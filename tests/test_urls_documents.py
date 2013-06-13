@@ -1,38 +1,32 @@
 # -*- coding:utf-8 -*-
 import unittest
-import tempfile
-import os
 
 
+from cdf.streams import ListStream
 from cdf.urls_documents import UrlsDocuments
 
 
 class TestUrlsDocuments(unittest.TestCase):
 
     def setUp(self):
-        self.url_file = tempfile.mkstemp(prefix='cdf_test')[1]
-        self.infos_file = tempfile.mkstemp(prefix='cdf_test')[1]
-        self.contents_file = tempfile.mkstemp(prefix='cdf_test')[1]
+        pass
 
     def tearDown(self):
-        """
-        os.remove(self.url_file.name)
-        os.remove(self.infos_file.name)
-        os.remove(self.contents_file.name)
-        """
+        pass
+
     def test_simple(self):
-        f = open(self.url_file, 'w')
-        f.write('1\thttp\twww.site.com\t/path/name.html\t\t\n')
-        f.write('2\thttp\twww.site.com\t/path/name2.html\t\t\n')
-        f.close()
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', ''],
+            [2, 'http', 'www.site.com', '/path/name2.html', '']
+        ]
 
-        f = open(self.infos_file, 'w')
-        f.write('1\t0\t6951326\t200\t89314\t303\t456\t0\n')
-        f.write('2\t0\t6951327\t301\t1000\t303\t456\t0\n')
-        f.close()
+        infos = [
+            [1, 0, 6951326, 200, 1200, 303, 456, 0],
+            [2, 1, 6951327, 301, 1000, 303, 456, 0],
+        ]
 
-        print self.url_file
+        contents = []
 
-        u = UrlsDocuments(self.url_file, self.infos_file, self.contents_file)
-        urls = [k for k in u.next()]
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream(contents))
+        urls = [k for k in u]
         print urls
