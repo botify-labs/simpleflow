@@ -148,3 +148,65 @@ class TestUrlsDocuments(unittest.TestCase):
         self.assertEquals(document['outlinks_external_follow_nb'], 1)
         self.assertEquals(document['outlinks_follow_ids'], [2, 4])
         self.assertEquals(document['outlinks_nofollow_ids'], [3])
+
+    def test_redirect_to(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+        ]
+
+        #format : link_type      follow? src_urlid       dst_urlid       or_external_url
+        outlinks = [
+            ['r301', True, 1, 2, ''],
+        ]
+
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]), ListStream(outlinks), ListStream([]))
+        document = u.__iter__().next()
+        logger.info(document)
+        self.assertEquals(document['redirect_to'], {'url_id': 2, 'http_code': 301})
+
+    def test_inlinks(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+        ]
+
+        #format : link_type      follow? dst_urlid       src_urlid
+        inlinks = [
+            ['a', True, 1, 10],
+            ['a', False, 1, 11],
+            ['a', True, 1, 12],
+        ]
+
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]), ListStream([]), ListStream(inlinks))
+        document = u.__iter__().next()
+        logger.info(document)
+        self.assertEquals(document['inlinks_nofollow_nb'], 1)
+        self.assertEquals(document['inlinks_follow_nb'], 2)
+        self.assertEquals(document['inlinks_follow_ids'], [10, 12])
+        self.assertEquals(document['inlinks_nofollow_ids'], [11])
+
+    def test_redirect_from(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+        ]
+
+        #format : link_type      follow? dst_urlid       src_urlid
+        inlinks = [
+            ['r301', True, 1, 2],
+        ]
+
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]), ListStream([]), ListStream(inlinks))
+        document = u.__iter__().next()
+        logger.info(document)
+        self.assertEquals(document['redirect_from'], {'url_id': 2, 'http_code': 301})

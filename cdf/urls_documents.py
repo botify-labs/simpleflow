@@ -25,7 +25,6 @@ def update_document_outlinks(url_data, stream_item):
         location_key = "internal" if url_dst > 0 else "external"
         follow_key = "follow" if follow else "nofollow"
         key_nb = "outlinks_%s_%s_nb" % (location_key, follow_key)
-        key_ids = "outlinks_%s_ids" % follow_key
 
         if key_nb not in url_data:
             url_data[key_nb] = 1
@@ -33,10 +32,37 @@ def update_document_outlinks(url_data, stream_item):
             url_data[key_nb] += 1
 
         if url_dst > 0:
+            key_ids = "outlinks_%s_ids" % follow_key
             if key_ids not in url_data:
                 url_data[key_ids] = [url_dst]
             else:
                 url_data[key_ids].append(url_dst)
+    elif link_type.startswith('r'):
+        http_code = int(link_type[1:])
+        url_data['redirect_to'] = {'url_id': url_dst, 'http_code': http_code}
+
+
+def update_document_inlinks(url_data, stream_item):
+    link_type, follow, url_dst, url_src = stream_item
+    if link_type == "a":
+        follow_key = "follow" if follow else "nofollow"
+        key_nb = "inlinks_%s_nb" % follow_key
+
+        if key_nb not in url_data:
+            url_data[key_nb] = 1
+        else:
+            url_data[key_nb] += 1
+
+        if url_dst > 0:
+            key_ids = "inlinks_%s_ids" % follow_key
+            if key_ids not in url_data:
+                url_data[key_ids] = [url_src]
+            else:
+                url_data[key_ids].append(url_src)
+    elif link_type.startswith('r'):
+        http_code = int(link_type[1:])
+        url_data['redirect_from'] = {'url_id': url_src, 'http_code': http_code}
+
 
 class UrlsDocuments(object):
     def __init__(self, stream_patterns, stream_infos, stream_contents, stream_outlinks, stream_inlinks):
@@ -99,6 +125,11 @@ class UrlsDocuments(object):
         except StopIteration:
             line_outlinks = None
 
+        try:
+            line_inlinks = next(self.streams['inlinks'])
+        except StopIteration:
+            line_inlinks = None
+
         while True:
             try:
                 line_url = next(self.streams['patterns'])
@@ -137,6 +168,14 @@ class UrlsDocuments(object):
                     update_document_outlinks(url_data, line_outlinks)
                     try:
                         line_outlinks = next(self.streams['outlinks'])
+                    except StopIteration:
+                        break
+
+            if line_inlinks:
+                while line_inlinks[2] == current_url_id:
+                    update_document_inlinks(url_data, line_inlinks)
+                    try:
+                        line_inlinks = next(self.streams['inlinks'])
                     except StopIteration:
                         break
 
