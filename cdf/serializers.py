@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+
+
 class PatternSerializer(object):
     FIELDS = ('id', 'protocol', 'host', 'path', 'query_string')
     CTYPES = (int, str, str, str, str)
@@ -13,8 +16,8 @@ class PatternSerializer(object):
 class InfosSerializer(object):
 
     @staticmethod
-    def to_date(str):
-        return 5
+    def to_date(date_str):
+        return datetime(2000, 1, 1) + timedelta(minutes=int(date_str))
 
     FIELDS = ('id', 'depth', 'date_crawled', 'http_code', 'byte_size', 'delay1', 'delay2', 'gzipped')
     MAPPERS = (int, int, to_date, int, int, int, bool, bool)

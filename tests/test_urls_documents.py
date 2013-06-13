@@ -28,9 +28,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
         ]
 
-        contents = []
-
-        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream(contents))
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]))
         document = u.__iter__().next()
         document_expected = {'id': 1,
                              'date_crawled': '2013-10-10 08:10:00',
@@ -57,9 +55,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
         ]
 
-        contents = []
-
-        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream(contents))
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]))
         document = u.__iter__().next()
         self.assertEquals(document['query_string'], '?f1=v1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
@@ -75,9 +71,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
         ]
 
-        contents = []
-
-        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream(contents))
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]))
         document = u.__iter__().next()
         self.assertEquals(document['query_string'], '?f1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
