@@ -10,19 +10,42 @@ def clean_infos_value(i, value):
     return value
 
 
-class UrlsDocuments(object):
-    CONTENT_TYPE_INDEX = {
-        '1': 'title',
-        '2': 'h1',
-        '3': 'h2',
-        '4': 'description'
-    }
+def update_document_contents(url_data, stream_item):
+    url_id, content_type, hash_id, txt = stream_item
+    if "metadata" not in url_data:
+        url_data["metadata"] = {}
+    if content_type not in url_data["metadata"]:
+        url_data["metadata"][content_type] = []
+    url_data["metadata"][content_type].append(txt)
 
-    def __init__(self, stream_patterns, stream_infos, stream_contents):
+
+def update_document_outlinks(url_data, stream_item):
+    link_type, follow, url_src, url_dst, external_url = stream_item
+    if link_type == "a":
+        location_key = "internal" if url_dst > 0 else "external"
+        follow_key = "follow" if follow else "nofollow"
+        key_nb = "outlinks_%s_%s_nb" % (location_key, follow_key)
+        key_ids = "outlinks_%s_ids" % follow_key
+
+        if key_nb not in url_data:
+            url_data[key_nb] = 1
+        else:
+            url_data[key_nb] += 1
+
+        if url_dst > 0:
+            if key_ids not in url_data:
+                url_data[key_ids] = [url_dst]
+            else:
+                url_data[key_ids].append(url_dst)
+
+class UrlsDocuments(object):
+    def __init__(self, stream_patterns, stream_infos, stream_contents, stream_outlinks, stream_inlinks):
         self.streams = {
             'patterns': stream_patterns,
             'infos': stream_infos,
-            'contents': stream_contents
+            'contents': stream_contents,
+            'outlinks': stream_outlinks,
+            'inlinks': stream_inlinks
         }
 
     """
@@ -46,10 +69,12 @@ class UrlsDocuments(object):
             "http_code": 200,
             "delay1": 120,
             "delay2": 300,
+            "outlinks_internal_follow_nb": 4,
+            "outlinks_internal_nofollow_nb": 1,
+            "outlinks_external_follow_nb": 5, 
+            "outlinks_external_nofollow_nb": 2, 
             "bytesize": 14554,
-            "outlinks_nb": 5,
             "inlinks_nb": 100,
-            "outlinks_follow_nb": 4,
             "inlinks_follow_nb": 90,
             "metadata": {
                 "title": ["My title"],
@@ -68,6 +93,11 @@ class UrlsDocuments(object):
             line_content = next(self.streams['contents'])
         except StopIteration:
             line_content = None
+
+        try:
+            line_outlinks = next(self.streams['outlinks'])
+        except StopIteration:
+            line_outlinks = None
 
         while True:
             try:
@@ -96,14 +126,19 @@ class UrlsDocuments(object):
 
             if line_content:
                 while line_content[0] == current_url_id:
-                    url_id, content_type_id, hash_id, txt = line_content
-                    content_type = self.CONTENT_TYPE_INDEX[content_type_id]
-                    if "metadata" not in url_data:
-                        url_data["metadata"] = {}
-                    if content_type not in url_data["metadata"]:
-                        url_data["metadata"][content_type] = []
-                    url_data["metadata"][content_type].append(txt)
-                    line_content = next(self.streams['contents'])
+                    update_document_contents(url_data, line_content)
+                    try:
+                        line_content = next(self.streams['contents'])
+                    except StopIteration:
+                        break
+
+            if line_outlinks:
+                while line_outlinks[2] == current_url_id:
+                    update_document_outlinks(url_data, line_outlinks)
+                    try:
+                        line_outlinks = next(self.streams['outlinks'])
+                    except StopIteration:
+                        break
 
             yield url_data
 

@@ -28,7 +28,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
         ]
 
-        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]))
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]), ListStream([]), ListStream([]))
         document = u.__iter__().next()
         document_expected = {'id': 1,
                              'date_crawled': '2013-10-10 08:10:00',
@@ -55,7 +55,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
         ]
 
-        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]))
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]), ListStream([]), ListStream([]))
         document = u.__iter__().next()
         self.assertEquals(document['query_string'], '?f1=v1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
@@ -71,9 +71,80 @@ class TestUrlsDocuments(unittest.TestCase):
             [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
         ]
 
-        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]))
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]), ListStream([]), ListStream([]))
         document = u.__iter__().next()
         self.assertEquals(document['query_string'], '?f1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
         self.assertEquals(document['query_string_keys_order'], 'f1;f2')
         self.assertEquals(document['query_string_items'], [['f1', ''], ['f2', 'v2']])
+
+    def test_metadata(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+        ]
+
+        contents = [
+            [1, 'h1', 0, 'My first H1'],
+            [1, 'h1', 0, 'My second H1'],
+            [1, 'title', 0, 'My title']
+        ]
+
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream(contents), ListStream([]), ListStream([]))
+        document = u.__iter__().next()
+        self.assertEquals(document['metadata']['h1'], ['My first H1', 'My second H1'])
+        self.assertEquals(document['metadata']['title'], ['My title'])
+
+    def test_metadata_gap(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
+            [3, 'http', 'www.site.com', '/path/name3.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+            [2, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+            [3, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+        ]
+
+        contents = [
+            [1, 'h1', 0, 'My H1'],
+            [3, 'h1', 0, 'My H1'],
+        ]
+
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream(contents), ListStream([]), ListStream([]))
+        for document in u:
+            if document['id'] in (1, 3):
+                self.assertEquals(document['metadata']['h1'], ['My H1'])
+            else:
+                self.assertTrue('metadata' not in document)
+
+    def test_outlinks(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+        ]
+
+        #format : link_type      follow? src_urlid       dst_urlid       or_external_url
+        outlinks = [
+            ['a', True, 1, 2, ''],
+            ['a', False, 1, 3, ''],
+            ['a', True, 1, 4, ''],
+            ['a', True, 1, -1, 'http://www.youtube.com'],
+        ]
+
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]), ListStream(outlinks), ListStream([]))
+        document = u.__iter__().next()
+        logger.info(document)
+        self.assertEquals(document['outlinks_internal_nofollow_nb'], 1)
+        self.assertEquals(document['outlinks_internal_follow_nb'], 2)
+        self.assertEquals(document['outlinks_external_follow_nb'], 1)
+        self.assertEquals(document['outlinks_follow_ids'], [2, 4])
+        self.assertEquals(document['outlinks_nofollow_ids'], [3])
