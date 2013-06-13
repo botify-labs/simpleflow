@@ -1,25 +1,16 @@
 import ujson
 
 from cdf.log import logger
-
-def clean_main_value(i, value):
-    if UrlsDocuments.FIELDS_URLIDS[i] == 'id':
-        return int(value)
-    return value
+from cdf.serializers import PatternSerializer, InfosSerializer
 
 
 def clean_infos_value(i, value):
-    if UrlsDocuments.FIELDS_URLINFOS[i] in ('depth', 'http_code', 'byte_size', 'delay1', 'delay2'):
-        return int(value)
-    elif UrlsDocuments.FIELDS_URLINFOS[i] in ('gzipped', ):
-        return bool(value)
+    if InfosSerializer.FIELDS[i] == 'date_crawled':
+        return str(value)
     return value
 
 
 class UrlsDocuments(object):
-    FIELDS_URLIDS = ('id', 'protocol', 'host', 'path', 'query_string')
-    FIELDS_URLINFOS = ('id', 'depth', 'date_crawled', 'http_code', 'byte_size', 'delay1', 'delay2', 'gzipped')
-
     CONTENT_TYPE_INDEX = {
         '1': 'title',
         '2': 'h1',
@@ -49,12 +40,12 @@ class UrlsDocuments(object):
             "query_string_keys_order": "p;offset",
             "query_string_items": [ ["p", "comments"], ["offset", "10] ],
             "url_id": 1,
-            "date": "2013-10-10 09:10:12 UTC",
+            "date": "2013-10-10 09:10:12",
             "depth": 1,
             "data_mask": 3, // See Data Mask explanations
             "http_code": 200,
-            "delay1_ms": 120,
-            "delay2_ms": 300,
+            "delay1": 120,
+            "delay2": 300,
             "bytesize": 14554,
             "outlinks_nb": 5,
             "inlinks_nb": 100,
@@ -89,10 +80,19 @@ class UrlsDocuments(object):
             logger.info('current url_id : %s' % current_url_id)
 
             # Create initial dictionary
-            url_data = {self.FIELDS_URLIDS[i]: clean_main_value(i, value) for i, value in enumerate(line_url)}
+            url_data = {PatternSerializer.FIELDS[i]: value for i, value in enumerate(line_url)}
+
+            # query_string fields
+            query_string = line_url[4]
+            if query_string:
+                # The first character is ? we flush it in the split
+                qs = [k.split('=') if '=' in k else [k, ''] for k in query_string[1:].split('&')]
+                url_data['query_string_keys'] = [q[0] for q in qs]
+                url_data['query_string_keys_order'] = ';'.join(url_data['query_string_keys'])
+                url_data['query_string_items'] = qs
 
             # Update dict with infos
-            url_data.update({self.FIELDS_URLINFOS[i]: clean_infos_value(i, value) for i, value in enumerate(line_infos)})
+            url_data.update({InfosSerializer.FIELDS[i]: clean_infos_value(i, value) for i, value in enumerate(line_infos)})
 
             if line_content:
                 while line_content[0] == current_url_id:
