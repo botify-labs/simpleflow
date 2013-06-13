@@ -1,9 +1,13 @@
 # -*- coding:utf-8 -*-
 import unittest
+import logging
 
 
+from cdf.log import logger
 from cdf.streams import ListStream
 from cdf.urls_documents import UrlsDocuments
+
+logger.setLevel(logging.DEBUG)
 
 
 class TestUrlsDocuments(unittest.TestCase):

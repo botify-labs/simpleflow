@@ -1,12 +1,6 @@
 import ujson
-import logging
 
-logger = logging.getLogger('cdf')
-
-
-def extract_url_id(line):
-    return line[0:line.index('\t')]
-
+from cdf.log import logger
 
 def clean_main_value(i, value):
     if UrlsDocuments.FIELDS_URLIDS[i] == 'id':
@@ -33,13 +27,12 @@ class UrlsDocuments(object):
         '4': 'description'
     }
 
-    def __init__(self, stream_patterns, stream_infos, stream_contents, debug=False):
+    def __init__(self, stream_patterns, stream_infos, stream_contents):
         self.streams = {
             'patterns': stream_patterns,
             'infos': stream_infos,
             'contents': stream_contents
         }
-        self.debug = debug
 
     """
     Return a document collection
@@ -93,9 +86,7 @@ class UrlsDocuments(object):
             line_infos = next(self.streams['infos'])
 
             current_url_id = line_url[0]
-
-            if self.debug:
-                logger.info('current url id : %s' % current_url_id)
+            logger.info('current url_id : %s' % current_url_id)
 
             # Create initial dictionary
             url_data = {self.FIELDS_URLIDS[i]: clean_main_value(i, value) for i, value in enumerate(line_url)}
