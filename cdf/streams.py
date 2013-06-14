@@ -1,38 +1,72 @@
-class BaseStream(object):
-    pass
+"""
+A stream is a generator of values. A value may be any object but usually is a
+string or a tuple. The purpose of this module is to provide simple operations
+that are easy to compose.
+
+A stream allow to chain operations on each of its elements and consume the
+values on-demand. Calling a stream operation after another does not iterate two
+times on the values.
+
+Example:
+
+>>> import streams
+>>> INFOS_FIELDS = [('id', int),
+...                 ('depth', int),
+...                 ('date_crawled', None),
+...                 ('http_code', int),
+...                 ('byte_size', int),
+...                 ('delay1', int),
+...                 ('delay2', bool),
+...                 ('gzipped', bool)]
+>>> cast = Caster(INFOS_FIELDS).cast
+>>> inlinks = cast(streams.split_file((open('test.data'))))
+
+"""
+from itertools import izip
+
+__all__ = ['split', 'rstrip', 'split_file', 'Caster']
 
 
-class FileStream(BaseStream):
+class Caster(object):
+    """
+    Cast each field value to an object with respect to a definition mapping in
+    *fields*.
 
-    def __init__(self, location, serializer=None):
-        self.f = open(location)
-        self.serializer = serializer
+    """
+    def __init__(self, fields):
+        self._fields = fields
 
-    def __iter__(self):
-        for k in self.f:
-            if self.serializer:
-                yield self.serializer.loads(k[:-1])
-            else:
-                yield k[:-1]
+    def cast_line(self, line):
+        return [(cast(value) if cast else value) for
+                (name, cast), value in izip(self.fields, line)]
 
-    def next(self):
-        if self.serializer:
-            return self.serializer.loads(self.f.next())
+    def cast(self, iterable):
+        for i in iterable:
+            yield self.cast_line(i)
 
 
-class ListStream(BaseStream):
+def split(iterable, char='\t'):
+    """
+    Split each line with *char*.
 
-    def __init__(self, lst):
-        self.lst = lst
-        self.i = -1
+    """
+    return (i.split(char) for i in iterable)
 
-    def iter(self):
-        for k in self.lst:
-            yield k
 
-    def next(self):
-        self.i += 1
-        if self.i < len(self.lst):
-            return self.lst[self.i]
-        else:
-            raise StopIteration
+def rstrip(iterable):
+    """
+    Strip end-of-line and trailing spaces.
+
+    """
+    for i in iterable:
+        yield i.rstrip()
+
+
+def split_file(iterable, char='\t'):
+    """
+    Strip end-of-line and trailing spaces, then split each line with *char*.
+
+    :param iterable: usually a file objects
+
+    """
+    return split(rstrip(iterable))
