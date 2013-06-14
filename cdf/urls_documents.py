@@ -29,9 +29,7 @@ def extract_infos(attributes, stream_item):
 
 
 def extract_contents(attributes, stream_item):
-    print stream_item
     content_type_id = stream_item[idx_from_stream('contents', 'content_type')]
-    print 'has ctid', content_type_id
     txt = stream_item[idx_from_stream('contents', 'txt')]
     if "metadata" not in attributes:
         attributes["metadata"] = {}
@@ -88,8 +86,19 @@ def extract_inlinks(attributes, stream_item):
         attributes['redirect_from'] = {'url_id': url_src, 'http_code': http_code}
 
 
-def extract_canonicals(attributes, stream_item):
-    pass
+def extract_incanonicals(attributes, stream_item):
+    nb_duplicates = attributes.get('canonical_nb_duplicates', 0) + 1
+    attributes['canonical_nb_duplicates'] = nb_duplicates
+    if nb_duplicates == 1:
+        attributes['canonical_duplicate_ids'] = [stream_item[1]]
+    else:
+        attributes['canonical_duplicate_ids'].append(stream_item[1])
+
+
+def extract_outcanonicals(attributes, stream_item):
+    url_id, dst_url_id = stream_item
+    attributes['canonical_equals'] = url_id == dst_url_id
+    attributes['canonical_url_id'] = dst_url_id
 
 
 class UrlsDocuments(object):
@@ -97,13 +106,14 @@ class UrlsDocuments(object):
         'infos': extract_infos,
         'contents': extract_contents,
         'inlinks': extract_inlinks,
-        'outlinks': extract_outlinks
+        'outlinks': extract_outlinks,
+        'incanonicals': extract_incanonicals,
+        'outcanonicals': extract_outcanonicals
     }
 
     def __init__(self, stream_patterns, **kwargs):
         self.stream_patterns = stream_patterns
         self.streams = kwargs
-
 
     """
     Return a document collection

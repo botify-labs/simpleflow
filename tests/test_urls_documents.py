@@ -254,7 +254,6 @@ class TestUrlsDocuments(unittest.TestCase):
         logger.info(document)
         self.assertEquals(document['redirect_from'], {'url_id': 2, 'http_code': 301})
 
-    """
     def test_canonical_to(self):
         patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
@@ -274,4 +273,24 @@ class TestUrlsDocuments(unittest.TestCase):
         # Url 2
         self.assertEquals(documents[1][1]['canonical_url_id'], 2)
         self.assertEquals(documents[1][1]['canonical_equals'], True)
-    """
+
+    def test_canonical_from(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
+        ]
+
+        incanonicals = [
+            [1, 5],
+            [2, 17],
+            [2, 20]
+        ]
+
+        u = UrlsDocuments(iter(patterns), incanonicals=iter(incanonicals))
+        documents = list(u)
+        # Url 1
+        self.assertEquals(documents[0][1]['canonical_nb_duplicates'], 1)
+        self.assertEquals(documents[0][1]['canonical_duplicate_ids'], [5])
+        # Url 2
+        self.assertEquals(documents[1][1]['canonical_nb_duplicates'], 2)
+        self.assertEquals(documents[1][1]['canonical_duplicate_ids'], [17, 20])

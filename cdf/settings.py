@@ -34,6 +34,14 @@ STREAMS_HEADERS = {
         ('follow', bool),
         ('id', int),
         ('src_url_id', int),
+    ),
+    'OUTCANONICALS': (
+        ('id', int),
+        ('dst_url_id', int)
+    ),
+    'INCANONICALS': (
+        ('id', int),
+        ('src_url_id', int)
     )
 }
 
