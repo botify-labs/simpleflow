@@ -10,6 +10,24 @@ def clean_infos_value(i, value):
     return value
 
 
+def update_document_patterns(url_data, stream_item):
+    # Create initial dictionary
+    url_data.update({PatternSerializer.FIELDS[i]: value for i, value in enumerate(stream_item)})
+
+    # query_string fields
+    query_string = stream_item[4]
+    if query_string:
+        # The first character is ? we flush it in the split
+        qs = [k.split('=') if '=' in k else [k, ''] for k in query_string[1:].split('&')]
+        url_data['query_string_keys'] = [q[0] for q in qs]
+        url_data['query_string_keys_order'] = ';'.join(url_data['query_string_keys'])
+        url_data['query_string_items'] = qs
+
+
+def update_document_infos(url_data, stream_item):
+    url_data.update({InfosSerializer.FIELDS[i]: clean_infos_value(i, value) for i, value in enumerate(stream_item)})
+
+
 def update_document_contents(url_data, stream_item):
     url_id, content_type, hash_id, txt = stream_item
     if "metadata" not in url_data:
@@ -65,29 +83,44 @@ def update_document_inlinks(url_data, stream_item):
 
 
 class UrlsDocuments(object):
+    STREAMS_MAPPERS = {
+        'patterns': {
+            'func': update_document_patterns,
+            'url_id_index': 0,
+        },
+        'infos': {
+            'func': update_document_infos,
+            'url_id_index': 0,
+        },
+        'outlinks': {
+            'func': update_document_outlinks,
+            'url_id_index': 2
+        },
+        'inlinks': {
+            'func': update_document_inlinks,
+            'url_id_index': 2
+        },
+        'contents': {
+            'func': update_document_contents,
+            'url_id_index': 0
+        }
+    }
+
     def __init__(self, stream_patterns, stream_infos, stream_contents, stream_outlinks, stream_inlinks):
         self.streams = {
             'patterns': stream_patterns,
             'infos': stream_infos,
             'contents': stream_contents,
             'outlinks': stream_outlinks,
-            'inlinks': stream_inlinks
+            'inlinks': stream_inlinks,
         }
 
-        try:
-            self.line_content = next(self.streams['contents'])
-        except StopIteration:
-            self.line_content = None
-
-        try:
-            self.line_outlinks = next(self.streams['outlinks'])
-        except StopIteration:
-            self.line_outlinks = None
-
-        try:
-            self.line_inlinks = next(self.streams['inlinks'])
-        except StopIteration:
-            self.line_inlinks = None
+        self.current_line = {}
+        for stream_type in self.streams.keys():
+            try:
+                self.current_line[stream_type] = next(self.streams[stream_type])
+            except StopIteration:
+                self.current_line[stream_type] = None
 
 
     """
@@ -132,56 +165,23 @@ class UrlsDocuments(object):
     """
     def __iter__(self):
         while True:
-            try:
-                line_url = next(self.streams['patterns'])
-            except StopIteration:
+            if not self.current_line['patterns']:
                 break
-            line_infos = next(self.streams['infos'])
 
-            current_url_id = line_url[0]
+            url_data = {}
+            current_url_id = self.current_line['patterns'][0]
             logger.info('current url_id : %s' % current_url_id)
 
-            # Create initial dictionary
-            url_data = {PatternSerializer.FIELDS[i]: value for i, value in enumerate(line_url)}
-
-            # query_string fields
-            query_string = line_url[4]
-            if query_string:
-                # The first character is ? we flush it in the split
-                qs = [k.split('=') if '=' in k else [k, ''] for k in query_string[1:].split('&')]
-                url_data['query_string_keys'] = [q[0] for q in qs]
-                url_data['query_string_keys_order'] = ';'.join(url_data['query_string_keys'])
-                url_data['query_string_items'] = qs
-
-            # Update dict with infos
-            url_data.update({InfosSerializer.FIELDS[i]: clean_infos_value(i, value) for i, value in enumerate(line_infos)})
-
-            if self.line_content:
-                while self.line_content[0] == current_url_id:
-                    update_document_contents(url_data, self.line_content)
-                    try:
-                        self.line_content = next(self.streams['contents'])
-                    except StopIteration:
-                        self.line_content = None
-                        break
-
-            if self.line_outlinks:
-                while self.line_outlinks[2] == current_url_id:
-                    update_document_outlinks(url_data, self.line_outlinks)
-                    try:
-                        self.line_outlinks = next(self.streams['outlinks'])
-                    except StopIteration:
-                        self.line_outlinks = None
-                        break
-
-            if self.line_inlinks:
-                while self.line_inlinks[2] == current_url_id:
-                    update_document_inlinks(url_data, self.line_inlinks)
-                    try:
-                        self.line_inlinks = next(self.streams['inlinks'])
-                    except StopIteration:
-                        self.line_inlinks = None
-                        break
+            # Join others streams
+            for stream_type, config in self.STREAMS_MAPPERS.iteritems():
+                if self.current_line[stream_type]:
+                    while self.current_line[stream_type][config['url_id_index']] == current_url_id:
+                        config['func'](url_data, self.current_line[stream_type])
+                        try:
+                            self.current_line[stream_type] = next(self.streams[stream_type])
+                        except StopIteration:
+                            self.current_line[stream_type] = None
+                            break
 
             yield url_data
 
@@ -189,5 +189,5 @@ class UrlsDocuments(object):
         for file_type in self.files.iterkeys():
             self.files[file_type].seek(0)
         f = open(location, 'w')
-        f.writelines('\n'.join((ujson.encode(l) for l in self.next())))
+        f.writelines('\n'.join((ujson.encode(l) for l in self)))
         f.close()
