@@ -126,10 +126,14 @@ class TestUrlsDocuments(unittest.TestCase):
     def test_outlinks(self):
         patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
+            [3, 'http', 'www.site.com', '/path/name3.html', '?f1&f2=v2'],
         ]
 
         infos = [
             [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+            [2, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+            [3, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
         ]
 
         #format : link_type      follow? src_urlid       dst_urlid       or_external_url
@@ -138,6 +142,7 @@ class TestUrlsDocuments(unittest.TestCase):
             ['a', False, 1, 3, ''],
             ['a', True, 1, 4, ''],
             ['a', True, 1, -1, 'http://www.youtube.com'],
+            ['a', True, 3, -1, 'http://www.youtube.com'],
         ]
 
         u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]), ListStream(outlinks), ListStream([]))
@@ -148,6 +153,68 @@ class TestUrlsDocuments(unittest.TestCase):
         self.assertEquals(document['outlinks_external_follow_nb'], 1)
         self.assertEquals(document['outlinks_follow_ids'], [2, 4])
         self.assertEquals(document['outlinks_nofollow_ids'], [3])
+
+        # Check that url 2 has no outlinks
+        document = u.__iter__().next()
+        logger.info(document)
+        self.assertTrue('outlinks_internal_nofollow_nb' not in document)
+        self.assertTrue('outlinks_internal_follow_nb' not in document)
+        self.assertTrue('outlinks_external_nofollow_nb' not in document)
+        self.assertTrue('outlinks_external_follow_nb' not in document)
+
+        # Check that url 3 has 1 outlink
+        document = u.__iter__().next()
+        logger.info(document)
+        self.assertTrue('outlinks_internal_nofollow_nb' not in document)
+        self.assertTrue('outlinks_internal_follow_nb' not in document)
+        self.assertTrue('outlinks_external_nofollow_nb' not in document)
+        self.assertEquals(document['outlinks_external_follow_nb'], 1)
+
+    """
+    Test outlinks with a stream starting at url 2
+    """
+    def test_oulinks_start_url2(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
+            [3, 'http', 'www.site.com', '/path/name3.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+            [2, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+            [3, 0, datetime(2013, 10, 10, 8, 10, 0), 200, 1200, 303, 456, True],
+        ]
+
+        #format : link_type      follow? src_urlid       dst_urlid       or_external_url
+        outlinks = [
+            ['a', True, 2, 3, ''],
+            ['a', False, 2, 4, ''],
+            ['a', True, 2, 5, ''],
+            ['a', True, 2, -1, 'http://www.youtube.com'],
+            ['a', True, 3, -1, 'http://www.youtube.com'],
+        ]
+
+        u = UrlsDocuments(ListStream(patterns), ListStream(infos), ListStream([]), ListStream(outlinks), ListStream([]))
+        documents = list(u)
+
+        # No link for url 1
+        document = documents[0]
+        logger.info(document)
+        self.assertTrue('outlinks_internal_nofollow_nb' not in document)
+        self.assertTrue('outlinks_internal_follow_nb' not in document)
+        self.assertTrue('outlinks_external_nofollow_nb' not in document)
+        self.assertTrue('outlinks_external_follow_nb' not in document)
+
+        # Url 2
+        document = documents[1]
+        logger.info(document)
+        self.assertEquals(document['outlinks_internal_nofollow_nb'], 1)
+        self.assertEquals(document['outlinks_internal_follow_nb'], 2)
+        self.assertEquals(document['outlinks_external_follow_nb'], 1)
+        self.assertEquals(document['outlinks_follow_ids'], [3, 5])
+        self.assertEquals(document['outlinks_nofollow_ids'], [4])
+
 
     def test_redirect_to(self):
         patterns = [

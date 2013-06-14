@@ -74,6 +74,22 @@ class UrlsDocuments(object):
             'inlinks': stream_inlinks
         }
 
+        try:
+            self.line_content = next(self.streams['contents'])
+        except StopIteration:
+            self.line_content = None
+
+        try:
+            self.line_outlinks = next(self.streams['outlinks'])
+        except StopIteration:
+            self.line_outlinks = None
+
+        try:
+            self.line_inlinks = next(self.streams['inlinks'])
+        except StopIteration:
+            self.line_inlinks = None
+
+
     """
     Return a document collection
 
@@ -115,21 +131,6 @@ class UrlsDocuments(object):
 
     """
     def __iter__(self):
-        try:
-            line_content = next(self.streams['contents'])
-        except StopIteration:
-            line_content = None
-
-        try:
-            line_outlinks = next(self.streams['outlinks'])
-        except StopIteration:
-            line_outlinks = None
-
-        try:
-            line_inlinks = next(self.streams['inlinks'])
-        except StopIteration:
-            line_inlinks = None
-
         while True:
             try:
                 line_url = next(self.streams['patterns'])
@@ -155,28 +156,31 @@ class UrlsDocuments(object):
             # Update dict with infos
             url_data.update({InfosSerializer.FIELDS[i]: clean_infos_value(i, value) for i, value in enumerate(line_infos)})
 
-            if line_content:
-                while line_content[0] == current_url_id:
-                    update_document_contents(url_data, line_content)
+            if self.line_content:
+                while self.line_content[0] == current_url_id:
+                    update_document_contents(url_data, self.line_content)
                     try:
-                        line_content = next(self.streams['contents'])
+                        self.line_content = next(self.streams['contents'])
                     except StopIteration:
+                        self.line_content = None
                         break
 
-            if line_outlinks:
-                while line_outlinks[2] == current_url_id:
-                    update_document_outlinks(url_data, line_outlinks)
+            if self.line_outlinks:
+                while self.line_outlinks[2] == current_url_id:
+                    update_document_outlinks(url_data, self.line_outlinks)
                     try:
-                        line_outlinks = next(self.streams['outlinks'])
+                        self.line_outlinks = next(self.streams['outlinks'])
                     except StopIteration:
+                        self.line_outlinks = None
                         break
 
-            if line_inlinks:
-                while line_inlinks[2] == current_url_id:
-                    update_document_inlinks(url_data, line_inlinks)
+            if self.line_inlinks:
+                while self.line_inlinks[2] == current_url_id:
+                    update_document_inlinks(url_data, self.line_inlinks)
                     try:
-                        line_inlinks = next(self.streams['inlinks'])
+                        self.line_inlinks = next(self.streams['inlinks'])
                     except StopIteration:
+                        self.line_inlinks = None
                         break
 
             yield url_data
