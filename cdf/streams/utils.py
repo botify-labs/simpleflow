@@ -1,3 +1,6 @@
+from cdf.settings import STREAMS_HEADERS
+
+
 """
 A stream is a generator of values. A value may be any object but usually is a
 string or a tuple. The purpose of this module is to provide simple operations
@@ -70,3 +73,10 @@ def split_file(iterable, char='\t'):
 
     """
     return split(rstrip(iterable))
+
+
+"""
+Return the field position of 'id' field from a specific stream
+"""
+def idx_from_stream(key, field):
+    return map(lambda i: i[0], STREAMS_HEADERS[key.upper()]).index(field)

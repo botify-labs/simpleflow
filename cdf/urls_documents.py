@@ -1,126 +1,108 @@
 import ujson
+from itertools import izip
 
+
+from cdf.settings import STREAMS_HEADERS, CONTENT_TYPE_INDEX
 from cdf.log import logger
-from cdf.serializers import PatternSerializer, InfosSerializer
+from cdf.streams.transformations import group_with
+from cdf.streams.utils import idx_from_stream
+from cdf.utils.date import date_2k_mn_to_date
 
-
-def clean_infos_value(i, value):
-    if InfosSerializer.FIELDS[i] == 'date_crawled':
-        return str(value)
-    return value
-
-
-def update_document_patterns(url_data, stream_item):
+def extract_patterns(attributes, stream_item):
     # Create initial dictionary
-    url_data.update({PatternSerializer.FIELDS[i]: value for i, value in enumerate(stream_item)})
+    attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
 
     # query_string fields
     query_string = stream_item[4]
     if query_string:
         # The first character is ? we flush it in the split
         qs = [k.split('=') if '=' in k else [k, ''] for k in query_string[1:].split('&')]
-        url_data['query_string_keys'] = [q[0] for q in qs]
-        url_data['query_string_keys_order'] = ';'.join(url_data['query_string_keys'])
-        url_data['query_string_items'] = qs
+        attributes['query_string_keys'] = [q[0] for q in qs]
+        attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
+        attributes['query_string_items'] = qs
 
 
-def update_document_infos(url_data, stream_item):
-    url_data.update({InfosSerializer.FIELDS[i]: clean_infos_value(i, value) for i, value in enumerate(stream_item)})
+def extract_infos(attributes, stream_item):
+    date_crawled_idx = idx_from_stream('infos', 'date_crawled')
+    stream_item[date_crawled_idx] = str(date_2k_mn_to_date(stream_item[date_crawled_idx]))
+    attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item)})
 
 
-def update_document_contents(url_data, stream_item):
-    url_id, content_type, hash_id, txt = stream_item
-    if "metadata" not in url_data:
-        url_data["metadata"] = {}
-    if content_type not in url_data["metadata"]:
-        url_data["metadata"][content_type] = []
-    url_data["metadata"][content_type].append(txt)
+def extract_contents(attributes, stream_item):
+    print stream_item
+    content_type_id = stream_item[idx_from_stream('contents', 'content_type')]
+    print 'has ctid', content_type_id
+    txt = stream_item[idx_from_stream('contents', 'txt')]
+    if "metadata" not in attributes:
+        attributes["metadata"] = {}
+
+    verbose_content_type = CONTENT_TYPE_INDEX[content_type_id]
+    if verbose_content_type not in attributes["metadata"]:
+        attributes["metadata"][verbose_content_type] = [txt]
+    else:
+        attributes["metadata"][verbose_content_type].append(txt)
 
 
-def update_document_outlinks(url_data, stream_item):
+def extract_outlinks(attributes, stream_item):
     link_type, follow, url_src, url_dst, external_url = stream_item
     if link_type == "a":
         location_key = "internal" if url_dst > 0 else "external"
         follow_key = "follow" if follow else "nofollow"
         key_nb = "outlinks_%s_%s_nb" % (location_key, follow_key)
 
-        if key_nb not in url_data:
-            url_data[key_nb] = 1
+        if key_nb not in attributes:
+            attributes[key_nb] = 1
         else:
-            url_data[key_nb] += 1
+            attributes[key_nb] += 1
 
         if url_dst > 0:
             key_ids = "outlinks_%s_ids" % follow_key
-            if key_ids not in url_data:
-                url_data[key_ids] = [url_dst]
+            if key_ids not in attributes:
+                attributes[key_ids] = [url_dst]
             else:
-                url_data[key_ids].append(url_dst)
+                attributes[key_ids].append(url_dst)
     elif link_type.startswith('r'):
         http_code = int(link_type[1:])
-        url_data['redirect_to'] = {'url_id': url_dst, 'http_code': http_code}
+        attributes['redirect_to'] = {'url_id': url_dst, 'http_code': http_code}
 
 
-def update_document_inlinks(url_data, stream_item):
+def extract_inlinks(attributes, stream_item):
     link_type, follow, url_dst, url_src = stream_item
     if link_type == "a":
         follow_key = "follow" if follow else "nofollow"
         key_nb = "inlinks_%s_nb" % follow_key
 
-        if key_nb not in url_data:
-            url_data[key_nb] = 1
+        if key_nb not in attributes:
+            attributes[key_nb] = 1
         else:
-            url_data[key_nb] += 1
+            attributes[key_nb] += 1
 
         if url_dst > 0:
             key_ids = "inlinks_%s_ids" % follow_key
-            if key_ids not in url_data:
-                url_data[key_ids] = [url_src]
+            if key_ids not in attributes:
+                attributes[key_ids] = [url_src]
             else:
-                url_data[key_ids].append(url_src)
+                attributes[key_ids].append(url_src)
     elif link_type.startswith('r'):
         http_code = int(link_type[1:])
-        url_data['redirect_from'] = {'url_id': url_src, 'http_code': http_code}
+        attributes['redirect_from'] = {'url_id': url_src, 'http_code': http_code}
+
+
+def extract_canonicals(attributes, stream_item):
+    pass
 
 
 class UrlsDocuments(object):
-    STREAMS_MAPPERS = {
-        'patterns': {
-            'func': update_document_patterns,
-            'url_id_index': 0,
-        },
-        'infos': {
-            'func': update_document_infos,
-            'url_id_index': 0,
-        },
-        'outlinks': {
-            'func': update_document_outlinks,
-            'url_id_index': 2
-        },
-        'inlinks': {
-            'func': update_document_inlinks,
-            'url_id_index': 2
-        },
-        'contents': {
-            'func': update_document_contents,
-            'url_id_index': 0
-        }
+    EXTRACTORS = {
+        'infos': extract_infos,
+        'contents': extract_contents,
+        'inlinks': extract_inlinks,
+        'outlinks': extract_outlinks
     }
 
-    def __init__(self, stream_patterns, stream_infos, stream_contents, stream_outlinks, stream_inlinks):
-        self.streams = {
-            'patterns': stream_patterns,
-            'infos': stream_infos,
-            'contents': stream_contents,
-            'outlinks': stream_outlinks,
-            'inlinks': stream_inlinks,
-        }
-
-        self.current_line = {}
-        for stream_type in self.streams.keys():
-            try:
-                self.current_line[stream_type] = next(self.streams[stream_type])
-            except StopIteration:
-                self.current_line[stream_type] = None
+    def __init__(self, stream_patterns, **kwargs):
+        self.stream_patterns = stream_patterns
+        self.streams = kwargs
 
 
     """
@@ -164,26 +146,9 @@ class UrlsDocuments(object):
 
     """
     def __iter__(self):
-        while True:
-            if not self.current_line['patterns']:
-                break
-
-            url_data = {}
-            current_url_id = self.current_line['patterns'][0]
-            logger.info('current url_id : %s' % current_url_id)
-
-            # Join others streams
-            for stream_type, config in self.STREAMS_MAPPERS.iteritems():
-                if self.current_line[stream_type]:
-                    while self.current_line[stream_type][config['url_id_index']] == current_url_id:
-                        config['func'](url_data, self.current_line[stream_type])
-                        try:
-                            self.current_line[stream_type] = next(self.streams[stream_type])
-                        except StopIteration:
-                            self.current_line[stream_type] = None
-                            break
-
-            yield url_data
+        left = (self.stream_patterns, 0, extract_patterns)
+        streams_ref = {key: (self.streams[key], idx_from_stream(key, 'id'), self.EXTRACTORS[key]) for key in self.streams.keys()}
+        return group_with(left, **streams_ref)
 
     def save_to_file(self, location):
         for file_type in self.files.iterkeys():
