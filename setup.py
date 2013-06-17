@@ -19,7 +19,7 @@ setup(
 
     author='ampelmann',
     author_email='thomas@botify.com',
-    url='http://github.com/sem-io/botify-data-extractor',
+    url='http://github.com/sem-io/botify-cdf',
     keywords='botify data extractor crawl',
     zip_safe=True,
     install_requires=[
