@@ -101,7 +101,7 @@ def extract_outcanonicals(attributes, stream_item):
     attributes['canonical_url_id'] = dst_url_id
 
 
-class UrlsDocuments(object):
+class UrlDataGenerator(object):
     EXTRACTORS = {
         'infos': extract_infos,
         'contents': extract_contents,

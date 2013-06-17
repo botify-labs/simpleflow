@@ -5,12 +5,12 @@ from datetime import datetime
 
 
 from cdf.log import logger
-from cdf.urls_documents import UrlsDocuments
+from cdf.collections.url_data import UrlDataGenerator
 
 logger.setLevel(logging.DEBUG)
 
 
-class TestUrlsDocuments(unittest.TestCase):
+class TestUrlDataGenerator(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -27,7 +27,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [1, 0, 1, 200, 1200, 303, 456, True],
         )
 
-        u = UrlsDocuments(iter(patterns), infos=iter(infos))
+        u = UrlDataGenerator(iter(patterns), infos=iter(infos))
         document = u.__iter__().next()
         document_expected = {'id': 1,
                              'date_crawled': '2000-01-01 00:01:00',
@@ -54,7 +54,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [1, 0, 1, 200, 1200, 303, 456, True],
         ]
 
-        u = UrlsDocuments(iter(patterns), infos=iter(infos))
+        u = UrlDataGenerator(iter(patterns), infos=iter(infos))
         document = u.__iter__().next()[1]
         self.assertEquals(document['query_string'], '?f1=v1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
@@ -70,7 +70,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [1, 0, 1, 200, 1200, 303, 456, True],
         ]
 
-        u = UrlsDocuments(iter(patterns), infos=iter(infos))
+        u = UrlDataGenerator(iter(patterns), infos=iter(infos))
         document = u.__iter__().next()[1]
         self.assertEquals(document['query_string'], '?f1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
@@ -92,7 +92,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [1, 1, 0, 'My title']
         ]
 
-        u = UrlsDocuments(iter(patterns), infos=iter(infos), contents=iter(contents))
+        u = UrlDataGenerator(iter(patterns), infos=iter(infos), contents=iter(contents))
         document = u.__iter__().next()[1]
         self.assertEquals(document['metadata']['h1'], ['My first H1', 'My second H1'])
         self.assertEquals(document['metadata']['title'], ['My title'])
@@ -115,7 +115,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [3, 2, 0, 'My H1'],
         ]
 
-        u = UrlsDocuments(iter(patterns), infos=iter(infos), contents=iter(contents))
+        u = UrlDataGenerator(iter(patterns), infos=iter(infos), contents=iter(contents))
         for url_id, document in u:
             if document['id'] in (1, 3):
                 self.assertEquals(document['metadata']['h1'], ['My H1'])
@@ -138,7 +138,7 @@ class TestUrlsDocuments(unittest.TestCase):
             ['a', True, 3, -1, 'http://www.youtube.com'],
         ]
 
-        u = UrlsDocuments(iter(patterns), outlinks=iter(outlinks))
+        u = UrlDataGenerator(iter(patterns), outlinks=iter(outlinks))
         documents = list(u)
         print documents
         document = documents[0][1]
@@ -184,7 +184,7 @@ class TestUrlsDocuments(unittest.TestCase):
             ['a', True, 3, -1, 'http://www.youtube.com'],
         ]
 
-        u = UrlsDocuments(patterns, outlinks=iter(outlinks))
+        u = UrlDataGenerator(patterns, outlinks=iter(outlinks))
         documents = list(u)
 
         # No link for url 1
@@ -214,7 +214,7 @@ class TestUrlsDocuments(unittest.TestCase):
             ['r301', True, 1, 2, ''],
         ]
 
-        u = UrlsDocuments(iter(patterns), outlinks=iter(outlinks))
+        u = UrlDataGenerator(iter(patterns), outlinks=iter(outlinks))
         document = u.__iter__().next()
         logger.info(document)
         self.assertEquals(document[1]['redirect_to'], {'url_id': 2, 'http_code': 301})
@@ -231,7 +231,7 @@ class TestUrlsDocuments(unittest.TestCase):
             ['a', True, 1, 12],
         ]
 
-        u = UrlsDocuments(iter(patterns), inlinks=iter(inlinks))
+        u = UrlDataGenerator(iter(patterns), inlinks=iter(inlinks))
         document = u.__iter__().next()[1]
         logger.info(document)
         self.assertEquals(document['inlinks_nofollow_nb'], 1)
@@ -249,7 +249,7 @@ class TestUrlsDocuments(unittest.TestCase):
             ['r301', True, 1, 2],
         ]
 
-        u = UrlsDocuments(iter(patterns), inlinks=iter(inlinks))
+        u = UrlDataGenerator(iter(patterns), inlinks=iter(inlinks))
         document = u.__iter__().next()[1]
         logger.info(document)
         self.assertEquals(document['redirect_from'], {'url_id': 2, 'http_code': 301})
@@ -265,7 +265,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [2, 2]
         ]
 
-        u = UrlsDocuments(iter(patterns), outcanonicals=iter(outcanonicals))
+        u = UrlDataGenerator(iter(patterns), outcanonicals=iter(outcanonicals))
         documents = list(u)
         # Url 1
         self.assertEquals(documents[0][1]['canonical_url_id'], 2)
@@ -286,7 +286,7 @@ class TestUrlsDocuments(unittest.TestCase):
             [2, 20]
         ]
 
-        u = UrlsDocuments(iter(patterns), incanonicals=iter(incanonicals))
+        u = UrlDataGenerator(iter(patterns), incanonicals=iter(incanonicals))
         documents = list(u)
         # Url 1
         self.assertEquals(documents[0][1]['canonical_nb_duplicates'], 1)
