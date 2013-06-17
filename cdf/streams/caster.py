@@ -39,7 +39,7 @@ class Caster(object):
 
     def cast_line(self, line):
         return [(cast(value) if cast else value) for
-                (name, cast), value in izip(self.fields, line)]
+                (name, cast), value in izip(self._fields, line)]
 
     def cast(self, iterable):
         for i in iterable:
