@@ -114,6 +114,9 @@ class ResourceTypeSettingsException(Exception):
     def __init__(self, errors):
         self._errors = errors
 
+    def __str__(self):
+        return repr("%d errors found" % len(self.errors))
+
     @property
     def errors(self):
         return [e for e in itertools.chain(*self._errors.values())]
