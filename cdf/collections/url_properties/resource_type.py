@@ -1,13 +1,17 @@
 import re
 import itertools
 
-
 from BQL.parser.properties_mapping import validate_query_grammar, query_to_python
+
+ALLOWED_RULES_FIELDS = ('query', 'value', 'abstract', 'rule_id', 'inherits_from')
+MANDATORY_RULES_FIELDS = ('query', 'value')
+
+__all__ = ['compile_resource_type_settings', 'validate_resource_type_settings', 'ResourceTypeSettingsException']
 
 
 def compile_resource_type_settings(settings):
     """
-    Return a list of dictionnaries
+    Return a list of dictionnaries or a `ResourceTypeSettingsException` if the settings are not valid
 
     Format :
     [
@@ -20,10 +24,9 @@ def compile_resource_type_settings(settings):
     ]
     """
     compiled_rules = []
-    r = ResourceTypeSettingsValidator(settings)
-    if not r.is_valid():
-        # Raise an exception with errors ?
-        return False
+
+    # An exception will be raised if the settings are not valid
+    validate_resource_type_settings(settings)
 
     for host, rules in settings.iteritems():
         for rule in rules:
@@ -44,10 +47,7 @@ def compile_resource_type_settings(settings):
     return compiled_rules
 
 
-class ResourceTypeSettingsValidator(object):
-    ALLOWED_RULES_FIELDS = ('query', 'value', 'abstract', 'rule_id', 'inherits_from')
-    MANDATORY_RULES_FIELDS = ('query', 'value')
-
+def validate_resource_type_settings(settings):
     """
     Validates a settings
 
@@ -72,66 +72,60 @@ class ResourceTypeSettingsValidator(object):
         If the rule must not be matched but only its children, add `abstract` field to True
 
         The inherited rule set `inherits_from `field with the rule_id as value
+
+    Return `True` if the settings format is valid, else raises ResourceTypeSettingsException
+
     """
-    def __init__(self, settings):
-        self.settings = settings
+    errors = {'host': [],
+              'query': [],
+              'field': []
+              }
 
-    def _run(self):
-        if hasattr(self, '_is_valid'):
-            return None
+    for host, rules in settings.iteritems():
+        if re.search('^(.+)\*', host):
+            errors['host'].append('Host %s should contains wildcard only at the beginning' % host)
+        elif host.startswith('*') and not host.startswith('*.'):
+            errors['host'].append('Wildcard at %s should be directly followed by a dot' % host)
 
-        self._compiled_rules = []
-        self._errors = {'host': [],
-                        'query': [],
-                        'field': []
-                        }
-        self._is_valid = False
+        for i, rule in enumerate(rules):
+            # Check fields names
+            for field in rule.keys():
+                if field not in ALLOWED_RULES_FIELDS:
+                    errors['field'].append('`%s` is not a valid field in host %s rule %d' % (field, host, i))
 
-        for host, rules in self.settings.iteritems():
-            if re.search('^(.+)\*', host):
-                self._errors['host'].append('Host %s should contains wildcard only at the beginning' % host)
-            elif host.startswith('*') and not host.startswith('*.'):
-                self._errors['host'].append('Wildcard at %s should be directly followed by a dot' % host)
+            # Check for mandatory fields
+            for field in MANDATORY_RULES_FIELDS:
+                if field not in rule.keys():
+                    errors['field'].append('`%s` is mandatory in host %s rule %d' % (field, host, i))
 
-            for i, rule in enumerate(rules):
-                # Check fields names
-                for field in rule.keys():
-                    if field not in self.ALLOWED_RULES_FIELDS:
-                        self._errors['field'].append('`%s` is not a valid field in host %s rule %d' % (field, host, i))
+            # Check query validity
+            if 'query' in rule:
+                _valid, _msg = validate_query_grammar(rule['query'])
+                if not _valid:
+                    errors['query'].append('Error in query, host %s rule %d : %s' % (host, i, _msg))
 
-                # Check for mandatory fields
-                for field in self.MANDATORY_RULES_FIELDS:
-                    if field not in rule.keys():
-                        self._errors['field'].append('`%s` is mandatory in host %s rule %d' % (field, host, i))
+    if len(list(itertools.chain(*errors.values()))) == 0:
+        return True
+    raise ResourceTypeSettingsException(errors)
 
-                # Check query validity
-                if 'query' in rule:
-                    _valid, _msg = validate_query_grammar(rule['query'])
-                    if not _valid:
-                        self._errors['query'].append('Error in query, host %s rule %d : %s' % (host, i, _msg))
 
-        self._is_valid = len(self.errors) == 0
+class ResourceTypeSettingsException(Exception):
 
-    def is_valid(self):
-        self._run()
-        return self._is_valid
+    def __init__(self, errors):
+        self._errors = errors
 
     @property
     def errors(self):
-        self._run()
         return [e for e in itertools.chain(*self._errors.values())]
 
     @property
     def host_errors(self):
-        self._run()
         return self._errors['host']
 
     @property
     def query_errors(self):
-        self._run()
         return self._errors['query']
 
     @property
     def field_errors(self):
-        self._run()
         return self._errors['field']

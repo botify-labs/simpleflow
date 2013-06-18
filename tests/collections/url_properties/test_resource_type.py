@@ -4,12 +4,14 @@ import logging
 
 
 from cdf.log import logger
-from cdf.collections.url_properties.resource_type import compile_resource_type_settings, ResourceTypeSettingsValidator
+from cdf.collections.url_properties.resource_type import (compile_resource_type_settings,
+                                                          validate_resource_type_settings,
+                                                          ResourceTypeSettingsException)
 
 logger.setLevel(logging.DEBUG)
 
 
-class TestUrlPropertiesValidator(unittest.TestCase):
+class TestResourceTypeSettings(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -26,8 +28,7 @@ class TestUrlPropertiesValidator(unittest.TestCase):
                 }
             ]
         }
-        v = ResourceTypeSettingsValidator(settings)
-        self.assertTrue(v.is_valid())
+        self.assertTrue(validate_resource_type_settings(settings))
 
     def test_bad_hosts(self):
         settings = {
@@ -38,8 +39,13 @@ class TestUrlPropertiesValidator(unittest.TestCase):
                 }
             ]
         }
-        v = ResourceTypeSettingsValidator(settings)
-        self.assertFalse(v.is_valid())
+
+        try:
+            validate_resource_type_settings(settings)
+            self.assertFail()
+        except ResourceTypeSettingsException as inst:
+            self.assertEquals(len(inst.host_errors), 1)
+
 
     def test_missing_field(self):
         settings = {
@@ -49,9 +55,12 @@ class TestUrlPropertiesValidator(unittest.TestCase):
                 }
             ]
         }
-        v = ResourceTypeSettingsValidator(settings)
-        self.assertFalse(v.is_valid())
-        self.assertEquals(len(v.field_errors), 1)
+
+        try:
+            validate_resource_type_settings(settings)
+            self.assertFail()
+        except ResourceTypeSettingsException as inst:
+            self.assertEquals(len(inst.field_errors), 1)
 
     def test_bad_request(self):
         settings = {
@@ -62,9 +71,12 @@ class TestUrlPropertiesValidator(unittest.TestCase):
                 }
             ]
         }
-        v = ResourceTypeSettingsValidator(settings)
-        self.assertFalse(v.is_valid())
-        self.assertEquals(len(v.query_errors), 1)
+
+        try:
+            validate_resource_type_settings(settings)
+            self.assertFail()
+        except ResourceTypeSettingsException as inst:
+            self.assertEquals(len(inst.query_errors), 1)
 
     def test_bad_field(self):
         settings = {
@@ -75,10 +87,13 @@ class TestUrlPropertiesValidator(unittest.TestCase):
                 }
             ]
         }
-        v = ResourceTypeSettingsValidator(settings)
-        self.assertFalse(v.is_valid())
-        # 2 errors : `query` is missing and `any_field` is not recognized'
-        self.assertEquals(len(v.field_errors), 2)
+
+        try:
+            validate_resource_type_settings(settings)
+            self.assertFail()
+        except ResourceTypeSettingsException as inst:
+            # 2 errors : `query` is missing and `any_field` is not recognized'
+            self.assertEquals(len(inst.field_errors), 2)
 
     def test_compiled(self):
         settings = {
