@@ -95,6 +95,102 @@ class TestResourceTypeSettings(unittest.TestCase):
             # 2 errors : `query` is missing and `any_field` is not recognized'
             self.assertEquals(len(inst.field_errors), 2)
 
+    def test_bad_inherits_from(self):
+        """
+        Second rule does not inherits from an existing url_id
+        """
+
+        settings = {
+            'www.site.com': [
+                {
+                    'query': 'STARTS(path, "/test")',
+                    'value': 'test',
+                    'rule_id': 'test'
+                },
+                {
+                    'query': 'ENDS(path, ".json")',
+                    'value': 'json',
+                    'inherits_from': 'test2'
+                },
+            ]
+        }
+
+        try:
+            validate_resource_type_settings(settings)
+            self.assertFail()
+        except ResourceTypeSettingsException as inst:
+            self.assertEquals(len(inst.inheritance_errors), 1)
+
+    def test_bad_inherits_rule_id_same_value(self):
+        """
+        Second rule does not inherits from an existing url_id
+        """
+
+        settings = {
+            'www.site.com': [
+                {
+                    'query': 'STARTS(path, "/test")',
+                    'value': 'test',
+                    'rule_id': 'test',
+                    'inherits_from': 'test'
+                }
+            ]
+        }
+
+        try:
+            validate_resource_type_settings(settings)
+            self.assertFail()
+        except ResourceTypeSettingsException as inst:
+            self.assertEquals(len(inst.inheritance_errors), 1)
+
+    def test_abstract_with_value_field(self):
+        # `abtract` cannot come with `value` field
+        settings = {
+            'www.site.com': [
+                {
+                    'query': 'STARTS(path, "/test")',
+                    'value': 'test',
+                    'abstract': True,
+                    'rule_id': 'test'
+                }
+            ]
+        }
+
+        try:
+            validate_resource_type_settings(settings)
+            self.assertFail()
+        except ResourceTypeSettingsException as inst:
+            self.assertEquals(len(inst.field_errors), 1)
+
+    def test_abstract_missing_rule_id(self):
+        # `abtract` cannot be set to `True` without `rule_id` field
+        settings = {
+            'www.site.com': [
+                {
+                    'query': 'STARTS(path, "/test")',
+                    'abstract': True,
+                }
+            ]
+        }
+
+        try:
+            validate_resource_type_settings(settings)
+            self.assertFail()
+        except ResourceTypeSettingsException as inst:
+            self.assertEquals(len(inst.field_errors), 1)
+
+        # But it passes when `abstract` is set to `False`
+        settings = {
+            'www.site.com': [
+                {
+                    'query': 'STARTS(path, "/test")',
+                    'abstract': False,
+                    'value': 'test'
+                }
+            ]
+        }
+        self.assertTrue(validate_resource_type_settings(settings))
+
     def test_compiled(self):
         settings = {
             'www.site.com': [

@@ -37,9 +37,9 @@ def compile_resource_type_settings(settings):
 
             # if rule inherits from another one, we don't need to check again the host
             _rule = {'query': query_to_python(' AND '.join((host_query, rule['query'])) if not 'inherits_from' in rule else rule['query']),
-                     'value': rule['value']
                      }
-            for field in ('inherits_from', 'rule_id', 'abstract'):
+
+            for field in ('value', 'inherits_from', 'rule_id', 'abstract'):
                 if field in rule:
                     _rule[field] = rule[field]
             compiled_rules.append(_rule)
@@ -71,17 +71,22 @@ def validate_resource_type_settings(settings):
         A `rule_id` field can be set to let the rule being inherited in another one
         If the rule must not be matched but only its children, add `abstract` field to True
 
+        If `abstract` is set to True, `value` field is not allowed, but `rule_id` will be mandatory
+
         The inherited rule set `inherits_from `field with the rule_id as value
+
 
     Return `True` if the settings format is valid, else raises ResourceTypeSettingsException
 
     """
     errors = {'host': [],
               'query': [],
-              'field': []
+              'field': [],
+              'inheritance': [],
               }
 
     for host, rules in settings.iteritems():
+        rule_id_known = set()
         if re.search('^(.+)\*', host):
             errors['host'].append('Host %s should contains wildcard only at the beginning' % host)
         elif host.startswith('*') and not host.startswith('*.'):
@@ -95,7 +100,10 @@ def validate_resource_type_settings(settings):
 
             # Check for mandatory fields
             for field in MANDATORY_RULES_FIELDS:
-                if field not in rule.keys():
+                if field == "value" and rule.get('abstract', False):
+                    if field in rule.keys():
+                        errors['field'].append('`value` is not allowed when `abstract` is set to `True` - Host %s - Rule %d' % (host, i))
+                elif field not in rule.keys():
                     errors['field'].append('`%s` is mandatory in host %s rule %d' % (field, host, i))
 
             # Check query validity
@@ -103,6 +111,18 @@ def validate_resource_type_settings(settings):
                 _valid, _msg = validate_query_grammar(rule['query'])
                 if not _valid:
                     errors['query'].append('Error in query, host %s rule %d : %s' % (host, i, _msg))
+
+            if 'rule_id' in rule:
+                rule_id_known.add(rule['rule_id'])
+
+            if rule.get('abstract', False) and not 'rule_id' in rule:
+                errors['field'].append('`rule_id` is mandatory when `abtract` is set to `True` - Host %s - Rule %d' % (host, i))
+
+            if 'inherits_from' in rule and rule['inherits_from'] not in rule_id_known:
+                errors['inheritance'].append('rule_id `%s` not found' % rule['inherits_from'])
+
+            if 'inherits_from' in rule and 'rule_id' in rule:
+                errors['inheritance'].append('rule_id and inherits_from should not have the same value')
 
     if len(list(itertools.chain(*errors.values()))) == 0:
         return True
@@ -132,3 +152,7 @@ class ResourceTypeSettingsException(Exception):
     @property
     def field_errors(self):
         return self._errors['field']
+
+    @property
+    def inheritance_errors(self):
+        return self._errors['inheritance']
