@@ -29,8 +29,44 @@ class TestResourceTypeSettings(unittest.TestCase):
         }]
         self.assertTrue(validate_resource_type_settings(settings))
 
+    def test_bad_struct(self):
+        settings = {}
+
+        # Should start with a list, not a json object
+        settings[0] = {
+            'host': '*.site.com'
+        }
+
+        # forgotten 'rules'
+        settings[1] = [
+            {
+                'host': '*.site.com'
+            }
+        ]
+
+        # unkown field
+        settings[2] = [
+            {
+                'host': '*.site.com',
+                'rules': [
+                    {'query': 'path == "/test.html"',
+                     'value': 'test'}
+                ],
+                'xxx': 'yy'
+            }
+        ]
+
+        for setting in settings.itervalues():
+            try:
+                validate_resource_type_settings(setting)
+                self.assertFail()
+            except ResourceTypeSettingsException as inst:
+                self.assertEquals(len(inst.format_errors), 1)
+
     def test_bad_hosts(self):
-        settings = [{
+        settings = {}
+
+        settings[0] = [{
             'host': 'www.*.com',
             'rules': [{
                 'query': 'STARTS(path, "/test/")',
@@ -38,11 +74,33 @@ class TestResourceTypeSettings(unittest.TestCase):
             }]
         }]
 
+        # host is not a string
+        settings[1] = [{
+            'host': 5,
+            'rules': [{
+                'query': 'STARTS(path, "/test/")',
+                'value': 'test'
+            }]
+        }]
+
+        for setting in settings.itervalues():
+            try:
+                validate_resource_type_settings(setting)
+                self.assertFail()
+            except ResourceTypeSettingsException as inst:
+                self.assertEquals(len(inst.host_errors), 1)
+
+    def test_bad_rules_type(self):
+        settings = [{
+            'host': 'www.site.com',
+            'rules': {}
+        }]
+
         try:
             validate_resource_type_settings(settings)
             self.assertFail()
         except ResourceTypeSettingsException as inst:
-            self.assertEquals(len(inst.host_errors), 1)
+            self.assertEquals(len(inst.format_errors), 1)
 
     def test_missing_field(self):
         settings = [{

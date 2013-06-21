@@ -50,6 +50,48 @@ def compile_resource_type_settings(settings):
     return compiled_rules
 
 
+def _validate_rule(rule, i, host, rule_id_known, errors):
+    """
+    Validate a rule dictionnary. Expected format :
+        {
+            'query': 'BQL QUERY',
+            'value': 'myvalue'
+        }
+
+    Optional fields : rule_id, inherits_from, abstract
+    """
+    # Check fields names
+    for field in rule.keys():
+        if field not in ALLOWED_RULES_FIELDS:
+            errors['field'].append('`%s` is not a valid field in host %s rule %d' % (field, host, i))
+
+    # Check for mandatory fields
+    for field in MANDATORY_RULES_FIELDS:
+        if field == "value" and rule.get('abstract', False):
+            if field in rule.keys():
+                errors['field'].append('`value` is not allowed when `abstract` is set to `True` - Host %s - Rule %d' % (host, i))
+        elif field not in rule.keys():
+            errors['field'].append('`%s` is mandatory in host %s rule %d' % (field, host, i))
+
+    # Check query validity
+    if 'query' in rule:
+        _valid, _msg = validate_query_grammar(rule['query'])
+        if not _valid:
+            errors['query'].append('Error in query, host %s rule %d : %s' % (host, i, _msg))
+
+    if 'rule_id' in rule:
+        rule_id_known.add(rule['rule_id'])
+
+    if rule.get('abstract', False) and not 'rule_id' in rule:
+        errors['field'].append('`rule_id` is mandatory when `abtract` is set to `True` - Host %s - Rule %d' % (host, i))
+
+    if 'inherits_from' in rule and rule['inherits_from'] not in rule_id_known:
+        errors['inheritance'].append('rule_id `%s` not found' % rule['inherits_from'])
+
+    if 'inherits_from' in rule and 'rule_id' in rule:
+        errors['inheritance'].append('rule_id and inherits_from should not have the same value')
+
+
 def validate_resource_type_settings(settings):
     """
     Validates a settings
@@ -95,53 +137,49 @@ def validate_resource_type_settings(settings):
     Return `True` if the settings format is valid, else raises ResourceTypeSettingsException
 
     """
-    errors = {'host': [],
+    errors = {'format': [],
+              'host': [],
               'query': [],
               'field': [],
               'inheritance': [],
               }
 
-    for host_rules in settings:
+    if not isinstance(settings, list):
+        errors['format'].append('Bad format. Should start with a list []')
+        raise ResourceTypeSettingsException(errors)
+
+    for host_num, host_rules in enumerate(settings):
+        if not isinstance(host_rules, dict):
+            errors['format'].append('JSON object awaiting for host number %d' % host_num)
+            raise ResourceTypeSettingsException(errors)
+
+        for field_ in ('host', 'rules'):
+            if field_ not in host_rules:
+                errors['format'].append('`host` field required for host number %d' % host_num)
+
+        for field_ in host_rules.keys():
+            if field_ not in ('host', 'rules'):
+                errors['format'].append('`%s` field unkown for host number %d' % (field_, host_num))
+
+        if len(list(itertools.chain(*errors.values()))) > 0:
+            raise ResourceTypeSettingsException(errors)
+
         host = host_rules['host']
         rules = host_rules['rules']
 
         rule_id_known = set()
-        if re.search('^(.+)\*', host):
+        if not isinstance(host, str):
+            errors['host'].append('Host %s should be a string' % host)
+        elif re.search('^(.+)\*', host):
             errors['host'].append('Host %s should contains wildcard only at the beginning' % host)
         elif host.startswith('*') and not host.startswith('*.'):
             errors['host'].append('Wildcard at %s should be directly followed by a dot' % host)
 
-        for i, rule in enumerate(rules):
-            # Check fields names
-            for field in rule.keys():
-                if field not in ALLOWED_RULES_FIELDS:
-                    errors['field'].append('`%s` is not a valid field in host %s rule %d' % (field, host, i))
-
-            # Check for mandatory fields
-            for field in MANDATORY_RULES_FIELDS:
-                if field == "value" and rule.get('abstract', False):
-                    if field in rule.keys():
-                        errors['field'].append('`value` is not allowed when `abstract` is set to `True` - Host %s - Rule %d' % (host, i))
-                elif field not in rule.keys():
-                    errors['field'].append('`%s` is mandatory in host %s rule %d' % (field, host, i))
-
-            # Check query validity
-            if 'query' in rule:
-                _valid, _msg = validate_query_grammar(rule['query'])
-                if not _valid:
-                    errors['query'].append('Error in query, host %s rule %d : %s' % (host, i, _msg))
-
-            if 'rule_id' in rule:
-                rule_id_known.add(rule['rule_id'])
-
-            if rule.get('abstract', False) and not 'rule_id' in rule:
-                errors['field'].append('`rule_id` is mandatory when `abtract` is set to `True` - Host %s - Rule %d' % (host, i))
-
-            if 'inherits_from' in rule and rule['inherits_from'] not in rule_id_known:
-                errors['inheritance'].append('rule_id `%s` not found' % rule['inherits_from'])
-
-            if 'inherits_from' in rule and 'rule_id' in rule:
-                errors['inheritance'].append('rule_id and inherits_from should not have the same value')
+        if not isinstance(rules, list):
+            errors['format'].append('`rules` field in host %s should be a list' % host)
+        else:
+            for i, rule in enumerate(rules):
+                _validate_rule(rule, i, host, rule_id_known, errors)
 
     if len(list(itertools.chain(*errors.values()))) == 0:
         return True
@@ -175,3 +213,7 @@ class ResourceTypeSettingsException(Exception):
     @property
     def inheritance_errors(self):
         return self._errors['inheritance']
+
+    @property
+    def format_errors(self):
+        return self._errors['format']
