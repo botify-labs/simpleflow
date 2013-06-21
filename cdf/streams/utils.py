@@ -7,7 +7,7 @@ A stream allow to chain operations on each of its elements and consume the
 values on-demand. Calling a stream operation after another does not iterate two
 times on the values.
 
-""
+"""
 from itertools import izip
 
 from cdf.settings import STREAMS_HEADERS
@@ -43,7 +43,7 @@ def rstrip(iterable):
 
     """
     for i in iterable:
-        yield i.rstrip()
+        yield i.rstrip('\n')
 
 
 def split_file(iterable, char='\t'):
