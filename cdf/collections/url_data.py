@@ -57,10 +57,11 @@ def extract_outlinks(attributes, stream_item):
             key_ids = "outlinks_%s_ids" % follow_key
             if key_ids not in attributes:
                 attributes[key_ids] = [url_dst]
-            else:
+            # Store only the first 1000 outlinks
+            elif url_dst not in attributes[key_ids] and len(attributes[key_ids]) < 1000:
                 attributes[key_ids].append(url_dst)
     elif link_type.startswith('r'):
-        http_code = int(link_type[1:])
+        http_code = link_type[1:]
         attributes['redirect_to'] = {'url_id': url_dst, 'http_code': http_code}
 
 
