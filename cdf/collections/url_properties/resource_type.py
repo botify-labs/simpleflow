@@ -3,7 +3,7 @@ import itertools
 
 from BQL.parser.properties_mapping import validate_query_grammar, query_to_python
 
-ALLOWED_RULES_FIELDS = ('query', 'value', 'abstract', 'rule_id', 'inherits_from')
+ALLOWED_RULES_FIELDS = ('query', 'value', 'abstract', 'rule_id', 'inherits_from', 'warning', 'comment')
 MANDATORY_RULES_FIELDS = ('query', 'value')
 
 __all__ = ['compile_resource_type_settings', 'validate_resource_type_settings', 'ResourceTypeSettingsException']
