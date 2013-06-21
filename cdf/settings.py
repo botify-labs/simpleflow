@@ -18,7 +18,7 @@ STREAMS_HEADERS = {
     ),
     'CONTENTS': (
         ('id', int),
-        ('content_type', str),
+        ('content_type', int),
         ('hash', str),
         ('txt', str)
     ),
