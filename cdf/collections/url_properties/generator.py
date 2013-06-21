@@ -41,3 +41,9 @@ class UrlPropertiesGenerator(object):
                         parents_matches.add(rule['rule_id'])
             if not found:
                 yield (url_id, {"resource_type": "unkown"})
+
+    def save_to_file(self, location):
+        f = open(location, 'w')
+        for url_id, document in self:
+            f.write('%d\t%s\n' % (url_id, document['resource_type']))
+        f.close()
