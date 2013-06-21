@@ -168,7 +168,7 @@ def validate_resource_type_settings(settings):
         rules = host_rules['rules']
 
         rule_id_known = set()
-        if not isinstance(host, str):
+        if not isinstance(host, (str, unicode)):
             errors['host'].append('Host %s should be a string' % host)
         elif re.search('^(.+)\*', host):
             errors['host'].append('Host %s should contains wildcard only at the beginning' % host)
