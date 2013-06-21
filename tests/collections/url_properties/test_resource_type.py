@@ -20,25 +20,23 @@ class TestResourceTypeSettings(unittest.TestCase):
         pass
 
     def test_simple(self):
-        settings = {
-            '*.site.com': [
-                {
-                    'query': 'STARTS(path, "/test/")',
-                    'value': 'test'
-                }
-            ]
-        }
+        settings = [{
+            'host': '*.site.com',
+            'rules': [{
+                'query': 'STARTS(path, "/test/")',
+                'value': 'test'
+            }]
+        }]
         self.assertTrue(validate_resource_type_settings(settings))
 
     def test_bad_hosts(self):
-        settings = {
-            'www.site.*': [
-                {
-                    'query': 'STARTS(path, "/test/")',
-                    'value': 'test'
-                }
-            ]
-        }
+        settings = [{
+            'host': 'www.*.com',
+            'rules': [{
+                'query': 'STARTS(path, "/test/")',
+                'value': 'test'
+            }]
+        }]
 
         try:
             validate_resource_type_settings(settings)
@@ -46,15 +44,13 @@ class TestResourceTypeSettings(unittest.TestCase):
         except ResourceTypeSettingsException as inst:
             self.assertEquals(len(inst.host_errors), 1)
 
-
     def test_missing_field(self):
-        settings = {
-            'www.site.*': [
-                {
-                    'query': 'STARTS(path, "/test/")',
-                }
-            ]
-        }
+        settings = [{
+            'host': 'www.*.com',
+            'rules': [{
+                'query': 'STARTS(path, "/test/")',
+            }]
+        }]
 
         try:
             validate_resource_type_settings(settings)
@@ -63,14 +59,13 @@ class TestResourceTypeSettings(unittest.TestCase):
             self.assertEquals(len(inst.field_errors), 1)
 
     def test_bad_request(self):
-        settings = {
-            'www.site.com': [
-                {
-                    'query': 'XX(path, "/test/")',
-                    'value': 'test'
-                }
-            ]
-        }
+        settings = [{
+            'host': 'www.site.com',
+            'rules': [{
+                'query': 'XXX(path, "/test/")',
+                'value': 'test'
+            }]
+        }]
 
         try:
             validate_resource_type_settings(settings)
@@ -79,14 +74,13 @@ class TestResourceTypeSettings(unittest.TestCase):
             self.assertEquals(len(inst.query_errors), 1)
 
     def test_bad_field(self):
-        settings = {
-            'www.site.*': [
-                {
-                    'any_field': 'test',
-                    'value': 'test'
-                }
-            ]
-        }
+        settings = [{
+            'host': '*.site.com',
+            'rules': [{
+                'any_field': 'test',
+                'value': 'test'
+            }]
+        }]
 
         try:
             validate_resource_type_settings(settings)
@@ -100,8 +94,9 @@ class TestResourceTypeSettings(unittest.TestCase):
         Second rule does not inherits from an existing url_id
         """
 
-        settings = {
-            'www.site.com': [
+        settings = [{
+            'host': 'www.site.com',
+            'rules': [
                 {
                     'query': 'STARTS(path, "/test")',
                     'value': 'test',
@@ -113,7 +108,7 @@ class TestResourceTypeSettings(unittest.TestCase):
                     'inherits_from': 'test2'
                 },
             ]
-        }
+        }]
 
         try:
             validate_resource_type_settings(settings)
@@ -126,8 +121,9 @@ class TestResourceTypeSettings(unittest.TestCase):
         Second rule does not inherits from an existing url_id
         """
 
-        settings = {
-            'www.site.com': [
+        settings = [{
+            'host': 'www.site.com',
+            'rules': [
                 {
                     'query': 'STARTS(path, "/test")',
                     'value': 'test',
@@ -135,7 +131,7 @@ class TestResourceTypeSettings(unittest.TestCase):
                     'inherits_from': 'test'
                 }
             ]
-        }
+        }]
 
         try:
             validate_resource_type_settings(settings)
@@ -145,8 +141,9 @@ class TestResourceTypeSettings(unittest.TestCase):
 
     def test_abstract_with_value_field(self):
         # `abtract` cannot come with `value` field
-        settings = {
-            'www.site.com': [
+        settings = [{
+            'host': 'www.site.com',
+            'rules': [
                 {
                     'query': 'STARTS(path, "/test")',
                     'value': 'test',
@@ -154,7 +151,7 @@ class TestResourceTypeSettings(unittest.TestCase):
                     'rule_id': 'test'
                 }
             ]
-        }
+        }]
 
         try:
             validate_resource_type_settings(settings)
@@ -164,14 +161,15 @@ class TestResourceTypeSettings(unittest.TestCase):
 
     def test_abstract_missing_rule_id(self):
         # `abtract` cannot be set to `True` without `rule_id` field
-        settings = {
-            'www.site.com': [
+        settings = [{
+            'host': 'www.site.com',
+            'rules': [
                 {
                     'query': 'STARTS(path, "/test")',
                     'abstract': True,
                 }
             ]
-        }
+        }]
 
         try:
             validate_resource_type_settings(settings)
@@ -180,20 +178,22 @@ class TestResourceTypeSettings(unittest.TestCase):
             self.assertEquals(len(inst.field_errors), 1)
 
         # But it passes when `abstract` is set to `False`
-        settings = {
-            'www.site.com': [
+        settings = [{
+            'host': 'www.site.com',
+            'rules': [
                 {
                     'query': 'STARTS(path, "/test")',
                     'abstract': False,
                     'value': 'test'
                 }
             ]
-        }
+        }]
         self.assertTrue(validate_resource_type_settings(settings))
 
     def test_compiled(self):
-        settings = {
-            'www.site.com': [
+        settings = [{
+            'host': 'www.site.com',
+            'rules': [
                 {
                     'query': 'STARTS(path, "/test")',
                     'value': 'test',
@@ -205,7 +205,7 @@ class TestResourceTypeSettings(unittest.TestCase):
                     'inherits_from': 'test'
                 },
             ]
-        }
+        }]
         v = compile_resource_type_settings(settings)
         expected_items = [
             [('rule_id', 'test'), ('value', 'test')],

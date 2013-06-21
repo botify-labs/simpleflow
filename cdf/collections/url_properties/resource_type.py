@@ -28,7 +28,10 @@ def compile_resource_type_settings(settings):
     # An exception will be raised if the settings are not valid
     validate_resource_type_settings(settings)
 
-    for host, rules in settings.iteritems():
+    for host_rules in settings:
+        host = host_rules['host']
+        rules = host_rules['rules']
+
         for rule in rules:
             if host.startswith('*.'):
                 host_query = 'ENDS(host, "%s")' % host[1:]
@@ -52,7 +55,20 @@ def validate_resource_type_settings(settings):
     Validates a settings
 
     -- settings : a dictionnary where keys are hostnames and values are tuples of rules
-        {'host1': (rule1, rule2...), 'host2': (rule3, rule4..)}
+        [
+            {'host': 'hostname',
+             'rules': [
+                rule1,
+                rule2...)
+             ]
+            },
+            {'host': 'another_hostname',
+             'rules': [
+                rule3,
+                rule4..
+             ],
+            }
+        ]
 
         Rule format :
         {'query': 'A BQL query',
@@ -85,7 +101,10 @@ def validate_resource_type_settings(settings):
               'inheritance': [],
               }
 
-    for host, rules in settings.iteritems():
+    for host_rules in settings:
+        host = host_rules['host']
+        rules = host_rules['rules']
+
         rule_id_known = set()
         if re.search('^(.+)\*', host):
             errors['host'].append('Host %s should contains wildcard only at the beginning' % host)
