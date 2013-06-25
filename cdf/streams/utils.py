@@ -71,3 +71,40 @@ def idx_from_stream(key, field):
 
     """
     return map(lambda i: i[0], STREAMS_HEADERS[key.upper()]).index(field)
+
+
+def group_left(left, **stream_defs):
+    """
+    :param left: (stream, key_index)
+    :param **stream_defs: {stream_name: (stream, key_index)
+
+    :returns:
+    :rtype: yield (key, left_line, {stream_name1: [stream_item_1, stream_itemX..], stream_name2: line_content})
+
+    >>>> iter_streams(patterns=pattern_stream, infos=pattern_info)
+    """
+    id_ = {}
+    right_line = {}
+    left_stream, left_key_idx = left
+
+    for line in left_stream:
+        current_id = line[left_key_idx]
+        stream_lines = {}
+
+        for stream_name, stream_def in stream_defs.iteritems():
+            stream, key_idx = stream_def
+            if not stream_name in id_:
+                right_line[stream_name] = stream.next()
+                id_[stream_name] = right_line[stream_name][key_idx]
+
+            while id_[stream_name] == current_id:
+                try:
+                    if stream_name in stream_lines:
+                        stream_lines[stream_name].append(right_line[stream_name])
+                    else:
+                        stream_lines[stream_name] = [right_line[stream_name]]
+                    right_line[stream_name] = stream.next()
+                    id_[stream_name] = right_line[stream_name][key_idx]
+                except StopIteration:
+                    break
+        yield current_id, line, stream_lines
