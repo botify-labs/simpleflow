@@ -42,6 +42,10 @@ STREAMS_HEADERS = {
     'INCANONICALS': (
         ('id', int),
         ('src_url_id', int)
+    ),
+    'PROPERTIES': (
+        ('id', int),
+        ('resource_type', str)
     )
 }
 
