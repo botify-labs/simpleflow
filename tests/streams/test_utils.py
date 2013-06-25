@@ -30,7 +30,8 @@ class TestUtils(unittest.TestCase):
         stream_1 = iter([
             (1, 'riri'),
             (2, 'fifi'),
-            (3, 'loulou')
+            (3, 'loulou'),
+            (7, 'rapetou')
         ])
         stream_2 = iter([
             (1, 'donald'),
@@ -40,7 +41,8 @@ class TestUtils(unittest.TestCase):
         ])
 
         result = list(group_left((stream_1.__iter__(), 0), stream_2=(stream_2, 0)))
-        self.assertEquals(len(result), 3)
+        self.assertEquals(len(result), 4)
         self.assertEquals(result[0], (1, (1, 'riri'), {'stream_2': [(1, 'donald')]}))
         self.assertEquals(result[1], (2, (2, 'fifi'), {}))
         self.assertEquals(result[2], (3, (3, 'loulou'), {'stream_2': [(3, 'daisy'), (3, 'picsou')]}))
+        self.assertEquals(result[3], (7, (7, 'rapetou'), {}))
