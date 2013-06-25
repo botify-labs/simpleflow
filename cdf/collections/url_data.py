@@ -24,7 +24,7 @@ def extract_patterns(attributes, stream_item):
 
 def extract_infos(attributes, stream_item):
     date_crawled_idx = idx_from_stream('infos', 'date_crawled')
-    stream_item[date_crawled_idx] = str(date_2k_mn_to_date(stream_item[date_crawled_idx]))
+    stream_item[date_crawled_idx] = date_2k_mn_to_date(stream_item[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item)})
 
 
