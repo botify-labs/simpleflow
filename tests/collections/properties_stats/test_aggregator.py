@@ -35,11 +35,18 @@ class TestPropertiesStats(unittest.TestCase):
 
         stream_outlinks = iter((
             [1, 'a', True, 2, ''],
+            [2, 'canonical', True, 1, ''],
         ))
 
-        a = PropertiesStatsAggregator(stream_patterns, stream_infos, stream_properties, stream_outlinks, iter([]))
+        stream_inlinks = iter((
+            [1, 'canonical', True, 2],
+            [2, 'a', True, 1]
+        ))
+
+        a = PropertiesStatsAggregator(stream_patterns, stream_infos, stream_properties, stream_outlinks, stream_inlinks)
         stats = a.get()
         logger.info(stats)
+
         # Reminder : keys = host, resource_type, content_type, depth, index, follow
         expected_keys = [
             ('www.site.com', 'homepage', 'text/html', 0, False, True),
@@ -47,6 +54,23 @@ class TestPropertiesStats(unittest.TestCase):
         ]
 
         self.assertItemsEqual(stats.keys(), expected_keys)
+        homepage_key = ('www.site.com', 'homepage', 'text/html', 0, False, True)
+        self.assertEquals(stats[homepage_key]['pages_nb'], 1)
+        self.assertEquals(stats[homepage_key]['pages_code_ok'], 1)
+        self.assertEquals(stats[homepage_key]['pages_code_ko'], 0)
+        self.assertEquals(stats[homepage_key]['outlinks_nb'], 1)
+        self.assertEquals(stats[homepage_key]['canonical_incoming_nb'], 1)
+
+        product_key = ('www.site.com', 'product', 'text/html', 1, True, False)
+        self.assertEquals(stats[product_key]['pages_nb'], 1)
+        self.assertEquals(stats[product_key]['pages_code_ok'], 0)
+        self.assertEquals(stats[product_key]['pages_code_ko'], 1)
+        self.assertEquals(stats[product_key]['inlinks_nb'], 1)
+        self.assertEquals(stats[product_key]['inlinks_follow_nb'], 1)
+        self.assertEquals(stats[product_key]['inlinks_nofollow_nb'], 0)
+        self.assertEquals(stats[product_key]['outlinks_nb'], 0)
+        self.assertEquals(stats[product_key]['canonical_filled_nb'], 1)
+        self.assertEquals(stats[product_key]['canonical_duplicates_nb'], 1)
 
 
 class TestPropertiesStatsMeta(unittest.TestCase):
