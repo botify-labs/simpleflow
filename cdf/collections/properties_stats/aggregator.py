@@ -1,3 +1,4 @@
+import copy
 import pyhash
 hasher = pyhash.fnv1_32()
 
@@ -81,7 +82,26 @@ class PropertiesStatsAggregator(object):
         outlinks_src_idx = idx_from_stream('outlinks', 'id')
         outlinks_dst_idx = idx_from_stream('outlinks', 'dst_url_id')
 
-        results = defaultdict(Counter)
+        counter_dict = {
+            'pages_nb': 0,
+            'pages_code_ok': 0,
+            'pages_code_ko': 0,
+            'outlinks_nb': 0,
+            'total_delay_ms': 0,
+            'redirections_nb': 0,
+            'canonical_filled_nb': 0,
+            'canonical_duplicates_nb': 0,
+            'inlinks_nb': 0,
+            'canonical_incoming_nb': 0,
+            'inlinks_follow_nb': 0,
+            'inlinks_nofollow_nb': 0,
+            'delay_gte_2s': 0,
+            'delay_gte_1s': 0,
+            'delay_gte_500ms': 0,
+            'delay_lt_500ms': 0
+        }
+
+        results = defaultdict(lambda: copy.copy(counter_dict))
         for result in group_left(left, **streams_ref):
             infos = result[2]['infos'][0]
             outlinks = result[2]['outlinks']
@@ -94,9 +114,13 @@ class PropertiesStatsAggregator(object):
             key = (result[1][host_idx], result[2]['properties'][0][resource_type_idx], result[2]['infos'][0][content_type_idx], result[2]['infos'][0][depth_idx], index, follow)
 
             results[key]['pages_nb'] += 1
-            results[key]['pages_code_%s' % infos[http_code_idx]] += 1
 
-            code_type = 'pages_code_ok' if infos[http_code_idx] in ('200', '304') else 'pages_code_ko'
+            if not 'pages_code_%s' % infos[http_code_idx] in results[key]:
+                results[key]['pages_code_%s' % infos[http_code_idx]] = 1
+            else:
+                results[key]['pages_code_%s' % infos[http_code_idx]] += 1
+
+            code_type = 'pages_code_ok' if infos[http_code_idx] in (200, 304) else 'pages_code_ko'
             results[key][code_type] += 1
 
             results[key][delay_to_range(infos[delay2_idx])] += 1
@@ -109,12 +133,16 @@ class PropertiesStatsAggregator(object):
             results[key]['canonical_duplicates_nb'] += len(filter(lambda i: i[outlinks_type_idx] == "canonical" and i[outlinks_src_idx] != i[outlinks_dst_idx], outlinks))
 
             results[key]['inlinks_nb'] += len(filter(lambda i: i[inlinks_type_idx] == "a", inlinks))
+            results[key]['canonical_incoming_nb'] += len(filter(lambda i: i[inlinks_type_idx] == "canonical", inlinks))
+
             for link in inlinks:
-                if link[inlinks_follow_idx]:
+                if link[inlinks_type_idx] == "a" and link[inlinks_follow_idx]:
                     results[key]['inlinks_follow_nb'] += 1
                 else:
                     results[key]['inlinks_nofollow_nb'] += 1
 
+        # Transform defaultdict to dict
+        results = dict(results)
         return results
 
 
