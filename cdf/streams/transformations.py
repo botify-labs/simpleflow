@@ -20,7 +20,10 @@ def group_with(left, **stream_defs):
 
         for stream, key_idx, func in stream_defs.itervalues():
             if not stream in id_:
-                right_line[stream] = stream.next()
+                try:
+                    right_line[stream] = stream.next()
+                except StopIteration:
+                    continue
                 id_[stream] = right_line[stream][key_idx]
 
             while id_[stream] == current_id:

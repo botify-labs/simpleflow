@@ -89,20 +89,20 @@ def group_left(left, **stream_defs):
 
     for line in left_stream:
         current_id = line[left_key_idx]
-        stream_lines = {}
+        stream_lines = {stream_name: [] for stream_name in stream_defs.iterkeys()}
 
         for stream_name, stream_def in stream_defs.iteritems():
             stream, key_idx = stream_def
             if not stream_name in id_:
-                right_line[stream_name] = stream.next()
+                try:
+                    right_line[stream_name] = stream.next()
+                except StopIteration:
+                    continue
                 id_[stream_name] = right_line[stream_name][key_idx]
 
             while id_[stream_name] == current_id:
                 try:
-                    if stream_name in stream_lines:
-                        stream_lines[stream_name].append(right_line[stream_name])
-                    else:
-                        stream_lines[stream_name] = [right_line[stream_name]]
+                    stream_lines[stream_name].append(right_line[stream_name])
                     right_line[stream_name] = stream.next()
                     id_[stream_name] = right_line[stream_name][key_idx]
                 except StopIteration:

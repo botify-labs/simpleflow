@@ -26,23 +26,33 @@ class TestUtils(unittest.TestCase):
         result = list(split_file(f))
         self.assertEquals(result, [['1', '2'], ['3', '4']])
 
-    def test_group_left(self):
-        stream_1 = iter([
+
+class TestUtilsGroupLeft(unittest.TestCase):
+
+    def setUp(self):
+        self.stream_1 = iter([
             (1, 'riri'),
             (2, 'fifi'),
             (3, 'loulou'),
             (7, 'rapetou')
         ])
-        stream_2 = iter([
+        self.stream_2 = iter([
             (1, 'donald'),
             (3, 'daisy'),
             (3, 'picsou'),
             (5, 'geotrouvetout')
         ])
 
-        result = list(group_left((stream_1.__iter__(), 0), stream_2=(stream_2, 0)))
+    def test_group_left(self):
+        result = list(group_left((self.stream_1, 0), stream_2=(self.stream_2, 0)))
         self.assertEquals(len(result), 4)
         self.assertEquals(result[0], (1, (1, 'riri'), {'stream_2': [(1, 'donald')]}))
-        self.assertEquals(result[1], (2, (2, 'fifi'), {}))
+        self.assertEquals(result[1], (2, (2, 'fifi'), {'stream_2': []}))
         self.assertEquals(result[2], (3, (3, 'loulou'), {'stream_2': [(3, 'daisy'), (3, 'picsou')]}))
-        self.assertEquals(result[3], (7, (7, 'rapetou'), {}))
+        self.assertEquals(result[3], (7, (7, 'rapetou'), {'stream_2': []}))
+
+    def test_empty(self):
+        # Test with an empty stream
+        stream_3 = iter([])
+        result = list(group_left((self.stream_1, 0), stream_2=(self.stream_2, 0), stream_3=(stream_3, 0)))
+        self.assertEquals(len(result), 4)
