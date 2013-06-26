@@ -73,8 +73,11 @@ class TestPropertiesStatsMeta(unittest.TestCase):
         stream_contents = iter((
             [1, 2, 1234, 'My first H1'],
             [1, 2, 456, 'My second H1'],
+            [1, 3, 7867, 'My H2'],
+            [1, 1, 8999, 'My title'],
             [2, 2, 1234, 'My first H1'],
-            [3, 2, 9877, 'My other H1']
+            [3, 2, 9877, 'My other H1'],
+            [3, 3, 7867, 'My H2'],
         ))
 
         a = PropertiesStatsMetaAggregator(stream_patterns, stream_properties, stream_contents)
@@ -84,8 +87,8 @@ class TestPropertiesStatsMeta(unittest.TestCase):
                 {'h1_filled_nb': 2,
                  'h1_local_unik_nb': 2,
                  'h1_global_unik_nb': 1,
-                 'h2_filled_nb': 0,
-                 'h2_local_unik_nb': 0,
+                 'h2_filled_nb': 1,
+                 'h2_local_unik_nb': 1,
                  'h2_global_unik_nb': 0,
                  'title_filled_nb': 0,
                  'title_global_unik_nb': 0,
@@ -98,12 +101,12 @@ class TestPropertiesStatsMeta(unittest.TestCase):
                 {'h1_filled_nb': 1,
                  'h1_local_unik_nb': 1,
                  'h1_global_unik_nb': 0,
-                 'h2_filled_nb': 0,
-                 'h2_local_unik_nb': 0,
+                 'h2_filled_nb': 1,
+                 'h2_local_unik_nb': 1,
                  'h2_global_unik_nb': 0,
-                 'title_filled_nb': 0,
-                 'title_global_unik_nb': 0,
-                 'title_local_unik_nb': 0,
+                 'title_filled_nb': 1,
+                 'title_global_unik_nb': 1,
+                 'title_local_unik_nb': 1,
                  'description_filled_nb': 0,
                  'description_local_unik_nb': 0,
                  'description_global_unik_nb': 0,
