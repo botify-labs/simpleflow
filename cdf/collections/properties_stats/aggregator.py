@@ -1,5 +1,7 @@
-from collections import defaultdict, Counter
+import pyhash
+hasher = pyhash.fnv1_32()
 
+from collections import defaultdict, Counter
 
 from cdf.settings import CONTENT_TYPE_INDEX
 from cdf.streams.utils import group_left, idx_from_stream
@@ -17,25 +19,24 @@ def delay_to_range(delay):
 
 class PropertiesStatsAggregator(object):
 
-    def __init__(self, stream_patterns, stream_infos, stream_properties, stream_outlinks, stream_inlinks, stream_contents):
+    def __init__(self, stream_patterns, stream_infos, stream_properties, stream_outlinks, stream_inlinks):
         self.stream_patterns = stream_patterns
         self.stream_infos = stream_infos
         self.stream_properties = stream_properties
         self.stream_inlinks = stream_inlinks
         self.stream_outlinks = stream_outlinks
-        self.stream_contents = stream_contents
 
     def get(self):
         """
         Return a dictionnary where key is a tuple :
-        (host, resource_type, depth, index, follow)
-          str      str         int   bool    bool
+        (host, resource_type, content_type, depth, index, follow)
+         str,  str,           str,          int,   bool,  bool
 
         Values is a sub-dictonnary with counters keys.
 
         Ex :
         {
-           ("www.site.com", "/article", 1, True, True) : {
+           ("www.site.com", "/article", "text/html", 1, True, True) : {
                    "pages_nb": 10,
                    "pages_code_200": 5,
                    "pages_code_301": 5,
@@ -51,9 +52,6 @@ class PropertiesStatsAggregator(object):
                    "delay_gte_500ms": 3,
                    "delay_gte_1s": 3,
                    "delay_gte_2s": 1,
-                   "title_filled_nb": 6,
-                   "desc_filled_nb": 6,
-                   "h1_filled_nb": 6,
                    "canonical_filled_nb": 3,
                    "canonical_duplicated_nb": 2,
             }
@@ -65,7 +63,6 @@ class PropertiesStatsAggregator(object):
                        'infos': (self.stream_infos, 0),
                        'inlinks': (self.stream_inlinks, idx_from_stream('inlinks', 'id')),
                        'outlinks': (self.stream_outlinks, idx_from_stream('outlinks', 'id')),
-                       'contents': (self.stream_contents, idx_from_stream('contents', 'id'))
                        }
 
         host_idx = idx_from_stream('patterns', 'host')
@@ -87,15 +84,14 @@ class PropertiesStatsAggregator(object):
         results = defaultdict(Counter)
         for result in group_left(left, **streams_ref):
             infos = result[2]['infos'][0]
-            contents = result[2]['contents']
             outlinks = result[2]['outlinks']
             inlinks = result[2]['inlinks']
 
             # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
-            follow = not (4 & infos[infos_mask_idx] == 4)
-            index = not (8 & infos[infos_mask_idx] == 8)
+            index = not (4 & infos[infos_mask_idx] == 4)
+            follow = not (8 & infos[infos_mask_idx] == 8)
 
-            key = (result[1][host_idx], result[2]['properties'][0][resource_type_idx], result[2]['infos'][0][content_type_idx], result[2]['infos'][0][depth_idx], follow, index)
+            key = (result[1][host_idx], result[2]['properties'][0][resource_type_idx], result[2]['infos'][0][content_type_idx], result[2]['infos'][0][depth_idx], index, follow)
 
             results[key]['pages_nb'] += 1
             results[key]['pages_code_%s' % infos[http_code_idx]] += 1
@@ -105,12 +101,6 @@ class PropertiesStatsAggregator(object):
 
             results[key][delay_to_range(infos[delay2_idx])] += 1
             results[key]['total_delay_ms'] += infos[delay2_idx]
-
-            # Meta filled
-            ct_idx = idx_from_stream('contents', 'content_type')
-            for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
-                if len(filter(lambda i: i[ct_idx] == ct_id, contents)):
-                    results[key]['%s_filled_nb' % ct_txt] += 1
 
             results[key]['outlinks_nb'] += len(filter(lambda i: i[outlinks_type_idx] == "a", outlinks))
             results[key]['redirections_nb'] += len(filter(lambda i: i[outlinks_type_idx].startswith("r"), outlinks))
@@ -124,5 +114,94 @@ class PropertiesStatsAggregator(object):
                     results[key]['inlinks_follow_nb'] += 1
                 else:
                     results[key]['inlinks_nofollow_nb'] += 1
+
+        return results
+
+
+class PropertiesStatsMetaAggregator(object):
+
+    """
+    Streams injected in This class should be the entire dataset of a crawl to ensure that the unicity of metadatas are valid
+    """
+    def __init__(self, stream_patterns, stream_properties, stream_contents):
+        self.stream_patterns = stream_patterns
+        self.stream_properties = stream_properties
+        self.stream_contents = stream_contents
+
+    def get(self):
+        """
+        Return a dictionnary where key is a tuple :
+        (host, resource_type)
+         str,  str
+
+        Values is a sub-dictonnary with counters keys.
+
+        Ex :
+        {
+           ("www.site.com", "/article") : {
+               "title_filled_nb": 6,
+               "title_global_unik_nb": 4,
+               "title_local_unik_nb": 5,
+               "desc_filled_nb": 6,
+               "desc_global_unik_nb": 4,
+               "desc_local_unik_nb": 5,
+               "h1_filled_nb": 6,
+               "h1_global_unik_nb": 4,
+               "h1_local_unik_nb": 5
+          }
+        }
+        """
+        left = (self.stream_patterns, 0)
+        streams_ref = {'properties': (self.stream_properties, 0),
+                       'contents': (self.stream_contents, idx_from_stream('contents', 'id'))
+                       }
+
+        hashes_global = {ct_id: defaultdict(set) for ct_id in CONTENT_TYPE_INDEX.iterkeys()}
+        # Store hashes by properties key
+        hashes_by_key = {ct_id: defaultdict(set) for ct_id in CONTENT_TYPE_INDEX.iterkeys()}
+
+        host_idx = idx_from_stream('patterns', 'host')
+        resource_type_idx = idx_from_stream('properties', 'resource_type')
+        content_meta_type_idx = idx_from_stream('contents', 'content_type')
+        content_hash_idx = idx_from_stream('contents', 'hash')
+
+        results = defaultdict(Counter)
+        for result in group_left(left, **streams_ref):
+            key = (result[1][host_idx], result[2]['properties'][0][resource_type_idx])
+            hash_key = hasher(','.join(key))
+            contents = result[2]['contents']
+
+             # Meta filled
+            for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
+                if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
+                    results[key]['%s_filled_nb' % ct_txt] += 1
+
+            # Fetch --first-- hash from each content type and watch add it to hashes set
+            ct_found = set()
+            for content in contents:
+                ct_id = content[content_meta_type_idx]
+                # If ct_i is already in ct_found, so it's the not the first content
+                if ct_id not in ct_found:
+                    ct_found.add(ct_id)
+                    hashes_global[ct_id][content[content_hash_idx]].add(hash_key)
+                    hashes_by_key[ct_id][hash_key].add(content[content_hash_idx])
+
+        # Concatenate results
+        results = dict(results)
+        for key in results.iterkeys():
+            # Transform Counter to dict
+            results[key] = dict(results[key])
+            result = results[key]
+            hash_key = hasher(','.join(key))
+            for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
+                # If [ct_txt]_filled_nb not exists, we create the fields
+                if not '%s_filled_nb' % ct_txt in result:
+                    result['%s_filled_nb' % ct_txt] = 0
+                    result['%s_local_unik_nb' % ct_txt] = 0
+                    result['%s_global_unik_nb' % ct_txt] = 0
+                else:
+                    result['%s_local_unik_nb' % ct_txt] = len(hashes_by_key[ct_id][hash_key])
+                    # We fetch all set where there is only the hash_key (that means uniq)
+                    result['%s_global_unik_nb' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
 
         return results

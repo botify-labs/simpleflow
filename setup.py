@@ -24,6 +24,7 @@ setup(
     zip_safe=True,
     install_requires=[
         'ujson==1.33',
+        'pyhash=0.5.0',
     ],
 
     package_dir={'': '.'},
