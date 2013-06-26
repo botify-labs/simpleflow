@@ -24,7 +24,7 @@ class TestUrlDataGenerator(unittest.TestCase):
         )
 
         infos = (
-            [1, 0, 1, 200, 1200, 303, 456, True],
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         )
 
         u = UrlDataGenerator(iter(patterns), infos=iter(infos))
@@ -34,13 +34,16 @@ class TestUrlDataGenerator(unittest.TestCase):
                              'protocol': 'http',
                              'host': 'www.site.com',
                              'path': '/path/name.html',
+                             'content_type': 'text/html',
+                             'gzipped': True,
                              'query_string': '',
                              'delay1': 303,
                              'byte_size': 1200,
                              'depth': 0,
                              'http_code': 200,
-                             'gzipped': True,
                              'delay2': 456,
+                             'meta_noindex': False,
+                             'meta_nofollow': False,
                              }
 
         self.assertEquals(document, (1, document_expected))
@@ -51,7 +54,7 @@ class TestUrlDataGenerator(unittest.TestCase):
         ]
 
         infos = [
-            [1, 0, 1, 200, 1200, 303, 456, True],
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         ]
 
         u = UrlDataGenerator(iter(patterns), infos=iter(infos))
@@ -67,7 +70,7 @@ class TestUrlDataGenerator(unittest.TestCase):
         ]
 
         infos = [
-            [1, 0, 1, 200, 1200, 303, 456, True],
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         ]
 
         u = UrlDataGenerator(iter(patterns), infos=iter(infos))
@@ -83,7 +86,7 @@ class TestUrlDataGenerator(unittest.TestCase):
         ]
 
         infos = [
-            [1, 0, 1, 200, 1200, 303, 456, True],
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         ]
 
         contents = [
@@ -105,9 +108,9 @@ class TestUrlDataGenerator(unittest.TestCase):
         ]
 
         infos = [
-            [1, 0, 1, 200, 1200, 303, 456, True],
-            [2, 0, 1, 200, 1200, 303, 456, True],
-            [3, 0, 1, 200, 1200, 303, 456, True],
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+            [2, 1, 'text/html', 1, 1, 200, 1200, 303, 456],
+            [3, 1, 'text/html', 1, 1, 200, 1200, 303, 456],
         ]
 
         contents = [

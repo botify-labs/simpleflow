@@ -8,6 +8,7 @@ from cdf.streams.transformations import group_with
 from cdf.streams.utils import idx_from_stream
 from cdf.utils.date import date_2k_mn_to_date
 
+
 def extract_patterns(attributes, stream_item):
     # Create initial dictionary
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
@@ -25,7 +26,13 @@ def extract_patterns(attributes, stream_item):
 def extract_infos(attributes, stream_item):
     date_crawled_idx = idx_from_stream('infos', 'date_crawled')
     stream_item[date_crawled_idx] = date_2k_mn_to_date(stream_item[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
-    attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item)})
+    attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item) if i[0] != 'infos_mask'})
+
+    # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
+    infos_mask = stream_item[idx_from_stream('infos', 'infos_mask')]
+    attributes['gzipped'] = 1 & infos_mask == 1
+    attributes['meta_noindex'] = 4 & infos_mask == 4
+    attributes['meta_nofollow'] = 8 & infos_mask == 8
 
 
 def extract_contents(attributes, stream_item):

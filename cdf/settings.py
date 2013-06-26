@@ -8,13 +8,14 @@ STREAMS_HEADERS = {
     ),
     'INFOS': (
         ('id', int),
+        ('infos_mask', int),
+        ('content_type', str),
         ('depth', int),
         ('date_crawled', int),
         ('http_code', int),
         ('byte_size', int),
         ('delay1', int),
         ('delay2', int),
-        ('gzipped', bool)
     ),
     'CONTENTS': (
         ('id', int),
