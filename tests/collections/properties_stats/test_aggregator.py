@@ -23,8 +23,8 @@ class TestUrlDataGenerator(unittest.TestCase):
         ))
 
         stream_infos = iter((
-            [1, 0, 1, 200, 1200, 303, 456, True],
-            [2, 1, 1, 404, 1200, 303, 456, True],
+            [1, 0, 'text/html', 0, 1, 200, 1200, 303, 456, True],
+            [2, 0, 'text/html', 1, 1, 404, 1200, 303, 456, True],
         ))
 
         stream_properties = iter((
@@ -32,6 +32,22 @@ class TestUrlDataGenerator(unittest.TestCase):
             [2, "product"]
         ))
 
-        a = PropertiesStatsAggregator(stream_patterns, stream_infos, stream_properties)
+        stream_outlinks = iter((
+            [1, 'a', True, 2, ''],
+        ))
+
+        stream_contents = iter((
+            [1, 2, 0, 'My first H1'],
+            [1, 2, 0, 'My second H1'],
+            [1, 1, 0, 'My title']
+        ))
+
+        a = PropertiesStatsAggregator(stream_patterns, stream_infos, stream_properties, stream_outlinks, iter([]), stream_contents)
         stats = a.get()
-        print stats
+        logger.info(stats)
+        # Reminder : keys = host, resource_type, content_type, depth, index, follow
+        expected_keys = [
+            ('www.site.com', 'homepage', 'text/html', 0, True, True),
+            ('www.site.com', 'product', 'text/html', 1, True, True),
+        ]
+        self.assertEquals(stats.keys(), expected_keys)
