@@ -30,7 +30,7 @@ class TestUrlDataGenerator(unittest.TestCase):
         u = UrlDataGenerator(iter(patterns), infos=iter(infos))
         document = u.__iter__().next()
         document_expected = {'id': 1,
-                             'date_crawled': '2000-01-01 00:01:00',
+                             'date_crawled': '2000-01-01T00:01:00',
                              'protocol': 'http',
                              'host': 'www.site.com',
                              'path': '/path/name.html',
@@ -131,11 +131,11 @@ class TestUrlDataGenerator(unittest.TestCase):
 
         #format : link_type      follow? src_urlid       dst_urlid       or_external_url
         outlinks = [
-            ['a', True, 1, 2, ''],
-            ['a', False, 1, 3, ''],
-            ['a', True, 1, 4, ''],
-            ['a', True, 1, -1, 'http://www.youtube.com'],
-            ['a', True, 3, -1, 'http://www.youtube.com'],
+            [1, 'a', True, 2, ''],
+            [1, 'a', False, 3, ''],
+            [1, 'a', True, 4, ''],
+            [1, 'a', True, -1, 'http://www.youtube.com'],
+            [3, 'a', True, -1, 'http://www.youtube.com'],
         ]
 
         u = UrlDataGenerator(iter(patterns), outlinks=iter(outlinks))
@@ -177,11 +177,11 @@ class TestUrlDataGenerator(unittest.TestCase):
 
         #format : link_type      follow? src_urlid       dst_urlid       or_external_url
         outlinks = [
-            ['a', True, 2, 3, ''],
-            ['a', False, 2, 4, ''],
-            ['a', True, 2, 5, ''],
-            ['a', True, 2, -1, 'http://www.youtube.com'],
-            ['a', True, 3, -1, 'http://www.youtube.com'],
+            [2, 'a', True, 3, ''],
+            [2, 'a', False, 4, ''],
+            [2, 'a', True, 5, ''],
+            [2, 'a', True, -1, 'http://www.youtube.com'],
+            [3, 'a', True, -1, 'http://www.youtube.com'],
         ]
 
         u = UrlDataGenerator(patterns, outlinks=iter(outlinks))
@@ -211,7 +211,7 @@ class TestUrlDataGenerator(unittest.TestCase):
 
         #format : link_type      follow? src_urlid       dst_urlid       or_external_url
         outlinks = [
-            ['r301', True, 1, 2, ''],
+            [1, 'r301', True, 2, ''],
         ]
 
         u = UrlDataGenerator(iter(patterns), outlinks=iter(outlinks))
@@ -226,9 +226,9 @@ class TestUrlDataGenerator(unittest.TestCase):
 
         #format : link_type      follow? dst_urlid       src_urlid
         inlinks = [
-            ['a', True, 1, 10],
-            ['a', False, 1, 11],
-            ['a', True, 1, 12],
+            [1, 'a', True, 10],
+            [1, 'a', False, 11],
+            [1, 'a', True, 12],
         ]
 
         u = UrlDataGenerator(iter(patterns), inlinks=iter(inlinks))
@@ -246,7 +246,7 @@ class TestUrlDataGenerator(unittest.TestCase):
 
         #format : link_type      follow? dst_urlid       src_urlid
         inlinks = [
-            ['r301', True, 1, 2],
+            [1, 'r301', True, 2],
         ]
 
         u = UrlDataGenerator(iter(patterns), inlinks=iter(inlinks))
@@ -260,12 +260,12 @@ class TestUrlDataGenerator(unittest.TestCase):
             [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
         ]
 
-        outcanonicals = [
-            [1, 2],
-            [2, 2]
+        outlinks = [
+            [1, 'canonical', True, 2, ''],
+            [2, 'canonical', True, 2, ''],
         ]
 
-        u = UrlDataGenerator(iter(patterns), outcanonicals=iter(outcanonicals))
+        u = UrlDataGenerator(iter(patterns), outlinks=iter(outlinks))
         documents = list(u)
         # Url 1
         self.assertEquals(documents[0][1]['canonical_url_id'], 2)
@@ -280,13 +280,13 @@ class TestUrlDataGenerator(unittest.TestCase):
             [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
         ]
 
-        incanonicals = [
-            [1, 5],
-            [2, 17],
-            [2, 20]
+        inlinks = [
+            [1, 'canonical', True, 5],
+            [2, 'canonical', True, 17],
+            [2, 'canonical', True, 20],
         ]
 
-        u = UrlDataGenerator(iter(patterns), incanonicals=iter(incanonicals))
+        u = UrlDataGenerator(iter(patterns), inlinks=iter(inlinks))
         documents = list(u)
         # Url 1
         self.assertEquals(documents[0][1]['canonical_nb_duplicates'], 1)

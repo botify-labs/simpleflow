@@ -42,7 +42,7 @@ def extract_contents(attributes, stream_item):
 
 
 def extract_outlinks(attributes, stream_item):
-    link_type, follow, url_src, url_dst, external_url = stream_item
+    url_src, link_type, follow, url_dst, external_url = stream_item
     if link_type == "a":
         location_key = "internal" if url_dst > 0 else "external"
         follow_key = "follow" if follow else "nofollow"
@@ -62,11 +62,14 @@ def extract_outlinks(attributes, stream_item):
                 attributes[key_ids].append(url_dst)
     elif link_type.startswith('r'):
         http_code = link_type[1:]
-        attributes['redirect_to'] = {'url_id': url_dst, 'http_code': http_code}
+        attributes['redirect_to'] = {'url_id': url_dst, 'http_code': int(http_code)}
+    elif link_type == "canonical":
+        attributes['canonical_equals'] = url_src == url_dst
+        attributes['canonical_url_id'] = url_dst
 
 
 def extract_inlinks(attributes, stream_item):
-    link_type, follow, url_dst, url_src = stream_item
+    url_dst, link_type, follow, url_src = stream_item
     if link_type == "a":
         follow_key = "follow" if follow else "nofollow"
         key_nb = "inlinks_%s_nb" % follow_key
@@ -85,21 +88,13 @@ def extract_inlinks(attributes, stream_item):
     elif link_type.startswith('r'):
         http_code = int(link_type[1:])
         attributes['redirect_from'] = {'url_id': url_src, 'http_code': http_code}
-
-
-def extract_incanonicals(attributes, stream_item):
-    nb_duplicates = attributes.get('canonical_nb_duplicates', 0) + 1
-    attributes['canonical_nb_duplicates'] = nb_duplicates
-    if nb_duplicates == 1:
-        attributes['canonical_duplicate_ids'] = [stream_item[1]]
-    else:
-        attributes['canonical_duplicate_ids'].append(stream_item[1])
-
-
-def extract_outcanonicals(attributes, stream_item):
-    url_id, dst_url_id = stream_item
-    attributes['canonical_equals'] = url_id == dst_url_id
-    attributes['canonical_url_id'] = dst_url_id
+    elif link_type == "canonical":
+        nb_duplicates = attributes.get('canonical_nb_duplicates', 0) + 1
+        attributes['canonical_nb_duplicates'] = nb_duplicates
+        if nb_duplicates == 1:
+            attributes['canonical_duplicate_ids'] = [url_src]
+        else:
+            attributes['canonical_duplicate_ids'].append(url_src)
 
 
 class UrlDataGenerator(object):
@@ -108,8 +103,6 @@ class UrlDataGenerator(object):
         'contents': extract_contents,
         'inlinks': extract_inlinks,
         'outlinks': extract_outlinks,
-        'incanonicals': extract_incanonicals,
-        'outcanonicals': extract_outcanonicals
     }
 
     def __init__(self, stream_patterns, **kwargs):

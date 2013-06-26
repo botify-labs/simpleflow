@@ -23,25 +23,17 @@ STREAMS_HEADERS = {
         ('txt', str)
     ),
     'OUTLINKS': (
+        ('id', int),
         ('link_type', str),
         ('follow', bool),
-        ('id', int),
         ('dst_url_id', int),
         ('external_url', str)
     ),
     'INLINKS': (
+        ('id', int),
         ('link_type', str),
         ('follow', bool),
-        ('id', int),
         ('src_url_id', int),
-    ),
-    'OUTCANONICALS': (
-        ('id', int),
-        ('dst_url_id', int)
-    ),
-    'INCANONICALS': (
-        ('id', int),
-        ('src_url_id', int)
     ),
     'PROPERTIES': (
         ('id', int),
