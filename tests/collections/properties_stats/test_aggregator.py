@@ -3,7 +3,8 @@ import unittest
 import logging
 
 from cdf.log import logger
-from cdf.collections.properties_stats.aggregator import PropertiesStatsAggregator, PropertiesStatsMetaAggregator
+from cdf.collections.properties_stats.aggregator import (PropertiesStatsAggregator, PropertiesStatsMetaAggregator,
+                                                         PropertiesStatsConsolidator)
 
 logger.setLevel(logging.DEBUG)
 
@@ -75,6 +76,84 @@ class TestPropertiesStats(unittest.TestCase):
         self.assertEquals(stats_product['outlinks_nb'], 0)
         self.assertEquals(stats_product['canonical_filled_nb'], 1)
         self.assertEquals(stats_product['canonical_duplicates_nb'], 1)
+
+class TestPropertiesStatsConsolidator(unittest.TestCase):
+
+    def test_simple(self):
+        stats_part_0 = [
+            {
+                "cross_properties": ["www.site.com", "homepage", "text/html", 0, True, True],
+                "counters": {
+                    "pages_nb": 10,
+                    "pages_code_200": 5,
+                    "pages_code_301": 5
+                }
+            },
+            {
+                "cross_properties": ["my.site.com", "product", "text/html", 0, True, True],
+                "counters": {
+                    "pages_nb": 30,
+                    "pages_code_200": 10,
+                    "pages_code_301": 20
+                }
+            }
+        ]
+
+        stats_part_1 = [
+            {
+                "cross_properties": ["my.site.com", "product", "text/html", 0, True, True],
+                "counters": {
+                    "pages_nb": 10,
+                    "pages_code_200": 5,
+                    "pages_code_301": 5
+                }
+            },
+            {
+                "cross_properties": ["music.site.com", "artist", "text/html", 0, True, True],
+                "counters": {
+                    "pages_nb": 30,
+                    "pages_code_200": 10,
+                    "pages_code_301": 20
+                }
+            }
+        ]
+
+        stats_part_2 = [
+            {
+                "cross_properties": ["music.site.com", "artist", "text/html", 0, True, True],
+                "counters": {
+                    "pages_nb": 130,
+                    "pages_code_200": 100,
+                    "pages_code_301": 30
+                }
+            }
+        ]
+
+        c = PropertiesStatsConsolidator([stats_part_0, stats_part_1, stats_part_2])
+        aggregated_data = c.consolidate()
+
+        expected_data = {
+            ('music.site.com', 'artist', 'text/html', 0, True, True): {
+                'pages_nb': 160,
+                'pages_code_200': 110,
+                'pages_code_301': 50
+            },
+            ('www.site.com', 'homepage', 'text/html', 0, True, True): {
+                'pages_nb': 10,
+                'pages_code_200': 5,
+                'pages_code_301': 5
+            },
+            ('my.site.com', 'product', 'text/html', 0, True, True): {
+                'pages_nb': 40,
+                'pages_code_200': 15,
+                'pages_code_301': 25
+            }
+        }
+
+        mysite_key = ('my.site.com', 'product', 'text/html', 0, True, True)
+        music_key = ('music.site.com', 'artist', 'text/html', 0, True, True)
+        self.assertEquals(aggregated_data[mysite_key], expected_data[mysite_key])
+        self.assertEquals(aggregated_data[music_key], expected_data[music_key])
 
 
 class TestPropertiesStatsMeta(unittest.TestCase):

@@ -2,13 +2,14 @@ import os
 import gzip
 import lz4
 import json
+from pandas import HDFStore
 
 from cdf.streams.constants import STREAMS_HEADERS, STREAMS_FILES
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file, split
 from cdf.collections.url_properties.generator import UrlPropertiesGenerator
-from cdf.collections.properties_stats.aggregator import PropertiesStatsAggregator
-from cdf.utils.s3 import fetch_files, push_content
+from cdf.collections.properties_stats.aggregator import PropertiesStatsAggregator, PropertiesStatsConsolidator
+from cdf.utils.s3 import fetch_files, push_content, push_file
 
 
 def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, tmp_dir_prefix='/tmp', force_fetch=False):
@@ -62,3 +63,24 @@ def compute_properties_stats_counter_from_s3(crawl_id, part_id, rev_num, s3_uri,
     aggregator = PropertiesStatsAggregator(**streams)
     content = json.dumps(aggregator.get())
     push_content(os.path.join(s3_uri, 'properties_stats_partial_rev%d/stats.json.%d' % (rev_num, part_id)), content)
+
+
+def consolidate_properties_stats_counter_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+    # Fetch locally the files from S3
+    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+
+    files_fetched = fetch_files(s3_uri,
+                                tmp_dir,
+                                regexp=['properties_stats_partial_rev%d/stats.json' % rev_num],
+                                force_fetch=force_fetch)
+
+    counters = [json.loads(open(path_local).read()) for path_local, fetched in files_fetched]
+    c = PropertiesStatsConsolidator(counters)
+    df = c.get_dataframe()
+
+    h5_file = os.path.join(tmp_dir, 'properties_stats_rev%d.h5' % rev_num)
+    store = HDFStore(h5_file, complevel=9, complib='blosc')
+    store['stats'] = df
+    store.close()
+
+    push_file(os.path.join(s3_uri, 'properties_stats_rev%d.h5' % rev_num), h5_file)

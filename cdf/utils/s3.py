@@ -64,9 +64,19 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True):
     return files
 
 
-def push_content(s3_uri, content):
+def get_key_from_s3_uri(s3_uri):
     access_key, secret_key, bucket, location = uri_parse(s3_uri)
     conn = get_connection(access_key, secret_key)
     bucket = conn.get_bucket(bucket)
     key = Key(bucket, location)
+    return key
+
+
+def push_content(s3_uri, content):
+    key = get_key_from_s3_uri(s3_uri)
     key.set_contents_from_string(content)
+
+
+def push_file(s3_uri, filename):
+    key = get_key_from_s3_uri(s3_uri)
+    key.set_contents_from_filename(filename)

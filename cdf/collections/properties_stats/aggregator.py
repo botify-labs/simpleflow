@@ -3,9 +3,11 @@ import pyhash
 hasher = pyhash.fnv1_32()
 
 from collections import defaultdict, Counter
+from pandas import DataFrame
 
 from cdf.streams.constants import CONTENT_TYPE_INDEX
 from cdf.streams.utils import group_left, idx_from_stream
+from cdf.collections.properties_stats.constants import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
 from cdf.log import logger
 
 
@@ -85,24 +87,7 @@ class PropertiesStatsAggregator(object):
         outlinks_src_idx = idx_from_stream('outlinks', 'id')
         outlinks_dst_idx = idx_from_stream('outlinks', 'dst_url_id')
 
-        counter_dict = {
-            'pages_nb': 0,
-            'pages_code_ok': 0,
-            'pages_code_ko': 0,
-            'outlinks_nb': 0,
-            'total_delay_ms': 0,
-            'redirections_nb': 0,
-            'canonical_filled_nb': 0,
-            'canonical_duplicates_nb': 0,
-            'inlinks_nb': 0,
-            'canonical_incoming_nb': 0,
-            'inlinks_follow_nb': 0,
-            'inlinks_nofollow_nb': 0,
-            'delay_gte_2s': 0,
-            'delay_gte_1s': 0,
-            'delay_gte_500ms': 0,
-            'delay_lt_500ms': 0
-        }
+        counter_dict = {field: 0 for field in COUNTERS_FIELDS}
 
         results = defaultdict(lambda: copy.copy(counter_dict))
         for k, result in enumerate(group_left(left, **streams_ref)):
@@ -149,6 +134,55 @@ class PropertiesStatsAggregator(object):
         for key, counters in results.iteritems():
             final_results.append({"cross_properties": list(key), "counters": counters})
         return final_results
+
+
+class PropertiesStatsConsolidator(object):
+
+    def __init__(self, part_stats):
+        """
+        Consolidate all dictionnaries coming from all PropertiesStats parts and aggregate counters by cross-property into one.
+        """
+        self.part_stats = part_stats
+
+    def consolidate(self):
+        """
+        Return a dictionnary of aggregated values by cross-property
+
+        {
+            ("www.site.com", "/article", "text/html", 1, True, True): {
+                "pages_nb": 6766,
+                "pages_code_200": 200,
+                ...
+            }
+        }
+        """
+        results = defaultdict(Counter)
+        for part_stat in self.part_stats:
+            for s_ in part_stat:
+                results[tuple(s_['cross_properties'])].update(s_['counters'])
+
+        # Replace Counters objects by dicts
+        final_results = {}
+        for key, values in results.iteritems():
+            final_results[key] = dict(values)
+        return final_results
+
+    def get_dataframe(self):
+        results = self.consolidate()
+
+        def transform_dict(cross_property, d_):
+            t_dict = dict(d_)
+            t_dict.update({CROSS_PROPERTIES_COLUMNS[i]: value for i, value in enumerate(cross_property)})
+            return t_dict
+
+        prepare_df_rows = []
+        for key, counters in results.iteritems():
+            prepare_df_rows.append(transform_dict(key, counters))
+
+        # Now that all cross-properties are aggregated, we can add it to a pandas dataframe
+        columns = CROSS_PROPERTIES_COLUMNS + list(COUNTERS_FIELDS)
+        df = DataFrame(prepare_df_rows, columns=columns)
+        return df
 
 
 class PropertiesStatsMetaAggregator(object):

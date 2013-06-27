@@ -27,7 +27,12 @@ setup(
         'pyhash=0.5.0',
         'pyelasticsearch==0.5',
         'boto==2.9.6',
-        'lz4==0.6.0'
+        'lz4==0.6.0',
+        'numpy',
+        'pandas==0.11.0',
+        'numexpr==2.1',
+        'Cython==0.19.1',
+        'tables==3.0.0'
     ],
 
     package_dir={'': '.'},
