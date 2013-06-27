@@ -58,3 +58,6 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
             es.bulk_index(es_index, 'urls_data', docs)
             docs = []
             logger.info('%d items imported to urls_data ES for %s (part %d)' % (i, es_index, part_id))
+    # Push the missing documents
+    if docs:
+        es.bulk_index(es_index, 'urls_data', docs)
