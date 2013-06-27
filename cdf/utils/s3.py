@@ -1,4 +1,5 @@
 import os
+import re
 from urlparse import urlparse
 
 from boto.s3.connection import S3Connection
@@ -32,7 +33,7 @@ def get_connection(access_key, secret_key):
     return CONNECTIONS[key]
 
 
-def fetch_files(s3_uri, dest_dir, prefixes=None, suffixes=None, force_fetch=True):
+def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True):
     """
     Fetch files from an `s3_uri` and save them to `dest_dir`
     Files can be filters by a list of `prefixes` or `suffixes`
@@ -49,8 +50,7 @@ def fetch_files(s3_uri, dest_dir, prefixes=None, suffixes=None, force_fetch=True
         key = key_obj.name
         key_without_location = key[len(location) + 1:]
 
-        if (not prefixes or any(key_without_location.startswith(p) for p in prefixes)) and \
-           (not suffixes or any(key_without_location.endswith(s) for s in suffixes)):
+        if not regexp or any(re.match(r, key_without_location) for r in regexp):
             path = os.path.join(dest_dir, key[len(location) + 1:])
             if not os.path.exists(os.path.dirname(path)):
                 os.makedirs(os.path.dirname(path))
