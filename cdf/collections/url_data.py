@@ -2,7 +2,7 @@ import ujson
 from itertools import izip
 
 
-from cdf.settings import STREAMS_HEADERS, CONTENT_TYPE_INDEX
+from cdf.streams.constants import STREAMS_HEADERS, CONTENT_TYPE_INDEX
 from cdf.log import logger
 from cdf.streams.transformations import group_with
 from cdf.streams.utils import idx_from_stream
