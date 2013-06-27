@@ -18,7 +18,7 @@ class UrlPropertiesGenerator(object):
         """
         for i in self.stream_patterns:
             url_id, protocol, host, path, query_string = i
-            # localtor not yet in urlids.txt
+            # locator not yet in urlids.txt
             locator = ''
 
             parents_matches = set()
