@@ -49,28 +49,32 @@ class TestPropertiesStats(unittest.TestCase):
 
         # Reminder : keys = host, resource_type, content_type, depth, index, follow
         expected_keys = [
-            ('www.site.com', 'homepage', 'text/html', 0, False, True),
-            ('www.site.com', 'product', 'text/html', 1, True, False),
+            ['www.site.com', 'homepage', 'text/html', 0, False, True],
+            ['www.site.com', 'product', 'text/html', 1, True, False],
         ]
 
-        self.assertItemsEqual(stats.keys(), expected_keys)
-        homepage_key = ('www.site.com', 'homepage', 'text/html', 0, False, True)
-        self.assertEquals(stats[homepage_key]['pages_nb'], 1)
-        self.assertEquals(stats[homepage_key]['pages_code_ok'], 1)
-        self.assertEquals(stats[homepage_key]['pages_code_ko'], 0)
-        self.assertEquals(stats[homepage_key]['outlinks_nb'], 1)
-        self.assertEquals(stats[homepage_key]['canonical_incoming_nb'], 1)
+        cross_properties = [k['cross_properties'] for k in stats]
+        self.assertItemsEqual(cross_properties, expected_keys)
 
-        product_key = ('www.site.com', 'product', 'text/html', 1, True, False)
-        self.assertEquals(stats[product_key]['pages_nb'], 1)
-        self.assertEquals(stats[product_key]['pages_code_ok'], 0)
-        self.assertEquals(stats[product_key]['pages_code_ko'], 1)
-        self.assertEquals(stats[product_key]['inlinks_nb'], 1)
-        self.assertEquals(stats[product_key]['inlinks_follow_nb'], 1)
-        self.assertEquals(stats[product_key]['inlinks_nofollow_nb'], 0)
-        self.assertEquals(stats[product_key]['outlinks_nb'], 0)
-        self.assertEquals(stats[product_key]['canonical_filled_nb'], 1)
-        self.assertEquals(stats[product_key]['canonical_duplicates_nb'], 1)
+        homepage_idx = cross_properties.index(['www.site.com', 'homepage', 'text/html', 0, False, True])
+        stats_homepage = stats[homepage_idx]['counters']
+        self.assertEquals(stats_homepage['pages_nb'], 1)
+        self.assertEquals(stats_homepage['pages_code_ok'], 1)
+        self.assertEquals(stats_homepage['pages_code_ko'], 0)
+        self.assertEquals(stats_homepage['outlinks_nb'], 1)
+        self.assertEquals(stats_homepage['canonical_incoming_nb'], 1)
+
+        product_idx = cross_properties.index(['www.site.com', 'product', 'text/html', 1, True, False])
+        stats_product = stats[product_idx]['counters']
+        self.assertEquals(stats_product['pages_nb'], 1)
+        self.assertEquals(stats_product['pages_code_ok'], 0)
+        self.assertEquals(stats_product['pages_code_ko'], 1)
+        self.assertEquals(stats_product['inlinks_nb'], 1)
+        self.assertEquals(stats_product['inlinks_follow_nb'], 1)
+        self.assertEquals(stats_product['inlinks_nofollow_nb'], 0)
+        self.assertEquals(stats_product['outlinks_nb'], 0)
+        self.assertEquals(stats_product['canonical_filled_nb'], 1)
+        self.assertEquals(stats_product['canonical_duplicates_nb'], 1)
 
 
 class TestPropertiesStatsMeta(unittest.TestCase):

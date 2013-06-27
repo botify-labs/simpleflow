@@ -3,7 +3,8 @@ STREAMS_FILES = {
     'urlinfos': 'infos',
     'urlcontents': 'contents',
     'urllinks': 'outlinks',
-    'urlinlinks': 'inlinks'
+    'urlinlinks': 'inlinks',
+    'url_properties': 'properties'
 }
 
 STREAMS_HEADERS = {

@@ -4,8 +4,9 @@ hasher = pyhash.fnv1_32()
 
 from collections import defaultdict, Counter
 
-from cdf.settings import CONTENT_TYPE_INDEX
+from cdf.streams.constants import CONTENT_TYPE_INDEX
 from cdf.streams.utils import group_left, idx_from_stream
+from cdf.log import logger
 
 
 def delay_to_range(delay):
@@ -29,15 +30,17 @@ class PropertiesStatsAggregator(object):
 
     def get(self):
         """
-        Return a dictionnary where key is a tuple :
-        (host, resource_type, content_type, depth, index, follow)
-         str,  str,           str,          int,   bool,  bool
-
-        Values is a sub-dictonnary with counters keys.
+        Return a tuple of dictionaries
+        Values are a sub-dictonnary with fields :
+            * `keys`, a tuple with following format :
+            (host, resource_type, content_type, depth, index, follow)
+            str,  str,           str,          int,   bool,  bool
+            * `counters` : a dictionary of counters
 
         Ex :
         {
-           ("www.site.com", "/article", "text/html", 1, True, True) : {
+           "keys": ["www.site.com", "/article", "text/html", 1, True, True],
+           "counters": {
                    "pages_nb": 10,
                    "pages_code_200": 5,
                    "pages_code_301": 5,
@@ -102,7 +105,7 @@ class PropertiesStatsAggregator(object):
         }
 
         results = defaultdict(lambda: copy.copy(counter_dict))
-        for result in group_left(left, **streams_ref):
+        for k, result in enumerate(group_left(left, **streams_ref)):
             infos = result[2]['infos'][0]
             outlinks = result[2]['outlinks']
             inlinks = result[2]['inlinks']
@@ -142,8 +145,10 @@ class PropertiesStatsAggregator(object):
                     results[key]['inlinks_nofollow_nb'] += 1
 
         # Transform defaultdict to dict
-        results = dict(results)
-        return results
+        final_results = []
+        for key, counters in results.iteritems():
+            final_results.append({"cross_properties": list(key), "counters": counters})
+        return final_results
 
 
 class PropertiesStatsMetaAggregator(object):
