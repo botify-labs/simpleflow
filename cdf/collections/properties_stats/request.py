@@ -1,10 +1,23 @@
-from cdf.collections.properties_stats.constants import CROSS_PROPERTIES_COLUMNS
+import os
+from pandas import HDFStore
+
+from cdf.collections.properties_stats.constants import CROSS_PROPERTIES_COLUMNS, CROSS_PROPERTIES_META_COLUMNS
+
+from cdf.utils.s3 import fetch_files
 
 
 class CounterRequest(object):
 
     def __init__(self, df):
         self.df = df
+
+    @classmethod
+    def from_s3_uri(cls, crawl_id, rev_num, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+        # Fetch locally the files from S3
+        tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+        files_fetched = fetch_files(s3_uri, tmp_dir, regexp='properties_stats_rev%d.h5' % rev_num, force_fetch=force_fetch)
+        store = HDFStore(files_fetched[0][0])
+        return cls(store[cls.STORE_KEY])
 
     def df_from_filters(self, filters):
         df = self.df.copy()
@@ -78,8 +91,10 @@ class CounterRequest(object):
 
 
 class PropertiesStatsRequest(CounterRequest):
-
     DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_COLUMNS
+    STORE_KEY = 'counter'
 
-    def __init__(self, df):
-        super(PropertiesStatsRequest, self).__init__(df)
+
+class PropertiesStatsMetaRequest(CounterRequest):
+    DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_META_COLUMNS
+    STORE_KEY = 'meta_unicity'
