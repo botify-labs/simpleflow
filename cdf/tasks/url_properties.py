@@ -12,6 +12,7 @@ from cdf.collections.url_properties.generator import UrlPropertiesGenerator
 from cdf.collections.properties_stats.aggregator import (PropertiesStatsAggregator, PropertiesStatsConsolidator,
                                                          PropertiesStatsMetaAggregator)
 from cdf.utils.s3 import fetch_files, push_content, push_file
+from cdf.utils.remote_files import nb_parts_from_crawl_location
 
 
 def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, tmp_dir_prefix='/tmp', force_fetch=False):
@@ -97,7 +98,7 @@ def _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_pre
                      'contents': []
                      }
 
-    for part_id in xrange(0, 3):
+    for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
         files_fetched = fetch_files(s3_uri,
                                     tmp_dir,
                                     regexp=['url(ids|contents).txt.%d.gz' % part_id, 'url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)],

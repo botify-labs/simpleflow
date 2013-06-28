@@ -33,13 +33,9 @@ def get_connection(access_key, secret_key):
     return CONNECTIONS[key]
 
 
-def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True):
+def list_files(s3_uri, regexp=None):
     """
-    Fetch files from an `s3_uri` and save them to `dest_dir`
-    Files can be filters by a list of `prefixes` or `suffixes`
-    If `force_fetch` is False, files will be fetched only if the file is not existing in the dest_dir
-
-    Return a list of tuples (local_path, fetched) where `fetched` is a boolean
+    Return list of boto.s3.Key objects
     """
     access_key, secret_key, bucket, location = uri_parse(s3_uri)
     conn = get_connection(access_key, secret_key)
@@ -50,17 +46,36 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True):
         key = key_obj.name
         key_without_location = key[len(location) + 1:]
 
-        if not regexp or any(re.match(r, key_without_location) for r in regexp):
-            path = os.path.join(dest_dir, key[len(location) + 1:])
-            if not os.path.exists(os.path.dirname(path)):
-                os.makedirs(os.path.dirname(path))
-            if not force_fetch and os.path.exists(path):
-                files.append((path, False))
-                continue
-            logger.info('Fetch %s' % key)
-            k = Key(bucket=bucket, name=key)
-            k.get_contents_to_filename(path)
-            files.append((path, True))
+        if not regexp \
+            or (isinstance(regexp, str) and re.match(regexp, key_without_location))\
+                or (isinstance(regexp, (list, tuple)) and any(re.match(r, key_without_location) for r in regexp)):
+            files.append(key_obj)
+    return files
+
+
+def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True):
+    """
+    Fetch files from an `s3_uri` and save them to `dest_dir`
+    Files can be filters by a list of `prefixes` or `suffixes`
+    If `force_fetch` is False, files will be fetched only if the file is not existing in the dest_dir
+
+    Return a list of tuples (local_path, fetched) where `fetched` is a boolean
+    """
+    access_key, secret_key, bucket, location = uri_parse(s3_uri)
+    files = []
+
+    for key_obj in list_files(s3_uri, regexp):
+        key = key_obj.name
+
+        path = os.path.join(dest_dir, key[len(location) + 1:])
+        if not os.path.exists(os.path.dirname(path)):
+            os.makedirs(os.path.dirname(path))
+        if not force_fetch and os.path.exists(path):
+            files.append((path, False))
+            continue
+        logger.info('Fetch %s' % key)
+        key_obj.get_contents_to_filename(path)
+        files.append((path, True))
     return files
 
 
