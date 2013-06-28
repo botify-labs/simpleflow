@@ -1,4 +1,6 @@
-CROSS_PROPERTIES_COLUMNS = ['host', 'resource_type', 'content_type', 'depth', 'index', 'follow']
+from cdf.streams.constants import CONTENT_TYPE_INDEX
+
+CROSS_PROPERTIES_COLUMNS = ('host', 'resource_type', 'content_type', 'depth', 'index', 'follow')
 
 COUNTERS_FIELDS = (
     'pages_nb',
@@ -18,3 +20,9 @@ COUNTERS_FIELDS = (
     'delay_gte_500ms',
     'delay_lt_500ms'
 )
+
+CROSS_PROPERTIES_META_COLUMNS = ('host', 'resource_type')
+
+META_FIELDS = []
+for ct_txt in CONTENT_TYPE_INDEX.itervalues():
+    META_FIELDS += ['%s_filled_nb' % ct_txt, '%s_local_unik_nb' % ct_txt, '%s_global_unik_nb' % ct_txt]

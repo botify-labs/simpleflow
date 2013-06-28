@@ -46,6 +46,9 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
 
         if stream_identifier == "patterns":
             stream_patterns = cast(split_file(gzip.open(path_local)))
+        # Warning : contents files are not sorted (stan has to do it)
+        elif stream_identifier == "contents":
+            streams[stream_identifier] = sorted(cast(split_file(gzip.open(path_local))))
         else:
             streams[stream_identifier] = cast(split_file(gzip.open(path_local)))
 

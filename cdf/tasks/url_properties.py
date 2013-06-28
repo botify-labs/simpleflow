@@ -2,13 +2,15 @@ import os
 import gzip
 import lz4
 import json
+import itertools
 from pandas import HDFStore
 
 from cdf.streams.constants import STREAMS_HEADERS, STREAMS_FILES
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file, split
 from cdf.collections.url_properties.generator import UrlPropertiesGenerator
-from cdf.collections.properties_stats.aggregator import PropertiesStatsAggregator, PropertiesStatsConsolidator
+from cdf.collections.properties_stats.aggregator import (PropertiesStatsAggregator, PropertiesStatsConsolidator,
+                                                         PropertiesStatsMetaAggregator)
 from cdf.utils.s3 import fetch_files, push_content, push_file
 
 
@@ -65,7 +67,10 @@ def compute_properties_stats_counter_from_s3(crawl_id, part_id, rev_num, s3_uri,
     push_content(os.path.join(s3_uri, 'properties_stats_partial_rev%d/stats.json.%d' % (rev_num, part_id)), content)
 
 
-def consolidate_properties_stats_counter_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+def _get_df_properties_stats_counter_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+    """
+    Consolidate all properties stats counter from different parts of a crawl and return a dataframe
+    """
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
@@ -74,13 +79,58 @@ def consolidate_properties_stats_counter_from_s3(crawl_id, rev_num, s3_uri, tmp_
                                 regexp=['properties_stats_partial_rev%d/stats.json' % rev_num],
                                 force_fetch=force_fetch)
 
-    counters = [json.loads(open(path_local).read()) for path_local, fetched in files_fetched]
+    counters = [json.load(open(path_local)) for path_local, fetched in files_fetched]
     c = PropertiesStatsConsolidator(counters)
-    df = c.get_dataframe()
+    return c.get_dataframe()
 
+
+def _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+    """
+    Fetch contents streams to generate a dataframe containing the unicity of metadata (h1, title, meta description, h2) by cross-property
+    """
+
+    # Fetch locally the files from S3
+    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+
+    streams_types = {'patterns': [],
+                     'properties': [],
+                     'contents': []
+                     }
+
+    for part_id in xrange(0, 3):
+        files_fetched = fetch_files(s3_uri,
+                                    tmp_dir,
+                                    regexp=['url(ids|contents).txt.%d.gz' % part_id, 'url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)],
+                                    force_fetch=force_fetch)
+
+        for path_local, fetched in files_fetched:
+            stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
+            cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
+
+            if stream_identifier == "properties":
+                streams_types[stream_identifier].append(cast(split(lz4.loads(open(path_local).read()).split('\n'))))
+            # Warning : contents files are not sorted (stan has to do it)
+            elif stream_identifier == "contents":
+                streams_types[stream_identifier].append(sorted(cast(split_file(gzip.open(path_local)))))
+            else:
+                streams_types[stream_identifier].append(cast(split_file(gzip.open(path_local))))
+
+    a = PropertiesStatsMetaAggregator(itertools.chain(*streams_types['patterns']),
+                                      itertools.chain(*streams_types['properties']),
+                                      itertools.chain(*streams_types['contents']))
+    return a.get_dataframe()
+
+
+def compute_properties_stats_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
     h5_file = os.path.join(tmp_dir, 'properties_stats_rev%d.h5' % rev_num)
+
+    if os.path.exists(h5_file):
+        os.remove(h5_file)
+
     store = HDFStore(h5_file, complevel=9, complib='blosc')
-    store['stats'] = df
+    store['counter'] = _get_df_properties_stats_counter_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix, force_fetch)
+    store['meta_unicity'] = _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix, force_fetch)
     store.close()
 
     push_file(os.path.join(s3_uri, 'properties_stats_rev%d.h5' % rev_num), h5_file)

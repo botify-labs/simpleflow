@@ -7,8 +7,8 @@ from pandas import DataFrame
 
 from cdf.streams.constants import CONTENT_TYPE_INDEX
 from cdf.streams.utils import group_left, idx_from_stream
-from cdf.collections.properties_stats.constants import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
-from cdf.log import logger
+from cdf.collections.properties_stats.constants import (COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS,
+                                                        META_FIELDS, CROSS_PROPERTIES_META_COLUMNS)
 
 
 def delay_to_range(delay):
@@ -162,10 +162,7 @@ class PropertiesStatsConsolidator(object):
                 results[tuple(s_['cross_properties'])].update(s_['counters'])
 
         # Replace Counters objects by dicts
-        final_results = {}
-        for key, values in results.iteritems():
-            final_results[key] = dict(values)
-        return final_results
+        return {key: dict(values) for key, values in results.iteritems()}
 
     def get_dataframe(self):
         results = self.consolidate()
@@ -179,9 +176,7 @@ class PropertiesStatsConsolidator(object):
         for key, counters in results.iteritems():
             prepare_df_rows.append(transform_dict(key, counters))
 
-        # Now that all cross-properties are aggregated, we can add it to a pandas dataframe
-        columns = CROSS_PROPERTIES_COLUMNS + list(COUNTERS_FIELDS)
-        df = DataFrame(prepare_df_rows, columns=columns)
+        df = DataFrame(prepare_df_rows)
         return df
 
 
@@ -238,7 +233,7 @@ class PropertiesStatsMetaAggregator(object):
             hash_key = hasher(','.join(key))
             contents = result[2]['contents']
 
-             # Meta filled
+            # Meta filled
             for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
                 if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
                     results[key]['%s_filled_nb' % ct_txt] += 1
@@ -272,3 +267,16 @@ class PropertiesStatsMetaAggregator(object):
                     result['%s_global_unik_nb' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
 
         return results
+
+    def get_dataframe(self):
+        results = self.get()
+
+        def transform_dict(cross_property, d_):
+            t_dict = dict(d_)
+            t_dict.update({CROSS_PROPERTIES_META_COLUMNS[i]: value for i, value in enumerate(cross_property)})
+            return t_dict
+
+        prepare_df_rows = [transform_dict(key, counters) for key, counters in results.iteritems()]
+        # Now that all cross-properties are aggregated, we can add it to a pandas dataframe
+        df = DataFrame(prepare_df_rows)
+        return df
