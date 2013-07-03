@@ -2,6 +2,7 @@ import os
 import re
 import operator
 from pandas import HDFStore
+import numpy
 
 from cdf.collections.properties_stats.constants import CROSS_PROPERTIES_COLUMNS, CROSS_PROPERTIES_META_COLUMNS
 
@@ -17,6 +18,12 @@ def is_dict_filter(filter_dict):
 
 def is_boolean_operation_filter(filter_dict):
     return len(filter_dict) == 1 and filter_dict.keys()[0].lower() in ('and', 'or')
+
+
+def std_type(value):
+    if type(value) == numpy.bool_:
+        return bool(value)
+    return value
 
 
 class CounterRequest(object):
@@ -93,7 +100,7 @@ class CounterRequest(object):
         if 'fields' in settings:
             fields = settings['fields']
         else:
-            fields = ['pages_nb']
+            fields = self.df.columns()
 
         if 'filters' in settings:
             df = self.df.copy()
@@ -145,7 +152,7 @@ class CounterRequest(object):
         if 'fields' in settings:
             fields = settings['fields']
         else:
-            fields = ['pages_nb']
+            fields = filter(lambda i: i not in self.DISTRIBUTION_COLUMNS, self.df.columns.tolist())
 
         df = self.df.copy()
         if 'filters' in settings:
@@ -156,7 +163,7 @@ class CounterRequest(object):
         results = []
         for i, n in enumerate(df.values):
             result = {
-                'properties': {field_: df[field_][i] for field_ in group_by},
+                'properties': {field_: std_type(df[field_][i]) for field_ in group_by},
                 'counters': {field_: int(df[field_][i]) if df[field_][i] > 0 else 0 for field_ in fields}
             }
             results.append(result)
@@ -210,30 +217,6 @@ class CounterRequest(object):
 class PropertiesStatsRequest(CounterRequest):
     DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_COLUMNS
     STORE_KEY = 'counter'
-
-    """
-    def fields_sum(self, fields, resource_type=None, host=None, min_depth=None, max_depth=None):
-        if min_depth or max_depth:
-            _filters = [('depth', self._get_depth_filter(min_depth, max_depth))]
-        else:
-            _filters = None
-        return super(PropertiesStatsRequest, self).fields_sum(fields, resource_type, host, _filters=_filters)
-
-    def fields_sum_by_property(self, fields, resource_type=None, host=None, group_by=False, min_depth=None, max_depth=None):
-        if min_depth or max_depth:
-            _filters = [('depth', self._get_depth_filter(min_depth, max_depth))]
-        else:
-            _filters = None
-        return super(PropertiesStatsRequest, self).fields_sum_by_property(fields, resource_type, host, group_by, _filters=_filters)
-
-    def _get_depth_filter(self, min_depth, max_depth):
-        if min_depth and max_depth:
-            return lambda i: i in range(min_depth, max_depth + 1)
-        elif min_depth:
-            return lambda i: i >= min_depth
-        elif max_depth:
-            return lambda i: i <= max_depth
-    """
 
 
 class PropertiesStatsMetaRequest(CounterRequest):
