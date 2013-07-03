@@ -45,14 +45,14 @@ class TestPropertiesStats(unittest.TestCase):
             'fields': ['pages_nb', 'pages_code_200', 'pages_code_500']
         }
 
-        self.assertEquals(request.fields_sum(settings), {'pages_code_500': 20, 'pages_code_200': 4, 'pages_nb': 30})
+        self.assertItemsEqual(request.query(settings)['counters'], {'pages_code_500': 20, 'pages_code_200': 4, 'pages_nb': 30})
         settings = {
             'fields': ['pages_nb'],
             'filters': [
                 {'field': 'host', 'value': 'www.site.com'}
             ]
         }
-        self.assertEquals(request.fields_sum(settings), {'pages_nb': 10})
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 10})
 
         # Implicit OR
         settings = {
@@ -62,19 +62,19 @@ class TestPropertiesStats(unittest.TestCase):
                 {'field': 'host', 'value': 'subdomain.site.com'}
             ]
         }
-        self.assertEquals(request.fields_sum(settings), {'pages_nb': 30})
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
 
         # Wildcart at start
         settings['filters'] = [
             {'field': 'host', 'value': '*.site.com'}
         ]
-        self.assertEquals(request.fields_sum(settings), {'pages_nb': 30})
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
 
         # Wildcard at start and at end
         settings['filters'] = [
             {'field': 'host', 'value': '*.site.*'}
         ]
-        self.assertEquals(request.fields_sum(settings), {'pages_nb': 30})
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
 
         # explicit OR condition
         settings['filters'] = {
@@ -83,7 +83,7 @@ class TestPropertiesStats(unittest.TestCase):
                 {'field': 'host', 'value': 'subdomain.site.com'}
             ]
         }
-        self.assertEquals(request.fields_sum(settings), {'pages_nb': 30})
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
 
         # AND condition
         settings['filters'] = {
@@ -92,7 +92,7 @@ class TestPropertiesStats(unittest.TestCase):
                 {'field': 'resource_type', 'value': 'article'}
             ]
         }
-        self.assertEquals(request.fields_sum(settings), {'pages_nb': 10})
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 10})
 
     def test_nested_filter(self):
         df = DataFrame(self.data)
@@ -115,7 +115,7 @@ class TestPropertiesStats(unittest.TestCase):
                 ]}
             ]
         }
-        self.assertEquals(request.fields_sum(settings), {'pages_nb': 30})
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
 
     def test_filter_in(self):
         df = DataFrame(self.data)
@@ -129,7 +129,7 @@ class TestPropertiesStats(unittest.TestCase):
         settings['filters'] = [
             {'field': 'host', 'value': ['www.site.com', 'subdomain.site.com']}
         ]
-        self.assertEquals(request.fields_sum(settings), {'pages_nb': 30})
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
 
     def test_sum_by_property_1dim(self):
         df = DataFrame(self.data)
@@ -157,7 +157,7 @@ class TestPropertiesStats(unittest.TestCase):
             'fields': ['pages_nb'],
             'group_by': ['host']
         }
-        self.assertItemsEqual(request.fields_sum_by_property(settings), expected_results)
+        self.assertItemsEqual(request.query(settings), expected_results)
 
     def test_sum_by_property_2dim(self):
         df = DataFrame(self.data)
@@ -187,7 +187,7 @@ class TestPropertiesStats(unittest.TestCase):
             'fields': ['pages_nb'],
             'group_by': ['host', 'content_type']
         }
-        self.assertItemsEqual(request.fields_sum_by_property(settings), expected_results)
+        self.assertItemsEqual(request.query(settings), expected_results)
 
     def test_sum_domains(self):
         self.data = [
@@ -243,7 +243,7 @@ class TestPropertiesStats(unittest.TestCase):
             'fields': ['pages_nb'],
             'group_by': ['host__level1']
         }
-        self.assertItemsEqual(request.fields_sum_by_property(settings), expected_results)
+        self.assertItemsEqual(request.query(settings), expected_results)
 
         # Level 2, main domains
         expected_results = [
@@ -268,7 +268,7 @@ class TestPropertiesStats(unittest.TestCase):
             'fields': ['pages_nb'],
             'group_by': ['host__level2']
         }
-        self.assertItemsEqual(request.fields_sum_by_property(settings), expected_results)
+        self.assertItemsEqual(request.query(settings), expected_results)
 
         # Level 3, subdomains
         expected_results = [
@@ -302,7 +302,7 @@ class TestPropertiesStats(unittest.TestCase):
             'fields': ['pages_nb'],
             'group_by': ['host__level3']
         }
-        self.assertItemsEqual(request.fields_sum_by_property(settings), expected_results)
+        self.assertItemsEqual(request.query(settings), expected_results)
 
         # Level 4, my.subdomain.site.com
         expected_results = [
@@ -335,7 +335,7 @@ class TestPropertiesStats(unittest.TestCase):
             'fields': ['pages_nb'],
             'group_by': ['host__level4']
         }
-        self.assertItemsEqual(request.fields_sum_by_property(settings), expected_results)
+        self.assertItemsEqual(request.query(settings), expected_results)
 
     def test_resource_type_levels(self):
         self.data = [
@@ -383,7 +383,7 @@ class TestPropertiesStats(unittest.TestCase):
             'fields': ['pages_nb'],
             'group_by': ['resource_type__level1']
         }
-        self.assertItemsEqual(request.fields_sum_by_property(settings), expected_results)
+        self.assertItemsEqual(request.query(settings), expected_results)
 
         # Level 2
         expected_results = [
@@ -408,7 +408,7 @@ class TestPropertiesStats(unittest.TestCase):
             'fields': ['pages_nb'],
             'group_by': ['resource_type__level2']
         }
-        self.assertItemsEqual(request.fields_sum_by_property(settings), expected_results)
+        self.assertItemsEqual(request.query(settings), expected_results)
 
         # Level 3
         expected_results = [
@@ -441,10 +441,10 @@ class TestPropertiesStats(unittest.TestCase):
             'fields': ['pages_nb'],
             'group_by': ['resource_type__level3']
         }
-        self.assertItemsEqual(request.fields_sum_by_property(settings), expected_results)
+        self.assertItemsEqual(request.query(settings), expected_results)
 
         settings = {
             'fields': ['pages_nb'],
             'group_by': ['resource_type__level4']
         }
-        self.assertItemsEqual(request.fields_sum_by_property(settings), expected_results)
+        self.assertItemsEqual(request.query(settings), expected_results)

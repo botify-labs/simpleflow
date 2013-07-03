@@ -86,37 +86,11 @@ class CounterRequest(object):
             raise Exception('Filter not well formated : %s' % filters)
         return filters_func
 
-    def fields_sum(self, settings):
-        """
-        Return the total sum from a list of `fields`
-
-
-        :param settings
-        :param resource_type : a list of resource types. wildcards (*) are allowed at the start or at the end of each resource_type
-        :param _filters : a list of defined filters (coming from a parent class)
-
-        Return a dict with the `field` as key and sum as value
-        """
-        if 'fields' in settings:
-            fields = settings['fields']
-        else:
-            fields = self.df.columns()
-
-        if 'filters' in settings:
-            df = self.df.copy()
-            df = df[self._apply_filters(df, settings['filters'])]
-        else:
-            df = self.df
-        return {f: int(df[f].sum()) for f in settings['fields']}
-
-    def fields_sum_by_property(self, settings):
+    def query(self, settings):
         """
         Return the total sum from a list of `fields` aggregated by cross-property
 
-        :param fields : a list of files
-        :param resource_type : a list of resource types. wildcards (*) are allowed at the start or at the end of each resource_type
-        :params group_by : if None, return all properties combinations possible. If a tuple of properties, return all combination matching those fields
-        :param _filters : a list of defined filters (coming from a parent class)
+        :param settings
 
         Return a list of dictionaries with two keys "properties" and "counters".
 
@@ -144,10 +118,6 @@ class CounterRequest(object):
         ]
         """
         results = {}
-        if 'group_by' in settings:
-            group_by = settings['group_by']
-        else:
-            group_by = self.DISTRIBUTION_COLUMNS
 
         if 'fields' in settings:
             fields = settings['fields']
@@ -155,15 +125,26 @@ class CounterRequest(object):
             fields = filter(lambda i: i not in self.DISTRIBUTION_COLUMNS, self.df.columns.tolist())
 
         df = self.df.copy()
+
         if 'filters' in settings:
             df = df[self._apply_filters(df, settings['filters'])]
-        df = self._map_host_group_by(df, group_by)
-        df = self._map_resource_type_group_by(df, group_by)
-        df = df.groupby(group_by).agg('sum').reset_index()
+
+        if 'group_by' in settings:
+            df = self._map_host_group_by(df, settings['group_by'])
+            df = self._map_resource_type_group_by(df, settings['group_by'])
+            df = df.groupby(settings['group_by']).agg('sum').reset_index()
+        else:
+            """
+            No group_by, we return a dictionnary with all counters
+            """
+            df = df.sum().reset_index()
+            results = {field: int(value) for field, value in df.values if field in fields}
+            return {"counters": results}
+
         results = []
         for i, n in enumerate(df.values):
             result = {
-                'properties': {field_: std_type(df[field_][i]) for field_ in group_by},
+                'properties': {field_: std_type(df[field_][i]) for field_ in settings['group_by']},
                 'counters': {field_: int(df[field_][i]) if df[field_][i] > 0 else 0 for field_ in fields}
             }
             results.append(result)
