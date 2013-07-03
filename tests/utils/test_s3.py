@@ -16,8 +16,6 @@ class TestCaster(unittest.TestCase):
         pass
 
     def test_uri_parse(self):
-        access_key, secret_key, bucket, location = uri_parse('s3://my_access_key@my_secret_key:bucket/location')
-        self.assertEquals(access_key, 'my_access_key')
-        self.assertEquals(secret_key, 'my_secret_key')
+        bucket, location = uri_parse('s3://bucket/location/sublocation')
         self.assertEquals(bucket, 'bucket')
-        self.assertEquals(location, 'location')
+        self.assertEquals(location, 'location/sublocation')
