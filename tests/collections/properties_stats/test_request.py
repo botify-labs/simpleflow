@@ -448,3 +448,31 @@ class TestPropertiesStats(unittest.TestCase):
             'group_by': ['resource_type__level4']
         }
         self.assertItemsEqual(request.query(settings), expected_results)
+
+    def test_not(self):
+        df = DataFrame(self.data)
+        request = PropertiesStatsRequest(df)
+
+        settings = {
+            'fields': ['pages_nb'],
+            'filters': [
+                {'field': 'host', 'value': 'www.site.com', 'not': True}
+            ]
+        }
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 20})
+
+        settings = {
+            'fields': ['pages_nb'],
+            'filters': [
+                {'field': 'host', 'value': '*.site.com', 'not': True}
+            ]
+        }
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 0})
+
+        settings = {
+            'fields': ['pages_nb'],
+            'filters': [
+                {'field': 'host', 'value': ['www.site.com', 'music.site.com'], 'not': True}
+            ]
+        }
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 20})

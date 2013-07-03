@@ -48,11 +48,17 @@ class CounterRequest(object):
         return pattern
 
     def get_func_from_filter_dict(self, df, _filter):
+        # Not operator
+        if _filter.get('not', False):
+            _op = lambda i: operator.__not__(i)
+        else:
+            _op = lambda i: i
+
         if isinstance(_filter['value'], list):
             _clean_filters = map(lambda i: self._transform_filter_value(i), _filter['value'])
-            return df[_filter['field']].map(lambda i: any(bool(re.search(_v, i)) for _v in _clean_filters))
+            return df[_filter['field']].map(lambda i: _op(any(bool(re.search(_v, i)) for _v in _clean_filters)))
         else:
-            return df[_filter['field']].map(lambda i: bool(re.search(self._transform_filter_value(_filter['value']), i)))
+            return df[_filter['field']].map(lambda i: _op(bool(re.search(self._transform_filter_value(_filter['value']), i))))
 
     def _apply_filters_list(self, df, lst, _operator='or'):
         filters_func = None
