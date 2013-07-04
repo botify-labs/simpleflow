@@ -18,20 +18,21 @@ def group_with(left, **stream_defs):
         if left_func:
             left_func(attributes, line)
 
-        for stream, key_idx, func in stream_defs.itervalues():
-            if not stream in id_:
+        for stream_name, stream_def in stream_defs.iteritems():
+            stream, key_idx, func = stream_def
+            if not stream_name in id_:
                 try:
-                    right_line[stream] = stream.next()
+                    right_line[stream_name] = stream.next()
                 except StopIteration:
                     continue
-                id_[stream] = right_line[stream][key_idx]
+                id_[stream_name] = right_line[stream_name][key_idx]
 
-            while id_[stream] == current_id:
-                func(attributes, right_line[stream])
+            while id_[stream_name] == current_id:
+                func(attributes, right_line[stream_name])
 
                 try:
-                    right_line[stream] = stream.next()
-                    id_[stream] = right_line[stream][key_idx]
+                    right_line[stream_name] = stream.next()
+                    id_[stream_name] = right_line[stream_name][key_idx]
                 except StopIteration:
                     break
         yield current_id, attributes
