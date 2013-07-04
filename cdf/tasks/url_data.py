@@ -12,6 +12,15 @@ from cdf.collections.url_data import UrlDataGenerator
 from cdf.streams.utils import split_file
 
 
+def prepare_crawl_index(crawL_id, es_location, es_index):
+    es = ElasticSearch(es_location)
+    try:
+        es.create_index(es_index)
+        es.put_mapping(es_index, 'urls_data', URLS_DATA_MAPPING)
+    except IndexAlreadyExistsError:
+        pass
+
+
 def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False):
     """
     Generate JSON type urls documents from a crawl's `part_id` and push it to elastic search
@@ -27,11 +36,6 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
     """
 
     es = ElasticSearch(es_location)
-    try:
-        es.create_index(es_index)
-        es.put_mapping(es_index, 'urls_data', URLS_DATA_MAPPING)
-    except IndexAlreadyExistsError:
-        pass
 
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
