@@ -36,3 +36,17 @@ URLS_DATA_MAPPING = {
         }
     }
 }
+
+URLS_PROPERTIES_MAPPING = {
+    "urls_properties": {
+        "_parent": {
+            "type": "urls_data"
+        },
+        "properties": {
+            "resource_type": {
+                "type": "string",
+                "index": "not_analyzed",
+            }
+        }
+    }
+}

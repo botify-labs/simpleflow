@@ -68,7 +68,6 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True):
 
 def get_key_from_s3_uri(s3_uri):
     bucket, location = uri_parse(s3_uri)
-    conn = get_connection()
     bucket = conn.get_bucket(bucket)
     key = Key(bucket, location)
     return key

@@ -3,8 +3,12 @@ import gzip
 import lz4
 import json
 import itertools
-from pandas import HDFStore
 
+from pandas import HDFStore
+from pyelasticsearch import ElasticSearch, IndexAlreadyExistsError
+
+from cdf.log import logger
+from cdf.constants import URLS_PROPERTIES_MAPPING
 from cdf.streams.constants import STREAMS_HEADERS, STREAMS_FILES
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file, split
@@ -15,7 +19,12 @@ from cdf.utils.s3 import fetch_files, push_content, push_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
 
-def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, tmp_dir_prefix='/tmp', force_fetch=False):
+def prepare_new_revision(crawl_id, rev_num, es_location, es_index):
+    es = ElasticSearch(es_location)
+    es.put_mapping(es_index, 'urls_properties_%d' % rev_num, URLS_PROPERTIES_MAPPING)
+
+
+def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False):
     """
     Match all urls from a crawl's `part_id` to properties defined by rules in a `settings` dictionnary and save it to a S3 bucket.
 
@@ -23,9 +32,13 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, tmp
 
     :param part_id : the part_id from the crawl
     :param s3_uri : the location where the file will be pushed. filename will be url_properties.txt.[part_id]
+    :param settings : a settings dictionnary
+    :param es_location : elastic search location (ex: http://localhost:9200)
+    :param es_index : index name where to push the documents.
     :param tmp_dir : the temporary directory where the S3 files will be put to compute the task
     :param force_fetch : fetch the S3 files even if they are already in the temp directory
     """
+    es = ElasticSearch(es_location)
 
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
@@ -38,8 +51,20 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, tmp
 
     g = UrlPropertiesGenerator(stream_patterns, settings)
 
-    map_func = lambda k: '\t'.join((str(k[0]), k[1]['resource_type']))
-    content = '\n'.join(map(map_func, g))
+    docs = []
+    raw_lines = []
+    for i, document in enumerate(g):
+        docs.append({"_parent": document[0], "id": document[0], "resource_type": document[1]['resource_type']})
+        raw_lines.append('\t'.join((str(document[0]), document[1]['resource_type'])))
+        if i % 10000 == 9999:
+            es.bulk_index(es_index, 'urls_properties_%d' % rev_num, docs)
+            docs = []
+            logger.info('%d items imported to urls_properties_%d ES for %s (part %d)' % (i, rev_num, es_index, part_id))
+    # Push the missing documents
+    if docs:
+        es.bulk_index(es_index, 'urls_properties_%s' % rev_num, docs)
+
+    content = '\n'.join(raw_lines)
 
     encoded_content = lz4.dumps(content)
     push_content(os.path.join(s3_uri, 'url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)), encoded_content)
