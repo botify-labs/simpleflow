@@ -21,6 +21,7 @@ def extract_patterns(attributes, stream_item):
         attributes['query_string_keys'] = [q[0] for q in qs]
         attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
         attributes['query_string_items'] = qs
+    attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
 
 
 def extract_infos(attributes, stream_item):
@@ -46,6 +47,8 @@ def extract_contents(attributes, stream_item):
         attributes["metadata"][verbose_content_type] = [txt]
     else:
         attributes["metadata"][verbose_content_type].append(txt)
+
+    attributes["metadata_nb"][verbose_content_type] += 1
 
 
 def extract_outlinks(attributes, stream_item):

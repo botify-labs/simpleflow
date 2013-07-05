@@ -10,6 +10,14 @@ URLS_DATA_MAPPING = {
             "host": {"type": "string"},
             "http_code": {"type": "long"},
             "id": {"type": "long"},
+            "metadata_nb": {
+                "properties": {
+                    "description": {"type": "long"},
+                    "h1": {"type": "long"},
+                    "h2": {"type": "long"},
+                    "title": {"type": "long"}
+                }
+            },
             "metadata": {
                 "properties": {
                     "description": {"type": "string"},
