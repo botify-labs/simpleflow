@@ -8,7 +8,7 @@ from cdf.log import logger
 from cdf.utils.s3 import fetch_files
 from cdf.streams.caster import Caster
 from cdf.streams.constants import STREAMS_HEADERS, STREAMS_FILES
-from cdf.collections.url_data import UrlDataGenerator
+from cdf.collections.url_data.generator import UrlDataGenerator
 from cdf.streams.utils import split_file
 
 

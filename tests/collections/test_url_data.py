@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 from cdf.log import logger
-from cdf.collections.url_data import UrlDataGenerator
+from cdf.collections.url_data.generator import UrlDataGenerator
 
 logger.setLevel(logging.DEBUG)
 
@@ -42,6 +42,7 @@ class TestUrlDataGenerator(unittest.TestCase):
                              'depth': 0,
                              'http_code': 200,
                              'delay2': 456,
+                             'metadata_nb': {'description': 0, 'h1': 0, 'h2': 0, 'title': 0},
                              'meta_noindex': False,
                              'meta_nofollow': False,
                              }
