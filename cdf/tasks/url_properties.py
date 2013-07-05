@@ -19,7 +19,7 @@ from cdf.utils.s3 import fetch_files, push_content, push_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
 
-def prepare_revision_indexed(crawl_id, rev_num, es_location, es_index):
+def prepare_revision_index(crawl_id, rev_num, es_location, es_index):
     es = ElasticSearch(es_location)
     es.put_mapping(es_index, 'urls_properties_%d' % rev_num, URLS_PROPERTIES_MAPPING)
 
@@ -135,9 +135,6 @@ def _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_pre
 
             if stream_identifier == "properties":
                 streams_types[stream_identifier].append(cast(split(lz4.loads(open(path_local).read()).split('\n'))))
-            # Warning : contents files are not sorted (stan has to do it)
-            elif stream_identifier == "contents":
-                streams_types[stream_identifier].append(sorted(cast(split_file(gzip.open(path_local)))))
             else:
                 streams_types[stream_identifier].append(cast(split_file(gzip.open(path_local))))
 
