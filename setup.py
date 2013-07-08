@@ -24,7 +24,7 @@ setup(
     zip_safe=True,
     install_requires=[
         'ujson==1.33',
-        'pyhash=0.5.0',
+        'pyhash==0.5.0',
         'pyelasticsearch==0.5',
         'boto==2.9.6',
         'lz4==0.6.0',
