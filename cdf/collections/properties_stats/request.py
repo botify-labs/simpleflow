@@ -26,7 +26,13 @@ def std_type(value):
     return value
 
 
+class BadRequest(Exception):
+    pass
+
+
 class CounterRequest(object):
+
+    BadRequest = BadRequest
 
     def __init__(self, df):
         self.df = df
@@ -39,14 +45,6 @@ class CounterRequest(object):
         store = HDFStore(files_fetched[0][0])
         return cls(store[cls.STORE_KEY])
 
-    def _transform_filter_value(self, value):
-        """
-        This function is called to create filters from `resource_type` and `host`
-        Wildcards (*) are replaced by a regular expression to make the check
-        """
-        pattern = "^%s$" % value.replace('*', '([\w-]+)')
-        return pattern
-
     def get_func_from_filter_dict(self, df, _filter):
         # Not operator
         if _filter.get('not', False):
@@ -54,11 +52,27 @@ class CounterRequest(object):
         else:
             _op = lambda i: i
 
-        if isinstance(_filter['value'], list):
-            _clean_filters = map(lambda i: self._transform_filter_value(i), _filter['value'])
-            return df[_filter['field']].map(lambda i: _op(any(bool(re.search(_v, i)) for _v in _clean_filters)))
-        else:
-            return df[_filter['field']].map(lambda i: _op(bool(re.search(self._transform_filter_value(_filter['value']), i))))
+        predicate = _filter.get('predicate', None)
+        if not predicate:
+            if isinstance(_filter['value'], list):
+                predicate = "in"
+            else:
+                predicate = "eq"
+
+        if predicate == "eq":
+            _predicate_func = lambda value, i: value == i
+        elif predicate == "re":
+            _predicate_func = lambda value, i: bool(re.search(value, i))
+        elif predicate == "starts":
+            _predicate_func = lambda value, i: i.startswith(value)
+        elif predicate == "ends":
+            _predicate_func = lambda value, i: i.endswith(value)
+        elif predicate == "contains":
+            _predicate_func = lambda value, i: value in i
+        elif predicate == "in":
+            _predicate_func = lambda value, i: any(i == v for v in value)
+
+        return df[_filter['field']].map(lambda i: _op(_predicate_func(_filter['value'], i)))
 
     def _apply_filters_list(self, df, lst, _operator='or'):
         filters_func = None

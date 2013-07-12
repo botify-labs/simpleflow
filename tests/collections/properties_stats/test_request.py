@@ -64,18 +64,6 @@ class TestPropertiesStats(unittest.TestCase):
         }
         self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
 
-        # Wildcart at start
-        settings['filters'] = [
-            {'field': 'host', 'value': '*.site.com'}
-        ]
-        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
-
-        # Wildcard at start and at end
-        settings['filters'] = [
-            {'field': 'host', 'value': '*.site.*'}
-        ]
-        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
-
         # explicit OR condition
         settings['filters'] = {
             'or': [
@@ -88,11 +76,68 @@ class TestPropertiesStats(unittest.TestCase):
         # AND condition
         settings['filters'] = {
             'and': [
-                {'field': 'host', 'value': '*.site.com'},
+                {'field': 'host', 'predicate': 'ends', 'value': '.site.com'},
                 {'field': 'resource_type', 'value': 'article'}
             ]
         }
         self.assertEquals(request.query(settings)['counters'], {'pages_nb': 10})
+
+    def test_predicates(self):
+        df = DataFrame(self.data)
+        request = PropertiesStatsRequest(df)
+        settings = {
+            'fields': ['pages_nb'],
+            'filters': [
+            ]
+        }
+
+        # eq explicit
+        settings['filters'] = [
+            {'field': 'host', 'predicate': 'eq', 'value': 'www.site.com'}
+        ]
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 10})
+
+        # eq implicit
+        settings['filters'] = [
+            {'field': 'host', 'value': 'www.site.com'}
+        ]
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 10})
+
+        # in implicit
+        settings['filters'] = [
+            {'field': 'host', 'value': ['www.site.com', 'subdomain.site.com']}
+        ]
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
+
+        # in explicit
+        settings['filters'] = [
+            {'field': 'host', 'predicate': 'in', 'value': ['www.site.com', 'subdomain.site.com']}
+        ]
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
+
+        # starts
+        settings['filters'] = [
+            {'field': 'host', 'predicate': 'starts', 'value': 'www'}
+        ]
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 10})
+
+        # ends
+        settings['filters'] = [
+            {'field': 'host', 'predicate': 'ends', 'value': '.site.com'}
+        ]
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
+
+        # contains
+        settings['filters'] = [
+            {'field': 'host', 'predicate': 'contains', 'value': '.site.'}
+        ]
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
+
+        # re
+        settings['filters'] = [
+            {'field': 'host', 'predicate': 're', 'value': '(www|subdomain).site.com'}
+        ]
+        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
 
     def test_nested_filter(self):
         df = DataFrame(self.data)
@@ -464,7 +509,7 @@ class TestPropertiesStats(unittest.TestCase):
         settings = {
             'fields': ['pages_nb'],
             'filters': [
-                {'field': 'host', 'value': '*.site.com', 'not': True}
+                {'field': 'host', 'predicate':'ends', 'value': '.site.com', 'not': True}
             ]
         }
         self.assertEquals(request.query(settings)['counters'], {'pages_nb': 0})
