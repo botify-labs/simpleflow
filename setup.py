@@ -1,6 +1,6 @@
 import os
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 root = os.path.abspath(os.path.dirname(__file__))
 
@@ -38,7 +38,5 @@ setup(
     package_dir={'': '.'},
     include_package_data=False,
 
-    packages=[
-        'cdf',
-    ],
+    packages=find_packages(),
 )
