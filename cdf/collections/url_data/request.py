@@ -129,11 +129,19 @@ class UrlRequest(object):
         """
 
         if not 'fields' in query:
-            query['fields'] = ('url', 'metadata.h1')
+            query['fields'] = ('url',)
 
         results = {}
         s = ElasticSearch(self.es_location)
         alt_results = s.search(self.make_raw_query(query, sort=sort), index=self.es_index, doc_type="urls_properties_%d" % self.revision_number, size=limit, es_from=start)
+
+        if alt_results["hits"]["total"] == 0:
+            return {
+                "count": 0,
+                "start": start,
+                "limit": limit,
+                "results": []
+            }
 
         # Fetch urls data
         results_ids = [r['_id'] for r in alt_results['hits']['hits']]
@@ -142,10 +150,7 @@ class UrlRequest(object):
         results = []
 
         for r in alt_results['hits']['hits']:
-            _url_doc = urls_documents_dict[r['_id']]
-            url = _url_doc['protocol'] + '://' + ''.join([_url_doc[field] for field in ('host', 'path', 'query_string')])
-
-            document = {'id': r['_id'], 'url': url}
+            document = {'id': r['_id']}
 
             for _f in QUERY_URLS_DATA_FIELDS:
                 if _f in query['fields']:
@@ -160,7 +165,7 @@ class UrlRequest(object):
             results.append(document)
 
         returned_data = {
-            'total': alt_results['hits']['total'],
+            'count': alt_results['hits']['total'],
             'start': start,
             'limit': limit,
             'results': results

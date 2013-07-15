@@ -1,12 +1,14 @@
 import ujson
 from itertools import izip
 
-
 from cdf.streams.constants import STREAMS_HEADERS, CONTENT_TYPE_INDEX
 from cdf.log import logger
 from cdf.streams.transformations import group_with
 from cdf.streams.utils import idx_from_stream
 from cdf.utils.date import date_2k_mn_to_date
+
+import pyhash
+hasher = pyhash.fnv1_64()
 
 
 def extract_patterns(attributes, stream_item):
@@ -18,6 +20,8 @@ def extract_patterns(attributes, stream_item):
     if query_string:
         # The first character is ? we flush it in the split
         qs = [k.split('=') if '=' in k else [k, ''] for k in query_string[1:].split('&')]
+        attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
+        attributes['url_hash'] = hasher(attributes['url'])
         attributes['query_string_keys'] = [q[0] for q in qs]
         attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
         attributes['query_string_items'] = qs
