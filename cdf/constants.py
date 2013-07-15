@@ -1,6 +1,8 @@
 URLS_DATA_MAPPING = {
     "urls": {
         "properties": {
+            "url": {"type": "string"},
+            "url_hash": {"type":"long"},
             "byte_size": {"type": "long"},
             "date_crawled": {"type": "date"},
             "delay1": {"type": "long"},

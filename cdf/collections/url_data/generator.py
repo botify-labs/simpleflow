@@ -1,17 +1,20 @@
 import ujson
 from itertools import izip
 
-
 from cdf.streams.constants import STREAMS_HEADERS, CONTENT_TYPE_INDEX
 from cdf.log import logger
 from cdf.streams.transformations import group_with
 from cdf.streams.utils import idx_from_stream
 from cdf.utils.date import date_2k_mn_to_date
+from cdf.utils.hashing import string_to_int64
 
 
 def extract_patterns(attributes, stream_item):
     # Create initial dictionary
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
+
+    attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
+    attributes['url_hash'] = string_to_int64(attributes['url'])
 
     # query_string fields
     query_string = stream_item[4]
