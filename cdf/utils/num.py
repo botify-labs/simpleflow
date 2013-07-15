@@ -1,5 +1,5 @@
-import struct
+import ctypes
 
 
 def to_u64(number):
-    return struct.unpack('q', struct.pack('Q', number))[0]
+    return ctypes.c_longlong(number).value
