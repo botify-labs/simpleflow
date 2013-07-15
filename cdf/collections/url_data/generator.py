@@ -6,22 +6,21 @@ from cdf.log import logger
 from cdf.streams.transformations import group_with
 from cdf.streams.utils import idx_from_stream
 from cdf.utils.date import date_2k_mn_to_date
-
-import pyhash
-hasher = pyhash.fnv1_64()
+from cdf.utils.hashing import string_to_u64
 
 
 def extract_patterns(attributes, stream_item):
     # Create initial dictionary
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
 
+    attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
+    attributes['url_hash'] = string_to_u64(attributes['url'])
+
     # query_string fields
     query_string = stream_item[4]
     if query_string:
         # The first character is ? we flush it in the split
         qs = [k.split('=') if '=' in k else [k, ''] for k in query_string[1:].split('&')]
-        attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
-        attributes['url_hash'] = hasher(attributes['url'])
         attributes['query_string_keys'] = [q[0] for q in qs]
         attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
         attributes['query_string_items'] = qs
