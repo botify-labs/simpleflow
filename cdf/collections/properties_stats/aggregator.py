@@ -5,7 +5,7 @@ hasher = pyhash.fnv1_32()
 from collections import defaultdict, Counter
 from pandas import DataFrame
 
-from cdf.streams.constants import CONTENT_TYPE_INDEX
+from cdf.streams.constants import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
 from cdf.streams.utils import group_left, idx_from_stream
 from cdf.collections.properties_stats.constants import (COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS,
                                                         META_FIELDS, CROSS_PROPERTIES_META_COLUMNS)
@@ -228,15 +228,25 @@ class PropertiesStatsMetaAggregator(object):
         content_hash_idx = idx_from_stream('contents', 'hash')
 
         results = defaultdict(Counter)
+
         for result in group_left(left, **streams_ref):
             key = (result[1][host_idx], result[2]['properties'][0][resource_type_idx])
             hash_key = hasher(','.join(key))
             contents = result[2]['contents']
 
+            # For each url, we check if it has correctly title, description and h1 filled
+            # If not, we'll consider that the url has not enough metadata
+            metadata_score = 0
+
             # Meta filled
             for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
                 if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
                     results[key]['%s_filled_nb' % ct_txt] += 1
+                    if ct_txt in MANDATORY_CONTENT_TYPES:
+                        metadata_score += 1
+
+            if metadata_score < 3:
+                results[key]['not_enough_metadata'] += 1
 
             # Fetch --first-- hash from each content type and watch add it to hashes set
             ct_found = set()
@@ -265,7 +275,8 @@ class PropertiesStatsMetaAggregator(object):
                     result['%s_local_unik_nb' % ct_txt] = len(hashes_by_key[ct_id][hash_key])
                     # We fetch all set where there is only the hash_key (that means uniq)
                     result['%s_global_unik_nb' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
-
+            if not 'not_enough_metadata' in result:
+                result['not_enough_metadata'] = 0
         return results
 
     def get_dataframe(self):

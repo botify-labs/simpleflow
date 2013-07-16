@@ -57,3 +57,5 @@ CONTENT_TYPE_INDEX = {
     3: 'h2',
     4: 'description'
 }
+
+MANDATORY_CONTENT_TYPES = ('title', 'h1', 'description')

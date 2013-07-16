@@ -203,6 +203,7 @@ class TestPropertiesStatsMeta(unittest.TestCase):
                  'description_filled_nb': 0,
                  'description_local_unik_nb': 0,
                  'description_global_unik_nb': 0,
+                 'not_enough_metadata': 2
                  },
             ('www.site.com', 'homepage'):
                 {'h1_filled_nb': 1,
@@ -217,9 +218,41 @@ class TestPropertiesStatsMeta(unittest.TestCase):
                  'description_filled_nb': 0,
                  'description_local_unik_nb': 0,
                  'description_global_unik_nb': 0,
+                 'not_enough_metadata': 1,
                  }
         }
         results = a.get()
 
         self.assertEquals(results[('www.site.com', 'product')], expected_results[('www.site.com', 'product')])
         self.assertEquals(results[('www.site.com', 'homepage')], expected_results[('www.site.com', 'homepage')])
+
+    def test_metadata(self):
+        stream_patterns = iter((
+            [1, 'http', 'www.site.com', '/', ''],
+            [2, 'http', 'www.site.com', '/product.html', ''],
+            [3, 'http', 'www.site.com', '/another_product.html', ''],
+        ))
+
+        stream_properties = iter((
+            [1, "homepage"],
+            [2, "product"],
+            [3, "product"]
+        ))
+
+        stream_contents = iter((
+            [1, 2, 1234, 'My first H1'],
+            [1, 2, 456, 'My second H1'],
+            [1, 3, 7867, 'My H2'],
+            [1, 4, 999, 'My description'],
+            [1, 1, 8999, 'My title'],
+            [2, 2, 1234, 'My first H1'],
+            [3, 2, 9877, 'My other H1'],
+            [3, 3, 7867, 'My H2'],
+            [3, 1, 78867, 'My title'],
+            [3, 4, 3999, 'My description'],
+        ))
+
+        a = PropertiesStatsMetaAggregator(stream_patterns, stream_properties, stream_contents)
+        results = a.get()
+        self.assertEquals(results[('www.site.com', 'homepage')]['not_enough_metadata'], 0)
+        self.assertEquals(results[('www.site.com', 'product')]['not_enough_metadata'], 1)
