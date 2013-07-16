@@ -153,7 +153,7 @@ def compute_properties_stats_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix='
 
     store = HDFStore(h5_file, complevel=9, complib='blosc')
     store['counter'] = _get_df_properties_stats_counter_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix, force_fetch)
-    store['meta_unicity'] = _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix, force_fetch)
+    store['meta_uniqueness'] = _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix, force_fetch)
     store.close()
 
     push_file(os.path.join(s3_uri, 'properties_stats_rev%d.h5' % rev_num), h5_file)

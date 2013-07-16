@@ -222,4 +222,4 @@ class PropertiesStatsRequest(CounterRequest):
 
 class PropertiesStatsMetaRequest(CounterRequest):
     DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_META_COLUMNS
-    STORE_KEY = 'meta_unicity'
+    STORE_KEY = 'meta_uniqueness'
