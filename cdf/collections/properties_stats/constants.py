@@ -16,8 +16,8 @@ COUNTERS_FIELDS = (
     'inlinks_follow_nb',
     'inlinks_nofollow_nb',
     'delay_gte_2s',
-    'delay_gte_1s',
-    'delay_gte_500ms',
+    'delay_from_1s_to_2s',
+    'delay_from_500ms_to_1s',
     'delay_lt_500ms'
 )
 

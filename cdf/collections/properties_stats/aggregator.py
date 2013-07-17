@@ -15,9 +15,9 @@ def delay_to_range(delay):
     if delay >= 2000:
         return "delay_gte_2s"
     elif delay >= 1000:
-        return "delay_gte_1s"
+        return "delay_from_1s_to_2s"
     elif delay >= 500:
-        return "delay_gte_500ms"
+        return "delay_from_500ms_to_1s"
     return "delay_lt_500ms"
 
 
