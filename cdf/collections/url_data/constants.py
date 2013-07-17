@@ -1,4 +1,5 @@
-QUERY_URLS_DATA_FIELDS = (
+QUERY_URLS_FIELDS = (
+    "url",
     "protocol",
     "path",
     "query",
@@ -27,6 +28,6 @@ QUERY_URLS_DATA_FIELDS = (
     "inlinks_nofollow_ids"
 )
 
-QUERY_URLS_PROPERTIES_FIELDS = (
+QUERY_TAGGING_FIELDS = (
     'resource_type',
 )
