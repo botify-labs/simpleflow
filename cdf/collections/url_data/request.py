@@ -46,7 +46,6 @@ class UrlRequest(object):
         """
         Transform Botify query to elastic search query
         """
-
         def has_parent_query_func(q):
             return {
                 "has_parent": {
@@ -107,6 +106,18 @@ class UrlRequest(object):
 
         :param query
 
+        Example of query : 
+        {
+            "fields": ["url", "id", "metadata.h1"],
+            "sort": ["id"],
+            "filters": [
+                {"field": "metadata.h1", "predicate": "match", "value": "recette"}
+            ],
+            "mapping_filters": [
+                {"field": "resource_type", "value": "recette/permalink"}
+            ]
+        }
+
         Ex :
 
         {
@@ -130,6 +141,11 @@ class UrlRequest(object):
 
         if not 'fields' in query:
             query['fields'] = ('url',)
+
+        if 'sort' in query:
+            sort = query['sort']
+        else:
+            sort = ('id', )
 
         results = {}
         s = ElasticSearch(self.es_location)
@@ -155,7 +171,10 @@ class UrlRequest(object):
             for _f in QUERY_URLS_DATA_FIELDS:
                 if _f in query['fields']:
                     if '.' in _f:
-                        document[_f] = reduce(dict.get, _f.split("."), urls_documents_dict[r['_id']])
+                        try:
+                            document[_f] = reduce(dict.get, _f.split("."), urls_documents_dict[r['_id']])
+                        except:
+                            document[_f] = None
                     else:
                         document[_f] = urls_documents_dict[r['_id']][_f]
             for _f in QUERY_URLS_PROPERTIES_FIELDS:
