@@ -5,10 +5,9 @@ import json
 import itertools
 
 from pandas import HDFStore
-from pyelasticsearch import ElasticSearch, IndexAlreadyExistsError
+from pyelasticsearch import ElasticSearch
 
 from cdf.log import logger
-from cdf.constants import URLS_PROPERTIES_MAPPING
 from cdf.streams.constants import STREAMS_HEADERS, STREAMS_FILES
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file, split
@@ -17,11 +16,6 @@ from cdf.collections.properties_stats.aggregator import (PropertiesStatsAggregat
                                                          PropertiesStatsMetaAggregator)
 from cdf.utils.s3 import fetch_files, push_content, push_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
-
-
-def prepare_revision_index(crawl_id, rev_num, es_location, es_index):
-    es = ElasticSearch(es_location)
-    es.put_mapping(es_index, 'urls_properties_%d' % rev_num, URLS_PROPERTIES_MAPPING)
 
 
 def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False):
@@ -54,15 +48,26 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
     docs = []
     raw_lines = []
     for i, document in enumerate(g):
-        docs.append({"_parent": document[0], "id": document[0], "resource_type": document[1]['resource_type']})
+        doc = {
+            "id": document[0],
+            "script": """if (ctx._source[\"tagging\"] == null) { ctx._source.tagging = tagging } else {
+                       ctx._source.tagging += comment }""",
+            "params": {
+                "tagging": {
+                    "resource_type": document[1]['resource_type'],
+                    "rev_id": rev_num
+                }
+            }
+        }
+        docs.append(doc)
         raw_lines.append('\t'.join((str(document[0]), document[1]['resource_type'])))
         if i % 10000 == 9999:
-            es.bulk_index(es_index, 'urls_properties_%d' % rev_num, docs)
+            es.bulk_update(es_index, 'crawl_%d' % crawl_id, docs)
             docs = []
-            logger.info('%d items imported to urls_properties_%d ES for %s (part %d)' % (i, rev_num, es_index, part_id))
+            logger.info('%d items updated to crawl_%d ES for %s (part %d)' % (i, crawl_id, es_index, part_id))
     # Push the missing documents
     if docs:
-        es.bulk_index(es_index, 'urls_properties_%s' % rev_num, docs)
+        es.bulk_update(es_index, 'crawl_%d' % crawl_id, docs)
 
     content = '\n'.join(raw_lines)
 

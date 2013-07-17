@@ -12,11 +12,11 @@ from cdf.collections.url_data.generator import UrlDataGenerator
 from cdf.streams.utils import split_file
 
 
-def prepare_crawl_index(crawL_id, es_location, es_index):
+def prepare_crawl_index(crawl_id, es_location, es_index):
     es = ElasticSearch(es_location)
     try:
         es.create_index(es_index)
-        es.put_mapping(es_index, 'urls_data', URLS_DATA_MAPPING)
+        es.put_mapping(es_index, 'crawl_%d' % crawl_id, URLS_DATA_MAPPING)
     except IndexAlreadyExistsError:
         pass
 
@@ -59,9 +59,9 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
     for i, document in enumerate(g):
         docs.append(document[1])
         if i % 10000 == 9999:
-            es.bulk_index(es_index, 'urls_data', docs)
+            es.bulk_index(es_index, 'crawl_%d' % crawl_id, docs)
             docs = []
             logger.info('%d items imported to urls_data ES for %s (part %d)' % (i, es_index, part_id))
     # Push the missing documents
     if docs:
-        es.bulk_index(es_index, 'urls_data', docs)
+        es.bulk_index(es_index, 'crawl_%d' % crawl_id, docs)
