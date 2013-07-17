@@ -21,10 +21,18 @@ def is_boolean_operation_filter(filter_dict):
 
 
 def std_type(value):
+    print value
+    print type(value)
     if type(value) == numpy.bool_:
         return bool(value)
     elif type(value) == numpy.int64:
         return int(value)
+    elif type(value) == numpy.float:
+        if numpy.isnan(value):
+            return 0
+        else:
+            return int(value)
+
     return value
 
 
@@ -160,14 +168,14 @@ class CounterRequest(object):
             No group_by, we return a dictionnary with all counters
             """
             df = df.sum().reset_index()
-            results = {field: int(value) for field, value in df.values if field in fields}
+            results = {field: std_type(value) for field, value in df.values if field in fields}
             return {"counters": results}
 
         results = []
         for i, n in enumerate(df.values):
             result = {
                 'properties': {field_: std_type(df[field_][i]) for field_ in settings['group_by']},
-                'counters': {field_: int(df[field_][i]) if df[field_][i] > 0 else 0 for field_ in fields}
+                'counters': {field_: std_type(df[field_][i]) if df[field_][i] > 0 else 0 for field_ in fields}
             }
             results.append(result)
         return results
