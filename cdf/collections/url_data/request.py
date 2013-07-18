@@ -186,7 +186,10 @@ class UrlRequest(object):
                         except:
                             document[_f] = None
                     else:
-                        document[_f] = r['_source'][_f]
+                        if _f in r['_source']:
+                            document[_f] = r['_source'][_f]
+                        else:
+                            document[_f] = None
             for _f in QUERY_TAGGING_FIELDS:
                 if _f in query['fields']:
                     for t in r['_source']['tagging']:
