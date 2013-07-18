@@ -1,5 +1,6 @@
 import os
 import gzip
+import copy
 
 from pyelasticsearch import ElasticSearch, IndexAlreadyExistsError
 
@@ -16,9 +17,12 @@ def prepare_crawl_index(crawl_id, es_location, es_index):
     es = ElasticSearch(es_location)
     try:
         es.create_index(es_index)
-        es.put_mapping(es_index, 'crawl_%d' % crawl_id, URLS_DATA_MAPPING)
-    except IndexAlreadyExistsError:
-        pass
+        urls_data_mapping = URLS_DATA_MAPPING
+        urls_data_mapping['urls']['properties']['tagging_%s' % crawl_id] = copy.deepcopy(urls_data_mapping['urls']['properties']['tagging'])
+        del urls_data_mapping['urls']['properties']['tagging']
+        es.put_mapping(es_index, 'crawl_%d' % crawl_id, urls_data_mapping)
+    except IndexAlreadyExistsError, e:
+        logger.error("IndexAlreadyExistsError : {}".format(str(e)))
 
 
 def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False):

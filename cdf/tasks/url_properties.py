@@ -50,8 +50,8 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
     for i, document in enumerate(g):
         doc = {
             "id": document[0],
-            "script": """if (ctx._source[\"tagging\"] == null) { ctx._source.tagging = [tagging] } else {
-                       ctx._source.tagging += tagging }""",
+            "script": """if (ctx._source[\"tagging_{crawl_id}\"] == null) {{ ctx._source.tagging_{crawl_id} = [tagging] }} else {{
+                       ctx._source.tagging_{crawl_id} += tagging }}""".format(crawl_id=crawl_id),
             "params": {
                 "tagging": {
                     "resource_type": document[1]['resource_type'],
