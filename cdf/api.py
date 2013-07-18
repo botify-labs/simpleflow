@@ -17,8 +17,7 @@ def post(api_endpoint, token, data):
         'content-Type': 'application/json',
         'Authorization': 'Token %s' % token
     }
-    r = requests.post(api_endpoint, data=json.dumps(data), headers=headers)
-    return r.json()
+    return requests.post(api_endpoint, data=json.dumps(data), headers=headers)
 
 
 def patch(api_endpoint, token, data):
@@ -26,5 +25,4 @@ def patch(api_endpoint, token, data):
         'content-Type': 'application/json',
         'Authorization': 'Token %s' % token
     }
-    r = requests.patch(api_endpoint, data=json.dumps(data), headers=headers)
-    return r.json()
+    return requests.patch(api_endpoint, data=json.dumps(data), headers=headers)
