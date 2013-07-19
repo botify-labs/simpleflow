@@ -23,34 +23,40 @@ class TestUrlDataGenerator(unittest.TestCase):
             [1, 'http', 'www.site.com', '/path/name.html', ''],
         )
 
-        resource_type_settings = {
-            '*.site.com': [
-                {'query': "STARTS(path, '/path')",
-                 'value': "mypath"
-                 }
-            ]
-        }
+        resource_type_settings = [
+            {
+                'host': '*.site.com',
+                'rules': [
+                    {'query': "STARTS(path, '/path')",
+                     'value': "mypath"
+                     }
+                ]
+            }
+        ]
 
         u = UrlPropertiesGenerator(iter(patterns), resource_type_settings)
         results = list(u)
-        self.assertEquals(results[0], (1, {"resource_type": "mypath"}))
+        self.assertEquals(results[0], (1, {"resource_type": "mypath", "host": "www.site.com"}))
 
     def test_unkown(self):
         patterns = (
             [1, 'http', 'www.site.com', '/path/name.html', ''],
         )
 
-        resource_type_settings = {
-            '*.site.com': [
-                {'query': "STARTS(path, '/another_path')",
-                 'value': "mypath"
-                 }
-            ]
-        }
+        resource_type_settings = [
+            {
+                'host': '*.site.com',
+                'rules': [
+                    {'query': "STARTS(path, '/another_path')",
+                     'value': "mypath"
+                     }
+                ]
+            }
+        ]
 
         u = UrlPropertiesGenerator(iter(patterns), resource_type_settings)
         results = list(u)
-        self.assertEquals(results[0], (1, {"resource_type": "unkown"}))
+        self.assertEquals(results[0], (1, {"resource_type": "unkown", "host": "www.site.com"}))
 
     def test_abstract(self):
         """
@@ -60,25 +66,28 @@ class TestUrlDataGenerator(unittest.TestCase):
             [1, 'http', 'www.site.com', '/path/name.html', ''],
         )
 
-        resource_type_settings = {
-            '*.site.com': [
-                {'query': "STARTS(path, '/path')",
-                 'abstract': True,
-                 'rule_id': 'path_rule'
-                 },
-                {'query': "ENDS(path, '.json')",
-                 'value': 'json',
-                 'inherits_from': 'path_rule'
-                 }
-            ]
-        }
+        resource_type_settings = [
+            {
+                'host': '*.site.com',
+                'rules': [
+                    {'query': "STARTS(path, '/path')",
+                     'abstract': True,
+                     'rule_id': 'path_rule'
+                     },
+                    {'query': "ENDS(path, '.json')",
+                     'value': 'json',
+                     'inherits_from': 'path_rule'
+                     }
+                ]
+            }
+        ]
 
         u = UrlPropertiesGenerator(iter(patterns), resource_type_settings)
         results = list(u)
-        self.assertEquals(results[0], (1, {"resource_type": "unkown"}))
+        self.assertEquals(results[0], (1, {"resource_type": "unkown", "host": "www.site.com"}))
 
         # Now we had another rule which should match
-        resource_type_settings['*.site.com'].append({
+        resource_type_settings[0]['rules'].append({
             'query': "ENDS(path, '.html')",
             'value': 'html',
             'inherits_from': 'path_rule'
@@ -86,7 +95,7 @@ class TestUrlDataGenerator(unittest.TestCase):
 
         u = UrlPropertiesGenerator(iter(patterns), resource_type_settings)
         results = list(u)
-        self.assertEquals(results[0], (1, {"resource_type": "html"}))
+        self.assertEquals(results[0], (1, {"resource_type": "html", "host": "www.site.com"}))
 
     def test_inherits(self):
         """
@@ -96,19 +105,21 @@ class TestUrlDataGenerator(unittest.TestCase):
             [1, 'http', 'www.site.com', '/music/name.html', ''],
         )
 
-        resource_type_settings = {
-            '*.site.com': [
-                {'query': "STARTS(path, '/movie')",
-                 'abstract': True,
-                 'rule_id': 'movie_rule'
-                 },
-                {'query': "ENDS(path, '.json')",
-                 'value': 'movie/json',
-                 'inherits_from': 'movie_rule'
-                 }
-            ]
-        }
-
+        resource_type_settings = [
+            {
+                'host': '*.site.com',
+                'rules': [
+                        {'query': "STARTS(path, '/movie')",
+                         'abstract': True,
+                         'rule_id': 'movie_rule'
+                         },
+                        {'query': "ENDS(path, '.json')",
+                         'value': 'movie/json',
+                         'inherits_from': 'movie_rule'
+                         }
+                ]
+            }
+        ]
         u = UrlPropertiesGenerator(iter(patterns), resource_type_settings)
         results = list(u)
-        self.assertEquals(results[0], (1, {"resource_type": "unkown"}))
+        self.assertEquals(results[0], (1, {"resource_type": "unkown", "host": "www.site.com"}))

@@ -35,12 +35,14 @@ class UrlPropertiesGenerator(object):
                 if rule['query'](protocol, host, path, query_string, locator):
                     if not rule.get('abstract', False):
                         found = True
-                        yield (url_id, {"resource_type": rule['value'], "_parent": url_id, "id": url_id})
+                        yield (url_id, {"resource_type": rule['value'],
+                                        "host": host})
                         break
                     else:
                         parents_matches.add(rule['rule_id'])
             if not found:
-                yield (url_id, {"resource_type": "unkown", "_parent": url_id, "id": url_id})
+                yield (url_id, {"resource_type": "unkown",
+                                "host": host})
 
     def save_to_file(self, location):
         f = open(location, 'w')
