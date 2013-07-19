@@ -103,7 +103,7 @@ class UrlRequest(object):
             operator = filters.keys()[0].lower()
             return {operator: self._make_raw_filters(filters.values()[0])}
         elif isinstance(filters, list):
-            return [self._make_raw_filters(f) for f in filters]
+            return {"and": [self._make_raw_filters(f) for f in filters]}
         else:
             predicate = filters.get('predicate', 'eq')
             if filters.get('not', False):
