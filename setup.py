@@ -2,8 +2,8 @@ import os
 
 from setuptools import setup, find_packages
 
-root = os.path.abspath(os.path.dirname(__file__))
 
+root = os.path.abspath(os.path.dirname(__file__))
 version = __import__('cdf').__version__
 
 with open(os.path.join(root, 'README.rst')) as f:
