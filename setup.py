@@ -32,7 +32,8 @@ setup(
         'pandas==0.11.0',
         'numexpr==2.1',
         'Cython==0.19.1',
-        'tables==3.0.0'
+        'tables==3.0.0',
+        'lockfile==0.9.1'
     ],
 
     package_dir={'': '.'},

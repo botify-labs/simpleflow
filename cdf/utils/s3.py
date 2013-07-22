@@ -1,3 +1,4 @@
+import time
 import os
 import re
 from urlparse import urlparse
@@ -5,6 +6,8 @@ from urlparse import urlparse
 import boto
 from boto.s3.key import Key
 from cdf.log import logger
+
+from lockfile import FileLock
 
 conn = boto.connect_s3()
 
@@ -40,7 +43,7 @@ def list_files(s3_uri, regexp=None):
     return files
 
 
-def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True):
+def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True, lock=True):
     """
     Fetch files from an `s3_uri` and save them to `dest_dir`
     Files can be filters by a list of `prefixes` or `suffixes`
@@ -55,13 +58,31 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True):
         key = key_obj.name
 
         path = os.path.join(dest_dir, key[len(location) + 1:])
+
+        if lock:
+            lock_obj = FileLock(path)
+
         if not os.path.exists(os.path.dirname(path)):
             os.makedirs(os.path.dirname(path))
         if not force_fetch and os.path.exists(path):
+            if lock:
+                nb_checks = 0
+                while lock_obj.is_locked():
+                    time.sleep(1)
+                    nb_checks += 1
+                    if nb_checks > 10:
+                        raise Exception('Timeout on lock checking for %s' % path)
             files.append((path, False))
             continue
         logger.info('Fetch %s' % key)
-        key_obj.get_contents_to_filename(path)
+
+        if lock:
+            lock_obj.acquire()
+            key_obj.get_contents_to_filename(path)
+            lock_obj.release()
+        else:
+            key_obj.get_contents_to_filename(path)
+
         files.append((path, True))
     return files
 
