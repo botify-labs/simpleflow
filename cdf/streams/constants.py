@@ -1,3 +1,6 @@
+def bool_int(val):
+    return True if val == '1' else False
+
 STREAMS_FILES = {
     'urlids': 'patterns',
     'urlinfos': 'infos',
@@ -35,14 +38,14 @@ STREAMS_HEADERS = {
     'OUTLINKS': (
         ('id', int),
         ('link_type', str),
-        ('follow', bool),
+        ('nofollow', bool_int),
         ('dst_url_id', int),
         ('external_url', str)
     ),
     'INLINKS': (
         ('id', int),
         ('link_type', str),
-        ('follow', bool),
+        ('nofollow', bool_int),
         ('src_url_id', int),
     ),
     'PROPERTIES': (

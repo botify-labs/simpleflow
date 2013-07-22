@@ -82,9 +82,9 @@ def extract_outlinks(attributes, stream_item):
 
 
 def extract_inlinks(attributes, stream_item):
-    url_dst, link_type, follow, url_src = stream_item
+    url_dst, link_type, nofollow, url_src = stream_item
     if link_type == "a":
-        follow_key = "follow" if follow else "nofollow"
+        follow_key = "nofollow" if nofollow else "follow"
         key_nb = "inlinks_%s_nb" % follow_key
 
         if key_nb not in attributes:
@@ -92,15 +92,23 @@ def extract_inlinks(attributes, stream_item):
         else:
             attributes[key_nb] += 1
 
-        if url_dst > 0:
+        if url_src > 0:
             key_ids = "inlinks_%s_ids" % follow_key
             if key_ids not in attributes:
                 attributes[key_ids] = [url_src]
-            else:
+            elif len(attributes[key_ids]) < 300 and url_src not in attributes[key_ids]:
                 attributes[key_ids].append(url_src)
+
     elif link_type.startswith('r'):
         http_code = int(link_type[1:])
-        attributes['redirect_from'] = {'url_id': url_src, 'http_code': http_code}
+        if 'redirect_from' not in attributes:
+            attributes['redirect_from'] = []
+            attributes['redirects_nb'] = 0
+
+        attributes['redirects_nb'] += 1
+        if len(attributes['redirect_from']) < 300:
+            attributes['redirect_from'].append({'url_id': url_src, 'http_code': http_code})
+
     elif link_type == "canonical":
         nb_duplicates = attributes.get('canonical_nb_duplicates', 0) + 1
         attributes['canonical_nb_duplicates'] = nb_duplicates
