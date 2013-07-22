@@ -1,13 +1,12 @@
 import os
+import pkgutil
 
 from setuptools import setup, find_packages
 
+
 root = os.path.abspath(os.path.dirname(__file__))
-
 version = __import__('cdf').__version__
-
-with open(os.path.join(root, 'README.rst')) as f:
-    README = f.read()
+README = pkgutil.get_data('', 'README.rst')
 
 setup(
     name='cdf',
