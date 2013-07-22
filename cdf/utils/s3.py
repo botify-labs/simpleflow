@@ -77,9 +77,8 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True, lock=True):
         logger.info('Fetch %s' % key)
 
         if lock:
-            lock_obj.acquire()
-            key_obj.get_contents_to_filename(path)
-            lock_obj.release()
+            with lock_obj:
+                key_obj.get_contents_to_filename(path)
         else:
             key_obj.get_contents_to_filename(path)
 
