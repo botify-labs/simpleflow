@@ -35,19 +35,15 @@ class PropertiesStatsAggregator(object):
         Return a tuple of dictionaries
         Values are a sub-dictonnary with fields :
             * `keys`, a tuple with following format :
-            (host, resource_type, content_type, depth, index, follow)
-            str,  str,           str,          int,   bool,  bool
+            (host, resource_type, content_type, depth, http_code, index, follow)
+            str,  str,           str,          int,   http_code, bool,  bool
             * `counters` : a dictionary of counters
 
         Ex :
         {
-           "keys": ["www.site.com", "/article", "text/html", 1, True, True],
+           "keys": ["www.site.com", "/article", "text/html", 1, 200, True, True],
            "counters": {
                    "pages_nb": 10,
-                   "pages_code_200": 5,
-                   "pages_code_301": 5,
-                   "pages_code_ok": 5,
-                   "pages_code_ko": 5,
                    "redirections_nb": 0,
                    "inlinks_nb": 10,
                    "inlinks_follow_nb": 10,
@@ -92,6 +88,7 @@ class PropertiesStatsAggregator(object):
         results = defaultdict(lambda: copy.copy(counter_dict))
         for k, result in enumerate(group_left(left, **streams_ref)):
             infos = result[2]['infos'][0]
+            properties = result[2]['properties'][0]
             outlinks = result[2]['outlinks']
             inlinks = result[2]['inlinks']
 
@@ -99,17 +96,15 @@ class PropertiesStatsAggregator(object):
             index = not (4 & infos[infos_mask_idx] == 4)
             follow = not (8 & infos[infos_mask_idx] == 8)
 
-            key = (result[1][host_idx], result[2]['properties'][0][resource_type_idx], result[2]['infos'][0][content_type_idx], result[2]['infos'][0][depth_idx], index, follow)
+            key = (result[1][host_idx],
+                   properties[resource_type_idx],
+                   infos[content_type_idx],
+                   infos[depth_idx],
+                   infos[http_code_idx],
+                   index,
+                   follow)
 
             results[key]['pages_nb'] += 1
-
-            if not 'pages_code_%s' % infos[http_code_idx] in results[key]:
-                results[key]['pages_code_%s' % infos[http_code_idx]] = 1
-            else:
-                results[key]['pages_code_%s' % infos[http_code_idx]] += 1
-
-            code_type = 'pages_code_ok' if infos[http_code_idx] in (200, 304) else 'pages_code_ko'
-            results[key][code_type] += 1
 
             results[key][delay_to_range(infos[delay2_idx])] += 1
             results[key]['total_delay_ms'] += infos[delay2_idx]
@@ -149,9 +144,8 @@ class PropertiesStatsConsolidator(object):
         Return a dictionnary of aggregated values by cross-property
 
         {
-            ("www.site.com", "/article", "text/html", 1, True, True): {
+            ("www.site.com", "/article", "text/html", 1, 200, True, True): {
                 "pages_nb": 6766,
-                "pages_code_200": 200,
                 ...
             }
         }

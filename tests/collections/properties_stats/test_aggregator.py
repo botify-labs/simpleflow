@@ -48,28 +48,23 @@ class TestPropertiesStats(unittest.TestCase):
         stats = a.get()
         logger.info(stats)
 
-        # Reminder : keys = host, resource_type, content_type, depth, index, follow
+        # Reminder : keys = host, resource_type, content_type, depth, http_code, index, follow
         expected_keys = [
-            ['www.site.com', 'homepage', 'text/html', 0, False, True],
-            ['www.site.com', 'product', 'text/html', 1, True, False],
+            ['www.site.com', 'homepage', 'text/html', 0, 200, False, True],
+            ['www.site.com', 'product', 'text/html', 1, 404, True, False],
         ]
-
         cross_properties = [k['cross_properties'] for k in stats]
         self.assertItemsEqual(cross_properties, expected_keys)
 
-        homepage_idx = cross_properties.index(['www.site.com', 'homepage', 'text/html', 0, False, True])
+        homepage_idx = cross_properties.index(['www.site.com', 'homepage', 'text/html', 0, 200, False, True])
         stats_homepage = stats[homepage_idx]['counters']
         self.assertEquals(stats_homepage['pages_nb'], 1)
-        self.assertEquals(stats_homepage['pages_code_ok'], 1)
-        self.assertEquals(stats_homepage['pages_code_ko'], 0)
         self.assertEquals(stats_homepage['outlinks_nb'], 1)
         self.assertEquals(stats_homepage['canonical_incoming_nb'], 1)
 
-        product_idx = cross_properties.index(['www.site.com', 'product', 'text/html', 1, True, False])
+        product_idx = cross_properties.index(['www.site.com', 'product', 'text/html', 1, 404, True, False])
         stats_product = stats[product_idx]['counters']
         self.assertEquals(stats_product['pages_nb'], 1)
-        self.assertEquals(stats_product['pages_code_ok'], 0)
-        self.assertEquals(stats_product['pages_code_ko'], 1)
         self.assertEquals(stats_product['inlinks_nb'], 1)
         self.assertEquals(stats_product['inlinks_follow_nb'], 1)
         self.assertEquals(stats_product['inlinks_nofollow_nb'], 0)
@@ -77,54 +72,51 @@ class TestPropertiesStats(unittest.TestCase):
         self.assertEquals(stats_product['canonical_filled_nb'], 1)
         self.assertEquals(stats_product['canonical_duplicates_nb'], 1)
 
+
 class TestPropertiesStatsConsolidator(unittest.TestCase):
 
     def test_simple(self):
         stats_part_0 = [
             {
-                "cross_properties": ["www.site.com", "homepage", "text/html", 0, True, True],
+                "cross_properties": ["www.site.com", "homepage", "text/html", 0, 200, True, True],
                 "counters": {
                     "pages_nb": 10,
-                    "pages_code_200": 5,
-                    "pages_code_301": 5
                 }
             },
             {
-                "cross_properties": ["my.site.com", "product", "text/html", 0, True, True],
+                "cross_properties": ["my.site.com", "product", "text/html", 0, 301, True, True],
                 "counters": {
                     "pages_nb": 30,
-                    "pages_code_200": 10,
-                    "pages_code_301": 20
+                }
+            },
+            {
+                "cross_properties": ["my.site.com", "product", "text/html", 0, 200, True, True],
+                "counters": {
+                    "pages_nb": 10,
                 }
             }
         ]
 
         stats_part_1 = [
             {
-                "cross_properties": ["my.site.com", "product", "text/html", 0, True, True],
+                "cross_properties": ["my.site.com", "product", "text/html", 0, 200, True, True],
                 "counters": {
                     "pages_nb": 10,
-                    "pages_code_200": 5,
-                    "pages_code_301": 5
                 }
             },
             {
-                "cross_properties": ["music.site.com", "artist", "text/html", 0, True, True],
+                "cross_properties": ["music.site.com", "artist", "text/html", 0, 404, True, True],
                 "counters": {
                     "pages_nb": 30,
-                    "pages_code_200": 10,
-                    "pages_code_301": 20
                 }
             }
         ]
 
         stats_part_2 = [
             {
-                "cross_properties": ["music.site.com", "artist", "text/html", 0, True, True],
+                "cross_properties": ["music.site.com", "artist", "text/html", 0, 200, True, True],
                 "counters": {
                     "pages_nb": 130,
-                    "pages_code_200": 100,
-                    "pages_code_301": 30
                 }
             }
         ]
@@ -133,27 +125,25 @@ class TestPropertiesStatsConsolidator(unittest.TestCase):
         aggregated_data = c.consolidate()
 
         expected_data = {
-            ('music.site.com', 'artist', 'text/html', 0, True, True): {
-                'pages_nb': 160,
-                'pages_code_200': 110,
-                'pages_code_301': 50
+            ('music.site.com', 'artist', 'text/html', 0, 200, True, True): {
+                'pages_nb': 130,
             },
-            ('www.site.com', 'homepage', 'text/html', 0, True, True): {
+            ('music.site.com', 'artist', 'text/html', 0, 404, True, True): {
+                'pages_nb': 30,
+            },
+            ('www.site.com', 'homepage', 'text/html', 0, 200, True, True): {
                 'pages_nb': 10,
-                'pages_code_200': 5,
-                'pages_code_301': 5
             },
-            ('my.site.com', 'product', 'text/html', 0, True, True): {
-                'pages_nb': 40,
-                'pages_code_200': 15,
-                'pages_code_301': 25
+            ('my.site.com', 'product', 'text/html', 0, 200, True, True): {
+                'pages_nb': 20,
+            },
+            ('my.site.com', 'product', 'text/html', 0, 301, True, True): {
+                'pages_nb': 30,
             }
         }
 
-        mysite_key = ('my.site.com', 'product', 'text/html', 0, True, True)
-        music_key = ('music.site.com', 'artist', 'text/html', 0, True, True)
-        self.assertEquals(aggregated_data[mysite_key], expected_data[mysite_key])
-        self.assertEquals(aggregated_data[music_key], expected_data[music_key])
+        for key, value in expected_data.iteritems():
+            self.assertEquals(aggregated_data[key], value)
 
 
 class TestPropertiesStatsMeta(unittest.TestCase):
