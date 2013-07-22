@@ -21,8 +21,6 @@ def is_boolean_operation_filter(filter_dict):
 
 
 def std_type(value):
-    print value
-    print type(value)
     if type(value) == numpy.bool_:
         return bool(value)
     elif type(value) == numpy.int64:
