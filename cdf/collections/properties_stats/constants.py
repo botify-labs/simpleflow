@@ -1,11 +1,9 @@
 from cdf.streams.constants import CONTENT_TYPE_INDEX
 
-CROSS_PROPERTIES_COLUMNS = ('host', 'resource_type', 'content_type', 'depth', 'index', 'follow')
+CROSS_PROPERTIES_COLUMNS = ('host', 'resource_type', 'content_type', 'depth', 'http_code', 'index', 'follow')
 
 COUNTERS_FIELDS = (
     'pages_nb',
-    'pages_code_ok',
-    'pages_code_ko',
     'outlinks_nb',
     'total_delay_ms',
     'redirections_nb',
