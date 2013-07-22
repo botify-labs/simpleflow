@@ -1,5 +1,6 @@
 from pyelasticsearch import ElasticSearch
 
+from cdf.utils.dict import deep_update
 from .constants import QUERY_URLS_FIELDS, QUERY_TAGGING_FIELDS
 
 PREDICATE_FORMATS = {
@@ -188,7 +189,6 @@ class UrlRequest(object):
 
         results = {}
         s = ElasticSearch(self.es_location)
-        print self.make_raw_query(query, sort=sort)
         alt_results = s.search(self.make_raw_query(query, sort=sort),
                                index=self.es_index,
                                doc_type="crawl_%d" % self.crawl_id,
@@ -212,9 +212,10 @@ class UrlRequest(object):
                 if _f in query['fields']:
                     if '.' in _f:
                         try:
-                            document[_f] = reduce(dict.get, _f.split("."), r['_source'])
+                            value = [reduce(dict.get, _f.split("."), r['_source'])]
                         except:
-                            document[_f] = None
+                            value = [0]
+                        deep_update(document, reduce(lambda x, y: {y: x}, reversed(_f.split('.') + value)))
                     else:
                         if _f in r['_source']:
                             document[_f] = r['_source'][_f]
