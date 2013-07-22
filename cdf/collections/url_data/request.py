@@ -27,6 +27,36 @@ PREDICATE_FORMATS = {
         "regexp": {
             filters['field']: "@%s@" % filters['value']
         }
+    },
+    'gte': lambda filters: {
+        "range": {
+            filters['field']: {
+                "from": filters['value'],
+            }
+        }
+    },
+    'gt': lambda filters: {
+        "range": {
+            filters['field']: {
+                "from": filters['value'],
+                "include_lower": False
+            }
+        }
+    },
+    'lte': lambda filters: {
+        "range": {
+            filters['field']: {
+                "to": filters['value'],
+            }
+        }
+    },
+    'lt': lambda filters: {
+        "range": {
+            filters['field']: {
+                "to": filters['value'],
+                "include_upper": False
+            }
+        }
     }
 }
 
