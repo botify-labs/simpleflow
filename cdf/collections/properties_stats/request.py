@@ -75,6 +75,14 @@ class CounterRequest(object):
             _predicate_func = lambda value, i: i.startswith(value)
         elif predicate == "ends":
             _predicate_func = lambda value, i: i.endswith(value)
+        elif predicate == "gte":
+            _predicate_func = lambda value, i: i >= value
+        elif predicate == "lte":
+            _predicate_func = lambda value, i: i <= value
+        elif predicate == "gt":
+            _predicate_func = lambda value, i: i > value
+        elif predicate == "lt":
+            _predicate_func = lambda value, i: i < value
         elif predicate == "contains":
             _predicate_func = lambda value, i: value in i
         elif predicate == "in":
