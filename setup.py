@@ -23,10 +23,10 @@ setup(
     keywords='botify data extractor crawl',
     zip_safe=True,
     install_requires=[
+        'boto',
         'ujson==1.33',
         'pyhash==0.5.0',
         'pyelasticsearch==0.5',
-        'boto==2.9.6',
         'lz4==0.6.0',
         'numpy',
         'pandas==0.11.0',
