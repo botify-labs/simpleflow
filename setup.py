@@ -10,7 +10,7 @@ with open(os.path.join(root, 'README.rst')) as f:
     README = f.read()
 
 setup(
-    name='cdf',
+    name='botify-cdf',
     version=version,
     license='MIT',
 
