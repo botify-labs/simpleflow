@@ -1,5 +1,4 @@
-class GroupWithSkipException(Exception):
-    pass
+from .exceptions import GroupWithSkipException
 
 
 def group_with(left, **stream_defs):

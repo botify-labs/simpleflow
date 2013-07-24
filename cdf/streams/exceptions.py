@@ -1,0 +1,2 @@
+class GroupWithSkipException(Exception):
+    pass
