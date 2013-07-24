@@ -1,5 +1,24 @@
-def bool_int(val):
-    return True if val == '1' else False
+def follow_mask(val):
+    """
+    0 follow, else mask :
+    1 link no-follow
+    2 meta no-follow
+    4 robots no-follow
+    8 config no-folfow
+    """
+    if val == "0":
+        return "follow"
+    else:
+        mask = int(val)
+        if 1 & mask == 1:
+            return "link_nofollow"
+        elif 2 & mask == 2:
+            return "meta_nofollow"
+        elif 4 & mask == 4:
+            return "robots_nofollow"
+        elif 8 & mask == 8:
+            return "config_nofollow"
+
 
 STREAMS_FILES = {
     'urlids': 'patterns',
@@ -38,14 +57,14 @@ STREAMS_HEADERS = {
     'OUTLINKS': (
         ('id', int),
         ('link_type', str),
-        ('nofollow', bool_int),
+        ('follow', follow_mask),
         ('dst_url_id', int),
         ('external_url', str)
     ),
     'INLINKS': (
         ('id', int),
         ('link_type', str),
-        ('nofollow', bool_int),
+        ('follow', follow_mask),
         ('src_url_id', int),
     ),
     'PROPERTIES': (

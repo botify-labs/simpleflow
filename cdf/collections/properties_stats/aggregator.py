@@ -82,6 +82,7 @@ class PropertiesStatsAggregator(object):
         outlinks_type_idx = idx_from_stream('outlinks', 'link_type')
         outlinks_src_idx = idx_from_stream('outlinks', 'id')
         outlinks_dst_idx = idx_from_stream('outlinks', 'dst_url_id')
+        outlinks_follow_idx = idx_from_stream('outlinks', 'follow')
 
         counter_dict = {field: 0 for field in COUNTERS_FIELDS}
 
@@ -96,11 +97,17 @@ class PropertiesStatsAggregator(object):
             index = not (4 & infos[infos_mask_idx] == 4)
             follow = not (8 & infos[infos_mask_idx] == 8)
 
+            http_code = infos[http_code_idx]
+            in_queue = http_code in (0, 1, 2)
+            # If the page has not been crawled, we skip it
+            if in_queue:
+                continue
+
             key = (result[1][host_idx],
                    properties[resource_type_idx],
                    infos[content_type_idx],
                    infos[depth_idx],
-                   infos[http_code_idx],
+                   http_code,
                    index,
                    follow)
 
@@ -118,10 +125,14 @@ class PropertiesStatsAggregator(object):
             results[key]['canonical_incoming_nb'] += len(filter(lambda i: i[inlinks_type_idx] == "canonical", inlinks))
 
             for link in inlinks:
-                if link[inlinks_type_idx] == "a" and link[inlinks_follow_idx]:
-                    results[key]['inlinks_follow_nb'] += 1
-                else:
-                    results[key]['inlinks_nofollow_nb'] += 1
+                if link[inlinks_type_idx] == "a":
+                    follow_key = link[inlinks_follow_idx]
+                    results[key]['inlinks_{}_nb'.format(follow_key)] += 1
+
+            for link in outlinks:
+                if link[outlinks_type_idx] == "a":
+                    follow_key = link[outlinks_follow_idx]
+                    results[key]['outlinks_{}_nb'.format(follow_key)] += 1
 
         # Transform defaultdict to dict
         final_results = []
