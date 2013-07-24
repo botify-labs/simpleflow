@@ -1,23 +1,18 @@
+# Order of masks is important !
+FOLLOW_MASKS = [
+    (0, "follow"),
+    (8, "config_nofollow"),
+    (4, "robots_nofollow"),
+    (2, "meta_nofollow"),
+    (1, "link_nofollow"),
+]
+
+
 def follow_mask(val):
-    """
-    0 follow, else mask :
-    1 link no-follow
-    2 meta no-follow
-    4 robots no-follow
-    8 config no-folfow
-    """
-    if val == "0":
-        return "follow"
-    else:
-        mask = int(val)
-        if 1 & mask == 1:
-            return "link_nofollow"
-        elif 2 & mask == 2:
-            return "meta_nofollow"
-        elif 4 & mask == 4:
-            return "robots_nofollow"
-        elif 8 & mask == 8:
-            return "config_nofollow"
+    mask = int(val)
+    for bitmask, term in FOLLOW_MASKS:
+        if bitmask & mask == bitmask:
+            return term
 
 
 STREAMS_FILES = {
