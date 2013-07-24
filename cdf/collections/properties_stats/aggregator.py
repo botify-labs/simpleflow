@@ -116,23 +116,21 @@ class PropertiesStatsAggregator(object):
             results[key][delay_to_range(infos[delay2_idx])] += 1
             results[key]['total_delay_ms'] += infos[delay2_idx]
 
-            results[key]['outlinks_nb'] += len(filter(lambda i: i[outlinks_type_idx] == "a", outlinks))
             results[key]['redirections_nb'] += len(filter(lambda i: i[outlinks_type_idx].startswith("r"), outlinks))
             results[key]['canonical_filled_nb'] += len(filter(lambda i: i[outlinks_type_idx] == "canonical", outlinks))
             results[key]['canonical_duplicates_nb'] += len(filter(lambda i: i[outlinks_type_idx] == "canonical" and i[outlinks_src_idx] != i[outlinks_dst_idx], outlinks))
-
-            results[key]['inlinks_nb'] += len(filter(lambda i: i[inlinks_type_idx] == "a", inlinks))
             results[key]['canonical_incoming_nb'] += len(filter(lambda i: i[inlinks_type_idx] == "canonical", inlinks))
 
-            for link in inlinks:
-                if link[inlinks_type_idx] == "a":
-                    follow_key = link[inlinks_follow_idx]
-                    results[key]['inlinks_{}_nb'.format(follow_key)] += 1
+            # Store inlinks and outlinks counters
+            for link_direction in ('inlinks', 'outlinks'):
+                follow_idx = idx_from_stream(link_direction, 'follow')
+                type_idx = inlinks_type_idx if link_direction == "inlinks" else outlinks_type_idx
 
-            for link in outlinks:
-                if link[outlinks_type_idx] == "a":
-                    follow_key = link[outlinks_follow_idx]
-                    results[key]['outlinks_{}_nb'.format(follow_key)] += 1
+                results[key]['{}_nb'.format(link_direction)] += len(filter(lambda i: i[type_idx] == "a", result[2][link_direction]))
+                for link in result[2][link_direction]:
+                    if link[type_idx] == "a":
+                        follow_key = link[follow_idx]
+                        results[key]['{}_{}_nb'.format(link_direction, follow_key)] += 1
 
         # Transform defaultdict to dict
         final_results = []
