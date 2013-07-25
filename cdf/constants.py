@@ -38,6 +38,13 @@ URLS_DATA_MAPPING = {
                     "title": {"type": "string"}
                 }
             },
+            "metadata_duplicate": {
+                "properties": {
+                    "title": {"type": "long"},
+                    "description": {"type": "long"},
+                    "h1": {"type": "long"}
+                }
+            },
             "outlinks_external_follow_nb": {"type": "long"},
             "outlinks_follow_ids": {"type": "long"},
             "outlinks_internal_follow_nb": {"type": "long"},
