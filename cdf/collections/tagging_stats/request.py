@@ -4,7 +4,7 @@ import operator
 from pandas import HDFStore
 import numpy
 
-from cdf.collections.tagging_stats.constants import CROSS_PROPERTIES_COLUMNS, CROSS_PROPERTIES_META_COLUMNS
+from cdf.collections.tagging_stats.mapping import CROSS_PROPERTIES_COLUMNS, CROSS_PROPERTIES_META_COLUMNS
 
 from cdf.utils.s3 import fetch_files
 

@@ -5,9 +5,9 @@ hasher = pyhash.fnv1_32()
 from collections import defaultdict, Counter
 from pandas import DataFrame
 
-from cdf.streams.constants import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
+from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
 from cdf.streams.utils import group_left, idx_from_stream
-from cdf.collections.tagging_stats.constants import (COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS,
+from cdf.collections.tagging_stats.mapping import (COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS,
                                                         META_FIELDS, CROSS_PROPERTIES_META_COLUMNS)
 
 
