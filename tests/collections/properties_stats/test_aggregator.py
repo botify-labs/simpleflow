@@ -35,13 +35,13 @@ class TestPropertiesStats(unittest.TestCase):
         ))
 
         stream_outlinks = iter((
-            [1, 'a', True, 2, ''],
-            [2, 'canonical', True, 1, ''],
+            [1, 'a', 'follow', 2, ''],
+            [2, 'canonical', 'follow', 1, ''],
         ))
 
         stream_inlinks = iter((
-            [1, 'canonical', True, 2],
-            [2, 'a', True, 1]
+            [1, 'canonical', 'follow', 2],
+            [2, 'a', 'follow', 1]
         ))
 
         a = PropertiesStatsAggregator(stream_patterns, stream_infos, stream_properties, stream_outlinks, stream_inlinks)
@@ -67,7 +67,8 @@ class TestPropertiesStats(unittest.TestCase):
         self.assertEquals(stats_product['pages_nb'], 1)
         self.assertEquals(stats_product['inlinks_nb'], 1)
         self.assertEquals(stats_product['inlinks_follow_nb'], 1)
-        self.assertEquals(stats_product['inlinks_nofollow_nb'], 0)
+        self.assertEquals(stats_product['inlinks_link_nofollow_nb'], 0)
+        self.assertEquals(stats_product['inlinks_meta_nofollow_nb'], 0)
         self.assertEquals(stats_product['outlinks_nb'], 0)
         self.assertEquals(stats_product['canonical_filled_nb'], 1)
         self.assertEquals(stats_product['canonical_duplicates_nb'], 1)
@@ -177,7 +178,13 @@ class TestPropertiesStatsMeta(unittest.TestCase):
             [3, 3, 7867, 'My H2'],
         ))
 
-        a = PropertiesStatsMetaAggregator(stream_patterns, stream_properties, stream_contents)
+        stream_infos = iter((
+            [1, 4, 'text/html', 0, 1, 200, 1200, 303, 456, True],
+            [2, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+            [3, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+        ))
+
+        a = PropertiesStatsMetaAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
 
         expected_results = {
             ('www.site.com', 'product'):
@@ -216,6 +223,41 @@ class TestPropertiesStatsMeta(unittest.TestCase):
         self.assertEquals(results[('www.site.com', 'product')], expected_results[('www.site.com', 'product')])
         self.assertEquals(results[('www.site.com', 'homepage')], expected_results[('www.site.com', 'homepage')])
 
+    def test_not_enugh_metadata_bad_code(self):
+        """
+        A page with code not in (200, 304) should not be returned with "not_enough_metadata"
+        """
+        stream_patterns = iter((
+            [1, 'http', 'www.site.com', '/', ''],
+            [2, 'http', 'www.site.com', '/product.html', ''],
+            [3, 'http', 'www.site.com', '/another_product.html', ''],
+        ))
+
+        stream_properties = iter((
+            [1, "homepage"],
+            [2, "product"],
+            [3, "product"]
+        ))
+
+        stream_contents = iter((
+            [1, 2, 1234, 'My first H1'],
+            [1, 2, 456, 'My second H1'],
+            [1, 3, 7867, 'My H2'],
+            [1, 1, 8999, 'My title'],
+            [2, 2, 1234, 'My first H1'],
+        ))
+
+        stream_infos = iter((
+            [1, 4, 'text/html', 0, 1, 200, 1200, 303, 456, True], # 200 code
+            [2, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True], # 200 code
+            [3, 8, 'text/html', 1, 1, 301, 1200, 303, 456, True], # 301 code
+        ))
+
+        a = PropertiesStatsMetaAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
+        results = a.get()
+        self.assertEquals(results[('www.site.com', 'product')]['not_enough_metadata'], 1)
+
+
     def test_metadata(self):
         stream_patterns = iter((
             [1, 'http', 'www.site.com', '/', ''],
@@ -242,7 +284,13 @@ class TestPropertiesStatsMeta(unittest.TestCase):
             [3, 4, 3999, 'My description'],
         ))
 
-        a = PropertiesStatsMetaAggregator(stream_patterns, stream_properties, stream_contents)
+        stream_infos = iter((
+            [1, 4, 'text/html', 0, 1, 200, 1200, 303, 456, True],
+            [2, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+            [3, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+        ))
+
+        a = PropertiesStatsMetaAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
         results = a.get()
         self.assertEquals(results[('www.site.com', 'homepage')]['not_enough_metadata'], 0)
         self.assertEquals(results[('www.site.com', 'product')]['not_enough_metadata'], 1)
