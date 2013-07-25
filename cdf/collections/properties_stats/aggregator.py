@@ -82,6 +82,7 @@ class PropertiesStatsAggregator(object):
         outlinks_type_idx = idx_from_stream('outlinks', 'link_type')
         outlinks_src_idx = idx_from_stream('outlinks', 'id')
         outlinks_dst_idx = idx_from_stream('outlinks', 'dst_url_id')
+        outlinks_follow_idx = idx_from_stream('outlinks', 'follow')
 
         counter_dict = {field: 0 for field in COUNTERS_FIELDS}
 
@@ -96,11 +97,17 @@ class PropertiesStatsAggregator(object):
             index = not (4 & infos[infos_mask_idx] == 4)
             follow = not (8 & infos[infos_mask_idx] == 8)
 
+            http_code = infos[http_code_idx]
+            in_queue = http_code in (0, 1, 2)
+            # If the page has not been crawled, we skip it
+            if in_queue:
+                continue
+
             key = (result[1][host_idx],
                    properties[resource_type_idx],
                    infos[content_type_idx],
                    infos[depth_idx],
-                   infos[http_code_idx],
+                   http_code,
                    index,
                    follow)
 
@@ -109,19 +116,21 @@ class PropertiesStatsAggregator(object):
             results[key][delay_to_range(infos[delay2_idx])] += 1
             results[key]['total_delay_ms'] += infos[delay2_idx]
 
-            results[key]['outlinks_nb'] += len(filter(lambda i: i[outlinks_type_idx] == "a", outlinks))
             results[key]['redirections_nb'] += len(filter(lambda i: i[outlinks_type_idx].startswith("r"), outlinks))
             results[key]['canonical_filled_nb'] += len(filter(lambda i: i[outlinks_type_idx] == "canonical", outlinks))
             results[key]['canonical_duplicates_nb'] += len(filter(lambda i: i[outlinks_type_idx] == "canonical" and i[outlinks_src_idx] != i[outlinks_dst_idx], outlinks))
-
-            results[key]['inlinks_nb'] += len(filter(lambda i: i[inlinks_type_idx] == "a", inlinks))
             results[key]['canonical_incoming_nb'] += len(filter(lambda i: i[inlinks_type_idx] == "canonical", inlinks))
 
-            for link in inlinks:
-                if link[inlinks_type_idx] == "a" and link[inlinks_follow_idx]:
-                    results[key]['inlinks_follow_nb'] += 1
-                else:
-                    results[key]['inlinks_nofollow_nb'] += 1
+            # Store inlinks and outlinks counters
+            for link_direction in ('inlinks', 'outlinks'):
+                follow_idx = idx_from_stream(link_direction, 'follow')
+                type_idx = inlinks_type_idx if link_direction == "inlinks" else outlinks_type_idx
+
+                results[key]['{}_nb'.format(link_direction)] += len(filter(lambda i: i[type_idx] == "a", result[2][link_direction]))
+                for link in result[2][link_direction]:
+                    if link[type_idx] == "a":
+                        follow_key = link[follow_idx]
+                        results[key]['{}_{}_nb'.format(link_direction, follow_key)] += 1
 
         # Transform defaultdict to dict
         final_results = []

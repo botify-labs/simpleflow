@@ -4,6 +4,7 @@ from itertools import izip
 from cdf.streams.constants import STREAMS_HEADERS, CONTENT_TYPE_INDEX
 from cdf.log import logger
 from cdf.streams.transformations import group_with
+from cdf.streams.exceptions import GroupWithSkipException
 from cdf.streams.utils import idx_from_stream
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
@@ -29,6 +30,20 @@ def extract_patterns(attributes, stream_item):
 
 def extract_infos(attributes, stream_item):
     date_crawled_idx = idx_from_stream('infos', 'date_crawled')
+    http_code_idx = idx_from_stream('infos', 'http_code')
+
+    """
+    Those codes should not be returned
+    Some pages can be in the queue and not crawled
+    from some reason (ex : max pages < to the queue
+    ---------------
+    job_not_done=0,
+    job_todo=1,
+    job_in_progress=2,
+    """
+    if stream_item[http_code_idx] in (0, 1, 2):
+        raise GroupWithSkipException()
+
     stream_item[date_crawled_idx] = date_2k_mn_to_date(stream_item[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item) if i[0] != 'infos_mask'})
 

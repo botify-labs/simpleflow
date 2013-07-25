@@ -1,5 +1,19 @@
-def bool_int(val):
-    return True if val == '1' else False
+# Order of masks is important !
+FOLLOW_MASKS = [
+    (0, "follow"),
+    (8, "config_nofollow"),
+    (4, "robots_nofollow"),
+    (2, "meta_nofollow"),
+    (1, "link_nofollow"),
+]
+
+
+def follow_mask(val):
+    mask = int(val)
+    for bitmask, term in FOLLOW_MASKS:
+        if bitmask & mask == bitmask:
+            return term
+
 
 STREAMS_FILES = {
     'urlids': 'patterns',
@@ -38,14 +52,14 @@ STREAMS_HEADERS = {
     'OUTLINKS': (
         ('id', int),
         ('link_type', str),
-        ('nofollow', bool_int),
+        ('follow', follow_mask),
         ('dst_url_id', int),
         ('external_url', str)
     ),
     'INLINKS': (
         ('id', int),
         ('link_type', str),
-        ('nofollow', bool_int),
+        ('follow', follow_mask),
         ('src_url_id', int),
     ),
     'PROPERTIES': (
