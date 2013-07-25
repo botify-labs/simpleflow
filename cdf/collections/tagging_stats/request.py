@@ -4,7 +4,7 @@ import operator
 from pandas import HDFStore
 import numpy
 
-from cdf.collections.properties_stats.constants import CROSS_PROPERTIES_COLUMNS, CROSS_PROPERTIES_META_COLUMNS
+from cdf.collections.tagging_stats.constants import CROSS_PROPERTIES_COLUMNS, CROSS_PROPERTIES_META_COLUMNS
 
 from cdf.utils.s3 import fetch_files
 
@@ -231,11 +231,11 @@ class CounterRequest(object):
         return df
 
 
-class PropertiesStatsRequest(CounterRequest):
+class MetricsRequest(CounterRequest):
     DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_COLUMNS
     STORE_KEY = 'counter'
 
 
-class PropertiesStatsMetaRequest(CounterRequest):
+class MetadataRequest(CounterRequest):
     DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_META_COLUMNS
     STORE_KEY = 'meta_uniqueness'

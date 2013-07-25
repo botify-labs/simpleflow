@@ -7,7 +7,7 @@ from pandas import DataFrame
 
 from cdf.streams.constants import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
 from cdf.streams.utils import group_left, idx_from_stream
-from cdf.collections.properties_stats.constants import (COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS,
+from cdf.collections.tagging_stats.constants import (COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS,
                                                         META_FIELDS, CROSS_PROPERTIES_META_COLUMNS)
 
 
@@ -21,7 +21,7 @@ def delay_to_range(delay):
     return "delay_lt_500ms"
 
 
-class PropertiesStatsAggregator(object):
+class MetricsAggregator(object):
 
     def __init__(self, stream_patterns, stream_infos, stream_properties, stream_outlinks, stream_inlinks):
         self.stream_patterns = stream_patterns
@@ -139,7 +139,7 @@ class PropertiesStatsAggregator(object):
         return final_results
 
 
-class PropertiesStatsConsolidator(object):
+class MetricsConsolidator(object):
 
     def __init__(self, part_stats):
         """
@@ -182,7 +182,7 @@ class PropertiesStatsConsolidator(object):
         return df
 
 
-class PropertiesStatsMetaAggregator(object):
+class MetadataAggregator(object):
 
     """
     Streams injected in This class should be the entire dataset of a crawl to ensure that the unicity of metadatas are valid
