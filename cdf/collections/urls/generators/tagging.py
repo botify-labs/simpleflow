@@ -1,7 +1,7 @@
-from cdf.collections.url_properties.resource_type import compile_resource_type_settings
+from cdf.collections.urls.tagging.resource_type import compile_resource_type_settings
 
 
-class UrlPropertiesGenerator(object):
+class UrlTaggingGenerator(object):
 
     def __init__(self, stream_patterns, resource_type_settings):
         self.stream_patterns = stream_patterns

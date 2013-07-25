@@ -11,9 +11,9 @@ from cdf.log import logger
 from cdf.streams.constants import STREAMS_HEADERS, STREAMS_FILES
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file, split
-from cdf.collections.url_properties.generator import UrlPropertiesGenerator
-from cdf.collections.properties_stats.aggregator import (PropertiesStatsAggregator, PropertiesStatsConsolidator,
-                                                         PropertiesStatsMetaAggregator)
+from cdf.collections.urls.generators.tagging import UrlTaggingGenerator
+from cdf.collections.tagging_stats.aggregator import (MetricsAggregator, MetricsConsolidator,
+                                                      MetadataAggregator)
 from cdf.utils.s3 import fetch_files, push_content, push_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
@@ -43,7 +43,7 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
     cast = Caster(STREAMS_HEADERS['PATTERNS']).cast
     stream_patterns = cast(split_file(gzip.open(path_local)))
 
-    g = UrlPropertiesGenerator(stream_patterns, settings)
+    g = UrlTaggingGenerator(stream_patterns, settings)
 
     docs = []
     raw_lines = []
@@ -93,7 +93,7 @@ def compute_properties_stats_counter_from_s3(crawl_id, part_id, rev_num, s3_uri,
         else:
             streams["stream_%s" % stream_identifier] = cast(split_file(gzip.open(path_local)))
 
-    aggregator = PropertiesStatsAggregator(**streams)
+    aggregator = MetricsAggregator(**streams)
     content = json.dumps(aggregator.get())
     push_content(os.path.join(s3_uri, 'properties_stats_partial_rev%d/stats.json.%d' % (rev_num, part_id)), content)
 
@@ -111,7 +111,7 @@ def _get_df_properties_stats_counter_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_
                                 force_fetch=force_fetch)
 
     counters = [json.load(open(path_local)) for path_local, fetched in files_fetched]
-    c = PropertiesStatsConsolidator(counters)
+    c = MetricsConsolidator(counters)
     return c.get_dataframe()
 
 
@@ -144,10 +144,10 @@ def _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_pre
             else:
                 streams_types[stream_identifier].append(cast(split_file(gzip.open(path_local))))
 
-    a = PropertiesStatsMetaAggregator(itertools.chain(*streams_types['patterns']),
-                                      itertools.chain(*streams_types['properties']),
-                                      itertools.chain(*streams_types['contents']),
-                                      itertools.chain(*streams_types['infos']))
+    a = MetadataAggregator(itertools.chain(*streams_types['patterns']),
+                           itertools.chain(*streams_types['properties']),
+                           itertools.chain(*streams_types['contents']),
+                           itertools.chain(*streams_types['infos']))
     return a.get_dataframe()
 
 
