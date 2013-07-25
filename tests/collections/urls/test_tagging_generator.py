@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 from cdf.log import logger
-from cdf.collections.url_properties.generator import UrlPropertiesGenerator
+from cdf.collections.urls.generators.tagging import UrlTaggingGenerator
 
 logger.setLevel(logging.DEBUG)
 
@@ -34,7 +34,7 @@ class TestUrlDataGenerator(unittest.TestCase):
             }
         ]
 
-        u = UrlPropertiesGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "mypath", "host": "www.site.com"}))
 
@@ -54,7 +54,7 @@ class TestUrlDataGenerator(unittest.TestCase):
             }
         ]
 
-        u = UrlPropertiesGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "unkown", "host": "www.site.com"}))
 
@@ -82,7 +82,7 @@ class TestUrlDataGenerator(unittest.TestCase):
             }
         ]
 
-        u = UrlPropertiesGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "unkown", "host": "www.site.com"}))
 
@@ -93,7 +93,7 @@ class TestUrlDataGenerator(unittest.TestCase):
             'inherits_from': 'path_rule'
         })
 
-        u = UrlPropertiesGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "html", "host": "www.site.com"}))
 
@@ -120,6 +120,6 @@ class TestUrlDataGenerator(unittest.TestCase):
                 ]
             }
         ]
-        u = UrlPropertiesGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "unkown", "host": "www.site.com"}))

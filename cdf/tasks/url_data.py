@@ -8,8 +8,8 @@ from cdf.constants import URLS_DATA_MAPPING
 from cdf.log import logger
 from cdf.utils.s3 import fetch_files
 from cdf.streams.caster import Caster
-from cdf.streams.constants import STREAMS_HEADERS, STREAMS_FILES
-from cdf.collections.url_data.generator import UrlDataGenerator
+from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
+from cdf.collections.urls.generators.documents import UrlDocumentGenerator
 from cdf.streams.utils import split_file
 
 
@@ -57,7 +57,7 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
         else:
             streams[stream_identifier] = cast(split_file(gzip.open(path_local)))
 
-    g = UrlDataGenerator(stream_patterns, **streams)
+    g = UrlDocumentGenerator(stream_patterns, **streams)
 
     docs = []
     for i, document in enumerate(g):

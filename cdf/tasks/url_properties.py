@@ -11,7 +11,7 @@ from cdf.log import logger
 from cdf.streams.constants import STREAMS_HEADERS, STREAMS_FILES
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file, split
-from cdf.collections.url_properties.generator import UrlPropertiesGenerator
+from cdf.collections.urls.generators.tagging import UrlTaggingGenerator
 from cdf.collections.properties_stats.aggregator import (PropertiesStatsAggregator, PropertiesStatsConsolidator,
                                                          PropertiesStatsMetaAggregator)
 from cdf.utils.s3 import fetch_files, push_content, push_file
@@ -43,7 +43,7 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
     cast = Caster(STREAMS_HEADERS['PATTERNS']).cast
     stream_patterns = cast(split_file(gzip.open(path_local)))
 
-    g = UrlPropertiesGenerator(stream_patterns, settings)
+    g = UrlTaggingGenerator(stream_patterns, settings)
 
     docs = []
     raw_lines = []

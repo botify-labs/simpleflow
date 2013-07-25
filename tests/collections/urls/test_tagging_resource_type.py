@@ -4,9 +4,9 @@ import logging
 
 
 from cdf.log import logger
-from cdf.collections.url_properties.resource_type import (compile_resource_type_settings,
-                                                          validate_resource_type_settings,
-                                                          ResourceTypeSettingsException)
+from cdf.collections.urls.tagging.resource_type import (compile_resource_type_settings,
+                                                        validate_resource_type_settings,
+                                                        ResourceTypeSettingsException)
 
 logger.setLevel(logging.DEBUG)
 

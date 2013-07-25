@@ -1,7 +1,7 @@
 import ujson
 from itertools import izip
 
-from cdf.streams.constants import STREAMS_HEADERS, CONTENT_TYPE_INDEX
+from cdf.streams.mapping import STREAMS_HEADERS, CONTENT_TYPE_INDEX
 from cdf.log import logger
 from cdf.streams.transformations import group_with
 from cdf.streams.exceptions import GroupWithSkipException
@@ -70,11 +70,9 @@ def extract_contents(attributes, stream_item):
 
 
 def extract_outlinks(attributes, stream_item):
-    url_src, link_type, follow, url_dst, external_url = stream_item
+    url_src, link_type, follow_key, url_dst, external_url = stream_item
     if link_type == "a":
-        location_key = "internal" if url_dst > 0 else "external"
-        follow_key = "follow" if follow else "nofollow"
-        key_nb = "outlinks_%s_%s_nb" % (location_key, follow_key)
+        key_nb = "outlinks_{}_nb".format(follow_key)
 
         if key_nb not in attributes:
             attributes[key_nb] = 1
@@ -97,9 +95,8 @@ def extract_outlinks(attributes, stream_item):
 
 
 def extract_inlinks(attributes, stream_item):
-    url_dst, link_type, nofollow, url_src = stream_item
+    url_dst, link_type, follow_key, url_src = stream_item
     if link_type == "a":
-        follow_key = "nofollow" if nofollow else "follow"
         key_nb = "inlinks_%s_nb" % follow_key
 
         if key_nb not in attributes:
@@ -133,7 +130,7 @@ def extract_inlinks(attributes, stream_item):
             attributes['canonical_duplicate_ids'].append(url_src)
 
 
-class UrlDataGenerator(object):
+class UrlDocumentGenerator(object):
     EXTRACTORS = {
         'infos': extract_infos,
         'contents': extract_contents,
