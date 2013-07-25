@@ -187,10 +187,11 @@ class PropertiesStatsMetaAggregator(object):
     """
     Streams injected in This class should be the entire dataset of a crawl to ensure that the unicity of metadatas are valid
     """
-    def __init__(self, stream_patterns, stream_properties, stream_contents):
+    def __init__(self, stream_patterns, stream_properties, stream_contents, stream_infos):
         self.stream_patterns = stream_patterns
         self.stream_properties = stream_properties
         self.stream_contents = stream_contents
+        self.stream_infos = stream_infos
 
     def get(self):
         """
@@ -217,7 +218,8 @@ class PropertiesStatsMetaAggregator(object):
         """
         left = (self.stream_patterns, 0)
         streams_ref = {'properties': (self.stream_properties, 0),
-                       'contents': (self.stream_contents, idx_from_stream('contents', 'id'))
+                       'contents': (self.stream_contents, idx_from_stream('contents', 'id')),
+                       'infos': (self.stream_infos, idx_from_stream('infos', 'id')),
                        }
 
         hashes_global = {ct_id: defaultdict(set) for ct_id in CONTENT_TYPE_INDEX.iterkeys()}
@@ -228,6 +230,7 @@ class PropertiesStatsMetaAggregator(object):
         resource_type_idx = idx_from_stream('properties', 'resource_type')
         content_meta_type_idx = idx_from_stream('contents', 'content_type')
         content_hash_idx = idx_from_stream('contents', 'hash')
+        http_code_idx = idx_from_stream('infos', 'http_code')
 
         results = defaultdict(Counter)
 
@@ -238,17 +241,18 @@ class PropertiesStatsMetaAggregator(object):
 
             # For each url, we check if it has correctly title, description and h1 filled
             # If not, we'll consider that the url has not enough metadata
-            metadata_score = 0
 
-            # Meta filled
-            for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
-                if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
-                    results[key]['%s_filled_nb' % ct_txt] += 1
-                    if ct_txt in MANDATORY_CONTENT_TYPES:
-                        metadata_score += 1
+            if result[2]['infos'][0][http_code_idx] in (200, 304):
+                metadata_score = 0
+                # Meta filled
+                for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
+                    if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
+                        results[key]['%s_filled_nb' % ct_txt] += 1
+                        if ct_txt in MANDATORY_CONTENT_TYPES:
+                            metadata_score += 1
 
-            if metadata_score < 3:
-                results[key]['not_enough_metadata'] += 1
+                if metadata_score < 3:
+                    results[key]['not_enough_metadata'] += 1
 
             # Fetch --first-- hash from each content type and watch add it to hashes set
             ct_found = set()

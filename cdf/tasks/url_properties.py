@@ -125,13 +125,14 @@ def _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_pre
 
     streams_types = {'patterns': [],
                      'properties': [],
-                     'contents': []
+                     'contents': [],
+                     'infos': []
                      }
 
     for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
         files_fetched = fetch_files(s3_uri,
                                     tmp_dir,
-                                    regexp=['url(ids|contents).txt.%d.gz' % part_id, 'url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)],
+                                    regexp=['url(ids|contents|infos).txt.%d.gz' % part_id, 'url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)],
                                     force_fetch=force_fetch)
 
         for path_local, fetched in files_fetched:
@@ -145,7 +146,8 @@ def _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_pre
 
     a = PropertiesStatsMetaAggregator(itertools.chain(*streams_types['patterns']),
                                       itertools.chain(*streams_types['properties']),
-                                      itertools.chain(*streams_types['contents']))
+                                      itertools.chain(*streams_types['contents']),
+                                      itertools.chain(*streams_types['infos']))
     return a.get_dataframe()
 
 
