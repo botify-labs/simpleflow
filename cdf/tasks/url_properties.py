@@ -8,7 +8,7 @@ from pandas import HDFStore
 from pyelasticsearch import ElasticSearch
 
 from cdf.log import logger
-from cdf.streams.constants import STREAMS_HEADERS, STREAMS_FILES
+from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file, split
 from cdf.collections.urls.generators.tagging import UrlTaggingGenerator
