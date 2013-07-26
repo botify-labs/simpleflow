@@ -10,7 +10,7 @@ from cdf.utils.s3 import fetch_files
 from cdf.streams.caster import Caster
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
 from cdf.collections.urls.generators.documents import UrlDocumentGenerator
-from cdf.collections.urls.generators.metadata_duplicate import MetadataDuplicateGenerator
+from cdf.collections.urls.generators.metadata_duplicate import get_duplicate_metadata
 from cdf.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
@@ -89,8 +89,8 @@ def push_metadata_duplicate_to_elastic_search(crawl_id, s3_uri, es_location, es_
             cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
             streams_types[stream_identifier].append(cast(split_file(gzip.open(path_local))))
 
-    generator = MetadataDuplicateGenerator(itertools.chain(*streams_types['patterns']),
-                                           itertools.chain(*streams_types['contents']))
+    generator = get_duplicate_metadata(itertools.chain(*streams_types['patterns']),
+                                       itertools.chain(*streams_types['contents']))
 
     es = ElasticSearch(es_location)
     docs = []
