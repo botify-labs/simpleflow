@@ -1,6 +1,6 @@
 import os
 import gzip
-import copy
+import itertools
 
 from pyelasticsearch import ElasticSearch, ElasticHttpError, IndexAlreadyExistsError
 
@@ -10,7 +10,9 @@ from cdf.utils.s3 import fetch_files
 from cdf.streams.caster import Caster
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
 from cdf.collections.urls.generators.documents import UrlDocumentGenerator
+from cdf.collections.urls.transducers.metadata_duplicate import get_duplicate_metadata
 from cdf.streams.utils import split_file
+from cdf.utils.remote_files import nb_parts_from_crawl_location
 
 
 def prepare_crawl_index(crawl_id, es_location, es_index):
@@ -66,3 +68,45 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
     # Push the missing documents
     if docs:
         es.bulk_index(es_index, 'crawl_%d' % crawl_id, docs)
+
+
+def push_metadata_duplicate_to_elastic_search(crawl_id, s3_uri, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False):
+    # Fetch locally the files from S3
+    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+
+    streams_types = {'patterns': [],
+                     'contents': []
+                     }
+
+    for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
+        files_fetched = fetch_files(s3_uri,
+                                    tmp_dir,
+                                    regexp='url(ids|contents).txt.%d.gz' % part_id,
+                                    force_fetch=force_fetch)
+
+        for path_local, fetched in files_fetched:
+            stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
+            cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
+            streams_types[stream_identifier].append(cast(split_file(gzip.open(path_local))))
+
+    generator = get_duplicate_metadata(itertools.chain(*streams_types['patterns']),
+                                       itertools.chain(*streams_types['contents']))
+
+    es = ElasticSearch(es_location)
+    docs = []
+    for i, result in enumerate(generator):
+        doc = {
+            "id": result[1],
+            "script": """if(ctx._source['metadata_duplicate'] == null) {{ctx._source['metadata_duplicate'] = {{ '{metadata_type}':urls_ids }};}}
+                        else {{ ctx._source.metadata_duplicate['{metadata_type}'] = urls_ids; }}""".format(metadata_type=result[0]),
+            "params": {
+                "urls_ids": result[2]
+            }
+        }
+        docs.append(doc)
+        if i % 10000 == 9999:
+            es.bulk_update(es_index, 'crawl_%d' % crawl_id, docs)
+            docs = []
+            logger.info('%d items updated to crawl_%d ES for %s' % (i, crawl_id, es_index))
+    if docs:
+        es.bulk_update(es_index, 'crawl_%d' % crawl_id, docs)
