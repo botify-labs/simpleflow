@@ -10,7 +10,7 @@ from cdf.utils.s3 import fetch_files
 from cdf.streams.caster import Caster
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
 from cdf.collections.urls.generators.documents import UrlDocumentGenerator
-from cdf.collections.urls.generators.metadata_duplicate import get_duplicate_metadata
+from cdf.collections.urls.transducers.metadata_duplicate import get_duplicate_metadata
 from cdf.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
