@@ -1,7 +1,8 @@
 from pyelasticsearch import ElasticSearch
+from collections import defaultdict
 
-from cdf.utils.dict import deep_update
-from .constants import QUERY_URLS_FIELDS, QUERY_TAGGING_FIELDS
+from cdf.utils.dict import deep_update, flatten_dict
+from .constants import QUERY_URLS_FIELDS, QUERY_TAGGING_FIELDS, QUERY_URLS_IDS
 
 PREDICATE_FORMATS = {
     'eq': lambda filters: {
@@ -56,6 +57,17 @@ PREDICATE_FORMATS = {
             filters['field']: {
                 "to": filters['value'],
                 "include_upper": False
+            }
+        }
+    },
+    'not_null': lambda filters: {
+        "bool": {
+            "must_not": {
+                "missing": {
+                    "field": filters['field'],
+                    "existence": True,
+                    "null_value": True
+                }
             }
         }
     }
@@ -229,6 +241,36 @@ class UrlRequest(object):
                             break
 
             results.append(document)
+
+        # If document contains fields with url_ids, we return a list (url_id, real_url) instead
+        urls_ids = set()
+        for i, result in enumerate(results):
+            result_flatten = flatten_dict(result)
+            for key, value in result_flatten.iteritems():
+                if key in QUERY_URLS_IDS:
+                    if isinstance(value, list):
+                        urls_ids |= set(value)
+                    else:
+                        urls_ids.add(value)
+
+        # If urls ids are found, we make a request to fetch those urls
+        if urls_ids:
+            urls_es = s.multi_get(urls_ids,
+                                  index=self.es_index,
+                                  doc_type="crawl_%d" % self.crawl_id,
+                                  fields=["url"])
+            urls = {int(url['_id']): url['fields']['url'] for url in urls_es['docs']}
+            for i, result in enumerate(results):
+                for field in QUERY_URLS_IDS:
+                    try:
+                        _urls_ids = reduce(dict.get, field.split("."), results[i])
+                    except:
+                        _urls_ids = None
+                    if _urls_ids:
+                        tmp_urls = []
+                        for _url_id in _urls_ids:
+                            tmp_urls.append(urls[_url_id])
+                        deep_update(results[i], reduce(lambda x, y: {y: x}, reversed(field.split('.') + [tmp_urls])))
 
         returned_data = {
             'count': alt_results['hits']['total'],
