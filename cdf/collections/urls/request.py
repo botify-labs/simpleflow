@@ -272,6 +272,11 @@ class UrlRequest(object):
                             tmp_urls.append(urls[_url_id])
                         deep_update(results[i], reduce(lambda x, y: {y: x}, reversed(field.split('.') + [tmp_urls])))
 
+                for redirect in ('redirect_from', 'redirect_to'):
+                    if redirect in results[i]:
+                        for k, _entry in enumerate(results[i][redirect]):
+                            results[i][redirect][k]['url'] = urls[_entry['url_id']]
+
         returned_data = {
             'count': alt_results['hits']['total'],
             'start': start,
