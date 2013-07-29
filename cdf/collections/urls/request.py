@@ -216,6 +216,7 @@ class UrlRequest(object):
             }
 
         results = []
+        urls_ids = set()
 
         for r in alt_results['hits']['hits']:
             document = {'id': r['_id']}
@@ -239,7 +240,6 @@ class UrlRequest(object):
                         if t['rev_id'] == self.revision_number:
                             document[_f] = t[_f]
                             break
-
             results.append(document)
 
         # If document contains fields with url_ids, we return a list (url_id, real_url) instead
