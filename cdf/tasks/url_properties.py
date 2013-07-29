@@ -93,6 +93,12 @@ def compute_properties_stats_counter_from_s3(crawl_id, part_id, rev_num, s3_uri,
         else:
             streams["stream_%s" % stream_identifier] = cast(split_file(gzip.open(path_local)))
 
+    # Not crawled urls may be referenced in urlids and urlinfos files, but some files may be missing like inlinks...
+    for optional_stream in ('outlinks', 'inlinks'):
+        stream_key = "stream_{}".format(optional_stream)
+        if not stream_key in streams:
+            streams[stream_key] = iter([])
+
     aggregator = MetricsAggregator(**streams)
     content = json.dumps(aggregator.get())
     push_content(os.path.join(s3_uri, 'properties_stats_partial_rev%d/stats.json.%d' % (rev_num, part_id)), content)
