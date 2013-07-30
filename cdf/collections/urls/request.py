@@ -266,7 +266,11 @@ class UrlRequest(object):
             for i, result in enumerate(results):
                 for field in QUERY_URLS_IDS:
                     try:
-                        _urls_ids = [reduce(dict.get, field.split("."), results[i])]
+                        _value = reduce(dict.get, field.split("."), results[i])
+                        if isinstance(_value, list):
+                            _urls_ids = _value
+                        else:
+                            _urls_ids = [_value]
                     except:
                         _urls_ids = []
                     if _urls_ids:
@@ -274,6 +278,9 @@ class UrlRequest(object):
                         for _url_id in _urls_ids:
                             url = urls.get(_url_id, None)
                             tmp_urls.append({"url": url, "exists": url is not None})
+                        initial_type = type(reduce(dict.get, field.split("."), result))
+                        if initial_type == list:
+                            tmp_urls = [tmp_urls]
                         deep_update(results[i], reduce(lambda x, y: {y: x}, reversed(field.split('.') + tmp_urls)), depth=len(field.split('.')))
 
                 if 'redirect_from' in results[i]:
