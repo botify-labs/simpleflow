@@ -34,7 +34,8 @@ QUERY_URLS_FIELDS = (
     "inlinks_follow_ids",
     "inlinks_nofollow_ids",
     "redirect_from",
-    "redirect_to"
+    "redirect_to",
+    "canonical_url"
 )
 
 QUERY_TAGGING_FIELDS = (

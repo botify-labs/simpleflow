@@ -274,13 +274,11 @@ class UrlRequest(object):
 
                 if 'redirect_from' in results[i]:
                     for k, _entry in enumerate(results[i]['redirect_from']):
-                        url = urls.get(_entry['url_id'], None)
-                        results[i]['redirect_from'][k]['url'] = url
-                        results[i]['redirect_from'][k]['exists'] = url is not None
+                        url = urls.get(_entry['url'], None)
+                        results[i]['redirect_from'][k]['url'] = {"url": url, "exists": url is not None}
                 if 'redirect_to' in results[i]:
-                    url = urls.get(results[i]['redirect_to']['url_id'], None)
-                    results[i]['redirect_to']['url'] = url
-                    results[i]['redirect_to']['exists'] = url is not None
+                    url = urls.get(results[i]['redirect_to']['url'], None)
+                    results[i]['redirect_to']['url'] = {"url": url, "exists": url is not None}
 
         returned_data = {
             'count': alt_results['hits']['total'],
