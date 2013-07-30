@@ -94,13 +94,28 @@ def push_metadata_duplicate_to_elastic_search(crawl_id, s3_uri, es_location, es_
 
     es = ElasticSearch(es_location)
     docs = []
-    for i, result in enumerate(generator):
+    for i, (metadata_type, url_id, duplicates_nb, is_first, target_urls_ids) in enumerate(generator):
         doc = {
-            "id": result[1],
-            "script": """if(ctx._source['metadata_duplicate'] == null) {{ctx._source['metadata_duplicate'] = {{ '{metadata_type}':urls_ids }};}}
-                        else {{ ctx._source.metadata_duplicate['{metadata_type}'] = urls_ids; }}""".format(metadata_type=result[0]),
+            "id": url_id,
+            "script": """if(ctx._source['metadata_duplicate'] == null) {{
+                            ctx._source['metadata_duplicate_nb'] = {{ '{metadata_type}':duplicate_nb }};
+                            ctx._source['metadata_duplicate'] = {{ '{metadata_type}':urls_ids }};
+                         }} else {{
+                            ctx._source.metadata_duplicate_nb['{metadata_type}'] = duplicate_nb;
+                            ctx._source.metadata_duplicate['{metadata_type}'] = urls_ids;
+                          }}
+                      if(is_first == true) {{
+                          if(ctx._source['metadata_duplicate_is_first'] == null) {{
+                              ctx._source['metadata_duplicate_is_first'] = {{ '{metadata_type}': true }};
+                          }} else {{
+                              ctx._source.metadata_duplicate_is_first['{metadata_type}'] = true;
+                          }}
+                      }}
+                      """.format(metadata_type=metadata_type),
             "params": {
-                "urls_ids": result[2]
+                "urls_ids": target_urls_ids,
+                "duplicate_nb": duplicates_nb,
+                "is_first": is_first
             }
         }
         docs.append(doc)

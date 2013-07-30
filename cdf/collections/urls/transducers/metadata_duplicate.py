@@ -13,7 +13,7 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
     The 2nd index is the url_id concerned
     The 3rd index is a list of the ten first url_ids found containg the same content type)
 
-    (content_type, url_id, [url_id_1, url_id2 ...])
+    (content_type, url_id, duplicates_number, is_first_url_found, [url_id_1, url_id2 ...])
     """
     content_meta_type_idx = idx_from_stream('contents', 'content_type')
     content_hash_idx = idx_from_stream('contents', 'hash')
@@ -41,6 +41,8 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
         for _h in ct_hashes:
             if len(ct_hashes[_h]) > 1:
                 # In case the set is too big, just iter on the first items
-                sample = itertools.islice(ct_hashes[_h], 0, 11)
+                sample = list(itertools.islice(ct_hashes[_h], 0, 11))
+                nb_duplicates = len(ct_hashes[_h])
+                first_url_id = min(ct_hashes[_h])
                 for url_id in ct_hashes[_h]:
-                    yield (CONTENT_TYPE_INDEX[ct_id], url_id, [i for i in sample if i != url_id][:10])
+                    yield (CONTENT_TYPE_INDEX[ct_id], url_id, nb_duplicates, first_url_id == url_id, [i for i in sample if i != url_id][:10])
