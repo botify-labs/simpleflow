@@ -252,6 +252,9 @@ class UrlRequest(object):
                         urls_ids |= set(value)
                     else:
                         urls_ids.add(value)
+            if 'redirect_from' in result:
+                for _r in result['redirect_from']:
+                    urls_ids.add(_r['url'])
 
         # If urls ids are found, we make a request to fetch those urls
         if urls_ids:
@@ -259,26 +262,24 @@ class UrlRequest(object):
                                   index=self.es_index,
                                   doc_type="crawl_%d" % self.crawl_id,
                                   fields=["url"])
-            urls = {int(url['_id']): url['fields']['url'] for url in urls_es['docs']}
+            urls = {int(url['_id']): url['fields']['url'] for url in urls_es['docs'] if url["exists"]}
             for i, result in enumerate(results):
                 for field in QUERY_URLS_IDS:
                     try:
-                        _urls_ids = reduce(dict.get, field.split("."), results[i])
+                        _urls_ids = [reduce(dict.get, field.split("."), results[i])]
                     except:
-                        _urls_ids = None
+                        _urls_ids = []
                     if _urls_ids:
                         tmp_urls = []
                         for _url_id in _urls_ids:
-                            tmp_urls.append(urls[_url_id])
-                        deep_update(results[i], reduce(lambda x, y: {y: x}, reversed(field.split('.') + [tmp_urls])))
+                            url = urls.get(_url_id, None)
+                            tmp_urls.append({"url": url, "exists": url is not None})
+                        deep_update(results[i], reduce(lambda x, y: {y: x}, reversed(field.split('.') + tmp_urls)), depth=len(field.split('.')))
 
                 if 'redirect_from' in results[i]:
                     for k, _entry in enumerate(results[i]['redirect_from']):
                         url = urls.get(_entry['url'], None)
                         results[i]['redirect_from'][k]['url'] = {"url": url, "exists": url is not None}
-                if 'redirect_to' in results[i]:
-                    url = urls.get(results[i]['redirect_to']['url'], None)
-                    results[i]['redirect_to']['url'] = {"url": url, "exists": url is not None}
 
         returned_data = {
             'count': alt_results['hits']['total'],
@@ -286,5 +287,4 @@ class UrlRequest(object):
             'limit': limit,
             'results': results
         }
-
         return returned_data

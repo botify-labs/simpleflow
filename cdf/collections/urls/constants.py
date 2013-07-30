@@ -35,7 +35,8 @@ QUERY_URLS_FIELDS = (
     "inlinks_nofollow_ids",
     "redirect_from",
     "redirect_to",
-    "canonical_url"
+    "canonical_url",
+    "redirects_nb"
 )
 
 QUERY_TAGGING_FIELDS = (
@@ -46,6 +47,5 @@ QUERY_URLS_IDS = (
     "metadata_duplicate.h1",
     "metadata_duplicate.title",
     "metadata_duplicate.description",
-    "redirect_to.url_id",
-    "redirect_from.url_id",
+    "redirect_to.url",
 )
