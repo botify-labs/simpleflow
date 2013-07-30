@@ -61,7 +61,7 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
     docs = []
     for i, document in enumerate(g):
         docs.append(document[1])
-        if i % 10000 == 9999:
+        if i % 3000 == 2999:
             es.bulk_index(es_index, 'crawl_%d' % crawl_id, docs)
             docs = []
             logger.info('%d items imported to urls_data ES for %s (part %d)' % (i, es_index, part_id))
