@@ -41,7 +41,7 @@ class UrlTaggingGenerator(object):
                     else:
                         parents_matches.add(rule['rule_id'])
             if not found:
-                yield (url_id, {"resource_type": "unkown",
+                yield (url_id, {"resource_type": "unknown",
                                 "host": host})
 
     def save_to_file(self, location):
