@@ -18,7 +18,7 @@ from cdf.utils.s3 import fetch_files, push_content, push_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
 
-def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False):
+def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False, erase_old_tagging=False):
     """
     Match all urls from a crawl's `part_id` to properties defined by rules in a `settings` dictionnary and save it to a S3 bucket.
 
@@ -31,6 +31,7 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
     :param es_index : index name where to push the documents.
     :param tmp_dir : the temporary directory where the S3 files will be put to compute the task
     :param force_fetch : fetch the S3 files even if they are already in the temp directory
+    :param erase_old_tagging : will remove nested tagging for old revisions
     """
     es = ElasticSearch(es_location)
 
@@ -48,10 +49,14 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
     docs = []
     raw_lines = []
     for i, document in enumerate(g):
+        if erase_old_tagging:
+            es_script = "ctx._source.tagging = [tagging]"
+        else:
+            es_script = """if (ctx._source[\"tagging\"] == null) { ctx._source.tagging = [tagging] } else {
+                       ctx._source.tagging += tagging }"""
         doc = {
             "id": document[0],
-            "script": """if (ctx._source[\"tagging\"] == null) { ctx._source.tagging = [tagging] } else {
-                       ctx._source.tagging += tagging }""",
+            "script": es_script,
             "params": {
                 "tagging": {
                     "resource_type": document[1]['resource_type'],
