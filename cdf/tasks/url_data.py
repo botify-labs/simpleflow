@@ -15,6 +15,14 @@ from cdf.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
 
+def remove_crawl_doctype(crawl_id, es_location, es_index):
+    es = ElasticSearch(es_location)
+    try:
+        es.delete_all(es_index, "crawl_{}".format(crawl_id))
+    except Exception, e:
+        logger.error("{} : {}".format(type(e), str(e)))
+
+
 def prepare_crawl_index(crawl_id, es_location, es_index):
     es = ElasticSearch(es_location)
     try:
