@@ -216,6 +216,7 @@ class UrlRequest(object):
             }
 
         results = []
+        urls_ids = set()
 
         for r in alt_results['hits']['hits']:
             document = {'id': r['_id']}
@@ -239,7 +240,6 @@ class UrlRequest(object):
                         if t['rev_id'] == self.revision_number:
                             document[_f] = t[_f]
                             break
-
             results.append(document)
 
         # If document contains fields with url_ids, we return a list (url_id, real_url) instead
@@ -252,6 +252,9 @@ class UrlRequest(object):
                         urls_ids |= set(value)
                     else:
                         urls_ids.add(value)
+            if 'redirect_from' in result:
+                for _r in result['redirect_from']:
+                    urls_ids.add(_r['url'])
 
         # If urls ids are found, we make a request to fetch those urls
         if urls_ids:
@@ -259,18 +262,31 @@ class UrlRequest(object):
                                   index=self.es_index,
                                   doc_type="crawl_%d" % self.crawl_id,
                                   fields=["url"])
-            urls = {int(url['_id']): url['fields']['url'] for url in urls_es['docs']}
+            urls = {int(url['_id']): url['fields']['url'] for url in urls_es['docs'] if url["exists"]}
             for i, result in enumerate(results):
                 for field in QUERY_URLS_IDS:
                     try:
-                        _urls_ids = reduce(dict.get, field.split("."), results[i])
+                        _value = reduce(dict.get, field.split("."), results[i])
+                        if isinstance(_value, list):
+                            _urls_ids = _value
+                        else:
+                            _urls_ids = [_value]
                     except:
-                        _urls_ids = None
+                        _urls_ids = []
                     if _urls_ids:
                         tmp_urls = []
                         for _url_id in _urls_ids:
-                            tmp_urls.append(urls[_url_id])
-                        deep_update(results[i], reduce(lambda x, y: {y: x}, reversed(field.split('.') + [tmp_urls])))
+                            url = urls.get(_url_id, None)
+                            tmp_urls.append({"url": url, "exists": url is not None})
+                        initial_type = type(reduce(dict.get, field.split("."), result))
+                        if initial_type == list:
+                            tmp_urls = [tmp_urls]
+                        deep_update(results[i], reduce(lambda x, y: {y: x}, reversed(field.split('.') + tmp_urls)), depth=len(field.split('.')))
+
+                if 'redirect_from' in results[i]:
+                    for k, _entry in enumerate(results[i]['redirect_from']):
+                        url = urls.get(_entry['url'], None)
+                        results[i]['redirect_from'][k]['url'] = {"url": url, "exists": url is not None}
 
         returned_data = {
             'count': alt_results['hits']['total'],
@@ -278,5 +294,4 @@ class UrlRequest(object):
             'limit': limit,
             'results': results
         }
-
         return returned_data

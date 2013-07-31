@@ -11,7 +11,10 @@ URLS_DATA_MAPPING = {
                     "rev_id": {"type": "long"}
                 }
             },
-            "url": {"type": "string"},
+            "url": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
             "url_hash": {"type": "long"},
             "byte_size": {"type": "long"},
             "date_crawled": {"type": "date"},
@@ -46,7 +49,7 @@ URLS_DATA_MAPPING = {
                 }
             },
             "outlinks_external_follow_nb": {"type": "long"},
-            "outlinks_follow_ids": {"type": "long"},
+            "outlinks_follow_urls": {"type": "long"},
             "outlinks_internal_follow_nb": {"type": "long"},
             "path": {"type": "string"},
             "protocol": {"type": "string"},
@@ -57,7 +60,13 @@ URLS_DATA_MAPPING = {
             "redirect_to": {
                 "properties": {
                     "http_code": {"type": "string"},
-                    "url_id": {"type": "long"}
+                    "url": {"type": "long"}
+                }
+            },
+            "redirect_from": {
+                "properties": {
+                    "http_code": {"type": "string"},
+                    "url": {"type": "long"}
                 }
             }
         }

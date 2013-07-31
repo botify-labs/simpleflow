@@ -29,12 +29,17 @@ QUERY_URLS_FIELDS = (
     "metadata_duplicate.h1",
     "metadata_duplicate.title",
     "metadata_duplicate.description",
+    "metadata_duplicate_nb.h1",
+    "metadata_duplicate_nb.title",
+    "metadata_duplicate_nb.description",
     "outlinks_follow_ids",
     "outlinks_nofollow_ids",
     "inlinks_follow_ids",
     "inlinks_nofollow_ids",
     "redirect_from",
-    "redirect_to"
+    "redirect_to",
+    "canonical_url",
+    "redirects_nb"
 )
 
 QUERY_TAGGING_FIELDS = (
@@ -45,6 +50,5 @@ QUERY_URLS_IDS = (
     "metadata_duplicate.h1",
     "metadata_duplicate.title",
     "metadata_duplicate.description",
-    "redirect_to.url_id",
-    "redirect_from.url_id",
+    "redirect_to.url",
 )

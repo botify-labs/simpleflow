@@ -80,7 +80,7 @@ def extract_outlinks(attributes, stream_item):
             attributes[key_nb] += 1
 
         if url_dst > 0:
-            key_ids = "outlinks_%s_ids" % follow_key
+            key_ids = "outlinks_%s_urls" % follow_key
             if key_ids not in attributes:
                 attributes[key_ids] = [url_dst]
             # Store only the first 1000 outlinks
@@ -88,10 +88,10 @@ def extract_outlinks(attributes, stream_item):
                 attributes[key_ids].append(url_dst)
     elif link_type.startswith('r'):
         http_code = link_type[1:]
-        attributes['redirect_to'] = {'url_id': url_dst, 'http_code': int(http_code)}
+        attributes['redirect_to'] = {'url': url_dst, 'http_code': int(http_code)}
     elif link_type == "canonical":
         attributes['canonical_equals'] = url_src == url_dst
-        attributes['canonical_url_id'] = url_dst
+        attributes['canonical_url'] = url_dst
 
 
 def extract_inlinks(attributes, stream_item):
@@ -105,7 +105,7 @@ def extract_inlinks(attributes, stream_item):
             attributes[key_nb] += 1
 
         if url_src > 0:
-            key_ids = "inlinks_%s_ids" % follow_key
+            key_ids = "inlinks_%s_urls" % follow_key
             if key_ids not in attributes:
                 attributes[key_ids] = [url_src]
             elif len(attributes[key_ids]) < 300 and url_src not in attributes[key_ids]:
@@ -119,15 +119,15 @@ def extract_inlinks(attributes, stream_item):
 
         attributes['redirects_nb'] += 1
         if len(attributes['redirect_from']) < 300:
-            attributes['redirect_from'].append({'url_id': url_src, 'http_code': http_code})
+            attributes['redirect_from'].append({'url': url_src, 'http_code': http_code})
 
     elif link_type == "canonical":
         nb_duplicates = attributes.get('canonical_nb_duplicates', 0) + 1
         attributes['canonical_nb_duplicates'] = nb_duplicates
         if nb_duplicates == 1:
-            attributes['canonical_duplicate_ids'] = [url_src]
+            attributes['canonical_duplicate_urls'] = [url_src]
         else:
-            attributes['canonical_duplicate_ids'].append(url_src)
+            attributes['canonical_duplicate_urls'].append(url_src)
 
 
 class UrlDocumentGenerator(object):
