@@ -252,7 +252,7 @@ class UrlRequest(object):
                         urls_ids |= set(value)
                     else:
                         urls_ids.add(value)
-            if 'redirect_from' in result:
+            if result.get('redirect_from', None):
                 for _r in result['redirect_from']:
                     urls_ids.add(_r['url'])
 
@@ -283,7 +283,7 @@ class UrlRequest(object):
                             tmp_urls = [tmp_urls]
                         deep_update(results[i], reduce(lambda x, y: {y: x}, reversed(field.split('.') + tmp_urls)), depth=len(field.split('.')))
 
-                if 'redirect_from' in results[i]:
+                if results[i].get('redirect_from', None):
                     for k, _entry in enumerate(results[i]['redirect_from']):
                         url = urls.get(_entry['url'], None)
                         results[i]['redirect_from'][k]['url'] = {"url": url, "exists": url is not None}
