@@ -247,7 +247,7 @@ class UrlRequest(object):
         for i, result in enumerate(results):
             result_flatten = flatten_dict(result)
             for key, value in result_flatten.iteritems():
-                if key in QUERY_URLS_IDS:
+                if value is not None and key in QUERY_URLS_IDS:
                     if isinstance(value, list):
                         urls_ids |= set(value)
                     else:

@@ -51,4 +51,8 @@ QUERY_URLS_IDS = (
     "metadata_duplicate.title",
     "metadata_duplicate.description",
     "redirect_to.url",
+    "outlinks_follow_urls",
+    "outlinks_nofollow_urls",
+    "inlinks_follow_urls",
+    "inlinks_nofollow_urls",
 )
