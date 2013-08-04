@@ -77,7 +77,7 @@ def _validate_rule(rule, i, host, rule_id_known, errors):
     if 'query' in rule:
         _valid, _msg = validate_query_grammar(rule['query'])
         if not _valid:
-            errors['query'].append('Error in query, host %s rule %d : %s' % (host, i, _msg))
+            errors['query'].append('Error in query {} (host {} / rule {}) : {}'.format(rule['query'], host, i, _msg))
 
     if 'rule_id' in rule:
         rule_id_known.add(rule['rule_id'])
