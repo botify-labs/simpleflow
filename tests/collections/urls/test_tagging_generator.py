@@ -10,7 +10,7 @@ from cdf.collections.urls.generators.tagging import UrlTaggingGenerator
 logger.setLevel(logging.DEBUG)
 
 
-class TestUrlDataGenerator(unittest.TestCase):
+class TestTaggingGenerator(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -38,7 +38,7 @@ class TestUrlDataGenerator(unittest.TestCase):
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "mypath", "host": "www.site.com"}))
 
-    def test_unkown(self):
+    def test_unknown(self):
         patterns = (
             [1, 'http', 'www.site.com', '/path/name.html', ''],
         )
@@ -56,11 +56,11 @@ class TestUrlDataGenerator(unittest.TestCase):
 
         u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
         results = list(u)
-        self.assertEquals(results[0], (1, {"resource_type": "unkown", "host": "www.site.com"}))
+        self.assertEquals(results[0], (1, {"resource_type": "unknown", "host": "www.site.com"}))
 
     def test_abstract(self):
         """
-        The url matches with the first rule but as it has been abstracted, it should be unkown
+        The url matches with the first rule but as it has been abstracted, it should be unknown
         """
         patterns = (
             [1, 'http', 'www.site.com', '/path/name.html', ''],
@@ -84,7 +84,7 @@ class TestUrlDataGenerator(unittest.TestCase):
 
         u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
         results = list(u)
-        self.assertEquals(results[0], (1, {"resource_type": "unkown", "host": "www.site.com"}))
+        self.assertEquals(results[0], (1, {"resource_type": "unknown", "host": "www.site.com"}))
 
         # Now we had another rule which should match
         resource_type_settings[0]['rules'].append({
@@ -122,4 +122,31 @@ class TestUrlDataGenerator(unittest.TestCase):
         ]
         u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
         results = list(u)
-        self.assertEquals(results[0], (1, {"resource_type": "unkown", "host": "www.site.com"}))
+        self.assertEquals(results[0], (1, {"resource_type": "unknown", "host": "www.site.com"}))
+
+    def test_query_string_field(self):
+        patterns = (
+            [1, 'http', 'www.site.com', '/music/name.html', '?page=1&session_id=3'],
+        )
+
+        resource_type_settings = [
+            {
+                'host': '*.site.com',
+                'rules': [
+                        {'query': "STARTS(query_string.page, '1')",
+                         'value': 'p1'
+                         }
+                ]
+            }
+        ]
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        results = list(u)
+        self.assertEquals(results[0], (1, {"resource_type": "p1", "host": "www.site.com"}))
+
+        # Now, set an url with 'page' querystring that does not exists
+        patterns = (
+            [1, 'http', 'www.site.com', '/music/name.html', '?sid=1djsq676g'],
+        )
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        results = list(u)
+        self.assertEquals(results[0], (1, {"resource_type": "unknown", "host": "www.site.com"}))
