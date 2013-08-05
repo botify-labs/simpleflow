@@ -151,6 +151,51 @@ class TestTaggingGenerator(unittest.TestCase):
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "unknown", "host": "www.site.com"}))
 
+    def test_query_string_keys_field(self):
+        patterns = (
+            [1, 'http', 'www.site.com', '/music/name.html', '?page=1&session_id=3'],
+            [2, 'http', 'www.site.com', '/music/name.html', '?page'],
+        )
+
+        resource_type_settings = [
+            {
+                'host': '*.site.com',
+                'rules': [
+                        {'query': "query_string_keys = ['page', 'session_id']",
+                         'value': 'page_and_session'
+                         }
+                ]
+            }
+        ]
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        results = list(u)
+        self.assertEquals(results[0], (1, {"resource_type": "page_and_session", "host": "www.site.com"}))
+        self.assertEquals(results[1], (2, {"resource_type": "unknown", "host": "www.site.com"}))
+
+    def test_query_string_keys_items(self):
+        patterns = (
+            [1, 'http', 'www.site.com', '/music/name.html', '?page=1&session_id=3'],
+            [2, 'http', 'www.site.com', '/music/name.html', '?page'],
+        )
+
+        resource_type_settings = [
+            {
+                'host': '*.site.com',
+                'rules': [
+                        {'query': "query_string_items = [['page', '1'], ['session_id', '3']]",
+                         'value': 'page_and_session'
+                         },
+                        {'query': "query_string_items = [['page', '']]",
+                         'value': 'page'
+                         }
+                ]
+            }
+        ]
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        results = list(u)
+        self.assertEquals(results[0], (1, {"resource_type": "page_and_session", "host": "www.site.com"}))
+        self.assertEquals(results[1], (2, {"resource_type": "page", "host": "www.site.com"}))
+
     def test_not_operator(self):
         patterns = (
             [1, 'http', 'www.site.com', '/music/name.html', ''],
