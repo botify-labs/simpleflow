@@ -150,3 +150,51 @@ class TestTaggingGenerator(unittest.TestCase):
         u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "unknown", "host": "www.site.com"}))
+
+    def test_not_operator(self):
+        patterns = (
+            [1, 'http', 'www.site.com', '/music/name.html', ''],
+            [2, 'http', 'www.site.com', '/movie/name.html', ''],
+        )
+
+        resource_type_settings = [
+            {
+                'host': '*.site.com',
+                'rules': [
+                        {'query': "STARTS(path, '/music')",
+                         'value': 'music'
+                         },
+                        {'query': "NOT STARTS(path, '/music')",
+                         'value': 'other'
+                         }
+                ]
+            }
+        ]
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        results = list(u)
+        self.assertEquals(results[0], (1, {"resource_type": "music", "host": "www.site.com"}))
+        self.assertEquals(results[1], (2, {"resource_type": "other", "host": "www.site.com"}))
+
+    def test_transformer_validator(self):
+        patterns = (
+            [1, 'http', 'www.site.com', '/music/name.html', '?page=10'],
+            [2, 'http', 'www.site.com', '/movie/name.html', '?page=4'],
+        )
+
+        resource_type_settings = [
+            {
+                'host': '*.site.com',
+                'rules': [
+                        {'query': "INT(query_string.page) > 5",
+                         'value': 'page_gt5'
+                         },
+                        {'query': "INT(query_string.page) = 4",
+                         'value': 'page_eq4'
+                         }
+                ]
+            }
+        ]
+        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        results = list(u)
+        self.assertEquals(results[0], (1, {"resource_type": "page_gt5", "host": "www.site.com"}))
+        self.assertEquals(results[1], (2, {"resource_type": "page_eq4", "host": "www.site.com"}))
