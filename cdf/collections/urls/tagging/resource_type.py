@@ -1,7 +1,7 @@
 import re
 import itertools
 
-from BQL.parser.properties_mapping import validate_query_grammar, query_to_python
+from BQL.parser.tagging import validate_query_grammar, query_to_python
 
 ALLOWED_RULES_FIELDS = ('query', 'value', 'abstract', 'rule_id', 'inherits_from', 'warning', 'comment')
 MANDATORY_RULES_FIELDS = ('query', 'value')

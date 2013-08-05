@@ -20,7 +20,7 @@ class UrlTaggingGenerator(object):
             url_id, protocol, host, path, query_string = i
             # locator not yet in urlids.txt
             locator = ''
-
+            url = "{}://{}{}{}".format(protocol, host, path, query_string)
             parents_matches = set()
             found = False
 
@@ -32,7 +32,7 @@ class UrlTaggingGenerator(object):
                 if 'inherits_from' in rule and rule['inherits_from'] not in parents_matches:
                     continue
 
-                if rule['query'](protocol, host, path, query_string, locator):
+                if rule['query'](url, protocol, host, path, query_string, locator):
                     if not rule.get('abstract', False):
                         found = True
                         yield (url_id, {"resource_type": rule['value'],
