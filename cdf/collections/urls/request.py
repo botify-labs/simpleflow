@@ -2,7 +2,7 @@ from pyelasticsearch import ElasticSearch
 from collections import defaultdict
 
 from cdf.utils.dict import deep_update, flatten_dict
-from .constants import QUERY_URLS_FIELDS, QUERY_TAGGING_FIELDS, QUERY_URLS_IDS
+from .constants import QUERY_URLS_FIELDS, QUERY_TAGGING_FIELDS, QUERY_URLS_IDS, QUERY_URLS_DEFAULT_VALUES
 
 PREDICATE_FORMATS = {
     'eq': lambda filters: {
@@ -240,6 +240,9 @@ class UrlRequest(object):
                         if t['rev_id'] == self.revision_number:
                             document[_f] = t[_f]
                             break
+            for default_field, default_value in QUERY_URLS_DEFAULT_VALUES.iteritems():
+                if default_field in query['fields'] and default_field not in document:
+                    document[default_field] = default_value
             results.append(document)
 
         # If document contains fields with url_ids, we return a list (url_id, real_url) instead
@@ -265,6 +268,8 @@ class UrlRequest(object):
             urls = {int(url['_id']): url['fields']['url'] for url in urls_es['docs'] if url["exists"]}
             for i, result in enumerate(results):
                 for field in QUERY_URLS_IDS:
+                    if not field in query['fields']:
+                        continue
                     try:
                         _value = reduce(dict.get, field.split("."), results[i])
                         if isinstance(_value, list):
