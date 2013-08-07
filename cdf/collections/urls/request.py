@@ -241,7 +241,7 @@ class UrlRequest(object):
                             document[_f] = t[_f]
                             break
             for default_field, default_value in QUERY_URLS_DEFAULT_VALUES.iteritems():
-                if default_field in query['fields'] and default_field not in document:
+                if default_field in query['fields'] and not document.get(default_field, None):
                     document[default_field] = default_value
             results.append(document)
 
