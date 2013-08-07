@@ -268,7 +268,7 @@ class UrlRequest(object):
             urls = {int(url['_id']): url['fields']['url'] for url in urls_es['docs'] if url["exists"]}
             for i, result in enumerate(results):
                 for field in QUERY_URLS_IDS:
-                    if not field in query['fields']:
+                    if not "." in field and not field in query['fields']:
                         continue
                     try:
                         _value = reduce(dict.get, field.split("."), results[i])
