@@ -34,26 +34,33 @@ def std_type(value):
     return value
 
 
-class BadRequest(Exception):
+class BadRequestException(Exception):
     pass
+
+
+def transform_std_type(field, df_values):
+    return std_type(df_values[field] if field in df_values else 0)
+
+
+def transform_links_nb(field, df_values, link_type):
+    value = {"total": 0}
+    for k, v in df_values.iteritems():
+        if v > 0 and k.startswith(link_type):
+            new_key = k[len('{}_'.format(link_type)):-len('_nb')]
+            value["total"] += v
+            value[new_key] = v
+    return value
 
 
 class CounterRequest(object):
 
-    BadRequest = BadRequest
+    BadRequestException = BadRequestException
 
-    FIELDS_VALIDATORS = {
-        'host': None,
-        'content_type': None,
-        'resource_type': None,
-        'follow': None,
-        'meta': None,
-        'index': None,
-        'depth': None,
-        'pages_nb': None,
-        'http_code': None,
-        'inlinks_nb': lambda field: field.startswith('inlinks_'),
-        'outlinks_nb': lambda field: field.startswith('outlinks_'),
+    FIELDS = ('host', 'content_type', 'resource_type', 'follow', 'meta', 'index', 'depth', 'pages_nb', 'inlinks_nb', 'outlinks_nb')
+
+    FIELDS_TRANSFORMERS = {
+        'inlinks_nb': lambda field, counters: transform_links_nb(field, counters, 'inlinks'),
+        'outlinks_nb': lambda field, counters: transform_links_nb(field, counters, 'outlinks'),
     }
 
     def __init__(self, df):
@@ -172,40 +179,9 @@ class CounterRequest(object):
         else:
             fields = filter(lambda i: i not in self.DISTRIBUTION_COLUMNS, self.df.columns.tolist())
 
-        def refactor_counters(counters):
-            new_c = dict()
-            for k, v in counters.iteritems():
-                assigned = False
-                for link_type in ('inlinks', 'outlinks'):
-                    if k.startswith(link_type):
-                        assigned = True
-                        # As the dataframe stores by column, the key exists for all the properties combinations
-                        # If for the current properties, the value is 0, skip it
-                        if v == 0:
-                            continue
-                        link_type_nb = "{}_nb".format(link_type)
-                        new_key = k[len('{}_'.format(link_type)):-len('_nb')]
-                        if link_type_nb not in new_c:
-                            new_c[link_type_nb] = {"total": 0}
-                        new_c[link_type_nb][new_key] = v
-                        new_c[link_type_nb]["total"] += v
-
-                if not assigned:
-                    new_c[k] = v
-            return new_c
-
-        def field_allowed(field):
-            """
-            Check if current dataframe field has to be return in the results
-            """
-            for real_field, func in self.FIELDS_VALIDATORS.iteritems():
-                if callable(func):
-                    check_ = func(field)
-                    if check_ and real_field in fields:
-                        return True
-                elif field in self.FIELDS_VALIDATORS and field in fields:
-                    return True
-            return False
+        for f in fields:
+            if f not in self.FIELDS:
+                raise self.BadRequestException('Field {} not allowed in query'.format(f))
 
         results = {}
 
@@ -223,14 +199,15 @@ class CounterRequest(object):
             No group_by, we return a dictionnary with all counters
             """
             df = df.sum().reset_index()
-            results = refactor_counters({field: std_type(value) for field, value in df.values if field_allowed(field)})
+            results = {field: self.FIELDS_TRANSFORMERS.get(field, transform_std_type)(field, dict(df.values)) for field in fields}
             return {"counters": results}
 
         results = []
         for i, n in enumerate(df.values):
+            values = dict(zip(df.columns, n))
             result = {
                 'properties': {field_: std_type(df[field_][i]) for field_ in settings['group_by']},
-                'counters': refactor_counters({field_: std_type(df[field_][i]) if df[field_][i] > 0 else 0 for field_ in fields if field_allowed(field_)})
+                'counters': {field: self.FIELDS_TRANSFORMERS.get(field, transform_std_type)(field, values) for field in fields}
             }
             results.append(result)
         return results

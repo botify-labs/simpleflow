@@ -58,7 +58,7 @@ class TestPropertiesStats(unittest.TestCase):
                               })
 
         settings = {
-            'fields': ['pages_nb', 'outlinks_nb'],
+            'fields': ['pages_nb', 'outlinks_nb', 'inlinks_nb'],
             'filters': [
                 {'field': 'host', 'value': 'www.site.com'}
             ]
@@ -70,6 +70,9 @@ class TestPropertiesStats(unittest.TestCase):
                               'outlinks_nb': {
                                   'total': 5,
                                   'nofollow_link__nofollow_meta': 5,
+                              },
+                              'inlinks_nb': {
+                                  'total': 0
                               }
                           })
 
@@ -555,3 +558,14 @@ class TestPropertiesStats(unittest.TestCase):
             ]
         }
         self.assertEquals(request.query(settings)['counters'], {'pages_nb': 20})
+
+    def test_bad_field(self):
+        df = DataFrame(self.data)
+        request = MetricsRequest(df)
+
+        settings = {
+            'fields': ['pages_nb', 'bad_field']
+        }
+
+        with self.assertRaises(MetricsRequest.BadRequestException):
+            request.query(settings)
