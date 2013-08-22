@@ -47,7 +47,7 @@ class MetricsAggregator(object):
                    "redirections_nb": 0,
                    "inlinks_nb": 10,
                    "inlinks_follow_nb": 10,
-                   "inlinks_nofollow_nb": 0,
+                   "inlinks_nofollow_meta_nb": 0,
                    "outlinks_nb": 5,
                    "total_delay_ms": 3400,
                    "avg_delay": 800,
@@ -129,7 +129,8 @@ class MetricsAggregator(object):
                 results[key]['{}_nb'.format(link_direction)] += len(filter(lambda i: i[type_idx] == "a", result[2][link_direction]))
                 for link in result[2][link_direction]:
                     if link[type_idx] == "a":
-                        follow_key = link[follow_idx]
+                        # Many statuses possible for an url, we concatenate them after a sort an split them with a double underscore
+                        follow_key = '__'.join(sorted(link[follow_idx]))
                         results[key]['{}_{}_nb'.format(link_direction, follow_key)] += 1
 
         # Transform defaultdict to dict

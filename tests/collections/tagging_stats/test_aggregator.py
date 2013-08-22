@@ -35,13 +35,15 @@ class TestPropertiesStats(unittest.TestCase):
         ))
 
         stream_outlinks = iter((
-            [1, 'a', 'follow', 2, ''],
-            [2, 'canonical', 'follow', 1, ''],
+            [1, 'a', ['follow'], 2, ''],
+            [2, 'a', ['nofollow_link', 'nofollow_meta'], 1, ''],
+            [2, 'canonical', ['follow'], 1, ''],
         ))
 
         stream_inlinks = iter((
-            [1, 'canonical', 'follow', 2],
-            [2, 'a', 'follow', 1]
+            [1, 'canonical', ['follow'], 2],
+            [1, 'a', ['nofollow_link', 'nofollow_meta'], 1],
+            [2, 'a', ['follow'], 1]
         ))
 
         a = MetricsAggregator(stream_patterns, stream_infos, stream_properties, stream_outlinks, stream_inlinks)
@@ -60,6 +62,8 @@ class TestPropertiesStats(unittest.TestCase):
         stats_homepage = stats[homepage_idx]['counters']
         self.assertEquals(stats_homepage['pages_nb'], 1)
         self.assertEquals(stats_homepage['outlinks_nb'], 1)
+        self.assertEquals(stats_homepage['inlinks_nb'], 1)
+        self.assertEquals(stats_homepage['inlinks_nofollow_link__nofollow_meta_nb'], 1)
         self.assertEquals(stats_homepage['canonical_incoming_nb'], 1)
 
         product_idx = cross_properties.index(['www.site.com', 'product', 'text/html', 1, 404, True, False])
@@ -67,9 +71,8 @@ class TestPropertiesStats(unittest.TestCase):
         self.assertEquals(stats_product['pages_nb'], 1)
         self.assertEquals(stats_product['inlinks_nb'], 1)
         self.assertEquals(stats_product['inlinks_follow_nb'], 1)
-        self.assertEquals(stats_product['inlinks_link_nofollow_nb'], 0)
-        self.assertEquals(stats_product['inlinks_meta_nofollow_nb'], 0)
-        self.assertEquals(stats_product['outlinks_nb'], 0)
+        self.assertEquals(stats_product['outlinks_nb'], 1)
+        self.assertEquals(stats_product['outlinks_nofollow_link__nofollow_meta_nb'], 1)
         self.assertEquals(stats_product['canonical_filled_nb'], 1)
         self.assertEquals(stats_product['canonical_duplicates_nb'], 1)
 

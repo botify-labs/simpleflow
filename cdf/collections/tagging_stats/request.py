@@ -42,6 +42,20 @@ class CounterRequest(object):
 
     BadRequest = BadRequest
 
+    FIELDS_VALIDATORS = {
+        'host': None,
+        'content_type': None,
+        'resource_type': None,
+        'follow': None,
+        'meta': None,
+        'index': None,
+        'depth': None,
+        'pages_nb': None,
+        'http_code': None,
+        'inlinks_nb': lambda field: field.startswith('inlinks_'),
+        'outlinks_nb': lambda field: field.startswith('outlinks_'),
+    }
+
     def __init__(self, df):
         self.df = df
 
@@ -153,12 +167,47 @@ class CounterRequest(object):
             }
         ]
         """
-        results = {}
-
         if 'fields' in settings:
             fields = settings['fields']
         else:
             fields = filter(lambda i: i not in self.DISTRIBUTION_COLUMNS, self.df.columns.tolist())
+
+        def refactor_counters(counters):
+            new_c = dict()
+            for k, v in counters.iteritems():
+                assigned = False
+                for link_type in ('inlinks', 'outlinks'):
+                    if k.startswith(link_type):
+                        assigned = True
+                        # As the dataframe stores by column, the key exists for all the properties combinations
+                        # If for the current properties, the value is 0, skip it
+                        if v == 0:
+                            continue
+                        link_type_nb = "{}_nb".format(link_type)
+                        new_key = k[len('{}_'.format(link_type)):-len('_nb')]
+                        if link_type_nb not in new_c:
+                            new_c[link_type_nb] = {"total": 0}
+                        new_c[link_type_nb][new_key] = v
+                        new_c[link_type_nb]["total"] += v
+
+                if not assigned:
+                    new_c[k] = v
+            return new_c
+
+        def field_allowed(field):
+            """
+            Check if current dataframe field has to be return in the results
+            """
+            for real_field, func in self.FIELDS_VALIDATORS.iteritems():
+                if callable(func):
+                    check_ = func(field)
+                    if check_ and real_field in fields:
+                        return True
+                elif field in self.FIELDS_VALIDATORS and field in fields:
+                    return True
+            return False
+
+        results = {}
 
         df = self.df.copy()
 
@@ -174,14 +223,14 @@ class CounterRequest(object):
             No group_by, we return a dictionnary with all counters
             """
             df = df.sum().reset_index()
-            results = {field: std_type(value) for field, value in df.values if field in fields}
+            results = refactor_counters({field: std_type(value) for field, value in df.values if field_allowed(field)})
             return {"counters": results}
 
         results = []
         for i, n in enumerate(df.values):
             result = {
                 'properties': {field_: std_type(df[field_][i]) for field_ in settings['group_by']},
-                'counters': {field_: std_type(df[field_][i]) if df[field_][i] > 0 else 0 for field_ in fields}
+                'counters': refactor_counters({field_: std_type(df[field_][i]) if df[field_][i] > 0 else 0 for field_ in fields if field_allowed(field_)})
             }
             results.append(result)
         return results

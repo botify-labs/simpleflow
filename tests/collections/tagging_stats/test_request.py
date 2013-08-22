@@ -4,7 +4,7 @@ import logging
 from pandas import DataFrame
 
 from cdf.log import logger
-from cdf.collections.properties_stats.request import PropertiesStatsRequest
+from cdf.collections.tagging_stats.request import MetricsRequest
 
 logger.setLevel(logging.DEBUG)
 
@@ -19,9 +19,9 @@ class TestPropertiesStats(unittest.TestCase):
              'depth': 1,
              'follow': True,
              'index': True,
+             'http_code': 200,
              'pages_nb': 10,
-             'pages_code_200': 4,
-             'pages_code_301': 6
+             'outlinks_nofollow_link__nofollow_meta_nb': 5
              },
             {'host': 'subdomain.site.com',
              'content_type': 'text/html',
@@ -29,8 +29,10 @@ class TestPropertiesStats(unittest.TestCase):
              'depth': 5,
              'follow': True,
              'index': True,
+             'http_code': 200,
              'pages_nb': 20,
-             'pages_code_500': 20
+             'outlinks_nofollow_link__nofollow_meta_nb': 4,
+             'outlinks_nofollow_link__nofollow_robots_nb': 8
              }
         ]
 
@@ -39,30 +41,55 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_simple(self):
         df = DataFrame(self.data)
-        request = PropertiesStatsRequest(df)
+        request = MetricsRequest(df)
 
         settings = {
-            'fields': ['pages_nb', 'pages_code_200', 'pages_code_500']
+            'fields': ['pages_nb', 'outlinks_nb']
         }
 
-        self.assertItemsEqual(request.query(settings)['counters'], {'pages_code_500': 20, 'pages_code_200': 4, 'pages_nb': 30})
+        self.assertItemsEqual(request.query(settings)['counters'],
+                              {
+                                  'pages_nb': 10,
+                                  'outlinks_nb': {
+                                      'total': 17,
+                                      'nofollow_link__nofollow_meta': 9,
+                                      'nofollow_link__nofollow_robots': 8
+                                  }
+                              })
+
         settings = {
-            'fields': ['pages_nb'],
+            'fields': ['pages_nb', 'outlinks_nb'],
             'filters': [
                 {'field': 'host', 'value': 'www.site.com'}
             ]
         }
-        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 10})
+
+        self.assertEquals(request.query(settings)['counters'],
+                          {
+                              'pages_nb': 10,
+                              'outlinks_nb': {
+                                  'total': 5,
+                                  'nofollow_link__nofollow_meta': 5,
+                              }
+                          })
 
         # Implicit OR
         settings = {
-            'fields': ['pages_nb'],
+            'fields': ['pages_nb', 'outlinks_nb'],
             'filters': [
                 {'field': 'host', 'value': 'www.site.com'},
                 {'field': 'host', 'value': 'subdomain.site.com'}
             ]
         }
-        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
+        expected_result = {
+            'pages_nb': 10,
+            'outlinks_nb': {
+                'total': 17,
+                'nofollow_link__nofollow_meta': 9,
+                'nofollow_link__nofollow_robots': 8
+            }
+        }
+        self.assertItemsEqual(request.query(settings)['counters'], expected_result)
 
         # explicit OR condition
         settings['filters'] = {
@@ -71,7 +98,7 @@ class TestPropertiesStats(unittest.TestCase):
                 {'field': 'host', 'value': 'subdomain.site.com'}
             ]
         }
-        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 30})
+        self.assertItemsEqual(request.query(settings)['counters'], expected_result)
 
         # AND condition
         settings['filters'] = {
@@ -80,11 +107,18 @@ class TestPropertiesStats(unittest.TestCase):
                 {'field': 'resource_type', 'value': 'article'}
             ]
         }
-        self.assertEquals(request.query(settings)['counters'], {'pages_nb': 10})
+        self.assertEquals(request.query(settings)['counters'],
+                          {
+                              'pages_nb': 10,
+                              'outlinks_nb': {
+                                  'total': 5,
+                                  'nofollow_link__nofollow_meta': 5,
+                              }
+                          })
 
     def test_predicates(self):
         df = DataFrame(self.data)
-        request = PropertiesStatsRequest(df)
+        request = MetricsRequest(df)
         settings = {
             'fields': ['pages_nb'],
             'filters': [
@@ -141,7 +175,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_nested_filter(self):
         df = DataFrame(self.data)
-        request = PropertiesStatsRequest(df)
+        request = MetricsRequest(df)
 
         settings = {
             'fields': ['pages_nb']
@@ -164,7 +198,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_filter_in(self):
         df = DataFrame(self.data)
-        request = PropertiesStatsRequest(df)
+        request = MetricsRequest(df)
 
         settings = {
             'fields': ['pages_nb']
@@ -178,7 +212,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_sum_by_property_1dim(self):
         df = DataFrame(self.data)
-        request = PropertiesStatsRequest(df)
+        request = MetricsRequest(df)
 
         expected_results = [
             {
@@ -206,7 +240,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_sum_by_property_2dim(self):
         df = DataFrame(self.data)
-        request = PropertiesStatsRequest(df)
+        request = MetricsRequest(df)
 
         expected_results = [
             {
@@ -263,7 +297,7 @@ class TestPropertiesStats(unittest.TestCase):
         ]
 
         df = DataFrame(self.data)
-        request = PropertiesStatsRequest(df)
+        request = MetricsRequest(df)
 
         # Level 1, TLDs
         expected_results = [
@@ -411,7 +445,7 @@ class TestPropertiesStats(unittest.TestCase):
         ]
 
         df = DataFrame(self.data)
-        request = PropertiesStatsRequest(df)
+        request = MetricsRequest(df)
 
         # Level 1
         expected_results = [
@@ -496,7 +530,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_not(self):
         df = DataFrame(self.data)
-        request = PropertiesStatsRequest(df)
+        request = MetricsRequest(df)
 
         settings = {
             'fields': ['pages_nb'],
