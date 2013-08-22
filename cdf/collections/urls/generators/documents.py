@@ -26,6 +26,10 @@ def extract_patterns(attributes, stream_item):
         attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
         attributes['query_string_items'] = qs
     attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
+    attributes['inlinks_nb'] = {}
+    attributes['inlinks_urls'] = {}
+    attributes['outlinks_nb'] = {}
+    attributes['outlinks_urls'] = {}
 
 
 def extract_infos(attributes, stream_item):
@@ -70,22 +74,20 @@ def extract_contents(attributes, stream_item):
 
 
 def extract_outlinks(attributes, stream_item):
-    url_src, link_type, follow_key, url_dst, external_url = stream_item
+    url_src, link_type, follow_keys, url_dst, external_url = stream_item
     if link_type == "a":
-        key_nb = "outlinks_{}_nb".format(follow_key)
+        for follow_key in follow_keys:
+            if follow_key not in attributes['outlinks_nb']:
+                attributes['outlinks_nb'][follow_key] = 1
+            else:
+                attributes['outlinks_nb'][follow_key] += 1
 
-        if key_nb not in attributes:
-            attributes[key_nb] = 1
-        else:
-            attributes[key_nb] += 1
-
-        if url_dst > 0:
-            key_ids = "outlinks_%s_urls" % follow_key
-            if key_ids not in attributes:
-                attributes[key_ids] = [url_dst]
-            # Store only the first 1000 outlinks
-            elif url_dst not in attributes[key_ids] and len(attributes[key_ids]) < 1000:
-                attributes[key_ids].append(url_dst)
+            if url_dst > 0:
+                if follow_key not in attributes['outlinks_urls']:
+                    attributes['outlinks_urls'][follow_key] = [url_dst]
+                # Store only the first 1000 outlinks
+                elif url_dst not in attributes['outlinks_urls'][follow_key] and len(attributes['outlinks_urls'][follow_key]) < 100:
+                    attributes['outlinks_urls'][follow_key].append(url_dst)
     elif link_type.startswith('r'):
         http_code = link_type[1:]
         attributes['redirect_to'] = {'url': url_dst, 'http_code': int(http_code)}
@@ -95,21 +97,19 @@ def extract_outlinks(attributes, stream_item):
 
 
 def extract_inlinks(attributes, stream_item):
-    url_dst, link_type, follow_key, url_src = stream_item
+    url_dst, link_type, follow_keys, url_src = stream_item
     if link_type == "a":
-        key_nb = "inlinks_%s_nb" % follow_key
+        for follow_key in follow_keys:
+            if follow_key not in attributes['inlinks_nb']:
+                attributes['inlinks_nb'][follow_key] = 1
+            else:
+                attributes['inlinks_nb'][follow_key] += 1
 
-        if key_nb not in attributes:
-            attributes[key_nb] = 1
-        else:
-            attributes[key_nb] += 1
-
-        if url_src > 0:
-            key_ids = "inlinks_%s_urls" % follow_key
-            if key_ids not in attributes:
-                attributes[key_ids] = [url_src]
-            elif len(attributes[key_ids]) < 300 and url_src not in attributes[key_ids]:
-                attributes[key_ids].append(url_src)
+            if url_src > 0:
+                if follow_key not in attributes['inlinks_urls']:
+                    attributes['inlinks_urls'][follow_key] = [url_src]
+                elif len(attributes['inlinks_urls'][follow_key]) < 300 and url_src not in attributes['inlinks_urls'][follow_key]:
+                    attributes['inlinks_urls'][follow_key].append(url_src)
 
     elif link_type.startswith('r'):
         http_code = int(link_type[1:])
