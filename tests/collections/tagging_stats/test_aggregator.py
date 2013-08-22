@@ -3,8 +3,8 @@ import unittest
 import logging
 
 from cdf.log import logger
-from cdf.collections.properties_stats.aggregator import (PropertiesStatsAggregator, PropertiesStatsMetaAggregator,
-                                                         PropertiesStatsConsolidator)
+from cdf.collections.tagging_stats.aggregator import (MetricsAggregator, MetadataAggregator,
+                                                      MetricsConsolidator)
 
 logger.setLevel(logging.DEBUG)
 
@@ -44,7 +44,7 @@ class TestPropertiesStats(unittest.TestCase):
             [2, 'a', 'follow', 1]
         ))
 
-        a = PropertiesStatsAggregator(stream_patterns, stream_infos, stream_properties, stream_outlinks, stream_inlinks)
+        a = MetricsAggregator(stream_patterns, stream_infos, stream_properties, stream_outlinks, stream_inlinks)
         stats = a.get()
         logger.info(stats)
 
@@ -74,7 +74,7 @@ class TestPropertiesStats(unittest.TestCase):
         self.assertEquals(stats_product['canonical_duplicates_nb'], 1)
 
 
-class TestPropertiesStatsConsolidator(unittest.TestCase):
+class TestMetricsConsolidator(unittest.TestCase):
 
     def test_simple(self):
         stats_part_0 = [
@@ -122,7 +122,7 @@ class TestPropertiesStatsConsolidator(unittest.TestCase):
             }
         ]
 
-        c = PropertiesStatsConsolidator([stats_part_0, stats_part_1, stats_part_2])
+        c = MetricsConsolidator([stats_part_0, stats_part_1, stats_part_2])
         aggregated_data = c.consolidate()
 
         expected_data = {
@@ -184,7 +184,7 @@ class TestPropertiesStatsMeta(unittest.TestCase):
             [3, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
         ))
 
-        a = PropertiesStatsMetaAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
+        a = MetadataAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
 
         expected_results = {
             ('www.site.com', 'product'):
@@ -253,7 +253,7 @@ class TestPropertiesStatsMeta(unittest.TestCase):
             [3, 8, 'text/html', 1, 1, 301, 1200, 303, 456, True], # 301 code
         ))
 
-        a = PropertiesStatsMetaAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
+        a = MetadataAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
         results = a.get()
         self.assertEquals(results[('www.site.com', 'product')]['not_enough_metadata'], 1)
 
@@ -290,7 +290,7 @@ class TestPropertiesStatsMeta(unittest.TestCase):
             [3, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
         ))
 
-        a = PropertiesStatsMetaAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
+        a = MetadataAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
         results = a.get()
         self.assertEquals(results[('www.site.com', 'homepage')]['not_enough_metadata'], 0)
         self.assertEquals(results[('www.site.com', 'product')]['not_enough_metadata'], 1)
