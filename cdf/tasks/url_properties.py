@@ -38,13 +38,18 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
-    files_fetched = fetch_files(s3_uri, tmp_dir, regexp=['urlids.txt.%d.gz' % part_id], force_fetch=force_fetch)
-    path_local, fetched = files_fetched[0]
+    files_fetched = fetch_files(s3_uri,
+                                tmp_dir,
+                                regexp=['url(ids|infos).txt.%d.gz' % part_id],
+                                force_fetch=force_fetch)
 
-    cast = Caster(STREAMS_HEADERS['PATTERNS']).cast
-    stream_patterns = cast(split_file(gzip.open(path_local)))
+    streams = dict()
+    for path_local, fetched in files_fetched:
+        stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
+        cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
+        streams[stream_identifier] = cast(split_file(gzip.open(path_local)))
 
-    g = UrlTaggingGenerator(stream_patterns, settings)
+    g = UrlTaggingGenerator(streams['patterns'], streams['infos'], settings)
 
     docs = []
     raw_lines = []

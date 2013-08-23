@@ -1,10 +1,12 @@
 from cdf.collections.urls.tagging.resource_type import compile_resource_type_settings
+from cdf.streams.utils import idx_from_stream, group_left
 
 
 class UrlTaggingGenerator(object):
 
-    def __init__(self, stream_patterns, resource_type_settings):
+    def __init__(self, stream_patterns, stream_infos, resource_type_settings):
         self.stream_patterns = stream_patterns
+        self.stream_infos = stream_infos
         self.resource_type_settings = resource_type_settings
         self.resource_type_compiled = compile_resource_type_settings(self.resource_type_settings)
 
@@ -16,8 +18,14 @@ class UrlTaggingGenerator(object):
             "resource_type": "value"
         }
         """
-        for i in self.stream_patterns:
-            url_id, protocol, host, path, query_string = i
+        date_crawled_idx = idx_from_stream('infos', 'date_crawled')
+        for i in group_left((self.stream_patterns, 0), infos=(self.stream_infos, 0)):
+            url_id, left_line, streams = i
+            date_crawled = streams['infos'][0][date_crawled_idx]
+            if not date_crawled:
+                continue
+
+            url_id, protocol, host, path, query_string = left_line
             # locator not yet in urlids.txt
             locator = ''
             url = "{}://{}{}{}".format(protocol, host, path, query_string)
