@@ -48,9 +48,31 @@ URLS_DATA_MAPPING = {
                     "h1": {"type": "long"}
                 }
             },
-            "outlinks_external_follow_nb": {"type": "long"},
-            "outlinks_follow_urls": {"type": "long"},
-            "outlinks_internal_follow_nb": {"type": "long"},
+            "inlinks_nb": {
+                "follow": {"type": "long"},
+                "nofollow_link": {"type": "long"},
+                "nofollow_meta": {"type": "long"},
+                "nofollow_robots": {"type": "long"},
+            },
+            "inlinks_ids": {
+                "follow": {"type": "long"},
+                "nofollow_link": {"type": "long"},
+                "nofollow_meta": {"type": "long"},
+                "nofollow_robots": {"type": "long"},
+            },
+            "outlinks_nb": {
+                "follow": {"type": "long"},
+                "nofollow_link": {"type": "long"},
+                "nofollow_meta": {"type": "long"},
+                "nofollow_robots": {"type": "long"},
+                "nofollow_config": {"type": "long"}
+            },
+            "outlinks_ids": {
+                "follow": {"type": "long"},
+                "nofollow_link": {"type": "long"},
+                "nofollow_meta": {"type": "long"},
+                "nofollow_robots": {"type": "long"},
+            },
             "path": {"type": "string"},
             "protocol": {"type": "string"},
             "query_string": {"type": "string"},
