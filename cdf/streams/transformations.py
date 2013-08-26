@@ -1,15 +1,16 @@
 from .exceptions import GroupWithSkipException
 
 
-def group_with(left, **stream_defs):
+def group_with(left, final_func=None, **stream_defs):
     """
     :param left: (stream, key_index, func)
+    :param final_func : callable function executed at the end of a group
     :param **stream_defs: {stream_name: (stream, key_index, func)
 
     :returns:
     :rtype: yield (key, attributes)
 
-    >>>> group(patterns=pattern_stream, infos=pattern_info)
+    >>>> group_with(left=pattern_stream, infos=pattern_info)
     """
     id_ = {}
     right_line = {}
@@ -53,5 +54,8 @@ def group_with(left, **stream_defs):
 
         if move_to_next_id:
             continue
+
+        if final_func:
+            final_func(attributes)
 
         yield current_id, attributes

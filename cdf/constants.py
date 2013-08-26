@@ -13,7 +13,6 @@ URLS_DATA_MAPPING = {
             },
             "url": {
                 "type": "string",
-                "index": "not_analyzed"
             },
             "url_hash": {"type": "long"},
             "byte_size": {"type": "long"},
@@ -79,16 +78,26 @@ URLS_DATA_MAPPING = {
             "query_string_items": {"type": "string"},
             "query_string_keys": {"type": "string"},
             "query_string_keys_order": {"type": "string"},
-            "redirect_to": {
+            "canonical_from_nb": {"type": "long"},
+            "canonical_from": {"type": "long"},
+            "canonical_to": {
                 "properties": {
-                    "http_code": {"type": "string"},
-                    "url": {"type": "long"}
+                    "url": {"type": "string"},
+                    "url_id": {"type": "long"}
                 }
             },
-            "redirect_from": {
+            "redirects_to": {
                 "properties": {
                     "http_code": {"type": "string"},
-                    "url": {"type": "long"}
+                    "url": {"type": "string"},
+                    "url_id": {"type": "long"}
+                }
+            },
+            "redirects_from_nb": {"type": "long"},
+            "redirects_from": {
+                "properties": {
+                    "http_code": {"type": "string"},
+                    "url_id": {"type": "long"}
                 }
             }
         }
