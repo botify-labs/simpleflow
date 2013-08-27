@@ -399,10 +399,11 @@ class Query(object):
                         if child in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[child]:
                             FIELDS_HOOKS[child]['transform'](self, r['_source'], document)
                         else:
+                            default_value = FIELDS_HOOKS.get(child, {"default": 0}).get("default", 0)
                             try:
-                                value = [reduce(dict.get, child.split("."), r['_source'])]
+                                value = [reduce(dict.get, child.split("."), r['_source']) or default_value]
                             except:
-                                value = [FIELDS_HOOKS.get(child, {"default": 0}).get("default", 0)]
+                                value = [default_value]
                             deep_update(document, reduce(lambda x, y: {y: x}, reversed(child.split('.') + value)))
                 elif field in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['transform'](self, r['_source'], document)

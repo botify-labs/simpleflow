@@ -37,6 +37,9 @@ class TestQuery(unittest.TestCase):
                 "metadata_duplicate": {
                     "h1": [7]
                 },
+                "metadata_duplicate_nb": {
+                    "h1": 1
+                },
                 "outlinks_nb": {
                     "follow": 3,
                     "nofollow_link": 1,
@@ -361,7 +364,7 @@ class TestQuery(unittest.TestCase):
 
     def test_metadata_duplicate(self):
         query = {
-            "fields": ["metadata_duplicate.h1"],
+            "fields": ["metadata_duplicate_nb", "metadata_duplicate.h1"],
             "filters": {
                 "field": "id",
                 "value": 1
@@ -369,6 +372,11 @@ class TestQuery(unittest.TestCase):
         }
         q = Query(*self.query_args, query=query, sort=('id',))
         expected_result = {
+            "metadata_duplicate_nb": {
+                "h1": 1,
+                "title": 0,
+                "description": 0
+            },
             "metadata_duplicate": {
                 "h1": [
                     {"url": "http://www.mysite.com/page7.html",
@@ -378,8 +386,6 @@ class TestQuery(unittest.TestCase):
         }
         q = Query(*self.query_args, query=query, sort=('id',))
         self.assertEquals(list(q.results)[0], expected_result)
-
- 
 
     def _test_filters(self):
         filters = {
