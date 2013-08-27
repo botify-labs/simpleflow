@@ -1,9 +1,16 @@
 from pyelasticsearch import ElasticSearch
-from collections import defaultdict
 
 from cdf.constants import URLS_DATA_MAPPING
-from cdf.utils.dict import deep_update, deep_clean, flatten_dict
-from .constants import QUERY_URLS_FIELDS, QUERY_TAGGING_FIELDS, QUERY_URLS_IDS, QUERY_URLS_DEFAULT_VALUES
+from cdf.utils.dict import deep_update, deep_clean
+from .constants import QUERY_FIELDS, QUERY_TAGGING_FIELDS
+
+
+def field_has_children(field):
+    return any(i.startswith('{}.'.format(field)) for i in QUERY_FIELDS)
+
+
+def children_from_field(field):
+    return filter(lambda i: i.startswith('{}.'.format(field)), QUERY_FIELDS)
 
 
 def prepare_redirects_from(query, es_document):
@@ -48,45 +55,28 @@ def transform_redirects_to(query, es_document, attributes):
             }
 
 
-def prepare_outlinks(query, es_document):
-    if not 'outlinks' in es_document:
+def prepare_links(query, es_document, link_direction, link_type):
+    if link_direction in es_document and link_type in es_document[link_direction]:
+        query._urls_ids |= set(es_document[link_direction][link_type])
+
+
+def transform_links(query, es_document, attributes, link_direction, link_type):
+    if not link_direction in attributes:
+        attributes[link_direction] = {}
+    if not link_type in attributes[link_direction]:
+        attributes[link_direction][link_type] = []
+    if not link_direction in es_document or not link_type in es_document[link_direction]:
         return
-    for link_type in es_document['outlinks']:
-        query._urls_ids |= set(es_document['outlinks'][link_type])
-
-
-def transform_outlinks(query, es_document, attributes):
-    attributes['outlinks'] = {}
-    for link_type in URLS_DATA_MAPPING["urls"]["properties"]["outlinks"]["properties"]:
-        attributes['outlinks'][link_type] = []
-        if not 'outlinks' in es_document:
-            continue
-        for url_id in es_document['outlinks'][link_type]:
-            url, http_code = query._id_to_url.get(url_id)
-            attributes['outlinks'][link_type].append(
-                {
-                    'url': url,
-                    'crawled': http_code > 0
-                }
-            )
+    for url_id in es_document[link_direction][link_type]:
+        url, http_code = query._id_to_url.get(url_id)
+        attributes[link_direction][link_type].append(
+            {
+                'url': str(url),
+                'crawled': http_code > 0
+            }
+        )
 
 FIELDS_HOOKS = {
-    'metadata_nb': {
-        'default': {
-            'title': 0,
-            'description': 0,
-            'h1': 0,
-            'h2': 0
-        }
-    },
-    'metadata': {
-        'default': {
-            'title': [],
-            'description': [],
-            'h1': [],
-            'h2': []
-        }
-    },
     'redirects_from': {
         'prepare': prepare_redirects_from,
         'transform': transform_redirects_from
@@ -95,15 +85,20 @@ FIELDS_HOOKS = {
         'prepare': prepare_redirects_to,
         'transform': transform_redirects_to
     },
-    'outlinks': {
-        'prepare': prepare_outlinks,
-        'transform': transform_outlinks
-    },
 }
+
+# Set prepare and transform functions for nested inlinks and outlinks
+for link_direction in ('inlinks', 'outlinks'):
+    for field in filter(lambda i: i.startswith('{}.'.format(link_direction)), QUERY_FIELDS):
+        _, _f = field.split('.')
+        FIELDS_HOOKS["{}.{}".format(link_direction, _f)] = {
+            'prepare': lambda query, es_document, link_direction=link_direction, link_type=_f: prepare_links(query, es_document, link_direction, link_type),
+            'transform': lambda query, es_document, attributes, ink_direction=link_direction, link_type=_f: transform_links(query, es_document, attributes, link_direction, link_type)
+        }
 
 # Set default values on nested objects
 for nested_field, default in (('inlinks_nb', 0), ('outlinks_nb', 0), ('metadata_nb', 0),
-                              ('inlinks', []), ('outlinks', []), ('metadata', [])):
+                              ('metadata', [])):
     for field in URLS_DATA_MAPPING["urls"]["properties"][nested_field]["properties"]:
         FIELDS_HOOKS["{}.{}".format(nested_field, field)] = {
             "default": default
@@ -359,6 +354,10 @@ class Query(object):
             document = {'id': r['_id']}
 
             for field in query['fields']:
+                if field_has_children(field):
+                    for child in children_from_field(field):
+                        if child in FIELDS_HOOKS and 'prepare' in FIELDS_HOOKS[child]:
+                            FIELDS_HOOKS[child]['prepare'](self, r['_source'])
                 if field in FIELDS_HOOKS and 'prepare' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['prepare'](self, r['_source'])
 
@@ -376,7 +375,17 @@ class Query(object):
             document = {}
 
             for field in query['fields']:
-                if field in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[field]:
+                if field_has_children(field):
+                    for child in children_from_field(field):
+                        if child in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[child]:
+                            FIELDS_HOOKS[child]['transform'](self, r['_source'], document)
+                        else:
+                            try:
+                                value = [reduce(dict.get, child.split("."), r['_source'])]
+                            except:
+                                value = [FIELDS_HOOKS.get(child, {"default": 0}).get("default", 0)]
+                            deep_update(document, reduce(lambda x, y: {y: x}, reversed(child.split('.') + value)))
+                elif field in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['transform'](self, r['_source'], document)
                 else:
                     default_value = FIELDS_HOOKS.get(field, {"default": 0}).get("default", 0)
@@ -397,9 +406,6 @@ class Query(object):
                             document[_f] = t[_f]
                             break
             """
-            for default_field, default_value in QUERY_URLS_DEFAULT_VALUES.iteritems():
-                if default_field in query['fields'] and not document.get(default_field, None):
-                    document[default_field] = default_value
             results.append(document)
 
         self._results = {

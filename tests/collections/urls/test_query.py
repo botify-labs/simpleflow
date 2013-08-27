@@ -35,14 +35,14 @@ class TestQuery(unittest.TestCase):
                     'description': 0
                 },
                 "outlinks_nb": {
-                    "follow": 1,
+                    "follow": 3,
                     "nofollow_link": 1,
                     "nofollow_meta": 0,
                     "nofollow_robots": 0,
                     "nofollow_config": 0
                 },
                 "outlinks": {
-                    "follow": [2, 3],
+                    "follow": [2, 3, 5],
                     "nofollow_link": [3],
                     "nofollow_meta": [],
                     "nofollow_robots": [],
@@ -286,7 +286,7 @@ class TestQuery(unittest.TestCase):
         q = Query(*self.query_args, query=query, sort=('id',))
         expected_result = {
             "outlinks_nb": {
-                "follow": 1,
+                "follow": 3,
                 "nofollow_link": 1,
                 "nofollow_meta": 0,
                 "nofollow_robots": 0,
@@ -298,6 +298,9 @@ class TestQuery(unittest.TestCase):
                      "crawled": True},
                     {"url": "http://www.mysite.com/page3.html",
                      "crawled": True},
+                    # Url 5 has not been crawled (http_code=0)
+                    {"url": "http://www.mysite.com/page5.html",
+                     "crawled": False},
                 ],
                 "nofollow_link": [
                     {"url": "http://www.mysite.com/page3.html",
@@ -306,6 +309,36 @@ class TestQuery(unittest.TestCase):
                 "nofollow_meta": [],
                 "nofollow_robots": [],
             },
+        }
+        q = Query(*self.query_args, query=query, sort=('id',))
+        results = list(q.results)
+        self.assertEquals(results[0]["outlinks_nb"], expected_result["outlinks_nb"])
+        self.assertEquals(results[0]["outlinks"], expected_result["outlinks"])
+
+    def test_outlinks_specific_field(self):
+        """
+        We want to return only "follow" outlinks
+        """
+        query = {
+            "fields": ["outlinks.follow"],
+            "filters": {
+                "field": "id",
+                "value": 1
+            }
+        }
+        q = Query(*self.query_args, query=query, sort=('id',))
+        expected_result = {
+            "outlinks": {
+                "follow": [
+                    {"url": "http://www.mysite.com/page2.html",
+                     "crawled": True},
+                    {"url": "http://www.mysite.com/page3.html",
+                     "crawled": True},
+                    # Url 5 has not been crawled (http_code=0)
+                    {"url": "http://www.mysite.com/page5.html",
+                     "crawled": False},
+                ]
+            }
         }
         q = Query(*self.query_args, query=query, sort=('id',))
         self.assertEquals(list(q.results)[0], expected_result)
