@@ -6,6 +6,25 @@ from cdf.utils.dict import deep_update, flatten_dict
 from .constants import QUERY_URLS_FIELDS, QUERY_TAGGING_FIELDS, QUERY_URLS_IDS, QUERY_URLS_DEFAULT_VALUES
 
 
+def prepare_redirects_from(query, es_document):
+    if 'redirects_from' in es_document:
+        for _r in es_document['redirects_from']:
+            query._urls_ids.add(_r['url_id'])
+
+
+def transform_redirects_from(query, es_document, attributes):
+    if 'redirects_from' in es_document:
+        attributes['redirects_from'] = []
+        for _r in es_document['redirects_from']:
+            attributes['redirects_from'].append({
+                'http_code': _r['http_code'],
+                'url': {
+                    'url': query._id_to_url.get(_r['url_id'])[0],
+                    'crawled': True
+                }
+            })
+
+
 def prepare_redirects_to(query, es_document):
     if 'redirects_to' in es_document and 'url_id' in es_document['redirects_to']:
         query._urls_ids.add(es_document['redirects_to']['url_id'])
@@ -49,10 +68,6 @@ FIELDS_HOOKS = {
     'metadata_nb.h2': {
         'default': 0
     },
-    'redirects_to': {
-        'prepare': prepare_redirects_to,
-        'transform': transform_redirects_to
-    },
     'metadata': {
         'default': {
             'title': [],
@@ -72,7 +87,15 @@ FIELDS_HOOKS = {
     },
     'metadata.h2': {
         'default': []
-    }
+    },
+    'redirects_from': {
+        'prepare': prepare_redirects_from,
+        'transform': transform_redirects_from
+    },
+    'redirects_to': {
+        'prepare': prepare_redirects_to,
+        'transform': transform_redirects_to
+    },
 }
 
 
@@ -342,10 +365,10 @@ class Query(object):
             document = {}
 
             for field in query['fields']:
-                default_value = FIELDS_HOOKS.get(field, {"default": 0})["default"]
                 if field in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['transform'](self, r['_source'], document)
                 else:
+                    default_value = FIELDS_HOOKS.get(field, {"default": 0}).get("default", 0)
                     if '.' in field:
                         try:
                             value = [reduce(dict.get, field.split("."), r['_source'])]

@@ -202,6 +202,29 @@ class TestQuery(unittest.TestCase):
         self.assertEquals(list(q.results)[0], expected_url_4)
         self.assertEquals(list(q.results)[1], expected_url_6)
 
+    def test_redirects_from(self):
+        query = {
+            "fields": ['id', 'redirects_from'],
+            "filters": {
+                'and': [
+                    {"field": "id", "value": 3},
+                    {"field": "redirects_from", "predicate": "not_null"}
+                ]
+            }
+        }
+        expected_url = {
+            "id": 3,
+            "redirects_from": [{
+                "http_code": 301,
+                "url": {
+                    "url": u"http://www.mysite.com/page2.html",
+                    "crawled": True
+                }
+            }]
+        }
+        q = Query(*self.query_args, query=query, sort=('id',))
+        self.assertEquals(list(q.results)[0], expected_url)
+
     def test_subfield(self):
         query = {
             "fields": ["metadata.title", "metadata_nb"],
