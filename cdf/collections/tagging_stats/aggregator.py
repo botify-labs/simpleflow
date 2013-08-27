@@ -197,14 +197,14 @@ class MetadataAggregator(object):
     def get(self):
         """
         Return a dictionnary where key is a tuple :
-        (host, resource_type)
-         str,  str
+        (host, resource_type, content_type, depth, http_code, index, follow)
+         str,  str,           str,          int,   http_code, bool,  bool
 
         Values is a sub-dictonnary with counters keys.
 
         Ex :
         {
-           ("www.site.com", "/article") : {
+           ("www.site.com", "/article", "text/html", 1, 200, True, True): {
                "title_filled_nb": 6,
                "title_global_unik_nb": 4,
                "title_local_unik_nb": 5,
@@ -224,20 +224,33 @@ class MetadataAggregator(object):
                        }
 
         hashes_global = {ct_id: defaultdict(set) for ct_id in CONTENT_TYPE_INDEX.iterkeys()}
-        # Store hashes by properties key
-        hashes_by_key = {ct_id: defaultdict(set) for ct_id in CONTENT_TYPE_INDEX.iterkeys()}
 
         host_idx = idx_from_stream('patterns', 'host')
         resource_type_idx = idx_from_stream('properties', 'resource_type')
         content_meta_type_idx = idx_from_stream('contents', 'content_type')
         content_hash_idx = idx_from_stream('contents', 'hash')
+        depth_idx = idx_from_stream('infos', 'depth')
         http_code_idx = idx_from_stream('infos', 'http_code')
+        infos_mask_idx = idx_from_stream('infos', 'infos_mask')
+        content_type_idx = idx_from_stream('infos', 'content_type')
 
         results = defaultdict(Counter)
 
         for result in group_left(left, **streams_ref):
-            key = (result[1][host_idx], result[2]['properties'][0][resource_type_idx])
-            hash_key = hasher(','.join(key))
+            # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
+            infos = result[2]['infos'][0]
+            index = not (4 & infos[infos_mask_idx] == 4)
+            follow = not (8 & infos[infos_mask_idx] == 8)
+
+            key = (result[1][host_idx],
+                   result[2]['properties'][0][resource_type_idx],
+                   infos[content_type_idx],
+                   infos[depth_idx],
+                   infos[http_code_idx],
+                   index,
+                   follow
+                   )
+            hash_key = hasher(','.join(str(k) for k in key))
             contents = result[2]['contents']
 
             # For each url, we check if it has correctly title, description and h1 filled
@@ -263,7 +276,6 @@ class MetadataAggregator(object):
                 if ct_id not in ct_found:
                     ct_found.add(ct_id)
                     hashes_global[ct_id][content[content_hash_idx]].add(hash_key)
-                    hashes_by_key[ct_id][hash_key].add(content[content_hash_idx])
 
         # Concatenate results
         results = dict(results)
@@ -271,17 +283,15 @@ class MetadataAggregator(object):
             # Transform Counter to dict
             results[key] = dict(results[key])
             result = results[key]
-            hash_key = hasher(','.join(key))
+            hash_key = hasher(','.join(str(k) for k in key))
             for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
                 # If [ct_txt]_filled_nb not exists, we create the fields
                 if not '%s_filled_nb' % ct_txt in result:
                     result['%s_filled_nb' % ct_txt] = 0
-                    result['%s_local_unik_nb' % ct_txt] = 0
-                    result['%s_global_unik_nb' % ct_txt] = 0
+                    result['%s_unique_nb' % ct_txt] = 0
                 else:
-                    result['%s_local_unik_nb' % ct_txt] = len(hashes_by_key[ct_id][hash_key])
                     # We fetch all set where there is only the hash_key (that means uniq)
-                    result['%s_global_unik_nb' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
+                    result['%s_unique_nb' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
             if not 'not_enough_metadata' in result:
                 result['not_enough_metadata'] = 0
         return results

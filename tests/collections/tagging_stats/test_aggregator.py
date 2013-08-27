@@ -182,9 +182,9 @@ class TestPropertiesStatsMeta(unittest.TestCase):
         ))
 
         stream_infos = iter((
-            [1, 4, 'text/html', 0, 1, 200, 1200, 303, 456, True],
-            [2, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
-            [3, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+            [1, 0, 'text/html', 0, 1, 200, 1200, 303, 456, True],
+            [2, 0, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+            [3, 0, 'text/html', 1, 1, 200, 1200, 303, 456, True],
         ))
 
         a = MetadataAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
@@ -192,39 +192,30 @@ class TestPropertiesStatsMeta(unittest.TestCase):
         expected_results = {
             ('www.site.com', 'product'):
                 {'h1_filled_nb': 2,
-                 'h1_local_unik_nb': 2,
-                 'h1_global_unik_nb': 1,
+                 'h1_unique_nb': 1,
                  'h2_filled_nb': 1,
-                 'h2_local_unik_nb': 1,
-                 'h2_global_unik_nb': 0,
+                 'h2_unique_nb': 0,
                  'title_filled_nb': 0,
-                 'title_global_unik_nb': 0,
-                 'title_local_unik_nb': 0,
+                 'title_unique_nb': 0,
                  'description_filled_nb': 0,
-                 'description_local_unik_nb': 0,
-                 'description_global_unik_nb': 0,
+                 'description_unique_nb': 0,
                  'not_enough_metadata': 2
                  },
             ('www.site.com', 'homepage'):
                 {'h1_filled_nb': 1,
-                 'h1_local_unik_nb': 1,
-                 'h1_global_unik_nb': 0,
+                 'h1_unique_nb': 0,
                  'h2_filled_nb': 1,
-                 'h2_local_unik_nb': 1,
-                 'h2_global_unik_nb': 0,
+                 'h2_unique_nb': 0,
                  'title_filled_nb': 1,
-                 'title_global_unik_nb': 1,
-                 'title_local_unik_nb': 1,
+                 'title_unique_nb': 1,
                  'description_filled_nb': 0,
-                 'description_local_unik_nb': 0,
-                 'description_global_unik_nb': 0,
+                 'description_unique_nb': 0,
                  'not_enough_metadata': 1,
                  }
         }
         results = a.get()
-
-        self.assertEquals(results[('www.site.com', 'product')], expected_results[('www.site.com', 'product')])
-        self.assertEquals(results[('www.site.com', 'homepage')], expected_results[('www.site.com', 'homepage')])
+        self.assertEquals(results[('www.site.com', 'product', 'text/html', 1, 200, True, True)], expected_results[('www.site.com', 'product')])
+        self.assertEquals(results[('www.site.com', 'homepage', 'text/html', 0, 200, True, True)], expected_results[('www.site.com', 'homepage')])
 
     def test_not_enugh_metadata_bad_code(self):
         """
@@ -251,14 +242,14 @@ class TestPropertiesStatsMeta(unittest.TestCase):
         ))
 
         stream_infos = iter((
-            [1, 4, 'text/html', 0, 1, 200, 1200, 303, 456, True], # 200 code
-            [2, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True], # 200 code
-            [3, 8, 'text/html', 1, 1, 301, 1200, 303, 456, True], # 301 code
+            [1, 0, 'text/html', 0, 1, 200, 1200, 303, 456, True], # 200 code
+            [2, 0, 'text/html', 1, 1, 200, 1200, 303, 456, True], # 200 code
+            [3, 0, 'text/html', 1, 1, 301, 1200, 303, 456, True], # 301 code
         ))
 
         a = MetadataAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
         results = a.get()
-        self.assertEquals(results[('www.site.com', 'product')]['not_enough_metadata'], 1)
+        self.assertEquals(results[('www.site.com', 'product', 'text/html', 1, 200, True, True)]['not_enough_metadata'], 1)
 
 
     def test_metadata(self):
@@ -288,12 +279,12 @@ class TestPropertiesStatsMeta(unittest.TestCase):
         ))
 
         stream_infos = iter((
-            [1, 4, 'text/html', 0, 1, 200, 1200, 303, 456, True],
-            [2, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
-            [3, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+            [1, 0, 'text/html', 0, 1, 200, 1200, 303, 456, True],
+            [2, 0, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+            [3, 0, 'text/html', 1, 1, 200, 1200, 303, 456, True],
         ))
 
         a = MetadataAggregator(stream_patterns, stream_properties, stream_contents, stream_infos)
         results = a.get()
-        self.assertEquals(results[('www.site.com', 'homepage')]['not_enough_metadata'], 0)
-        self.assertEquals(results[('www.site.com', 'product')]['not_enough_metadata'], 1)
+        self.assertEquals(results[('www.site.com', 'homepage', 'text/html', 0, 200, True, True)]['not_enough_metadata'], 0)
+        self.assertEquals(results[('www.site.com', 'product', 'text/html', 1, 200, True, True)]['not_enough_metadata'], 1)
