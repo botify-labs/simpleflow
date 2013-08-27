@@ -25,7 +25,14 @@ class TestQuery(unittest.TestCase):
                 'http_code': 200,
                 'delay2': 100,
                 'metadata': {
-                    'h1': 'Welcome to our website'
+                    'title': ['My title'],
+                    'h1': ['Welcome to our website']
+                },
+                'metadata_nb': {
+                    'title': 1,
+                    'h1': 1,
+                    'h2': 0,
+                    'description': 0
                 }
             },
             {
@@ -43,7 +50,13 @@ class TestQuery(unittest.TestCase):
                 'redirects_from': [{
                     'http_code': 301,
                     'url_id': 2
-                }]
+                }],
+                'metadata_nb': {
+                    'title': 0,
+                    'h1': 0,
+                    'h2': 0,
+                    'description': 0
+                }
             },
             {
                 'id': 4,
@@ -60,9 +73,10 @@ class TestQuery(unittest.TestCase):
             },
             {
                 'id': 6,
-                'url': 'http://www.mysite.com/page5.html',
+                'url': 'http://www.mysite.com/page6.html',
+                'http_code': 302,
                 'redirects_to': {
-                    'url': 'http://www.youtube.com'
+                    'url': 'http://www.youtube.com/'
                 }
             },
         ]
@@ -143,7 +157,7 @@ class TestQuery(unittest.TestCase):
             "fields": ['id', 'redirects_to'],
             "filters": {
                 'and': [
-                    {"field": "http_code", "value": 301, "predicate": "gte"},
+                    {"field": "http_code", "value": 301},
                     {"field": "redirects_to", "predicate": "not_null"}
                 ]
             }
@@ -169,17 +183,61 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        res = self.r.query(query)
-        self.assertEquals(res['count'], 1)
-        expected_url = {
-            "id": u"4",
+        expected_url_4 = {
+            "id": 4,
             "redirects_to": {
                 "url": u"http://www.mysite.com/page5.html",
                 "crawled": False
             }
         }
-        self.assertEquals(res['results'][0], expected_url)
+        expected_url_6 = {
+            "id": 6,
+            "redirects_to": {
+                "url": u"http://www.youtube.com/",
+                "crawled": False
+            }
+        }
+        q = Query(*self.query_args, query=query, sort=('id',))
+        self.assertEquals(q.count, 2)
+        self.assertEquals(list(q.results)[0], expected_url_4)
+        self.assertEquals(list(q.results)[1], expected_url_6)
 
+    def test_subfield(self):
+        query = {
+            "fields": ["metadata.title", "metadata_nb"],
+            "filters": {
+                "field": "id",
+                "value": 2,
+                "predicate": "lte"
+            }
+        }
+        q = Query(*self.query_args, query=query, sort=('id',))
+        expected_result_1 = {
+            "metadata": {
+                "title": ["My title"]
+            },
+            "metadata_nb": {
+                "title": 1,
+                "h1": 1,
+                "description": 0,
+                "h2": 0
+            }
+        }
+        results = list(q.results)
+        self.assertEquals(results[0], expected_result_1)
+        # Url 2 has not title but should return a None value
+        expected_result_2 = {
+            "metadata": {
+                "title": []
+            },
+            "metadata_nb": {
+                "title": 0,
+                "h1": 0,
+                "description": 0,
+                "h2": 0
+            }
+        }
+        self.assertEquals(results[1], expected_result_2)
 
     def test_filters(self):
         filters = {

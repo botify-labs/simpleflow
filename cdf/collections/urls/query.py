@@ -19,13 +19,62 @@ def transform_redirects_to(query, es_document, attributes):
                 'url': url,
                 'crawled': http_code > 0
             }
+        elif 'url' in es_document['redirects_to']:
+            """
+            It's an external url
+            """
+            attributes['redirects_to'] = {
+                'url': es_document['redirects_to']['url'],
+                'crawled': False 
+            }
 
 FIELDS_HOOKS = {
+    'metadata_nb': {
+        'default': {
+            'title': 0,
+            'description': 0,
+            'h1': 0,
+            'h2': 0
+        }
+    },
+    'metadata_nb.title': {
+        'default': 0
+    },
+    'metadata_nb.description': {
+        'default': 0
+    },
+    'metadata_nb.h1': {
+        'default': 0
+    },
+    'metadata_nb.h2': {
+        'default': 0
+    },
     'redirects_to': {
         'prepare': prepare_redirects_to,
         'transform': transform_redirects_to
+    },
+    'metadata': {
+        'default': {
+            'title': [],
+            'description': [],
+            'h1': [],
+            'h2': []
+        }
+    },
+    'metadata.title': {
+        'default': []
+    },
+    'metadata.description': {
+        'default': []
+    },
+    'metadata.h1': {
+        'default': []
+    },
+    'metadata.h2': {
+        'default': []
     }
 }
+
 
 def predicate_not_null(filters):
     """
@@ -33,13 +82,16 @@ def predicate_not_null(filters):
     We need to check the existence of one of the required subobject fields
     """
     if 'properties' in URLS_DATA_MAPPING["urls"]["properties"][filters["field"]]:
-        _f =  {"or": []}
+        _f = {"or": []}
         for field in URLS_DATA_MAPPING["urls"]["properties"][filters["field"]]["properties"]:
-            _f["or"].append({"exists": {"field": field}})
-        return _r
+            _f["or"].append({"exists": {"field": "{}.{}".format(filters["field"], field)}})
+        return _f
     else:
-        return {"exists" : { "field" : filters['field'] }
-}
+        return {
+            "exists": {
+                "field": filters['field']
+            }
+        }
 
 PREDICATE_FORMATS = {
     'eq': lambda filters: {
@@ -242,12 +294,12 @@ class Query(object):
 
         # some pages not crawled are stored into ES but should not be returned
         filter_http_code = {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
-        #if not 'filters' in query:
-        #    query['filters'] = filter_http_code
-        #elif 'and' in query['filters']:
-        #    query['filters']['and'].append(filter_http_code)
-        #else:
-        #    query['filters'] = {'and': [filter_http_code, query['filters']]}
+        if not 'filters' in query:
+            query['filters'] = filter_http_code
+        elif 'and' in query['filters']:
+            query['filters']['and'].append(filter_http_code)
+        else:
+            query['filters'] = {'and': [filter_http_code, query['filters']]}
 
         if 'sort' in query:
             sort = query['sort']
@@ -255,15 +307,6 @@ class Query(object):
             sort = ('id', )
 
         s = ElasticSearch(self.es_location)
-        import json
-        print json.dumps(self.make_raw_query(query, sort=sort))
-        q = {"sort": ["id"], "filter": {"and": [{"bool": {"must_not": {"missing": {"field": "redirects_to", "null_value": True, "existence": True}}}}]}}
-        alt_results = s.search(q,
-                               index=self.es_index,
-                               doc_type="crawl_%d" % self.crawl_id,
-                               size=self.limit,
-                               es_from=self.start)
-        print json.dumps(alt_results, indent=4)
         alt_results = s.search(self.make_raw_query(query, sort=sort),
                                index=self.es_index,
                                doc_type="crawl_%d" % self.crawl_id,
@@ -282,7 +325,7 @@ class Query(object):
             document = {'id': r['_id']}
 
             for field in query['fields']:
-                if field in FIELDS_HOOKS:
+                if field in FIELDS_HOOKS and 'prepare' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['prepare'](self, r['_source'])
 
         """
@@ -299,10 +342,18 @@ class Query(object):
             document = {}
 
             for field in query['fields']:
-                if field in FIELDS_HOOKS:
+                default_value = FIELDS_HOOKS.get(field, {"default": 0})["default"]
+                if field in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['transform'](self, r['_source'], document)
                 else:
-                    document[field] = r['_source'][field]
+                    if '.' in field:
+                        try:
+                            value = [reduce(dict.get, field.split("."), r['_source'])]
+                        except:
+                            value = [default_value]
+                        deep_update(document, reduce(lambda x, y: {y: x}, reversed(field.split('.') + value)))
+                    else:
+                        document[field] = r['_source'][field] if field in r['_source'] else default_value
 
             """
             for _f in QUERY_TAGGING_FIELDS:
