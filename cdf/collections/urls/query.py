@@ -76,6 +76,16 @@ def transform_links(query, es_document, attributes, link_direction, link_type):
             }
         )
 
+
+"""
+def prepare_metadata_duplicate(query, es_document, field):
+    if 'metadata_duplicate' in es_document and field in es_document['metadata_duplicate']:
+        query._urls_ids |= set(es_document['metadata_duplicate'][field])
+
+
+def transform_metadata_duplicate(query, es_document, attributes, field):
+"""
+
 FIELDS_HOOKS = {
     'redirects_from': {
         'prepare': prepare_redirects_from,
@@ -96,11 +106,20 @@ for link_direction in ('inlinks', 'outlinks'):
             'transform': lambda query, es_document, attributes, ink_direction=link_direction, link_type=_f: transform_links(query, es_document, attributes, link_direction, link_type)
         }
 
+# Prepare metadata duplicate urls
+for field in children_from_field('metadata_duplicate'):
+    _, _f = field.split('.')
+    FIELDS_HOOKS["metadata_duplicate.{}".format(_f)] = {
+        'prepare': lambda query, es_document, field=_f: prepare_links(query, es_document, "metadata_duplicate", field),
+        'transform': lambda query, es_document, attributes, field=_f: transform_links(query, es_document, attributes, "metadata_duplicate", field)
+    }
+
 # Set default values on nested objects
-for nested_field, default in (('inlinks_nb', 0), ('outlinks_nb', 0), ('metadata_nb', 0),
-                              ('metadata', [])):
-    for field in URLS_DATA_MAPPING["urls"]["properties"][nested_field]["properties"]:
-        FIELDS_HOOKS["{}.{}".format(nested_field, field)] = {
+for nested_field, default in (('inlinks_nb', 0), ('outlinks_nb', 0),
+                              ('metadata_nb', 0), ('metadata', []),
+                              ('metadata_duplicate_nb', 0)):
+    for field in children_from_field(nested_field):
+        FIELDS_HOOKS[field] = {
             "default": default
         }
 

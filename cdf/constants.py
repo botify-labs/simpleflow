@@ -40,6 +40,13 @@ URLS_DATA_MAPPING = {
                     "title": {"type": "string"}
                 }
             },
+            "metadata_duplicate_nb": {
+                "properties": {
+                    "title": {"type": "long"},
+                    "description": {"type": "long"},
+                    "h1": {"type": "long"}
+                }
+            },
             "metadata_duplicate": {
                 "properties": {
                     "title": {"type": "long"},

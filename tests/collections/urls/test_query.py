@@ -34,6 +34,9 @@ class TestQuery(unittest.TestCase):
                     'h2': 0,
                     'description': 0
                 },
+                "metadata_duplicate": {
+                    "h1": [7]
+                },
                 "outlinks_nb": {
                     "follow": 3,
                     "nofollow_link": 1,
@@ -92,6 +95,15 @@ class TestQuery(unittest.TestCase):
                     'url': 'http://www.youtube.com/'
                 }
             },
+            {
+                'id': 7,
+                'url': 'http://www.mysite.com/page7.html',
+                'http_code': 200,
+                'metadata': {
+                    'title': ['My title'],
+                    'h1': ['Welcome to our website']
+                }
+            },
         ]
         self.es = ElasticSearch(ELASTICSEARCH_LOCATION)
         try:
@@ -115,7 +127,7 @@ class TestQuery(unittest.TestCase):
         # A query with no filter should return 4 results (id=5 should not be returned as it has
         # not been crawled (only exists to return the value of id=4's redirect
         q = Query(*self.query_args, query={})
-        self.assertEquals(q.count, 5)
+        self.assertEquals(q.count, 6)
 
     def test_simple_filter(self):
         query = {
@@ -131,10 +143,14 @@ class TestQuery(unittest.TestCase):
             {
                 'url': u'http://www.mysite.com/page3.html',
                 'id': 3
+            },
+            {
+                'url': u'http://www.mysite.com/page7.html',
+                'id': 7
             }
         ]
         q = Query(*self.query_args, query=query)
-        self.assertEquals(q.count, 2)
+        self.assertEquals(q.count, 3)
         self.assertEquals(list(q.results), expected_results)
 
     def test_and_filter(self):
@@ -163,7 +179,7 @@ class TestQuery(unittest.TestCase):
             "sort": ["id"]
         }
         q = Query(*self.query_args, query=query)
-        self.assertEquals([k['id'] for k in q.results], [1, 2, 3])
+        self.assertEquals([k['id'] for k in q.results], [1, 2, 3, 7])
 
     def test_redirects_to_crawled(self):
         query = {
@@ -342,6 +358,28 @@ class TestQuery(unittest.TestCase):
         }
         q = Query(*self.query_args, query=query, sort=('id',))
         self.assertEquals(list(q.results)[0], expected_result)
+
+    def test_metadata_duplicate(self):
+        query = {
+            "fields": ["metadata_duplicate.h1"],
+            "filters": {
+                "field": "id",
+                "value": 1
+            }
+        }
+        q = Query(*self.query_args, query=query, sort=('id',))
+        expected_result = {
+            "metadata_duplicate": {
+                "h1": [
+                    {"url": "http://www.mysite.com/page7.html",
+                     "crawled": True},
+                ]
+            }
+        }
+        q = Query(*self.query_args, query=query, sort=('id',))
+        self.assertEquals(list(q.results)[0], expected_result)
+
+ 
 
     def _test_filters(self):
         filters = {
