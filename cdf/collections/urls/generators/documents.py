@@ -26,11 +26,14 @@ def extract_patterns(attributes, stream_item):
         attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
         attributes['query_string_items'] = qs
     attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
+    attributes['inlinks_nb'] = {}
+    attributes['inlinks_urls'] = {}
+    attributes['outlinks_nb'] = {}
+    attributes['outlinks_urls'] = {}
 
 
 def extract_infos(attributes, stream_item):
     date_crawled_idx = idx_from_stream('infos', 'date_crawled')
-    http_code_idx = idx_from_stream('infos', 'http_code')
 
     """
     Those codes should not be returned
@@ -41,8 +44,6 @@ def extract_infos(attributes, stream_item):
     job_todo=1,
     job_in_progress=2,
     """
-    if stream_item[http_code_idx] in (0, 1, 2):
-        raise GroupWithSkipException()
 
     stream_item[date_crawled_idx] = date_2k_mn_to_date(stream_item[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item) if i[0] != 'infos_mask'})
@@ -70,64 +71,83 @@ def extract_contents(attributes, stream_item):
 
 
 def extract_outlinks(attributes, stream_item):
-    url_src, link_type, follow_key, url_dst, external_url = stream_item
+    url_src, link_type, follow_keys, url_dst, external_url = stream_item
     if link_type == "a":
-        key_nb = "outlinks_{}_nb".format(follow_key)
+        for follow_key in follow_keys:
+            if follow_key not in attributes['outlinks_nb']:
+                attributes['outlinks_nb'][follow_key] = 1
+            else:
+                attributes['outlinks_nb'][follow_key] += 1
 
-        if key_nb not in attributes:
-            attributes[key_nb] = 1
-        else:
-            attributes[key_nb] += 1
-
-        if url_dst > 0:
-            key_ids = "outlinks_%s_urls" % follow_key
-            if key_ids not in attributes:
-                attributes[key_ids] = [url_dst]
-            # Store only the first 1000 outlinks
-            elif url_dst not in attributes[key_ids] and len(attributes[key_ids]) < 1000:
-                attributes[key_ids].append(url_dst)
+            if url_dst > 0:
+                if follow_key not in attributes['outlinks_urls']:
+                    attributes['outlinks_urls'][follow_key] = [url_dst]
+                # Store only the first 1000 outlinks
+                elif url_dst not in attributes['outlinks_urls'][follow_key] and len(attributes['outlinks_urls'][follow_key]) < 100:
+                    attributes['outlinks_urls'][follow_key].append(url_dst)
     elif link_type.startswith('r'):
         http_code = link_type[1:]
-        attributes['redirect_to'] = {'url': url_dst, 'http_code': int(http_code)}
+        if url_dst == -1:
+            attributes['redirects_to'] = {'url': external_url, 'http_code': int(http_code)}
+        else:
+            attributes['redirects_to'] = {'url_id': url_dst, 'http_code': int(http_code)}
     elif link_type == "canonical":
         attributes['canonical_equals'] = url_src == url_dst
-        attributes['canonical_url'] = url_dst
+        if url_dst > 0:
+            attributes['canonical_url'] = {'id': url_dst}
+        else:
+            attributes['canonical_url'] = {'url': external_url}
 
 
 def extract_inlinks(attributes, stream_item):
-    url_dst, link_type, follow_key, url_src = stream_item
+    url_dst, link_type, follow_keys, url_src = stream_item
     if link_type == "a":
-        key_nb = "inlinks_%s_nb" % follow_key
+        for follow_key in follow_keys:
+            if follow_key not in attributes['inlinks_nb']:
+                attributes['inlinks_nb'][follow_key] = 1
+            else:
+                attributes['inlinks_nb'][follow_key] += 1
 
-        if key_nb not in attributes:
-            attributes[key_nb] = 1
-        else:
-            attributes[key_nb] += 1
-
-        if url_src > 0:
-            key_ids = "inlinks_%s_urls" % follow_key
-            if key_ids not in attributes:
-                attributes[key_ids] = [url_src]
-            elif len(attributes[key_ids]) < 300 and url_src not in attributes[key_ids]:
-                attributes[key_ids].append(url_src)
+            if url_src > 0:
+                if follow_key not in attributes['inlinks_urls']:
+                    attributes['inlinks_urls'][follow_key] = [url_src]
+                elif len(attributes['inlinks_urls'][follow_key]) < 300 and url_src not in attributes['inlinks_urls'][follow_key]:
+                    attributes['inlinks_urls'][follow_key].append(url_src)
 
     elif link_type.startswith('r'):
         http_code = int(link_type[1:])
-        if 'redirect_from' not in attributes:
-            attributes['redirect_from'] = []
-            attributes['redirects_nb'] = 0
+        if 'redirects_from' not in attributes:
+            attributes['redirects_from'] = []
+            attributes['redirects_from_nb'] = 0
 
-        attributes['redirects_nb'] += 1
-        if len(attributes['redirect_from']) < 300:
-            attributes['redirect_from'].append({'url': url_src, 'http_code': http_code})
+        attributes['redirects_from_nb'] += 1
+        if len(attributes['redirects_from']) < 300:
+            attributes['redirects_from'].append({'url_id': url_src, 'http_code': http_code})
 
     elif link_type == "canonical":
-        nb_duplicates = attributes.get('canonical_nb_duplicates', 0) + 1
-        attributes['canonical_nb_duplicates'] = nb_duplicates
+        nb_duplicates = attributes.get('canonical_from_nb', 0) + 1
+        attributes['canonical_from_nb'] = nb_duplicates
         if nb_duplicates == 1:
-            attributes['canonical_duplicate_urls'] = [url_src]
+            attributes['canonical_from'] = [url_src]
         else:
-            attributes['canonical_duplicate_urls'].append(url_src)
+            attributes['canonical_from'].append(url_src)
+
+
+def end_extract_url(attributes):
+    """
+    If the url has not been crawled but received redirections or canonicals, we exceptionnaly
+    this one into elasticsearch
+    """
+    if attributes['http_code'] < 100:
+        if 'redirects_from_nb' in attributes or 'canonical_from_nb' in attributes:
+            url = attributes['url']
+            attributes.clear()
+            attributes.update({
+                'url': url,
+                'http_code': 0
+            })
+        else:
+            raise GroupWithSkipException()
 
 
 class UrlDocumentGenerator(object):
@@ -185,7 +205,7 @@ class UrlDocumentGenerator(object):
     def __iter__(self):
         left = (self.stream_patterns, 0, extract_patterns)
         streams_ref = {key: (self.streams[key], idx_from_stream(key, 'id'), self.EXTRACTORS[key]) for key in self.streams.keys()}
-        return group_with(left, **streams_ref)
+        return group_with(left, final_func=end_extract_url, **streams_ref)
 
     def save_to_file(self, location):
         for file_type in self.files.iterkeys():

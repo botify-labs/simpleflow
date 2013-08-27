@@ -34,13 +34,34 @@ def std_type(value):
     return value
 
 
-class BadRequest(Exception):
+class BadRequestException(Exception):
     pass
+
+
+def transform_std_type(field, df_values):
+    return std_type(df_values[field] if field in df_values else 0)
+
+
+def transform_links_nb(field, df_values, link_type):
+    value = {"total": 0}
+    for k, v in df_values.iteritems():
+        if v > 0 and k.startswith(link_type):
+            new_key = k[len('{}_'.format(link_type)):-len('_nb')]
+            value["total"] += v
+            value[new_key] = v
+    return value
 
 
 class CounterRequest(object):
 
-    BadRequest = BadRequest
+    BadRequestException = BadRequestException
+
+    FIELDS = ('host', 'content_type', 'resource_type', 'follow', 'meta', 'index', 'depth', 'pages_nb', 'inlinks_nb', 'outlinks_nb')
+
+    FIELDS_TRANSFORMERS = {
+        'inlinks_nb': lambda field, counters: transform_links_nb(field, counters, 'inlinks'),
+        'outlinks_nb': lambda field, counters: transform_links_nb(field, counters, 'outlinks'),
+    }
 
     def __init__(self, df):
         self.df = df
@@ -153,12 +174,16 @@ class CounterRequest(object):
             }
         ]
         """
-        results = {}
-
         if 'fields' in settings:
             fields = settings['fields']
         else:
             fields = filter(lambda i: i not in self.DISTRIBUTION_COLUMNS, self.df.columns.tolist())
+
+        for f in fields:
+            if f not in self.FIELDS:
+                raise self.BadRequestException('Field {} not allowed in query'.format(f))
+
+        results = {}
 
         df = self.df.copy()
 
@@ -174,14 +199,15 @@ class CounterRequest(object):
             No group_by, we return a dictionnary with all counters
             """
             df = df.sum().reset_index()
-            results = {field: std_type(value) for field, value in df.values if field in fields}
+            results = {field: self.FIELDS_TRANSFORMERS.get(field, transform_std_type)(field, dict(df.values)) for field in fields}
             return {"counters": results}
 
         results = []
         for i, n in enumerate(df.values):
+            values = dict(zip(df.columns, n))
             result = {
                 'properties': {field_: std_type(df[field_][i]) for field_ in settings['group_by']},
-                'counters': {field_: std_type(df[field_][i]) if df[field_][i] > 0 else 0 for field_ in fields}
+                'counters': {field: self.FIELDS_TRANSFORMERS.get(field, transform_std_type)(field, values) for field in fields}
             }
             results.append(result)
         return results
