@@ -45,10 +45,10 @@ QUERY_URLS_FIELDS = (
     "outlinks_meta_nofollow_urls",
     "outlinks_robots_nofollow_urls",
     "outlinks_config_nofollow_urls",
-    "redirect_from",
-    "redirect_to",
+    "redirects_from",
+    "redirects_to",
     "canonical_url",
-    "redirects_nb"
+    "redirects_from_nb"
 )
 
 QUERY_TAGGING_FIELDS = (
@@ -59,7 +59,7 @@ QUERY_URLS_IDS = (
     "metadata_duplicate.h1",
     "metadata_duplicate.title",
     "metadata_duplicate.description",
-    "redirect_to.url",
+    "redirects_to",
     "inlinks_follow_urls",
     "inlinks_link_nofollow_urls",
     "inlinks_meta_nofollow_urls",
