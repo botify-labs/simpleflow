@@ -33,7 +33,20 @@ class TestQuery(unittest.TestCase):
                     'h1': 1,
                     'h2': 0,
                     'description': 0
-                }
+                },
+                "outlinks_nb": {
+                    "follow": 1,
+                    "nofollow_link": 1,
+                    "nofollow_meta": 0,
+                    "nofollow_robots": 0,
+                    "nofollow_config": 0
+                },
+                "outlinks": {
+                    "follow": [2, 3],
+                    "nofollow_link": [3],
+                    "nofollow_meta": [],
+                    "nofollow_robots": [],
+                },
             },
             {
                 'id': 2,
@@ -102,7 +115,7 @@ class TestQuery(unittest.TestCase):
         # A query with no filter should return 4 results (id=5 should not be returned as it has
         # not been crawled (only exists to return the value of id=4's redirect
         q = Query(*self.query_args, query={})
-        self.assertEquals(q.count, 4)
+        self.assertEquals(q.count, 5)
 
     def test_simple_filter(self):
         query = {
@@ -262,7 +275,42 @@ class TestQuery(unittest.TestCase):
         }
         self.assertEquals(results[1], expected_result_2)
 
-    def test_filters(self):
+    def test_outlinks(self):
+        query = {
+            "fields": ["outlinks_nb", "outlinks"],
+            "filters": {
+                "field": "id",
+                "value": 1
+            }
+        }
+        q = Query(*self.query_args, query=query, sort=('id',))
+        expected_result = {
+            "outlinks_nb": {
+                "follow": 1,
+                "nofollow_link": 1,
+                "nofollow_meta": 0,
+                "nofollow_robots": 0,
+                "nofollow_config": 0
+            },
+            "outlinks": {
+                "follow": [
+                    {"url": "http://www.mysite.com/page2.html",
+                     "crawled": True},
+                    {"url": "http://www.mysite.com/page3.html",
+                     "crawled": True},
+                ],
+                "nofollow_link": [
+                    {"url": "http://www.mysite.com/page3.html",
+                     "crawled": True},
+                ],
+                "nofollow_meta": [],
+                "nofollow_robots": [],
+            },
+        }
+        q = Query(*self.query_args, query=query, sort=('id',))
+        self.assertEquals(list(q.results)[0], expected_result)
+
+    def _test_filters(self):
         filters = {
             "and": {
                 "or": [

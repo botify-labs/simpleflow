@@ -2,7 +2,7 @@ from pyelasticsearch import ElasticSearch
 from collections import defaultdict
 
 from cdf.constants import URLS_DATA_MAPPING
-from cdf.utils.dict import deep_update, flatten_dict
+from cdf.utils.dict import deep_update, deep_clean, flatten_dict
 from .constants import QUERY_URLS_FIELDS, QUERY_TAGGING_FIELDS, QUERY_URLS_IDS, QUERY_URLS_DEFAULT_VALUES
 
 
@@ -44,8 +44,31 @@ def transform_redirects_to(query, es_document, attributes):
             """
             attributes['redirects_to'] = {
                 'url': es_document['redirects_to']['url'],
-                'crawled': False 
+                'crawled': False
             }
+
+
+def prepare_outlinks(query, es_document):
+    if not 'outlinks' in es_document:
+        return
+    for link_type in es_document['outlinks']:
+        query._urls_ids |= set(es_document['outlinks'][link_type])
+
+
+def transform_outlinks(query, es_document, attributes):
+    attributes['outlinks'] = {}
+    for link_type in URLS_DATA_MAPPING["urls"]["properties"]["outlinks"]["properties"]:
+        attributes['outlinks'][link_type] = []
+        if not 'outlinks' in es_document:
+            continue
+        for url_id in es_document['outlinks'][link_type]:
+            url, http_code = query._id_to_url.get(url_id)
+            attributes['outlinks'][link_type].append(
+                {
+                    'url': url,
+                    'crawled': http_code > 0
+                }
+            )
 
 FIELDS_HOOKS = {
     'metadata_nb': {
@@ -56,18 +79,6 @@ FIELDS_HOOKS = {
             'h2': 0
         }
     },
-    'metadata_nb.title': {
-        'default': 0
-    },
-    'metadata_nb.description': {
-        'default': 0
-    },
-    'metadata_nb.h1': {
-        'default': 0
-    },
-    'metadata_nb.h2': {
-        'default': 0
-    },
     'metadata': {
         'default': {
             'title': [],
@@ -75,18 +86,6 @@ FIELDS_HOOKS = {
             'h1': [],
             'h2': []
         }
-    },
-    'metadata.title': {
-        'default': []
-    },
-    'metadata.description': {
-        'default': []
-    },
-    'metadata.h1': {
-        'default': []
-    },
-    'metadata.h2': {
-        'default': []
     },
     'redirects_from': {
         'prepare': prepare_redirects_from,
@@ -96,7 +95,19 @@ FIELDS_HOOKS = {
         'prepare': prepare_redirects_to,
         'transform': transform_redirects_to
     },
+    'outlinks': {
+        'prepare': prepare_outlinks,
+        'transform': transform_outlinks
+    },
 }
+
+# Set default values on nested objects
+for nested_field, default in (('inlinks_nb', 0), ('outlinks_nb', 0), ('metadata_nb', 0),
+                              ('inlinks', []), ('outlinks', []), ('metadata', [])):
+    for field in URLS_DATA_MAPPING["urls"]["properties"][nested_field]["properties"]:
+        FIELDS_HOOKS["{}.{}".format(nested_field, field)] = {
+            "default": default
+        }
 
 
 def predicate_not_null(filters):
@@ -376,7 +387,7 @@ class Query(object):
                             value = [default_value]
                         deep_update(document, reduce(lambda x, y: {y: x}, reversed(field.split('.') + value)))
                     else:
-                        document[field] = r['_source'][field] if field in r['_source'] else default_value
+                        document[field] = deep_clean(r['_source'][field]) if field in r['_source'] else default_value
 
             """
             for _f in QUERY_TAGGING_FIELDS:
