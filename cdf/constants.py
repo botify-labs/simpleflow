@@ -13,7 +13,6 @@ URLS_DATA_MAPPING = {
             },
             "url": {
                 "type": "string",
-                "index": "not_analyzed"
             },
             "url_hash": {"type": "long"},
             "byte_size": {"type": "long"},
@@ -48,25 +47,57 @@ URLS_DATA_MAPPING = {
                     "h1": {"type": "long"}
                 }
             },
-            "outlinks_external_follow_nb": {"type": "long"},
-            "outlinks_follow_urls": {"type": "long"},
-            "outlinks_internal_follow_nb": {"type": "long"},
+            "inlinks_nb": {
+                "follow": {"type": "long"},
+                "nofollow_link": {"type": "long"},
+                "nofollow_meta": {"type": "long"},
+                "nofollow_robots": {"type": "long"},
+            },
+            "inlinks_ids": {
+                "follow": {"type": "long"},
+                "nofollow_link": {"type": "long"},
+                "nofollow_meta": {"type": "long"},
+                "nofollow_robots": {"type": "long"},
+            },
+            "outlinks_nb": {
+                "follow": {"type": "long"},
+                "nofollow_link": {"type": "long"},
+                "nofollow_meta": {"type": "long"},
+                "nofollow_robots": {"type": "long"},
+                "nofollow_config": {"type": "long"}
+            },
+            "outlinks_ids": {
+                "follow": {"type": "long"},
+                "nofollow_link": {"type": "long"},
+                "nofollow_meta": {"type": "long"},
+                "nofollow_robots": {"type": "long"},
+            },
             "path": {"type": "string"},
             "protocol": {"type": "string"},
             "query_string": {"type": "string"},
             "query_string_items": {"type": "string"},
             "query_string_keys": {"type": "string"},
             "query_string_keys_order": {"type": "string"},
-            "redirect_to": {
+            "canonical_from_nb": {"type": "long"},
+            "canonical_from": {"type": "long"},
+            "canonical_to": {
                 "properties": {
-                    "http_code": {"type": "string"},
-                    "url": {"type": "long"}
+                    "url": {"type": "string"},
+                    "url_id": {"type": "long"}
                 }
             },
-            "redirect_from": {
+            "redirects_to": {
                 "properties": {
                     "http_code": {"type": "string"},
-                    "url": {"type": "long"}
+                    "url": {"type": "string"},
+                    "url_id": {"type": "long"}
+                }
+            },
+            "redirects_from_nb": {"type": "long"},
+            "redirects_from": {
+                "properties": {
+                    "http_code": {"type": "string"},
+                    "url_id": {"type": "long"}
                 }
             }
         }
