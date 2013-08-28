@@ -170,7 +170,6 @@ class TestMetricsConsolidator(unittest.TestCase):
         for key, value in expected_data.iteritems():
             self.assertEquals(aggregated_data[key], value)
 
-
 class TestPropertiesStatsMeta(unittest.TestCase):
 
     def setUp(self):

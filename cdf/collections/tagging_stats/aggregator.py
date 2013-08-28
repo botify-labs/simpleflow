@@ -7,8 +7,7 @@ from pandas import DataFrame
 
 from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
 from cdf.streams.utils import group_left, idx_from_stream
-from cdf.collections.tagging_stats.constants import (COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS,
-                                                     META_FIELDS, CROSS_PROPERTIES_META_COLUMNS)
+from cdf.collections.tagging_stats.constants import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
 
 
 def delay_to_range(delay):
@@ -173,6 +172,8 @@ class MetricsConsolidator(object):
         def transform_dict(cross_property, d_):
             t_dict = dict(d_)
             t_dict.update({CROSS_PROPERTIES_COLUMNS[i]: value for i, value in enumerate(cross_property)})
+            t_dict.update({k: t_dict.get(k, 0) for k in COUNTERS_FIELDS})
+            print t_dict
             return t_dict
 
         prepare_df_rows = []
@@ -180,6 +181,7 @@ class MetricsConsolidator(object):
             prepare_df_rows.append(transform_dict(key, counters))
 
         df = DataFrame(prepare_df_rows)
+        import pdb; pdb.set_trace()
         return df
 
 
