@@ -8,6 +8,7 @@ from cdf.streams.exceptions import GroupWithSkipException
 from cdf.streams.utils import idx_from_stream
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
+from cdf.collections.urls.utils import children_from_field
 
 
 def extract_patterns(attributes, stream_item):
@@ -26,9 +27,9 @@ def extract_patterns(attributes, stream_item):
         attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
         attributes['query_string_items'] = qs
     attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
-    attributes['inlinks_nb'] = {}
+    attributes['inlinks_nb'] = {_f.split('.')[1]:0 for _f in children_from_field('inlinks_nb')}
     attributes['inlinks'] = {}
-    attributes['outlinks_nb'] = {}
+    attributes['outlinks_nb'] = {_f.split('.')[1]:0 for _f in children_from_field('outlinks_nb')}
     attributes['outlinks'] = {}
 
 
@@ -74,10 +75,7 @@ def extract_outlinks(attributes, stream_item):
     url_src, link_type, follow_keys, url_dst, external_url = stream_item
     if link_type == "a":
         for follow_key in follow_keys:
-            if follow_key not in attributes['outlinks_nb']:
-                attributes['outlinks_nb'][follow_key] = 1
-            else:
-                attributes['outlinks_nb'][follow_key] += 1
+            attributes['outlinks_nb'][follow_key] += 1
 
             if url_dst > 0:
                 if follow_key not in attributes['outlinks']:
@@ -103,10 +101,7 @@ def extract_inlinks(attributes, stream_item):
     url_dst, link_type, follow_keys, url_src = stream_item
     if link_type == "a":
         for follow_key in follow_keys:
-            if follow_key not in attributes['inlinks_nb']:
-                attributes['inlinks_nb'][follow_key] = 1
-            else:
-                attributes['inlinks_nb'][follow_key] += 1
+            attributes['inlinks_nb'][follow_key] += 1
 
             if url_src > 0:
                 if follow_key not in attributes['inlinks']:

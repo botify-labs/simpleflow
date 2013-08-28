@@ -2,15 +2,8 @@ from pyelasticsearch import ElasticSearch
 
 from cdf.constants import URLS_DATA_MAPPING
 from cdf.utils.dict import deep_update, deep_clean
-from .constants import QUERY_FIELDS, QUERY_TAGGING_FIELDS
-
-
-def field_has_children(field):
-    return any(i.startswith('{}.'.format(field)) for i in QUERY_FIELDS)
-
-
-def children_from_field(field):
-    return filter(lambda i: i.startswith('{}.'.format(field)), QUERY_FIELDS)
+from .constants import QUERY_FIELDS
+from .utils import field_has_children, children_from_field
 
 
 def prepare_redirects_from(query, es_document):
