@@ -48,9 +48,9 @@ class TestUrlDocumentGenerator(unittest.TestCase):
                              'meta_noindex': False,
                              'meta_nofollow': False,
                              'inlinks_nb': {},
-                             'inlinks_urls': {},
+                             'inlinks': {},
                              'outlinks_nb': {},
-                             'outlinks_urls': {},
+                             'outlinks': {},
                              }
 
         self.assertEquals(document, (1, document_expected))
@@ -161,8 +161,8 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         self.assertEquals(document['outlinks_nb']['nofollow_link'], 1)
         self.assertEquals(document['outlinks_nb']['follow'], 2)
         self.assertEquals(document['outlinks_nb']['nofollow_config'], 1)
-        self.assertEquals(document['outlinks_urls']['follow'], [2, 4])
-        self.assertEquals(document['outlinks_urls']['nofollow_link'], [3])
+        self.assertEquals(document['outlinks']['follow'], [2, 4])
+        self.assertEquals(document['outlinks']['nofollow_link'], [3])
 
         # Check that url 2 has no outlinks
         document = documents[1][1]
@@ -217,8 +217,8 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         self.assertEquals(document['outlinks_nb']['nofollow_link'], 1)
         self.assertEquals(document['outlinks_nb']['follow'], 2)
         self.assertEquals(document['outlinks_nb']['nofollow_config'], 1)
-        self.assertEquals(document['outlinks_urls']['follow'], [3, 5])
-        self.assertEquals(document['outlinks_urls']['nofollow_link'], [4])
+        self.assertEquals(document['outlinks']['follow'], [3, 5])
+        self.assertEquals(document['outlinks']['nofollow_link'], [4])
 
     def test_redirect_to(self):
         """
@@ -292,8 +292,8 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         logger.info(document)
         self.assertEquals(document['inlinks_nb']['nofollow_link'], 1)
         self.assertEquals(document['inlinks_nb']['follow'], 2)
-        self.assertEquals(document['inlinks_urls']['follow'], [10, 12])
-        self.assertEquals(document['inlinks_urls']['nofollow_link'], [11])
+        self.assertEquals(document['inlinks']['follow'], [10, 12])
+        self.assertEquals(document['inlinks']['nofollow_link'], [11])
 
     def test_redirect_from(self):
         patterns = [
