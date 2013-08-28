@@ -34,14 +34,14 @@ class MetricsAggregator(object):
         """
         Return a tuple of dictionaries
         Values are a sub-dictonnary with fields :
-            * `keys`, a tuple with following format :
+            * `cross_properties`, a tuple with following format :
             (host, resource_type, content_type, depth, http_code, index, follow)
             str,  str,           str,          int,   http_code, bool,  bool
             * `counters` : a dictionary of counters
 
         Ex :
         {
-           "keys": ["www.site.com", "/article", "text/html", 1, 200, True, True],
+           "cross_properties": ["www.site.com", "/article", "text/html", 1, 200, True, True],
            "counters": {
                    "pages_nb": 10,
                    "redirections_nb": 0,
@@ -196,26 +196,33 @@ class MetadataAggregator(object):
 
     def get(self):
         """
-        Return a dictionnary where key is a tuple :
+        Return a tuple of dictionnaries :
+
+        For each dict, an index "keys" with the following tuple :
         (host, resource_type, content_type, depth, http_code, index, follow)
          str,  str,           str,          int,   http_code, bool,  bool
 
-        Values is a sub-dictonnary with counters keys.
-
         Ex :
-        {
-           ("www.site.com", "/article", "text/html", 1, 200, True, True): {
-               "title_filled_nb": 6,
-               "title_global_unik_nb": 4,
-               "title_local_unik_nb": 5,
-               "desc_filled_nb": 6,
-               "desc_global_unik_nb": 4,
-               "desc_local_unik_nb": 5,
-               "h1_filled_nb": 6,
-               "h1_global_unik_nb": 4,
-               "h1_local_unik_nb": 5
-          }
-        }
+        [
+            {
+                "keys": ["www.site.com", "/article", "text/html", 1, 200, True, True],
+                "counters": {
+                   "title_global_unik_nb": 4,
+                   "title_local_unik_nb": 5,
+                   "desc_filled_nb": 6,
+                   "desc_global_unik_nb": 4,
+                   "desc_local_unik_nb": 5,
+                   "h1_filled_nb": 6,
+                   "h1_global_unik_nb": 4,
+                   "h1_local_unik_nb": 5
+                    "h1_filled_nb": 3,
+                    "h1_unique_nb": 5,
+                    ...
+            },
+            {
+                ...
+            }
+        ]
         """
         left = (self.stream_patterns, 0)
         streams_ref = {'properties': (self.stream_properties, 0),
@@ -279,32 +286,25 @@ class MetadataAggregator(object):
 
         # Concatenate results
         results = dict(results)
+        final_results = []
         for key in results.iterkeys():
             # Transform Counter to dict
-            results[key] = dict(results[key])
-            result = results[key]
+            counters = copy.copy(dict(results[key]))
             hash_key = hasher(','.join(str(k) for k in key))
             for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
                 # If [ct_txt]_filled_nb not exists, we create the fields
-                if not '%s_filled_nb' % ct_txt in result:
-                    result['%s_filled_nb' % ct_txt] = 0
-                    result['%s_unique_nb' % ct_txt] = 0
+                if not '%s_filled_nb' % ct_txt in counters:
+                    counters['%s_filled_nb' % ct_txt] = 0
+                    counters['%s_unique_nb' % ct_txt] = 0
                 else:
                     # We fetch all set where there is only the hash_key (that means uniq)
-                    result['%s_unique_nb' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
-            if not 'not_enough_metadata' in result:
-                result['not_enough_metadata'] = 0
-        return results
-
-    def get_dataframe(self):
-        results = self.get()
-
-        def transform_dict(cross_property, d_):
-            t_dict = dict(d_)
-            t_dict.update({CROSS_PROPERTIES_META_COLUMNS[i]: value for i, value in enumerate(cross_property)})
-            return t_dict
-
-        prepare_df_rows = [transform_dict(key, counters) for key, counters in results.iteritems()]
-        # Now that all cross-properties are aggregated, we can add it to a pandas dataframe
-        df = DataFrame(prepare_df_rows)
-        return df
+                    counters['%s_unique_nb' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
+            if not 'not_enough_metadata' in counters:
+                counters['not_enough_metadata'] = 0
+            final_results.append(
+                {
+                    "cross_properties": key,
+                    "counters": counters
+                }
+            )
+        return final_results
