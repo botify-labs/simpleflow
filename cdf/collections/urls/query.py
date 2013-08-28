@@ -32,27 +32,43 @@ def transform_redirects_from(query, es_document, attributes):
             })
 
 
-def prepare_redirects_to(query, es_document):
-    if 'redirects_to' in es_document and 'url_id' in es_document['redirects_to']:
-        query._urls_ids.add(es_document['redirects_to']['url_id'])
+def prepare_redirects_to(query, es_document, field="redirects_to"):
+    if field in es_document and 'url_id' in es_document[field]:
+        query._urls_ids.add(es_document[field]['url_id'])
 
 
-def transform_redirects_to(query, es_document, attributes):
-    if 'redirects_to' in es_document:
-        if 'url_id' in es_document['redirects_to']:
-            url, http_code = query._id_to_url.get(es_document['redirects_to']['url_id'])
-            attributes['redirects_to'] = {
-                'url': url,
+def transform_redirects_to(query, es_document, attributes, field="redirects_to"):
+    attributes[field] = None
+    if field in es_document:
+        if 'url_id' in es_document[field]:
+            url, http_code = query._id_to_url.get(es_document[field]['url_id'])
+            attributes[field] = {
+                'url': str(url),
                 'crawled': http_code > 0
             }
-        elif 'url' in es_document['redirects_to']:
+        elif 'url' in es_document[field]:
             """
             It's an external url
             """
-            attributes['redirects_to'] = {
-                'url': es_document['redirects_to']['url'],
+            attributes[field] = {
+                'url': es_document[field]['url'],
                 'crawled': False
             }
+
+def prepare_canonical_from(query, es_document):
+    if 'canonical_from' in es_document:
+        query._urls_ids |= set(es_document['canonical_from'])
+
+
+def transform_canonical_from(query, es_document, attributes):
+    attributes['canonical_from'] = []
+    if not 'canonical_from' in es_document:
+        return
+    for url_id in es_document['canonical_from']:
+        attributes['canonical_from'].append({
+            'url': query._id_to_url.get(url_id)[0],
+            'crawled': True
+        })
 
 
 def prepare_links(query, es_document, link_direction, link_type):
@@ -77,15 +93,6 @@ def transform_links(query, es_document, attributes, link_direction, link_type):
         )
 
 
-"""
-def prepare_metadata_duplicate(query, es_document, field):
-    if 'metadata_duplicate' in es_document and field in es_document['metadata_duplicate']:
-        query._urls_ids |= set(es_document['metadata_duplicate'][field])
-
-
-def transform_metadata_duplicate(query, es_document, attributes, field):
-"""
-
 FIELDS_HOOKS = {
     'redirects_from': {
         'prepare': prepare_redirects_from,
@@ -95,6 +102,14 @@ FIELDS_HOOKS = {
         'prepare': prepare_redirects_to,
         'transform': transform_redirects_to
     },
+    'canonical_from': {
+        'prepare': prepare_canonical_from,
+        'transform': transform_canonical_from
+    },
+    'canonical_to': {
+        'prepare': lambda query, es_document: prepare_redirects_to(query, es_document, "canonical_to"),
+        'transform': lambda query, es_document, attributes: transform_redirects_to(query, es_document, attributes, "canonical_to")
+    }
 }
 
 # Set prepare and transform functions for nested inlinks and outlinks

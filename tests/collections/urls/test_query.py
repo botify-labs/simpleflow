@@ -53,6 +53,9 @@ class TestQuery(unittest.TestCase):
                     "nofollow_meta": [],
                     "nofollow_robots": [],
                 },
+                "canonical_to": {
+                    "url_id": 2
+                }
             },
             {
                 'id': 2,
@@ -60,7 +63,8 @@ class TestQuery(unittest.TestCase):
                 'http_code': 301,
                 'redirects_to': {
                     'url_id': 3
-                }
+                },
+                'canonical_from': [1]
             },
             {
                 'id': 3,
@@ -386,6 +390,38 @@ class TestQuery(unittest.TestCase):
         }
         q = Query(*self.query_args, query=query, sort=('id',))
         self.assertEquals(list(q.results)[0], expected_result)
+
+    def test_canonicals(self):
+        query = {
+            "fields": ["canonical_from", "canonical_to"],
+            "filters": {
+                "field": "id",
+                "value": 1,
+                "predicate": "gte"
+            }
+        }
+        q = Query(*self.query_args, query=query, sort=('id',))
+        expected_result_1 = {
+            "canonical_to": {
+                "url": "http://www.mysite.com/page2.html",
+                "crawled": True
+            },
+            "canonical_from": []
+        }
+        self.assertEquals(list(q.results)[0], expected_result_1)
+        expected_result_2 = {
+            "canonical_to": None,
+            "canonical_from": [
+                {
+                    'url': 'http://www.mysite.com/',
+                    'crawled': True
+                }
+            ]
+        }
+        self.assertEquals(list(q.results)[1], expected_result_2)
+
+
+
 
     def _test_filters(self):
         filters = {
