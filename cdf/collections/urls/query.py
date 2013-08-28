@@ -55,6 +55,7 @@ def transform_redirects_to(query, es_document, attributes, field="redirects_to")
                 'crawled': False
             }
 
+
 def prepare_canonical_from(query, es_document):
     if 'canonical_from' in es_document:
         query._urls_ids |= set(es_document['canonical_from'])
@@ -69,6 +70,13 @@ def transform_canonical_from(query, es_document, attributes):
             'url': query._id_to_url.get(url_id)[0],
             'crawled': True
         })
+
+
+def transform_resource_type(query, es_document, attributes):
+    for item in es_document["tagging"]:
+        if item["rev_id"] == query.revision_number:
+            attributes['resource_type'] = item["resource_type"]
+            return
 
 
 def prepare_links(query, es_document, link_direction, link_type):
@@ -109,6 +117,10 @@ FIELDS_HOOKS = {
     'canonical_to': {
         'prepare': lambda query, es_document: prepare_redirects_to(query, es_document, "canonical_to"),
         'transform': lambda query, es_document, attributes: transform_redirects_to(query, es_document, attributes, "canonical_to")
+    },
+    'resource_type': {
+        'fields': ["tagging"],
+        'transform': transform_resource_type
     }
 }
 
@@ -180,6 +192,11 @@ PREDICATE_FORMATS = {
     'contains': lambda filters: {
         "regexp": {
             filters['field']: "@%s@" % filters['value']
+        }
+    },
+    're': lambda filters: {
+        "regexp": {
+            filters['field']: filters['value']
         }
     },
     'gte': lambda filters: {

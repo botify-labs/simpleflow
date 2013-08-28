@@ -5,6 +5,7 @@ import time
 
 from cdf.log import logger
 from cdf.collections.urls.query import Query
+from cdf.constants import URLS_DATA_MAPPING
 from pyelasticsearch import ElasticSearch
 
 ELASTICSEARCH_LOCATION = "http://localhost:9200"
@@ -55,7 +56,13 @@ class TestQuery(unittest.TestCase):
                 },
                 "canonical_to": {
                     "url_id": 2
-                }
+                },
+                "tagging": [
+                    {
+                        "rev_id": 1,
+                        "resource_type": "homepage"
+                    }
+                ]
             },
             {
                 'id': 2,
@@ -64,7 +71,13 @@ class TestQuery(unittest.TestCase):
                 'redirects_to': {
                     'url_id': 3
                 },
-                'canonical_from': [1]
+                'canonical_from': [1],
+                'tagging': [
+                    {
+                        'rev_id': 1,
+                        'resource_type': 'not homepage'
+                    }
+                ]
             },
             {
                 'id': 3,
@@ -118,6 +131,7 @@ class TestQuery(unittest.TestCase):
         except:
             pass
         self.es.create_index(ELASTICSEARCH_INDEX)
+        self.es.put_mapping(ELASTICSEARCH_INDEX, "crawl_{}".format(CRAWL_ID), URLS_DATA_MAPPING)
         for url in urls:
             self.es.index(ELASTICSEARCH_INDEX, "crawl_{}".format(CRAWL_ID), url, url['id'])
 
@@ -420,36 +434,31 @@ class TestQuery(unittest.TestCase):
         }
         self.assertEquals(list(q.results)[1], expected_result_2)
 
-
-
-
-    def _test_filters(self):
-        filters = {
-            "and": {
-                "or": [
-                    {"field": "resource_type", "predicate": "starts", "value": "recette/"},
-                    #{"field": "resource_type", "predicate": "ends", "value": "permalink"},
-                ]
-            }
-        }
-        r = UrlRequest(ELASTICSEARCH_LOCATION, ELASTICSEARCH_INDEX, CRAWL_ID, REVISION_ID)
-        import json
-        print json.dumps(r._make_raw_tagging_filters(filters))
-        
-        """
+    def test_tagging_filters(self):
         query = {
-            "fields": ["url", "resource_type", "metadata.h1"],
+            "fields": ["url", "resource_type"],
             "tagging_filters": {
                 "and": [
-                    {"not": True, "field": "resource_type", "predicate": "starts", "value": "recette/"}
+                    {"field": "resource_type", "value": "homepage", "predicate": "match"}
+                    #{"not": True, "field": "resource_type", "predicate": "starts", "value": "recette/"}
                 ]
             },
-            "filters": {
-                "and": [
-                    {"field": "metadata.h1", "value": "tomate"}
-                ]
-            }
         }
-        print json.dumps(r.make_raw_query(query))
-        print r.query(query, start=0, limit=3)
-        """
+
+        tagging_filters = [
+            {"field": "resource_type", "value": "homepage", "predicate": "match"},
+            {"field": "resource_type", "value": "home", "predicate": "starts"},
+            {"field": "resource_type", "value": "age", "predicate": "ends"},
+            {"field": "resource_type", "value": "omep", "predicate": "contains"},
+            {"field": "resource_type", "value": "(.+)age", "predicate": "re"},
+            {"not": True, "field": "resource_type", "value": "product", "predicate": "eq"},
+            {"not": True, "field": "resource_type", "value": "(.+)agmkjqshd", "predicate": "re"},
+            {"field": "resource_type", "value": "homepage", "predicate": "match", "filters": {"field": "id", "value": 1}},
+        ]
+
+        for _f in tagging_filters:
+            query["tagging_filters"]["and"] = _f
+            q = Query(*self.query_args, query=query, sort=('id',))
+            results = list(q.results)
+            self.assertEquals(results[0]['url'], "http://www.mysite.com/")
+            self.assertEquals(results[0]['resource_type'], "homepage")
