@@ -56,6 +56,8 @@ URLS_DATA_MAPPING = {
             },
             "inlinks_nb": {
                 "properties": {
+                    "total": {"type": "long"},
+                    "follow_unique": {"type": "long"},
                     "follow": {"type": "long"},
                     "nofollow_link": {"type": "long"},
                     "nofollow_meta": {"type": "long"},
@@ -72,6 +74,8 @@ URLS_DATA_MAPPING = {
             },
             "outlinks_nb": {
                 "properties": {
+                    "total": {"type": "long"},
+                    "follow_unique": {"type": "long"},
                     "follow": {"type": "long"},
                     "nofollow_link": {"type": "long"},
                     "nofollow_meta": {"type": "long"},

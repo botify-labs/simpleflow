@@ -27,9 +27,9 @@ def extract_patterns(attributes, stream_item):
         attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
         attributes['query_string_items'] = qs
     attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
-    attributes['inlinks_nb'] = {_f.split('.')[1]:0 for _f in children_from_field('inlinks_nb')}
+    attributes['inlinks_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('inlinks_nb')}
     attributes['inlinks'] = {}
-    attributes['outlinks_nb'] = {_f.split('.')[1]:0 for _f in children_from_field('outlinks_nb')}
+    attributes['outlinks_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('outlinks_nb')}
     attributes['outlinks'] = {}
 
 
@@ -73,16 +73,24 @@ def extract_contents(attributes, stream_item):
 
 def extract_outlinks(attributes, stream_item):
     url_src, link_type, follow_keys, url_dst, external_url = stream_item
+
+    def increments_follow_unique():
+        if follow_key == "follow" and len(follow_keys) == 1:
+            attributes['outlinks_nb']['follow_unique'] += 1
+
     if link_type == "a":
         for follow_key in follow_keys:
+            attributes['outlinks_nb']['total'] += 1
             attributes['outlinks_nb'][follow_key] += 1
 
             if url_dst > 0:
                 if follow_key not in attributes['outlinks']:
                     attributes['outlinks'][follow_key] = [url_dst]
-                # Store only the first 1000 outlinks
-                elif url_dst not in attributes['outlinks'][follow_key] and len(attributes['outlinks'][follow_key]) < 100:
+                    increments_follow_unique()
+                elif url_dst not in attributes['outlinks'][follow_key]:
                     attributes['outlinks'][follow_key].append(url_dst)
+                    increments_follow_unique()
+
     elif link_type.startswith('r'):
         http_code = link_type[1:]
         if url_dst == -1:
@@ -99,15 +107,23 @@ def extract_outlinks(attributes, stream_item):
 
 def extract_inlinks(attributes, stream_item):
     url_dst, link_type, follow_keys, url_src = stream_item
+
+    def increments_follow_unique():
+        if follow_key == "follow" and len(follow_keys) == 1:
+            attributes['inlinks_nb']['follow_unique'] += 1
+
     if link_type == "a":
         for follow_key in follow_keys:
+            attributes['inlinks_nb']['total'] += 1
             attributes['inlinks_nb'][follow_key] += 1
 
             if url_src > 0:
                 if follow_key not in attributes['inlinks']:
                     attributes['inlinks'][follow_key] = [url_src]
-                elif len(attributes['inlinks'][follow_key]) < 300 and url_src not in attributes['inlinks'][follow_key]:
+                    increments_follow_unique()
+                elif url_src not in attributes['inlinks'][follow_key]:
                     attributes['inlinks'][follow_key].append(url_src)
+                    increments_follow_unique()
 
     elif link_type.startswith('r'):
         http_code = int(link_type[1:])
@@ -143,6 +159,11 @@ def end_extract_url(attributes):
             })
         else:
             raise GroupWithSkipException()
+
+    for link_direction in ('inlinks', 'outlinks'):
+        for follow_key in attributes.get(link_direction, []):
+            if len(attributes[link_direction][follow_key]) > 300:
+                attributes[link_direction][follow_key] = attributes[link_direction][follow_key][0:300]
 
 
 class UrlDocumentGenerator(object):
