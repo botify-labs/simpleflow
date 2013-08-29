@@ -40,6 +40,13 @@ URLS_DATA_MAPPING = {
                     "title": {"type": "string"}
                 }
             },
+            "metadata_duplicate_nb": {
+                "properties": {
+                    "title": {"type": "long"},
+                    "description": {"type": "long"},
+                    "h1": {"type": "long"}
+                }
+            },
             "metadata_duplicate": {
                 "properties": {
                     "title": {"type": "long"},
@@ -48,29 +55,37 @@ URLS_DATA_MAPPING = {
                 }
             },
             "inlinks_nb": {
-                "follow": {"type": "long"},
-                "nofollow_link": {"type": "long"},
-                "nofollow_meta": {"type": "long"},
-                "nofollow_robots": {"type": "long"},
+                "properties": {
+                    "follow": {"type": "long"},
+                    "nofollow_link": {"type": "long"},
+                    "nofollow_meta": {"type": "long"},
+                    "nofollow_robots": {"type": "long"},
+                }
             },
-            "inlinks_ids": {
-                "follow": {"type": "long"},
-                "nofollow_link": {"type": "long"},
-                "nofollow_meta": {"type": "long"},
-                "nofollow_robots": {"type": "long"},
+            "inlinks": {
+                "properties": {
+                    "follow": {"type": "long"},
+                    "nofollow_link": {"type": "long"},
+                    "nofollow_meta": {"type": "long"},
+                    "nofollow_robots": {"type": "long"},
+                }
             },
             "outlinks_nb": {
-                "follow": {"type": "long"},
-                "nofollow_link": {"type": "long"},
-                "nofollow_meta": {"type": "long"},
-                "nofollow_robots": {"type": "long"},
-                "nofollow_config": {"type": "long"}
+                "properties": {
+                    "follow": {"type": "long"},
+                    "nofollow_link": {"type": "long"},
+                    "nofollow_meta": {"type": "long"},
+                    "nofollow_robots": {"type": "long"},
+                    "nofollow_config": {"type": "long"}
+                }
             },
-            "outlinks_ids": {
-                "follow": {"type": "long"},
-                "nofollow_link": {"type": "long"},
-                "nofollow_meta": {"type": "long"},
-                "nofollow_robots": {"type": "long"},
+            "outlinks": {
+                "properties": {
+                    "follow": {"type": "long"},
+                    "nofollow_link": {"type": "long"},
+                    "nofollow_meta": {"type": "long"},
+                    "nofollow_robots": {"type": "long"},
+                }
             },
             "path": {"type": "string"},
             "protocol": {"type": "string"},
