@@ -54,41 +54,47 @@ URLS_DATA_MAPPING = {
                     "h1": {"type": "long"}
                 }
             },
-            "inlinks_nb": {
+            "inlinks_internal_nb": {
                 "properties": {
                     "total": {"type": "long"},
                     "follow_unique": {"type": "long"},
                     "follow": {"type": "long"},
-                    "nofollow_link": {"type": "long"},
-                    "nofollow_meta": {"type": "long"},
-                    "nofollow_robots": {"type": "long"},
+                    "nofollow": {"type": "long"},
+                    "nofollow_combinations": {
+                        "properties": {
+                            "key": {"type": "string"},
+                            "value": {"type": "long"}
+                        }
+                    }
                 }
             },
-            "inlinks": {
-                "properties": {
-                    "follow": {"type": "long"},
-                    "nofollow_link": {"type": "long"},
-                    "nofollow_meta": {"type": "long"},
-                    "nofollow_robots": {"type": "long"},
-                }
-            },
-            "outlinks_nb": {
+            "inlinks_internal": {"type": "long"},
+            "outlinks_internal": {"type": "long"},
+            "outlinks_internal_nb": {
                 "properties": {
                     "total": {"type": "long"},
                     "follow_unique": {"type": "long"},
                     "follow": {"type": "long"},
-                    "nofollow_link": {"type": "long"},
-                    "nofollow_meta": {"type": "long"},
-                    "nofollow_robots": {"type": "long"},
-                    "nofollow_config": {"type": "long"}
+                    "nofollow": {"type": "long"},
+                    "nofollow_combinations": {
+                        "properties": {
+                            "key": {"type": "string"},
+                            "value": {"type": "long"}
+                        }
+                    }
                 }
             },
-            "outlinks": {
+            "outlinks_external_nb": {
                 "properties": {
+                    "total": {"type": "long"},
                     "follow": {"type": "long"},
-                    "nofollow_link": {"type": "long"},
-                    "nofollow_meta": {"type": "long"},
-                    "nofollow_robots": {"type": "long"},
+                    "nofollow": {"type": "long"},
+                    "nofollow_combinations": {
+                        "properties": {
+                            "key": {"type": "string"},
+                            "value": {"type": "long"}
+                        }
+                    }
                 }
             },
             "path": {"type": "string"},

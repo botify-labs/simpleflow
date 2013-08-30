@@ -6,6 +6,7 @@ from cdf.log import logger
 from cdf.streams.transformations import group_with
 from cdf.streams.exceptions import GroupWithSkipException
 from cdf.streams.utils import idx_from_stream
+from cdf.streams.masks import list_to_mask
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 from cdf.collections.urls.utils import children_from_field
@@ -27,10 +28,16 @@ def extract_patterns(attributes, stream_item):
         attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
         attributes['query_string_items'] = qs
     attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
-    attributes['inlinks_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('inlinks_nb')}
-    attributes['inlinks'] = {}
-    attributes['outlinks_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('outlinks_nb')}
-    attributes['outlinks'] = {}
+    attributes['inlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('inlinks_internal_nb')}
+    attributes['inlinks_internal_nb']['nofollow_combinations'] = []
+    attributes['inlinks_internal'] = []
+    attributes['outlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('outlinks_internal_nb')}
+    attributes['outlinks_internal_nb']['nofollow_combinations'] = []
+    attributes['outlinks_external_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('outlinks_external_nb')}
+    attributes['outlinks_external_nb']['nofollow_combinations'] = []
+    attributes['outlinks_internal'] = []
+    attributes["inlinks_id_to_idx"] = {}
+    attributes["outlinks_id_to_idx"] = {}
 
 
 def extract_infos(attributes, stream_item):
@@ -75,21 +82,47 @@ def extract_outlinks(attributes, stream_item):
     url_src, link_type, follow_keys, url_dst, external_url = stream_item
 
     def increments_follow_unique():
-        if follow_key == "follow" and len(follow_keys) == 1:
-            attributes['outlinks_nb']['follow_unique'] += 1
+        if not (url_dst, mask) in attributes["outlinks_id_to_idx"]:
+            attributes[outlink_type]['follow_unique'] += 1
+
+    def increments_nofollow_combination():
+        found = False
+        for _d in attributes[outlink_type]['nofollow_combinations']:
+            if _d["key"] == follow_keys:
+                _d["value"] += 1
+                found = True
+                break
+        if not found:
+            attributes[outlink_type]['nofollow_combinations'].append(
+                {
+                    "key": follow_keys,
+                    "value": 1
+                }
+            )
+
+    def follow_keys_to_acronym():
+        return "".join(k[0] for k in sorted(follow_keys))
 
     if link_type == "a":
-        for follow_key in follow_keys:
-            attributes['outlinks_nb']['total'] += 1
-            attributes['outlinks_nb'][follow_key] += 1
+        is_internal = url_dst > 0
+        is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
+        outlink_type = "outlinks_internal_nb" if is_internal else "outlinks_external_nb"
+        mask = list_to_mask(follow_keys)
 
-            if url_dst > 0:
-                if follow_key not in attributes['outlinks']:
-                    attributes['outlinks'][follow_key] = [url_dst]
-                    increments_follow_unique()
-                elif url_dst not in attributes['outlinks'][follow_key]:
-                    attributes['outlinks'][follow_key].append(url_dst)
-                    increments_follow_unique()
+        attributes[outlink_type]['total'] += 1
+        attributes[outlink_type]['follow' if is_follow else 'nofollow'] += 1
+        if is_internal and is_follow:
+            increments_follow_unique()
+        elif not is_follow:
+            increments_nofollow_combination()
+
+        if is_internal:
+            url_idx = attributes["outlinks_id_to_idx"].get((url_dst, mask), None)
+            if url_idx is not None:
+                attributes["outlinks_internal"][url_idx][2] += 1
+            else:
+                attributes["outlinks_internal"].append([url_dst, mask, 1])
+                attributes["outlinks_id_to_idx"][(url_dst, mask)] = len(attributes["outlinks_internal"]) - 1
 
     elif link_type.startswith('r'):
         http_code = link_type[1:]
@@ -109,21 +142,44 @@ def extract_inlinks(attributes, stream_item):
     url_dst, link_type, follow_keys, url_src = stream_item
 
     def increments_follow_unique():
-        if follow_key == "follow" and len(follow_keys) == 1:
-            attributes['inlinks_nb']['follow_unique'] += 1
+        if not (url_src, mask) in attributes["inlinks_id_to_idx"]:
+            attributes['inlinks_internal_nb']['follow_unique'] += 1
+
+    def increments_nofollow_combination():
+        found = False
+        for _d in attributes['inlinks_internal_nb']['nofollow_combinations']:
+            if _d["key"] == follow_keys:
+                _d["value"] += 1
+                found = True
+                break
+        if not found:
+            attributes['inlinks_internal_nb']['nofollow_combinations'].append(
+                {
+                    "key": follow_keys,
+                    "value": 1
+                }
+            )
+
+    def follow_keys_to_acronym():
+        return "".join(k[0] for k in sorted(follow_keys))
 
     if link_type == "a":
-        for follow_key in follow_keys:
-            attributes['inlinks_nb']['total'] += 1
-            attributes['inlinks_nb'][follow_key] += 1
+        is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
+        mask = list_to_mask(follow_keys)
 
-            if url_src > 0:
-                if follow_key not in attributes['inlinks']:
-                    attributes['inlinks'][follow_key] = [url_src]
-                    increments_follow_unique()
-                elif url_src not in attributes['inlinks'][follow_key]:
-                    attributes['inlinks'][follow_key].append(url_src)
-                    increments_follow_unique()
+        attributes['inlinks_internal_nb']['total'] += 1
+        attributes['inlinks_internal_nb']['follow' if is_follow else 'nofollow'] += 1
+        if is_follow:
+            increments_follow_unique()
+        else:
+            increments_nofollow_combination()
+
+        url_idx = attributes["inlinks_id_to_idx"].get((url_src, mask), None)
+        if url_idx is not None:
+            attributes["inlinks_internal"][url_idx][2] += 1
+        else:
+            attributes["inlinks_internal"].append([url_src, mask, 1])
+            attributes["inlinks_id_to_idx"][(url_src, mask)] = len(attributes["inlinks_internal"]) - 1
 
     elif link_type.startswith('r'):
         http_code = int(link_type[1:])
@@ -149,6 +205,13 @@ def end_extract_url(attributes):
     If the url has not been crawled but received redirections or canonicals, we exceptionnaly
     this one into elasticsearch
     """
+    del attributes["outlinks_id_to_idx"]
+    del attributes["inlinks_id_to_idx"]
+
+    for link_direction in ('inlinks_internal', 'outlinks_internal'):
+        if len(attributes[link_direction]) > 300:
+            attributes[link_direction] = attributes[link_direction][0:300]
+
     if attributes['http_code'] < 100:
         if 'redirects_from_nb' in attributes or 'canonical_from_nb' in attributes:
             url = attributes['url']
@@ -159,11 +222,6 @@ def end_extract_url(attributes):
             })
         else:
             raise GroupWithSkipException()
-
-    for link_direction in ('inlinks', 'outlinks'):
-        for follow_key in attributes.get(link_direction, []):
-            if len(attributes[link_direction][follow_key]) > 300:
-                attributes[link_direction][follow_key] = attributes[link_direction][follow_key][0:300]
 
 
 class UrlDocumentGenerator(object):

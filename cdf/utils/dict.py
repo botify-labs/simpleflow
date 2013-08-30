@@ -19,21 +19,6 @@ def deep_update(d, u, depth=-1):
     return d
 
 
-def deep_clean(d):
-    if not isinstance(d, dict):
-        return d
-
-    new_d = {}
-    for k, v in d.iteritems():
-        if isinstance(v, dict):
-            new_d[str(k)] = deep_clean(v)
-        elif isinstance(v, unicode):
-            new_d[str(k)] = str(v)
-        else:
-            new_d[str(k)] = v
-    return new_d
-
-
 def flatten_dict(init, lkey=''):
     ret = {}
     for rkey, val in init.items():
