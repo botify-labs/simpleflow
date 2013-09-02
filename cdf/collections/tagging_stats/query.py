@@ -10,6 +10,7 @@ from cdf.utils.s3 import fetch_files
 from cdf.utils.dict import deep_dict, deep_update
 from .utils import field_has_children, children_from_field
 
+
 def is_dict_filter(filter_dict):
     """
     Check if the incoming dict is a filter (means "field" et "value" keys are set
@@ -43,10 +44,11 @@ def transform_std_type(field, df_values):
     return std_type(df_values[field] if field in df_values else 0)
 
 
-class CounterRequest(object):
+class MetricsQuery(object):
 
     BadRequestException = BadRequestException
 
+    DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_COLUMNS
     FIELDS = CROSS_PROPERTIES_COLUMNS + COUNTERS_FIELDS
 
     def __init__(self, df):
@@ -253,8 +255,3 @@ class CounterRequest(object):
         elif len(rt_) > 1:
             raise Exception("It is not allowed to make a group_by with differents resourc_type's levels")
         return df
-
-
-class MetricsRequest(CounterRequest):
-    DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_COLUMNS
-    STORE_KEY = 'counter'

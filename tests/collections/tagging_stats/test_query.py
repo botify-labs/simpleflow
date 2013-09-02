@@ -4,7 +4,7 @@ import logging
 from pandas import DataFrame
 
 from cdf.log import logger
-from cdf.collections.tagging_stats.request import MetricsRequest
+from cdf.collections.tagging_stats.query import MetricsQuery
 from cdf.utils.dict import flatten_dict
 
 logger.setLevel(logging.DEBUG)
@@ -57,7 +57,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_simple(self):
         df = DataFrame([flatten_dict(k) for k in self.data])
-        request = MetricsRequest(df)
+        request = MetricsQuery(df)
 
         settings = {
             'fields': ['pages_nb', 'outlinks_internal_nb']
@@ -147,7 +147,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_predicates(self):
         df = DataFrame(self.data)
-        request = MetricsRequest(df)
+        request = MetricsQuery(df)
         settings = {
             'fields': ['pages_nb'],
             'filters': [
@@ -204,7 +204,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_nested_filter(self):
         df = DataFrame(self.data)
-        request = MetricsRequest(df)
+        request = MetricsQuery(df)
 
         settings = {
             'fields': ['pages_nb']
@@ -227,7 +227,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_filter_in(self):
         df = DataFrame(self.data)
-        request = MetricsRequest(df)
+        request = MetricsQuery(df)
 
         settings = {
             'fields': ['pages_nb']
@@ -241,7 +241,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_sum_by_property_1dim(self):
         df = DataFrame(self.data)
-        request = MetricsRequest(df)
+        request = MetricsQuery(df)
 
         expected_results = [
             {
@@ -269,7 +269,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_sum_by_property_2dim(self):
         df = DataFrame(self.data)
-        request = MetricsRequest(df)
+        request = MetricsQuery(df)
 
         expected_results = [
             {
@@ -326,7 +326,7 @@ class TestPropertiesStats(unittest.TestCase):
         ]
 
         df = DataFrame(self.data)
-        request = MetricsRequest(df)
+        request = MetricsQuery(df)
 
         # Level 1, TLDs
         expected_results = [
@@ -474,7 +474,7 @@ class TestPropertiesStats(unittest.TestCase):
         ]
 
         df = DataFrame(self.data)
-        request = MetricsRequest(df)
+        request = MetricsQuery(df)
 
         # Level 1
         expected_results = [
@@ -559,7 +559,7 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_not(self):
         df = DataFrame(self.data)
-        request = MetricsRequest(df)
+        request = MetricsQuery(df)
 
         settings = {
             'fields': ['pages_nb'],
@@ -587,11 +587,11 @@ class TestPropertiesStats(unittest.TestCase):
 
     def test_bad_field(self):
         df = DataFrame(self.data)
-        request = MetricsRequest(df)
+        request = MetricsQuery(df)
 
         settings = {
             'fields': ['pages_nb', 'bad_field']
         }
 
-        with self.assertRaises(MetricsRequest.BadRequestException):
+        with self.assertRaises(MetricsQuery.BadRequestException):
             request.query(settings)
