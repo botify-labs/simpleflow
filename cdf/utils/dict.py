@@ -28,3 +28,13 @@ def flatten_dict(init, lkey=''):
         else:
             ret[key] = val
     return ret
+
+
+def deep_dict(d, split_key='.'):
+    """
+    Transform a flat dict {"a.b": 1, "b.c": 2} to a deep dict: {"a": {"b": 1 }}, "b": {"c": 2}}
+    """
+    new_d = {}
+    for k, v in d.iteritems():
+        deep_update(new_d, reduce(lambda x, y: {y: x}, reversed(k.split('.') + [v])))
+    return new_d

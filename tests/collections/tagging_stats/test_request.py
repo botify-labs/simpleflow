@@ -5,6 +5,7 @@ from pandas import DataFrame
 
 from cdf.log import logger
 from cdf.collections.tagging_stats.request import MetricsRequest
+from cdf.utils.dict import flatten_dict
 
 logger.setLevel(logging.DEBUG)
 
@@ -13,86 +14,106 @@ class TestPropertiesStats(unittest.TestCase):
 
     def setUp(self):
         self.data = [
-            {'host': 'www.site.com',
-             'content_type': 'text/html',
-             'resource_type': 'article',
-             'depth': 1,
-             'follow': True,
-             'index': True,
-             'http_code': 200,
-             'pages_nb': 10,
-             'outlinks_nofollow_link__nofollow_meta_nb': 5
-             },
-            {'host': 'subdomain.site.com',
-             'content_type': 'text/html',
-             'resource_type': 'photo',
-             'depth': 5,
-             'follow': True,
-             'index': True,
-             'http_code': 200,
-             'pages_nb': 20,
-             'outlinks_nofollow_link__nofollow_meta_nb': 4,
-             'outlinks_nofollow_link__nofollow_robots_nb': 8
-             }
+            {
+                'host': 'www.site.com',
+                'content_type': 'text/html',
+                'resource_type': 'article',
+                'depth': 1,
+                'follow': True,
+                'index': True,
+                'http_code': 200,
+                'pages_nb': 10,
+                'outlinks_internal_nb': {
+                    'total': 5,
+                    'follow': 0,
+                    'nofollow': 5,
+                    'nofollow_combinations': {
+                        'link_meta': 5
+                    }
+                }
+            },
+            {
+                'host': 'subdomain.site.com',
+                'content_type': 'text/html',
+                'resource_type': 'photo',
+                'depth': 5,
+                'follow': True,
+                'index': True,
+                'http_code': 200,
+                'pages_nb': 20,
+                'outlinks_internal_nb': {
+                    'total': 12,
+                    'nofollow': 12,
+                    'nofollow_combinations': {
+                        'link_meta': 4,
+                        'link_robots': 8
+                    }
+                }
+            }
         ]
 
     def tearDown(self):
         pass
 
     def test_simple(self):
-        df = DataFrame(self.data)
+        df = DataFrame([flatten_dict(k) for k in self.data])
         request = MetricsRequest(df)
 
         settings = {
-            'fields': ['pages_nb', 'outlinks_nb']
+            'fields': ['pages_nb', 'outlinks_internal_nb']
+        }
+        expected_result = {
+            'pages_nb': 30,
+            'outlinks_internal_nb': {
+                'total': 17,
+                'follow': 0,
+                'nofollow': 17,
+                'follow_unique': 0,
+                'nofollow_combinations': {
+                    'link_meta_robots': 0,
+                    'meta_robots': 0,
+                    'meta': 0,
+                    'link': 0,
+                    'robots': 0,
+                    'link_meta': 9,
+                    'link_robots': 8,
+                }
+            }
         }
 
-        self.assertItemsEqual(request.query(settings)['counters'],
-                              {
-                                  'pages_nb': 10,
-                                  'outlinks_nb': {
-                                      'total': 17,
-                                      'nofollow_link__nofollow_meta': 9,
-                                      'nofollow_link__nofollow_robots': 8
-                                  }
-                              })
+        self.assertEquals(
+            request.query(settings)['counters'],
+            expected_result
+        )
 
         settings = {
-            'fields': ['pages_nb', 'outlinks_nb', 'inlinks_nb'],
+            'fields': ['pages_nb', 'outlinks_internal_nb', 'inlinks_internal_nb'],
             'filters': [
                 {'field': 'host', 'value': 'www.site.com'}
             ]
         }
 
-        self.assertEquals(request.query(settings)['counters'],
-                          {
-                              'pages_nb': 10,
-                              'outlinks_nb': {
-                                  'total': 5,
-                                  'nofollow_link__nofollow_meta': 5,
-                              },
-                              'inlinks_nb': {
-                                  'total': 0
-                              }
-                          })
+        results = request.query(settings)['counters']
+        self.assertEquals(results['pages_nb'], 10)
+        self.assertEquals(results['outlinks_internal_nb']['nofollow'], 5)
+        self.assertEquals(results['outlinks_internal_nb']['nofollow_combinations']['link_meta'], 5)
 
         # Implicit OR
         settings = {
-            'fields': ['pages_nb', 'outlinks_nb'],
+            'fields': ['pages_nb', 'outlinks_internal_nb'],
             'filters': [
                 {'field': 'host', 'value': 'www.site.com'},
                 {'field': 'host', 'value': 'subdomain.site.com'}
             ]
         }
-        expected_result = {
-            'pages_nb': 10,
-            'outlinks_nb': {
-                'total': 17,
-                'nofollow_link__nofollow_meta': 9,
-                'nofollow_link__nofollow_robots': 8
-            }
-        }
-        self.assertItemsEqual(request.query(settings)['counters'], expected_result)
+
+        results = request.query(settings)['counters']
+        self.assertEquals(results, expected_result)
+        self.assertEquals(results['pages_nb'], 30)
+        self.assertEquals(results['outlinks_internal_nb']['total'], 17)
+        self.assertEquals(results['outlinks_internal_nb']['nofollow'], 17)
+        self.assertEquals(results['outlinks_internal_nb']['nofollow_combinations']['link_meta'], 9)
+        self.assertEquals(results['outlinks_internal_nb']['nofollow_combinations']['link_robots'], 8)
 
         # explicit OR condition
         settings['filters'] = {
@@ -101,7 +122,8 @@ class TestPropertiesStats(unittest.TestCase):
                 {'field': 'host', 'value': 'subdomain.site.com'}
             ]
         }
-        self.assertItemsEqual(request.query(settings)['counters'], expected_result)
+        results = request.query(settings)['counters']
+        self.assertEquals(results, expected_result)
 
         # AND condition
         settings['filters'] = {
@@ -110,14 +132,18 @@ class TestPropertiesStats(unittest.TestCase):
                 {'field': 'resource_type', 'value': 'article'}
             ]
         }
-        self.assertEquals(request.query(settings)['counters'],
-                          {
-                              'pages_nb': 10,
-                              'outlinks_nb': {
-                                  'total': 5,
-                                  'nofollow_link__nofollow_meta': 5,
-                              }
-                          })
+
+        results = request.query(settings)['counters']
+        self.assertEquals(results['pages_nb'], 10)
+        self.assertEquals(results['outlinks_internal_nb']['total'], 5)
+        self.assertEquals(results['outlinks_internal_nb']['nofollow_combinations']['link_meta'], 5)
+
+        # Test with a deep field
+        settings['fields'] = ['outlinks_internal_nb.nofollow_combinations.link_meta']
+        results = request.query(settings)['counters']
+        self.assertTrue('total' not in results['outlinks_internal_nb'])
+        self.assertTrue('meta' not in results['outlinks_internal_nb']['nofollow_combinations'])
+        self.assertEquals(results['outlinks_internal_nb']['nofollow_combinations']['link_meta'], 5)
 
     def test_predicates(self):
         df = DataFrame(self.data)

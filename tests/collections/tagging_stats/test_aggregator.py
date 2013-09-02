@@ -9,7 +9,14 @@ from cdf.collections.tagging_stats.aggregator import (MetricsAggregator, Metadat
 logger.setLevel(logging.DEBUG)
 
 
-class TestPropertiesStats(unittest.TestCase):
+def reverse_outlinks(stream_outlinks):
+    stream_inlinks = []
+    for k in stream_outlinks:
+        stream_inlinks.append([k[3], k[1], k[2], k[0]])
+    return filter(lambda i: i[0] > 0, sorted(stream_inlinks, key=lambda i: i[0]))
+
+
+class TestTaggingStats(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -34,19 +41,19 @@ class TestPropertiesStats(unittest.TestCase):
             [2, "product"]
         ))
 
-        stream_outlinks = iter((
+        stream_outlinks = (
             [1, 'a', ['follow'], 2, ''],
-            [2, 'a', ['nofollow_link', 'nofollow_meta'], 1, ''],
+            [1, 'a', ['follow'], 2, ''],
+            [2, 'a', ['follow'], 1, ''],
+            [2, 'a', ['link'], 1, ''],
+            [2, 'a', ['link', 'robots'], 3, ''],
+            [2, 'a', ['link', 'meta'], 4, ''],
             [2, 'canonical', ['follow'], 1, ''],
-        ))
+        )
 
-        stream_inlinks = iter((
-            [1, 'canonical', ['follow'], 2],
-            [1, 'a', ['nofollow_link', 'nofollow_meta'], 1],
-            [2, 'a', ['follow'], 1]
-        ))
+        stream_inlinks = reverse_outlinks(stream_outlinks)
 
-        a = MetricsAggregator(stream_patterns, stream_infos, stream_properties, stream_outlinks, stream_inlinks)
+        a = MetricsAggregator(stream_patterns, stream_infos, stream_properties, iter(stream_outlinks), iter(stream_inlinks))
         stats = a.get()
         logger.info(stats)
 
@@ -61,20 +68,121 @@ class TestPropertiesStats(unittest.TestCase):
         homepage_idx = cross_properties.index(['www.site.com', 'homepage', 'text/html', 0, 200, False, True])
         stats_homepage = stats[homepage_idx]['counters']
         self.assertEquals(stats_homepage['pages_nb'], 1)
-        self.assertEquals(stats_homepage['outlinks_nb'], 1)
-        self.assertEquals(stats_homepage['inlinks_nb'], 1)
-        self.assertEquals(stats_homepage['inlinks_nofollow_link__nofollow_meta_nb'], 1)
+        self.assertEquals(
+            stats_homepage['outlinks_internal_nb'],
+            {
+                'total': 2,
+                'nofollow': 0,
+                'follow': 2,
+                'follow_unique': 1,
+                'nofollow_combinations': {
+                    'link': 0,
+                    'link_meta': 0,
+                    'link_meta_robots': 0,
+                    'link_robots': 0,
+                    'meta': 0,
+                    'meta_robots': 0,
+                    'robots': 0
+                }
+            }
+        )
+        self.assertEquals(
+            stats_homepage['inlinks_internal_nb'],
+            {
+                'total': 2,
+                'follow': 1,
+                'follow_unique': 1,
+                'nofollow': 1,
+                'nofollow_combinations': {
+                    'link': 1,
+                    'link_meta': 0,
+                    'link_meta_robots': 0,
+                    'link_robots': 0,
+                    'meta': 0,
+                    'meta_robots': 0,
+                    'robots': 0
+                }
+            }
+        )
         self.assertEquals(stats_homepage['canonical_incoming_nb'], 1)
 
         product_idx = cross_properties.index(['www.site.com', 'product', 'text/html', 1, 404, True, False])
         stats_product = stats[product_idx]['counters']
         self.assertEquals(stats_product['pages_nb'], 1)
-        self.assertEquals(stats_product['inlinks_nb'], 1)
-        self.assertEquals(stats_product['inlinks_follow_nb'], 1)
-        self.assertEquals(stats_product['outlinks_nb'], 1)
-        self.assertEquals(stats_product['outlinks_nofollow_link__nofollow_meta_nb'], 1)
+        self.assertEquals(stats_product['inlinks_internal_nb']['follow'], 2)
+        self.assertEquals(stats_product['outlinks_internal_nb']['total'], 4)
+        self.assertEquals(stats_product['outlinks_internal_nb']['follow'], 1)
+        self.assertEquals(stats_product['outlinks_internal_nb']['nofollow'], 3)
+        self.assertEquals(
+            stats_product['outlinks_internal_nb']['nofollow_combinations'],
+            {
+                'link_meta': 1,
+                'link_meta_robots': 0,
+                'link_robots': 1,
+                'link': 1,
+                'meta': 0,
+                'meta_robots': 0,
+                'robots': 0
+            }
+        )
         self.assertEquals(stats_product['canonical_filled_nb'], 1)
         self.assertEquals(stats_product['canonical_duplicates_nb'], 1)
+
+    def test_links(self):
+        stream_patterns = iter((
+            [1, 'http', 'www.site.com', '/', ''],
+            [2, 'http', 'www.site.com', '/product1.html', ''],
+            [3, 'http', 'www.site.com', '/product2.html', ''],
+            [4, 'http', 'www.site.com', '/product3.html', ''],
+        ))
+
+        # infos mask (2nd field) : 4 noindex, 8 nofollow
+        stream_infos = iter((
+            [1, 4, 'text/html', 0, 1, 200, 1200, 303, 456, True],
+            [2, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+            [3, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+            [4, 8, 'text/html', 1, 1, 200, 1200, 303, 456, True],
+        ))
+
+        stream_properties = iter((
+            [1, "homepage"],
+            [2, "product"],
+            [3, "product"],
+            [4, "product"]
+        ))
+
+        stream_outlinks = (
+            [1, 'a', ['follow'], 2, ''],
+            [1, 'a', ['follow'], 2, ''],
+            [1, 'a', ['follow'], 4, ''],
+            [1, 'a', ['follow'], 3, ''],
+            [1, 'a', ['follow'], 3, ''],
+            [1, 'a', ['follow'], 4, ''],
+            [1, 'a', ['follow'], -1, 'http://www.youtube.com/'],
+            [2, 'a', ['meta', 'link'], 3, ''],
+            [2, 'a', ['meta'], 4, ''],
+            [2, 'a', ['meta'], 1, ''],
+            [2, 'a', ['meta', 'link'], 1, ''],
+        )
+
+        stream_inlinks = reverse_outlinks(stream_outlinks)
+
+        a = MetricsAggregator(stream_patterns, stream_infos, stream_properties, iter(stream_outlinks), iter(stream_inlinks))
+        stats = a.get()
+        cross_properties = [k['cross_properties'] for k in stats]
+
+        product_idx = cross_properties.index(['www.site.com', 'product', 'text/html', 1, 200, True, False])
+        stats_product = stats[product_idx]['counters']
+
+        self.assertEquals(stats_product['pages_nb'], 3)
+        self.assertEquals(stats_product['inlinks_internal_nb']['follow'], 6)
+        self.assertEquals(stats_product['inlinks_internal_nb']['follow_unique'], 3)
+        self.assertEquals(stats_product['inlinks_internal_nb']['nofollow'], 2)
+        self.assertEquals(stats_product['inlinks_internal_nb']['nofollow_combinations']['link_meta'], 1)
+        self.assertEquals(stats_product['inlinks_internal_nb']['nofollow_combinations']['meta'], 1)
+        self.assertEquals(stats_product['outlinks_internal_nb']['nofollow'], 4)
+        self.assertEquals(stats_product['outlinks_internal_nb']['nofollow_combinations']['link_meta'], 2)
+        self.assertEquals(stats_product['outlinks_internal_nb']['nofollow_combinations']['meta'], 2)
 
 
 class TestMetricsConsolidator(unittest.TestCase):
@@ -97,6 +205,14 @@ class TestMetricsConsolidator(unittest.TestCase):
                 "cross_properties": ["my.site.com", "product", "text/html", 0, 200, True, True],
                 "counters": {
                     "pages_nb": 10,
+                    "inlinks_internal_nb": {
+                        "total": 1,
+                        "nofollow": 1,
+                        "follow": 0,
+                        "nofollow_combinations": {
+                            "link_meta": 1
+                        }
+                    }
                 }
             }
         ]
@@ -105,7 +221,16 @@ class TestMetricsConsolidator(unittest.TestCase):
             {
                 "cross_properties": ["my.site.com", "product", "text/html", 0, 200, True, True],
                 "counters": {
-                    "pages_nb": 10,
+                    "pages_nb": 12,
+                    "inlinks_internal_nb": {
+                        "total": 11,
+                        "nofollow": 11,
+                        "follow": 0,
+                        "nofollow_combinations": {
+                            "link_meta": 1,
+                            "link": 10
+                        }
+                    }
                 }
             },
             {
@@ -143,7 +268,7 @@ class TestMetricsConsolidator(unittest.TestCase):
         ]
 
         c = MetricsConsolidator([stats_part_0, stats_part_1, stats_part_2, metadata_only_part])
-        aggregated_data = c.consolidate()
+        aggregated_data = c.consolidate(return_flatten=False)
 
         expected_data = {
             ('music.site.com', 'artist', 'text/html', 0, 200, True, True): {
@@ -160,7 +285,16 @@ class TestMetricsConsolidator(unittest.TestCase):
                 'pages_nb': 10,
             },
             ('my.site.com', 'product', 'text/html', 0, 200, True, True): {
-                'pages_nb': 20,
+                'pages_nb': 22,
+                "inlinks_internal_nb": {
+                    "total": 12,
+                    "nofollow": 12,
+                    "follow": 0,
+                    "nofollow_combinations": {
+                        "link_meta": 2,
+                        "link": 10
+                    }
+                }
             },
             ('my.site.com', 'product', 'text/html', 0, 301, True, True): {
                 'pages_nb': 30,
@@ -168,7 +302,9 @@ class TestMetricsConsolidator(unittest.TestCase):
         }
 
         for key, value in expected_data.iteritems():
+            logger.info('Valid {}'.format(key))
             self.assertEquals(aggregated_data[key], value)
+
 
 class TestPropertiesStatsMeta(unittest.TestCase):
 
