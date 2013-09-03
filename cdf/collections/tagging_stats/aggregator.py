@@ -116,7 +116,6 @@ class MetricsAggregator(object):
         results = dict()
         for k, result in enumerate(group_left(left, **streams_ref)):
             infos = result[2]['infos'][0]
-            properties = result[2]['properties'][0]
             outlinks = result[2]['outlinks']
             inlinks = result[2]['inlinks']
 
@@ -129,6 +128,9 @@ class MetricsAggregator(object):
             # If the page has not been crawled, we skip it
             if in_queue:
                 continue
+
+            # If not crawled, the file has not properties
+            properties = result[2]['properties'][0]
 
             key = (result[1][host_idx],
                    properties[resource_type_idx],
@@ -323,6 +325,12 @@ class MetadataAggregator(object):
             index = not (4 & infos[infos_mask_idx] == 4)
             follow = not (8 & infos[infos_mask_idx] == 8)
 
+            http_code = infos[http_code_idx]
+            in_queue = http_code in (0, 1, 2)
+            # If the page has not been crawled, we skip it
+            if in_queue:
+                continue
+
             key = (result[1][host_idx],
                    result[2]['properties'][0][resource_type_idx],
                    infos[content_type_idx],
@@ -337,7 +345,7 @@ class MetadataAggregator(object):
             # For each url, we check if it has correctly title, description and h1 filled
             # If not, we'll consider that the url has not enough metadata
 
-            if result[2]['infos'][0][http_code_idx] in (200, 304):
+            if result[2]['infos'][0][http_code_idx] == 200:
                 metadata_score = 0
                 # Meta filled
                 for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
