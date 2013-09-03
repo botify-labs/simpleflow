@@ -12,7 +12,7 @@ def follow_mask(val):
     We return a concatenated version
     """
     _mask = int(val)
-    if val in (0, 8):
+    if _mask in (0, 8):
         return ["follow"]
     masks = []
     for bitmask, term in NOFOLLOW_MASKS:
