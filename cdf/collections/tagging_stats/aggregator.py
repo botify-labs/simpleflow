@@ -130,6 +130,8 @@ class MetricsAggregator(object):
                 continue
 
             # If not crawled, the file has not properties
+            if not result[2]['properties']:
+                print infos
             properties = result[2]['properties'][0]
 
             key = (result[1][host_idx],

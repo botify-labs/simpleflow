@@ -212,7 +212,7 @@ def end_extract_url(attributes):
         if len(attributes[link_direction]) > 300:
             attributes[link_direction] = attributes[link_direction][0:300]
 
-    if attributes['http_code'] < 100:
+    if attributes['http_code'] in (0, 1, 2):
         if 'redirects_from_nb' in attributes or 'canonical_from_nb' in attributes:
             url = attributes['url']
             attributes.clear()
