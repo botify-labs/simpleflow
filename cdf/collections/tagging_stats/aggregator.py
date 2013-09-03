@@ -352,12 +352,12 @@ class MetadataAggregator(object):
                 # Meta filled
                 for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
                     if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
-                        results[key]['%s_filled_nb' % ct_txt] += 1
+                        results[key]['metadata_nb.%s.filled' % ct_txt] += 1
                         if ct_txt in MANDATORY_CONTENT_TYPES:
                             metadata_score += 1
 
                 if metadata_score < 3:
-                    results[key]['not_enough_metadata'] += 1
+                    results[key]['metadata_nb.not_enough'] += 1
 
             # Fetch --first-- hash from each content type and watch add it to hashes set
             ct_found = set()
@@ -377,14 +377,14 @@ class MetadataAggregator(object):
             hash_key = hasher(','.join(str(k) for k in key))
             for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
                 # If [ct_txt]_filled_nb not exists, we create the fields
-                if not '%s_filled_nb' % ct_txt in counters:
-                    counters['%s_filled_nb' % ct_txt] = 0
-                    counters['%s_unique_nb' % ct_txt] = 0
+                if not 'metadata_nb.%s.filled' % ct_txt in counters:
+                    counters['metadata_nb.%s.filled' % ct_txt] = 0
+                    counters['metadata_nb.%s.unique' % ct_txt] = 0
                 else:
                     # We fetch all set where there is only the hash_key (that means uniq)
-                    counters['%s_unique_nb' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
-            if not 'not_enough_metadata' in counters:
-                counters['not_enough_metadata'] = 0
+                    counters['metadata_nb.%s.unique' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
+            if not 'metadata_nb.not_enough' in counters:
+                counters['metadata_nb.not_enough'] = 0
             final_results.append(
                 {
                     "cross_properties": key,

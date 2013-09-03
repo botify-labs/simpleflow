@@ -52,8 +52,9 @@ COUNTERS_FIELDS = (
     'delay_from_1s_to_2s',
     'delay_from_500ms_to_1s',
     'delay_lt_500ms',
-    'not_enough_metadata'
+    'metadata_nb',
+    'metadata_nb.not_enough'
 )
 
 for ct_txt in CONTENT_TYPE_INDEX.itervalues():
-    COUNTERS_FIELDS += ('%s_filled_nb' % ct_txt, '%s_unique_nb' % ct_txt)
+    COUNTERS_FIELDS += ('metadata_nb.%s.filled' % ct_txt, 'metadata_nb.%s.unique' % ct_txt)
