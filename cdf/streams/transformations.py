@@ -56,6 +56,9 @@ def group_with(left, final_func=None, **stream_defs):
             continue
 
         if final_func:
-            final_func(attributes)
+            try:
+                final_func(attributes)
+            except GroupWithSkipException:
+                continue
 
         yield current_id, attributes
