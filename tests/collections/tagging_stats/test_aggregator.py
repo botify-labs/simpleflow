@@ -5,7 +5,7 @@ import logging
 from cdf.log import logger
 from cdf.collections.tagging_stats.aggregator import (MetricsAggregator, MetadataAggregator,
                                                       MetricsConsolidator)
-
+from cdf.utils.dict import flatten_dict
 logger.setLevel(logging.DEBUG)
 
 
@@ -254,15 +254,21 @@ class TestMetricsConsolidator(unittest.TestCase):
             {
                 "cross_properties": ['music.site.com', 'artist', 'text/html', 0, 200, True, True],
                 "counters": {
-                    "h1_filled_nb": 100,
-                    "h1_unique_nb": 90
+                    "metadata_nb": {
+                        "h1": {
+                            "filled": 100,
+                            "unique": 90
+                        }
+                    }
                 }
             },
             {
                 "cross_properties": ['music.site.com', 'artist', 'text/html', 0, 404, True, True],
                 "counters": {
-                    "title_filled_nb": 20,
-                    "title_unique_nb": 20
+                    "metadata_nb": {
+                        "title": 20,
+                        "unique": 20
+                    }
                 }
             },
         ]
@@ -273,13 +279,19 @@ class TestMetricsConsolidator(unittest.TestCase):
         expected_data = {
             ('music.site.com', 'artist', 'text/html', 0, 200, True, True): {
                 'pages_nb': 130,
-                'h1_filled_nb': 100,
-                'h1_unique_nb': 90
+                'metadata_nb': {
+                    'h1': {
+                        'filled': 100,
+                        'unique': 90
+                    }
+                }
             },
             ('music.site.com', 'artist', 'text/html', 0, 404, True, True): {
                 'pages_nb': 30,
-                'title_filled_nb': 20,
-                'title_unique_nb': 20
+                "metadata_nb": {
+                    "title": 20,
+                    "unique": 20
+                }
             },
             ('www.site.com', 'homepage', 'text/html', 0, 200, True, True): {
                 'pages_nb': 10,
@@ -347,35 +359,57 @@ class TestPropertiesStatsMeta(unittest.TestCase):
 
         expected_results = {
             ('www.site.com', 'product'):
-                {'h1_filled_nb': 2,
-                 'h1_unique_nb': 1,
-                 'h2_filled_nb': 1,
-                 'h2_unique_nb': 0,
-                 'title_filled_nb': 0,
-                 'title_unique_nb': 0,
-                 'description_filled_nb': 0,
-                 'description_unique_nb': 0,
-                 'not_enough_metadata': 2
-                 },
+            {
+                "metadata_nb": {
+                    "h1": {
+                        "filled": 2,
+                        "unique": 1
+                    },
+                    "h2": {
+                        "filled": 1,
+                        "unique": 0
+                    },
+                    "title": {
+                        "filled": 0,
+                        "unique": 0
+                    },
+                    "description": {
+                        "filled": 0,
+                        "unique": 0
+                    },
+                    "not_enough": 2
+                }
+            },
             ('www.site.com', 'homepage'):
-                {'h1_filled_nb': 1,
-                 'h1_unique_nb': 0,
-                 'h2_filled_nb': 1,
-                 'h2_unique_nb': 0,
-                 'title_filled_nb': 1,
-                 'title_unique_nb': 1,
-                 'description_filled_nb': 0,
-                 'description_unique_nb': 0,
-                 'not_enough_metadata': 1,
-                 }
+            {
+                "metadata_nb": {
+                    "h1": {
+                        "filled": 1,
+                        "unique": 0
+                    },
+                    "h2": {
+                        "filled": 1,
+                        "unique": 0
+                    },
+                    "title": {
+                        "filled": 1,
+                        "unique": 1
+                    },
+                    "description": {
+                        "filled": 0,
+                        "unique": 0
+                    },
+                    "not_enough": 1
+                }
+            }
         }
         results = a.get()
         cross_properties = [k['cross_properties'] for k in results]
         homepage_idx = cross_properties.index(('www.site.com', 'homepage', 'text/html', 0, 200, True, True))
         product_idx = cross_properties.index(('www.site.com', 'product', 'text/html', 1, 200, True, True))
 
-        self.assertEquals(results[product_idx]["counters"], expected_results[('www.site.com', 'product')])
-        self.assertEquals(results[homepage_idx]["counters"], expected_results[('www.site.com', 'homepage')])
+        self.assertEquals(results[product_idx]["counters"], flatten_dict(expected_results[('www.site.com', 'product')]))
+        self.assertEquals(results[homepage_idx]["counters"], flatten_dict(expected_results[('www.site.com', 'homepage')]))
 
     def test_not_enough_metadata_bad_code(self):
         """
@@ -412,7 +446,7 @@ class TestPropertiesStatsMeta(unittest.TestCase):
         cross_properties = [k['cross_properties'] for k in results]
         product_idx = cross_properties.index(('www.site.com', 'product', 'text/html', 1, 200, True, True))
 
-        self.assertEquals(results[product_idx]['counters']['not_enough_metadata'], 1)
+        self.assertEquals(results[product_idx]['counters']['metadata_nb.not_enough'], 1)
 
 
     def test_metadata(self):
@@ -452,5 +486,5 @@ class TestPropertiesStatsMeta(unittest.TestCase):
         cross_properties = [k['cross_properties'] for k in results]
         homepage_idx = cross_properties.index(('www.site.com', 'homepage', 'text/html', 0, 200, True, True))
         product_idx = cross_properties.index(('www.site.com', 'product', 'text/html', 1, 200, True, True))
-        self.assertEquals(results[homepage_idx]['counters']['not_enough_metadata'], 0)
-        self.assertEquals(results[product_idx]['counters']['not_enough_metadata'], 1)
+        self.assertEquals(results[homepage_idx]['counters']['metadata_nb.not_enough'], 0)
+        self.assertEquals(results[product_idx]['counters']['metadata_nb.not_enough'], 1)
