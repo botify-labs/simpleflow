@@ -84,7 +84,9 @@ def transform_links(query, es_document, attributes, link_direction):
         attributes[link_direction] = []
     for link_item in es_document.get(link_direction, []):
         mask = follow_mask(link_item[1])
-        url, http_code = query._id_to_url.get(link_item[0])
+        url, http_code = query._id_to_url.get(link_item[0], [None, None])
+        if not url:
+            continue
         if mask != ["follow"]:
             mask = ["nofollow_{}".format(_m) for _m in mask]
         attributes[link_direction].append(
