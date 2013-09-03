@@ -60,7 +60,7 @@ class MetricsQuery(object):
         tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
         files_fetched = fetch_files(s3_uri, tmp_dir, regexp='properties_stats_rev%d.h5' % rev_num, force_fetch=force_fetch)
         store = HDFStore(files_fetched[0][0])
-        return cls(store[cls.STORE_KEY])
+        return cls(store['counter'])
 
     def get_func_from_filter_dict(self, df, _filter):
         # Not operator
