@@ -171,19 +171,24 @@ class MetricsAggregator(object):
             for link_direction in ('inlinks', 'outlinks'):
                 follow_idx = idx_from_stream(link_direction, 'follow')
                 type_idx = inlinks_type_idx if link_direction == "inlinks" else outlinks_type_idx
+                if link_direction == "outlinks":
+                    dst_idx = idx_from_stream(link_direction, 'dst_url_id')
 
                 # Count follow_unique links
                 follow_urls = set()
 
                 if link_direction == "outlinks":
                     unique_idx = outlinks_dst_idx
+                    is_inlink = False
                 else:
                     unique_idx = inlinks_src_idx
+                    is_inlink = True
 
                 for link in result[2][link_direction]:
                     if link[type_idx] == "a":
+                        # If is_inlink, it's necessarily as we don't crawl the web :)
+                        is_internal = is_inlink or link[dst_idx] > 0
                         # Many statuses possible for an url, we concatenate them after a sort an split them with a double underscore
-                        is_internal = link[0] > 0
                         follow_key = '_'.join(sorted(link[follow_idx]))
                         counter_key = '{}_{}_nb'.format(link_direction, "internal" if is_internal else "external")
 
