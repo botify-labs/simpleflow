@@ -9,6 +9,7 @@ from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
 from cdf.streams.utils import group_left, idx_from_stream
 from cdf.collections.tagging_stats.constants import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
 from cdf.utils.dict import deep_update, flatten_dict
+from cdf.utils.hashing import string_to_int64
 
 
 def delay_to_range(delay):
@@ -130,8 +131,6 @@ class MetricsAggregator(object):
                 continue
 
             # If not crawled, the file has not properties
-            if not result[2]['properties']:
-                print infos
             properties = result[2]['properties'][0]
 
             key = (result[1][host_idx],
@@ -173,6 +172,7 @@ class MetricsAggregator(object):
                 type_idx = inlinks_type_idx if link_direction == "inlinks" else outlinks_type_idx
                 if link_direction == "outlinks":
                     dst_idx = idx_from_stream(link_direction, 'dst_url_id')
+                    external_idx = idx_from_stream(link_direction, 'external_url')
 
                 # Count follow_unique links
                 follow_urls = set()
@@ -188,15 +188,24 @@ class MetricsAggregator(object):
                     if link[type_idx] == "a":
                         # If is_inlink, it's necessarily as we don't crawl the web :)
                         is_internal = is_inlink or link[dst_idx] > 0
+                        url_id = link[unique_idx]
+
+                        """
+                        If the link is external and the follow_key is robots,
+                        That means that the url is finally internal (not linked once in follow)
+                        """
+                        if not is_internal and link_direction == "outlinks" and "robots" in link[follow_idx]:
+                            is_internal = True
+                            url_id = string_to_int64(link[external_idx])
+
                         # Many statuses possible for an url, we concatenate them after a sort an split them with a double underscore
                         follow_key = '_'.join(sorted(link[follow_idx]))
                         counter_key = '{}_{}_nb'.format(link_direction, "internal" if is_internal else "external")
-
                         results[key][counter_key]['total'] += 1
                         results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += 1
 
                         if is_internal and follow_key == "follow":
-                            follow_urls.add(link[unique_idx])
+                            follow_urls.add(url_id)
 
                         if follow_key != 'follow':
                             if follow_key not in results[key][counter_key]['nofollow_combinations']:
