@@ -99,8 +99,7 @@ class TestTaggingStats(unittest.TestCase):
                     'link_meta_robots': 0,
                     'link_robots': 0,
                     'meta': 0,
-                    'meta_robots': 0,
-                    'robots': 0
+                    'meta_robots': 0
                 }
             }
         )

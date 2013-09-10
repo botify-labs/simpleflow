@@ -342,9 +342,7 @@ class MetadataAggregator(object):
             follow = not (8 & infos[infos_mask_idx] == 8)
 
             http_code = infos[http_code_idx]
-            in_queue = http_code in (0, 1, 2)
-            # If the page has not been crawled, we skip it
-            if in_queue:
+            if http_code != 200:
                 continue
 
             key = (result[1][host_idx],
@@ -361,17 +359,16 @@ class MetadataAggregator(object):
             # For each url, we check if it has correctly title, description and h1 filled
             # If not, we'll consider that the url has not enough metadata
 
-            if result[2]['infos'][0][http_code_idx] == 200:
-                metadata_score = 0
-                # Meta filled
-                for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
-                    if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
-                        results[key]['metadata_nb.%s.filled' % ct_txt] += 1
-                        if ct_txt in MANDATORY_CONTENT_TYPES:
-                            metadata_score += 1
+            metadata_score = 0
+            # Meta filled
+            for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
+                if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
+                    results[key]['metadata_nb.%s.filled' % ct_txt] += 1
+                    if ct_txt in MANDATORY_CONTENT_TYPES:
+                        metadata_score += 1
 
-                if metadata_score < 3:
-                    results[key]['metadata_nb.not_enough'] += 1
+            if metadata_score < 3:
+                results[key]['metadata_nb.not_enough'] += 1
 
             # Fetch --first-- hash from each content type and watch add it to hashes set
             ct_found = set()
