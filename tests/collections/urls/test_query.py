@@ -6,6 +6,7 @@ import time
 from cdf.log import logger
 from cdf.collections.urls.query import Query
 from cdf.constants import URLS_DATA_MAPPING
+from cdf.streams.masks import list_to_mask
 from pyelasticsearch import ElasticSearch
 
 ELASTICSEARCH_LOCATION = "http://localhost:9200"
@@ -41,19 +42,22 @@ class TestQuery(unittest.TestCase):
                 "metadata_duplicate_nb": {
                     "h1": 1
                 },
-                "outlinks_nb": {
+                "outlinks_internal_nb": {
+                    "total": 4,
                     "follow": 3,
-                    "nofollow_link": 1,
-                    "nofollow_meta": 0,
-                    "nofollow_robots": 0,
-                    "nofollow_config": 0
+                    "follow_unique": 3,
+                    "nofollow": 1,
+                    "nofollow_combinations": [
+                        {"key": ["link"],
+                         "value": 1}
+                    ],
                 },
-                "outlinks": {
-                    "follow": [2, 3, 5],
-                    "nofollow_link": [3],
-                    "nofollow_meta": [],
-                    "nofollow_robots": [],
-                },
+                "outlinks_internal": [
+                    [2, list_to_mask(['follow']), 1],
+                    [3, list_to_mask(['follow']), 1],
+                    [5, list_to_mask(['follow']), 1],
+                    [3, list_to_mask(['link']), 1]
+                ],
                 "canonical_to": {
                     "url_id": 2
                 },
@@ -314,7 +318,7 @@ class TestQuery(unittest.TestCase):
 
     def test_outlinks(self):
         query = {
-            "fields": ["outlinks_nb", "outlinks"],
+            "fields": ["outlinks_internal_nb", "outlinks_internal"],
             "filters": {
                 "field": "id",
                 "value": 1
@@ -322,63 +326,55 @@ class TestQuery(unittest.TestCase):
         }
         q = Query(*self.query_args, query=query, sort=('id',))
         expected_result = {
-            "outlinks_nb": {
+            "outlinks_internal_nb": {
+                "total": 4,
                 "follow": 3,
-                "nofollow_link": 1,
-                "nofollow_meta": 0,
-                "nofollow_robots": 0,
-                "nofollow_config": 0
+                "nofollow": 1,
+                "follow_unique": 3,
+                "nofollow_combinations": [
+                    {"key": ["link"],
+                     "value": 1}
+                ]
             },
-            "outlinks": {
-                "follow": [
-                    {"url": "http://www.mysite.com/page2.html",
-                     "crawled": True},
-                    {"url": "http://www.mysite.com/page3.html",
-                     "crawled": True},
-                    # Url 5 has not been crawled (http_code=0)
-                    {"url": "http://www.mysite.com/page5.html",
-                     "crawled": False},
-                ],
-                "nofollow_link": [
-                    {"url": "http://www.mysite.com/page3.html",
-                     "crawled": True},
-                ],
-                "nofollow_meta": [],
-                "nofollow_robots": [],
-            },
+            "outlinks_internal": [
+                {
+                    "url": {
+                        "url": "http://www.mysite.com/page2.html",
+                        "crawled": True
+                    },
+                    "status": ["follow"],
+                    "nb_links": 1
+                },
+                {
+                    "url": {
+                        "url": "http://www.mysite.com/page3.html",
+                        "crawled": True
+                    },
+                    "status": ["follow"],
+                    "nb_links": 1
+                },
+                {
+                    "url": {
+                        "url": "http://www.mysite.com/page5.html",
+                        "crawled": False
+                    },
+                    "status": ["follow"],
+                    "nb_links": 1
+                },
+                {
+                    "url": {
+                        "url": "http://www.mysite.com/page3.html",
+                        "crawled": True
+                    },
+                    "status": ["nofollow_link"],
+                    "nb_links": 1
+                },
+            ]
         }
         q = Query(*self.query_args, query=query, sort=('id',))
         results = list(q.results)
-        self.assertEquals(results[0]["outlinks_nb"], expected_result["outlinks_nb"])
-        self.assertEquals(results[0]["outlinks"], expected_result["outlinks"])
-
-    def test_outlinks_specific_field(self):
-        """
-        We want to return only "follow" outlinks
-        """
-        query = {
-            "fields": ["outlinks.follow"],
-            "filters": {
-                "field": "id",
-                "value": 1
-            }
-        }
-        q = Query(*self.query_args, query=query, sort=('id',))
-        expected_result = {
-            "outlinks": {
-                "follow": [
-                    {"url": "http://www.mysite.com/page2.html",
-                     "crawled": True},
-                    {"url": "http://www.mysite.com/page3.html",
-                     "crawled": True},
-                    # Url 5 has not been crawled (http_code=0)
-                    {"url": "http://www.mysite.com/page5.html",
-                     "crawled": False},
-                ]
-            }
-        }
-        q = Query(*self.query_args, query=query, sort=('id',))
-        self.assertEquals(list(q.results)[0], expected_result)
+        self.assertEquals(results[0]["outlinks_internal_nb"], expected_result["outlinks_internal_nb"])
+        self.assertEquals(results[0]["outlinks_internal"], expected_result["outlinks_internal"])
 
     def test_metadata_duplicate(self):
         query = {

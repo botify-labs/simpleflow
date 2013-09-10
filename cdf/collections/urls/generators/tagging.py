@@ -18,11 +18,12 @@ class UrlTaggingGenerator(object):
             "resource_type": "value"
         }
         """
-        date_crawled_idx = idx_from_stream('infos', 'date_crawled')
+        http_code_idx = idx_from_stream('infos', 'http_code')
         for i in group_left((self.stream_patterns, 0), infos=(self.stream_infos, 0)):
             url_id, left_line, streams = i
-            date_crawled = streams['infos'][0][date_crawled_idx]
-            if not date_crawled:
+            # If http_code in 0, 1, 2 > means than not crawled
+            # If http_code < 0, it means that there were a fetcher error but the url was correctly crawled
+            if streams['infos'][0][http_code_idx] in (0, 1, 2):
                 continue
 
             url_id, protocol, host, path, query_string = left_line

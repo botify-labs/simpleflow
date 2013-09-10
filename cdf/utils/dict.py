@@ -19,21 +19,6 @@ def deep_update(d, u, depth=-1):
     return d
 
 
-def deep_clean(d):
-    if not isinstance(d, dict):
-        return d
-
-    new_d = {}
-    for k, v in d.iteritems():
-        if isinstance(v, dict):
-            new_d[str(k)] = deep_clean(v)
-        elif isinstance(v, unicode):
-            new_d[str(k)] = str(v)
-        else:
-            new_d[str(k)] = v
-    return new_d
-
-
 def flatten_dict(init, lkey=''):
     ret = {}
     for rkey, val in init.items():
@@ -43,3 +28,13 @@ def flatten_dict(init, lkey=''):
         else:
             ret[key] = val
     return ret
+
+
+def deep_dict(d, split_key='.'):
+    """
+    Transform a flat dict {"a.b": 1, "b.c": 2} to a deep dict: {"a": {"b": 1 }}, "b": {"c": 2}}
+    """
+    new_d = {}
+    for k, v in d.iteritems():
+        deep_update(new_d, reduce(lambda x, y: {y: x}, reversed(k.split('.') + [v])))
+    return new_d

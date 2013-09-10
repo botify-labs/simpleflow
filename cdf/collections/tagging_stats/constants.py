@@ -1,7 +1,5 @@
-import itertools
-
 from cdf.streams.mapping import CONTENT_TYPE_INDEX
-from cdf.streams.masks import NOFOLLOW_MASKS
+
 
 CROSS_PROPERTIES_COLUMNS = ('host', 'resource_type', 'content_type', 'depth', 'http_code', 'index', 'follow')
 
@@ -12,22 +10,50 @@ COUNTERS_FIELDS = (
     'canonical_filled_nb',
     'canonical_duplicates_nb',
     'canonical_incoming_nb',
-    'inlinks_nb',
-    'inlinks_follow_nb',
-    'outlinks_nb',
-    'outlinks_follow_nb',
+
+    'inlinks_internal_nb',
+    'inlinks_internal_nb.total',
+    'inlinks_internal_nb.follow',
+    'inlinks_internal_nb.follow_unique',
+    'inlinks_internal_nb.nofollow',
+    'inlinks_internal_nb.nofollow_combinations',
+    'inlinks_internal_nb.nofollow_combinations.link',
+    'inlinks_internal_nb.nofollow_combinations.link_meta',
+    'inlinks_internal_nb.nofollow_combinations.link_meta_robots',
+    'inlinks_internal_nb.nofollow_combinations.link_robots',
+    'inlinks_internal_nb.nofollow_combinations.meta',
+    'inlinks_internal_nb.nofollow_combinations.meta_robots',
+
+    'outlinks_internal_nb',
+    'outlinks_internal_nb.total',
+    'outlinks_internal_nb.follow',
+    'outlinks_internal_nb.follow_unique',
+    'outlinks_internal_nb.nofollow',
+    'outlinks_internal_nb.nofollow_combinations',
+    'outlinks_internal_nb.nofollow_combinations.link',
+    'outlinks_internal_nb.nofollow_combinations.link_meta',
+    'outlinks_internal_nb.nofollow_combinations.link_meta_robots',
+    'outlinks_internal_nb.nofollow_combinations.link_robots',
+    'outlinks_internal_nb.nofollow_combinations.meta',
+    'outlinks_internal_nb.nofollow_combinations.meta_robots',
+    'outlinks_internal_nb.nofollow_combinations.robots',
+
+    'outlinks_external_nb',
+    'outlinks_external_nb.total',
+    'outlinks_external_nb.follow',
+    'outlinks_external_nb.nofollow',
+    'outlinks_external_nb.nofollow_combinations',
+    'outlinks_external_nb.nofollow_combinations.link',
+    'outlinks_external_nb.nofollow_combinations.link_meta',
+    'outlinks_external_nb.nofollow_combinations.meta',
+
     'delay_gte_2s',
     'delay_from_1s_to_2s',
     'delay_from_500ms_to_1s',
     'delay_lt_500ms',
-    'not_enough_metadata'
+    'metadata_nb',
+    'metadata_nb.not_enough'
 )
 
 for ct_txt in CONTENT_TYPE_INDEX.itervalues():
-    COUNTERS_FIELDS += ('%s_filled_nb' % ct_txt, '%s_unique_nb' % ct_txt)
-
-# Generate all nofollow combinations possible
-for L in range(1, len(NOFOLLOW_MASKS) + 1):
-    for subset in itertools.combinations(NOFOLLOW_MASKS, L):
-        COUNTERS_FIELDS += ('inlinks_{}_nb'.format('__'.join(('nofollow_{}'.format(k[1]) for k in sorted(subset)))),)
-        COUNTERS_FIELDS += ('outlinks_{}_nb'.format('__'.join(('nofollow_{}'.format(k[1]) for k in sorted(subset)))),)
+    COUNTERS_FIELDS += ('metadata_nb.%s.filled' % ct_txt, 'metadata_nb.%s.unique' % ct_txt)

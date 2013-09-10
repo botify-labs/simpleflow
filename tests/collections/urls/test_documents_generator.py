@@ -6,6 +6,7 @@ from datetime import datetime
 
 from cdf.log import logger
 from cdf.collections.urls.generators.documents import UrlDocumentGenerator
+from cdf.streams.masks import list_to_mask
 
 logger.setLevel(logging.DEBUG)
 
@@ -29,30 +30,48 @@ class TestUrlDocumentGenerator(unittest.TestCase):
 
         u = UrlDocumentGenerator(iter(patterns), infos=iter(infos))
         document = u.__iter__().next()
-        document_expected = {'id': 1,
-                             'date_crawled': '2000-01-01T00:01:00',
-                             'url': 'http://www.site.com/path/name.html',
-                             'url_hash': 5539870621365162490,
-                             'protocol': 'http',
-                             'host': 'www.site.com',
-                             'path': '/path/name.html',
-                             'content_type': 'text/html',
-                             'gzipped': True,
-                             'query_string': '',
-                             'delay1': 303,
-                             'byte_size': 1200,
-                             'depth': 0,
-                             'http_code': 200,
-                             'delay2': 456,
-                             'metadata_nb': {'description': 0, 'h1': 0, 'h2': 0, 'title': 0},
-                             'meta_noindex': False,
-                             'meta_nofollow': False,
-                             'inlinks_nb': {'follow': 0, 'nofollow_meta': 0, 'nofollow_link': 0, 'nofollow_robots': 0},
-                             'inlinks': {},
-                             'outlinks_nb': {'nofollow_config': 0, 'follow': 0, 'nofollow_meta': 0, 'nofollow_link': 0, 'nofollow_robots': 0},
-                             'outlinks': {},
-                             }
-
+        document_expected = {
+            'id': 1,
+            'date_crawled': '2000-01-01T00:01:00',
+            'url': 'http://www.site.com/path/name.html',
+            'url_hash': 5539870621365162490,
+            'protocol': 'http',
+            'host': 'www.site.com',
+            'path': '/path/name.html',
+            'content_type': 'text/html',
+            'gzipped': True,
+            'query_string': '',
+            'delay1': 303,
+            'byte_size': 1200,
+            'depth': 0,
+            'http_code': 200,
+            'delay2': 456,
+            'metadata_nb': {'description': 0, 'h1': 0, 'h2': 0, 'title': 0},
+            'meta_noindex': False,
+            'meta_nofollow': False,
+            'inlinks_internal_nb': {
+                'total': 0,
+                'follow_unique': 0,
+                'follow': 0,
+                'nofollow': 0,
+                'nofollow_combinations': []
+            },
+            'inlinks_internal': [],
+            'outlinks_internal_nb': {
+                'total': 0,
+                'follow_unique': 0,
+                'follow': 0,
+                'nofollow': 0,
+                'nofollow_combinations': []
+            },
+            'outlinks_external_nb': {
+                'total': 0,
+                'follow': 0,
+                'nofollow': 0,
+                'nofollow_combinations': []
+            },
+            'outlinks_internal': [],
+        }
         self.assertEquals(document, (1, document_expected))
 
     def test_query_string(self):
@@ -148,36 +167,127 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         #format : link_type      follow? src_urlid       dst_urlid       or_external_url
         outlinks = [
             [1, 'a', ['follow'], 2, ''],
-            [1, 'a', ['nofollow_link'], 3, ''],
+            [1, 'a', ['link'], 3, ''],
             [1, 'a', ['follow'], 4, ''],
-            [1, 'a', ['nofollow_config'], -1, 'http://www.youtube.com'],
-            [3, 'a', ['nofollow_config'], -1, 'http://www.youtube.com'],
+            [1, 'a', ['follow'], 4, ''],
+            [1, 'a', ['link'], 4, ''],
+            [1, 'a', ['follow'], -1, 'http://www.youtube.com'],
+            [1, 'a', ['follow'], -1, 'http://www.youtube.com'],
+            [3, 'a', ['follow'], -1, 'http://www.youtube.com'],
+            [3, 'a', ['robots', 'link'], 5, ''],
+            [3, 'a', ['robots', 'link'], 5, ''],
+            [3, 'a', ['link'], 6, ''],
         ]
 
         u = UrlDocumentGenerator(iter(patterns), outlinks=iter(outlinks), infos=iter(infos))
         documents = list(u)
         document = documents[0][1]
         logger.info(document)
-        self.assertEquals(document['outlinks_nb']['nofollow_link'], 1)
-        self.assertEquals(document['outlinks_nb']['follow'], 2)
-        self.assertEquals(document['outlinks_nb']['nofollow_config'], 1)
-        self.assertEquals(document['outlinks']['follow'], [2, 4])
-        self.assertEquals(document['outlinks']['nofollow_link'], [3])
+        expected_combinations = [
+            {
+                "key": ["link"],
+                "value": 2
+            },
+        ]
+
+        self.assertItemsEqual(document['outlinks_internal_nb']['nofollow_combinations'], expected_combinations)
+        self.assertEquals(document['outlinks_internal_nb']['follow'], 3)
+        self.assertEquals(document['outlinks_internal_nb']['follow_unique'], 2)
+        self.assertEquals(document['outlinks_external_nb']['follow'], 2)
+        expected_outlinks_internal = [
+            [2, list_to_mask(['follow']), 1],
+            [3, list_to_mask(['link']), 1],
+            [4, list_to_mask(['follow']), 2],
+            [4, list_to_mask(['link']), 1]
+        ]
+        self.assertEquals(document['outlinks_internal'], expected_outlinks_internal)
 
         # Check that url 2 has no outlinks
         document = documents[1][1]
         logger.info(document)
-        self.assertEquals(document['outlinks_nb'], {'nofollow_config': 0, 'follow': 0, 'nofollow_meta': 0, 'nofollow_link': 0, 'nofollow_robots': 0})
-
+        self.assertEquals(
+            document['outlinks_internal_nb'],
+            {'nofollow_combinations': [], 'follow': 0, 'total': 0, 'nofollow': 0, 'follow_unique': 0}
+        )
         # Check that url 3 has 1 outlink
         document = documents[2][1]
         logger.info(document)
-        self.assertEquals(document['outlinks_nb']['nofollow_config'], 1)
+        self.assertEquals(document['outlinks_external_nb']['follow'], 1)
+        expected_combinations = [
+            {"key": ["robots", "link"],
+             "value": 2},
+            {"key": ["link"],
+             "value": 1}
+        ]
+        self.assertEquals(document['outlinks_internal_nb']['nofollow'], 3)
+        self.assertEquals(document['outlinks_internal_nb']['nofollow_combinations'], expected_combinations)
+        expected_outlinks = [
+            [5, list_to_mask(["robots", "link"]), 2],
+            [6, list_to_mask(["link"]), 1]
+        ]
+        self.assertItemsEqual(document['outlinks_internal'], expected_outlinks)
+
+    def test_outlinks_follow(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+        )
+
+        #format : link_type      follow? src_urlid       dst_urlid       or_external_url
+        outlinks = [
+            [1, 'a', ['follow'], 2, ''],
+            [1, 'a', ['link'], 2, ''],
+            [1, 'a', ['follow'], 2, ''],
+            [1, 'a', ['follow'], 3, ''],
+        ]
+
+        u = UrlDocumentGenerator(iter(patterns), outlinks=iter(outlinks), infos=iter(infos))
+        documents = list(u)
+        document = documents[0][1]
+        logger.info(document)
+        self.assertEquals(document['outlinks_internal_nb']['total'], 4)
+        self.assertEquals(document['outlinks_internal_nb']['nofollow'], 1)
+        self.assertEquals(document['outlinks_internal_nb']['nofollow_combinations'], [{"key": ["link"], "value": 1}])
+        self.assertEquals(document['outlinks_internal_nb']['follow'], 3)
+        self.assertEquals(document['outlinks_internal_nb']['follow_unique'], 2)
+        self.assertEquals(document['outlinks_internal'], [[2, list_to_mask(['follow']), 2], [2, list_to_mask(['link']), 1], [3, list_to_mask(['follow']), 1]])
+
+    def test_inlinks_follow(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+        )
+
+        #format : dst_url_id link_type      follow? src_urlid
+        inlinks = [
+            [1, 'a', ['follow'], 2],
+            [1, 'a', ['follow'], 2],
+            [1, 'a', ['follow'], 2],
+            [1, 'a', ['link'], 3],
+            [1, 'a', ['follow'], 3],
+        ]
+
+        u = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks), infos=iter(infos))
+        documents = list(u)
+        document = documents[0][1]
+        logger.info(document)
+        self.assertEquals(document['inlinks_internal_nb']['total'], 5)
+        self.assertEquals(document['inlinks_internal_nb']['nofollow'], 1)
+        self.assertEquals(document['inlinks_internal_nb']['nofollow_combinations'], [{"key": ["link"], "value": 1}])
+        self.assertEquals(document['inlinks_internal_nb']['follow'], 4)
+        self.assertEquals(document['inlinks_internal_nb']['follow_unique'], 2)
+        self.assertEquals(document['inlinks_internal'], [[2, list_to_mask(['follow']), 3], [3, list_to_mask(['link']), 1], [3, list_to_mask(['follow']), 1]])
 
     """
     Test outlinks with a stream starting at url 2
     """
-    def test_oulinks_start_url2(self):
+    def test_outlinks_start_url2(self):
         patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
             [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
@@ -193,10 +303,10 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         #format : link_type      follow? src_urlid       dst_urlid       or_external_url
         outlinks = [
             [2, 'a', ['follow'], 3, ''],
-            [2, 'a', ['nofollow_link'], 4, ''],
+            [2, 'a', ['link'], 4, ''],
             [2, 'a', ['follow'], 5, ''],
-            [2, 'a', ['nofollow_config'], -1, 'http://www.youtube.com'],
-            [3, 'a', ['nofollow_config'], -1, 'http://www.youtube.com'],
+            [2, 'a', ['follow'], -1, 'http://www.youtube.com'],
+            [3, 'a', ['follow'], -1, 'http://www.youtube.com'],
         ]
 
         u = UrlDocumentGenerator(patterns, outlinks=iter(outlinks), infos=iter(infos))
@@ -205,15 +315,23 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         # No link for url 1
         document = documents[0][1]
         logger.info(document)
-        self.assertEquals(document['outlinks_nb'], {'nofollow_config': 0, 'follow': 0, 'nofollow_meta': 0, 'nofollow_link': 0, 'nofollow_robots': 0})
+        self.assertEquals(document['outlinks_internal_nb'],
+                          {
+                              'total': 0,
+                              'follow_unique': 0,
+                              'nofollow': 0,
+                              'follow': 0,
+                              'nofollow_combinations': [],
+                          })
 
         # Url 2
         document = documents[1][1]
-        self.assertEquals(document['outlinks_nb']['nofollow_link'], 1)
-        self.assertEquals(document['outlinks_nb']['follow'], 2)
-        self.assertEquals(document['outlinks_nb']['nofollow_config'], 1)
-        self.assertEquals(document['outlinks']['follow'], [3, 5])
-        self.assertEquals(document['outlinks']['nofollow_link'], [4])
+        self.assertEquals(document['outlinks_internal_nb']['nofollow'], 1)
+        self.assertEquals(document['outlinks_internal_nb']['nofollow_combinations'], [{"key": ["link"], "value": 1}])
+        self.assertEquals(document['outlinks_internal_nb']['follow'], 2)
+        self.assertEquals(document['outlinks_internal_nb']['follow_unique'], 2)
+        self.assertEquals(document['outlinks_external_nb']['follow'], 1)
+        self.assertEquals(document['outlinks_internal'], [[3, list_to_mask(['follow']), 1], [4, list_to_mask(['link']), 1], [5, list_to_mask(['follow']), 1]])
 
     def test_redirect_to(self):
         """
@@ -278,17 +396,17 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         #format : link_type      follow? dst_urlid       src_urlid
         inlinks = [
             [1, 'a', ['follow'], 10],
-            [1, 'a', ['nofollow_link'], 11],
+            [1, 'a', ['link'], 11],
             [1, 'a', ['follow'], 12],
         ]
 
         u = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks), infos=iter(infos))
         document = u.__iter__().next()[1]
         logger.info(document)
-        self.assertEquals(document['inlinks_nb']['nofollow_link'], 1)
-        self.assertEquals(document['inlinks_nb']['follow'], 2)
-        self.assertEquals(document['inlinks']['follow'], [10, 12])
-        self.assertEquals(document['inlinks']['nofollow_link'], [11])
+        self.assertEquals(document['inlinks_internal_nb']['nofollow'], 1)
+        self.assertEquals(document['inlinks_internal_nb']['follow'], 2)
+        self.assertEquals(document['inlinks_internal_nb']['follow_unique'], 2)
+        self.assertEquals(document['inlinks_internal'], [[10, list_to_mask(['follow']), 1], [11, list_to_mask(['link']), 1], [12, list_to_mask(['follow']), 1]])
 
     def test_redirect_from(self):
         patterns = [

@@ -4,9 +4,11 @@ import operator
 from pandas import HDFStore
 import numpy
 
-from cdf.collections.tagging_stats.constants import CROSS_PROPERTIES_COLUMNS, CROSS_PROPERTIES_META_COLUMNS
+from cdf.collections.tagging_stats.constants import CROSS_PROPERTIES_COLUMNS, COUNTERS_FIELDS
 
 from cdf.utils.s3 import fetch_files
+from cdf.utils.dict import deep_dict, deep_update
+from .utils import field_has_children, children_from_field
 
 
 def is_dict_filter(filter_dict):
@@ -42,26 +44,12 @@ def transform_std_type(field, df_values):
     return std_type(df_values[field] if field in df_values else 0)
 
 
-def transform_links_nb(field, df_values, link_type):
-    value = {"total": 0}
-    for k, v in df_values.iteritems():
-        if v > 0 and k.startswith(link_type):
-            new_key = k[len('{}_'.format(link_type)):-len('_nb')]
-            value["total"] += v
-            value[new_key] = v
-    return value
-
-
-class CounterRequest(object):
+class MetricsQuery(object):
 
     BadRequestException = BadRequestException
 
-    FIELDS = ('host', 'content_type', 'resource_type', 'follow', 'meta', 'index', 'depth', 'pages_nb', 'inlinks_nb', 'outlinks_nb')
-
-    FIELDS_TRANSFORMERS = {
-        'inlinks_nb': lambda field, counters: transform_links_nb(field, counters, 'inlinks'),
-        'outlinks_nb': lambda field, counters: transform_links_nb(field, counters, 'outlinks'),
-    }
+    DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_COLUMNS
+    FIELDS = CROSS_PROPERTIES_COLUMNS + COUNTERS_FIELDS
 
     def __init__(self, df):
         self.df = df
@@ -72,7 +60,7 @@ class CounterRequest(object):
         tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
         files_fetched = fetch_files(s3_uri, tmp_dir, regexp='properties_stats_rev%d.h5' % rev_num, force_fetch=force_fetch)
         store = HDFStore(files_fetched[0][0])
-        return cls(store[cls.STORE_KEY])
+        return cls(store['counter'])
 
     def get_func_from_filter_dict(self, df, _filter):
         # Not operator
@@ -179,9 +167,14 @@ class CounterRequest(object):
         else:
             fields = filter(lambda i: i not in self.DISTRIBUTION_COLUMNS, self.df.columns.tolist())
 
+        final_fields = []
         for f in fields:
             if f not in self.FIELDS:
                 raise self.BadRequestException('Field {} not allowed in query'.format(f))
+            if field_has_children(f):
+                final_fields += children_from_field(f)
+            else:
+                final_fields.append(f)
 
         results = {}
 
@@ -199,15 +192,22 @@ class CounterRequest(object):
             No group_by, we return a dictionnary with all counters
             """
             df = df.sum().reset_index()
-            results = {field: self.FIELDS_TRANSFORMERS.get(field, transform_std_type)(field, dict(df.values)) for field in fields}
+            results = {}
+            values = dict(df.values)
+            for field in final_fields:
+                deep_update(results, deep_dict({field: transform_std_type(field, values)}))
             return {"counters": results}
 
         results = []
         for i, n in enumerate(df.values):
             values = dict(zip(df.columns, n))
+            counters = {}
+            for field in final_fields:
+                deep_update(counters, deep_dict({field: transform_std_type(field, values)}))
+
             result = {
                 'properties': {field_: std_type(df[field_][i]) for field_ in settings['group_by']},
-                'counters': {field: self.FIELDS_TRANSFORMERS.get(field, transform_std_type)(field, values) for field in fields}
+                'counters': counters
             }
             results.append(result)
         return results
@@ -255,13 +255,3 @@ class CounterRequest(object):
         elif len(rt_) > 1:
             raise Exception("It is not allowed to make a group_by with differents resourc_type's levels")
         return df
-
-
-class MetricsRequest(CounterRequest):
-    DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_COLUMNS
-    STORE_KEY = 'counter'
-
-
-class MetadataRequest(CounterRequest):
-    DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_META_COLUMNS
-    STORE_KEY = 'meta_uniqueness'

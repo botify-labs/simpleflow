@@ -8,6 +8,8 @@ from pandas import DataFrame
 from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
 from cdf.streams.utils import group_left, idx_from_stream
 from cdf.collections.tagging_stats.constants import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
+from cdf.utils.dict import deep_update, flatten_dict
+from cdf.utils.hashing import string_to_int64
 
 
 def delay_to_range(delay):
@@ -40,21 +42,47 @@ class MetricsAggregator(object):
 
         Ex :
         {
-           "cross_properties": ["www.site.com", "/article", "text/html", 1, 200, True, True],
-           "counters": {
-                   "pages_nb": 10,
-                   "redirections_nb": 0,
-                   "inlinks_nb": 10,
-                   "inlinks_follow_nb": 10,
-                   "inlinks_nofollow_meta_nb": 0,
-                   "outlinks_nb": 5,
-                   "total_delay_ms": 3400,
-                   "avg_delay": 800,
-                   "delay_gte_500ms": 3,
-                   "delay_gte_1s": 3,
-                   "delay_gte_2s": 1,
-                   "canonical_filled_nb": 3,
-                   "canonical_duplicated_nb": 2,
+            "cross_properties": ["www.site.com", "/article", "text/html", 1, 200, True, True],
+            "counters": {
+                "pages_nb": 10,
+                "redirections_nb": 0,
+                "inlinks_internal_nb": {
+                    "total": 10,
+                    "follow": 8,
+                    "follow_unique": 6,
+                    "nofollow": 2,
+                    "nofollow_combinations": {
+                        "link_meta": 1,
+                        "link": 1
+                    }
+                },
+                "outlinks_internal_nb": {
+                    "total": 10,
+                    "follow": 8,
+                    "follow_unique": 6,
+                    "nofollow": 2,
+                    "nofollow_combinations": {
+                        "link_meta": 1,
+                        "link": 1
+                    }
+                },
+                "outlinks_external_nb": {
+                    "total": 10,
+                    "follow": 8,
+                    "follow_unique": 6,
+                    "nofollow": 2,
+                    "nofollow_combinations": {
+                        "link_meta": 1,
+                        "link": 1
+                    }
+                },
+                "total_delay_ms": 3400,
+                "avg_delay": 800,
+                "delay_gte_500ms": 3,
+                "delay_gte_1s": 3,
+                "delay_gte_2s": 1,
+                "canonical_filled_nb": 3,
+                "canonical_duplicated_nb": 2,
             }
         }
         """
@@ -76,19 +104,19 @@ class MetricsAggregator(object):
         delay2_idx = idx_from_stream('infos', 'delay2')
 
         inlinks_type_idx = idx_from_stream('inlinks', 'link_type')
-        inlinks_follow_idx = idx_from_stream('inlinks', 'follow')
+        inlinks_src_idx = idx_from_stream('inlinks', 'src_url_id')
 
         outlinks_type_idx = idx_from_stream('outlinks', 'link_type')
         outlinks_src_idx = idx_from_stream('outlinks', 'id')
         outlinks_dst_idx = idx_from_stream('outlinks', 'dst_url_id')
-        outlinks_follow_idx = idx_from_stream('outlinks', 'follow')
 
-        counter_dict = {field: 0 for field in COUNTERS_FIELDS}
+        counter_dict = {}
+        for field in COUNTERS_FIELDS:
+            deep_update(counter_dict, reduce(lambda x, y: {y: x}, reversed(field.split('.') + [0])))
 
-        results = defaultdict(lambda: copy.copy(counter_dict))
+        results = dict()
         for k, result in enumerate(group_left(left, **streams_ref)):
             infos = result[2]['infos'][0]
-            properties = result[2]['properties'][0]
             outlinks = result[2]['outlinks']
             inlinks = result[2]['inlinks']
 
@@ -102,6 +130,9 @@ class MetricsAggregator(object):
             if in_queue:
                 continue
 
+            # If not crawled, the file has not properties
+            properties = result[2]['properties'][0]
+
             key = (result[1][host_idx],
                    properties[resource_type_idx],
                    infos[content_type_idx],
@@ -109,6 +140,9 @@ class MetricsAggregator(object):
                    http_code,
                    index,
                    follow)
+
+            if key not in results:
+                results[key] = copy.deepcopy(counter_dict)
 
             results[key]['pages_nb'] += 1
 
@@ -121,16 +155,66 @@ class MetricsAggregator(object):
             results[key]['canonical_incoming_nb'] += len(filter(lambda i: i[inlinks_type_idx] == "canonical", inlinks))
 
             # Store inlinks and outlinks counters
+            """
+            "outlinks_external_nb": {
+                    "total": 10,
+                    "follow": 8,
+                    "follow_unique": 6,
+                    "nofollow": 2,
+                    "nofollow_combinations": {
+                        "link_meta": 1,
+                        "link": 1
+                    }
+                },
+            """
             for link_direction in ('inlinks', 'outlinks'):
                 follow_idx = idx_from_stream(link_direction, 'follow')
                 type_idx = inlinks_type_idx if link_direction == "inlinks" else outlinks_type_idx
+                if link_direction == "outlinks":
+                    dst_idx = idx_from_stream(link_direction, 'dst_url_id')
+                    external_idx = idx_from_stream(link_direction, 'external_url')
 
-                results[key]['{}_nb'.format(link_direction)] += len(filter(lambda i: i[type_idx] == "a", result[2][link_direction]))
+                # Count follow_unique links
+                follow_urls = set()
+
+                if link_direction == "outlinks":
+                    unique_idx = outlinks_dst_idx
+                    is_inlink = False
+                else:
+                    unique_idx = inlinks_src_idx
+                    is_inlink = True
+
                 for link in result[2][link_direction]:
                     if link[type_idx] == "a":
+                        # If is_inlink, it's necessarily as we don't crawl the web :)
+                        is_internal = is_inlink or link[dst_idx] > 0
+                        url_id = link[unique_idx]
+
+                        """
+                        If the link is external and the follow_key is robots,
+                        That means that the url is finally internal (not linked once in follow)
+                        """
+                        if not is_internal and link_direction == "outlinks" and "robots" in link[follow_idx]:
+                            is_internal = True
+                            url_id = string_to_int64(link[external_idx])
+
                         # Many statuses possible for an url, we concatenate them after a sort an split them with a double underscore
-                        follow_key = '__'.join(sorted(link[follow_idx]))
-                        results[key]['{}_{}_nb'.format(link_direction, follow_key)] += 1
+                        follow_key = '_'.join(sorted(link[follow_idx]))
+                        counter_key = '{}_{}_nb'.format(link_direction, "internal" if is_internal else "external")
+                        results[key][counter_key]['total'] += 1
+                        results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += 1
+
+                        if is_internal and follow_key == "follow":
+                            follow_urls.add(url_id)
+
+                        if follow_key != 'follow':
+                            if follow_key not in results[key][counter_key]['nofollow_combinations']:
+                                results[key][counter_key]['nofollow_combinations'][follow_key] = 1
+                            else:
+                                results[key][counter_key]['nofollow_combinations'][follow_key] += 1
+
+                if len(follow_urls) > 0:
+                    results[key]['{}_internal_nb'.format(link_direction)]['follow_unique'] += len(follow_urls)
 
         # Transform defaultdict to dict
         final_results = []
@@ -147,7 +231,7 @@ class MetricsConsolidator(object):
         """
         self.part_stats = part_stats
 
-    def consolidate(self):
+    def consolidate(self, return_flatten=True):
         """
         Return a dictionnary of aggregated values by cross-property
 
@@ -161,10 +245,18 @@ class MetricsConsolidator(object):
         results = defaultdict(Counter)
         for part_stat in self.part_stats:
             for s_ in part_stat:
-                results[tuple(s_['cross_properties'])].update(s_['counters'])
+                results[tuple(s_['cross_properties'])].update(Counter(flatten_dict(s_['counters'])))
 
         # Replace Counters objects by dicts
-        return {key: dict(values) for key, values in results.iteritems()}
+        if return_flatten:
+            return {key: dict(values) for key, values in results.iteritems()}
+
+        document = {}
+        for cross_properties, counters in results.iteritems():
+            document[cross_properties] = {}
+            for k, v in counters.iteritems():
+                deep_update(document[cross_properties], reduce(lambda x, y: {y: x}, reversed(k.split('.') + [v])))
+        return document
 
     def get_dataframe(self):
         results = self.consolidate()
@@ -173,7 +265,6 @@ class MetricsConsolidator(object):
             t_dict = dict(d_)
             t_dict.update({CROSS_PROPERTIES_COLUMNS[i]: value for i, value in enumerate(cross_property)})
             t_dict.update({k: t_dict.get(k, 0) for k in COUNTERS_FIELDS})
-            print t_dict
             return t_dict
 
         prepare_df_rows = []
@@ -181,7 +272,6 @@ class MetricsConsolidator(object):
             prepare_df_rows.append(transform_dict(key, counters))
 
         df = DataFrame(prepare_df_rows)
-        import pdb; pdb.set_trace()
         return df
 
 
@@ -251,6 +341,12 @@ class MetadataAggregator(object):
             index = not (4 & infos[infos_mask_idx] == 4)
             follow = not (8 & infos[infos_mask_idx] == 8)
 
+            http_code = infos[http_code_idx]
+            in_queue = http_code in (0, 1, 2)
+            # If the page has not been crawled, we skip it
+            if in_queue:
+                continue
+
             key = (result[1][host_idx],
                    result[2]['properties'][0][resource_type_idx],
                    infos[content_type_idx],
@@ -265,17 +361,17 @@ class MetadataAggregator(object):
             # For each url, we check if it has correctly title, description and h1 filled
             # If not, we'll consider that the url has not enough metadata
 
-            if result[2]['infos'][0][http_code_idx] in (200, 304):
+            if result[2]['infos'][0][http_code_idx] == 200:
                 metadata_score = 0
                 # Meta filled
                 for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
                     if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
-                        results[key]['%s_filled_nb' % ct_txt] += 1
+                        results[key]['metadata_nb.%s.filled' % ct_txt] += 1
                         if ct_txt in MANDATORY_CONTENT_TYPES:
                             metadata_score += 1
 
                 if metadata_score < 3:
-                    results[key]['not_enough_metadata'] += 1
+                    results[key]['metadata_nb.not_enough'] += 1
 
             # Fetch --first-- hash from each content type and watch add it to hashes set
             ct_found = set()
@@ -295,14 +391,14 @@ class MetadataAggregator(object):
             hash_key = hasher(','.join(str(k) for k in key))
             for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
                 # If [ct_txt]_filled_nb not exists, we create the fields
-                if not '%s_filled_nb' % ct_txt in counters:
-                    counters['%s_filled_nb' % ct_txt] = 0
-                    counters['%s_unique_nb' % ct_txt] = 0
+                if not 'metadata_nb.%s.filled' % ct_txt in counters:
+                    counters['metadata_nb.%s.filled' % ct_txt] = 0
+                    counters['metadata_nb.%s.unique' % ct_txt] = 0
                 else:
                     # We fetch all set where there is only the hash_key (that means uniq)
-                    counters['%s_unique_nb' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
-            if not 'not_enough_metadata' in counters:
-                counters['not_enough_metadata'] = 0
+                    counters['metadata_nb.%s.unique' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
+            if not 'metadata_nb.not_enough' in counters:
+                counters['metadata_nb.not_enough'] = 0
             final_results.append(
                 {
                     "cross_properties": key,

@@ -1,7 +1,9 @@
 from pyelasticsearch import ElasticSearch
 
 from cdf.constants import URLS_DATA_MAPPING
-from cdf.utils.dict import deep_update, deep_clean
+from cdf.utils.dict import deep_update
+from cdf.utils.unicode import deep_clean
+from cdf.streams.masks import follow_mask
 from .constants import QUERY_FIELDS
 from .utils import field_has_children, children_from_field
 
@@ -72,27 +74,53 @@ def transform_resource_type(query, es_document, attributes):
             return
 
 
-def prepare_links(query, es_document, link_direction, link_type):
-    if link_direction in es_document and link_type in es_document[link_direction]:
-        query._urls_ids |= set(es_document[link_direction][link_type])
+def prepare_links(query, es_document, link_direction):
+    for link_item in es_document.get(link_direction, []):
+        query._urls_ids.add(link_item[0])
 
 
-def transform_links(query, es_document, attributes, link_direction, link_type):
+def transform_links(query, es_document, attributes, link_direction):
     if not link_direction in attributes:
-        attributes[link_direction] = {}
-    if not link_type in attributes[link_direction]:
-        attributes[link_direction][link_type] = []
-    if not link_direction in es_document or not link_type in es_document[link_direction]:
+        attributes[link_direction] = []
+    for link_item in es_document.get(link_direction, []):
+        mask = follow_mask(link_item[1])
+        url, http_code = query._id_to_url.get(link_item[0], [None, None])
+        if not url:
+            continue
+        if mask != ["follow"]:
+            mask = ["nofollow_{}".format(_m) for _m in mask]
+        attributes[link_direction].append(
+            {
+                'url': {
+                    'url': str(url),
+                    'crawled': http_code > 0
+                },
+                'status': mask,
+                'nb_links': link_item[2]
+            }
+        )
+
+
+def prepare_metadata_duplicate(query, es_document, link_type):
+    if 'metadata_duplicate' in es_document and link_type in es_document['metadata_duplicate']:
+        query._urls_ids |= set(es_document['metadata_duplicate'][link_type])
+
+
+def transform_metadata_duplicate(query, es_document, attributes, link_type):
+    if not 'metadata_duplicate' in attributes:
+        attributes['metadata_duplicate'] = {}
+    if not link_type in attributes['metadata_duplicate']:
+        attributes['metadata_duplicate'][link_type] = []
+    if not 'metadata_duplicate' in es_document or not link_type in es_document['metadata_duplicate']:
         return
-    for url_id in es_document[link_direction][link_type]:
+    for url_id in es_document['metadata_duplicate'][link_type]:
         url, http_code = query._id_to_url.get(url_id)
-        attributes[link_direction][link_type].append(
+        attributes['metadata_duplicate'][link_type].append(
             {
                 'url': str(url),
                 'crawled': http_code > 0
             }
         )
-
 
 FIELDS_HOOKS = {
     'redirects_from': {
@@ -114,24 +142,23 @@ FIELDS_HOOKS = {
     'resource_type': {
         'fields': ["tagging"],
         'transform': transform_resource_type
-    }
+    },
+    'inlinks_internal': {
+        'prepare': lambda query, es_document: prepare_links(query, es_document, 'inlinks_internal'),
+        'transform': lambda query, es_document, attributes: transform_links(query, es_document, attributes, 'inlinks_internal')
+    },
+    'outlinks_internal': {
+        'prepare': lambda query, es_document: prepare_links(query, es_document, 'outlinks_internal'),
+        'transform': lambda query, es_document, attributes: transform_links(query, es_document, attributes, 'outlinks_internal')
+    },
 }
-
-# Set prepare and transform functions for nested inlinks and outlinks
-for link_direction in ('inlinks', 'outlinks'):
-    for field in filter(lambda i: i.startswith('{}.'.format(link_direction)), QUERY_FIELDS):
-        _, _f = field.split('.')
-        FIELDS_HOOKS["{}.{}".format(link_direction, _f)] = {
-            'prepare': lambda query, es_document, link_direction=link_direction, link_type=_f: prepare_links(query, es_document, link_direction, link_type),
-            'transform': lambda query, es_document, attributes, ink_direction=link_direction, link_type=_f: transform_links(query, es_document, attributes, link_direction, link_type)
-        }
 
 # Prepare metadata duplicate urls
 for field in children_from_field('metadata_duplicate'):
     _, _f = field.split('.')
     FIELDS_HOOKS["metadata_duplicate.{}".format(_f)] = {
-        'prepare': lambda query, es_document, field=_f: prepare_links(query, es_document, "metadata_duplicate", field),
-        'transform': lambda query, es_document, attributes, field=_f: transform_links(query, es_document, attributes, "metadata_duplicate", field)
+        'prepare': lambda query, es_document, field=_f: prepare_metadata_duplicate(query, es_document, field),
+        'transform': lambda query, es_document, attributes, field=_f: transform_metadata_duplicate(query, es_document, attributes, field)
     }
 
 # Set default values on nested objects
@@ -429,7 +456,7 @@ class Query(object):
                                 value = [reduce(dict.get, child.split("."), r['_source']) or default_value]
                             except:
                                 value = [default_value]
-                            deep_update(document, reduce(lambda x, y: {y: x}, reversed(child.split('.') + value)))
+                            deep_update(document, reduce(lambda x, y: {y: x}, reversed(child.split('.') + deep_clean(value))))
                 elif field in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['transform'](self, r['_source'], document)
                 else:
@@ -439,7 +466,7 @@ class Query(object):
                             value = [reduce(dict.get, field.split("."), r['_source'])]
                         except:
                             value = [default_value]
-                        deep_update(document, reduce(lambda x, y: {y: x}, reversed(field.split('.') + value)))
+                        deep_update(document, reduce(lambda x, y: {y: x}, reversed(field.split('.') + deep_clean(value))))
                     else:
                         document[field] = deep_clean(r['_source'][field]) if field in r['_source'] else default_value
 
