@@ -362,19 +362,23 @@ class TestPropertiesStatsMeta(unittest.TestCase):
                 "metadata_nb": {
                     "h1": {
                         "filled": 2,
-                        "unique": 1
+                        "unique": 1,
+                        "not_filled": 0
                     },
                     "h2": {
                         "filled": 1,
-                        "unique": 0
+                        "unique": 0,
+                        "not_filled": 1,
                     },
                     "title": {
                         "filled": 0,
-                        "unique": 0
+                        "unique": 0,
+                        "not_filled": 2
                     },
                     "description": {
                         "filled": 0,
-                        "unique": 0
+                        "unique": 0,
+                        "not_filled": 2
                     },
                     "not_enough": 2
                 }
@@ -384,19 +388,23 @@ class TestPropertiesStatsMeta(unittest.TestCase):
                 "metadata_nb": {
                     "h1": {
                         "filled": 1,
-                        "unique": 0
+                        "unique": 0,
+                        "not_filled": 0
                     },
                     "h2": {
                         "filled": 1,
-                        "unique": 0
+                        "unique": 0,
+                        "not_filled": 0
                     },
                     "title": {
                         "filled": 1,
-                        "unique": 1
+                        "unique": 1,
+                        "not_filled": 0
                     },
                     "description": {
                         "filled": 0,
-                        "unique": 0
+                        "unique": 0,
+                        "not_filled": 1
                     },
                     "not_enough": 1
                 }

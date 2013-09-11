@@ -366,6 +366,8 @@ class MetadataAggregator(object):
                     results[key]['metadata_nb.%s.filled' % ct_txt] += 1
                     if ct_txt in MANDATORY_CONTENT_TYPES:
                         metadata_score += 1
+                else:
+                    results[key]['metadata_nb.%s.not_filled' % ct_txt] += 1
 
             if metadata_score < 3:
                 results[key]['metadata_nb.not_enough'] += 1
@@ -394,6 +396,9 @@ class MetadataAggregator(object):
                 else:
                     # We fetch all set where there is only the hash_key (that means uniq)
                     counters['metadata_nb.%s.unique' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
+                if not 'metadata_nb.%s.not_filled' % ct_txt in counters:
+                    counters['metadata_nb.%s.not_filled' % ct_txt] = 0
+
             if not 'metadata_nb.not_enough' in counters:
                 counters['metadata_nb.not_enough'] = 0
             final_results.append(
