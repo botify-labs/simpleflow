@@ -56,4 +56,4 @@ COUNTERS_FIELDS = (
 )
 
 for ct_txt in CONTENT_TYPE_INDEX.itervalues():
-    COUNTERS_FIELDS += ('metadata_nb.%s.filled' % ct_txt, 'metadata_nb.%s.unique' % ct_txt)
+    COUNTERS_FIELDS += ('metadata_nb.%s.not_filled' % ct_txt, 'metadata_nb.%s.filled' % ct_txt, 'metadata_nb.%s.unique' % ct_txt)
