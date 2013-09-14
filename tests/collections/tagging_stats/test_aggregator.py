@@ -103,7 +103,7 @@ class TestTaggingStats(unittest.TestCase):
                 }
             }
         )
-        self.assertEquals(stats_homepage['canonical_incoming_nb'], 1)
+        self.assertEquals(stats_homepage['canonical_nb']['incoming'], 1)
 
         product_idx = cross_properties.index(['www.site.com', 'product', 'text/html', 1, 404, True, False])
         stats_product = stats[product_idx]['counters']
@@ -124,8 +124,9 @@ class TestTaggingStats(unittest.TestCase):
                 'robots': 0
             }
         )
-        self.assertEquals(stats_product['canonical_filled_nb'], 1)
-        self.assertEquals(stats_product['canonical_duplicates_nb'], 1)
+        self.assertEquals(stats_product['canonical_nb']['filled'], 1)
+        self.assertEquals(stats_product['canonical_nb']['not_equal'], 1)
+        self.assertEquals(stats_product['canonical_nb']['equal'], 0)
 
     def test_links(self):
         stream_patterns = iter((
