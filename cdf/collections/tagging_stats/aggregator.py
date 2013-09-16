@@ -81,8 +81,11 @@ class MetricsAggregator(object):
                 "delay_gte_500ms": 3,
                 "delay_gte_1s": 3,
                 "delay_gte_2s": 1,
-                "canonical_filled_nb": 3,
-                "canonical_duplicated_nb": 2,
+                "canonical_nb": {
+                    "filled": 3,
+                    "equal": 1,
+                    "not_filled": 0
+                }
             }
         }
         """
@@ -150,9 +153,18 @@ class MetricsAggregator(object):
             results[key]['total_delay_ms'] += infos[delay2_idx]
 
             results[key]['redirections_nb'] += len(filter(lambda i: i[outlinks_type_idx].startswith("r"), outlinks))
-            results[key]['canonical_filled_nb'] += len(filter(lambda i: i[outlinks_type_idx] == "canonical", outlinks))
-            results[key]['canonical_duplicates_nb'] += len(filter(lambda i: i[outlinks_type_idx] == "canonical" and i[outlinks_src_idx] != i[outlinks_dst_idx], outlinks))
-            results[key]['canonical_incoming_nb'] += len(filter(lambda i: i[inlinks_type_idx] == "canonical", inlinks))
+
+            # Get the first canonical tag found (a page may be have 2 canonicals tags by mistake
+            canonicals = filter(lambda i: i[outlinks_type_idx] == "canonical", outlinks)
+            if canonicals:
+                canonical = canonicals[0]
+                results[key]['canonical_nb']['filled'] += 1
+                if canonical[outlinks_src_idx] == canonical[outlinks_dst_idx]:
+                    results[key]['canonical_nb']['equal'] += 1
+                else:
+                    results[key]['canonical_nb']['not_equal'] += 1
+
+            results[key]['canonical_nb']['incoming'] += len(filter(lambda i: i[inlinks_type_idx] == "canonical", inlinks))
 
             # Store inlinks and outlinks counters
             """
