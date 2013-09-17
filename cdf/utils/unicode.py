@@ -7,6 +7,6 @@ def deep_clean(d):
             new_d[deep_clean(k)] = deep_clean(v)
         return new_d
     elif isinstance(d, unicode):
-        return str(d)
+        return d.encode('utf-8')
     else:
         return d
