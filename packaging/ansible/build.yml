@@ -4,4 +4,4 @@
   roles:
     - base
     - ruby
-    - build
+    - buildpkg

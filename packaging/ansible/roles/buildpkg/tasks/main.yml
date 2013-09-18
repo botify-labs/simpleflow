@@ -1,0 +1,76 @@
+- name: Build boto
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb -v 2.9.8 boto"
+
+- name: Build ujson
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb -v 1.33 ujson"
+  
+- name: Build pyhash
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb -v 0.5 pyhash"
+
+- name: Build python-requests
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb requests"
+
+- name: Checkout pyelasticsearch
+  tags: build
+  sudo: no
+  command: "/usr/bin/git clone https://github.com/botify-labs/pyelasticsearch.git /tmp/pyelasticsearch"
+
+- name: Build python-pyelasticsearch
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb /tmp/pyelasticsearch"
+
+- name: Build python-lz4
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb -v 0.6.0 lz4"
+
+- name: Build python-pytz
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb pytz"
+
+- name: Build python-pandas
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb -v 0.11.0 pandas"
+
+- name: Build python-numexpr
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb -v 2.1 numexpr"
+
+- name: Build Cython
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb -v 0.19.1 Cython"
+
+- name: Build Tables
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb -v 3.0.0 tables"
+
+- name: Build lockfiles
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb -v 0.9.1 lockfiles"
+
+- name: Checkout Botify CDF
+  tags: build
+  sudo: no
+  command: "/usr/bin/git clone https://github.com/sem-io/botify-cdf.git /tmp/botify-cdf"
+
+- name: Build Botify CDF
+  tags: build
+  sudo: no
+  command: "/usr/local/bin/fpm -s python -t deb /tmp/botify-cdf"
+
+
