@@ -1,0 +1,7 @@
+- hosts: build
+  gather_facts: False
+
+  roles:
+    - base
+    - ruby
+    - build

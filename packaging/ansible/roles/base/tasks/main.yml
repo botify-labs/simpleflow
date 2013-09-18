@@ -1,0 +1,28 @@
+- name: Disable recommended packages automatic installation
+  tags: [bootstrap]
+  raw: echo -e "APT::Install-Recommends "false";" >> /etc/apt/apt.conf.d/10recommends
+
+- name: Install mandatory packages for ansible the dirty way
+  tags: [bootstrap]
+  raw: aptitude install -y {{ item }}
+  with_items: bootstrap_debpkg
+ 
+- name: Now gather facts
+  tags: [bootstrap]
+  setup:
+
+- name: Update apt DB
+  tags: [debinstall, update] 
+  sudo: yes
+  apt: update_cache=yes
+
+- name: Update base packages
+  tags: [debinstall, update] 
+  sudo: yes
+  apt: pkg={{ item }} state=latest
+  with_items: bootstrap_debpkg
+
+- name: Do a system upgrade
+  tags: [bootstrap]
+  sudo: yes
+  apt: update_cache=yes upgrade=safe
