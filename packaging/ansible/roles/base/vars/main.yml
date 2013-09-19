@@ -1,16 +1,14 @@
 bootstrap_debpkg:
   - sudo
-  - python2.7
-  - python2.7-dev
+  - python-dev
   - python-setuptools
   - build-essential
-  - ruby1.9.1
-  - ruby1.9.1-dev
   - libboost-python-dev
   - git
   - python-simplejson
   - python-six
   - python-numpy
   - python-dateutil
+  - python-pip
   - libhdf5-serial-dev
   
