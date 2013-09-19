@@ -1,0 +1,117 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# This Vagrantfile was thought to help with the packaging of
+# botify-cdf modules in mind. It should allow you to easily
+# boot a vagrant box ready to serve.
+#
+# The box was made with EC2 integration in mind, and can be easily
+# instantiated on an amazon instance using the vagrant aws provider.
+# To use it, you will need to install the aws vagrant provider using
+# the following method:
+# `$ vagrant plugin install vagrant-aws`
+#
+# Using vagrant with Ec2 will require you to set up a few environment
+# variables:
+# * AWS_ACCESS_KEY_ID      => The API key used to make requests to AWS
+# * AWS_SECRET_ACCESS_KEY  => The secret key to make AWS API requests
+# * AWS_KEYPAIR_NAME       => The name of the keypair used for this EC2 instance
+# * AWS_SSH_PRIVKEY        => The path to the private key for the named keypair,
+#                             for example ~/.aws/oleiade.pem.
+#
+# Once it is installed, and environment is set up all you have to is to
+# `$ vagrant up --provider=aws`
+#
+# On startup last puppet version for the box you've choosed will be
+# installed, and puppet-botify-saas will be deployed as the master
+# puppet configuration.
+
+
+
+# Fetch some vagrant box aws informations configuration value
+# from the environment or rely on default values
+BOX_NAME = ENV['BOX_NAME'] || "precise64"
+BOX_URI = ENV['BOX_URI'] || "http://files.vagrantup.com/precise64.box"
+
+AWS_REGION = ENV['AWS_REGION'] || "eu-west-1"  # Ireland FTW
+AWS_AMI = ENV['AWS_AMI'] || "ami-fbb1a38f"  # Default is botify-saas-base ami
+AWS_SECURITY_GROUPS = ENV['AWS_SECURITY_GROUPS'] || "botify-saas/base"
+
+# Should the system be provisioned at startup with the
+# content of $system_provisioning_script
+VAGRANT_SYSTEM_PROVISIONING = ENV['VAGRANT_SYSTEM_PROVISIONING'] || 1
+
+# If set, puppet provisioning will be applied at box startup,
+# and comma separated listed module will be applied.
+PUPPET_BOOTSTRAP_RULES = ENV['PUPPET_BOOTSTRAP_RULES'] || nil
+PUPPET_ENV = ENV['PUPPET_ENV'] || "development"
+
+
+# Set up an empty provisioning rule that will
+# be fulfilled later on according to has been set in env
+# like : should the base system bootstraped (you don't want that
+# if you're using an homemade box), or should the puppet config
+# be linked and ran
+$provisioning_script = <<SCRIPT
+SCRIPT
+
+# Script to be ran at Box startup which will install system dependencies.
+$system_provisioning_script = <<SCRIPT
+# Copy generated packages
+echo "--- Modules are copied into packages shared repository"
+rm -rf /vagrant/packages/
+mkdir -p /vagrant/packages/
+cp /home/vagrant/*.deb /vagrant/packages
+SCRIPT
+
+# Run the system provisioning script if activated
+if VAGRANT_SYSTEM_PROVISIONING == 1
+  $provisioning_script << $system_provisioning_script
+end
+
+# Let's be gentle with a finish message
+$provisioning_script << "echo 'Your box is now ready to use, enjoy.\n'"
+
+Vagrant.configure("2") do |config|
+  # Base box specifications
+  config.vm.box = BOX_NAME
+  config.vm.box_url = BOX_URI
+
+  # Network configuration, opening web and
+  # ssh, ports
+  config.vm.network :forwarded_port, id: 'ssh', guest: 22, host: 2222, auto_correct: true
+  config.vm.network :forwarded_port, id: 'nginx', guest: 80, host: 8080, auto_correct: true
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "ansible/build.yml"
+  end
+
+  # Deploy puppet-botify-saas on instance
+  config.vm.provision :shell, :inline => $provisioning_script
+
+  # Configuration to be applied whenever selected
+  # provider is aws
+  config.vm.provider :aws do |aws, override|
+      # Setting up aws credentials
+      aws.access_key_id = ENV["AWS_ACCESS_KEY_ID"]
+      aws.secret_access_key = ENV["AWS_SECRET_ACCESS_KEY"]
+      aws.keypair_name = ENV["AWS_KEYPAIR_NAME"]
+      aws.security_groups = [AWS_SECURITY_GROUPS]
+
+      # Set up ssh to work with your EC2 ssh credentials
+      override.ssh.private_key_path = ENV["AWS_SSH_PRIVKEY"]
+      override.ssh.username = "ubuntu"
+
+      # tunning up EC2 instance a little bit
+      aws.region = AWS_REGION
+      aws.ami = AWS_AMI
+      aws.instance_type = "t1.micro"
+  end
+
+  # Configuration to be applied whenever
+  # Virtualbox provider is selected
+  config.vm.provider :virtualbox do |vb, override|
+    # Let's bridge the network connector
+    override.vm.network :private_network, ip: "192.168.42.42"
+  end
+end
