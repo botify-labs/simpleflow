@@ -100,9 +100,8 @@ def compute_properties_stats_counter_from_s3(crawl_id, part_id, rev_num, s3_uri,
     file_content = lz4.loads(open(path_local).read())
     if not file_content:
         return
-    else:
-        cast = Caster(STREAMS_HEADERS["PROPERTIES"]).cast
-        streams["stream_properties"] = cast(split(file_content.split('\n')))
+    cast = Caster(STREAMS_HEADERS["PROPERTIES"]).cast
+    streams["stream_properties"] = cast(split(file_content.split('\n')))
 
     files_fetched = fetch_files(s3_uri,
                                 tmp_dir,
@@ -172,9 +171,9 @@ def _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_pre
         if not file_content:
             # If no content for properties file, that means that no pages were crawled for this part_id, we can skip
             continue
-        else:
-            cast = Caster(STREAMS_HEADERS["PROPERTIES"]).cast
-            streams_types["properties"].append(cast(split(file_content.split('\n'))))
+
+        cast = Caster(STREAMS_HEADERS["PROPERTIES"]).cast
+        streams_types["properties"].append(cast(split(file_content.split('\n'))))
 
         files_fetched = fetch_files(s3_uri,
                                     tmp_dir,
