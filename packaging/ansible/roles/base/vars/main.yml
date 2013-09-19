@@ -1,6 +1,9 @@
 bootstrap_debpkg:
   - sudo
   - python-dev
+  - libexpat1-dev 
+  - libpython2.7
+  - python2.7-dev
   - python-setuptools
   - build-essential
   - libboost-python-dev

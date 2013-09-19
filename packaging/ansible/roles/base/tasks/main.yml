@@ -3,6 +3,11 @@
   sudo: yes
   raw: echo -e "APT::Install-Recommends "false";" >> /etc/apt/apt.conf.d/10recommends
 
+- name: Update apt DB
+  tags: [debinstall, update] 
+  sudo: yes
+  apt: update_cache=yes
+
 - name: Install mandatory packages for ansible the dirty way
   tags: [bootstrap]
   sudo: yes
@@ -12,8 +17,3 @@
 - name: Now gather facts
   tags: [bootstrap]
   setup:
-
-- name: Update apt DB
-  tags: [debinstall, update] 
-  sudo: yes
-  apt: update_cache=yes
