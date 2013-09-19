@@ -14,7 +14,7 @@ from cdf.streams.utils import split_file, split
 from cdf.collections.urls.generators.tagging import UrlTaggingGenerator
 from cdf.collections.tagging_stats.aggregator import (MetricsAggregator, MetricsConsolidator,
                                                       MetadataAggregator)
-from cdf.utils.s3 import fetch_files, push_content, push_file
+from cdf.utils.s3 import fetch_file, fetch_files, push_content, push_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
 
@@ -90,13 +90,11 @@ def compute_properties_stats_counter_from_s3(crawl_id, part_id, rev_num, s3_uri,
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
     streams = {}
 
-    properties_file = fetch_files(
-        s3_uri,
-        tmp_dir,
-        regexp=['url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)],
+    properties_file = fetch_file(
+        os.path.join(s3_uri, 'url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)),
+        os.path.join(tmp_dir, 'url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)),
         force_fetch=force_fetch)
-
-    path_local, fetch = properties_file[0]
+    path_local, fetch = properties_file
     file_content = lz4.loads(open(path_local).read())
     if not file_content:
         return
@@ -160,13 +158,11 @@ def _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_pre
                      }
 
     for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
-        properties_file = fetch_files(
-            s3_uri,
-            tmp_dir,
-            regexp=['url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)],
+        properties_file = fetch_file(
+            os.path.join(s3_uri, 'url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)),
+            os.path.join(tmp_dir, 'url_properties.rev%d.txt.%d.lz4' % (rev_num, part_id)),
             force_fetch=force_fetch)
-
-        path_local, fetch = properties_file[0]
+        path_local, fetch = properties_file
         file_content = lz4.loads(open(path_local).read())
         if not file_content:
             # If no content for properties file, that means that no pages were crawled for this part_id, we can skip
