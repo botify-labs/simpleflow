@@ -133,9 +133,9 @@ def extract_outlinks(attributes, stream_item):
     elif link_type == "canonical":
         attributes['canonical_equals'] = url_src == url_dst
         if url_dst > 0:
-            attributes['canonical_url'] = {'id': url_dst}
+            attributes['canonical_to'] = {'id': url_dst}
         else:
-            attributes['canonical_url'] = {'url': external_url}
+            attributes['canonical_to'] = {'url': external_url}
 
 
 def extract_inlinks(attributes, stream_item):

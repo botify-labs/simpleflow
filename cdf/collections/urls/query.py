@@ -67,6 +67,27 @@ def transform_canonical_from(query, es_document, attributes):
         })
 
 
+def prepare_canonical_to(query, es_document):
+    if 'canonical_to' in es_document:
+        if 'id' in es_document['canonical_to']:
+            query._urls_ids.add(es_document['canonical_to']['id'])
+
+
+def transform_canonical_to(query, es_document, attributes):
+    attributes['canonical_from'] = []
+    if 'canonical_to' in es_document:
+        if 'id' in es_document['canonical_to']:
+            attributes['canonical_to'] = {
+                'url': query._id_to_url.get(es_document['canonical_to']['id'])[0],
+                'crawled': True
+            }
+        else:
+            attributes['canonical_to'] = {
+                'url': es_document['canonical_to']['url'],
+                'crawled': False
+            }
+
+
 def transform_resource_type(query, es_document, attributes):
     for item in es_document["tagging"]:
         if item["rev_id"] == query.revision_number:
@@ -136,8 +157,8 @@ FIELDS_HOOKS = {
         'transform': transform_canonical_from
     },
     'canonical_to': {
-        'prepare': lambda query, es_document: prepare_redirects_to(query, es_document, "canonical_to"),
-        'transform': lambda query, es_document, attributes: transform_redirects_to(query, es_document, attributes, "canonical_to")
+        'prepare': prepare_canonical_to,
+        'transform': transform_canonical_to
     },
     'resource_type': {
         'fields': ["tagging"],
