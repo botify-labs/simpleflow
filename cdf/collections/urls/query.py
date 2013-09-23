@@ -303,7 +303,7 @@ class Query(object):
             q["filter"] = {
                 "and": [
                     has_nested_func(self._make_raw_tagging_filters(query['tagging_filters'])),
-                    self._make_raw_filters(query['filters'])
+                    self._make_raw_filters(query['filters'], has_parent=True)
                 ]
             }
         elif 'tagging_filters' in query:
@@ -399,7 +399,12 @@ class Query(object):
         elif 'and' in query['filters']:
             query['filters']['and'].append(filter_http_code)
         else:
-            query['filters'] = {'and': [filter_http_code, query['filters']]}
+            if isinstance(query['filters'], list):
+                query['filters'] = {'and': [filter_http_code, {'or': query['filters']}]}
+            elif isinstance(query['filters'], dict) and len(query['filters']) == 1 and query['filters'].keys() == "and":
+                query['filters']['and'].append(filter_http_code)
+            else:
+                query['filters'] = {'and': [filter_http_code, query['filters']]}
 
         if 'sort' in query:
             sort = query['sort']
