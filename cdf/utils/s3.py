@@ -86,6 +86,18 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True, lock=True):
     return files
 
 
+def fetch_file(s3_uri, dest_dir, force_fetch):
+    if force_fetch and os.path.exists(dest_dir):
+        return (dest_dir, False)
+    key_obj = get_key_from_s3_uri(s3_uri)
+    """
+    If the file does not exist, a `boto.exception.S3ResponseError`
+    will be raised when calling `get_contents_to_filename`
+    """
+    key_obj.get_contents_to_filename(dest_dir)
+    return (dest_dir, True)
+
+
 def get_key_from_s3_uri(s3_uri):
     bucket, location = uri_parse(s3_uri)
     bucket = conn.get_bucket(bucket)
