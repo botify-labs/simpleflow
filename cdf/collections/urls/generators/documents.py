@@ -215,8 +215,10 @@ def end_extract_url(attributes):
     if attributes['http_code'] in (0, 1, 2):
         if 'redirects_from_nb' in attributes or 'canonical_from_nb' in attributes:
             url = attributes['url']
+            url_id = attributes['id']
             attributes.clear()
             attributes.update({
+                'id': url_id,
                 'url': url,
                 'http_code': 0
             })
@@ -250,7 +252,7 @@ class UrlDocumentGenerator(object):
             "query_string_keys": ["p", "offset"],
             "query_string_keys_order": "p;offset",
             "query_string_items": [ ["p", "comments"], ["offset", "10] ],
-            "url_id": 1,
+            "id": 1,
             "date": "2013-10-10 09:10:12",
             "depth": 1,
             "data_mask": 3, // See Data Mask explanations
@@ -262,17 +264,13 @@ class UrlDocumentGenerator(object):
             "outlinks_external_follow_nb": 5, 
             "outlinks_external_nofollow_nb": 2, 
             "bytesize": 14554,
-            "inlinks_nb": 100,
-            "inlinks_follow_nb": 90,
+            "inlinks_internal_nb": 100,
+            "inlinks_external_nb": 100,
             "metadata": {
                 "title": ["My title"],
                 "description": ["My description"],
                 "h1": ["My first H1", "My second H1"]
             },
-            "outlinks_follow_ids": [10, 20, 50 ...],
-            "outlinks_nofollow_ids": [32],
-            "inlinks_follow_ids": [10, 20, 23...] // The 1000 first found in the crawl
-            "inlinks_nofollow_ids": [30, ...] // The 1000 first found in the crawl
         }
 
     """
