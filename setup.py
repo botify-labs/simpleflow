@@ -26,7 +26,7 @@ setup(
         'boto==2.9.8',
         'ujson==1.33',
         'pyhash==0.5.0',
-        'pyelasticsearch==0.5',
+        'elasticsearch==0.4.1',
         'lz4==0.6.0',
         'numpy',
         'pandas==0.11.0',
