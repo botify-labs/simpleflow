@@ -1,4 +1,4 @@
-from pyelasticsearch import ElasticSearch
+from elasticsearch import Elasticsearch
 
 from cdf.constants import URLS_DATA_MAPPING
 from cdf.utils.dict import deep_update
@@ -414,30 +414,35 @@ class Query(object):
             query['fields'] = ('url',)
 
         # some pages not crawled are stored into ES but should not be returned
-        filter_http_code = {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
+
+        default_filters = [
+            {'field': 'http_code', 'value': 0, 'predicate': 'gt'},
+            {'field': 'crawl_id', 'value': self.crawl_id}
+        ]
+
         if not 'filters' in query:
-            query['filters'] = filter_http_code
+            query['filters'] = {'and': default_filters}
+        elif isinstance(query['filters'], dict) and not any(k in ('and', 'or') for k in query['filters'].keys()):
+            query['filters'] = {'and': default_filters + [query['filters']]}
         elif 'and' in query['filters']:
-            query['filters']['and'].append(filter_http_code)
+            query['filters']['and'] += default_filters
+        elif 'or' in query['filters']:
+            query['filters']['and'] = [{'and': default_filters}, {'or': query['filters']['or']}]
         else:
-            if isinstance(query['filters'], list):
-                query['filters'] = {'and': [filter_http_code, {'or': query['filters']}]}
-            elif isinstance(query['filters'], dict) and len(query['filters']) == 1 and query['filters'].keys() == "and":
-                query['filters']['and'].append(filter_http_code)
-            else:
-                query['filters'] = {'and': [filter_http_code, query['filters']]}
+            raise Exception('filters are not valid for given query')
 
         if 'sort' in query:
             sort = query['sort']
         else:
             sort = ('id', )
 
-        s = ElasticSearch(self.es_location)
-        alt_results = s.search(self.make_raw_query(query, sort=sort),
+        host, port = self.es_location[7:].split(':')
+        s = Elasticsearch([{'host': host, 'port': int(port)}])
+        alt_results = s.search(body=self.make_raw_query(query, sort=sort),
                                index=self.es_index,
-                               doc_type="crawl_%d" % self.crawl_id,
+                               doc_type="crawls",
                                size=self.limit,
-                               es_from=self.start)
+                               offset=self.start)
         if alt_results["hits"]["total"] == 0:
             self._results = {
                 "count": 0,
