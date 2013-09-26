@@ -16,17 +16,17 @@ from cdf.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
 
-def prepare_crawl_index(crawl_id, es_location, es_index):
+def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type):
     host, port = es_location[7:].split(':')
     es = Elasticsearch([{'host': host, 'port': int(port)}])
     try:
         es.indices.create(es_index)
     except Exception, e:
         logger.error("{} : {}".format(type(e), str(e)))
-    es.indices.put_mapping(es_index, 'crawls', URLS_DATA_MAPPING)
+    es.indices.put_mapping(es_index, es_doc_type, URLS_DATA_MAPPING)
 
 
-def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False):
+def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index, es_doc_type, tmp_dir_prefix='/tmp', force_fetch=False):
     """
     Generate JSON type urls documents from a crawl's `part_id` and push it to elastic search
 
@@ -67,15 +67,15 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
         document[1]['_id'] = '{}:{}'.format(crawl_id, document[0])
         docs.append(document[1])
         if i % 3000 == 2999:
-            bulk(es, docs, doc_type='crawls', index=es_index)
+            bulk(es, docs, doc_type=es_doc_type, index=es_index)
             docs = []
             logger.info('%d items imported to urls_data ES for %s (part %d)' % (i, es_index, part_id))
     # Push the missing documents
     if docs:
-        bulk(es, docs, doc_type='crawls', index=es_index)
+        bulk(es, docs, doc_type=es_doc_type, index=es_index)
 
 
-def push_metadata_duplicate_to_elastic_search(crawl_id, s3_uri, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False):
+def push_metadata_duplicate_to_elastic_search(crawl_id, s3_uri, es_location, es_index, es_doc_type, tmp_dir_prefix='/tmp', force_fetch=False):
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
@@ -126,8 +126,8 @@ def push_metadata_duplicate_to_elastic_search(crawl_id, s3_uri, es_location, es_
         }
         docs.append(doc)
         if i % 10000 == 9999:
-            bulk(es, docs, doc_type='crawls', index=es_index, bulk_type="update")
+            bulk(es, docs, doc_type=es_doc_type, index=es_index, bulk_type="update")
             docs = []
             logger.info('%d items updated to crawl_%d ES for %s' % (i, crawl_id, es_index))
     if docs:
-        bulk(es, docs, doc_type='crawls', index=es_index, bulk_type="update")
+        bulk(es, docs, doc_type=es_doc_type, index=es_index, bulk_type="update")

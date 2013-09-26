@@ -19,7 +19,7 @@ from cdf.utils.es import bulk
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
 
-def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False, erase_old_tagging=False):
+def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_location, es_index, es_doc_type, tmp_dir_prefix='/tmp', force_fetch=False, erase_old_tagging=False):
     """
     Match all urls from a crawl's `part_id` to properties defined by rules in a `settings` dictionnary and save it to a S3 bucket.
 
@@ -30,6 +30,7 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
     :param settings : a settings dictionnary
     :param es_location : elastic search location (ex: http://localhost:9200)
     :param es_index : index name where to push the documents.
+    :param es_doc_type : doc_type name where to push the documents.
     :param tmp_dir : the temporary directory where the S3 files will be put to compute the task
     :param force_fetch : fetch the S3 files even if they are already in the temp directory
     :param erase_old_tagging : will remove nested tagging for old revisions
@@ -74,12 +75,12 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
         docs.append(doc)
         raw_lines.append('\t'.join((str(document[0]), document[1]['resource_type'])))
         if i % 10000 == 9999:
-            bulk(es, docs, doc_type='crawls', index=es_index, bulk_type="update")
+            bulk(es, docs, doc_type=es_doc_type, index=es_index, bulk_type="update")
             docs = []
             logger.info('%d items updated to crawl_%d ES for %s (part %d)' % (i, crawl_id, es_index, part_id))
     # Push the missing documents
     if docs:
-        bulk(es, docs, doc_type='crawls', index=es_index, bulk_type="update")
+        bulk(es, docs, doc_type=es_doc_type, index=es_index, bulk_type="update")
 
     content = '\n'.join(raw_lines)
 
