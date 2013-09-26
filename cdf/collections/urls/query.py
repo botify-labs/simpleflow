@@ -280,9 +280,10 @@ def is_boolean_operation_filter(filter_dict):
 
 class Query(object):
 
-    def __init__(self, es_location, es_index, crawl_id, revision_number, query, start=0, limit=100, sort=('id',)):
+    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100, sort=('id',)):
         self.es_location = es_location
         self.es_index = es_index
+        self.es_doc_type = es_doc_type
         self.crawl_id = crawl_id
         self.revision_number = revision_number
         self._results = {}
@@ -440,7 +441,7 @@ class Query(object):
         s = Elasticsearch([{'host': host, 'port': int(port)}])
         alt_results = s.search(body=self.make_raw_query(query, sort=sort),
                                index=self.es_index,
-                               doc_type="crawls",
+                               doc_type=self.es_doc_type,
                                size=self.limit,
                                offset=self.start)
         if alt_results["hits"]["total"] == 0:
