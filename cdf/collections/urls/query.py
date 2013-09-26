@@ -105,7 +105,8 @@ def transform_links(query, es_document, attributes, link_direction):
         attributes[link_direction] = []
     for link_item in es_document.get(link_direction, []):
         mask = follow_mask(link_item[1])
-        url, http_code = query._id_to_url.get(link_item[0], [None, None])
+        document_id = '{}:{}'.format(query.crawl_id, link_item[0])
+        url, http_code = query._id_to_url.get(document_id, [None, None])
         if not url:
             continue
         if mask != ["follow"]:
@@ -468,11 +469,11 @@ class Query(object):
         Resolve urls ids added in `prepare` functions hooks
         """
         if self._urls_ids:
-            urls_es = s.multi_get(self._urls_ids,
-                                  index=self.es_index,
-                                  doc_type="crawl_%d" % self.crawl_id,
-                                  fields=["url", "http_code"])
-            self._id_to_url = {int(url['_id']): (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs'] if url["exists"]}
+            urls_es = s.mget(body={"ids": list('{}:{}'.format(self.crawl_id, url_id) for url_id in self._urls_ids)},
+                             index=self.es_index,
+                             doc_type=self.es_doc_type,
+                             fields=["url", "http_code"])
+            self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs'] if url["exists"]}
 
         for r in alt_results['hits']['hits']:
             document = {}
