@@ -21,7 +21,7 @@ def transform_redirects_from(query, es_document, attributes):
             attributes['redirects_from'].append({
                 'http_code': _r['http_code'],
                 'url': {
-                    'url': query._id_to_url.get(_r['url_id'])[0],
+                    'url': query._id_to_url.get('{}:{}'.format(query.crawl_id, _r['url_id']))[0],
                     'crawled': True
                 }
             })
@@ -36,7 +36,7 @@ def transform_redirects_to(query, es_document, attributes, field="redirects_to")
     attributes[field] = None
     if field in es_document:
         if 'url_id' in es_document[field]:
-            url, http_code = query._id_to_url.get(es_document[field]['url_id'])
+            url, http_code = query._id_to_url.get('{}:{}'.format(query.crawl_id, es_document[field]['url_id']))
             attributes[field] = {
                 'url': str(url),
                 'crawled': http_code > 0
@@ -62,7 +62,7 @@ def transform_canonical_from(query, es_document, attributes):
         return
     for url_id in es_document['canonical_from']:
         attributes['canonical_from'].append({
-            'url': query._id_to_url.get(url_id)[0],
+            'url': query._id_to_url.get('{}:{}'.format(query.crawl_id, url_id))[0],
             'crawled': True
         })
 
@@ -78,7 +78,7 @@ def transform_canonical_to(query, es_document, attributes):
     if 'canonical_to' in es_document:
         if 'id' in es_document['canonical_to']:
             attributes['canonical_to'] = {
-                'url': query._id_to_url.get(es_document['canonical_to']['id'])[0],
+                'url': query._id_to_url.get('{}:{}'.format(query.crawl_id, es_document['canonical_to']['id']))[0],
                 'crawled': True
             }
         else:
