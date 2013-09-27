@@ -1,4 +1,4 @@
-from pyelasticsearch import ElasticSearch
+from elasticsearch import Elasticsearch
 
 from cdf.constants import URLS_DATA_MAPPING
 from cdf.utils.dict import deep_update
@@ -21,7 +21,7 @@ def transform_redirects_from(query, es_document, attributes):
             attributes['redirects_from'].append({
                 'http_code': _r['http_code'],
                 'url': {
-                    'url': query._id_to_url.get(_r['url_id'])[0],
+                    'url': query._id_to_url.get('{}:{}'.format(query.crawl_id, _r['url_id']))[0],
                     'crawled': True
                 }
             })
@@ -36,7 +36,7 @@ def transform_redirects_to(query, es_document, attributes, field="redirects_to")
     attributes[field] = None
     if field in es_document:
         if 'url_id' in es_document[field]:
-            url, http_code = query._id_to_url.get(es_document[field]['url_id'])
+            url, http_code = query._id_to_url.get('{}:{}'.format(query.crawl_id, es_document[field]['url_id']))
             attributes[field] = {
                 'url': str(url),
                 'crawled': http_code > 0
@@ -62,7 +62,7 @@ def transform_canonical_from(query, es_document, attributes):
         return
     for url_id in es_document['canonical_from']:
         attributes['canonical_from'].append({
-            'url': query._id_to_url.get(url_id)[0],
+            'url': query._id_to_url.get('{}:{}'.format(query.crawl_id, url_id))[0],
             'crawled': True
         })
 
@@ -78,7 +78,7 @@ def transform_canonical_to(query, es_document, attributes):
     if 'canonical_to' in es_document:
         if 'id' in es_document['canonical_to']:
             attributes['canonical_to'] = {
-                'url': query._id_to_url.get(es_document['canonical_to']['id'])[0],
+                'url': query._id_to_url.get('{}:{}'.format(query.crawl_id, es_document['canonical_to']['id']))[0],
                 'crawled': True
             }
         else:
@@ -105,7 +105,8 @@ def transform_links(query, es_document, attributes, link_direction):
         attributes[link_direction] = []
     for link_item in es_document.get(link_direction, []):
         mask = follow_mask(link_item[1])
-        url, http_code = query._id_to_url.get(link_item[0], [None, None])
+        document_id = '{}:{}'.format(query.crawl_id, link_item[0])
+        url, http_code = query._id_to_url.get(document_id, [None, None])
         if not url:
             continue
         if mask != ["follow"]:
@@ -280,9 +281,10 @@ def is_boolean_operation_filter(filter_dict):
 
 class Query(object):
 
-    def __init__(self, es_location, es_index, crawl_id, revision_number, query, start=0, limit=100, sort=('id',)):
+    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100, sort=('id',)):
         self.es_location = es_location
         self.es_index = es_index
+        self.es_doc_type = es_doc_type
         self.crawl_id = crawl_id
         self.revision_number = revision_number
         self._results = {}
@@ -414,30 +416,35 @@ class Query(object):
             query['fields'] = ('url',)
 
         # some pages not crawled are stored into ES but should not be returned
-        filter_http_code = {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
+
+        default_filters = [
+            {'field': 'http_code', 'value': 0, 'predicate': 'gt'},
+            {'field': 'crawl_id', 'value': self.crawl_id}
+        ]
+
         if not 'filters' in query:
-            query['filters'] = filter_http_code
+            query['filters'] = {'and': default_filters}
+        elif isinstance(query['filters'], dict) and not any(k in ('and', 'or') for k in query['filters'].keys()):
+            query['filters'] = {'and': default_filters + [query['filters']]}
         elif 'and' in query['filters']:
-            query['filters']['and'].append(filter_http_code)
+            query['filters']['and'] += default_filters
+        elif 'or' in query['filters']:
+            query['filters']['and'] = [{'and': default_filters}, {'or': query['filters']['or']}]
         else:
-            if isinstance(query['filters'], list):
-                query['filters'] = {'and': [filter_http_code, {'or': query['filters']}]}
-            elif isinstance(query['filters'], dict) and len(query['filters']) == 1 and query['filters'].keys() == "and":
-                query['filters']['and'].append(filter_http_code)
-            else:
-                query['filters'] = {'and': [filter_http_code, query['filters']]}
+            raise Exception('filters are not valid for given query')
 
         if 'sort' in query:
             sort = query['sort']
         else:
             sort = ('id', )
 
-        s = ElasticSearch(self.es_location)
-        alt_results = s.search(self.make_raw_query(query, sort=sort),
+        host, port = self.es_location[7:].split(':')
+        s = Elasticsearch([{'host': host, 'port': int(port)}])
+        alt_results = s.search(body=self.make_raw_query(query, sort=sort),
                                index=self.es_index,
-                               doc_type="crawl_%d" % self.crawl_id,
+                               doc_type=self.es_doc_type,
                                size=self.limit,
-                               es_from=self.start)
+                               offset=self.start)
         if alt_results["hits"]["total"] == 0:
             self._results = {
                 "count": 0,
@@ -462,11 +469,11 @@ class Query(object):
         Resolve urls ids added in `prepare` functions hooks
         """
         if self._urls_ids:
-            urls_es = s.multi_get(self._urls_ids,
-                                  index=self.es_index,
-                                  doc_type="crawl_%d" % self.crawl_id,
-                                  fields=["url", "http_code"])
-            self._id_to_url = {int(url['_id']): (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs'] if url["exists"]}
+            urls_es = s.mget(body={"ids": list('{}:{}'.format(self.crawl_id, url_id) for url_id in self._urls_ids)},
+                             index=self.es_index,
+                             doc_type=self.es_doc_type,
+                             fields=["url", "http_code"])
+            self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs'] if url["exists"]}
 
         for r in alt_results['hits']['hits']:
             document = {}

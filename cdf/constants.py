@@ -24,6 +24,7 @@ URLS_DATA_MAPPING = {
             "host": {"type": "string"},
             "http_code": {"type": "long"},
             "id": {"type": "long"},
+            "crawl_id": {"type": "long"},
             "metadata_nb": {
                 "properties": {
                     "description": {"type": "long"},
