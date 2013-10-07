@@ -91,6 +91,9 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
 def compute_properties_stats_counter_from_s3(crawl_id, part_id, rev_num, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    if not os.path.exists(tmp_dir):
+        os.makedirs(tmp_dir)
+
     streams = {}
 
     properties_file = fetch_file(
