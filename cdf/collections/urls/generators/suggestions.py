@@ -19,7 +19,11 @@ class UrlSuggestionsGenerator(object):
         self.clusters_dict = {name: transform_queries(queries) for name, queries in clusters_dict.iteritems()}
 
     def __iter__(self):
-        for entry in self.stream_patterns:
+        while True:
+            try:
+                entry = self.stream_patterns.next()
+            except StopIteration:
+                break
             url_id, protocol, host, path, query_string = entry
             # locator not yet in urlids.txt
             locator = ''
@@ -29,6 +33,12 @@ class UrlSuggestionsGenerator(object):
                 for query in queries:
                     if query['func'](url, protocol, host, path, query_string, locator):
                         yield (url_id, cluster, query['string'])
+
+    def save_to_file(self, location):
+        f = open(location, 'w')
+        for data in self:
+            f.write('\t'.join(data) + '\n')
+        f.close()
 
 
 class MetadataSuggestionsGenerator(object):
