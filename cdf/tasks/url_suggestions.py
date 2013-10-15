@@ -7,6 +7,7 @@ from cdf.streams.utils import split_file
 from cdf.collections.urls.generators.suggestions import UrlSuggestionsGenerator
 from cdf.utils.s3 import fetch_file, fetch_files, push_content
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
+from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 from cdf.log import logger
 
 
@@ -42,9 +43,7 @@ def compute_urls_suggestions_from_s3(crawl_id, part_id, s3_uri, tmp_dir_prefix='
 
     u = UrlSuggestionsGenerator(streams['patterns'], streams['infos'], streams['contents'])
 
-    CLUSTERS = [('pattern', 'path'), ('pattern', 'qskey'), ('metadata', 'title'), ('metadata', 'h1')] #, ('metadata', 'h2')#]
-
-    for cluster_type, cluster_name in CLUSTERS:
+    for cluster_type, cluster_name in SUGGEST_CLUSTERS:
         filename = 'clusters_{}_{}.tsv'.format(cluster_type, cluster_name)
         _f, fetched = fetch_file(os.path.join(s3_uri, filename), os.path.join(tmp_dir, filename), force_fetch=force_fetch)
         cluster_values = [k.split('\t', 1)[0] for k in open(_f)]
@@ -55,7 +54,7 @@ def compute_urls_suggestions_from_s3(crawl_id, part_id, s3_uri, tmp_dir_prefix='
 
     content = []
     for i, result in enumerate(u):
-        content.append('{}\t{}\t{}'.format(result[0], result[1], result[2]))
+        content.append('{}\t{}\t{}\t{}'.format(result[0], result[1], result[2], result[3]))
         if i % 1000 == 999:
             logger.info(content[-1])
     encoded_content = lz4.dumps('\n'.join(content))

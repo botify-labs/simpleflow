@@ -3,11 +3,13 @@ from cdf.streams.mapping import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 from cdf.streams.utils import idx_from_stream, group_left
 from BQL.parser.tagging import query_to_python
 from BQL.parser.metadata import query_to_python as metadata_query_to_python
+from cdf.utils.hashing import string_to_int32
 
 
 def transform_queries(queries_lst, func=query_to_python):
     return [
         {'func': func(query),
+         'hash': string_to_int32(query),
          'string': query}
         for query in queries_lst
     ]
@@ -47,7 +49,7 @@ class UrlSuggestionsGenerator(object):
             for cluster, queries in self.patterns_clusters.iteritems():
                 for query in queries:
                     if query['func'](url, protocol, host, path, query_string, locator):
-                        yield (url_id, cluster, query['string'])
+                        yield (url_id, cluster, query["string"], query["hash"])
 
             for entry in streams['contents']:
                 url_id, metadata_type, hash_id, value = entry
@@ -55,7 +57,7 @@ class UrlSuggestionsGenerator(object):
                     continue
                 for query in self.metadata_clusters[metadata_type]:
                     if query['func'](value):
-                        yield (url_id, "metadata_{}".format(CONTENT_TYPE_INDEX[metadata_type]), query["string"])
+                        yield (url_id, "metadata_{}".format(CONTENT_TYPE_INDEX[metadata_type]), query["string"], query["hash"])
 
     def save_to_file(self, location):
         f = open(location, 'w')
