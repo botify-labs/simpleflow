@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import gzip
 import json
@@ -11,9 +12,10 @@ from cdf.streams.utils import split_file, split
 from cdf.collections.urls.generators.suggestions import UrlSuggestionsGenerator
 from cdf.utils.s3 import fetch_file, fetch_files, push_content, push_file
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
+from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
-from cdf.collections.tagging_stats.aggregator import (MetricsAggregator, MetricsConsolidator,
-                                                      MetadataAggregator)
+from cdf.collections.suggestions.aggregator import (MetricsAggregator, MetricsConsolidator,
+                                                    MetadataAggregator)
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.log import logger
 
@@ -60,14 +62,14 @@ def compute_urls_suggestions_from_s3(crawl_id, part_id, s3_uri, tmp_dir_prefix='
             u.add_pattern_cluster(cluster_name, cluster_values)
 
     # Make K/V Store dataframe (hash to request)
-    h5_file = os.path.join(tmp_dir, 'suggest_requests.h5')
+    h5_file = os.path.join(tmp_dir, 'suggest.h5')
     if os.path.exists(h5_file):
         os.remove(h5_file)
 
     store = HDFStore(h5_file, complevel=9, complib='blosc')
     store['requests'] = u.make_clusters_series()
     store.close()
-    push_file(os.path.join(s3_uri, 'suggest_requests.h5'), h5_file)
+    push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)
 
     content = []
     for i, result in enumerate(u):
@@ -190,12 +192,18 @@ def compute_suggest_aggregators_from_s3(crawl_id, s3_uri, tmp_dir_prefix='/tmp',
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
 
+    # Fetch hdf5 file that already contains the full list of requests
     h5_file = os.path.join(tmp_dir, 'suggest.h5')
-    if os.path.exists(h5_file):
-        os.remove(h5_file)
+    fetch_file(
+        os.path.join(s3_uri, 'suggest.h5'),
+        h5_file,
+        force_fetch=force_fetch
+    )
 
     store = HDFStore(h5_file, complevel=9, complib='blosc')
-    store['counter'] = _get_df_suggest_counter_from_s3(crawl_id, s3_uri, tmp_dir_prefix, force_fetch)
-    store.close()
+    df_counter = _get_df_suggest_counter_from_s3(crawl_id, s3_uri, tmp_dir_prefix, force_fetch)
+    store["full_crawl"] = df_counter[df_counter['query'] == '0'].groupby(CROSS_PROPERTIES_COLUMNS).agg('sum').reset_index()
+    store["suggest"] = df_counter[df_counter['query'] != '0'].groupby(CROSS_PROPERTIES_COLUMNS).agg('sum').reset_index()
 
+    store.close()
     push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)

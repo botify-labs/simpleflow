@@ -113,4 +113,5 @@ def push_content(s3_uri, content):
 
 def push_file(s3_uri, filename):
     key = get_key_from_s3_uri(s3_uri)
+    logger.info("Push {}".format(s3_uri))
     key.set_contents_from_filename(filename)
