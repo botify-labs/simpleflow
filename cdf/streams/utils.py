@@ -59,7 +59,9 @@ def split_file(iterable, char='\t'):
     ['a', 'b', 'c']
 
     """
-    return split(rstrip(iterable))
+    import csv
+
+    return csv.reader(iterable, delimiter=char, quoting=csv.QUOTE_NONE)
 
 
 def idx_from_stream(key, field):

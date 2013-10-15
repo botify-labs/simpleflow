@@ -5,7 +5,7 @@ import json
 import itertools
 
 from pandas import HDFStore
-from pyelasticsearch import ElasticSearch
+from elasticsearch import Elasticsearch
 
 from cdf.log import logger
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
@@ -15,10 +15,11 @@ from cdf.collections.urls.generators.tagging import UrlTaggingGenerator
 from cdf.collections.tagging_stats.aggregator import (MetricsAggregator, MetricsConsolidator,
                                                       MetadataAggregator)
 from cdf.utils.s3 import fetch_file, fetch_files, push_content, push_file
+from cdf.utils.es import bulk
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 
 
-def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_location, es_index, tmp_dir_prefix='/tmp', force_fetch=False, erase_old_tagging=False):
+def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_location, es_index, es_doc_type, tmp_dir_prefix='/tmp', force_fetch=False, erase_old_tagging=False):
     """
     Match all urls from a crawl's `part_id` to properties defined by rules in a `settings` dictionnary and save it to a S3 bucket.
 
@@ -29,11 +30,13 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
     :param settings : a settings dictionnary
     :param es_location : elastic search location (ex: http://localhost:9200)
     :param es_index : index name where to push the documents.
+    :param es_doc_type : doc_type name where to push the documents.
     :param tmp_dir : the temporary directory where the S3 files will be put to compute the task
     :param force_fetch : fetch the S3 files even if they are already in the temp directory
     :param erase_old_tagging : will remove nested tagging for old revisions
     """
-    es = ElasticSearch(es_location)
+    host, port = es_location[7:].split(':')
+    es = Elasticsearch([{'host': host, 'port': int(port)}])
 
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
@@ -60,7 +63,7 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
             es_script = """if (ctx._source[\"tagging\"] == null) { ctx._source.tagging = [tagging] } else {
                        ctx._source.tagging += tagging }"""
         doc = {
-            "id": document[0],
+            "_id": "{}.{}".format(crawl_id, document[0]),
             "script": es_script,
             "params": {
                 "tagging": {
@@ -72,12 +75,12 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
         docs.append(doc)
         raw_lines.append('\t'.join((str(document[0]), document[1]['resource_type'])))
         if i % 10000 == 9999:
-            es.bulk_update(es_index, 'crawl_%d' % crawl_id, docs)
+            bulk(es, docs, doc_type=es_doc_type, index=es_index, bulk_type="update")
             docs = []
             logger.info('%d items updated to crawl_%d ES for %s (part %d)' % (i, crawl_id, es_index, part_id))
     # Push the missing documents
     if docs:
-        es.bulk_update(es_index, 'crawl_%d' % crawl_id, docs)
+        bulk(es, docs, doc_type=es_doc_type, index=es_index, bulk_type="update")
 
     content = '\n'.join(raw_lines)
 
@@ -88,6 +91,9 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
 def compute_properties_stats_counter_from_s3(crawl_id, part_id, rev_num, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    if not os.path.exists(tmp_dir):
+        os.makedirs(tmp_dir)
+
     streams = {}
 
     properties_file = fetch_file(
