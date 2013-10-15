@@ -10,6 +10,7 @@ from cdf.streams.masks import list_to_mask
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 from cdf.collections.urls.utils import children_from_field
+from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 
 
 def extract_patterns(attributes, stream_item):
@@ -38,6 +39,7 @@ def extract_patterns(attributes, stream_item):
     attributes['outlinks_internal'] = []
     attributes["inlinks_id_to_idx"] = {}
     attributes["outlinks_id_to_idx"] = {}
+    attributes["suggest"] = {c[1]: [] for c in SUGGEST_CLUSTERS}
 
 
 def extract_infos(attributes, stream_item):
@@ -200,6 +202,11 @@ def extract_inlinks(attributes, stream_item):
             attributes['canonical_from'].append(url_src)
 
 
+def extract_suggest(attributes, stream_item):
+    url_id, section, stype, query, query_hash = stream_item
+    attributes['suggest'][stype].append(query_hash)
+
+
 def end_extract_url(attributes):
     """
     If the url has not been crawled but received redirections or canonicals, we exceptionnaly
@@ -232,6 +239,7 @@ class UrlDocumentGenerator(object):
         'contents': extract_contents,
         'inlinks': extract_inlinks,
         'outlinks': extract_outlinks,
+        'suggest': extract_suggest
     }
 
     def __init__(self, stream_patterns, **kwargs):

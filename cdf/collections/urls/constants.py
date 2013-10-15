@@ -1,3 +1,15 @@
+SUGGEST_CLUSTERS = [
+    ('pattern', 'path'),
+    ('pattern', 'qskey'),
+    ('metadata', 'title'),
+    ('metadata', 'h1'),
+]
+
+CLUSTER_TYPES_ACRONYMS = {
+    'P': 'pattern',
+    'M': 'metadata'
+}
+
 QUERY_FIELDS = (
     "url",
     "protocol",
@@ -12,6 +24,7 @@ QUERY_FIELDS = (
     "delay1",
     "delay2",
     "bytesize",
+    "suggest",
 
     "inlinks_internal_nb",
     "inlinks_internal_nb.total",
@@ -56,8 +69,4 @@ QUERY_FIELDS = (
     "redirects_from",
     "redirects_to",
     "canonical_url",
-)
-
-QUERY_TAGGING_FIELDS = (
-    'resource_type',
 )

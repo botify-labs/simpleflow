@@ -54,9 +54,10 @@ def compute_urls_suggestions_from_s3(crawl_id, part_id, s3_uri, tmp_dir_prefix='
 
     content = []
     for i, result in enumerate(u):
-        content.append('{}\t{}\t{}\t{}'.format(result[0], result[1], result[2], result[3]))
+        # TODO : bench best method to write line
+        content.append('\t'.join((str(i) for i in result)))
         if i % 1000 == 999:
             logger.info(content[-1])
     encoded_content = lz4.dumps('\n'.join(content))
-    push_content(os.path.join(s3_uri, 'url_suggested_clusters.lz4'), encoded_content)
-    push_content(os.path.join(s3_uri, 'url_suggested_clusters.txt'), '\n'.join(content))
+    push_content(os.path.join(s3_uri, 'url_suggested_clusters.{}.txt.lz4'.format(part_id)), encoded_content)
+    push_content(os.path.join(s3_uri, 'url_suggested_clusters.{}.txt'.format(part_id)), '\n'.join(content))

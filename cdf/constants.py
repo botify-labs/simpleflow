@@ -1,16 +1,6 @@
 URLS_DATA_MAPPING = {
     "urls": {
         "properties": {
-            "tagging": {
-                "type": "nested",
-                "properties": {
-                    "resource_type": {
-                        "type": "string",
-                        "index": "not_analyzed"
-                    },
-                    "rev_id": {"type": "long"}
-                }
-            },
             "url": {
                 "type": "string",
             },
@@ -25,6 +15,15 @@ URLS_DATA_MAPPING = {
             "http_code": {"type": "long"},
             "id": {"type": "long"},
             "crawl_id": {"type": "long"},
+            "suggest": {
+                "properties": {
+                    "pattern_path": {"type": "long"},
+                    "pattern_qskey": {"type": "long"},
+                    "metadata_title": {"type": "long"},
+                    "metadata_h1": {"type": "long"},
+                    "metadata_h2": {"type": "long"},
+                }
+            },
             "metadata_nb": {
                 "properties": {
                     "description": {"type": "long"},

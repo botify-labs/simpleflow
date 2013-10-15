@@ -7,7 +7,7 @@ STREAMS_FILES = {
     'urlcontents': 'contents',
     'urllinks': 'outlinks',
     'urlinlinks': 'inlinks',
-    'url_properties': 'properties'
+    'url_suggested_clusters': 'suggest'
 }
 
 STREAMS_HEADERS = {
@@ -48,9 +48,12 @@ STREAMS_HEADERS = {
         ('follow', follow_mask),
         ('src_url_id', int),
     ),
-    'PROPERTIES': (
+    'SUGGEST': (
         ('id', int),
-        ('resource_type', str)
+        ('section', str),
+        ('type', str),
+        ('query', str),
+        ('query_hash', int)
     )
 }
 
