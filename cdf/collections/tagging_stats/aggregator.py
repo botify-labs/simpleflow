@@ -1,4 +1,5 @@
 import copy
+import itertools
 import pyhash
 hasher = pyhash.fnv1_32()
 
@@ -10,6 +11,7 @@ from cdf.streams.utils import group_left, idx_from_stream
 from cdf.collections.tagging_stats.constants import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
 from cdf.utils.dict import deep_update, flatten_dict
 from cdf.utils.hashing import string_to_int64
+from cdf.log import logger
 
 
 def delay_to_range(delay):
@@ -22,12 +24,28 @@ def delay_to_range(delay):
     return "delay_lt_500ms"
 
 
+def get_keys_from_stream_suggest(stream_suggest):
+    """
+    Return all possible combinations from stream suggest hashes
+    Ex for hashes ["1", "2", "3"], it will return ["1", "2", "3", "1;2", "1;3", "2;3", "1;2;3"]
+    """
+    keys = ["0"]
+    hashes = []
+    for entry in stream_suggest:
+        url_id, section, stype, query, query_hash = entry
+        hashes.append(query_hash)
+    for L in range(1, len(hashes) + 1):
+        for subset in itertools.combinations(hashes, L):
+            keys.append(';'.join(subset))
+    return keys
+
+
 class MetricsAggregator(object):
 
-    def __init__(self, stream_patterns, stream_infos, stream_properties, stream_outlinks, stream_inlinks):
+    def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_outlinks, stream_inlinks):
         self.stream_patterns = stream_patterns
         self.stream_infos = stream_infos
-        self.stream_properties = stream_properties
+        self.stream_suggest = stream_suggest
         self.stream_inlinks = stream_inlinks
         self.stream_outlinks = stream_outlinks
 
@@ -36,13 +54,13 @@ class MetricsAggregator(object):
         Return a tuple of dictionaries
         Values are a sub-dictonnary with fields :
             * `cross_properties`, a tuple with following format :
-            (host, resource_type, content_type, depth, http_code, index, follow)
+            (query_id, content_type, depth, http_code, index, follow)
             str,  str,           str,          int,   http_code, bool,  bool
             * `counters` : a dictionary of counters
 
         Ex :
         {
-            "cross_properties": ["www.site.com", "/article", "text/html", 1, 200, True, True],
+            "cross_properties": ["1233223;11222211;33322", "text/html", 1, 200, True, True],
             "counters": {
                 "pages_nb": 10,
                 "redirections_nb": 0,
@@ -91,7 +109,7 @@ class MetricsAggregator(object):
         """
 
         left = (self.stream_patterns, 0)
-        streams_ref = {'properties': (self.stream_properties, 0),
+        streams_ref = {'suggest': (self.stream_suggest, 0),
                        'infos': (self.stream_infos, 0),
                        'inlinks': (self.stream_inlinks, idx_from_stream('inlinks', 'id')),
                        'outlinks': (self.stream_outlinks, idx_from_stream('outlinks', 'id')),
@@ -101,7 +119,6 @@ class MetricsAggregator(object):
         depth_idx = idx_from_stream('infos', 'depth')
         content_type_idx = idx_from_stream('infos', 'content_type')
         infos_mask_idx = idx_from_stream('infos', 'infos_mask')
-        resource_type_idx = idx_from_stream('properties', 'resource_type')
 
         http_code_idx = idx_from_stream('infos', 'http_code')
         delay2_idx = idx_from_stream('infos', 'delay2')
@@ -118,40 +135,11 @@ class MetricsAggregator(object):
             deep_update(counter_dict, reduce(lambda x, y: {y: x}, reversed(field.split('.') + [0])))
 
         results = dict()
-        for k, result in enumerate(group_left(left, **streams_ref)):
-            infos = result[2]['infos'][0]
-            outlinks = result[2]['outlinks']
-            inlinks = result[2]['inlinks']
 
-            # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
-            index = not (4 & infos[infos_mask_idx] == 4)
-            follow = not (8 & infos[infos_mask_idx] == 8)
-
-            http_code = infos[http_code_idx]
-            in_queue = http_code in (0, 1, 2)
-            # If the page has not been crawled, we skip it
-            if in_queue:
-                continue
-
-            # If not crawled, the file has not properties
-            properties = result[2]['properties'][0]
-
-            key = (result[1][host_idx],
-                   properties[resource_type_idx],
-                   infos[content_type_idx],
-                   infos[depth_idx],
-                   http_code,
-                   index,
-                   follow)
-
-            if key not in results:
-                results[key] = copy.deepcopy(counter_dict)
-
+        def increment_results_for_key(key):
             results[key]['pages_nb'] += 1
-
             results[key][delay_to_range(infos[delay2_idx])] += 1
             results[key]['total_delay_ms'] += infos[delay2_idx]
-
             results[key]['redirections_nb'] += len(filter(lambda i: i[outlinks_type_idx].startswith("r"), outlinks))
 
             # Get the first canonical tag found (a page may be have 2 canonicals tags by mistake
@@ -228,6 +216,36 @@ class MetricsAggregator(object):
                 if len(follow_urls) > 0:
                     results[key]['{}_internal_nb'.format(link_direction)]['follow_unique'] += len(follow_urls)
 
+        for k, result in enumerate(group_left(left, **streams_ref)):
+            if k % 1000 == 999:
+                logger.info('MetricAggregator iter {}'.format(k))
+
+            infos = result[2]['infos'][0]
+            outlinks = result[2]['outlinks']
+            inlinks = result[2]['inlinks']
+
+            # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
+            index = not (4 & infos[infos_mask_idx] == 4)
+            follow = not (8 & infos[infos_mask_idx] == 8)
+
+            http_code = infos[http_code_idx]
+            in_queue = http_code in (0, 1, 2)
+            # If the page has not been crawled, we skip it
+            if in_queue:
+                continue
+
+            suggest_keys = get_keys_from_stream_suggest(result[2]['suggest'])
+
+            for suggest_key in suggest_keys:
+                key = (suggest_key,
+                       http_code,
+                       index,
+                       follow)
+
+                if key not in results:
+                    results[key] = copy.deepcopy(counter_dict)
+                increment_results_for_key(key)
+
         # Transform defaultdict to dict
         final_results = []
         for key, counters in results.iteritems():
@@ -248,7 +266,7 @@ class MetricsConsolidator(object):
         Return a dictionnary of aggregated values by cross-property
 
         {
-            ("www.site.com", "/article", "text/html", 1, 200, True, True): {
+            ("3233;3223;87742", "text/html", 1, 200, True, True): {
                 "pages_nb": 6766,
                 ...
             }
@@ -292,9 +310,9 @@ class MetadataAggregator(object):
     """
     Streams injected in This class should be the entire dataset of a crawl to ensure that the unicity of metadatas are valid
     """
-    def __init__(self, stream_patterns, stream_properties, stream_contents, stream_infos):
+    def __init__(self, stream_patterns, stream_suggest, stream_contents, stream_infos):
         self.stream_patterns = stream_patterns
-        self.stream_properties = stream_properties
+        self.stream_suggest = stream_suggest
         self.stream_contents = stream_contents
         self.stream_infos = stream_infos
 
@@ -329,15 +347,13 @@ class MetadataAggregator(object):
         ]
         """
         left = (self.stream_patterns, 0)
-        streams_ref = {'properties': (self.stream_properties, 0),
+        streams_ref = {'suggest': (self.stream_suggest, 0),
                        'contents': (self.stream_contents, idx_from_stream('contents', 'id')),
                        'infos': (self.stream_infos, idx_from_stream('infos', 'id')),
                        }
 
         hashes_global = {ct_id: defaultdict(set) for ct_id in CONTENT_TYPE_INDEX.iterkeys()}
 
-        host_idx = idx_from_stream('patterns', 'host')
-        resource_type_idx = idx_from_stream('properties', 'resource_type')
         content_meta_type_idx = idx_from_stream('contents', 'content_type')
         content_hash_idx = idx_from_stream('contents', 'hash')
         depth_idx = idx_from_stream('infos', 'depth')
@@ -357,41 +373,41 @@ class MetadataAggregator(object):
             if http_code != 200:
                 continue
 
-            key = (result[1][host_idx],
-                   result[2]['properties'][0][resource_type_idx],
-                   infos[content_type_idx],
-                   infos[depth_idx],
-                   infos[http_code_idx],
-                   index,
-                   follow
-                   )
-            hash_key = hasher(','.join(str(k) for k in key))
-            contents = result[2]['contents']
+            for suggest_key in get_keys_from_stream_suggest(result[2]["suggest"]):
+                key = (suggest_key,
+                       infos[content_type_idx],
+                       infos[depth_idx],
+                       infos[http_code_idx],
+                       index,
+                       follow
+                       )
+                hash_key = hasher(','.join(str(k) for k in key))
+                contents = result[2]['contents']
 
-            # For each url, we check if it has correctly title, description and h1 filled
-            # If not, we'll consider that the url has not enough metadata
+                # For each url, we check if it has correctly title, description and h1 filled
+                # If not, we'll consider that the url has not enough metadata
 
-            metadata_score = 0
-            # Meta filled
-            for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
-                if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
-                    results[key]['metadata_nb.%s.filled' % ct_txt] += 1
-                    if ct_txt in MANDATORY_CONTENT_TYPES:
-                        metadata_score += 1
-                else:
-                    results[key]['metadata_nb.%s.not_filled' % ct_txt] += 1
+                metadata_score = 0
+                # Meta filled
+                for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
+                    if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
+                        results[key]['metadata_nb.%s.filled' % ct_txt] += 1
+                        if ct_txt in MANDATORY_CONTENT_TYPES:
+                            metadata_score += 1
+                    else:
+                        results[key]['metadata_nb.%s.not_filled' % ct_txt] += 1
 
-            if metadata_score < 3:
-                results[key]['metadata_nb.not_enough'] += 1
+                if metadata_score < 3:
+                    results[key]['metadata_nb.not_enough'] += 1
 
-            # Fetch --first-- hash from each content type and watch add it to hashes set
-            ct_found = set()
-            for content in contents:
-                ct_id = content[content_meta_type_idx]
-                # If ct_i is already in ct_found, so it's the not the first content
-                if ct_id not in ct_found:
-                    ct_found.add(ct_id)
-                    hashes_global[ct_id][content[content_hash_idx]].add(hash_key)
+                # Fetch --first-- hash from each content type and watch add it to hashes set
+                ct_found = set()
+                for content in contents:
+                    ct_id = content[content_meta_type_idx]
+                    # If ct_i is already in ct_found, so it's the not the first content
+                    if ct_id not in ct_found:
+                        ct_found.add(ct_id)
+                        hashes_global[ct_id][content[content_hash_idx]].add(hash_key)
 
         # Concatenate results
         results = dict(results)

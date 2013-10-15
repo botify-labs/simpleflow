@@ -5,14 +5,24 @@ from BQL.parser.tagging import query_to_python
 from BQL.parser.metadata import query_to_python as metadata_query_to_python
 from cdf.utils.hashing import string_to_int32
 
+import numpy
+from pandas import Series
+
 
 def transform_queries(queries_lst, func=query_to_python):
-    return [
-        {'func': func(query),
-         'hash': string_to_int32(query),
-         'string': query}
-        for query in queries_lst
-    ]
+    transformed = []
+    for query in queries_lst:
+        try:
+            _func = func(query)
+        except Exception, e:
+            raise Exception('Query cannot be parsed : {} / Message: {}'.format(query, e))
+
+        transformed.append(
+            {'func': _func,
+             'hash': string_to_int32(query),
+             'string': query}
+        )
+    return transformed
 
 
 class UrlSuggestionsGenerator(object):
@@ -31,6 +41,21 @@ class UrlSuggestionsGenerator(object):
         if metadata_type not in CONTENT_TYPE_INDEX.values():
             raise Exception('{} is not a valid metadata type'.format(metadata_type))
         self.metadata_clusters[CONTENT_TYPE_NAME_TO_ID[metadata_type]] = transform_queries(cluster_list, metadata_query_to_python)
+
+    def make_clusters_series(self):
+        """
+        Generate a pandas Series object with index as hash and value as the full request
+        """
+        final_serie = None
+        for i, (pattern_type, suggestions) in enumerate(self.patterns_clusters.items() + self.metadata_clusters.items()):
+            if len(suggestions) == 0:
+                continue
+            serie = Series([q['string'] for q in suggestions], index=[q['hash'] for q in suggestions], dtype=numpy.character)
+            if final_serie is None:
+                final_serie = serie.copy()
+            else:
+                final_serie = final_serie.append(serie)
+        return final_serie
 
     def __iter__(self):
         http_code_idx = idx_from_stream('infos', 'http_code')

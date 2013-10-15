@@ -3,6 +3,7 @@ SUGGEST_CLUSTERS = [
     ('pattern', 'qskey'),
     ('metadata', 'title'),
     ('metadata', 'h1'),
+    ('metadata', 'h2'),
 ]
 
 CLUSTER_TYPES_ACRONYMS = {

@@ -1,7 +1,7 @@
 from cdf.streams.mapping import CONTENT_TYPE_INDEX
 
 
-CROSS_PROPERTIES_COLUMNS = ('host', 'resource_type', 'content_type', 'depth', 'http_code', 'index', 'follow')
+CROSS_PROPERTIES_COLUMNS = ('suggest_combination', 'content_type', 'depth', 'http_code', 'index', 'follow')
 
 COUNTERS_FIELDS = (
     'pages_nb',
