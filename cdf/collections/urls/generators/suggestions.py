@@ -33,7 +33,6 @@ class UrlSuggestionsGenerator(object):
     def __iter__(self):
         http_code_idx = idx_from_stream('infos', 'http_code')
         for i in group_left((self.stream_patterns, 0), infos=(self.stream_infos, 0), contents=(self.stream_contents, 0)):
-
             url_id, left_line, streams = i
             # If http_code in 0, 1, 2 > means than not crawled
             # If http_code < 0, it means that there were a fetcher error but the url was correctly crawled
@@ -52,6 +51,8 @@ class UrlSuggestionsGenerator(object):
 
             for entry in streams['contents']:
                 url_id, metadata_type, hash_id, value = entry
+                if metadata_type not in self.metadata_clusters:
+                    continue
                 for query in self.metadata_clusters[metadata_type]:
                     if query['func'](value):
                         yield (url_id, "metadata_{}".format(CONTENT_TYPE_INDEX[metadata_type]), query["string"])

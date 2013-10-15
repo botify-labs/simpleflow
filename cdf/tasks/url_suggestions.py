@@ -5,11 +5,12 @@ import lz4
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file
 from cdf.collections.urls.generators.suggestions import UrlSuggestionsGenerator
-from cdf.utils.s3 import fetch_file, push_content
-from cdf.streams.mapping import STREAMS_HEADERS
+from cdf.utils.s3 import fetch_file, fetch_files, push_content
+from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
+from cdf.log import logger
 
 
-def compute_urls_patterns_suggestions_from_s3(crawl_id, part_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+def compute_urls_suggestions_from_s3(crawl_id, part_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
     """
     Match all urls with suggested patterns coming for precomputed clusters
 
@@ -28,23 +29,35 @@ def compute_urls_patterns_suggestions_from_s3(crawl_id, part_id, s3_uri, tmp_dir
         except:
             pass
 
-    patterns_file, _ = fetch_file(os.path.join(s3_uri, 'urlids.txt.%d.gz' % part_id), os.path.join(tmp_dir, 'urlids.txt.%d.gz' % part_id), force_fetch=force_fetch)
-    cluster_path_file, _ = fetch_file(os.path.join(s3_uri, 'clusters_path.tsv'), os.path.join(tmp_dir, 'clusters_path.tsv'), force_fetch=force_fetch)
-    cluster_qskey_file, _ = fetch_file(os.path.join(s3_uri, 'clusters_qskey.tsv'), os.path.join(tmp_dir, 'clusters_qskey.tsv'), force_fetch=force_fetch)
+    files_fetched = fetch_files(s3_uri,
+                                tmp_dir,
+                                regexp=['url(ids|infos|contents).txt.%d.gz' % part_id],
+                                force_fetch=force_fetch)
 
-    cast = Caster(STREAMS_HEADERS["PATTERNS"]).cast
-    stream_patterns = cast(split_file(gzip.open(patterns_file)))
-    cluster_path_list = [k.split('\t', 1)[0] for k in open(cluster_path_file)]
-    cluster_qskey_list = [k.split('\t', 1)[0] for k in open(cluster_qskey_file)]
+    streams = dict()
+    for path_local, fetched in files_fetched:
+        stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
+        cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
+        streams[stream_identifier] = cast(split_file(gzip.open(path_local)))
 
-    clusters = {
-        'path': cluster_path_list,
-        'qskey': cluster_qskey_list
-    }
+    u = UrlSuggestionsGenerator(streams['patterns'], streams['infos'], streams['contents'])
+
+    CLUSTERS = [('pattern', 'path'), ('pattern', 'qskey'), ('metadata', 'title'), ('metadata', 'h1')] #, ('metadata', 'h2')#]
+
+    for cluster_type, cluster_name in CLUSTERS:
+        filename = 'clusters_{}_{}.tsv'.format(cluster_type, cluster_name)
+        _f, fetched = fetch_file(os.path.join(s3_uri, filename), os.path.join(tmp_dir, filename), force_fetch=force_fetch)
+        cluster_values = [k.split('\t', 1)[0] for k in open(_f)]
+        if cluster_type == "metadata":
+            u.add_metadata_cluster(cluster_name, cluster_values)
+        else:
+            u.add_pattern_cluster(cluster_name, cluster_values)
 
     content = []
-    u = UrlSuggestionsGenerator(stream_patterns, clusters)
     for i, result in enumerate(u):
         content.append('{}\t{}\t{}'.format(result[0], result[1], result[2]))
+        if i % 1000 == 999:
+            logger.info(content[-1])
     encoded_content = lz4.dumps('\n'.join(content))
-    push_content(os.path.join(s3_uri, 'url_suggested_patterns.lz4'), encoded_content)
+    push_content(os.path.join(s3_uri, 'url_suggested_clusters.lz4'), encoded_content)
+    push_content(os.path.join(s3_uri, 'url_suggested_clusters.txt'), '\n'.join(content))
