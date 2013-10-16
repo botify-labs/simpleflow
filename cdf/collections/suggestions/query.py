@@ -52,17 +52,18 @@ class BaseMetricsQuery(object):
     DISTRIBUTION_COLUMNS = CROSS_PROPERTIES_COLUMNS
     FIELDS = CROSS_PROPERTIES_COLUMNS + COUNTERS_FIELDS
 
-    def __init__(self, hdfstore):
+    def __init__(self, hdfstore, options=None):
         self.hdfstore = hdfstore
         self.df = self.hdfstore[self.DF_KEY]
+        self.options = options
 
     @classmethod
-    def from_s3_uri(cls, crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+    def from_s3_uri(cls, crawl_id, s3_uri, options=None, tmp_dir_prefix='/tmp', force_fetch=False):
         # Fetch locally the files from S3
         tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
         files_fetched = fetch_files(s3_uri, tmp_dir, regexp='suggest.h5', force_fetch=force_fetch)
         store = HDFStore(files_fetched[0][0])
-        return cls(store)
+        return cls(store, options)
 
     def get_func_from_filter_dict(self, df, _filter):
         # Not operator
@@ -189,11 +190,13 @@ class BaseMetricsQuery(object):
             df = self._map_host_group_by(df, settings['group_by'])
             df = self._map_resource_type_group_by(df, settings['group_by'])
             df = df.groupby(settings['group_by']).agg('sum').reset_index()
+            df = self.df_filter_after_agg(df)
         else:
             """
             No group_by, we return a dictionnary with all counters
             """
             df = df.sum().reset_index()
+            df = self.df_filter_after_agg(df)
             results = {}
             values = dict(df.values)
             for field in final_fields:
@@ -208,11 +211,17 @@ class BaseMetricsQuery(object):
                 deep_update(counters, deep_dict({field: transform_std_type(field, values)}))
 
             result = {
-                'properties': {field_: self._display_field(field_, df[field_][i]) for field_ in settings['group_by']},
+                'properties': {field_: self._display_field(field_, values[field_]) for field_ in settings['group_by']},
                 'counters': counters
             }
             results.append(result)
         return results
+
+    def df_filter_after_agg(self, df):
+        """
+        Filter the dataframe after aggregation if necessary
+        """
+        return df
 
     def _display_field(field, value):
         return std_type(value)
@@ -277,3 +286,10 @@ class SuggestQuery(BaseMetricsQuery):
         if field == "query":
             return self.query_hash_to_string(value)
         return super(SuggestQuery, self)._display_field(field, value)
+
+    def df_filter_after_agg(self, df):
+        if self.options['stats_urls_done']:
+            # Take only urls > 3%
+            threshold = int(float(self.options['stats_urls_done']) * 0.03)
+            return df[df['pages_nb'] > threshold]
+        return df
