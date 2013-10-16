@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import re
+import copy
 import operator
 from pandas import HDFStore
 import numpy
@@ -134,37 +135,7 @@ class BaseMetricsQuery(object):
             raise Exception('Filter not well formated : %s' % filters)
         return filters_func
 
-    def query(self, settings):
-        """
-        Return the total sum from a list of `fields` aggregated by cross-property
-
-        :param settings
-
-        Return a list of dictionaries with two keys "properties" and "counters".
-
-        Ex :
-
-        [
-            {
-                "properties": {
-                    "host": "www.site.com",
-                    "content_type": "text/html"
-                },
-                "counters": {
-                    "pages_nb": 10,
-                }
-            },
-            {
-                "properties": {
-                    "host": "subdomain.site.com",
-                    "content_type": "text/html"
-                },
-                "counters": {
-                    "pages_nb": 20
-                }
-            }
-        ]
-        """
+    def get_fields_from_settings(self, settings):
         if 'fields' in settings:
             fields = settings['fields']
         else:
@@ -178,25 +149,61 @@ class BaseMetricsQuery(object):
                 final_fields += children_from_field(f)
             else:
                 final_fields.append(f)
+        return final_fields
+
+    def query(self, settings):
+        """
+        Return the total sum from a list of `fields` aggregated by cross-property
+
+        :param settings
+
+        Return a list of dictionaries with two keys "properties" and "counters".
+
+        Ex :
+
+        [
+            {
+                "properties": {
+                    "depth": 1,
+                    "http_code": 200
+                },
+                "counters": {
+                    "pages_nb": 10,
+                }
+            },
+            {
+                "properties": {
+                    "depth": 1,
+                    "http_code": 301
+                },
+                "counters": {
+                    "pages_nb": 20
+                }
+            }
+        ]
+        """
+        final_fields = self.get_fields_from_settings(settings)
 
         results = {}
-
         df = self.df.copy()
 
         if 'filters' in settings:
             df = df[self._apply_filters(df, settings['filters'])]
 
         if 'group_by' in settings:
-            df = self._map_host_group_by(df, settings['group_by'])
-            df = self._map_resource_type_group_by(df, settings['group_by'])
             df = df.groupby(settings['group_by']).agg('sum').reset_index()
             df = self.df_filter_after_agg(df)
+            if 'sort' in settings:
+                df.sort(columns=[k[0] for k in settings['sort']], ascending=[k[1] == "ASC" for k in settings['sort']], inplace=True)
+
         else:
             """
             No group_by, we return a dictionnary with all counters
             """
             df = df.sum().reset_index()
             df = self.df_filter_after_agg(df)
+            if 'sort' in settings:
+                df.sort(columns=[k[0] for k in settings['sort']], ascending=[k[1] == "ASC" for k in settings['sort']], inplace=True)
             results = {}
             values = dict(df.values)
             for field in final_fields:
@@ -209,7 +216,6 @@ class BaseMetricsQuery(object):
             counters = {}
             for field in final_fields:
                 deep_update(counters, deep_dict({field: transform_std_type(field, values)}))
-
             result = {
                 'properties': {field_: self._display_field(field_, values[field_]) for field_ in settings['group_by']},
                 'counters': counters
@@ -223,52 +229,8 @@ class BaseMetricsQuery(object):
         """
         return df
 
-    def _display_field(field, value):
+    def _display_field(self, field, value):
         return std_type(value)
-
-    def _map_host_group_by(self, df, group_by):
-        hosts = filter(lambda i: i.startswith('host__level'), group_by)
-        if len(hosts) == 1:
-            try:
-                hostname = hosts[0]
-                level = int(hostname[len('host__level')])
-            except:
-                raise Exception("Level has to be an integer (ex host__level1)")
-            group_by.remove(hostname)
-            group_by.append('host')
-
-            def host_to_level(host, level):
-                splited = host.rsplit('.', level)
-                if len(splited) > level:
-                    return '*.' + '.'.join(splited[-level:])
-                return '.'.join(splited[-level:])
-
-            df['host'] = df['host'].map(lambda name: host_to_level(name, level))
-        elif len(hosts) > 1:
-            raise Exception("It is not allowed to make a group_by with differents host's levels")
-        return df
-
-    def _map_resource_type_group_by(self, df, group_by):
-        rt_ = filter(lambda i: i.startswith('resource_type__level'), group_by)
-        if len(rt_) == 1:
-            try:
-                resource_type = rt_[0]
-                level = int(resource_type[len('resource_type__level')])
-            except:
-                raise Exception("Level has to be an integer (ex resource_type__level1)")
-            group_by.remove(resource_type)
-            group_by.append('resource_type')
-
-            def rename_resource_type(name, level):
-                splited = name.split('/', level)
-                if len(splited) > level:
-                    return '/'.join(splited[:level]) + '/*'
-                return name
-
-            df['resource_type'] = df['resource_type'].map(lambda name: rename_resource_type(name, level))
-        elif len(rt_) > 1:
-            raise Exception("It is not allowed to make a group_by with differents resourc_type's levels")
-        return df
 
 
 class MetricsQuery(BaseMetricsQuery):
@@ -282,14 +244,82 @@ class SuggestQuery(BaseMetricsQuery):
         ids = [int(v) for v in value.split(';')]
         return ' AND '.join([unicode(self.hdfstore['requests'][hash_id], "utf8") for hash_id in ids])
 
+    """
     def _display_field(self, field, value):
         if field == "query":
             return self.query_hash_to_string(value)
         return super(SuggestQuery, self)._display_field(field, value)
+    """
+
+    def query(self, settings):
+        final_fields = self.get_fields_from_settings(settings)
+        df = self.df.copy()
+
+        target_field = settings.get('target_field', 'pages_nb')
+
+        if 'filters' in settings:
+            df = df[self._apply_filters(df, settings['filters'])]
+
+        df = df.groupby(['query']).agg('sum').reset_index()
+        df.sort(columns=[target_field], ascending=[0], inplace=True)
+
+        results = []
+        for i, n in enumerate(df.values):
+            values = dict(zip(df.columns, n))
+            #counters = {}
+            #for field in final_fields:
+            #    deep_update(counters, deep_dict({field: transform_std_type(field, values)}))
+            result = {
+                'query': values['query'],
+                'counters': {field: transform_std_type(field, values) for field in final_fields}
+            }
+            results.append(result)
+
+        results = self.remove_results_with_common_hashes(settings, results)
+
+        # Resolve query
+        for i, r in enumerate(results):
+            results[i]["query"] = self.query_hash_to_string(results[i]["query"])
+            results[i]["counters"] = deep_dict(results[i]["counters"])
+            if "children" in results[i]:
+                results[i]["children"] = results[i]["children"][0:10]
+                for k, c in enumerate(results[i]["children"]):
+                    results[i]["children"][k]["query"] = self.query_hash_to_string(results[i]["children"][k]["query"])
+        return results[0:30]
+
+    def remove_results_with_common_hashes(self, settings, results):
+        """
+        If 1;3 and 1;2;3 has the same value for target field, we remove the one with the less hashes
+        """
+        target_field = settings.get('target_field', 'pages_nb')
+        results_to_remove = set()
+        for i, result in enumerate(results):
+            hashes = result["query"].split(';')
+            for _r in results:
+                local_hashes = _r["query"].split(';')
+                if all(h in local_hashes for h in hashes):
+                    if result["counters"][target_field] == _r["counters"][target_field]:
+                        if len(local_hashes) > len(hashes):
+                            #print 'remove', result, 'in favor of', _r["query"]
+                            results_to_remove.add(result["query"])
+                        else:
+                            #print 'remove', _r, 'in favor of', result["query"]
+                            results_to_remove.add(_r["query"])
+                    elif result["counters"][target_field] > _r["counters"][target_field] and _r["counters"][target_field] > 0:
+                        if not "children" in results[i]:
+                            results[i]["children"] = []
+                        results[i]["children"].append(copy.copy(_r))
+                        results_to_remove.add(_r["query"])
+        for result in results:
+            if result["query"] in results_to_remove:
+                results.remove(result)
+        return results
 
     def df_filter_after_agg(self, df):
+        """
         if self.options['stats_urls_done']:
             # Take only urls > 3%
             threshold = int(float(self.options['stats_urls_done']) * 0.03)
             return df[df['pages_nb'] > threshold]
+        """
         return df

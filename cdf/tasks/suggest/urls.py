@@ -20,7 +20,7 @@ from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.log import logger
 
 
-def compute_urls_suggestions_from_s3(crawl_id, part_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+def make_url_to_suggested_patterns_file(crawl_id, part_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
     """
     Match all urls with suggested patterns coming for precomputed clusters
 
