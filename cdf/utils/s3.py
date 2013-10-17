@@ -86,7 +86,7 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True, lock=True):
     return files
 
 
-def fetch_file(s3_uri, dest_dir, force_fetch):
+def fetch_file(s3_uri, dest_dir, force_fetch, lock=True):
     if not force_fetch and os.path.exists(dest_dir):
         return (dest_dir, False)
     key_obj = get_key_from_s3_uri(s3_uri)
@@ -95,7 +95,12 @@ def fetch_file(s3_uri, dest_dir, force_fetch):
     will be raised when calling `get_contents_to_filename`
     """
     logger.info('Fetch %s' % s3_uri)
-    key_obj.get_contents_to_filename(dest_dir)
+    if lock:
+        lock_obj = FileLock(dest_dir)
+        with lock_obj:
+            key_obj.get_contents_to_filename(dest_dir)
+    else:
+        key_obj.get_contents_to_filename(dest_dir)
     return (dest_dir, True)
 
 
