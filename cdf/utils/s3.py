@@ -87,7 +87,7 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True, lock=True):
 
 
 def fetch_file(s3_uri, dest_dir, force_fetch):
-    if force_fetch and os.path.exists(dest_dir):
+    if not force_fetch and os.path.exists(dest_dir):
         return (dest_dir, False)
     key_obj = get_key_from_s3_uri(s3_uri)
     """

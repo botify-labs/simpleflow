@@ -35,6 +35,19 @@ STREAMS_HEADERS = {
         ('hash', str),
         ('txt', str)
     ),
+    'OUTLINKS_RAW': (
+        ('id', int),
+        ('link_type', str),
+        ('follow', str),
+        ('dst_url_id', str),
+        ('external_url', str)
+    ),
+    'INLINKS_RAW': (
+        ('id', int),
+        ('link_type', str),
+        ('follow', str),
+        ('src_url_id', str),
+    ),
     'OUTLINKS': (
         ('id', int),
         ('link_type', str),
