@@ -52,7 +52,6 @@ STREAMS_HEADERS = {
         ('id', int),
         ('section', str),
         ('type', str),
-        ('query', str),
         ('query_hash', str)
     )
 }

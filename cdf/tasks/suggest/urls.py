@@ -119,7 +119,13 @@ def compute_suggestions_counter_from_s3(crawl_id, part_id, s3_uri, tmp_dir_prefi
 
     aggregator = MetricsAggregator(**streams)
     content = json.dumps(aggregator.get())
-    push_content(os.path.join(s3_uri, 'suggestions/counters.{}.json'.format(part_id)), content)
+    f = open(os.path.join(tmp_dir, 'suggestions/counters.{}.json'.format(part_id)), 'w')
+    f.write(content)
+    f.close()
+    push_file(
+        os.path.join(s3_uri, 'suggestions/counters.{}.json'.format(part_id)),
+        os.path.join(tmp_dir, 'suggestions/counters.{}.json'.format(part_id))
+    )
 
 
 def _get_df_suggest_counter_from_s3(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):

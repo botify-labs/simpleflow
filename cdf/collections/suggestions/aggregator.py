@@ -33,12 +33,16 @@ def get_keys_from_stream_suggest(stream_suggest):
     keys = ["0"]
     hashes = []
     for entry in stream_suggest:
-        url_id, section, stype, query, query_hash = entry
+        url_id, section, stype, query_hash = entry
         hashes.append(query_hash)
-    for L in range(1, len(hashes) + 1):
-        for subset in itertools.combinations(hashes, L):
-            keys.append(';'.join(subset))
+    # Todo : refactor to send directly the generate key
+    if hashes:
+        keys.append(';'.join(sorted(hashes)))
     return keys
+    #for L in range(1, len(hashes) + 1):
+    #    for subset in itertools.combinations(hashes, L):
+    #        keys.append(';'.join(sorted(subset)))
+    #return keys
 
 
 class MetricsAggregator(object):
@@ -220,7 +224,8 @@ class MetricsAggregator(object):
         for k, result in enumerate(group_left(left, **streams_ref)):
             if k % 1000 == 999:
                 logger.info('MetricAggregator iter {}'.format(k))
-
+            #if k == 2:
+            #    break
             infos = result[2]['infos'][0]
             outlinks = result[2]['outlinks']
             inlinks = result[2]['inlinks']

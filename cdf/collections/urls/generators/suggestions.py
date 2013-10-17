@@ -74,7 +74,7 @@ class UrlSuggestionsGenerator(object):
             for cluster, queries in self.patterns_clusters.iteritems():
                 for query in queries:
                     if query['func'](url, protocol, host, path, query_string, locator):
-                        yield (url_id, "P", cluster, query["string"], query["hash"])
+                        yield (url_id, "P", cluster, query["hash"])
 
             for entry in streams['contents']:
                 url_id, metadata_type, hash_id, value = entry
@@ -82,7 +82,7 @@ class UrlSuggestionsGenerator(object):
                     continue
                 for query in self.metadata_clusters[metadata_type]:
                     if query['func'](value):
-                        yield (url_id, "M", CONTENT_TYPE_INDEX[metadata_type], query["string"], query["hash"])
+                        yield (url_id, "M", CONTENT_TYPE_INDEX[metadata_type], query["hash"])
 
     def save_to_file(self, location):
         f = open(location, 'w')
