@@ -5,10 +5,12 @@ STREAMS_FILES = {
     'urlids': 'patterns',
     'urlinfos': 'infos',
     'urlcontents': 'contents',
+    'urlcontentsduplicate': 'contents_duplicate',
     'urllinks': 'outlinks',
     'urlinlinks': 'inlinks',
     'url_suggested_clusters': 'suggest'
 }
+
 
 STREAMS_HEADERS = {
     'PATTERNS': (
@@ -34,6 +36,14 @@ STREAMS_HEADERS = {
         ('content_type', int),
         ('hash', str),
         ('txt', str)
+    ),
+    'CONTENTS_DUPLICATE': (
+        ('id', int),
+        ('content_type', int),
+        ('filled_nb', int),
+        ('duplicates_nb', int),
+        ('is_first_url', bool),
+        ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
     ),
     'OUTLINKS_RAW': (
         ('id', int),

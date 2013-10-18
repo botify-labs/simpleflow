@@ -7,7 +7,7 @@ hasher = pyhash.fnv1_32()
 from collections import defaultdict, Counter
 from pandas import DataFrame
 
-from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
+from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES, MANDATORY_CONTENT_TYPES_IDS
 from cdf.streams.utils import group_left, idx_from_stream
 from cdf.collections.suggestions.constants import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
 from cdf.utils.dict import deep_update, flatten_dict
@@ -47,12 +47,13 @@ def get_keys_from_stream_suggest(stream_suggest):
 
 class MetricsAggregator(object):
 
-    def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_outlinks, stream_inlinks):
+    def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_outlinks, stream_inlinks, stream_contents_duplicate):
         self.stream_patterns = stream_patterns
         self.stream_infos = stream_infos
         self.stream_suggest = stream_suggest
         self.stream_inlinks = stream_inlinks
         self.stream_outlinks = stream_outlinks
+        self.stream_contents_duplicate = stream_contents_duplicate
 
     def get(self):
         """
@@ -118,9 +119,9 @@ class MetricsAggregator(object):
                        'infos': (self.stream_infos, 0),
                        'inlinks': (self.stream_inlinks, idx_from_stream('inlinks', 'id')),
                        'outlinks': (self.stream_outlinks, idx_from_stream('outlinks', 'id')),
+                       'contents_duplicate': (self.stream_contents_duplicate, idx_from_stream('contents_duplicate', 'id'))
                        }
 
-        host_idx = idx_from_stream('patterns', 'host')
         depth_idx = idx_from_stream('infos', 'depth')
         content_type_idx = idx_from_stream('infos', 'content_type')
         infos_mask_idx = idx_from_stream('infos', 'infos_mask')
@@ -134,6 +135,8 @@ class MetricsAggregator(object):
         outlinks_type_idx = idx_from_stream('outlinks', 'link_type')
         outlinks_src_idx = idx_from_stream('outlinks', 'id')
         outlinks_dst_idx = idx_from_stream('outlinks', 'dst_url_id')
+
+        content_duplicate_meta_type_idx = idx_from_stream('contents_duplicate', 'content_type')
 
         counter_dict = {}
         for field in COUNTERS_FIELDS:
@@ -158,6 +161,38 @@ class MetricsAggregator(object):
                     results[key]['canonical_nb']['not_equal'] += 1
 
             results[key]['canonical_nb']['incoming'] += len(filter(lambda i: i[inlinks_type_idx] == "canonical", inlinks))
+
+            # Store metadata counters
+            """
+            "metadata_nb": {
+                "h1": {
+                    "filled": 2,
+                    "not_filled": 1,
+                    "unique": 1,
+                },
+                "title": {
+                    ...
+                },
+                "not_enough": 1
+            }
+            """
+            # If the url has not h1, title or description, we considered that there is not enough metadata
+            meta_types_available = [i[content_duplicate_meta_type_idx] for i in contents_duplicate]
+            if len(meta_types_available) < 3:
+                results[key]['metadata_nb']['not_enough'] += 1
+
+            for entry in contents_duplicate:
+                url_id, ct_id, nb_filled, nb_duplicates, is_first_url, _ = entry
+                # Meta filled
+                metadata_dict = results[key]['metadata_nb'][CONTENT_TYPE_INDEX[ct_id]]
+                metadata_dict['filled'] += 1
+                if nb_duplicates == 1 and ct_id in MANDATORY_CONTENT_TYPES_IDS:
+                    metadata_dict['unique'] += 1
+
+            # If a metadata type is not set, we increment not_filled
+            for ct_id in MANDATORY_CONTENT_TYPES_IDS:
+                if ct_id not in meta_types_available:
+                    results[key]['metadata_nb'][CONTENT_TYPE_INDEX[ct_id]]['not_filled'] += 1
 
             # Store inlinks and outlinks counters
             """
@@ -229,6 +264,7 @@ class MetricsAggregator(object):
             infos = result[2]['infos'][0]
             outlinks = result[2]['outlinks']
             inlinks = result[2]['inlinks']
+            contents_duplicate = result[2]['contents_duplicate']
 
             # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
             index = not (4 & infos[infos_mask_idx] == 4)
@@ -311,136 +347,3 @@ class MetricsConsolidator(object):
 
         df = DataFrame(prepare_df_rows)
         return df
-
-
-class MetadataAggregator(object):
-
-    """
-    Streams injected in This class should be the entire dataset of a crawl to ensure that the unicity of metadatas are valid
-    """
-    def __init__(self, stream_patterns, stream_suggest, stream_contents, stream_infos):
-        self.stream_patterns = stream_patterns
-        self.stream_suggest = stream_suggest
-        self.stream_contents = stream_contents
-        self.stream_infos = stream_infos
-
-    def get(self):
-        """
-        Return a tuple of dictionnaries :
-
-        For each dict, an index "keys" with the following tuple :
-        (host, resource_type, content_type, depth, http_code, index, follow)
-         str,  str,           str,          int,   http_code, bool,  bool
-
-        Ex :
-        [
-            {
-                "keys": ["www.site.com", "/article", "text/html", 1, 200, True, True],
-                "counters": {
-                   "title_global_unik_nb": 4,
-                   "title_local_unik_nb": 5,
-                   "desc_filled_nb": 6,
-                   "desc_global_unik_nb": 4,
-                   "desc_local_unik_nb": 5,
-                   "h1_filled_nb": 6,
-                   "h1_global_unik_nb": 4,
-                   "h1_local_unik_nb": 5
-                    "h1_filled_nb": 3,
-                    "h1_unique_nb": 5,
-                    ...
-            },
-            {
-                ...
-            }
-        ]
-        """
-        left = (self.stream_patterns, 0)
-        streams_ref = {'suggest': (self.stream_suggest, 0),
-                       'contents': (self.stream_contents, idx_from_stream('contents', 'id')),
-                       'infos': (self.stream_infos, idx_from_stream('infos', 'id')),
-                       }
-
-        hashes_global = {ct_id: defaultdict(set) for ct_id in CONTENT_TYPE_INDEX.iterkeys()}
-
-        content_meta_type_idx = idx_from_stream('contents', 'content_type')
-        content_hash_idx = idx_from_stream('contents', 'hash')
-        depth_idx = idx_from_stream('infos', 'depth')
-        http_code_idx = idx_from_stream('infos', 'http_code')
-        infos_mask_idx = idx_from_stream('infos', 'infos_mask')
-        content_type_idx = idx_from_stream('infos', 'content_type')
-
-        results = defaultdict(Counter)
-
-        for result in group_left(left, **streams_ref):
-            # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
-            infos = result[2]['infos'][0]
-            index = not (4 & infos[infos_mask_idx] == 4)
-            follow = not (8 & infos[infos_mask_idx] == 8)
-
-            http_code = infos[http_code_idx]
-            if http_code != 200:
-                continue
-
-            for suggest_key in get_keys_from_stream_suggest(result[2]["suggest"]):
-                key = (suggest_key,
-                       infos[content_type_idx],
-                       infos[depth_idx],
-                       infos[http_code_idx],
-                       index,
-                       follow
-                       )
-                hash_key = hasher(','.join(str(k) for k in key))
-                contents = result[2]['contents']
-
-                # For each url, we check if it has correctly title, description and h1 filled
-                # If not, we'll consider that the url has not enough metadata
-
-                metadata_score = 0
-                # Meta filled
-                for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
-                    if len(filter(lambda i: i[content_meta_type_idx] == ct_id, contents)):
-                        results[key]['metadata_nb.%s.filled' % ct_txt] += 1
-                        if ct_txt in MANDATORY_CONTENT_TYPES:
-                            metadata_score += 1
-                    else:
-                        results[key]['metadata_nb.%s.not_filled' % ct_txt] += 1
-
-                if metadata_score < 3:
-                    results[key]['metadata_nb.not_enough'] += 1
-
-                # Fetch --first-- hash from each content type and watch add it to hashes set
-                ct_found = set()
-                for content in contents:
-                    ct_id = content[content_meta_type_idx]
-                    # If ct_i is already in ct_found, so it's the not the first content
-                    if ct_id not in ct_found:
-                        ct_found.add(ct_id)
-                        hashes_global[ct_id][content[content_hash_idx]].add(hash_key)
-
-        # Concatenate results
-        results = dict(results)
-        final_results = []
-        for key in results.iterkeys():
-            # Transform Counter to dict
-            counters = copy.copy(dict(results[key]))
-            hash_key = hasher(','.join(str(k) for k in key))
-            for ct_id, ct_txt in CONTENT_TYPE_INDEX.iteritems():
-                # If [ct_txt]_filled_nb not exists, we create the fields
-                if not 'metadata_nb.%s.filled' % ct_txt in counters:
-                    counters['metadata_nb.%s.filled' % ct_txt] = 0
-                    counters['metadata_nb.%s.unique' % ct_txt] = 0
-                else:
-                    # We fetch all set where there is only the hash_key (that means uniq)
-                    counters['metadata_nb.%s.unique' % ct_txt] = len(filter(lambda i: i == set((hash_key,)), hashes_global[ct_id].itervalues()))
-                if not 'metadata_nb.%s.not_filled' % ct_txt in counters:
-                    counters['metadata_nb.%s.not_filled' % ct_txt] = 0
-
-            if not 'metadata_nb.not_enough' in counters:
-                counters['metadata_nb.not_enough'] = 0
-            final_results.append(
-                {
-                    "cross_properties": key,
-                    "counters": counters
-                }
-            )
-        return final_results
