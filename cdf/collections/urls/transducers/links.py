@@ -30,13 +30,15 @@ class OutlinksTransducer(object):
                 canonical = None
                 redirect = None
                 current_url_id = url_id
-            is_internal = url_id > 0
+
+            """
+            If the link is external and the follow_key is robots,
+            That means that the url is finally internal (not linked once in follow)
+            """
+            is_internal = dst_url_id > 0 or (dst_url_id == -1 and bitmask & 4 == bitmask)
 
             if link_type == "a":
-                if is_internal:
-                    counter_by_type[(bitmask, 1)].append(dst_url_id)
-                else:
-                    counter_by_type[(bitmask, 0)].append(dst_url)
+                counter_by_type[(bitmask, 1 if is_internal else 0)].append(dst_url_id if dst_url_id > 0 else dst_url)
             elif link_type == "canonical":
                 # Fetch only the first canonical
                 if canonical is None:

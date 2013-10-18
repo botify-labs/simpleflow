@@ -54,15 +54,15 @@ STREAMS_HEADERS = {
     'OUTLINKS_RAW': (
         ('id', int),
         ('link_type', str),
-        ('follow', str),
-        ('dst_url_id', str),
+        ('bitmask', int),
+        ('dst_url_id', int),
         ('external_url', str)
     ),
     'INLINKS_RAW': (
         ('id', int),
         ('link_type', str),
-        ('follow', str),
-        ('src_url_id', str),
+        ('bitmask', int),
+        ('src_url_id', int),
     ),
     'OUTLINKS': (
         ('id', int),
@@ -82,6 +82,7 @@ STREAMS_HEADERS = {
         ('follow', follow_mask),
         ('is_internal', bool),
         ('score', int),
+        ('score_unique', int),
     ),
     'OUTREDIRECT_COUNTERS': (
         ('id', int),
@@ -93,9 +94,9 @@ STREAMS_HEADERS = {
     ),
     'INLINKS_COUNTERS': (
         ('id', int),
-        ('link_type', str),
         ('follow', follow_mask),
         ('score', int),
+        ('score_unique', int),
     ),
     'INREDIRECT_COUNTERS': (
         ('id', int),

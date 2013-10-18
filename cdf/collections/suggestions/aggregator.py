@@ -47,13 +47,19 @@ def get_keys_from_stream_suggest(stream_suggest):
 
 class MetricsAggregator(object):
 
-    def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_outlinks_counters, stream_inlinks_counters, stream_contents_duplicate):
+    def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_contents_duplicate,
+                 stream_outlinks_counters, stream_outcanonical_counters, stream_outredirect_counters,
+                 stream_inlinks_counters, stream_incanonical_counters, stream_inredirect_counters):
         self.stream_patterns = stream_patterns
         self.stream_infos = stream_infos
         self.stream_suggest = stream_suggest
-        self.stream_inlinks = stream_inlinks_counters
-        self.stream_outlinks = stream_outlinks_counters
         self.stream_contents_duplicate = stream_contents_duplicate
+        self.stream_out_links_counters = stream_outlinks_counters
+        self.stream_out_canonical_counters = stream_outcanonical_counters
+        self.stream_out_redirect_counters = stream_outredirect_counters
+        self.stream_in_links_counters = stream_inlinks_counters
+        self.stream_in_canonical_counters = stream_incanonical_counters
+        self.stream_in_redirect_counters = stream_inredirect_counters
 
     def get(self):
         """
@@ -117,8 +123,12 @@ class MetricsAggregator(object):
         left = (self.stream_patterns, 0)
         streams_ref = {'suggest': (self.stream_suggest, 0),
                        'infos': (self.stream_infos, 0),
-                       'inlinks': (self.stream_inlinks, idx_from_stream('inlinks', 'id')),
-                       'outlinks': (self.stream_outlinks, idx_from_stream('outlinks', 'id')),
+                       'in_links_counters': (self.stream_in_links_counters, idx_from_stream('inlinks_counters', 'id')),
+                       'in_canonical_counters': (self.stream_in_canonical_counters, idx_from_stream('incanonical_counters', 'id')),
+                       'in_redirect_counters': (self.stream_in_redirect_counters, idx_from_stream('inredirect_counters', 'id')),
+                       'out_links_counters': (self.stream_out_links_counters, idx_from_stream('outlinks_counters', 'id')),
+                       'out_canonical_counters': (self.stream_out_canonical_counters, idx_from_stream('outcanonical_counters', 'id')),
+                       'out_redirect_counters': (self.stream_out_redirect_counters, idx_from_stream('outredirect_counters', 'id')),
                        'contents_duplicate': (self.stream_contents_duplicate, idx_from_stream('contents_duplicate', 'id'))
                        }
 
@@ -129,14 +139,14 @@ class MetricsAggregator(object):
         http_code_idx = idx_from_stream('infos', 'http_code')
         delay2_idx = idx_from_stream('infos', 'delay2')
 
-        inlinks_type_idx = idx_from_stream('inlinks_counters', 'link_type')
-        inlinks_equals_idx = idx_from_stream('inlinks_counters', 'src_url_id_equals')
         inlinks_score_idx = idx_from_stream('inlinks_counters', 'score')
 
-        outlinks_type_idx = idx_from_stream('outlinks_counters', 'link_type')
-        outlinks_src_idx = idx_from_stream('outlinks_counters', 'id')
-        outlinks_equals_idx = idx_from_stream('outlinks_counters', 'dst_url_id_equals')
         outlinks_score_idx = idx_from_stream('outlinks_counters', 'score')
+        outlinks_score_unique_idx = idx_from_stream('outlinks_counters', 'score_unique')
+
+        incanonical_score_idx = idx_from_stream('inlinks_counters', 'score')
+
+        inredirect_score_idx = idx_from_stream('inredirect_counters', 'score')
 
         content_duplicate_meta_type_idx = idx_from_stream('contents_duplicate', 'content_type')
 
@@ -151,24 +161,21 @@ class MetricsAggregator(object):
             results[key][delay_to_range(infos[delay2_idx])] += 1
             results[key]['total_delay_ms'] += infos[delay2_idx]
 
-            canonical_found = False
-            for entry in outlinks:
-                link_type = entry[outlinks_type_idx]
-                if link_type.startswith('r'):
-                    results[key]['redirections_nb'] += entry[outlinks_score_idx]
-                elif link_type.startswith('canonical') and not canonical_found:
-                    # Get the first canonical tag found (a page may be have 2 canonicals tags by mistake
-                    canonical_found = True
-                    results[key]['canonical_nb']['filled'] += 1
-                    if entry[outlinks_equals_idx]:
-                        results[key]['canonical_nb']['equal'] += 1
-                    else:
-                        results[key]['canonical_nb']['not_equal'] += 1
+            if outredirect:
+                results[key]['redirects_to_nb'] += 1
 
-            for entry in inlinks:
-                link_type = entry[inlinks_type_idx]
-                if link_type == "canonical" and not entry[inlinks_equals_idx]:
-                    results[key]['canonical_nb']['incoming'] += entry[inlinks_score_idx]
+            if inredirects:
+                results[key]['redirects_from_nb'] += inredirects[inredirect_score_idx]
+
+            if outcanonical:
+                results[key]['canonical_nb']['filled'] += 1
+                if outcanonical[outcanonical_equals_idx]:
+                    results[key]['canonical_nb']['equal'] += 1
+                else:
+                    results[key]['canonical_nb']['not_equal'] += 1
+
+            if incanonicals:
+                results[key]['canonical_nb']['incoming'] += incanonicals[incanonicals_score_idx]
 
             # Store metadata counters
             """
@@ -205,64 +212,46 @@ class MetricsAggregator(object):
             # Store inlinks and outlinks counters
             """
             "outlinks_external_nb": {
-                    "total": 10,
-                    "follow": 8,
-                    "follow_unique": 6,
-                    "nofollow": 2,
-                    "nofollow_combinations": {
-                        "link_meta": 1,
-                        "link": 1
-                    }
-                },
+                "total": 10,
+                "follow": 8,
+                "follow_unique": 6,
+                "nofollow": 2,
+                "nofollow_combinations": {
+                    "link_meta": 1,
+                    "link": 1
+                }
+            },
             """
-            for link_direction in ('inlinks', 'outlinks'):
-                follow_idx = idx_from_stream(link_direction, 'follow')
-                type_idx = inlinks_type_idx if link_direction == "inlinks" else outlinks_type_idx
-                if link_direction == "outlinks":
-                    dst_idx = idx_from_stream(link_direction, 'dst_url_id')
-                    external_idx = idx_from_stream(link_direction, 'external_url')
+            for entry in inlinks:
+                url_id, follow, score, score_unique = entry
+                counter_key = 'outlinks_internal_nb'
+                follow_key = '_'.join(sorted(follow))
+                results[key][counter_key]['total'] += score
+                results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += 1
 
-                # Count follow_unique links
-                follow_urls = set()
-
-                if link_direction == "outlinks":
-                    unique_idx = outlinks_dst_idx
-                    is_inlink = False
+                if follow_key == 'follow':
+                    results[key][counter_key]['follow_unique'] += score_unique
                 else:
-                    unique_idx = inlinks_src_idx
-                    is_inlink = True
+                    if follow_key not in results[key][counter_key]['nofollow_combinations']:
+                        results[key][counter_key]['nofollow_combinations'][follow_key] = 1
+                    else:
+                        results[key][counter_key]['nofollow_combinations'][follow_key] += 1
 
-                for link in result[2][link_direction]:
-                    if link[type_idx] == "a":
-                        # If is_inlink, it's necessarily as we don't crawl the web :)
-                        is_internal = is_inlink or link[dst_idx] > 0
-                        url_id = link[unique_idx]
+            for entry in outlinks:
+                url_id, follow, is_internal, score, score_unique = entry
+                counter_key = 'outlinks_{}_nb'.format("internal" if is_internal else "external")
+                follow_key = '_'.join(sorted(follow))
+                results[key][counter_key]['total'] += score
+                results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += score
 
-                        """
-                        If the link is external and the follow_key is robots,
-                        That means that the url is finally internal (not linked once in follow)
-                        """
-                        if not is_internal and link_direction == "outlinks" and "robots" in link[follow_idx]:
-                            is_internal = True
-                            url_id = string_to_int64(link[external_idx])
+                if follow_key == 'follow':
+                    results[key][counter_key]['follow_unique'] += score_unique
+                else:
+                    if follow_key not in results[key][counter_key]['nofollow_combinations']:
+                        results[key][counter_key]['nofollow_combinations'][follow_key] = 1
+                    else:
+                        results[key][counter_key]['nofollow_combinations'][follow_key] += 1
 
-                        # Many statuses possible for an url, we concatenate them after a sort an split them with a double underscore
-                        follow_key = '_'.join(sorted(link[follow_idx]))
-                        counter_key = '{}_{}_nb'.format(link_direction, "internal" if is_internal else "external")
-                        results[key][counter_key]['total'] += 1
-                        results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += 1
-
-                        if is_internal and follow_key == "follow":
-                            follow_urls.add(url_id)
-
-                        if follow_key != 'follow':
-                            if follow_key not in results[key][counter_key]['nofollow_combinations']:
-                                results[key][counter_key]['nofollow_combinations'][follow_key] = 1
-                            else:
-                                results[key][counter_key]['nofollow_combinations'][follow_key] += 1
-
-                if len(follow_urls) > 0:
-                    results[key]['{}_internal_nb'.format(link_direction)]['follow_unique'] += len(follow_urls)
 
         for k, result in enumerate(group_left(left, **streams_ref)):
             if k % 1000 == 999:
@@ -270,9 +259,15 @@ class MetricsAggregator(object):
             #if k == 2:
             #    break
             infos = result[2]['infos'][0]
-            outlinks = result[2]['outlinks']
-            inlinks = result[2]['inlinks']
+            outlinks = result[2]['out_links_counters']
+            inlinks = result[2]['in_links_counters']
             contents_duplicate = result[2]['contents_duplicate']
+
+            outcanonical = result[2]['out_canonical_counters'][0] if result[2]['out_canonical_counters'] else None
+            outredirect = result[2]['out_redirect_counters'][0] if result[2]['out_redirect_counters'] else None
+
+            incanonicals = result[2]['in_canonical_counters'][0] if result[2]['in_canonical_counters'] else None
+            inredirects = result[2]['in_redirect_counters'][0] if result[2]['in_redirect_counters'] else None
 
             # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
             index = not (4 & infos[infos_mask_idx] == 4)

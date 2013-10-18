@@ -6,7 +6,8 @@ CROSS_PROPERTIES_COLUMNS = ('query', 'content_type', 'depth', 'http_code', 'inde
 COUNTERS_FIELDS = (
     'pages_nb',
     'total_delay_ms',
-    'redirections_nb',
+    'redirects_to_nb',
+    'redirects_from_nb',
     'canonical_nb',
     'canonical_nb.filled',
     'canonical_nb.not_filled',

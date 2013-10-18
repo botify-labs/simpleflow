@@ -19,22 +19,21 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='
     if not os.path.exists(os.path.join(tmp_dir, 'suggest')):
         os.makedirs(os.path.join(tmp_dir, 'suggest'))
 
+    files = ('ids', 'infos',
+             '_out_links_counters', '_out_canonical_counters', '_out_redirect_counters',
+             '_in_links_counters', '_in_canonical_counters', '_in_redirect_counters',
+             '_suggested_clusters', 'contentsduplicate')
+
     streams = {}
     files_fetched = fetch_files(s3_uri,
                                 tmp_dir,
-                                regexp=['url(ids|infos|links|inlinks|_suggested_clusters|contentsduplicate).txt.%d.gz' % part_id],
+                                regexp=['url(%s).txt.%d.gz' % ('|'.join(files), part_id)],
                                 force_fetch=force_fetch)
 
     for path_local, fetched in files_fetched:
         stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
         cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
         streams["stream_%s" % stream_identifier] = cast(split_file(gzip.open(path_local)))
-
-    # Not crawled urls may be referenced in urlids and urlinfos files, but some files may be missing like inlinks...
-    for optional_stream in ('outlinks', 'inlinks'):
-        stream_key = "stream_{}".format(optional_stream)
-        if not stream_key in streams:
-            streams[stream_key] = iter([])
 
     aggregator = MetricsAggregator(**streams)
     content = json.dumps(aggregator.get())
