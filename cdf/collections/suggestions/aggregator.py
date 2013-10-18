@@ -47,12 +47,12 @@ def get_keys_from_stream_suggest(stream_suggest):
 
 class MetricsAggregator(object):
 
-    def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_outlinks, stream_inlinks, stream_contents_duplicate):
+    def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_outlinks_counters, stream_inlinks_counters, stream_contents_duplicate):
         self.stream_patterns = stream_patterns
         self.stream_infos = stream_infos
         self.stream_suggest = stream_suggest
-        self.stream_inlinks = stream_inlinks
-        self.stream_outlinks = stream_outlinks
+        self.stream_inlinks = stream_inlinks_counters
+        self.stream_outlinks = stream_outlinks_counters
         self.stream_contents_duplicate = stream_contents_duplicate
 
     def get(self):
@@ -129,12 +129,14 @@ class MetricsAggregator(object):
         http_code_idx = idx_from_stream('infos', 'http_code')
         delay2_idx = idx_from_stream('infos', 'delay2')
 
-        inlinks_type_idx = idx_from_stream('inlinks', 'link_type')
-        inlinks_src_idx = idx_from_stream('inlinks', 'src_url_id')
+        inlinks_type_idx = idx_from_stream('inlinks_counters', 'link_type')
+        inlinks_equals_idx = idx_from_stream('inlinks_counters', 'src_url_id_equals')
+        inlinks_score_idx = idx_from_stream('inlinks_counters', 'score')
 
-        outlinks_type_idx = idx_from_stream('outlinks', 'link_type')
-        outlinks_src_idx = idx_from_stream('outlinks', 'id')
-        outlinks_dst_idx = idx_from_stream('outlinks', 'dst_url_id')
+        outlinks_type_idx = idx_from_stream('outlinks_counters', 'link_type')
+        outlinks_src_idx = idx_from_stream('outlinks_counters', 'id')
+        outlinks_equals_idx = idx_from_stream('outlinks_counters', 'dst_url_id_equals')
+        outlinks_score_idx = idx_from_stream('outlinks_counters', 'score')
 
         content_duplicate_meta_type_idx = idx_from_stream('contents_duplicate', 'content_type')
 
@@ -148,19 +150,25 @@ class MetricsAggregator(object):
             results[key]['pages_nb'] += 1
             results[key][delay_to_range(infos[delay2_idx])] += 1
             results[key]['total_delay_ms'] += infos[delay2_idx]
-            results[key]['redirections_nb'] += len(filter(lambda i: i[outlinks_type_idx].startswith("r"), outlinks))
 
-            # Get the first canonical tag found (a page may be have 2 canonicals tags by mistake
-            canonicals = filter(lambda i: i[outlinks_type_idx] == "canonical", outlinks)
-            if canonicals:
-                canonical = canonicals[0]
-                results[key]['canonical_nb']['filled'] += 1
-                if canonical[outlinks_src_idx] == canonical[outlinks_dst_idx]:
-                    results[key]['canonical_nb']['equal'] += 1
-                else:
-                    results[key]['canonical_nb']['not_equal'] += 1
+            canonical_found = False
+            for entry in outlinks:
+                link_type = entry[outlinks_type_idx]
+                if link_type.startswith('r'):
+                    results[key]['redirections_nb'] += entry[outlinks_score_idx]
+                elif link_type.startswith('canonical') and not canonical_found:
+                    # Get the first canonical tag found (a page may be have 2 canonicals tags by mistake
+                    canonical_found = True
+                    results[key]['canonical_nb']['filled'] += 1
+                    if entry[outlinks_equals_idx]:
+                        results[key]['canonical_nb']['equal'] += 1
+                    else:
+                        results[key]['canonical_nb']['not_equal'] += 1
 
-            results[key]['canonical_nb']['incoming'] += len(filter(lambda i: i[inlinks_type_idx] == "canonical", inlinks))
+            for entry in inlinks:
+                link_type = entry[inlinks_type_idx]
+                if link_type == "canonical" and not entry[inlinks_equals_idx]:
+                    results[key]['canonical_nb']['incoming'] += entry[inlinks_score_idx]
 
             # Store metadata counters
             """

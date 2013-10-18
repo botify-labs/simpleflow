@@ -81,32 +81,40 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
-    if link_direction == "outlinks":
+    if link_direction == "out":
         transducer = OutlinksTransducer
+        stream_name = "outlinks_raw"
     else:
         transducer = InlinksTransducer
+        stream_name = "inlinks_raw"
 
-    links_file_path = 'url{}.txt.{}.gz'.format("links" if link_direction == "outlinks" else "inlinks", part_id)
+    links_file_path = 'url{}.txt.{}.gz'.format("links" if link_direction == "out" else "inlinks", part_id)
     links_file, fecthed = fetch_file(
         os.path.join(s3_uri, links_file_path),
         os.path.join(tmp_dir, links_file_path),
         force_fetch=force_fetch
     )
 
-    cast = Caster(STREAMS_HEADERS['{}_RAW'.format(link_direction.upper())]).cast
+    cast = Caster(STREAMS_HEADERS[stream_name.upper()]).cast
     stream_links = cast(split_file(gzip.open(links_file)))
     generator = transducer(stream_links).get()
 
-    counter_filename = 'url{}counters.txt.{}.gz'.format(link_direction, part_id)
-    f = gzip.open(os.path.join(tmp_dir, counter_filename), 'w')
-    for i, entry in enumerate(generator):
-        f.write('\t'.join(str(k) for k in entry) + '\n')
-    f.close()
+    filenames = {
+        'links': 'url_{}_links_counters.txt.{}.gz'.format(link_direction, part_id),
+        'canonical': 'url_{}_canonical_counters.txt.{}.gz'.format(link_direction, part_id),
+        'redirect': 'url_{}_redirect_counters.txt.{}.gz'.format(link_direction, part_id),
+    }
 
-    push_file(
-        os.path.join(s3_uri, counter_filename),
-        os.path.join(tmp_dir, counter_filename),
-    )
+    f_list = {k: gzip.open(os.path.join(tmp_dir, v), 'w') for k, v in filenames.iteritems()}
+
+    for i, entry in enumerate(generator):
+        f_list[entry[1]].write(str(entry[0]) + '\t' + '\t'.join(str(k) for k in entry[2:]) + '\n')
+
+    for counter_filename in filenames.values():
+        push_file(
+            os.path.join(s3_uri, counter_filename),
+            os.path.join(tmp_dir, counter_filename),
+        )
 
 
 def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_size, tmp_dir_prefix='/tmp', force_fetch=False):

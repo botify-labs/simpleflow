@@ -8,6 +8,12 @@ STREAMS_FILES = {
     'urlcontentsduplicate': 'contents_duplicate',
     'urllinks': 'outlinks',
     'urlinlinks': 'inlinks',
+    'url_out_links_counters': 'outlinks_counters',
+    'url_out_redirect_counters': 'outredirect_counters',
+    'url_out_canonical_counters': 'outcanonical_counters',
+    'url_in_links_counters': 'inlinks_counters',
+    'url_in_redirect_counters': 'inredirect_counters',
+    'url_in_canonical_counters': 'incanonical_counters',
     'url_suggested_clusters': 'suggest'
 }
 
@@ -70,6 +76,34 @@ STREAMS_HEADERS = {
         ('link_type', str),
         ('follow', follow_mask),
         ('src_url_id', int),
+    ),
+    'OUTLINKS_COUNTERS': (
+        ('id', int),
+        ('follow', follow_mask),
+        ('is_internal', bool),
+        ('score', int),
+    ),
+    'OUTREDIRECT_COUNTERS': (
+        ('id', int),
+        ('is_internal', bool)
+    ),
+    'OUTCANONICAL_COUNTERS': (
+        ('id', int),
+        ('equals', bool)
+    ),
+    'INLINKS_COUNTERS': (
+        ('id', int),
+        ('link_type', str),
+        ('follow', follow_mask),
+        ('score', int),
+    ),
+    'INREDIRECT_COUNTERS': (
+        ('id', int),
+        ('score', int)
+    ),
+    'INCANONICAL_COUNTERS': (
+        ('id', int),
+        ('score', int)
     ),
     'SUGGEST': (
         ('id', int),
