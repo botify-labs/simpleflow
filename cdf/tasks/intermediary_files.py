@@ -15,7 +15,7 @@ from cdf.collections.urls.generators.suggestions import UrlSuggestionsGenerator
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 
 
-def make_url_to_suggested_patterns_file(crawl_id, part_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+def make_url_to_suggested_patterns_file(crawl_id, s3_uri, part_id, tmp_dir_prefix='/tmp', force_fetch=False):
     """
     Match all urls with suggested patterns coming for precomputed clusters
 

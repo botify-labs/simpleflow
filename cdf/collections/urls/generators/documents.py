@@ -1,7 +1,7 @@
 import ujson
 from itertools import izip
 
-from cdf.streams.mapping import STREAMS_HEADERS, CONTENT_TYPE_INDEX
+from cdf.streams.mapping import STREAMS_HEADERS, CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
 from cdf.log import logger
 from cdf.streams.transformations import group_with
 from cdf.streams.exceptions import GroupWithSkipException
@@ -29,6 +29,9 @@ def extract_patterns(attributes, stream_item):
         attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
         attributes['query_string_items'] = qs
     attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
+    attributes['metadata_duplicate'] = {verbose_content_type: [] for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
+    attributes['metadata_duplicate_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
+    attributes['metadata_duplicate_is_first'] = {verbose_content_type: False for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
     attributes['inlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('inlinks_internal_nb')}
     attributes['inlinks_internal_nb']['nofollow_combinations'] = []
     attributes['inlinks_internal'] = []
@@ -78,6 +81,14 @@ def extract_contents(attributes, stream_item):
         attributes["metadata"][verbose_content_type].append(txt)
 
     attributes["metadata_nb"][verbose_content_type] += 1
+
+
+def extract_contents_duplicate(attributes, stream_item):
+    _, metadata_idx, nb_filled, nb_duplicates, is_first, duplicate_urls = stream_item
+    metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
+    attributes['metadata_duplicate_nb'][metadata_type] = nb_filled
+    attributes['metadata_duplicate'][metadata_type] = duplicate_urls
+    attributes['metadata_duplicate_is_first'][metadata_type] = is_first
 
 
 def extract_outlinks(attributes, stream_item):
@@ -203,7 +214,7 @@ def extract_inlinks(attributes, stream_item):
 
 
 def extract_suggest(attributes, stream_item):
-    url_id, section, stype, query, query_hash = stream_item
+    url_id, section, stype, query_hash = stream_item
     attributes['suggest'][stype].append(query_hash)
 
 
@@ -237,6 +248,7 @@ class UrlDocumentGenerator(object):
     EXTRACTORS = {
         'infos': extract_infos,
         'contents': extract_contents,
+        'contents_duplicate': extract_contents_duplicate,
         'inlinks': extract_inlinks,
         'outlinks': extract_outlinks,
         'suggest': extract_suggest

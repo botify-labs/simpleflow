@@ -224,7 +224,7 @@ class MetricsAggregator(object):
             """
             for entry in inlinks:
                 url_id, follow, score, score_unique = entry
-                counter_key = 'outlinks_internal_nb'
+                counter_key = 'inlinks_internal_nb'
                 follow_key = '_'.join(sorted(follow))
                 results[key][counter_key]['total'] += score
                 results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += 1
@@ -245,7 +245,8 @@ class MetricsAggregator(object):
                 results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += score
 
                 if follow_key == 'follow':
-                    results[key][counter_key]['follow_unique'] += score_unique
+                    if is_internal:
+                        results[key][counter_key]['follow_unique'] += score_unique
                 else:
                     if follow_key not in results[key][counter_key]['nofollow_combinations']:
                         results[key][counter_key]['nofollow_combinations'][follow_key] = 1

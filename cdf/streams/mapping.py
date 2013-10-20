@@ -18,6 +18,10 @@ STREAMS_FILES = {
 }
 
 
+def str_to_bool(string):
+    return string == '1'
+
+
 STREAMS_HEADERS = {
     'PATTERNS': (
         ('id', int),
@@ -48,7 +52,7 @@ STREAMS_HEADERS = {
         ('content_type', int),
         ('filled_nb', int),
         ('duplicates_nb', int),
-        ('is_first_url', bool),
+        ('is_first_url', str_to_bool),
         ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
     ),
     'OUTLINKS_RAW': (
@@ -80,17 +84,17 @@ STREAMS_HEADERS = {
     'OUTLINKS_COUNTERS': (
         ('id', int),
         ('follow', follow_mask),
-        ('is_internal', bool),
+        ('is_internal', str_to_bool),
         ('score', int),
         ('score_unique', int),
     ),
     'OUTREDIRECT_COUNTERS': (
         ('id', int),
-        ('is_internal', bool)
+        ('is_internal', str_to_bool)
     ),
     'OUTCANONICAL_COUNTERS': (
         ('id', int),
-        ('equals', bool)
+        ('equals', str_to_bool)
     ),
     'INLINKS_COUNTERS': (
         ('id', int),

@@ -54,6 +54,13 @@ URLS_DATA_MAPPING = {
                     "h1": {"type": "long"}
                 }
             },
+            "metadata_duplicate_is_first": {
+                "properties": {
+                    "title": {"type": "boolean"},
+                    "description": {"type": "boolean"},
+                    "h1": {"type": "boolean"}
+                }
+            },
             "inlinks_internal_nb": {
                 "properties": {
                     "total": {"type": "long"},
