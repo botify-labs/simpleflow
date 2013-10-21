@@ -144,7 +144,9 @@ class MetricsAggregator(object):
         outlinks_score_idx = idx_from_stream('outlinks_counters', 'score')
         outlinks_score_unique_idx = idx_from_stream('outlinks_counters', 'score_unique')
 
-        incanonical_score_idx = idx_from_stream('inlinks_counters', 'score')
+        outcanonical_equals_idx = idx_from_stream('outcanonical_counters', 'equals')
+
+        incanonical_score_idx = idx_from_stream('incanonical_counters', 'score')
 
         inredirect_score_idx = idx_from_stream('inredirect_counters', 'score')
 
@@ -175,7 +177,7 @@ class MetricsAggregator(object):
                     results[key]['canonical_nb']['not_equal'] += 1
 
             if incanonicals:
-                results[key]['canonical_nb']['incoming'] += incanonicals[incanonicals_score_idx]
+                results[key]['canonical_nb']['incoming'] += incanonicals[incanonical_score_idx]
 
             # Store metadata counters
             """
