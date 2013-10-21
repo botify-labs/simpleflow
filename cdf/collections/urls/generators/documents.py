@@ -18,6 +18,7 @@ def extract_patterns(attributes, stream_item):
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
 
     attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
+    attributes['url_not_analyzed'] = attributes['url']
     attributes['url_hash'] = string_to_int64(attributes['url'])
 
     # query_string fields
@@ -42,7 +43,7 @@ def extract_patterns(attributes, stream_item):
     attributes['outlinks_internal'] = []
     attributes["inlinks_id_to_idx"] = {}
     attributes["outlinks_id_to_idx"] = {}
-    attributes["suggest"] = {c[1]: [] for c in SUGGEST_CLUSTERS}
+    attributes["patterns"] = []
 
 
 def extract_infos(attributes, stream_item):
@@ -80,13 +81,12 @@ def extract_contents(attributes, stream_item):
     else:
         attributes["metadata"][verbose_content_type].append(txt)
 
-    attributes["metadata_nb"][verbose_content_type] += 1
-
 
 def extract_contents_duplicate(attributes, stream_item):
     _, metadata_idx, nb_filled, nb_duplicates, is_first, duplicate_urls = stream_item
     metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
-    attributes['metadata_duplicate_nb'][metadata_type] = nb_filled
+    attributes['metadata_nb'][metadata_type] = nb_filled
+    attributes['metadata_duplicate_nb'][metadata_type] = nb_duplicates
     attributes['metadata_duplicate'][metadata_type] = duplicate_urls
     attributes['metadata_duplicate_is_first'][metadata_type] = is_first
 
@@ -214,8 +214,8 @@ def extract_inlinks(attributes, stream_item):
 
 
 def extract_suggest(attributes, stream_item):
-    url_id, section, stype, query_hash = stream_item
-    attributes['suggest'][stype].append(query_hash)
+    url_id, query_hash = stream_item
+    attributes['patterns'].append(query_hash)
 
 
 def end_extract_url(attributes):

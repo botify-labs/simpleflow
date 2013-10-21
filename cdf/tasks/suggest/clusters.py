@@ -14,7 +14,7 @@ from cdf.log import logger
 from cdf.utils.s3 import fetch_files, push_file
 
 
-def compute_clusters_from_s3(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+def compute_patterns_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
     minimal_frequency = 0.03
     nb_urls = 100000
 
@@ -65,6 +65,23 @@ def compute_clusters_from_s3(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetc
         os.path.join(s3_uri, 'clusters_pattern_qskey.tsv'),
         os.path.join(output_dir, 'clusters_pattern_qskey.tsv')
     )
+
+
+def compute_metadata_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+    minimal_frequency = 0.03
+    nb_urls = 100000
+
+    # Fetch locally the files from S3
+    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    if not os.path.exists(tmp_dir):
+        try:
+            os.makedirs(tmp_dir)
+        except:
+            pass
+
+    output_dir = os.path.join(tmp_dir, 'clusters')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     for metadata_type in [Content_types.TITLE, Content_types.H1, Content_types.H2]:
         logger.info("Discovering patterns on %s.", Content_types.get_string(metadata_type))

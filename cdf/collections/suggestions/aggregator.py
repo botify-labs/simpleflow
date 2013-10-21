@@ -33,7 +33,7 @@ def get_keys_from_stream_suggest(stream_suggest):
     keys = ["0"]
     hashes = []
     for entry in stream_suggest:
-        url_id, section, stype, query_hash = entry
+        url_id, query_hash = entry
         hashes.append(query_hash)
     # Todo : refactor to send directly the generate key
     if hashes:

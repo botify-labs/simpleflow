@@ -112,8 +112,6 @@ STREAMS_HEADERS = {
     ),
     'SUGGEST': (
         ('id', int),
-        ('section', str),
-        ('type', str),
         ('query_hash', str)
     )
 }

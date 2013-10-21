@@ -44,7 +44,7 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
-    files_fetched = fetch_files(s3_uri, tmp_dir, regexp=['url(ids|infos|links|inlinks|contents|contentsduplicate).txt.%d.gz' % part_id, 'url_suggested_clusters.%d.txt.lz4' % part_id], force_fetch=force_fetch)
+    files_fetched = fetch_files(s3_uri, tmp_dir, regexp=['url(ids|infos|links|inlinks|contents|contentsduplicate|_suggested_clusters).txt.%d.gz' % part_id], force_fetch=force_fetch)
     streams = {}
 
     path_local, fetched = files_fetched[0]
@@ -54,13 +54,6 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
 
         if stream_identifier == "patterns":
             stream_patterns = cast(split_file(gzip.open(path_local)))
-        elif stream_identifier == "suggest":
-            file_content = lz4.loads(open(path_local).read())
-            if not file_content:
-                streams["suggest"] = iter([])
-            else:
-                cast = Caster(STREAMS_HEADERS["SUGGEST"]).cast
-                streams["suggest"] = cast(split(file_content.split('\n')))
         else:
             streams[stream_identifier] = cast(split_file(gzip.open(path_local)))
 

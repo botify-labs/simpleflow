@@ -4,6 +4,10 @@ URLS_DATA_MAPPING = {
             "url": {
                 "type": "string",
             },
+            "url_not_analyzed": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
             "url_hash": {"type": "long"},
             "byte_size": {"type": "long"},
             "date_crawled": {"type": "date"},
@@ -15,15 +19,7 @@ URLS_DATA_MAPPING = {
             "http_code": {"type": "long"},
             "id": {"type": "long"},
             "crawl_id": {"type": "long"},
-            "suggest": {
-                "properties": {
-                    "pattern_path": {"type": "long"},
-                    "pattern_qskey": {"type": "long"},
-                    "metadata_title": {"type": "long"},
-                    "metadata_h1": {"type": "long"},
-                    "metadata_h2": {"type": "long"},
-                }
-            },
+            "patterns": {"type": "long"},
             "metadata_nb": {
                 "properties": {
                     "description": {"type": "long"},

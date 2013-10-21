@@ -1,3 +1,5 @@
+from cdf.streams.mapping import CONTENT_TYPE_NAME_TO_ID
+
 SUGGEST_CLUSTERS = [
     ('pattern', 'path'),
     ('pattern', 'qskey'),
@@ -6,9 +8,17 @@ SUGGEST_CLUSTERS = [
     ('metadata', 'h2'),
 ]
 
-CLUSTER_TYPES_ACRONYMS = {
-    'P': 'pattern',
-    'M': 'metadata'
+CLUSTER_TYPE_TO_ID = {
+    'pattern': {
+        'path': 10,
+        'qskey': 11,
+    },
+    'metadata': {
+        CONTENT_TYPE_NAME_TO_ID['title']: 20,
+        CONTENT_TYPE_NAME_TO_ID['h1']: 21,
+        CONTENT_TYPE_NAME_TO_ID['h2']: 22,
+        CONTENT_TYPE_NAME_TO_ID['h3']: 32
+    }
 }
 
 QUERY_FIELDS = (
