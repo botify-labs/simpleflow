@@ -48,14 +48,16 @@ class UrlSuggestionsGenerator(object):
         Generate a pandas Series object with index as hash and value as the full request
         """
         final_serie = None
-        for i, (pattern_type, suggestions) in enumerate(self.patterns_clusters.items() + self.metadata_clusters.items()):
-            if len(suggestions) == 0:
-                continue
-            serie = Series([q['string'] for q in suggestions], index=[q['hash'] for q in suggestions], dtype=numpy.character)
-            if final_serie is None:
-                final_serie = serie.copy()
-            else:
-                final_serie = final_serie.append(serie)
+        for cluster_section, clusters in (("pattern", self.patterns_clusters), ("metadata", self.metadata_clusters)):
+            for i, (cluster_name, suggestions) in enumerate(clusters.iteritems()):
+                cluster_id = CLUSTER_TYPE_TO_ID[cluster_section][cluster_name]
+                if len(suggestions) == 0:
+                    continue
+                serie = Series([q['string'] for q in suggestions], index=[int(str(cluster_id) + str(q['hash'])) for q in suggestions], dtype=numpy.character)
+                if final_serie is None:
+                    final_serie = serie.copy()
+                else:
+                    final_serie = final_serie.append(serie)
         return final_serie
 
     def __iter__(self):
