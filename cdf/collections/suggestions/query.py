@@ -288,6 +288,7 @@ class SuggestQuery(BaseMetricsQuery):
                 results[i]["children"] = results[i]["children"][0:10]
                 for k, c in enumerate(results[i]["children"]):
                     results[i]["children"][k]["query"] = self.query_hash_to_string(results[i]["children"][k]["query"])
+                    results[i]["children"][k]["counters"] = deep_dict(results[i]["children"][k]["counters"])
         return results[0:30]
 
     def remove_results_with_common_hashes(self, settings, results):
