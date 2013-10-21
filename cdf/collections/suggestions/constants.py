@@ -1,12 +1,13 @@
 from cdf.streams.mapping import CONTENT_TYPE_INDEX
 
 
-CROSS_PROPERTIES_COLUMNS = ('suggest_combination', 'content_type', 'depth', 'http_code', 'index', 'follow')
+CROSS_PROPERTIES_COLUMNS = ('query', 'content_type', 'depth', 'http_code', 'index', 'follow')
 
 COUNTERS_FIELDS = (
     'pages_nb',
     'total_delay_ms',
-    'redirections_nb',
+    'redirects_to_nb',
+    'redirects_from_nb',
     'canonical_nb',
     'canonical_nb.filled',
     'canonical_nb.not_filled',

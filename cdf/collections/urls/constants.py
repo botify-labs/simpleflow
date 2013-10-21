@@ -1,3 +1,26 @@
+from cdf.streams.mapping import CONTENT_TYPE_NAME_TO_ID
+
+SUGGEST_CLUSTERS = [
+    ('pattern', 'path'),
+    ('pattern', 'qskey'),
+    ('metadata', 'title'),
+    ('metadata', 'h1'),
+    ('metadata', 'h2'),
+]
+
+CLUSTER_TYPE_TO_ID = {
+    'pattern': {
+        'path': 10,
+        'qskey': 11,
+    },
+    'metadata': {
+        CONTENT_TYPE_NAME_TO_ID['title']: 20,
+        CONTENT_TYPE_NAME_TO_ID['h1']: 21,
+        CONTENT_TYPE_NAME_TO_ID['h2']: 22,
+        CONTENT_TYPE_NAME_TO_ID['h3']: 32
+    }
+}
+
 QUERY_FIELDS = (
     "url",
     "protocol",
@@ -12,6 +35,7 @@ QUERY_FIELDS = (
     "delay1",
     "delay2",
     "bytesize",
+    "suggest",
 
     "inlinks_internal_nb",
     "inlinks_internal_nb.total",
@@ -56,8 +80,4 @@ QUERY_FIELDS = (
     "redirects_from",
     "redirects_to",
     "canonical_url",
-)
-
-QUERY_TAGGING_FIELDS = (
-    'resource_type',
 )

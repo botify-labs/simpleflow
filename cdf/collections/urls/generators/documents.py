@@ -1,7 +1,7 @@
 import ujson
 from itertools import izip
 
-from cdf.streams.mapping import STREAMS_HEADERS, CONTENT_TYPE_INDEX
+from cdf.streams.mapping import STREAMS_HEADERS, CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
 from cdf.log import logger
 from cdf.streams.transformations import group_with
 from cdf.streams.exceptions import GroupWithSkipException
@@ -10,6 +10,7 @@ from cdf.streams.masks import list_to_mask
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 from cdf.collections.urls.utils import children_from_field
+from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 
 
 def extract_patterns(attributes, stream_item):
@@ -17,6 +18,7 @@ def extract_patterns(attributes, stream_item):
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
 
     attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
+    attributes['url_not_analyzed'] = attributes['url']
     attributes['url_hash'] = string_to_int64(attributes['url'])
 
     # query_string fields
@@ -28,6 +30,9 @@ def extract_patterns(attributes, stream_item):
         attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
         attributes['query_string_items'] = qs
     attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
+    attributes['metadata_duplicate'] = {verbose_content_type: [] for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
+    attributes['metadata_duplicate_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
+    attributes['metadata_duplicate_is_first'] = {verbose_content_type: False for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
     attributes['inlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('inlinks_internal_nb')}
     attributes['inlinks_internal_nb']['nofollow_combinations'] = []
     attributes['inlinks_internal'] = []
@@ -38,6 +43,7 @@ def extract_patterns(attributes, stream_item):
     attributes['outlinks_internal'] = []
     attributes["inlinks_id_to_idx"] = {}
     attributes["outlinks_id_to_idx"] = {}
+    attributes["patterns"] = []
 
 
 def extract_infos(attributes, stream_item):
@@ -75,7 +81,14 @@ def extract_contents(attributes, stream_item):
     else:
         attributes["metadata"][verbose_content_type].append(txt)
 
-    attributes["metadata_nb"][verbose_content_type] += 1
+
+def extract_contents_duplicate(attributes, stream_item):
+    _, metadata_idx, nb_filled, nb_duplicates, is_first, duplicate_urls = stream_item
+    metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
+    attributes['metadata_nb'][metadata_type] = nb_filled
+    attributes['metadata_duplicate_nb'][metadata_type] = nb_duplicates
+    attributes['metadata_duplicate'][metadata_type] = duplicate_urls
+    attributes['metadata_duplicate_is_first'][metadata_type] = is_first
 
 
 def extract_outlinks(attributes, stream_item):
@@ -200,6 +213,11 @@ def extract_inlinks(attributes, stream_item):
             attributes['canonical_from'].append(url_src)
 
 
+def extract_suggest(attributes, stream_item):
+    url_id, query_hash = stream_item
+    attributes['patterns'].append(query_hash)
+
+
 def end_extract_url(attributes):
     """
     If the url has not been crawled but received redirections or canonicals, we exceptionnaly
@@ -230,8 +248,10 @@ class UrlDocumentGenerator(object):
     EXTRACTORS = {
         'infos': extract_infos,
         'contents': extract_contents,
+        'contents_duplicate': extract_contents_duplicate,
         'inlinks': extract_inlinks,
         'outlinks': extract_outlinks,
+        'suggest': extract_suggest
     }
 
     def __init__(self, stream_patterns, **kwargs):

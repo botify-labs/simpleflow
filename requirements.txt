@@ -1,2 +1,1 @@
--e git+git@github.com:botify-labs/pyelasticsearch.git#egg=pyelasticsearch
 -e git+ssh://git@github.com/sem-io/botify-BQL.git#egg=botify-BQL

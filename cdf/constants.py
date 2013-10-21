@@ -1,18 +1,12 @@
 URLS_DATA_MAPPING = {
     "urls": {
         "properties": {
-            "tagging": {
-                "type": "nested",
-                "properties": {
-                    "resource_type": {
-                        "type": "string",
-                        "index": "not_analyzed"
-                    },
-                    "rev_id": {"type": "long"}
-                }
-            },
             "url": {
                 "type": "string",
+            },
+            "url_not_analyzed": {
+                "type": "string",
+                "index": "not_analyzed"
             },
             "url_hash": {"type": "long"},
             "byte_size": {"type": "long"},
@@ -25,6 +19,7 @@ URLS_DATA_MAPPING = {
             "http_code": {"type": "long"},
             "id": {"type": "long"},
             "crawl_id": {"type": "long"},
+            "patterns": {"type": "long"},
             "metadata_nb": {
                 "properties": {
                     "description": {"type": "long"},
@@ -53,6 +48,13 @@ URLS_DATA_MAPPING = {
                     "title": {"type": "long"},
                     "description": {"type": "long"},
                     "h1": {"type": "long"}
+                }
+            },
+            "metadata_duplicate_is_first": {
+                "properties": {
+                    "title": {"type": "boolean"},
+                    "description": {"type": "boolean"},
+                    "h1": {"type": "boolean"}
                 }
             },
             "inlinks_internal_nb": {

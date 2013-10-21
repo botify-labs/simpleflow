@@ -136,7 +136,8 @@ def transform_metadata_duplicate(query, es_document, attributes, link_type):
     if not 'metadata_duplicate' in es_document or not link_type in es_document['metadata_duplicate']:
         return
     for url_id in es_document['metadata_duplicate'][link_type]:
-        url, http_code = query._id_to_url.get(url_id)
+        document_id = '{}:{}'.format(query.crawl_id, url_id)
+        url, http_code = query._id_to_url.get(document_id)
         attributes['metadata_duplicate'][link_type].append(
             {
                 'url': str(url),
