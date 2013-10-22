@@ -36,13 +36,13 @@ def get_keys_from_stream_suggest(stream_suggest):
         url_id, query_hash = entry
         hashes.append(query_hash)
     # Todo : refactor to send directly the generate key
-    if hashes:
-        keys.append(';'.join(sorted(hashes)))
-    return keys
-    #for L in range(1, len(hashes) + 1):
-    #    for subset in itertools.combinations(hashes, L):
-    #        keys.append(';'.join(sorted(subset)))
+    #if hashes:
+    #    keys.append(';'.join(sorted(hashes)))
     #return keys
+    for L in range(1, len(hashes) + 1):
+        for subset in itertools.combinations(hashes, L):
+            keys.append(';'.join(sorted(subset)))
+    return keys
 
 
 class MetricsAggregator(object):
