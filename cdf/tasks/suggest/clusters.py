@@ -1,14 +1,10 @@
 import os
 
-from autotagging.mdl_clustering.algorithm import mdl_clustering_saas
 from autotagging.association_rules.algorithm import discover_query_strings_patterns
 from autotagging.association_rules.algorithm import discover_metadata_patterns
+from autotagging.association_rules.algorithm import discover_path_patterns
 from autotagging.loading.saas import Content_types
 from autotagging.visualization.textual import save_apriori_algorithm_results
-from autotagging.visualization.textual import save_mdl_results
-from autotagging.visualization.textual import get_non_exclusive_categories
-
-from pandas import HDFStore
 
 from cdf.log import logger
 from cdf.utils.s3 import fetch_files, push_file
@@ -37,19 +33,16 @@ def compute_patterns_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fet
                 force_fetch=force_fetch)
 
     logger.info("Compute patterns cluster")
-    path_partition = mdl_clustering_saas(tmp_dir,
-                                         100000,
-                                         minimal_frequency=minimal_frequency)
 
-    minimal_size = int(minimal_frequency * path_partition.size())
-    for category in get_non_exclusive_categories(path_partition, minimal_size):
-        logger.info("  %s: %d", category["pattern"], len(category["data"]))
+    #find patterns on pathes
+    path_patterns = discover_path_patterns(tmp_dir,
+                                           nb_urls,
+                                           minimal_frequency)
+    if output_dir:
+        save_apriori_algorithm_results(path_patterns,
+                                       output_dir,
+                                       "pattern_path")
 
-    exclusive_categories = False
-    save_mdl_results(path_partition,
-                     minimal_frequency,
-                     exclusive_categories,
-                     output_dir)
     push_file(
         os.path.join(s3_uri, 'clusters_pattern_path.tsv'),
         os.path.join(output_dir, 'clusters_pattern_path.tsv')

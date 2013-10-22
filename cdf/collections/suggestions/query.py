@@ -298,6 +298,7 @@ class SuggestQuery(BaseMetricsQuery):
         target_field = settings.get('target_field', 'pages_nb')
         results_to_remove = set()
         for i, result in enumerate(results):
+            result["query_hash_ids"] = [int(h) for h in result["query"].split(';')]
             hashes = result["query"].split(';')
             for _r in results:
                 local_hashes = _r["query"].split(';')

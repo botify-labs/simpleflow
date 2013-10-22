@@ -35,7 +35,7 @@ QUERY_FIELDS = (
     "delay1",
     "delay2",
     "bytesize",
-    "suggest",
+    "patterns",
 
     "inlinks_internal_nb",
     "inlinks_internal_nb.total",
