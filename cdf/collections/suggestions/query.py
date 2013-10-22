@@ -8,6 +8,7 @@ import numpy
 
 from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS, COUNTERS_FIELDS
 
+from cdf.log import logger
 from cdf.utils.s3 import fetch_files
 from cdf.utils.dict import deep_dict, deep_update
 from .utils import field_has_children, children_from_field
@@ -55,6 +56,8 @@ class BaseMetricsQuery(object):
 
     def __init__(self, hdfstore, options=None):
         self.hdfstore = hdfstore
+        logger.info("self.DF_KEY: '%s'", self.DF_KEY)
+
         self.df = self.hdfstore[self.DF_KEY]
         self.options = options
 
@@ -306,10 +309,10 @@ class SuggestQuery(BaseMetricsQuery):
                     if result["counters"][target_field] == _r["counters"][target_field]:
                         if len(local_hashes) > len(hashes):
                             #print 'remove', result, 'in favor of', _r["query"]
-                            results_to_remove.add(result["query"])
+                            results_to_remove.add(_r["query"])
                         else:
                             #print 'remove', _r, 'in favor of', result["query"]
-                            results_to_remove.add(_r["query"])
+                            results_to_remove.add(result["query"])
                     elif result["counters"][target_field] > _r["counters"][target_field] and _r["counters"][target_field] > 0:
                         if not "children" in results[i]:
                             results[i]["children"] = []
