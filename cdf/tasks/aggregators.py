@@ -11,6 +11,8 @@ from cdf.utils.s3 import fetch_file, fetch_files, push_file
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
 from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS
 from cdf.collections.suggestions.aggregator import MetricsAggregator, MetricsConsolidator
+from cdf.collections.urls.generators.suggestions import MetadataClusterMixin
+from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 
 
 def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='/tmp', force_fetch=False):
@@ -35,6 +37,10 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='
         cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
         streams["stream_%s" % stream_identifier] = cast(split_file(gzip.open(path_local)))
 
+    # Part seems empty
+    if not 'stream_outlinks_counters' in streams:
+        return
+
     aggregator = MetricsAggregator(**streams)
     content = json.dumps(aggregator.get())
     f = open(os.path.join(tmp_dir, 'suggest/counters.{}.json'.format(part_id)), 'w')
@@ -56,13 +62,23 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 
     # Fetch hdf5 file that already contains the full list of requests
     h5_file = os.path.join(tmp_dir, 'suggest.h5')
-    fetch_file(
-        os.path.join(s3_uri, 'suggest.h5'),
-        h5_file,
-        force_fetch=force_fetch
-    )
+    if os.path.exists(h5_file):
+        os.remove(h5_file)
+
+    # new
+    u = MetadataClusterMixin()
+    for cluster_type, cluster_name in SUGGEST_CLUSTERS:
+        filename = 'clusters_{}_{}.tsv'.format(cluster_type, cluster_name)
+        _f, fetched = fetch_file(os.path.join(s3_uri, filename), os.path.join(tmp_dir, filename), force_fetch=force_fetch)
+        cluster_values = [k.split('\t', 1)[0] for k in open(_f)]
+        if cluster_type == "metadata":
+            u.add_metadata_cluster(cluster_name, cluster_values)
+        else:
+            u.add_pattern_cluster(cluster_name, cluster_values)
 
     store = HDFStore(h5_file, complevel=9, complib='blosc')
+    # Make K/V Store dataframe (hash to request)
+    store['requests'] = u.make_clusters_series()
 
     files_fetched = fetch_files(s3_uri,
                                 tmp_dir,

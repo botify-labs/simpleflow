@@ -26,12 +26,9 @@ def transform_queries(queries_lst, func=query_to_python):
     return transformed
 
 
-class UrlSuggestionsGenerator(object):
+class MetadataClusterMixin(object):
 
-    def __init__(self, stream_patterns, stream_infos, stream_contents):
-        self.stream_patterns = stream_patterns
-        self.stream_infos = stream_infos
-        self.stream_contents = stream_contents
+    def __init__(self):
         self.patterns_clusters = dict()
         self.metadata_clusters = dict()
 
@@ -59,6 +56,15 @@ class UrlSuggestionsGenerator(object):
                 else:
                     final_serie = final_serie.append(serie)
         return final_serie
+
+
+class UrlSuggestionsGenerator(MetadataClusterMixin):
+
+    def __init__(self, stream_patterns, stream_infos, stream_contents):
+        super(UrlSuggestionsGenerator, self).__init__()
+        self.stream_patterns = stream_patterns
+        self.stream_infos = stream_infos
+        self.stream_contents = stream_contents
 
     def __iter__(self):
         http_code_idx = idx_from_stream('infos', 'http_code')

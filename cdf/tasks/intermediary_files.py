@@ -2,7 +2,7 @@ import os
 import gzip
 import itertools
 
-from pandas import HDFStore
+from boto.exception import S3ResponseError
 
 from cdf.utils.s3 import fetch_files, fetch_file, push_file
 from cdf.streams.caster import Caster
@@ -45,6 +45,10 @@ def make_url_to_suggested_patterns_file(crawl_id, s3_uri, part_id, tmp_dir_prefi
         cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
         streams[stream_identifier] = cast(split_file(gzip.open(path_local)))
 
+    # part_id seems empty...
+    if not 'contents' in streams:
+        return
+
     u = UrlSuggestionsGenerator(streams['patterns'], streams['infos'], streams['contents'])
 
     for cluster_type, cluster_name in SUGGEST_CLUSTERS:
@@ -55,16 +59,6 @@ def make_url_to_suggested_patterns_file(crawl_id, s3_uri, part_id, tmp_dir_prefi
             u.add_metadata_cluster(cluster_name, cluster_values)
         else:
             u.add_pattern_cluster(cluster_name, cluster_values)
-
-    # Make K/V Store dataframe (hash to request)
-    h5_file = os.path.join(tmp_dir, 'suggest.h5')
-    if os.path.exists(h5_file):
-        os.remove(h5_file)
-
-    store = HDFStore(h5_file, complevel=9, complib='blosc')
-    store['requests'] = u.make_clusters_series()
-    store.close()
-    push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)
 
     cluster_filename = 'url_suggested_clusters.txt.{}.gz'.format(part_id)
     f = gzip.open(os.path.join(tmp_dir, cluster_filename), 'wb')
@@ -89,11 +83,14 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
         stream_name = "inlinks_raw"
 
     links_file_path = 'url{}.txt.{}.gz'.format("links" if link_direction == "out" else "inlinks", part_id)
-    links_file, fecthed = fetch_file(
-        os.path.join(s3_uri, links_file_path),
-        os.path.join(tmp_dir, links_file_path),
-        force_fetch=force_fetch
-    )
+    try:
+        links_file, fecthed = fetch_file(
+            os.path.join(s3_uri, links_file_path),
+            os.path.join(tmp_dir, links_file_path),
+            force_fetch=force_fetch
+        )
+    except S3ResponseError:
+        return
 
     cast = Caster(STREAMS_HEADERS[stream_name.upper()]).cast
     stream_links = cast(split_file(gzip.open(links_file)))
