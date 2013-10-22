@@ -5,6 +5,7 @@ import copy
 import operator
 from pandas import HDFStore
 import numpy
+import itertools
 
 from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS, COUNTERS_FIELDS
 
@@ -55,6 +56,7 @@ class BaseMetricsQuery(object):
 
     def __init__(self, hdfstore, options=None):
         self.hdfstore = hdfstore
+
         self.df = self.hdfstore[self.DF_KEY]
         self.options = options
 
@@ -297,27 +299,27 @@ class SuggestQuery(BaseMetricsQuery):
         """
         target_field = settings.get('target_field', 'pages_nb')
         results_to_remove = set()
-        for i, result in enumerate(results):
-            result["query_hash_ids"] = [int(h) for h in result["query"].split(';')]
-            hashes = result["query"].split(';')
-            for _r in results:
-                local_hashes = _r["query"].split(';')
-                if all(h in local_hashes for h in hashes):
-                    if result["counters"][target_field] == _r["counters"][target_field]:
-                        if len(local_hashes) > len(hashes):
-                            #print 'remove', result, 'in favor of', _r["query"]
-                            results_to_remove.add(result["query"])
-                        else:
-                            #print 'remove', _r, 'in favor of', result["query"]
-                            results_to_remove.add(_r["query"])
-                    elif result["counters"][target_field] > _r["counters"][target_field] and _r["counters"][target_field] > 0:
-                        if not "children" in results[i]:
-                            results[i]["children"] = []
-                        results[i]["children"].append(copy.copy(_r))
-                        results_to_remove.add(_r["query"])
-        for result in results:
-            if result["query"] in results_to_remove:
-                results.remove(result)
+        for index1, index2 in itertools.permutations(range(len(results)), 2):
+            result1 = results[index1]
+            result2 = results[index2]
+            hashes1 = frozenset(result1["query"].split(';'))
+            hashes2 = frozenset(result2["query"].split(';'))
+
+            if hashes2.issubset(hashes1):
+                counter1 = result1["counters"][target_field]
+                counter2 = result2["counters"][target_field]
+
+                if counter1 == counter2:
+                    if len(hashes2) > len(hashes1):
+                        results_to_remove.add(index2)
+                    else:
+                        results_to_remove.add(index1)
+                elif counter1 > counter2 and counter2 > 0:
+                    if not "children" in result1:
+                        result1["children"] = []
+                    result1["children"].append(copy.copy(result2))
+                    results_to_remove.add(index2)
+        results = [result for i, result in enumerate(results) if i not in results_to_remove]
         return results
 
     def df_filter_after_agg(self, df):
