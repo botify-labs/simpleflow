@@ -300,11 +300,15 @@ class SuggestQuery(BaseMetricsQuery):
         """
         target_field = settings.get('target_field', 'pages_nb')
         results_to_remove = set()
+
+        for result in results:
+            result["query_hash"] = frozenset(result["query"].split(';'))
+
         for index1, index2 in itertools.permutations(range(len(results)), 2):
             result1 = results[index1]
             result2 = results[index2]
-            hashes1 = frozenset(result1["query"].split(';'))
-            hashes2 = frozenset(result2["query"].split(';'))
+            hashes1 = result1["query_hash"]
+            hashes2 = result2["query_hash"]
 
             if hashes2.issubset(hashes1):
                 counter1 = result1["counters"][target_field]
