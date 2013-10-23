@@ -49,9 +49,11 @@ def get_keys_from_stream_suggest(stream_suggest):
     for L in range(1, nb_terms + 1):
         for subset in itertools.combinations(hashes, L):
             keys.append(';'.join(sorted(subset)))
-    url_combination = ';'.join(sorted(hashes))
-    if url_combination not in keys:
-        keys.append(url_combination)
+
+    if hashes:
+        url_combination = ';'.join(sorted(hashes))
+        if url_combination not in keys:
+            keys.append(url_combination)
     return keys
 
 
