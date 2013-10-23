@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import re
+import json
 import copy
 import operator
 from pandas import HDFStore
@@ -145,8 +146,8 @@ class BaseMetricsQuery(object):
 
         final_fields = []
         for f in fields:
-            if f not in self.FIELDS:
-                raise self.BadRequestException('Field {} not allowed in query'.format(f))
+            #if f not in self.FIELDS:
+            #    raise self.BadRequestException('Field {} not allowed in query'.format(f))
             if field_has_children(f):
                 final_fields += children_from_field(f)
             else:
@@ -397,3 +398,20 @@ class SuggestQuery(BaseMetricsQuery):
             return df[df['pages_nb'] > threshold]
         """
         return df
+
+
+class SuggestSummary(object):
+
+    def __init__(self, content):
+        self.content = content
+
+    @classmethod
+    def from_s3_uri(cls, crawl_id, s3_uri, options=None, tmp_dir_prefix='/tmp', force_fetch=False):
+        # Fetch locally the files from S3
+        tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+        files_fetched = fetch_files(s3_uri, tmp_dir, regexp='suggested_patterns_summary.json', force_fetch=force_fetch)
+        content = json.loads(open(files_fetched[0][0]).read())
+        return cls(content)
+
+    def get(self):
+        return self.content

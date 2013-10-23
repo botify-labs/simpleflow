@@ -131,7 +131,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             query_type.append(['metadata', metadata_type, metadata_status])
             queries.append(
                 {
-                    "fields": ["pages_nb", "metadata_nb.{}.{}".format(metadata_type, metadata_status)],
+                    "fields": ["pages_nb", "metadata_nb.{}".format(metadata_type)],
                     "target_field": "metadata_nb.{}.{}".format(metadata_type, metadata_status)
                 }
             )
@@ -149,6 +149,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
     final_summary = []
     q = SuggestQuery.from_s3_uri(crawl_id, s3_uri)
     for i, query in enumerate(queries):
+        query["display_children"] = False
         results = q.query(query)
         for result in results:
             hash_id_filters = [{'field': 'patterns', 'value': hash_id} for hash_id in result['query_hash_id']]
@@ -157,17 +158,14 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 "filters": {'and': hash_id_filters + urls_filters[i]}
             }
             urls = Query(es_location, es_index, es_doc_type, crawl_id, rev_num, urls_query, start=0, limit=10, sort=('id',))
-            final_summary.append(
-                {
-                    "type": query_type[i],
-                    "results": result,
-                    "score": reduce(dict.get, query["target_field"].split("."), result["counters"]),
-                    "urls": list(urls.results)
-                }
-            )
+
+            result["urls"] = list(urls.results)
+            result["score"] = reduce(dict.get, query["target_field"].split("."), result["counters"])
+            result["type"] = query_type[i]
+            final_summary.append(result)
 
     #final_summary = sorted(final_summary, key=lambda i: i['score'], reverse=True)
-    final_summary = sorted(final_summary, key=lambda i: i['results']['relevance'], reverse=True)
+    final_summary = sorted(final_summary, key=lambda i: i['relevance'], reverse=True)
     final_summary_flatten = json.dumps(final_summary, indent=4)
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
     if not os.path.exists(os.path.join(tmp_dir)):
