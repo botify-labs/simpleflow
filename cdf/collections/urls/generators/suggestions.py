@@ -13,6 +13,8 @@ from pandas import Series
 def transform_queries(queries_lst, func=query_to_python):
     transformed = []
     for query in queries_lst:
+        if query == "Unrecognized pattern":
+            continue
         try:
             _func = func(query)
         except Exception, e:
