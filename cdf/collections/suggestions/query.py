@@ -279,6 +279,8 @@ class SuggestQuery(BaseMetricsQuery):
 
         results = self.remove_results_with_common_hashes(settings, results)
 
+        results = self.sort_results_by_relevance(settings, results)
+
         # Resolve query
         for i, r in enumerate(results):
             results[i]["query_hash_id"] = [int(v) for v in results[i]["query"].split(';')]
@@ -293,6 +295,43 @@ class SuggestQuery(BaseMetricsQuery):
                     results[i]["children"][k]["query"] = self.query_hash_to_string(results[i]["children"][k]["query"])
                     results[i]["children"][k]["counters"] = deep_dict(results[i]["children"][k]["counters"])
         return results[0:30]
+
+    def sort_results_by_relevance(self, settings, results):
+        """Sort the query results by relevance.
+        For each result, compute its relevance
+        and add it to the result as an attribute.
+
+        The concept of relevance is fuzzy.
+        In the present situation a cluster is considered as relevant
+        for a given query if it is close from the query result
+
+        For formally the relevance is the Jaccard similarity.
+        - relevance = |intersection| / |union|
+        with intersection = intersection(cluster, query result)
+        and union = union(cluster, query result)
+
+        This metric discard big clusters that contain the query result
+        as well as small clusters that are entirely contained in the query result
+        """
+        metrics_query = MetricsQuery(self.hdfstore)
+        metrics_result = metrics_query.query(settings)
+
+        target_field = settings.get('target_field', 'pages_nb')
+
+        #metrics_result is a dictionary so we cannot access it elements with dot notation
+        target_field_full_size = reduce(dict.get, target_field.split("."), metrics_result["counters"])
+
+        for result in results:
+            intersection_size = result["counters"][target_field]
+            #FIXME this is not the union but an approximation of it
+            #we should try union = size1 + size2 - intersection
+            union_size = max(target_field_full_size, result["counters"]["pages_nb"])
+            relevance = float(intersection_size)/float(union_size)
+            #add a relevance element, so that it can be used later on
+            result["relevance"] = relevance
+        results = sorted(results, reverse = True, key = lambda x: x["relevance"])
+
+        return results
 
     def remove_results_with_common_hashes(self, settings, results):
         """
