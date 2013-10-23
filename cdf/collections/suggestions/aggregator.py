@@ -203,8 +203,11 @@ class MetricsAggregator(object):
                 # Meta filled
                 metadata_dict = results[key]['metadata_nb'][CONTENT_TYPE_INDEX[ct_id]]
                 metadata_dict['filled'] += 1
-                if nb_duplicates == 1 and ct_id in MANDATORY_CONTENT_TYPES_IDS:
-                    metadata_dict['unique'] += 1
+                if ct_id in MANDATORY_CONTENT_TYPES_IDS:
+                    if nb_duplicates == 1:
+                        metadata_dict['unique'] += 1
+                    else:
+                        metadata_dict['duplicate'] += 1
 
             # If a metadata type is not set, we increment not_filled
             for ct_id in MANDATORY_CONTENT_TYPES_IDS:
