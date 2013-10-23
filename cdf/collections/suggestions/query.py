@@ -281,6 +281,7 @@ class SuggestQuery(BaseMetricsQuery):
 
         # Resolve query
         for i, r in enumerate(results):
+            results[i]["query_hash_id"] = [int(v) for v in results[i]["query"].split(';')]
             results[i]["query"] = self.query_hash_to_string(results[i]["query"])
             results[i]["counters"] = deep_dict(results[i]["counters"])
             if "children" in results[i]:
