@@ -312,14 +312,21 @@ class SuggestQuery(BaseMetricsQuery):
 
                 if counter1 == counter2:
                     if len(hashes2) > len(hashes1):
+                        # This should never happen since hashes2 C hashes1
+                        # and all hashes are supposed to be unique
                         results_to_remove.add(index2)
                     else:
                         results_to_remove.add(index1)
-                elif counter1 > counter2 and counter2 > 0:
-                    if not "children" in result1:
-                        result1["children"] = []
-                    result1["children"].append(copy.copy(result2))
-                    results_to_remove.add(index2)
+                # hashes1 is more specific that hashes2
+                # so we have counter2 >= counter1
+                # since they are not equal (cf. previous test)
+                # we have counter2 > counter1.
+                # However we recheck this to be sure.
+                elif counter2 > counter1 and counter1 > 0:
+                    if not "children" in result2:
+                        result2["children"] = []
+                    result2["children"].append(copy.copy(result1))
+                    results_to_remove.add(index1)
         results = [result for i, result in enumerate(results) if i not in results_to_remove]
         return results
 
