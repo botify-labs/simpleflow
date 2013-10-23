@@ -253,7 +253,7 @@ class SuggestQuery(BaseMetricsQuery):
         return super(SuggestQuery, self)._display_field(field, value)
     """
 
-    def query(self, settings):
+    def query(self, settings, sort_results=True):
         final_fields = self.get_fields_from_settings(settings)
         df = self.df.copy()
 
@@ -277,9 +277,9 @@ class SuggestQuery(BaseMetricsQuery):
             }
             results.append(result)
 
-        results = self.remove_results_with_common_hashes(settings, results)
-
-        results = self.sort_results_by_relevance(settings, results)
+        if sort_results:
+            results = self.remove_results_with_common_hashes(settings, results)
+            results = self.sort_results_by_relevance(settings, results)
 
         # Resolve query
         for i, r in enumerate(results):
@@ -313,19 +313,39 @@ class SuggestQuery(BaseMetricsQuery):
         This metric discard big clusters that contain the query result
         as well as small clusters that are entirely contained in the query result
         """
-        metrics_query = MetricsQuery(self.hdfstore)
-        metrics_result = metrics_query.query(settings)
-
         target_field = settings.get('target_field', 'pages_nb')
+        if target_field.startswith('metadata_nb.'):
+            metrics_settings = {
+                "filters": {
+                    "field": target_field,
+                    "value": 1,
+                    "predicate": "gte"
+                }
+            }
+        else:
+            metrics_settings = settings
+        metrics_query = MetricsQuery(self.hdfstore)
+        metrics_result = metrics_query.query(metrics_settings)
 
         #metrics_result is a dictionary so we cannot access it elements with dot notation
         target_field_full_size = reduce(dict.get, target_field.split("."), metrics_result["counters"])
 
         for result in results:
+            result["score_global"] = target_field_full_size
+
+            suggestions_query = SuggestQuery(self.hdfstore)
+            suggestions_result = suggestions_query.query(
+                {"filters": {"field": "query", "value": result["query"]}},
+                sort_results=False
+            )
+            cluster_size = suggestions_result[0]["counters"]["pages_nb"]
+            result["score_cluster"] = cluster_size
+
             intersection_size = result["counters"][target_field]
             #FIXME this is not the union but an approximation of it
             #we should try union = size1 + size2 - intersection
-            union_size = max(target_field_full_size, result["counters"]["pages_nb"])
+            #union_size = max(target_field_full_size, result["counters"]["pages_nb"])
+            union_size = max(target_field_full_size, cluster_size)
             relevance = float(intersection_size)/float(union_size)
             #add a relevance element, so that it can be used later on
             result["relevance"] = relevance
