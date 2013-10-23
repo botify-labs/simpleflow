@@ -13,6 +13,8 @@ from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS
 from cdf.collections.suggestions.aggregator import MetricsAggregator, MetricsConsolidator
 from cdf.collections.urls.generators.suggestions import MetadataClusterMixin
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
+from cdf.collections.suggestions.query import SuggestQuery
+from cdf.collections.urls.query import Query
 
 
 def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='/tmp', force_fetch=False):
@@ -93,3 +95,91 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 
     store.close()
     push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)
+
+
+def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, rev_num, tmp_dir_prefix='/tmp', force_fetch=False):
+    query_type = []
+    queries = []
+    urls_fields = []
+    urls_filters = []
+    for http_code in (300, 400, 500):
+        query_type.append(['http_code', str(http_code)[0] + 'xx'])
+        queries.append(
+            {
+                "fields": ["pages_nb"],
+                "target_field": "pages_nb",
+                "filters": {
+                    'and': [
+                        {"field": "http_code", "value": http_code, "predicate": "gte"},
+                        {"field": "http_code", "value": http_code + 99, "predicate": "lt"},
+                    ]
+                }
+            }
+        )
+        if http_code == 300:
+            urls_fields.append(["redirects_to"])
+        else:
+            urls_fields.append(["http_code"])
+        urls_filters.append(
+            [
+                {"field": "http_code", "value": http_code, "predicate": "gte"},
+                {"field": "http_code", "value": http_code + 99, "predicate": "lt"},
+            ]
+        )
+    for metadata_type in ('title', 'description', 'h1'):
+        for metadata_status in ('duplicate', 'not_filled'):
+            query_type.append(['metadata', metadata_type, metadata_status])
+            queries.append(
+                {
+                    "fields": ["pages_nb", "metadata_nb.{}.{}".format(metadata_type, metadata_status)],
+                    "target_field": "metadata_nb.{}.{}".format(metadata_type, metadata_status)
+                }
+            )
+            if metadata_status == "duplicate":
+                urls_fields.append(["metadata.{}".format(metadata_type), "metadata_duplicate.{}".format(metadata_type)])
+                urls_filters.append([
+                    {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1, "predicate": "gt"}
+                ])
+            else:
+                urls_fields.append([])
+                urls_filters.append([
+                    {"field": "metadata_nb.{}".format(metadata_type), "value": 0}
+                ])
+
+    final_summary = []
+    q = SuggestQuery.from_s3_uri(crawl_id, s3_uri)
+    for i, query in enumerate(queries):
+        results = q.query(query)
+        for result in results:
+            hash_id_filters = [{'field': 'patterns', 'value': hash_id} for hash_id in result['query_hash_id']]
+            urls_query = {
+                "fields": ["url"] + urls_fields[i],
+                "filters": {'and': hash_id_filters + urls_filters[i]}
+            }
+            urls = Query(es_location, es_index, es_doc_type, crawl_id, rev_num, urls_query, start=0, limit=10, sort=('id',))
+            final_summary.append(
+                {
+                    "type": query_type[i],
+                    "results": result,
+                    "score": reduce(dict.get, query["target_field"].split("."), result["counters"]),
+                    "urls": list(urls.results)
+                }
+            )
+
+    final_summary = sorted(final_summary, key=lambda i: i['score'], reverse=True)
+    final_summary_flatten = json.dumps(final_summary, indent=4)
+    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    if not os.path.exists(os.path.join(tmp_dir)):
+        os.makedirs(os.path.join(tmp_dir))
+
+    summary_file = os.path.join(tmp_dir, 'suggested_patterns_summary.json')
+    f = open(os.path.join(summary_file), 'w')
+    f.write(final_summary_flatten)
+    f.close()
+
+    push_file(
+        os.path.join(s3_uri, 'suggested_patterns_summary.json'),
+        summary_file
+    )
+
+    print final_summary_flatten

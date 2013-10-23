@@ -31,10 +31,10 @@ def get_keys_from_stream_suggest(stream_suggest):
     Ex for hashes ["1", "2", "3"], it will return ["1", "2", "3", "1;2", "1;3", "2;3", "1;2;3"]
     """
     keys = ["0"]
-    hashes = []
+    hashes = set()
     for entry in stream_suggest:
         url_id, query_hash = entry
-        hashes.append(query_hash)
+        hashes.add(query_hash)
     # Todo : refactor to send directly the generate key
     #if hashes:
     #    keys.append(';'.join(sorted(hashes)))
