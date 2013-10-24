@@ -3,14 +3,18 @@ import os
 from autotagging.association_rules.algorithm import discover_query_strings_patterns
 from autotagging.association_rules.algorithm import discover_metadata_patterns
 from autotagging.association_rules.algorithm import discover_path_patterns
-from autotagging.loading.saas import Content_types
+from autotagging.association_rules.algorithm import discover_mixed_patterns
+from autotagging.association_rules.algorithm import build_children_relationship
 from autotagging.visualization.textual import save_apriori_algorithm_results
+from autotagging.visualization.textual import save_child_relationship
 
+from cdf.streams.mapping import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
+from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_files, push_file
 
+def compute_mixed_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
 
-def compute_patterns_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
     minimal_frequency = 0.03
     nb_urls = 100000
 
@@ -29,65 +33,59 @@ def compute_patterns_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fet
     # For now, compute clusters only with first part (to be improved)
     fetch_files(s3_uri,
                 tmp_dir,
-                regexp=['url(ids|contents).txt.0.gz'],
+                regexp=['url(ids|infos|xcontents).txt.0.gz'],
                 force_fetch=force_fetch)
 
+
     logger.info("Compute patterns cluster")
+
+    patterns = []
+
 
     #find patterns on pathes
     path_patterns = discover_path_patterns(tmp_dir,
                                            nb_urls,
                                            minimal_frequency)
-    if output_dir:
-        save_apriori_algorithm_results(path_patterns,
-                                       output_dir,
-                                       "pattern_path")
-
-    push_file(
-        os.path.join(s3_uri, 'clusters_pattern_path.tsv'),
-        os.path.join(output_dir, 'clusters_pattern_path.tsv')
-    )
+    cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["path"]
+    patterns.append([(cluster_type, pattern, support) for pattern, support in path_patterns])
 
     query_string_patterns = discover_query_strings_patterns(tmp_dir,
                                                             nb_urls,
                                                             minimal_frequency)
-    save_apriori_algorithm_results(query_string_patterns,
-                                   output_dir,
-                                   "pattern_qskey")
-    push_file(
-        os.path.join(s3_uri, 'clusters_pattern_qskey.tsv'),
-        os.path.join(output_dir, 'clusters_pattern_qskey.tsv')
-    )
+    cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["qskey"]
+    patterns.append([(cluster_type, pattern, support) for pattern, support in query_string_patterns])
 
-
-def compute_metadata_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
-    minimal_frequency = 0.03
-    nb_urls = 100000
-
-    # Fetch locally the files from S3
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    if not os.path.exists(tmp_dir):
-        try:
-            os.makedirs(tmp_dir)
-        except:
-            pass
-
-    output_dir = os.path.join(tmp_dir, 'clusters')
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    for metadata_type in [Content_types.TITLE, Content_types.H1, Content_types.H2]:
-        logger.info("Discovering patterns on %s.", Content_types.get_string(metadata_type))
+    for metadata_type in ["title", "h1", "h2"]:
+        logger.info("Discovering patterns on %s.", metadata_type)
         metadata_patterns = discover_metadata_patterns(tmp_dir,
                                                        nb_urls,
                                                        minimal_frequency,
                                                        metadata_type)
-        suffix = Content_types.get_string(metadata_type)
-        suffix = "%s_%s" % ("metadata", suffix)
-        save_apriori_algorithm_results(metadata_patterns,
+
+        cluster_type = CLUSTER_TYPE_TO_ID["metadata"][CONTENT_TYPE_NAME_TO_ID[metadata_type]]
+        patterns.append([(cluster_type, pattern, support) for pattern, support in metadata_patterns])
+
+    mixed_patterns = discover_mixed_patterns(patterns, minimal_frequency)
+    if output_dir:
+        save_apriori_algorithm_results(mixed_patterns,
                                        output_dir,
-                                       suffix)
-        push_file(
-            os.path.join(s3_uri, 'clusters_{}.tsv'.format(suffix)),
-            os.path.join(output_dir, 'clusters_{}.tsv'.format(suffix))
-        )
+                                       "mixed")
+    push_file(
+        os.path.join(s3_uri, 'clusters_mixed.tsv'),
+        os.path.join(output_dir, 'clusters_mixed.tsv')
+    )
+
+    push_file(
+        os.path.join(s3_uri, 'url_suggested_clusters.txt.0.gz'),
+        os.path.join(output_dir, 'url_suggested_clusters.txt.0.gz')
+    )
+
+
+    children_dictionary = build_children_relationship(mixed_patterns)
+    if output_dir:
+        save_child_relationship(children_dictionary, output_dir)
+
+    push_file(
+        os.path.join(s3_uri, 'cluster_mixed_children.tsv'),
+        os.path.join(output_dir, 'cluster_mixed_children.tsv')
+    )

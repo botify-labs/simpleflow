@@ -2,7 +2,6 @@
 import os
 import gzip
 import json
-
 from pandas import HDFStore
 
 from cdf.streams.caster import Caster
@@ -69,14 +68,25 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 
     # new
     u = MetadataClusterMixin()
-    for cluster_type, cluster_name in SUGGEST_CLUSTERS:
-        filename = 'clusters_{}_{}.tsv'.format(cluster_type, cluster_name)
-        _f, fetched = fetch_file(os.path.join(s3_uri, filename), os.path.join(tmp_dir, filename), force_fetch=force_fetch)
-        cluster_values = [k.split('\t', 1)[0] for k in open(_f)]
-        if cluster_type == "metadata":
-            u.add_metadata_cluster(cluster_name, cluster_values)
-        else:
-            u.add_pattern_cluster(cluster_name, cluster_values)
+    for cluster_type in SUGGEST_CLUSTERS:
+        filename = 'clusters_{}.tsv'.format(cluster_type)
+
+        source_uri = os.path.join(s3_uri, filename)
+        destination_path = os.path.join(tmp_dir, "clusters", filename)
+
+        file_, fetched = fetch_file(source_uri,
+                                    destination_path,
+                                    force_fetch=force_fetch)
+
+        cluster_values = []
+        csv_reader = csv.reader(open(file_),
+                                delimiter="\t",
+                                quotechar=None,
+                                quoting=csv.QUOTE_NONE)
+        for row in csv_reader:
+            pattern, hash, _ = row
+            cluster_values.append((pattern, hash))
+        u.add_pattern_cluster(cluster_type, cluster_values)
 
     store = HDFStore(h5_file, complevel=9, complib='blosc')
     # Make K/V Store dataframe (hash to request)
@@ -191,7 +201,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
     if not os.path.exists(os.path.join(tmp_dir)):
         os.makedirs(os.path.join(tmp_dir))
 
-    summary_file = os.path.join(tmp_dir, 'suggested_patterns_summary.json')
+    summary_file = os.path.join(tmp_dir, 'clusters', 'suggested_patterns_summary.json')
     f = open(os.path.join(summary_file), 'w')
     f.write(final_summary_flatten)
     f.close()

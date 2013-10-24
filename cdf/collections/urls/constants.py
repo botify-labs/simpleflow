@@ -1,12 +1,8 @@
 from cdf.streams.mapping import CONTENT_TYPE_NAME_TO_ID
 
-SUGGEST_CLUSTERS = [
-    ('pattern', 'path'),
-    ('pattern', 'qskey'),
-    ('metadata', 'title'),
-    ('metadata', 'h1'),
-    ('metadata', 'h2'),
-]
+
+SUGGEST_CLUSTERS = ['mixed']
+
 
 CLUSTER_TYPE_TO_ID = {
     'pattern': {

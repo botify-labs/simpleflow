@@ -40,7 +40,7 @@ def get_keys_from_stream_suggest(stream_suggest):
         hashes.add(query_hash)
     # Todo : refactor to send directly the generate key
     if hashes:
-        keys.append(';'.join(sorted(hashes)))
+        keys.extend(hashes)
     return keys
 
 
