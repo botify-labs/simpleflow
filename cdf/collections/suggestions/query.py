@@ -279,7 +279,6 @@ class SuggestQuery(BaseMetricsQuery):
             results.append(result)
 
         if sort_results:
-            results = self.remove_results_with_common_hashes(settings, results)
             results = self.sort_results_by_relevance(settings, results)
 
         # Resolve query
@@ -352,48 +351,6 @@ class SuggestQuery(BaseMetricsQuery):
             result["relevance"] = relevance
         results = sorted(results, reverse = True, key = lambda x: x["relevance"])
 
-        return results
-
-    def remove_results_with_common_hashes(self, settings, results):
-        """
-        If 1;3 and 1;2;3 has the same value for target field, we remove the one with the less hashes
-        """
-        target_field = settings.get('target_field', 'pages_nb')
-        results_to_remove = set()
-
-        for result in results:
-            result["query_hash"] = frozenset(result["query"].split(';'))
-
-        for index1, index2 in itertools.permutations(range(len(results)), 2):
-            result1 = results[index1]
-            result2 = results[index2]
-            hashes1 = result1["query_hash"]
-            hashes2 = result2["query_hash"]
-
-            if hashes2.issubset(hashes1):
-                counter1 = result1["counters"][target_field]
-                counter2 = result2["counters"][target_field]
-
-                if counter1 == counter2:
-                    if len(hashes2) > len(hashes1):
-                        # This should never happen since hashes2 C hashes1
-                        # and all hashes are supposed to be unique
-                        results_to_remove.add(index2)
-                    else:
-                        results_to_remove.add(index1)
-                # hashes1 is more specific that hashes2
-                # so we have counter2 >= counter1
-                # since they are not equal (cf. previous test)
-                # we have counter2 > counter1.
-                # However we recheck this to be sure.
-                elif counter2 > counter1 and counter1 > 0:
-                    if not "children" in result2:
-                        result2["children"] = []
-                    result2["children"].append(copy.copy(result1))
-                    results_to_remove.add(index1)
-        results = [result for i, result in enumerate(results) if i not in results_to_remove]
-        for result in results:
-            del result["query_hash"]
         return results
 
     def df_filter_after_agg(self, df):
