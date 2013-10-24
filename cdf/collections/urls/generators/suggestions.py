@@ -50,7 +50,9 @@ class MetadataClusterMixin(object):
                 cluster_id = CLUSTER_TYPE_TO_ID[cluster_section][cluster_name]
                 if len(suggestions) == 0:
                     continue
-                serie = Series([q['string'] for q in suggestions], index=[int(str(cluster_id) + str(q['hash'])) for q in suggestions], dtype=numpy.character)
+                # Temporary deduplicate queries, some are set 2 times like in path file for francetvinfo, Simon is fixing it
+                suggestions = list(set((q['hash'], q['string']) for q in suggestions))
+                serie = Series([q[1] for q in suggestions], index=[int(str(cluster_id) + str(q[0])) for q in suggestions], dtype=numpy.character)
                 if final_serie is None:
                     final_serie = serie.copy()
                 else:

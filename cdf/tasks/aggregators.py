@@ -180,5 +180,3 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         os.path.join(s3_uri, 'suggested_patterns_summary.json'),
         summary_file
     )
-
-    print final_summary_flatten
