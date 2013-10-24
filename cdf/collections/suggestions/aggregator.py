@@ -34,16 +34,27 @@ def get_keys_from_stream_suggest(stream_suggest):
     hashes = set()
     for entry in stream_suggest:
         url_id, query_hash = entry
+        # We keep only the path and qskey streams (prefix by 1)
+        if not query_hash.startswith('1'):
+            continue
         hashes.add(query_hash)
     # Todo : refactor to send directly the generate key
-    #if hashes:
-    #    keys.append(';'.join(sorted(hashes)))
-    #return keys
-    for L in range(1, len(hashes) + 1):
+    if hashes:
+        keys.append(';'.join(sorted(hashes)))
+    return keys
+
+    # Test with a max of 3 or 4 terms, depending on the number of hashes
+    """
+    nb_terms = len(hashes)
+    if nb_terms > 10:
+        nb_terms = 3
+    elif nb_terms > 4:
+        nb_terms = 4
+    for L in range(1, nb_terms + 1):
         for subset in itertools.combinations(hashes, L):
             keys.append(';'.join(sorted(subset)))
     return keys
-
+    """
 
 class MetricsAggregator(object):
 
