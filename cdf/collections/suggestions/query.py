@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import re
+import json
 import copy
 import operator
 from pandas import HDFStore
@@ -145,8 +146,8 @@ class BaseMetricsQuery(object):
 
         final_fields = []
         for f in fields:
-            if f not in self.FIELDS:
-                raise self.BadRequestException('Field {} not allowed in query'.format(f))
+            #if f not in self.FIELDS:
+            #    raise self.BadRequestException('Field {} not allowed in query'.format(f))
             if field_has_children(f):
                 final_fields += children_from_field(f)
             else:
@@ -253,7 +254,7 @@ class SuggestQuery(BaseMetricsQuery):
         return super(SuggestQuery, self)._display_field(field, value)
     """
 
-    def query(self, settings):
+    def query(self, settings, sort_results=True):
         final_fields = self.get_fields_from_settings(settings)
         df = self.df.copy()
 
@@ -277,7 +278,9 @@ class SuggestQuery(BaseMetricsQuery):
             }
             results.append(result)
 
-        results = self.remove_results_with_common_hashes(settings, results)
+        if sort_results:
+            results = self.remove_results_with_common_hashes(settings, results)
+            results = self.sort_results_by_relevance(settings, results)
 
         # Resolve query
         for i, r in enumerate(results):
@@ -293,6 +296,63 @@ class SuggestQuery(BaseMetricsQuery):
                     results[i]["children"][k]["query"] = self.query_hash_to_string(results[i]["children"][k]["query"])
                     results[i]["children"][k]["counters"] = deep_dict(results[i]["children"][k]["counters"])
         return results[0:30]
+
+    def sort_results_by_relevance(self, settings, results):
+        """Sort the query results by relevance.
+        For each result, compute its relevance
+        and add it to the result as an attribute.
+
+        The concept of relevance is fuzzy.
+        In the present situation a cluster is considered as relevant
+        for a given query if it is close from the query result
+
+        For formally the relevance is the Jaccard similarity.
+        - relevance = |intersection| / |union|
+        with intersection = intersection(cluster, query result)
+        and union = union(cluster, query result)
+
+        This metric discard big clusters that contain the query result
+        as well as small clusters that are entirely contained in the query result
+        """
+        target_field = settings.get('target_field', 'pages_nb')
+        if target_field.startswith('metadata_nb.'):
+            metrics_settings = {
+                "filters": {
+                    "field": target_field,
+                    "value": 1,
+                    "predicate": "gte"
+                }
+            }
+        else:
+            metrics_settings = settings
+        metrics_query = MetricsQuery(self.hdfstore)
+        metrics_result = metrics_query.query(metrics_settings)
+
+        #metrics_result is a dictionary so we cannot access it elements with dot notation
+        target_field_full_size = reduce(dict.get, target_field.split("."), metrics_result["counters"])
+
+        for result in results:
+            result["score_global"] = target_field_full_size
+
+            suggestions_query = SuggestQuery(self.hdfstore)
+            suggestions_result = suggestions_query.query(
+                {"filters": {"field": "query", "value": result["query"]}},
+                sort_results=False
+            )
+            cluster_size = suggestions_result[0]["counters"]["pages_nb"]
+            result["score_cluster"] = cluster_size
+
+            intersection_size = result["counters"][target_field]
+            #FIXME this is not the union but an approximation of it
+            #we should try union = size1 + size2 - intersection
+            #union_size = max(target_field_full_size, result["counters"]["pages_nb"])
+            union_size = max(target_field_full_size, cluster_size)
+            relevance = float(intersection_size)/float(union_size)
+            #add a relevance element, so that it can be used later on
+            result["relevance"] = relevance
+        results = sorted(results, reverse = True, key = lambda x: x["relevance"])
+
+        return results
 
     def remove_results_with_common_hashes(self, settings, results):
         """
@@ -342,3 +402,20 @@ class SuggestQuery(BaseMetricsQuery):
             return df[df['pages_nb'] > threshold]
         """
         return df
+
+
+class SuggestSummary(object):
+
+    def __init__(self, content):
+        self.content = content
+
+    @classmethod
+    def from_s3_uri(cls, crawl_id, s3_uri, options=None, tmp_dir_prefix='/tmp', force_fetch=False):
+        # Fetch locally the files from S3
+        tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+        files_fetched = fetch_files(s3_uri, tmp_dir, regexp='suggested_patterns_summary.json', force_fetch=force_fetch)
+        content = json.loads(open(files_fetched[0][0]).read())
+        return cls(content)
+
+    def get(self):
+        return self.content

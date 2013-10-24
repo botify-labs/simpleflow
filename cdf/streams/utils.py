@@ -107,6 +107,8 @@ def group_left(left, **stream_defs):
                     stream_lines[stream_name].append(right_line[stream_name])
                     right_line[stream_name] = stream.next()
                     id_[stream_name] = right_line[stream_name][key_idx]
+                except IOError, e:
+                    raise Exception('IE Error on {} : {}'.format(stream_name, e))
                 except StopIteration:
                     break
         yield current_id, line, stream_lines
