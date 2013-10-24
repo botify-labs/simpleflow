@@ -44,8 +44,7 @@ def get_keys_from_stream_suggest(stream_suggest):
     return keys
 
 
-   class MetricsAggregator(object):
-
+class MetricsAggregator(object):
     def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_contents_duplicate,
                  stream_outlinks_counters, stream_outcanonical_counters, stream_outredirect_counters,
                  stream_inlinks_counters, stream_incanonical_counters, stream_inredirect_counters):
