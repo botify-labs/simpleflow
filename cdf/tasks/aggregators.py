@@ -97,7 +97,7 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
     push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)
 
 
-def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, rev_num, tmp_dir_prefix='/tmp', force_fetch=False):
+def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix='/tmp', force_fetch=False):
     query_type = []
     queries = []
     urls_fields = []
