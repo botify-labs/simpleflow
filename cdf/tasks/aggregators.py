@@ -2,7 +2,10 @@
 import os
 import gzip
 import json
-from pandas import HDFStore
+
+import csv
+
+from pandas import HDFStore, DataFrame
 
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file
@@ -91,6 +94,24 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
     store = HDFStore(h5_file, complevel=9, complib='blosc')
     # Make K/V Store dataframe (hash to request)
     store['requests'] = u.make_clusters_series()
+
+    #fetch child relationship tsv
+    children_filename = "cluster_mixed_children.tsv"
+    source_uri = os.path.join(s3_uri, filename)
+    destination_path = os.path.join(tmp_dir, "clusters", children_filename)
+    _f, fetched = fetch_file(source_uri,
+                             destination_path,
+                             force_fetch=force_fetch)
+
+    #build child relationship dataframe
+    csv_reader = csv.reader(open(_f, "rb"),
+                            delimiter = "\t",
+                            quotechar=None,
+                            quoting=csv.QUOTE_NONE)
+    row_list = [row for row in csv_reader]
+    child_frame = DataFrame(row_list, columns = ["parent", "child"])
+    #store it in hdfstore
+    store['children'] = child_frame
 
     files_fetched = fetch_files(s3_uri,
                                 tmp_dir,
