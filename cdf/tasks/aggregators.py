@@ -131,12 +131,12 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             query_type.append(['metadata', metadata_type, metadata_status])
             queries.append(
                 {
-                    "fields": ["pages_nb", "metadata_nb.{}".format(metadata_type)],
+                    "fields": ["pages_nb", "metadata_nb.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)],
                     "target_field": "metadata_nb.{}.{}".format(metadata_type, metadata_status)
                 }
             )
             if metadata_status == "duplicate":
-                urls_fields.append(["metadata.{}".format(metadata_type), "metadata_duplicate.{}".format(metadata_type)])
+                urls_fields.append(["metadata.{}".format(metadata_type), "metadata_duplicate.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)])
                 urls_filters.append([
                     {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1, "predicate": "gt"}
                 ])
@@ -157,11 +157,31 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 "fields": ["url"] + urls_fields[i],
                 "filters": {'and': hash_id_filters + urls_filters[i]}
             }
-            urls = Query(es_location, es_index, es_doc_type, crawl_id, revision_number, urls_query, start=0, limit=10, sort=('id',))
 
-            result["urls"] = list(urls.results)
             result["score"] = reduce(dict.get, query["target_field"].split("."), result["counters"])
             result["type"] = query_type[i]
+
+            if result["type"][0] == "http_code" or (result["type"][0] == "metadata" and result["type"][2] == "not_filled"):
+                limit = 3
+            else:
+                limit = 10
+
+            urls = Query(es_location, es_index, es_doc_type, crawl_id, revision_number, urls_query, start=0, limit=limit, sort=('id',))
+
+            urls_results = list(urls.results)
+            result["urls"] = []
+            # Filter on metadata duplicate : get only the 3 first different duplicates urls
+            if result["type"][0:3:2] == ["metadata", "duplicate"]:
+                duplicates_found = set()
+                for url_result in urls_results:
+                    metadata_value = url_result["metadata"][result["type"][1]][0]
+                    if metadata_value not in duplicates_found:
+                        result["urls"].append(url_result)
+                        duplicates_found.add(metadata_value)
+                        if len(duplicates_found) == 3:
+                            break
+            else:
+                result["urls"] = urls_results
             final_summary.append(result)
 
     #final_summary = sorted(final_summary, key=lambda i: i['score'], reverse=True)
