@@ -157,7 +157,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 "fields": ["url"] + urls_fields[i],
                 "filters": {'and': hash_id_filters + urls_filters[i]}
             }
-            urls = Query(es_location, es_index, es_doc_type, crawl_id, rev_num, urls_query, start=0, limit=10, sort=('id',))
+            urls = Query(es_location, es_index, es_doc_type, crawl_id, revision_number, urls_query, start=0, limit=10, sort=('id',))
 
             result["urls"] = list(urls.results)
             result["score"] = reduce(dict.get, query["target_field"].split("."), result["counters"])

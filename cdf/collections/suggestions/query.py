@@ -392,6 +392,8 @@ class SuggestQuery(BaseMetricsQuery):
                     result2["children"].append(copy.copy(result1))
                     results_to_remove.add(index1)
         results = [result for i, result in enumerate(results) if i not in results_to_remove]
+        for result in results:
+            del result["query_hash"]
         return results
 
     def df_filter_after_agg(self, df):
