@@ -43,21 +43,8 @@ def get_keys_from_stream_suggest(stream_suggest):
         keys.append(';'.join(sorted(hashes)))
     return keys
 
-    # Test with a max of 3 or 4 terms, depending on the number of hashes
-    """
-    nb_terms = len(hashes)
-    if nb_terms > 10:
-        nb_terms = 3
-    elif nb_terms > 4:
-        nb_terms = 4
-    for L in range(1, nb_terms + 1):
-        for subset in itertools.combinations(hashes, L):
-            keys.append(';'.join(sorted(subset)))
-    return keys
-    """
 
 class MetricsAggregator(object):
-
     def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_contents_duplicate,
                  stream_outlinks_counters, stream_outcanonical_counters, stream_outredirect_counters,
                  stream_inlinks_counters, stream_incanonical_counters, stream_inredirect_counters):
