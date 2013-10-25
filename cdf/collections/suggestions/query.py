@@ -280,6 +280,9 @@ class SuggestQuery(BaseMetricsQuery):
 
         if sort_results:
             results = self.sort_results_by_relevance(settings, results)
+            results = self.remove_less_relevant_children(settings, results)
+
+
 
         # Resolve query
         for i, r in enumerate(results):
@@ -351,6 +354,30 @@ class SuggestQuery(BaseMetricsQuery):
             result["relevance"] = relevance
         results = sorted(results, reverse = True, key = lambda x: x["relevance"])
 
+        return results
+
+    def remove_less_relevant_children(self, settings, results):
+        """Remove the children of a result if they are less relevant
+        Returning a parent node may make sense to return more generic results
+        but returning more specific and less relevant does not make sense.
+        """
+        child_frame = self.hdfstore['children']
+
+        hashes_to_remove = []
+        for potential_parent, potential_child  in itertools.combinations(results, 2):
+            potential_parent_hash = potential_parent["query"]
+            potential_child_hash = potential_child["query"]
+
+            parent_selection = (child_frame.parent == potential_parent_hash)
+            child_selection = (child_frame.child == potential_child_hash)
+
+            if child_frame[parent_selection & child_selection].shape[0] != 0:
+                hashes_to_remove.append(potential_child_hash)
+                if not "children" in potential_parent:
+                    potential_parent["children"] = []
+                potential_parent["children"].append(copy.copy(potential_child))
+
+        results = [result for result in results if not result["query"] in hashes_to_remove]
         return results
 
     def df_filter_after_agg(self, df):
