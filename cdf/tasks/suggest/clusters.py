@@ -26,7 +26,7 @@ def compute_mixed_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=
         except:
             pass
 
-    output_dir = os.path.join(tmp_dir, 'clusters')
+    output_dir = tmp_dir
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -36,11 +36,9 @@ def compute_mixed_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=
                 regexp=['url(ids|infos|xcontents).txt.0.gz'],
                 force_fetch=force_fetch)
 
-
     logger.info("Compute patterns cluster")
 
     patterns = []
-
 
     #find patterns on pathes
     path_patterns = discover_path_patterns(tmp_dir,
@@ -79,7 +77,6 @@ def compute_mixed_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=
         os.path.join(s3_uri, 'url_suggested_clusters.txt.0.gz'),
         os.path.join(output_dir, 'url_suggested_clusters.txt.0.gz')
     )
-
 
     children_dictionary = build_children_relationship(mixed_patterns)
     if output_dir:
