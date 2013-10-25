@@ -400,7 +400,7 @@ class SuggestQuery(BaseMetricsQuery):
         return df
 
 
-class SuggestSummary(object):
+class SuggestSummaryQuery(object):
 
     def __init__(self, content):
         self.content = content
