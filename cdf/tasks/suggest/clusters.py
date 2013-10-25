@@ -1,4 +1,5 @@
 import os
+import re
 
 from autotagging.association_rules.algorithm import discover_query_strings_patterns
 from autotagging.association_rules.algorithm import discover_metadata_patterns
@@ -13,7 +14,12 @@ from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_files, push_file
 
-def compute_mixed_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+def compute_mixed_clusters(crawl_id,
+                           s3_uri,
+                           first_part_id_size,
+                           part_id_size,
+                           tmp_dir_prefix='/tmp',
+                           force_fetch=False):
 
     minimal_frequency = 0.03
     nb_urls = 100000
@@ -67,16 +73,23 @@ def compute_mixed_clusters(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=
     if output_dir:
         save_apriori_algorithm_results(mixed_patterns,
                                        output_dir,
-                                       "mixed")
+                                       "mixed",
+                                       first_part_id_size,
+                                       part_id_size)
     push_file(
         os.path.join(s3_uri, 'clusters_mixed.tsv'),
         os.path.join(output_dir, 'clusters_mixed.tsv')
     )
 
-    push_file(
-        os.path.join(s3_uri, 'url_suggested_clusters.txt.0.gz'),
-        os.path.join(output_dir, 'url_suggested_clusters.txt.0.gz')
-    )
+
+    file_name_regex = re.compile('url_suggested_clusters.txt.\d+.gz')
+    for file_name in os.listdir(tmp_dir):
+        if not file_name_regex.match(file_name):
+            continue
+        push_file(
+            os.path.join(s3_uri, file_name),
+            os.path.join(tmp_dir, file_name),
+            )
 
     children_dictionary = build_children_relationship(mixed_patterns)
     if output_dir:
