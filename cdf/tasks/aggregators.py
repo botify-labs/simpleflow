@@ -222,7 +222,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
     if not os.path.exists(os.path.join(tmp_dir)):
         os.makedirs(os.path.join(tmp_dir))
 
-    summary_file = os.path.join(tmp_dir, 'clusters', 'suggested_patterns_summary.json')
+    summary_file = os.path.join(tmp_dir, 'suggested_patterns_summary.json')
     f = open(os.path.join(summary_file), 'w')
     f.write(final_summary_flatten)
     f.close()
