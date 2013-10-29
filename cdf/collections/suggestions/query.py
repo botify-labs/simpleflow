@@ -279,6 +279,7 @@ class SuggestQuery(BaseMetricsQuery):
 
         if sort_results:
             results = self.sort_results_by_target_field_count(settings, results)
+            results = self.remove_equivalent_parents(settings, results)
             results = self.hide_less_relevant_children(settings, results)
 
 
@@ -367,6 +368,43 @@ class SuggestQuery(BaseMetricsQuery):
         results = sorted(results, reverse = True, key = lambda x: x["relevance"])
 
         return results
+
+    def remove_equivalent_parents(self, settings, results):
+        """This method removes parent results if they have a child which
+        contains the same number of relevant elements.
+
+        For instance if we look for elements with title not set:
+        - pattern A has size 200 and contains 100 elements with h1 not set
+        - pattern B has size 110 and contains 100 elements with h1 not set
+
+        pattern A is a parent of pattern B.
+
+        Displaying pattern A to the user would not help him.
+        pattern B is more relevant as it is more specific.
+
+        The present method would remove pattern A from results
+        """
+
+        target_field = settings.get('target_field', 'pages_nb')
+        child_frame = self.hdfstore['children']
+
+        hashes_to_remove = []
+        for potential_parent, potential_child in itertools.combinations(results, 2):
+            potential_parent_hash = potential_parent["query"]
+            potential_child_hash = potential_child["query"]
+
+            parent_selection = (child_frame.parent == potential_parent_hash)
+            child_selection = (child_frame.child == potential_child_hash)
+
+            if child_frame[parent_selection & child_selection].shape[0] != 0:
+                parent_target_field_count = potential_parent["counters"][target_field]
+                child_target_field_count = potential_child["counters"][target_field]
+                if parent_target_field_count == child_target_field_count:
+                    hashes_to_remove.append(potential_parent_hash)
+
+        results = [result for result in results if not result["query"] in hashes_to_remove]
+        return results
+
 
     def hide_less_relevant_children(self, settings, results):
         """Once we have displayed a node,
