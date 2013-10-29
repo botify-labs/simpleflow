@@ -13,7 +13,7 @@ from cdf.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.collections.urls.generators.suggestions import UrlSuggestionsGenerator
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
-
+from cdf.collections.urls.generators.bad_links import get_bad_links
 
 
 def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_prefix='/tmp', force_fetch=False):
@@ -109,3 +109,38 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
         os.path.join(s3_uri, 'urlcontentsduplicate.txt.{}.gz'.format(current_part_id)),
         os.path.join(tmp_dir, 'urlcontentsduplicate.txt.{}.gz'.format(current_part_id)),
     )
+
+
+def make_bad_link_file(crawl_id, s3_uri,
+                       tmp_dir_prefix='/tmp', force_fetch=False):
+    """
+    Generate a tsv file that list all urls outlink to an error url:
+      url_src_id  url_dest_id error_http_code
+
+    Ordered on url_src_id
+    """
+    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+
+    streams_types = {'infos': [],
+                     'outlinks': []}
+
+    for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
+        files_fetched = fetch_files(s3_uri,
+                                    tmp_dir,
+                                    regexp='url(infos|links).txt.%d.gz' % part_id,
+                                    force_fetch=force_fetch)
+
+        for path_local, fetched in files_fetched:
+            stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
+            cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
+            streams_types[stream_identifier].append(cast(split_file(gzip.open(path_local))))
+
+    generator = get_bad_links(itertools.chain(*streams_types['infos']),
+                              itertools.chain(*streams_types['outlinks']))
+
+    f = gzip.open(os.path.join(tmp_dir, 'urlbadlinks.txt.gz'), 'w')
+    for (src, dest, bad_code) in generator:
+        f.write(str(src) + '\t' +
+                str(dest) + '\t' +
+                str(bad_code) + '\n')
+    f.close()
