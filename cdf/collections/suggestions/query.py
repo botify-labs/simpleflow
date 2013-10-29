@@ -278,7 +278,7 @@ class SuggestQuery(BaseMetricsQuery):
             results.append(result)
 
         if sort_results:
-            results = self.sort_results_by_relevance(settings, results)
+            results = self.sort_results_by_target_field_count(settings, results)
             results = self.hide_less_relevant_children(settings, results)
 
 
@@ -297,6 +297,19 @@ class SuggestQuery(BaseMetricsQuery):
                     results[i]["children"][k]["query"] = self.query_hash_to_string(results[i]["children"][k]["query"])
                     results[i]["children"][k]["counters"] = deep_dict(results[i]["children"][k]["counters"])
         return results[0:30]
+
+    def sort_results_by_target_field_count(self, settings, results):
+        """Sort the query results by target field count.
+        For instance if we look for elements with title not set:
+        - pattern A has size 200 and contains 10 elements with h1 not set
+        - pattern B has size 110 and contains 100 elements with h1 not set
+
+        this method will place pattern B first.
+        """
+        target_field = settings.get('target_field', 'pages_nb')
+        results = sorted(results, reverse = True, key = lambda x: x["counters"][target_field])
+        return results
+
 
     def sort_results_by_relevance(self, settings, results):
         """Sort the query results by relevance.
