@@ -87,13 +87,13 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
                                 quotechar=None,
                                 quoting=csv.QUOTE_NONE)
         for row in csv_reader:
-            pattern, hash, _ = row
-            cluster_values.append((pattern, hash))
+            pattern, verbose_pattern, hash, _ = row
+            cluster_values.append((pattern, verbose_pattern, hash))
         u.add_pattern_cluster(cluster_type, cluster_values)
 
     store = HDFStore(h5_file, complevel=9, complib='blosc')
     # Make K/V Store dataframe (hash to request)
-    store['requests'] = u.make_clusters_series()
+    store['requests'] = u.make_clusters_dataframe()
 
     #fetch child relationship tsv
     children_filename = "cluster_mixed_children.tsv"

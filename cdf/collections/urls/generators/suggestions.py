@@ -7,11 +7,12 @@ from cdf.utils.hashing import string_to_int32
 from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
 
 import numpy
-from pandas import Series
+from pandas import DataFrame
 
 
 def transform_queries(queries_lst, func=query_to_python):
-    return [{'hash': hash, 'string': query} for query, hash in queries_lst]
+    return [{'hash': hash, 'string': query, 'verbose_string': verbose_string}
+            for query, verbose_string, hash in queries_lst]
 
 
 class MetadataClusterMixin(object):
@@ -28,20 +29,25 @@ class MetadataClusterMixin(object):
             raise Exception('{} is not a valid metadata type'.format(metadata_type))
         self.metadata_clusters[CONTENT_TYPE_NAME_TO_ID[metadata_type]] = transform_queries(cluster_list, metadata_query_to_python)
 
-    def make_clusters_series(self):
+    def make_clusters_dataframe(self):
         """
-        Generate a pandas Series object with index as hash and value as the full request
+        Generate a pandas DataFrame object with hash as index
+        and bql query and verbose query as values
         """
-        final_serie = Series()
+
+        final_dataframe = DataFrame()
         for cluster_section, clusters in (("pattern", self.patterns_clusters), ("metadata", self.metadata_clusters)):
             for i, (cluster_name, suggestions) in enumerate(clusters.iteritems()):
                 if len(suggestions) == 0:
                     continue
                 # Temporary deduplicate queries, some are set 2 times like in path file for francetvinfo, Simon is fixing it
-                suggestions = list(set((q['hash'], q['string']) for q in suggestions))
-                serie = Series([q[1] for q in suggestions], index=[int(str(q[0])) for q in suggestions], dtype=numpy.character)
-                final_serie = final_serie.append(serie)
-        return final_serie
+                suggestions = list(set((q['hash'], q['string'], q['verbose_string']) for q in suggestions) )
+                dataframe = DataFrame({"string": [q[1] for q in suggestions],
+                                       "verbose_string": [q[2] for q in suggestions]})
+                dataframe.index = [q[0] for q in suggestions]
+                final_dataframe = final_dataframe.append(dataframe)
+
+        return final_dataframe
 
 
 class UrlSuggestionsGenerator(MetadataClusterMixin):
