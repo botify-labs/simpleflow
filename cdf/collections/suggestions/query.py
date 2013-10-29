@@ -311,64 +311,6 @@ class SuggestQuery(BaseMetricsQuery):
         results = sorted(results, reverse = True, key = lambda x: x["counters"][target_field])
         return results
 
-
-    def sort_results_by_relevance(self, settings, results):
-        """Sort the query results by relevance.
-        For each result, compute its relevance
-        and add it to the result as an attribute.
-
-        The concept of relevance is fuzzy.
-        In the present situation a cluster is considered as relevant
-        for a given query if it is close from the query result
-
-        For formally the relevance is the Jaccard similarity.
-        - relevance = |intersection| / |union|
-        with intersection = intersection(cluster, query result)
-        and union = union(cluster, query result)
-
-        This metric discard big clusters that contain the query result
-        as well as small clusters that are entirely contained in the query result
-        """
-        target_field = settings.get('target_field', 'pages_nb')
-        if target_field.startswith('metadata_nb.'):
-            metrics_settings = {
-                "filters": {
-                    "field": target_field,
-                    "value": 1,
-                    "predicate": "gte"
-                }
-            }
-        else:
-            metrics_settings = settings
-        metrics_query = MetricsQuery(self.hdfstore)
-        metrics_result = metrics_query.query(metrics_settings)
-
-        #metrics_result is a dictionary so we cannot access it elements with dot notation
-        target_field_full_size = reduce(dict.get, target_field.split("."), metrics_result["counters"])
-
-        for result in results:
-            result["score_global"] = target_field_full_size
-
-            suggestions_query = SuggestQuery(self.hdfstore)
-            suggestions_result = suggestions_query.query(
-                {"filters": {"field": "query", "value": result["query"]}},
-                sort_results=False
-            )
-            cluster_size = suggestions_result[0]["counters"]["pages_nb"]
-            result["score_cluster"] = cluster_size
-
-            intersection_size = result["counters"][target_field]
-            #FIXME this is not the union but an approximation of it
-            #we should try union = size1 + size2 - intersection
-            #union_size = max(target_field_full_size, result["counters"]["pages_nb"])
-            union_size = max(target_field_full_size, cluster_size)
-            relevance = float(intersection_size)/float(union_size)
-            #add a relevance element, so that it can be used later on
-            result["relevance"] = relevance
-        results = sorted(results, reverse = True, key = lambda x: x["relevance"])
-
-        return results
-
     def remove_equivalent_parents(self, settings, results):
         """This method removes parent results if they have a child which
         contains the same number of relevant elements.
