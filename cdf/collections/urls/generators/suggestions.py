@@ -3,10 +3,8 @@ from cdf.streams.mapping import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 from cdf.streams.utils import idx_from_stream, group_left
 from BQL.parser.tagging import query_to_python
 from BQL.parser.metadata import query_to_python as metadata_query_to_python
-from cdf.utils.hashing import string_to_int32
 from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
 
-import numpy
 from pandas import DataFrame
 
 
