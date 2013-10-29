@@ -27,21 +27,14 @@ def delay_to_range(delay):
 
 def get_keys_from_stream_suggest(stream_suggest):
     """
-    Return all possible combinations from stream suggest hashes
-    Ex for hashes ["1", "2", "3"], it will return ["1", "2", "3", "1;2", "1;3", "2;3", "1;2;3"]
+    Return possible combinations from stream suggest hashes
+    Basically it returns every hash plus "0" which correspond to
+    "all pages"
+    Ex for hashes ["1", "2", "3"], it will return ["0, "1", "2", "3"]
     """
-    keys = ["0"]
-    hashes = set()
-    for entry in stream_suggest:
-        url_id, query_hash = entry
-        # We keep only the path and qskey streams (prefix by 1)
-        if not query_hash.startswith('1'):
-            continue
-        hashes.add(query_hash)
-    # Todo : refactor to send directly the generate key
-    if hashes:
-        keys.append(';'.join(sorted(hashes)))
-    return keys
+    keys = {query_hash for _, query_hash in stream_suggest}
+    keys.add("0")
+    return list(keys)
 
 
 class MetricsAggregator(object):

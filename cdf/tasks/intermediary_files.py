@@ -15,61 +15,6 @@ from cdf.collections.urls.generators.suggestions import UrlSuggestionsGenerator
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 
 
-def make_url_to_suggested_patterns_file(crawl_id, s3_uri, part_id, tmp_dir_prefix='/tmp', force_fetch=False):
-    """
-    Match all urls with suggested patterns coming for precomputed clusters
-
-    Crawl dataset for this part_id is found by fetching all files finishing by .txt.[part_id] in the `s3_uri` called.
-
-    :param part_id : the part_id from the crawl
-    :param s3_uri : the location where the file will be pushed. filename will be url_properties.txt.[part_id]
-    :param tmp_dir : the temporary directory where the S3 files will be put to compute the task
-    :param force_fetch : fetch the S3 files even if they are already in the temp directory
-    """
-    # Fetch locally the files from S3
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    if not os.path.exists(tmp_dir):
-        try:
-            os.makedirs(tmp_dir)
-        except:
-            pass
-
-    files_fetched = fetch_files(s3_uri,
-                                tmp_dir,
-                                regexp=['url(ids|infos|contents).txt.%d.gz' % part_id],
-                                force_fetch=force_fetch)
-
-    streams = dict()
-    for path_local, fetched in files_fetched:
-        stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
-        cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
-        streams[stream_identifier] = cast(split_file(gzip.open(path_local)))
-
-    # part_id seems empty...
-    if not 'contents' in streams:
-        return
-
-    u = UrlSuggestionsGenerator(streams['patterns'], streams['infos'], streams['contents'])
-
-    for cluster_type, cluster_name in SUGGEST_CLUSTERS:
-        filename = 'clusters_{}_{}.tsv'.format(cluster_type, cluster_name)
-        _f, fetched = fetch_file(os.path.join(s3_uri, filename), os.path.join(tmp_dir, filename), force_fetch=force_fetch)
-        cluster_values = [k.split('\t', 1)[0] for k in open(_f)]
-        if cluster_type == "metadata":
-            u.add_metadata_cluster(cluster_name, cluster_values)
-        else:
-            u.add_pattern_cluster(cluster_name, cluster_values)
-
-    cluster_filename = 'url_suggested_clusters.txt.{}.gz'.format(part_id)
-    f = gzip.open(os.path.join(tmp_dir, cluster_filename), 'wb')
-    for i, result in enumerate(u):
-        # TODO : bench best method to write line
-        f.write('\t'.join((str(i) for i in result)) + '\n')
-    push_file(
-        os.path.join(s3_uri, cluster_filename),
-        os.path.join(tmp_dir, cluster_filename),
-    )
-
 
 def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_prefix='/tmp', force_fetch=False):
     # Fetch locally the files from S3

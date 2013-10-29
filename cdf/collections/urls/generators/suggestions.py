@@ -11,21 +11,7 @@ from pandas import Series
 
 
 def transform_queries(queries_lst, func=query_to_python):
-    transformed = []
-    for query in queries_lst:
-        if query == "Unrecognized pattern":
-            continue
-        try:
-            _func = func(query)
-        except Exception, e:
-            raise Exception('Query cannot be parsed : {} / Message: {}'.format(query, e))
-
-        transformed.append(
-            {'func': _func,
-             'hash': string_to_int32(query),
-             'string': query}
-        )
-    return transformed
+    return [{'hash': hash, 'string': query} for query, hash in queries_lst]
 
 
 class MetadataClusterMixin(object):
@@ -49,12 +35,11 @@ class MetadataClusterMixin(object):
         final_serie = None
         for cluster_section, clusters in (("pattern", self.patterns_clusters), ("metadata", self.metadata_clusters)):
             for i, (cluster_name, suggestions) in enumerate(clusters.iteritems()):
-                cluster_id = CLUSTER_TYPE_TO_ID[cluster_section][cluster_name]
                 if len(suggestions) == 0:
                     continue
                 # Temporary deduplicate queries, some are set 2 times like in path file for francetvinfo, Simon is fixing it
                 suggestions = list(set((q['hash'], q['string']) for q in suggestions))
-                serie = Series([q[1] for q in suggestions], index=[int(str(cluster_id) + str(q[0])) for q in suggestions], dtype=numpy.character)
+                serie = Series([q[1] for q in suggestions], index=[int(str(q[0])) for q in suggestions], dtype=numpy.character)
                 if final_serie is None:
                     final_serie = serie.copy()
                 else:
