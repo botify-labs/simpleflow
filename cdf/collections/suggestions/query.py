@@ -279,7 +279,7 @@ class SuggestQuery(BaseMetricsQuery):
 
         if sort_results:
             results = self.sort_results_by_relevance(settings, results)
-            results = self.remove_less_relevant_children(settings, results)
+            results = self.hide_less_relevant_children(settings, results)
 
 
 
@@ -355,10 +355,16 @@ class SuggestQuery(BaseMetricsQuery):
 
         return results
 
-    def remove_less_relevant_children(self, settings, results):
-        """Remove the children of a result if they are less relevant
-        Returning a parent node may make sense to return more generic results
-        but returning more specific and less relevant does not make sense.
+    def hide_less_relevant_children(self, settings, results):
+        """Once we have displayed a node,
+        displaying its children would confuse the user.
+        The present method :
+        - detects such children
+        - remove them from the result
+        - add them as children of their parent
+
+        The method requires the input results to be sorted.
+        The sort criterion does not matter.
         """
         child_frame = self.hdfstore['children']
 
