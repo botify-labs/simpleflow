@@ -431,6 +431,7 @@ class Query(object):
             query['filters']['and'] += default_filters
         elif 'or' in query['filters']:
             query['filters']['and'] = [{'and': default_filters}, {'or': query['filters']['or']}]
+            del query['filters']['or']
         else:
             raise Exception('filters are not valid for given query')
 
