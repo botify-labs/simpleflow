@@ -278,8 +278,9 @@ class SuggestQuery(BaseMetricsQuery):
             results.append(result)
 
         if sort_results:
-            results = self.sort_results_by_relevance(settings, results)
-            results = self.remove_less_relevant_children(settings, results)
+            results = self.sort_results_by_target_field_count(settings, results)
+            results = self.remove_equivalent_parents(settings, results)
+            results = self.hide_less_relevant_children(settings, results)
 
 
 
@@ -298,67 +299,65 @@ class SuggestQuery(BaseMetricsQuery):
                     results[i]["children"][k]["counters"] = deep_dict(results[i]["children"][k]["counters"])
         return results[0:30]
 
-    def sort_results_by_relevance(self, settings, results):
-        """Sort the query results by relevance.
-        For each result, compute its relevance
-        and add it to the result as an attribute.
+    def sort_results_by_target_field_count(self, settings, results):
+        """Sort the query results by target field count.
+        For instance if we look for elements with title not set:
+        - pattern A has size 200 and contains 10 elements with h1 not set
+        - pattern B has size 110 and contains 100 elements with h1 not set
 
-        The concept of relevance is fuzzy.
-        In the present situation a cluster is considered as relevant
-        for a given query if it is close from the query result
-
-        For formally the relevance is the Jaccard similarity.
-        - relevance = |intersection| / |union|
-        with intersection = intersection(cluster, query result)
-        and union = union(cluster, query result)
-
-        This metric discard big clusters that contain the query result
-        as well as small clusters that are entirely contained in the query result
+        this method will place pattern B first.
         """
         target_field = settings.get('target_field', 'pages_nb')
-        if target_field.startswith('metadata_nb.'):
-            metrics_settings = {
-                "filters": {
-                    "field": target_field,
-                    "value": 1,
-                    "predicate": "gte"
-                }
-            }
-        else:
-            metrics_settings = settings
-        metrics_query = MetricsQuery(self.hdfstore)
-        metrics_result = metrics_query.query(metrics_settings)
-
-        #metrics_result is a dictionary so we cannot access it elements with dot notation
-        target_field_full_size = reduce(dict.get, target_field.split("."), metrics_result["counters"])
-
-        for result in results:
-            result["score_global"] = target_field_full_size
-
-            suggestions_query = SuggestQuery(self.hdfstore)
-            suggestions_result = suggestions_query.query(
-                {"filters": {"field": "query", "value": result["query"]}},
-                sort_results=False
-            )
-            cluster_size = suggestions_result[0]["counters"]["pages_nb"]
-            result["score_cluster"] = cluster_size
-
-            intersection_size = result["counters"][target_field]
-            #FIXME this is not the union but an approximation of it
-            #we should try union = size1 + size2 - intersection
-            #union_size = max(target_field_full_size, result["counters"]["pages_nb"])
-            union_size = max(target_field_full_size, cluster_size)
-            relevance = float(intersection_size)/float(union_size)
-            #add a relevance element, so that it can be used later on
-            result["relevance"] = relevance
-        results = sorted(results, reverse = True, key = lambda x: x["relevance"])
-
+        results = sorted(results, reverse = True, key = lambda x: x["counters"][target_field])
         return results
 
-    def remove_less_relevant_children(self, settings, results):
-        """Remove the children of a result if they are less relevant
-        Returning a parent node may make sense to return more generic results
-        but returning more specific and less relevant does not make sense.
+    def remove_equivalent_parents(self, settings, results):
+        """This method removes parent results if they have a child which
+        contains the same number of relevant elements.
+
+        For instance if we look for elements with title not set:
+        - pattern A has size 200 and contains 100 elements with h1 not set
+        - pattern B has size 110 and contains 100 elements with h1 not set
+
+        pattern A is a parent of pattern B.
+
+        Displaying pattern A to the user would not help him.
+        pattern B is more relevant as it is more specific.
+
+        The present method would remove pattern A from results
+        """
+
+        target_field = settings.get('target_field', 'pages_nb')
+        child_frame = self.hdfstore['children']
+
+        hashes_to_remove = []
+        for potential_parent, potential_child in itertools.combinations(results, 2):
+            potential_parent_hash = potential_parent["query"]
+            potential_child_hash = potential_child["query"]
+
+            parent_selection = (child_frame.parent == potential_parent_hash)
+            child_selection = (child_frame.child == potential_child_hash)
+
+            if child_frame[parent_selection & child_selection].shape[0] != 0:
+                parent_target_field_count = potential_parent["counters"][target_field]
+                child_target_field_count = potential_child["counters"][target_field]
+                if parent_target_field_count == child_target_field_count:
+                    hashes_to_remove.append(potential_parent_hash)
+
+        results = [result for result in results if not result["query"] in hashes_to_remove]
+        return results
+
+
+    def hide_less_relevant_children(self, settings, results):
+        """Once we have displayed a node,
+        displaying its children would confuse the user.
+        The present method :
+        - detects such children
+        - remove them from the result
+        - add them as children of their parent
+
+        The method requires the input results to be sorted.
+        The sort criterion does not matter.
         """
         child_frame = self.hdfstore['children']
 
