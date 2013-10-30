@@ -6,8 +6,9 @@ SUGGEST_CLUSTERS = ['mixed']
 
 CLUSTER_TYPE_TO_ID = {
     'pattern': {
-        'path': 10,
-        'qskey': 11,
+        'host': 10,
+        'path': 11,
+        'qskey': 12,
     },
     'metadata': {
         CONTENT_TYPE_NAME_TO_ID['title']: 20,
