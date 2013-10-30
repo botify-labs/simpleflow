@@ -1,6 +1,7 @@
 import os
 import re
 
+from autotagging.association_rules.algorithm import discover_host_patterns
 from autotagging.association_rules.algorithm import discover_query_strings_patterns
 from autotagging.association_rules.algorithm import discover_metadata_patterns
 from autotagging.association_rules.algorithm import discover_path_patterns
@@ -45,6 +46,14 @@ def compute_mixed_clusters(crawl_id,
     logger.info("Compute patterns cluster")
 
     patterns = []
+
+    host_patterns = discover_host_patterns(tmp_dir,
+                                           nb_urls,
+                                           minimal_frequency)
+
+    #find patterns on hosts
+    cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["host"]
+    patterns.append([(cluster_type, pattern, support) for pattern, support in host_patterns])
 
     #find patterns on pathes
     path_patterns = discover_path_patterns(tmp_dir,
