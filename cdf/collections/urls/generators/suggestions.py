@@ -32,7 +32,7 @@ class MetadataClusterMixin(object):
         """
         Generate a pandas Series object with index as hash and value as the full request
         """
-        final_serie = None
+        final_serie = Series()
         for cluster_section, clusters in (("pattern", self.patterns_clusters), ("metadata", self.metadata_clusters)):
             for i, (cluster_name, suggestions) in enumerate(clusters.iteritems()):
                 if len(suggestions) == 0:
@@ -40,10 +40,7 @@ class MetadataClusterMixin(object):
                 # Temporary deduplicate queries, some are set 2 times like in path file for francetvinfo, Simon is fixing it
                 suggestions = list(set((q['hash'], q['string']) for q in suggestions))
                 serie = Series([q[1] for q in suggestions], index=[int(str(q[0])) for q in suggestions], dtype=numpy.character)
-                if final_serie is None:
-                    final_serie = serie.copy()
-                else:
-                    final_serie = final_serie.append(serie)
+                final_serie = final_serie.append(serie)
         return final_serie
 
 
