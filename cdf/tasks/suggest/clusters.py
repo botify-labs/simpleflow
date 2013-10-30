@@ -39,7 +39,7 @@ def compute_mixed_clusters(crawl_id,
     # For now, compute clusters only with first part (to be improved)
     fetch_files(s3_uri,
                 tmp_dir,
-                regexp=['url(ids|infos|xcontents).txt.0.gz'],
+                regexp=['url(ids|infos|contents).txt.0.gz'],
                 force_fetch=force_fetch)
 
     logger.info("Compute patterns cluster")
