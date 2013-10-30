@@ -1,3 +1,4 @@
+from collections import Counter
 from cdf.streams.utils import idx_from_stream
 
 def get_bad_links(stream_infos, stream_outlinks):
@@ -26,3 +27,21 @@ def get_bad_links(stream_infos, stream_outlinks):
         link_type = outlink[link_type_idx]
         if link_type == 'a' and dest in bad_code:
             yield (outlink[src_url_idx], dest, bad_code[dest])
+
+
+def get_bad_link_counters(stream_bad_links):
+    """
+    a counter ((url_src_id, error_http_code), count)
+    """
+    # Resolve indexes
+    src_url_idx = idx_from_stream('badlinks', 'id')
+    http_code_idx = idx_from_stream('badlinks', 'http_code')
+
+    cnt = Counter()
+    for link in stream_bad_links:
+        group = (link[src_url_idx], link[http_code_idx])
+        cnt[group] += 1
+
+    # Result must be sorted on url_id and http_code
+    for k in iter(sorted(cnt)):
+        yield (k, cnt[k])
