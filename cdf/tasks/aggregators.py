@@ -105,13 +105,17 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 
     #build child relationship dataframe
     csv_reader = csv.reader(open(_f, "rb"),
-                            delimiter = "\t",
+                            delimiter="\t",
                             quotechar=None,
                             quoting=csv.QUOTE_NONE)
     row_list = [row for row in csv_reader]
-    child_frame = DataFrame(row_list, columns = ["parent", "child"])
-    #store it in hdfstore
-    store['children'] = child_frame
+    if len(row_list) > 0:
+        child_frame = DataFrame(row_list, columns=["parent", "child"])
+        #store dataframe in hdfstore.
+        #we do not store empty dataframe in hdfstore since recovering it
+        #afterwards raises an exception :
+        #ValueError: Shape of passed values is (2, 0), indices imply (2, 1)
+        store['children'] = child_frame
 
     files_fetched = fetch_files(s3_uri,
                                 tmp_dir,
