@@ -1,6 +1,6 @@
 import itertools
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES_IDS
 from cdf.streams.utils import group_left, idx_from_stream
@@ -20,18 +20,22 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
 
     (url_id, content_type, filled_nb, duplicates_nb, is_first_url_found, [url_id_1, url_id2 ...])
     """
+    # Resolve indexes
     content_meta_type_idx = idx_from_stream('contents', 'content_type')
     content_hash_idx = idx_from_stream('contents', 'hash')
+
     streams_def = {
         'contents': (stream_contents, idx_from_stream('contents', 'id')),
     }
-    hashes = defaultdict(lambda: defaultdict(set))
+
+    hashes = defaultdict(lambda: defaultdict(list))
 
     # Resolve an url_id + ct_id to an hash : url_to_hash[url_id][ct_id] = hash_id
     url_to_hash = defaultdict(lambda: defaultdict(set))
 
-    # Resolve the number of filled metadata for an given url : url_to_nb_filled[url_id][ct_id] = nb
-    url_to_nb_filled = defaultdict(lambda: defaultdict(lambda: 0))
+    # Number of filled metadata for (url, meta_type)
+    # Counter[(url, meta_type)] = count
+    filled_counter = Counter()
 
     for i, result in enumerate(group_left((stream_patterns, 0), **streams_def)):
         url_id = result[0]
@@ -44,14 +48,15 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
         ct_found = set()
         for content in contents:
             ct_id = content[content_meta_type_idx]
-            url_to_nb_filled[url_id][ct_id] += 1
+            filled_counter[(url_id, ct_id)] += 1
             if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
                 continue
             # If ct_i is already in ct_found, so it's the not the first content
             if ct_id not in ct_found:
                 ct_found.add(ct_id)
-                hashes[ct_id][content[content_hash_idx]].add(url_id)
-                url_to_hash[url_id][ct_id] = content[content_hash_idx]
+                _hash = content[content_hash_idx]
+                hashes[ct_id][_hash].append(url_id)
+                url_to_hash[url_id][ct_id] = _hash
 
     # Take the last url_id
     max_url_id = url_id
@@ -60,10 +65,13 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
         if url_id in url_to_hash:
             for ct_id in url_to_hash[url_id]:
                 _h = url_to_hash[url_id][ct_id]
+                filled_nb = filled_counter[(url_id, ct_id)]
+
                 if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
-                    yield (url_id, ct_id, url_to_nb_filled[url_id][ct_id], 0, True, [])
+                    yield (url_id, ct_id, filled_nb, 0, True, [])
+
                 urls = hashes[ct_id][_h]
-                sample = list(itertools.islice(urls, 0, 11))
+                sample = urls[:11]
                 nb_duplicates = len(urls)
                 first_url_id = min(urls)
-                yield (url_id, ct_id, url_to_nb_filled[url_id][ct_id], nb_duplicates, first_url_id == url_id, [i for i in sample if i != url_id][:10])
+                yield (url_id, ct_id, filled_nb, nb_duplicates, first_url_id == url_id, [i for i in sample if i != url_id][:10])
