@@ -29,6 +29,7 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
     }
 
     hashes = defaultdict(lambda: defaultdict(list))
+    hashes_count = defaultdict(Counter)
 
     # Resolve an url_id + ct_id to an hash : url_to_hash[url_id][ct_id] = hash_id
     url_to_hash = defaultdict(lambda: defaultdict(set))
@@ -55,7 +56,11 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
             if ct_id not in ct_found:
                 ct_found.add(ct_id)
                 _hash = content[content_hash_idx]
-                hashes[ct_id][_hash].append(url_id)
+                hashes_count[ct_id][_hash] += 1
+                hashes_lst = hashes[ct_id][_hash]
+                # only preserve 11 duplicating urls
+                if len(hashes_lst) < 11:
+                    hashes[ct_id][_hash].append(url_id)
                 url_to_hash[url_id][ct_id] = _hash
 
     # Take the last url_id
@@ -71,7 +76,6 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
                     yield (url_id, ct_id, filled_nb, 0, True, [])
 
                 urls = hashes[ct_id][_h]
-                sample = urls[:11]
-                nb_duplicates = len(urls)
+                nb_duplicates = hashes_count[ct_id][_h]
                 first_url_id = min(urls)
-                yield (url_id, ct_id, filled_nb, nb_duplicates, first_url_id == url_id, [i for i in sample if i != url_id][:10])
+                yield (url_id, ct_id, filled_nb, nb_duplicates, first_url_id == url_id, [i for i in urls if i != url_id][:10])
