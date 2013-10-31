@@ -244,7 +244,7 @@ class SuggestQuery(BaseMetricsQuery):
     DF_KEY = "suggest"
 
     def query_hash_to_string(self, value):
-        return unicode(self.hdfstore['requests'][int(value)], "utf8")
+        return unicode(self.hdfstore['requests'].ix[value, 'string'], "utf8")
 
     """
     def _display_field(self, field, value):
