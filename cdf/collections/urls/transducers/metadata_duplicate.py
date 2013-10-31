@@ -77,5 +77,8 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
 
                 urls = hashes[ct_id][_h]
                 nb_duplicates = hashes_count[ct_id][_h]
-                first_url_id = min(urls)
+                # Since duplicating urls are appended to a list, order is preserved
+                # The first url is garanteed to be the min
+                # urls list has at least one elem. (url itself)
+                first_url_id = urls[0]
                 yield (url_id, ct_id, filled_nb, nb_duplicates, first_url_id == url_id, [i for i in urls if i != url_id][:10])
