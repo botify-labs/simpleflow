@@ -328,6 +328,9 @@ class SuggestQuery(BaseMetricsQuery):
         """
 
         target_field = settings.get('target_field', 'pages_nb')
+        if not 'children' in self.hdfstore.keys():
+            return results
+
         child_frame = self.hdfstore['children']
 
         hashes_to_remove = []
@@ -359,6 +362,9 @@ class SuggestQuery(BaseMetricsQuery):
         The method requires the input results to be sorted.
         The sort criterion does not matter.
         """
+        if not 'children' in self.hdfstore.keys():
+            return results
+
         child_frame = self.hdfstore['children']
 
         hashes_to_remove = []
