@@ -244,7 +244,10 @@ class SuggestQuery(BaseMetricsQuery):
     DF_KEY = "suggest"
 
     def query_hash_to_string(self, value):
-        return unicode(self.hdfstore['requests'].ix[value, 'string'], "utf8")
+        return unicode(self.hdfstore['requests'].ix[str(value), 'string'], "utf8")
+
+    def query_hash_to_verbose_string(self, value):
+        return unicode(self.hdfstore['requests'].ix[str(value), 'verbose_string'], "utf8")
 
     """
     def _display_field(self, field, value):
@@ -282,12 +285,11 @@ class SuggestQuery(BaseMetricsQuery):
             results = self.remove_equivalent_parents(settings, results)
             results = self.hide_less_relevant_children(settings, results)
 
-
-
         # Resolve query
         for i, r in enumerate(results):
-            results[i]["query_hash_id"] = [int(v) for v in results[i]["query"].split(';')]
-            results[i]["query"] = self.query_hash_to_string(results[i]["query"])
+            results[i]["query_hash_id"] = int(results[i]["query"])
+            results[i]["query"] = self.query_hash_to_string(results[i]["query_hash_id"])
+            results[i]["query_verbose"] = self.query_hash_to_verbose_string(results[i]["query_hash_id"])
             results[i]["counters"] = deep_dict(results[i]["counters"])
             if "children" in results[i]:
                 if not settings.get('display_children', True):
@@ -295,7 +297,9 @@ class SuggestQuery(BaseMetricsQuery):
                     continue
                 results[i]["children"] = results[i]["children"][0:10]
                 for k, c in enumerate(results[i]["children"]):
-                    results[i]["children"][k]["query"] = self.query_hash_to_string(results[i]["children"][k]["query"])
+                    results[i]["children"][k]["query_hash_id"] = int(results[i]["children"][k]["query"])
+                    results[i]["children"][k]["query"] = self.query_hash_to_string(results[i]["children"][k]["query_hash_id"])
+                    results[i]["children"][k]["query_verbose"] = self.query_hash_to_verbose_string(results[i]["children"][k]["query_hash_id"])
                     results[i]["children"][k]["counters"] = deep_dict(results[i]["children"][k]["counters"])
         return results[0:30]
 
