@@ -10,8 +10,9 @@ import itertools
 
 from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS, COUNTERS_FIELDS
 
-from cdf.utils.s3 import fetch_files
+from cdf.utils.s3 import fetch_files, fetch_file
 from cdf.utils.dict import deep_dict, deep_update
+from cdf.streams.utils import split_file
 from .utils import field_has_children, children_from_field
 
 
@@ -413,3 +414,25 @@ class SuggestSummaryQuery(object):
 
     def get(self):
         return self.content
+
+
+class SuggestedPatternsQuery(object):
+
+    def __init__(self, stream):
+        self.stream = stream
+
+    @classmethod
+    def from_s3_uri(cls, crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+        # Fetch locally the files from S3
+        tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id, 'clusters_mixed.tsv')
+        fetch_file(os.path.join(s3_uri, 'clusters_mixed.tsv'), tmp_dir, force_fetch=force_fetch)
+        return cls(split_file(open(tmp_dir)))
+
+    def get(self):
+        for query, query_verbose, hash_id, nb_urls in self.stream:
+            yield {
+                "query": query,
+                "query_verbose": query_verbose,
+                "query_hash_id": int(hash_id),
+                "nb_urls": int(nb_urls)
+            }
