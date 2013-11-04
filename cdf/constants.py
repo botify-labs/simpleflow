@@ -114,6 +114,7 @@ URLS_DATA_MAPPING = {
                     "url_id": {"type": "long"}
                 }
             },
+            "canonical_to_equal": {"type": "boolean"},
             "redirects_to": {
                 "properties": {
                     "http_code": {"type": "string"},

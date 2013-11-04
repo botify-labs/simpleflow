@@ -76,5 +76,9 @@ QUERY_FIELDS = (
     "redirects_from_nb",
     "redirects_from",
     "redirects_to",
-    "canonical_url",
+
+    "canonical_from_nb",
+    "canonical_from",
+    "canonical_to",
+    "canonical_to_equal",
 )

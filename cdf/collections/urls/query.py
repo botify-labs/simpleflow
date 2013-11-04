@@ -76,9 +76,9 @@ def prepare_canonical_to(query, es_document):
 def transform_canonical_to(query, es_document, attributes):
     attributes['canonical_from'] = []
     if 'canonical_to' in es_document:
-        if 'id' in es_document['canonical_to']:
+        if 'url_id' in es_document['canonical_to']:
             attributes['canonical_to'] = {
-                'url': query._id_to_url.get('{}:{}'.format(query.crawl_id, es_document['canonical_to']['id']))[0],
+                'url': query._id_to_url.get('{}:{}'.format(query.crawl_id, es_document['canonical_to']['url_id']))[0],
                 'crawled': True
             }
         else:
@@ -428,7 +428,10 @@ class Query(object):
         elif isinstance(query['filters'], dict) and not any(k in ('and', 'or') for k in query['filters'].keys()):
             query['filters'] = {'and': default_filters + [query['filters']]}
         elif 'and' in query['filters']:
-            query['filters']['and'] += default_filters
+            if isinstance(query['filters']['and'], dict):
+                query['filters']['and'] = [query['filters']['and'], default_filters]
+            else:
+                query['filters']['and'] += default_filters
         elif 'or' in query['filters']:
             query['filters']['and'] = [{'and': default_filters}, {'or': query['filters']['or']}]
             del query['filters']['or']

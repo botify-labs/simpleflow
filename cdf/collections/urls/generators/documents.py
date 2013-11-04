@@ -136,7 +136,6 @@ def extract_outlinks(attributes, stream_item):
             else:
                 attributes["outlinks_internal"].append([url_dst, mask, 1])
                 attributes["outlinks_id_to_idx"][(url_dst, mask)] = len(attributes["outlinks_internal"]) - 1
-
     elif link_type.startswith('r'):
         http_code = link_type[1:]
         if url_dst == -1:
@@ -144,11 +143,13 @@ def extract_outlinks(attributes, stream_item):
         else:
             attributes['redirects_to'] = {'url_id': url_dst, 'http_code': int(http_code)}
     elif link_type == "canonical":
-        attributes['canonical_equals'] = url_src == url_dst
-        if url_dst > 0:
-            attributes['canonical_to'] = {'id': url_dst}
-        else:
-            attributes['canonical_to'] = {'url': external_url}
+        if not 'canonical_to_equal' in attributes:
+            # We take only the first canonical found
+            attributes['canonical_to_equal'] = url_src == url_dst
+            if url_dst > 0:
+                attributes['canonical_to'] = {'url_id': url_dst}
+            else:
+                attributes['canonical_to'] = {'url': external_url}
 
 
 def extract_inlinks(attributes, stream_item):

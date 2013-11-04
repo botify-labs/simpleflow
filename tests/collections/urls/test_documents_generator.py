@@ -456,6 +456,7 @@ class TestUrlDocumentGenerator(unittest.TestCase):
             [2, 'canonical', True, 2, ''],
             [3, 'canonical', True, -1, 'http://www.youtube.com'],
             [4, 'canonical', True, 5, ''],
+            [4, 'canonical', True, 6, ''], # Check that we take only the first canonical for url 4
         ]
 
         inlinks = [
@@ -469,19 +470,19 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         documents = list(u)
 
         # Url 1
-        self.assertEquals(documents[0][1]['canonical_url']['id'], 2)
-        self.assertEquals(documents[0][1]['canonical_equals'], False)
+        self.assertEquals(documents[0][1]['canonical_to']['url_id'], 2)
+        self.assertEquals(documents[0][1]['canonical_to_equal'], False)
         # Url 2
-        self.assertEquals(documents[1][1]['canonical_url']['id'], 2)
-        self.assertEquals(documents[1][1]['canonical_equals'], True)
+        self.assertEquals(documents[1][1]['canonical_to']['url_id'], 2)
+        self.assertEquals(documents[1][1]['canonical_to_equal'], True)
         # Url 3
-        self.assertEquals(documents[2][1]['canonical_url']['url'], "http://www.youtube.com")
-        self.assertEquals(documents[2][1]['canonical_equals'], False)
+        self.assertEquals(documents[2][1]['canonical_to']['url'], "http://www.youtube.com")
+        self.assertEquals(documents[2][1]['canonical_to_equal'], False)
         # Url 4
-        self.assertEquals(documents[3][1]['canonical_url']['id'], 5)
-        self.assertEquals(documents[3][1]['canonical_equals'], False)
+        self.assertEquals(documents[3][1]['canonical_to']['url_id'], 5)
+        self.assertEquals(documents[3][1]['canonical_to_equal'], False)
         # Url 5
-        self.assertEquals(documents[4][1], {"url": "http://www.site.com/path/name4.html", "http_code": 0})
+        self.assertEquals(documents[4][1], {"id": 5, "url": "http://www.site.com/path/name4.html", "http_code": 0})
 
     def test_canonical_from(self):
         patterns = [
