@@ -79,9 +79,11 @@ def get_duplicate_metadata(stream_contents):
 
                 urls = hashes[ct_id][_h]
                 nb_duplicates = hashes_count[ct_id][_h]
-                # Do not push this to ES since it's not a duplicate
+                # Unique (url, metatype)'s duplicates number should be 0, intuitively
+                # Simple hack here, we should not push no-duplicate records to ES and
+                # generates necessary information in document generator (like `filled_nb`)
                 if nb_duplicates == 1:
-                    continue
+                    nb_duplicates = 0
 
                 # Since duplicating urls are appended to a list, order is preserved
                 # The first url is garanteed to be the min

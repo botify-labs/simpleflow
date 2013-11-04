@@ -42,6 +42,7 @@ class TestMetadataDuplicateGenerator(unittest.TestCase):
             (2, 2, 1, 2, False, [1]),
             (2, 4, 1, 3, False, [1, 3]),
             (3, 1, 1, 2, False, [1]),
+            (3, 2, 1, 0, True, []),
             (3, 4, 1, 3, False, [1, 2])
         ]
         self.assertEquals(results, expected)
