@@ -1,12 +1,14 @@
 import itertools
 
+
 from collections import defaultdict, Counter
+from itertools import groupby
 
 from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES_IDS
-from cdf.streams.utils import group_left, idx_from_stream
+from cdf.streams.utils import idx_from_stream
 
 
-def get_duplicate_metadata(stream_patterns, stream_contents):
+def get_duplicate_metadata(stream_contents):
     """
     Return a tuple of urls having a duplicate metadata (the first one found for each page)
     The 1st index is the url_id concerned
@@ -21,12 +23,10 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
     (url_id, content_type, filled_nb, duplicates_nb, is_first_url_found, [url_id_1, url_id2 ...])
     """
     # Resolve indexes
+    url_id_idx = idx_from_stream('contents', 'id')
     content_meta_type_idx = idx_from_stream('contents', 'content_type')
     content_hash_idx = idx_from_stream('contents', 'hash')
 
-    streams_def = {
-        'contents': (stream_contents, idx_from_stream('contents', 'id')),
-    }
 
     hashes = defaultdict(lambda: defaultdict(list))
     hashes_count = defaultdict(Counter)
@@ -38,11 +38,13 @@ def get_duplicate_metadata(stream_patterns, stream_contents):
     # Counter[(url, meta_type)] = count
     filled_counter = Counter()
 
-    for i, result in enumerate(group_left((stream_patterns, 0), **streams_def)):
-        url_id = result[0]
-        contents = result[2]['contents']
+    min_url_id = -1
+    for url_id, g in groupby(stream_contents, lambda x: x[url_id_idx]):
 
-        if i == 0:
+        contents = list(g)
+
+        # Take the first url_id
+        if min_url_id < 0:
             min_url_id = url_id
 
         # Fetch --first-- hash from each content type and watch add it to hashes set
