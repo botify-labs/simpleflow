@@ -135,7 +135,7 @@ def make_bad_link_file(crawl_id, s3_uri,
     generator = get_bad_links(itertools.chain(*streams_types['infos']),
                               itertools.chain(*streams_types['outlinks']))
 
-    file_name = 'urlbadinks.txt.gz'
+    file_name = 'urlbadlinks.txt.gz'
     f = gzip.open(os.path.join(tmp_dir, file_name), 'w')
     for (src, dest, bad_code) in generator:
         f.write(str(src) + '\t' +
