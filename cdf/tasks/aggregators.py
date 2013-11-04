@@ -219,8 +219,9 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 result["urls"] = urls_results
             final_summary.append(result)
 
-    #final_summary = sorted(final_summary, key=lambda i: i['score'], reverse=True)
-    final_summary = sorted(final_summary, key=lambda i: i['relevance'], reverse=True)
+    final_summary = sorted(final_summary,
+                           key=lambda i: i['score'],
+                           reverse=True)
     final_summary_flatten = json.dumps(final_summary, indent=4)
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
     if not os.path.exists(os.path.join(tmp_dir)):
