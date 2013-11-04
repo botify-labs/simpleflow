@@ -429,6 +429,6 @@ class SuggestedPatternsQuery(object):
             yield {
                 "query": query,
                 "query_verbose": query_verbose,
-                "query_hash_id": hash_id,
-                "nb_urls": nb_urls
+                "query_hash_id": int(hash_id),
+                "nb_urls": int(nb_urls)
             }
