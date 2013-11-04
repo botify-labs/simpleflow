@@ -244,6 +244,15 @@ class MetricsQuery(BaseMetricsQuery):
 class SuggestQuery(BaseMetricsQuery):
     DF_KEY = "suggest"
 
+    def __init__(self, hdfstore, options=None):
+        super(SuggestQuery, self).__init__(hdfstore, options)
+
+        if not '/children' in self.hdfstore.keys():
+            self.child_relationship_set = set()
+        else:
+            child_frame = self.hdfstore['children']
+            self.child_relationship_set = self.compute_child_relationship_set(child_frame)
+
     def query_hash_to_string(self, value):
         return unicode(self.hdfstore['requests'].ix[str(value), 'string'], "utf8")
 
@@ -316,6 +325,28 @@ class SuggestQuery(BaseMetricsQuery):
         results = sorted(results, reverse = True, key = lambda x: x["counters"][target_field])
         return results
 
+    def is_child(self, parent_hash, child_hash):
+        """Test if a pattern is the child from an other pattern,
+        given their two hashes.
+        """
+        return (parent_hash, child_hash) in self.child_relationship_set
+
+    def compute_child_relationship_set(self, child_frame):
+        """Build a set of tuples (parent_hash, child_hash)
+        to be able to test fast if a relationship exists.
+        child_frame : a pandas dataframe with two columns:
+        - parent : contains the parent pattern hash
+        - child : contains the parent pattern hash
+        Each row of the frame represent a parent/child relationship
+        between two patterns
+        """
+        result = set()
+        for count, row in child_frame.iterrows():
+            parent_hash = row["parent"]
+            child_hash = row["child"]
+            result.add((parent_hash, child_hash))
+        return result
+
     def remove_equivalent_parents(self, settings, results):
         """This method removes parent results if they have a child which
         contains the same number of relevant elements.
@@ -333,20 +364,13 @@ class SuggestQuery(BaseMetricsQuery):
         """
 
         target_field = settings.get('target_field', 'pages_nb')
-        if not 'children' in self.hdfstore.keys():
-            return results
-
-        child_frame = self.hdfstore['children']
 
         hashes_to_remove = []
         for potential_parent, potential_child in itertools.combinations(results, 2):
             potential_parent_hash = potential_parent["query"]
             potential_child_hash = potential_child["query"]
 
-            parent_selection = (child_frame.parent == potential_parent_hash)
-            child_selection = (child_frame.child == potential_child_hash)
-
-            if child_frame[parent_selection & child_selection].shape[0] != 0:
+            if self.is_child(potential_parent_hash, potential_child_hash):
                 parent_target_field_count = potential_parent["counters"][target_field]
                 child_target_field_count = potential_child["counters"][target_field]
                 if parent_target_field_count == child_target_field_count:
@@ -354,7 +378,6 @@ class SuggestQuery(BaseMetricsQuery):
 
         results = [result for result in results if not result["query"] in hashes_to_remove]
         return results
-
 
     def hide_less_relevant_children(self, settings, results):
         """Once we have displayed a node,
@@ -367,20 +390,12 @@ class SuggestQuery(BaseMetricsQuery):
         The method requires the input results to be sorted.
         The sort criterion does not matter.
         """
-        if not 'children' in self.hdfstore.keys():
-            return results
-
-        child_frame = self.hdfstore['children']
-
         hashes_to_remove = []
         for potential_parent, potential_child  in itertools.combinations(results, 2):
             potential_parent_hash = potential_parent["query"]
             potential_child_hash = potential_child["query"]
 
-            parent_selection = (child_frame.parent == potential_parent_hash)
-            child_selection = (child_frame.child == potential_child_hash)
-
-            if child_frame[parent_selection & child_selection].shape[0] != 0:
+            if self.is_child(potential_parent_hash, potential_child_hash):
                 hashes_to_remove.append(potential_child_hash)
                 if not "children" in potential_parent:
                     potential_parent["children"] = []
