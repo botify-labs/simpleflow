@@ -63,14 +63,12 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
-    streams_types = {'patterns': [],
-                     'contents': []
-                     }
+    streams_types = {'contents': []}
 
     for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
         files_fetched = fetch_files(s3_uri,
                                     tmp_dir,
-                                    regexp='url(ids|contents).txt.%d.gz' % part_id,
+                                    regexp='urlcontents.txt.%d.gz' % part_id,
                                     force_fetch=force_fetch)
 
         for path_local, fetched in files_fetched:
@@ -78,8 +76,7 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
             cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
             streams_types[stream_identifier].append(cast(split_file(gzip.open(path_local))))
 
-    generator = get_duplicate_metadata(itertools.chain(*streams_types['patterns']),
-                                       itertools.chain(*streams_types['contents']))
+    generator = get_duplicate_metadata(itertools.chain(*streams_types['contents']))
 
     current_part_id = 0
     f = gzip.open(os.path.join(tmp_dir, 'urlcontentsduplicate.txt.0.gz'), 'w')

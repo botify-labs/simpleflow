@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 from cdf.log import logger
-from cdf.collections.urls.generators.metadata_duplicate import MetadataDuplicateGenerator
+from cdf.collections.urls.transducers.metadata_duplicate import get_duplicate_metadata
 
 logger.setLevel(logging.DEBUG)
 
@@ -19,29 +19,30 @@ class TestMetadataDuplicateGenerator(unittest.TestCase):
         pass
 
     def test_simple(self):
-        stream_patterns = iter((
-            [1, 'http', 'www.site.com', '/path/name.html', ''],
-            [2, 'http', 'www.site.com', '/path/name2.html', ''],
-            [3, 'http', 'www.site.com', '/path/name4.html', ''],
-        ))
-
         stream_contents = iter((
             [1, 2, 1234, 'My first H1'],
             [1, 2, 456, 'My second H1'],
             [1, 3, 7867, 'My H2'],
             [1, 1, 8999, 'My title'],
+            [1, 4, 1111, 'My Desc'],
             [2, 2, 1234, 'My first H1'],
-            [3, 2, 9877, 'My other H1'],
+            [2, 4, 1111, 'My Desc'],
+            [3, 2, 456, 'My second H1'],
             [3, 1, 8999, 'My title'],
+            [3, 4, 1111, 'My Desc'],
         ))
 
-        u = MetadataDuplicateGenerator(stream_patterns, stream_contents)
-        results = list(u)
+        generator = get_duplicate_metadata(stream_contents)
+        results = list(generator)
         logger.info(results)
         expected = [
-            ('title', 1, [3]),
-            ('title', 3, [1]),
-            ('h1', 1, [2]),
-            ('h1', 2, [1])
+            (1, 1, 1, 2, True, [3]),
+            (1, 2, 2, 2, True, [2]),
+            (1, 4, 1, 3, True, [2, 3]),
+            (2, 2, 1, 2, False, [1]),
+            (2, 4, 1, 3, False, [1, 3]),
+            (3, 1, 1, 2, False, [1]),
+            (3, 2, 1, 0, True, []),
+            (3, 4, 1, 3, False, [1, 2])
         ]
         self.assertEquals(results, expected)
