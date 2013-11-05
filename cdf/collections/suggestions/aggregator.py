@@ -63,7 +63,7 @@ class MetricsAggregator(object):
 
         Ex :
         {
-            "cross_properties": ["1233223;11222211;33322", "text/html", 1, 200, True, True],
+            "cross_properties": [17376626532, "text/html", 1, 200, True, True],
             "counters": {
                 "pages_nb": 10,
                 "redirections_nb": 0,
@@ -195,7 +195,7 @@ class MetricsAggregator(object):
                 metadata_dict = results[key]['metadata_nb'][CONTENT_TYPE_INDEX[ct_id]]
                 metadata_dict['filled'] += 1
                 if ct_id in MANDATORY_CONTENT_TYPES_IDS:
-                    if nb_duplicates == 1:
+                    if nb_duplicates == 0:
                         metadata_dict['unique'] += 1
                     else:
                         metadata_dict['duplicate'] += 1
