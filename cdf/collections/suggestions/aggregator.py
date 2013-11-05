@@ -149,6 +149,31 @@ class MetricsAggregator(object):
 
         results = dict()
 
+        def inlink_follow_dist(target_dict, score_unique):
+            # This should be put some where as a constant
+            dist_key = 'follow_distribution'
+            if score_unique < 10:
+                target_dict[dist_key][str(score_unique)] += 1
+            if score_unique <= 3:
+                target_dict[dist_key]['lte_3'] += 1
+                target_dict[dist_key]['lt_10'] += 1
+            elif score_unique >= 10 and score_unique < 20:
+                target_dict[dist_key]['10_to_19'] += 1
+            elif score_unique >= 20 and score_unique < 30:
+                target_dict[dist_key]['20_to_29'] += 1
+            elif score_unique >= 30 and score_unique < 40:
+                target_dict[dist_key]['30_to_39'] += 1
+            elif score_unique >= 40 and score_unique < 50:
+                target_dict[dist_key]['40_to_49'] += 1
+            elif score_unique >= 50 and score_unique < 100:
+                target_dict[dist_key]['50_to_99'] += 1
+            elif score_unique >= 100 and score_unique < 500:
+                target_dict[dist_key]['100_to_499'] += 1
+            elif score_unique >= 500 and score_unique <= 1000:
+                target_dict[dist_key]['500_to_1000'] += 1
+            elif score_unique > 1000:
+                target_dict[dist_key]['gt_1000'] += 1
+
         def increment_results_for_key(key):
             results[key]['pages_nb'] += 1
             results[key][delay_to_range(infos[delay2_idx])] += 1
@@ -227,6 +252,7 @@ class MetricsAggregator(object):
 
                 if follow_key == 'follow':
                     results[key][counter_key]['follow_unique'] += score_unique
+                    inlink_follow_dist(results[key][counter_key], score_unique)
                 else:
                     if follow_key not in results[key][counter_key]['nofollow_combinations']:
                         results[key][counter_key]['nofollow_combinations'][follow_key] = 1
