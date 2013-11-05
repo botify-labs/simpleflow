@@ -5,7 +5,7 @@ import json
 
 import csv
 
-from pandas import HDFStore, DataFrame
+from pandas import HDFStore, DataFrame, Index
 
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file
@@ -126,7 +126,16 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
     c = MetricsConsolidator(counters)
     df_counter = c.get_dataframe()
     store["full_crawl"] = df_counter[df_counter['query'] == '0'].groupby(CROSS_PROPERTIES_COLUMNS).agg('sum').reset_index()
-    store["suggest"] = df_counter[df_counter['query'] != '0'].groupby(CROSS_PROPERTIES_COLUMNS).agg('sum').reset_index()
+    suggest_frame = df_counter[df_counter['query'] != '0'].groupby(CROSS_PROPERTIES_COLUMNS).agg('sum').reset_index()
+    if len(suggest_frame) == 0:
+        #for an unknown reason, pandas raises a :
+        #ValueError: Shape of passed values is (75, 0), indices imply (75, 1)
+        #
+        #when retrieving a dataframe with an empty int64 index.
+        #To avoid this, we change the type of the index.
+        #It does not hurt, since the dataframe is empty.
+        suggest_frame.index = Index([], dtype=int)
+    store["suggest"] = suggest_frame
 
     store.close()
     push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)

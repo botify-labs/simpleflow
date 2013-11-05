@@ -4,6 +4,7 @@ import itertools
 
 from boto.exception import S3ResponseError
 
+from cdf.log import logger
 from cdf.utils.s3 import fetch_files, fetch_file, push_file
 from cdf.streams.caster import Caster
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
@@ -75,6 +76,10 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
             stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
             cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
             streams_types[stream_identifier].append(cast(split_file(gzip.open(path_local))))
+
+    if len(streams_types['contents']) == 0:
+        logger.warn("Could not fetch any urlcontents file.")
+        return
 
     generator = get_duplicate_metadata(itertools.chain(*streams_types['contents']))
 
