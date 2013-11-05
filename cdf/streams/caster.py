@@ -1,5 +1,7 @@
 from itertools import izip
 
+from cdf.streams.utils import iterate_csv_safely
+
 """
 A stream is a generator of values. A value may be any object but usually is a
 string or a tuple. The purpose of this module is to provide simple operations
@@ -42,7 +44,5 @@ class Caster(object):
                 (name, cast), value in izip(self._fields, line)]
 
     def cast(self, iterable):
-        for i in iterable:
+        for i in iterate_csv_safely(iterable):
             yield self.cast_line(i)
-
-
