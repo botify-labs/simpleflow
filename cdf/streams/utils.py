@@ -10,6 +10,8 @@ times on the values.
 """
 from itertools import izip
 
+import csv
+
 from cdf.streams.mapping import STREAMS_HEADERS
 
 
@@ -60,8 +62,12 @@ def split_file(iterable, char='\t'):
 
     """
     import csv
-
-    return csv.reader(iterable, delimiter=char, quoting=csv.QUOTE_NONE)
+    result = csv.reader(iterable, delimiter=char, quoting=csv.QUOTE_NONE)
+    #if a field is longer than 1024 we ignore it
+    #because it is very likely that the user has simply forgotten
+    #to close a markup
+    csv.field_size_limit(1024)
+    return result
 
 
 def idx_from_stream(key, field):
@@ -112,3 +118,24 @@ def group_left(left, **stream_defs):
                 except StopIteration:
                     break
         yield current_id, line, stream_lines
+
+
+def iterate_csv_safely(iterable):
+    """
+    A generator that delivers all the elements of an csv.reader
+    except the elements that raises a csv.Error which are ignored.
+
+    csv.reader for instance raises an exception when a field is too big.
+    To protect your loop you can write:
+    csv_reader = csv.reader(...)
+    for row in iterate_safely(csv_reader):
+        ...
+    The row which are too long will simply be ignored.
+    """
+    while True:
+        try:
+            yield next(iterable)
+        except StopIteration:
+            raise
+        except csv.Error:
+            pass
