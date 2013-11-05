@@ -187,7 +187,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         query["display_children"] = False
         results = q.query(query)
         for result in results:
-            hash_id_filters = [{'field': 'patterns', 'value': hash_id} for hash_id in result['query_hash_id']]
+            hash_id_filters = [{'field': 'patterns', 'value': result['query_hash_id']}]
             urls_query = {
                 "fields": ["url"] + urls_fields[i],
                 "filters": {'and': hash_id_filters + urls_filters[i]}
