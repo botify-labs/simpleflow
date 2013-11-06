@@ -23,6 +23,10 @@ class TestTaggingGenerator(unittest.TestCase):
             [1, 'http', 'www.site.com', '/path/name.html', ''],
         )
 
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+        )
+
         resource_type_settings = [
             {
                 'host': '*.site.com',
@@ -34,13 +38,17 @@ class TestTaggingGenerator(unittest.TestCase):
             }
         ]
 
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "mypath", "host": "www.site.com"}))
 
     def test_unknown(self):
         patterns = (
             [1, 'http', 'www.site.com', '/path/name.html', ''],
+        )
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         )
 
         resource_type_settings = [
@@ -54,7 +62,7 @@ class TestTaggingGenerator(unittest.TestCase):
             }
         ]
 
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "unknown", "host": "www.site.com"}))
 
@@ -64,6 +72,10 @@ class TestTaggingGenerator(unittest.TestCase):
         """
         patterns = (
             [1, 'http', 'www.site.com', '/path/name.html', ''],
+        )
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         )
 
         resource_type_settings = [
@@ -82,7 +94,7 @@ class TestTaggingGenerator(unittest.TestCase):
             }
         ]
 
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "unknown", "host": "www.site.com"}))
 
@@ -93,7 +105,7 @@ class TestTaggingGenerator(unittest.TestCase):
             'inherits_from': 'path_rule'
         })
 
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "html", "host": "www.site.com"}))
 
@@ -103,6 +115,10 @@ class TestTaggingGenerator(unittest.TestCase):
         """
         patterns = (
             [1, 'http', 'www.site.com', '/music/name.html', ''],
+        )
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         )
 
         resource_type_settings = [
@@ -120,13 +136,17 @@ class TestTaggingGenerator(unittest.TestCase):
                 ]
             }
         ]
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "unknown", "host": "www.site.com"}))
 
     def test_query_string_field(self):
         patterns = (
             [1, 'http', 'www.site.com', '/music/name.html', '?page=1&session_id=3'],
+        )
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         )
 
         resource_type_settings = [
@@ -139,7 +159,7 @@ class TestTaggingGenerator(unittest.TestCase):
                 ]
             }
         ]
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "p1", "host": "www.site.com"}))
 
@@ -147,7 +167,7 @@ class TestTaggingGenerator(unittest.TestCase):
         patterns = (
             [1, 'http', 'www.site.com', '/music/name.html', '?sid=1djsq676g'],
         )
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "unknown", "host": "www.site.com"}))
 
@@ -155,6 +175,11 @@ class TestTaggingGenerator(unittest.TestCase):
         patterns = (
             [1, 'http', 'www.site.com', '/music/name.html', '?page=1&session_id=3'],
             [2, 'http', 'www.site.com', '/music/name.html', '?page'],
+        )
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+            [2, 1, 'text/html', 0, 1, 200, 1121, 315, 403],
         )
 
         resource_type_settings = [
@@ -167,7 +192,7 @@ class TestTaggingGenerator(unittest.TestCase):
                 ]
             }
         ]
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "page_and_session", "host": "www.site.com"}))
         self.assertEquals(results[1], (2, {"resource_type": "unknown", "host": "www.site.com"}))
@@ -176,6 +201,11 @@ class TestTaggingGenerator(unittest.TestCase):
         patterns = (
             [1, 'http', 'www.site.com', '/music/name.html', '?page=1&session_id=3'],
             [2, 'http', 'www.site.com', '/music/name.html', '?page'],
+        )
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+            [2, 1, 'text/html', 0, 1, 200, 1121, 315, 403],
         )
 
         resource_type_settings = [
@@ -191,7 +221,7 @@ class TestTaggingGenerator(unittest.TestCase):
                 ]
             }
         ]
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "page_and_session", "host": "www.site.com"}))
         self.assertEquals(results[1], (2, {"resource_type": "page", "host": "www.site.com"}))
@@ -200,6 +230,11 @@ class TestTaggingGenerator(unittest.TestCase):
         patterns = (
             [1, 'http', 'www.site.com', '/music/name.html', ''],
             [2, 'http', 'www.site.com', '/movie/name.html', ''],
+        )
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+            [2, 1, 'text/html', 0, 1, 200, 1121, 315, 403],
         )
 
         resource_type_settings = [
@@ -215,7 +250,7 @@ class TestTaggingGenerator(unittest.TestCase):
                 ]
             }
         ]
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "music", "host": "www.site.com"}))
         self.assertEquals(results[1], (2, {"resource_type": "other", "host": "www.site.com"}))
@@ -224,6 +259,11 @@ class TestTaggingGenerator(unittest.TestCase):
         patterns = (
             [1, 'http', 'www.site.com', '/music/name.html', '?page=10'],
             [2, 'http', 'www.site.com', '/movie/name.html', '?page=4'],
+        )
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+            [2, 1, 'text/html', 0, 1, 200, 1121, 315, 403],
         )
 
         resource_type_settings = [
@@ -239,7 +279,7 @@ class TestTaggingGenerator(unittest.TestCase):
                 ]
             }
         ]
-        u = UrlTaggingGenerator(iter(patterns), resource_type_settings)
+        u = UrlTaggingGenerator(iter(patterns), iter(infos), resource_type_settings)
         results = list(u)
         self.assertEquals(results[0], (1, {"resource_type": "page_gt5", "host": "www.site.com"}))
         self.assertEquals(results[1], (2, {"resource_type": "page_eq4", "host": "www.site.com"}))
