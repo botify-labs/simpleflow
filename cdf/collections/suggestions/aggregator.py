@@ -164,13 +164,13 @@ class MetricsAggregator(object):
                 keys = ['40_to_49']
             elif score_unique >= 50 and score_unique < 100:
                 keys = ['50_to_99']
-            elif score_unique >= 100 and score_unique < 999:
+            elif score_unique >= 100 and score_unique < 1000:
                 keys = ['100_to_999']
-            elif score_unique >= 1000 and score_unique < 9999:
+            elif score_unique >= 1000 and score_unique < 10000:
                 keys = ['1000_to_9999']
-            elif score_unique >= 10000 and score_unique < 99999:
+            elif score_unique >= 10000 and score_unique < 100000:
                 keys = ['10000_to_99999']
-            elif score_unique >= 100000 and score_unique < 999999:
+            elif score_unique >= 100000 and score_unique < 1000000:
                 keys = ['100000_to_999999']
             elif score_unique >= 1000000:
                 keys = ['gte_1M']
