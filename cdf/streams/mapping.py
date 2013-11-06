@@ -15,7 +15,8 @@ STREAMS_FILES = {
     'url_in_redirect_counters': 'inredirect_counters',
     'url_in_canonical_counters': 'incanonical_counters',
     'url_suggested_clusters': 'suggest',
-    'urlbadlinks': 'badlinks'
+    'urlbadlinks': 'badlinks',
+    'urlbadlinks_counters': 'badlinks_counters'
 }
 
 
@@ -119,6 +120,11 @@ STREAMS_HEADERS = {
         ('id', int),
         ('dst_url_id', int),
         ('http_code', int)
+    ),
+    'BADLINKS_COUNTERS': (
+        ('id', int),
+        ('http_code', int),
+        ('score', int)
     )
 }
 
