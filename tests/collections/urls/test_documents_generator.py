@@ -46,7 +46,7 @@ class TestUrlDocumentGenerator(unittest.TestCase):
             'depth': 0,
             'http_code': 200,
             'delay2': 456,
-            'metadata_nb': {'description': 0, 'h1': 0, 'h2': 0, 'title': 0},
+            'metadata_nb': {'description': 0, 'h1': 0, 'h2': 0, 'h3': 0, 'title': 0},
             'meta_noindex': False,
             'meta_nofollow': False,
             'inlinks_internal_nb': {
@@ -72,7 +72,10 @@ class TestUrlDocumentGenerator(unittest.TestCase):
             },
             'outlinks_internal': [],
         }
-        self.assertEquals(document, (1, document_expected))
+
+        for key, expected in document_expected.items():
+            self.assertEquals(document[1][key], expected)
+
 
     def test_query_string(self):
         patterns = [
@@ -382,7 +385,7 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         self.assertEquals(document[1]['redirects_to'], {'url_id': 4, 'http_code': 301})
 
         document = documents.next()
-        self.assertEquals(document[1], {'url': 'http://www.site.com/path/name4.html', 'http_code': 0})
+        self.assertEquals(document[1], {'url': 'http://www.site.com/path/name4.html', 'http_code': 0, 'id': 4})
 
     def test_inlinks(self):
         patterns = [
