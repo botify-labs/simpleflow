@@ -150,29 +150,33 @@ class MetricsAggregator(object):
         results = dict()
 
         def inlink_follow_dist(target_dict, score_unique):
-            # This should be put some where as a constant
-            dist_key = 'follow_distribution'
             if score_unique < 10:
-                target_dict[dist_key][str(score_unique)] += 1
-            if score_unique <= 3:
-                target_dict[dist_key]['lte_3'] += 1
-                target_dict[dist_key]['lt_10'] += 1
+                keys = [str(score_unique), 'lt_10']
+            elif score_unique <= 3:
+                keys = [str(score_unique), 'lt_10', 'lte_3']
             elif score_unique >= 10 and score_unique < 20:
-                target_dict[dist_key]['10_to_19'] += 1
+                keys = ['10_to_19']
             elif score_unique >= 20 and score_unique < 30:
-                target_dict[dist_key]['20_to_29'] += 1
+                keys = ['20_to_29']
             elif score_unique >= 30 and score_unique < 40:
-                target_dict[dist_key]['30_to_39'] += 1
+                keys = ['30_to_39']
             elif score_unique >= 40 and score_unique < 50:
-                target_dict[dist_key]['40_to_49'] += 1
+                keys = ['40_to_49']
             elif score_unique >= 50 and score_unique < 100:
-                target_dict[dist_key]['50_to_99'] += 1
-            elif score_unique >= 100 and score_unique < 500:
-                target_dict[dist_key]['100_to_499'] += 1
-            elif score_unique >= 500 and score_unique < 1000:
-                target_dict[dist_key]['500_to_999'] += 1
-            elif score_unique >= 1000:
-                target_dict[dist_key]['gte_1000'] += 1
+                keys = ['50_to_99']
+            elif score_unique >= 100 and score_unique < 999:
+                keys = ['100_to_999']
+            elif score_unique >= 1000 and score_unique < 9999:
+                keys = ['1000_to_9999']
+            elif score_unique >= 10000 and score_unique < 99999:
+                keys = ['10000_to_99999']
+            elif score_unique >= 100000 and score_unique < 999999:
+                keys = ['100000_to_999999']
+            elif score_unique >= 1000000:
+                keys = ['gte_1M']
+            for k in keys:
+                target_dict['follow_distribution_urls'][k] += 1
+                target_dict['follow_distribution_links'][k] += score_unique
 
         def increment_results_for_key(key):
             results[key]['pages_nb'] += 1
