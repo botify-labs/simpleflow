@@ -512,3 +512,65 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         # Url 2
         self.assertEquals(documents[1][1]['canonical_from_nb'], 2)
         self.assertEquals(documents[1][1]['canonical_from'], [17, 20])
+
+
+    def test_bad_links(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+            [2, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+        ]
+
+        badlinks = [
+            [1, 5, 500],
+            [1, 100, 302],
+            [1, 101, 302],
+            [1, 102, 302],
+            [1, 103, 402],
+            [2, 100, 402],
+            [2, 101, 402],
+            [2, 102, 402],
+            [2, 103, 402],
+            [2, 104, 402],
+            [2, 105, 402],
+            [2, 106, 402],
+            [2, 107, 402],
+            [2, 108, 402],
+            [2, 109, 402],
+            [2, 110, 402],
+        ]
+
+        u = UrlDocumentGenerator(iter(patterns),
+                                 infos=iter(infos),
+                                 badlinks=iter(badlinks))
+        documents = list(u)
+
+        expected_1 = {
+            '3xx': {
+                'nb': 3,
+                'urls': [100, 101, 102]
+            },
+            '4xx': {
+                'nb': 1,
+                'urls': [103]
+            },
+            '5xx': {
+                'nb': 1,
+                'urls': [5]
+            }
+
+        }
+        expected_2 = {
+            '4xx': {
+                'nb': 11,
+                'urls': range(100, 110)
+            }
+        }
+
+        key = 'error_links'
+        self.assertEquals(documents[0][1][key], expected_1)
+        self.assertEquals(documents[1][1][key], expected_2)
