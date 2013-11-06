@@ -1,6 +1,7 @@
 import os
 import gzip
 import itertools
+import re
 
 from boto.exception import S3ResponseError
 
@@ -114,6 +115,8 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
 
 
 def make_bad_link_file(crawl_id, s3_uri,
+                       first_part_id_size=500000,
+                       part_id_size=500000,
                        tmp_dir_prefix='/tmp', force_fetch=False):
     """
     Generate a tsv file that list all urls outlink to an error url:
@@ -140,19 +143,39 @@ def make_bad_link_file(crawl_id, s3_uri,
     generator = get_bad_links(itertools.chain(*streams_types['infos']),
                               itertools.chain(*streams_types['outlinks']))
 
-    file_name = 'urlbadinks.txt.gz'
-    f = gzip.open(os.path.join(tmp_dir, file_name), 'w')
-    for (src, dest, bad_code) in generator:
-        f.write(str(src) + '\t' +
-                str(dest) + '\t' +
-                str(bad_code) + '\n')
+    current_part_id = 0
+    file_name = 'urlbadlinks.txt.{}.gz'
+    f = gzip.open(os.path.join(tmp_dir, file_name.format('0')), 'w')
+    for _, (src, dest, bad_code) in enumerate(generator):
+
+        # check the part id
+        url_id = src
+        if (current_part_id == 0 and url_id > first_part_id_size) or \
+           (current_part_id > 0 and (url_id - first_part_id_size) / part_id_size != current_part_id - 1):
+            f.close()
+            push_file(
+                os.path.join(s3_uri, file_name.format(current_part_id)),
+                os.path.join(tmp_dir, file_name.format(current_part_id)),
+            )
+            current_part_id += 1
+            f = gzip.open(os.path.join(tmp_dir, file_name.format(current_part_id)), 'w')
+
+        f.write('\t'.join((
+            str(src),
+            str(dest),
+            str(bad_code)
+        )) + '\n')
     f.close()
-    push_file(os.path.join(s3_uri, file_name),
-              os.path.join(tmp_dir, file_name))
+    push_file(
+        os.path.join(s3_uri, file_name.format(current_part_id)),
+        os.path.join(tmp_dir, file_name.format(current_part_id)),
+    )
 
 
 def make_bad_link_counter_file(crawl_id, s3_uri,
-                               tmp_dir_prefix='/tmp'):
+                               part_id,
+                               tmp_dir_prefix='/tmp',
+                               force_fetch=False):
     """
     Generate a counter file that list bad link counts by source url and http code
       url_src_id  http_code  count
@@ -161,22 +184,26 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
     Ordered on url_src_id and http_code
     """
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    bad_link_file = os.path.join(tmp_dir, 'urlbadlinks.txt.%d.gz' % part_id)
 
     streams_types = {'badlinks': []}
 
-    bad_links = os.path.join(tmp_dir, 'urlbadlinks.txt.gz')
-    stream_identifier = STREAMS_FILES[os.path.basename(bad_links).split('.')[0]]
+    stream_identifier = STREAMS_FILES[os.path.basename(bad_link_file).split('.')[0]]
     cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
-    streams_types[stream_identifier].append(cast(split_file(gzip.open(bad_links))))
+    streams_types[stream_identifier].append(cast(split_file(gzip.open(bad_link_file))))
 
     generator = get_bad_link_counters(itertools.chain(*streams_types['badlinks']))
 
-    file_name = 'urlbadlinks_counters.txt.gz'
+    file_name = 'urlbadlinks_counters.txt.%d.gz' % part_id
     f = gzip.open(os.path.join(tmp_dir, file_name), 'w')
-    for (src, bad_code), count in generator:
-        f.write(str(src) + '\t' +
-                str(bad_code) + '\t' +
-                str(count) + '\n')
+    for src, bad_code, count in generator:
+        f.write('\t'.join((
+            str(src),
+            str(bad_code),
+            str(count)
+        )) + '\n')
     f.close()
-    push_file(os.path.join(s3_uri, file_name),
-              os.path.join(tmp_dir, file_name))
+    push_file(
+        os.path.join(s3_uri, file_name),
+        os.path.join(tmp_dir, file_name),
+    )
