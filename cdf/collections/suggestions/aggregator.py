@@ -149,6 +149,35 @@ class MetricsAggregator(object):
 
         results = dict()
 
+        def inlink_follow_dist(target_dict, score_unique):
+            if score_unique < 10:
+                keys = [str(score_unique), 'lt_10']
+            elif score_unique <= 3:
+                keys = [str(score_unique), 'lt_10', 'lte_3']
+            elif score_unique >= 10 and score_unique < 20:
+                keys = ['10_to_19']
+            elif score_unique >= 20 and score_unique < 30:
+                keys = ['20_to_29']
+            elif score_unique >= 30 and score_unique < 40:
+                keys = ['30_to_39']
+            elif score_unique >= 40 and score_unique < 50:
+                keys = ['40_to_49']
+            elif score_unique >= 50 and score_unique < 100:
+                keys = ['50_to_99']
+            elif score_unique >= 100 and score_unique < 1000:
+                keys = ['100_to_999']
+            elif score_unique >= 1000 and score_unique < 10000:
+                keys = ['1000_to_9999']
+            elif score_unique >= 10000 and score_unique < 100000:
+                keys = ['10000_to_99999']
+            elif score_unique >= 100000 and score_unique < 1000000:
+                keys = ['100000_to_999999']
+            elif score_unique >= 1000000:
+                keys = ['gte_1M']
+            for k in keys:
+                target_dict['follow_distribution_urls'][k] += 1
+                target_dict['follow_distribution_links'][k] += score_unique
+
         def increment_results_for_key(key):
             results[key]['pages_nb'] += 1
             results[key][delay_to_range(infos[delay2_idx])] += 1
@@ -223,10 +252,11 @@ class MetricsAggregator(object):
                 counter_key = 'inlinks_internal_nb'
                 follow_key = '_'.join(sorted(follow))
                 results[key][counter_key]['total'] += score
-                results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += 1
+                results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += score
 
                 if follow_key == 'follow':
                     results[key][counter_key]['follow_unique'] += score_unique
+                    inlink_follow_dist(results[key][counter_key], score_unique)
                 else:
                     if follow_key not in results[key][counter_key]['nofollow_combinations']:
                         results[key][counter_key]['nofollow_combinations'][follow_key] = 1
