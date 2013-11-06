@@ -252,7 +252,7 @@ class MetricsAggregator(object):
                 counter_key = 'inlinks_internal_nb'
                 follow_key = '_'.join(sorted(follow))
                 results[key][counter_key]['total'] += score
-                results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += 1
+                results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += score
 
                 if follow_key == 'follow':
                     results[key][counter_key]['follow_unique'] += score_unique
