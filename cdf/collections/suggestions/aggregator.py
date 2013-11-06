@@ -150,10 +150,10 @@ class MetricsAggregator(object):
         results = dict()
 
         def inlink_follow_dist(target_dict, score_unique):
-            if score_unique < 10:
-                keys = [str(score_unique), 'lt_10']
-            elif score_unique <= 3:
+            if score_unique <= 3:
                 keys = [str(score_unique), 'lt_10', 'lte_3']
+            elif score_unique < 10:
+                keys = [str(score_unique), 'lt_10']
             elif score_unique >= 10 and score_unique < 20:
                 keys = ['10_to_19']
             elif score_unique >= 20 and score_unique < 30:
