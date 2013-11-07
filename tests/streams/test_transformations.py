@@ -60,3 +60,28 @@ class TestGroupWith(unittest.TestCase):
         self.assertEquals(len(result), 2)
         self.assertEquals(result[0], (2, {"ok": True}))
         self.assertEquals(result[1], (7, {"ok": True}))
+
+    def test_empty(self):
+        def func_1(attributes, stream):
+            if not 'func_1' in attributes:
+                attributes['func_1'] = 1
+            else:
+                attributes['func_1'] += 1
+
+        def func_2(attributes, stream):
+            if not 'func_2' in attributes:
+                attributes['func_2'] = 1
+            else:
+                attributes['func_2'] += 1
+
+        def func_3(attributes, stream):
+            if not 'func_3' in attributes:
+                attributes['func_3'] = 1
+            else:
+                attributes['func_3'] += 1
+
+        results = list(group_with((self.stream_1, 0, func_1),
+                                 stream_2=(self.stream_2, 0, func_2),
+                                 stream_3=(iter([]), 0, func_3)))
+        for result in results:
+            self.assertFalse('func_3' in result)
