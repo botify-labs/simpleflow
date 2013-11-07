@@ -25,7 +25,8 @@ def compute_mixed_clusters(crawl_id,
                            force_fetch=False):
 
     minimal_frequency = 0.03
-    nb_urls = 100000
+    # load all the available urls
+    nb_urls = -1
 
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
