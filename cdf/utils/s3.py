@@ -6,6 +6,7 @@ from urlparse import urlparse
 import boto
 from boto.s3.key import Key
 from cdf.log import logger
+from cdf.utils.path import makedirs
 
 from lockfile import FileLock
 
@@ -62,8 +63,7 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True, lock=True):
         if lock:
             lock_obj = FileLock(path)
 
-        if not os.path.exists(os.path.dirname(path)):
-            os.makedirs(os.path.dirname(path))
+        makedirs(os.path.dirname(path), exist_ok=True)
         if not force_fetch and os.path.exists(path):
             if lock:
                 nb_checks = 0

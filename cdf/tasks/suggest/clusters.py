@@ -10,10 +10,13 @@ from autotagging.association_rules.algorithm import build_children_relationship
 from autotagging.visualization.textual import save_apriori_algorithm_results
 from autotagging.visualization.textual import save_child_relationship
 
+from cdf.utils.path import makedirs
+from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.streams.mapping import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_files, push_file
+
 
 def compute_mixed_clusters(crawl_id,
                            s3_uri,
@@ -23,25 +26,21 @@ def compute_mixed_clusters(crawl_id,
                            force_fetch=False):
 
     minimal_frequency = 0.03
-    nb_urls = 100000
+    # load all the available urls
+    nb_urls = -1
 
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    if not os.path.exists(tmp_dir):
-        try:
-            os.makedirs(tmp_dir)
-        except:
-            pass
+    makedirs(tmp_dir, exist_ok=True)
 
     output_dir = tmp_dir
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    makedirs(output_dir, exist_ok=True)
 
-    # For now, compute clusters only with first part (to be improved)
-    fetch_files(s3_uri,
-                tmp_dir,
-                regexp=['url(ids|infos|contents).txt.0.gz'],
-                force_fetch=force_fetch)
+    for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
+        fetch_files(s3_uri,
+                    tmp_dir,
+                    regexp=['url(ids|infos|contents).txt.%d.gz' % part_id],
+                    force_fetch=force_fetch)
 
     logger.info("Compute patterns cluster")
 

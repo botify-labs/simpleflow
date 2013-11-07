@@ -10,6 +10,7 @@ from pandas import HDFStore, DataFrame, Index
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
+from cdf.utils.path import makedirs
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
 from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS
 from cdf.collections.suggestions.aggregator import MetricsAggregator, MetricsConsolidator
@@ -22,8 +23,8 @@ from cdf.collections.urls.query import Query
 def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='/tmp', force_fetch=False):
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    if not os.path.exists(os.path.join(tmp_dir, 'suggest')):
-        os.makedirs(os.path.join(tmp_dir, 'suggest'))
+    suggest_dir_path = os.path.join(tmp_dir, 'suggest')
+    makedirs(suggest_dir_path, exist_ok=True)
 
     files = ('ids', 'infos',
              '_out_links_counters', '_out_canonical_counters', '_out_redirect_counters',
@@ -61,8 +62,7 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
     Fetch all part_id's aggregators and merge them
     """
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    if not os.path.exists(tmp_dir):
-        os.makedirs(tmp_dir)
+    makedirs(tmp_dir, exist_ok=True)
 
     # Fetch hdf5 file that already contains the full list of requests
     h5_file = os.path.join(tmp_dir, 'suggest.h5')
@@ -233,8 +233,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                            reverse=True)
     final_summary_flatten = json.dumps(final_summary, indent=4)
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    if not os.path.exists(os.path.join(tmp_dir)):
-        os.makedirs(os.path.join(tmp_dir))
+    makedirs(os.path.join(tmp_dir), exist_ok=True)
 
     summary_file = os.path.join(tmp_dir, 'suggested_patterns_summary.json')
     f = open(os.path.join(summary_file), 'w')
