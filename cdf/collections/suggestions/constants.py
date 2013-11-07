@@ -105,7 +105,7 @@ COUNTERS_FIELDS = (
     'error_links.3xx',
     'error_links.4xx',
     'error_links.5xx',
-    'error_links.all'
+    'error_links.any'
 )
 
 for ct_txt in CONTENT_TYPE_INDEX.itervalues():

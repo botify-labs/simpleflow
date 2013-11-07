@@ -154,7 +154,7 @@ class MetricsAggregator(object):
         results = dict()
 
         def aggregate_badlinks(target_dict, http_code, score):
-            target_dict['all'] += score
+            target_dict['any'] += score
             if http_code >= 300 and http_code < 400:
                 target_dict['3xx'] += score
             elif http_code >= 400 and http_code < 500:
