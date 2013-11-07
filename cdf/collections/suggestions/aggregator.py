@@ -37,6 +37,18 @@ def get_keys_from_stream_suggest(stream_suggest):
     return list(keys)
 
 
+def get_http_code_kind(http_code):
+    """
+    :return: the range key for the http code, eg. '3xx' for 301
+    """
+    if 300 <= http_code < 400:
+        return '3xx'
+    elif 400 <= http_code < 500:
+        return '4xx'
+    elif http_code >= 500:
+        return '5xx'
+
+
 class MetricsAggregator(object):
     def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_contents_duplicate,
                  stream_outlinks_counters, stream_outcanonical_counters, stream_outredirect_counters,
@@ -155,12 +167,7 @@ class MetricsAggregator(object):
 
         def aggregate_badlinks(target_dict, http_code, score):
             target_dict['any'] += score
-            if http_code >= 300 and http_code < 400:
-                target_dict['3xx'] += score
-            elif http_code >= 400 and http_code < 500:
-                target_dict['4xx'] += score
-            elif http_code >= 500:
-                target_dict['5xx'] += score
+            target_dict[get_http_code_kind(http_code)] += score
 
         def inlink_follow_dist(target_dict, score_unique):
             if score_unique <= 3:
