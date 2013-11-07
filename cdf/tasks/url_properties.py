@@ -8,6 +8,7 @@ from pandas import HDFStore
 from elasticsearch import Elasticsearch
 
 from cdf.log import logger
+from cdf.utils.path import makedirs
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file, split
@@ -91,8 +92,7 @@ def compute_properties_from_s3(crawl_id, part_id, rev_num, s3_uri, settings, es_
 def compute_properties_stats_counter_from_s3(crawl_id, part_id, rev_num, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    if not os.path.exists(tmp_dir):
-        os.makedirs(tmp_dir)
+    makedirs(tmp_dir, exist_ok=True)
 
     streams = {}
 
@@ -196,8 +196,7 @@ def _get_df_properties_stats_meta_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_pre
 
 def compute_properties_stats_from_s3(crawl_id, rev_num, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    if not os.path.exists(tmp_dir):
-        os.makedirs(tmp_dir)
+    makedirs(tmp_dir, exist_ok=True)
 
     h5_file = os.path.join(tmp_dir, 'properties_stats_rev%d.h5' % rev_num)
     if os.path.exists(h5_file):
