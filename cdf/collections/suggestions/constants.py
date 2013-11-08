@@ -69,7 +69,7 @@ COUNTERS_FIELDS = (
     'inlinks_internal_nb.follow_distribution_links.100_to_999',
     'inlinks_internal_nb.follow_distribution_links.1000_to_9999',
     'inlinks_internal_nb.follow_distribution_links.10000_to_99999',
-    'inlinks_internal_nb.follow_distribution_links.100000_to_99999',
+    'inlinks_internal_nb.follow_distribution_links.100000_to_999999',
     'inlinks_internal_nb.follow_distribution_links.gte_1M',
 
     'outlinks_internal_nb',
