@@ -100,7 +100,12 @@ COUNTERS_FIELDS = (
     'delay_from_500ms_to_1s',
     'delay_lt_500ms',
     'metadata_nb',
-    'metadata_nb.not_enough'
+    'metadata_nb.not_enough',
+
+    'error_links.3xx',
+    'error_links.4xx',
+    'error_links.5xx',
+    'error_links.any'
 )
 
 for ct_txt in CONTENT_TYPE_INDEX.itervalues():

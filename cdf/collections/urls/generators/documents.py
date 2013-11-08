@@ -1,5 +1,6 @@
 import ujson
 from itertools import izip
+from collections import defaultdict
 
 from cdf.streams.mapping import STREAMS_HEADERS, CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
 from cdf.log import logger
@@ -219,6 +220,28 @@ def extract_suggest(attributes, stream_item):
     attributes['patterns'].append(query_hash)
 
 
+def extract_bad_links(attributes, stream_item):
+    _, url_dest_id, http_code = stream_item
+    error_link_key = 'error_links'
+    if error_link_key not in attributes:
+        attributes[error_link_key] = defaultdict(lambda: {'nb': 0, 'urls': []})
+
+    target_dict = attributes[error_link_key]
+
+    if http_code >= 300 and http_code < 400:
+        target_dict['3xx']['nb'] += 1
+        if len(target_dict['3xx']['urls']) < 10:
+            target_dict['3xx']['urls'].append(url_dest_id)
+    elif http_code >= 400 and http_code < 500:
+        target_dict['4xx']['nb'] += 1
+        if len(target_dict['4xx']['urls'])< 10:
+            target_dict['4xx']['urls'].append(url_dest_id)
+    elif http_code >= 500:
+        target_dict['5xx']['nb'] += 1
+        if len(target_dict['5xx']['urls']) < 10:
+            target_dict['5xx']['urls'].append(url_dest_id)
+
+
 def end_extract_url(attributes):
     """
     If the url has not been crawled but received redirections or canonicals, we exceptionnaly
@@ -252,7 +275,8 @@ class UrlDocumentGenerator(object):
         'contents_duplicate': extract_contents_duplicate,
         'inlinks': extract_inlinks,
         'outlinks': extract_outlinks,
-        'suggest': extract_suggest
+        'suggest': extract_suggest,
+        'badlinks': extract_bad_links
     }
 
     def __init__(self, stream_patterns, **kwargs):

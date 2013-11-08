@@ -37,10 +37,23 @@ def get_keys_from_stream_suggest(stream_suggest):
     return list(keys)
 
 
+def get_http_code_kind(http_code):
+    """
+    :return: the range key for the http code, eg. '3xx' for 301
+    """
+    if 300 <= http_code < 400:
+        return '3xx'
+    elif 400 <= http_code < 500:
+        return '4xx'
+    elif http_code >= 500:
+        return '5xx'
+
+
 class MetricsAggregator(object):
     def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_contents_duplicate,
                  stream_outlinks_counters, stream_outcanonical_counters, stream_outredirect_counters,
-                 stream_inlinks_counters, stream_incanonical_counters, stream_inredirect_counters):
+                 stream_inlinks_counters, stream_incanonical_counters, stream_inredirect_counters,
+                 stream_badlinks_counters):
         self.stream_patterns = stream_patterns
         self.stream_infos = stream_infos
         self.stream_suggest = stream_suggest
@@ -51,6 +64,8 @@ class MetricsAggregator(object):
         self.stream_in_links_counters = stream_inlinks_counters
         self.stream_in_canonical_counters = stream_incanonical_counters
         self.stream_in_redirect_counters = stream_inredirect_counters
+        self.stream_badlinks_counters = stream_badlinks_counters
+
 
     def get(self):
         """
@@ -120,7 +135,8 @@ class MetricsAggregator(object):
                        'out_links_counters': (self.stream_out_links_counters, idx_from_stream('outlinks_counters', 'id')),
                        'out_canonical_counters': (self.stream_out_canonical_counters, idx_from_stream('outcanonical_counters', 'id')),
                        'out_redirect_counters': (self.stream_out_redirect_counters, idx_from_stream('outredirect_counters', 'id')),
-                       'contents_duplicate': (self.stream_contents_duplicate, idx_from_stream('contents_duplicate', 'id'))
+                       'contents_duplicate': (self.stream_contents_duplicate, idx_from_stream('contents_duplicate', 'id')),
+                       'badlinks_counters': (self.stream_badlinks_counters, idx_from_stream('badlinks_counters', 'id'))
                        }
 
         depth_idx = idx_from_stream('infos', 'depth')
@@ -148,6 +164,10 @@ class MetricsAggregator(object):
             deep_update(counter_dict, reduce(lambda x, y: {y: x}, reversed(field.split('.') + [0])))
 
         results = dict()
+
+        def aggregate_badlinks(target_dict, http_code, score):
+            target_dict['any'] += score
+            target_dict[get_http_code_kind(http_code)] += score
 
         def inlink_follow_dist(target_dict, score_unique):
             if score_unique <= 3:
@@ -279,6 +299,9 @@ class MetricsAggregator(object):
                     else:
                         results[key][counter_key]['nofollow_combinations'][follow_key] += 1
 
+            for entry in badlinks:
+                _, http_code, count = entry
+                aggregate_badlinks(results[key]['error_links'], http_code, count)
 
         for k, result in enumerate(group_left(left, **streams_ref)):
             if k % 1000 == 999:
@@ -295,6 +318,8 @@ class MetricsAggregator(object):
 
             incanonicals = result[2]['in_canonical_counters'][0] if result[2]['in_canonical_counters'] else None
             inredirects = result[2]['in_redirect_counters'][0] if result[2]['in_redirect_counters'] else None
+
+            badlinks = result[2]['badlinks_counters']
 
             # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
             index = not (4 & infos[infos_mask_idx] == 4)

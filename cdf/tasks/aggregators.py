@@ -29,7 +29,9 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='
     files = ('ids', 'infos',
              '_out_links_counters', '_out_canonical_counters', '_out_redirect_counters',
              '_in_links_counters', '_in_canonical_counters', '_in_redirect_counters',
-             '_suggested_clusters', 'contentsduplicate')
+             '_suggested_clusters',
+             'contentsduplicate',
+             'badlinks_counters')
 
     streams = {}
     files_fetched = fetch_files(s3_uri,
