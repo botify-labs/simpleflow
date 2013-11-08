@@ -61,13 +61,7 @@ def split_file(iterable, char='\t'):
     ['a', 'b', 'c']
 
     """
-    import csv
-    result = csv.reader(iterable, delimiter=char, quoting=csv.QUOTE_NONE)
-    #if a field is longer than 1024 we ignore it
-    #because it is very likely that the user has simply forgotten
-    #to close a markup
-    csv.field_size_limit(1024)
-    return result
+    return split(rstrip(iterable))
 
 
 def idx_from_stream(key, field):
