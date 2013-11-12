@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-version = (0, 1, 48)
+version = (0, 1, 49)
 
 __title__ = "botify-cdf"
 __author__ = "ampelmann"
