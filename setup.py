@@ -41,4 +41,6 @@ setup(
     include_package_data=False,
 
     packages=find_packages(),
+
+    test_suite="nose.collector",
 )
