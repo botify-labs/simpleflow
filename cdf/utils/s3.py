@@ -94,6 +94,7 @@ def fetch_file(s3_uri, dest_dir, force_fetch, lock=True):
     If the file does not exist, a `boto.exception.S3ResponseError`
     will be raised when calling `get_contents_to_filename`
     """
+    makedirs(os.path.dirname(dest_dir), exist_ok=True)
     logger.info('Fetch %s' % s3_uri)
     if lock:
         lock_obj = FileLock(dest_dir)
