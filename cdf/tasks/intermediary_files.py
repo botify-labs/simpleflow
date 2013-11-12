@@ -166,10 +166,12 @@ def make_bad_link_file(crawl_id, s3_uri,
             str(bad_code)
         )) + '\n')
     f.close()
-    push_file(
-        os.path.join(s3_uri, file_name.format(current_part_id)),
-        os.path.join(tmp_dir, file_name.format(current_part_id)),
-    )
+
+    for i in range(0, current_part_id + 1):
+        push_file(
+            os.path.join(s3_uri, file_name.format(i)),
+            os.path.join(tmp_dir, file_name.format(i)),
+        )
 
 
 def make_bad_link_counter_file(crawl_id, s3_uri,
@@ -184,7 +186,14 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
     Ordered on url_src_id and http_code
     """
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    bad_link_file = os.path.join(tmp_dir, 'urlbadlinks.txt.%d.gz' % part_id)
+
+    files_fetched = fetch_files(s3_uri,
+                                tmp_dir,
+                                regexp='urlbadlinks.txt.%d.gz' % part_id,
+                                force_fetch=force_fetch)
+
+    # It's known that it fetches only one file
+    bad_link_file, _ = files_fetched[0]
 
     streams_types = {'badlinks': []}
 
