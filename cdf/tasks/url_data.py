@@ -44,7 +44,9 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
-    files_fetched = fetch_files(s3_uri, tmp_dir, regexp=['url(ids|infos|links|inlinks|contents|contentsduplicate|_suggested_clusters).txt.%d.gz' % part_id], force_fetch=force_fetch)
+    files_fetched = fetch_files(s3_uri, tmp_dir,
+                                regexp=['url(ids|infos|links|inlinks|contents|contentsduplicate|_suggested_clusters|badlinks).txt.%d.gz' % part_id],
+                                force_fetch=force_fetch)
     streams = {}
 
     path_local, fetched = files_fetched[0]
