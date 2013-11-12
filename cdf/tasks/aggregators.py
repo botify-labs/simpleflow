@@ -7,7 +7,7 @@ import csv
 
 from pandas import HDFStore, DataFrame, Index
 
-from cdf.utils.exceptions import MissingResource
+from cdf.exceptions import MissingResource
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file
 from cdf.utils.s3 import fetch_file, fetch_files, push_file

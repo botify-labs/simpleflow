@@ -1,0 +1,2 @@
+class MissingResource(Exception):
+    pass
