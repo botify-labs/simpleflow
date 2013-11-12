@@ -192,6 +192,11 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
                                 regexp='urlbadlinks.txt.%d.gz' % part_id,
                                 force_fetch=force_fetch)
 
+    # Input file does not exist for the given `part_id`
+    # `part_id` is decided on `urlids` which contains also non-crawled urls
+    if len(files_fetched) < 1:
+        return
+
     # It's known that it fetches only one file
     bad_link_file, _ = files_fetched[0]
 
