@@ -187,18 +187,14 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
     """
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
-    files_fetched = fetch_files(s3_uri,
-                                tmp_dir,
-                                regexp='urlbadlinks.txt.%d.gz' % part_id,
-                                force_fetch=force_fetch)
-
-    # Input file does not exist for the given `part_id`
-    # `part_id` is decided on `urlids` which contains also non-crawled urls
-    if len(files_fetched) < 1:
+    file_name = 'urlbadlinks.txt.%d.gz' % part_id
+    try:
+        bad_link_file, _ = fetch_file(os.path.join(s3_uri, file_name),
+                                   os.path.join(tmp_dir, file_name),
+                                   force_fetch=force_fetch)
+    except S3ResponseError:
+        logger.info("{} is not found from s3".format(file_name))
         return
-
-    # It's known that it fetches only one file
-    bad_link_file, _ = files_fetched[0]
 
     streams_types = {'badlinks': []}
 
