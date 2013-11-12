@@ -46,6 +46,7 @@ VAGRANT_SYSTEM_PROVISIONING = ENV['VAGRANT_SYSTEM_PROVISIONING'] || 1
 PUPPET_BOOTSTRAP_RULES = ENV['PUPPET_BOOTSTRAP_RULES'] || nil
 PUPPET_ENV = ENV['PUPPET_ENV'] || "development"
 
+JENKINS_TEST = ENV['JENKINS_TEST'] || 0
 
 # Set up an empty provisioning rule that will
 # be fulfilled later on according to has been set in env
@@ -69,6 +70,32 @@ if VAGRANT_SYSTEM_PROVISIONING == 1
   $provisioning_script << $system_provisioning_script
 end
 
+#Testing with jenkins requires additional dependencies
+if JENKINS_TEST != 0
+  $jenkins_provisioning_script = <<SCRIPT
+apt-get update
+apt-get -y install libboost-python-dev
+apt-get -y install libhdf5-serial-dev
+apt-get -y install python-setuptools
+apt-get -y install python-pip
+apt-get -y install build-essential python-dev
+apt-get -y install python-virtualenv
+
+#install elasticsearch
+apt-get install openjdk-7-jre-headless -y
+wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.5.deb
+sudo dpkg -i elasticsearch-0.90.5.deb
+sudo service elasticsearch start
+
+cat > /home/vagrant/.pip/pip.conf << EOF
+[global]
+index-url = http://ff879dbbee9047288c13e31e9f8d45d3:dc076cf5483e4501a548225cbbf5b9b2@pypi.botify.com/simple
+EOF
+
+SCRIPT
+  $provisioning_script << $provisioning_script << $jenkins_provisioning_script
+end
+
 # Let's be gentle with a finish message
 $provisioning_script << "echo 'Your box is now ready to use, enjoy.\n'"
 
@@ -82,8 +109,11 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, id: 'ssh', guest: 22, host: 2222, auto_correct: true
   config.vm.network :forwarded_port, id: 'nginx', guest: 80, host: 8080, auto_correct: true
 
-  config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "ansible/build.yml"
+  #FIXME we should be able to provision with ansible even in jenkins test mode.
+  if JENKINS_TEST == 0
+      config.vm.provision "ansible" do |ansible|
+          ansible.playbook = "ansible/build.yml"
+      end
   end
 
   # Deploy puppet-botify-saas on instance
@@ -106,6 +136,11 @@ Vagrant.configure("2") do |config|
       aws.region = AWS_REGION
       aws.ami = AWS_AMI
       aws.instance_type = "t1.micro"
+  end
+
+  #If we are testing the module in jenkins we need the source
+  if JENKINS_TEST != 0
+      config.vm.synced_folder "..", "/home/vagrant/botify-cdf"
   end
 
   # Configuration to be applied whenever
