@@ -2,6 +2,9 @@ import os
 
 from setuptools import setup, find_packages
 
+#avoid errors on python setup.py test
+#(cf. http://bugs.python.org/issue15881#msg170215)
+import multiprocessing
 
 root = os.path.abspath(os.path.dirname(__file__))
 version = __import__('cdf').__version__
