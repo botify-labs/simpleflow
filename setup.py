@@ -37,6 +37,7 @@ setup(
         'mock'
     ],
 
+
     package_dir={'': '.'},
     include_package_data=False,
 
