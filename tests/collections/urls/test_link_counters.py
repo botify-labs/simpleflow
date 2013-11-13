@@ -1,0 +1,115 @@
+import unittest
+from cdf.collections.urls.transducers.links import OutlinksTransducer, InlinksTransducer
+
+
+class TestLinkCounters(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_out_links(self):
+        """Test for out links aggregation
+
+        Output format:
+            (url_id, 'links', bitmask, is_internal, nb_links, nb_links_unique)
+        """
+        stream_outlinks = [
+            [1, 'a', 0, 2, ''],
+            [1, 'a', 1, 3, ''],
+            [1, 'a', 0, 4, ''],
+            [1, 'a', 0, 4, ''],
+            [1, 'a', 1, 4, ''],
+            [1, 'a', 0, -1, 'http://www.youtube.com'],
+            [1, 'a', 0, -1, 'http://www.youtube.com'],
+            [1, 'a', 4, -1, 'http://www.lemonde.com'],  # internal
+            [3, 'a', 0, -1, 'http://www.youtube.com'],
+            [3, 'a', 5, 5, ''],
+            [3, 'a', 5, 5, ''],
+        ]
+
+        result = list(OutlinksTransducer(stream_outlinks).get())
+
+        expected = [
+            (1, 'links', 0, 1, 3, 2),
+            (1, 'links', 1, 1, 2, 2),
+            (1, 'links', 0, 0, 2, 1),
+            (1, 'links', 4, 1, 1, 1),
+            (3, 'links', 0, 0, 1, 1),
+            (3, 'links', 5, 1, 2, 1)
+        ]
+        self.assertEqual(len(expected), len(result))
+        for entry in expected:
+            self.assertTrue(entry in result)
+
+    def test_out_canonicals(self):
+        """Test for out canonical link aggregation
+
+        Output format:
+            (url_id, 'canonical', is_equal)
+            is_equal is 1 if the canonical url is the url itself
+        """
+        stream_outlinks = [
+            [1, 'r301', 0, 5, ''],
+            [2, 'canonical', 0, 4, ''],
+            [2, 'canonical', 0, 2, ''],  # should be ignored
+            [2, 'canonical', 0, 11, ''],  # should be ignored
+            [3, 'canonical', 0, 4, ''],
+            [4, 'a', 0, 5, ''],
+            [4, 'a', 0, 5, ''],
+            [4, 'a', 0, 5, ''],
+            [4, 'canonical', 0, 4, ''],
+            [6, 'r301', 4, -1, 'http://www.lemonde.com']  # internal
+        ]
+
+        result = list(OutlinksTransducer(stream_outlinks).get())
+
+        expected = [
+            (1, 'redirect', 1),
+            (2, 'canonical', 0),
+            (3, 'canonical', 0),
+            (4, 'links', 0, 1, 3, 1),
+            (4, 'canonical', 1),
+            (6, 'redirect', 1)
+        ]
+        self.assertEqual(len(expected), len(result))
+        for entry in expected:
+            self.assertTrue(entry in result)
+
+    def test_out_redirects(self):
+        """Test for out redirecgtion aggregation
+
+        Output format:
+            (url_id, 'redirect', is_internal)
+        """
+        stream_outlinks = [
+            [1, 'r301', 0, 5, ''],
+            [2, 'r302', 1, -1, 'http://www.youtube.com'],
+            [4, 'a', 0, 5, ''],
+            [4, 'a', 0, 5, ''],
+            [4, 'a', 0, 5, ''],
+            [6, 'r301', 4, -1, 'http://www.lemonde.com']  # internal
+        ]
+
+        result = list(OutlinksTransducer(stream_outlinks).get())
+
+        expected = [
+            (1, 'redirect', 1),
+            (2, 'redirect', 0),
+            (4, 'links', 0, 1, 3, 1),
+            (6, 'redirect', 1)
+        ]
+        self.assertEqual(len(expected), len(result))
+        for entry in expected:
+            self.assertTrue(entry in result)
+
+
+    def test_in_links(self):
+        pass
+
+    def test_in_redirects(self):
+        pass
+
+    def test_in_canonicals(self):
+        pass
