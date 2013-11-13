@@ -43,7 +43,7 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='
                                         regexp=[filename],
                                         force_fetch=force_fetch)
         if len(crt_fetched_files) == 0:
-            raise MissingResource("Could not fetch '%s'", filename)
+            raise MissingResource("Could not fetch '%s'" % filename)
         fetched_files.extend(crt_fetched_files)
 
     for path_local, fetched in fetched_files:
