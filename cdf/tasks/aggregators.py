@@ -33,8 +33,7 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='
              '_suggested_clusters',
              'contentsduplicate',
              'badlinks_counters')
-
-    MANDATORY_FILES = ('ids', 'infos')
+    mandatory_files = ('ids', 'infos')
 
     streams = {}
     fetched_files = []
@@ -46,7 +45,7 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='
                                         regexp=[filename],
                                         force_fetch=force_fetch)
         if len(crt_fetched_files) == 0:
-            if file_type in MANDATORY_FILES:
+            if file_type in mandatory_files:
                 raise MissingResource("Could not fetch file : {}".format(filename))
             missing_files.append(os.path.join(s3_uri, filename))
         else:
