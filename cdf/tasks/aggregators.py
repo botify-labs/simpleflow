@@ -7,7 +7,7 @@ import csv
 
 from pandas import HDFStore, DataFrame, Index
 
-from cdf.utils.exceptions import MissingResource
+from cdf.exceptions import MissingResource
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
@@ -33,9 +33,11 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='
              '_suggested_clusters',
              'contentsduplicate',
              'badlinks_counters')
+    mandatory_files = ('ids', 'infos')
 
     streams = {}
     fetched_files = []
+    missing_files = []
     for file_type in files:
         filename = 'url%s.txt.%d.gz' % (file_type, part_id)
         crt_fetched_files = fetch_files(s3_uri,
@@ -43,17 +45,22 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='
                                         regexp=[filename],
                                         force_fetch=force_fetch)
         if len(crt_fetched_files) == 0:
-            raise MissingResource("Could not fetch '%s'", filename)
-        fetched_files.extend(crt_fetched_files)
+            if file_type in mandatory_files:
+                raise MissingResource("Could not fetch file : {}".format(filename))
+            missing_files.append(os.path.join(s3_uri, filename))
+        else:
+            fetched_files.extend(crt_fetched_files)
+
+    # Create an empty stream for all missing files (not mandatory)
+    if missing_files:
+        for filename in missing_files:
+            stream_identifier = STREAMS_FILES[os.path.basename(filename).split('.')[0]]
+            streams["stream_{}".format(stream_identifier)] = iter([])
 
     for path_local, fetched in fetched_files:
         stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
         cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
         streams["stream_%s" % stream_identifier] = cast(split_file(gzip.open(path_local)))
-
-    # Part seems empty
-    if not 'stream_outlinks_counters' in streams:
-        return
 
     aggregator = MetricsAggregator(**streams)
     content = json.dumps(aggregator.get())

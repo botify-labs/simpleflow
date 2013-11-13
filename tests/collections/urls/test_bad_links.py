@@ -26,7 +26,7 @@ class TestBadLink(unittest.TestCase):
             [6, 'canonical', 0, 2],
         ))
 
-        u = get_bad_links(stream_patterns, stream_contents)
+        u = get_bad_links(stream_infos, stream_outlinks)
         results = list(u)
         expected = [
             (4, 2, 301),
@@ -47,13 +47,13 @@ class TestBadLink(unittest.TestCase):
         ))
 
         u = get_bad_link_counters(stream_bad_links)
-        results = list(u)
+        # counters are sorted only on *id*
+        results = sorted(list(u), key=lambda record: (record[0], record[1]))
         expected = [
-            ((1, 400), 1),
-            ((1, 500), 2),
-            ((2, 300), 1),
-            ((2, 500), 2),
-            ((3, 300), 1),
-            ((3, 400), 2)
+            (1, 400, 1),
+            (1, 500, 2),
+            (2, 500, 2),
+            (3, 300, 1),
+            (3, 400, 2)
         ]
         self.assertEquals(results, expected)

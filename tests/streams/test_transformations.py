@@ -9,7 +9,6 @@ logger.setLevel(logging.DEBUG)
 
 
 class TestGroupWith(unittest.TestCase):
-
     def setUp(self):
         self.stream_1 = iter([
             (1, 'riri'),
@@ -25,19 +24,14 @@ class TestGroupWith(unittest.TestCase):
         ])
 
     def test_group_with(self):
-        def func_1(attributes, stream):
-            if not 'nb_left' in attributes:
-                attributes['nb_left'] = 1
-            else:
-                attributes['nb_left'] += 1
+        def increment_left(attributes, stream):
+            attributes['nb_left'] = attributes.get('nb_left', 0) + 1
 
-        def func_2(attributes, stream):
-            if not 'nb_right' in attributes:
-                attributes['nb_right'] = 1
-            else:
-                attributes['nb_right'] += 1
+        def increment_right(attributes, stream):
+            attributes['nb_right'] = attributes.get('nb_right', 0) + 1
 
-        result = list(group_with((self.stream_1, 0, func_1), stream_2=(self.stream_2, 0, func_2)))
+        result = list(group_with((self.stream_1, 0, increment_left),
+                                 stream_2=(self.stream_2, 0, increment_right)))
         self.assertEquals(len(result), 4)
         self.assertEquals(result[0], (1, {"nb_left": 1, "nb_right": 1}))
         self.assertEquals(result[1], (2, {"nb_left": 1}))
@@ -49,14 +43,31 @@ class TestGroupWith(unittest.TestCase):
         """
         We don't want to return any item in right stream starting by a "d"
         """
-        def func_1(attributes, stream):
+
+        def func_left(attributes, stream):
             attributes['ok'] = True
 
-        def func_2(attributes, stream):
+        def skip_on_d(attributes, stream):
             if stream[1].startswith('d'):
                 raise GroupWithSkipException()
 
-        result = list(group_with((self.stream_1, 0, func_1), stream_2=(self.stream_2, 0, func_2)))
+        result = list(group_with((self.stream_1, 0, func_left), stream_2=(self.stream_2, 0, skip_on_d)))
         self.assertEquals(len(result), 2)
         self.assertEquals(result[0], (2, {"ok": True}))
         self.assertEquals(result[1], (7, {"ok": True}))
+
+    def test_empty(self):
+        def increment_left(attributes, stream):
+            attributes['nb_left'] = attributes.get('nb_left', 0) + 1
+
+        def increment_stream2(attributes, stream):
+            attributes['nb_stream2'] = attributes.get('nb_stream2', 0) + 1
+
+        def increment_stream3(attributes, stream):
+            attributes['nb_stream3'] = attributes.get('nb_stream3', 0) + 1
+
+        results = list(group_with((self.stream_1, 0, increment_left),
+                                  stream_2=(self.stream_2, 0, increment_stream2),
+                                  stream_3=(iter([]), 0, increment_stream3)))
+        for result in results:
+            self.assertFalse('nb_stream3' in result)
