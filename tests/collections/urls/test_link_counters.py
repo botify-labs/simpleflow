@@ -9,6 +9,12 @@ class TestLinkCounters(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def assertNonOrderedList(self, expected, result):
+        self.assertEqual(len(expected), len(result))
+        for entry in expected:
+            self.assertTrue(entry in result)
+
+
     def test_out_links(self):
         """Test for out links aggregation
 
@@ -23,7 +29,7 @@ class TestLinkCounters(unittest.TestCase):
             [1, 'a', 1, 4, ''],
             [1, 'a', 0, -1, 'http://www.youtube.com'],
             [1, 'a', 0, -1, 'http://www.youtube.com'],
-            [1, 'a', 4, -1, 'http://www.lemonde.com'],  # internal
+            [1, 'a', 4, -1, 'http://www.lemonde.com'], # internal
             [3, 'a', 0, -1, 'http://www.youtube.com'],
             [3, 'a', 5, 5, ''],
             [3, 'a', 5, 5, ''],
@@ -39,9 +45,8 @@ class TestLinkCounters(unittest.TestCase):
             (3, 'links', 0, 0, 1, 1),
             (3, 'links', 5, 1, 2, 1)
         ]
-        self.assertEqual(len(expected), len(result))
-        for entry in expected:
-            self.assertTrue(entry in result)
+
+        self.assertNonOrderedList(expected, result)
 
     def test_out_canonicals(self):
         """Test for out canonical link aggregation
@@ -53,8 +58,8 @@ class TestLinkCounters(unittest.TestCase):
         stream_outlinks = [
             [1, 'r301', 0, 5, ''],
             [2, 'canonical', 0, 4, ''],
-            [2, 'canonical', 0, 2, ''],  # should be ignored
-            [2, 'canonical', 0, 11, ''],  # should be ignored
+            [2, 'canonical', 0, 2, ''], # should be ignored
+            [2, 'canonical', 0, 11, ''], # should be ignored
             [3, 'canonical', 0, 4, ''],
             [4, 'a', 0, 5, ''],
             [4, 'a', 0, 5, ''],
@@ -73,9 +78,8 @@ class TestLinkCounters(unittest.TestCase):
             (4, 'canonical', 1),
             (6, 'redirect', 1)
         ]
-        self.assertEqual(len(expected), len(result))
-        for entry in expected:
-            self.assertTrue(entry in result)
+
+        self.assertNonOrderedList(expected, result)
 
     def test_out_redirects(self):
         """Test for out redirecgtion aggregation
@@ -100,16 +104,69 @@ class TestLinkCounters(unittest.TestCase):
             (4, 'links', 0, 1, 3, 1),
             (6, 'redirect', 1)
         ]
-        self.assertEqual(len(expected), len(result))
-        for entry in expected:
-            self.assertTrue(entry in result)
 
+        self.assertNonOrderedList(expected, result)
 
     def test_in_links(self):
-        pass
+        stream_inlinks = [
+            [1, 'a', 0, 2],
+            [1, 'a', 1, 3],
+            [1, 'a', 0, 4],
+            [1, 'a', 1, 4],
+            [1, 'a', 5, 4],
+            [1, 'a', 5, 4],
+            [3, 'a', 5, 5],
+            [3, 'a', 5, 5],
+        ]
+
+        result = list(InlinksTransducer(stream_inlinks).get())
+
+        expected = [
+            (1, 'links', 0, 2, 2),
+            (1, 'links', 1, 2, 2),
+            (1, 'links', 5, 2, 1),
+            (3, 'links', 5, 2, 1)
+        ]
+
+        self.assertNonOrderedList(expected, result)
 
     def test_in_redirects(self):
-        pass
+        stream_inlinks = [
+            [1, 'r301', 0, 2],
+            [1, 'r302', 0, 3],
+            [1, 'r303', 5, 4],
+            [2, 'a', 0, 1],
+            [3, 'r302', 5, 5],
+        ]
+
+        result = list(InlinksTransducer(stream_inlinks).get())
+
+        expected = [
+            (1, 'redirect', 3),
+            (2, 'links', 0, 1, 1),
+            (3, 'redirect', 1)
+        ]
+
+        self.assertNonOrderedList(expected, result)
 
     def test_in_canonicals(self):
-        pass
+        stream_inlinks = [
+            [1, 'canonical', 0, 1],
+            [1, 'canonical', 0, 2],
+            [1, 'canonical', 0, 2],
+            [1, 'canonical', 0, 2],
+            [1, 'canonical', 0, 3],
+            [1, 'canonical', 5, 4],
+            [2, 'canonical', 0, 1],
+            [3, 'canonical', 5, 5]
+        ]
+
+        result = list(InlinksTransducer(stream_inlinks).get())
+
+        expected = [
+            (1, 'canonical', 3),
+            (2, 'canonical', 1),
+            (3, 'canonical', 1)
+        ]
+
+        self.assertNonOrderedList(expected, result)

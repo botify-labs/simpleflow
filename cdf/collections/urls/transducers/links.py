@@ -45,39 +45,41 @@ class OutlinksTransducer(object):
 
 
 class InlinksTransducer(object):
-    """
-    This transducers returns the number of links by url_id, link_type,  bitmask and internal status
+    """This transducer aggregates counters for incoming links
+
+    For different link_type:
+        - `a` link: number of incoming links by (url_id, link_type, bitmask)
+        - redirection link: (url_id, 'redirect', nb_incoming_redirects)
+        - canonical link: (url_id, 'canonical', nb_incoming_canonicals)
     It accepts a stream of INLINKS_RAW type
     """
 
-    def __init__(self, stream_links):
-        self.stream_links = stream_links
+    def __init__(self, stream_inlinks):
+        self.stream_inlinks = stream_inlinks
 
     def get(self):
-        current_url_id = None
+        url_id_idx = idx_from_stream('inlinks_raw', 'id')
 
-        for entry in self.stream_links:
-            url_id, link_type, bitmask, src_url_id = entry
-            if url_id != current_url_id:
-                if current_url_id:
-                    for bitmask, urls in counter_by_type.iteritems():
-                        # returns a tuple (url_id, 'links', bitmask, nb_incoming_links, nb_incoming_links_unique)
-                        yield (url_id, 'links', bitmask, len(urls), len(set(urls)))
-                    if len(canonicals) > 0:
-                        # returns a tuple (url_id, 'canonical', nb_canonicals_incoming)
-                        yield (url_id, 'canonical', len(canonicals))
-                    if redirects > 0:
-                        # returns a tuple (url_id, 'redirects', nb_redirects_incoming)
-                        yield (url_id, 'redirect', redirects)
-                counter_by_type = defaultdict(list)
-                canonicals = set()
-                redirects = 0
-                current_url_id = url_id
+        # Group the stream by url_id using itertools.groupby
+        for url_id, group in groupby(self.stream_inlinks, lambda x: x[url_id_idx]):
+            counter_by_type = defaultdict(list)
+            redirects = 0
+            canonicals = set()
+            for url, link_type, bitmask, src_url_id in group:
+                if link_type == 'a':
+                    counter_by_type[bitmask].append(src_url_id)
+                elif link_type.startswith('r'):
+                    redirects += 1
+                elif link_type == "canonical":
+                    # Ignore identical canonicals
+                    if url_id is not src_url_id:
+                        canonicals.add(src_url_id)
 
-            if link_type == "a":
-                counter_by_type[bitmask].append(src_url_id)
-            elif link_type == "canonical":
-                if url_id != src_url_id:
-                    canonicals.add(src_url_id)
-            elif link_type.startswith('r'):
-                redirects += 1
+            for key, srcs in counter_by_type.iteritems():
+                yield (url_id, 'links', key) + (len(srcs), len(set(srcs)))
+
+            if redirects > 0:
+                yield (url_id, 'redirect', redirects)
+
+            if len(canonicals) > 0:
+                yield (url_id, 'canonical', len(canonicals))
