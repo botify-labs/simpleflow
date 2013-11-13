@@ -15,8 +15,13 @@ class TestMasks(unittest.TestCase):
         pass
 
     def test_follow(self):
+        # 0 and 8 means follow
         self.assertEquals(follow_mask("0"), ["follow"])
+        self.assertEquals(follow_mask("8"), ["follow"])
+
+    def test_nofollow(self):
+        # Bitmask test
         for L in range(1, len(NOFOLLOW_MASKS) + 1):
             for subset in itertools.combinations(NOFOLLOW_MASKS, L):
                 counter = sum(k[0] for k in subset)
-                self.assertEquals(follow_mask(str(counter)), ["nofollow_{}".format(k[1]) for k in subset])
+                self.assertEquals(follow_mask(str(counter)), [k[1] for k in subset])
