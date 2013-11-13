@@ -23,7 +23,9 @@ class TestQuery(unittest.TestCase):
         urls = [
             {
                 'id': 1,
-                'url': 'http://www.mysite.com/',
+                '_id': "%d:%d" % (CRAWL_ID, 1),
+                'crawl_id': CRAWL_ID,
+                'url': u'http://www.mysite.com/',
                 'http_code': 200,
                 'delay2': 100,
                 'metadata': {
@@ -59,7 +61,7 @@ class TestQuery(unittest.TestCase):
                     [3, list_to_mask(['link']), 1]
                 ],
                 "canonical_to": {
-                    "url_id": 2
+                    "url_id": 2,
                 },
                 "tagging": [
                     {
@@ -70,7 +72,9 @@ class TestQuery(unittest.TestCase):
             },
             {
                 'id': 2,
-                'url': 'http://www.mysite.com/page2.html',
+                '_id': "%d:%d" % (CRAWL_ID, 2),
+                'crawl_id': CRAWL_ID,
+                'url': u'http://www.mysite.com/page2.html',
                 'http_code': 301,
                 'redirects_to': {
                     'url_id': 3
@@ -85,7 +89,9 @@ class TestQuery(unittest.TestCase):
             },
             {
                 'id': 3,
-                'url': 'http://www.mysite.com/page3.html',
+                '_id': "%d:%d" % (CRAWL_ID, 3),
+                'crawl_id': CRAWL_ID,
+                'url': u'http://www.mysite.com/page3.html',
                 'http_code': 200,
                 'redirects_from': [{
                     'http_code': 301,
@@ -100,7 +106,9 @@ class TestQuery(unittest.TestCase):
             },
             {
                 'id': 4,
-                'url': 'http://www.mysite.com/page4.html',
+                '_id': "%d:%d" % (CRAWL_ID, 4),
+                'crawl_id': CRAWL_ID,
+                'url': u'http://www.mysite.com/page4.html',
                 'http_code': 302,
                 'redirects_to': {
                     'url_id': 5
@@ -108,12 +116,16 @@ class TestQuery(unittest.TestCase):
             },
             {
                 'id': 5,
-                'url': 'http://www.mysite.com/page5.html',
+                '_id': "%d:%d" % (CRAWL_ID, 5),
+                'crawl_id': CRAWL_ID,
+                'url': u'http://www.mysite.com/page5.html',
                 'http_code': 0
             },
             {
                 'id': 6,
-                'url': 'http://www.mysite.com/page6.html',
+                '_id': "%d:%d" % (CRAWL_ID, 6),
+                'crawl_id': CRAWL_ID,
+                'url': u'http://www.mysite.com/page6.html',
                 'http_code': 302,
                 'redirects_to': {
                     'url': 'http://www.youtube.com/'
@@ -121,7 +133,9 @@ class TestQuery(unittest.TestCase):
             },
             {
                 'id': 7,
-                'url': 'http://www.mysite.com/page7.html',
+                '_id': "%d:%d" % (CRAWL_ID, 7),
+                'crawl_id': CRAWL_ID,
+                'url': u'http://www.mysite.com/page7.html',
                 'http_code': 200,
                 'metadata': {
                     'title': ['My title'],
@@ -135,14 +149,15 @@ class TestQuery(unittest.TestCase):
         except:
             pass
         self.es.create_index(ELASTICSEARCH_INDEX)
+
         self.es.put_mapping(ELASTICSEARCH_INDEX, "crawl_{}".format(CRAWL_ID), URLS_DATA_MAPPING)
         for url in urls:
-            self.es.index(ELASTICSEARCH_INDEX, "crawl_{}".format(CRAWL_ID), url, url['id'])
+            self.es.index(ELASTICSEARCH_INDEX, "crawl_{}".format(CRAWL_ID), url, url['_id'])
 
         while self.es.count({}, index=ELASTICSEARCH_INDEX)['count'] < len(urls):
             time.sleep(0.1)
 
-        self.query_args = (ELASTICSEARCH_LOCATION, ELASTICSEARCH_INDEX, CRAWL_ID, REVISION_ID)
+        self.query_args = (ELASTICSEARCH_LOCATION, ELASTICSEARCH_INDEX, "crawl_{}".format(CRAWL_ID), CRAWL_ID, REVISION_ID)
 
     def tearDown(self):
         #self.es.delete_index(ELASTICSEARCH_INDEX)
@@ -156,31 +171,32 @@ class TestQuery(unittest.TestCase):
 
     def test_simple_filter(self):
         query = {
-            "fields": ['id', 'url'],
+            "fields": ['_id', 'url'],
             "filters": {"field": "http_code", "value": 200},
             "sort": ["id"]
         }
         expected_results = [
             {
-                'url': u'http://www.mysite.com/',
-                'id': 1
+                'url': 'http://www.mysite.com/',
+                '_id': "%d:%d" % (CRAWL_ID, 1)
             },
             {
-                'url': u'http://www.mysite.com/page3.html',
-                'id': 3
+                'url': 'http://www.mysite.com/page3.html',
+                '_id': "%d:%d" % (CRAWL_ID, 3)
             },
             {
-                'url': u'http://www.mysite.com/page7.html',
-                'id': 7
+                'url': 'http://www.mysite.com/page7.html',
+                '_id': "%d:%d" % (CRAWL_ID, 7)
             }
         ]
         q = Query(*self.query_args, query=query)
         self.assertEquals(q.count, 3)
+
         self.assertEquals(list(q.results), expected_results)
 
     def test_and_filter(self):
         query = {
-            "fields": ['id'],
+            "fields": ['_id'],
             "filters": {
                 "and": [
                     {"field": "http_code", "value": 200},
@@ -190,11 +206,11 @@ class TestQuery(unittest.TestCase):
             "sort": ["id"]
         }
         q = Query(*self.query_args, query=query)
-        self.assertEquals([k['id'] for k in q.results], [1])
+        self.assertEquals([k['_id'] for k in q.results], ["1:1"])
 
     def test_or_filter(self):
         query = {
-            "fields": ['id'],
+            "fields": ['_id'],
             "filters": {
                 "or": [
                     {"field": "http_code", "value": 200},
@@ -204,11 +220,11 @@ class TestQuery(unittest.TestCase):
             "sort": ["id"]
         }
         q = Query(*self.query_args, query=query)
-        self.assertEquals([k['id'] for k in q.results], [1, 2, 3, 7])
+        self.assertEquals([k['_id'] for k in q.results], ["1:1", "1:2", "1:3", "1:7"])
 
     def test_redirects_to_crawled(self):
         query = {
-            "fields": ['id', 'redirects_to'],
+            "fields": ['_id', 'redirects_to'],
             "filters": {
                 'and': [
                     {"field": "http_code", "value": 301},
@@ -217,9 +233,9 @@ class TestQuery(unittest.TestCase):
             }
         }
         expected_url = {
-            "id": 2,
+            "_id": '%d:%d' % (CRAWL_ID, 2),
             "redirects_to": {
-                "url": u"http://www.mysite.com/page3.html",
+                "url": "http://www.mysite.com/page3.html",
                 "crawled": True
             }
         }
@@ -229,7 +245,7 @@ class TestQuery(unittest.TestCase):
 
     def test_redirects_to_not_crawled(self):
         query = {
-            "fields": ['id', 'redirects_to'],
+            "fields": ['_id', 'redirects_to'],
             "filters": {
                 'and': [
                     {"field": "http_code", "value": 302},
@@ -238,14 +254,14 @@ class TestQuery(unittest.TestCase):
             }
         }
         expected_url_4 = {
-            "id": 4,
+            "_id": "%d:%d" % (CRAWL_ID, 4),
             "redirects_to": {
                 "url": u"http://www.mysite.com/page5.html",
                 "crawled": False
             }
         }
         expected_url_6 = {
-            "id": 6,
+            "_id": "%d:%d" % (CRAWL_ID, 6),
             "redirects_to": {
                 "url": u"http://www.youtube.com/",
                 "crawled": False
@@ -258,16 +274,16 @@ class TestQuery(unittest.TestCase):
 
     def test_redirects_from(self):
         query = {
-            "fields": ['id', 'redirects_from'],
+            "fields": ['_id', 'redirects_from'],
             "filters": {
                 'and': [
-                    {"field": "id", "value": 3},
+                    {"field": "_id", "value": "%d:%d" % (CRAWL_ID, 3)},
                     {"field": "redirects_from", "predicate": "not_null"}
                 ]
             }
         }
         expected_url = {
-            "id": 3,
+            "_id": "%d:%d" % (CRAWL_ID, 3),
             "redirects_from": [{
                 "http_code": 301,
                 "url": {
@@ -320,8 +336,8 @@ class TestQuery(unittest.TestCase):
         query = {
             "fields": ["outlinks_internal_nb", "outlinks_internal"],
             "filters": {
-                "field": "id",
-                "value": 1
+                "field": "_id",
+                "value": "%d:%d" % (CRAWL_ID, 1)
             }
         }
         q = Query(*self.query_args, query=query, sort=('id',))
@@ -380,8 +396,8 @@ class TestQuery(unittest.TestCase):
         query = {
             "fields": ["metadata_duplicate_nb", "metadata_duplicate.h1"],
             "filters": {
-                "field": "id",
-                "value": 1
+                "field": "_id",
+                "value": "%d:%d" % (CRAWL_ID, 1)
             }
         }
         q = Query(*self.query_args, query=query, sort=('id',))
@@ -398,7 +414,7 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        q = Query(*self.query_args, query=query, sort=('id',))
+        q = Query(*self.query_args, query=query, sort=('_id',))
         self.assertEquals(list(q.results)[0], expected_result)
 
     def test_canonicals(self):
@@ -413,7 +429,7 @@ class TestQuery(unittest.TestCase):
         q = Query(*self.query_args, query=query, sort=('id',))
         expected_result_1 = {
             "canonical_to": {
-                "url": "http://www.mysite.com/page2.html",
+                "url": u"http://www.mysite.com/page2.html",
                 "crawled": True
             },
             "canonical_from": []
@@ -423,38 +439,9 @@ class TestQuery(unittest.TestCase):
             "canonical_to": None,
             "canonical_from": [
                 {
-                    'url': 'http://www.mysite.com/',
+                    'url': u'http://www.mysite.com/',
                     'crawled': True
                 }
             ]
         }
         self.assertEquals(list(q.results)[1], expected_result_2)
-
-    def test_tagging_filters(self):
-        query = {
-            "fields": ["url", "resource_type"],
-            "tagging_filters": {
-                "and": [
-                    {"field": "resource_type", "value": "homepage", "predicate": "match"}
-                    #{"not": True, "field": "resource_type", "predicate": "starts", "value": "recette/"}
-                ]
-            },
-        }
-
-        tagging_filters = [
-            {"field": "resource_type", "value": "homepage", "predicate": "match"},
-            {"field": "resource_type", "value": "home", "predicate": "starts"},
-            {"field": "resource_type", "value": "age", "predicate": "ends"},
-            {"field": "resource_type", "value": "omep", "predicate": "contains"},
-            {"field": "resource_type", "value": "(.+)age", "predicate": "re"},
-            {"not": True, "field": "resource_type", "value": "product", "predicate": "eq"},
-            {"not": True, "field": "resource_type", "value": "(.+)agmkjqshd", "predicate": "re"},
-            {"field": "resource_type", "value": "homepage", "predicate": "match", "filters": {"field": "id", "value": 1}},
-        ]
-
-        for _f in tagging_filters:
-            query["tagging_filters"]["and"] = _f
-            q = Query(*self.query_args, query=query, sort=('id',))
-            results = list(q.results)
-            self.assertEquals(results[0]['url'], "http://www.mysite.com/")
-            self.assertEquals(results[0]['resource_type'], "homepage")

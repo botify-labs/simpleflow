@@ -69,12 +69,12 @@ def transform_canonical_from(query, es_document, attributes):
 
 def prepare_canonical_to(query, es_document):
     if 'canonical_to' in es_document:
-        if 'id' in es_document['canonical_to']:
-            query._urls_ids.add(es_document['canonical_to']['id'])
+        if 'url_id' in es_document['canonical_to']:
+            query._urls_ids.add(es_document['canonical_to']['url_id'])
 
 
 def transform_canonical_to(query, es_document, attributes):
-    attributes['canonical_from'] = []
+    attributes['canonical_to'] = None
     if 'canonical_to' in es_document:
         if 'url_id' in es_document['canonical_to']:
             attributes['canonical_to'] = {
@@ -384,7 +384,7 @@ class Query(object):
 
         :param query
 
-        Example of query : 
+        Example of query :
         {
             "fields": ["url", "id", "metadata.h1"],
             "sort": ["id"],
