@@ -15,7 +15,9 @@ source /tmp/venv/bin/activate
 
 #install dependencies
 
+pip install Cython==0.19.1
 pip install numpy
+pip install numexpr==2.1
 pip install nose
 pip install BQL
 
