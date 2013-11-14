@@ -27,6 +27,7 @@ setup(
         'ujson==1.33',
         'pyhash==0.5.0',
         'elasticsearch==0.4.1',
+        'pyelasticsearch',
         'lz4==0.6.0',
         'numpy',
         'pandas==0.11.0',
