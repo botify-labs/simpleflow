@@ -46,6 +46,8 @@ VAGRANT_SYSTEM_PROVISIONING = ENV['VAGRANT_SYSTEM_PROVISIONING'] || 1
 PUPPET_BOOTSTRAP_RULES = ENV['PUPPET_BOOTSTRAP_RULES'] || nil
 PUPPET_ENV = ENV['PUPPET_ENV'] || "development"
 
+ANSIBLE_ENV = ENV['ANSIBLE_ENV'] || 1
+
 JENKINS_TEST = ENV['JENKINS_TEST'] || 0
 
 # Set up an empty provisioning rule that will
@@ -109,8 +111,8 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, id: 'ssh', guest: 22, host: 2222, auto_correct: true
   config.vm.network :forwarded_port, id: 'nginx', guest: 80, host: 8080, auto_correct: true
 
-  #FIXME we should be able to provision with ansible even in jenkins test mode.
-  if JENKINS_TEST == 0
+
+  if ANSIBLE_ENV == 1
       config.vm.provision "ansible" do |ansible|
           ansible.playbook = "ansible/build.yml"
       end
