@@ -1,9 +1,7 @@
 import unittest
-from collections import defaultdict
 
 from cdf.collections.suggestions.aggregator import (MetricsAggregator,
                                                     get_keys_from_stream_suggest)
-from cdf.collections.suggestions.constants import COUNTERS_FIELDS
 
 
 class TestMetricsAggregator(unittest.TestCase):
@@ -179,8 +177,6 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['title']['duplicate'], 2)
         self.assertEqual(target['description']['unique'], 1)
 
-    # TODO fix bug and finish this test
-    @unittest.skip("")
     def test_out_links(self):
         stream_outlinks_counters = [
             [1, ['follow'], True, 10, 5],
@@ -201,15 +197,15 @@ class TestMetricsAggregator(unittest.TestCase):
         # counters for this part are calculated with `score`
         self.assertEqual(target_int['total'], 43)
         self.assertEqual(target_int['follow'], 40)
+        self.assertEqual(target_int['follow_unique'], 30)
         self.assertEqual(target_int['nofollow'], 3)
         self.assertEqual(target_int[nfc_key]['link_meta_robots'], 2)
-        print target_int[nfc_key]
 
+        # counters for `nofollow` are calculated with `score_unique`
         self.assertEqual(target_ext['nofollow'], 12)
-        print target_ext[nfc_key]
         self.assertEqual(target_ext[nfc_key]['meta'], 8)
         self.assertEqual(target_ext[nfc_key]['link_meta'], 1)
-        self.assertEqual(target_ext[nfc_key]['meta_robots'], 0)
+        self.assertEqual(target_ext[nfc_key]['link'], 0)
 
     def test_in_links(self):
         stream_inlinks_counters = [
@@ -227,8 +223,7 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['follow_unique'], 30)
         self.assertEqual(target['nofollow'], 3)
 
-        # TODO same problem as above
-        # self.assertEqual(target[nfc_key]['link_meta_robots'], 2)
+        self.assertEqual(target[nfc_key]['link_meta_robots'], 2)
 
     def test_redirects(self):
         stream_outredirect_counters = [
@@ -252,7 +247,17 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['redirects_from_nb'], 10**7 + 50)
 
     # TODO `not_filled`
-    def test_out_canonicals(self):
+    def test_canonicals(self):
+        """Canonicals counters should be aggregated correctly
+        """
+        stream_infos = [
+            [1, 1, 'text/html', 0, 1, 200, 1024, 100, 100],
+            [2, 1, 'text/html', 0, 1, 200, 1024, 100, 2200],
+            [3, 1, 'text/html', 0, 1, 200, 1024, 100, 100],
+            [4, 1, 'text/html', 0, 1, 200, 1024, 100, 500],
+            [5, 1, 'text/html', 0, 1, 200, 1024, 100, 1500]
+        ]
+
         stream_outcanonical_counters = [
             [1, True],
             [2, False],
@@ -263,15 +268,15 @@ class TestMetricsAggregator(unittest.TestCase):
             [1, 10],
             [2, 10**7]
         ]
+
         self.kwargs['stream_outcanonical_counters'] = iter(stream_outcanonical_counters)
         self.kwargs['stream_incanonical_counters'] = iter(stream_incanonical_counters)
+        self.kwargs['stream_infos'] = iter(stream_infos)
         result = list(MetricsAggregator(**self.kwargs).get())
         target = result[0]['counters']['canonical_nb']
 
-        print target
         self.assertEqual(target['equal'], 2)
         self.assertEqual(target['not_equal'], 1)
         self.assertEqual(target['filled'], 3)
-        self.assertEqual(target['not_filled'], 2)
+        #self.assertEqual(target['not_filled'], 2)
         self.assertEqual(target['incoming'], 10**7 + 10)
-
