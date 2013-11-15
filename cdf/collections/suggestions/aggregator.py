@@ -279,9 +279,9 @@ class MetricsAggregator(object):
                     inlink_follow_dist(results[key][counter_key], score_unique)
                 else:
                     if follow_key not in results[key][counter_key]['nofollow_combinations']:
-                        results[key][counter_key]['nofollow_combinations'][follow_key] = 1
+                        results[key][counter_key]['nofollow_combinations'][follow_key] = score_unique
                     else:
-                        results[key][counter_key]['nofollow_combinations'][follow_key] += 1
+                        results[key][counter_key]['nofollow_combinations'][follow_key] += score_unique
 
             for entry in outlinks:
                 url_id, follow, is_internal, score, score_unique = entry
@@ -295,9 +295,9 @@ class MetricsAggregator(object):
                         results[key][counter_key]['follow_unique'] += score_unique
                 else:
                     if follow_key not in results[key][counter_key]['nofollow_combinations']:
-                        results[key][counter_key]['nofollow_combinations'][follow_key] = 1
+                        results[key][counter_key]['nofollow_combinations'][follow_key] = score_unique
                     else:
-                        results[key][counter_key]['nofollow_combinations'][follow_key] += 1
+                        results[key][counter_key]['nofollow_combinations'][follow_key] += score_unique
 
             for entry in badlinks:
                 _, http_code, count = entry
