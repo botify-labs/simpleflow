@@ -22,39 +22,49 @@ CRAWL_ID = 0
 S3_URI = ''
 
 
-# TODO bug in intermediary_files
 def split_partition(input_file,
                     dest_dir,
                     first_part_size=4,
                     part_size=2):
-    """Split a plain text crawl file into gzipped partitions
+    """Split a file in several partitions, according to
+    `first_part_size` and `part_size`
 
-    The 2 size params controls the url ids in the partition.
-    For example, the first partition (index 0), it contains data records
-    from url 1 up to the url id which equals `first_part_size`
-
-    Outputs are write to `dest_dir`
+    Output partitions are gzipped
     """
+    def get_part_id(url_id, first_part_size, part_size):
+        """Determine which partition a url_id should go into
+        """
+        import math
+
+        if url_id <= first_part_size:
+            return 0
+        else:
+            return int(math.ceil(float(url_id - first_part_size) / part_size))
+
     current_part = 0
-    output_name = os.path.join(dest_dir,
+    output_path = os.path.join(dest_dir,
                                os.path.basename(input_file) + '.{}.gz')
     _in = open(input_file, 'rb')
-    _out = gzip.open(output_name.format(current_part), 'w')
+    _out = gzip.open(output_path.format(current_part), 'w')
 
     for line in split_file(_in):
         # check the part id
         url_id = int(line[0])
-        if (current_part == 0 and url_id > first_part_size) or \
-                (current_part > 0 and
-                         (url_id - first_part_size - (current_part - 1) * part_size) > part_size):
+        part = get_part_id(url_id, first_part_size, part_size)
+
+        # a new part file is needed
+        if part != current_part:
+            # this is safe b/c url_id is ordered
+            current_part = part
             _out.close()
-            current_part += 1
-            _out = gzip.open(output_name.format(current_part), 'w')
+            _out = gzip.open(output_path.format(current_part), 'w')
+
         _out.write('\t'.join(line) + '\n')
     _out.close()
 
 
 def generate_inlink_file(outlink_file, inlink_file):
+    """Reverse `urllinks`"""
     outlink = open(outlink_file, 'r')
     buffer = []
 
@@ -75,14 +85,24 @@ def generate_inlink_file(outlink_file, inlink_file):
 def _list_local_files(input_dir, regexp):
     """List all files that satisfy the given regexp"""
     result = []
-    for f in os.listdir(input_dir):
+
+    def listdir(input_dir):
+        """Recursively list all files under `input_dir`"""
+        files = []
+        for dir, _, filenames in os.walk(input_dir):
+            files.extend([os.path.join(dir, f) for f in filenames])
+        return files
+
+    for f in listdir(input_dir):
+        # exclude the top folder for regexp matching
+        to_match = f[len(input_dir) + 1:]
         # regexp is a string, try match it
-        if isinstance(regexp, str) and re.match(regexp, f):
-            result.append(os.path.join(input_dir, f))
+        if isinstance(regexp, str) and re.match(regexp, to_match):
+            result.append(f)
         # regexp is a list of string, try match anyone of it
         elif isinstance(regexp, (list, tuple)):
-            if any(re.match(r, f) for r in regexp):
-                result.append(os.path.join(input_dir, f))
+            if any(re.match(r, to_match) for r in regexp):
+                result.append(f)
 
     return result
 
@@ -99,9 +119,15 @@ def _mock_push_content(s3_uri, content):
 
 def _mock_fetch_file(s3_uri, dest_path, force_fetch, lock=True):
     """A mock fetch that merely check if the file exists locally"""
+    filename = os.path.basename(dest_path)
     if not os.path.exists(dest_path):
-        raise S3ResponseError('', '{} not found'.format(dest_path))
-    return dest_path, True
+        if not os.path.exists(os.path.join(TEST_DIR, filename)):
+            # this should be managed correctly by tasks
+            raise S3ResponseError('', '{} not found'.format(dest_path))
+        else:
+            return os.path.join(TEST_DIR, filename), True
+    else:
+        return dest_path, True
 
 
 def _mock_fetch_files(s3_uri, dest_dir,
@@ -144,25 +170,33 @@ class MockIntergrationTest(unittest.TestCase):
     def test_mock_crawl(self):
         from cdf.utils.remote_files import nb_parts_from_crawl_location
 
-        # reload modules, let mocks take effect
+        # reload modules, mocks need this to take effect
         reload(im)
         reload(agg)
         reload(clusters)
 
+        # launch cdf's analyse process
         force_fetch = False
+
+        # figure out number of partitions
         parts = nb_parts_from_crawl_location(S3_URI)
 
+        # bad link
         im.make_bad_link_file(CRAWL_ID, S3_URI, 4, 2, tmp_dir_prefix=TEST_DIR)
 
+        # aggragate bad links on (url, http_code)
         for part_id in xrange(0, parts):
             im.make_bad_link_counter_file(CRAWL_ID, S3_URI, part_id, tmp_dir_prefix=TEST_DIR)
 
+        # metadata duplication detection
         im.make_metadata_duplicates_file(CRAWL_ID, S3_URI, 4, 2,
                                          tmp_dir_prefix=TEST_DIR)
 
+        # clustering
         clusters.compute_mixed_clusters(CRAWL_ID, S3_URI, 4, 2,
                                         tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
 
+        # aggregation for each partition
         for part_id in xrange(0, parts):
             logger.info("Compute inlinks counter file")
             im.make_links_counter_file(CRAWL_ID, S3_URI, part_id, "in",
@@ -173,5 +207,10 @@ class MockIntergrationTest(unittest.TestCase):
             agg.compute_aggregators_from_part_id(CRAWL_ID, S3_URI, part_id,
                                                  tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
 
+        # consolidation of partitions
         agg.consolidate_aggregators(CRAWL_ID, S3_URI,
                                     tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
+
+
+        # analyse process completed
+        # asserting files and their contents
