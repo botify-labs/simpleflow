@@ -49,10 +49,14 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
         'redirect': 'url_{}_redirect_counters.txt.{}.gz'.format(link_direction, part_id),
     }
 
-    f_list = {k: gzip.open(os.path.join(tmp_dir, v), 'w') for k, v in filenames.iteritems()}
-
+    # lazily open files
+    file_dict = {}
     for i, entry in enumerate(generator):
-        f_list[entry[1]].write(str(entry[0]) + '\t' + '\t'.join(str(k) for k in entry[2:]) + '\n')
+        # TODO remove hard coded index
+        link_type = entry[1]
+        if link_type not in file_dict:
+            file_dict[link_type] = gzip.open(os.path.join(tmp_dir, filenames[link_type]), 'w')
+        file_dict[link_type].write(str(entry[0]) + '\t' + '\t'.join(str(k) for k in entry[2:]) + '\n')
 
     for counter_filename in filenames.values():
         push_file(
