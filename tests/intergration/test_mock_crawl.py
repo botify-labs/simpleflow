@@ -81,6 +81,14 @@ def generate_inlink_file(outlink_file, inlink_file):
     inlink.close()
 
 
+def list_part_files(dir, file_pattern, part):
+    return [f for f in os.listdir(dir)
+            if re.match(file_pattern.format(part), f)]
+
+
+def list_result_files(dir, regexp):
+    pass
+
 # Mock s3 module
 def _list_local_files(input_dir, regexp):
     """List all files that satisfy the given regexp"""
@@ -147,28 +155,25 @@ def _mock_nb_parts(s3_uri):
 
 
 class MockIntergrationTest(unittest.TestCase):
-    def setUp(self):
-        generate_inlink_file(os.path.join(MOCK_CRAWL_DIR, 'urllinks.txt'),
-                             os.path.join(MOCK_CRAWL_DIR, 'urlinlinks.txt'))
-
-        crawl_dir = os.path.join(TEST_DIR, 'crawl_%d' % CRAWL_ID)
-        if not os.path.exists(crawl_dir):
-            os.makedirs(crawl_dir)
-
-        for file in os.listdir(MOCK_CRAWL_DIR):
-            split_partition(os.path.join(MOCK_CRAWL_DIR, file), TEST_DIR)
-
-    def tearDown(self):
-        # delete generated files
-        pass
-
+    @classmethod
     @patch('cdf.utils.s3.push_file', _mock_push_file)
     @patch('cdf.utils.s3.push_content', _mock_push_content)
     @patch('cdf.utils.s3.fetch_file', _mock_fetch_file)
     @patch('cdf.utils.s3.fetch_files', _mock_fetch_files)
     @patch('cdf.utils.remote_files.nb_parts_from_crawl_location', _mock_nb_parts)
-    def test_mock_crawl(self):
-        from cdf.utils.remote_files import nb_parts_from_crawl_location
+    def setUpClass(cls):
+        # generate inlink file
+        generate_inlink_file(os.path.join(MOCK_CRAWL_DIR, 'urllinks.txt'),
+                             os.path.join(MOCK_CRAWL_DIR, 'urlinlinks.txt'))
+
+        # prepare test folder
+        crawl_dir = os.path.join(TEST_DIR, 'crawl_%d' % CRAWL_ID)
+        if not os.path.exists(crawl_dir):
+            os.makedirs(crawl_dir)
+
+        # split and gzip mock crawl files
+        for file in os.listdir(MOCK_CRAWL_DIR):
+            split_partition(os.path.join(MOCK_CRAWL_DIR, file), TEST_DIR)
 
         # reload modules, mocks need this to take effect
         reload(im)
@@ -179,12 +184,13 @@ class MockIntergrationTest(unittest.TestCase):
         force_fetch = False
 
         # figure out number of partitions
+        from cdf.utils.remote_files import nb_parts_from_crawl_location
         parts = nb_parts_from_crawl_location(S3_URI)
 
         # bad link
         im.make_bad_link_file(CRAWL_ID, S3_URI, 4, 2, tmp_dir_prefix=TEST_DIR)
 
-        # aggragate bad links on (url, http_code)
+        # aggregate bad links on (url, http_code)
         for part_id in xrange(0, parts):
             im.make_bad_link_counter_file(CRAWL_ID, S3_URI, part_id, tmp_dir_prefix=TEST_DIR)
 
@@ -211,6 +217,24 @@ class MockIntergrationTest(unittest.TestCase):
         agg.consolidate_aggregators(CRAWL_ID, S3_URI,
                                     tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
 
+        # TODO(darkjh) mock ElasticSearch
 
-        # analyse process completed
-        # asserting files and their contents
+
+    @classmethod
+    def tearDownClass(cls):
+        # TODO(darkjh) delete generated files
+        pass
+
+    def setUp(self):
+        self.result_dir = os.path.join(TEST_DIR, 'crawl_0')
+
+    def tearDown(self):
+        pass
+
+    def test_in_links_result(self):
+        pattern = 'url_in_links_counters.txt.{}.gz'
+        for part in (5, 6):
+            self.assertEqual([], list_part_files(self.result_dir, pattern, part))
+        for part in (0, 1, 2, 3, 4):
+            self.assertEqual([pattern.format(part)],
+                             list_part_files(self.result_dir, pattern, part))
