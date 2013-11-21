@@ -45,11 +45,12 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
     files_fetched = fetch_files(s3_uri, tmp_dir,
-                                regexp=['url(ids|infos|links|inlinks|contents|contentsduplicate|_suggested_clusters|badlinks).txt.%d.gz' % part_id],
+                                regexp=['url(ids|infos|links|inlinks|contents|' +
+                                        'contentsduplicate|_suggested_clusters|' +
+                                        'badlinks).txt.%d.gz' % part_id],
                                 force_fetch=force_fetch)
     streams = {}
 
-    path_local, fetched = files_fetched[0]
     for path_local, fetched in files_fetched:
         stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
         cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
