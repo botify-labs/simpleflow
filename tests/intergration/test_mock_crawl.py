@@ -8,18 +8,19 @@ from boto.exception import S3ResponseError
 
 from cdf.log import logger
 from cdf.streams.utils import split_file
+from cdf.collections.urls.utils import get_part_id
 
 from cdf.tasks.url_data import prepare_crawl_index, push_urls_to_elastic_search
 import cdf.tasks.suggest.clusters as clusters
 import cdf.tasks.intermediary_files as im
 import cdf.tasks.aggregators as agg
 
+CRAWL_ID = 0
+S3_URI = ''
 
 MOCK_CRAWL_DIR = os.path.join(os.path.curdir, 'mock')
 TEST_DIR = os.path.join(os.path.curdir, 'test')
-
-CRAWL_ID = 0
-S3_URI = ''
+RESULT_DIR = os.path.join(TEST_DIR, 'crawl_%d' % CRAWL_ID)
 
 
 def split_partition(input_file,
@@ -31,16 +32,6 @@ def split_partition(input_file,
 
     Output partitions are gzipped
     """
-    def get_part_id(url_id, first_part_size, part_size):
-        """Determine which partition a url_id should go into
-        """
-        import math
-
-        if url_id <= first_part_size:
-            return 0
-        else:
-            return int(math.ceil(float(url_id - first_part_size) / part_size))
-
     current_part = 0
     output_path = os.path.join(dest_dir,
                                os.path.basename(input_file) + '.{}.gz')
@@ -81,13 +72,9 @@ def generate_inlink_file(outlink_file, inlink_file):
     inlink.close()
 
 
-def list_part_files(dir, file_pattern, part):
-    return [f for f in os.listdir(dir)
-            if re.match(file_pattern.format(part), f)]
-
-
 def list_result_files(dir, regexp):
-    pass
+    return [f for f in os.listdir(dir) if re.match(regexp, f)]
+
 
 # Mock s3 module
 def _list_local_files(input_dir, regexp):
@@ -226,15 +213,38 @@ class MockIntergrationTest(unittest.TestCase):
         pass
 
     def setUp(self):
-        self.result_dir = os.path.join(TEST_DIR, 'crawl_0')
+        pass
 
     def tearDown(self):
         pass
 
-    def test_in_links_result(self):
+    def assert_part_files(self, file_pattern,
+                          expected_parts):
+        """Assert that with the given `file_pattern`, only files for
+        `expected_parts` should be created
+
+        :param file_pattern should be of form 'some_name.txt.{}.gz'
+        :param expected_parts a list/tuple of expected part number
+        """
+        file_regexp = file_pattern.format('*')
+        self.assertEqual(len(expected_parts),
+                         len(list_result_files(RESULT_DIR, file_regexp)))
+        for part in expected_parts:
+            self.assertEqual([file_pattern.format(part)],
+                             list_result_files(RESULT_DIR, file_pattern.format(part)))
+
+    def test_in_links(self):
         pattern = 'url_in_links_counters.txt.{}.gz'
-        for part in (5, 6):
-            self.assertEqual([], list_part_files(self.result_dir, pattern, part))
-        for part in (0, 1, 2, 3, 4):
-            self.assertEqual([pattern.format(part)],
-                             list_part_files(self.result_dir, pattern, part))
+        self.assert_part_files(pattern, [0, 1, 2, 3, 4, 5])
+
+    def test_in_canonicals(self):
+        # TODO(darkjh) issue 128
+        pass
+
+    def test_in_redirects(self):
+        pattern = 'url_in_redirect_counters.txt.{}.gz'
+        self.assert_part_files(pattern, [0, 2, 3])
+
+    def test_bad_links(self):
+        pattern = 'urlbadlinks.txt.{}.gz'
+        self.assert_part_files(pattern, [0, 4])
