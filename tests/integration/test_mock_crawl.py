@@ -207,7 +207,7 @@ class MockIntergrationTest(unittest.TestCase):
 
         # TODO(darkjh) mock ElasticSearch
         es_location = 'http://localhost:9200'
-        es_index = 'intergration-test'
+        es_index = 'integration-test'
         es_doc_type = 'crawls'
         ud.prepare_crawl_index(CRAWL_ID, es_location, es_index, es_doc_type)
         for part_id in xrange(0, parts):
