@@ -18,8 +18,8 @@ import cdf.tasks.aggregators as agg
 CRAWL_ID = 0
 S3_URI = ''
 
-MOCK_CRAWL_DIR = os.path.join(os.path.curdir, 'mock')
-TEST_DIR = os.path.join(os.path.curdir, 'test')
+MOCK_CRAWL_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mock')
+TEST_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'test')
 RESULT_DIR = os.path.join(TEST_DIR, 'crawl_%d' % CRAWL_ID)
 
 
