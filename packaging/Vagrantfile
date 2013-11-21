@@ -89,6 +89,7 @@ wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearc
 sudo dpkg -i elasticsearch-0.90.5.deb
 sudo service elasticsearch start
 
+mkdir /home/vagrant/.pip
 cat > /home/vagrant/.pip/pip.conf << EOF
 [global]
 index-url = http://ff879dbbee9047288c13e31e9f8d45d3:dc076cf5483e4501a548225cbbf5b9b2@pypi.botify.com/simple
