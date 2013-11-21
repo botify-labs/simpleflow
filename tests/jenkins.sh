@@ -26,5 +26,4 @@ nosetests --with-xunit
 [ $? -ne 0 ] && STATUS=1
 
 deactivate
-rm -rf venv
 exit $STATUS
