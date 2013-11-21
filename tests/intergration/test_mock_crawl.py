@@ -10,7 +10,7 @@ from cdf.log import logger
 from cdf.streams.utils import split_file
 from cdf.collections.urls.utils import get_part_id
 
-from cdf.tasks.url_data import prepare_crawl_index, push_urls_to_elastic_search
+import cdf.tasks.url_data as ud
 import cdf.tasks.suggest.clusters as clusters
 import cdf.tasks.intermediary_files as im
 import cdf.tasks.aggregators as agg
@@ -103,8 +103,9 @@ def _list_local_files(input_dir, regexp):
 
 
 def _mock_push_file(s3_uri, filename):
-    """No push to s3"""
-    pass
+    """Verify that the file indeed exists"""
+    if not os.path.exists(filename):
+        raise Exception('{} file does not exists'.format(filename))
 
 
 def _mock_push_content(s3_uri, content):
@@ -128,8 +129,7 @@ def _mock_fetch_file(s3_uri, dest_path, force_fetch, lock=True):
 def _mock_fetch_files(s3_uri, dest_dir,
                       regexp=None, force_fetch=True, lock=True):
     local_files = _list_local_files(dest_dir, regexp)
-    if len(local_files) == 0:
-        local_files = _list_local_files(TEST_DIR, regexp)
+    local_files.extend(_list_local_files(TEST_DIR, regexp))
 
     # it could return an empty list, this is managed by the tasks
     # that use it
@@ -166,6 +166,7 @@ class MockIntergrationTest(unittest.TestCase):
         reload(im)
         reload(agg)
         reload(clusters)
+        reload(ud)
 
         # launch cdf's analyse process
         force_fetch = False
@@ -205,6 +206,14 @@ class MockIntergrationTest(unittest.TestCase):
                                     tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
 
         # TODO(darkjh) mock ElasticSearch
+        es_location = 'http://localhost:9200'
+        es_index = 'intergration-test'
+        es_doc_type = 'crawls'
+        ud.prepare_crawl_index(CRAWL_ID, es_location, es_index, es_doc_type)
+        for part_id in xrange(0, parts):
+            ud.push_urls_to_elastic_search(CRAWL_ID, part_id, S3_URI,
+                                           es_location, es_index, es_doc_type,
+                                           tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
 
 
     @classmethod
@@ -224,7 +233,7 @@ class MockIntergrationTest(unittest.TestCase):
         `expected_parts` should be created
 
         :param file_pattern should be of form 'some_name.txt.{}.gz'
-        :param expected_parts a list/tuple of expected part number
+        :param expected_parts is a list/tuple of expected part numbers
         """
         file_regexp = file_pattern.format('*')
         self.assertEqual(len(expected_parts),
@@ -233,18 +242,34 @@ class MockIntergrationTest(unittest.TestCase):
             self.assertEqual([file_pattern.format(part)],
                              list_result_files(RESULT_DIR, file_pattern.format(part)))
 
-    def test_in_links(self):
+    def test_in_links_files(self):
         pattern = 'url_in_links_counters.txt.{}.gz'
-        self.assert_part_files(pattern, [0, 1, 2, 3, 4, 5])
+        self.assert_part_files(pattern, [0, 2, 3, 4, 5])
 
-    def test_in_canonicals(self):
+    def test_in_canonicals_files(self):
         # TODO(darkjh) issue 128
         pass
 
-    def test_in_redirects(self):
+    def test_in_redirects_files(self):
         pattern = 'url_in_redirect_counters.txt.{}.gz'
-        self.assert_part_files(pattern, [0, 2, 3])
+        self.assert_part_files(pattern, [0, 2, 4])
 
-    def test_bad_links(self):
+    def test_out_links_files(self):
+        pattern = 'url_out_links_counters.txt.{}.gz'
+        self.assert_part_files(pattern, [0, 4])
+
+    def test_out_redirects_files(self):
+        pattern = 'url_out_redirect_counters.txt.{}.gz'
+        self.assert_part_files(pattern, [2, 5])
+
+    def test_out_canonicals_files(self):
+        pattern = 'url_out_canonical_counters.txt.{}.gz'
+        self.assert_part_files(pattern, [0, 1])
+
+    def test_bad_links_files(self):
         pattern = 'urlbadlinks.txt.{}.gz'
         self.assert_part_files(pattern, [0, 4])
+
+    def test_metadata_duplication_files(self):
+        pattern = 'urlcontentsduplicate.txt.{}.gz'
+        self.assert_part_files(pattern, [0, 1, 4])
