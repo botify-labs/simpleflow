@@ -1,16 +1,16 @@
-1	http	www.site.com	/home.html
-2	http	www.site.com	/product/cano.html
-3	http	www.site.com	/product/cano.html?c=1?d=1
-4	http	www.site.com	/product/cano.html?c=2?e=10
-5	http	www.site.com	/product/cano.html?c=2?e=10
-6	http	www.site.com	/path/redirect_to_7
-7	http	www.site.com	/path/redirect_to_2
-8	http	www.site.com	/path/bad400_1
-9	http	www.site.com	/path/bad500_1
-10	http	www.site.com	/path/bad400_2
-11	http	www.site.com	/other/1
-12	http	www.site.com	/other/redirect_to_10
-13	http	www.site.com	/path/not-crawled1
-14	http	www.site.com	/path/not-crawled2
-15	http	www.site.com	/path/not-crawled3
-16	http	www.site.com	/path/not-crawled4
+1	http	www.site.com	/home.html	''
+2	http	www.site.com	/product/cano.html	''
+3	http	www.site.com	/product/cano.html?c=1?d=1	''
+4	http	www.site.com	/product/cano.html?c=2?e=10	''
+5	http	www.site.com	/product/cano.html?c=2?e=10	''
+6	http	www.site.com	/path/redirect_to_7	''
+7	http	www.site.com	/path/redirect_to_2	''
+8	http	www.site.com	/path/bad400_1	''
+9	http	www.site.com	/path/bad500_1	''
+10	http	www.site.com	/path/bad400_2	''
+11	http	www.site.com	/other/1	''
+12	http	www.site.com	/other/redirect_to_10	''
+13	http	www.site.com	/path/not-crawled1	''
+14	http	www.site.com	/path/not-crawled2	''
+15	http	www.site.com	/path/not-crawled3	''
+16	http	www.site.com	/path/not-crawled4	''
