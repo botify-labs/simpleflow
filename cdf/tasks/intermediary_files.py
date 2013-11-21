@@ -58,7 +58,7 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
 
     # push all created files to s3
     for counter_file in file_created.values():
-        counter_filename = os.path.basename(counter_file.filename)
+        counter_filename = os.path.basename(counter_file.name)
         push_file(
             os.path.join(s3_uri, counter_filename),
             os.path.join(tmp_dir, counter_filename),
