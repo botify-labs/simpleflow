@@ -18,8 +18,10 @@ source /tmp/venv/bin/activate
 pip install Cython==0.19.1
 pip install numpy
 pip install numexpr==2.1
+pip install elasticsearch==0.4.1
 pip install nose
 pip install BQL
+
 
 python setup.py install
 nosetests --with-xunit
