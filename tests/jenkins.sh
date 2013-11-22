@@ -9,9 +9,10 @@ STATUS=0
 SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd $SCRIPT_DIR/.. #back to root directory
 
-virtualenv /tmp/venv
+VIRTUALENV_DIR="/tmp/venv"
+virtualenv $VIRTUALENV_DIR
 [ $? -ne 0 ] && exit 1
-source /tmp/venv/bin/activate
+source $VIRTUALENV_DIR/bin/activate
 
 #install dependencies
 
