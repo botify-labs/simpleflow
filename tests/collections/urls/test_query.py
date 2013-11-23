@@ -3,11 +3,13 @@ import unittest
 import logging
 import time
 
+from mock import MagicMock
+
 from cdf.log import logger
 from cdf.collections.urls.query import Query
 from cdf.constants import URLS_DATA_MAPPING
 from cdf.streams.masks import list_to_mask
-from pyelasticsearch import ElasticSearch
+
 
 ELASTICSEARCH_LOCATION = "http://localhost:9200"
 ELASTICSEARCH_INDEX = "cdf_test"
@@ -143,19 +145,6 @@ class TestQuery(unittest.TestCase):
                 }
             },
         ]
-        self.es = ElasticSearch(ELASTICSEARCH_LOCATION)
-        try:
-            self.es.delete_index(ELASTICSEARCH_INDEX)
-        except:
-            pass
-        self.es.create_index(ELASTICSEARCH_INDEX)
-
-        self.es.put_mapping(ELASTICSEARCH_INDEX, "crawl_{}".format(CRAWL_ID), URLS_DATA_MAPPING)
-        for url in urls:
-            self.es.index(ELASTICSEARCH_INDEX, "crawl_{}".format(CRAWL_ID), url, url['_id'])
-
-        while self.es.count({}, index=ELASTICSEARCH_INDEX)['count'] < len(urls):
-            time.sleep(0.1)
 
         self.query_args = (ELASTICSEARCH_LOCATION, ELASTICSEARCH_INDEX, "crawl_{}".format(CRAWL_ID), CRAWL_ID, REVISION_ID)
 
@@ -163,10 +152,240 @@ class TestQuery(unittest.TestCase):
         #self.es.delete_index(ELASTICSEARCH_INDEX)
         pass
 
+    def generate_expected_results(self, result_ids):
+
+
+        full_result = {
+            "_shards": {
+                "failed": 0,
+                "successful": 5,
+                "total": 5
+            },
+            "hits": {
+                "hits": [
+                    {
+                        "_id": "1:1",
+                        "_index": "cdf_test",
+                        "_score": None,
+                        "_source": {
+                            "_id": "1:1",
+                            "canonical_to": {
+                                "url_id": 2
+                            },
+                            "crawl_id": 1,
+                            "delay2": 100,
+                            "http_code": 200,
+                            "id": 1,
+                            "metadata": {
+                                "h1": [
+                                    "Welcome to our website"
+                                ],
+                                "title": [
+                                    "My title"
+                                ]
+                            },
+                            "metadata_duplicate": {
+                                "h1": [
+                                    7
+                                ]
+                            },
+                            "metadata_duplicate_nb": {
+                                "h1": 1
+                            },
+                            "metadata_nb": {
+                                "description": 0,
+                                "h1": 1,
+                                "h2": 0,
+                                "title": 1
+                            },
+                            "outlinks_internal": [
+                                [2, 0, 1],
+                                [3, 0, 1],
+                                [5, 0, 1],
+                                [3, 1, 1]
+                            ],
+                            "outlinks_internal_nb": {
+                                "follow": 3,
+                                "follow_unique": 3,
+                                "nofollow": 1,
+                                "nofollow_combinations": [
+                                    {
+                                        "key": [
+                                            "link"
+                                        ],
+                                        "value": 1
+                                    }
+                                ],
+                                "total": 4
+                            },
+                            "tagging": [
+                                {
+                                    "resource_type": "homepage",
+                                    "rev_id": 1
+                                }
+                            ],
+                            "url": "http://www.mysite.com/"
+                        },
+                        "_type": "crawl_1",
+                        "sort": [
+                            1
+                        ]
+                    },
+                    {
+                        "_id": "1:2",
+                        "_index": "cdf_test",
+                        "_score": None,
+                        "_source": {
+                            "_id": "1:2",
+                            "canonical_from": [
+                                1
+                            ],
+                            "crawl_id": 1,
+                            "http_code": 301,
+                            "id": 2,
+                            "redirects_to": {
+                                "url_id": 3
+                            },
+                            "tagging": [
+                                {
+                                    "resource_type": "not homepage",
+                                    "rev_id": 1
+                                }
+                            ],
+                            "url": "http://www.mysite.com/page2.html"
+                        },
+                        "_type": "crawl_1",
+                        "sort": [
+                            2
+                        ]
+                    },
+                    {
+                        "_id": "1:3",
+                        "_index": "cdf_test",
+                        "_score": None,
+                        "_source": {
+                            "_id": "1:3",
+                            "crawl_id": 1,
+                            "http_code": 200,
+                            "id": 3,
+                            "metadata_nb": {
+                                "description": 0,
+                                "h1": 0,
+                                "h2": 0,
+                                "title": 0
+                            },
+                            "redirects_from": [
+                                {
+                                    "http_code": 301,
+                                    "url_id": 2
+                                }
+                            ],
+                            "url": "http://www.mysite.com/page3.html"
+                        },
+                        "_type": "crawl_1",
+                        "sort": [
+                            3
+                        ]
+                    },
+                    {
+                        "_id": "1:4",
+                        "_index": "cdf_test",
+                        "_score": None,
+                        "_source": {
+                            "_id": "1:4",
+                            "crawl_id": 1,
+                            "http_code": 302,
+                            "id": 4,
+                            "redirects_to": {
+                                "url_id": 5
+                            },
+                            "url": "http://www.mysite.com/page4.html"
+                        },
+                        "_type": "crawl_1",
+                        "sort": [
+                            4
+                        ]
+                    },
+                    {
+                        "_id": "1:6",
+                        "_index": "cdf_test",
+                        "_score": None,
+                        "_source": {
+                            "_id": "1:6",
+                            "crawl_id": 1,
+                            "http_code": 302,
+                            "id": 6,
+                            "redirects_to": {
+                                "url": "http://www.youtube.com/"
+                            },
+                            "url": "http://www.mysite.com/page6.html"
+                        },
+                        "_type": "crawl_1",
+                        "sort": [
+                            6
+                        ]
+                    },
+                    {
+                        "_id": "1:7",
+                        "_index": "cdf_test",
+                        "_score": None,
+                        "_source": {
+                            "_id": "1:7",
+                            "crawl_id": 1,
+                            "http_code": 200,
+                            "id": 7,
+                            "metadata": {
+                                "h1": [
+                                    "Welcome to our website"
+                                ],
+                                "title": [
+                                    "My title"
+                                ]
+                            },
+                            "url": "http://www.mysite.com/page7.html"
+                        },
+                        "_type": "crawl_1",
+                        "sort": [
+                            7
+                        ]
+                    }
+                ],
+                "max_score": None,
+                "total": 6
+            },
+            "timed_out": False,
+            "took": 2
+        }
+
+        l = []
+        for id in result_ids:
+            for hit in full_result["hits"]["hits"]:
+                if int(hit["_id"].split(":")[1]) == id:
+                    l.append(hit)
+
+        d = {
+            "_shards": {
+                "failed": 0,
+                "successful": 5,
+                "total": 5
+            },
+            "hits": {
+                "hits": l,
+                "max_score": None,
+                "total": len(l)
+                },
+            "timed_out": False,
+            "took": 2
+            }
+        return d
+
+
     def test_count(self):
         # A query with no filter should return 4 results (id=5 should not be returned as it has
         # not been crawled (only exists to return the value of id=4's redirect
-        q = Query(*self.query_args, query={})
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 6, 7])
+        q = Query(*self.query_args, query={}, search_backend=search_backend)
         self.assertEquals(q.count, 6)
 
     def test_simple_filter(self):
@@ -189,7 +408,11 @@ class TestQuery(unittest.TestCase):
                 '_id': "%d:%d" % (CRAWL_ID, 7)
             }
         ]
-        q = Query(*self.query_args, query=query)
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([1, 3, 7])
+        print self.generate_expected_results([1, 3, 7])
+        q = Query(*self.query_args, query=query, search_backend=search_backend)
+        print search_backend.mock_calls
         self.assertEquals(q.count, 3)
 
         self.assertEquals(list(q.results), expected_results)
@@ -205,8 +428,11 @@ class TestQuery(unittest.TestCase):
             },
             "sort": ["id"]
         }
-        q = Query(*self.query_args, query=query)
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([1])
+        q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals([k['_id'] for k in q.results], ["1:1"])
+
 
     def test_or_filter(self):
         query = {
@@ -219,7 +445,9 @@ class TestQuery(unittest.TestCase):
             },
             "sort": ["id"]
         }
-        q = Query(*self.query_args, query=query)
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 7])
+        q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals([k['_id'] for k in q.results], ["1:1", "1:2", "1:3", "1:7"])
 
     def test_redirects_to_crawled(self):
@@ -239,7 +467,21 @@ class TestQuery(unittest.TestCase):
                 "crawled": True
             }
         }
-        q = Query(*self.query_args, query=query)
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([2])
+        search_backend.mget.return_value = {
+            u'docs': [
+                {
+                    u'_type': u'crawl_1',
+                    u'exists': True,
+                    u'_index': u'cdf_test',
+                    u'fields': {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200},
+                    u'_version': 1,
+                    u'_id': u'1:3'
+                }
+                ]
+            }
+        q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals(q.count, 1)
         self.assertEquals(list(q.results)[0], expected_url)
 
@@ -267,7 +509,21 @@ class TestQuery(unittest.TestCase):
                 "crawled": False
             }
         }
-        q = Query(*self.query_args, query=query, sort=('id',))
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([4, 6])
+        search_backend.mget.return_value={
+            u'docs': [
+                {
+                    u'_type': u'crawl_1',
+                    u'exists': True,
+                    u'_index': u'cdf_test',
+                    u'fields': {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0},
+                    u'_version': 1,
+                    u'_id': u'1:5'
+                }
+                ]
+            }
+        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
         self.assertEquals(q.count, 2)
         self.assertEquals(list(q.results)[0], expected_url_4)
         self.assertEquals(list(q.results)[1], expected_url_6)
@@ -292,7 +548,24 @@ class TestQuery(unittest.TestCase):
                 }
             }]
         }
-        q = Query(*self.query_args, query=query, sort=('id',))
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([3])
+        search_backend.mget.return_value={
+            u'docs': [
+                {
+                    u'_type': u'crawl_1',
+                    u'exists': True,
+                    u'_index': u'cdf_test',
+                    u'fields': {
+                        u'url': u'http://www.mysite.com/page2.html',
+                        u'http_code': 301
+                    },
+                    u'_version': 1,
+                    u'_id': u'1:2'
+                }
+                ]
+            }
+        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_url)
 
     def test_subfield(self):
@@ -304,7 +577,10 @@ class TestQuery(unittest.TestCase):
                 "predicate": "lte"
             }
         }
-        q = Query(*self.query_args, query=query, sort=('id',))
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 5, 7])
+
+        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
         expected_result_1 = {
             "metadata": {
                 "title": ["My title"]
@@ -340,7 +616,10 @@ class TestQuery(unittest.TestCase):
                 "value": "%d:%d" % (CRAWL_ID, 1)
             }
         }
-        q = Query(*self.query_args, query=query, sort=('id',))
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 5, 7])
+
+        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
         expected_result = {
             "outlinks_internal_nb": {
                 "total": 4,
@@ -387,7 +666,89 @@ class TestQuery(unittest.TestCase):
                 },
             ]
         }
-        q = Query(*self.query_args, query=query, sort=('id',))
+
+        search_backend2 = MagicMock()
+        search_backend2.search.return_value = {
+            "_shards": {
+                "failed": 0,
+                "successful": 5,
+                "total": 5
+            },
+            "hits": {
+                "hits": [
+                {
+                    "_id": "1:1",
+                    "_index": "cdf_test",
+                    "_score": None,
+                    "_source": {
+                        "_id": "1:1",
+                        "canonical_to": {
+                            "url_id": 2
+                        },
+                        "crawl_id": 1,
+                        "delay2": 100,
+                        "http_code": 200,
+                        "id": 1,
+                        "metadata": {
+                            "h1": ["Welcome to our website"],
+                            "title": ["My title"]
+                        },
+                        "metadata_duplicate": {
+                            "h1": [7]
+                        },
+                        "metadata_duplicate_nb": {
+                            "h1": 1
+                        },
+                        "metadata_nb": {
+                            "description": 0,
+                            "h1": 1,
+                            "h2": 0,
+                            "title": 1
+                        },
+                        "outlinks_internal": [
+                        [2, 0, 1],
+                        [3, 0, 1],
+                        [5, 0, 1],
+                        [3, 1, 1]
+                        ],
+                        "outlinks_internal_nb": {
+                            "follow": 3,
+                            "follow_unique": 3,
+                            "nofollow": 1,
+                            "nofollow_combinations": [
+                            {
+                                "key": [
+                                "link"
+                                ],
+                                "value": 1
+                            }
+                            ],
+                            "total": 4
+                        },
+                        "tagging": [
+                        {
+                            "resource_type": "homepage",
+                            "rev_id": 1
+                        }
+                        ],
+                        "url": "http://www.mysite.com/"
+                    },
+                    "_type": "crawl_1",
+                    "sort": [
+                    1
+                    ]
+                }
+                ],
+                "max_score": None,
+                "total": 1
+            },
+            "timed_out": False,
+            "took": 2
+        }
+        search_backend2.mget.return_value = {u'docs': [{u'_type': u'crawl_1', u'exists': True, u'_index': u'cdf_test', u'fields': {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301}, u'_version': 1, u'_id': u'1:2'}, {u'_type': u'crawl_1', u'exists': True, u'_index': u'cdf_test', u'fields': {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200}, u'_version': 1, u'_id': u'1:3'}, {u'_type': u'crawl_1', u'exists': True, u'_index': u'cdf_test', u'fields': {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0}, u'_version': 1, u'_id': u'1:5'}]}
+
+
+        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend2)
         results = list(q.results)
         self.assertEquals(results[0]["outlinks_internal_nb"], expected_result["outlinks_internal_nb"])
         self.assertEquals(results[0]["outlinks_internal"], expected_result["outlinks_internal"])
@@ -400,7 +761,9 @@ class TestQuery(unittest.TestCase):
                 "value": "%d:%d" % (CRAWL_ID, 1)
             }
         }
-        q = Query(*self.query_args, query=query, sort=('id',))
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 5, 7])
+        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
         expected_result = {
             "metadata_duplicate_nb": {
                 "h1": 1,
@@ -414,7 +777,24 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        q = Query(*self.query_args, query=query, sort=('_id',))
+
+        search_backend.mget.return_value = {
+            u'docs': [
+                {
+                    u'_type': u'crawl_1',
+                    u'exists': True,
+                    u'_index': u'cdf_test',
+                    u'fields': {
+                        u'url': u'http://www.mysite.com/page7.html',
+                        u'http_code': 200
+                    },
+                    u'_version': 1,
+                    u'_id': u'1:7'
+                }
+                ]
+            }
+
+        q = Query(*self.query_args, query=query, sort=('_id',), search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_result)
 
     def test_canonicals(self):
@@ -426,7 +806,33 @@ class TestQuery(unittest.TestCase):
                 "predicate": "gte"
             }
         }
-        q = Query(*self.query_args, query=query, sort=('id',))
+        search_backend = MagicMock()
+        search_backend.search.return_value = self.generate_expected_results([1, 2])
+        search_backend.mget.return_value = {
+            u'docs': [
+                {
+                    u'_type': u'crawl_1',
+                    u'exists': True,
+                    u'_index': u'cdf_test',
+                    u'fields': {
+                        u'url': u'http://www.mysite.com/',
+                        u'http_code': 200
+                    },
+                    u'_version': 1,
+                    u'_id': u'1:1'
+                },
+                {
+                    u'_type': u'crawl_1',
+                    u'exists': True,
+                    u'_index': u'cdf_test',
+                    u'fields': {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301},
+                    u'_version': 1,
+                    u'_id': u'1:2'
+                }
+                ]
+            }
+
+        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
         expected_result_1 = {
             "canonical_to": {
                 "url": u"http://www.mysite.com/page2.html",
