@@ -30,15 +30,7 @@ class TestQuery(unittest.TestCase):
 
     def generate_expected_results(self, result_ids):
 
-
-        full_result = {
-            "_shards": {
-                "failed": 0,
-                "successful": 5,
-                "total": 5
-            },
-            "hits": {
-                "hits": [
+        hits = [
                     {
                         "_id": "1:1",
                         "_index": "cdf_test",
@@ -53,17 +45,11 @@ class TestQuery(unittest.TestCase):
                             "http_code": 200,
                             "id": 1,
                             "metadata": {
-                                "h1": [
-                                    "Welcome to our website"
-                                ],
-                                "title": [
-                                    "My title"
-                                ]
+                                "h1": ["Welcome to our website"],
+                                "title": ["My title"]
                             },
                             "metadata_duplicate": {
-                                "h1": [
-                                    7
-                                ]
+                                "h1": [7]
                             },
                             "metadata_duplicate_nb": {
                                 "h1": 1
@@ -86,9 +72,7 @@ class TestQuery(unittest.TestCase):
                                 "nofollow": 1,
                                 "nofollow_combinations": [
                                     {
-                                        "key": [
-                                            "link"
-                                        ],
+                                        "key": ["link"],
                                         "value": 1
                                     }
                                 ],
@@ -113,9 +97,7 @@ class TestQuery(unittest.TestCase):
                         "_score": None,
                         "_source": {
                             "_id": "1:2",
-                            "canonical_from": [
-                                1
-                            ],
+                            "canonical_from": [1],
                             "crawl_id": 1,
                             "http_code": 301,
                             "id": 2,
@@ -178,9 +160,7 @@ class TestQuery(unittest.TestCase):
                             "url": "http://www.mysite.com/page4.html"
                         },
                         "_type": CRAWL_NAME,
-                        "sort": [
-                            4
-                        ]
+                        "sort": [4]
                     },
                     {
                         "_id": "1:6",
@@ -211,35 +191,23 @@ class TestQuery(unittest.TestCase):
                             "http_code": 200,
                             "id": 7,
                             "metadata": {
-                                "h1": [
-                                    "Welcome to our website"
-                                ],
-                                "title": [
-                                    "My title"
-                                ]
+                                "h1": ["Welcome to our website"],
+                                "title": ["My title"]
                             },
                             "url": "http://www.mysite.com/page7.html"
                         },
                         "_type": CRAWL_NAME,
-                        "sort": [
-                            7
-                        ]
+                        "sort": [7]
                     }
-                ],
-                "max_score": None,
-                "total": 6
-            },
-            "timed_out": False,
-            "took": 2
-        }
+                ]
 
         l = []
         for id in result_ids:
-            for hit in full_result["hits"]["hits"]:
+            for hit in hits:
                 if int(hit["_id"].split(":")[1]) == id:
                     l.append(hit)
 
-        d = {
+        result = {
             "_shards": {
                 "failed": 0,
                 "successful": 5,
@@ -253,7 +221,7 @@ class TestQuery(unittest.TestCase):
             "timed_out": False,
             "took": 2
             }
-        return d
+        return result
 
 
     def test_count(self):
