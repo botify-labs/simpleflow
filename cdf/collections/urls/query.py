@@ -282,7 +282,10 @@ def is_boolean_operation_filter(filter_dict):
 
 class Query(object):
 
-    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100, sort=('id',)):
+    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100, sort=('id',), search_backend = None):
+        """Constructor
+        search_backend : the search backend to use. If None, use elasticsearch.
+        """
         self.es_location = es_location
         self.es_index = es_index
         self.es_doc_type = es_doc_type
@@ -294,8 +297,11 @@ class Query(object):
         self.start = start
         self.limit = limit
         self.sort = sort
-        host, port = self.es_location[7:].split(':')
-        self.search_backend = Elasticsearch([{'host': host, 'port': int(port)}])
+        if search_backend :
+            self.search_backend = search_backend
+        else:
+            host, port = self.es_location[7:].split(':')
+            self.search_backend = Elasticsearch([{'host': host, 'port': int(port)}])
 
     @property
     def results(self):
