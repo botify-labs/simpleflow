@@ -10,7 +10,6 @@ from cdf.collections.urls.query import Query
 from cdf.constants import URLS_DATA_MAPPING
 from cdf.streams.masks import list_to_mask
 
-
 ELASTICSEARCH_LOCATION = "http://localhost:9200"
 ELASTICSEARCH_INDEX = "cdf_test"
 CRAWL_ID = 1
@@ -387,6 +386,11 @@ class TestQuery(unittest.TestCase):
         search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 6, 7])
         q = Query(*self.query_args, query={}, search_backend=search_backend)
         self.assertEquals(q.count, 6)
+        expected_body = {
+            'sort': ('id',),
+            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+
 
     def test_simple_filter(self):
         query = {
@@ -410,12 +414,15 @@ class TestQuery(unittest.TestCase):
         ]
         search_backend = MagicMock()
         search_backend.search.return_value = self.generate_expected_results([1, 3, 7])
-        print self.generate_expected_results([1, 3, 7])
         q = Query(*self.query_args, query=query, search_backend=search_backend)
-        print search_backend.mock_calls
+
         self.assertEquals(q.count, 3)
 
         self.assertEquals(list(q.results), expected_results)
+        expected_body = {
+            'sort': ['id'],
+            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'http_code': 200}}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
 
     def test_and_filter(self):
         query = {
@@ -432,6 +439,10 @@ class TestQuery(unittest.TestCase):
         search_backend.search.return_value = self.generate_expected_results([1])
         q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals([k['_id'] for k in q.results], ["1:1"])
+        expected_body = {
+            'sort': ['id'],
+            'filter': {'and': [{'term': {'http_code': 200}}, {'range': {'delay2': {'from': 100}}}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
 
 
     def test_or_filter(self):
@@ -449,6 +460,12 @@ class TestQuery(unittest.TestCase):
         search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 7])
         q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals([k['_id'] for k in q.results], ["1:1", "1:2", "1:3", "1:7"])
+
+        expected_body = {
+            'sort': ['id'],
+            'filter': {'and': [{'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}, {'or': [{'term': {'http_code': 200}}, {'term': {'http_code': 301}}]}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+
 
     def test_redirects_to_crawled(self):
         query = {
@@ -484,6 +501,12 @@ class TestQuery(unittest.TestCase):
         q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals(q.count, 1)
         self.assertEquals(list(q.results)[0], expected_url)
+
+        expected_body = {
+            'sort': ('id',),
+            'filter': {'and': [{'term': {'http_code': 301}}, {'or': [{'exists': {'field': 'redirects_to.url'}}, {'exists': {'field': 'redirects_to.url_id'}}, {'exists': {'field': 'redirects_to.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+
 
     def test_redirects_to_not_crawled(self):
         query = {
@@ -528,6 +551,11 @@ class TestQuery(unittest.TestCase):
         self.assertEquals(list(q.results)[0], expected_url_4)
         self.assertEquals(list(q.results)[1], expected_url_6)
 
+        expected_body = {
+            'sort': ('id',),
+            'filter': {'and': [{'term': {'http_code': 302}}, {'or': [{'exists': {'field': 'redirects_to.url'}}, {'exists': {'field': 'redirects_to.url_id'}}, {'exists': {'field': 'redirects_to.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+
     def test_redirects_from(self):
         query = {
             "fields": ['_id', 'redirects_from'],
@@ -568,6 +596,11 @@ class TestQuery(unittest.TestCase):
         q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_url)
 
+        expected_body = {
+            'sort': ('id',),
+            'filter': {'and': [{'term': {'_id': '1:3'}}, {'or': [{'exists': {'field': 'redirects_from.url_id'}}, {'exists': {'field': 'redirects_from.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+
     def test_subfield(self):
         query = {
             "fields": ["metadata.title", "metadata_nb"],
@@ -594,6 +627,7 @@ class TestQuery(unittest.TestCase):
         }
         results = list(q.results)
         self.assertEquals(results[0], expected_result_1)
+
         # Url 2 has not title but should return a None value
         expected_result_2 = {
             "metadata": {
@@ -607,6 +641,12 @@ class TestQuery(unittest.TestCase):
             }
         }
         self.assertEquals(results[1], expected_result_2)
+
+        expected_body = {
+            'sort': ('id',),
+            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'range': {'id': {'to': 2}}}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+
 
     def test_outlinks(self):
         query = {
@@ -753,6 +793,11 @@ class TestQuery(unittest.TestCase):
         self.assertEquals(results[0]["outlinks_internal_nb"], expected_result["outlinks_internal_nb"])
         self.assertEquals(results[0]["outlinks_internal"], expected_result["outlinks_internal"])
 
+        expected_body = {
+            'sort': ('id',),
+            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
+        search_backend2.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+
     def test_metadata_duplicate(self):
         query = {
             "fields": ["metadata_duplicate_nb", "metadata_duplicate.h1"],
@@ -796,6 +841,11 @@ class TestQuery(unittest.TestCase):
 
         q = Query(*self.query_args, query=query, sort=('_id',), search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_result)
+
+        expected_body = {
+            'sort': ('id',),
+            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
 
     def test_canonicals(self):
         query = {
@@ -851,3 +901,9 @@ class TestQuery(unittest.TestCase):
             ]
         }
         self.assertEquals(list(q.results)[1], expected_result_2)
+
+        expected_body = {
+            'sort': ('id',),
+            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'range': {'id': {'from': 1}}}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+
