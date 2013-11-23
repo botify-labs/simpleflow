@@ -13,6 +13,7 @@ from cdf.streams.masks import list_to_mask
 ELASTICSEARCH_LOCATION = "http://localhost:9200"
 ELASTICSEARCH_INDEX = "cdf_test"
 CRAWL_ID = 1
+CRAWL_NAME = "crawl_%d" % CRAWL_ID
 REVISION_ID = 1
 
 logger.setLevel(logging.DEBUG)
@@ -225,7 +226,7 @@ class TestQuery(unittest.TestCase):
                             ],
                             "url": "http://www.mysite.com/"
                         },
-                        "_type": "crawl_1",
+                        "_type": CRAWL_NAME,
                         "sort": [
                             1
                         ]
@@ -253,7 +254,7 @@ class TestQuery(unittest.TestCase):
                             ],
                             "url": "http://www.mysite.com/page2.html"
                         },
-                        "_type": "crawl_1",
+                        "_type": CRAWL_NAME,
                         "sort": [
                             2
                         ]
@@ -281,7 +282,7 @@ class TestQuery(unittest.TestCase):
                             ],
                             "url": "http://www.mysite.com/page3.html"
                         },
-                        "_type": "crawl_1",
+                        "_type": CRAWL_NAME,
                         "sort": [
                             3
                         ]
@@ -300,7 +301,7 @@ class TestQuery(unittest.TestCase):
                             },
                             "url": "http://www.mysite.com/page4.html"
                         },
-                        "_type": "crawl_1",
+                        "_type": CRAWL_NAME,
                         "sort": [
                             4
                         ]
@@ -319,7 +320,7 @@ class TestQuery(unittest.TestCase):
                             },
                             "url": "http://www.mysite.com/page6.html"
                         },
-                        "_type": "crawl_1",
+                        "_type": CRAWL_NAME,
                         "sort": [
                             6
                         ]
@@ -343,7 +344,7 @@ class TestQuery(unittest.TestCase):
                             },
                             "url": "http://www.mysite.com/page7.html"
                         },
-                        "_type": "crawl_1",
+                        "_type": CRAWL_NAME,
                         "sort": [
                             7
                         ]
@@ -389,7 +390,7 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ('id',),
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
 
     def test_simple_filter(self):
@@ -422,7 +423,7 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ['id'],
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'http_code': 200}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
     def test_and_filter(self):
         query = {
@@ -442,7 +443,7 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ['id'],
             'filter': {'and': [{'term': {'http_code': 200}}, {'range': {'delay2': {'from': 100}}}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
 
     def test_or_filter(self):
@@ -464,7 +465,7 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ['id'],
             'filter': {'and': [{'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}, {'or': [{'term': {'http_code': 200}}, {'term': {'http_code': 301}}]}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
 
     def test_redirects_to_crawled(self):
@@ -489,9 +490,9 @@ class TestQuery(unittest.TestCase):
         search_backend.mget.return_value = {
             u'docs': [
                 {
-                    u'_type': u'crawl_1',
+                    u'_type': CRAWL_NAME,
                     u'exists': True,
-                    u'_index': u'cdf_test',
+                    u'_index': ELASTICSEARCH_INDEX,
                     u'fields': {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200},
                     u'_version': 1,
                     u'_id': u'1:3'
@@ -505,7 +506,7 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ('id',),
             'filter': {'and': [{'term': {'http_code': 301}}, {'or': [{'exists': {'field': 'redirects_to.url'}}, {'exists': {'field': 'redirects_to.url_id'}}, {'exists': {'field': 'redirects_to.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
 
     def test_redirects_to_not_crawled(self):
@@ -537,9 +538,9 @@ class TestQuery(unittest.TestCase):
         search_backend.mget.return_value={
             u'docs': [
                 {
-                    u'_type': u'crawl_1',
+                    u'_type': CRAWL_NAME,
                     u'exists': True,
-                    u'_index': u'cdf_test',
+                    u'_index': ELASTICSEARCH_INDEX,
                     u'fields': {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0},
                     u'_version': 1,
                     u'_id': u'1:5'
@@ -554,7 +555,7 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ('id',),
             'filter': {'and': [{'term': {'http_code': 302}}, {'or': [{'exists': {'field': 'redirects_to.url'}}, {'exists': {'field': 'redirects_to.url_id'}}, {'exists': {'field': 'redirects_to.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
     def test_redirects_from(self):
         query = {
@@ -581,9 +582,9 @@ class TestQuery(unittest.TestCase):
         search_backend.mget.return_value={
             u'docs': [
                 {
-                    u'_type': u'crawl_1',
+                    u'_type': CRAWL_NAME,
                     u'exists': True,
-                    u'_index': u'cdf_test',
+                    u'_index': ELASTICSEARCH_INDEX,
                     u'fields': {
                         u'url': u'http://www.mysite.com/page2.html',
                         u'http_code': 301
@@ -599,7 +600,7 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ('id',),
             'filter': {'and': [{'term': {'_id': '1:3'}}, {'or': [{'exists': {'field': 'redirects_from.url_id'}}, {'exists': {'field': 'redirects_from.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
     def test_subfield(self):
         query = {
@@ -645,7 +646,7 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ('id',),
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'range': {'id': {'to': 2}}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
 
     def test_outlinks(self):
@@ -773,7 +774,7 @@ class TestQuery(unittest.TestCase):
                         ],
                         "url": "http://www.mysite.com/"
                     },
-                    "_type": "crawl_1",
+                    "_type": CRAWL_NAME,
                     "sort": [
                     1
                     ]
@@ -785,7 +786,7 @@ class TestQuery(unittest.TestCase):
             "timed_out": False,
             "took": 2
         }
-        search_backend2.mget.return_value = {u'docs': [{u'_type': u'crawl_1', u'exists': True, u'_index': u'cdf_test', u'fields': {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301}, u'_version': 1, u'_id': u'1:2'}, {u'_type': u'crawl_1', u'exists': True, u'_index': u'cdf_test', u'fields': {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200}, u'_version': 1, u'_id': u'1:3'}, {u'_type': u'crawl_1', u'exists': True, u'_index': u'cdf_test', u'fields': {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0}, u'_version': 1, u'_id': u'1:5'}]}
+        search_backend2.mget.return_value = {u'docs': [{u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301}, u'_version': 1, u'_id': u'1:2'}, {u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200}, u'_version': 1, u'_id': u'1:3'}, {u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0}, u'_version': 1, u'_id': u'1:5'}]}
 
 
         q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend2)
@@ -796,7 +797,7 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ('id',),
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
-        search_backend2.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        search_backend2.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
     def test_metadata_duplicate(self):
         query = {
@@ -826,9 +827,9 @@ class TestQuery(unittest.TestCase):
         search_backend.mget.return_value = {
             u'docs': [
                 {
-                    u'_type': u'crawl_1',
+                    u'_type': CRAWL_NAME,
                     u'exists': True,
-                    u'_index': u'cdf_test',
+                    u'_index': ELASTICSEARCH_INDEX,
                     u'fields': {
                         u'url': u'http://www.mysite.com/page7.html',
                         u'http_code': 200
@@ -845,7 +846,7 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ('id',),
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
     def test_canonicals(self):
         query = {
@@ -861,9 +862,9 @@ class TestQuery(unittest.TestCase):
         search_backend.mget.return_value = {
             u'docs': [
                 {
-                    u'_type': u'crawl_1',
+                    u'_type': CRAWL_NAME,
                     u'exists': True,
-                    u'_index': u'cdf_test',
+                    u'_index': ELASTICSEARCH_INDEX,
                     u'fields': {
                         u'url': u'http://www.mysite.com/',
                         u'http_code': 200
@@ -872,9 +873,9 @@ class TestQuery(unittest.TestCase):
                     u'_id': u'1:1'
                 },
                 {
-                    u'_type': u'crawl_1',
+                    u'_type': CRAWL_NAME,
                     u'exists': True,
-                    u'_index': u'cdf_test',
+                    u'_index': ELASTICSEARCH_INDEX,
                     u'fields': {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301},
                     u'_version': 1,
                     u'_id': u'1:2'
@@ -902,8 +903,6 @@ class TestQuery(unittest.TestCase):
         }
         self.assertEquals(list(q.results)[1], expected_result_2)
 
-        expected_body = {
-            'sort': ('id',),
-            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'range': {'id': {'from': 1}}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type='crawl_1', size=100, index='cdf_test', offset=0)
+        expected_body = {'sort': ('id',), 'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'range': {'id': {'from': 1}}}]}}
+        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
