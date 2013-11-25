@@ -1,14 +1,12 @@
 # -*- coding:utf-8 -*-
 import unittest
 import logging
-import time
 
 from mock import MagicMock
 
 from cdf.log import logger
 from cdf.collections.urls.query import Query
-from cdf.constants import URLS_DATA_MAPPING
-from cdf.streams.masks import list_to_mask
+
 
 ELASTICSEARCH_LOCATION = "http://localhost:9200"
 ELASTICSEARCH_INDEX = "cdf_test"
