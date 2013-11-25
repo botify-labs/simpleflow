@@ -22,7 +22,11 @@ logger.setLevel(logging.DEBUG)
 class TestQuery(unittest.TestCase):
 
     def setUp(self):
-        self.query_args = (ELASTICSEARCH_LOCATION, ELASTICSEARCH_INDEX, "crawl_{}".format(CRAWL_ID), CRAWL_ID, REVISION_ID)
+        self.query_args = (ELASTICSEARCH_LOCATION,
+                           ELASTICSEARCH_INDEX,
+                           "crawl_{}".format(CRAWL_ID),
+                           CRAWL_ID,
+                           REVISION_ID)
 
     def tearDown(self):
         #self.es.delete_index(ELASTICSEARCH_INDEX)
@@ -31,175 +35,167 @@ class TestQuery(unittest.TestCase):
     def generate_expected_results(self, result_ids):
 
         hits = [
-                    {
-                        "_id": "1:1",
-                        "_index": "cdf_test",
-                        "_score": None,
-                        "_source": {
-                            "_id": "1:1",
-                            "canonical_to": {
-                                "url_id": 2
-                            },
-                            "crawl_id": 1,
-                            "delay2": 100,
-                            "http_code": 200,
-                            "id": 1,
-                            "metadata": {
-                                "h1": ["Welcome to our website"],
-                                "title": ["My title"]
-                            },
-                            "metadata_duplicate": {
-                                "h1": [7]
-                            },
-                            "metadata_duplicate_nb": {
-                                "h1": 1
-                            },
-                            "metadata_nb": {
-                                "description": 0,
-                                "h1": 1,
-                                "h2": 0,
-                                "title": 1
-                            },
-                            "outlinks_internal": [
-                                [2, 0, 1],
-                                [3, 0, 1],
-                                [5, 0, 1],
-                                [3, 1, 1]
-                            ],
-                            "outlinks_internal_nb": {
-                                "follow": 3,
-                                "follow_unique": 3,
-                                "nofollow": 1,
-                                "nofollow_combinations": [
-                                    {
-                                        "key": ["link"],
-                                        "value": 1
-                                    }
-                                ],
-                                "total": 4
-                            },
-                            "tagging": [
-                                {
-                                    "resource_type": "homepage",
-                                    "rev_id": 1
-                                }
-                            ],
-                            "url": "http://www.mysite.com/"
-                        },
-                        "_type": CRAWL_NAME,
-                        "sort": [
-                            1
-                        ]
+            {
+                "_id": "1:1",
+                "_index": "cdf_test",
+                "_score": None,
+                "_source": {
+                    "_id": "1:1",
+                    "canonical_to": {
+                        "url_id": 2
                     },
-                    {
-                        "_id": "1:2",
-                        "_index": "cdf_test",
-                        "_score": None,
-                        "_source": {
-                            "_id": "1:2",
-                            "canonical_from": [1],
-                            "crawl_id": 1,
+                    "crawl_id": 1,
+                    "delay2": 100,
+                    "http_code": 200,
+                    "id": 1,
+                    "metadata": {
+                        "h1": ["Welcome to our website"],
+                        "title": ["My title"]
+                    },
+                    "metadata_duplicate": {
+                        "h1": [7]
+                    },
+                    "metadata_duplicate_nb": {
+                        "h1": 1
+                    },
+                    "metadata_nb": {
+                        "description": 0,
+                        "h1": 1,
+                        "h2": 0,
+                        "title": 1
+                    },
+                    "outlinks_internal": [
+                        [2, 0, 1],
+                        [3, 0, 1],
+                        [5, 0, 1],
+                        [3, 1, 1]
+                    ],
+                    "outlinks_internal_nb": {
+                        "follow": 3,
+                        "follow_unique": 3,
+                        "nofollow": 1,
+                        "nofollow_combinations": [
+                            {
+                                "key": ["link"],
+                                "value": 1
+                            }
+                        ],
+                        "total": 4
+                    },
+                    "tagging": [
+                        {
+                            "resource_type": "homepage",
+                            "rev_id": 1
+                        }
+                    ],
+                    "url": "http://www.mysite.com/"
+                },
+                "_type": CRAWL_NAME,
+                "sort": [1]
+            },
+            {
+                "_id": "1:2",
+                "_index": "cdf_test",
+                "_score": None,
+                "_source": {
+                    "_id": "1:2",
+                    "canonical_from": [1],
+                    "crawl_id": 1,
+                    "http_code": 301,
+                    "id": 2,
+                    "redirects_to": {
+                        "url_id": 3
+                    },
+                    "tagging": [
+                        {
+                            "resource_type": "not homepage",
+                            "rev_id": 1
+                        }
+                    ],
+                    "url": "http://www.mysite.com/page2.html"
+                },
+                "_type": CRAWL_NAME,
+                "sort": [2]
+            },
+            {
+                "_id": "1:3",
+                "_index": "cdf_test",
+                "_score": None,
+                "_source": {
+                    "_id": "1:3",
+                    "crawl_id": 1,
+                    "http_code": 200,
+                    "id": 3,
+                    "metadata_nb": {
+                        "description": 0,
+                        "h1": 0,
+                        "h2": 0,
+                        "title": 0
+                    },
+                    "redirects_from": [
+                        {
                             "http_code": 301,
-                            "id": 2,
-                            "redirects_to": {
-                                "url_id": 3
-                            },
-                            "tagging": [
-                                {
-                                    "resource_type": "not homepage",
-                                    "rev_id": 1
-                                }
-                            ],
-                            "url": "http://www.mysite.com/page2.html"
-                        },
-                        "_type": CRAWL_NAME,
-                        "sort": [
-                            2
-                        ]
+                            "url_id": 2
+                        }
+                    ],
+                    "url": "http://www.mysite.com/page3.html"
+                },
+                "_type": CRAWL_NAME,
+                "sort": [3]
+            },
+            {
+                "_id": "1:4",
+                "_index": "cdf_test",
+                "_score": None,
+                "_source": {
+                    "_id": "1:4",
+                    "crawl_id": 1,
+                    "http_code": 302,
+                    "id": 4,
+                    "redirects_to": {
+                        "url_id": 5
                     },
-                    {
-                        "_id": "1:3",
-                        "_index": "cdf_test",
-                        "_score": None,
-                        "_source": {
-                            "_id": "1:3",
-                            "crawl_id": 1,
-                            "http_code": 200,
-                            "id": 3,
-                            "metadata_nb": {
-                                "description": 0,
-                                "h1": 0,
-                                "h2": 0,
-                                "title": 0
-                            },
-                            "redirects_from": [
-                                {
-                                    "http_code": 301,
-                                    "url_id": 2
-                                }
-                            ],
-                            "url": "http://www.mysite.com/page3.html"
-                        },
-                        "_type": CRAWL_NAME,
-                        "sort": [
-                            3
-                        ]
+                    "url": "http://www.mysite.com/page4.html"
+                },
+                "_type": CRAWL_NAME,
+                "sort": [4]
+            },
+            {
+                "_id": "1:6",
+                "_index": "cdf_test",
+                "_score": None,
+                "_source": {
+                    "_id": "1:6",
+                    "crawl_id": 1,
+                    "http_code": 302,
+                    "id": 6,
+                    "redirects_to": {
+                        "url": "http://www.youtube.com/"
                     },
-                    {
-                        "_id": "1:4",
-                        "_index": "cdf_test",
-                        "_score": None,
-                        "_source": {
-                            "_id": "1:4",
-                            "crawl_id": 1,
-                            "http_code": 302,
-                            "id": 4,
-                            "redirects_to": {
-                                "url_id": 5
-                            },
-                            "url": "http://www.mysite.com/page4.html"
-                        },
-                        "_type": CRAWL_NAME,
-                        "sort": [4]
+                    "url": "http://www.mysite.com/page6.html"
+                },
+                "_type": CRAWL_NAME,
+                "sort": [6]
+            },
+            {
+                "_id": "1:7",
+                "_index": "cdf_test",
+                "_score": None,
+                "_source": {
+                    "_id": "1:7",
+                    "crawl_id": 1,
+                    "http_code": 200,
+                    "id": 7,
+                    "metadata": {
+                        "h1": ["Welcome to our website"],
+                        "title": ["My title"]
                     },
-                    {
-                        "_id": "1:6",
-                        "_index": "cdf_test",
-                        "_score": None,
-                        "_source": {
-                            "_id": "1:6",
-                            "crawl_id": 1,
-                            "http_code": 302,
-                            "id": 6,
-                            "redirects_to": {
-                                "url": "http://www.youtube.com/"
-                            },
-                            "url": "http://www.mysite.com/page6.html"
-                        },
-                        "_type": CRAWL_NAME,
-                        "sort": [
-                            6
-                        ]
-                    },
-                    {
-                        "_id": "1:7",
-                        "_index": "cdf_test",
-                        "_score": None,
-                        "_source": {
-                            "_id": "1:7",
-                            "crawl_id": 1,
-                            "http_code": 200,
-                            "id": 7,
-                            "metadata": {
-                                "h1": ["Welcome to our website"],
-                                "title": ["My title"]
-                            },
-                            "url": "http://www.mysite.com/page7.html"
-                        },
-                        "_type": CRAWL_NAME,
-                        "sort": [7]
-                    }
-                ]
+                    "url": "http://www.mysite.com/page7.html"
+                },
+                "_type": CRAWL_NAME,
+                "sort": [7]
+            }
+        ]
 
         l = []
         for id in result_ids:
@@ -223,7 +219,6 @@ class TestQuery(unittest.TestCase):
             }
         return result
 
-
     def test_count(self):
         # A query with no filter should return 4 results (id=5 should not be returned as it has
         # not been crawled (only exists to return the value of id=4's redirect
@@ -231,11 +226,20 @@ class TestQuery(unittest.TestCase):
         search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 6, 7])
         q = Query(*self.query_args, query={}, search_backend=search_backend)
         self.assertEquals(q.count, 6)
+
         expected_body = {
             'sort': ('id',),
-            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
-
+            'filter': {
+                'and': [
+                    {'range': {'http_code': {'from': 0, 'include_lower': False}}},
+                    {'term': {'crawl_id': 1}}]
+            }
+        }
+        search_backend.search.assert_called_with(body=expected_body,
+                                                 doc_type=CRAWL_NAME,
+                                                 size=100,
+                                                 index=ELASTICSEARCH_INDEX,
+                                                 offset=0)
 
     def test_simple_filter(self):
         query = {
@@ -266,8 +270,17 @@ class TestQuery(unittest.TestCase):
         self.assertEquals(list(q.results), expected_results)
         expected_body = {
             'sort': ['id'],
-            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'http_code': 200}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
+            'filter': {
+                'and': [
+                    {'range': {'http_code': {'from': 0, 'include_lower': False}}},
+                    {'term': {'crawl_id': 1}}, {'term': {'http_code': 200}}]
+            }
+        }
+        search_backend.search.assert_called_with(body=expected_body,
+                                                 doc_type=CRAWL_NAME,
+                                                 size=100,
+                                                 index=ELASTICSEARCH_INDEX,
+                                                 offset=0)
 
     def test_and_filter(self):
         query = {
@@ -286,9 +299,19 @@ class TestQuery(unittest.TestCase):
         self.assertEquals([k['_id'] for k in q.results], ["1:1"])
         expected_body = {
             'sort': ['id'],
-            'filter': {'and': [{'term': {'http_code': 200}}, {'range': {'delay2': {'from': 100}}}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
-
+            'filter': {
+                'and': [
+                    {'term': {'http_code': 200}},
+                    {'range': {'delay2': {'from': 100}}},
+                    {'range': {'http_code': {'from': 0, 'include_lower': False}}},
+                    {'term': {'crawl_id': 1}}]
+            }
+        }
+        search_backend.search.assert_called_with(body=expected_body,
+                                                 doc_type=CRAWL_NAME,
+                                                 size=100,
+                                                 index=ELASTICSEARCH_INDEX,
+                                                 offset=0)
 
     def test_or_filter(self):
         query = {
@@ -308,9 +331,18 @@ class TestQuery(unittest.TestCase):
 
         expected_body = {
             'sort': ['id'],
-            'filter': {'and': [{'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}, {'or': [{'term': {'http_code': 200}}, {'term': {'http_code': 301}}]}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
-
+            'filter': {
+                'and': [
+                    {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]},
+                    {'or': [{'term': {'http_code': 200}}, {'term': {'http_code': 301}}]}
+                ]
+            }
+        }
+        search_backend.search.assert_called_with(body=expected_body,
+                                                 doc_type=CRAWL_NAME,
+                                                 size=100,
+                                                 index=ELASTICSEARCH_INDEX,
+                                                 offset=0)
 
     def test_redirects_to_crawled(self):
         query = {
@@ -349,11 +381,25 @@ class TestQuery(unittest.TestCase):
 
         expected_body = {
             'sort': ('id',),
-            'filter': {'and': [{'term': {'http_code': 301}}, {'or': [{'exists': {'field': 'redirects_to.url'}}, {'exists': {'field': 'redirects_to.url_id'}}, {'exists': {'field': 'redirects_to.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
+            'filter': {
+                'and': [
+                    {'term': {'http_code': 301}},
+                    {'or': [{'exists': {'field': 'redirects_to.url'}}, {'exists': {'field': 'redirects_to.url_id'}}, {'exists': {'field': 'redirects_to.http_code'}}]},
+                    {'range': {'http_code': {'from': 0, 'include_lower': False}}},
+                    {'term': {'crawl_id': 1}}
+                ]
+            }
+        }
 
-        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
-        search_backend.mget.assert_called_with(body={'ids': ['1:3']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
-
+        search_backend.search.assert_called_with(body=expected_body,
+                                                 doc_type=CRAWL_NAME,
+                                                 size=100,
+                                                 index=ELASTICSEARCH_INDEX,
+                                                 offset=0)
+        search_backend.mget.assert_called_with(body={'ids': ['1:3']},
+                                               fields=['url', 'http_code'],
+                                               index=ELASTICSEARCH_INDEX,
+                                               doc_type=CRAWL_NAME)
 
     def test_redirects_to_not_crawled(self):
         query = {
@@ -381,7 +427,7 @@ class TestQuery(unittest.TestCase):
         }
         search_backend = MagicMock()
         search_backend.search.return_value = self.generate_expected_results([4, 6])
-        search_backend.mget.return_value={
+        search_backend.mget.return_value = {
             u'docs': [
                 {
                     u'_type': CRAWL_NAME,
@@ -393,16 +439,33 @@ class TestQuery(unittest.TestCase):
                 }
                 ]
             }
-        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
+        q = Query(*self.query_args,
+                  query=query, sort=('id',),
+                  search_backend=search_backend)
         self.assertEquals(q.count, 2)
         self.assertEquals(list(q.results)[0], expected_url_4)
         self.assertEquals(list(q.results)[1], expected_url_6)
 
         expected_body = {
             'sort': ('id',),
-            'filter': {'and': [{'term': {'http_code': 302}}, {'or': [{'exists': {'field': 'redirects_to.url'}}, {'exists': {'field': 'redirects_to.url_id'}}, {'exists': {'field': 'redirects_to.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
-        search_backend.mget.assert_called_with(body={'ids': ['1:5']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
+            'filter': {
+                'and': [
+                    {'term': {'http_code': 302}},
+                    {'or': [{'exists': {'field': 'redirects_to.url'}},{'exists': {'field': 'redirects_to.url_id'}}, {'exists': {'field': 'redirects_to.http_code'}}]},
+                    {'range': {'http_code': {'from': 0, 'include_lower': False}}},
+                    {'term': {'crawl_id': 1}}
+                ]
+            }
+        }
+        search_backend.search.assert_called_with(body=expected_body,
+                                                 doc_type=CRAWL_NAME,
+                                                 size=100,
+                                                 index=ELASTICSEARCH_INDEX,
+                                                 offset=0)
+        search_backend.mget.assert_called_with(body={'ids': ['1:5']},
+                                               fields=['url', 'http_code'],
+                                               index=ELASTICSEARCH_INDEX,
+                                               doc_type=CRAWL_NAME)
 
     def test_redirects_from(self):
         query = {
@@ -441,15 +504,32 @@ class TestQuery(unittest.TestCase):
                 }
                 ]
             }
-        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
+        q = Query(*self.query_args,
+                  query=query, sort=('id',),
+                  search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_url)
 
         expected_body = {
             'sort': ('id',),
-            'filter': {'and': [{'term': {'_id': '1:3'}}, {'or': [{'exists': {'field': 'redirects_from.url_id'}}, {'exists': {'field': 'redirects_from.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
+            'filter': {
+                'and': [
+                    {'term': {'_id': '1:3'}},
+                    {'or': [{'exists': {'field': 'redirects_from.url_id'}}, {'exists': {'field': 'redirects_from.http_code'}}]},
+                    {'range': {'http_code': {'from': 0, 'include_lower': False}}},
+                    {'term': {'crawl_id': 1}}
+                ]
+            }
+        }
+        search_backend.search.assert_called_with(body=expected_body,
+                                                 doc_type=CRAWL_NAME,
+                                                 size=100,
+                                                 index=ELASTICSEARCH_INDEX,
+                                                 offset=0)
 
-        search_backend.mget.assert_called_with(body={'ids': ['1:2']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
+        search_backend.mget.assert_called_with(body={'ids': ['1:2']},
+                                               fields=['url', 'http_code'],
+                                               index=ELASTICSEARCH_INDEX,
+                                               doc_type=CRAWL_NAME)
 
     def test_subfield(self):
         query = {
@@ -494,9 +574,18 @@ class TestQuery(unittest.TestCase):
 
         expected_body = {
             'sort': ('id',),
-            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'range': {'id': {'to': 2}}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
-
+            'filter': {
+                'and': [
+                    {'range': {'http_code': {'from': 0, 'include_lower': False}}},
+                    {'term': {'crawl_id': 1}}, {'range': {'id': {'to': 2}}}
+                ]
+            }
+}
+        search_backend.search.assert_called_with(body=expected_body,
+                                                 doc_type=CRAWL_NAME,
+                                                 size=100,
+                                                 index=ELASTICSEARCH_INDEX,
+                                                 offset=0)
 
     def test_outlinks(self):
         query = {
@@ -509,7 +598,7 @@ class TestQuery(unittest.TestCase):
         search_backend = MagicMock()
         search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 5, 7])
 
-        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
+        q = Query(*self.query_args, query=query, sort=('id',), search_backend = search_backend)
         expected_result = {
             "outlinks_internal_nb": {
                 "total": 4,
@@ -566,68 +655,64 @@ class TestQuery(unittest.TestCase):
             },
             "hits": {
                 "hits": [
-                {
-                    "_id": "1:1",
-                    "_index": "cdf_test",
-                    "_score": None,
-                    "_source": {
+                    {
                         "_id": "1:1",
-                        "canonical_to": {
-                            "url_id": 2
-                        },
-                        "crawl_id": 1,
-                        "delay2": 100,
-                        "http_code": 200,
-                        "id": 1,
-                        "metadata": {
-                            "h1": ["Welcome to our website"],
-                            "title": ["My title"]
-                        },
-                        "metadata_duplicate": {
-                            "h1": [7]
-                        },
-                        "metadata_duplicate_nb": {
-                            "h1": 1
-                        },
-                        "metadata_nb": {
-                            "description": 0,
-                            "h1": 1,
-                            "h2": 0,
-                            "title": 1
-                        },
-                        "outlinks_internal": [
-                        [2, 0, 1],
-                        [3, 0, 1],
-                        [5, 0, 1],
-                        [3, 1, 1]
-                        ],
-                        "outlinks_internal_nb": {
-                            "follow": 3,
-                            "follow_unique": 3,
-                            "nofollow": 1,
-                            "nofollow_combinations": [
-                            {
-                                "key": [
-                                "link"
-                                ],
-                                "value": 1
-                            }
+                        "_index": "cdf_test",
+                        "_score": None,
+                        "_source": {
+                            "_id": "1:1",
+                            "canonical_to": {
+                                "url_id": 2
+                            },
+                            "crawl_id": 1,
+                            "delay2": 100,
+                            "http_code": 200,
+                            "id": 1,
+                            "metadata": {
+                                "h1": ["Welcome to our website"],
+                                "title": ["My title"]
+                            },
+                            "metadata_duplicate": {
+                                "h1": [7]
+                            },
+                            "metadata_duplicate_nb": {
+                                "h1": 1
+                            },
+                            "metadata_nb": {
+                                "description": 0,
+                                "h1": 1,
+                                "h2": 0,
+                                "title": 1
+                            },
+                            "outlinks_internal": [
+                                [2, 0, 1],
+                                [3, 0, 1],
+                                [5, 0, 1],
+                                [3, 1, 1]
                             ],
-                            "total": 4
+                            "outlinks_internal_nb": {
+                                "follow": 3,
+                                "follow_unique": 3,
+                                "nofollow": 1,
+                                "nofollow_combinations": [
+                                    {
+                                        "key": ["link"],
+                                        "value": 1
+                                    }
+                                ],
+                                "total": 4
+                            },
+                            "tagging": [
+                                {
+                                    "resource_type": "homepage",
+                                    "rev_id": 1
+                                }
+                            ],
+                            "url": "http://www.mysite.com/"
                         },
-                        "tagging": [
-                        {
-                            "resource_type": "homepage",
-                            "rev_id": 1
-                        }
-                        ],
-                        "url": "http://www.mysite.com/"
-                    },
-                    "_type": CRAWL_NAME,
-                    "sort": [
-                    1
-                    ]
-                }
+                        "_type": CRAWL_NAME,
+                        "sort": [1]
+                    }
                 ],
                 "max_score": None,
                 "total": 1
@@ -635,10 +720,19 @@ class TestQuery(unittest.TestCase):
             "timed_out": False,
             "took": 2
         }
-        search_backend2.mget.return_value = {u'docs': [{u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301}, u'_version': 1, u'_id': u'1:2'}, {u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200}, u'_version': 1, u'_id': u'1:3'}, {u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0}, u'_version': 1, u'_id': u'1:5'}]}
+        search_backend2.mget.return_value = {
+            u'docs': [
+                {u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301}, u'_version': 1, u'_id': u'1:2'},
+                {u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200}, u'_version': 1, u'_id': u'1:3'},
+                {u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0}, u'_version': 1, u'_id': u'1:5'}
+            ]
+        }
 
 
-        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend2)
+        q = Query(*self.query_args,
+                  query=query,
+                  sort=('id',),
+                  search_backend=search_backend2)
         results = list(q.results)
         self.assertEquals(results[0]["outlinks_internal_nb"], expected_result["outlinks_internal_nb"])
         self.assertEquals(results[0]["outlinks_internal"], expected_result["outlinks_internal"])
@@ -646,7 +740,11 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ('id',),
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
-        search_backend2.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
+        search_backend2.search.assert_called_with(body=expected_body,
+                                                  doc_type=CRAWL_NAME,
+                                                  size=100,
+                                                  index=ELASTICSEARCH_INDEX,
+                                                  offset=0)
 
         search_backend2.mget.assert_called_with(body={'ids': ['1:2', '1:3', '1:5']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
 
@@ -696,10 +794,23 @@ class TestQuery(unittest.TestCase):
 
         expected_body = {
             'sort': ('id',),
-            'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
+            'filter': {
+                'and': [
+                    {'range': {'http_code': {'from': 0, 'include_lower': False}}},
+                    {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}
+                ]
+            }
+        }
+        search_backend.search.assert_called_with(body=expected_body,
+                                                 doc_type=CRAWL_NAME,
+                                                 size=100,
+                                                 index=ELASTICSEARCH_INDEX,
+                                                 offset=0)
 
-        search_backend.mget.assert_called_with(body={'ids': ['1:7']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
+        search_backend.mget.assert_called_with(body={'ids': ['1:7']},
+                                               fields=['url', 'http_code'],
+                                               index=ELASTICSEARCH_INDEX,
+                                               doc_type=CRAWL_NAME)
 
     def test_canonicals(self):
         query = {
@@ -736,7 +847,8 @@ class TestQuery(unittest.TestCase):
                 ]
             }
 
-        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
+        q = Query(*self.query_args, query=query, sort=('id',),
+                  search_backend=search_backend)
         expected_result_1 = {
             "canonical_to": {
                 "url": u"http://www.mysite.com/page2.html",
@@ -756,7 +868,22 @@ class TestQuery(unittest.TestCase):
         }
         self.assertEquals(list(q.results)[1], expected_result_2)
 
-        expected_body = {'sort': ('id',), 'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'range': {'id': {'from': 1}}}]}}
-        search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
+        expected_body = {
+            'sort': ('id',),
+            'filter': {
+                'and': [
+                    {'range': {'http_code': {'from': 0, 'include_lower': False}}},
+                    {'term': {'crawl_id': 1}}, {'range': {'id': {'from': 1}}}
+                ]
+            }
+        }
+        search_backend.search.assert_called_with(body=expected_body,
+                                                 doc_type=CRAWL_NAME,
+                                                 size=100,
+                                                 index=ELASTICSEARCH_INDEX,
+                                                 offset=0)
 
-        search_backend.mget.assert_called_with(body={'ids': ['1:1', '1:2']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
+        search_backend.mget.assert_called_with(body={'ids': ['1:1', '1:2']},
+                                               fields=['url', 'http_code'],
+                                               index=ELASTICSEARCH_INDEX,
+                                               doc_type=CRAWL_NAME)
