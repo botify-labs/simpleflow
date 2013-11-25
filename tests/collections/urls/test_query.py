@@ -350,7 +350,9 @@ class TestQuery(unittest.TestCase):
         expected_body = {
             'sort': ('id',),
             'filter': {'and': [{'term': {'http_code': 301}}, {'or': [{'exists': {'field': 'redirects_to.url'}}, {'exists': {'field': 'redirects_to.url_id'}}, {'exists': {'field': 'redirects_to.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
+
         search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
+        search_backend.mget.assert_called_with(body={'ids': ['1:3']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
 
 
     def test_redirects_to_not_crawled(self):
@@ -400,6 +402,7 @@ class TestQuery(unittest.TestCase):
             'sort': ('id',),
             'filter': {'and': [{'term': {'http_code': 302}}, {'or': [{'exists': {'field': 'redirects_to.url'}}, {'exists': {'field': 'redirects_to.url_id'}}, {'exists': {'field': 'redirects_to.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
         search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
+        search_backend.mget.assert_called_with(body={'ids': ['1:5']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
 
     def test_redirects_from(self):
         query = {
@@ -445,6 +448,8 @@ class TestQuery(unittest.TestCase):
             'sort': ('id',),
             'filter': {'and': [{'term': {'_id': '1:3'}}, {'or': [{'exists': {'field': 'redirects_from.url_id'}}, {'exists': {'field': 'redirects_from.http_code'}}]}, {'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}]}}
         search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
+
+        search_backend.mget.assert_called_with(body={'ids': ['1:2']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
 
     def test_subfield(self):
         query = {
@@ -643,6 +648,8 @@ class TestQuery(unittest.TestCase):
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
         search_backend2.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
+        search_backend2.mget.assert_called_with(body={'ids': ['1:2', '1:3', '1:5']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
+
     def test_metadata_duplicate(self):
         query = {
             "fields": ["metadata_duplicate_nb", "metadata_duplicate.h1"],
@@ -691,6 +698,8 @@ class TestQuery(unittest.TestCase):
             'sort': ('id',),
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
         search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
+
+        search_backend.mget.assert_called_with(body={'ids': ['1:7']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
 
     def test_canonicals(self):
         query = {
@@ -750,3 +759,4 @@ class TestQuery(unittest.TestCase):
         expected_body = {'sort': ('id',), 'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'range': {'id': {'from': 1}}}]}}
         search_backend.search.assert_called_with(body=expected_body, doc_type=CRAWL_NAME, size=100, index=ELASTICSEARCH_INDEX, offset=0)
 
+        search_backend.mget.assert_called_with(body={'ids': ['1:1', '1:2']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
