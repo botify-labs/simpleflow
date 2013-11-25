@@ -206,12 +206,13 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                     {"field": "metadata_nb.{}".format(metadata_type), "value": 0}
                 ])
 
+    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
     final_summary = []
     q = SuggestQuery.from_s3_uri(crawl_id, s3_uri)
     for i, query in enumerate(queries):
         query["display_children"] = False
         results = q.query(query)
-        for result in results:
+        for k, result in enumerate(results):
             hash_id_filters = [{'field': 'patterns', 'value': result['query_hash_id']}]
             urls_query = {
                 "fields": ["url"] + urls_fields[i],
@@ -242,13 +243,20 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                             break
             else:
                 result["urls"] = urls_results
+            results[k] = result
             final_summary.append(result)
+
+        # Write suggestion file
+        summary_file = os.path.join(tmp_dir, 'suggest', '/'.join(query_type[i]) + '.json')
+        makedirs(os.path.join(os.path.dirname(summary_file)), exist_ok=True)
+        f = open(os.path.join(summary_file), 'w')
+        f.write(json.dumps(results, indent=4))
+        f.close()
 
     final_summary = sorted(final_summary,
                            key=lambda i: i['score'],
                            reverse=True)
     final_summary_flatten = json.dumps(final_summary, indent=4)
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
     makedirs(os.path.join(tmp_dir), exist_ok=True)
 
     summary_file = os.path.join(tmp_dir, 'suggested_patterns_summary.json')
