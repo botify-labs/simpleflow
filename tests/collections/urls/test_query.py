@@ -30,7 +30,7 @@ class TestQuery(unittest.TestCase):
         #self.es.delete_index(ELASTICSEARCH_INDEX)
         pass
 
-    def generate_expected_results(self, result_ids):
+    def get_search_expected_results(self, result_ids):
 
         hits = [
             {
@@ -221,11 +221,11 @@ class TestQuery(unittest.TestCase):
         # A query with no filter should return 4 results (id=5 should not be returned as it has
         # not been crawled (only exists to return the value of id=4's redirect
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 6, 7])
+        search_backend.search.return_value = self.get_search_expected_results([1, 2, 3, 4, 6, 7])
         q = Query(*self.query_args, query={}, search_backend=search_backend)
         self.assertEquals(q.count, 6)
 
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
                 'and': [
@@ -233,7 +233,7 @@ class TestQuery(unittest.TestCase):
                     {'term': {'crawl_id': 1}}]
             }
         }
-        search_backend.search.assert_called_with(body=expected_body,
+        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
                                                  doc_type=CRAWL_NAME,
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
@@ -260,13 +260,13 @@ class TestQuery(unittest.TestCase):
             }
         ]
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([1, 3, 7])
+        search_backend.search.return_value = self.get_search_expected_results([1, 3, 7])
         q = Query(*self.query_args, query=query, search_backend=search_backend)
 
         self.assertEquals(q.count, 3)
 
         self.assertEquals(list(q.results), expected_results)
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ['id'],
             'filter': {
                 'and': [
@@ -274,7 +274,7 @@ class TestQuery(unittest.TestCase):
                     {'term': {'crawl_id': 1}}, {'term': {'http_code': 200}}]
             }
         }
-        search_backend.search.assert_called_with(body=expected_body,
+        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
                                                  doc_type=CRAWL_NAME,
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
@@ -292,10 +292,10 @@ class TestQuery(unittest.TestCase):
             "sort": ["id"]
         }
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([1])
+        search_backend.search.return_value = self.get_search_expected_results([1])
         q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals([k['_id'] for k in q.results], ["1:1"])
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ['id'],
             'filter': {
                 'and': [
@@ -305,7 +305,7 @@ class TestQuery(unittest.TestCase):
                     {'term': {'crawl_id': 1}}]
             }
         }
-        search_backend.search.assert_called_with(body=expected_body,
+        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
                                                  doc_type=CRAWL_NAME,
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
@@ -323,11 +323,11 @@ class TestQuery(unittest.TestCase):
             "sort": ["id"]
         }
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 7])
+        search_backend.search.return_value = self.get_search_expected_results([1, 2, 3, 7])
         q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals([k['_id'] for k in q.results], ["1:1", "1:2", "1:3", "1:7"])
 
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ['id'],
             'filter': {
                 'and': [
@@ -336,7 +336,7 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        search_backend.search.assert_called_with(body=expected_body,
+        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
                                                  doc_type=CRAWL_NAME,
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
@@ -360,7 +360,7 @@ class TestQuery(unittest.TestCase):
             }
         }
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([2])
+        search_backend.search.return_value = self.get_search_expected_results([2])
         search_backend.mget.return_value = {
             u'docs': [
                 {
@@ -377,7 +377,7 @@ class TestQuery(unittest.TestCase):
         self.assertEquals(q.count, 1)
         self.assertEquals(list(q.results)[0], expected_url)
 
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
                 'and': [
@@ -389,7 +389,7 @@ class TestQuery(unittest.TestCase):
             }
         }
 
-        search_backend.search.assert_called_with(body=expected_body,
+        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
                                                  doc_type=CRAWL_NAME,
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
@@ -424,7 +424,7 @@ class TestQuery(unittest.TestCase):
             }
         }
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([4, 6])
+        search_backend.search.return_value = self.get_search_expected_results([4, 6])
         search_backend.mget.return_value = {
             u'docs': [
                 {
@@ -444,7 +444,7 @@ class TestQuery(unittest.TestCase):
         self.assertEquals(list(q.results)[0], expected_url_4)
         self.assertEquals(list(q.results)[1], expected_url_6)
 
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
                 'and': [
@@ -455,7 +455,7 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        search_backend.search.assert_called_with(body=expected_body,
+        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
                                                  doc_type=CRAWL_NAME,
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
@@ -486,7 +486,7 @@ class TestQuery(unittest.TestCase):
             }]
         }
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([3])
+        search_backend.search.return_value = self.get_search_expected_results([3])
         search_backend.mget.return_value={
             u'docs': [
                 {
@@ -507,7 +507,7 @@ class TestQuery(unittest.TestCase):
                   search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_url)
 
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
                 'and': [
@@ -518,7 +518,7 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        search_backend.search.assert_called_with(body=expected_body,
+        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
                                                  doc_type=CRAWL_NAME,
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
@@ -539,7 +539,7 @@ class TestQuery(unittest.TestCase):
             }
         }
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 5, 7])
+        search_backend.search.return_value = self.get_search_expected_results([1, 2, 3, 4, 5, 7])
 
         q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
         expected_result_1 = {
@@ -570,7 +570,7 @@ class TestQuery(unittest.TestCase):
         }
         self.assertEquals(results[1], expected_result_2)
 
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
                 'and': [
@@ -579,7 +579,7 @@ class TestQuery(unittest.TestCase):
                 ]
             }
 }
-        search_backend.search.assert_called_with(body=expected_body,
+        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
                                                  doc_type=CRAWL_NAME,
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
@@ -594,7 +594,7 @@ class TestQuery(unittest.TestCase):
             }
         }
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 5, 7])
+        search_backend.search.return_value = self.get_search_expected_results([1, 2, 3, 4, 5, 7])
 
         q = Query(*self.query_args, query=query, sort=('id',), search_backend = search_backend)
         expected_result = {
@@ -735,10 +735,10 @@ class TestQuery(unittest.TestCase):
         self.assertEquals(results[0]["outlinks_internal_nb"], expected_result["outlinks_internal_nb"])
         self.assertEquals(results[0]["outlinks_internal"], expected_result["outlinks_internal"])
 
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
-        search_backend2.search.assert_called_with(body=expected_body,
+        search_backend2.search.assert_called_with(body=expected_elasticsearch_query,
                                                   doc_type=CRAWL_NAME,
                                                   size=100,
                                                   index=ELASTICSEARCH_INDEX,
@@ -755,7 +755,7 @@ class TestQuery(unittest.TestCase):
             }
         }
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([1, 2, 3, 4, 5, 7])
+        search_backend.search.return_value = self.get_search_expected_results([1, 2, 3, 4, 5, 7])
         q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
         expected_result = {
             "metadata_duplicate_nb": {
@@ -790,7 +790,7 @@ class TestQuery(unittest.TestCase):
         q = Query(*self.query_args, query=query, sort=('_id',), search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_result)
 
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
                 'and': [
@@ -799,7 +799,7 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        search_backend.search.assert_called_with(body=expected_body,
+        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
                                                  doc_type=CRAWL_NAME,
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
@@ -820,7 +820,7 @@ class TestQuery(unittest.TestCase):
             }
         }
         search_backend = MagicMock()
-        search_backend.search.return_value = self.generate_expected_results([1, 2])
+        search_backend.search.return_value = self.get_search_expected_results([1, 2])
         search_backend.mget.return_value = {
             u'docs': [
                 {
@@ -866,7 +866,7 @@ class TestQuery(unittest.TestCase):
         }
         self.assertEquals(list(q.results)[1], expected_result_2)
 
-        expected_body = {
+        expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
                 'and': [
@@ -875,7 +875,7 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        search_backend.search.assert_called_with(body=expected_body,
+        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
                                                  doc_type=CRAWL_NAME,
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
