@@ -54,6 +54,10 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
     for i, entry in enumerate(generator):
         f_list[entry[1]].write(str(entry[0]) + '\t' + '\t'.join(str(k) for k in entry[2:]) + '\n')
 
+    # Close files
+    for f in f_list.itervalues():
+        f.close()
+
     for counter_filename in filenames.values():
         push_file(
             os.path.join(s3_uri, counter_filename),
