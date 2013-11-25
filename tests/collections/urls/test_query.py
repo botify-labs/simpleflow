@@ -6,7 +6,7 @@ from mock import MagicMock
 
 from cdf.log import logger
 from cdf.collections.urls.query import Query
-
+from cdf.streams.masks import list_to_mask
 
 ELASTICSEARCH_LOCATION = "http://localhost:9200"
 ELASTICSEARCH_INDEX = "cdf_test"
@@ -63,10 +63,10 @@ class TestQuery(unittest.TestCase):
                         "title": 1
                     },
                     "outlinks_internal": [
-                        [2, 0, 1],
-                        [3, 0, 1],
-                        [5, 0, 1],
-                        [3, 1, 1]
+                        [2, list_to_mask(['follow']), 1],
+                        [3, list_to_mask(['follow']), 1],
+                        [5, list_to_mask(['follow']), 1],
+                        [3, list_to_mask(['link']), 1]
                     ],
                     "outlinks_internal_nb": {
                         "follow": 3,
