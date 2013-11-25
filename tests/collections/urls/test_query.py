@@ -217,6 +217,18 @@ class TestQuery(unittest.TestCase):
             }
         return result
 
+    def get_mget_expected_arguments(self, result_ids):
+        """Return the expected arguments for a mget query on the search backend
+        result_ids : a list of int representing the expected ids
+        """
+        result = {
+            "body": {'ids': ["%d:%d" % (CRAWL_ID, id) for id in result_ids]},
+            "fields": ['url', 'http_code'],
+            "index": ELASTICSEARCH_INDEX,
+            "doc_type": CRAWL_NAME
+        }
+        return result
+
     def test_count(self):
         # A query with no filter should return 4 results (id=5 should not be returned as it has
         # not been crawled (only exists to return the value of id=4's redirect
@@ -394,10 +406,8 @@ class TestQuery(unittest.TestCase):
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
                                                  offset=0)
-        search_backend.mget.assert_called_with(body={'ids': ['1:3']},
-                                               fields=['url', 'http_code'],
-                                               index=ELASTICSEARCH_INDEX,
-                                               doc_type=CRAWL_NAME)
+
+        search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([3]))
 
     def test_redirects_to_not_crawled(self):
         query = {
@@ -460,10 +470,7 @@ class TestQuery(unittest.TestCase):
                                                  size=100,
                                                  index=ELASTICSEARCH_INDEX,
                                                  offset=0)
-        search_backend.mget.assert_called_with(body={'ids': ['1:5']},
-                                               fields=['url', 'http_code'],
-                                               index=ELASTICSEARCH_INDEX,
-                                               doc_type=CRAWL_NAME)
+        search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([5]))
 
     def test_redirects_from(self):
         query = {
@@ -524,10 +531,7 @@ class TestQuery(unittest.TestCase):
                                                  index=ELASTICSEARCH_INDEX,
                                                  offset=0)
 
-        search_backend.mget.assert_called_with(body={'ids': ['1:2']},
-                                               fields=['url', 'http_code'],
-                                               index=ELASTICSEARCH_INDEX,
-                                               doc_type=CRAWL_NAME)
+        search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([2]))
 
     def test_subfield(self):
         query = {
@@ -743,8 +747,7 @@ class TestQuery(unittest.TestCase):
                                                   size=100,
                                                   index=ELASTICSEARCH_INDEX,
                                                   offset=0)
-
-        search_backend2.mget.assert_called_with(body={'ids': ['1:2', '1:3', '1:5']}, fields=['url', 'http_code'], index=ELASTICSEARCH_INDEX, doc_type=CRAWL_NAME)
+        search_backend2.mget.assert_called_with(**self.get_mget_expected_arguments([2, 3, 5]))
 
     def test_metadata_duplicate(self):
         query = {
@@ -805,10 +808,7 @@ class TestQuery(unittest.TestCase):
                                                  index=ELASTICSEARCH_INDEX,
                                                  offset=0)
 
-        search_backend.mget.assert_called_with(body={'ids': ['1:7']},
-                                               fields=['url', 'http_code'],
-                                               index=ELASTICSEARCH_INDEX,
-                                               doc_type=CRAWL_NAME)
+        search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([7]))
 
     def test_canonicals(self):
         query = {
@@ -881,7 +881,4 @@ class TestQuery(unittest.TestCase):
                                                  index=ELASTICSEARCH_INDEX,
                                                  offset=0)
 
-        search_backend.mget.assert_called_with(body={'ids': ['1:1', '1:2']},
-                                               fields=['url', 'http_code'],
-                                               index=ELASTICSEARCH_INDEX,
-                                               doc_type=CRAWL_NAME)
+        search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([1, 2]))
