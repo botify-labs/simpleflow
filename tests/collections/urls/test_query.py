@@ -20,19 +20,7 @@ logger.setLevel(logging.DEBUG)
 class TestQuery(unittest.TestCase):
 
     def setUp(self):
-        self.query_args = (ELASTICSEARCH_LOCATION,
-                           ELASTICSEARCH_INDEX,
-                           "crawl_{}".format(CRAWL_ID),
-                           CRAWL_ID,
-                           REVISION_ID)
-
-    def tearDown(self):
-        #self.es.delete_index(ELASTICSEARCH_INDEX)
-        pass
-
-    def get_search_expected_results(self, result_ids):
-
-        hits = [
+        self.hits = [
             {
                 "_id": "1:1",
                 "_index": "cdf_test",
@@ -195,9 +183,20 @@ class TestQuery(unittest.TestCase):
             }
         ]
 
+        self.query_args = (ELASTICSEARCH_LOCATION,
+                           ELASTICSEARCH_INDEX,
+                           "crawl_{}".format(CRAWL_ID),
+                           CRAWL_ID,
+                           REVISION_ID)
+
+    def tearDown(self):
+        #self.es.delete_index(ELASTICSEARCH_INDEX)
+        pass
+
+    def get_search_expected_results(self, result_ids):
         l = []
         for id in result_ids:
-            for hit in hits:
+            for hit in self.hits:
                 if int(hit["_id"].split(":")[1]) == id:
                     l.append(hit)
 
@@ -235,22 +234,37 @@ class TestQuery(unittest.TestCase):
         result_ids : a list of int representing the ids
                      that are expected in the result
         """
-        fields = {
-            1: {u'url': u'http://www.mysite.com/', u'http_code': 200},
-            2: {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301},
-            3: {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200},
-            5: {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0},
-            7: {u'url': u'http://www.mysite.com/page7.html', u'http_code': 200}
-        }
+
         docs = []
         for id in result_ids:
+
+            #look for the corresponding hit
+            crt_hit = None
+            for hit in self.hits:
+                if int(hit["_id"].split(":")[1]) == id:
+                    crt_hit = hit
+
+            if not crt_hit:
+                #if no hit was found
+                #the id is just referenced in links
+                #we create a dedicated page
+                fields = {
+                    u'url': u'http://www.mysite.com/page%d.html' % id,
+                    u'http_code': 0
+                }
+            else:
+                fields = {
+                    u'url': crt_hit["_source"]["url"],
+                    u'http_code': crt_hit["_source"]["http_code"]
+                }
+
             crt_doc = {
-                    u'_type': CRAWL_NAME,
-                    u'exists': True,
-                    u'_index': ELASTICSEARCH_INDEX,
-                    u'fields': fields[id],
-                    u'_version': 1,
-                    u'_id': u'%s:%s' % (CRAWL_ID, id)
+                u'_type': CRAWL_NAME,
+                u'exists': True,
+                u'_index': ELASTICSEARCH_INDEX,
+                u'fields': fields,
+                u'_version': 1,
+                u'_id': u'%s:%s' % (CRAWL_ID, id)
             }
             docs.append(crt_doc)
 
