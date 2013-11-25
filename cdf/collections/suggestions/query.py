@@ -257,7 +257,7 @@ class SuggestQuery(BaseMetricsQuery):
         return unicode(self.hdfstore['requests'].ix[str(value), 'string'], "utf8")
 
     def query_hash_to_verbose_string(self, value):
-        return unicode(self.hdfstore['requests'].ix[str(value), 'verbose_string'], "utf8")
+        return json.loads(unicode(self.hdfstore['requests'].ix[str(value), 'verbose_string'], "utf8"))
 
     """
     def _display_field(self, field, value):
@@ -298,8 +298,8 @@ class SuggestQuery(BaseMetricsQuery):
         # Resolve query
         for i, r in enumerate(results):
             results[i]["query_hash_id"] = int(results[i]["query"])
-            results[i]["query"] = self.query_hash_to_string(results[i]["query_hash_id"])
-            results[i]["query_verbose"] = self.query_hash_to_verbose_string(results[i]["query_hash_id"])
+            results[i]["query_bql"] = self.query_hash_to_string(results[i]["query_hash_id"])
+            results[i]["query"] = self.query_hash_to_verbose_string(results[i]["query_hash_id"])
             results[i]["counters"] = deep_dict(results[i]["counters"])
             if "children" in results[i]:
                 if not settings.get('display_children', True):
@@ -447,7 +447,7 @@ class SuggestedPatternsQuery(object):
         for query, query_verbose, hash_id, nb_urls in self.stream:
             yield {
                 "query": query,
-                "query_verbose": query_verbose,
+                "query_verbose": json.loads(query_verbose),
                 "query_hash_id": int(hash_id),
                 "nb_urls": int(nb_urls)
             }
