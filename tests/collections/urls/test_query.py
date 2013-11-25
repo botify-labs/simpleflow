@@ -230,6 +230,35 @@ class TestQuery(unittest.TestCase):
         }
         return result
 
+    def get_mget_expected_result(self, result_ids):
+        """Return the expected result of a mget query
+        result_ids : a list of int representing the ids
+                     that are expected in the result
+        """
+        fields = {
+            1: {u'url': u'http://www.mysite.com/', u'http_code': 200},
+            2: {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301},
+            3: {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200},
+            5: {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0},
+            7: {u'url': u'http://www.mysite.com/page7.html', u'http_code': 200}
+        }
+        docs = []
+        for id in result_ids:
+            crt_doc = {
+                    u'_type': CRAWL_NAME,
+                    u'exists': True,
+                    u'_index': ELASTICSEARCH_INDEX,
+                    u'fields': fields[id],
+                    u'_version': 1,
+                    u'_id': u'%s:%s' % (CRAWL_ID, id)
+            }
+            docs.append(crt_doc)
+
+        result = {
+            u'docs': docs
+        }
+        return result
+
     def get_mget_expected_arguments(self, result_ids):
         """Return the expected arguments for a mget query on the search backend
         result_ids : a list of int representing the expected ids
@@ -383,18 +412,7 @@ class TestQuery(unittest.TestCase):
         }
         search_backend = MagicMock()
         search_backend.search.return_value = self.get_search_expected_results([2])
-        search_backend.mget.return_value = {
-            u'docs': [
-                {
-                    u'_type': CRAWL_NAME,
-                    u'exists': True,
-                    u'_index': ELASTICSEARCH_INDEX,
-                    u'fields': {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200},
-                    u'_version': 1,
-                    u'_id': u'1:3'
-                }
-                ]
-            }
+        search_backend.mget.return_value = self.get_mget_expected_result([3])
         q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals(q.count, 1)
         self.assertEquals(list(q.results)[0], expected_url)
@@ -445,18 +463,8 @@ class TestQuery(unittest.TestCase):
         }
         search_backend = MagicMock()
         search_backend.search.return_value = self.get_search_expected_results([4, 6])
-        search_backend.mget.return_value = {
-            u'docs': [
-                {
-                    u'_type': CRAWL_NAME,
-                    u'exists': True,
-                    u'_index': ELASTICSEARCH_INDEX,
-                    u'fields': {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0},
-                    u'_version': 1,
-                    u'_id': u'1:5'
-                }
-                ]
-            }
+        search_backend.mget.return_value = self.get_mget_expected_result([5])
+
         q = Query(*self.query_args,
                   query=query, sort=('id',),
                   search_backend=search_backend)
@@ -505,21 +513,7 @@ class TestQuery(unittest.TestCase):
         }
         search_backend = MagicMock()
         search_backend.search.return_value = self.get_search_expected_results([3])
-        search_backend.mget.return_value={
-            u'docs': [
-                {
-                    u'_type': CRAWL_NAME,
-                    u'exists': True,
-                    u'_index': ELASTICSEARCH_INDEX,
-                    u'fields': {
-                        u'url': u'http://www.mysite.com/page2.html',
-                        u'http_code': 301
-                    },
-                    u'_version': 1,
-                    u'_id': u'1:2'
-                }
-                ]
-            }
+        search_backend.mget.return_value = self.get_mget_expected_result([2])
         q = Query(*self.query_args,
                   query=query, sort=('id',),
                   search_backend=search_backend)
@@ -734,14 +728,7 @@ class TestQuery(unittest.TestCase):
             "timed_out": False,
             "took": 2
         }
-        search_backend2.mget.return_value = {
-            u'docs': [
-                {u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301}, u'_version': 1, u'_id': u'1:2'},
-                {u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page3.html', u'http_code': 200}, u'_version': 1, u'_id': u'1:3'},
-                {u'_type': CRAWL_NAME, u'exists': True, u'_index': ELASTICSEARCH_INDEX, u'fields': {u'url': u'http://www.mysite.com/page5.html', u'http_code': 0}, u'_version': 1, u'_id': u'1:5'}
-            ]
-        }
-
+        search_backend2.mget.return_value = self.get_mget_expected_result([2, 3, 5])
 
         q = Query(*self.query_args,
                   query=query,
@@ -787,21 +774,7 @@ class TestQuery(unittest.TestCase):
             }
         }
 
-        search_backend.mget.return_value = {
-            u'docs': [
-                {
-                    u'_type': CRAWL_NAME,
-                    u'exists': True,
-                    u'_index': ELASTICSEARCH_INDEX,
-                    u'fields': {
-                        u'url': u'http://www.mysite.com/page7.html',
-                        u'http_code': 200
-                    },
-                    u'_version': 1,
-                    u'_id': u'1:7'
-                }
-                ]
-            }
+        search_backend.mget.return_value = self.get_mget_expected_result([7])
 
         q = Query(*self.query_args, query=query, sort=('_id',), search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_result)
@@ -834,29 +807,7 @@ class TestQuery(unittest.TestCase):
         }
         search_backend = MagicMock()
         search_backend.search.return_value = self.get_search_expected_results([1, 2])
-        search_backend.mget.return_value = {
-            u'docs': [
-                {
-                    u'_type': CRAWL_NAME,
-                    u'exists': True,
-                    u'_index': ELASTICSEARCH_INDEX,
-                    u'fields': {
-                        u'url': u'http://www.mysite.com/',
-                        u'http_code': 200
-                    },
-                    u'_version': 1,
-                    u'_id': u'1:1'
-                },
-                {
-                    u'_type': CRAWL_NAME,
-                    u'exists': True,
-                    u'_index': ELASTICSEARCH_INDEX,
-                    u'fields': {u'url': u'http://www.mysite.com/page2.html', u'http_code': 301},
-                    u'_version': 1,
-                    u'_id': u'1:2'
-                }
-                ]
-            }
+        search_backend.mget.return_value = self.get_mget_expected_result([1, 2])
 
         q = Query(*self.query_args, query=query, sort=('id',),
                   search_backend=search_backend)
