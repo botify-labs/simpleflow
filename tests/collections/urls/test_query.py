@@ -604,58 +604,7 @@ class TestQuery(unittest.TestCase):
             }
         }
         search_backend = MagicMock()
-        search_backend.search.return_value = self.get_search_expected_results([1, 2, 3, 4, 5, 7])
-
-        q = Query(*self.query_args, query=query, sort=('id',), search_backend = search_backend)
-        expected_result = {
-            "outlinks_internal_nb": {
-                "total": 4,
-                "follow": 3,
-                "nofollow": 1,
-                "follow_unique": 3,
-                "nofollow_combinations": [
-                    {"key": ["link"],
-                     "value": 1}
-                ]
-            },
-            "outlinks_internal": [
-                {
-                    "url": {
-                        "url": "http://www.mysite.com/page2.html",
-                        "crawled": True
-                    },
-                    "status": ["follow"],
-                    "nb_links": 1
-                },
-                {
-                    "url": {
-                        "url": "http://www.mysite.com/page3.html",
-                        "crawled": True
-                    },
-                    "status": ["follow"],
-                    "nb_links": 1
-                },
-                {
-                    "url": {
-                        "url": "http://www.mysite.com/page5.html",
-                        "crawled": False
-                    },
-                    "status": ["follow"],
-                    "nb_links": 1
-                },
-                {
-                    "url": {
-                        "url": "http://www.mysite.com/page3.html",
-                        "crawled": True
-                    },
-                    "status": ["nofollow_link"],
-                    "nb_links": 1
-                },
-            ]
-        }
-
-        search_backend2 = MagicMock()
-        search_backend2.search.return_value = {
+        search_backend.search.return_value = {
             "_shards": {
                 "failed": 0,
                 "successful": 5,
@@ -728,12 +677,60 @@ class TestQuery(unittest.TestCase):
             "timed_out": False,
             "took": 2
         }
-        search_backend2.mget.return_value = self.get_mget_expected_result([2, 3, 5])
+        search_backend.mget.return_value = self.get_mget_expected_result([2, 3, 5])
+
+        q = Query(*self.query_args, query=query, sort=('id',), search_backend = search_backend)
+        expected_result = {
+            "outlinks_internal_nb": {
+                "total": 4,
+                "follow": 3,
+                "nofollow": 1,
+                "follow_unique": 3,
+                "nofollow_combinations": [
+                    {"key": ["link"],
+                     "value": 1}
+                ]
+            },
+            "outlinks_internal": [
+                {
+                    "url": {
+                        "url": "http://www.mysite.com/page2.html",
+                        "crawled": True
+                    },
+                    "status": ["follow"],
+                    "nb_links": 1
+                },
+                {
+                    "url": {
+                        "url": "http://www.mysite.com/page3.html",
+                        "crawled": True
+                    },
+                    "status": ["follow"],
+                    "nb_links": 1
+                },
+                {
+                    "url": {
+                        "url": "http://www.mysite.com/page5.html",
+                        "crawled": False
+                    },
+                    "status": ["follow"],
+                    "nb_links": 1
+                },
+                {
+                    "url": {
+                        "url": "http://www.mysite.com/page3.html",
+                        "crawled": True
+                    },
+                    "status": ["nofollow_link"],
+                    "nb_links": 1
+                },
+            ]
+        }
 
         q = Query(*self.query_args,
                   query=query,
                   sort=('id',),
-                  search_backend=search_backend2)
+                  search_backend=search_backend)
         results = list(q.results)
         self.assertEquals(results[0]["outlinks_internal_nb"], expected_result["outlinks_internal_nb"])
         self.assertEquals(results[0]["outlinks_internal"], expected_result["outlinks_internal"])
@@ -742,10 +739,10 @@ class TestQuery(unittest.TestCase):
         expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
-        search_backend2.search.assert_called_with(
+        search_backend.search.assert_called_with(
             **self.get_search_expected_arguments(expected_elasticsearch_query)
         )
-        search_backend2.mget.assert_called_with(
+        search_backend.mget.assert_called_with(
             **self.get_mget_expected_arguments([2, 3, 5])
         )
 
