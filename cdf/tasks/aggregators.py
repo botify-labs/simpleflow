@@ -19,6 +19,11 @@ from cdf.collections.urls.generators.suggestions import MetadataClusterMixin
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 from cdf.collections.suggestions.query import SuggestQuery
 from cdf.collections.urls.query import Query
+from cdf.collections.urls.query_helpers import (
+    get_filters_from_http_code_range,
+    get_filters_from_agg_delay_field,
+    get_filters_from_agg_canonical_field
+)
 
 
 def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='/tmp', force_fetch=False):
@@ -126,7 +131,7 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
                             quoting=csv.QUOTE_NONE)
     row_list = [row for row in csv_reader]
     if len(row_list) > 0:
-        child_frame = DataFrame(row_list, columns=["parent", "child"])
+        child_frame = DataFrame([r[2:] for r in row_list], columns=["parent", "child"])
         #store dataframe in hdfstore.
         #we do not store empty dataframe in hdfstore since recovering it
         #afterwards raises an exception :
@@ -157,114 +162,143 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
     push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)
 
 
-def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix='/tmp', force_fetch=False):
-    query_type = []
-    queries = []
-    urls_fields = []
-    urls_filters = []
-    for http_code in (300, 400, 500):
-        query_type.append(['http_code', str(http_code)[0] + 'xx'])
-        queries.append(
-            {
-                "fields": ["pages_nb"],
-                "target_field": "pages_nb",
-                "filters": {
-                    'and': [
-                        {"field": "http_code", "value": http_code, "predicate": "gte"},
-                        {"field": "http_code", "value": http_code + 99, "predicate": "lt"},
-                    ]
-                }
-            }
-        )
-        if http_code == 300:
-            urls_fields.append(["redirects_to"])
-        else:
-            urls_fields.append(["http_code"])
-        urls_filters.append(
-            [
-                {"field": "http_code", "value": http_code, "predicate": "gte"},
-                {"field": "http_code", "value": http_code + 99, "predicate": "lt"},
-            ]
-        )
-    for metadata_type in ('title', 'description', 'h1'):
-        for metadata_status in ('duplicate', 'not_filled'):
-            query_type.append(['metadata', metadata_type, metadata_status])
-            queries.append(
-                {
-                    "fields": ["pages_nb", "metadata_nb.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)],
-                    "target_field": "metadata_nb.{}.{}".format(metadata_type, metadata_status)
-                }
-            )
-            if metadata_status == "duplicate":
-                urls_fields.append(["metadata.{}".format(metadata_type), "metadata_duplicate.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)])
-                urls_filters.append([
-                    {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1, "predicate": "gt"}
-                ])
-            else:
-                urls_fields.append([])
-                urls_filters.append([
-                    {"field": "metadata_nb.{}".format(metadata_type), "value": 0}
-                ])
-
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    final_summary = []
+def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix, identifier, query, urls_fields, urls_filters):
     q = SuggestQuery.from_s3_uri(crawl_id, s3_uri)
-    for i, query in enumerate(queries):
-        query["display_children"] = False
-        results = q.query(query)
-        for k, result in enumerate(results):
-            hash_id_filters = [{'field': 'patterns', 'value': result['query_hash_id']}]
-            urls_query = {
-                "fields": ["url"] + urls_fields[i],
-                "filters": {'and': hash_id_filters + urls_filters[i]}
-            }
+    query["display_children"] = False
+    _results = q.query(query)
+    results = []
+    for k, result in enumerate(_results):
+        hash_id_filters = [{'field': 'patterns', 'value': result['query_hash_id']}]
+        urls_query = {
+            "fields": ["url"] + urls_fields,
+            "filters": {'and': hash_id_filters + urls_filters}
+        }
 
-            result["score"] = reduce(dict.get, query["target_field"].split("."), result["counters"])
-            result["type"] = query_type[i]
+        result["score"] = reduce(dict.get, query["target_field"].split("."), result["counters"])
+        if result["score"] == 0:
+            continue
 
-            if result["type"][0] == "http_code" or (result["type"][0] == "metadata" and result["type"][2] == "not_filled"):
-                limit = 3
-            else:
-                limit = 10
+        if identifier.startswith("http_code") or identifier.startswith("metadata:not_filled"):
+            limit = 3
+        else:
+            limit = 10
 
-            urls = Query(es_location, es_index, es_doc_type, crawl_id, revision_number, urls_query, start=0, limit=limit, sort=('id',))
+        urls = Query(es_location, es_index, es_doc_type, crawl_id, revision_number, urls_query, start=0, limit=limit, sort=('id',))
 
-            urls_results = list(urls.results)
-            result["urls"] = []
-            # Filter on metadata duplicate : get only the 3 first different duplicates urls
-            if result["type"][0:3:2] == ["metadata", "duplicate"]:
-                duplicates_found = set()
-                for url_result in urls_results:
-                    metadata_value = url_result["metadata"][result["type"][1]][0]
-                    if metadata_value not in duplicates_found:
-                        result["urls"].append(url_result)
-                        duplicates_found.add(metadata_value)
-                        if len(duplicates_found) == 3:
-                            break
-            else:
-                result["urls"] = urls_results
-            results[k] = result
-            final_summary.append(result)
+        urls_results = list(urls.results)
+        result["urls"] = []
+        # Filter on metadata duplicate : get only the 3 first different duplicates urls
+        if identifier.startswith("metadata:duplicate"):
+            duplicates_found = set()
+            for url_result in urls_results:
+                metadata_value = url_result["metadata"][identifier.rsplit(':', 1)[1]][0]
+                if metadata_value not in duplicates_found:
+                    result["urls"].append(url_result)
+                    duplicates_found.add(metadata_value)
+                    if len(duplicates_found) == 3:
+                        break
+        else:
+            result["urls"] = urls_results
+        results.append(result)
 
-        # Write suggestion file
-        summary_file = os.path.join(tmp_dir, 'suggest', '/'.join(query_type[i]) + '.json')
-        makedirs(os.path.join(os.path.dirname(summary_file)), exist_ok=True)
-        f = open(os.path.join(summary_file), 'w')
-        f.write(json.dumps(results, indent=4))
-        f.close()
-
-    final_summary = sorted(final_summary,
-                           key=lambda i: i['score'],
-                           reverse=True)
-    final_summary_flatten = json.dumps(final_summary, indent=4)
-    makedirs(os.path.join(tmp_dir), exist_ok=True)
-
-    summary_file = os.path.join(tmp_dir, 'suggested_patterns_summary.json')
+    # Write suggestion file
+    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    summary_file = os.path.join(tmp_dir, 'suggest', '{}.json'.format(identifier))
+    makedirs(os.path.join(os.path.dirname(summary_file)), exist_ok=True)
     f = open(os.path.join(summary_file), 'w')
-    f.write(final_summary_flatten)
+    f.write(json.dumps(results, indent=4))
     f.close()
-
     push_file(
-        os.path.join(s3_uri, 'suggested_patterns_summary.json'),
+        os.path.join(s3_uri, 'suggest', '{}.json'.format(identifier)),
         summary_file
     )
+    return len(results)
+
+
+
+def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix='/tmp', force_fetch=False):
+    summary_kwargs = {
+        'crawl_id': crawl_id,
+        's3_uri': s3_uri,
+        'es_location': es_location,
+        'es_index': es_index,
+        'es_doc_type': es_doc_type,
+        'revision_number': revision_number,
+        'tmp_dir_prefix': tmp_dir_prefix,
+    }
+
+    # Http codes by range
+    for http_code in (200, 300, 400, 500):
+        query = {
+            "fields": ["pages_nb"],
+            "target_field": "pages_nb",
+            "filters": {
+                'and': [
+                    {"field": "http_code", "value": http_code, "predicate": "gte"},
+                    {"field": "http_code", "value": http_code + 99, "predicate": "lt"},
+                ]
+            }
+        }
+        if http_code == 300:
+            urls_fields = ["redirects_to"]
+        else:
+            urls_fields = ["http_code"]
+        urls_filters = get_filters_from_http_code_range(http_code)
+        make_suggest_file_from_query(identifier='http_code:{}'.format(str(http_code)[0] + 'xx'), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
+    # Metadata types
+    for metadata_type in ('title', 'description', 'h1'):
+        for metadata_status in ('duplicate', 'not_filled'):
+            query = {
+                "fields": ["pages_nb", "metadata_nb.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)],
+                "target_field": "metadata_nb.{}.{}".format(metadata_type, metadata_status)
+            }
+            if metadata_status == "duplicate":
+                urls_fields = ["metadata.{}".format(metadata_type), "metadata_duplicate.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)]
+                urls_filters = [
+                    {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1, "predicate": "gt"}
+                ]
+            else:
+                urls_fields = []
+                urls_filters = [
+                    {"field": "metadata_nb.{}".format(metadata_type), "value": 0}
+                ]
+            make_suggest_file_from_query(identifier='metadata:{}:{}'.format(metadata_type, metadata_status), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
+    # Speed
+    for delay in ("delay_gte_2s", "delay_lt_500ms"):
+        urls_fields = ["delay2"]
+        urls_filters = get_filters_from_agg_delay_field(delay)
+        query = {
+            "fields": [delay],
+            "target_field": delay
+        }
+        make_suggest_file_from_query(identifier='delay:{}'.format(delay[6:]), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
+    # Canonicals
+    for field in ('filled', 'not_filled', 'equal', 'not_equal', 'incoming'):
+        full_field = "canonical_nb.{}".format(field)
+        query = {
+            "fields": [full_field],
+            "target_field": full_field
+        }
+        urls_fields = ["canonical_to", "canonical_from"]
+        urls_filters = get_filters_from_agg_canonical_field(field)
+        make_suggest_file_from_query(identifier='canonical:{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
+    # Deeper depths
+    for depth in (5, 7, 10):
+        query = {
+            "filters": {
+                "field": "depth",
+                "value": depth,
+                "predicate": "gte"
+            }
+        }
+        urls_fields = []
+        urls_filters = [{
+            "field": "depth",
+            "value": depth,
+            "predicate": "gte"
+        }]
+        make_suggest_file_from_query(identifier='distribution:depth_gte_{}'.format(depth), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
