@@ -217,6 +217,19 @@ class TestQuery(unittest.TestCase):
             }
         return result
 
+    def get_search_expected_arguments(self, elasticsearch_query):
+        """Return the expected arguments for a search query on the search backend
+        elasticsearch_query : the expected query to elasticsearch
+        """
+        result = {
+            "body": elasticsearch_query,
+            "doc_type": CRAWL_NAME,
+            "size": 100,
+            "index": ELASTICSEARCH_INDEX,
+            "offset": 0
+        }
+        return result
+
     def get_mget_expected_arguments(self, result_ids):
         """Return the expected arguments for a mget query on the search backend
         result_ids : a list of int representing the expected ids
@@ -245,11 +258,9 @@ class TestQuery(unittest.TestCase):
                     {'term': {'crawl_id': 1}}]
             }
         }
-        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
-                                                 doc_type=CRAWL_NAME,
-                                                 size=100,
-                                                 index=ELASTICSEARCH_INDEX,
-                                                 offset=0)
+        search_backend.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
 
     def test_simple_filter(self):
         query = {
@@ -286,11 +297,9 @@ class TestQuery(unittest.TestCase):
                     {'term': {'crawl_id': 1}}, {'term': {'http_code': 200}}]
             }
         }
-        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
-                                                 doc_type=CRAWL_NAME,
-                                                 size=100,
-                                                 index=ELASTICSEARCH_INDEX,
-                                                 offset=0)
+        search_backend.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
 
     def test_and_filter(self):
         query = {
@@ -317,11 +326,9 @@ class TestQuery(unittest.TestCase):
                     {'term': {'crawl_id': 1}}]
             }
         }
-        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
-                                                 doc_type=CRAWL_NAME,
-                                                 size=100,
-                                                 index=ELASTICSEARCH_INDEX,
-                                                 offset=0)
+        search_backend.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
 
     def test_or_filter(self):
         query = {
@@ -348,11 +355,9 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
-                                                 doc_type=CRAWL_NAME,
-                                                 size=100,
-                                                 index=ELASTICSEARCH_INDEX,
-                                                 offset=0)
+        search_backend.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
 
     def test_redirects_to_crawled(self):
         query = {
@@ -401,12 +406,9 @@ class TestQuery(unittest.TestCase):
             }
         }
 
-        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
-                                                 doc_type=CRAWL_NAME,
-                                                 size=100,
-                                                 index=ELASTICSEARCH_INDEX,
-                                                 offset=0)
-
+        search_backend.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
         search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([3]))
 
     def test_redirects_to_not_crawled(self):
@@ -465,11 +467,9 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
-                                                 doc_type=CRAWL_NAME,
-                                                 size=100,
-                                                 index=ELASTICSEARCH_INDEX,
-                                                 offset=0)
+        search_backend.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
         search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([5]))
 
     def test_redirects_from(self):
@@ -525,12 +525,10 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
-                                                 doc_type=CRAWL_NAME,
-                                                 size=100,
-                                                 index=ELASTICSEARCH_INDEX,
-                                                 offset=0)
 
+        search_backend.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
         search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([2]))
 
     def test_subfield(self):
@@ -582,12 +580,10 @@ class TestQuery(unittest.TestCase):
                     {'term': {'crawl_id': 1}}, {'range': {'id': {'to': 2}}}
                 ]
             }
-}
-        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
-                                                 doc_type=CRAWL_NAME,
-                                                 size=100,
-                                                 index=ELASTICSEARCH_INDEX,
-                                                 offset=0)
+        }
+        search_backend.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
 
     def test_outlinks(self):
         query = {
@@ -742,11 +738,9 @@ class TestQuery(unittest.TestCase):
         expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
-        search_backend2.search.assert_called_with(body=expected_elasticsearch_query,
-                                                  doc_type=CRAWL_NAME,
-                                                  size=100,
-                                                  index=ELASTICSEARCH_INDEX,
-                                                  offset=0)
+        search_backend2.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
         search_backend2.mget.assert_called_with(**self.get_mget_expected_arguments([2, 3, 5]))
 
     def test_metadata_duplicate(self):
@@ -802,12 +796,9 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
-                                                 doc_type=CRAWL_NAME,
-                                                 size=100,
-                                                 index=ELASTICSEARCH_INDEX,
-                                                 offset=0)
-
+        search_backend.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
         search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([7]))
 
     def test_canonicals(self):
@@ -875,10 +866,8 @@ class TestQuery(unittest.TestCase):
                 ]
             }
         }
-        search_backend.search.assert_called_with(body=expected_elasticsearch_query,
-                                                 doc_type=CRAWL_NAME,
-                                                 size=100,
-                                                 index=ELASTICSEARCH_INDEX,
-                                                 offset=0)
 
+        search_backend.search.assert_called_with(
+            **self.get_search_expected_arguments(expected_elasticsearch_query)
+        )
         search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([1, 2]))
