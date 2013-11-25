@@ -250,6 +250,7 @@ class TestQuery(unittest.TestCase):
         q = Query(*self.query_args, query={}, search_backend=search_backend)
         self.assertEquals(q.count, 6)
 
+        #assert search() arguments
         expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
@@ -287,8 +288,9 @@ class TestQuery(unittest.TestCase):
         q = Query(*self.query_args, query=query, search_backend=search_backend)
 
         self.assertEquals(q.count, 3)
-
         self.assertEquals(list(q.results), expected_results)
+
+        #assert search() arguments
         expected_elasticsearch_query = {
             'sort': ['id'],
             'filter': {
@@ -316,6 +318,8 @@ class TestQuery(unittest.TestCase):
         search_backend.search.return_value = self.get_search_expected_results([1])
         q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals([k['_id'] for k in q.results], ["1:1"])
+
+        #assert search() arguments
         expected_elasticsearch_query = {
             'sort': ['id'],
             'filter': {
@@ -346,6 +350,7 @@ class TestQuery(unittest.TestCase):
         q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals([k['_id'] for k in q.results], ["1:1", "1:2", "1:3", "1:7"])
 
+        #assert search() arguments
         expected_elasticsearch_query = {
             'sort': ['id'],
             'filter': {
@@ -406,10 +411,13 @@ class TestQuery(unittest.TestCase):
             }
         }
 
+        #assert search() and mget() arguments
         search_backend.search.assert_called_with(
             **self.get_search_expected_arguments(expected_elasticsearch_query)
         )
-        search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([3]))
+        search_backend.mget.assert_called_with(
+            **self.get_mget_expected_arguments([3])
+        )
 
     def test_redirects_to_not_crawled(self):
         query = {
@@ -456,6 +464,7 @@ class TestQuery(unittest.TestCase):
         self.assertEquals(list(q.results)[0], expected_url_4)
         self.assertEquals(list(q.results)[1], expected_url_6)
 
+        #assert search() and mget() arguments
         expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
@@ -470,7 +479,9 @@ class TestQuery(unittest.TestCase):
         search_backend.search.assert_called_with(
             **self.get_search_expected_arguments(expected_elasticsearch_query)
         )
-        search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([5]))
+        search_backend.mget.assert_called_with(
+            **self.get_mget_expected_arguments([5])
+        )
 
     def test_redirects_from(self):
         query = {
@@ -514,6 +525,8 @@ class TestQuery(unittest.TestCase):
                   search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_url)
 
+
+        #assert search() and mget() arguments
         expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
@@ -529,7 +542,9 @@ class TestQuery(unittest.TestCase):
         search_backend.search.assert_called_with(
             **self.get_search_expected_arguments(expected_elasticsearch_query)
         )
-        search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([2]))
+        search_backend.mget.assert_called_with(
+            **self.get_mget_expected_arguments([2])
+        )
 
     def test_subfield(self):
         query = {
@@ -572,6 +587,7 @@ class TestQuery(unittest.TestCase):
         }
         self.assertEquals(results[1], expected_result_2)
 
+        #assert search() arguments
         expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
@@ -735,13 +751,16 @@ class TestQuery(unittest.TestCase):
         self.assertEquals(results[0]["outlinks_internal_nb"], expected_result["outlinks_internal_nb"])
         self.assertEquals(results[0]["outlinks_internal"], expected_result["outlinks_internal"])
 
+        #assert search() and mget() arguments
         expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
         search_backend2.search.assert_called_with(
             **self.get_search_expected_arguments(expected_elasticsearch_query)
         )
-        search_backend2.mget.assert_called_with(**self.get_mget_expected_arguments([2, 3, 5]))
+        search_backend2.mget.assert_called_with(
+            **self.get_mget_expected_arguments([2, 3, 5])
+        )
 
     def test_metadata_duplicate(self):
         query = {
@@ -787,6 +806,7 @@ class TestQuery(unittest.TestCase):
         q = Query(*self.query_args, query=query, sort=('_id',), search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_result)
 
+        #assert search() and mget() arguments
         expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
@@ -799,7 +819,9 @@ class TestQuery(unittest.TestCase):
         search_backend.search.assert_called_with(
             **self.get_search_expected_arguments(expected_elasticsearch_query)
         )
-        search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([7]))
+        search_backend.mget.assert_called_with(
+            **self.get_mget_expected_arguments([7])
+        )
 
     def test_canonicals(self):
         query = {
@@ -857,6 +879,8 @@ class TestQuery(unittest.TestCase):
         }
         self.assertEquals(list(q.results)[1], expected_result_2)
 
+
+        #assert search() and mget() arguments
         expected_elasticsearch_query = {
             'sort': ('id',),
             'filter': {
@@ -870,4 +894,6 @@ class TestQuery(unittest.TestCase):
         search_backend.search.assert_called_with(
             **self.get_search_expected_arguments(expected_elasticsearch_query)
         )
-        search_backend.mget.assert_called_with(**self.get_mget_expected_arguments([1, 2]))
+        search_backend.mget.assert_called_with(
+            **self.get_mget_expected_arguments([1, 2])
+        )
