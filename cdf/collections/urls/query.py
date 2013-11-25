@@ -449,7 +449,7 @@ class Query(object):
                                index=self.es_index,
                                doc_type=self.es_doc_type,
                                size=self.limit,
-                               offset=self.start)
+                               from_=self.start)
         if alt_results["hits"]["total"] == 0:
             self._results = {
                 "count": 0,
