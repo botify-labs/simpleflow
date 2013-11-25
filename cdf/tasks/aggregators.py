@@ -131,7 +131,9 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
                             quoting=csv.QUOTE_NONE)
     row_list = [row for row in csv_reader]
     if len(row_list) > 0:
-        child_frame = DataFrame([r[2:] for r in row_list], columns=["parent", "child"])
+        # hot fix
+        #child_frame = DataFrame([r[2:] for r in row_list], columns=["parent", "child"])
+        child_frame = DataFrame(row_list, columns=["parent", "child"])
         #store dataframe in hdfstore.
         #we do not store empty dataframe in hdfstore since recovering it
         #afterwards raises an exception :
@@ -246,6 +248,19 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         urls_filters = get_filters_from_http_code_range(http_code)
         make_suggest_file_from_query(identifier='http_code:{}'.format(str(http_code)[0] + 'xx'), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
+    # Incoming redirections
+    query = {
+        "fields": ["redirects_from_nb"],
+        "target_field": "redirects_from_nb",
+    }
+    urls_fields = []
+    urls_filters = [{
+        "field": "redirects_from_nb",
+        "value": 0,
+        "predicate": "gt"
+    }]
+    make_suggest_file_from_query(identifier='http_code:incoming_redirects', query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
     # Metadata types
     for metadata_type in ('title', 'description', 'h1'):
         for metadata_status in ('duplicate', 'not_filled'):
@@ -287,15 +302,17 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         make_suggest_file_from_query(identifier='canonical:{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # Deeper depths
-    for depth in (5, 7, 10):
+    for depth in (3, 5, 7, 10):
         query = {
+            "fields": ["pages_nb"],
+            "target_field": "pages_nb",
             "filters": {
                 "field": "depth",
                 "value": depth,
                 "predicate": "gte"
             }
         }
-        urls_fields = []
+        urls_fields = ["depth"]
         urls_filters = [{
             "field": "depth",
             "value": depth,
