@@ -2,6 +2,7 @@
 import os
 import gzip
 import json
+import copy
 
 import csv
 
@@ -132,8 +133,8 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
     row_list = [row for row in csv_reader]
     if len(row_list) > 0:
         # hot fix
-        #child_frame = DataFrame([r[2:] for r in row_list], columns=["parent", "child"])
-        child_frame = DataFrame(row_list, columns=["parent", "child"])
+        child_frame = DataFrame([r[2:] for r in row_list], columns=["parent", "child"])
+        #child_frame = DataFrame(row_list, columns=["parent", "child"])
         #store dataframe in hdfstore.
         #we do not store empty dataframe in hdfstore since recovering it
         #afterwards raises an exception :
@@ -164,7 +165,7 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
     push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)
 
 
-def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix, identifier, query, urls_fields, urls_filters):
+def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix, identifier, query, urls_fields, urls_filters, urls_sort=None):
     q = SuggestQuery.from_s3_uri(crawl_id, s3_uri)
     query["display_children"] = False
     _results = q.query(query)
@@ -185,7 +186,11 @@ def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc
         else:
             limit = 10
 
-        urls = Query(es_location, es_index, es_doc_type, crawl_id, revision_number, urls_query, start=0, limit=limit, sort=('id',))
+        if not urls_sort:
+            urls_sort = ['id', ]
+        urls_query["sort"] = urls_sort
+
+        urls = Query(es_location, es_index, es_doc_type, crawl_id, revision_number, copy.deepcopy(urls_query), start=0, limit=limit)
 
         urls_results = list(urls.results)
         result["urls"] = []
@@ -201,21 +206,21 @@ def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc
                         break
         else:
             result["urls"] = urls_results
+            result["urls_query"] = urls_query
         results.append(result)
 
     # Write suggestion file
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    summary_file = os.path.join(tmp_dir, 'suggest', '{}.json'.format(identifier))
+    summary_file = os.path.join(tmp_dir, 'flat', 'metrics', 'suggest', '{}.json'.format(identifier))
     makedirs(os.path.join(os.path.dirname(summary_file)), exist_ok=True)
     f = open(os.path.join(summary_file), 'w')
     f.write(json.dumps(results, indent=4))
     f.close()
     push_file(
-        os.path.join(s3_uri, 'suggest', '{}.json'.format(identifier)),
+        os.path.join(s3_uri, 'flat', 'metrics', 'suggest', '{}.json'.format(identifier)),
         summary_file
     )
     return len(results)
-
 
 
 def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix='/tmp', force_fetch=False):
@@ -246,20 +251,21 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         else:
             urls_fields = ["http_code"]
         urls_filters = get_filters_from_http_code_range(http_code)
-        make_suggest_file_from_query(identifier='http_code:{}'.format(str(http_code)[0] + 'xx'), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        make_suggest_file_from_query(identifier='http_code/{}'.format(str(http_code)[0] + 'xx'), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # Incoming redirections
     query = {
         "fields": ["redirects_from_nb"],
         "target_field": "redirects_from_nb",
     }
-    urls_fields = []
+    urls_fields = ["redirects_from_nb", "redirects_from"]
     urls_filters = [{
         "field": "redirects_from_nb",
         "value": 0,
         "predicate": "gt"
     }]
-    make_suggest_file_from_query(identifier='http_code:incoming_redirects', query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+    urls_sort = [{"redirects_from_nb": "desc"}]
+    make_suggest_file_from_query(identifier='http_code/incoming_redirects', query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort, **summary_kwargs)
 
     # Metadata types
     for metadata_type in ('title', 'description', 'h1'):
@@ -278,7 +284,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 urls_filters = [
                     {"field": "metadata_nb.{}".format(metadata_type), "value": 0}
                 ]
-            make_suggest_file_from_query(identifier='metadata:{}:{}'.format(metadata_type, metadata_status), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+            make_suggest_file_from_query(identifier='metadata/{}/{}'.format(metadata_type, metadata_status), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # Speed
     for delay in ("delay_gte_2s", "delay_lt_500ms"):
@@ -288,7 +294,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             "fields": [delay],
             "target_field": delay
         }
-        make_suggest_file_from_query(identifier='delay:{}'.format(delay[6:]), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        make_suggest_file_from_query(identifier='delay/{}'.format(delay[6:]), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # Canonicals
     for field in ('filled', 'not_filled', 'equal', 'not_equal', 'incoming'):
@@ -299,7 +305,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         }
         urls_fields = ["canonical_to", "canonical_from"]
         urls_filters = get_filters_from_agg_canonical_field(field)
-        make_suggest_file_from_query(identifier='canonical:{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        make_suggest_file_from_query(identifier='canonical/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # Deeper depths
     for depth in (3, 5, 7, 10):
@@ -318,4 +324,29 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             "value": depth,
             "predicate": "gte"
         }]
-        make_suggest_file_from_query(identifier='distribution:depth_gte_{}'.format(depth), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        make_suggest_file_from_query(identifier='distribution/depth_gte_{}'.format(depth), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
+    # internal outlinks
+    for field in ('total', 'follow', 'follow_unique', 'nofollow'):
+        full_field = "outlinks_internal_nb.{}".format(field)
+        query = {
+            "target_field": full_field
+        }
+        urls_fields = [full_field]
+        urls_filters = [
+            {"field": full_field, "value": 0, "predicate": "gt"}
+        ]
+        make_suggest_file_from_query(identifier='outlinks_internal/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
+    # broken outlinks
+    for field in ('any', '3xx', '4xx', '5xx'):
+        full_field = "error_links.{}".format(field)
+        query = {
+            "target_field": full_field
+        }
+        urls_fields = [full_field]
+        urls_filters = [
+            {"field": "error_links.{}.nb".format(field), "value": 0, "predicate": "gt"}
+        ]
+        urls_sort = [{"error_links.{}.nb".format(field): "desc"}]
+        make_suggest_file_from_query(identifier='outlinks_internal/errors_links_{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort, **summary_kwargs)
