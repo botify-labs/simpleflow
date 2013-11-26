@@ -113,7 +113,7 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 
     #fetch child relationship tsv
     children_filename = "cluster_mixed_children.tsv"
-    source_uri = os.path.join(s3_uri, filename)
+    source_uri = os.path.join(s3_uri, children_filename)
     destination_path = os.path.join(tmp_dir, children_filename)
     _f, fetched = fetch_file(source_uri,
                              destination_path,
