@@ -7,7 +7,7 @@ import csv
 
 from pandas import HDFStore, DataFrame, Index
 
-from cdf.exceptions import MissingResource
+from cdf.exceptions import MissingResource, InvalidDataFormat
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
@@ -125,8 +125,19 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
                             quotechar=None,
                             quoting=csv.QUOTE_NONE)
     row_list = [row for row in csv_reader]
+
+    columns = ["parent", "child"]
+    #check format
+    if not all([len(row) == len(columns) for row in row_list]):
+        sample_error_line = next(row for row in row_list
+                                 if len(row) != len(columns))
+        raise InvalidDataFormat("'%s' has incorrect format. "
+                                "Each row should contain exactly %d elements. "
+                                "Sample error line : '%s'"
+                                % (_f, len(columns), sample_error_line))
+
     if len(row_list) > 0:
-        child_frame = DataFrame(row_list, columns=["parent", "child"])
+        child_frame = DataFrame(row_list, columns=columns)
         #store dataframe in hdfstore.
         #we do not store empty dataframe in hdfstore since recovering it
         #afterwards raises an exception :
