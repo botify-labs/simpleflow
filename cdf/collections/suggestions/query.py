@@ -277,6 +277,10 @@ class SuggestQuery(BaseMetricsQuery):
             #and may select columns
             df = df.loc[self._apply_filters(df, settings['filters'])]
 
+        #if the dataframe is empty the result will be empty
+        if len(df) > 0:
+            return []
+
         df = df.groupby(['query']).agg('sum').reset_index()
         df.sort(columns=[target_field], ascending=[0], inplace=True)
 
