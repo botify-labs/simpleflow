@@ -282,7 +282,7 @@ def is_boolean_operation_filter(filter_dict):
 
 class Query(object):
 
-    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100, sort=('id',)):
+    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100):
         self.es_location = es_location
         self.es_index = es_index
         self.es_doc_type = es_doc_type
@@ -293,7 +293,6 @@ class Query(object):
         self.query = query
         self.start = start
         self.limit = limit
-        self.sort = sort
 
     @property
     def results(self):
@@ -306,7 +305,7 @@ class Query(object):
         self._run()
         return self._results['count']
 
-    def make_raw_query(self, query, sort=None):
+    def make_raw_query(self, query):
         """
         Transform Botify query to elastic search query
         """
@@ -319,9 +318,6 @@ class Query(object):
             }
 
         q = {}
-
-        if sort:
-            q['sort'] = sort
 
         if 'tagging_filters' in query and 'filters' in query:
             q["filter"] = {
@@ -438,14 +434,9 @@ class Query(object):
         else:
             raise Exception('filters are not valid for given query')
 
-        if 'sort' in query:
-            sort = query['sort']
-        else:
-            sort = ('id', )
-
         host, port = self.es_location[7:].split(':')
         s = Elasticsearch([{'host': host, 'port': int(port)}])
-        alt_results = s.search(body=self.make_raw_query(query, sort=sort),
+        alt_results = s.search(body=self.make_raw_query(query),
                                index=self.es_index,
                                doc_type=self.es_doc_type,
                                size=self.limit,
