@@ -215,8 +215,8 @@ class BaseMetricsQuery(object):
             return {"counters": results}
 
         results = []
-        for i, n in enumerate(df.values):
-            values = dict(zip(df.columns, n))
+        for idx in df.index:
+            values = {c: df[c][idx] for c in df.columns}
             counters = {}
             for field in final_fields:
                 deep_update(counters, deep_dict({field: transform_std_type(field, values)}))
