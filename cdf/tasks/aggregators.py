@@ -5,9 +5,10 @@ import json
 
 import csv
 
-from pandas import HDFStore, DataFrame, Index
+from pandas import HDFStore, Index
 
 from cdf.exceptions import MissingResource
+from cdf.utils.loading import build_dataframe_from_csv
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
@@ -113,20 +114,15 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 
     #fetch child relationship tsv
     children_filename = "cluster_mixed_children.tsv"
-    source_uri = os.path.join(s3_uri, filename)
+    source_uri = os.path.join(s3_uri, children_filename)
     destination_path = os.path.join(tmp_dir, children_filename)
     _f, fetched = fetch_file(source_uri,
                              destination_path,
                              force_fetch=force_fetch)
 
     #build child relationship dataframe
-    csv_reader = csv.reader(open(_f, "rb"),
-                            delimiter="\t",
-                            quotechar=None,
-                            quoting=csv.QUOTE_NONE)
-    row_list = [row for row in csv_reader]
-    if len(row_list) > 0:
-        child_frame = DataFrame(row_list, columns=["parent", "child"])
+    child_frame = build_dataframe_from_csv(open(_f, "rb"), ["parent", "child"])
+    if len(child_frame) > 0:
         #store dataframe in hdfstore.
         #we do not store empty dataframe in hdfstore since recovering it
         #afterwards raises an exception :
@@ -155,7 +151,6 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 
     store.close()
     push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)
-
 
 def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix='/tmp', force_fetch=False):
     query_type = []
