@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-#a jenkins script to be launched by the botify-cdf job
+#a jenkins script to be launched by the botify-cdf jenkins job
 STATUS=0
 
 #get script location
