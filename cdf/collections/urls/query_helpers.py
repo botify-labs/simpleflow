@@ -6,10 +6,10 @@ CANONICAL_FIELD_TO_FILTERS = {
         {"field": "canonical_to", "predicate": "not_null", "not": True}
     ],
     "equal": [
-        {"field": "canonical_equal", "value": True}
+        {"field": "canonical_to_equal", "value": True}
     ],
     "not_equal": [
-        {"field": "canonical_equal", "value": False}
+        {"field": "canonical_to_equal", "value": False}
     ],
     "incoming": [
         {"field": "canonical_from_nb", "value": 0, "predicate": "gt"}

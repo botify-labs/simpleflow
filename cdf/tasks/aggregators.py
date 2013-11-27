@@ -132,9 +132,7 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
                             quoting=csv.QUOTE_NONE)
     row_list = [row for row in csv_reader]
     if len(row_list) > 0:
-        # hot fix
-        child_frame = DataFrame([r[2:] for r in row_list], columns=["parent", "child"])
-        #child_frame = DataFrame(row_list, columns=["parent", "child"])
+        child_frame = DataFrame(row_list, columns=["parent", "child"])
         #store dataframe in hdfstore.
         #we do not store empty dataframe in hdfstore since recovering it
         #afterwards raises an exception :
@@ -339,7 +337,10 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             "fields": [full_field],
             "target_field": full_field
         }
-        urls_fields = ["canonical_to", "canonical_from"]
+        if field == "incoming":
+            urls_fields = ["canonical_from"]
+        else:
+            urls_fields = ["canonical_to"]
         urls_filters = get_filters_from_agg_canonical_field(field)
         make_suggest_file_from_query(identifier='canonical/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
