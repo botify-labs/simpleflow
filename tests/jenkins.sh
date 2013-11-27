@@ -15,7 +15,6 @@ virtualenv $VIRTUALENV_DIR
 source $VIRTUALENV_DIR/bin/activate
 
 #install dependencies
-
 pip install Cython==0.19.1
 pip install numpy
 pip install numexpr==2.1
