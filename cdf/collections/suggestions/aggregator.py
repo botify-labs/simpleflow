@@ -219,6 +219,14 @@ class MetricsAggregator(object):
             if incanonicals:
                 results[key]['canonical_nb']['incoming'] += incanonicals[incanonical_score_idx]
 
+            if len(inlinks) > 0:
+                results[key]['inlinks_internal_nb']['total_urls'] += 1
+
+            # control flags for `follow_urls` and `total_urls`
+            has_in_follow = False
+            has_out_follow = False
+            has_out_internal = False
+
             # Store metadata counters
             """
             "metadata_nb": {
@@ -234,6 +242,7 @@ class MetricsAggregator(object):
             }
             """
             # If the url has not h1, title or description, we considered that there is not enough metadata
+            # TODO if we have meta types 1,2,3, is it `not_enough` ??
             meta_types_available = [i[content_duplicate_meta_type_idx] for i in contents_duplicate]
             if len(meta_types_available) < 3:
                 results[key]['metadata_nb']['not_enough'] += 1
@@ -274,7 +283,12 @@ class MetricsAggregator(object):
                 results[key][counter_key]['total'] += score
                 results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += score
 
+                results[key][counter_key]['total_unique'] += score_unique
+
                 if follow_key == 'follow':
+                    if not has_in_follow:
+                        has_in_follow = True
+                        results[key][counter_key]['follow_urls'] += 1
                     results[key][counter_key]['follow_unique'] += score_unique
                     inlink_follow_dist(results[key][counter_key], score_unique)
                 else:
@@ -290,9 +304,18 @@ class MetricsAggregator(object):
                 results[key][counter_key]['total'] += score
                 results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += score
 
+                if is_internal:
+                    results[key][counter_key]['total_unique'] += score_unique
+                    if not has_out_internal:
+                        has_out_internal = True
+                        results[key][counter_key]['total_urls'] += 1
+
                 if follow_key == 'follow':
                     if is_internal:
                         results[key][counter_key]['follow_unique'] += score_unique
+                        if not has_out_follow:
+                            has_out_follow = True
+                            results[key][counter_key]['follow_urls'] += 1
                 else:
                     if follow_key not in results[key][counter_key]['nofollow_combinations']:
                         results[key][counter_key]['nofollow_combinations'][follow_key] = score_unique

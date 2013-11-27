@@ -199,6 +199,9 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target_int['follow'], 40)
         self.assertEqual(target_int['follow_unique'], 30)
         self.assertEqual(target_int['nofollow'], 3)
+        self.assertEqual(target_int['total_unique'], 32)
+        self.assertEqual(target_int['total_urls'], 2)
+        self.assertEqual(target_int['follow_urls'], 2)
         self.assertEqual(target_int[nfc_key]['link_meta_robots'], 2)
 
         # counters for `nofollow` are calculated with `score_unique`
@@ -222,6 +225,9 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['follow'], 40)
         self.assertEqual(target['follow_unique'], 30)
         self.assertEqual(target['nofollow'], 3)
+        self.assertEqual(target['total_unique'], 32)
+        self.assertEqual(target['total_urls'], 2)
+        self.assertEqual(target['follow_urls'], 2)
 
         self.assertEqual(target[nfc_key]['link_meta_robots'], 2)
 

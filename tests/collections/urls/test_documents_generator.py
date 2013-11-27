@@ -6,7 +6,7 @@ from datetime import datetime
 
 from cdf.log import logger
 from cdf.collections.urls.generators.documents import UrlDocumentGenerator
-from cdf.streams.masks import list_to_mask
+from cdf.streams.masks import list_to_mask, follow_mask
 
 logger.setLevel(logging.DEBUG)
 
@@ -359,14 +359,14 @@ class TestUrlDocumentGenerator(unittest.TestCase):
 
         #format : link_type      follow? src_urlid       dst_urlid       or_external_url
         outlinks = [
-            [1, 'r301', True, 2, ''],
-            [2, 'r302', True, -1, 'http://www.youtube.com'],
-            [3, 'r301', True, 4, ''],
+            [1, 'r301', ['follow'], 2, ''],
+            [2, 'r302', ['follow'], -1, 'http://www.youtube.com'],
+            [3, 'r301', ['follow'], 4, ''],
         ]
 
         inlinks = [
-            [2, 'r301', True, 1],
-            [4, 'r301', True, 3],
+            [2, 'r301', ['follow'], 1],
+            [4, 'r301', ['follow'], 3],
         ]
 
         u = UrlDocumentGenerator(iter(patterns),
@@ -422,7 +422,7 @@ class TestUrlDocumentGenerator(unittest.TestCase):
 
         #format : link_type      follow? dst_urlid       src_urlid
         inlinks = [
-            [1, 'r301', True, 2],
+            [1, 'r301', ['follow'], 2],
         ]
 
         u = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks), infos=iter(infos))
@@ -455,18 +455,17 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         )
 
         outlinks = [
-            [1, 'canonical', True, 2, ''],
-            [2, 'canonical', True, 2, ''],
-            [3, 'canonical', True, -1, 'http://www.youtube.com'],
-            [4, 'canonical', True, 5, ''],
-            [4, 'canonical', True, 6, ''], # Check that we take only the first canonical for url 4
+            [1, 'canonical', ['follow'], 2, ''],
+            [2, 'canonical', ['follow'], 2, ''],
+            [3, 'canonical', ['follow'], -1, 'http://www.youtube.com'],
+            [4, 'canonical', ['follow'], 5, ''],
+            [4, 'canonical', ['follow'], 6, ''], # Check that we take only the first canonical for url 4
         ]
 
         inlinks = [
-            [2, 'canonical', True, 1],
-            [2, 'canonical', True, 2],
-            [5, 'canonical', True, 4],
-
+            [2, 'canonical', ['follow'], 1],
+            [2, 'canonical', ['follow'], 2],
+            [5, 'canonical', ['follow'], 4],
         ]
 
         u = UrlDocumentGenerator(iter(patterns), outlinks=iter(outlinks), infos=iter(infos), inlinks=iter(inlinks))
@@ -499,9 +498,9 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         )
 
         inlinks = [
-            [1, 'canonical', True, 5],
-            [2, 'canonical', True, 17],
-            [2, 'canonical', True, 20],
+            [1, 'canonical', ['follow'], 5],
+            [2, 'canonical', ['follow'], 17],
+            [2, 'canonical', ['follow'], 20],
         ]
 
         u = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks), infos=iter(infos))
@@ -574,3 +573,43 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         key = 'error_links'
         self.assertEquals(documents[0][1][key], expected_1)
         self.assertEquals(documents[1][1][key], expected_2)
+
+    def test_total_uniques(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+        ]
+
+        outlinks = [
+            [1, 'a', follow_mask(0), 2, ''],
+            [1, 'a', follow_mask(8), 2, ''],
+            [1, 'a', follow_mask(1), 2, ''],
+            [1, 'a', follow_mask(7), 2, ''],
+            [1, 'a', follow_mask(4), 2, ''],
+            [1, 'a', follow_mask(5), 3, ''],
+            [1, 'canonical', follow_mask(0), 10, ''],
+        ]
+
+        inlinks = [
+            [1, 'a', follow_mask(0), 2],
+            [1, 'r301', follow_mask(0), 3],
+            [1, 'a', follow_mask(2), 3],
+            [1, 'a', follow_mask(4), 4],
+            [1, 'a', follow_mask(6), 4],
+            [1, 'a', follow_mask(7), 4],
+        ]
+
+        u = UrlDocumentGenerator(iter(patterns),
+                                 infos=iter(infos),
+                                 outlinks=iter(outlinks),
+                                 inlinks=iter(inlinks))
+        documents = list(u)
+
+        target = documents[0][1]
+        self.assertEqual(target['outlinks_internal_nb']['total_unique'], 2)
+        self.assertEqual(target['inlinks_internal_nb']['total_unique'], 3)
+        self.assertFalse('processed_inlink_url' in documents[0][1])
+        self.assertFalse('processed_outlink_url' in documents[0][1])

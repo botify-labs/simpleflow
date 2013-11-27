@@ -36,6 +36,7 @@ QUERY_FIELDS = (
 
     "inlinks_internal_nb",
     "inlinks_internal_nb.total",
+    "inlinks_internal_nb.total_unique",
     "inlinks_internal_nb.follow",
     "inlinks_internal_nb.follow_unique",
     "inlinks_internal_nb.nofollow",
@@ -43,6 +44,7 @@ QUERY_FIELDS = (
 
     "outlinks_internal_nb",
     "outlinks_internal_nb.total",
+    "outlinks_internal_nb.total_unique",
     "outlinks_internal_nb.follow_unique",
     "outlinks_internal_nb.follow",
     "outlinks_internal_nb.nofollow_combinations",
@@ -81,4 +83,15 @@ QUERY_FIELDS = (
     "canonical_from",
     "canonical_to",
     "canonical_to_equal",
+
+    "error_links",
+    "error_links.3xx",
+    "error_links.3xx.nb",
+    "error_links.3xx.urls",
+    "error_links.4xx",
+    "error_links.4xx.nb",
+    "error_links.4xx.urls",
+    "error_links.5xx",
+    "error_links.5xx.nb",
+    "error_links.5xx.urls",
 )
