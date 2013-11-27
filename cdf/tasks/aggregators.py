@@ -18,7 +18,7 @@ from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS
 from cdf.collections.suggestions.aggregator import MetricsAggregator, MetricsConsolidator
 from cdf.collections.urls.generators.suggestions import MetadataClusterMixin
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
-from cdf.collections.suggestions.query import SuggestQuery
+from cdf.collections.suggestions.query import MetricsQuery, SuggestQuery
 from cdf.collections.urls.query import Query
 from cdf.collections.urls.query_helpers import (
     get_filters_from_http_code_range,
@@ -119,7 +119,7 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 
     #fetch child relationship tsv
     children_filename = "cluster_mixed_children.tsv"
-    source_uri = os.path.join(s3_uri, filename)
+    source_uri = os.path.join(s3_uri, children_filename)
     destination_path = os.path.join(tmp_dir, children_filename)
     _f, fetched = fetch_file(source_uri,
                              destination_path,
@@ -223,16 +223,52 @@ def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc
     return len(results)
 
 
+def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir_prefix, identifier, query):
+    q = MetricsQuery.from_s3_uri(crawl_id, s3_uri)
+    results = q.query(query)
+     # Write suggestion file
+    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    summary_file = os.path.join(tmp_dir, 'flat', 'metrics', '{}.json'.format(identifier))
+    makedirs(os.path.join(os.path.dirname(summary_file)), exist_ok=True)
+    f = open(os.path.join(summary_file), 'w')
+    f.write(json.dumps(results, indent=4))
+    f.close()
+    push_file(
+        os.path.join(s3_uri, 'flat', 'metrics', '{}.json'.format(identifier)),
+        summary_file
+    )
+
+
 def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix='/tmp', force_fetch=False):
-    summary_kwargs = {
+    counter_kwargs = {
         'crawl_id': crawl_id,
         's3_uri': s3_uri,
-        'es_location': es_location,
-        'es_index': es_index,
-        'es_doc_type': es_doc_type,
         'revision_number': revision_number,
         'tmp_dir_prefix': tmp_dir_prefix,
     }
+
+    suggest_kwargs = counter_kwargs.copy()
+    suggest_kwargs.update({
+        'es_location': es_location,
+        'es_index': es_index,
+        'es_doc_type': es_doc_type,
+    })
+
+    # Full picture
+    query = {}
+    make_counter_file_from_query(identifier='full_picture', query=query, **counter_kwargs)
+
+    # Counters by http_code
+    query = {
+        "group_by": ["http_code"]
+    }
+    make_counter_file_from_query(identifier='http_code', query=query, **counter_kwargs)
+
+    # Counters by depth
+    query = {
+        "group_by": ["depth"]
+    }
+    make_counter_file_from_query(identifier='depth', query=query, **counter_kwargs)
 
     # Http codes by range
     for http_code in (200, 300, 400, 500):
@@ -251,7 +287,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         else:
             urls_fields = ["http_code"]
         urls_filters = get_filters_from_http_code_range(http_code)
-        make_suggest_file_from_query(identifier='http_code/{}'.format(str(http_code)[0] + 'xx'), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        make_suggest_file_from_query(identifier='http_code/{}'.format(str(http_code)[0] + 'xx'), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
     # Incoming redirections
     query = {
@@ -265,7 +301,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         "predicate": "gt"
     }]
     urls_sort = [{"redirects_from_nb": "desc"}]
-    make_suggest_file_from_query(identifier='http_code/incoming_redirects', query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort, **summary_kwargs)
+    make_suggest_file_from_query(identifier='http_code/incoming_redirects', query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort, **suggest_kwargs)
 
     # Metadata types
     for metadata_type in ('title', 'description', 'h1'):
@@ -284,7 +320,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 urls_filters = [
                     {"field": "metadata_nb.{}".format(metadata_type), "value": 0}
                 ]
-            make_suggest_file_from_query(identifier='metadata/{}/{}'.format(metadata_type, metadata_status), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+            make_suggest_file_from_query(identifier='metadata/{}/{}'.format(metadata_type, metadata_status), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
     # Speed
     for delay in ("delay_gte_2s", "delay_lt_500ms"):
@@ -294,7 +330,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             "fields": [delay],
             "target_field": delay
         }
-        make_suggest_file_from_query(identifier='delay/{}'.format(delay[6:]), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        make_suggest_file_from_query(identifier='delay/{}'.format(delay[6:]), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
     # Canonicals
     for field in ('filled', 'not_filled', 'equal', 'not_equal', 'incoming'):
@@ -305,7 +341,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         }
         urls_fields = ["canonical_to", "canonical_from"]
         urls_filters = get_filters_from_agg_canonical_field(field)
-        make_suggest_file_from_query(identifier='canonical/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        make_suggest_file_from_query(identifier='canonical/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
     # Deeper depths
     for depth in (3, 5, 7, 10):
@@ -324,7 +360,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             "value": depth,
             "predicate": "gte"
         }]
-        make_suggest_file_from_query(identifier='distribution/depth_gte_{}'.format(depth), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        make_suggest_file_from_query(identifier='distribution/depth_gte_{}'.format(depth), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
     # internal outlinks
     for field in ('total', 'follow', 'follow_unique', 'nofollow'):
@@ -336,7 +372,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         urls_filters = [
             {"field": full_field, "value": 0, "predicate": "gt"}
         ]
-        make_suggest_file_from_query(identifier='outlinks_internal/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        make_suggest_file_from_query(identifier='outlinks_internal/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
     # broken outlinks
     for field in ('any', '3xx', '4xx', '5xx'):
@@ -349,4 +385,4 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             {"field": "error_links.{}.nb".format(field), "value": 0, "predicate": "gt"}
         ]
         urls_sort = [{"error_links.{}.nb".format(field): "desc"}]
-        make_suggest_file_from_query(identifier='outlinks_internal/errors_links_{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort, **summary_kwargs)
+        make_suggest_file_from_query(identifier='outlinks_internal/errors_links_{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort, **suggest_kwargs)
