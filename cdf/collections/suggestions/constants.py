@@ -17,6 +17,7 @@ COUNTERS_FIELDS = (
 
     'inlinks_internal_nb',
     'inlinks_internal_nb.total',
+    'inlinks_internal_nb.total_unique',
     'inlinks_internal_nb.follow',
     'inlinks_internal_nb.follow_unique',
     'inlinks_internal_nb.nofollow',
@@ -74,6 +75,7 @@ COUNTERS_FIELDS = (
 
     'outlinks_internal_nb',
     'outlinks_internal_nb.total',
+    'outlinks_internal_nb.total_unique',
     'outlinks_internal_nb.follow',
     'outlinks_internal_nb.follow_unique',
     'outlinks_internal_nb.nofollow',

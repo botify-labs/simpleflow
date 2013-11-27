@@ -234,6 +234,7 @@ class MetricsAggregator(object):
             }
             """
             # If the url has not h1, title or description, we considered that there is not enough metadata
+            # TODO if we have meta types 1,2,3, is it `not_enough` ??
             meta_types_available = [i[content_duplicate_meta_type_idx] for i in contents_duplicate]
             if len(meta_types_available) < 3:
                 results[key]['metadata_nb']['not_enough'] += 1
@@ -274,6 +275,8 @@ class MetricsAggregator(object):
                 results[key][counter_key]['total'] += score
                 results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += score
 
+                results[key][counter_key]['total_unique'] += score_unique
+
                 if follow_key == 'follow':
                     results[key][counter_key]['follow_unique'] += score_unique
                     inlink_follow_dist(results[key][counter_key], score_unique)
@@ -289,6 +292,9 @@ class MetricsAggregator(object):
                 follow_key = '_'.join(sorted(follow))
                 results[key][counter_key]['total'] += score
                 results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += score
+
+                if is_internal:
+                    results[key][counter_key]['total_unique'] += score_unique
 
                 if follow_key == 'follow':
                     if is_internal:
