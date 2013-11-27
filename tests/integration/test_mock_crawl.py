@@ -87,7 +87,7 @@ def _mock_nb_parts(s3_uri):
     return len(files)
 
 
-class MockIntergrationTest(unittest.TestCase):
+class MockIntegrationTest(unittest.TestCase):
     @classmethod
     @patch('cdf.utils.s3.push_file', _mock_push_file)
     @patch('cdf.utils.s3.push_content', _mock_push_content)
