@@ -68,7 +68,6 @@ class TestUrlDocumentGenerator(unittest.TestCase):
             },
             'outlinks_external_nb': {
                 'total': 0,
-                'total_unique': 0,
                 'follow': 0,
                 'nofollow': 0,
                 'nofollow_combinations': []
