@@ -282,7 +282,10 @@ def is_boolean_operation_filter(filter_dict):
 
 class Query(object):
 
-    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100, sort=('id',)):
+    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100, sort=('id',), search_backend = None):
+        """Constructor
+        search_backend : the search backend to use. If None, use elasticsearch.
+        """
         self.es_location = es_location
         self.es_index = es_index
         self.es_doc_type = es_doc_type
@@ -294,6 +297,11 @@ class Query(object):
         self.start = start
         self.limit = limit
         self.sort = sort
+        if search_backend :
+            self.search_backend = search_backend
+        else:
+            host, port = self.es_location[7:].split(':')
+            self.search_backend = Elasticsearch([{'host': host, 'port': int(port)}])
 
     @property
     def results(self):
@@ -443,13 +451,11 @@ class Query(object):
         else:
             sort = ('id', )
 
-        host, port = self.es_location[7:].split(':')
-        s = Elasticsearch([{'host': host, 'port': int(port)}])
-        alt_results = s.search(body=self.make_raw_query(query, sort=sort),
-                               index=self.es_index,
-                               doc_type=self.es_doc_type,
-                               size=self.limit,
-                               offset=self.start)
+        alt_results = self.search_backend.search(body=self.make_raw_query(query, sort=sort),
+                                                 index=self.es_index,
+                                                 doc_type=self.es_doc_type,
+                                                 size=self.limit,
+                                                 offset=self.start)
         if alt_results["hits"]["total"] == 0:
             self._results = {
                 "count": 0,
@@ -474,10 +480,10 @@ class Query(object):
         Resolve urls ids added in `prepare` functions hooks
         """
         if self._urls_ids:
-            urls_es = s.mget(body={"ids": list('{}:{}'.format(self.crawl_id, url_id) for url_id in self._urls_ids)},
-                             index=self.es_index,
-                             doc_type=self.es_doc_type,
-                             fields=["url", "http_code"])
+            urls_es = self.search_backend.mget(body={"ids": list('{}:{}'.format(self.crawl_id, url_id) for url_id in self._urls_ids)},
+                                               index=self.es_index,
+                                               doc_type=self.es_doc_type,
+                                               fields=["url", "http_code"])
             self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs'] if url["exists"]}
 
         for r in alt_results['hits']['hits']:
