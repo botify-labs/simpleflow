@@ -273,7 +273,13 @@ class SuggestQuery(BaseMetricsQuery):
         target_field = settings.get('target_field', 'pages_nb')
 
         if 'filters' in settings:
-            df = df[self._apply_filters(df, settings['filters'])]
+            #explicitly select rows, [] notation is ambiguous
+            #and may select columns
+            df = df.loc[self._apply_filters(df, settings['filters'])]
+
+        #if the dataframe is empty the result will be empty
+        if len(df) == 0:
+            return []
 
         df = df.groupby(['query']).agg('sum').reset_index()
         df.sort(columns=[target_field], ascending=[0], inplace=True)

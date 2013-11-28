@@ -36,15 +36,24 @@ def extract_patterns(attributes, stream_item):
     attributes['metadata_duplicate_is_first'] = {verbose_content_type: False for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
     attributes['inlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('inlinks_internal_nb')}
     attributes['inlinks_internal_nb']['nofollow_combinations'] = []
+    # a list of [src, mask, count]
     attributes['inlinks_internal'] = []
     attributes['outlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('outlinks_internal_nb')}
     attributes['outlinks_internal_nb']['nofollow_combinations'] = []
     attributes['outlinks_external_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('outlinks_external_nb')}
     attributes['outlinks_external_nb']['nofollow_combinations'] = []
+    # a list of [dest, mask, count]
     attributes['outlinks_internal'] = []
+    # resolve a (src, mask) to its index in `outlinks_internal` list
     attributes["inlinks_id_to_idx"] = {}
+    # resolve a (dest, mask) to its index in `inlinks_internal` list
     attributes["outlinks_id_to_idx"] = {}
+    # TODO need renaming, `pattern` is used both for `cluster` and for `urlids`
     attributes["patterns"] = []
+    # a temp set to track all `seen` src url of incoming links
+    attributes["processed_inlink_url"] = set()
+    # a temp set to track all `seen` dest url of outgoing links
+    attributes["processed_outlink_url"] = set()
 
 
 def extract_infos(attributes, stream_item):
@@ -131,6 +140,9 @@ def extract_outlinks(attributes, stream_item):
             increments_nofollow_combination()
 
         if is_internal:
+            # add this link's dest to the processed set
+            attributes['processed_outlink_url'].add(url_dst)
+
             url_idx = attributes["outlinks_id_to_idx"].get((url_dst, mask), None)
             if url_idx is not None:
                 attributes["outlinks_internal"][url_idx][2] += 1
@@ -184,6 +196,10 @@ def extract_inlinks(attributes, stream_item):
 
         attributes['inlinks_internal_nb']['total'] += 1
         attributes['inlinks_internal_nb']['follow' if is_follow else 'nofollow'] += 1
+
+        # add src to processed set
+        attributes['processed_inlink_url'].add(url_src)
+
         if is_follow:
             increments_follow_unique()
         else:
@@ -197,6 +213,7 @@ def extract_inlinks(attributes, stream_item):
             attributes["inlinks_id_to_idx"][(url_src, mask)] = len(attributes["inlinks_internal"]) - 1
 
     elif link_type.startswith('r'):
+        # TODO problem here?
         http_code = int(link_type[1:])
         if 'redirects_from' not in attributes:
             attributes['redirects_from'] = []
@@ -247,13 +264,22 @@ def end_extract_url(attributes):
     If the url has not been crawled but received redirections or canonicals, we exceptionnaly
     this one into elasticsearch
     """
+    attributes['outlinks_internal_nb']['total_unique'] = len(attributes['processed_outlink_url'])
+    attributes['inlinks_internal_nb']['total_unique'] = len(attributes['processed_inlink_url'])
+
+    # delete intermediate data structures
+    del attributes['processed_inlink_url']
+    del attributes['processed_outlink_url']
     del attributes["outlinks_id_to_idx"]
     del attributes["inlinks_id_to_idx"]
 
+    # only push up to 300 links information for each url
     for link_direction in ('inlinks_internal', 'outlinks_internal'):
         if len(attributes[link_direction]) > 300:
             attributes[link_direction] = attributes[link_direction][0:300]
 
+    # include not crawled url in generated document only if they've received
+    # redirection or canonicals
     if attributes['http_code'] in (0, 1, 2):
         if 'redirects_from_nb' in attributes or 'canonical_from_nb' in attributes:
             url = attributes['url']
@@ -286,13 +312,13 @@ class UrlDocumentGenerator(object):
     """
     Return a document collection
 
-    Format : 
+    Format :
 
         {
             "url": "http://www.site.com/fr/my-article-1",
             "protocol": "http",
             "host": "www.site.com",
-            "path": "/fr/my-article-1", 
+            "path": "/fr/my-article-1",
             "query_string": "?p=comments&offset=10",
             "query_string_keys": ["p", "offset"],
             "query_string_keys_order": "p;offset",
@@ -306,8 +332,8 @@ class UrlDocumentGenerator(object):
             "delay2": 300,
             "outlinks_internal_follow_nb": 4,
             "outlinks_internal_nofollow_nb": 1,
-            "outlinks_external_follow_nb": 5, 
-            "outlinks_external_nofollow_nb": 2, 
+            "outlinks_external_follow_nb": 5,
+            "outlinks_external_nofollow_nb": 2,
             "bytesize": 14554,
             "inlinks_internal_nb": 100,
             "inlinks_external_nb": 100,
