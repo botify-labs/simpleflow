@@ -3,9 +3,6 @@ URLS_DATA_MAPPING = {
         "properties": {
             "url": {
                 "type": "string",
-            },
-            "url_not_analyzed": {
-                "type": "string",
                 "index": "not_analyzed"
             },
             "url_hash": {"type": "long"},
@@ -15,7 +12,10 @@ URLS_DATA_MAPPING = {
             "delay2": {"type": "long"},
             "depth": {"type": "long"},
             "gzipped": {"type": "boolean"},
-            "host": {"type": "string"},
+            "host": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
             "http_code": {"type": "long"},
             "id": {"type": "long"},
             "crawl_id": {"type": "long"},
@@ -30,10 +30,54 @@ URLS_DATA_MAPPING = {
             },
             "metadata": {
                 "properties": {
-                    "description": {"type": "string"},
-                    "h1": {"type": "string"},
-                    "h2": {"type": "string"},
-                    "title": {"type": "string"}
+                    "description": {
+                        "type": "multi_field",
+                        "fields": {
+                            "description": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    },
+                    "h1": {
+                        "type": "multi_field",
+                        "fields": {
+                            "h1": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    },
+                    "h2": {
+                        "type": "multi_field",
+                        "fields": {
+                            "h2": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    },
+                    "title": {
+                        "type": "multi_field",
+                        "fields": {
+                            "title": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    }
                 }
             },
             "metadata_duplicate_nb": {
@@ -100,9 +144,13 @@ URLS_DATA_MAPPING = {
                     }
                 }
             },
-            "path": {"type": "string"},
+            "path": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
             "protocol": {"type": "string"},
             "query_string": {"type": "string"},
+            # can replace this by an custom analyzer
             "query_string_items": {"type": "string"},
             "query_string_keys": {"type": "string"},
             "query_string_keys_order": {"type": "string"},

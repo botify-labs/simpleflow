@@ -19,7 +19,6 @@ def extract_patterns(attributes, stream_item):
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
 
     attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
-    attributes['url_not_analyzed'] = attributes['url']
     attributes['url_hash'] = string_to_int64(attributes['url'])
 
     # query_string fields
@@ -286,13 +285,13 @@ class UrlDocumentGenerator(object):
     """
     Return a document collection
 
-    Format : 
+    Format :
 
         {
             "url": "http://www.site.com/fr/my-article-1",
             "protocol": "http",
             "host": "www.site.com",
-            "path": "/fr/my-article-1", 
+            "path": "/fr/my-article-1",
             "query_string": "?p=comments&offset=10",
             "query_string_keys": ["p", "offset"],
             "query_string_keys_order": "p;offset",
@@ -306,8 +305,8 @@ class UrlDocumentGenerator(object):
             "delay2": 300,
             "outlinks_internal_follow_nb": 4,
             "outlinks_internal_nofollow_nb": 1,
-            "outlinks_external_follow_nb": 5, 
-            "outlinks_external_nofollow_nb": 2, 
+            "outlinks_external_follow_nb": 5,
+            "outlinks_external_nofollow_nb": 2,
             "bytesize": 14554,
             "inlinks_internal_nb": 100,
             "inlinks_external_nb": 100,
