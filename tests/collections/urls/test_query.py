@@ -697,6 +697,7 @@ class TestQuery(unittest.TestCase):
         expected_result = {
             "outlinks_internal_nb": {
                 "total": 4,
+                'total_unique': 0,
                 "follow": 3,
                 "nofollow": 1,
                 "follow_unique": 3,
