@@ -272,7 +272,15 @@ PREDICATE_FORMATS = {
             }
         }
     },
-    'not_null': lambda filters: predicate_not_null(filters)
+    'between': lambda filters: {
+        "range": {
+            filters['field']: {
+                "from": filters['value'][0],
+                "to": filters['value'][1],
+            }
+        }
+    },
+    'not_null': lambda filters: predicate_not_null(filters),
 }
 
 
@@ -449,7 +457,7 @@ class Query(object):
                                index=self.es_index,
                                doc_type=self.es_doc_type,
                                size=self.limit,
-                               offset=self.start)
+                               from_=self.start)
         if alt_results["hits"]["total"] == 0:
             self._results = {
                 "count": 0,
