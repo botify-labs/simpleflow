@@ -51,7 +51,6 @@ class TestUrlDocumentGenerator(unittest.TestCase):
             'meta_nofollow': False,
             'inlinks_internal_nb': {
                 'total': 0,
-                'total_unique': 0,
                 'follow_unique': 0,
                 'follow': 0,
                 'nofollow': 0,
@@ -60,7 +59,6 @@ class TestUrlDocumentGenerator(unittest.TestCase):
             'inlinks_internal': [],
             'outlinks_internal_nb': {
                 'total': 0,
-                'total_unique': 0,
                 'follow_unique': 0,
                 'follow': 0,
                 'nofollow': 0,
