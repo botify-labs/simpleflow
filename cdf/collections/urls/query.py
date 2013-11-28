@@ -255,7 +255,7 @@ PREDICATE_FORMATS = {
     },
     'contains': lambda filters: {
         "regexp": {
-            filters['field']: "@%s@" % filters['value']
+            get_untouched_field(filters['field']): "@%s@" % filters['value']
         }
     },
     're': lambda filters: {
