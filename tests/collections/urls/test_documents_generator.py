@@ -51,6 +51,7 @@ class TestUrlDocumentGenerator(unittest.TestCase):
             'meta_nofollow': False,
             'inlinks_internal_nb': {
                 'total': 0,
+                'total_unique': 0,
                 'follow_unique': 0,
                 'follow': 0,
                 'nofollow': 0,
@@ -59,6 +60,7 @@ class TestUrlDocumentGenerator(unittest.TestCase):
             'inlinks_internal': [],
             'outlinks_internal_nb': {
                 'total': 0,
+                'total_unique': 0,
                 'follow_unique': 0,
                 'follow': 0,
                 'nofollow': 0,
@@ -210,7 +212,7 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         logger.info(document)
         self.assertEquals(
             document['outlinks_internal_nb'],
-            {'nofollow_combinations': [], 'follow': 0, 'total': 0, 'nofollow': 0, 'follow_unique': 0}
+            {'nofollow_combinations': [], 'follow': 0, 'total': 0, 'total_unique': 0, 'nofollow': 0, 'follow_unique': 0}
         )
         # Check that url 3 has 1 outlink
         document = documents[2][1]
@@ -321,6 +323,7 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         self.assertEquals(document['outlinks_internal_nb'],
                           {
                               'total': 0,
+                              'total_unique': 0,
                               'follow_unique': 0,
                               'nofollow': 0,
                               'follow': 0,
