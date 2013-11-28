@@ -168,11 +168,13 @@ FIELDS_HOOKS = {
     },
     'inlinks_internal': {
         'prepare': lambda query, es_document: prepare_links(query, es_document, 'inlinks_internal'),
-        'transform': lambda query, es_document, attributes: transform_links(query, es_document, attributes, 'inlinks_internal')
+        'transform': lambda query, es_document,
+                            attributes: transform_links(query, es_document, attributes, 'inlinks_internal')
     },
     'outlinks_internal': {
         'prepare': lambda query, es_document: prepare_links(query, es_document, 'outlinks_internal'),
-        'transform': lambda query, es_document, attributes: transform_links(query, es_document, attributes, 'outlinks_internal')
+        'transform': lambda query, es_document,
+                            attributes: transform_links(query, es_document, attributes, 'outlinks_internal')
     },
 }
 
@@ -201,6 +203,7 @@ def predicate_not_null(filters):
     """
     if 'properties' in URLS_DATA_MAPPING["urls"]["properties"][filters["field"]]:
         _f = {"or": []}
+        # TODO potential not managed `KeyError` here
         for field in URLS_DATA_MAPPING["urls"]["properties"][filters["field"]]["properties"]:
             _f["or"].append({"exists": {"field": "{}.{}".format(filters["field"], field)}})
         return _f
@@ -210,6 +213,27 @@ def predicate_not_null(filters):
                 "field": filters['field']
             }
         }
+
+
+def get_untouched_field(field):
+    """Get the untouched field out of a `multi_field` element
+
+    returns the original field if it's not a `multi_field`
+    """
+    if field in MULTI_FILEDS:
+        return '%s.untouched' % field
+    else:
+        return field
+
+
+# Elements that are of `multi_field` type
+MULTI_FILEDS = [
+    "metadata.h1",
+    "metadata.h2",
+    "metadata.description",
+    "metadata.title",
+]
+
 
 PREDICATE_FORMATS = {
     'eq': lambda filters: {
@@ -222,14 +246,16 @@ PREDICATE_FORMATS = {
             filters['field']: filters['value'],
         }
     },
+    # 'starts' predicate should be applied on `untouched`
     'starts': lambda filters: {
         "prefix": {
-            filters['field']: filters['value'],
+            get_untouched_field(filters['field']): filters['value'],
         }
     },
+    # 'ends' predicate should be applied on `untouched`
     'ends': lambda filters: {
         "regexp": {
-            filters['field']: "@%s" % filters['value']
+            get_untouched_field(filters['field']): "@%s" % filters['value']
         }
     },
     'contains': lambda filters: {
@@ -282,7 +308,8 @@ def is_boolean_operation_filter(filter_dict):
 
 class Query(object):
 
-    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100, sort=('id',)):
+    def __init__(self, es_location, es_index, es_doc_type, crawl_id,
+                 revision_number, query, start=0, limit=100, sort=('id',)):
         self.es_location = es_location
         self.es_index = es_index
         self.es_doc_type = es_doc_type
@@ -306,6 +333,7 @@ class Query(object):
         self._run()
         return self._results['count']
 
+    # TODO refactor signature to `make_es_query(self, sort=None)`
     def make_raw_query(self, query, sort=None):
         """
         Transform Botify query to elastic search query
@@ -376,9 +404,8 @@ class Query(object):
             else:
                 return PREDICATE_FORMATS[predicate](filters)
 
+    # TODO refactor, function too big, too long
     def _run(self):
-        if 'count' in self._results:
-            return
         """
         Compute a list of urls depending on parameters
 
@@ -412,6 +439,10 @@ class Query(object):
             ]
         }
         """
+        if 'count' in self._results:
+            return
+
+        # TODO should not modify query content here, it's just an execution
         query = self.query
         if not 'fields' in query:
             query['fields'] = ('url',)
@@ -478,7 +509,9 @@ class Query(object):
                              index=self.es_index,
                              doc_type=self.es_doc_type,
                              fields=["url", "http_code"])
-            self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs'] if url["exists"]}
+            # TODO _id_to_url should be declared explicitly
+            self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code'])
+                               for url in urls_es['docs'] if url["exists"]}
 
         for r in alt_results['hits']['hits']:
             document = {}
@@ -494,7 +527,8 @@ class Query(object):
                                 value = [reduce(dict.get, child.split("."), r['_source']) or default_value]
                             except:
                                 value = [default_value]
-                            deep_update(document, reduce(lambda x, y: {y: x}, reversed(child.split('.') + deep_clean(value))))
+                            deep_update(document,
+                                        reduce(lambda x, y: {y: x}, reversed(child.split('.') + deep_clean(value))))
                 elif field in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['transform'](self, r['_source'], document)
                 else:
@@ -504,7 +538,8 @@ class Query(object):
                             value = [reduce(dict.get, field.split("."), r['_source'])]
                         except:
                             value = [default_value]
-                        deep_update(document, reduce(lambda x, y: {y: x}, reversed(field.split('.') + deep_clean(value))))
+                        deep_update(document,
+                                    reduce(lambda x, y: {y: x}, reversed(field.split('.') + deep_clean(value))))
                     else:
                         document[field] = deep_clean(r['_source'][field]) if field in r['_source'] else default_value
 
