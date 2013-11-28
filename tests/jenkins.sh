@@ -23,7 +23,8 @@ pip install BQL
 
 
 python setup.py install
-nosetests --with-xunit
+#ignore integration tests
+nosetests --with-xunit -e=*integration*
 [ $? -ne 0 ] && STATUS=1
 
 deactivate
