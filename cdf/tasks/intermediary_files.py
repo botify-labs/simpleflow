@@ -1,7 +1,6 @@
 import os
 import gzip
 import itertools
-import re
 
 from boto.exception import S3ResponseError
 
@@ -13,8 +12,7 @@ from cdf.collections.urls.transducers.metadata_duplicate import get_duplicate_me
 from cdf.collections.urls.transducers.links import OutlinksTransducer, InlinksTransducer
 from cdf.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
-from cdf.collections.urls.generators.suggestions import UrlSuggestionsGenerator
-from cdf.collections.urls.constants import SUGGEST_CLUSTERS
+from cdf.collections.urls.utils import get_part_id
 from cdf.collections.urls.generators.bad_links import get_bad_links, get_bad_link_counters
 
 
@@ -49,12 +47,18 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
         'redirect': 'url_{}_redirect_counters.txt.{}.gz'.format(link_direction, part_id),
     }
 
-    f_list = {k: gzip.open(os.path.join(tmp_dir, v), 'w') for k, v in filenames.iteritems()}
-
+    # lazily open files
+    file_created = {}
     for i, entry in enumerate(generator):
-        f_list[entry[1]].write(str(entry[0]) + '\t' + '\t'.join(str(k) for k in entry[2:]) + '\n')
+        # TODO remove hard coded index
+        link_type = entry[1]
+        if link_type not in file_created:
+            file_created[link_type] = gzip.open(os.path.join(tmp_dir, filenames[link_type]), 'w')
+        file_created[link_type].write(str(entry[0]) + '\t' + '\t'.join(str(k) for k in entry[2:]) + '\n')
 
-    for counter_filename in filenames.values():
+    # push all created files to s3
+    for counter_file in file_created.values():
+        counter_filename = os.path.basename(counter_file.name)
         push_file(
             os.path.join(s3_uri, counter_filename),
             os.path.join(tmp_dir, counter_filename),
@@ -84,20 +88,25 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
 
     generator = get_duplicate_metadata(itertools.chain(*streams_types['contents']))
 
+    file_pattern = 'urlcontentsduplicate.txt.{}.gz'
     current_part_id = 0
-    f = gzip.open(os.path.join(tmp_dir, 'urlcontentsduplicate.txt.0.gz'), 'w')
+    f = None
     for i, (url_id, metadata_type, filled_nb, duplicates_nb, is_first, target_urls_ids) in enumerate(generator):
 
         # check the part id
-        if (current_part_id == 0 and url_id > first_part_id_size) or \
-           (current_part_id > 0 and (url_id - first_part_id_size) / part_id_size != current_part_id - 1):
+        part = get_part_id(url_id, first_part_id_size, part_id_size)
+
+        # first file (could not be `part_0`)
+        if not f:
+            current_part_id = part
+            f = gzip.open(os.path.join(tmp_dir, file_pattern.format(current_part_id)), 'w')
+
+        # need a new partition file
+        if part != current_part_id:
+            # this is safe b/c url_id is ordered
             f.close()
-            push_file(
-                os.path.join(s3_uri, 'urlcontentsduplicate.txt.{}.gz'.format(current_part_id)),
-                os.path.join(tmp_dir, 'urlcontentsduplicate.txt.{}.gz'.format(current_part_id)),
-            )
-            current_part_id += 1
-            f = gzip.open(os.path.join(tmp_dir, 'urlcontentsduplicate.txt.{}.gz'.format(current_part_id)), 'w')
+            current_part_id = part
+            f = gzip.open(os.path.join(tmp_dir, file_pattern.format(current_part_id)), 'w')
 
         f.write('\t'.join((
             str(url_id),
@@ -108,10 +117,15 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
             ';'.join(str(u) for u in target_urls_ids)
         )) + '\n')
     f.close()
-    push_file(
-        os.path.join(s3_uri, 'urlcontentsduplicate.txt.{}.gz'.format(current_part_id)),
-        os.path.join(tmp_dir, 'urlcontentsduplicate.txt.{}.gz'.format(current_part_id)),
-    )
+
+    # push all created files to s3
+    for i in xrange(0, current_part_id + 1):
+        file_to_push = file_pattern.format(i)
+        if os.path.exists(os.path.join(tmp_dir, file_to_push)):
+            push_file(
+                os.path.join(s3_uri, file_to_push),
+                os.path.join(tmp_dir, file_to_push),
+            )
 
 
 def make_bad_link_file(crawl_id, s3_uri,
@@ -144,21 +158,23 @@ def make_bad_link_file(crawl_id, s3_uri,
                               itertools.chain(*streams_types['outlinks']))
 
     current_part_id = 0
-    file_name = 'urlbadlinks.txt.{}.gz'
-    f = gzip.open(os.path.join(tmp_dir, file_name.format('0')), 'w')
+    file_pattern = 'urlbadlinks.txt.{}.gz'
+    f = None
     for _, (src, dest, bad_code) in enumerate(generator):
-
-        # check the part id
         url_id = src
-        if (current_part_id == 0 and url_id > first_part_id_size) or \
-           (current_part_id > 0 and (url_id - first_part_id_size) / part_id_size != current_part_id - 1):
+        # check the part id
+        part = get_part_id(url_id, first_part_id_size, part_id_size)
+
+        # first file (could not be `part_0`)
+        if not f:
+            current_part_id = part
+            f = gzip.open(os.path.join(tmp_dir, file_pattern.format(current_part_id)), 'w')
+        # need a new partition file
+        if part != current_part_id:
+            # this is safe b/c url_id is ordered
             f.close()
-            push_file(
-                os.path.join(s3_uri, file_name.format(current_part_id)),
-                os.path.join(tmp_dir, file_name.format(current_part_id)),
-            )
-            current_part_id += 1
-            f = gzip.open(os.path.join(tmp_dir, file_name.format(current_part_id)), 'w')
+            current_part_id = part
+            f = gzip.open(os.path.join(tmp_dir, file_pattern.format(current_part_id)), 'w')
 
         f.write('\t'.join((
             str(src),
@@ -167,11 +183,14 @@ def make_bad_link_file(crawl_id, s3_uri,
         )) + '\n')
     f.close()
 
-    for i in range(0, current_part_id + 1):
-        push_file(
-            os.path.join(s3_uri, file_name.format(i)),
-            os.path.join(tmp_dir, file_name.format(i)),
-        )
+    # push all created files to s3
+    for i in xrange(0, current_part_id + 1):
+        file_to_push = file_pattern.format(i)
+        if os.path.exists(os.path.join(tmp_dir, file_to_push)):
+            push_file(
+                os.path.join(s3_uri, file_to_push),
+                os.path.join(tmp_dir, file_to_push),
+            )
 
 
 def make_bad_link_counter_file(crawl_id, s3_uri,

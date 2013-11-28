@@ -2,6 +2,9 @@ import os
 
 from setuptools import setup, find_packages
 
+#avoid errors on python setup.py test
+#(cf. http://bugs.python.org/issue15881#msg170215)
+import multiprocessing
 
 root = os.path.abspath(os.path.dirname(__file__))
 version = __import__('cdf').__version__
@@ -33,11 +36,15 @@ setup(
         'numexpr==2.1',
         'Cython==0.19.1',
         'tables==3.0.0',
-        'lockfile==0.9.1'
+        'lockfile==0.9.1',
+        'mock'
     ],
+
 
     package_dir={'': '.'},
     include_package_data=False,
 
     packages=find_packages(),
+
+    test_suite="nose.collector",
 )
