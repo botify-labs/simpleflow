@@ -241,11 +241,6 @@ PREDICATE_FORMATS = {
             filters['field']: filters['value'],
         }
     },
-    'match': lambda filters: {
-        "term": {
-            filters['field']: filters['value'],
-        }
-    },
     # 'starts' predicate should be applied on `untouched`
     'starts': lambda filters: {
         "prefix": {
