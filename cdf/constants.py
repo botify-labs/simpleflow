@@ -148,12 +148,27 @@ URLS_DATA_MAPPING = {
                 "type": "string",
                 "index": "not_analyzed"
             },
-            "protocol": {"type": "string"},
-            "query_string": {"type": "string"},
+            "protocol": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "query_string": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
             # can replace this by an custom analyzer
-            "query_string_items": {"type": "string"},
-            "query_string_keys": {"type": "string"},
-            "query_string_keys_order": {"type": "string"},
+            "query_string_items": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "query_string_keys": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "query_string_keys_order": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
             "canonical_from_nb": {"type": "long"},
             "canonical_from": {"type": "long"},
             "canonical_to": {
