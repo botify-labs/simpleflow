@@ -228,7 +228,6 @@ def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir_pref
 
     # If it is a batch query, replace result list by a dictionnary (mapped to query identifiers)
     if is_batch:
-        import pdb; pdb.set_trace()
         results = {identifier: result for identifier, result in zip(identifiers, results)}
 
      # Write suggestion file
