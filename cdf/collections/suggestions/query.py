@@ -186,6 +186,9 @@ class BaseMetricsQuery(object):
             }
         ]
         """
+        if isinstance(settings, list):
+            return [self.query(s) for s in settings]
+
         final_fields = self.get_fields_from_settings(settings)
 
         results = {}

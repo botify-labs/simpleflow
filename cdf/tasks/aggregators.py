@@ -218,7 +218,19 @@ def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc
 
 def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir_prefix, identifier, query):
     q = MetricsQuery.from_s3_uri(crawl_id, s3_uri)
+
+    is_batch = isinstance(query, list)
+    if is_batch:
+        identifiers = [k[0] for k in query]
+        query = [k[1] for k in query]
+
     results = q.query(query)
+
+    # If it is a batch query, replace result list by a dictionnary (mapped to query identifiers)
+    if is_batch:
+        import pdb; pdb.set_trace()
+        results = {identifier: result for identifier, result in zip(identifiers, results)}
+
      # Write suggestion file
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
     summary_file = os.path.join(tmp_dir, 'flat', 'metrics', '{}.json'.format(identifier))
@@ -247,21 +259,20 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         'es_doc_type': es_doc_type,
     })
 
-    # Full picture
-    query = {}
-    make_counter_file_from_query(identifier='full_picture', query=query, **counter_kwargs)
-
-    # Counters by http_code
-    query = {
-        "group_by": ["http_code"]
-    }
-    make_counter_file_from_query(identifier='http_code', query=query, **counter_kwargs)
-
     # Counters by depth
-    query = {
+    query_depth = {
         "group_by": ["depth"]
     }
-    make_counter_file_from_query(identifier='depth', query=query, **counter_kwargs)
+    make_counter_file_from_query(identifier='depth', query=query_depth, **counter_kwargs)
+
+    make_counter_file_from_query(
+        identifier='full_picture',
+        query=[
+            ['global', {}],
+            ['http_code', {"group_by": ["http_code"]}]
+        ],
+        **counter_kwargs
+    )
 
     # Http codes by range
     for http_code in (200, 300, 400, 500):
