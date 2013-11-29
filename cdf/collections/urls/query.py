@@ -1,6 +1,7 @@
 from elasticsearch import Elasticsearch
 
 from cdf.constants import URLS_DATA_MAPPING
+from cdf.exceptions import ElasticSearchIncompleteIndex
 from cdf.utils.dict import deep_update
 from cdf.utils.unicode import deep_clean
 from cdf.streams.masks import follow_mask
@@ -484,7 +485,10 @@ class Query(object):
                                                index=self.es_index,
                                                doc_type=self.es_doc_type,
                                                fields=["url", "http_code"])
-            self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs'] if url["exists"]}
+            #all referenced urlids should be in elasticsearch index.
+            if not all([url["exists"] for url in urls_es['docs']]):
+                raise ElasticSearchIncompleteIndex("Missing documents")
+            self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs']}
 
         for r in alt_results['hits']['hits']:
             document = {}
