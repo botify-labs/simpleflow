@@ -37,7 +37,8 @@ setup(
         'Cython==0.19.1',
         'tables==3.0.0',
         'lockfile==0.9.1',
-        'mock'
+        'mock',
+        'nose'
     ],
 
 
