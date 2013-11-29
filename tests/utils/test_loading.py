@@ -37,3 +37,11 @@ class TestDataFrameBuilderFromCsv(unittest.TestCase):
         self.assertRaises(InvalidDataFormat,
                           build_dataframe_from_csv,
                           csv_file, column_names)
+
+    def test_empty_input(self):
+
+        csv_file = StringIO.StringIO("")
+        column_names = ["city", "population"]
+        dataframe = build_dataframe_from_csv(csv_file, column_names)
+        assert_equals((0, 2), dataframe.shape)
+        assert((column_names == dataframe.columns).all())
