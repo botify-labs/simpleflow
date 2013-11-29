@@ -105,6 +105,7 @@ URLS_DATA_MAPPING = {
                 "properties": {
                     "total": {"type": "long"},
                     "follow_unique": {"type": "long"},
+                    "total_unique": {"type": "long"},
                     "follow": {"type": "long"},
                     "nofollow": {"type": "long"},
                     "nofollow_combinations": {
@@ -121,6 +122,7 @@ URLS_DATA_MAPPING = {
                 "properties": {
                     "total": {"type": "long"},
                     "follow_unique": {"type": "long"},
+                    "total_unique": {"type": "long"},
                     "follow": {"type": "long"},
                     "nofollow": {"type": "long"},
                     "nofollow_combinations": {
@@ -190,6 +192,28 @@ URLS_DATA_MAPPING = {
                 "properties": {
                     "http_code": {"type": "string"},
                     "url_id": {"type": "long"}
+                }
+            },
+            "error_links": {
+                "properties": {
+                    "3xx": {
+                        "properties": {
+                            "nb": {"type": "long"},
+                            "urls": {"type": "long"}
+                        }
+                    },
+                    "4xx": {
+                        "properties": {
+                            "nb": {"type": "long"},
+                            "urls": {"type": "long"}
+                        }
+                    },
+                    "5xx": {
+                        "properties": {
+                            "nb": {"type": "long"},
+                            "urls": {"type": "long"}
+                        }
+                    },
                 }
             }
         }

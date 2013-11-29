@@ -212,7 +212,7 @@ def extract_inlinks(attributes, stream_item):
             attributes["inlinks_id_to_idx"][(url_src, mask)] = len(attributes["inlinks_internal"]) - 1
 
     elif link_type.startswith('r'):
-        # TODO problem here?
+        # TODO proper way to extract redirection code
         http_code = int(link_type[1:])
         if 'redirects_from' not in attributes:
             attributes['redirects_from'] = []
@@ -244,11 +244,11 @@ def extract_bad_links(attributes, stream_item):
 
     target_dict = attributes[error_link_key]
 
-    if http_code >= 300 and http_code < 400:
+    if 300 <= http_code < 400:
         target_dict['3xx']['nb'] += 1
         if len(target_dict['3xx']['urls']) < 10:
             target_dict['3xx']['urls'].append(url_dest_id)
-    elif http_code >= 400 and http_code < 500:
+    elif 400 <= http_code < 500:
         target_dict['4xx']['nb'] += 1
         if len(target_dict['4xx']['urls'])< 10:
             target_dict['4xx']['urls'].append(url_dest_id)
