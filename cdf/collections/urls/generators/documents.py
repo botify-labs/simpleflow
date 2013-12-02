@@ -213,7 +213,7 @@ def extract_inlinks(attributes, stream_item):
             attributes["inlinks_id_to_idx"][(url_src, mask)] = len(attributes["inlinks_internal"]) - 1
 
     elif link_type.startswith('r'):
-        # TODO problem here?
+        # TODO dangerous assumption of crawl's string format to be 'r3xx'
         http_code = int(link_type[1:])
         if 'redirects_from' not in attributes:
             attributes['redirects_from'] = []
@@ -224,12 +224,21 @@ def extract_inlinks(attributes, stream_item):
             attributes['redirects_from'].append({'url_id': url_src, 'http_code': http_code})
 
     elif link_type == "canonical":
-        nb_duplicates = attributes.get('canonical_from_nb', 0) + 1
-        attributes['canonical_from_nb'] = nb_duplicates
-        if nb_duplicates == 1:
-            attributes['canonical_from'] = [url_src]
-        else:
-            attributes['canonical_from'].append(url_src)
+        current_nb = attributes.get('canonical_from_nb', 0)
+
+        if current_nb is 0:
+            # init the counter
+            attributes['canonical_from_nb'] = 0
+
+        # only count for none self canonical
+        if url_dst is not url_src:
+            current_nb += 1
+            attributes['canonical_from_nb'] = current_nb
+
+            if current_nb == 1:
+                attributes['canonical_from'] = [url_src]
+            else:
+                attributes['canonical_from'].append(url_src)
 
 
 def extract_suggest(attributes, stream_item):
