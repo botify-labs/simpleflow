@@ -8,6 +8,36 @@ from .constants import QUERY_FIELDS
 from .utils import field_has_children, children_from_field
 
 
+# TODO it's bad to implicitly use a object field
+# `prepare` and `transform` should be extracted as a Transformer class
+def prepare_error_links(query, es_document):
+    key = 'error_links'
+    if key in es_document:
+        # 3xx, 4xx or 5xx
+        for code_kind in es_document[key]:
+            # `urls` field is guaranteed to be a list, even if
+            # it's a single url
+            urls = es_document[key][code_kind]['urls']
+            for url_id in urls:
+                query._urls_ids.add(url_id)
+
+
+def transform_error_links(query, es_document, attributes):
+    key = 'error_links'
+    attributes[key] = {}
+    if key in es_document:
+        # 3xx, 4xx or 5xx
+        for code_kind in es_document[key]:
+            original = es_document[key][code_kind]
+            if original['nb'] > 0:
+                attributes[key][code_kind] = {
+                    'urls': []
+                }
+                for url_id in original['urls']:
+                    attributes[key][code_kind]['urls'].append(
+                        query._id_to_url.get('{}:{}'.format(query.crawl_id, url_id))[0])
+
+
 def prepare_redirects_from(query, es_document):
     if 'redirects_from' in es_document:
         for _r in es_document['redirects_from']:
@@ -176,6 +206,10 @@ FIELDS_HOOKS = {
         'transform': lambda query, es_document,
                             attributes: transform_links(query, es_document, attributes, 'outlinks_internal')
     },
+    'error_links.3xx.urls': {
+        'prepare': prepare_error_links,
+        'transform': transform_error_links
+    }
 }
 
 # Prepare metadata duplicate urls
@@ -319,7 +353,7 @@ class Query(object):
         self.start = start
         self.limit = limit
         self.sort = sort
-        if search_backend :
+        if search_backend:
             self.search_backend = search_backend
         else:
             host, port = self.es_location[7:].split(':')
@@ -408,6 +442,10 @@ class Query(object):
                 return PREDICATE_FORMATS[predicate](filters)
 
     # TODO refactor, function too big, too long
+    # things should be separated:
+    #   - ElasticSearch query generation
+    #   - Query execution
+    #   - Result transformation (maybe by a class `ResultTransformer`)
     def _run(self):
         """
         Compute a list of urls depending on parameters
@@ -482,6 +520,8 @@ class Query(object):
                                                  doc_type=self.es_doc_type,
                                                  size=self.limit,
                                                  offset=self.start)
+
+        # Return directly if search has no result
         if alt_results["hits"]["total"] == 0:
             self._results = {
                 "count": 0,
@@ -491,6 +531,8 @@ class Query(object):
 
         results = []
 
+        # Resolve `url` based on `url_id`s in search results
+        # Firstly add all seen `url_id` of this search results into a set
         for r in alt_results['hits']['hits']:
             document = {'id': r['_id']}
 
@@ -502,10 +544,10 @@ class Query(object):
                 if field in FIELDS_HOOKS and 'prepare' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['prepare'](self, r['_source'])
 
-        """
-        Resolve urls ids added in `prepare` functions hooks
-        """
+        # Resolve urls ids added in `prepare` functions hooks
+        # Issue a `multi get` call to get corresponding `url`s
         if self._urls_ids:
+            # TODO so diff. version of crawls are mixed in the same index? Not a good idea
             urls_es = self.search_backend.mget(body={"ids": list('{}:{}'.format(self.crawl_id, url_id) for url_id in self._urls_ids)},
                                                index=self.es_index,
                                                doc_type=self.es_doc_type,

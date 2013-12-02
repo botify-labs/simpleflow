@@ -72,6 +72,11 @@ class TestQueryES(unittest.TestCase):
                 'url': u'http://www.mysite.com/football/article-s.html',
                 'path': u'/football/article-s.html',
                 'http_code': 200,
+                'redirects_from_nb': 2,
+                'redirects_from': [
+                    {'http_code': 301, 'url_id': 1},
+                    {'http_code': 301, 'url_id': 2}
+                ]
             },
             {
                 'id': 4,
@@ -137,7 +142,7 @@ class TestQueryES(unittest.TestCase):
         results = list(Query(*QUERY_ARGS, query=bql_query).results)
         self.assertItemsEqual(results, [{'id': 2}, {'id': 3}])
 
-    def test_contgains_query(self):
+    def test_contains_query(self):
         bql_query = get_simple_bql_query('url', 'contains', '/france/football')
         results = list(Query(*QUERY_ARGS, query=bql_query).results)
         self.assertItemsEqual(results, [{'id': 1}])
@@ -172,3 +177,12 @@ class TestQueryES(unittest.TestCase):
             }
         }
         self.assertItemsEqual(results, [expected])
+
+    def test_redirects_from_query(self):
+        bql_query = get_simple_bql_query('redirects_from_nb', 'gt', 0,
+                                         fields=['redirects_from'])
+        results = list(Query(*QUERY_ARGS, query=bql_query).results)
+
+        print results
+
+
