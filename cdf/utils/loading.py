@@ -36,4 +36,7 @@ def build_dataframe_from_csv(csv_file, column_names):
                                 "Sample error line : '%s'"
                                 % (filename, len(column_names), sample_error_line))
 
-    return DataFrame(row_list, columns=column_names)
+    if len(row_list) > 0:
+        return DataFrame(row_list, columns=column_names)
+    else:
+        return DataFrame(columns=column_names)

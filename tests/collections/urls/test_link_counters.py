@@ -151,12 +151,13 @@ class TestLinkCounters(unittest.TestCase):
 
     def test_in_canonicals(self):
         stream_inlinks = [
-            [1, 'canonical', 0, 1],
+            [1, 'canonical', 0, 1],  # self canonical
             [1, 'canonical', 0, 2],
             [1, 'canonical', 0, 2],
             [1, 'canonical', 0, 2],
             [1, 'canonical', 0, 3],
             [1, 'canonical', 5, 4],
+            [2, 'canonical', 0, 2],  # self canonical
             [2, 'canonical', 0, 1],
             [3, 'canonical', 5, 5]
         ]
