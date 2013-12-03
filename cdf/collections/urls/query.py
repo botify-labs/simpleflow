@@ -10,32 +10,35 @@ from .utils import field_has_children, children_from_field
 
 # TODO it's bad to implicitly use a object field
 # `prepare` and `transform` should be extracted as a Transformer class
-def prepare_error_links(query, es_document):
+def prepare_error_links(query, code_kind, es_document):
     key = 'error_links'
     if key in es_document:
-        # 3xx, 4xx or 5xx
-        for code_kind in es_document[key]:
-            # `urls` field is guaranteed to be a list, even if
-            # it's a single url
-            urls = es_document[key][code_kind]['urls']
-            for url_id in urls:
-                query._urls_ids.add(url_id)
+        for kind in es_document[key]:
+            if code_kind == 'any' or kind == code_kind:
+                # `urls` field is guaranteed to be a list, even if
+                # it's a single url
+                urls = es_document[key][kind]['urls']
+                for url_id in urls:
+                    query._urls_ids.add(url_id)
 
 
-def transform_error_links(query, es_document, attributes):
+def transform_error_links(query, code_kind, es_document, attributes):
     key = 'error_links'
-    attributes[key] = {}
     if key in es_document:
+        if key not in attributes:
+            attributes[key] = {}
         # 3xx, 4xx or 5xx
-        for code_kind in es_document[key]:
-            original = es_document[key][code_kind]
-            if original['nb'] > 0:
-                attributes[key][code_kind] = {
-                    'urls': []
-                }
-                for url_id in original['urls']:
-                    attributes[key][code_kind]['urls'].append(
-                        query._id_to_url.get('{}:{}'.format(query.crawl_id, url_id))[0])
+        for kind in es_document[key]:
+            if code_kind == 'any' or kind == code_kind:
+                original = es_document[key][kind]
+                if original['nb'] > 0:
+                    attributes[key][kind] = {
+                        'nb': original['nb'],
+                        'urls': []
+                    }
+                    for url_id in original['urls']:
+                        attributes[key][kind]['urls'].append(
+                            query._id_to_url.get('{}:{}'.format(query.crawl_id, url_id))[0])
 
 
 def prepare_redirects_from(query, es_document):
@@ -206,9 +209,21 @@ FIELDS_HOOKS = {
         'transform': lambda query, es_document,
                             attributes: transform_links(query, es_document, attributes, 'outlinks_internal')
     },
-    'error_links.3xx.urls': {
-        'prepare': prepare_error_links,
-        'transform': transform_error_links
+    'error_links.3xx': {
+        'prepare': lambda query, es_document: prepare_error_links(query, '3xx', es_document),
+        'transform': lambda query, es_document, attr: transform_error_links(query, '3xx', es_document, attr)
+    },
+    'error_links.4xx': {
+        'prepare': lambda query, es_document: prepare_error_links(query, '4xx', es_document),
+        'transform': lambda query, es_document, attr: transform_error_links(query, '4xx', es_document, attr)
+    },
+    'error_links.5xx': {
+        'prepare': lambda query, es_document: prepare_error_links(query, '5xx', es_document),
+        'transform': lambda query, es_document, attr: transform_error_links(query, '5xx', es_document, attr)
+    },
+    'error_links': {
+        'prepare': lambda query, es_document: prepare_error_links(query, 'any', es_document),
+        'transform': lambda query, es_document, attr: transform_error_links(query, 'any', es_document, attr)
     }
 }
 

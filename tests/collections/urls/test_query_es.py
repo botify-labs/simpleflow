@@ -163,26 +163,43 @@ class TestQueryES(unittest.TestCase):
 
     def test_error_link_query(self):
         bql_query = get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
-                                         fields=['error_links.3xx.urls'])
+                                         fields=['error_links.3xx'])
         results = list(Query(*QUERY_ARGS, query=bql_query).results)
         expected = {
             'error_links': {
                 '3xx': {
+                    'nb': 3,
                     'urls': [
                         u'http://www.mysite.com/france/football/abcde/main.html',
                         u'http://www.mysite.com/football/france/abc/abcde',
-                        u'http://www.mysite.com/football/france/abc/abcde',
+                        u'http://www.mysite.com/football/article-s.html'
                     ]
                 }
             }
         }
         self.assertItemsEqual(results, [expected])
 
-    def test_redirects_from_query(self):
-        bql_query = get_simple_bql_query('redirects_from_nb', 'gt', 0,
-                                         fields=['redirects_from'])
+        # search for `error_links` field should return all error links
+        bql_query = get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                         fields=['error_links'])
         results = list(Query(*QUERY_ARGS, query=bql_query).results)
-
-        print results
-
-
+        expected = {
+            'error_links': {
+                '3xx': {
+                    'nb': 3,
+                    'urls': [
+                        u'http://www.mysite.com/france/football/abcde/main.html',
+                        u'http://www.mysite.com/football/france/abc/abcde',
+                        u'http://www.mysite.com/football/article-s.html'
+                    ]
+                },
+                '5xx': {
+                    'nb': 2,
+                    'urls': [
+                        u'http://www.mysite.com/football/france/abc/abcde',
+                        u'http://www.mysite.com/football/article-s.html'
+                    ]
+                }
+            }
+        }
+        self.assertItemsEqual(results, [expected])
