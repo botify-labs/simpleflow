@@ -203,3 +203,17 @@ class TestQueryES(unittest.TestCase):
             }
         }
         self.assertItemsEqual(results, [expected])
+
+        # search only for `nb`
+        # TODO assert that this will not involve the result transform part
+        bql_query = get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                         fields=['error_links.3xx.nb'])
+        results = list(Query(*QUERY_ARGS, query=bql_query).results)
+        expected = {
+            'error_links': {
+                '3xx': {
+                    'nb': 3
+                }
+            }
+        }
+        self.assertItemsEqual(results, [expected])
