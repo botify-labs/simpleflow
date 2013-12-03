@@ -493,17 +493,20 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
             [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
+            [3, 'http', 'www.site.com', '/path/name3.html', '?f1&f2=v2'],
         ]
 
         infos = (
             [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
             [2, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+            [3, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         )
 
         inlinks = [
             [1, 'canonical', ['follow'], 5],
             [2, 'canonical', ['follow'], 17],
             [2, 'canonical', ['follow'], 20],
+            [3, 'canonical', ['follow'], 3],  # self canonical
         ]
 
         u = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks), infos=iter(infos))
@@ -514,7 +517,9 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         # Url 2
         self.assertEquals(documents[1][1]['canonical_from_nb'], 2)
         self.assertEquals(documents[1][1]['canonical_from'], [17, 20])
-
+        # Url 3
+        # should not count self canonical
+        self.assertEqual(documents[2][1]['canonical_from_nb'], 0)
 
     def test_bad_links(self):
         patterns = [
