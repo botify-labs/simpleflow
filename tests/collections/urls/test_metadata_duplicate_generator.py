@@ -53,14 +53,14 @@ class TestMetadataDuplicateGenerator(unittest.TestCase):
         `filled_nb` neither
         """
         stream_contents = iter((
-            [1, 4, string_to_int64(''), ''],
-            [1, 2, 456, 'My second H1'],
-            [1, 1, string_to_int64(''), ''],
-            [1, 4, 1111, 'My Desc'],
-            [2, 4, string_to_int64(''), ''],
-            [2, 4, 1111, 'My Desc'],
-            [2, 4, 1111, 'My Desc'],
-            [3, 1, string_to_int64(''), ''],
+            [1, 4, '-2078137563', ''],
+            [1, 2, '456', 'My second H1'],
+            [1, 1, '-2078137563', ''],
+            [1, 4, '1111', 'My Desc'],
+            [2, 4, '-2078137563', ''],
+            [2, 4, '1111', 'My Desc'],
+            [2, 4, '1111', 'My Desc'],
+            [3, 1, '-2078137563', ''],
         ))
 
         generator = get_duplicate_metadata(stream_contents)

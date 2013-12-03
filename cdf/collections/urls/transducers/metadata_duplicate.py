@@ -6,12 +6,11 @@ from itertools import groupby
 
 from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES_IDS
 from cdf.streams.utils import idx_from_stream
-from cdf.utils.hashing import string_to_int64
 
 
 # notset metadata is interpreted as an empty string
 # they should be ignored by duplication detection
-notset_hash_value = string_to_int64('')
+notset_hash_value = "-2078137563"
 
 
 def get_duplicate_metadata(stream_contents):
@@ -58,7 +57,7 @@ def get_duplicate_metadata(stream_contents):
         for content in contents:
             # ignore notset metadata first, they don't count anything
             _hash = content[content_hash_idx]
-            if _hash is notset_hash_value:
+            if _hash == notset_hash_value:
                 continue
 
             ct_id = content[content_meta_type_idx]
