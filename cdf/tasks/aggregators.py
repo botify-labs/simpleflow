@@ -159,7 +159,7 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
     push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)
 
 
-def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix, identifier, query, urls_fields, urls_filters, urls_sort=None):
+def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix, identifier, query, urls_fields, urls_filters, urls_sort=None, return_urls=False):
     q = SuggestQuery.from_s3_uri(crawl_id, s3_uri)
     query["display_children"] = False
     _results = q.query(query)
@@ -184,23 +184,25 @@ def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc
             urls_sort = ['id', ]
         urls_query["sort"] = urls_sort
 
-        urls = Query(es_location, es_index, es_doc_type, crawl_id, revision_number, copy.deepcopy(urls_query), start=0, limit=limit)
+        if return_urls:
+            urls = Query(es_location, es_index, es_doc_type, crawl_id, revision_number, copy.deepcopy(urls_query), start=0, limit=limit)
 
-        urls_results = list(urls.results)
-        result["urls"] = []
-        # Filter on metadata duplicate : get only the 3 first different duplicates urls
-        if identifier.startswith("metadata:duplicate"):
-            duplicates_found = set()
-            for url_result in urls_results:
-                metadata_value = url_result["metadata"][identifier.rsplit(':', 1)[1]][0]
-                if metadata_value not in duplicates_found:
-                    result["urls"].append(url_result)
-                    duplicates_found.add(metadata_value)
-                    if len(duplicates_found) == 3:
-                        break
-        else:
-            result["urls"] = urls_results
-            result["urls_query"] = urls_query
+            urls_results = list(urls.results)
+            result["urls"] = []
+            # Filter on metadata duplicate : get only the 3 first different duplicates urls
+            if identifier.startswith("metadata:duplicate"):
+                duplicates_found = set()
+                for url_result in urls_results:
+                    metadata_value = url_result["metadata"][identifier.rsplit(':', 1)[1]][0]
+                    if metadata_value not in duplicates_found:
+                        result["urls"].append(url_result)
+                        duplicates_found.add(metadata_value)
+                        if len(duplicates_found) == 3:
+                            break
+            else:
+                result["urls"] = urls_results
+
+        result["urls_query"] = urls_query
         results.append(result)
 
     # Write suggestion file
