@@ -158,6 +158,7 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
     store.close()
     push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)
 
+
 def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix, identifier, query, urls_fields, urls_filters, urls_sort=None):
     q = SuggestQuery.from_s3_uri(crawl_id, s3_uri)
     query["display_children"] = False
@@ -330,7 +331,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         urls_fields = ["delay2"]
         urls_filters = get_filters_from_agg_delay_field(delay)
         query = {
-            "fields": [delay],
+            "fields": ['delay_gte_2s', 'delay_from_1s_to_2s', 'delay_from_500ms_to_1s', 'delay_lt_500ms', 'pages_nb'],
             "target_field": delay
         }
         make_suggest_file_from_query(identifier='delay/{}'.format(delay[6:]), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
