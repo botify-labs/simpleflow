@@ -19,7 +19,6 @@ def extract_patterns(attributes, stream_item):
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
 
     attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
-    attributes['url_not_analyzed'] = attributes['url']
     attributes['url_hash'] = string_to_int64(attributes['url'])
 
     # query_string fields
@@ -254,11 +253,11 @@ def extract_bad_links(attributes, stream_item):
 
     target_dict = attributes[error_link_key]
 
-    if http_code >= 300 and http_code < 400:
+    if 300 <= http_code < 400:
         target_dict['3xx']['nb'] += 1
         if len(target_dict['3xx']['urls']) < 10:
             target_dict['3xx']['urls'].append(url_dest_id)
-    elif http_code >= 400 and http_code < 500:
+    elif 400 <= http_code < 500:
         target_dict['4xx']['nb'] += 1
         if len(target_dict['4xx']['urls'])< 10:
             target_dict['4xx']['urls'].append(url_dest_id)

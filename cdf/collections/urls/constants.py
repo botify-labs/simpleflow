@@ -86,12 +86,6 @@ QUERY_FIELDS = (
 
     "error_links",
     "error_links.3xx",
-    "error_links.3xx.nb",
-    "error_links.3xx.urls",
     "error_links.4xx",
-    "error_links.4xx.nb",
-    "error_links.4xx.urls",
     "error_links.5xx",
-    "error_links.5xx.nb",
-    "error_links.5xx.urls",
 )
