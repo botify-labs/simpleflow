@@ -19,7 +19,6 @@ def extract_patterns(attributes, stream_item):
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
 
     attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
-    attributes['url_not_analyzed'] = attributes['url']
     attributes['url_hash'] = string_to_int64(attributes['url'])
 
     # query_string fields
@@ -213,7 +212,7 @@ def extract_inlinks(attributes, stream_item):
             attributes["inlinks_id_to_idx"][(url_src, mask)] = len(attributes["inlinks_internal"]) - 1
 
     elif link_type.startswith('r'):
-        # TODO problem here?
+        # TODO dangerous assumption of crawl's string format to be 'r3xx'
         http_code = int(link_type[1:])
         if 'redirects_from' not in attributes:
             attributes['redirects_from'] = []
@@ -224,12 +223,21 @@ def extract_inlinks(attributes, stream_item):
             attributes['redirects_from'].append({'url_id': url_src, 'http_code': http_code})
 
     elif link_type == "canonical":
-        nb_duplicates = attributes.get('canonical_from_nb', 0) + 1
-        attributes['canonical_from_nb'] = nb_duplicates
-        if nb_duplicates == 1:
-            attributes['canonical_from'] = [url_src]
-        else:
-            attributes['canonical_from'].append(url_src)
+        current_nb = attributes.get('canonical_from_nb', 0)
+
+        if current_nb is 0:
+            # init the counter
+            attributes['canonical_from_nb'] = 0
+
+        # only count for none self canonical
+        if url_dst is not url_src:
+            current_nb += 1
+            attributes['canonical_from_nb'] = current_nb
+
+            if current_nb == 1:
+                attributes['canonical_from'] = [url_src]
+            else:
+                attributes['canonical_from'].append(url_src)
 
 
 def extract_suggest(attributes, stream_item):
@@ -245,11 +253,11 @@ def extract_bad_links(attributes, stream_item):
 
     target_dict = attributes[error_link_key]
 
-    if http_code >= 300 and http_code < 400:
+    if 300 <= http_code < 400:
         target_dict['3xx']['nb'] += 1
         if len(target_dict['3xx']['urls']) < 10:
             target_dict['3xx']['urls'].append(url_dest_id)
-    elif http_code >= 400 and http_code < 500:
+    elif 400 <= http_code < 500:
         target_dict['4xx']['nb'] += 1
         if len(target_dict['4xx']['urls'])< 10:
             target_dict['4xx']['urls'].append(url_dest_id)

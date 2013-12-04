@@ -3,9 +3,6 @@ URLS_DATA_MAPPING = {
         "properties": {
             "url": {
                 "type": "string",
-            },
-            "url_not_analyzed": {
-                "type": "string",
                 "index": "not_analyzed"
             },
             "url_hash": {"type": "long"},
@@ -15,7 +12,10 @@ URLS_DATA_MAPPING = {
             "delay2": {"type": "long"},
             "depth": {"type": "long"},
             "gzipped": {"type": "boolean"},
-            "host": {"type": "string"},
+            "host": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
             "http_code": {"type": "long"},
             "id": {"type": "long"},
             "crawl_id": {"type": "long"},
@@ -30,10 +30,54 @@ URLS_DATA_MAPPING = {
             },
             "metadata": {
                 "properties": {
-                    "description": {"type": "string"},
-                    "h1": {"type": "string"},
-                    "h2": {"type": "string"},
-                    "title": {"type": "string"}
+                    "description": {
+                        "type": "multi_field",
+                        "fields": {
+                            "description": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    },
+                    "h1": {
+                        "type": "multi_field",
+                        "fields": {
+                            "h1": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    },
+                    "h2": {
+                        "type": "multi_field",
+                        "fields": {
+                            "h2": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    },
+                    "title": {
+                        "type": "multi_field",
+                        "fields": {
+                            "title": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    }
                 }
             },
             "metadata_duplicate_nb": {
@@ -61,6 +105,7 @@ URLS_DATA_MAPPING = {
                 "properties": {
                     "total": {"type": "long"},
                     "follow_unique": {"type": "long"},
+                    "total_unique": {"type": "long"},
                     "follow": {"type": "long"},
                     "nofollow": {"type": "long"},
                     "nofollow_combinations": {
@@ -77,6 +122,7 @@ URLS_DATA_MAPPING = {
                 "properties": {
                     "total": {"type": "long"},
                     "follow_unique": {"type": "long"},
+                    "total_unique": {"type": "long"},
                     "follow": {"type": "long"},
                     "nofollow": {"type": "long"},
                     "nofollow_combinations": {
@@ -100,12 +146,31 @@ URLS_DATA_MAPPING = {
                     }
                 }
             },
-            "path": {"type": "string"},
-            "protocol": {"type": "string"},
-            "query_string": {"type": "string"},
-            "query_string_items": {"type": "string"},
-            "query_string_keys": {"type": "string"},
-            "query_string_keys_order": {"type": "string"},
+            "path": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "protocol": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "query_string": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            # can replace this by an custom analyzer
+            "query_string_items": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "query_string_keys": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "query_string_keys_order": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
             "canonical_from_nb": {"type": "long"},
             "canonical_from": {"type": "long"},
             "canonical_to": {
@@ -127,6 +192,28 @@ URLS_DATA_MAPPING = {
                 "properties": {
                     "http_code": {"type": "string"},
                     "url_id": {"type": "long"}
+                }
+            },
+            "error_links": {
+                "properties": {
+                    "3xx": {
+                        "properties": {
+                            "nb": {"type": "long"},
+                            "urls": {"type": "long"}
+                        }
+                    },
+                    "4xx": {
+                        "properties": {
+                            "nb": {"type": "long"},
+                            "urls": {"type": "long"}
+                        }
+                    },
+                    "5xx": {
+                        "properties": {
+                            "nb": {"type": "long"},
+                            "urls": {"type": "long"}
+                        }
+                    },
                 }
             }
         }

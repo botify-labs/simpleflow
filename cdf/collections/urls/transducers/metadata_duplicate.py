@@ -8,6 +8,11 @@ from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES_IDS
 from cdf.streams.utils import idx_from_stream
 
 
+# notset metadata is interpreted as an empty string
+# they should be ignored by duplication detection
+notset_hash_value = "-2078137563"
+
+
 def get_duplicate_metadata(stream_contents):
     """
     Return a tuple of urls having a duplicate metadata (the first one found for each page)
@@ -50,14 +55,20 @@ def get_duplicate_metadata(stream_contents):
         # Fetch --first-- hash from each content type and watch add it to hashes set
         ct_found = set()
         for content in contents:
+            # ignore notset metadata first, they don't count anything
+            _hash = content[content_hash_idx]
+            if _hash == notset_hash_value:
+                continue
+
             ct_id = content[content_meta_type_idx]
             filled_counter[(url_id, ct_id)] += 1
+
             if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
                 continue
+
             # If ct_i is already in ct_found, so it's the not the first content
             if ct_id not in ct_found:
                 ct_found.add(ct_id)
-                _hash = content[content_hash_idx]
                 hashes_count[ct_id][_hash] += 1
                 hashes_lst = hashes[ct_id][_hash]
                 # only preserve 11 duplicating urls

@@ -9,8 +9,27 @@ from cdf.log import logger
 from cdf.utils.path import makedirs
 
 from lockfile import FileLock
+from threading import Lock
 
-conn = boto.connect_s3()
+
+class Connection(object):
+    """A class for S3 connection
+    The purpose of this class is to contain
+    a global boto connection object
+    that is instanciated only when needed.
+    """
+    #the actual connection
+    #it is lazily instanciated
+    _conn = None
+    _lock = Lock()
+
+    @staticmethod
+    def get():
+        """A getter for the connection"""
+        with Connection._lock:
+            if not Connection._conn:
+                Connection._conn = boto.connect_s3()
+        return Connection._conn
 
 
 def uri_parse(s3_uri):
@@ -30,7 +49,7 @@ def list_files(s3_uri, regexp=None):
     Return list of boto.s3.Key objects
     """
     bucket, location = uri_parse(s3_uri)
-    bucket = conn.get_bucket(bucket)
+    bucket = Connection.get().get_bucket(bucket)
     files = []
 
     for key_obj in bucket.list(prefix=location):
@@ -107,7 +126,7 @@ def fetch_file(s3_uri, dest_dir, force_fetch, lock=True):
 
 def get_key_from_s3_uri(s3_uri):
     bucket, location = uri_parse(s3_uri)
-    bucket = conn.get_bucket(bucket)
+    bucket = Connection.get().get_bucket(bucket)
     key = Key(bucket, location)
     return key
 
