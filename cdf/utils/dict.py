@@ -65,3 +65,26 @@ def path_in_dict(path, dict):
     except KeyError:
         res = False
     return res
+
+
+def update_path_in_dict(path, value, _dict):
+    keys = path.split('.')
+    _len = len(keys)
+    current = _dict
+    for i in xrange(0, _len):
+        key = keys[i]
+        if i is _len - 1:
+            # override existing value
+            # create non-existing value
+            current[key] = value
+        else:
+            if key in _dict:
+                _next = current[key]
+                if isinstance(_next, dict):
+                    current = _next
+                else:
+                    _next = {}
+                    current = _next
+            else:
+                current[key] = {}
+                current = current[key]

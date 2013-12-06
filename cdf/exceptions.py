@@ -8,3 +8,7 @@ class InvalidDataFormat(Exception):
 
 class ElasticSearchIncompleteIndex(Exception):
     pass
+
+
+class BotifyQueryException(Exception):
+    pass

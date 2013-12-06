@@ -1,7 +1,7 @@
 import abc
 
 from cdf.collections.urls.utils import children_from_field, field_has_children, get_es_id, get_url_id
-from cdf.utils.dict import path_in_dict, get_subdict_from_path, deep_dict
+from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
 from cdf.exceptions import ElasticSearchIncompleteIndex
 from cdf.streams.masks import follow_mask
 
@@ -315,8 +315,8 @@ class DefaultValueTransformer(ResultTransformer):
 
     # Strategies here defines the default value of all
     # children fields
-    #   e.g `metadata_nb` defaults to 0
-    #   so, `metadata_nb.h1` defaults to 0
+    #   if `metadata_nb` defaults to 0
+    #   so, `metadata_nb.*` all default to 0
     _META_STRATEGY = {
         'inlinks_internal_nb': 0,
         'outlinks_internal_nb': 0,
@@ -342,16 +342,25 @@ class DefaultValueTransformer(ResultTransformer):
             self.fields = kwargs['fields']
 
     def transform(self):
+        # For each result document
         for result in self.results:
-            patch = {}
+            # Check all children of query's required fields
+            # Update the result document for default value if any of the
+            # children is missing in that document
             for required_field in self.fields:
-                for child in children_from_field(required_field):
-                    if not path_in_dict(child, result) and \
-                                    child in self._DEFAULT_VALUE_STRATEGY:
-                        default = self._DEFAULT_VALUE_STRATEGY[child]
-                        patch.update(deep_dict({child: default}))
-            # in-place, deep update
-            result.update(patch)
+                if not field_has_children(required_field):
+                    if not path_in_dict(required_field, result) and \
+                                    required_field in self._DEFAULT_VALUE_STRATEGY:
+                        default = self._DEFAULT_VALUE_STRATEGY[required_field]
+                        # in-place update
+                        update_path_in_dict(required_field, default, result)
+                else:
+                    for child in children_from_field(required_field):
+                        if not path_in_dict(child, result) and \
+                                        child in self._DEFAULT_VALUE_STRATEGY:
+                            default = self._DEFAULT_VALUE_STRATEGY[child]
+                            # in-place update
+                            update_path_in_dict(child, default, result)
 
 # Available transformers
 RESULT_TRANSFORMERS = [

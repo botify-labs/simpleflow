@@ -1,8 +1,10 @@
 from elasticsearch import Elasticsearch
+import copy
 
+from cdf.collections.urls.result_transformer import RESULT_TRANSFORMERS
 from cdf.constants import URLS_DATA_MAPPING
 from cdf.exceptions import ElasticSearchIncompleteIndex
-from cdf.utils.dict import deep_update
+from cdf.utils.dict import deep_update, deep_dict
 from cdf.utils.unicode import deep_clean
 from cdf.streams.masks import follow_mask
 from .constants import QUERY_FIELDS
@@ -363,12 +365,13 @@ class Query(object):
         self.es_doc_type = es_doc_type
         self.crawl_id = crawl_id
         self.revision_number = revision_number
-        self._results = {}
-        self._urls_ids = set()
+        self._results = []
+        # self._urls_ids = set()
         self.query = query
         self.start = start
         self.limit = limit
         self.sort = sort
+        self._count = 0
         if search_backend:
             self.search_backend = search_backend
         else:
@@ -378,13 +381,13 @@ class Query(object):
     @property
     def results(self):
         self._run()
-        for k in self._results['results']:
+        for k in self._results:
             yield k
 
     @property
     def count(self):
         self._run()
-        return self._results['count']
+        return self._count
 
     # TODO refactor signature to `make_es_query(self, sort=None)`
     def make_raw_query(self, query, sort=None):
@@ -417,6 +420,10 @@ class Query(object):
             q["filter"] = self._make_raw_filters(query['filters'])
         else:
             pass
+
+        if 'fields' in query:
+            q['fields'] = query['fields']
+
         return q
 
     def _make_raw_tagging_filters(self, filters):
@@ -531,90 +538,105 @@ class Query(object):
         else:
             sort = ('id', )
 
-        alt_results = self.search_backend.search(body=self.make_raw_query(query, sort=sort),
-                                                 index=self.es_index,
-                                                 doc_type=self.es_doc_type,
-                                                 size=self.limit,
-                                                 offset=self.start)
+        es_query = self.make_raw_query(query, sort=sort)
+        temp_results = self.search_backend.search(body=es_query,
+                                                  index=self.es_index,
+                                                  doc_type=self.es_doc_type,
+                                                  size=self.limit,
+                                                  offset=self.start)
 
         # Return directly if search has no result
-        if alt_results["hits"]["total"] == 0:
-            self._results = {
-                "count": 0,
-                "results": []
-            }
+        if temp_results["hits"]["total"] == 0:
+            self._results = []
+            self._count = 0
             return
 
-        results = []
+        self._count = temp_results['hits']['total']
+        self._results = []
 
-        # Resolve `url` based on `url_id`s in search results
-        # Firstly add all seen `url_id` of this search results into a set
-        for r in alt_results['hits']['hits']:
-            document = {'id': r['_id']}
+        # make a copy of the fields part
+        # need to use `deep_dict` since ES gives a dict with flatten path
+        # eg. for field 'a.b', instead of {'a' {'b': 1}}, it gives {'a.b': 1}
+        for result in temp_results['hits']['hits']:
+            # in transformed ES query, there's always `fields`
+            # in this way, ES always response with a` `fields` field containing
+            # the selected fields of the result documents
 
-            for field in query['fields']:
-                if field_has_children(field):
-                    for child in children_from_field(field):
-                        if child in FIELDS_HOOKS and 'prepare' in FIELDS_HOOKS[child]:
-                            FIELDS_HOOKS[child]['prepare'](self, r['_source'])
-                if field in FIELDS_HOOKS and 'prepare' in FIELDS_HOOKS[field]:
-                    FIELDS_HOOKS[field]['prepare'](self, r['_source'])
+            # the only exception is that the document contains no required fields,
+            # in which case we need to create an empty `fields` for default value
+            # transformation
+            if 'fields' in result:
+                res = copy.deepcopy(deep_dict(result['fields']))
+                self._results.append(res)
+            else:
+                self._results.append({})
 
-        # Resolve urls ids added in `prepare` functions hooks
-        # Issue a `multi get` call to get corresponding `url`s
-        if self._urls_ids:
-            # TODO so diff. version of crawls are mixed in the same index? Not a good idea
-            urls_es = self.search_backend.mget(body={"ids": list('{}:{}'.format(self.crawl_id, url_id) for url_id in self._urls_ids)},
-                                               index=self.es_index,
-                                               doc_type=self.es_doc_type,
-                                               fields=["url", "http_code"])
-            # TODO _id_to_url should be declared explicitly
-            # all referenced urlids should be in elasticsearch index.
-            if not all([url["exists"] for url in urls_es['docs']]):
-                raise ElasticSearchIncompleteIndex("Missing documents")
-            self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs']}
+        # Apply transformers
+        # Reminder: in-place transformation
+        for trans in RESULT_TRANSFORMERS:
+            trans(self._results, self).transform()
 
-        for r in alt_results['hits']['hits']:
-            document = {}
-
-            for field in query['fields']:
-                if field_has_children(field):
-                    for child in children_from_field(field):
-                        if child in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[child]:
-                            FIELDS_HOOKS[child]['transform'](self, r['_source'], document)
-                        else:
-                            default_value = FIELDS_HOOKS.get(child, {"default": 0}).get("default", 0)
-                            try:
-                                value = [reduce(dict.get, child.split("."), r['_source']) or default_value]
-                            except:
-                                value = [default_value]
-                            deep_update(document,
-                                        reduce(lambda x, y: {y: x}, reversed(child.split('.') + deep_clean(value))))
-                elif field in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[field]:
-                    FIELDS_HOOKS[field]['transform'](self, r['_source'], document)
-                else:
-                    default_value = FIELDS_HOOKS.get(field, {"default": 0}).get("default", 0)
-                    if '.' in field:
-                        try:
-                            value = [reduce(dict.get, field.split("."), r['_source'])]
-                        except:
-                            value = [default_value]
-                        deep_update(document,
-                                    reduce(lambda x, y: {y: x}, reversed(field.split('.') + deep_clean(value))))
-                    else:
-                        document[field] = deep_clean(r['_source'][field]) if field in r['_source'] else default_value
-
-            """
-            for _f in QUERY_TAGGING_FIELDS:
-                if _f in query['fields']:
-                    for t in r['_source']['tagging']:
-                        if t['rev_id'] == self.revision_number:
-                            document[_f] = t[_f]
-                            break
-            """
-            results.append(document)
-
-        self._results = {
-            'count': alt_results['hits']['total'],
-            'results': results
-        }
+        ## Resolve `url` based on `url_id`s in search results
+        ## Firstly add all seen `url_id` of this search results into a set
+        #for r in alt_results['hits']['hits']:
+        #    document = {'id': r['_id']}
+        #
+        #    for field in query['fields']:
+        #        if field_has_children(field):
+        #            for child in children_from_field(field):
+        #                if child in FIELDS_HOOKS and 'prepare' in FIELDS_HOOKS[child]:
+        #                    FIELDS_HOOKS[child]['prepare'](self, r['_source'])
+        #        if field in FIELDS_HOOKS and 'prepare' in FIELDS_HOOKS[field]:
+        #            FIELDS_HOOKS[field]['prepare'](self, r['_source'])
+        #
+        ## Resolve urls ids added in `prepare` functions hooks
+        ## Issue a `multi get` call to get corresponding `url`s
+        #if self._urls_ids:
+        #    # TODO so diff. version of crawls are mixed in the same index? Not a good idea
+        #    urls_es = self.search_backend.mget(body={"ids": list('{}:{}'.format(self.crawl_id, url_id) for url_id in self._urls_ids)},
+        #                                       index=self.es_index,
+        #                                       doc_type=self.es_doc_type,
+        #                                       fields=["url", "http_code"])
+        #    # TODO _id_to_url should be declared explicitly
+        #    # all referenced urlids should be in elasticsearch index.
+        #    if not all([url["exists"] for url in urls_es['docs']]):
+        #        raise ElasticSearchIncompleteIndex("Missing documents")
+        #    self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs']}
+        #
+        #for r in alt_results['hits']['hits']:
+        #    document = {}
+        #
+        #    for field in query['fields']:
+        #        if field_has_children(field):
+        #            for child in children_from_field(field):
+        #                if child in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[child]:
+        #                    FIELDS_HOOKS[child]['transform'](self, r['_source'], document)
+        #                else:
+        #                    default_value = FIELDS_HOOKS.get(child, {"default": 0}).get("default", 0)
+        #                    try:
+        #                        value = [reduce(dict.get, child.split("."), r['_source']) or default_value]
+        #                    except:
+        #                        value = [default_value]
+        #                    deep_update(document,
+        #                                reduce(lambda x, y: {y: x}, reversed(child.split('.') + deep_clean(value))))
+        #        elif field in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[field]:
+        #            FIELDS_HOOKS[field]['transform'](self, r['_source'], document)
+        #        else:
+        #            default_value = FIELDS_HOOKS.get(field, {"default": 0}).get("default", 0)
+        #            if '.' in field:
+        #                try:
+        #                    value = [reduce(dict.get, field.split("."), r['_source'])]
+        #                except:
+        #                    value = [default_value]
+        #                deep_update(document,
+        #                            reduce(lambda x, y: {y: x}, reversed(field.split('.') + deep_clean(value))))
+        #            else:
+        #                document[field] = deep_clean(r['_source'][field]) if field in r['_source'] else default_value
+        #
+        #    #for _f in QUERY_TAGGING_FIELDS:
+        #    #    if _f in query['fields']:
+        #    #        for t in r['_source']['tagging']:
+        #    #            if t['rev_id'] == self.revision_number:
+        #    #                document[_f] = t[_f]
+        #    #                break
+        #    results.append(document)

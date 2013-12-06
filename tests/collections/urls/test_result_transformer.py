@@ -128,5 +128,14 @@ class TestDefaultValueTransformer(unittest.TestCase):
         d = DefaultValueTransformer(results, fields=fields)
         d.transform()
 
-        self.assertEqual(d.results, [{'metadata_nb': {'title': 0}},
-                                     {'metadata_nb': {'title': 0}}])
+        self.assertEqual(results, [{'metadata_nb': {'title': 0}},
+                                   {'metadata_nb': {'title': 0}}])
+
+    def test_children(self):
+        fields = ['metadata_nb']
+        results = [{}]
+        d = DefaultValueTransformer(results, fields=fields)
+        d.transform()
+
+        self.assertEqual(results, [{'metadata_nb': {'title': 0, 'h1': 0,
+                                                    'h2': 0, 'description': 0}}])
