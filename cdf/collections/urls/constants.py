@@ -18,7 +18,7 @@ CLUSTER_TYPE_TO_ID = {
     }
 }
 
-QUERY_FIELDS = (
+QUERY_FIELDS = {
     "url",
     "protocol",
     "path",
@@ -88,4 +88,4 @@ QUERY_FIELDS = (
     "error_links.3xx",
     "error_links.4xx",
     "error_links.5xx",
-)
+}
