@@ -1,7 +1,7 @@
 import abc
 
 from cdf.collections.urls.utils import children_from_field, field_has_children, get_es_id, get_url_id
-from cdf.utils.dict import path_in_dict, get_subdict_from_path
+from cdf.utils.dict import path_in_dict, get_subdict_from_path, deep_dict
 from cdf.exceptions import ElasticSearchIncompleteIndex
 from cdf.streams.masks import follow_mask
 
@@ -9,6 +9,7 @@ from cdf.streams.masks import follow_mask
 class ResultTransformer(object):
     """Post-processing for ElasticSearch search results
     """
+
     @abc.abstractmethod
     def transform(self):
         """In-place transformation of ES search results"""
@@ -172,6 +173,9 @@ def transform_metadata_duplicate(es_result, id_to_url, meta_type):
 
 
 class IdToUrlTransformer(ResultTransformer):
+    """Replace all `url_id` in ElasticSearch result by their
+    corresponding complete url"""
+
     FIELD_TRANSFORM_STRATEGY = {
         'error_links.3xx': {
             'extract': lambda res: prepare_error_links(res, '3xx'),
@@ -229,6 +233,7 @@ class IdToUrlTransformer(ResultTransformer):
             self.es_doctype = kwargs['es_doctype']
             self.crawl_id = kwargs['crawl_id']
         else:
+            # TODO manage `fields` in query
             self.fields = query.query['fields']
             self.es_conn = query.search_backend
             self.es_index = query.es_index
@@ -282,7 +287,7 @@ class IdToUrlTransformer(ResultTransformer):
                                           index=self.es_index,
                                           doc_type=self.es_doctype,
                                           fields=["url", "http_code"])
-        # All referenced urlids should be in elasticsearch index.
+        # All referenced urlids should be in ElasticSearch index.
         if not all([url["exists"] for url in resolved_urls['docs']]):
             raise ElasticSearchIncompleteIndex("Missing documents")
 
@@ -305,7 +310,51 @@ class IdToUrlTransformer(ResultTransformer):
         return self.results
 
 
+class DefaultValueTransformer(ResultTransformer):
+    """Assign default value to some missing field"""
+
+    # Strategies here defines the default value of all
+    # children fields
+    #   e.g `metadata_nb` defaults to 0
+    #   so, `metadata_nb.h1` defaults to 0
+    _META_STRATEGY = {
+        'inlinks_internal_nb': 0,
+        'outlinks_internal_nb': 0,
+        'metadata_nb': 0,
+        'metadata_duplicate_nb': 0,
+        'metadata': [],
+        'metadata_duplicate': []
+    }
+
+    _DEFAULT_VALUE_STRATEGY = {}
+    for parent, default in _META_STRATEGY.iteritems():
+        for child in children_from_field(parent):
+            _DEFAULT_VALUE_STRATEGY[child] = default
+
+    def __init__(self, es_result, query=None, **kwargs):
+        # ES search result to transform
+        # a list of dict (`fields`)
+        self.results = es_result
+        if query:
+            # fields to retrieve
+            self.fields = query.query['fields']
+        else:
+            self.fields = kwargs['fields']
+
+    def transform(self):
+        for result in self.results:
+            patch = {}
+            for required_field in self.fields:
+                for child in children_from_field(required_field):
+                    if not path_in_dict(child, result) and \
+                                    child in self._DEFAULT_VALUE_STRATEGY:
+                        default = self._DEFAULT_VALUE_STRATEGY[child]
+                        patch.update(deep_dict({child: default}))
+            # in-place, deep update
+            result.update(patch)
+
 # Available transformers
 RESULT_TRANSFORMERS = [
-    IdToUrlTransformer
+    IdToUrlTransformer,
+    DefaultValueTransformer
 ]
