@@ -14,6 +14,7 @@ from cdf.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.collections.urls.utils import get_part_id
 from cdf.collections.urls.generators.bad_links import get_bad_links, get_bad_link_counters
+from cdf.log import logger
 
 
 def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_prefix='/tmp', force_fetch=False):
@@ -27,7 +28,9 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
         transducer = InlinksTransducer
         stream_name = "inlinks_raw"
 
-    links_file_path = 'url{}.txt.{}.gz'.format("links" if link_direction == "out" else "inlinks", part_id)
+    logger.info('Fetching files from s3 for part {}'.format(part_id))
+    links_file_path = 'url{}.txt.{}.gz'.\
+        format("links" if link_direction == "out" else "inlinks", part_id)
     try:
         links_file, fecthed = fetch_file(
             os.path.join(s3_uri, links_file_path),
@@ -35,6 +38,7 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
             force_fetch=force_fetch
         )
     except S3ResponseError:
+        logger.error('S3ResponseError')
         return
 
     cast = Caster(STREAMS_HEADERS[stream_name.upper()]).cast
@@ -57,8 +61,10 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
         file_created[link_type].write(str(entry[0]) + '\t' + '\t'.join(str(k) for k in entry[2:]) + '\n')
 
     # push all created files to s3
+    logger.info('Pushing links counter files to S3')
     for counter_file in file_created.values():
         counter_filename = os.path.basename(counter_file.name)
+        logger.info('Pushing {}'.format(counter_filename))
         push_file(
             os.path.join(s3_uri, counter_filename),
             os.path.join(tmp_dir, counter_filename),
@@ -71,6 +77,7 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
 
     streams_types = {'contents': []}
 
+    logger.info('Fetching all partitions from S3')
     for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
         files_fetched = fetch_files(s3_uri,
                                     tmp_dir,
@@ -121,9 +128,11 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
         f.close()
 
     # push all created files to s3
+    logger.info('Pushing metadata duplicate file to s3')
     for i in xrange(0, current_part_id + 1):
         file_to_push = file_pattern.format(i)
         if os.path.exists(os.path.join(tmp_dir, file_to_push)):
+            logger.info('Pushing {}'.format(file_to_push))
             push_file(
                 os.path.join(s3_uri, file_to_push),
                 os.path.join(tmp_dir, file_to_push),
@@ -145,6 +154,7 @@ def make_bad_link_file(crawl_id, s3_uri,
     streams_types = {'infos': [],
                      'outlinks': []}
 
+    logger.info('Fetching all partition info and links files from s3')
     for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
         files_fetched = fetch_files(s3_uri,
                                     tmp_dir,
@@ -188,9 +198,11 @@ def make_bad_link_file(crawl_id, s3_uri,
         f.close()
 
     # push all created files to s3
+    logger.info('Pushing badlink files to s3')
     for i in xrange(0, current_part_id + 1):
         file_to_push = file_pattern.format(i)
         if os.path.exists(os.path.join(tmp_dir, file_to_push)):
+            logger.info('Pushing {}'.format(file_to_push))
             push_file(
                 os.path.join(s3_uri, file_to_push),
                 os.path.join(tmp_dir, file_to_push),
@@ -211,6 +223,7 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
     file_name = 'urlbadlinks.txt.%d.gz' % part_id
+    logger.info('Fetching file from s3 for part {}'.format(part_id))
     try:
         bad_link_file, _ = fetch_file(os.path.join(s3_uri, file_name),
                                    os.path.join(tmp_dir, file_name),
@@ -236,6 +249,8 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
             str(count)
         )) + '\n')
     f.close()
+
+    logger.info('Pushing {}'.format(file_name))
     push_file(
         os.path.join(s3_uri, file_name),
         os.path.join(tmp_dir, file_name),
