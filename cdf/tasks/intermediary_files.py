@@ -56,6 +56,9 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
             file_created[link_type] = gzip.open(os.path.join(tmp_dir, filenames[link_type]), 'w')
         file_created[link_type].write(str(entry[0]) + '\t' + '\t'.join(str(k) for k in entry[2:]) + '\n')
 
+    for _f in file_created.itervalues():
+        _f.close()
+
     # push all created files to s3
     for counter_file in file_created.values():
         counter_filename = os.path.basename(counter_file.name)
