@@ -116,7 +116,9 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
             '1' if is_first else '0',
             ';'.join(str(u) for u in target_urls_ids)
         )) + '\n')
-    f.close()
+
+    if f:
+        f.close()
 
     # push all created files to s3
     for i in xrange(0, current_part_id + 1):
@@ -181,7 +183,9 @@ def make_bad_link_file(crawl_id, s3_uri,
             str(dest),
             str(bad_code)
         )) + '\n')
-    f.close()
+
+    if f:
+        f.close()
 
     # push all created files to s3
     for i in xrange(0, current_part_id + 1):
