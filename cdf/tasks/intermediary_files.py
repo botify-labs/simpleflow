@@ -40,8 +40,8 @@ def make_links_counter_file(crawl_id, s3_uri,
             os.path.join(tmp_dir, links_file_path),
             force_fetch=force_fetch
         )
-    except S3ResponseError:
-        logger.error('S3ResponseError')
+    except S3ResponseError as e:
+        logger.error(str(e))
         return
 
     cast = Caster(STREAMS_HEADERS[stream_name.upper()]).cast
