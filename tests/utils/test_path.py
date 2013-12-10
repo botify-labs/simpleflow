@@ -29,8 +29,8 @@ class TestPath(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
 
     def test_group_by_part(self):
-        res = [(gid, list(group))
-               for gid, group in group_by_part(iter(self.data), 2, 4)]
+        res = [(gid, list(group)) for
+               gid, group in group_by_part(iter(self.data), 2, 4)]
 
         expected = [
             (1, [[4, 301]]),

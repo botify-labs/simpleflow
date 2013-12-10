@@ -40,17 +40,17 @@ def group_by_part(generator, first_part_size, part_size):
 
 def write_by_part(generator,
                   first_part_size, part_size,
-                  tmp_dir, file_pattern, to_sting_func):
+                  dirpath, file_pattern, to_string_func):
     """Write rows from the generator function in partitions,
     according to the partition size params
 
-    :param to_sting_func: Determine the logic to transform a generator output to a string.
+    :param to_string_func: Determine the logic to transform a generator output to a string.
                           It should append '\n'
     """
     for part, rows in group_by_part(generator, first_part_size, part_size):
         file_name = file_pattern.format(part)
         logger.info('Writing for file {}'.format(file_name))
-        path = os.path.join(tmp_dir, file_name)
+        path = os.path.join(dirpath, file_name)
         with gzip.open(path, 'w') as f:
             for row in rows:
-                f.write(to_sting_func(row))
+                f.write(to_string_func(row))
