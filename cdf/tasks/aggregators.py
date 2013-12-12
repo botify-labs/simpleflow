@@ -326,17 +326,21 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         }]
         make_suggest_file_from_query(identifier='distribution/depth_gte_{}'.format(depth), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
-    # internal outlinks
-    for field in ('total', 'follow', 'follow_unique', 'nofollow'):
-        full_field = "outlinks_internal_nb.{}".format(field)
-        query = {
-            "target_field": full_field
-        }
-        urls_fields = [full_field]
-        urls_filters = [
-            {"field": full_field, "value": 0, "predicate": "gt"}
-        ]
-        make_suggest_file_from_query(identifier='outlinks_internal/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+    # internal/external outlinks
+    for status in ('internal', 'external'):
+        fields = ['total', 'follow', 'nofollow']
+        if status == "internal":
+            fields.append('follow_unique')
+        for field in fields:
+            full_field = "outlinks_{}_nb.{}".format(status, field)
+            query = {
+                "target_field": full_field
+            }
+            urls_fields = [full_field]
+            urls_filters = [
+                {"field": full_field, "value": 0, "predicate": "gt"}
+            ]
+            make_suggest_file_from_query(identifier='outlinks_{}/{}'.format(status, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # broken outlinks
     for field in ('any', '3xx', '4xx', '5xx'):
