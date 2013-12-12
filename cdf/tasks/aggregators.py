@@ -269,7 +269,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
 
     # Metadata types
     for metadata_type in ('title', 'description', 'h1'):
-        for metadata_status in ('duplicate', 'not_filled'):
+        for metadata_status in ('duplicate', 'not_filled', 'filled', 'unique'):
             query = {
                 "fields": ["pages_nb", "metadata_nb.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)],
                 "target_field": "metadata_nb.{}.{}".format(metadata_type, metadata_status)
