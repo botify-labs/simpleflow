@@ -171,18 +171,20 @@ def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc
     results = q.query(query)
     for k, result in enumerate(results):
         hash_id_filters = [{'field': 'patterns', 'value': result['query_hash_id']}]
-        urls_query = {
-            "fields": ["url"] + urls_fields,
-            "filters": {'and': hash_id_filters + urls_filters}
-        }
-
         result["score"] = reduce(dict.get, query["target_field"].split("."), result["counters"])
         if result["score"] == 0:
             continue
 
-        if not urls_sort:
-            urls_sort = ['id', ]
-        urls_query["sort"] = urls_sort
+        urls_query_bgn = {
+            "fields": ["url"] + urls_fields,
+            "filters": {'and': hash_id_filters + urls_filters}
+        }
+        urls_query = {
+            "fields": ["url"] + urls_fields,
+            "filters": {'and': result['query'] + urls_filters}
+        }
+
+        results[k]["urls_query_bgn"] = urls_query_bgn
         results[k]["urls_query"] = urls_query
 
     # Write suggestion file
