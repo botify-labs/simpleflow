@@ -342,6 +342,18 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             ]
             make_suggest_file_from_query(identifier='outlinks_{}/{}'.format(status, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
+    # inlinks
+    for field in ('total', 'follow', 'follow_unique', 'nofollow'):
+        full_field = "inlinks_internal_nb.{}".format(field)
+        query = {
+            "target_field": full_field
+        }
+        urls_fields = [full_field]
+        urls_filters = [
+            {"field": full_field, "value": 0, "predicate": "gt"}
+        ]
+        make_suggest_file_from_query(identifier='inlinks_internal/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
     # broken outlinks
     for field in ('any', '3xx', '4xx', '5xx'):
         full_field = "error_links.{}".format(field)
