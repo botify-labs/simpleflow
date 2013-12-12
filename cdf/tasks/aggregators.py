@@ -269,7 +269,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         urls_fields = ["delay2"]
         urls_filters = get_filters_from_agg_delay_field(delay)
         query = {
-            "fields": [delay],
+            "fields": ["pages_nb", "delay_gte_2s", "delay_lt_500ms", "delay_from_500ms_to_1s", "delay_from_1s_to_2s"],
             "target_field": delay
         }
         make_suggest_file_from_query(identifier='delay/{}'.format(delay[6:]), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
