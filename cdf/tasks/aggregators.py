@@ -20,11 +20,16 @@ from cdf.collections.urls.generators.suggestions import MetadataClusterMixin
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 from cdf.collections.suggestions.query import SuggestQuery
 from cdf.collections.urls.query import Query
+from .decorators import TemporaryDirTask as with_temporary_dir
+from cdf.constants import DEFAULT_FORCE_FETCH
+from cdf.tasks.base import make_tmp_dir_from_crawl_id
 
 
-def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='/tmp', force_fetch=False):
+@with_temporary_dir
+def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     # Fetch locally the files from S3
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    if not tmp_dir:
+        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
     suggest_dir_path = os.path.join(tmp_dir, 'suggest')
     makedirs(suggest_dir_path, exist_ok=True)
 
@@ -74,11 +79,13 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='
     )
 
 
-def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+@with_temporary_dir
+def consolidate_aggregators(crawl_id, s3_uri, tmp_dir=None, force_fetch=False):
     """
     Fetch all part_id's aggregators and merge them
     """
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    if not tmp_dir:
+        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
     makedirs(tmp_dir, exist_ok=True)
 
     # Fetch hdf5 file that already contains the full list of requests
@@ -152,7 +159,11 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
     store.close()
     push_file(os.path.join(s3_uri, 'suggest.h5'), h5_file)
 
-def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix='/tmp', force_fetch=False):
+
+@with_temporary_dir
+def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
+    if not tmp_dir:
+        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
     query_type = []
     queries = []
     urls_fields = []
@@ -243,8 +254,6 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                            key=lambda i: i['score'],
                            reverse=True)
     final_summary_flatten = json.dumps(final_summary, indent=4)
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-    makedirs(os.path.join(tmp_dir), exist_ok=True)
 
     summary_file = os.path.join(tmp_dir, 'suggested_patterns_summary.json')
     f = open(os.path.join(summary_file), 'w')
