@@ -5,7 +5,7 @@ URLS_DATA_MAPPING = {
                 "type": "string",
                 "index": "not_analyzed"
             },
-            "url_hash": {"type": "long"},
+            "url_hash": {"type": "long", "index": "no"},
             "byte_size": {"type": "long"},
             "date_crawled": {"type": "date"},
             "delay1": {"type": "long"},
@@ -89,9 +89,9 @@ URLS_DATA_MAPPING = {
             },
             "metadata_duplicate": {
                 "properties": {
-                    "title": {"type": "long"},
-                    "description": {"type": "long"},
-                    "h1": {"type": "long"}
+                    "title": {"type": "long", "index": "no"},
+                    "description": {"type": "long", "index": "no"},
+                    "h1": {"type": "long", "index": "no"}
                 }
             },
             "metadata_duplicate_is_first": {
@@ -116,8 +116,8 @@ URLS_DATA_MAPPING = {
                     }
                 }
             },
-            "inlinks_internal": {"type": "long"},
-            "outlinks_internal": {"type": "long"},
+            "inlinks_internal": {"type": "long", "index": "no"},
+            "outlinks_internal": {"type": "long", "index": "no"},
             "outlinks_internal_nb": {
                 "properties": {
                     "total": {"type": "long"},
@@ -172,11 +172,11 @@ URLS_DATA_MAPPING = {
                 "index": "not_analyzed"
             },
             "canonical_from_nb": {"type": "long"},
-            "canonical_from": {"type": "long"},
+            "canonical_from": {"type": "long", "index": "no"},
             "canonical_to": {
                 "properties": {
-                    "url": {"type": "string"},
-                    "url_id": {"type": "long"}
+                    "url": {"type": "string", "index": "no"},
+                    "url_id": {"type": "long", "index": "no"}
                 }
             },
             "canonical_to_equal": {"type": "boolean"},
@@ -190,8 +190,8 @@ URLS_DATA_MAPPING = {
             "redirects_from_nb": {"type": "long"},
             "redirects_from": {
                 "properties": {
-                    "http_code": {"type": "string"},
-                    "url_id": {"type": "long"}
+                    "http_code": {"type": "string", "index": "no"},
+                    "url_id": {"type": "long", "index": "no"}
                 }
             },
             "error_links": {
@@ -199,19 +199,19 @@ URLS_DATA_MAPPING = {
                     "3xx": {
                         "properties": {
                             "nb": {"type": "long"},
-                            "urls": {"type": "long"}
+                            "urls": {"type": "long", "index": "no"}
                         }
                     },
                     "4xx": {
                         "properties": {
                             "nb": {"type": "long"},
-                            "urls": {"type": "long"}
+                            "urls": {"type": "long", "index": "no"}
                         }
                     },
                     "5xx": {
                         "properties": {
                             "nb": {"type": "long"},
-                            "urls": {"type": "long"}
+                            "urls": {"type": "long", "index": "no"}
                         }
                     },
                 }
