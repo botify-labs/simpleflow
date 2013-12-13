@@ -63,7 +63,7 @@ URLS_FIXTURE = [
             'total': 102
         },
         'canonical_to': {
-            'url': u'www.abc.com'
+            'url_id': 3
         },
         'canonical_from': [2, 3, 4],
         'canonical_from_nb': 3
@@ -149,6 +149,16 @@ URLS_FIXTURE = [
         '_id': '%d:%d' % (CRAWL_ID, 6),
         'crawl_id': CRAWL_ID,
         'http_code': 200
+    },
+    {
+        'id': 7,
+        '_id': '%d:%d' % (CRAWL_ID, 7),
+        'crawl_id': CRAWL_ID,
+        'http_code': 301,
+        'redirects_to': {
+            'http_code': 301,
+            'url_id': 5
+        }
     }
 ]
 
@@ -297,7 +307,9 @@ class TestQueryES(unittest.TestCase):
                     '3xx': self.error_3xx,
                     '5xx': self.error_5xx
                 }
-            }
+            },
+            {'id': 6},
+            {'id': 7}
         ]
 
         self.assertItemsEqual(results, expected)
@@ -372,27 +384,26 @@ class TestQueryES(unittest.TestCase):
         }
         self.assertItemsEqual(result, [expected])
 
-    @unittest.skip('')
     def test_canonical_to_query(self):
         # external url
         bql_query = _get_simple_bql_query('id', 'eq', 1,
                                           fields=['canonical_to'])
         result = list(Query(*QUERY_ARGS, query=bql_query).results)
         expected = {
-            'canonical_to': {'url': 'www.abc.com'},
-            'crawled': False  # b/c it's an external url
+            'canonical_to': {
+                'url': self.urls[3],
+                'crawled': True
+            },
         }
         self.assertItemsEqual(result, [expected])
 
-    @unittest.skip('')
     def test_canonical_to_not_crawled(self):
         # internal url and it's not crawled
         bql_query = _get_simple_bql_query('id', 'eq', 2,
                                           fields=['canonical_to'])
         result = list(Query(*QUERY_ARGS, query=bql_query).results)
         expected = {
-            'canonical_to': {'url': 'www.notcrawled.com'},
-            'crawled': False
+            'canonical_to': {'url': 'http://www.notcrawled.com', 'crawled': False},
         }
         self.assertItemsEqual(result, [expected])
 
@@ -426,6 +437,15 @@ class TestQueryES(unittest.TestCase):
                     'http_code': 301
                 }
             ]
+        }
+        self.assertItemsEqual(result, [expected])
+
+    def test_redirects_to_not_crawled(self):
+        bql_query = _get_simple_bql_query('redirects_to', 'not_null', 0,
+                                          fields=['redirects_to'])
+        result = list(Query(*QUERY_ARGS, query=bql_query).results)
+        expected = {
+            'redirects_to': {'url': self.urls[5], 'crawled': False}
         }
         self.assertItemsEqual(result, [expected])
 
@@ -463,3 +483,20 @@ class TestQueryES(unittest.TestCase):
             }
         }
         self.assertItemsEqual(result, [expected])
+
+    def test_sort_query(self):
+        bql_query = {
+            'sort': [{'http_code': {'order': 'desc'}}, 'id'],
+            'fields': ['id'],
+        }
+        result = list(Query(*QUERY_ARGS, query=bql_query).results)
+        expected = [
+            {'id': 2},
+            {'id': 7},
+            {'id': 1},
+            {'id': 3},
+            {'id': 4},
+            {'id': 6}
+            # url 5 is ignored since it's not crawled
+        ]
+        self.assertItemsEqual(result, expected)

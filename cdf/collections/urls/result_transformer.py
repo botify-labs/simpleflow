@@ -22,7 +22,7 @@ class ResultTransformer(object):
 
 # all `transform` functions here modifies ES result IN PLACE
 
-def prepare_error_links(es_result, code_kind):
+def _prepare_error_links(es_result, code_kind):
     key = 'error_links'
     if key in es_result:
         if code_kind in es_result[key]:
@@ -31,7 +31,7 @@ def prepare_error_links(es_result, code_kind):
             return es_result[key][code_kind]['urls']
 
 
-def transform_error_links(es_result, id_to_url, code_kind):
+def _transform_error_links(es_result, id_to_url, code_kind):
     key = 'error_links'
     if key in es_result:
         if code_kind in es_result[key]:
@@ -43,14 +43,14 @@ def transform_error_links(es_result, id_to_url, code_kind):
             original['urls'] = urls
 
 
-def prepare_links(es_result, link_kind):
+def _prepare_links(es_result, link_kind):
     ids = []
     for link_item in es_result.get(link_kind, []):
         ids.append(link_item[0])
     return ids
 
 
-def transform_links(es_result, id_to_url, link_kind):
+def _transform_links(es_result, id_to_url, link_kind):
     if link_kind in es_result:
         res = []
         for link_item in es_result[link_kind]:
@@ -75,7 +75,7 @@ def transform_links(es_result, id_to_url, link_kind):
 
 
 # for `canonical_to` and `redirects_to`
-def prepare_single_id(es_result, field):
+def _prepare_single_id(es_result, field):
     if path_in_dict(field, es_result):
         url_item = get_subdict_from_path(field, es_result)
         if 'url_id' in url_item:
@@ -84,20 +84,20 @@ def prepare_single_id(es_result, field):
             return []
 
 
-# TODO semantic of not_crawled
-# 3 cases
-#   - not_crawled url
-#   - normal url
-#   - external url
-# same for redirect_to
-def transform_canonical_to(es_result, id_to_url):
-    field = 'canonical_to'
+def _transform_single_link_to(es_result, id_to_url, field):
     if field in es_result:
         if 'url_id' in es_result[field]:
-            es_result[field] = {
-                'url': id_to_url.get(es_result[field]['url_id'])[0],
-                'crawled': True
-            }
+            url, http_code = id_to_url.get(es_result[field]['url_id'])
+            if http_code > 0:
+                es_result[field] = {
+                    'url': url,
+                    'crawled': True
+                }
+            else:
+                es_result[field] = {
+                    'url': url,
+                    'crawled': False
+                }
         else:
             es_result[field] = {
                 'url': es_result[field]['url'],
@@ -105,11 +105,20 @@ def transform_canonical_to(es_result, id_to_url):
             }
 
 
-def transform_redirects_to():
-    pass
+# 3 cases
+#   - not_crawled url
+#   - normal url
+#   - external url
+# same for redirect_to
+def _transform_canonical_to(es_result, id_to_url):
+    _transform_single_link_to(es_result, id_to_url, 'canonical_to')
 
 
-def prepare_canonical_from(es_result):
+def _transform_redirects_to(es_result, id_to_url):
+    _transform_single_link_to(es_result, id_to_url, 'redirects_to')
+
+
+def _prepare_canonical_from(es_result):
     field = 'canonical_from'
     if field in es_result:
         return es_result[field]
@@ -117,7 +126,7 @@ def prepare_canonical_from(es_result):
         return []
 
 
-def transform_canonical_from(es_result, id_to_url):
+def _transform_canonical_from(es_result, id_to_url):
     field = 'canonical_from'
     if field in es_result:
         urls = []
@@ -126,7 +135,7 @@ def transform_canonical_from(es_result, id_to_url):
         es_result[field] = urls
 
 
-def prepare_redirects_from(es_result):
+def _prepare_redirects_from(es_result):
     field = 'redirects_from'
     if field in es_result:
         return map(lambda item: item['url_id'],
@@ -135,7 +144,7 @@ def prepare_redirects_from(es_result):
         return []
 
 
-def transform_redirects_from(es_result, id_to_url):
+def _transform_redirects_from(es_result, id_to_url):
     field = 'redirects_from'
     if field in es_result:
         urls = []
@@ -150,7 +159,7 @@ def transform_redirects_from(es_result, id_to_url):
         es_result[field] = urls
 
 
-def prepare_metadata_duplicate(es_result, meta_type):
+def _prepare_metadata_duplicate(es_result, meta_type):
     field = 'metadata_duplicate'
     if field in es_result and meta_type in es_result[field]:
         return es_result[field][meta_type]
@@ -158,8 +167,7 @@ def prepare_metadata_duplicate(es_result, meta_type):
         return []
 
 
-# TODO(darkjh) default value transformer for this
-def transform_metadata_duplicate(es_result, id_to_url, meta_type):
+def _transform_metadata_duplicate(es_result, id_to_url, meta_type):
     field = 'metadata_duplicate'
     if field in es_result and meta_type in es_result[field]:
         urls = []
@@ -178,48 +186,52 @@ class IdToUrlTransformer(ResultTransformer):
 
     FIELD_TRANSFORM_STRATEGY = {
         'error_links.3xx': {
-            'extract': lambda res: prepare_error_links(res, '3xx'),
-            'transform': lambda res, id_to_url: transform_error_links(res, id_to_url, '3xx')
+            'extract': lambda res: _prepare_error_links(res, '3xx'),
+            'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '3xx')
         },
         'error_links.4xx': {
-            'extract': lambda res: prepare_error_links(res, '4xx'),
-            'transform': lambda res, id_to_url: transform_error_links(res, id_to_url, '4xx')
+            'extract': lambda res: _prepare_error_links(res, '4xx'),
+            'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '4xx')
         },
         'error_links.5xx': {
-            'extract': lambda res: prepare_error_links(res, '5xx'),
-            'transform': lambda res, id_to_url: transform_error_links(res, id_to_url, '5xx')
+            'extract': lambda res: _prepare_error_links(res, '5xx'),
+            'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '5xx')
         },
         'inlinks_internal': {
-            'extract': lambda res: prepare_links(res, 'inlinks_internal'),
-            'transform': lambda res, id_to_url: transform_links(res, id_to_url, 'inlinks_internal')
+            'extract': lambda res: _prepare_links(res, 'inlinks_internal'),
+            'transform': lambda res, id_to_url: _transform_links(res, id_to_url, 'inlinks_internal')
         },
         'outlinks_internal': {
-            'extract': lambda res: prepare_links(res, 'outlinks_internal'),
-            'transform': lambda res, id_to_url: transform_links(res, id_to_url, 'outlinks_internal')
+            'extract': lambda res: _prepare_links(res, 'outlinks_internal'),
+            'transform': lambda res, id_to_url: _transform_links(res, id_to_url, 'outlinks_internal')
         },
         'canonical_to': {
-            'extract': lambda res: prepare_single_id(res, 'canonical_to'),
-            'transform': lambda res, id_to_url: transform_canonical_to(res, id_to_url)
+            'extract': lambda res: _prepare_single_id(res, 'canonical_to'),
+            'transform': lambda res, id_to_url: _transform_canonical_to(res, id_to_url)
         },
         'canonical_from': {
-            'extract': lambda res: prepare_canonical_from(res),
-            'transform': lambda res, id_to_url: transform_canonical_from(res, id_to_url)
+            'extract': lambda res: _prepare_canonical_from(res),
+            'transform': lambda res, id_to_url: _transform_canonical_from(res, id_to_url)
+        },
+        'redirects_to': {
+            'extract': lambda res: _prepare_single_id(res, 'redirects_to'),
+            'transform': lambda res, id_to_url: _transform_redirects_to(res, id_to_url)
         },
         'redirects_from': {
-            'extract': lambda res: prepare_redirects_from(res),
-            'transform': lambda res, id_to_url: transform_redirects_from(res, id_to_url)
+            'extract': lambda res: _prepare_redirects_from(res),
+            'transform': lambda res, id_to_url: _transform_redirects_from(res, id_to_url)
         },
         'metadata_duplicate.title': {
-            'extract': lambda res: prepare_metadata_duplicate(res, 'title'),
-            'transform': lambda res, id_to_url: transform_metadata_duplicate(res, id_to_url, 'title')
+            'extract': lambda res: _prepare_metadata_duplicate(res, 'title'),
+            'transform': lambda res, id_to_url: _transform_metadata_duplicate(res, id_to_url, 'title')
         },
         'metadata_duplicate.h1': {
-            'extract': lambda res: prepare_metadata_duplicate(res, 'h1'),
-            'transform': lambda res, id_to_url: transform_metadata_duplicate(res, id_to_url, 'h1')
+            'extract': lambda res: _prepare_metadata_duplicate(res, 'h1'),
+            'transform': lambda res, id_to_url: _transform_metadata_duplicate(res, id_to_url, 'h1')
         },
         'metadata_duplicate.description': {
-            'extract': lambda res: prepare_metadata_duplicate(res, 'description'),
-            'transform': lambda res, id_to_url: transform_metadata_duplicate(res, id_to_url, 'description')
+            'extract': lambda res: _prepare_metadata_duplicate(res, 'description'),
+            'transform': lambda res, id_to_url: _transform_metadata_duplicate(res, id_to_url, 'description')
         }
     }
 
@@ -234,7 +246,7 @@ class IdToUrlTransformer(ResultTransformer):
             self.crawl_id = kwargs['crawl_id']
         else:
             # TODO manage `fields` in query
-            self.fields = query.query['fields']
+            self.fields = query.fields
             self.es_conn = query.search_backend
             self.es_index = query.es_index
             self.es_doctype = query.es_doc_type
@@ -295,8 +307,8 @@ class IdToUrlTransformer(ResultTransformer):
         # Also fetch the http_code
         # Assumption: we don't do query over multiple crawls, one site at a time
         self.id_to_url = {get_url_id(es_url['_id']):
-                              (es_url['fields']['url'], es_url['fields']['http_code'])
-                          for es_url in resolved_urls['docs']}
+                              (es_url['fields']['url'], es_url['fields']['http_code']) for
+                          es_url in resolved_urls['docs']}
 
         for result in self.results:
             # Resolve urls in each field found by prepare
@@ -337,7 +349,7 @@ class DefaultValueTransformer(ResultTransformer):
         self.results = es_result
         if query:
             # fields to retrieve
-            self.fields = query.query['fields']
+            self.fields = query.fields
         else:
             self.fields = kwargs['fields']
 
@@ -362,8 +374,41 @@ class DefaultValueTransformer(ResultTransformer):
                             # in-place update
                             update_path_in_dict(child, default, result)
 
+
+# TODO this should be managed in a proper way
+# Now we need this b/c when transforming a `canonical_to` or
+# `redirects_to`, if it's an external url string, we will not
+# do a ES mget for it. So it IdToUrlTransformer will not affect
+# it.
+
+class ExternalUrlTransformer(ResultTransformer):
+    """External urls should also be marked as not crawled"""
+
+    _TRANSFORM_STRATEGY = {
+        'redirects_to',
+        'canonical_to'
+    }
+
+    def __init__(self, es_result, query=None, **kwargs):
+        self.results = es_result
+        if query:
+            self.fields = query.fields
+        else:
+            self.fields = kwargs['fields']
+
+    def transform(self):
+        for result in self.results:
+            for required_field in self.fields:
+                if required_field in self._TRANSFORM_STRATEGY:
+                    field = result[required_field]
+                    if 'url' in field:
+                        field['crawled'] = False
+
+
 # Available transformers
+# Order is IMPORTANT
 RESULT_TRANSFORMERS = [
+    ExternalUrlTransformer,
     IdToUrlTransformer,
-    DefaultValueTransformer
+    DefaultValueTransformer,
 ]

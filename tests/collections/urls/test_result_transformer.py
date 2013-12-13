@@ -2,7 +2,7 @@ import unittest
 import copy
 from mock import MagicMock
 
-from cdf.collections.urls.result_transformer import IdToUrlTransformer, DefaultValueTransformer
+from cdf.collections.urls.result_transformer import IdToUrlTransformer, DefaultValueTransformer, ExternalUrlTransformer
 
 
 ELASTICSEARCH_INDEX = 'mock'
@@ -72,7 +72,7 @@ class TestResultTransformer(unittest.TestCase):
 
         # partial transformation, controled by `fields` param
         test_input = copy.deepcopy(es_result)
-        trans = IdToUrlTransformer(fields=['error_links.5xx'], es_result=test_input,
+        trans = IdToUrlTransformer(fields=['error_links.5xx'], es_result=[test_input],
                                    es_conn=self.es_conn, es_index=None,
                                    es_doctype=None, crawl_id=CRAWL_ID)
         trans.transform()
@@ -94,7 +94,7 @@ class TestResultTransformer(unittest.TestCase):
 
         # children fields transformation
         test_input = copy.deepcopy(es_result)
-        trans = IdToUrlTransformer(fields=['error_links.5xx'], es_result=test_input,
+        trans = IdToUrlTransformer(fields=['error_links.5xx'], es_result=[test_input],
                                    es_conn=self.es_conn, es_index=None,
                                    es_doctype=None, crawl_id=CRAWL_ID)
         trans.transform()
@@ -137,5 +137,25 @@ class TestDefaultValueTransformer(unittest.TestCase):
         d = DefaultValueTransformer(results, fields=fields)
         d.transform()
 
-        self.assertEqual(results, [{'metadata_nb': {'title': 0, 'h1': 0,
-                                                    'h2': 0, 'description': 0}}])
+        expected = [{'metadata_nb': {'title': 0, 'h1': 0,
+                                     'h2': 0, 'description': 0}}]
+
+        self.assertEqual(d.results, expected)
+
+
+class TestExternalUrlTransformer(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_simple(self):
+        fields = ['canonical_to']
+        results = [{'canonical_to': {'url': 'external', 'crawled': True}}]
+        d = ExternalUrlTransformer(results, fields=fields)
+        d.transform()
+
+        expected = [{'canonical_to': {'url': 'external', 'crawled': False}}]
+
+        self.assertEqual(d.results, expected)
