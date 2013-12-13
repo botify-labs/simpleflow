@@ -182,7 +182,7 @@ URLS_DATA_MAPPING = {
             "canonical_to_equal": {"type": "boolean"},
             "redirects_to": {
                 "properties": {
-                    "http_code": {"type": "string"},
+                    "http_code": {"type": "long"},
                     "url": {"type": "string"},
                     "url_id": {"type": "long"}
                 }
@@ -190,7 +190,7 @@ URLS_DATA_MAPPING = {
             "redirects_from_nb": {"type": "long"},
             "redirects_from": {
                 "properties": {
-                    "http_code": {"type": "string", "index": "no"},
+                    "http_code": {"type": "long", "index": "no"},
                     "url_id": {"type": "long", "index": "no"}
                 }
             },
