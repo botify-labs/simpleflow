@@ -145,6 +145,9 @@ class BaseMetricsQuery(object):
         else:
             fields = filter(lambda i: i not in self.DISTRIBUTION_COLUMNS, self.df.columns.tolist())
 
+        if settings.get('target_field') == "score":
+            fields.append('score')
+
         final_fields = []
         for f in fields:
             #if f not in self.FIELDS:
@@ -267,7 +270,6 @@ class SuggestQuery(BaseMetricsQuery):
     """
 
     def query(self, settings, sort_results=True):
-        final_fields = self.get_fields_from_settings(settings)
         df = self.df.copy()
 
         target_field = settings.get('target_field', 'pages_nb')
@@ -276,7 +278,19 @@ class SuggestQuery(BaseMetricsQuery):
             df = df[self._apply_filters(df, settings['filters'])]
 
         df = df.groupby(['query']).agg('sum').reset_index()
+
+        """
+        If target field is {"div": [a, b]}, we create a new column on the current
+        dataframe that div a by b
+        """
+        if isinstance(target_field, dict) and target_field.keys() == ["div"]:
+            df["score"] = df[target_field["div"][0]] / df[target_field["div"][1]]
+            target_field = "score"
+            settings["target_field"] = target_field
+
         df.sort(columns=[target_field], ascending=[0], inplace=True)
+
+        final_fields = self.get_fields_from_settings(settings)
 
         results = []
         for i, n in enumerate(df.values):
@@ -318,11 +332,14 @@ class SuggestQuery(BaseMetricsQuery):
         For instance if we look for elements with title not set:
         - pattern A has size 200 and contains 10 elements with h1 not set
         - pattern B has size 110 and contains 100 elements with h1 not set
-
         this method will place pattern B first.
+
+        Sorting mode can be changed by adding a `target_sort` on settings with allowed values "asc" or "desc" (desc by default)
         """
         target_field = settings.get('target_field', 'pages_nb')
-        results = sorted(results, reverse = True, key = lambda x: x["counters"][target_field])
+        target_sort = settings.get('target_sort', 'desc')
+        reverse = target_sort == "desc"
+        results = sorted(results, reverse=reverse, key=lambda x: x["counters"][target_field])
         return results
 
     def is_child(self, parent_hash, child_hash):
