@@ -342,6 +342,18 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             sort_verbose = "most" if sort == "desc" else "fewer"
             make_suggest_file_from_query(identifier='inlinks_internal/{}_{}'.format(sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
+    # Only 1 follow link
+    full_field = "inlinks_internal_nb.follow_distribution_urls.1"
+    query = {
+        "fields": [full_field, "pages_nb"],
+        "target_field": full_field
+    }
+    urls_fields = [full_field]
+    urls_filters = [
+        {"field": "inlinks_internal_nb.follow", "value": 1}
+    ]
+    make_suggest_file_from_query(identifier='inlinks_internal/1_follow_link', query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
     # broken outlinks
     for field in ('any', '3xx', '4xx', '5xx'):
         full_field = "error_links.{}".format(field)
