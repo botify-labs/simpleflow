@@ -306,31 +306,41 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
 
     # internal/external outlinks
     for status in ('internal', 'external'):
-        fields = ['total', 'follow', 'nofollow']
-        if status == "internal":
-            fields.append('follow_unique')
-        for field in fields:
-            full_field = "outlinks_{}_nb.{}".format(status, field)
-            query = {
-                "target_field": full_field
-            }
-            urls_fields = [full_field]
-            urls_filters = [
-                {"field": full_field, "value": 0, "predicate": "gt"}
-            ]
-            make_suggest_file_from_query(identifier='outlinks_{}/{}'.format(status, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        for sort in ('asc', 'desc'):
+            fields = ['total', 'follow', 'nofollow']
+            if status == "internal":
+                fields.append('follow_unique')
+            for field in fields:
+                full_field = "outlinks_{}_nb.{}".format(status, field)
+                query = {
+                    "fields": ["score", full_field, "pages_nb"],
+                    "target_field": full_field,
+                    "target_sort": sort,
+                    "filters": {"field": full_field, "value": 0, "predicate": "gt"}
+                }
+                urls_fields = [full_field]
+                urls_filters = [
+                    {"field": full_field, "value": 0, "predicate": "gt"}
+                ]
+                sort_verbose = "most" if sort == "desc" else "fewer"
+                make_suggest_file_from_query(identifier='outlinks_{}/{}_{}'.format(status, sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # inlinks
     for field in ('total', 'follow', 'follow_unique', 'nofollow'):
-        full_field = "inlinks_internal_nb.{}".format(field)
-        query = {
-            "target_field": full_field
-        }
-        urls_fields = [full_field]
-        urls_filters = [
-            {"field": full_field, "value": 0, "predicate": "gt"}
-        ]
-        make_suggest_file_from_query(identifier='inlinks_internal/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+        for sort in ('asc', 'desc'):
+            full_field = "inlinks_internal_nb.{}".format(field)
+            query = {
+                "fields": ["score", full_field, "pages_nb"],
+                "target_field": {"div": [full_field, "pages_nb"]},
+                "target_sort": sort,
+                "filters": {"field": full_field, "value": 0, "predicate": "gt"}
+            }
+            urls_fields = [full_field, "pages_nb"]
+            urls_filters = [
+                {"field": full_field, "value": 0, "predicate": "gt"}
+            ]
+            sort_verbose = "most" if sort == "desc" else "fewer"
+            make_suggest_file_from_query(identifier='inlinks_internal/{}_{}'.format(sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # broken outlinks
     for field in ('any', '3xx', '4xx', '5xx'):
