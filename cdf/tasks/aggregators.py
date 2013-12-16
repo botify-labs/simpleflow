@@ -322,7 +322,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 urls_filters = [
                     {"field": full_field, "value": 0, "predicate": "gt"}
                 ]
-                sort_verbose = "most" if sort == "desc" else "fewer"
+                sort_verbose = "top" if sort == "desc" else "lowest"
                 make_suggest_file_from_query(identifier='outlinks_{}/{}_{}'.format(status, sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # inlinks
@@ -339,7 +339,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             urls_filters = [
                 {"field": full_field, "value": 0, "predicate": "gt"}
             ]
-            sort_verbose = "most" if sort == "desc" else "fewer"
+            sort_verbose = "top" if sort == "desc" else "lowest"
             make_suggest_file_from_query(identifier='inlinks_internal/{}_{}'.format(sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # Only 1 follow link
