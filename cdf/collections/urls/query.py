@@ -406,6 +406,11 @@ class Query(object):
 
         q = {}
 
+        if 'sort' in query:
+            q["sort"] = query["sort"]
+        else:
+            q["sort"] = ["id"]
+
         if 'tagging_filters' in query and 'filters' in query:
             q["filter"] = {
                 "and": [

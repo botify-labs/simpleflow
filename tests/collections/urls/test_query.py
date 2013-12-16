@@ -225,7 +225,7 @@ class TestQuery(unittest.TestCase):
             "doc_type": CRAWL_NAME,
             "size": 100,
             "index": ELASTICSEARCH_INDEX,
-            "_from": 0
+            "from_": 0
         }
         return result
 
@@ -295,7 +295,7 @@ class TestQuery(unittest.TestCase):
 
         #assert search() arguments
         expected_elasticsearch_query = {
-            'sort': ('id',),
+            'sort': ['id'],
             'filter': {
                 'and': [
                     {'range': {'http_code': {'from': 0, 'include_lower': False}}},
@@ -432,7 +432,7 @@ class TestQuery(unittest.TestCase):
         self.assertEquals(list(q.results)[0], expected_url)
 
         expected_elasticsearch_query = {
-            'sort': ('id',),
+            'sort': ['id'],
             'filter': {
                 'and': [
                     {'term': {'http_code': 301}},
@@ -480,7 +480,7 @@ class TestQuery(unittest.TestCase):
         search_backend.mget.return_value = self.get_mget_expected_result([5])
 
         q = Query(*self.query_args,
-                  query=query, sort=('id',),
+                  query=query,
                   search_backend=search_backend)
         self.assertEquals(q.count, 2)
         self.assertEquals(list(q.results)[0], expected_url_4)
@@ -488,7 +488,7 @@ class TestQuery(unittest.TestCase):
 
         #assert search() and mget() arguments
         expected_elasticsearch_query = {
-            'sort': ('id',),
+            'sort': ["id"],
             'filter': {
                 'and': [
                     {'term': {'http_code': 302}},
@@ -529,14 +529,14 @@ class TestQuery(unittest.TestCase):
         search_backend.search.return_value = self.get_search_expected_results([3])
         search_backend.mget.return_value = self.get_mget_expected_result([2])
         q = Query(*self.query_args,
-                  query=query, sort=('id',),
+                  query=query,
                   search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_url)
 
 
         #assert search() and mget() arguments
         expected_elasticsearch_query = {
-            'sort': ('id',),
+            'sort': ["id"],
             'filter': {
                 'and': [
                     {'term': {'_id': '1:3'}},
@@ -566,7 +566,7 @@ class TestQuery(unittest.TestCase):
         search_backend = MagicMock()
         search_backend.search.return_value = self.get_search_expected_results([1, 2, 3, 4, 5, 7])
 
-        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
+        q = Query(*self.query_args, query=query, search_backend=search_backend)
         expected_result_1 = {
             "metadata": {
                 "title": ["My title"]
@@ -597,7 +597,7 @@ class TestQuery(unittest.TestCase):
 
         #assert search() arguments
         expected_elasticsearch_query = {
-            'sort': ('id',),
+            'sort': ["id"],
             'filter': {
                 'and': [
                     {'range': {'http_code': {'from': 0, 'include_lower': False}}},
@@ -693,7 +693,7 @@ class TestQuery(unittest.TestCase):
         }
         search_backend.mget.return_value = self.get_mget_expected_result([2, 3, 5])
 
-        q = Query(*self.query_args, query=query, sort=('id',), search_backend = search_backend)
+        q = Query(*self.query_args, query=query, search_backend = search_backend)
         expected_result = {
             "outlinks_internal_nb": {
                 "total": 4,
@@ -744,7 +744,6 @@ class TestQuery(unittest.TestCase):
 
         q = Query(*self.query_args,
                   query=query,
-                  sort=('id',),
                   search_backend=search_backend)
         results = list(q.results)
         self.assertEquals(results[0]["outlinks_internal_nb"], expected_result["outlinks_internal_nb"])
@@ -752,7 +751,7 @@ class TestQuery(unittest.TestCase):
 
         #assert search() and mget() arguments
         expected_elasticsearch_query = {
-            'sort': ('id',),
+            'sort': ["id"],
             'filter': {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}}, {'term': {'crawl_id': 1}}, {'term': {'_id': '1:1'}}]}}
         search_backend.search.assert_called_with(
             **self.get_search_expected_arguments(expected_elasticsearch_query)
@@ -771,7 +770,7 @@ class TestQuery(unittest.TestCase):
         }
         search_backend = MagicMock()
         search_backend.search.return_value = self.get_search_expected_results([1, 2, 3, 4, 5, 7])
-        q = Query(*self.query_args, query=query, sort=('id',), search_backend=search_backend)
+        q = Query(*self.query_args, query=query, search_backend=search_backend)
         expected_result = {
             "metadata_duplicate_nb": {
                 "h1": 1,
@@ -788,12 +787,12 @@ class TestQuery(unittest.TestCase):
 
         search_backend.mget.return_value = self.get_mget_expected_result([7])
 
-        q = Query(*self.query_args, query=query, sort=('_id',), search_backend=search_backend)
+        q = Query(*self.query_args, query=query, search_backend=search_backend)
         self.assertEquals(list(q.results)[0], expected_result)
 
         #assert search() and mget() arguments
         expected_elasticsearch_query = {
-            'sort': ('id',),
+            'sort': ["id"],
             'filter': {
                 'and': [
                     {'range': {'http_code': {'from': 0, 'include_lower': False}}},
@@ -821,7 +820,7 @@ class TestQuery(unittest.TestCase):
         search_backend.search.return_value = self.get_search_expected_results([1, 2])
         search_backend.mget.return_value = self.get_mget_expected_result([1, 2])
 
-        q = Query(*self.query_args, query=query, sort=('id',),
+        q = Query(*self.query_args, query=query,
                   search_backend=search_backend)
         expected_result_1 = {
             "canonical_to": {
@@ -845,7 +844,7 @@ class TestQuery(unittest.TestCase):
 
         #assert search() and mget() arguments
         expected_elasticsearch_query = {
-            'sort': ('id',),
+            'sort': ["id"],
             'filter': {
                 'and': [
                     {'range': {'http_code': {'from': 0, 'include_lower': False}}},
