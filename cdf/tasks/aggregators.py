@@ -162,48 +162,24 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix, identifier, query, urls_fields, urls_filters, urls_sort=None, return_urls=False):
     q = SuggestQuery.from_s3_uri(crawl_id, s3_uri)
     query["display_children"] = False
-    _results = q.query(query)
-    results = []
-    for k, result in enumerate(_results):
+    results = q.query(query)
+    for k, result in enumerate(results):
         hash_id_filters = [{'field': 'patterns', 'value': result['query_hash_id']}]
-        urls_query = {
-            "fields": ["url"] + urls_fields,
-            "filters": {'and': hash_id_filters + urls_filters}
-        }
-
         result["score"] = reduce(dict.get, query["target_field"].split("."), result["counters"])
         if result["score"] == 0:
             continue
 
-        if identifier.startswith("http_code") or identifier.startswith("metadata:not_filled"):
-            limit = 3
-        else:
-            limit = 10
+        urls_query_bgn = {
+            "fields": ["url"] + urls_fields,
+            "filters": {'and': hash_id_filters + urls_filters}
+        }
+        urls_query = {
+            "fields": ["url"] + urls_fields,
+            "filters": {'and': result['query'] + urls_filters}
+        }
 
-        if not urls_sort:
-            urls_sort = ['id', ]
-        urls_query["sort"] = urls_sort
-
-        if return_urls:
-            urls = Query(es_location, es_index, es_doc_type, crawl_id, revision_number, copy.deepcopy(urls_query), start=0, limit=limit)
-
-            urls_results = list(urls.results)
-            result["urls"] = []
-            # Filter on metadata duplicate : get only the 3 first different duplicates urls
-            if identifier.startswith("metadata:duplicate"):
-                duplicates_found = set()
-                for url_result in urls_results:
-                    metadata_value = url_result["metadata"][identifier.rsplit(':', 1)[1]][0]
-                    if metadata_value not in duplicates_found:
-                        result["urls"].append(url_result)
-                        duplicates_found.add(metadata_value)
-                        if len(duplicates_found) == 3:
-                            break
-            else:
-                result["urls"] = urls_results
-
-        result["urls_query"] = urls_query
-        results.append(result)
+        results[k]["urls_query_bgn"] = urls_query_bgn
+        results[k]["urls_query"] = urls_query
 
     # Write suggestion file
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
@@ -267,6 +243,13 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
     }
     make_counter_file_from_query(identifier='depth', query=query_depth, **counter_kwargs)
 
+    # Counters by depth and index
+    query_depth = {
+        "group_by": ["depth", "index"]
+    }
+    make_counter_file_from_query(identifier='depth_index', query=query_depth, **counter_kwargs)
+
+    # Full picture
     make_counter_file_from_query(
         identifier='full_picture',
         query=[
@@ -311,7 +294,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
 
     # Metadata types
     for metadata_type in ('title', 'description', 'h1'):
-        for metadata_status in ('duplicate', 'not_filled'):
+        for metadata_status in ('duplicate', 'not_filled', 'filled', 'unique'):
             query = {
                 "fields": ["pages_nb", "metadata_nb.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)],
                 "target_field": "metadata_nb.{}.{}".format(metadata_type, metadata_status)
@@ -333,7 +316,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         urls_fields = ["delay2"]
         urls_filters = get_filters_from_agg_delay_field(delay)
         query = {
-            "fields": ['delay_gte_2s', 'delay_from_1s_to_2s', 'delay_from_500ms_to_1s', 'delay_lt_500ms', 'pages_nb'],
+            "fields": ["pages_nb", "delay_gte_2s", "delay_lt_500ms", "delay_from_500ms_to_1s", "delay_from_1s_to_2s"],
             "target_field": delay
         }
         make_suggest_file_from_query(identifier='delay/{}'.format(delay[6:]), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
@@ -371,17 +354,55 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         }]
         make_suggest_file_from_query(identifier='distribution/depth_gte_{}'.format(depth), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
-    # internal outlinks
+    # internal/external outlinks
+    for status in ('internal', 'external'):
+        for sort in ('asc', 'desc'):
+            fields = ['total', 'follow', 'nofollow']
+            if status == "internal":
+                fields.append('follow_unique')
+            for field in fields:
+                full_field = "outlinks_{}_nb.{}".format(status, field)
+                query = {
+                    "fields": ["score", full_field, "pages_nb"],
+                    "target_field": full_field,
+                    "target_sort": sort,
+                    "filters": {"field": full_field, "value": 0, "predicate": "gt"}
+                }
+                urls_fields = [full_field]
+                urls_filters = [
+                    {"field": full_field, "value": 0, "predicate": "gt"}
+                ]
+                sort_verbose = "top" if sort == "desc" else "lowest"
+                make_suggest_file_from_query(identifier='outlinks_{}/{}_{}'.format(status, sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
+    # inlinks
     for field in ('total', 'follow', 'follow_unique', 'nofollow'):
-        full_field = "outlinks_internal_nb.{}".format(field)
-        query = {
-            "target_field": full_field
-        }
-        urls_fields = [full_field]
-        urls_filters = [
-            {"field": full_field, "value": 0, "predicate": "gt"}
-        ]
-        make_suggest_file_from_query(identifier='outlinks_internal/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
+        for sort in ('asc', 'desc'):
+            full_field = "inlinks_internal_nb.{}".format(field)
+            query = {
+                "fields": ["score", full_field, "pages_nb"],
+                "target_field": {"div": [full_field, "pages_nb"]},
+                "target_sort": sort,
+                "filters": {"field": full_field, "value": 0, "predicate": "gt"}
+            }
+            urls_fields = [full_field, "pages_nb"]
+            urls_filters = [
+                {"field": full_field, "value": 0, "predicate": "gt"}
+            ]
+            sort_verbose = "top" if sort == "desc" else "lowest"
+            make_suggest_file_from_query(identifier='inlinks_internal/{}_{}'.format(sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+
+    # Only 1 follow link
+    full_field = "inlinks_internal_nb.follow_distribution_urls.1"
+    query = {
+        "fields": [full_field, "pages_nb"],
+        "target_field": full_field
+    }
+    urls_fields = [full_field]
+    urls_filters = [
+        {"field": "inlinks_internal_nb.follow", "value": 1}
+    ]
+    make_suggest_file_from_query(identifier='inlinks_internal/1_follow_link', query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
 
     # broken outlinks
     for field in ('any', '3xx', '4xx', '5xx'):
