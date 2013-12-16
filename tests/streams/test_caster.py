@@ -37,3 +37,20 @@ class TestCaster(unittest.TestCase):
             [3, 'http://www.site.com/another_page.html', True]
         ]
         self.assertEquals(list(urls), expected_urls)
+
+    def test_empty_string(self):
+        f = StringIO()
+        f.write('1\t/some/thing\t\n')
+        f.seek(0)
+
+        FIELDS = [('id', int),
+                  ('path', str),
+                  ('query', str)]
+        cast = Caster(FIELDS).cast
+        urls = cast(split_file(f))
+        expected = [
+            [1, '/some/thing', ''],
+        ]
+        self.assertEquals(list(urls), expected)
+
+

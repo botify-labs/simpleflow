@@ -3,6 +3,7 @@ import os
 import re
 import itertools
 import shutil
+from elasticsearch import Elasticsearch
 
 from mock import patch
 from boto.exception import S3ResponseError
@@ -164,7 +165,12 @@ class MockIntegrationTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        # delete created files
         shutil.rmtree(TEST_DIR)
+        # delete ES index
+        ES = Elasticsearch()
+        ES.indices.delete('integration-test')
+        ES.indices.refresh()
 
     def setUp(self):
         pass

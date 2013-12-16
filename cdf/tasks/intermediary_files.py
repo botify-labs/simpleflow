@@ -5,6 +5,7 @@ import itertools
 from boto.exception import S3ResponseError
 
 from cdf.log import logger
+from cdf.utils.path import write_by_part
 from cdf.utils.s3 import fetch_files, fetch_file, push_file
 from cdf.streams.caster import Caster
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
@@ -14,9 +15,12 @@ from cdf.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.collections.urls.utils import get_part_id
 from cdf.collections.urls.generators.bad_links import get_bad_links, get_bad_link_counters
+from cdf.log import logger
 
 
-def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_prefix='/tmp', force_fetch=False):
+def make_links_counter_file(crawl_id, s3_uri,
+                            part_id, link_direction,
+                            tmp_dir_prefix='/tmp', force_fetch=False):
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
@@ -27,14 +31,17 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
         transducer = InlinksTransducer
         stream_name = "inlinks_raw"
 
-    links_file_path = 'url{}.txt.{}.gz'.format("links" if link_direction == "out" else "inlinks", part_id)
+    logger.info('Fetching files from s3 for part {}'.format(part_id))
+    links_file_path = 'url{}.txt.{}.gz'.format(
+        "links" if link_direction == "out" else "inlinks", part_id)
     try:
         links_file, fecthed = fetch_file(
             os.path.join(s3_uri, links_file_path),
             os.path.join(tmp_dir, links_file_path),
             force_fetch=force_fetch
         )
-    except S3ResponseError:
+    except S3ResponseError as e:
+        logger.error(str(e))
         return
 
     cast = Caster(STREAMS_HEADERS[stream_name.upper()]).cast
@@ -60,21 +67,39 @@ def make_links_counter_file(crawl_id, s3_uri, part_id, link_direction, tmp_dir_p
         _f.close()
 
     # push all created files to s3
+    logger.info('Pushing links counter files to S3')
     for counter_file in file_created.values():
         counter_filename = os.path.basename(counter_file.name)
+        logger.info('Pushing {}'.format(counter_filename))
         push_file(
             os.path.join(s3_uri, counter_filename),
             os.path.join(tmp_dir, counter_filename),
         )
 
 
-def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_size, tmp_dir_prefix='/tmp', force_fetch=False):
+def make_metadata_duplicates_file(crawl_id, s3_uri,
+                                  first_part_id_size, part_id_size,
+                                  tmp_dir_prefix='/tmp', force_fetch=False):
+    def to_string(row):
+        url_id, metadata_type, filled_nb, duplicates_nb, is_first, target_urls_ids = row
+        return '\t'.join((
+            str(url_id),
+            str(metadata_type),
+            str(filled_nb),
+            str(duplicates_nb),
+            '1' if is_first else '0',
+            ';'.join(str(u) for u in target_urls_ids)
+        )) + '\n'
+
+
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
     streams_types = {'contents': []}
+    nb_parts = nb_parts_from_crawl_location(s3_uri)
 
-    for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
+    logger.info('Fetching all partitions from S3')
+    for part_id in xrange(0, nb_parts):
         files_fetched = fetch_files(s3_uri,
                                     tmp_dir,
                                     regexp='urlcontents.txt.%d.gz' % part_id,
@@ -92,45 +117,22 @@ def make_metadata_duplicates_file(crawl_id, s3_uri, first_part_id_size, part_id_
     generator = get_duplicate_metadata(itertools.chain(*streams_types['contents']))
 
     file_pattern = 'urlcontentsduplicate.txt.{}.gz'
-    current_part_id = 0
-    f = None
-    for i, (url_id, metadata_type, filled_nb, duplicates_nb, is_first, target_urls_ids) in enumerate(generator):
-
-        # check the part id
-        part = get_part_id(url_id, first_part_id_size, part_id_size)
-
-        # first file (could not be `part_0`)
-        if not f:
-            current_part_id = part
-            f = gzip.open(os.path.join(tmp_dir, file_pattern.format(current_part_id)), 'w')
-
-        # need a new partition file
-        if part != current_part_id:
-            # this is safe b/c url_id is ordered
-            f.close()
-            current_part_id = part
-            f = gzip.open(os.path.join(tmp_dir, file_pattern.format(current_part_id)), 'w')
-
-        f.write('\t'.join((
-            str(url_id),
-            str(metadata_type),
-            str(filled_nb),
-            str(duplicates_nb),
-            '1' if is_first else '0',
-            ';'.join(str(u) for u in target_urls_ids)
-        )) + '\n')
-    f.close()
+    write_by_part(generator, first_part_id_size, part_id_size,
+                  tmp_dir, file_pattern, to_string)
 
     # push all created files to s3
-    for i in xrange(0, current_part_id + 1):
+    logger.info('Pushing metadata duplicate file to s3')
+    for i in xrange(0, nb_parts + 1):
         file_to_push = file_pattern.format(i)
         if os.path.exists(os.path.join(tmp_dir, file_to_push)):
+            logger.info('Pushing {}'.format(file_to_push))
             push_file(
                 os.path.join(s3_uri, file_to_push),
                 os.path.join(tmp_dir, file_to_push),
             )
 
 
+# TODO part_id_size should be rename to part_size
 def make_bad_link_file(crawl_id, s3_uri,
                        first_part_id_size=500000,
                        part_id_size=500000,
@@ -141,12 +143,17 @@ def make_bad_link_file(crawl_id, s3_uri,
 
     Ordered on url_src_id
     """
+    def to_string(row):
+        return '\t'.join(str(field) for field in row) + '\n'
+
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
     streams_types = {'infos': [],
                      'outlinks': []}
+    nb_parts = nb_parts_from_crawl_location(s3_uri)
 
-    for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
+    logger.info('Fetching all partition info and links files from s3')
+    for part_id in xrange(0, nb_parts):
         files_fetched = fetch_files(s3_uri,
                                     tmp_dir,
                                     regexp='url(infos|links).txt.%d.gz' % part_id,
@@ -160,36 +167,16 @@ def make_bad_link_file(crawl_id, s3_uri,
     generator = get_bad_links(itertools.chain(*streams_types['infos']),
                               itertools.chain(*streams_types['outlinks']))
 
-    current_part_id = 0
     file_pattern = 'urlbadlinks.txt.{}.gz'
-    f = None
-    for _, (src, dest, bad_code) in enumerate(generator):
-        url_id = src
-        # check the part id
-        part = get_part_id(url_id, first_part_id_size, part_id_size)
-
-        # first file (could not be `part_0`)
-        if not f:
-            current_part_id = part
-            f = gzip.open(os.path.join(tmp_dir, file_pattern.format(current_part_id)), 'w')
-        # need a new partition file
-        if part != current_part_id:
-            # this is safe b/c url_id is ordered
-            f.close()
-            current_part_id = part
-            f = gzip.open(os.path.join(tmp_dir, file_pattern.format(current_part_id)), 'w')
-
-        f.write('\t'.join((
-            str(src),
-            str(dest),
-            str(bad_code)
-        )) + '\n')
-    f.close()
+    write_by_part(generator, first_part_id_size, part_id_size,
+                  tmp_dir, file_pattern, to_string)
 
     # push all created files to s3
-    for i in xrange(0, current_part_id + 1):
+    logger.info('Pushing badlink files to s3')
+    for i in xrange(0, nb_parts + 1):
         file_to_push = file_pattern.format(i)
         if os.path.exists(os.path.join(tmp_dir, file_to_push)):
+            logger.info('Pushing {}'.format(file_to_push))
             push_file(
                 os.path.join(s3_uri, file_to_push),
                 os.path.join(tmp_dir, file_to_push),
@@ -210,10 +197,11 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
 
     file_name = 'urlbadlinks.txt.%d.gz' % part_id
+    logger.info('Fetching file from s3 for part {}'.format(part_id))
     try:
         bad_link_file, _ = fetch_file(os.path.join(s3_uri, file_name),
-                                   os.path.join(tmp_dir, file_name),
-                                   force_fetch=force_fetch)
+                                      os.path.join(tmp_dir, file_name),
+                                      force_fetch=force_fetch)
     except S3ResponseError:
         logger.info("{} is not found from s3".format(file_name))
         return
@@ -235,6 +223,8 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
             str(count)
         )) + '\n')
     f.close()
+
+    logger.info('Pushing {}'.format(file_name))
     push_file(
         os.path.join(s3_uri, file_name),
         os.path.join(tmp_dir, file_name),

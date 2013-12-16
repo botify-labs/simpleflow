@@ -1,11 +1,45 @@
 from elasticsearch import Elasticsearch
 
 from cdf.constants import URLS_DATA_MAPPING
+from cdf.exceptions import ElasticSearchIncompleteIndex
 from cdf.utils.dict import deep_update
 from cdf.utils.unicode import deep_clean
 from cdf.streams.masks import follow_mask
 from .constants import QUERY_FIELDS
 from .utils import field_has_children, children_from_field
+
+
+# TODO it's bad to implicitly use a object field
+# `prepare` and `transform` should be extracted as a Transformer class
+def prepare_error_links(query, code_kind, es_document):
+    key = 'error_links'
+    if key in es_document:
+        for kind in es_document[key]:
+            if code_kind == 'any' or kind == code_kind:
+                # `urls` field is guaranteed to be a list, even if
+                # it's a single url
+                urls = es_document[key][kind]['urls']
+                for url_id in urls:
+                    query._urls_ids.add(url_id)
+
+
+def transform_error_links(query, code_kind, es_document, attributes):
+    key = 'error_links'
+    if key in es_document:
+        if key not in attributes:
+            attributes[key] = {}
+        # 3xx, 4xx or 5xx
+        for kind in es_document[key]:
+            if code_kind == 'any' or kind == code_kind:
+                original = es_document[key][kind]
+                if original['nb'] > 0:
+                    attributes[key][kind] = {
+                        'nb': original['nb'],
+                        'urls': []
+                    }
+                    for url_id in original['urls']:
+                        attributes[key][kind]['urls'].append(
+                            query._id_to_url.get('{}:{}'.format(query.crawl_id, url_id))[0])
 
 
 def prepare_redirects_from(query, es_document):
@@ -168,12 +202,30 @@ FIELDS_HOOKS = {
     },
     'inlinks_internal': {
         'prepare': lambda query, es_document: prepare_links(query, es_document, 'inlinks_internal'),
-        'transform': lambda query, es_document, attributes: transform_links(query, es_document, attributes, 'inlinks_internal')
+        'transform': lambda query, es_document,
+                            attributes: transform_links(query, es_document, attributes, 'inlinks_internal')
     },
     'outlinks_internal': {
         'prepare': lambda query, es_document: prepare_links(query, es_document, 'outlinks_internal'),
-        'transform': lambda query, es_document, attributes: transform_links(query, es_document, attributes, 'outlinks_internal')
+        'transform': lambda query, es_document,
+                            attributes: transform_links(query, es_document, attributes, 'outlinks_internal')
     },
+    'error_links.3xx': {
+        'prepare': lambda query, es_document: prepare_error_links(query, '3xx', es_document),
+        'transform': lambda query, es_document, attr: transform_error_links(query, '3xx', es_document, attr)
+    },
+    'error_links.4xx': {
+        'prepare': lambda query, es_document: prepare_error_links(query, '4xx', es_document),
+        'transform': lambda query, es_document, attr: transform_error_links(query, '4xx', es_document, attr)
+    },
+    'error_links.5xx': {
+        'prepare': lambda query, es_document: prepare_error_links(query, '5xx', es_document),
+        'transform': lambda query, es_document, attr: transform_error_links(query, '5xx', es_document, attr)
+    },
+    'error_links': {
+        'prepare': lambda query, es_document: prepare_error_links(query, 'any', es_document),
+        'transform': lambda query, es_document, attr: transform_error_links(query, 'any', es_document, attr)
+    }
 }
 
 # Prepare metadata duplicate urls
@@ -201,6 +253,7 @@ def predicate_not_null(filters):
     """
     if 'properties' in URLS_DATA_MAPPING["urls"]["properties"][filters["field"]]:
         _f = {"or": []}
+        # TODO potential not managed `KeyError` here
         for field in URLS_DATA_MAPPING["urls"]["properties"][filters["field"]]["properties"]:
             _f["or"].append({"exists": {"field": "{}.{}".format(filters["field"], field)}})
         return _f
@@ -211,30 +264,48 @@ def predicate_not_null(filters):
             }
         }
 
+
+def get_untouched_field(field):
+    """Get the untouched field out of a `multi_field` element
+
+    returns the original field if it's not a `multi_field`
+    """
+    if field in MULTI_FILEDS:
+        return '%s.untouched' % field
+    else:
+        return field
+
+
+# Elements that are of `multi_field` type
+MULTI_FILEDS = [
+    "metadata.h1",
+    "metadata.h2",
+    "metadata.description",
+    "metadata.title",
+]
+
+
 PREDICATE_FORMATS = {
     'eq': lambda filters: {
         "term": {
             filters['field']: filters['value'],
         }
     },
-    'match': lambda filters: {
-        "term": {
-            filters['field']: filters['value'],
-        }
-    },
+    # 'starts' predicate should be applied on `untouched`
     'starts': lambda filters: {
         "prefix": {
-            filters['field']: filters['value'],
+            get_untouched_field(filters['field']): filters['value'],
         }
     },
+    # 'ends' predicate should be applied on `untouched`
     'ends': lambda filters: {
         "regexp": {
-            filters['field']: "@%s" % filters['value']
+            get_untouched_field(filters['field']): "@%s" % filters['value']
         }
     },
     'contains': lambda filters: {
         "regexp": {
-            filters['field']: "@%s@" % filters['value']
+            get_untouched_field(filters['field']): "@%s@" % filters['value']
         }
     },
     're': lambda filters: {
@@ -272,7 +343,15 @@ PREDICATE_FORMATS = {
             }
         }
     },
-    'not_null': lambda filters: predicate_not_null(filters)
+    'between': lambda filters: {
+        "range": {
+            filters['field']: {
+                "from": filters['value'][0],
+                "to": filters['value'][1],
+            }
+        }
+    },
+    'not_null': lambda filters: predicate_not_null(filters),
 }
 
 
@@ -282,7 +361,10 @@ def is_boolean_operation_filter(filter_dict):
 
 class Query(object):
 
-    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100):
+    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100, search_backend=None):
+        """Constructor
+        search_backend : the search backend to use. If None, use elasticsearch.
+        """
         self.es_location = es_location
         self.es_index = es_index
         self.es_doc_type = es_doc_type
@@ -293,6 +375,11 @@ class Query(object):
         self.query = query
         self.start = start
         self.limit = limit
+        if search_backend:
+            self.search_backend = search_backend
+        else:
+            host, port = self.es_location[7:].split(':')
+            self.search_backend = Elasticsearch([{'host': host, 'port': int(port)}])
 
     @property
     def results(self):
@@ -372,9 +459,12 @@ class Query(object):
             else:
                 return PREDICATE_FORMATS[predicate](filters)
 
+    # TODO refactor, function too big, too long
+    # things should be separated:
+    #   - ElasticSearch query generation
+    #   - Query execution
+    #   - Result transformation (maybe by a class `ResultTransformer`)
     def _run(self):
-        if 'count' in self._results:
-            return
         """
         Compute a list of urls depending on parameters
 
@@ -408,6 +498,10 @@ class Query(object):
             ]
         }
         """
+        if 'count' in self._results:
+            return
+
+        # TODO should not modify query content here, it's just an execution
         query = self.query
         if not 'fields' in query:
             query['fields'] = ('url',)
@@ -434,13 +528,13 @@ class Query(object):
         else:
             raise Exception('filters are not valid for given query')
 
-        host, port = self.es_location[7:].split(':')
-        s = Elasticsearch([{'host': host, 'port': int(port)}])
-        alt_results = s.search(body=self.make_raw_query(query),
-                               index=self.es_index,
-                               doc_type=self.es_doc_type,
-                               size=self.limit,
-                               from_=self.start)
+        alt_results = self.search_backend.search(body=self.make_raw_query(query),
+                                                 index=self.es_index,
+                                                 doc_type=self.es_doc_type,
+                                                 size=self.limit,
+                                                 from_=self.start)
+
+        # Return directly if search has no result
         if alt_results["hits"]["total"] == 0:
             self._results = {
                 "count": 0,
@@ -450,6 +544,8 @@ class Query(object):
 
         results = []
 
+        # Resolve `url` based on `url_id`s in search results
+        # Firstly add all seen `url_id` of this search results into a set
         for r in alt_results['hits']['hits']:
             document = {'id': r['_id']}
 
@@ -461,15 +557,19 @@ class Query(object):
                 if field in FIELDS_HOOKS and 'prepare' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['prepare'](self, r['_source'])
 
-        """
-        Resolve urls ids added in `prepare` functions hooks
-        """
+        # Resolve urls ids added in `prepare` functions hooks
+        # Issue a `multi get` call to get corresponding `url`s
         if self._urls_ids:
-            urls_es = s.mget(body={"ids": list('{}:{}'.format(self.crawl_id, url_id) for url_id in self._urls_ids)},
-                             index=self.es_index,
-                             doc_type=self.es_doc_type,
-                             fields=["url", "http_code"])
-            self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs'] if url["exists"]}
+            # TODO so diff. version of crawls are mixed in the same index? Not a good idea
+            urls_es = self.search_backend.mget(body={"ids": list('{}:{}'.format(self.crawl_id, url_id) for url_id in self._urls_ids)},
+                                               index=self.es_index,
+                                               doc_type=self.es_doc_type,
+                                               fields=["url", "http_code"])
+            # TODO _id_to_url should be declared explicitly
+            # all referenced urlids should be in elasticsearch index.
+            if not all([url["exists"] for url in urls_es['docs']]):
+                raise ElasticSearchIncompleteIndex("Missing documents")
+            self._id_to_url = {url['_id']: (url['fields']['url'], url['fields']['http_code']) for url in urls_es['docs']}
 
         for r in alt_results['hits']['hits']:
             document = {}
@@ -485,7 +585,8 @@ class Query(object):
                                 value = [reduce(dict.get, child.split("."), r['_source']) or default_value]
                             except:
                                 value = [default_value]
-                            deep_update(document, reduce(lambda x, y: {y: x}, reversed(child.split('.') + deep_clean(value))))
+                            deep_update(document,
+                                        reduce(lambda x, y: {y: x}, reversed(child.split('.') + deep_clean(value))))
                 elif field in FIELDS_HOOKS and 'transform' in FIELDS_HOOKS[field]:
                     FIELDS_HOOKS[field]['transform'](self, r['_source'], document)
                 else:
@@ -495,7 +596,8 @@ class Query(object):
                             value = [reduce(dict.get, field.split("."), r['_source'])]
                         except:
                             value = [default_value]
-                        deep_update(document, reduce(lambda x, y: {y: x}, reversed(field.split('.') + deep_clean(value))))
+                        deep_update(document,
+                                    reduce(lambda x, y: {y: x}, reversed(field.split('.') + deep_clean(value))))
                     else:
                         document[field] = deep_clean(r['_source'][field]) if field in r['_source'] else default_value
 

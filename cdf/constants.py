@@ -3,9 +3,6 @@ URLS_DATA_MAPPING = {
         "properties": {
             "url": {
                 "type": "string",
-            },
-            "url_not_analyzed": {
-                "type": "string",
                 "index": "not_analyzed"
             },
             "url_hash": {"type": "long"},
@@ -15,7 +12,10 @@ URLS_DATA_MAPPING = {
             "delay2": {"type": "long"},
             "depth": {"type": "long"},
             "gzipped": {"type": "boolean"},
-            "host": {"type": "string"},
+            "host": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
             "http_code": {"type": "long"},
             "id": {"type": "long"},
             "crawl_id": {"type": "long"},
@@ -30,10 +30,54 @@ URLS_DATA_MAPPING = {
             },
             "metadata": {
                 "properties": {
-                    "description": {"type": "string"},
-                    "h1": {"type": "string"},
-                    "h2": {"type": "string"},
-                    "title": {"type": "string"}
+                    "description": {
+                        "type": "multi_field",
+                        "fields": {
+                            "description": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    },
+                    "h1": {
+                        "type": "multi_field",
+                        "fields": {
+                            "h1": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    },
+                    "h2": {
+                        "type": "multi_field",
+                        "fields": {
+                            "h2": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    },
+                    "title": {
+                        "type": "multi_field",
+                        "fields": {
+                            "title": {
+                                "type": "string"
+                            },
+                            "untouched": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    }
                 }
             },
             "metadata_duplicate_nb": {
@@ -45,9 +89,9 @@ URLS_DATA_MAPPING = {
             },
             "metadata_duplicate": {
                 "properties": {
-                    "title": {"type": "long"},
-                    "description": {"type": "long"},
-                    "h1": {"type": "long"}
+                    "title": {"type": "long", "index": "no"},
+                    "description": {"type": "long", "index": "no"},
+                    "h1": {"type": "long", "index": "no"}
                 }
             },
             "metadata_duplicate_is_first": {
@@ -61,6 +105,7 @@ URLS_DATA_MAPPING = {
                 "properties": {
                     "total": {"type": "long"},
                     "follow_unique": {"type": "long"},
+                    "total_unique": {"type": "long"},
                     "follow": {"type": "long"},
                     "nofollow": {"type": "long"},
                     "nofollow_combinations": {
@@ -71,12 +116,13 @@ URLS_DATA_MAPPING = {
                     }
                 }
             },
-            "inlinks_internal": {"type": "long"},
-            "outlinks_internal": {"type": "long"},
+            "inlinks_internal": {"type": "long", "index": "no"},
+            "outlinks_internal": {"type": "long", "index": "no"},
             "outlinks_internal_nb": {
                 "properties": {
                     "total": {"type": "long"},
                     "follow_unique": {"type": "long"},
+                    "total_unique": {"type": "long"},
                     "follow": {"type": "long"},
                     "nofollow": {"type": "long"},
                     "nofollow_combinations": {
@@ -100,24 +146,43 @@ URLS_DATA_MAPPING = {
                     }
                 }
             },
-            "path": {"type": "string"},
-            "protocol": {"type": "string"},
-            "query_string": {"type": "string"},
-            "query_string_items": {"type": "string"},
-            "query_string_keys": {"type": "string"},
-            "query_string_keys_order": {"type": "string"},
+            "path": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "protocol": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "query_string": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            # can replace this by an custom analyzer
+            "query_string_items": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "query_string_keys": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
+            "query_string_keys_order": {
+                "type": "string",
+                "index": "not_analyzed"
+            },
             "canonical_from_nb": {"type": "long"},
-            "canonical_from": {"type": "long"},
+            "canonical_from": {"type": "long", "index": "no"},
             "canonical_to": {
                 "properties": {
-                    "url": {"type": "string"},
-                    "url_id": {"type": "long"}
+                    "url": {"type": "string", "index": "no"},
+                    "url_id": {"type": "long", "index": "no"}
                 }
             },
             "canonical_to_equal": {"type": "boolean"},
             "redirects_to": {
                 "properties": {
-                    "http_code": {"type": "string"},
+                    "http_code": {"type": "long"},
                     "url": {"type": "string"},
                     "url_id": {"type": "long"}
                 }
@@ -125,8 +190,30 @@ URLS_DATA_MAPPING = {
             "redirects_from_nb": {"type": "long"},
             "redirects_from": {
                 "properties": {
-                    "http_code": {"type": "string"},
-                    "url_id": {"type": "long"}
+                    "http_code": {"type": "long", "index": "no"},
+                    "url_id": {"type": "long", "index": "no"}
+                }
+            },
+            "error_links": {
+                "properties": {
+                    "3xx": {
+                        "properties": {
+                            "nb": {"type": "long"},
+                            "urls": {"type": "long", "index": "no"}
+                        }
+                    },
+                    "4xx": {
+                        "properties": {
+                            "nb": {"type": "long"},
+                            "urls": {"type": "long", "index": "no"}
+                        }
+                    },
+                    "5xx": {
+                        "properties": {
+                            "nb": {"type": "long"},
+                            "urls": {"type": "long", "index": "no"}
+                        }
+                    },
                 }
             }
         }

@@ -4,3 +4,7 @@ class MissingResource(Exception):
 
 class InvalidDataFormat(Exception):
     pass
+
+
+class ElasticSearchIncompleteIndex(Exception):
+    pass
