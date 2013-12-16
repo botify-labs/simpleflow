@@ -202,7 +202,6 @@ def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir_pref
     if is_batch:
         identifiers = [k[0] for k in query]
         query = [k[1] for k in query]
-
     results = q.query(query)
 
     # If it is a batch query, replace result list by a dictionnary (mapped to query identifiers)
@@ -254,7 +253,11 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         identifier='full_picture',
         query=[
             ['global', {}],
-            ['http_code', {"group_by": ["http_code"]}]
+            ['http_code', {"group_by": ["http_code"]}],
+            ['noindex', {"fields": ["pages_nb"], "filters": {"field": "index", "value": False}}],
+            ['content_type', {"fields": ["pages_nb"], "group_by": ["content_type"]}],
+            ['depth', {"fields": ["pages_nb"], "group_by": ["depth"]}],
+            ['depth_gt5', {"filters": {"field": "depth", "value": 5, "predicate": "gt"}, "fields": ["pages_nb"]}],
         ],
         **counter_kwargs
     )
