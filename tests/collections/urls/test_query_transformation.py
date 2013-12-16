@@ -217,3 +217,27 @@ class TestQueryTransformation(unittest.TestCase):
         }
         self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
         self.is_valid_es_query(expected_es_query)
+
+    def test_between(self):
+        query = {
+            'fields': ['id'],
+            'filters': {
+                'field': 'http_code',
+                'value': [123, 456],
+                'predicate': 'between'
+            }
+        }
+
+        expected_es_query = {
+            'fields': ['http_code'],
+            'filter': {
+                'and': [
+                    {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}},
+                             {'term': {'crawl_id': 1}}]},
+                    {'range': {'http_code': {'from': 123, 'to': 456}}}
+                ]
+            },
+            'sort': [{'id': {'ignore_unmapped': True}}]
+        }
+        self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
+        self.is_valid_es_query(expected_es_query)

@@ -500,3 +500,20 @@ class TestQueryES(unittest.TestCase):
             # url 5 is ignored since it's not crawled
         ]
         self.assertItemsEqual(result, expected)
+
+    def test_between_query(self):
+        bql_query = {
+            'fields': ['id'],
+            'filters': {
+                'predicate': 'between',
+                'field': 'id',
+                'value': [0, 3]
+            }
+        }
+        result = list(Query(*QUERY_ARGS, query=bql_query).results)
+        expected = [
+            {'id': 1},
+            {'id': 2},
+            {'id': 3},
+        ]
+        self.assertItemsEqual(result, expected)
