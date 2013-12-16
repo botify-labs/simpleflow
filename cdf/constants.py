@@ -5,7 +5,7 @@ URLS_DATA_MAPPING = {
                 "type": "string",
                 "index": "not_analyzed"
             },
-            "url_hash": {"type": "long", "index": "no"},
+            "url_hash": {"type": "long"},
             "byte_size": {"type": "long"},
             "date_crawled": {"type": "date"},
             "delay1": {"type": "long"},
