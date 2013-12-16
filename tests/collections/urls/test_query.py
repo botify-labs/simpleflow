@@ -225,7 +225,7 @@ class TestQuery(unittest.TestCase):
             "doc_type": CRAWL_NAME,
             "size": 100,
             "index": ELASTICSEARCH_INDEX,
-            "offset": 0
+            "_from": 0
         }
         return result
 
