@@ -1,7 +1,7 @@
 from elasticsearch import Elasticsearch
 import copy
-from cdf.collections.urls.query_transformer import get_es_query
 
+from cdf.collections.urls.query_transformer import get_es_query
 from cdf.collections.urls.result_transformer import RESULT_TRANSFORMERS
 from cdf.utils.dict import deep_dict
 

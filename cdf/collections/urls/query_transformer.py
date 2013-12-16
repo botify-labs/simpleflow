@@ -83,7 +83,15 @@ _PREDICATE_FORMATS = {
         'exists': {
             'field': filters['field']
         }
-    }
+    },
+    'between': lambda filters: {
+        "range": {
+            filters['field']: {
+                "from": filters['value'][0],
+                "to": filters['value'][1],
+            }
+        }
+    },
 }
 
 
