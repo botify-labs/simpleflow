@@ -354,6 +354,21 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         }]
         make_suggest_file_from_query(identifier='distribution/depth_gte_{}'.format(depth), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
+    # no-index urls
+    full_field = "index"
+    query = {
+        "fields": ["pages_nb"],
+        "filters": {
+            "field": "index", "value": False
+        },
+        "target_field": "pages_nb"
+    }
+    urls_fields = ["url"]
+    urls_filters = [
+        {"field": "meta.noindex", "value": True}
+    ]
+    make_suggest_file_from_query(identifier='distribution/noindex', query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
+
     # internal/external outlinks
     for status in ('internal', 'external'):
         for sort in ('asc', 'desc'):
@@ -373,7 +388,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                     {"field": full_field, "value": 0, "predicate": "gt"}
                 ]
                 sort_verbose = "top" if sort == "desc" else "lowest"
-                make_suggest_file_from_query(identifier='outlinks_{}/{}_{}'.format(status, sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+                make_suggest_file_from_query(identifier='outlinks_{}/{}_{}'.format(status, sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
     # inlinks
     for field in ('total', 'follow', 'follow_unique', 'nofollow'):
@@ -390,7 +405,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 {"field": full_field, "value": 0, "predicate": "gt"}
             ]
             sort_verbose = "top" if sort == "desc" else "lowest"
-            make_suggest_file_from_query(identifier='inlinks_internal/{}_{}'.format(sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+            make_suggest_file_from_query(identifier='inlinks_internal/{}_{}'.format(sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
     # Only 1 follow link
     full_field = "inlinks_internal_nb.follow_distribution_urls.1"
@@ -402,7 +417,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
     urls_filters = [
         {"field": "inlinks_internal_nb.follow", "value": 1}
     ]
-    make_suggest_file_from_query(identifier='inlinks_internal/1_follow_link', query=query, urls_filters=urls_filters, urls_fields=urls_fields, **summary_kwargs)
+    make_suggest_file_from_query(identifier='inlinks_internal/1_follow_link', query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
     # broken outlinks
     for field in ('any', '3xx', '4xx', '5xx'):
