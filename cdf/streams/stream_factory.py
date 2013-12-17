@@ -91,14 +91,19 @@ class StreamFactory(object):
         result = int(result)
         return result
 
-    def generate_paths(self):
+
+class PathStreamFactory(StreamFactory):
+    def __init__(self, dirpath, part_id=None):
+        super(PathStreamFactory, self).__init__(dirpath, "urlids", part_id)
+
+    def get_stream(self):
         """Create a generator for the paths
         data_directory_path: the path to the directory
                              that contains crawl data
         The generator creates tuples (urlid, path)
         """
-        url_generator = self.get_stream()
-        for url in url_generator:
+        base_stream = super(PathStreamFactory, self).get_stream()
+        for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
             path = url[idx_from_stream("PATTERNS", "path")]
             path = unicode(path, encoding="utf-8")
