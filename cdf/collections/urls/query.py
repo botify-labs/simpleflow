@@ -361,8 +361,7 @@ def is_boolean_operation_filter(filter_dict):
 
 class Query(object):
 
-    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number,
-                 query, start=0, limit=100, sort=('id',), search_backend = None):
+    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number, query, start=0, limit=100, search_backend=None):
         """Constructor
         search_backend : the search backend to use. If None, use elasticsearch.
         """
@@ -376,7 +375,6 @@ class Query(object):
         self.query = query
         self.start = start
         self.limit = limit
-        self.sort = sort
         if search_backend:
             self.search_backend = search_backend
         else:
@@ -394,8 +392,7 @@ class Query(object):
         self._run()
         return self._results['count']
 
-    # TODO refactor signature to `make_es_query(self, sort=None)`
-    def make_raw_query(self, query, sort=None):
+    def make_raw_query(self, query):
         """
         Transform Botify query to elastic search query
         """
@@ -409,8 +406,10 @@ class Query(object):
 
         q = {}
 
-        if sort:
-            q['sort'] = sort
+        if 'sort' in query:
+            q["sort"] = query["sort"]
+        else:
+            q["sort"] = ["id"]
 
         if 'tagging_filters' in query and 'filters' in query:
             q["filter"] = {
@@ -534,12 +533,7 @@ class Query(object):
         else:
             raise Exception('filters are not valid for given query')
 
-        if 'sort' in query:
-            sort = query['sort']
-        else:
-            sort = ('id', )
-
-        alt_results = self.search_backend.search(body=self.make_raw_query(query, sort=sort),
+        alt_results = self.search_backend.search(body=self.make_raw_query(query),
                                                  index=self.es_index,
                                                  doc_type=self.es_doc_type,
                                                  size=self.limit,
