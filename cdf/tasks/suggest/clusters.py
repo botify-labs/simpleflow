@@ -19,6 +19,7 @@ from cdf.utils.s3 import fetch_file, fetch_files, push_file
 from cdf.streams.stream_factory import (PathStreamFactory,
                                         HostStreamFactory,
                                         QueryStringStreamFactory,
+                                        MetadataStreamFactory,
                                         get_number_pages)
 
 
@@ -85,11 +86,11 @@ def compute_mixed_clusters(crawl_id,
 
     for metadata_type in ["title", "h1", "h2"]:
         logger.info("Discovering patterns on %s.", metadata_type)
-        metadata_patterns = discover_metadata_patterns(tmp_dir,
+        metadata_stream_factory = MetadataStreamFactory(tmp_dir, metadata_type)
+        metadata_patterns = discover_metadata_patterns(metadata_stream_factory,
                                                        nb_pages,
                                                        nb_urls,
-                                                       minimal_frequency,
-                                                       metadata_type)
+                                                       minimal_frequency)
 
         cluster_type = CLUSTER_TYPE_TO_ID["metadata"][CONTENT_TYPE_NAME_TO_ID[metadata_type]]
         patterns.append([(cluster_type, pattern, support) for pattern, support in metadata_patterns])

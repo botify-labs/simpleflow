@@ -153,6 +153,40 @@ class QueryStringStreamFactory(StreamFactory):
                 yield urlid, query_string
 
 
+class MetadataStreamFactory(StreamFactory):
+    def __init__(self, dirpath, content_type, part_id=None):
+        super(MetadataStreamFactory, self).__init__(dirpath,
+                                                    "urlcontents",
+                                                    part_id)
+        self._content_type = content_type
+        self._content_type_code = CONTENT_TYPE_NAME_TO_ID[self._content_type]
+
+    @property
+    def content_type(self):
+        return self._content_type
+
+    def get_stream(self):
+        """Create a generator for the metadata
+        data_directory_path: the path to the directory
+                             that contains crawl data
+        The generator creates tuples (urlid, path)
+        """
+        base_stream = super(MetadataStreamFactory, self).get_stream()
+        for urlid, lines in itertools.groupby(base_stream, key=lambda url: url[0]):
+            result = []
+            for line in lines:
+                metadata_code = line[idx_from_stream("CONTENTS", "content_type")]
+                if metadata_code != self._content_type_code:
+                    continue
+                metadata = line[idx_from_stream("CONTENTS", "txt")]
+                metadata = unicode(metadata, encoding="utf-8")
+                result.append(metadata)
+            if len(result) == 0:
+                #if we do not have corresponding metadata do not generate
+                #an element for this urlid
+                continue
+            yield urlid, result
+
 
 # getting the number of pages takes a while.
 # We'd better remember the result.
