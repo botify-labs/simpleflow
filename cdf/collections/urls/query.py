@@ -14,8 +14,10 @@ class Query(object):
     gets the result back from ElasticSearch on `query.count` and `query.results`
     properties.
     """
+
     def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number,
-                 query, start=0, limit=100, sort=('id',), search_backend = None):
+                 query, start=0, limit=100, sort=('id',), search_backend=None):
+
         """Constructor
         search_backend : the search backend to use. If None, use ElasticSearch.
         """
@@ -92,7 +94,7 @@ class Query(object):
                                                   index=self.es_index,
                                                   doc_type=self.es_doc_type,
                                                   size=self.limit,
-                                                  offset=self.start)
+                                                  from_=self.start)
 
         # Return directly if search has no result
         if temp_results["hits"]["total"] == 0:

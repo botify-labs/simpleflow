@@ -15,7 +15,7 @@ from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.streams.mapping import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
-from cdf.utils.s3 import fetch_files, push_file
+from cdf.utils.s3 import fetch_file, fetch_files, push_file
 
 
 def compute_mixed_clusters(crawl_id,
@@ -35,6 +35,11 @@ def compute_mixed_clusters(crawl_id,
 
     output_dir = tmp_dir
     makedirs(output_dir, exist_ok=True)
+
+    global_crawl_info_filename = "files.json"
+    fetch_file(os.path.join(s3_uri, global_crawl_info_filename),
+               os.path.join(tmp_dir, global_crawl_info_filename),
+               force_fetch=force_fetch)
 
     for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
         fetch_files(s3_uri,
