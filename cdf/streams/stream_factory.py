@@ -203,12 +203,10 @@ class MetadataStreamFactory(StreamFactory):
             yield urlid, result
 
 
-# getting the number of pages takes a while.
-# We'd better remember the result.
 def get_number_pages(data_directory_path):
     """Return the number of available pages"""
-    max_crawled_urlid = get_max_crawled_urlid(data_directory_path)
     urlinfos_stream_factory = StreamFactory(data_directory_path, "urlinfos")
+    max_crawled_urlid = urlinfos_stream_factory.get_max_crawled_urlid()
     urlinfo_generator = urlinfos_stream_factory.get_stream()
     result = 0
     for urlinfo in urlinfo_generator:
@@ -219,18 +217,4 @@ def get_number_pages(data_directory_path):
         if httpcode == 0:
             continue
         result += 1
-    return result
-
-
-def get_max_crawled_urlid(data_directory_path):
-    """Return the highest urlid that correspond to an url
-    that was actually crawled.
-    data_directory_path: the path to the directory that contains the data
-    """
-    #locate file
-    filename = os.path.join(data_directory_path, "files.json")
-    with open(filename) as f:
-        json_content = json.load(f)
-    result = json_content["max_uid_we_crawled"]
-    result = int(result)
     return result
