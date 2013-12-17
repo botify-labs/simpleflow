@@ -4,7 +4,7 @@ import gzip
 import itertools
 import json
 
-from urlparse import urlsplit
+from urlparse import urlsplit, parse_qs
 
 from cdf.log import logger
 
@@ -126,6 +126,33 @@ class PathStreamFactory(StreamFactory):
             parsed_path = urlsplit(path)
             path = parsed_path.path
             yield urlid, path
+
+
+class QueryStringStreamFactory(StreamFactory):
+    def __init__(self, dirpath, part_id=None):
+        super(QueryStringStreamFactory, self).__init__(dirpath,
+                                                       "urlids",
+                                                       part_id)
+
+    def get_stream(self):
+        """Create a generator for the query strings
+        data_directory_path: the path to the directory
+                             that contains crawl data
+        The generator creates tuples (urlid, path)
+        """
+        base_stream = super(QueryStringStreamFactory, self).get_stream()
+        for url in base_stream:
+            urlid = url[idx_from_stream("PATTERNS", "id")]
+            query_string_index = idx_from_stream("PATTERNS", "query_string")
+            query_string = {}
+            if len(url) >= query_string_index + 1:
+                query_string = url[query_string_index]
+                query_string = unicode(query_string, encoding="utf-8")
+                query_string = query_string[1:]
+                query_string = parse_qs(query_string)
+                yield urlid, query_string
+
+
 
 # getting the number of pages takes a while.
 # We'd better remember the result.

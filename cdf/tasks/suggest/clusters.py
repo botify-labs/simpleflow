@@ -18,6 +18,7 @@ from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
 from cdf.streams.stream_factory import (PathStreamFactory,
                                         HostStreamFactory,
+                                        QueryStringStreamFactory,
                                         get_number_pages)
 
 
@@ -75,7 +76,8 @@ def compute_mixed_clusters(crawl_id,
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["path"]
     patterns.append([(cluster_type, pattern, support) for pattern, support in path_patterns])
 
-    query_string_patterns = discover_query_strings_patterns(tmp_dir,
+    query_string_stream_factory = QueryStringStreamFactory(tmp_dir)
+    query_string_patterns = discover_query_strings_patterns(query_string_stream_factory,
                                                             nb_urls,
                                                             minimal_frequency)
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["qskey"]
