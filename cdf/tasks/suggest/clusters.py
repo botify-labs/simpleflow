@@ -16,7 +16,9 @@ from cdf.streams.mapping import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
-from cdf.streams.stream_factory import PathStreamFactory, get_number_pages
+from cdf.streams.stream_factory import (PathStreamFactory,
+                                        HostStreamFactory,
+                                        get_number_pages)
 
 
 def compute_mixed_clusters(crawl_id,
@@ -55,7 +57,8 @@ def compute_mixed_clusters(crawl_id,
 
     patterns = []
 
-    host_patterns = discover_host_patterns(tmp_dir,
+    host_stream_factory = HostStreamFactory(tmp_dir)
+    host_patterns = discover_host_patterns(host_stream_factory,
                                            nb_urls,
                                            minimal_frequency)
 

@@ -92,6 +92,22 @@ class StreamFactory(object):
         return result
 
 
+class HostStreamFactory(StreamFactory):
+    def __init__(self, dirpath, part_id=None):
+        super(HostStreamFactory, self).__init__(dirpath, "urlids", part_id)
+
+    def get_stream(self):
+        """Create a generator for the hosts
+        The generator creates tuples (urlid, path)
+        """
+        base_stream = super(HostStreamFactory, self).get_stream()
+        for url in base_stream:
+            urlid = url[idx_from_stream("PATTERNS", "id")]
+            host = url[idx_from_stream("PATTERNS", "host")]
+            host = unicode(host, encoding="utf-8")
+            yield urlid, host
+
+
 class PathStreamFactory(StreamFactory):
     def __init__(self, dirpath, part_id=None):
         super(PathStreamFactory, self).__init__(dirpath, "urlids", part_id)
@@ -110,7 +126,6 @@ class PathStreamFactory(StreamFactory):
             parsed_path = urlsplit(path)
             path = parsed_path.path
             yield urlid, path
-
 
 # getting the number of pages takes a while.
 # We'd better remember the result.
