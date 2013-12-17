@@ -86,6 +86,7 @@ def compute_mixed_clusters(crawl_id,
     for metadata_type in ["title", "h1", "h2"]:
         logger.info("Discovering patterns on %s.", metadata_type)
         metadata_patterns = discover_metadata_patterns(tmp_dir,
+                                                       nb_pages,
                                                        nb_urls,
                                                        minimal_frequency,
                                                        metadata_type)
