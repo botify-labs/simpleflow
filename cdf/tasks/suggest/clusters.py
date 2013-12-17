@@ -31,8 +31,6 @@ def compute_mixed_clusters(crawl_id,
                            force_fetch=False):
 
     minimal_frequency = 0.03
-    # load all the available urls
-    nb_urls = -1
 
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
@@ -61,7 +59,6 @@ def compute_mixed_clusters(crawl_id,
 
     host_stream_factory = HostStreamFactory(tmp_dir)
     host_patterns = discover_host_patterns(host_stream_factory,
-                                           nb_urls,
                                            minimal_frequency)
 
     #find patterns on hosts
@@ -72,14 +69,12 @@ def compute_mixed_clusters(crawl_id,
     path_stream_factory = PathStreamFactory(tmp_dir)
     path_patterns = discover_path_patterns(path_stream_factory,
                                            nb_pages,
-                                           nb_urls,
                                            minimal_frequency)
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["path"]
     patterns.append([(cluster_type, pattern, support) for pattern, support in path_patterns])
 
     query_string_stream_factory = QueryStringStreamFactory(tmp_dir)
     query_string_patterns = discover_query_strings_patterns(query_string_stream_factory,
-                                                            nb_urls,
                                                             minimal_frequency)
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["qskey"]
     patterns.append([(cluster_type, pattern, support) for pattern, support in query_string_patterns])
@@ -89,7 +84,6 @@ def compute_mixed_clusters(crawl_id,
         metadata_stream_factory = MetadataStreamFactory(tmp_dir, metadata_type)
         metadata_patterns = discover_metadata_patterns(metadata_stream_factory,
                                                        nb_pages,
-                                                       nb_urls,
                                                        minimal_frequency)
 
         cluster_type = CLUSTER_TYPE_TO_ID["metadata"][CONTENT_TYPE_NAME_TO_ID[metadata_type]]
