@@ -2,6 +2,7 @@ import os
 import re
 import gzip
 import itertools
+import json
 
 from urlparse import urlsplit
 
@@ -76,6 +77,19 @@ class StreamFactory(object):
             streams.append(cast(split_file(gzip.open(f))))
 
         return itertools.chain(*streams)
+
+    def get_max_crawled_urlid(self):
+        """Return the highest urlid that correspond to an url
+        that was actually crawled.
+        data_directory_path: the path to the directory that contains the data
+        """
+        #locate file
+        filename = os.path.join(self.dirpath, "files.json")
+        with open(filename) as f:
+            json_content = json.load(f)
+        result = json_content["max_uid_we_crawled"]
+        result = int(result)
+        return result
 
     def generate_paths(self):
         """Create a generator for the paths
