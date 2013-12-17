@@ -118,8 +118,6 @@ class PathStreamFactory(StreamFactory):
 
     def get_stream(self):
         """Create a generator for the paths
-        data_directory_path: the path to the directory
-                             that contains crawl data
         The generator creates tuples (urlid, path)
         """
         base_stream = super(PathStreamFactory, self).get_stream()
@@ -144,9 +142,8 @@ class QueryStringStreamFactory(StreamFactory):
 
     def get_stream(self):
         """Create a generator for the query strings
-        data_directory_path: the path to the directory
-                             that contains crawl data
-        The generator creates tuples (urlid, path)
+        The generator creates tuples (urlid, query_string_dict)
+        where query_string_dict is a dict: param->value
         """
         base_stream = super(QueryStringStreamFactory, self).get_stream()
         max_crawled_urlid = self.get_max_crawled_urlid()
@@ -167,6 +164,11 @@ class QueryStringStreamFactory(StreamFactory):
 
 class MetadataStreamFactory(StreamFactory):
     def __init__(self, dirpath, content_type, part_id=None):
+        """Constructor.
+        content_type : a string representing
+        the kind of metadata: "title", "h1", etc.
+        that we want to figure in the generated streams
+        """
         super(MetadataStreamFactory, self).__init__(dirpath,
                                                     "urlcontents",
                                                     part_id)
@@ -179,9 +181,7 @@ class MetadataStreamFactory(StreamFactory):
 
     def get_stream(self):
         """Create a generator for the metadata
-        data_directory_path: the path to the directory
-                             that contains crawl data
-        The generator creates tuples (urlid, path)
+        The generator creates tuples (urlid, list_metadata)
         """
         base_stream = super(MetadataStreamFactory, self).get_stream()
         max_crawled_urlid = self.get_max_crawled_urlid()
@@ -204,7 +204,9 @@ class MetadataStreamFactory(StreamFactory):
 
 
 def get_number_pages(data_directory_path):
-    """Return the number of available pages"""
+    """Return the number of available pages
+    data_directory_path: the path to the directory that contains the crawl data
+    """
     urlinfos_stream_factory = StreamFactory(data_directory_path, "urlinfos")
     max_crawled_urlid = urlinfos_stream_factory.get_max_crawled_urlid()
     urlinfo_generator = urlinfos_stream_factory.get_stream()
