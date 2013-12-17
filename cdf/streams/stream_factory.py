@@ -101,11 +101,15 @@ class HostStreamFactory(StreamFactory):
         The generator creates tuples (urlid, path)
         """
         base_stream = super(HostStreamFactory, self).get_stream()
+        max_crawled_urlid = self.get_max_crawled_urlid()
         for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
             host = url[idx_from_stream("PATTERNS", "host")]
             host = unicode(host, encoding="utf-8")
-            yield urlid, host
+            if urlid > max_crawled_urlid:
+                raise StopIteration
+            else:
+                yield urlid, host
 
 
 class PathStreamFactory(StreamFactory):
@@ -119,13 +123,17 @@ class PathStreamFactory(StreamFactory):
         The generator creates tuples (urlid, path)
         """
         base_stream = super(PathStreamFactory, self).get_stream()
+        max_crawled_urlid = self.get_max_crawled_urlid()
         for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
             path = url[idx_from_stream("PATTERNS", "path")]
             path = unicode(path, encoding="utf-8")
             parsed_path = urlsplit(path)
             path = parsed_path.path
-            yield urlid, path
+            if urlid > max_crawled_urlid:
+                raise StopIteration
+            else:
+                yield urlid, path
 
 
 class QueryStringStreamFactory(StreamFactory):
@@ -141,6 +149,7 @@ class QueryStringStreamFactory(StreamFactory):
         The generator creates tuples (urlid, path)
         """
         base_stream = super(QueryStringStreamFactory, self).get_stream()
+        max_crawled_urlid = self.get_max_crawled_urlid()
         for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
             query_string_index = idx_from_stream("PATTERNS", "query_string")
@@ -150,7 +159,10 @@ class QueryStringStreamFactory(StreamFactory):
                 query_string = unicode(query_string, encoding="utf-8")
                 query_string = query_string[1:]
                 query_string = parse_qs(query_string)
-                yield urlid, query_string
+                if urlid > max_crawled_urlid:
+                    raise StopIteration
+                else:
+                    yield urlid, query_string
 
 
 class MetadataStreamFactory(StreamFactory):
@@ -172,6 +184,7 @@ class MetadataStreamFactory(StreamFactory):
         The generator creates tuples (urlid, path)
         """
         base_stream = super(MetadataStreamFactory, self).get_stream()
+        max_crawled_urlid = self.get_max_crawled_urlid()
         for urlid, lines in itertools.groupby(base_stream, key=lambda url: url[0]):
             result = []
             for line in lines:
@@ -181,6 +194,8 @@ class MetadataStreamFactory(StreamFactory):
                 metadata = line[idx_from_stream("CONTENTS", "txt")]
                 metadata = unicode(metadata, encoding="utf-8")
                 result.append(metadata)
+            if urlid > max_crawled_urlid:
+                raise StopIteration
             if len(result) == 0:
                 #if we do not have corresponding metadata do not generate
                 #an element for this urlid
