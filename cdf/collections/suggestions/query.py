@@ -288,10 +288,8 @@ class SuggestQuery(BaseMetricsQuery):
 
         df = df.groupby(['query']).agg('sum').reset_index()
 
-        """
-        If target field is {"div": [a, b]}, we create a new column on the current
-        dataframe that div a by b
-        """
+        #If target field is {"div": [a, b]}, we create a new column on the current
+        #dataframe that div a by b
         if isinstance(target_field, dict) and target_field.keys() == ["div"]:
             df["score"] = df[target_field["div"][0]] / df[target_field["div"][1]]
             target_field = "score"
@@ -304,9 +302,6 @@ class SuggestQuery(BaseMetricsQuery):
         results = []
         for i, n in enumerate(df.values):
             values = dict(zip(df.columns, n))
-            #counters = {}
-            #for field in final_fields:
-            #    deep_update(counters, deep_dict({field: transform_std_type(field, values)}))
             result = {
                 'query': values['query'],
                 'counters': {field: transform_std_type(field, values) for field in final_fields}
