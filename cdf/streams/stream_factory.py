@@ -73,7 +73,7 @@ class FileStreamFactory(object):
         """Return the list of files to stream
         json_content : the content of the file files.json
         Return the list of filepaths to stream"""
-        if not self.content in json_content:
+        if self.content not in json_content:
             logger.warning("No entry for %s found", self.content)
             return []
         file_list = json_content[self.content]
