@@ -119,6 +119,17 @@ class TestStreamFactory(unittest.TestCase):
         self.assertEqual(expected_result,
                          list(file_stream_factory.get_stream()))
 
+    @patch("cdf.streams.stream_factory.FileStreamFactory._get_json_file_content")
+    def test_get_stream_missing_file(self, json_mock):
+        json_mock.return_value = {"max_uid_we_crawled": 3,
+                                  "urlids": ["/unexisting_dir/urlids.txt.0.gz"]
+                                  }
+
+        #actual test
+        file_stream_factory = FileStreamFactory("/tmp/crawl-1", "urlids")
+        self.assertRaises(IOError,
+                          file_stream_factory.get_stream)
+
 
 class TestHostStreamFactory(unittest.TestCase):
     def test_nominal_case(self):
