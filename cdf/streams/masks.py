@@ -29,3 +29,13 @@ def list_to_mask(lst):
         if mask_name in lst:
             mask += mask_int
     return mask
+
+
+def is_first_canonical(mask):
+    """Test if a canonical link is the first one of that page
+
+        A dedicated bit is added in links file's mask:
+            # 16 : extra link (if set & canonical -> this is NOT the
+            first canonical in the page)
+    """
+    return int(mask) & 16 != 16
