@@ -1,5 +1,5 @@
 import unittest
-from mock import MagicMock
+from mock import MagicMock, patch
 
 import StringIO
 
@@ -47,6 +47,27 @@ class TestStreamFactory(unittest.TestCase):
         stream_factory = StreamFactory(dirpath, content, part_id)
         self.assertEqual("urlids.txt.1.gz", stream_factory._get_file_regexp())
 
+    def test_get_file_list_nominal_case(self):
+        json_content = {
+            "urlinfos": ["crawl-result/urlinfos.txt.0.gz",
+                         "crawl-result/urlinfos.txt.1.gz"]
+        }
+        dirpath = "/tmp/crawl_data"
+        content = "urlinfos"
+        stream_factory = StreamFactory(dirpath, content)
+
+        expected_result = ["/tmp/crawl_data/urlinfos.txt.0.gz",
+                           "/tmp/crawl_data/urlinfos.txt.1.gz"]
+        self.assertEquals(expected_result,
+                          stream_factory._get_file_list(json_content))
+
+    def test_get_file_list_incomplete_json(self):
+        json_content = {}
+        dirpath = "/tmp/crawl_data"
+        content = "urlinfos"
+        stream_factory = StreamFactory(dirpath, content)
+        self.assertEquals([], stream_factory._get_file_list(json_content))
+
     def test_get_stream_from_file(self):
         dirpath = None
         content = "urlids"
@@ -60,6 +81,15 @@ class TestStreamFactory(unittest.TestCase):
                            [3, "http", "www.foo.com", "/bar/baz"]]
         actual_result = stream_factory._get_stream_from_file(file)
         self.assertEqual(expected_result, list(actual_result))
+
+    #patch get_json_file_content to avoid file creation
+    @patch("cdf.streams.stream_factory.StreamFactory._get_json_file_content",
+           new=lambda x: {"max_uid_we_crawled": 3})
+    def test_get_max_crawled_urlid(self):
+        dirpath = None
+        content = "urlids"
+        stream_factory = StreamFactory(dirpath, content)
+        self.assertEqual(3, stream_factory.get_max_crawled_urlid())
 
 
 class TestHostStreamFactory(unittest.TestCase):

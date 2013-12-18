@@ -63,34 +63,27 @@ class StreamFactory(object):
         else:
             return template.format(self.content, '*')
 
-    # TODO(darkjh) maybe put this in a util module
-    def _list_local_files(self, directory_path, regexp,
-                          full_path=True):
-        """List the files in a directory matching a given pattern.
-        The method is not recursive
-        directory_path : the path to the directory
-        regex: the filename pattern.
-               It can be a regex string or a list/tuple of strings
-               each of one corresponding to a regex
-        full_path : if True the full file paths are returned
-                    otherwise the method return the basenames
-        Return a list of filenames or filepaths
-        """
-        result = []
-        for f in os.listdir(directory_path):
-            # regexp is a string, try match it
-            if isinstance(regexp, str) and re.match(regexp, f):
-                result.append(f)
-            # regexp is a list of string, try match anyone of it
-            elif isinstance(regexp, (list, tuple)):
-                if any(re.match(r, f) for r in regexp):
-                    result.append(f)
+    def _get_json_file_content(self):
+        """Return the content of files.json"""
+        filename = os.path.join(self.dirpath, "files.json")
+        with open(filename) as f:
+            json_content = json.load(f)
+        return json_content
 
-        if full_path:
-            result = [os.path.join(directory_path, filename)
-                      for filename in result]
+    def _get_file_list(self, json_content):
+        """Return the list of files to stream
+        json_content : the content of the file files.json
+        Return the list of filepaths to stream"""
+        if not self.content in json_content:
+            logger.warning("No entry for %s found", self.content)
+            return []
+        file_list = json_content[self.content]
+        file_list = [os.path.basename(f) for f in file_list]
+        file_regexp = self._get_file_regexp()
+        file_list = [f for f in file_list if re.match(file_regexp, f)]
 
-        return result
+        file_list = [os.path.join(self.dirpath, f) for f in file_list]
+        return file_list
 
     def _get_stream_from_file(self, input_file):
         """Build the stream corresponding to a file
@@ -107,7 +100,8 @@ class StreamFactory(object):
         regexp = self._get_file_regexp()
         logger.info('Streaming files with regexp {}'.format(regexp))
 
-        files = self._list_local_files(self.dirpath, regexp)
+        json_content = self._get_json_file_content()
+        files = self._get_file_list(json_content)
 
         # sort files by part_id
         # assume file name format to be `basename.txt.part_id.gz`
@@ -123,10 +117,7 @@ class StreamFactory(object):
         """Return the highest urlid that correspond to an url
         that was actually crawled.
         """
-        #locate file
-        filename = os.path.join(self.dirpath, "files.json")
-        with open(filename) as f:
-            json_content = json.load(f)
+        json_content = self._get_json_file_content()
         result = json_content["max_uid_we_crawled"]
         result = int(result)
         return result
