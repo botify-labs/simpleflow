@@ -58,10 +58,9 @@ class FileStreamFactory(object):
         """Return a string representing a regex for the filenames
         that correspond to the desired content and part_id"""
         template = '{}.txt.{}.gz'
-        if self.part_id:
-            return template.format(self.content, self.part_id)
-        else:
-            return template.format(self.content, '*')
+        wildcard = '*'
+        return template.format(self.content,
+                               self.part_id if (self.part_id is not None) else wildcard)
 
     def _get_json_file_content(self):
         """Return the content of files.json"""
