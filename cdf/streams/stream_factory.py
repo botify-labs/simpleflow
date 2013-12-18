@@ -108,6 +108,12 @@ class HostStreamFactory(object):
     def __init__(self, dirpath, part_id=None):
         self._stream_factory = StreamFactory(dirpath, "urlids", part_id)
 
+    def set_stream_factory(self, stream_factory):
+        """A setter for the stream factory.
+        This function was implemented for test purpose
+        """
+        self._stream_factory = stream_factory
+
     def get_stream(self):
         """Create a generator for the hosts
         The generator creates tuples (urlid, host)
@@ -127,6 +133,12 @@ class HostStreamFactory(object):
 class PathStreamFactory(object):
     def __init__(self, dirpath, part_id=None):
         self._stream_factory = StreamFactory(dirpath, "urlids", part_id)
+
+    def set_stream_factory(self, stream_factory):
+        """A setter for the stream factory.
+        This function was implemented for test purpose
+        """
+        self._stream_factory = stream_factory
 
     def get_stream(self):
         """Create a generator for the paths
@@ -149,6 +161,12 @@ class PathStreamFactory(object):
 class QueryStringStreamFactory(object):
     def __init__(self, dirpath, part_id=None):
         self._stream_factory = StreamFactory(dirpath, "urlids", part_id)
+
+    def set_stream_factory(self, stream_factory):
+        """A setter for the stream factory.
+        This function was implemented for test purpose
+        """
+        self._stream_factory = stream_factory
 
     def get_stream(self):
         """Create a generator for the query strings
@@ -182,6 +200,12 @@ class MetadataStreamFactory(object):
         self._stream_factory = StreamFactory(dirpath, "urlcontents", part_id)
         self._content_type = content_type
         self._content_type_code = CONTENT_TYPE_NAME_TO_ID[self._content_type]
+
+    def set_stream_factory(self, stream_factory):
+        """A setter for the stream factory.
+        This function was implemented for test purpose
+        """
+        self._stream_factory = stream_factory
 
     @property
     def content_type(self):
