@@ -209,6 +209,9 @@ class QueryStringStreamFactory(DataStreamFactory):
         max_crawled_urlid = self._file_stream_factory.get_max_crawled_urlid()
         for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
+            if urlid > max_crawled_urlid:
+                raise StopIteration
+
             query_string_index = idx_from_stream("PATTERNS", "query_string")
             query_string = {}
             if len(url) >= query_string_index + 1:
@@ -216,10 +219,7 @@ class QueryStringStreamFactory(DataStreamFactory):
                 query_string = unicode(query_string, encoding="utf-8")
                 query_string = query_string[1:]
                 query_string = parse_qs(query_string)
-                if urlid > max_crawled_urlid:
-                    raise StopIteration
-                else:
-                    yield urlid, query_string
+                yield urlid, query_string
 
 
 class MetadataStreamFactory(DataStreamFactory):
