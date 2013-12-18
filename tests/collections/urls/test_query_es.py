@@ -135,7 +135,12 @@ URLS_FIXTURE = [
             'title': 1,
             'h1': 2,
             'description': 1
-        }
+        },
+        'redirects_from_nb': 2,
+        'redirects_from': [
+            {'http_code': 301, 'url_id': 1},
+            {'http_code': 301, 'url_id': 2}
+        ],
     },
     {
         'id': 5,
@@ -418,27 +423,49 @@ class TestQueryES(unittest.TestCase):
 
     def test_redirects_from_query(self):
         bql_query = _get_simple_bql_query('redirects_from_nb', 'gt', 0,
-                                          fields=['redirects_from'])
+                                          fields=['id', 'redirects_from'])
         result = list(Query(*QUERY_ARGS, query=bql_query).results)
-        expected = {
-            'redirects_from': [
-                {
-                    'url': {
-                        'url': self.urls[1],
-                        'crawled': True
+        expected = [
+            {
+                'id': 3,
+                'redirects_from': [
+                    {
+                        'url': {
+                            'url': self.urls[1],
+                            'crawled': True
+                        },
+                        'http_code': 301
                     },
-                    'http_code': 301
-                },
-                {
-                    'url': {
-                        'url': self.urls[2],
-                        'crawled': True
+                    {
+                        'url': {
+                            'url': self.urls[2],
+                            'crawled': True
+                        },
+                        'http_code': 301
+                    }
+                ]
+            },
+            {
+                'id': 4,
+                'redirects_from': [
+                    {
+                        'url': {
+                            'url': self.urls[1],
+                            'crawled': True
+                        },
+                        'http_code': 301
                     },
-                    'http_code': 301
-                }
-            ]
-        }
-        self.assertItemsEqual(result, [expected])
+                    {
+                        'url': {
+                            'url': self.urls[2],
+                            'crawled': True
+                        },
+                        'http_code': 301
+                    }
+                ]
+            }
+        ]
+        self.assertItemsEqual(result, expected)
 
     def test_redirects_to_not_crawled(self):
         bql_query = _get_simple_bql_query('redirects_to', 'not_null', 0,

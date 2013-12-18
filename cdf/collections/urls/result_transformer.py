@@ -260,23 +260,18 @@ class IdToUrlTransformer(ResultTransformer):
         # id to url lookup
         self.id_to_url = {}
 
-        self.fields_to_transform = []
+        self.fields_to_transform = set()
 
     def prepare(self):
-        for result in self.results:
-            # find all fields that needs to be transformed
-            for field in self.fields:
-                if not path_in_dict(field, result):
-                    continue
-                if not field_has_children(field):
-                    if field in self.FIELD_TRANSFORM_STRATEGY and \
-                            path_in_dict(field, result):
-                        self.fields_to_transform.append(field)
-                else:
-                    for child in children_from_field(field):
-                        if child in self.FIELD_TRANSFORM_STRATEGY and \
-                                path_in_dict(child, result):
-                            self.fields_to_transform.append(child)
+        # find all fields that needs to be transformed
+        for field in self.fields:
+            if not field_has_children(field):
+                if field in self.FIELD_TRANSFORM_STRATEGY:
+                    self.fields_to_transform.add(field)
+            else:
+                for child in children_from_field(field):
+                    if child in self.FIELD_TRANSFORM_STRATEGY:
+                        self.fields_to_transform.add(child)
 
         for result in self.results:
             # call each field's extractor for url ids
@@ -396,6 +391,7 @@ class ExternalUrlTransformer(ResultTransformer):
         else:
             self.fields = kwargs['fields']
 
+    # TODO if fields not in STRATEGY, return directly
     def transform(self):
         for result in self.results:
             for required_field in self.fields:
