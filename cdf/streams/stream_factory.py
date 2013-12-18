@@ -30,7 +30,13 @@ def get_id_from_filename(filename):
 
 
 class StreamFactory(object):
-    """Factory that produces a stream out of files."""
+    """Factory that produces a stream out of files of the same type.
+    To generate a stream, the class :
+    - locate all the corresponding files
+    - sort them by part_id
+    - generate a stream for each of them
+    - chain the streams together
+    """
 
     def __init__(self, dirpath, content, part_id=None):
         """Initiate a factory
