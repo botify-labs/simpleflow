@@ -104,16 +104,16 @@ class StreamFactory(object):
         return result
 
 
-class HostStreamFactory(StreamFactory):
+class HostStreamFactory(object):
     def __init__(self, dirpath, part_id=None):
-        super(self.__class__, self).__init__(dirpath, "urlids", part_id)
+        self._stream_factory = StreamFactory(dirpath, "urlids", part_id)
 
     def get_stream(self):
         """Create a generator for the hosts
         The generator creates tuples (urlid, host)
         """
-        base_stream = super(self.__class__, self).get_stream()
-        max_crawled_urlid = self.get_max_crawled_urlid()
+        base_stream = self._stream_factory.get_stream()
+        max_crawled_urlid = self._stream_factory.get_max_crawled_urlid()
         for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
             host = url[idx_from_stream("PATTERNS", "host")]
@@ -124,16 +124,16 @@ class HostStreamFactory(StreamFactory):
                 yield urlid, host
 
 
-class PathStreamFactory(StreamFactory):
+class PathStreamFactory(object):
     def __init__(self, dirpath, part_id=None):
-        super(self.__class__, self).__init__(dirpath, "urlids", part_id)
+        self._stream_factory = StreamFactory(dirpath, "urlids", part_id)
 
     def get_stream(self):
         """Create a generator for the paths
         The generator creates tuples (urlid, path)
         """
-        base_stream = super(self.__class__, self).get_stream()
-        max_crawled_urlid = self.get_max_crawled_urlid()
+        base_stream = self._stream_factory.get_stream()
+        max_crawled_urlid = self._stream_factory.get_max_crawled_urlid()
         for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
             path = url[idx_from_stream("PATTERNS", "path")]
@@ -146,19 +146,17 @@ class PathStreamFactory(StreamFactory):
                 yield urlid, path
 
 
-class QueryStringStreamFactory(StreamFactory):
+class QueryStringStreamFactory(object):
     def __init__(self, dirpath, part_id=None):
-        super(self.__class__, self).__init__(dirpath,
-                                             "urlids",
-                                             part_id)
+        self._stream_factory = StreamFactory(dirpath, "urlids", part_id)
 
     def get_stream(self):
         """Create a generator for the query strings
         The generator creates tuples (urlid, query_string_dict)
         where query_string_dict is a dict: param->value
         """
-        base_stream = super(self.__class__, self).get_stream()
-        max_crawled_urlid = self.get_max_crawled_urlid()
+        base_stream = self._stream_factory.get_stream()
+        max_crawled_urlid = self._stream_factory.get_max_crawled_urlid()
         for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
             query_string_index = idx_from_stream("PATTERNS", "query_string")
@@ -174,16 +172,14 @@ class QueryStringStreamFactory(StreamFactory):
                     yield urlid, query_string
 
 
-class MetadataStreamFactory(StreamFactory):
+class MetadataStreamFactory(object):
     def __init__(self, dirpath, content_type, part_id=None):
         """Constructor.
         content_type : a string representing
         the kind of metadata: "title", "h1", etc.
         that we want to figure in the generated streams
         """
-        super(self.__class__, self).__init__(dirpath,
-                                                      "urlcontents",
-                                                      part_id)
+        self._stream_factory = StreamFactory(dirpath, "urlcontents", part_id)
         self._content_type = content_type
         self._content_type_code = CONTENT_TYPE_NAME_TO_ID[self._content_type]
 
@@ -195,8 +191,8 @@ class MetadataStreamFactory(StreamFactory):
         """Create a generator for the metadata
         The generator creates tuples (urlid, list_metadata)
         """
-        base_stream = super(self.__class__, self).get_stream()
-        max_crawled_urlid = self.get_max_crawled_urlid()
+        base_stream = self._stream_factory.get_stream()
+        max_crawled_urlid = self._stream_factory.get_max_crawled_urlid()
         for urlid, lines in itertools.groupby(base_stream, key=lambda url: url[0]):
             result = []
             for line in lines:
