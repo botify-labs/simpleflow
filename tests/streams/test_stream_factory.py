@@ -5,7 +5,7 @@ import StringIO
 
 from cdf.exceptions import MalformedFileNameError
 from cdf.streams.stream_factory import (get_part_id_from_filename,
-                                        StreamFactory,
+                                        FileStreamFactory,
                                         HostStreamFactory,
                                         PathStreamFactory,
                                         QueryStringStreamFactory,
@@ -33,18 +33,18 @@ class TestStreamFactory(unittest.TestCase):
     def test_constructor(self):
         #test that the constructor raises on unknow content
         self.assertRaises(Exception,
-                          StreamFactory,
+                          FileStreamFactory,
                           "/tmp",
                           "unknown_content")
 
     def test_get_file_regexp(self):
         dirpath = None
         content = "urlids"
-        stream_factory = StreamFactory(dirpath, content)
+        stream_factory = FileStreamFactory(dirpath, content)
         self.assertEqual("urlids.txt.*.gz", stream_factory._get_file_regexp())
 
         part_id = 1
-        stream_factory = StreamFactory(dirpath, content, part_id)
+        stream_factory = FileStreamFactory(dirpath, content, part_id)
         self.assertEqual("urlids.txt.1.gz", stream_factory._get_file_regexp())
 
     def test_get_file_list_nominal_case(self):
@@ -54,7 +54,7 @@ class TestStreamFactory(unittest.TestCase):
         }
         dirpath = "/tmp/crawl_data"
         content = "urlinfos"
-        stream_factory = StreamFactory(dirpath, content)
+        stream_factory = FileStreamFactory(dirpath, content)
 
         expected_result = ["/tmp/crawl_data/urlinfos.txt.0.gz",
                            "/tmp/crawl_data/urlinfos.txt.1.gz"]
@@ -65,13 +65,13 @@ class TestStreamFactory(unittest.TestCase):
         json_content = {}
         dirpath = "/tmp/crawl_data"
         content = "urlinfos"
-        stream_factory = StreamFactory(dirpath, content)
+        stream_factory = FileStreamFactory(dirpath, content)
         self.assertEquals([], stream_factory._get_file_list(json_content))
 
     def test_get_stream_from_file(self):
         dirpath = None
         content = "urlids"
-        stream_factory = StreamFactory(dirpath, content)
+        stream_factory = FileStreamFactory(dirpath, content)
         #fake file object
         file_content = ("1\thttp\twww.foo.com\t/bar\t?param=value\n"
                         "3\thttp\twww.foo.com\t/bar/baz")
@@ -83,12 +83,12 @@ class TestStreamFactory(unittest.TestCase):
         self.assertEqual(expected_result, list(actual_result))
 
     #patch get_json_file_content to avoid file creation
-    @patch("cdf.streams.stream_factory.StreamFactory._get_json_file_content",
+    @patch("cdf.streams.stream_factory.FileStreamFactory._get_json_file_content",
            new=lambda x: {"max_uid_we_crawled": 3})
     def test_get_max_crawled_urlid(self):
         dirpath = None
         content = "urlids"
-        stream_factory = StreamFactory(dirpath, content)
+        stream_factory = FileStreamFactory(dirpath, content)
         self.assertEqual(3, stream_factory.get_max_crawled_urlid())
 
 
@@ -105,7 +105,7 @@ class TestHostStreamFactory(unittest.TestCase):
 
         path = None
         host_stream_factory = HostStreamFactory(path)
-        host_stream_factory.set_stream_factory(stream_factory)
+        host_stream_factory.set_file_stream_factory(stream_factory)
 
         #urlid 3 is not returned since it has not been crawled
         expected_result = [
@@ -130,7 +130,7 @@ class TestPathStreamFactory(unittest.TestCase):
 
         path = None
         path_stream_factory = PathStreamFactory(path)
-        path_stream_factory.set_stream_factory(stream_factory)
+        path_stream_factory.set_file_stream_factory(stream_factory)
 
         #urlid 3 is not returned since it has not been crawled
         expected_result = [
@@ -156,7 +156,7 @@ class TestQueryStringStreamFactory(unittest.TestCase):
 
         path = None
         qs_stream_factory = QueryStringStreamFactory(path)
-        qs_stream_factory.set_stream_factory(stream_factory)
+        qs_stream_factory.set_file_stream_factory(stream_factory)
 
         #urlid 1 is not returned since it has no query string
         #urlid 3 is not returned since it has not been crawled
@@ -189,7 +189,7 @@ class TestMetadataStreamFactory(unittest.TestCase):
         path = None
         content_type = "h1"
         metadata_stream_factory = MetadataStreamFactory(path, content_type)
-        metadata_stream_factory.set_stream_factory(self.stream_factory)
+        metadata_stream_factory.set_file_stream_factory(self.stream_factory)
 
         #urlid 0 is not returned since it has no h1
         #urlid 3 is not returned since it has not been crawled
@@ -204,7 +204,7 @@ class TestMetadataStreamFactory(unittest.TestCase):
         path = None
         content_type = "h2"
         metadata_stream_factory = MetadataStreamFactory(path, content_type)
-        metadata_stream_factory.set_stream_factory(self.stream_factory)
+        metadata_stream_factory.set_file_stream_factory(self.stream_factory)
 
         #urlid 3 is not returned since it has not been crawled
         expected_result = [
