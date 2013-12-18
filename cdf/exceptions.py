@@ -6,5 +6,9 @@ class InvalidDataFormat(Exception):
     pass
 
 
+class MalformedFileNameError(Exception):
+    pass
+
+
 class ElasticSearchIncompleteIndex(Exception):
     pass

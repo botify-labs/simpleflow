@@ -1,10 +1,65 @@
 import unittest
 from mock import MagicMock
 
-from cdf.streams.stream_factory import (HostStreamFactory,
+import StringIO
+
+from cdf.exceptions import MalformedFileNameError
+from cdf.streams.stream_factory import (get_id_from_filename,
+                                        StreamFactory,
+                                        HostStreamFactory,
                                         PathStreamFactory,
                                         QueryStringStreamFactory,
-                                        MetadataStreamFactory)
+                                        MetadataStreamFactory,
+                                        _get_number_pages_from_stream)
+
+
+class TestGetIdFromFileName(unittest.TestCase):
+    def test_nominal_case(self):
+        self.assertEqual(0, get_id_from_filename("urlcontents.txt.0.gz"))
+        self.assertEqual(10, get_id_from_filename("urlcontents.txt.10.gz"))
+        self.assertEqual(0, get_id_from_filename("/tmp/urlcontents.txt.0.gz"))
+
+    def test_malformed_filename(self):
+        self.assertRaises(MalformedFileNameError,
+                          get_id_from_filename,
+                          "urlcontents.txt.gz")
+
+        self.assertRaises(MalformedFileNameError,
+                          get_id_from_filename,
+                          "urlcontents.txt.-1.gz")
+
+
+class TestStreamFactory(unittest.TestCase):
+    def test_constructor(self):
+        #test that the constructor raises on unknow content
+        self.assertRaises(Exception,
+                          StreamFactory,
+                          "/tmp",
+                          "unknown_content")
+
+    def test_get_file_regexp(self):
+        dirpath = None
+        content = "urlids"
+        stream_factory = StreamFactory(dirpath, content)
+        self.assertEqual("urlids.txt.*.gz", stream_factory._get_file_regexp())
+
+        part_id = 1
+        stream_factory = StreamFactory(dirpath, content, part_id)
+        self.assertEqual("urlids.txt.1.gz", stream_factory._get_file_regexp())
+
+    def test_get_stream_from_file(self):
+        dirpath = None
+        content = "urlids"
+        stream_factory = StreamFactory(dirpath, content)
+        #fake file object
+        file_content = ("1\thttp\twww.foo.com\t/bar\t?param=value\n"
+                        "3\thttp\twww.foo.com\t/bar/baz")
+        file = StringIO.StringIO(file_content)
+
+        expected_result = [[1, "http", "www.foo.com", "/bar", "?param=value"],
+                           [3, "http", "www.foo.com", "/bar/baz"]]
+        actual_result = stream_factory._get_stream_from_file(file)
+        self.assertEqual(expected_result, list(actual_result))
 
 
 class TestHostStreamFactory(unittest.TestCase):
@@ -129,3 +184,17 @@ class TestMetadataStreamFactory(unittest.TestCase):
 
         self.assertEqual(expected_result,
                          list(metadata_stream_factory.get_stream()))
+
+
+class TestGetNumberPagesFromStream(unittest.TestCase):
+    def test_nominal_case(self):
+        urlinfos = [
+            (1, 0, "text/html", 0, 0, 200),
+            (2, 0, "text/html", 0, 0, 0),
+            (3, 0, "text/html", 0, 0, 200),
+            (4, 0, "text/html", 0, 0, 200),
+        ]
+        self.assertEqual(2, _get_number_pages_from_stream(iter(urlinfos),
+                                                          3))
+        self.assertEqual(3, _get_number_pages_from_stream(iter(urlinfos),
+                                                          5))

@@ -8,11 +8,25 @@ from urlparse import urlsplit, parse_qs
 
 from cdf.log import logger
 
+from cdf.exceptions import MalformedFileNameError
 from cdf.streams.mapping import (STREAMS_HEADERS,
                                  STREAMS_FILES,
                                  CONTENT_TYPE_NAME_TO_ID)
 from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file, idx_from_stream
+
+
+def get_id_from_filename(filename):
+    """Return the part id from a filename
+    If the part id can not be extracted raise a MalformedFileNameError
+    """
+    regex = re.compile(".*txt.([\d]+).gz")
+    m = regex.match(filename)
+    if not m:
+        raise MalformedFileNameError(
+            "%s does not contained any part id." % filename
+        )
+    return int(m.group(1))
 
 
 class StreamFactory(object):
@@ -44,23 +58,20 @@ class StreamFactory(object):
             return template.format(self.content, '*')
 
     # TODO(darkjh) maybe put this in a util module
-    def _list_local_files(self, regexp, full_path=True, sort=True):
+    def _list_local_files(self, directory_path, regexp,
+                          full_path=True):
         """List the files in a directory matching a given pattern.
         The method is not recursive
+        directory_path : the path to the directory
         regex: the filename pattern.
                It can be a regex string or a list/tuple of strings
                each of one corresponding to a regex
         full_path : if True the full file paths are returned
                     otherwise the method return the basenames
-        sort : if True sort the files by part_id
         Return a list of filenames or filepaths
         """
-        # assume file name format to be `basename.txt.part_id.gz`
-        def file_sort_key(filename):
-            return int(filename.split('.')[2])
-
         result = []
-        for f in os.listdir(self.dirpath):
+        for f in os.listdir(directory_path):
             # regexp is a string, try match it
             if isinstance(regexp, str) and re.match(regexp, f):
                 result.append(f)
@@ -68,27 +79,38 @@ class StreamFactory(object):
             elif isinstance(regexp, (list, tuple)):
                 if any(re.match(r, f) for r in regexp):
                     result.append(f)
-        if sort:
-            result.sort(key=file_sort_key)
 
         if full_path:
-            for i in xrange(0, len(result)):
-                result[i] = os.path.join(self.dirpath, result[i])
+            result = [os.path.join(directory_path, filename)
+                      for filename in result]
 
         return result
+
+    def _get_stream_from_file(self, input_file):
+        """Build the stream corresponding to a file
+        input_file : a file object
+        Return the stream corresponding to the input file
+        with each field correctly casted.
+        """
+        stream_identifier = STREAMS_FILES[self.content]
+        cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
+        return cast(split_file(input_file))
 
     def get_stream(self):
         """Return the desired generator"""
         regexp = self._get_file_regexp()
         logger.info('Streaming files with regexp {}'.format(regexp))
-        ordered_files = self._list_local_files(regexp)
+
+        files = self._list_local_files(self.dirpath, regexp)
+
+        # sort files by part_id
+        # assume file name format to be `basename.txt.part_id.gz`
+        ordered_files = sorted(files, key=get_id_from_filename)
 
         streams = []
-        for f in ordered_files:
-            stream_identifier = STREAMS_FILES[self.content]
-            cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
-            streams.append(cast(split_file(gzip.open(f))))
-
+        for filename in ordered_files:
+            f = gzip.open(filename)
+            streams.append(self._get_stream_from_file(f))
         return itertools.chain(*streams)
 
     def get_max_crawled_urlid(self):
@@ -241,9 +263,18 @@ def get_number_pages(data_directory_path):
     """
     urlinfos_stream_factory = StreamFactory(data_directory_path, "urlinfos")
     max_crawled_urlid = urlinfos_stream_factory.get_max_crawled_urlid()
-    urlinfo_generator = urlinfos_stream_factory.get_stream()
+    return _get_number_pages_from_stream(urlinfos_stream_factory.get_stream(),
+                                         max_crawled_urlid)
+
+
+def _get_number_pages_from_stream(urlinfos_stream, max_crawled_urlid):
+    """Helper function (mainly here to make tests easier
+    Return the number of available pages
+    urlinfos_stream : a stream from the urlinfos files
+    max_crawled_urlid : the highest urlid corresponding to a crawled page
+    """
     result = 0
-    for urlinfo in urlinfo_generator:
+    for urlinfo in urlinfos_stream:
         urlid = urlinfo[idx_from_stream("INFOS", "id")]
         httpcode = urlinfo[idx_from_stream("INFOS", "http_code")]
         if urlid > max_crawled_urlid:
