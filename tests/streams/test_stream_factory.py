@@ -91,6 +91,34 @@ class TestStreamFactory(unittest.TestCase):
         stream_factory = FileStreamFactory(dirpath, content)
         self.assertEqual(3, stream_factory.get_max_crawled_urlid())
 
+    @patch("cdf.streams.stream_factory.FileStreamFactory._get_json_file_content")
+    @patch('gzip.open')
+    def test_get_stream(self, gzip_open_mock, json_mock):
+        #note that urlids are not sorted by part_id
+        json_mock.return_value = {"max_uid_we_crawled": 3,
+                                  "urlids": ["/tmp/crawl-1/urlids.txt.2.gz",
+                                             "/tmp/crawl-1/urlids.txt.0.gz"]}
+
+        #mock gzip.open
+        def side_effect(*args, **kwargs):
+            filepath = args[0]
+            file_contents = {
+                "/tmp/crawl-1/urlids.txt.0.gz": ['1\thttp\twww.foo.com\n'],
+                "/tmp/crawl-1/urlids.txt.2.gz": ['3\thttp\twww.bar.com\n']
+            }
+            mock = MagicMock()
+            mock.__iter__.return_value = iter(file_contents[filepath])
+            return mock
+        gzip_open_mock.side_effect = side_effect
+
+        #actual test
+        file_stream_factory = FileStreamFactory("/tmp/crawl-1", "urlids")
+        #result stream should respect part_id order
+        expected_result = [[1, "http", "www.foo.com"],
+                           [3, "http", "www.bar.com"]]
+        self.assertEqual(expected_result,
+                         list(file_stream_factory.get_stream()))
+
 
 class TestHostStreamFactory(unittest.TestCase):
     def test_nominal_case(self):
