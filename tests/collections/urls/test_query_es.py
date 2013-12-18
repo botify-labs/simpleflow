@@ -291,6 +291,16 @@ class TestQueryES(unittest.TestCase):
         }
         self.assertItemsEqual(results, [expected])
 
+        bql_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                          fields=['error_links.3xx.urls'])
+        results = list(Query(*QUERY_ARGS, query=bql_query).results)
+        expected = {
+            'error_links': {
+                '3xx': {'urls': self.error_3xx['urls']}
+            }
+        }
+        self.assertItemsEqual(results, [expected])
+
     def test_query_missing_fields(self):
         """`error_links` is missing in the first 2 docs"""
         # retrieve parent field

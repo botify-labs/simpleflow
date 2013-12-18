@@ -185,15 +185,15 @@ class IdToUrlTransformer(ResultTransformer):
     corresponding complete url"""
 
     FIELD_TRANSFORM_STRATEGY = {
-        'error_links.3xx': {
+        'error_links.3xx.urls': {
             'extract': lambda res: _prepare_error_links(res, '3xx'),
             'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '3xx')
         },
-        'error_links.4xx': {
+        'error_links.4xx.urls': {
             'extract': lambda res: _prepare_error_links(res, '4xx'),
             'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '4xx')
         },
-        'error_links.5xx': {
+        'error_links.5xx.urls': {
             'extract': lambda res: _prepare_error_links(res, '5xx'),
             'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '5xx')
         },
