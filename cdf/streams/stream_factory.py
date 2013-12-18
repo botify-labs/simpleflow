@@ -171,7 +171,7 @@ class QueryStringStreamFactory(object):
     def get_stream(self):
         """Create a generator for the query strings
         The generator creates tuples (urlid, query_string_dict)
-        where query_string_dict is a dict: param->value
+        where query_string_dict is a dict: param->list of values
         """
         base_stream = self._stream_factory.get_stream()
         max_crawled_urlid = self._stream_factory.get_max_crawled_urlid()
