@@ -16,7 +16,7 @@ from cdf.streams.caster import Caster
 from cdf.streams.utils import split_file, idx_from_stream
 
 
-def get_id_from_filename(filename):
+def get_part_id_from_filename(filename):
     """Return the part id from a filename
     If the part id can not be extracted raise a MalformedFileNameError
     """
@@ -105,7 +105,7 @@ class StreamFactory(object):
 
         # sort files by part_id
         # assume file name format to be `basename.txt.part_id.gz`
-        ordered_files = sorted(files, key=get_id_from_filename)
+        ordered_files = sorted(files, key=get_part_id_from_filename)
 
         streams = []
         for filename in ordered_files:
