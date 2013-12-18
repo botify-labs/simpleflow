@@ -76,12 +76,10 @@ class FileStreamFactory(object):
         if self.content not in json_content:
             logger.warning("No entry for %s found", self.content)
             return []
-        file_list = json_content[self.content]
-        file_list = [os.path.basename(f) for f in file_list]
-        file_regexp = self._get_file_regexp()
-        file_list = [f for f in file_list if re.match(file_regexp, f)]
-
-        file_list = [os.path.join(self.dirpath, f) for f in file_list]
+        def relocate(path): return os.path.join(self.dirpath, os.path.basename(path))
+        file_list = [relocate(f) for f in json_content[self.content]]
+        file_list = [f for f in file_list if
+                     re.match(self._get_file_regexp(), os.path.basename(f))]
         return file_list
 
     def _get_stream_from_file(self, input_file):
