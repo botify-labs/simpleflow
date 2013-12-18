@@ -59,8 +59,9 @@ class FileStreamFactory(object):
         that correspond to the desired content and part_id"""
         template = '{}.txt.{}.gz'
         wildcard = '*'
-        return template.format(self.content,
-                               self.part_id if (self.part_id is not None) else wildcard)
+        pattern = template.format(self.content,
+                                  self.part_id if (self.part_id is not None) else wildcard)
+        return re.compile(pattern)
 
     def _get_json_file_content(self):
         """Return the content of files.json"""
@@ -79,7 +80,7 @@ class FileStreamFactory(object):
         def relocate(path): return os.path.join(self.dirpath, os.path.basename(path))
         file_list = [relocate(f) for f in json_content[self.content]]
         file_list = [f for f in file_list if
-                     re.match(self._get_file_regexp(), os.path.basename(f))]
+                     self._get_file_regexp().match(os.path.basename(f))]
         return file_list
 
     def _get_stream_from_file(self, input_file):
@@ -95,7 +96,7 @@ class FileStreamFactory(object):
     def get_stream(self):
         """Return the desired generator"""
         regexp = self._get_file_regexp()
-        logger.info('Streaming files with regexp {}'.format(regexp))
+        logger.info('Streaming files with regexp {}'.format(regexp.pattern))
 
         json_content = self._get_json_file_content()
         files = self._get_file_list(json_content)

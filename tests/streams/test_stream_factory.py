@@ -41,11 +41,13 @@ class TestStreamFactory(unittest.TestCase):
         dirpath = None
         content = "urlids"
         stream_factory = FileStreamFactory(dirpath, content)
-        self.assertEqual("urlids.txt.*.gz", stream_factory._get_file_regexp())
+        self.assertEqual("urlids.txt.*.gz",
+                         stream_factory._get_file_regexp().pattern)
 
         part_id = 1
         stream_factory = FileStreamFactory(dirpath, content, part_id)
-        self.assertEqual("urlids.txt.1.gz", stream_factory._get_file_regexp())
+        self.assertEqual("urlids.txt.1.gz",
+                         stream_factory._get_file_regexp().pattern)
 
     def test_get_file_list_nominal_case(self):
         json_content = {
