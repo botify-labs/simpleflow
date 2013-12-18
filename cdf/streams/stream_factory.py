@@ -35,6 +35,8 @@ class StreamFactory(object):
             raise Exception("{} is not a known raw file basename".format(content))
 
     def _get_file_regexp(self):
+        """Return a string representing a regex for the filenames
+        that correspond to the desired content and part_id"""
         template = '{}.txt.{}.gz'
         if self.part_id:
             return template.format(self.content, self.part_id)
@@ -43,6 +45,16 @@ class StreamFactory(object):
 
     # TODO(darkjh) maybe put this in a util module
     def _list_local_files(self, regexp, full_path=True, sort=True):
+        """List the files in a directory matching a given pattern.
+        The method is not recursive
+        regex: the filename pattern.
+               It can be a regex string or a list/tuple of strings
+               each of one corresponding to a regex
+        full_path : if True the full file paths are returned
+                    otherwise the method return the basenames
+        sort : if True sort the files by part_id
+        Return a list of filenames or filepaths
+        """
         # assume file name format to be `basename.txt.part_id.gz`
         def file_sort_key(filename):
             return int(filename.split('.')[2])
@@ -66,6 +78,7 @@ class StreamFactory(object):
         return result
 
     def get_stream(self):
+        """Return the desired generator"""
         regexp = self._get_file_regexp()
         logger.info('Streaming files with regexp {}'.format(regexp))
         ordered_files = self._list_local_files(regexp)
@@ -81,7 +94,6 @@ class StreamFactory(object):
     def get_max_crawled_urlid(self):
         """Return the highest urlid that correspond to an url
         that was actually crawled.
-        data_directory_path: the path to the directory that contains the data
         """
         #locate file
         filename = os.path.join(self.dirpath, "files.json")
@@ -98,7 +110,7 @@ class HostStreamFactory(StreamFactory):
 
     def get_stream(self):
         """Create a generator for the hosts
-        The generator creates tuples (urlid, path)
+        The generator creates tuples (urlid, host)
         """
         base_stream = super(self.__class__, self).get_stream()
         max_crawled_urlid = self.get_max_crawled_urlid()
