@@ -128,15 +128,6 @@ class FileStreamFactory(object):
             streams.append(self._get_stream_from_file(f))
         return itertools.chain(*streams)
 
-    def get_max_crawled_urlid(self):
-        """Return the highest urlid that correspond to an url
-        that was actually crawled.
-        """
-        crawler_metakeys = self.crawler_metakeys
-        result = crawler_metakeys["max_uid_we_crawled"]
-        result = int(result)
-        return result
-
 
 class DataStreamFactory(object):
     """An abstract class for data stream factories
@@ -145,11 +136,12 @@ class DataStreamFactory(object):
     They take raw file streams and filter and process the stream
     to extract relevant data
     """
-    def __init__(self, file_stream_factory):
+    def __init__(self, file_stream_factory, crawler_metakeys):
         """Constructor
         file_stream_factory : the factory that generate the raw file streams
         """
         self._file_stream_factory = file_stream_factory
+        self._crawler_metakeys = crawler_metakeys
 
     def set_file_stream_factory(self, stream_factory):
         """A setter for the stream factory.
@@ -163,18 +155,19 @@ class DataStreamFactory(object):
 
 
 class HostStreamFactory(DataStreamFactory):
-    def __init__(self, dirpath, part_id=None):
+    def __init__(self, dirpath, crawler_metakeys, part_id=None):
         file_stream_factory = FileStreamFactory(dirpath,
                                                 "urlids",
                                                 part_id)
-        super(self.__class__, self).__init__(file_stream_factory)
+        super(self.__class__, self).__init__(file_stream_factory,
+                                             crawler_metakeys)
 
     def get_stream(self):
         """Create a generator for the hosts
         The generator creates tuples (urlid, host)
         """
         base_stream = self._file_stream_factory.get_stream()
-        max_crawled_urlid = self._file_stream_factory.get_max_crawled_urlid()
+        max_crawled_urlid = self._crawler_metakeys.get_max_crawled_urlid()
         for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
             host = url[idx_from_stream("PATTERNS", "host")]
@@ -186,18 +179,19 @@ class HostStreamFactory(DataStreamFactory):
 
 
 class PathStreamFactory(DataStreamFactory):
-    def __init__(self, dirpath, part_id=None):
+    def __init__(self, dirpath, crawler_metakeys, part_id=None):
         file_stream_factory = FileStreamFactory(dirpath,
                                                 "urlids",
                                                 part_id)
-        super(self.__class__, self).__init__(file_stream_factory)
+        super(self.__class__, self).__init__(file_stream_factory,
+                                             crawler_metakeys)
 
     def get_stream(self):
         """Create a generator for the paths
         The generator creates tuples (urlid, path)
         """
         base_stream = self._file_stream_factory.get_stream()
-        max_crawled_urlid = self._file_stream_factory.get_max_crawled_urlid()
+        max_crawled_urlid = self._crawler_metakeys.get_max_crawled_urlid()
         for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
             path = url[idx_from_stream("PATTERNS", "path")]
@@ -211,11 +205,12 @@ class PathStreamFactory(DataStreamFactory):
 
 
 class QueryStringStreamFactory(DataStreamFactory):
-    def __init__(self, dirpath, part_id=None):
+    def __init__(self, dirpath, crawler_metakeys, part_id=None):
         file_stream_factory = FileStreamFactory(dirpath,
                                                 "urlids",
                                                 part_id)
-        super(self.__class__, self).__init__(file_stream_factory)
+        super(self.__class__, self).__init__(file_stream_factory,
+                                             crawler_metakeys)
 
     def get_stream(self):
         """Create a generator for the query strings
@@ -223,7 +218,7 @@ class QueryStringStreamFactory(DataStreamFactory):
         where query_string_dict is a dict: param->list of values
         """
         base_stream = self._file_stream_factory.get_stream()
-        max_crawled_urlid = self._file_stream_factory.get_max_crawled_urlid()
+        max_crawled_urlid = self._crawler_metakeys.get_max_crawled_urlid()
         for url in base_stream:
             urlid = url[idx_from_stream("PATTERNS", "id")]
             if urlid > max_crawled_urlid:
@@ -241,7 +236,7 @@ class QueryStringStreamFactory(DataStreamFactory):
 
 
 class MetadataStreamFactory(DataStreamFactory):
-    def __init__(self, dirpath, content_type, part_id=None):
+    def __init__(self, dirpath, content_type, crawler_metakeys, part_id=None):
         """Constructor.
         content_type : a string representing
         the kind of metadata: "title", "h1", etc.
@@ -250,7 +245,8 @@ class MetadataStreamFactory(DataStreamFactory):
         file_stream_factory = FileStreamFactory(dirpath,
                                                 "urlcontents",
                                                 part_id)
-        super(self.__class__, self).__init__(file_stream_factory)
+        super(self.__class__, self).__init__(file_stream_factory,
+                                             crawler_metakeys)
         #init class specific attributes
         self._content_type = content_type
         self._content_type_code = CONTENT_TYPE_NAME_TO_ID[self._content_type]
@@ -264,7 +260,7 @@ class MetadataStreamFactory(DataStreamFactory):
         The generator creates tuples (urlid, list_metadata)
         """
         base_stream = self._file_stream_factory.get_stream()
-        max_crawled_urlid = self._file_stream_factory.get_max_crawled_urlid()
+        max_crawled_urlid = self._crawler_metakeys.get_max_crawled_urlid()
         for urlid, lines in itertools.groupby(base_stream,
                                               key=lambda url: url[0]):
             result = []
@@ -282,6 +278,40 @@ class MetadataStreamFactory(DataStreamFactory):
                 #an element for this urlid
                 continue
             yield urlid, result
+
+
+class CrawlerMetakeys(object):
+    def __init__(self, data_directory_path):
+        self._data_directory_path = data_directory_path
+        self._crawler_metakeys = None
+
+    @property
+    def crawler_metakeys(self):
+        """Return the metakeys generated by the crawler.
+        Metakeys include the list of files generated by the crawler
+        as well as other useful information such as the highest
+        urlid corresponding to a crawled url."""
+        if self._crawler_metakeys is None:
+            #store crawler metakeys to avoid useless file access
+            self._crawler_metakeys = self._read_crawler_metakeys()
+        return self._crawler_metakeys
+
+    def _read_crawler_metakeys(self):
+        """Read the crawler metakeys from 'files.json'"""
+        print self._data_directory_path
+        filename = os.path.join(self._data_directory_path, "files.json")
+        print filename
+        with open(filename) as f:
+            crawler_metakeys = json.load(f)
+        return crawler_metakeys
+
+    def get_max_crawled_urlid(self):
+        """Return the highest urlid that correspond to an url
+        that was actually crawled.
+        """
+        result = self.crawler_metakeys["max_uid_we_crawled"]
+        result = int(result)
+        return result
 
 
 def get_nb_crawled_urls(data_directory_path):

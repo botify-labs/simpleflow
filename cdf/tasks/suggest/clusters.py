@@ -20,6 +20,7 @@ from cdf.streams.stream_factory import (PathStreamFactory,
                                         HostStreamFactory,
                                         QueryStringStreamFactory,
                                         MetadataStreamFactory,
+                                        CrawlerMetakeys,
                                         get_nb_crawled_urls)
 
 
@@ -53,11 +54,13 @@ def compute_mixed_clusters(crawl_id,
 
     logger.info("Compute patterns cluster")
 
+    crawler_metakeys = CrawlerMetakeys(tmp_dir)
     nb_crawled_urls = get_nb_crawled_urls(tmp_dir)
+
 
     patterns = []
 
-    host_stream_factory = HostStreamFactory(tmp_dir)
+    host_stream_factory = HostStreamFactory(tmp_dir, crawler_metakeys)
     host_patterns = discover_host_patterns(host_stream_factory,
                                            minimal_frequency)
 
@@ -66,14 +69,15 @@ def compute_mixed_clusters(crawl_id,
     patterns.append([(cluster_type, pattern, support) for pattern, support in host_patterns])
 
     #find patterns on pathes
-    path_stream_factory = PathStreamFactory(tmp_dir)
+    path_stream_factory = PathStreamFactory(tmp_dir, crawler_metakeys)
     path_patterns = discover_path_patterns(path_stream_factory,
                                            nb_crawled_urls,
                                            minimal_frequency)
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["path"]
     patterns.append([(cluster_type, pattern, support) for pattern, support in path_patterns])
 
-    query_string_stream_factory = QueryStringStreamFactory(tmp_dir)
+    query_string_stream_factory = QueryStringStreamFactory(tmp_dir,
+                                                           crawler_metakeys)
     query_string_patterns = discover_query_strings_patterns(query_string_stream_factory,
                                                             minimal_frequency)
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["qskey"]
@@ -81,7 +85,9 @@ def compute_mixed_clusters(crawl_id,
 
     for metadata_type in ["title", "h1", "h2"]:
         logger.info("Discovering patterns on %s.", metadata_type)
-        metadata_stream_factory = MetadataStreamFactory(tmp_dir, metadata_type)
+        metadata_stream_factory = MetadataStreamFactory(tmp_dir,
+                                                        metadata_type,
+                                                        crawler_metakeys)
         metadata_patterns = discover_metadata_patterns(metadata_stream_factory,
                                                        nb_crawled_urls,
                                                        minimal_frequency)
