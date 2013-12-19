@@ -60,6 +60,7 @@ def compute_mixed_clusters(crawl_id,
 
     host_stream_factory = HostStreamFactory(tmp_dir, crawler_metakeys)
     host_patterns = discover_host_patterns(host_stream_factory,
+                                           nb_crawled_urls,
                                            minimal_frequency)
 
     #find patterns on hosts
@@ -77,6 +78,7 @@ def compute_mixed_clusters(crawl_id,
     query_string_stream_factory = QueryStringStreamFactory(tmp_dir,
                                                            crawler_metakeys)
     query_string_patterns = discover_query_strings_patterns(query_string_stream_factory,
+                                                            nb_crawled_urls,
                                                             minimal_frequency)
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["qskey"]
     patterns.append([(cluster_type, pattern, support) for pattern, support in query_string_patterns])
@@ -93,7 +95,7 @@ def compute_mixed_clusters(crawl_id,
         cluster_type = CLUSTER_TYPE_TO_ID["metadata"][CONTENT_TYPE_NAME_TO_ID[metadata_type]]
         patterns.append([(cluster_type, pattern, support) for pattern, support in metadata_patterns])
 
-    mixed_patterns = discover_mixed_patterns(patterns, minimal_frequency)
+    mixed_patterns = discover_mixed_patterns(patterns, nb_crawled_urls, minimal_frequency)
     if output_dir:
         save_apriori_algorithm_results(mixed_patterns,
                                        output_dir,
