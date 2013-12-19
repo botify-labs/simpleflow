@@ -36,17 +36,22 @@ class TestStreamFactory(unittest.TestCase):
         self.assertRaises(Exception,
                           FileStreamFactory,
                           "/tmp",
+                          None,
                           "unknown_content")
 
     def test_get_file_regexp(self):
         dirpath = None
         content = "urlids"
-        stream_factory = FileStreamFactory(dirpath, content)
+        crawler_metakeys = None
+        stream_factory = FileStreamFactory(dirpath, content, crawler_metakeys)
         self.assertEqual("urlids.txt.*.gz",
                          stream_factory._get_file_regexp().pattern)
 
         part_id = 1
-        stream_factory = FileStreamFactory(dirpath, content, part_id)
+        stream_factory = FileStreamFactory(dirpath,
+                                           content,
+                                           crawler_metakeys,
+                                           part_id)
         self.assertEqual("urlids.txt.1.gz",
                          stream_factory._get_file_regexp().pattern)
 
@@ -57,7 +62,7 @@ class TestStreamFactory(unittest.TestCase):
         }
         dirpath = "/tmp/crawl_data"
         content = "urlinfos"
-        stream_factory = FileStreamFactory(dirpath, content)
+        stream_factory = FileStreamFactory(dirpath, content, crawler_metakeys)
 
         expected_result = ["/tmp/crawl_data/urlinfos.txt.0.gz",
                            "/tmp/crawl_data/urlinfos.txt.1.gz"]
@@ -68,13 +73,14 @@ class TestStreamFactory(unittest.TestCase):
         crawler_metakeys = {}
         dirpath = "/tmp/crawl_data"
         content = "urlinfos"
-        stream_factory = FileStreamFactory(dirpath, content)
+        stream_factory = FileStreamFactory(dirpath, content, crawler_metakeys)
         self.assertEquals([], stream_factory._get_file_list(crawler_metakeys))
 
     def test_get_stream_from_file(self):
         dirpath = None
         content = "urlids"
-        stream_factory = FileStreamFactory(dirpath, content)
+        crawler_metakeys = None
+        stream_factory = FileStreamFactory(dirpath, content, crawler_metakeys)
         #fake file object
         file_content = ("1\thttp\twww.foo.com\t/bar\t?param=value\n"
                         "3\thttp\twww.foo.com\t/bar/baz")
@@ -85,11 +91,6 @@ class TestStreamFactory(unittest.TestCase):
         actual_result = stream_factory._get_stream_from_file(file)
         self.assertEqual(expected_result, list(actual_result))
 
-    @patch("cdf.streams.stream_factory.FileStreamFactory.crawler_metakeys",
-           #note that urlids are not sorted by part_id
-           new={"max_uid_we_crawled": 3,
-                "urlids": ["/tmp/crawl-1/urlids.txt.2.gz",
-                           "/tmp/crawl-1/urlids.txt.0.gz"]})
     @patch('gzip.open')
     def test_get_stream(self, gzip_open_mock):
         #mock gzip.open
@@ -105,19 +106,25 @@ class TestStreamFactory(unittest.TestCase):
         gzip_open_mock.side_effect = side_effect
 
         #actual test
-        file_stream_factory = FileStreamFactory("/tmp/crawl-1", "urlids")
+        crawler_metakeys = {"max_uid_we_crawled": 3,
+                            "urlids": ["/tmp/crawl-1/urlids.txt.2.gz",
+                                       "/tmp/crawl-1/urlids.txt.0.gz"]}
+        file_stream_factory = FileStreamFactory("/tmp/crawl-1",
+                                                "urlids",
+                                                crawler_metakeys)
         #result stream should respect part_id order
         expected_result = [[1, "http", "www.foo.com"],
                            [3, "http", "www.bar.com"]]
         self.assertEqual(expected_result,
                          list(file_stream_factory.get_stream()))
 
-    @patch("cdf.streams.stream_factory.CrawlerMetakeys.crawler_metakeys",
-           new={"max_uid_we_crawled": 3,
-                "urlids": ["/unexisting_dir/urlids.txt.0.gz"]})
     def test_get_stream_missing_file(self):
         #actual test
-        file_stream_factory = FileStreamFactory("/tmp/crawl-1", "urlids")
+        crawler_metakeys = {"max_uid_we_crawled": 3,
+                            "urlids": ["/unexisting_dir/urlids.txt.0.gz"]}
+        file_stream_factory = FileStreamFactory("/tmp/crawl-1",
+                                                "urlids",
+                                                crawler_metakeys)
         self.assertRaises(IOError,
                           file_stream_factory.get_stream)
 
