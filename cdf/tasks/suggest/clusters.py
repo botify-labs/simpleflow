@@ -7,7 +7,8 @@ from autotagging.association_rules.algorithm import discover_metadata_patterns
 from autotagging.association_rules.algorithm import discover_path_patterns
 from autotagging.association_rules.algorithm import discover_mixed_patterns
 from autotagging.association_rules.algorithm import build_children_relationship
-from autotagging.visualization.textual import save_apriori_algorithm_results
+from autotagging.visualization.textual import (save_mixed_clusters,
+                                               save_url_suggested_clusters)
 from autotagging.visualization.textual import save_child_relationship
 
 from cdf.utils.path import makedirs
@@ -96,32 +97,32 @@ def compute_mixed_clusters(crawl_id,
         patterns.append([(cluster_type, pattern, support) for pattern, support in metadata_patterns])
 
     mixed_patterns = discover_mixed_patterns(patterns, nb_crawled_urls, minimal_frequency)
-    if output_dir:
-        save_apriori_algorithm_results(mixed_patterns,
-                                       output_dir,
-                                       "mixed",
-                                       first_part_id_size,
-                                       part_id_size)
+
+
+    ######################## save results ########################
+    mixed_clusters_filepath = save_mixed_clusters(mixed_patterns,
+                                                  output_dir,
+                                                  "mixed")
+
     push_file(
-        os.path.join(s3_uri, 'clusters_mixed.tsv'),
-        os.path.join(output_dir, 'clusters_mixed.tsv')
+        os.path.join(s3_uri, os.path.basename(mixed_clusters_filepath)),
+        os.path.join(mixed_clusters_filepath)
     )
 
-
-    file_name_regex = re.compile('url_suggested_clusters.txt.\d+.gz')
-    for file_name in os.listdir(tmp_dir):
-        if not file_name_regex.match(file_name):
-            continue
+    suggested_clusters_files = save_url_suggested_clusters(mixed_patterns,
+                                                           output_dir,
+                                                           first_part_id_size,
+                                                           part_id_size)
+    for file_path in suggested_clusters_files:
         push_file(
-            os.path.join(s3_uri, file_name),
-            os.path.join(tmp_dir, file_name),
-            )
+            os.path.join(s3_uri, os.path.basename(file_path)),
+            os.path.join(file_path),
+        )
 
     children_dictionary = build_children_relationship(mixed_patterns)
-    if output_dir:
-        save_child_relationship(children_dictionary, output_dir)
-
+    children_filepath = save_child_relationship(children_dictionary,
+                                                output_dir)
     push_file(
-        os.path.join(s3_uri, 'cluster_mixed_children.tsv'),
-        os.path.join(output_dir, 'cluster_mixed_children.tsv')
+        os.path.join(s3_uri, os.path.basename(children_filepath)),
+        os.path.join(children_filepath)
     )
