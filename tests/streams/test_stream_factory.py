@@ -84,23 +84,22 @@ class TestStreamFactory(unittest.TestCase):
         actual_result = stream_factory._get_stream_from_file(file)
         self.assertEqual(expected_result, list(actual_result))
 
-    #patch _get_crawler_metakeys to avoid file creation
-    @patch("cdf.streams.stream_factory.FileStreamFactory._get_crawler_metakeys",
-           new=lambda x: {"max_uid_we_crawled": 3})
+    #patch crawler_metakeys to avoid file creation
+    @patch("cdf.streams.stream_factory.FileStreamFactory.crawler_metakeys",
+           new={"max_uid_we_crawled": 3})
     def test_get_max_crawled_urlid(self):
         dirpath = None
         content = "urlids"
         stream_factory = FileStreamFactory(dirpath, content)
         self.assertEqual(3, stream_factory.get_max_crawled_urlid())
 
-    @patch("cdf.streams.stream_factory.FileStreamFactory._get_crawler_metakeys")
+    @patch("cdf.streams.stream_factory.FileStreamFactory.crawler_metakeys",
+           #note that urlids are not sorted by part_id
+           new={"max_uid_we_crawled": 3,
+                "urlids": ["/tmp/crawl-1/urlids.txt.2.gz",
+                           "/tmp/crawl-1/urlids.txt.0.gz"]})
     @patch('gzip.open')
-    def test_get_stream(self, gzip_open_mock, json_mock):
-        #note that urlids are not sorted by part_id
-        json_mock.return_value = {"max_uid_we_crawled": 3,
-                                  "urlids": ["/tmp/crawl-1/urlids.txt.2.gz",
-                                             "/tmp/crawl-1/urlids.txt.0.gz"]}
-
+    def test_get_stream(self, gzip_open_mock):
         #mock gzip.open
         def side_effect(*args, **kwargs):
             filepath = args[0]
@@ -121,12 +120,10 @@ class TestStreamFactory(unittest.TestCase):
         self.assertEqual(expected_result,
                          list(file_stream_factory.get_stream()))
 
-    @patch("cdf.streams.stream_factory.FileStreamFactory._get_crawler_metakeys")
-    def test_get_stream_missing_file(self, json_mock):
-        json_mock.return_value = {"max_uid_we_crawled": 3,
-                                  "urlids": ["/unexisting_dir/urlids.txt.0.gz"]
-                                  }
-
+    @patch("cdf.streams.stream_factory.FileStreamFactory.crawler_metakeys",
+           new={"max_uid_we_crawled": 3,
+                "urlids": ["/unexisting_dir/urlids.txt.0.gz"]})
+    def test_get_stream_missing_file(self):
         #actual test
         file_stream_factory = FileStreamFactory("/tmp/crawl-1", "urlids")
         self.assertRaises(IOError,
