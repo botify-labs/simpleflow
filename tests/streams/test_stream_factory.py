@@ -10,8 +10,8 @@ from cdf.streams.stream_factory import (get_part_id_from_filename,
                                         PathStreamFactory,
                                         QueryStringStreamFactory,
                                         MetadataStreamFactory,
-                                        _get_nb_crawled_urls_from_stream,
-                                        CrawlerMetakeys)
+                                        get_max_crawled_urlid,
+                                        _get_nb_crawled_urls_from_stream)
 
 
 class TestGetPartIdFromFileName(unittest.TestCase):
@@ -139,10 +139,8 @@ class TestHostStreamFactory(unittest.TestCase):
         ]
         stream_factory.get_stream.return_value = iter(urlids)
 
-        crawler_metakeys = MagicMock()
-        crawler_metakeys.get_max_crawled_urlid.return_value = 1
-
         path = None
+        crawler_metakeys = {"max_uid_we_crawled": 1}
         host_stream_factory = HostStreamFactory(path, crawler_metakeys)
         host_stream_factory.set_file_stream_factory(stream_factory)
 
@@ -166,10 +164,8 @@ class TestPathStreamFactory(unittest.TestCase):
         ]
         stream_factory.get_stream.return_value = iter(urlids)
 
-        crawler_metakeys = MagicMock()
-        crawler_metakeys.get_max_crawled_urlid.return_value = 1
-
         path = None
+        crawler_metakeys = {"max_uid_we_crawled": 1}
         path_stream_factory = PathStreamFactory(path, crawler_metakeys)
         path_stream_factory.set_file_stream_factory(stream_factory)
 
@@ -194,10 +190,8 @@ class TestQueryStringStreamFactory(unittest.TestCase):
         ]
         stream_factory.get_stream.return_value = iter(urlids)
 
-        crawler_metakeys = MagicMock()
-        crawler_metakeys.get_max_crawled_urlid.return_value = 2
-
         path = None
+        crawler_metakeys = {"max_uid_we_crawled": 2}
         qs_stream_factory = QueryStringStreamFactory(path, crawler_metakeys)
         qs_stream_factory.set_file_stream_factory(stream_factory)
 
@@ -278,11 +272,8 @@ class TestGetNumberPagesFromStream(unittest.TestCase):
         self.assertEqual(3, _get_nb_crawled_urls_from_stream(iter(urlinfos),
                                                              5))
 
-class TestCrawlerMetakey(unittest.TestCase):
-    #patch crawler_metakeys to avoid file creation
-    @patch("cdf.streams.stream_factory.CrawlerMetakeys.crawler_metakeys",
-           new={"max_uid_we_crawled": 3})
-    def test_get_max_crawled_urlid(self):
-        dirpath = None
-        crawler_metakeys = CrawlerMetakeys(dirpath)
-        self.assertEqual(3, crawler_metakeys.get_max_crawled_urlid())
+
+class TestGetMaxCrawledUrlid(unittest.TestCase):
+    def test_nominal_case(self):
+        crawler_metakeys = {"max_uid_we_crawled": 2}
+        self.assertEqual(2, get_max_crawled_urlid(crawler_metakeys))

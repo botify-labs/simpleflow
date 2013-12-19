@@ -20,7 +20,7 @@ from cdf.streams.stream_factory import (PathStreamFactory,
                                         HostStreamFactory,
                                         QueryStringStreamFactory,
                                         MetadataStreamFactory,
-                                        CrawlerMetakeys,
+                                        load_crawler_metakeys,
                                         get_nb_crawled_urls)
 
 
@@ -51,12 +51,10 @@ def compute_mixed_clusters(crawl_id,
                     regexp=['url(ids|infos|contents).txt.%d.gz' % part_id],
                     force_fetch=force_fetch)
 
-
     logger.info("Compute patterns cluster")
 
-    crawler_metakeys = CrawlerMetakeys(tmp_dir)
+    crawler_metakeys = load_crawler_metakeys(tmp_dir)
     nb_crawled_urls = get_nb_crawled_urls(tmp_dir)
-
 
     patterns = []
 
