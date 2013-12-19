@@ -267,18 +267,18 @@ class MetadataStreamFactory(DataStreamFactory):
             yield urlid, result
 
 
-def get_number_pages(data_directory_path):
-    """Return the number of available pages
+def get_nb_crawled_urls(data_directory_path):
+    """Return the number of crawled urls
     data_directory_path: the path to the directory that contains the crawl data
     """
     urlinfos_stream_factory = FileStreamFactory(data_directory_path,
                                                 "urlinfos")
     max_crawled_urlid = urlinfos_stream_factory.get_max_crawled_urlid()
-    return _get_number_pages_from_stream(urlinfos_stream_factory.get_stream(),
-                                         max_crawled_urlid)
+    return _get_nb_crawled_urls_from_stream(urlinfos_stream_factory.get_stream(),
+                                            max_crawled_urlid)
 
 
-def _get_number_pages_from_stream(urlinfos_stream, max_crawled_urlid):
+def _get_nb_crawled_urls_from_stream(urlinfos_stream, max_crawled_urlid):
     """Helper function (mainly here to make tests easier
     Return the number of available pages
     urlinfos_stream : a stream from the urlinfos files

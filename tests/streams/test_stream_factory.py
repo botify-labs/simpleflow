@@ -10,7 +10,7 @@ from cdf.streams.stream_factory import (get_part_id_from_filename,
                                         PathStreamFactory,
                                         QueryStringStreamFactory,
                                         MetadataStreamFactory,
-                                        _get_number_pages_from_stream)
+                                        _get_nb_crawled_urls_from_stream)
 
 
 class TestGetPartIdFromFileName(unittest.TestCase):
@@ -265,7 +265,7 @@ class TestGetNumberPagesFromStream(unittest.TestCase):
             (3, 0, "text/html", 0, 0, 200),
             (4, 0, "text/html", 0, 0, 200),
         ]
-        self.assertEqual(2, _get_number_pages_from_stream(iter(urlinfos),
-                                                          3))
-        self.assertEqual(3, _get_number_pages_from_stream(iter(urlinfos),
-                                                          5))
+        self.assertEqual(2, _get_nb_crawled_urls_from_stream(iter(urlinfos),
+                                                             3))
+        self.assertEqual(3, _get_nb_crawled_urls_from_stream(iter(urlinfos),
+                                                             5))

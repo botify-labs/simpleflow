@@ -20,7 +20,7 @@ from cdf.streams.stream_factory import (PathStreamFactory,
                                         HostStreamFactory,
                                         QueryStringStreamFactory,
                                         MetadataStreamFactory,
-                                        get_number_pages)
+                                        get_nb_crawled_urls)
 
 
 def compute_mixed_clusters(crawl_id,
@@ -53,7 +53,7 @@ def compute_mixed_clusters(crawl_id,
 
     logger.info("Compute patterns cluster")
 
-    nb_pages = get_number_pages(tmp_dir)
+    nb_crawled_urls = get_nb_crawled_urls(tmp_dir)
 
     patterns = []
 
@@ -68,7 +68,7 @@ def compute_mixed_clusters(crawl_id,
     #find patterns on pathes
     path_stream_factory = PathStreamFactory(tmp_dir)
     path_patterns = discover_path_patterns(path_stream_factory,
-                                           nb_pages,
+                                           nb_crawled_urls,
                                            minimal_frequency)
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["path"]
     patterns.append([(cluster_type, pattern, support) for pattern, support in path_patterns])
@@ -83,7 +83,7 @@ def compute_mixed_clusters(crawl_id,
         logger.info("Discovering patterns on %s.", metadata_type)
         metadata_stream_factory = MetadataStreamFactory(tmp_dir, metadata_type)
         metadata_patterns = discover_metadata_patterns(metadata_stream_factory,
-                                                       nb_pages,
+                                                       nb_crawled_urls,
                                                        minimal_frequency)
 
         cluster_type = CLUSTER_TYPE_TO_ID["metadata"][CONTENT_TYPE_NAME_TO_ID[metadata_type]]
