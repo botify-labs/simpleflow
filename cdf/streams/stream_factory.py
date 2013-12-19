@@ -92,7 +92,9 @@ class FileStreamFactory(object):
         if self.content not in crawler_metakeys:
             logger.warning("No entry for %s found", self.content)
             return []
-        def relocate(path): return os.path.join(self.dirpath, os.path.basename(path))
+
+        def relocate(path):
+            return os.path.join(self.dirpath, os.path.basename(path))
         file_list = [relocate(f) for f in crawler_metakeys[self.content]]
         file_list = [f for f in file_list if
                      self._get_file_regexp().match(os.path.basename(f))]
