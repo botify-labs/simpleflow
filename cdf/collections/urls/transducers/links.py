@@ -1,5 +1,6 @@
 from collections import defaultdict
 from itertools import groupby
+from cdf.streams.masks import is_first_canonical
 from cdf.streams.utils import idx_from_stream
 
 
@@ -72,8 +73,12 @@ class InlinksTransducer(object):
                     redirects += 1
                 elif link_type == "canonical":
                     # Ignore identical canonicals
-                    if url_id is not src_url_id:
-                        canonicals.add(src_url_id)
+                    if url_id is src_url_id:
+                        continue
+                    # Ignore non-first canonical
+                    if not is_first_canonical(bitmask):
+                        continue
+                    canonicals.add(src_url_id)
 
             for key, srcs in counter_by_type.iteritems():
                 yield (url_id, 'links', key) + (len(srcs), len(set(srcs)))

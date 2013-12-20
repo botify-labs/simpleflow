@@ -151,23 +151,25 @@ class TestLinkCounters(unittest.TestCase):
 
     def test_in_canonicals(self):
         stream_inlinks = [
-            [1, 'canonical', 0, 1],  # self canonical
+            [1, 'canonical', 24, 1],  # self canonical
             [1, 'canonical', 0, 2],
             [1, 'canonical', 0, 2],
             [1, 'canonical', 0, 2],
             [1, 'canonical', 0, 3],
             [1, 'canonical', 5, 4],
             [2, 'canonical', 0, 2],  # self canonical
-            [2, 'canonical', 0, 1],
-            [3, 'canonical', 5, 5]
+            [2, 'canonical', 17, 1],
+            [3, 'canonical', 5, 5],
+            [3, 'canonical', 8, 1],  # first canonical of url 1
+            [4, 'canonical', 16, 1]
         ]
 
         result = list(InlinksTransducer(stream_inlinks).get())
 
+        # the first canonical of url 1 is set to url 3
         expected = [
             (1, 'canonical', 3),
-            (2, 'canonical', 1),
-            (3, 'canonical', 1)
+            (3, 'canonical', 2)
         ]
 
         self.assertNonOrderedList(expected, result)
