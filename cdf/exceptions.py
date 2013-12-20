@@ -12,3 +12,7 @@ class MalformedFileNameError(Exception):
 
 class ElasticSearchIncompleteIndex(Exception):
     pass
+
+
+class BotifyQueryException(Exception):
+    pass

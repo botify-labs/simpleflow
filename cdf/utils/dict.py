@@ -38,3 +38,53 @@ def deep_dict(d, split_key='.'):
     for k, v in d.iteritems():
         deep_update(new_d, reduce(lambda x, y: {y: x}, reversed(k.split('.') + [v])))
     return new_d
+
+
+def get_subdict_from_path(path, dict):
+    """Get the corresponding sub-dict or value from a dict by a
+    dot separated path
+
+        For example, _dict = {'a': {'b': {'c': 1}}} called with
+        path 'a.b.c' will return the value 1. With path 'a.b' will
+        return the sub dict {'c': 1}
+
+    :param path: a valid dot separated path
+    :returns: sub dict or value
+    """
+    return reduce(lambda d, key: d[key], path.split('.'), dict)
+
+
+def path_in_dict(path, dict):
+    """Check whether a path is valid in a dict
+
+    :param path: dot separated path to check
+    """
+    res = True
+    try:
+        get_subdict_from_path(path, dict)
+    except KeyError:
+        res = False
+    return res
+
+
+def update_path_in_dict(path, value, _dict):
+    keys = path.split('.')
+    _len = len(keys)
+    current = _dict
+    for i in xrange(0, _len):
+        key = keys[i]
+        if i is _len - 1:
+            # override existing value
+            # create non-existing value
+            current[key] = value
+        else:
+            if key in _dict:
+                _next = current[key]
+                if isinstance(_next, dict):
+                    current = _next
+                else:
+                    _next = {}
+                    current = _next
+            else:
+                current[key] = {}
+                current = current[key]
