@@ -7,7 +7,8 @@ from autotagging.association_rules.algorithm import discover_metadata_patterns
 from autotagging.association_rules.algorithm import discover_path_patterns
 from autotagging.association_rules.algorithm import discover_mixed_patterns
 from autotagging.association_rules.algorithm import build_children_relationship
-from autotagging.visualization.textual import save_apriori_algorithm_results
+from autotagging.visualization.textual import (save_mixed_clusters,
+                                               save_url_suggested_clusters)
 from autotagging.visualization.textual import save_child_relationship
 
 from cdf.utils.path import makedirs
@@ -16,6 +17,12 @@ from cdf.streams.mapping import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
+from cdf.streams.stream_factory import (PathStreamFactory,
+                                        HostStreamFactory,
+                                        QueryStringStreamFactory,
+                                        MetadataStreamFactory,
+                                        load_crawler_metakeys,
+                                        get_nb_crawled_urls)
 
 
 def compute_mixed_clusters(crawl_id,
@@ -26,8 +33,6 @@ def compute_mixed_clusters(crawl_id,
                            force_fetch=False):
 
     minimal_frequency = 0.03
-    # load all the available urls
-    nb_urls = -1
 
     # Fetch locally the files from S3
     tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
@@ -49,10 +54,14 @@ def compute_mixed_clusters(crawl_id,
 
     logger.info("Compute patterns cluster")
 
+    crawler_metakeys = load_crawler_metakeys(tmp_dir)
+    nb_crawled_urls = get_nb_crawled_urls(tmp_dir)
+
     patterns = []
 
-    host_patterns = discover_host_patterns(tmp_dir,
-                                           nb_urls,
+    host_stream_factory = HostStreamFactory(tmp_dir, crawler_metakeys)
+    host_patterns = discover_host_patterns(host_stream_factory,
+                                           nb_crawled_urls,
                                            minimal_frequency)
 
     #find patterns on hosts
@@ -60,55 +69,60 @@ def compute_mixed_clusters(crawl_id,
     patterns.append([(cluster_type, pattern, support) for pattern, support in host_patterns])
 
     #find patterns on pathes
-    path_patterns = discover_path_patterns(tmp_dir,
-                                           nb_urls,
+    path_stream_factory = PathStreamFactory(tmp_dir, crawler_metakeys)
+    path_patterns = discover_path_patterns(path_stream_factory,
+                                           nb_crawled_urls,
                                            minimal_frequency)
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["path"]
     patterns.append([(cluster_type, pattern, support) for pattern, support in path_patterns])
 
-    query_string_patterns = discover_query_strings_patterns(tmp_dir,
-                                                            nb_urls,
+    query_string_stream_factory = QueryStringStreamFactory(tmp_dir,
+                                                           crawler_metakeys)
+    query_string_patterns = discover_query_strings_patterns(query_string_stream_factory,
+                                                            nb_crawled_urls,
                                                             minimal_frequency)
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["qskey"]
     patterns.append([(cluster_type, pattern, support) for pattern, support in query_string_patterns])
 
     for metadata_type in ["title", "h1", "h2"]:
         logger.info("Discovering patterns on %s.", metadata_type)
-        metadata_patterns = discover_metadata_patterns(tmp_dir,
-                                                       nb_urls,
-                                                       minimal_frequency,
-                                                       metadata_type)
+        metadata_stream_factory = MetadataStreamFactory(tmp_dir,
+                                                        metadata_type,
+                                                        crawler_metakeys)
+        metadata_patterns = discover_metadata_patterns(metadata_stream_factory,
+                                                       nb_crawled_urls,
+                                                       minimal_frequency)
 
         cluster_type = CLUSTER_TYPE_TO_ID["metadata"][CONTENT_TYPE_NAME_TO_ID[metadata_type]]
         patterns.append([(cluster_type, pattern, support) for pattern, support in metadata_patterns])
 
-    mixed_patterns = discover_mixed_patterns(patterns, minimal_frequency)
-    if output_dir:
-        save_apriori_algorithm_results(mixed_patterns,
-                                       output_dir,
-                                       "mixed",
-                                       first_part_id_size,
-                                       part_id_size)
+    mixed_patterns = discover_mixed_patterns(patterns, nb_crawled_urls, minimal_frequency)
+
+
+    ######################## save results ########################
+    mixed_clusters_filepath = save_mixed_clusters(mixed_patterns,
+                                                  output_dir,
+                                                  "mixed")
+
     push_file(
-        os.path.join(s3_uri, 'clusters_mixed.tsv'),
-        os.path.join(output_dir, 'clusters_mixed.tsv')
+        os.path.join(s3_uri, os.path.basename(mixed_clusters_filepath)),
+        os.path.join(mixed_clusters_filepath)
     )
 
-
-    file_name_regex = re.compile('url_suggested_clusters.txt.\d+.gz')
-    for file_name in os.listdir(tmp_dir):
-        if not file_name_regex.match(file_name):
-            continue
+    suggested_clusters_files = save_url_suggested_clusters(mixed_patterns,
+                                                           output_dir,
+                                                           first_part_id_size,
+                                                           part_id_size)
+    for file_path in suggested_clusters_files:
         push_file(
-            os.path.join(s3_uri, file_name),
-            os.path.join(tmp_dir, file_name),
-            )
+            os.path.join(s3_uri, os.path.basename(file_path)),
+            os.path.join(file_path),
+        )
 
     children_dictionary = build_children_relationship(mixed_patterns)
-    if output_dir:
-        save_child_relationship(children_dictionary, output_dir)
-
+    children_filepath = save_child_relationship(children_dictionary,
+                                                output_dir)
     push_file(
-        os.path.join(s3_uri, 'cluster_mixed_children.tsv'),
-        os.path.join(output_dir, 'cluster_mixed_children.tsv')
+        os.path.join(s3_uri, os.path.basename(children_filepath)),
+        os.path.join(children_filepath)
     )
