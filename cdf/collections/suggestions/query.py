@@ -272,13 +272,6 @@ class SuggestQuery(BaseMetricsQuery):
     def query_hash_to_verbose_string(self, value):
         return json.loads(unicode(self.hdfstore['requests'].ix[str(value), 'verbose_string'], "utf8"))
 
-    """
-    def _display_field(self, field, value):
-        if field == "query":
-            return self.query_hash_to_string(value)
-        return super(SuggestQuery, self)._display_field(field, value)
-    """
-
     def query(self, settings, sort_results=True):
         df = self.df.copy()
 
@@ -330,6 +323,7 @@ class SuggestQuery(BaseMetricsQuery):
 
         # Resolve query
         for i, r in enumerate(results):
+            results[i]["score"] = results[i]["counters"][target_field]
             results[i]["query_hash_id"] = int(results[i]["query"])
             results[i]["query_bql"] = self.query_hash_to_string(results[i]["query_hash_id"])
             results[i]["query"] = self.query_hash_to_verbose_string(results[i]["query_hash_id"])
@@ -369,11 +363,8 @@ class SuggestQuery(BaseMetricsQuery):
             "fields": ["pages_nb"],
             "group_by": ["query"]
         }
-        if "filters" in query:
-            total_query["filters"] = query["filters"]
         r = q.query(total_query)
         return {int(v["properties"]["query"]): v["counters"]["pages_nb"] for v in r}
-
 
     def sort_results_by_target_field_count(self, settings, results):
         """Sort the query results by target field count.
