@@ -11,7 +11,7 @@ import itertools
 from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS, COUNTERS_FIELDS
 
 from cdf.utils.s3 import fetch_files, fetch_file
-from cdf.utils.dict import deep_dict, deep_update
+from cdf.utils.dict import deep_dict, deep_update, flatten_dict
 from cdf.streams.utils import split_file
 from .utils import field_has_children, children_from_field
 
@@ -313,11 +313,23 @@ class SuggestQuery(BaseMetricsQuery):
             results = self.remove_equivalent_parents(settings, results)
             results = self.hide_less_relevant_children(settings, results)
 
+        print settings
+        # Request Metrics query in order to get the total number of elements
+        q = MetricsQuery(self.hdfstore)
+        total_query = {
+            "fields": [settings["target_field"]]
+        }
+        if "filters" in settings:
+            total_query["filters"] = settings["filters"]
+        r = q.query(total_query)
+        total_results = flatten_dict(r["counters"])[settings["target_field"]]
+
         # Resolve query
         for i, r in enumerate(results):
             results[i]["query_hash_id"] = int(results[i]["query"])
             results[i]["query_bql"] = self.query_hash_to_string(results[i]["query_hash_id"])
             results[i]["query"] = self.query_hash_to_verbose_string(results[i]["query_hash_id"])
+            results[i]["percent_total"] = round(float(results[i]["counters"][target_field]) * 100.00 / float(total_results), 2)
             results[i]["counters"] = deep_dict(results[i]["counters"])
             if "children" in results[i]:
                 if not settings.get('display_children', True):
