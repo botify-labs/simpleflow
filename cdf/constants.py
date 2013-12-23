@@ -158,16 +158,7 @@ URLS_DATA_MAPPING = {
                 "type": "string",
                 "index": "not_analyzed"
             },
-            # can replace this by an custom analyzer
-            "query_string_items": {
-                "type": "string",
-                "index": "not_analyzed"
-            },
             "query_string_keys": {
-                "type": "string",
-                "index": "not_analyzed"
-            },
-            "query_string_keys_order": {
                 "type": "string",
                 "index": "not_analyzed"
             },

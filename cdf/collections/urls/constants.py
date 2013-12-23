@@ -25,8 +25,6 @@ QUERY_FIELDS = {
     "path",
     "query_string",
     "query_string_keys",
-    "query_string_keys_order",
-    "query_string_items",
     "date_crawled",
     "depth",
     "http_code",
