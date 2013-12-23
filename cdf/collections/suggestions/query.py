@@ -247,6 +247,13 @@ class MetricsQuery(BaseMetricsQuery):
     DF_KEY = "full_crawl"
 
 
+class MetricsPatternQuery(BaseMetricsQuery):
+    """
+    Allow the query to be grouped by a given pattern (maps to the `query` field)
+    """
+    DF_KEY = "suggest"
+
+
 class SuggestQuery(BaseMetricsQuery):
     DF_KEY = "suggest"
 
@@ -313,23 +320,22 @@ class SuggestQuery(BaseMetricsQuery):
             results = self.remove_equivalent_parents(settings, results)
             results = self.hide_less_relevant_children(settings, results)
 
-        print settings
         # Request Metrics query in order to get the total number of elements
-        q = MetricsQuery(self.hdfstore)
-        total_query = {
-            "fields": [settings["target_field"]]
-        }
-        if "filters" in settings:
-            total_query["filters"] = settings["filters"]
-        r = q.query(total_query)
-        total_results = flatten_dict(r["counters"])[settings["target_field"]]
+        total_results = self._get_total_results(settings)
+
+        if total_results == 0:
+            return []
+
+        total_results_by_pattern = self._get_total_results_by_pattern(settings)
 
         # Resolve query
         for i, r in enumerate(results):
             results[i]["query_hash_id"] = int(results[i]["query"])
             results[i]["query_bql"] = self.query_hash_to_string(results[i]["query_hash_id"])
             results[i]["query"] = self.query_hash_to_verbose_string(results[i]["query_hash_id"])
-            results[i]["percent_total"] = round(float(results[i]["counters"][target_field]) * 100.00 / float(total_results), 2)
+            results[i]["percent_total"] = round(float(results[i]["counters"][target_field]) * 100.00 / float(total_results), 1)
+            results[i]["score_pattern"] = total_results_by_pattern[results[i]["query_hash_id"]]
+            results[i]["percent_pattern"] = round(float(results[i]["counters"][target_field]) * 100.00 / float(results[i]["score_pattern"]), 1)
             results[i]["counters"] = deep_dict(results[i]["counters"])
             if "children" in results[i]:
                 if not settings.get('display_children', True):
@@ -342,6 +348,32 @@ class SuggestQuery(BaseMetricsQuery):
                     results[i]["children"][k]["query_verbose"] = self.query_hash_to_verbose_string(results[i]["children"][k]["query_hash_id"])
                     results[i]["children"][k]["counters"] = deep_dict(results[i]["children"][k]["counters"])
         return results[0:30]
+
+    def _get_total_results(self, query):
+        """Return the total number of items for the given query
+        """
+        q = MetricsQuery(self.hdfstore)
+        total_query = {
+            "fields": [query["target_field"]]
+        }
+        if "filters" in query:
+            total_query["filters"] = query["filters"]
+        r = q.query(total_query)
+        return flatten_dict(r["counters"])[query["target_field"]]
+
+    def _get_total_results_by_pattern(self, query):
+        """Return the total number of items for the given query
+        """
+        q = MetricsPatternQuery(self.hdfstore)
+        total_query = {
+            "fields": ["pages_nb"],
+            "group_by": ["query"]
+        }
+        if "filters" in query:
+            total_query["filters"] = query["filters"]
+        r = q.query(total_query)
+        return {int(v["properties"]["query"]): v["counters"]["pages_nb"] for v in r}
+
 
     def sort_results_by_target_field_count(self, settings, results):
         """Sort the query results by target field count.
