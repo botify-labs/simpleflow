@@ -318,7 +318,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         urls_sort = [{"delay2": sort}]
         urls_fields = ["delay2"]
         query = {
-            "fields": ["total_delay_ms", "pages_nb"],
+            "fields": ["total_delay_ms", "pages_nb", "delay_lt_500ms", "delay_from_1s_to_2s", "delay_from_500ms_to_1s", "delay_gte_2s"],
             "target_field": {"div": ["total_delay_ms", "pages_nb"]},
             "target_sort": sort,
         }
