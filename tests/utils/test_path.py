@@ -1,10 +1,12 @@
+# coding=utf-8
 import unittest
 import tempfile
 import os
 import shutil
 import gzip
+from StringIO import StringIO
 
-from cdf.utils.path import group_by_part, write_by_part
+from cdf.utils.path import group_by_part, write_by_part, utf8_writer, utf8_reader
 
 
 def _simple_to_string(row):
@@ -79,3 +81,25 @@ class TestPath(unittest.TestCase):
 
         # nothing should be created and no exceptions
         self.assertEqual(files_created, [])
+
+    def test_utf8_read_write(self):
+        file = StringIO()
+
+        french = u"ùûüÿ€àâæçéèêëïîôœ\n"
+        chinese = u"你好我是程序员\n"
+
+        writer = utf8_writer(file)
+        writer.write(french)
+        writer.write(chinese)
+
+        file.seek(0)
+
+        reader = utf8_reader(file)
+        line1 = reader.readline()
+        line2 = reader.readline()
+        reader.close()
+
+        self.assertEqual(french, line1)
+        self.assertEqual(chinese, line2)
+        self.assertFalse(french is line1)
+        self.assertFalse(chinese is line2)
