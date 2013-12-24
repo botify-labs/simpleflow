@@ -315,10 +315,6 @@ class SuggestQuery(BaseMetricsQuery):
 
         # Request Metrics query in order to get the total number of elements
         total_results = self._get_total_results(settings)
-
-        if total_results == 0:
-            return []
-
         total_results_by_pattern = self._get_total_results_by_pattern(settings)
 
         # Resolve query
@@ -327,7 +323,14 @@ class SuggestQuery(BaseMetricsQuery):
             results[i]["query_hash_id"] = int(results[i]["query"])
             results[i]["query_bql"] = self.query_hash_to_string(results[i]["query_hash_id"])
             results[i]["query"] = self.query_hash_to_verbose_string(results[i]["query_hash_id"])
-            results[i]["percent_total"] = round(float(results[i]["counters"][target_field]) * 100.00 / float(total_results), 1)
+
+            # if total_results is zero, it must comes from a target_field based on a complex operation like "div"
+            # So we cannot know the value from the full crawl
+            if total_results:
+                results[i]["percent_total"] = round(float(results[i]["counters"][target_field]) * 100.00 / float(total_results), 1)
+            else:
+                results[i]["percent_total"] = -1
+
             results[i]["score_pattern"] = total_results_by_pattern[results[i]["query_hash_id"]]
             results[i]["percent_pattern"] = round(float(results[i]["counters"][target_field]) * 100.00 / float(results[i]["score_pattern"]), 1)
             results[i]["counters"] = deep_dict(results[i]["counters"])
