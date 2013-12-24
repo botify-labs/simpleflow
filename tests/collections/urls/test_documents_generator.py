@@ -78,7 +78,6 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         for key, expected in document_expected.items():
             self.assertEquals(document[1][key], expected)
 
-
     def test_query_string(self):
         patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1=v1&f2=v2'],
@@ -94,6 +93,27 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
         self.assertEquals(document['query_string_keys_order'], 'f1;f2')
         self.assertEquals(document['query_string_items'], [['f1', 'v1'], ['f2', 'v2']])
+
+    def test_info_content_type(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1=v1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 1, '?', 0, 1, 200, 1200, 303, 456],
+        ]
+
+        u = UrlDocumentGenerator(iter(patterns), infos=iter(infos))
+        document = u.__iter__().next()[1]
+        self.assertEquals(document['content_type'], 'not-set')
+
+        infos = [
+            [1, 1, 'text', 0, 1, 200, 1200, 303, 456],
+        ]
+
+        u = UrlDocumentGenerator(iter(patterns), infos=iter(infos))
+        document = u.__iter__().next()[1]
+        self.assertEquals(document['content_type'], 'text')
 
     def test_query_string_without_value(self):
         patterns = [

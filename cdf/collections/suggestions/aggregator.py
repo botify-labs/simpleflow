@@ -357,8 +357,12 @@ class MetricsAggregator(object):
             suggest_keys = get_keys_from_stream_suggest(result[2]['suggest'])
 
             for suggest_key in suggest_keys:
+                content_type = infos[content_type_idx]
+                if content_type == '?':
+                    content_type = 'not-set'
+
                 key = (suggest_key,
-                       infos[content_type_idx],
+                       content_type,
                        infos[depth_idx],
                        http_code,
                        index,
