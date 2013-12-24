@@ -165,12 +165,10 @@ def make_suggest_file_from_query(crawl_id, s3_uri, es_location, es_index, es_doc
     results = q.query(query)
     for k, result in enumerate(results):
         hash_id_filters = [{'field': 'patterns', 'value': result['query_hash_id']}]
-        result["score"] = reduce(dict.get, query["target_field"].split("."), result["counters"])
         if result["score"] == 0:
             continue
 
         urls_query_bgn = {
-            "fields": ["url"] + urls_fields,
             "filters": {'and': hash_id_filters + urls_filters}
         }
         urls_query = {
@@ -316,14 +314,16 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             make_suggest_file_from_query(identifier='metadata/{}/{}'.format(metadata_type, metadata_status), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
 
     # Speed
-    for delay in ("delay_gte_2s", "delay_lt_500ms"):
+    for sort in ('asc', 'desc'):
+        urls_sort = [{"delay2": sort}]
         urls_fields = ["delay2"]
-        urls_filters = get_filters_from_agg_delay_field(delay)
         query = {
-            "fields": ["pages_nb", "delay_gte_2s", "delay_lt_500ms", "delay_from_500ms_to_1s", "delay_from_1s_to_2s"],
-            "target_field": delay
+            "fields": ["total_delay_ms", "pages_nb", "delay_lt_500ms", "delay_from_1s_to_2s", "delay_from_500ms_to_1s", "delay_gte_2s"],
+            "target_field": {"div": ["total_delay_ms", "pages_nb"]},
+            "target_sort": sort,
         }
-        make_suggest_file_from_query(identifier='delay/{}'.format(delay[6:]), query=query, urls_filters=urls_filters, urls_fields=urls_fields, **suggest_kwargs)
+        sort_verbose = "fastest" if sort == "asc" else "slowest"
+        make_suggest_file_from_query(identifier='delay/{}'.format(sort_verbose), query=query, urls_filters=[], urls_fields=urls_fields, urls_sort=urls_sort, **suggest_kwargs)
 
     # Canonicals
     for field in ('filled', 'not_filled', 'equal', 'not_equal', 'incoming'):
