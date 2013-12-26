@@ -221,8 +221,7 @@ class TestMetadataStreamFactory(unittest.TestCase):
         ]
         self.stream_factory.get_stream.return_value = iter(urlcontents)
 
-        self.crawler_metakeys = MagicMock()
-        self.crawler_metakeys.get_max_crawled_urlid.return_value = 2
+        self.crawler_metakeys = {"max_uid_we_crawled": 2}
 
     def test_nominal_case_h1(self):
         path = None
