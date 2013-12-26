@@ -26,10 +26,7 @@ COUNTERS_FIELDS = (
     'inlinks_internal_nb.nofollow_combinations',
     'inlinks_internal_nb.nofollow_combinations.link',
     'inlinks_internal_nb.nofollow_combinations.link_meta',
-    'inlinks_internal_nb.nofollow_combinations.link_meta_robots',
-    'inlinks_internal_nb.nofollow_combinations.link_robots',
     'inlinks_internal_nb.nofollow_combinations.meta',
-    'inlinks_internal_nb.nofollow_combinations.meta_robots',
 
     'inlinks_internal_nb.follow_distribution_urls.1',
     'inlinks_internal_nb.follow_distribution_urls.2',

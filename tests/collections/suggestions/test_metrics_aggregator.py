@@ -72,7 +72,6 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['delay_from_1s_to_2s'], 1)
         self.assertEqual(target['delay_gte_2s'], 1)
 
-
     def test_cross_property_keys(self):
         """Aggregator should generate correctly the cross property keys
 
@@ -213,7 +212,7 @@ class TestMetricsAggregator(unittest.TestCase):
     def test_in_links(self):
         stream_inlinks_counters = [
             [1, ['follow'], 10, 5],
-            [1, ['robots', 'link', 'meta'], 3, 2],
+            [1, ['link', 'meta'], 3, 2],
             [2, ['follow'], 30, 25],
         ]
         self.kwargs['stream_inlinks_counters'] = iter(stream_inlinks_counters)
@@ -229,7 +228,7 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['total_urls'], 2)
         self.assertEqual(target['follow_urls'], 2)
 
-        self.assertEqual(target[nfc_key]['link_meta_robots'], 2)
+        self.assertEqual(target[nfc_key]['link_meta'], 2)
 
     def test_redirects(self):
         stream_outredirect_counters = [
