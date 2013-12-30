@@ -201,12 +201,20 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target_int['total_unique'], 32)
         self.assertEqual(target_int['total_urls'], 2)
         self.assertEqual(target_int['follow_urls'], 2)
-        self.assertEqual(target_int[nfc_key]['link_meta_robots'], 2)
 
         # counters for `nofollow` are calculated with `score_unique`
+        nfc_key = 'nofollow_combinations_unique'
         self.assertEqual(target_ext['nofollow'], 12)
+        self.assertEqual(target_int[nfc_key]['link_meta_robots'], 2)
         self.assertEqual(target_ext[nfc_key]['meta'], 8)
         self.assertEqual(target_ext[nfc_key]['link_meta'], 1)
+        self.assertEqual(target_ext[nfc_key]['link'], 0)
+
+        # we also calculate `score`
+        nfc_key = 'nofollow_combinations'
+        self.assertEqual(target_int[nfc_key]['link_meta_robots'], 3)
+        self.assertEqual(target_ext[nfc_key]['meta'], 10)
+        self.assertEqual(target_ext[nfc_key]['link_meta'], 2)
         self.assertEqual(target_ext[nfc_key]['link'], 0)
 
     def test_in_links(self):
@@ -218,7 +226,6 @@ class TestMetricsAggregator(unittest.TestCase):
         self.kwargs['stream_inlinks_counters'] = iter(stream_inlinks_counters)
         result = list(MetricsAggregator(**self.kwargs).get())
         target = result[0]['counters']['inlinks_internal_nb']
-        nfc_key = 'nofollow_combinations'
 
         self.assertEqual(target['total'], 43)
         self.assertEqual(target['follow'], 40)
@@ -228,6 +235,10 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['total_urls'], 2)
         self.assertEqual(target['follow_urls'], 2)
 
+        nfc_key = 'nofollow_combinations'
+        self.assertEqual(target[nfc_key]['link_meta'], 3)
+
+        nfc_key = 'nofollow_combinations_unique'
         self.assertEqual(target[nfc_key]['link_meta'], 2)
 
     def test_redirects(self):

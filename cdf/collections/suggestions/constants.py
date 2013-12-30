@@ -28,6 +28,12 @@ COUNTERS_FIELDS = (
     'inlinks_internal_nb.nofollow_combinations.link_meta',
     'inlinks_internal_nb.nofollow_combinations.meta',
 
+    'inlinks_internal_nb.nofollow_unique',
+    'inlinks_internal_nb.nofollow_combinations_unique',
+    'inlinks_internal_nb.nofollow_combinations_unique.link',
+    'inlinks_internal_nb.nofollow_combinations_unique.link_meta',
+    'inlinks_internal_nb.nofollow_combinations_unique.meta',
+
     'inlinks_internal_nb.follow_distribution_urls.1',
     'inlinks_internal_nb.follow_distribution_urls.2',
     'inlinks_internal_nb.follow_distribution_urls.3',
@@ -89,6 +95,16 @@ COUNTERS_FIELDS = (
     'outlinks_internal_nb.nofollow_combinations.meta_robots',
     'outlinks_internal_nb.nofollow_combinations.robots',
 
+    'outlinks_internal_nb.nofollow_unique',
+    'outlinks_internal_nb.nofollow_combinations_unique',
+    'outlinks_internal_nb.nofollow_combinations_unique.link',
+    'outlinks_internal_nb.nofollow_combinations_unique.link_meta',
+    'outlinks_internal_nb.nofollow_combinations_unique.link_meta_robots',
+    'outlinks_internal_nb.nofollow_combinations_unique.link_robots',
+    'outlinks_internal_nb.nofollow_combinations_unique.meta',
+    'outlinks_internal_nb.nofollow_combinations_unique.meta_robots',
+    'outlinks_internal_nb.nofollow_combinations_unique.robots',
+
     'outlinks_external_nb',
     'outlinks_external_nb.total',
     'outlinks_external_nb.follow',
@@ -97,6 +113,12 @@ COUNTERS_FIELDS = (
     'outlinks_external_nb.nofollow_combinations.link',
     'outlinks_external_nb.nofollow_combinations.link_meta',
     'outlinks_external_nb.nofollow_combinations.meta',
+
+    'outlinks_external_nb.nofollow_unique',
+    'outlinks_external_nb.nofollow_combinations_unique',
+    'outlinks_external_nb.nofollow_combinations_unique.link',
+    'outlinks_external_nb.nofollow_combinations_unique.link_meta',
+    'outlinks_external_nb.nofollow_combinations_unique.meta',
 
     'delay_gte_2s',
     'delay_from_1s_to_2s',
@@ -112,4 +134,5 @@ COUNTERS_FIELDS = (
 )
 
 for ct_txt in CONTENT_TYPE_INDEX.itervalues():
-    COUNTERS_FIELDS += ('metadata_nb.%s.not_filled' % ct_txt, 'metadata_nb.%s.filled' % ct_txt, 'metadata_nb.%s.unique' % ct_txt, 'metadata_nb.%s.duplicate' % ct_txt)
+    COUNTERS_FIELDS += ('metadata_nb.%s.not_filled' % ct_txt, 'metadata_nb.%s.filled' % ct_txt,
+                        'metadata_nb.%s.unique' % ct_txt, 'metadata_nb.%s.duplicate' % ct_txt)
