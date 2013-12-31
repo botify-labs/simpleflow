@@ -170,6 +170,22 @@ def _process_sorts(sorts):
     return es_sorts
 
 
+def _wrap_query(unwrapped):
+    """Wrap a processed botify query into its final form
+
+    Currently a `constant_score` query is used
+
+    :param unwrapped: processed botify query containing
+        `fields`, `filter` and `sort`
+    """
+    filters = {'filter': unwrapped['filter']}
+    return {
+        'query': {'constant_score': filters},
+        'sort': unwrapped['sort'],
+        'fields': unwrapped['fields']
+    }
+
+
 def get_es_query(botify_query, crawl_id):
     # By default all queries should have these filter/predicate
     #   1. only query for urls whose http_code > 0 (crawled urls)
@@ -198,4 +214,4 @@ def get_es_query(botify_query, crawl_id):
     else:
         es_query['fields'] = ['url']
 
-    return es_query
+    return _wrap_query(es_query)
