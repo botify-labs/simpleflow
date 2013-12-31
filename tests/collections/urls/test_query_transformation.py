@@ -4,7 +4,7 @@ import time
 from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
 
-from cdf.collections.urls.query_transformer import get_es_query
+from cdf.collections.urls.query_transformer import get_es_query, _add_filters
 from cdf.constants import URLS_DATA_MAPPING
 
 CRAWL_ID = 1
@@ -52,6 +52,27 @@ class TestQueryTransformation(unittest.TestCase):
         response = ES.indices.validate_query(ELASTICSEARCH_INDEX,
                                              DOC_TYPE, es_query, explain=True)
         return response['valid']
+
+    def test_process_filter(self):
+        query_filters = {
+            "filters": {
+                "and": [
+                    {"field": "http_code", "value": 200},
+                    {"field": "delay2", "value": 100, "predicate": "gte"},
+                ]
+            }
+        }
+
+        default_filters = [
+            {'field': 'crawl_id', 'value': 1},
+            {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
+        ]
+
+        _add_filters(query_filters, default_filters)
+        target = query_filters['filters']['and']
+        # assert on order
+        # first filter should be that of the `crawl_id`
+        self.assertEqual(target[0]['field'], 'crawl_id')
 
     def test_simple_filters(self):
         query = {

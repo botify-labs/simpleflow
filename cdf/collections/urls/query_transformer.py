@@ -130,10 +130,11 @@ def _add_filters(botify_query, filters):
                                                                k in botify_query['filters'].keys()):
         botify_query['filters'] = {'and': filters + [botify_query['filters']]}
     elif 'and' in botify_query['filters']:
+        # TODO(darkjh) a dict inside and/or ???
         if isinstance(botify_query['filters']['and'], dict):
             botify_query['filters']['and'] = [botify_query['filters']['and'], filters]
         else:
-            botify_query['filters']['and'] += filters
+            botify_query['filters']['and'] = filters + botify_query['filters']['and']
     elif 'or' in botify_query['filters']:
         botify_query['filters']['and'] = [{'and': filters}, {'or': botify_query['filters']['or']}]
         del botify_query['filters']['or']
@@ -188,11 +189,13 @@ def _wrap_query(unwrapped):
 
 def get_es_query(botify_query, crawl_id):
     # By default all queries should have these filter/predicate
-    #   1. only query for urls whose http_code > 0 (crawled urls)
-    #   2. only query for current crawl/site
+    #   1. only query for current crawl/site
+    #   2. only query for urls whose http_code > 0 (crawled urls)
+    # The order is important for and/or/not filters in ElasticSearch
+    # See: http://www.elasticsearch.org/blog/all-about-elasticsearch-filter-bitsets/
     default_filters = [
-        {'field': 'http_code', 'value': 0, 'predicate': 'gt'},
-        {'field': 'crawl_id', 'value': crawl_id}
+        {'field': 'crawl_id', 'value': crawl_id},
+        {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
     ]
 
     # Merge default filters in botify format query
