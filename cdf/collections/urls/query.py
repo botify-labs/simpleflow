@@ -93,7 +93,6 @@ class Query(object):
         temp_results = self.search_backend.search(body=es_query,
                                                   index=self.es_index,
                                                   doc_type=self.es_doc_type,
-                                                  routing=self.crawl_id,
                                                   size=self.limit,
                                                   from_=self.start)
 
