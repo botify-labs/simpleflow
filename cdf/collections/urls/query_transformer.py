@@ -59,23 +59,21 @@ _PREDICATE_FORMATS = {
     'gt': lambda filters: {
         "range": {
             filters['field']: {
-                "from": filters['value'],
-                "include_lower": False
+                "gt": filters['value']
             }
         }
     },
     'lte': lambda filters: {
         "range": {
             filters['field']: {
-                "to": filters['value'],
+                "lte": filters['value'],
             }
         }
     },
     'lt': lambda filters: {
         "range": {
             filters['field']: {
-                "to": filters['value'],
-                "include_upper": False
+                "lt": filters['value'],
             }
         }
     },
@@ -87,8 +85,8 @@ _PREDICATE_FORMATS = {
     'between': lambda filters: {
         "range": {
             filters['field']: {
-                "from": filters['value'][0],
-                "to": filters['value'][1],
+                "gte": filters['value'][0],
+                "lte": filters['value'][1],
             }
         }
     },
