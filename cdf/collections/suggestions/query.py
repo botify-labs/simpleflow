@@ -308,6 +308,9 @@ class SuggestQuery(BaseMetricsQuery):
             }
             results.append(result)
 
+        #remove empty results
+        results = [result for result in results if result["counters"][target_field] > 0]
+
         if sort_results:
             results = self.sort_results_by_target_field_count(settings, results)
             results = self.remove_equivalent_parents(settings, results)
