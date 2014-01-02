@@ -426,12 +426,12 @@ class SuggestQuery(BaseMetricsQuery):
         """
 
         target_field = settings.get('target_field', 'pages_nb')
-
         hashes_to_remove = []
-        for potential_parent, potential_child in itertools.combinations(results, 2):
+        #WARNING should we use permutation here?
+        #It depends if we assume that parent always come first in the list
+        for potential_parent, potential_child in itertools.permutations(results, 2):
             potential_parent_hash = potential_parent["query"]
             potential_child_hash = potential_child["query"]
-
             if self.is_child(potential_parent_hash, potential_child_hash):
                 parent_target_field_count = potential_parent["counters"][target_field]
                 child_target_field_count = potential_child["counters"][target_field]
