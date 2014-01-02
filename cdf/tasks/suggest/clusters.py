@@ -58,7 +58,7 @@ def compute_mixed_clusters(crawl_id,
     nb_crawled_urls = get_nb_crawled_urls(tmp_dir)
 
     patterns = []
-
+    logger.info("Discovering patterns on host.")
     host_stream_factory = HostStreamFactory(tmp_dir, crawler_metakeys)
     host_patterns = discover_host_patterns(host_stream_factory,
                                            nb_crawled_urls,
@@ -69,6 +69,7 @@ def compute_mixed_clusters(crawl_id,
     patterns.append([(cluster_type, pattern, support) for pattern, support in host_patterns])
 
     #find patterns on pathes
+    logger.info("Discovering patterns on path.")
     path_stream_factory = PathStreamFactory(tmp_dir, crawler_metakeys)
     path_patterns = discover_path_patterns(path_stream_factory,
                                            nb_crawled_urls,
@@ -76,6 +77,7 @@ def compute_mixed_clusters(crawl_id,
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["path"]
     patterns.append([(cluster_type, pattern, support) for pattern, support in path_patterns])
 
+    logger.info("Discovering patterns on query string.")
     query_string_stream_factory = QueryStringStreamFactory(tmp_dir,
                                                            crawler_metakeys)
     query_string_patterns = discover_query_strings_patterns(query_string_stream_factory,
@@ -96,8 +98,8 @@ def compute_mixed_clusters(crawl_id,
         cluster_type = CLUSTER_TYPE_TO_ID["metadata"][CONTENT_TYPE_NAME_TO_ID[metadata_type]]
         patterns.append([(cluster_type, pattern, support) for pattern, support in metadata_patterns])
 
+    logger.info("Mixing patterns from different kinds of data together.")
     mixed_patterns = discover_mixed_patterns(patterns, nb_crawled_urls, minimal_frequency)
-
 
     ######################## save results ########################
     mixed_clusters_filepath = save_mixed_clusters(mixed_patterns,
@@ -119,6 +121,7 @@ def compute_mixed_clusters(crawl_id,
             os.path.join(file_path),
         )
 
+    logger.info("Computing children relationship between patterns.")
     children_dictionary = build_children_relationship(mixed_patterns)
     children_filepath = save_child_relationship(children_dictionary,
                                                 output_dir)
