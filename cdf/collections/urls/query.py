@@ -94,6 +94,7 @@ class Query(object):
                                                   index=self.es_index,
                                                   doc_type=self.es_doc_type,
                                                   routing=self.crawl_id,
+                                                  preference=self.crawl_id,
                                                   size=self.limit,
                                                   from_=self.start)
 
