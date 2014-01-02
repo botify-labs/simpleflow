@@ -383,7 +383,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 full_field = "outlinks_{}_nb.{}".format(status, field)
                 query = {
                     "fields": ["score", full_field, "pages_nb"],
-                    "target_field": full_field,
+                    "target_field": {"div": [full_field, "pages_nb"]},
                     "target_sort": sort,
                     "filters": {"field": full_field, "value": 0, "predicate": "gt"}
                 }
