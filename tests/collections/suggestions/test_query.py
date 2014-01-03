@@ -101,15 +101,21 @@ class TestSuggestQuery(unittest.TestCase):
 
         settings = {"target_field": "field"}
         results = [
-            {"query": "1", "counters": {"pages_nb": 10, "field": 10}},
-            {"query": "2", "counters": {"pages_nb":  5, "field":  5}},
-            {"query": "3", "counters": {"pages_nb": 10, "field": 10}}
+            {"query": "1", "counters": {"pages_nb": 1, "field": 10}},
+            {"query": "2", "counters": {"pages_nb": 1, "field":  5}},
+            {"query": "3", "counters": {"pages_nb": 2, "field": 10}}
         ]
 
         expected_result = [
-            {"query": "1", "counters": {"pages_nb": 10, "field": 10}},
-            {"query": "2", "counters": {"pages_nb": 5, "field": 5}}
+            {"query": "1", "counters": {"pages_nb": 1, "field": 10}},
+            {"query": "2", "counters": {"pages_nb": 1, "field": 5}}
         ]
 
         self.assertListEqual(expected_result,
                              self.suggest_query.remove_equivalent_parents(settings, results))
+
+        #if target_filed is not set use "pages_nb" as target field
+        #if the target field is "pages_nb",
+        #the algorithm should not remove any element
+        self.assertListEqual(results,
+                             self.suggest_query.remove_equivalent_parents({}, results))
