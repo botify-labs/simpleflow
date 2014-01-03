@@ -339,6 +339,8 @@ class SuggestQuery(BaseMetricsQuery):
         return results
 
     def _resolve_result(self, result, resolve_verbose):
+        """Transform a result identified by its hash
+        to a result identified by its full letter query"""
         query_hash_id = int(result["query"])
         result["query_hash_id"] = query_hash_id
         result["query_bql"] = self.query_hash_to_string(query_hash_id)
