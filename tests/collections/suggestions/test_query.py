@@ -277,3 +277,54 @@ class TestSuggestQuery(unittest.TestCase):
 
         self.suggest_query._compute_scores_one_result(result, target_field, total_results, pattern_size)
         self.assertDictEqual(expected_result, result)
+
+    @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results",
+                new=lambda x, y: 10)
+    @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results_by_pattern",
+                new=lambda x, y: {1: 4, 2: 3, 3: 5})
+    def test_query(self):
+        sort_results = True
+        settings = {"target_field": "error_links.4xx", "fields": ["error_links.4xx"]}
+        data = {
+            "query": [1, 2, 3],
+            "error_links.4xx": [1, 0, 2]
+        }
+        dataframe = pd.DataFrame(data)
+
+        expected_results = [
+            {
+                'query_hash_id': 3,
+                'query_bql': u'string3',
+                'score_pattern': 5,
+                'percent_total': 20.0,
+                'percent_pattern': 40.0,
+                'score': 2,
+                'query': u'string3',
+                'counters': {
+                    'error_links': {'4xx': 2}
+                },
+            },
+            {
+                'query_hash_id': 1,
+                'query_bql': u'string1',
+                'score_pattern': 4,
+                'percent_total': 10.0,
+                'percent_pattern': 25.0,
+                'score': 1,
+                'query': u'string1',
+                'counters': {'error_links': {'4xx': 1}},
+            },
+            {
+                'query_hash_id': 2,
+                'query_bql': u'string2',
+                'score_pattern': 3,
+                'percent_total': 0.0,
+                'percent_pattern': 0.0,
+                'score': 0,
+                'query': u'string2',
+                'counters': {'error_links': {'4xx': 0}}
+            }
+        ]
+
+        self.assertListEqual(expected_results,
+                             self.suggest_query._query(dataframe, settings, sort_results))

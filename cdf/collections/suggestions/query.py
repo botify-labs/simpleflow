@@ -274,7 +274,13 @@ class SuggestQuery(BaseMetricsQuery):
 
     def query(self, settings, sort_results=True):
         df = self.df.copy()
+        return self._query(df, settings, sort_results)
 
+    def _query(self, df, settings, sort_results):
+        """The method that actually runs the query.
+        The method is almost identical to the query() function
+        but it is easier to test since we can pass the dataframe as parameter
+        """
         target_field = settings.get('target_field', 'pages_nb')
 
         if 'filters' in settings:
