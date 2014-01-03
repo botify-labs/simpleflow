@@ -319,10 +319,12 @@ class SuggestQuery(BaseMetricsQuery):
         # Request Metrics query in order to get the total number of elements
         total_results = self._get_total_results(settings)
         total_results_by_pattern = self._get_total_results_by_pattern(settings)
-        results = self._resolve_query(results, target_field, total_results, total_results_by_pattern)
+
+        display_children = settings.get('display_children', True)
+        results = self._resolve_query(results, target_field, total_results, total_results_by_pattern, display_children)
         return results[0:30]
 
-    def _resolve_query(self, results, target_field, total_results, total_results_by_pattern):
+    def _resolve_query(self, results, target_field, total_results, total_results_by_pattern, display_children):
         # Resolve query
         for result in results:
             result["score"] = result["counters"][target_field]
@@ -342,7 +344,7 @@ class SuggestQuery(BaseMetricsQuery):
             result["percent_pattern"] = round(float(result["counters"][target_field]) * 100.00 / float(result["score_pattern"]), 1)
             result["counters"] = deep_dict(result["counters"])
             if "children" in result:
-                if not settings.get('display_children', True):
+                if not display_children:
                     del result["children"]
                     continue
                 result["children"] = result["children"][0:10]
