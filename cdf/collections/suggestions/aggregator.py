@@ -325,7 +325,8 @@ class MetricsAggregator(object):
                             has_out_follow = True
                             results[key][counter_key]['follow_urls'] += 1
                 else:
-                    # TODO(darkjh) add `nofollow_unique`
+                    if is_internal:
+                        results[key][counter_key]['nofollow_unique'] += score_unique
                     if follow_key not in results[key][counter_key]['nofollow_combinations']:
                         results[key][counter_key]['nofollow_combinations'][follow_key] = score
                         results[key][counter_key]['nofollow_combinations_unique'][follow_key] = score_unique

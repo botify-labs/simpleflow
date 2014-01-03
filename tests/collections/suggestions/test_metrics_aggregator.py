@@ -193,24 +193,30 @@ class TestMetricsAggregator(unittest.TestCase):
         target_ext = result[0]['counters']['outlinks_external_nb']
         target_int = result[0]['counters']['outlinks_internal_nb']
 
-        # counters for this part are calculated with `score`
+        # counters for internal outlinks
         self.assertEqual(target_int['total'], 43)
         self.assertEqual(target_int['follow'], 40)
         self.assertEqual(target_int['follow_unique'], 30)
         self.assertEqual(target_int['nofollow'], 3)
+        self.assertEqual(target_int['nofollow_unique'], 2)
         self.assertEqual(target_int['total_unique'], 32)
         self.assertEqual(target_int['total_urls'], 2)
         self.assertEqual(target_int['follow_urls'], 2)
 
-        # counters for `nofollow` are calculated with `score_unique`
-        nfc_key = 'nofollow_combinations_unique'
+        # counters for external outlinks
+        self.assertEqual(target_ext['total'], 17)
+        self.assertEqual(target_ext['follow'], 5)
         self.assertEqual(target_ext['nofollow'], 12)
+
+        # asserts on `nofollow_combinations`
+        # `nofollow_combinations_unique` calculated with `score_unique`
+        nfc_key = 'nofollow_combinations_unique'
         self.assertEqual(target_int[nfc_key]['link_meta_robots'], 2)
         self.assertEqual(target_ext[nfc_key]['meta'], 8)
         self.assertEqual(target_ext[nfc_key]['link_meta'], 1)
         self.assertEqual(target_ext[nfc_key]['link'], 0)
 
-        # we also calculate `score`
+        # `nofollow_combinations` calculated with `score`
         nfc_key = 'nofollow_combinations'
         self.assertEqual(target_int[nfc_key]['link_meta_robots'], 3)
         self.assertEqual(target_ext[nfc_key]['meta'], 10)
@@ -231,6 +237,7 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['follow'], 40)
         self.assertEqual(target['follow_unique'], 30)
         self.assertEqual(target['nofollow'], 3)
+        self.assertEqual(target['nofollow_unique'], 2)
         self.assertEqual(target['total_unique'], 32)
         self.assertEqual(target['total_urls'], 2)
         self.assertEqual(target['follow_urls'], 2)
