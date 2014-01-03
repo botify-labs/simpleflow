@@ -1,4 +1,5 @@
 from cdf.exceptions import BotifyQueryException
+from copy import deepcopy
 
 
 def _get_untouched_field(field):
@@ -116,12 +117,14 @@ def _process_filters(filters, has_parent=False):
 
 
 # TODO(darkjh) nested `and` and `or` can be simplified
-def _add_filters(botify_query, filters):
+def _add_filters(query, filters):
     """Append some filters to botify format query using `and` operator
 
     :param botify_query: the botify format query
     :param filters: a list of botify predicate to merge
+    :return: the appended query
     """
+    botify_query = deepcopy(query)
     if not 'filters' in botify_query:
         botify_query['filters'] = {'and': filters}
     elif isinstance(botify_query['filters'], dict) and not any(k in ('and', 'or') for
@@ -138,6 +141,8 @@ def _add_filters(botify_query, filters):
         del botify_query['filters']['or']
     else:
         raise Exception('filters are not valid for given es_query')
+
+    return botify_query
 
 
 def _process_sorts(sorts):
@@ -197,7 +202,7 @@ def get_es_query(botify_query, crawl_id):
     ]
 
     # Merge default filters in botify format query
-    _add_filters(botify_query, default_filters)
+    botify_query = _add_filters(botify_query, default_filters)
 
     # Transform botify query to ElasticSearch query
     es_query = {}

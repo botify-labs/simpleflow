@@ -1,5 +1,4 @@
 import unittest
-import time
 
 from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
@@ -68,7 +67,7 @@ class TestQueryTransformation(unittest.TestCase):
             {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
         ]
 
-        _add_filters(query_filters, default_filters)
+        query_filters = _add_filters(query_filters, default_filters)
         target = query_filters['filters']['and']
         # assert on order
         # first filter should be that of the `crawl_id`
