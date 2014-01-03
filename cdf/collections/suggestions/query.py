@@ -267,9 +267,17 @@ class SuggestQuery(BaseMetricsQuery):
             self.child_relationship_set = self.compute_child_relationship_set(child_frame)
 
     def query_hash_to_string(self, value):
+        """get the full-letter query corresponding to a hash
+        :param value: the hash
+        :type value: int
+        :returns: unicode - the full-letter query"""
         return unicode(self.hdfstore['requests'].ix[str(value), 'string'], "utf8")
 
     def query_hash_to_verbose_string(self, value):
+        """get the full-letter verbose query corresponding to a hash
+        :param value: the hash
+        :type value: int
+        :returns: unicode - the full-letter query"""
         return json.loads(unicode(self.hdfstore['requests'].ix[str(value), 'verbose_string'], "utf8"))
 
     def query(self, settings, sort_results=True):
@@ -279,7 +287,23 @@ class SuggestQuery(BaseMetricsQuery):
     def _query(self, df, settings, sort_results):
         """The method that actually runs the query.
         The method is almost identical to the query() function
-        but it is easier to test since we can pass the dataframe as parameter
+        but it is easier to test since we can pass the dataframe as parameter.
+        :param df: the dataframe containing the aggregated data
+                   sample columns are : query, depth, http_code, delay_lt_500ms
+        :type df: pandas.DataFrame
+        :param settings: a dictionary representing the query to run
+        :type setting: dict
+        :returns: list - the list of results corresponding to the query.
+                         the list is sorted by descending "target_field" value.
+                         each result is a dict with keys :
+                         - "query_hash_id"
+                         - "query",
+                         - "query_bql",
+                         - "score",
+                         - "score_pattern"
+                         - "percent_pattern"
+                         - "percent_total"
+                         - "counters"
         """
         results = self._raw_query(df, settings)
         if len(results) == 0:
@@ -356,7 +380,17 @@ class SuggestQuery(BaseMetricsQuery):
 
     def _resolve_results(self, results, display_children):
         """Transform results identified by their hashes
-        to a result identified by their full letter queries"""
+        to a result identified by their full-letter queries
+        :param results: the list of input results.
+                        the results will be modified by the method
+        :type results: list
+        :param display_children: if False, the children patterns
+                                 are removed from the results
+                                 Results can have "children" entry
+                                 corresponding patterns which are included in them.
+                                 This parameter decides what to do with them
+        :type display_children: bool
+        """
         # Resolve query
         for result in results:
             self._resolve_result(result, False)
@@ -370,7 +404,14 @@ class SuggestQuery(BaseMetricsQuery):
 
     def _resolve_result(self, result, resolve_verbose):
         """Transform a result identified by its hash
-        to a result identified by its full letter query"""
+        to a result identified by its full letter query
+        :param result: the result to resolve.
+                       It will be modified by the method
+        :type result: dict
+        :param resolve_verbose: if True,
+                                insert a key "query_verbose" in the result
+        :type resolve_verbose: bool
+        """
         query_hash_id = int(result["query"])
         result["query_hash_id"] = query_hash_id
         result["query_bql"] = self.query_hash_to_string(query_hash_id)
@@ -381,6 +422,16 @@ class SuggestQuery(BaseMetricsQuery):
 
     def _compute_scores(self, results, target_field, total_results, total_results_by_pattern):
         """Compute the different metrics for the results
+        :param results: the list of results.
+                        the results will be modified by the method
+        :type results: list
+        :param target_field: the target_field used in the query
+        :type target_field: string
+        :param total_results: the number of urls matching the query
+        :type total_results: int
+        :param total_results_by_pattern: the size of the patterns
+                                         the patterns are identified by their hash
+        :type total_results_by_pattern: dict
         """
         for result in results:
             query_hash_id = int(result["query"])
@@ -395,6 +446,16 @@ class SuggestQuery(BaseMetricsQuery):
         - percent_pattern : proportion of urls with target_field property in the pattern (= 100 * score/score_pattern)
         - percent_total : proportion of urls from the pattern in the urls with the target_field property
                           (= 100 * score/nb_url_with_property)
+
+        :param result: the input result.
+                       It will be modified by the method
+        :type results: dict
+        :param target_field: the target_field used in the query
+        :type target_field: string
+        :param total_results: the number of urls matching the query
+        :type total_results: int
+        :param pattern_size: the size of the pattern corresponding to result
+        :type pattern_size: int
         """
         result["score"] = result["counters"][target_field]
         # if total_results is zero, it must comes from a target_field based on a complex operation like "div"
@@ -409,6 +470,9 @@ class SuggestQuery(BaseMetricsQuery):
 
     def _get_total_results(self, query):
         """Return the total number of items for the given query
+        :param query: the input query
+        :type query: dict
+        :returns: int
         """
         q = MetricsQuery(self.hdfstore)
         total_query = {
@@ -421,6 +485,9 @@ class SuggestQuery(BaseMetricsQuery):
 
     def _get_total_results_by_pattern(self, query):
         """Return the total number of items for the given query
+        :param query: the input query
+        :type query: dict
+        :returns: dict
         """
         q = MetricsPatternQuery(self.hdfstore)
         total_query = {
@@ -438,6 +505,13 @@ class SuggestQuery(BaseMetricsQuery):
         this method will place pattern B first.
 
         Sorting mode can be changed by adding a `target_sort` on settings with allowed values "asc" or "desc" (desc by default)
+
+        :param settings: the input query
+        :type settings: dict
+        :param results: the list of results to sort.
+                        each result is a dict
+        :type results: list
+        :returns: list
         """
         target_field = settings.get('target_field', 'pages_nb')
         target_sort = settings.get('target_sort', 'desc')
@@ -448,17 +522,25 @@ class SuggestQuery(BaseMetricsQuery):
     def is_child(self, parent_hash, child_hash):
         """Test if a pattern is the child from an other pattern,
         given their two hashes.
+        :param parent_hash: the hash of the potential parent pattern
+        :type parent_hash: int
+        :param child_hash: the hash of the potential parent pattern
+        :type child_hash: int
+        :returns: bool
         """
         return (parent_hash, child_hash) in self.child_relationship_set
 
     def compute_child_relationship_set(self, child_frame):
         """Build a set of tuples (parent_hash, child_hash)
         to be able to test fast if a relationship exists.
-        child_frame : a pandas dataframe with two columns:
-        - parent : contains the parent pattern hash
-        - child : contains the parent pattern hash
-        Each row of the frame represent a parent/child relationship
-        between two patterns
+        :param child_frame : a pandas dataframe with two columns:
+                            - parent : contains the parent pattern hash
+                            - child : contains the parent pattern hash
+                            Each row of the frame represents
+                            a parent/child relationship
+                            between two patterns.
+        :type child_frame: pandas.DataFrame
+        :returns: set
         """
         result = set()
         for count, row in child_frame.iterrows():
@@ -481,6 +563,12 @@ class SuggestQuery(BaseMetricsQuery):
         pattern B is more relevant as it is more specific.
 
         The present method would remove pattern A from results
+
+        :param settings: the query settings
+        :type settings: dict
+        :param results: the query results
+        :type results: list
+        :returns: list
         """
 
         target_field = settings.get('target_field', 'pages_nb')
@@ -509,6 +597,10 @@ class SuggestQuery(BaseMetricsQuery):
 
         The method requires the input results to be sorted.
         The sort criterion does not matter.
+
+        :param results: the list of results to process
+        :type results: list
+        :returns: list
         """
         hashes_to_remove = []
         for potential_parent, potential_child  in itertools.combinations(results, 2):
@@ -525,6 +617,12 @@ class SuggestQuery(BaseMetricsQuery):
         return results
 
     def df_filter_after_agg(self, df):
+        """
+        Does nothing
+        :param df: the input dataframe
+        :type df: pandas.DataFrame
+        :returns: pandas.DataFrame
+        """
         """
         if self.options['stats_urls_done']:
             # Take only urls > 3%
