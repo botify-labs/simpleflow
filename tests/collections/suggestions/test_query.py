@@ -119,3 +119,19 @@ class TestSuggestQuery(unittest.TestCase):
         #the algorithm should not remove any element
         self.assertListEqual(results,
                              self.suggest_query.remove_equivalent_parents({}, results))
+
+    def test_hide_less_relevant_children(self):
+        results = [
+            {"query": "1", "counters": {"pages_nb": 5}},
+            {"query": "3", "counters": {"pages_nb": 2}},
+            {"query": "2", "counters": {"pages_nb": 1}}
+        ]
+
+        #result "2" is removed from the result list since it
+        expected_result = [
+            {"query": "1", "counters": {"pages_nb": 5}},
+            {"query": "3", "counters": {"pages_nb": 2}, "children": [{"query": "2", "counters": {"pages_nb": 1}}]}
+        ]
+
+        self.assertListEqual(expected_result,
+                             self.suggest_query.hide_less_relevant_children({}, results))
