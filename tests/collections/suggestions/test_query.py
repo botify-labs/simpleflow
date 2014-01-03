@@ -191,8 +191,8 @@ class TestSuggestQuery(unittest.TestCase):
             }]
 
         display_children = True
-        self.assertListEqual(expected_result,
-                             self.suggest_query._resolve_results(results, display_children))
+        self.suggest_query._resolve_results(results, display_children)
+        self.assertListEqual(expected_result, results)
 
         #do not display children
 
@@ -205,5 +205,5 @@ class TestSuggestQuery(unittest.TestCase):
         #the expected result is the same except
         #that the children entry is removed
         del expected_result[1]["children"]
-        self.assertListEqual(expected_result,
-                             self.suggest_query._resolve_results(results, display_children))
+        self.suggest_query._resolve_results(results, display_children)
+        self.assertListEqual(expected_result, results)

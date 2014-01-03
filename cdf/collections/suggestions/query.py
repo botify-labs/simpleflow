@@ -322,7 +322,7 @@ class SuggestQuery(BaseMetricsQuery):
 
         display_children = settings.get('display_children', True)
         results = self._compute_scores(results, target_field, total_results, total_results_by_pattern)
-        results = self._resolve_results(results, display_children)
+        self._resolve_results(results, display_children)
         return results[0:30]
 
     def _resolve_results(self, results, display_children):
@@ -336,7 +336,6 @@ class SuggestQuery(BaseMetricsQuery):
                 result["children"] = result["children"][0:10]
                 for child in result["children"]:
                     self._resolve_result(child, True)
-        return results
 
     def _resolve_result(self, result, resolve_verbose):
         """Transform a result identified by its hash
