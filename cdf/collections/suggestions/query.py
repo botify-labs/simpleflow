@@ -281,6 +281,30 @@ class SuggestQuery(BaseMetricsQuery):
         The method is almost identical to the query() function
         but it is easier to test since we can pass the dataframe as parameter
         """
+        results = self._raw_query(df, settings, sort_results)
+        if len(results) == 0:
+            return results
+
+        if sort_results:
+            results = self.sort_results_by_target_field_count(settings, results)
+            results = self.remove_equivalent_parents(settings, results)
+            results = self.hide_less_relevant_children(results)
+
+        # Request Metrics query in order to get the total number of elements
+        total_results = self._get_total_results(settings)
+        total_results_by_pattern = self._get_total_results_by_pattern(settings)
+
+        target_field = settings.get('target_field', 'pages_nb')
+        display_children = settings.get('display_children', True)
+        self._compute_scores(results, target_field, total_results, total_results_by_pattern)
+        self._resolve_results(results, display_children)
+        return results[0:30]
+
+    def _raw_query(self, df, settings, sort_results):
+        """Run a query on the dataframe,
+        but does not perform any postprocessing on it: no result filtering,
+                                                       no query resolution
+        """
         target_field = settings.get('target_field', 'pages_nb')
 
         if 'filters' in settings:
@@ -317,19 +341,7 @@ class SuggestQuery(BaseMetricsQuery):
         #remove empty results
         results = [result for result in results if result["counters"][target_field] > 0]
 
-        if sort_results:
-            results = self.sort_results_by_target_field_count(settings, results)
-            results = self.remove_equivalent_parents(settings, results)
-            results = self.hide_less_relevant_children(results)
-
-        # Request Metrics query in order to get the total number of elements
-        total_results = self._get_total_results(settings)
-        total_results_by_pattern = self._get_total_results_by_pattern(settings)
-
-        display_children = settings.get('display_children', True)
-        self._compute_scores(results, target_field, total_results, total_results_by_pattern)
-        self._resolve_results(results, display_children)
-        return results[0:30]
+        return results
 
     def _resolve_results(self, results, display_children):
         """Transform results identified by their hashes
