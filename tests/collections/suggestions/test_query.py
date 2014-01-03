@@ -1,7 +1,5 @@
 import unittest
 import mock
-import tempfile
-import os
 
 import pandas as pd
 
@@ -10,13 +8,11 @@ from cdf.collections.suggestions.query import SuggestQuery
 
 class TestSuggestQuery(unittest.TestCase):
     def setUp(self):
-        #TODO instanciate hdfstore
-        #TODO instanciate SuggestQuery
-        f = tempfile.NamedTemporaryFile()
-        self.hdf5_path = f.name
-        f.close()
-
-        self.hdfstore = pd.HDFStore(self.hdf5_path)
+        #This is not a real hdfstore object
+        #because instanciating a HdfStore would require to create
+        #a temporary file
+        #but a HdfStore object behaves essentially like a dict of DataFrame
+        hdfstore = {}
 
         hashes = ["1", "3", "2"]
         requests = {
@@ -25,20 +21,16 @@ class TestSuggestQuery(unittest.TestCase):
                                '{"query": "v_string2"}',
                                '{"query": "v_string3"}']
             }
-        self.hdfstore["requests"] = pd.DataFrame(requests, index=hashes)
+        hdfstore["requests"] = pd.DataFrame(requests, index=hashes)
 
         children_relationship = {
             "parent": ["2", "2"],
             "child": ["1", "3"]
             }
-        self.hdfstore["children"] = pd.DataFrame(children_relationship)
+        hdfstore["children"] = pd.DataFrame(children_relationship)
 
-        self.hdfstore["suggest"] = pd.DataFrame()
-        self.suggest_query = SuggestQuery(self.hdfstore)
-
-    def tearDown(self):
-        self.hdfstore.close()
-        os.remove(self.hdf5_path)
+        hdfstore["suggest"] = pd.DataFrame()
+        self.suggest_query = SuggestQuery(hdfstore)
 
     def test_query_hash_to_string(self):
         self.assertEqual("string2", self.suggest_query.query_hash_to_string(3))
@@ -108,6 +100,7 @@ class TestSuggestQuery(unittest.TestCase):
     @mock.patch("cdf.collections.suggestions.query.SuggestQuery.is_child")
     def test_remove_equivalent_parents(self, mock_is_child):
 
+        #mock is child
         def is_child(*args):
             parent_hash, _ = args
             if parent_hash == "hash3":

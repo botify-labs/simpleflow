@@ -260,7 +260,7 @@ class SuggestQuery(BaseMetricsQuery):
     def __init__(self, hdfstore, options=None):
         super(SuggestQuery, self).__init__(hdfstore, options)
 
-        if not '/children' in self.hdfstore.keys():
+        if not 'children' in self.hdfstore.keys():
             self.child_relationship_set = set()
         else:
             child_frame = self.hdfstore['children']
