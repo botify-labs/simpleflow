@@ -136,3 +136,74 @@ class TestSuggestQuery(unittest.TestCase):
 
         self.assertListEqual(expected_result,
                              self.suggest_query.hide_less_relevant_children(results))
+
+    def test_resolve_result(self):
+        resolve_verbose = False
+        result = {"query": "1", "counters": {"pages_nb": 5}}
+
+        expected_result = {
+            "query_hash_id": 1,
+            "query": u"string1",
+            "query_bql": u"string1",
+            "counters": {"pages_nb": 5}
+        }
+        self.suggest_query._resolve_result(result, resolve_verbose)
+        self.assertDictEqual(expected_result, result)
+
+    def test_resolve_result_verbose(self):
+        resolve_verbose = True
+        result = {"query": "1", "counters": {"pages_nb": 5}}
+
+        expected_result = {
+            "query_hash_id": 1,
+            "query": u"string1",
+            "query_bql": u"string1",
+            "query_verbose": {"query": "v_string1"},
+            "counters": {"pages_nb": 5}
+        }
+        self.suggest_query._resolve_result(result, resolve_verbose)
+        self.assertDictEqual(expected_result, result)
+
+    def test_resolve_results(self):
+        results = [
+            {"query": "1", "counters": {"pages_nb": 5}},
+            {"query": "3", "counters": {"pages_nb": 2}, "children": [{"query": "2", "counters": {"pages_nb": 1}}]},
+        ]
+
+        expected_result = [
+            {
+                "query_hash_id": 1,
+                "query": u"string1",
+                "query_bql": u"string1",
+                "counters": {"pages_nb": 5}
+            },
+            {
+                "query_hash_id": 3,
+                "query": u"string3",
+                "query_bql": u"string3",
+                "counters": {"pages_nb": 2},
+                "children": [{"query_hash_id": 2,
+                              "query": u"string2",
+                              "query_bql": u"string2",
+                              "query_verbose": {"query": "v_string2"},
+                              "counters": {"pages_nb": 1}}
+                             ]
+            }]
+
+        display_children = True
+        self.assertListEqual(expected_result,
+                             self.suggest_query._resolve_results(results, display_children))
+
+        #do not display children
+
+        #we redefine results as the previous call has modified it.
+        results = [
+            {"query": "1", "counters": {"pages_nb": 5}},
+            {"query": "3", "counters": {"pages_nb": 2}, "children": [{"query": "2", "counters": {"pages_nb": 1}}]},
+        ]
+        display_children = False
+        #the expected result is the same except
+        #that the children entry is removed
+        del expected_result[1]["children"]
+        self.assertListEqual(expected_result,
+                             self.suggest_query._resolve_results(results, display_children))
