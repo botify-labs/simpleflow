@@ -73,26 +73,27 @@ class TestSuggestQuery(unittest.TestCase):
         query = {"target_field": "field1"}
 
         results = [
-            {"query": "string1", "counters": {"field1": 2, "field2": 4}},
-            {"query": "string2", "counters": {"field1": 1, "field2": 5}}
+            {"query": "string1", "counters": {"field1": 2, "pages_nb": 4}},
+            {"query": "string2", "counters": {"field1": 1, "pages_nb": 5}}
             ]
 
         #default ordering is descending
         expected_result = [
-            {"query": "string1", "counters": {"field1": 2, "field2": 4}},
-            {"query": "string2", "counters": {"field1": 1, "field2": 5}}
+            {"query": "string1", "counters": {"field1": 2, "pages_nb": 4}},
+            {"query": "string2", "counters": {"field1": 1, "pages_nb": 5}}
             ]
 
         self.assertListEqual(expected_result,
                              self.suggest_query.sort_results_by_target_field_count(query, results))
 
-        query = {"target_field": "field2"}
+        #if target_field is not set use "pages_nb"
+        query = {}
         expected_result.reverse()
         self.assertListEqual(expected_result,
                              self.suggest_query.sort_results_by_target_field_count(query, results))
 
         #change ordering
-        query = {"target_field": "field2", "target_sort": "asc"}
+        query = {"target_sort": "asc"}
         expected_result.reverse()
         self.assertListEqual(expected_result,
                              self.suggest_query.sort_results_by_target_field_count(query, results))
