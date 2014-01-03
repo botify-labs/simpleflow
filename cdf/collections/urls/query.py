@@ -16,7 +16,7 @@ class Query(object):
     """
 
     def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number,
-                 query, start=0, limit=100, sort=('id',), search_backend=None):
+                 botify_query, start=0, limit=100, sort=('id',), search_backend=None):
 
         """Constructor
         search_backend : the search backend to use. If None, use ElasticSearch.
@@ -26,7 +26,7 @@ class Query(object):
         self.es_doc_type = es_doc_type
         self.crawl_id = crawl_id
         self.revision_number = revision_number
-        self.query = query
+        self.botify_query = botify_query
         self.fields = None
         self.start = start
         self.limit = limit
@@ -87,7 +87,7 @@ class Query(object):
             return
 
         # Translation
-        es_query = get_es_query(self.query, self.crawl_id)
+        es_query = get_es_query(self.botify_query, self.crawl_id)
 
         # Issue a ES search
         temp_results = self.search_backend.search(body=es_query,
@@ -106,7 +106,7 @@ class Query(object):
 
         self._count = temp_results['hits']['total']
         self._results = []
-        self.fields = self.query['fields']
+        self.fields = es_query['fields']
 
         # make a copy of the fields part
         # need to use `deep_dict` since ES gives a dict with flatten path
