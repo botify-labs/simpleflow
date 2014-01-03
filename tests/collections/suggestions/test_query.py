@@ -207,3 +207,35 @@ class TestSuggestQuery(unittest.TestCase):
         del expected_result[1]["children"]
         self.suggest_query._resolve_results(results, display_children)
         self.assertListEqual(expected_result, results)
+
+    def test_compute_scores(self):
+        results = [
+            {"query": 1, "counters": {"pages_nb": 5, "http_errors": 2}},
+            {"query": 3, "counters": {"pages_nb": 2, "http_errors": 1}},
+        ]
+
+        target_field = "http_errors"
+        total_results = 4  # one url with http_error is not part of any pattern
+        total_results_by_pattern = {1: 5, 3: 2}
+
+        expected_results = [
+            {
+                "query": 1,
+                "score": 2,
+                "percent_total": 50,  # on 4 errors, 2 belong to the pattern
+                "score_pattern": 5,  # pattern size
+                "percent_pattern": 40,  # 2 urls on 5 are errors
+                "counters": {"pages_nb": 5, "http_errors": 2}
+            },
+            {
+                "query": 3,
+                "score": 1,
+                "percent_total": 25,
+                "score_pattern": 2,
+                "percent_pattern": 50,
+                "counters": {"pages_nb": 2, "http_errors": 1}
+            },
+        ]
+
+        self.suggest_query._compute_scores(results, target_field, total_results, total_results_by_pattern)
+        self.assertListEqual(expected_results, results)
