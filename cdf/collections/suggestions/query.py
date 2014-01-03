@@ -319,13 +319,17 @@ class SuggestQuery(BaseMetricsQuery):
         # Request Metrics query in order to get the total number of elements
         total_results = self._get_total_results(settings)
         total_results_by_pattern = self._get_total_results_by_pattern(settings)
+        results = self._resolve_query(results, target_field, total_results, total_results_by_pattern)
+        return results[0:30]
 
+    def _resolve_query(self, results, target_field, total_results, total_results_by_pattern):
         # Resolve query
         for i, r in enumerate(results):
             results[i]["score"] = results[i]["counters"][target_field]
             results[i]["query_hash_id"] = int(results[i]["query"])
             results[i]["query_bql"] = self.query_hash_to_string(results[i]["query_hash_id"])
-            results[i]["query"] = self.query_hash_to_verbose_string(results[i]["query_hash_id"])
+            results[i]["query"] = self.query_hash_to_string(results[i]["query_hash_id"])
+            #results[i]["query"] = self.query_hash_to_verbose_string(results[i]["query_hash_id"])
 
             # if total_results is zero, it must comes from a target_field based on a complex operation like "div"
             # So we cannot know the value from the full crawl
@@ -347,7 +351,7 @@ class SuggestQuery(BaseMetricsQuery):
                     results[i]["children"][k]["query"] = self.query_hash_to_string(results[i]["children"][k]["query_hash_id"])
                     results[i]["children"][k]["query_verbose"] = self.query_hash_to_verbose_string(results[i]["children"][k]["query_hash_id"])
                     results[i]["children"][k]["counters"] = deep_dict(results[i]["children"][k]["counters"])
-        return results[0:30]
+        return results
 
     def _get_total_results(self, query):
         """Return the total number of items for the given query
