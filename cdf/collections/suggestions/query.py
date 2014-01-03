@@ -321,28 +321,19 @@ class SuggestQuery(BaseMetricsQuery):
         total_results_by_pattern = self._get_total_results_by_pattern(settings)
 
         display_children = settings.get('display_children', True)
-        results = self._resolve_query(results, target_field, total_results, total_results_by_pattern, display_children)
+        results = self._compute_scores(results, target_field, total_results, total_results_by_pattern)
+        results = self._resolve_query(results, display_children)
         return results[0:30]
 
-    def _resolve_query(self, results, target_field, total_results, total_results_by_pattern, display_children):
+    def _resolve_query(self, results, display_children):
         # Resolve query
         for result in results:
-            result["score"] = result["counters"][target_field]
             query_hash_id = int(result["query"])
             result["query_hash_id"] = query_hash_id
             result["query_bql"] = self.query_hash_to_string(query_hash_id)
             result["query"] = self.query_hash_to_string(query_hash_id)
             #result["query"] = self.query_hash_to_verbose_string(query_hash_id)
 
-            # if total_results is zero, it must comes from a target_field based on a complex operation like "div"
-            # So we cannot know the value from the full crawl
-            if total_results:
-                result["percent_total"] = round(float(result["counters"][target_field]) * 100.00 / float(total_results), 1)
-            else:
-                result["percent_total"] = -1
-
-            result["score_pattern"] = total_results_by_pattern[query_hash_id]
-            result["percent_pattern"] = round(float(result["counters"][target_field]) * 100.00 / float(result["score_pattern"]), 1)
             result["counters"] = deep_dict(result["counters"])
             if "children" in result:
                 if not display_children:
@@ -355,6 +346,22 @@ class SuggestQuery(BaseMetricsQuery):
                     child["query"] = self.query_hash_to_string(child_hash_id)
                     child["query_verbose"] = self.query_hash_to_verbose_string(child_hash_id)
                     child["counters"] = deep_dict(child["counters"])
+        return results
+
+    def _compute_scores(self, results, target_field, total_results, total_results_by_pattern):
+        for result in results:
+            result["score"] = result["counters"][target_field]
+            query_hash_id = int(result["query"])
+
+            # if total_results is zero, it must comes from a target_field based on a complex operation like "div"
+            # So we cannot know the value from the full crawl
+            if total_results:
+                result["percent_total"] = round(float(result["counters"][target_field]) * 100.00 / float(total_results), 1)
+            else:
+                result["percent_total"] = -1
+
+            result["score_pattern"] = total_results_by_pattern[query_hash_id]
+            result["percent_pattern"] = round(float(result["counters"][target_field]) * 100.00 / float(result["score_pattern"]), 1)
         return results
 
     def _get_total_results(self, query):
