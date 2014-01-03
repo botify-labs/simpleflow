@@ -134,4 +134,4 @@ class TestSuggestQuery(unittest.TestCase):
         ]
 
         self.assertListEqual(expected_result,
-                             self.suggest_query.hide_less_relevant_children({}, results))
+                             self.suggest_query.hide_less_relevant_children(results))

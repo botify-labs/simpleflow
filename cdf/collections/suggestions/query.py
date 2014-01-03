@@ -314,7 +314,7 @@ class SuggestQuery(BaseMetricsQuery):
         if sort_results:
             results = self.sort_results_by_target_field_count(settings, results)
             results = self.remove_equivalent_parents(settings, results)
-            results = self.hide_less_relevant_children(settings, results)
+            results = self.hide_less_relevant_children(results)
 
         # Request Metrics query in order to get the total number of elements
         total_results = self._get_total_results(settings)
@@ -441,7 +441,7 @@ class SuggestQuery(BaseMetricsQuery):
         results = [result for result in results if not result["query"] in hashes_to_remove]
         return results
 
-    def hide_less_relevant_children(self, settings, results):
+    def hide_less_relevant_children(self, results):
         """Once we have displayed a node,
         displaying its children would confuse the user.
         The present method :
