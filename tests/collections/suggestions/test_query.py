@@ -283,13 +283,21 @@ class TestSuggestQuery(unittest.TestCase):
     @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results_by_pattern",
                 new=lambda x, y: {1: 4, 2: 3, 3: 5})
     def test_query(self):
-        sort_results = True
-        settings = {"target_field": "error_links.4xx", "fields": ["error_links.4xx"]}
         data = {
             "query": [1, 2, 3],
-            "error_links.4xx": [1, 0, 2]
+            "error_links.4xx": [1, 0, 2],
+            "depth": [3, 1, 1]
         }
         dataframe = pd.DataFrame(data)
+
+        sort_results = True
+        settings = {
+            "target_field": "error_links.4xx",
+            "fields": ["error_links.4xx"],
+            #this filter will remove result with hash 1
+            "filters": {"field": "depth", "value": 3, "predicate": "lt"}
+        }
+
 
         expected_results = [
             {
@@ -303,16 +311,6 @@ class TestSuggestQuery(unittest.TestCase):
                 'counters': {
                     'error_links': {'4xx': 2}
                 },
-            },
-            {
-                'query_hash_id': 1,
-                'query_bql': u'string1',
-                'score_pattern': 4,
-                'percent_total': 10.0,
-                'percent_pattern': 25.0,
-                'score': 1,
-                'query': u'string1',
-                'counters': {'error_links': {'4xx': 1}},
             },
             {
                 'query_hash_id': 2,
