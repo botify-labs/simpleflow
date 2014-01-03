@@ -299,6 +299,64 @@ class TestSuggestQuery(unittest.TestCase):
         self.suggest_query._compute_scores_one_result(result, target_field, total_results, pattern_size)
         self.assertDictEqual(expected_result, result)
 
+    def test_raw_query(self):
+        data = {
+            "query": [1, 2, 3],
+            "error_links.4xx": [1, 0, 2],
+            "depth": [3, 1, 1]
+        }
+        dataframe = pd.DataFrame(data)
+
+        sort_results = True
+        settings = {
+            "target_field": "error_links.4xx",
+            "fields": ["error_links.4xx"],
+            #this filter will remove result with hash 1
+            "filters": {"field": "depth", "value": 3, "predicate": "lt"}
+        }
+
+        expected_results = [
+            {
+                'query': 3,
+                'counters': {'error_links.4xx': 2},
+            },
+            {
+                'query': 2,
+                'counters': {'error_links.4xx': 0}
+            }
+        ]
+
+        self.assertListEqual(expected_results,
+                             self.suggest_query._raw_query(dataframe, settings, sort_results))
+
+    def test_raw_query_div(self):
+        data = {
+            "query": [1, 3],
+            "metadata_nb.h1.filled": [20, 5],
+            "pages_nb": [4, 5]
+        }
+        dataframe = pd.DataFrame(data)
+
+        sort_results = True
+        settings = {
+            "target_field": {"div": ["metadata_nb.h1.filled", "pages_nb"]},
+            "fields": ["pages_nb"],
+        }
+
+        expected_results = [
+            {
+                'query': 1,
+                'counters': {'pages_nb': 4, 'score': 5},
+            },
+            {
+                'query': 3,
+                'counters': {'pages_nb': 5, 'score': 1},
+            }
+        ]
+
+        self.assertListEqual(expected_results,
+                             self.suggest_query._raw_query(dataframe, settings, sort_results))
+
     @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results",
                 new=lambda x, y: 10)
     @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results_by_pattern",
@@ -356,51 +414,4 @@ class TestSuggestQuery(unittest.TestCase):
         }
 
         self.assertListEqual([],
-                             self.suggest_query._query(dataframe, settings, sort_results))
-
-
-    @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results",
-                new=lambda x, y: 10)
-    @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results_by_pattern",
-                new=lambda x, y: {1: 4, 3: 5})
-    def test_query_div(self):
-        data = {
-            "query": [1, 3],
-            "metadata_nb.h1.filled": [20, 5],
-            "pages_nb": [4, 5]
-        }
-        dataframe = pd.DataFrame(data)
-
-        sort_results = True
-        settings = {
-            "target_field": {"div": ["metadata_nb.h1.filled", "pages_nb"]},
-            "fields": ["pages_nb"],
-        }
-
-        expected_results = [
-            {
-                'query_hash_id': 1,
-                'query_bql': u'string1',
-                'score_pattern': 4,
-                'percent_total': 50.0,
-                'percent_pattern': 125.0,  # 125=target_field/4=(20/4)/4 this number does not really make sense
-                'score': 5,
-                'query': u'string1',
-                'counters': {'pages_nb': 4,
-                             'score': 5},
-            },
-            {
-                'query_hash_id': 3,
-                'query_bql': u'string3',
-                'score_pattern': 5,
-                'percent_total': 10.0,
-                'percent_pattern': 20.0,  # 20=target_field/5=(5/5)/5 this number does not really make sense
-                'score': 1,
-                'query': u'string3',
-                'counters': {'pages_nb': 5,
-                             'score': 1},
-            }
-        ]
-
-        self.assertListEqual(expected_results,
                              self.suggest_query._query(dataframe, settings, sort_results))
