@@ -304,6 +304,17 @@ class SuggestQuery(BaseMetricsQuery):
         """Run a query on the dataframe,
         but does not perform any postprocessing on it: no result filtering,
                                                        no query resolution
+        :param df: the dataframe containing the aggregated data
+                   sample columns are : query, depth, http_code, delay_lt_500ms
+        :type df: pandas.DataFrame
+        :param settings: a dictionary representing the query to run
+        :type setting: dict
+        :returns: list - the list of results corresponding to the query.
+                         the list is sorted by descending "target_field" value
+                         each result is a dict with keys : "query", "counters"
+                         with "query" the hash of the query and
+                         "counters" a dict which keys are the fields requested
+                         in the query.
         """
         target_field = settings.get('target_field', 'pages_nb')
 
