@@ -321,7 +321,7 @@ class SuggestQuery(BaseMetricsQuery):
         total_results_by_pattern = self._get_total_results_by_pattern(settings)
 
         display_children = settings.get('display_children', True)
-        results = self._compute_scores(results, target_field, total_results, total_results_by_pattern)
+        self._compute_scores(results, target_field, total_results, total_results_by_pattern)
         self._resolve_results(results, display_children)
         return results[0:30]
 
@@ -357,7 +357,6 @@ class SuggestQuery(BaseMetricsQuery):
             query_hash_id = int(result["query"])
             pattern_size = total_results_by_pattern[query_hash_id]
             self._compute_scores_one_result(result, target_field, total_results, pattern_size)
-        return results
 
     def _compute_scores_one_result(self, result, target_field, total_results, pattern_size):
         """Compute the different metrics for one result
