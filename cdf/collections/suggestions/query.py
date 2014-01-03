@@ -351,6 +351,14 @@ class SuggestQuery(BaseMetricsQuery):
         result["counters"] = deep_dict(result["counters"])
 
     def _compute_scores(self, results, target_field, total_results, total_results_by_pattern):
+        """Compute the different metrics for the results
+        The method computes four metrics:
+        - score: nb urls with the target_field property
+        - score_pattern : nb urls in pattern
+        - percent_pattern : proportion of urls with target_field property in the pattern (= 100 * score/score_pattern)
+        - percent_total : proportion of urls from the pattern in the urls with the target_field property
+                          (= 100 * score/nb_url_with_property)
+        """
         for result in results:
             result["score"] = result["counters"][target_field]
             query_hash_id = int(result["query"])
