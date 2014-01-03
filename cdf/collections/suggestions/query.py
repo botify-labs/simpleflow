@@ -326,6 +326,8 @@ class SuggestQuery(BaseMetricsQuery):
         return results[0:30]
 
     def _resolve_results(self, results, display_children):
+        """Transform results identified by their hashes
+        to a result identified by their full letter queries"""
         # Resolve query
         for result in results:
             self._resolve_result(result, False)
