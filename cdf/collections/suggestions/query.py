@@ -328,10 +328,11 @@ class SuggestQuery(BaseMetricsQuery):
         # Resolve query
         for result in results:
             result["score"] = result["counters"][target_field]
-            result["query_hash_id"] = int(result["query"])
-            result["query_bql"] = self.query_hash_to_string(result["query_hash_id"])
-            result["query"] = self.query_hash_to_string(result["query_hash_id"])
-            #result["query"] = self.query_hash_to_verbose_string(result["query_hash_id"])
+            query_hash_id = int(result["query"])
+            result["query_hash_id"] = query_hash_id
+            result["query_bql"] = self.query_hash_to_string(query_hash_id)
+            result["query"] = self.query_hash_to_string(query_hash_id)
+            #result["query"] = self.query_hash_to_verbose_string(query_hash_id)
 
             # if total_results is zero, it must comes from a target_field based on a complex operation like "div"
             # So we cannot know the value from the full crawl
@@ -340,7 +341,7 @@ class SuggestQuery(BaseMetricsQuery):
             else:
                 result["percent_total"] = -1
 
-            result["score_pattern"] = total_results_by_pattern[result["query_hash_id"]]
+            result["score_pattern"] = total_results_by_pattern[query_hash_id]
             result["percent_pattern"] = round(float(result["counters"][target_field]) * 100.00 / float(result["score_pattern"]), 1)
             result["counters"] = deep_dict(result["counters"])
             if "children" in result:
@@ -349,9 +350,10 @@ class SuggestQuery(BaseMetricsQuery):
                     continue
                 result["children"] = result["children"][0:10]
                 for child in result["children"]:
-                    child["query_hash_id"] = int(child["query"])
-                    child["query"] = self.query_hash_to_string(child["query_hash_id"])
-                    child["query_verbose"] = self.query_hash_to_verbose_string(child["query_hash_id"])
+                    child_hash_id = int(child["query"])
+                    child["query_hash_id"] = child_hash_id
+                    child["query"] = self.query_hash_to_string(child_hash_id)
+                    child["query_verbose"] = self.query_hash_to_verbose_string(child_hash_id)
                     child["counters"] = deep_dict(child["counters"])
         return results
 
