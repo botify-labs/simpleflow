@@ -14,7 +14,7 @@ class TestSuggestQuery(unittest.TestCase):
         #but a HdfStore object behaves essentially like a dict of DataFrame
         hdfstore = {}
 
-        hashes = ["1", "3", "2"]
+        hashes = ["1", "2", "3"]
         requests = {
             "string": ["string1", "string2", "string3"],
             "verbose_string": ['{"query": "v_string1"}',
@@ -23,9 +23,10 @@ class TestSuggestQuery(unittest.TestCase):
             }
         hdfstore["requests"] = pd.DataFrame(requests, index=hashes)
 
+        #all patterns are children of pattern3
         children_relationship = {
-            "parent": ["2", "2"],
-            "child": ["1", "3"]
+            "parent": ["3", "3"],
+            "child": ["1", "2"]
             }
         hdfstore["children"] = pd.DataFrame(children_relationship)
 
@@ -33,7 +34,7 @@ class TestSuggestQuery(unittest.TestCase):
         self.suggest_query = SuggestQuery(hdfstore)
 
     def test_query_hash_to_string(self):
-        self.assertEqual("string2", self.suggest_query.query_hash_to_string(3))
+        self.assertEqual("string3", self.suggest_query.query_hash_to_string(3))
 
     def test_query_hash_to_string_unexisting_hash(self):
         self.assertRaises(
@@ -52,8 +53,8 @@ class TestSuggestQuery(unittest.TestCase):
             "does_not_exist")
 
     def test_is_child(self):
-        self.assertTrue(self.suggest_query.is_child("2", "1"))
-        self.assertFalse(self.suggest_query.is_child("3", "1"))
+        self.assertTrue(self.suggest_query.is_child("3", "1"))
+        self.assertFalse(self.suggest_query.is_child("2", "1"))
 
     def test_is_child_unexisting_hash(self):
         self.assertFalse(self.suggest_query.is_child("does_not_exist", "1"))
@@ -96,30 +97,18 @@ class TestSuggestQuery(unittest.TestCase):
         self.assertListEqual(expected_result,
                              self.suggest_query.sort_results_by_target_field_count(query, results))
 
-
-    @mock.patch("cdf.collections.suggestions.query.SuggestQuery.is_child")
-    def test_remove_equivalent_parents(self, mock_is_child):
-
-        #mock is child
-        def is_child(*args):
-            parent_hash, _ = args
-            if parent_hash == "hash3":
-                return True
-            else:
-                return False
-
-        mock_is_child.side_effect = is_child
+    def test_remove_equivalent_parents(self):
 
         settings = {"target_field": "field"}
         results = [
-            {"query": "hash1", "counters": {"pages_nb": 10, "field": 10}},
-            {"query": "hash2", "counters": {"pages_nb":  5, "field":  5}},
-            {"query": "hash3", "counters": {"pages_nb": 10, "field": 10}}
+            {"query": "1", "counters": {"pages_nb": 10, "field": 10}},
+            {"query": "2", "counters": {"pages_nb":  5, "field":  5}},
+            {"query": "3", "counters": {"pages_nb": 10, "field": 10}}
         ]
 
         expected_result = [
-            {"query": "hash1", "counters": {"pages_nb": 10, "field": 10}},
-            {"query": "hash2", "counters": {"pages_nb": 5, "field": 5}}
+            {"query": "1", "counters": {"pages_nb": 10, "field": 10}},
+            {"query": "2", "counters": {"pages_nb": 5, "field": 5}}
         ]
 
         self.assertListEqual(expected_result,
