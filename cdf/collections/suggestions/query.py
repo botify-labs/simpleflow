@@ -352,6 +352,15 @@ class SuggestQuery(BaseMetricsQuery):
 
     def _compute_scores(self, results, target_field, total_results, total_results_by_pattern):
         """Compute the different metrics for the results
+        """
+        for result in results:
+            query_hash_id = int(result["query"])
+            pattern_size = total_results_by_pattern[query_hash_id]
+            self._compute_scores_one_result(result, target_field, total_results, pattern_size)
+        return results
+
+    def _compute_scores_one_result(self, result, target_field, total_results, pattern_size):
+        """Compute the different metrics for one result
         The method computes four metrics:
         - score: nb urls with the target_field property
         - score_pattern : nb urls in pattern
@@ -359,20 +368,16 @@ class SuggestQuery(BaseMetricsQuery):
         - percent_total : proportion of urls from the pattern in the urls with the target_field property
                           (= 100 * score/nb_url_with_property)
         """
-        for result in results:
-            result["score"] = result["counters"][target_field]
-            query_hash_id = int(result["query"])
+        result["score"] = result["counters"][target_field]
+        # if total_results is zero, it must comes from a target_field based on a complex operation like "div"
+        # So we cannot know the value from the full crawl
+        if total_results:
+            result["percent_total"] = round(float(result["counters"][target_field]) * 100.00 / float(total_results), 1)
+        else:
+            result["percent_total"] = -1
 
-            # if total_results is zero, it must comes from a target_field based on a complex operation like "div"
-            # So we cannot know the value from the full crawl
-            if total_results:
-                result["percent_total"] = round(float(result["counters"][target_field]) * 100.00 / float(total_results), 1)
-            else:
-                result["percent_total"] = -1
-
-            result["score_pattern"] = total_results_by_pattern[query_hash_id]
-            result["percent_pattern"] = round(float(result["counters"][target_field]) * 100.00 / float(result["score_pattern"]), 1)
-        return results
+        result["score_pattern"] = pattern_size
+        result["percent_pattern"] = round(float(result["counters"][target_field]) * 100.00 / float(pattern_size), 1)
 
     def _get_total_results(self, query):
         """Return the total number of items for the given query
