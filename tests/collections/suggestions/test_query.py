@@ -298,7 +298,6 @@ class TestSuggestQuery(unittest.TestCase):
             "filters": {"field": "depth", "value": 3, "predicate": "lt"}
         }
 
-
         expected_results = [
             {
                 'query_hash_id': 3,
@@ -321,6 +320,64 @@ class TestSuggestQuery(unittest.TestCase):
                 'score': 0,
                 'query': u'string2',
                 'counters': {'error_links': {'4xx': 0}}
+            }
+        ]
+
+        self.assertListEqual(expected_results,
+                             self.suggest_query._query(dataframe, settings, sort_results))
+
+    def test_query_empty_dataframe(self):
+        dataframe = pd.DataFrame()
+        sort_results = True
+        settings = {
+            "target_field": "error_links.4xx",
+            "fields": ["error_links.4xx"],
+        }
+
+        self.assertListEqual([],
+                             self.suggest_query._query(dataframe, settings, sort_results))
+
+
+    @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results",
+                new=lambda x, y: 10)
+    @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results_by_pattern",
+                new=lambda x, y: {1: 4, 3: 5})
+    def test_query_div(self):
+        data = {
+            "query": [1, 3],
+            "metadata_nb.h1.filled": [20, 5],
+            "pages_nb": [4, 5]
+        }
+        dataframe = pd.DataFrame(data)
+
+        sort_results = True
+        settings = {
+            "target_field": {"div": ["metadata_nb.h1.filled", "pages_nb"]},
+            "fields": ["pages_nb"],
+        }
+
+        expected_results = [
+            {
+                'query_hash_id': 1,
+                'query_bql': u'string1',
+                'score_pattern': 4,
+                'percent_total': 50.0,
+                'percent_pattern': 125.0,  # 125=target_field/4=(20/4)/4 this number does not really make sense
+                'score': 5,
+                'query': u'string1',
+                'counters': {'pages_nb': 4,
+                             'score': 5},
+            },
+            {
+                'query_hash_id': 3,
+                'query_bql': u'string3',
+                'score_pattern': 5,
+                'percent_total': 10.0,
+                'percent_pattern': 20.0,  # 20=target_field/5=(5/5)/5 this number does not really make sense
+                'score': 1,
+                'query': u'string3',
+                'counters': {'pages_nb': 5,
+                             'score': 1},
             }
         ]
 
