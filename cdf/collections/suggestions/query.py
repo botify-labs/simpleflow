@@ -281,7 +281,7 @@ class SuggestQuery(BaseMetricsQuery):
         The method is almost identical to the query() function
         but it is easier to test since we can pass the dataframe as parameter
         """
-        results = self._raw_query(df, settings, sort_results)
+        results = self._raw_query(df, settings)
         if len(results) == 0:
             return results
 
@@ -300,7 +300,7 @@ class SuggestQuery(BaseMetricsQuery):
         self._resolve_results(results, display_children)
         return results[0:30]
 
-    def _raw_query(self, df, settings, sort_results):
+    def _raw_query(self, df, settings):
         """Run a query on the dataframe,
         but does not perform any postprocessing on it: no result filtering,
                                                        no query resolution

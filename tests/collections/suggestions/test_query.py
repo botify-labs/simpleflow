@@ -307,7 +307,6 @@ class TestSuggestQuery(unittest.TestCase):
         }
         dataframe = pd.DataFrame(data)
 
-        sort_results = True
         settings = {
             "target_field": "error_links.4xx",
             "fields": ["error_links.4xx"],
@@ -327,7 +326,7 @@ class TestSuggestQuery(unittest.TestCase):
         ]
 
         self.assertListEqual(expected_results,
-                             self.suggest_query._raw_query(dataframe, settings, sort_results))
+                             self.suggest_query._raw_query(dataframe, settings))
 
     def test_raw_query_div(self):
         data = {
@@ -337,7 +336,6 @@ class TestSuggestQuery(unittest.TestCase):
         }
         dataframe = pd.DataFrame(data)
 
-        sort_results = True
         settings = {
             "target_field": {"div": ["metadata_nb.h1.filled", "pages_nb"]},
             "fields": ["pages_nb"],
@@ -355,7 +353,7 @@ class TestSuggestQuery(unittest.TestCase):
         ]
 
         self.assertListEqual(expected_results,
-                             self.suggest_query._raw_query(dataframe, settings, sort_results))
+                             self.suggest_query._raw_query(dataframe, settings))
 
     @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results",
                 new=lambda x, y: 10)
