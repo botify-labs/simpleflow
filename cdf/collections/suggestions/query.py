@@ -322,10 +322,10 @@ class SuggestQuery(BaseMetricsQuery):
 
         display_children = settings.get('display_children', True)
         results = self._compute_scores(results, target_field, total_results, total_results_by_pattern)
-        results = self._resolve_query(results, display_children)
+        results = self._resolve_results(results, display_children)
         return results[0:30]
 
-    def _resolve_query(self, results, display_children):
+    def _resolve_results(self, results, display_children):
         # Resolve query
         for result in results:
             self._resolve_result(result, False)
