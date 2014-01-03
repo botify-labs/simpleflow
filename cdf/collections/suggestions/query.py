@@ -328,25 +328,24 @@ class SuggestQuery(BaseMetricsQuery):
     def _resolve_query(self, results, display_children):
         # Resolve query
         for result in results:
-            query_hash_id = int(result["query"])
-            result["query_hash_id"] = query_hash_id
-            result["query_bql"] = self.query_hash_to_string(query_hash_id)
-            result["query"] = self.query_hash_to_string(query_hash_id)
-            #result["query"] = self.query_hash_to_verbose_string(query_hash_id)
-
-            result["counters"] = deep_dict(result["counters"])
+            self._resolve_result(result, False)
             if "children" in result:
                 if not display_children:
                     del result["children"]
                     continue
                 result["children"] = result["children"][0:10]
                 for child in result["children"]:
-                    child_hash_id = int(child["query"])
-                    child["query_hash_id"] = child_hash_id
-                    child["query"] = self.query_hash_to_string(child_hash_id)
-                    child["query_verbose"] = self.query_hash_to_verbose_string(child_hash_id)
-                    child["counters"] = deep_dict(child["counters"])
+                    self._resolve_result(child, True)
         return results
+
+    def _resolve_result(self, result, resolve_verbose):
+        query_hash_id = int(result["query"])
+        result["query_hash_id"] = query_hash_id
+        result["query_bql"] = self.query_hash_to_string(query_hash_id)
+        result["query"] = self.query_hash_to_string(query_hash_id)
+        if resolve_verbose:
+            result["query_verbose"] = self.query_hash_to_verbose_string(query_hash_id)
+        result["counters"] = deep_dict(result["counters"])
 
     def _compute_scores(self, results, target_field, total_results, total_results_by_pattern):
         for result in results:
