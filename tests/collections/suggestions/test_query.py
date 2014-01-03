@@ -3,7 +3,28 @@ import mock
 
 import pandas as pd
 
-from cdf.collections.suggestions.query import SuggestQuery
+from cdf.collections.suggestions.query import (is_dict_filter,
+                                               is_boolean_operation_filter,
+                                               SuggestQuery)
+
+
+class TestIsDictFilter(unittest.TestCase):
+    def test_is_dict_filter(self):
+        self.assertTrue(is_dict_filter({"field": "foo", "value": "bar"}))
+        self.assertFalse(is_dict_filter({"field": "foo"}))
+        self.assertFalse(is_dict_filter({"value": "bar"}))
+
+
+class TestIsBooleanOperationFilter(unittest.TestCase):
+    def test_is_boolean_operation_filter(self):
+        self.assertTrue(is_boolean_operation_filter({"and": []}))
+        self.assertTrue(is_boolean_operation_filter({"or": []}))
+        #the method currently returns True on this data
+        #but this migth not be the right behavior
+        self.assertTrue(is_boolean_operation_filter({"and": "foo"}))
+
+        self.assertFalse(is_boolean_operation_filter({"or": [], "and": []}))
+        self.assertFalse(is_boolean_operation_filter({"foo": []}))
 
 
 class TestSuggestQuery(unittest.TestCase):
@@ -81,7 +102,7 @@ class TestSuggestQuery(unittest.TestCase):
         expected_result = [
             {"query": "string1", "counters": {"field1": 2, "pages_nb": 4}},
             {"query": "string2", "counters": {"field1": 1, "pages_nb": 5}}
-            ]
+        ]
 
         self.assertListEqual(expected_result,
                              self.suggest_query.sort_results_by_target_field_count(query, results))
