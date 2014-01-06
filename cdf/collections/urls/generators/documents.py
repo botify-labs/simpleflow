@@ -66,8 +66,15 @@ def extract_infos(attributes, stream_item):
     job_in_progress=2,
     """
 
-    stream_item[date_crawled_idx] = date_2k_mn_to_date(stream_item[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
-    attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item) if i[0] != 'infos_mask'})
+    stream_item[date_crawled_idx] = date_2k_mn_to_date(
+        stream_item[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
+    attributes.update(
+        {i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item)
+         if i[0] != 'infos_mask'})
+
+    # `?` should be rename to `not-set`
+    if attributes['content_type'] == '?':
+        attributes['content_type'] = 'not-set'
 
     # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
     infos_mask = stream_item[idx_from_stream('infos', 'infos_mask')]

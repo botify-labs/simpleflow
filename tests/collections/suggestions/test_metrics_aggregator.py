@@ -84,7 +84,7 @@ class TestMetricsAggregator(unittest.TestCase):
             [2, 1, 'text/html', 1, 1, 300, 1024, 100, 100],
             [3, 8, 'text/html', 1, 1, 400, 1024, 100, 100],
             [4, 1, 'text/html', 0, 1, 200, 1024, 100, 100],
-            [5, 4, 'text/html', 3, 1, 200, 1024, 100, 100]
+            [5, 4, '?', 3, 1, 200, 1024, 100, 100]  # `?` should be replaced
         ]
 
         stream_suggest = [
@@ -101,7 +101,7 @@ class TestMetricsAggregator(unittest.TestCase):
             ['0', 'text/html', 0, 200, True, True],
             ['0', 'text/html', 1, 300, True, True],
             ['0', 'text/html', 1, 400, True, False],
-            ['0', 'text/html', 3, 200, False, True]
+            ['0', 'not-set', 3, 200, False, True]
         ]
 
         self.assertEqual(sorted(expected), sorted(properties))
