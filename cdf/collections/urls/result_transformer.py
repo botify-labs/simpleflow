@@ -293,6 +293,7 @@ class IdToUrlTransformer(ResultTransformer):
                                                             for url_id in self.ids)},
                                           index=self.es_index,
                                           doc_type=self.es_doctype,
+                                          routing=self.crawl_id,
                                           fields=["url", "http_code"])
         # All referenced urlids should be in ElasticSearch index.
         if not all([url["exists"] for url in resolved_urls['docs']]):
