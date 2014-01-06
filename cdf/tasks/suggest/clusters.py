@@ -1,15 +1,15 @@
 import os
 import re
 
-from autotagging.association_rules.algorithm import discover_host_patterns
-from autotagging.association_rules.algorithm import discover_query_strings_patterns
-from autotagging.association_rules.algorithm import discover_metadata_patterns
-from autotagging.association_rules.algorithm import discover_path_patterns
-from autotagging.association_rules.algorithm import discover_mixed_patterns
-from autotagging.association_rules.algorithm import build_children_relationship
+from autotagging.association_rules.algorithm import (discover_host_patterns,
+                                                     discover_query_strings_patterns,
+                                                     discover_metadata_patterns,
+                                                     discover_path_patterns,
+                                                     discover_mixed_patterns,
+                                                     build_children_relationship)
 from autotagging.visualization.textual import (save_mixed_clusters,
-                                               save_url_suggested_clusters)
-from autotagging.visualization.textual import save_child_relationship
+                                               save_url_suggested_clusters,
+                                               save_child_relationship)
 
 from cdf.utils.path import makedirs
 from cdf.utils.remote_files import nb_parts_from_crawl_location
