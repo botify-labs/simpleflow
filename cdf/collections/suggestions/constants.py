@@ -114,11 +114,6 @@ COUNTERS_FIELDS = (
     'outlinks_external_nb.nofollow_combinations.link_meta',
     'outlinks_external_nb.nofollow_combinations.meta',
 
-    'outlinks_external_nb.nofollow_combinations_unique',
-    'outlinks_external_nb.nofollow_combinations_unique.link',
-    'outlinks_external_nb.nofollow_combinations_unique.link_meta',
-    'outlinks_external_nb.nofollow_combinations_unique.meta',
-
     'delay_gte_2s',
     'delay_from_1s_to_2s',
     'delay_from_500ms_to_1s',

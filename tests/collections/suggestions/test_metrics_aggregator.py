@@ -183,7 +183,7 @@ class TestMetricsAggregator(unittest.TestCase):
             [1, ['robots', 'link', 'meta'], True, 3, 2],
             [2, ['follow'], True, 30, 25],
             [2, ['meta'], False, 10, 8],
-            [2, ['meta', 'link'], False, 2, 1],
+            [2, ['meta', 'link'], True, 2, 1],
         ]
 
         self.kwargs['stream_outlinks_counters'] = iter(stream_outlinks_counters)
@@ -194,33 +194,31 @@ class TestMetricsAggregator(unittest.TestCase):
         target_int = result[0]['counters']['outlinks_internal_nb']
 
         # counters for internal outlinks
-        self.assertEqual(target_int['total'], 43)
+        self.assertEqual(target_int['total'], 45)
         self.assertEqual(target_int['follow'], 40)
         self.assertEqual(target_int['follow_unique'], 30)
-        self.assertEqual(target_int['nofollow'], 3)
-        self.assertEqual(target_int['nofollow_unique'], 2)
-        self.assertEqual(target_int['total_unique'], 32)
+        self.assertEqual(target_int['nofollow'], 5)
+        self.assertEqual(target_int['nofollow_unique'], 3)
+        self.assertEqual(target_int['total_unique'], 33)
         self.assertEqual(target_int['total_urls'], 2)
         self.assertEqual(target_int['follow_urls'], 2)
 
         # counters for external outlinks
-        self.assertEqual(target_ext['total'], 17)
+        self.assertEqual(target_ext['total'], 15)
         self.assertEqual(target_ext['follow'], 5)
-        self.assertEqual(target_ext['nofollow'], 12)
+        self.assertEqual(target_ext['nofollow'], 10)
 
         # asserts on `nofollow_combinations`
         # `nofollow_combinations_unique` calculated with `score_unique`
         nfc_key = 'nofollow_combinations_unique'
         self.assertEqual(target_int[nfc_key]['link_meta_robots'], 2)
-        self.assertEqual(target_ext[nfc_key]['meta'], 8)
-        self.assertEqual(target_ext[nfc_key]['link_meta'], 1)
-        self.assertEqual(target_ext[nfc_key]['link'], 0)
+        self.assertEqual(target_int[nfc_key]['link_meta'], 1)
 
         # `nofollow_combinations` calculated with `score`
         nfc_key = 'nofollow_combinations'
         self.assertEqual(target_int[nfc_key]['link_meta_robots'], 3)
+        self.assertEqual(target_int[nfc_key]['link_meta'], 2)
         self.assertEqual(target_ext[nfc_key]['meta'], 10)
-        self.assertEqual(target_ext[nfc_key]['link_meta'], 2)
         self.assertEqual(target_ext[nfc_key]['link'], 0)
 
     def test_in_links(self):

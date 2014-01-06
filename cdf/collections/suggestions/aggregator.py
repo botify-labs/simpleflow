@@ -312,27 +312,32 @@ class MetricsAggregator(object):
                 results[key][counter_key]['total'] += score
                 results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += score
 
+                # `unique` link information is needed only for `internal` links
                 if is_internal:
                     results[key][counter_key]['total_unique'] += score_unique
                     if not has_out_internal:
                         has_out_internal = True
                         results[key][counter_key]['total_urls'] += 1
 
+                # follow
                 if follow_key == 'follow':
                     if is_internal:
                         results[key][counter_key]['follow_unique'] += score_unique
                         if not has_out_follow:
                             has_out_follow = True
                             results[key][counter_key]['follow_urls'] += 1
+                # nofollow
                 else:
                     if is_internal:
                         results[key][counter_key]['nofollow_unique'] += score_unique
                     if follow_key not in results[key][counter_key]['nofollow_combinations']:
                         results[key][counter_key]['nofollow_combinations'][follow_key] = score
-                        results[key][counter_key]['nofollow_combinations_unique'][follow_key] = score_unique
+                        if is_internal:
+                            results[key][counter_key]['nofollow_combinations_unique'][follow_key] = score_unique
                     else:
                         results[key][counter_key]['nofollow_combinations'][follow_key] += score
-                        results[key][counter_key]['nofollow_combinations_unique'][follow_key] += score_unique
+                        if is_internal:
+                            results[key][counter_key]['nofollow_combinations_unique'][follow_key] += score_unique
 
             for entry in badlinks:
                 _, http_code, count = entry
