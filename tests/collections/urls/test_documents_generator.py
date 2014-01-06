@@ -92,8 +92,6 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         document = u.__iter__().next()[1]
         self.assertEquals(document['query_string'], '?f1=v1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
-        self.assertEquals(document['query_string_keys_order'], 'f1;f2')
-        self.assertEquals(document['query_string_items'], [['f1', 'v1'], ['f2', 'v2']])
 
     def test_query_string_without_value(self):
         patterns = [
@@ -108,8 +106,6 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         document = u.__iter__().next()[1]
         self.assertEquals(document['query_string'], '?f1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
-        self.assertEquals(document['query_string_keys_order'], 'f1;f2')
-        self.assertEquals(document['query_string_items'], [['f1', ''], ['f2', 'v2']])
 
     def test_metadata(self):
         patterns = [
