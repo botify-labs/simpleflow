@@ -59,6 +59,7 @@ def compute_mixed_clusters(crawl_id,
     nb_crawled_urls = get_nb_crawled_urls(tmp_dir)
 
     patterns = []
+    ######################## host patterns ########################
     logger.info("Discovering patterns on host.")
     host_stream_factory = HostStreamFactory(tmp_dir, crawler_metakeys)
     try:
@@ -68,12 +69,12 @@ def compute_mixed_clusters(crawl_id,
 
         #find patterns on hosts
         cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["host"]
-        patterns.append([(cluster_type, pattern, support) for pattern, support in host_patterns])
+        patterns.append([(cluster_type, pattern, support) for
+                         pattern, support in host_patterns])
     except TooManyCombinationsError as e:
         logger.warning("Could not compute patterns on host: '%s'.", str(e))
 
-
-    #find patterns on pathes
+    ######################## path patterns ###############################
     logger.info("Discovering patterns on path.")
     path_stream_factory = PathStreamFactory(tmp_dir, crawler_metakeys)
     try:
@@ -81,10 +82,12 @@ def compute_mixed_clusters(crawl_id,
                                                nb_crawled_urls,
                                                minimal_frequency)
         cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["path"]
-        patterns.append([(cluster_type, pattern, support) for pattern, support in path_patterns])
+        patterns.append([(cluster_type, pattern, support) for
+                         pattern, support in path_patterns])
     except TooManyCombinationsError as e:
         logger.warning("Could not compute patterns on path: '%s'.", str(e))
 
+    ######################## query string patterns #######################
     logger.info("Discovering patterns on query string.")
     query_string_stream_factory = QueryStringStreamFactory(tmp_dir,
                                                            crawler_metakeys)
@@ -93,10 +96,12 @@ def compute_mixed_clusters(crawl_id,
                                                                 nb_crawled_urls,
                                                                 minimal_frequency)
         cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["qskey"]
-        patterns.append([(cluster_type, pattern, support) for pattern, support in query_string_patterns])
+        patterns.append([(cluster_type, pattern, support) for
+                         pattern, support in query_string_patterns])
     except TooManyCombinationsError as e:
         logger.warning("Could not compute patterns on query string: '%s'.", str(e))
 
+    ######################## metadata patterns ###########################
     for metadata_type in ["title", "h1", "h2"]:
         logger.info("Discovering patterns on %s.", metadata_type)
         metadata_stream_factory = MetadataStreamFactory(tmp_dir,
@@ -108,14 +113,18 @@ def compute_mixed_clusters(crawl_id,
                                                            minimal_frequency)
 
             cluster_type = CLUSTER_TYPE_TO_ID["metadata"][CONTENT_TYPE_NAME_TO_ID[metadata_type]]
-            patterns.append([(cluster_type, pattern, support) for pattern, support in metadata_patterns])
+            patterns.append([(cluster_type, pattern, support) for
+                             pattern, support in metadata_patterns])
         except TooManyCombinationsError as e:
-            logger.warning("Could not compute patterns on %s: '%s'", metadata_type, str(e))
+            logger.warning("Could not compute patterns on %s: '%s'",
+                           metadata_type, str(e))
 
     logger.info("Mixing patterns from different kinds of data together.")
-    mixed_patterns = discover_mixed_patterns(patterns, nb_crawled_urls, minimal_frequency)
+    mixed_patterns = discover_mixed_patterns(patterns,
+                                             nb_crawled_urls,
+                                             minimal_frequency)
 
-    ######################## save results ########################
+    ######################## save results ################################
     files_to_push = []
 
     mixed_clusters_filepath = save_mixed_clusters(mixed_patterns,
