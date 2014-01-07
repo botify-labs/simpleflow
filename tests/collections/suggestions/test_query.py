@@ -211,29 +211,7 @@ class TestSuggestQuery(unittest.TestCase):
                              ]
             }]
 
-        display_children = True
-        self.suggest_query._resolve_results(results, display_children)
-        self.assertListEqual(expected_result, results)
-
-        #do not display children
-
-        #we redefine results as the previous call has modified it.
-        results = [
-            {
-                "query": "1",
-                "counters": {"pages_nb": 5}
-            },
-            {
-                "query": "3",
-                "counters": {"pages_nb": 2},
-                "children": [{"query": "2", "counters": {"pages_nb": 1}}]
-            },
-        ]
-        display_children = False
-        #the expected result is the same except
-        #that the children entry is removed
-        del expected_result[1]["children"]
-        self.suggest_query._resolve_results(results, display_children)
+        self.suggest_query._resolve_results(results)
         self.assertListEqual(expected_result, results)
 
     def test_compute_scores(self):

@@ -324,10 +324,9 @@ class SuggestQuery(BaseMetricsQuery):
         total_results = self._get_total_results(settings)
         total_results_by_pattern = self._get_total_results_by_pattern(settings)
 
-        display_children = settings.get('display_children', True)
         self._compute_scores(results, target_field,
                              total_results, total_results_by_pattern)
-        self._resolve_results(results, display_children)
+        self._resolve_results(results)
         return results[0:30]
 
     def _raw_query(self, df, settings):
@@ -383,26 +382,17 @@ class SuggestQuery(BaseMetricsQuery):
 
         return results
 
-    def _resolve_results(self, results, display_children):
+    def _resolve_results(self, results):
         """Transform results identified by their hashes
         to a result identified by their full-letter queries
         :param results: the list of input results.
                         the results will be modified by the method
         :type results: list
-        :param display_children: if False, the children patterns
-                                 are removed from the results
-                                 Results can have "children" entry
-                                 corresponding patterns which are included in them.
-                                 This parameter decides what to do with them
-        :type display_children: bool
         """
         # Resolve query
         for result in results:
             self._resolve_result(result)
             if "children" in result:
-                if not display_children:
-                    del result["children"]
-                    continue
                 result["children"] = result["children"][0:10]
                 for child in result["children"]:
                     self._resolve_result(child)
