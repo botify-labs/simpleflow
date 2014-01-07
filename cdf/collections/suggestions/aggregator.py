@@ -220,6 +220,8 @@ class MetricsAggregator(object):
                     results[key]['canonical_nb']['equal'] += 1
                 else:
                     results[key]['canonical_nb']['not_equal'] += 1
+            else:
+                results[key]['canonical_nb']['not_filled'] += 1
 
             if incanonicals:
                 results[key]['canonical_nb']['incoming'] += incanonicals[incanonical_score_idx]
