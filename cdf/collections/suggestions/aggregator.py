@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import copy
-import itertools
 import pyhash
 hasher = pyhash.fnv1_32()
 
@@ -11,7 +10,6 @@ from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES, MAN
 from cdf.streams.utils import group_left, idx_from_stream
 from cdf.collections.suggestions.constants import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
 from cdf.utils.dict import deep_update, flatten_dict
-from cdf.utils.hashing import string_to_int64
 from cdf.log import logger
 
 
@@ -65,7 +63,6 @@ class MetricsAggregator(object):
         self.stream_in_canonical_counters = stream_incanonical_counters
         self.stream_in_redirect_counters = stream_inredirect_counters
         self.stream_badlinks_counters = stream_badlinks_counters
-
 
     def get(self):
         """
@@ -127,17 +124,25 @@ class MetricsAggregator(object):
         """
 
         left = (self.stream_patterns, 0)
-        streams_ref = {'suggest': (self.stream_suggest, 0),
-                       'infos': (self.stream_infos, 0),
-                       'in_links_counters': (self.stream_in_links_counters, idx_from_stream('inlinks_counters', 'id')),
-                       'in_canonical_counters': (self.stream_in_canonical_counters, idx_from_stream('incanonical_counters', 'id')),
-                       'in_redirect_counters': (self.stream_in_redirect_counters, idx_from_stream('inredirect_counters', 'id')),
-                       'out_links_counters': (self.stream_out_links_counters, idx_from_stream('outlinks_counters', 'id')),
-                       'out_canonical_counters': (self.stream_out_canonical_counters, idx_from_stream('outcanonical_counters', 'id')),
-                       'out_redirect_counters': (self.stream_out_redirect_counters, idx_from_stream('outredirect_counters', 'id')),
-                       'contents_duplicate': (self.stream_contents_duplicate, idx_from_stream('contents_duplicate', 'id')),
-                       'badlinks_counters': (self.stream_badlinks_counters, idx_from_stream('badlinks_counters', 'id'))
-                       }
+        streams_ref = {
+            'suggest': (self.stream_suggest, 0),
+            'infos': (self.stream_infos, 0),
+            'in_links_counters': (self.stream_in_links_counters,
+                                  idx_from_stream('inlinks_counters', 'id')),
+            'in_canonical_counters': (self.stream_in_canonical_counters,
+                                      idx_from_stream('incanonical_counters', 'id')),
+            'in_redirect_counters': (self.stream_in_redirect_counters,
+                                     idx_from_stream('inredirect_counters', 'id')),
+            'out_links_counters': (self.stream_out_links_counters, idx_from_stream('outlinks_counters', 'id')),
+            'out_canonical_counters': (self.stream_out_canonical_counters,
+                                       idx_from_stream('outcanonical_counters', 'id')),
+            'out_redirect_counters': (self.stream_out_redirect_counters,
+                                      idx_from_stream('outredirect_counters', 'id')),
+            'contents_duplicate': (self.stream_contents_duplicate,
+                                   idx_from_stream('contents_duplicate', 'id')),
+            'badlinks_counters': (self.stream_badlinks_counters,
+                                  idx_from_stream('badlinks_counters', 'id'))
+        }
 
         depth_idx = idx_from_stream('infos', 'depth')
         content_type_idx = idx_from_stream('infos', 'content_type')
@@ -174,23 +179,23 @@ class MetricsAggregator(object):
                 keys = [str(score_unique), 'lt_10', 'lte_3']
             elif score_unique < 10:
                 keys = [str(score_unique), 'lt_10']
-            elif score_unique >= 10 and score_unique < 20:
+            elif 10 <= score_unique < 20:
                 keys = ['10_to_19']
-            elif score_unique >= 20 and score_unique < 30:
+            elif 20 <= score_unique < 30:
                 keys = ['20_to_29']
-            elif score_unique >= 30 and score_unique < 40:
+            elif 30 <= score_unique < 40:
                 keys = ['30_to_39']
-            elif score_unique >= 40 and score_unique < 50:
+            elif 40 <= score_unique < 50:
                 keys = ['40_to_49']
-            elif score_unique >= 50 and score_unique < 100:
+            elif 50 <= score_unique < 100:
                 keys = ['50_to_99']
-            elif score_unique >= 100 and score_unique < 1000:
+            elif 100 <= score_unique < 1000:
                 keys = ['100_to_999']
-            elif score_unique >= 1000 and score_unique < 10000:
+            elif 1000 <= score_unique < 10000:
                 keys = ['1000_to_9999']
-            elif score_unique >= 10000 and score_unique < 100000:
+            elif 10000 <= score_unique < 100000:
                 keys = ['10000_to_99999']
-            elif score_unique >= 100000 and score_unique < 1000000:
+            elif 100000 <= score_unique < 1000000:
                 keys = ['100000_to_999999']
             elif score_unique >= 1000000:
                 keys = ['gte_1M']
@@ -228,19 +233,19 @@ class MetricsAggregator(object):
             has_out_internal = False
 
             # Store metadata counters
-            """
-            "metadata_nb": {
-                "h1": {
-                    "filled": 2,
-                    "not_filled": 1,
-                    "unique": 1,
-                },
-                "title": {
-                    ...
-                },
-                "not_enough": 1
-            }
-            """
+
+            # "metadata_nb": {
+            #     "h1": {
+            #         "filled": 2,
+            #         "not_filled": 1,
+            #         "unique": 1,
+            #     },
+            #     "title": {
+            #         ...
+            #     },
+            #     "not_enough": 1
+            # }
+
             # If the url has not h1, title or description, we considered that there is not enough metadata
             # TODO if we have meta types 1,2,3, is it `not_enough` ??
             meta_types_available = [i[content_duplicate_meta_type_idx] for i in contents_duplicate]
@@ -264,18 +269,18 @@ class MetricsAggregator(object):
                     results[key]['metadata_nb'][CONTENT_TYPE_INDEX[ct_id]]['not_filled'] += 1
 
             # Store inlinks and outlinks counters
-            """
-            "outlinks_external_nb": {
-                "total": 10,
-                "follow": 8,
-                "follow_unique": 6,
-                "nofollow": 2,
-                "nofollow_combinations": {
-                    "link_meta": 1,
-                    "link": 1
-                }
-            },
-            """
+
+            # "outlinks_external_nb": {
+            #     "total": 10,
+            #     "follow": 8,
+            #     "follow_unique": 6,
+            #     "nofollow": 2,
+            #     "nofollow_combinations": {
+            #         "link_meta": 1,
+            #         "link": 1
+            #     }
+            # },
+
             for entry in inlinks:
                 url_id, follow, score, score_unique = entry
                 counter_key = 'inlinks_internal_nb'
@@ -292,10 +297,13 @@ class MetricsAggregator(object):
                     results[key][counter_key]['follow_unique'] += score_unique
                     inlink_follow_dist(results[key][counter_key], score_unique)
                 else:
+                    results[key][counter_key]['nofollow_unique'] += score_unique
                     if follow_key not in results[key][counter_key]['nofollow_combinations']:
-                        results[key][counter_key]['nofollow_combinations'][follow_key] = score_unique
+                        results[key][counter_key]['nofollow_combinations'][follow_key] = score
+                        results[key][counter_key]['nofollow_combinations_unique'][follow_key] = score_unique
                     else:
-                        results[key][counter_key]['nofollow_combinations'][follow_key] += score_unique
+                        results[key][counter_key]['nofollow_combinations'][follow_key] += score
+                        results[key][counter_key]['nofollow_combinations_unique'][follow_key] += score_unique
 
             for entry in outlinks:
                 url_id, follow, is_internal, score, score_unique = entry
@@ -304,23 +312,32 @@ class MetricsAggregator(object):
                 results[key][counter_key]['total'] += score
                 results[key][counter_key]['follow' if follow_key == 'follow' else 'nofollow'] += score
 
+                # `unique` link information is needed only for `internal` links
                 if is_internal:
                     results[key][counter_key]['total_unique'] += score_unique
                     if not has_out_internal:
                         has_out_internal = True
                         results[key][counter_key]['total_urls'] += 1
 
+                # follow
                 if follow_key == 'follow':
                     if is_internal:
                         results[key][counter_key]['follow_unique'] += score_unique
                         if not has_out_follow:
                             has_out_follow = True
                             results[key][counter_key]['follow_urls'] += 1
+                # nofollow
                 else:
+                    if is_internal:
+                        results[key][counter_key]['nofollow_unique'] += score_unique
                     if follow_key not in results[key][counter_key]['nofollow_combinations']:
-                        results[key][counter_key]['nofollow_combinations'][follow_key] = score_unique
+                        results[key][counter_key]['nofollow_combinations'][follow_key] = score
+                        if is_internal:
+                            results[key][counter_key]['nofollow_combinations_unique'][follow_key] = score_unique
                     else:
-                        results[key][counter_key]['nofollow_combinations'][follow_key] += score_unique
+                        results[key][counter_key]['nofollow_combinations'][follow_key] += score
+                        if is_internal:
+                            results[key][counter_key]['nofollow_combinations_unique'][follow_key] += score_unique
 
             for entry in badlinks:
                 _, http_code, count = entry
@@ -357,8 +374,12 @@ class MetricsAggregator(object):
             suggest_keys = get_keys_from_stream_suggest(result[2]['suggest'])
 
             for suggest_key in suggest_keys:
+                content_type = infos[content_type_idx]
+                if content_type == '?':
+                    content_type = 'not-set'
+
                 key = (suggest_key,
-                       infos[content_type_idx],
+                       content_type,
                        infos[depth_idx],
                        http_code,
                        index,
@@ -379,7 +400,8 @@ class MetricsConsolidator(object):
 
     def __init__(self, part_stats):
         """
-        Consolidate all dictionnaries coming from all PropertiesStats parts and aggregate counters by cross-property into one.
+        Consolidate all dictionnaries coming from all PropertiesStats parts
+        and aggregate counters by cross-property into one.
         """
         self.part_stats = part_stats
 

@@ -58,7 +58,7 @@ def compute_mixed_clusters(crawl_id,
     nb_crawled_urls = get_nb_crawled_urls(tmp_dir)
 
     patterns = []
-
+    logger.info("Discovering patterns on host.")
     host_stream_factory = HostStreamFactory(tmp_dir, crawler_metakeys)
     host_patterns = discover_host_patterns(host_stream_factory,
                                            nb_crawled_urls,
@@ -69,6 +69,7 @@ def compute_mixed_clusters(crawl_id,
     patterns.append([(cluster_type, pattern, support) for pattern, support in host_patterns])
 
     #find patterns on pathes
+    logger.info("Discovering patterns on path.")
     path_stream_factory = PathStreamFactory(tmp_dir, crawler_metakeys)
     path_patterns = discover_path_patterns(path_stream_factory,
                                            nb_crawled_urls,
@@ -76,6 +77,7 @@ def compute_mixed_clusters(crawl_id,
     cluster_type = CLUSTER_TYPE_TO_ID["pattern"]["path"]
     patterns.append([(cluster_type, pattern, support) for pattern, support in path_patterns])
 
+    logger.info("Discovering patterns on query string.")
     query_string_stream_factory = QueryStringStreamFactory(tmp_dir,
                                                            crawler_metakeys)
     query_string_patterns = discover_query_strings_patterns(query_string_stream_factory,
@@ -96,33 +98,32 @@ def compute_mixed_clusters(crawl_id,
         cluster_type = CLUSTER_TYPE_TO_ID["metadata"][CONTENT_TYPE_NAME_TO_ID[metadata_type]]
         patterns.append([(cluster_type, pattern, support) for pattern, support in metadata_patterns])
 
+    logger.info("Mixing patterns from different kinds of data together.")
     mixed_patterns = discover_mixed_patterns(patterns, nb_crawled_urls, minimal_frequency)
 
-
     ######################## save results ########################
+    files_to_push = []
+
     mixed_clusters_filepath = save_mixed_clusters(mixed_patterns,
                                                   output_dir,
                                                   "mixed")
-
-    push_file(
-        os.path.join(s3_uri, os.path.basename(mixed_clusters_filepath)),
-        os.path.join(mixed_clusters_filepath)
-    )
+    files_to_push.append(mixed_clusters_filepath)
 
     suggested_clusters_files = save_url_suggested_clusters(mixed_patterns,
                                                            output_dir,
                                                            first_part_id_size,
                                                            part_id_size)
-    for file_path in suggested_clusters_files:
-        push_file(
-            os.path.join(s3_uri, os.path.basename(file_path)),
-            os.path.join(file_path),
-        )
+    files_to_push.extend(suggested_clusters_files)
 
+    logger.info("Computing children relationship between patterns.")
     children_dictionary = build_children_relationship(mixed_patterns)
     children_filepath = save_child_relationship(children_dictionary,
                                                 output_dir)
-    push_file(
-        os.path.join(s3_uri, os.path.basename(children_filepath)),
-        os.path.join(children_filepath)
-    )
+    files_to_push.append(children_filepath)
+
+    #push files to s3
+    for filepath in files_to_push:
+        push_file(
+            os.path.join(s3_uri, os.path.basename(filepath)),
+            os.path.join(filepath)
+        )
