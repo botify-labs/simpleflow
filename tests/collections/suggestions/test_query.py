@@ -351,6 +351,9 @@ class TestSuggestQuery(unittest.TestCase):
                 'query': 3,
                 'counters': {'error_links.4xx': 2},
             },
+            # this result is not removed, since _raw_query does not remove
+            # empty results
+            # this is the responsibility of _query
             {
                 'query': 2,
                 'counters': {'error_links.4xx': 0}
