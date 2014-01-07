@@ -181,7 +181,6 @@ class SuggestSummaryRegister(object):
         Compute a specific item for the suggested patterns queue
         """
         q = SuggestQuery.from_s3_uri(self.crawl_id, self.s3_uri)
-        query["display_children"] = False
         results = q.query(query)
         for k, result in enumerate(results):
             hash_id_filters = [{'field': 'patterns', 'value': result['query_hash_id']}]
