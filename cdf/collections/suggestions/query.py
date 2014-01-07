@@ -309,13 +309,15 @@ class SuggestQuery(BaseMetricsQuery):
 
         #remove empty results
         target_field = settings.get('target_field', 'pages_nb')
-        results = [result for result in results if result["counters"][target_field] > 0]
+        results = [result for result in results if
+                   result["counters"][target_field] > 0]
 
         if len(results) == 0:
             return results
 
         if sort_results:
-            results = self.sort_results_by_target_field_count(settings, results)
+            results = self.sort_results_by_target_field_count(settings,
+                                                              results)
             results = self.remove_equivalent_parents(settings, results)
             results = self.hide_less_relevant_children(results)
 
@@ -324,7 +326,8 @@ class SuggestQuery(BaseMetricsQuery):
         total_results_by_pattern = self._get_total_results_by_pattern(settings)
 
         display_children = settings.get('display_children', True)
-        self._compute_scores(results, target_field, total_results, total_results_by_pattern)
+        self._compute_scores(results, target_field,
+                             total_results, total_results_by_pattern)
         self._resolve_results(results, display_children)
         return results[0:30]
 
@@ -357,7 +360,8 @@ class SuggestQuery(BaseMetricsQuery):
 
         df = df.groupby(['query']).agg('sum').reset_index()
 
-        #If target field is {"div": [a, b]}, we create a new column on the current
+        #If target field is {"div": [a, b]},
+        #we create a new column on the current
         #dataframe that div a by b
         if isinstance(target_field, dict) and target_field.keys() == ["div"]:
             df["score"] = df[target_field["div"][0]] / df[target_field["div"][1]]
@@ -373,7 +377,8 @@ class SuggestQuery(BaseMetricsQuery):
             values = dict(zip(df.columns, n))
             result = {
                 'query': values['query'],
-                'counters': {field: transform_std_type(field, values) for field in final_fields}
+                'counters': {field: transform_std_type(field, values) for
+                             field in final_fields}
             }
             results.append(result)
 
@@ -421,7 +426,8 @@ class SuggestQuery(BaseMetricsQuery):
             result["query_verbose"] = self.query_hash_to_verbose_string(query_hash_id)
         result["counters"] = deep_dict(result["counters"])
 
-    def _compute_scores(self, results, target_field, total_results, total_results_by_pattern):
+    def _compute_scores(self, results, target_field,
+                        total_results, total_results_by_pattern):
         """Compute the different metrics for the results
         :param results: the list of results.
                         the results will be modified by the method
@@ -437,15 +443,19 @@ class SuggestQuery(BaseMetricsQuery):
         for result in results:
             query_hash_id = int(result["query"])
             pattern_size = total_results_by_pattern[query_hash_id]
-            self._compute_scores_one_result(result, target_field, total_results, pattern_size)
+            self._compute_scores_one_result(result, target_field,
+                                            total_results, pattern_size)
 
-    def _compute_scores_one_result(self, result, target_field, total_results, pattern_size):
+    def _compute_scores_one_result(self, result, target_field,
+                                   total_results, pattern_size):
         """Compute the different metrics for one result
         The method computes four metrics:
         - score: nb urls with the target_field property
         - score_pattern : nb urls in pattern
-        - percent_pattern : proportion of urls with target_field property in the pattern (= 100 * score/score_pattern)
-        - percent_total : proportion of urls from the pattern in the urls with the target_field property
+        - percent_pattern : proportion of urls with target_field property
+                            in the pattern (= 100 * score/score_pattern)
+        - percent_total : proportion of urls from the pattern
+                          in the urls with the target_field property
                           (= 100 * score/nb_url_with_property)
 
         :param result: the input result.
@@ -459,7 +469,8 @@ class SuggestQuery(BaseMetricsQuery):
         :type pattern_size: int
         """
         result["score"] = result["counters"][target_field]
-        # if total_results is zero, it must comes from a target_field based on a complex operation like "div"
+        # if total_results is zero, it must comes from a target_field
+        # based on a complex operation like "div"
         # So we cannot know the value from the full crawl
         if total_results:
             result["percent_total"] = round(float(result["counters"][target_field]) * 100.00 / float(total_results), 1)
@@ -505,7 +516,8 @@ class SuggestQuery(BaseMetricsQuery):
         - pattern B has size 110 and contains 100 elements with h1 not set
         this method will place pattern B first.
 
-        Sorting mode can be changed by adding a `target_sort` on settings with allowed values "asc" or "desc" (desc by default)
+        Sorting mode can be changed by adding a `target_sort` on settings
+        with allowed values "asc" or "desc" (desc by default)
 
         :param settings: the input query
         :type settings: dict
@@ -517,7 +529,9 @@ class SuggestQuery(BaseMetricsQuery):
         target_field = settings.get('target_field', 'pages_nb')
         target_sort = settings.get('target_sort', 'desc')
         reverse = target_sort == "desc"
-        results = sorted(results, reverse=reverse, key=lambda x: x["counters"][target_field])
+        results = sorted(results,
+                         reverse=reverse,
+                         key=lambda x: x["counters"][target_field])
         return results
 
     def is_child(self, parent_hash, child_hash):
@@ -614,7 +628,8 @@ class SuggestQuery(BaseMetricsQuery):
                     potential_parent["children"] = []
                 potential_parent["children"].append(copy.copy(potential_child))
 
-        results = [result for result in results if not result["query"] in hashes_to_remove]
+        results = [result for result in results if
+                   result["query"] not in hashes_to_remove]
         return results
 
     def df_filter_after_agg(self, df):
@@ -639,10 +654,14 @@ class SuggestSummaryQuery(object):
         self.content = content
 
     @classmethod
-    def from_s3_uri(cls, crawl_id, s3_uri, options=None, tmp_dir_prefix='/tmp', force_fetch=False):
+    def from_s3_uri(cls, crawl_id, s3_uri, options=None,
+                    tmp_dir_prefix='/tmp', force_fetch=False):
         # Fetch locally the files from S3
         tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-        files_fetched = fetch_files(s3_uri, tmp_dir, regexp='suggested_patterns_summary.json', force_fetch=force_fetch)
+        files_fetched = fetch_files(s3_uri,
+                                    tmp_dir,
+                                    regexp='suggested_patterns_summary.json',
+                                    force_fetch=force_fetch)
         content = json.loads(open(files_fetched[0][0]).read())
         return cls(content)
 
@@ -656,10 +675,14 @@ class SuggestedPatternsQuery(object):
         self.stream = stream
 
     @classmethod
-    def from_s3_uri(cls, crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+    def from_s3_uri(cls, crawl_id, s3_uri,
+                    tmp_dir_prefix='/tmp', force_fetch=False):
         # Fetch locally the files from S3
-        tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id, 'clusters_mixed.tsv')
-        fetch_file(os.path.join(s3_uri, 'clusters_mixed.tsv'), tmp_dir, force_fetch=force_fetch)
+        tmp_dir = os.path.join(tmp_dir_prefix,
+                               'crawl_%d' % crawl_id,
+                               'clusters_mixed.tsv')
+        fetch_file(os.path.join(s3_uri, 'clusters_mixed.tsv'),
+                   tmp_dir, force_fetch=force_fetch)
         return cls(split_file(open(tmp_dir)))
 
     def get(self):

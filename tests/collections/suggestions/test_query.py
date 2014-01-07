@@ -87,8 +87,8 @@ class TestSuggestQuery(unittest.TestCase):
         }
         frame = pd.DataFrame(child_relationship)
         expected_result = set([("1", "2"), ("1", "3"), ("3", "4")])
-        self.assertSetEqual(expected_result,
-                            self.suggest_query.compute_child_relationship_set(frame))
+        actual_result = self.suggest_query.compute_child_relationship_set(frame)
+        self.assertSetEqual(expected_result, actual_result)
 
     def test_sort_results_by_target_field_count(self):
         query = {"target_field": "field1"}
@@ -96,7 +96,7 @@ class TestSuggestQuery(unittest.TestCase):
         results = [
             {"query": "string1", "counters": {"field1": 2, "pages_nb": 4}},
             {"query": "string2", "counters": {"field1": 1, "pages_nb": 5}}
-            ]
+        ]
 
         #default ordering is descending
         expected_result = [
@@ -104,20 +104,20 @@ class TestSuggestQuery(unittest.TestCase):
             {"query": "string2", "counters": {"field1": 1, "pages_nb": 5}}
         ]
 
-        self.assertListEqual(expected_result,
-                             self.suggest_query.sort_results_by_target_field_count(query, results))
+        actual_result = self.suggest_query.sort_results_by_target_field_count(query, results)
+        self.assertListEqual(expected_result, actual_result)
 
         #if target_field is not set use "pages_nb"
         query = {}
         expected_result.reverse()
-        self.assertListEqual(expected_result,
-                             self.suggest_query.sort_results_by_target_field_count(query, results))
+        actual_result = self.suggest_query.sort_results_by_target_field_count(query, results)
+        self.assertListEqual(expected_result, actual_result)
 
         #change ordering
         query = {"target_sort": "asc"}
         expected_result.reverse()
-        self.assertListEqual(expected_result,
-                             self.suggest_query.sort_results_by_target_field_count(query, results))
+        actual_result = self.suggest_query.sort_results_by_target_field_count(query, results)
+        self.assertListEqual(expected_result, actual_result)
 
     def test_remove_equivalent_parents(self):
 
@@ -133,14 +133,16 @@ class TestSuggestQuery(unittest.TestCase):
             {"query": "2", "counters": {"pages_nb": 1, "field": 5}}
         ]
 
-        self.assertListEqual(expected_result,
-                             self.suggest_query.remove_equivalent_parents(settings, results))
+        actual_result = self.suggest_query.remove_equivalent_parents(settings,
+                                                                     results)
+        self.assertListEqual(expected_result, actual_result)
 
         #if target_filed is not set use "pages_nb" as target field
         #if the target field is "pages_nb",
         #the algorithm should not remove any element
-        self.assertListEqual(results,
-                             self.suggest_query.remove_equivalent_parents({}, results))
+        actual_result = self.suggest_query.remove_equivalent_parents({},
+                                                                     results)
+        self.assertListEqual(results, actual_result)
 
     def test_hide_less_relevant_children(self):
         results = [
@@ -151,12 +153,19 @@ class TestSuggestQuery(unittest.TestCase):
 
         #result "2" is removed from the result list since it
         expected_result = [
-            {"query": "1", "counters": {"pages_nb": 5}},
-            {"query": "3", "counters": {"pages_nb": 2}, "children": [{"query": "2", "counters": {"pages_nb": 1}}]}
+            {
+                "query": "1",
+                "counters": {"pages_nb": 5}
+            },
+            {
+                "query": "3",
+                "counters": {"pages_nb": 2},
+                "children": [{"query": "2", "counters": {"pages_nb": 1}}]
+            }
         ]
 
-        self.assertListEqual(expected_result,
-                             self.suggest_query.hide_less_relevant_children(results))
+        actual_result = self.suggest_query.hide_less_relevant_children(results)
+        self.assertListEqual(expected_result, actual_result)
 
     def test_resolve_result(self):
         resolve_verbose = False
@@ -187,8 +196,15 @@ class TestSuggestQuery(unittest.TestCase):
 
     def test_resolve_results(self):
         results = [
-            {"query": "1", "counters": {"pages_nb": 5}},
-            {"query": "3", "counters": {"pages_nb": 2}, "children": [{"query": "2", "counters": {"pages_nb": 1}}]},
+            {
+                "query": "1",
+                "counters": {"pages_nb": 5}
+            },
+            {
+                "query": "3",
+                "counters": {"pages_nb": 2},
+                "children": [{"query": "2", "counters": {"pages_nb": 1}}]
+            },
         ]
 
         expected_result = [
@@ -219,8 +235,15 @@ class TestSuggestQuery(unittest.TestCase):
 
         #we redefine results as the previous call has modified it.
         results = [
-            {"query": "1", "counters": {"pages_nb": 5}},
-            {"query": "3", "counters": {"pages_nb": 2}, "children": [{"query": "2", "counters": {"pages_nb": 1}}]},
+            {
+                "query": "1",
+                "counters": {"pages_nb": 5}
+            },
+            {
+                "query": "3",
+                "counters": {"pages_nb": 2},
+                "children": [{"query": "2", "counters": {"pages_nb": 1}}]
+            },
         ]
         display_children = False
         #the expected result is the same except
@@ -258,7 +281,10 @@ class TestSuggestQuery(unittest.TestCase):
             },
         ]
 
-        self.suggest_query._compute_scores(results, target_field, total_results, total_results_by_pattern)
+        self.suggest_query._compute_scores(results,
+                                           target_field,
+                                           total_results,
+                                           total_results_by_pattern)
         self.assertListEqual(expected_results, results)
 
     def test_compute_scores_one_result(self):
@@ -277,7 +303,10 @@ class TestSuggestQuery(unittest.TestCase):
             "counters": {"http_errors": 2}
         }
 
-        self.suggest_query._compute_scores_one_result(result, target_field, total_results, pattern_size)
+        self.suggest_query._compute_scores_one_result(result,
+                                                      target_field,
+                                                      total_results,
+                                                      pattern_size)
         self.assertDictEqual(expected_result, result)
 
     def test_compute_scores_one_result_null_total_results(self):
@@ -296,7 +325,10 @@ class TestSuggestQuery(unittest.TestCase):
             "counters": {"http_errors": 2}
         }
 
-        self.suggest_query._compute_scores_one_result(result, target_field, total_results, pattern_size)
+        self.suggest_query._compute_scores_one_result(result,
+                                                      target_field,
+                                                      total_results,
+                                                      pattern_size)
         self.assertDictEqual(expected_result, result)
 
     def test_raw_query(self):
@@ -325,8 +357,8 @@ class TestSuggestQuery(unittest.TestCase):
             }
         ]
 
-        self.assertListEqual(expected_results,
-                             self.suggest_query._raw_query(dataframe, settings))
+        actual_results = self.suggest_query._raw_query(dataframe, settings)
+        self.assertListEqual(expected_results, actual_results)
 
     def test_raw_query_div(self):
         data = {
@@ -352,8 +384,8 @@ class TestSuggestQuery(unittest.TestCase):
             }
         ]
 
-        self.assertListEqual(expected_results,
-                             self.suggest_query._raw_query(dataframe, settings))
+        actual_results = self.suggest_query._raw_query(dataframe, settings)
+        self.assertListEqual(expected_results, actual_results)
 
     @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results",
                 new=lambda x, y: 10)
@@ -390,8 +422,10 @@ class TestSuggestQuery(unittest.TestCase):
             }
         ]
 
-        self.assertListEqual(expected_results,
-                             self.suggest_query._query(dataframe, settings, sort_results))
+        actual_results = self.suggest_query._query(dataframe,
+                                                   settings,
+                                                   sort_results)
+        self.assertListEqual(expected_results, actual_results)
 
     def test_query_empty_dataframe(self):
         dataframe = pd.DataFrame()
@@ -401,5 +435,7 @@ class TestSuggestQuery(unittest.TestCase):
             "fields": ["error_links.4xx"],
         }
 
-        self.assertListEqual([],
-                             self.suggest_query._query(dataframe, settings, sort_results))
+        actual_results = self.suggest_query._query(dataframe,
+                                                   settings,
+                                                   sort_results)
+        self.assertListEqual([], actual_results)
