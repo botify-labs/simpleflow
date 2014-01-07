@@ -1,5 +1,9 @@
 URLS_DATA_MAPPING = {
     "urls": {
+        "_routing": {
+            "required": True,
+            "path": "crawl_id"
+        },
         "properties": {
             "url": {
                 "type": "string",
