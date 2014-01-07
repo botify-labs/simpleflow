@@ -306,6 +306,11 @@ class SuggestQuery(BaseMetricsQuery):
                          - "counters"
         """
         results = self._raw_query(df, settings)
+
+        #remove empty results
+        target_field = settings.get('target_field', 'pages_nb')
+        results = [result for result in results if result["counters"][target_field] > 0]
+
         if len(results) == 0:
             return results
 
@@ -318,7 +323,6 @@ class SuggestQuery(BaseMetricsQuery):
         total_results = self._get_total_results(settings)
         total_results_by_pattern = self._get_total_results_by_pattern(settings)
 
-        target_field = settings.get('target_field', 'pages_nb')
         display_children = settings.get('display_children', True)
         self._compute_scores(results, target_field, total_results, total_results_by_pattern)
         self._resolve_results(results, display_children)
@@ -372,9 +376,6 @@ class SuggestQuery(BaseMetricsQuery):
                 'counters': {field: transform_std_type(field, values) for field in final_fields}
             }
             results.append(result)
-
-        #remove empty results
-        results = [result for result in results if result["counters"][target_field] > 0]
 
         return results
 

@@ -387,16 +387,6 @@ class TestSuggestQuery(unittest.TestCase):
                 'counters': {
                     'error_links': {'4xx': 2}
                 },
-            },
-            {
-                'query_hash_id': 2,
-                'query_bql': u'string2',
-                'score_pattern': 3,
-                'percent_total': 0.0,
-                'percent_pattern': 0.0,
-                'score': 0,
-                'query': u'string2',
-                'counters': {'error_links': {'4xx': 0}}
             }
         ]
 
