@@ -267,7 +267,6 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['redirects_to_nb'], 4)
         self.assertEqual(target['redirects_from_nb'], 10**7 + 50)
 
-    # TODO `not_filled`
     def test_canonicals(self):
         """Canonicals counters should be aggregated correctly
         """
@@ -299,5 +298,5 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['equal'], 2)
         self.assertEqual(target['not_equal'], 1)
         self.assertEqual(target['filled'], 3)
-        #self.assertEqual(target['not_filled'], 2)
+        self.assertEqual(target['not_filled'], 2)
         self.assertEqual(target['incoming'], 10**7 + 10)
