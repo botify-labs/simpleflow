@@ -350,7 +350,7 @@ class TestSuggestQuery(unittest.TestCase):
     def test_raw_query_div(self):
         data = {
             "query": [1, 3],
-            "metadata_nb.h1.filled": [20, 5],
+            "metadata_nb.h1.filled": [18, 5],
             "pages_nb": [4, 5]
         }
         dataframe = pd.DataFrame(data)
@@ -363,7 +363,7 @@ class TestSuggestQuery(unittest.TestCase):
         expected_results = [
             {
                 'query': 1,
-                'counters': {'pages_nb': 4, 'score': 5},
+                'counters': {'pages_nb': 4, 'score': 4.5},
             },
             {
                 'query': 3,

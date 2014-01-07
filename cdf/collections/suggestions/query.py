@@ -363,7 +363,12 @@ class SuggestQuery(BaseMetricsQuery):
         #we create a new column on the current
         #dataframe that div a by b
         if isinstance(target_field, dict) and target_field.keys() == ["div"]:
-            df["score"] = df[target_field["div"][0]] / df[target_field["div"][1]]
+            num_field = target_field["div"][0]  # numerator field
+            den_field = target_field["div"][1]  # denominator field
+
+            #multiply by 1.0 to convert to float
+            #cf http://stackoverflow.com/questions/12183432/typecasting-before-division-or-any-other-mathematical-operator-of-columns-in-d
+            df["score"] = df[num_field] * 1.0 / df[den_field]
             target_field = "score"
             settings["target_field"] = target_field
 
