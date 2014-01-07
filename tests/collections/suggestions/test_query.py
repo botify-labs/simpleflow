@@ -173,7 +173,7 @@ class TestSuggestQuery(unittest.TestCase):
 
         expected_result = {
             "query_hash_id": 1,
-            "query": u"string1",
+            "query": {u"query": u"v_string1"},
             "query_bql": u"string1",
             "counters": {"pages_nb": 5}
         }
@@ -186,9 +186,9 @@ class TestSuggestQuery(unittest.TestCase):
 
         expected_result = {
             "query_hash_id": 1,
-            "query": u"string1",
+            "query": {u"query": u"v_string1"},
             "query_bql": u"string1",
-            "query_verbose": {"query": "v_string1"},
+            "query_verbose": {u"query": u"v_string1"},
             "counters": {"pages_nb": 5}
         }
         self.suggest_query._resolve_result(result, resolve_verbose)
@@ -210,17 +210,17 @@ class TestSuggestQuery(unittest.TestCase):
         expected_result = [
             {
                 "query_hash_id": 1,
-                "query": u"string1",
+                "query": {u"query": u"v_string1"},
                 "query_bql": u"string1",
                 "counters": {"pages_nb": 5}
             },
             {
                 "query_hash_id": 3,
-                "query": u"string3",
+                "query": {u"query": u"v_string3"},
                 "query_bql": u"string3",
                 "counters": {"pages_nb": 2},
                 "children": [{"query_hash_id": 2,
-                              "query": u"string2",
+                              "query": {u"query": u"v_string2"},
                               "query_bql": u"string2",
                               "query_verbose": {"query": "v_string2"},
                               "counters": {"pages_nb": 1}}
@@ -414,11 +414,11 @@ class TestSuggestQuery(unittest.TestCase):
             {
                 'query_hash_id': 3,
                 'query_bql': u'string3',
+                'query': {u"query": u"v_string3"},
                 'score_pattern': 5,
                 'percent_total': 20.0,
                 'percent_pattern': 40.0,
                 'score': 2,
-                'query': u'string3',
                 'counters': {
                     'error_links': {'4xx': 2}
                 },
