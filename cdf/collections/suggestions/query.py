@@ -582,7 +582,6 @@ class SuggestQuery(BaseMetricsQuery):
 
         target_field = settings.get('target_field', 'pages_nb')
         hashes_to_remove = []
-        #WARNING should we use permutation here?
         #It depends if we assume that parent always come first in the list
         for potential_parent, potential_child in itertools.permutations(results, 2):
             potential_parent_hash = potential_parent["query"]
