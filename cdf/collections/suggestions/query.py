@@ -298,7 +298,6 @@ class SuggestQuery(BaseMetricsQuery):
                          each result is a dict with keys :
                          - "query_hash_id"
                          - "query",
-                         - "query_bql",
                          - "score",
                          - "score_pattern"
                          - "percent_pattern"
@@ -411,7 +410,6 @@ class SuggestQuery(BaseMetricsQuery):
         """
         query_hash_id = int(result["query"])
         result["query_hash_id"] = query_hash_id
-        result["query_bql"] = self.query_hash_to_string(query_hash_id)
         result["query"] = self.query_hash_to_verbose_string(query_hash_id)
         result["counters"] = deep_dict(result["counters"])
 
