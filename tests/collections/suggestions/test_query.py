@@ -168,7 +168,6 @@ class TestSuggestQuery(unittest.TestCase):
         self.assertListEqual(expected_result, actual_result)
 
     def test_resolve_result(self):
-        resolve_verbose = False
         result = {"query": "1", "counters": {"pages_nb": 5}}
 
         expected_result = {
@@ -177,21 +176,7 @@ class TestSuggestQuery(unittest.TestCase):
             "query_bql": u"string1",
             "counters": {"pages_nb": 5}
         }
-        self.suggest_query._resolve_result(result, resolve_verbose)
-        self.assertDictEqual(expected_result, result)
-
-    def test_resolve_result_verbose(self):
-        resolve_verbose = True
-        result = {"query": "1", "counters": {"pages_nb": 5}}
-
-        expected_result = {
-            "query_hash_id": 1,
-            "query": {u"query": u"v_string1"},
-            "query_bql": u"string1",
-            "query_verbose": {u"query": u"v_string1"},
-            "counters": {"pages_nb": 5}
-        }
-        self.suggest_query._resolve_result(result, resolve_verbose)
+        self.suggest_query._resolve_result(result)
         self.assertDictEqual(expected_result, result)
 
     def test_resolve_results(self):
@@ -222,7 +207,6 @@ class TestSuggestQuery(unittest.TestCase):
                 "children": [{"query_hash_id": 2,
                               "query": {u"query": u"v_string2"},
                               "query_bql": u"string2",
-                              "query_verbose": {"query": "v_string2"},
                               "counters": {"pages_nb": 1}}
                              ]
             }]

@@ -398,31 +398,26 @@ class SuggestQuery(BaseMetricsQuery):
         """
         # Resolve query
         for result in results:
-            self._resolve_result(result, False)
+            self._resolve_result(result)
             if "children" in result:
                 if not display_children:
                     del result["children"]
                     continue
                 result["children"] = result["children"][0:10]
                 for child in result["children"]:
-                    self._resolve_result(child, True)
+                    self._resolve_result(child)
 
-    def _resolve_result(self, result, resolve_verbose):
+    def _resolve_result(self, result):
         """Transform a result identified by its hash
         to a result identified by its full letter query
         :param result: the result to resolve.
                        It will be modified by the method
         :type result: dict
-        :param resolve_verbose: if True,
-                                insert a key "query_verbose" in the result
-        :type resolve_verbose: bool
         """
         query_hash_id = int(result["query"])
         result["query_hash_id"] = query_hash_id
         result["query_bql"] = self.query_hash_to_string(query_hash_id)
         result["query"] = self.query_hash_to_verbose_string(query_hash_id)
-        if resolve_verbose:
-            result["query_verbose"] = self.query_hash_to_verbose_string(query_hash_id)
         result["counters"] = deep_dict(result["counters"])
 
     def _compute_scores(self, results, target_field,
