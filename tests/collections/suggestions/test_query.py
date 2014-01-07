@@ -90,7 +90,7 @@ class TestSuggestQuery(unittest.TestCase):
         actual_result = self.suggest_query.compute_child_relationship_set(frame)
         self.assertSetEqual(expected_result, actual_result)
 
-    def test_sort_results_by_target_field_count(self):
+    def test_sort_results_by_target_field(self):
         query = {"target_field": "field1"}
 
         results = [
@@ -104,19 +104,19 @@ class TestSuggestQuery(unittest.TestCase):
             {"query": "string2", "counters": {"field1": 1, "pages_nb": 5}}
         ]
 
-        actual_result = self.suggest_query.sort_results_by_target_field_count(query, results)
+        actual_result = self.suggest_query.sort_results_by_target_field(query, results)
         self.assertListEqual(expected_result, actual_result)
 
         #if target_field is not set use "pages_nb"
         query = {}
         expected_result.reverse()
-        actual_result = self.suggest_query.sort_results_by_target_field_count(query, results)
+        actual_result = self.suggest_query.sort_results_by_target_field(query, results)
         self.assertListEqual(expected_result, actual_result)
 
         #change ordering
         query = {"target_sort": "asc"}
         expected_result.reverse()
-        actual_result = self.suggest_query.sort_results_by_target_field_count(query, results)
+        actual_result = self.suggest_query.sort_results_by_target_field(query, results)
         self.assertListEqual(expected_result, actual_result)
 
     def test_remove_equivalent_parents(self):

@@ -316,8 +316,7 @@ class SuggestQuery(BaseMetricsQuery):
             return results
 
         if sort_results:
-            results = self.sort_results_by_target_field_count(settings,
-                                                              results)
+            results = self.sort_results_by_target_field(settings, results)
             results = self.remove_equivalent_parents(settings, results)
             results = self.hide_less_relevant_children(results)
 
@@ -509,7 +508,7 @@ class SuggestQuery(BaseMetricsQuery):
         r = q.query(total_query)
         return {int(v["properties"]["query"]): v["counters"]["pages_nb"] for v in r}
 
-    def sort_results_by_target_field_count(self, settings, results):
+    def sort_results_by_target_field(self, settings, results):
         """Sort the query results by target field count.
         For instance if we look for elements with title not set:
         - pattern A has size 200 and contains 10 elements with h1 not set
