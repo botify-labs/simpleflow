@@ -196,8 +196,8 @@ class SuggestSummaryRegister(object):
                 "filters": {'and': result['query'] + urls_filters}
             }
 
-            results[k]["urls_query_bgn"] = urls_query_bgn
-            results[k]["urls_query"] = urls_query
+            result["urls_query_bgn"] = urls_query_bgn
+            result["urls_query"] = urls_query
 
         # Write suggestion file
         tmp_dir = os.path.join(self.tmp_dir_prefix, 'crawl_%d' % self.crawl_id)
