@@ -260,21 +260,92 @@ class SuggestQuery(BaseMetricsQuery):
     def __init__(self, hdfstore, options=None):
         super(SuggestQuery, self).__init__(hdfstore, options)
 
-        if not '/children' in self.hdfstore.keys():
+        if not 'children' in self.hdfstore.keys():
             self.child_relationship_set = set()
         else:
             child_frame = self.hdfstore['children']
             self.child_relationship_set = self.compute_child_relationship_set(child_frame)
 
     def query_hash_to_string(self, value):
+        """get the full-letter query corresponding to a hash
+        :param value: the hash
+        :type value: int
+        :returns: unicode - the full-letter query"""
         return unicode(self.hdfstore['requests'].ix[str(value), 'string'], "utf8")
 
     def query_hash_to_verbose_string(self, value):
+        """get the full-letter verbose query corresponding to a hash
+        :param value: the hash
+        :type value: int
+        :returns: unicode - the full-letter query"""
         return json.loads(unicode(self.hdfstore['requests'].ix[str(value), 'verbose_string'], "utf8"))
 
     def query(self, settings, sort_results=True):
         df = self.df.copy()
+        return self._query(df, settings, sort_results)
 
+    def _query(self, df, settings, sort_results):
+        """The method that actually runs the query.
+        The method is almost identical to the query() function
+        but it is easier to test since we can pass the dataframe as parameter.
+        :param df: the dataframe containing the aggregated data
+                   sample columns are : query, depth, http_code, delay_lt_500ms
+        :type df: pandas.DataFrame
+        :param settings: a dictionary representing the query to run
+        :type setting: dict
+        :returns: list - the list of results corresponding to the query.
+                         the list is sorted by descending "target_field" value.
+                         each result is a dict with keys :
+                         - "query_hash_id"
+                         - "query",
+                         - "query_bql",
+                         - "score",
+                         - "score_pattern"
+                         - "percent_pattern"
+                         - "percent_total"
+                         - "counters"
+        """
+        results = self._raw_query(df, settings)
+
+        #remove empty results
+        target_field = settings.get('target_field', 'pages_nb')
+        results = [result for result in results if
+                   result["counters"][target_field] > 0]
+
+        if len(results) == 0:
+            return results
+
+        if sort_results:
+            results = self.sort_results_by_target_field(settings, results)
+            results = self.remove_equivalent_parents(settings, results)
+            results = self.hide_less_relevant_children(results)
+
+        # Request Metrics query in order to get the total number of elements
+        total_results = self._get_total_results(settings)
+        total_results_by_pattern = self._get_total_results_by_pattern(settings)
+
+        display_children = settings.get('display_children', True)
+        self._compute_scores(results, target_field,
+                             total_results, total_results_by_pattern)
+        self._resolve_results(results, display_children)
+        return results[0:30]
+
+    def _raw_query(self, df, settings):
+        """Run a query on the dataframe,
+        but does not perform any postprocessing on it: no result filtering,
+                                                       no query resolution
+        :param df: the dataframe containing the aggregated data
+                   sample columns are : query, depth, http_code, delay_lt_500ms
+        :type df: pandas.DataFrame
+        :param settings: a dictionary representing the query to run
+        :type setting: dict
+        :returns: list - the list of results corresponding to the query.
+                         the list is sorted by descending "target_field" value
+                         each result is a dict with keys : "query", "counters"
+                         with "query" the hash of the query and
+                         "counters" a dict which keys are the fields requested
+                         in the query.
+        """
         target_field = settings.get('target_field', 'pages_nb')
 
         if 'filters' in settings:
@@ -288,7 +359,8 @@ class SuggestQuery(BaseMetricsQuery):
 
         df = df.groupby(['query']).agg('sum').reset_index()
 
-        #If target field is {"div": [a, b]}, we create a new column on the current
+        #If target field is {"div": [a, b]},
+        #we create a new column on the current
         #dataframe that div a by b
         if isinstance(target_field, dict) and target_field.keys() == ["div"]:
             df["score"] = df[target_field["div"][0]] / df[target_field["div"][1]]
@@ -304,53 +376,109 @@ class SuggestQuery(BaseMetricsQuery):
             values = dict(zip(df.columns, n))
             result = {
                 'query': values['query'],
-                'counters': {field: transform_std_type(field, values) for field in final_fields}
+                'counters': {field: transform_std_type(field, values) for
+                             field in final_fields}
             }
             results.append(result)
 
-        #remove empty results
-        results = [result for result in results if result["counters"][target_field] > 0]
+        return results
 
-        if sort_results:
-            results = self.sort_results_by_target_field_count(settings, results)
-            results = self.remove_equivalent_parents(settings, results)
-            results = self.hide_less_relevant_children(settings, results)
-
-        # Request Metrics query in order to get the total number of elements
-        total_results = self._get_total_results(settings)
-        total_results_by_pattern = self._get_total_results_by_pattern(settings)
-
+    def _resolve_results(self, results, display_children):
+        """Transform results identified by their hashes
+        to a result identified by their full-letter queries
+        :param results: the list of input results.
+                        the results will be modified by the method
+        :type results: list
+        :param display_children: if False, the children patterns
+                                 are removed from the results
+                                 Results can have "children" entry
+                                 corresponding patterns which are included in them.
+                                 This parameter decides what to do with them
+        :type display_children: bool
+        """
         # Resolve query
-        for i, r in enumerate(results):
-            results[i]["score"] = results[i]["counters"][target_field]
-            results[i]["query_hash_id"] = int(results[i]["query"])
-            results[i]["query_bql"] = self.query_hash_to_string(results[i]["query_hash_id"])
-            results[i]["query"] = self.query_hash_to_verbose_string(results[i]["query_hash_id"])
-
-            # if total_results is zero, it must comes from a target_field based on a complex operation like "div"
-            # So we cannot know the value from the full crawl
-            if total_results:
-                results[i]["percent_total"] = round(float(results[i]["counters"][target_field]) * 100.00 / float(total_results), 1)
-            else:
-                results[i]["percent_total"] = -1
-
-            results[i]["score_pattern"] = total_results_by_pattern[results[i]["query_hash_id"]]
-            results[i]["percent_pattern"] = round(float(results[i]["counters"][target_field]) * 100.00 / float(results[i]["score_pattern"]), 1)
-            results[i]["counters"] = deep_dict(results[i]["counters"])
-            if "children" in results[i]:
-                if not settings.get('display_children', True):
-                    del results[i]["children"]
+        for result in results:
+            self._resolve_result(result)
+            if "children" in result:
+                if not display_children:
+                    del result["children"]
                     continue
-                results[i]["children"] = results[i]["children"][0:10]
-                for k, c in enumerate(results[i]["children"]):
-                    results[i]["children"][k]["query_hash_id"] = int(results[i]["children"][k]["query"])
-                    results[i]["children"][k]["query"] = self.query_hash_to_string(results[i]["children"][k]["query_hash_id"])
-                    results[i]["children"][k]["query_verbose"] = self.query_hash_to_verbose_string(results[i]["children"][k]["query_hash_id"])
-                    results[i]["children"][k]["counters"] = deep_dict(results[i]["children"][k]["counters"])
-        return results[0:30]
+                result["children"] = result["children"][0:10]
+                for child in result["children"]:
+                    self._resolve_result(child)
+
+    def _resolve_result(self, result):
+        """Transform a result identified by its hash
+        to a result identified by its full letter query
+        :param result: the result to resolve.
+                       It will be modified by the method
+        :type result: dict
+        """
+        query_hash_id = int(result["query"])
+        result["query_hash_id"] = query_hash_id
+        result["query_bql"] = self.query_hash_to_string(query_hash_id)
+        result["query"] = self.query_hash_to_verbose_string(query_hash_id)
+        result["counters"] = deep_dict(result["counters"])
+
+    def _compute_scores(self, results, target_field,
+                        total_results, total_results_by_pattern):
+        """Compute the different metrics for the results
+        :param results: the list of results.
+                        the results will be modified by the method
+        :type results: list
+        :param target_field: the target_field used in the query
+        :type target_field: string
+        :param total_results: the number of urls matching the query
+        :type total_results: int
+        :param total_results_by_pattern: the size of the patterns
+                                         the patterns are identified by their hash
+        :type total_results_by_pattern: dict
+        """
+        for result in results:
+            query_hash_id = int(result["query"])
+            pattern_size = total_results_by_pattern[query_hash_id]
+            self._compute_scores_one_result(result, target_field,
+                                            total_results, pattern_size)
+
+    def _compute_scores_one_result(self, result, target_field,
+                                   total_results, pattern_size):
+        """Compute the different metrics for one result
+        The method computes four metrics:
+        - score: nb urls with the target_field property
+        - score_pattern : nb urls in pattern
+        - percent_pattern : proportion of urls with target_field property
+                            in the pattern (= 100 * score/score_pattern)
+        - percent_total : proportion of urls from the pattern
+                          in the urls with the target_field property
+                          (= 100 * score/nb_url_with_property)
+
+        :param result: the input result.
+                       It will be modified by the method
+        :type results: dict
+        :param target_field: the target_field used in the query
+        :type target_field: string
+        :param total_results: the number of urls matching the query
+        :type total_results: int
+        :param pattern_size: the size of the pattern corresponding to result
+        :type pattern_size: int
+        """
+        result["score"] = result["counters"][target_field]
+        # if total_results is zero, it must comes from a target_field
+        # based on a complex operation like "div"
+        # So we cannot know the value from the full crawl
+        if total_results:
+            result["percent_total"] = round(float(result["counters"][target_field]) * 100.00 / float(total_results), 1)
+        else:
+            result["percent_total"] = -1
+
+        result["score_pattern"] = pattern_size
+        result["percent_pattern"] = round(float(result["counters"][target_field]) * 100.00 / float(pattern_size), 1)
 
     def _get_total_results(self, query):
         """Return the total number of items for the given query
+        :param query: the input query
+        :type query: dict
+        :returns: int
         """
         q = MetricsQuery(self.hdfstore)
         total_query = {
@@ -363,6 +491,9 @@ class SuggestQuery(BaseMetricsQuery):
 
     def _get_total_results_by_pattern(self, query):
         """Return the total number of items for the given query
+        :param query: the input query
+        :type query: dict
+        :returns: dict
         """
         q = MetricsPatternQuery(self.hdfstore)
         total_query = {
@@ -372,35 +503,53 @@ class SuggestQuery(BaseMetricsQuery):
         r = q.query(total_query)
         return {int(v["properties"]["query"]): v["counters"]["pages_nb"] for v in r}
 
-    def sort_results_by_target_field_count(self, settings, results):
+    def sort_results_by_target_field(self, settings, results):
         """Sort the query results by target field count.
         For instance if we look for elements with title not set:
         - pattern A has size 200 and contains 10 elements with h1 not set
         - pattern B has size 110 and contains 100 elements with h1 not set
         this method will place pattern B first.
 
-        Sorting mode can be changed by adding a `target_sort` on settings with allowed values "asc" or "desc" (desc by default)
+        Sorting mode can be changed by adding a `target_sort` on settings
+        with allowed values "asc" or "desc" (desc by default)
+
+        :param settings: the input query
+        :type settings: dict
+        :param results: the list of results to sort.
+                        each result is a dict
+        :type results: list
+        :returns: list
         """
         target_field = settings.get('target_field', 'pages_nb')
         target_sort = settings.get('target_sort', 'desc')
         reverse = target_sort == "desc"
-        results = sorted(results, reverse=reverse, key=lambda x: x["counters"][target_field])
+        results = sorted(results,
+                         reverse=reverse,
+                         key=lambda x: x["counters"][target_field])
         return results
 
     def is_child(self, parent_hash, child_hash):
         """Test if a pattern is the child from an other pattern,
         given their two hashes.
+        :param parent_hash: the hash of the potential parent pattern
+        :type parent_hash: int
+        :param child_hash: the hash of the potential parent pattern
+        :type child_hash: int
+        :returns: bool
         """
         return (parent_hash, child_hash) in self.child_relationship_set
 
     def compute_child_relationship_set(self, child_frame):
         """Build a set of tuples (parent_hash, child_hash)
         to be able to test fast if a relationship exists.
-        child_frame : a pandas dataframe with two columns:
-        - parent : contains the parent pattern hash
-        - child : contains the parent pattern hash
-        Each row of the frame represent a parent/child relationship
-        between two patterns
+        :param child_frame : a pandas dataframe with two columns:
+                            - parent : contains the parent pattern hash
+                            - child : contains the parent pattern hash
+                            Each row of the frame represents
+                            a parent/child relationship
+                            between two patterns.
+        :type child_frame: pandas.DataFrame
+        :returns: set
         """
         result = set()
         for count, row in child_frame.iterrows():
@@ -423,15 +572,20 @@ class SuggestQuery(BaseMetricsQuery):
         pattern B is more relevant as it is more specific.
 
         The present method would remove pattern A from results
+
+        :param settings: the query settings
+        :type settings: dict
+        :param results: the query results
+        :type results: list
+        :returns: list
         """
 
         target_field = settings.get('target_field', 'pages_nb')
-
         hashes_to_remove = []
-        for potential_parent, potential_child in itertools.combinations(results, 2):
+        #It depends if we assume that parent always come first in the list
+        for potential_parent, potential_child in itertools.permutations(results, 2):
             potential_parent_hash = potential_parent["query"]
             potential_child_hash = potential_child["query"]
-
             if self.is_child(potential_parent_hash, potential_child_hash):
                 parent_target_field_count = potential_parent["counters"][target_field]
                 child_target_field_count = potential_child["counters"][target_field]
@@ -441,7 +595,7 @@ class SuggestQuery(BaseMetricsQuery):
         results = [result for result in results if not result["query"] in hashes_to_remove]
         return results
 
-    def hide_less_relevant_children(self, settings, results):
+    def hide_less_relevant_children(self, results):
         """Once we have displayed a node,
         displaying its children would confuse the user.
         The present method :
@@ -451,6 +605,10 @@ class SuggestQuery(BaseMetricsQuery):
 
         The method requires the input results to be sorted.
         The sort criterion does not matter.
+
+        :param results: the list of results to process
+        :type results: list
+        :returns: list
         """
         hashes_to_remove = []
         for potential_parent, potential_child  in itertools.combinations(results, 2):
@@ -463,10 +621,17 @@ class SuggestQuery(BaseMetricsQuery):
                     potential_parent["children"] = []
                 potential_parent["children"].append(copy.copy(potential_child))
 
-        results = [result for result in results if not result["query"] in hashes_to_remove]
+        results = [result for result in results if
+                   result["query"] not in hashes_to_remove]
         return results
 
     def df_filter_after_agg(self, df):
+        """
+        Does nothing
+        :param df: the input dataframe
+        :type df: pandas.DataFrame
+        :returns: pandas.DataFrame
+        """
         """
         if self.options['stats_urls_done']:
             # Take only urls > 3%
@@ -482,10 +647,14 @@ class SuggestSummaryQuery(object):
         self.content = content
 
     @classmethod
-    def from_s3_uri(cls, crawl_id, s3_uri, options=None, tmp_dir_prefix='/tmp', force_fetch=False):
+    def from_s3_uri(cls, crawl_id, s3_uri, options=None,
+                    tmp_dir_prefix='/tmp', force_fetch=False):
         # Fetch locally the files from S3
         tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
-        files_fetched = fetch_files(s3_uri, tmp_dir, regexp='suggested_patterns_summary.json', force_fetch=force_fetch)
+        files_fetched = fetch_files(s3_uri,
+                                    tmp_dir,
+                                    regexp='suggested_patterns_summary.json',
+                                    force_fetch=force_fetch)
         content = json.loads(open(files_fetched[0][0]).read())
         return cls(content)
 
@@ -499,10 +668,14 @@ class SuggestedPatternsQuery(object):
         self.stream = stream
 
     @classmethod
-    def from_s3_uri(cls, crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+    def from_s3_uri(cls, crawl_id, s3_uri,
+                    tmp_dir_prefix='/tmp', force_fetch=False):
         # Fetch locally the files from S3
-        tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id, 'clusters_mixed.tsv')
-        fetch_file(os.path.join(s3_uri, 'clusters_mixed.tsv'), tmp_dir, force_fetch=force_fetch)
+        tmp_dir = os.path.join(tmp_dir_prefix,
+                               'crawl_%d' % crawl_id,
+                               'clusters_mixed.tsv')
+        fetch_file(os.path.join(s3_uri, 'clusters_mixed.tsv'),
+                   tmp_dir, force_fetch=force_fetch)
         return cls(split_file(open(tmp_dir)))
 
     def get(self):
