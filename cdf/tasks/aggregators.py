@@ -281,7 +281,25 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             ['nofollow', {"fields": ["pages_nb"], "group_by": ["follow"]}],
             ['content_type', {"fields": ["pages_nb"], "group_by": ["content_type"]}],
             ['depth', {"fields": ["pages_nb"], "group_by": ["depth"]}],
-            ['canonical', {"fields": ["pages_nb", "canonical_nb"], "filters": {"and": [{"field": "content_type", "value": "text/html"}, {"field": "http_code", "value": 200}]}}]
+            ['2xx_html', {
+                "filters": {
+                    "and": [
+                        {"field": "content_type", "value": "text/html"},
+                        {"field": "http_code", "value": 200, "predicate": "gte"},
+                        {"field": "http_code", "value": 299, "predicate": "lte"}
+                    ]
+                }
+            }],
+            ['canonical', {
+                "fields": ["pages_nb", "canonical_nb"],
+                "filters": {
+                    "and": [
+                        {"field": "content_type", "value": "text/html"},
+                        {"field": "http_code", "value": 200, "predicate": "gte"},
+                        {"field": "http_code", "value": 299, "predicate": "lte"}
+                    ]
+                }
+            }]
         ],
         **counter_kwargs
     )
