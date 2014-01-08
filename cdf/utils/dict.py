@@ -78,7 +78,7 @@ def update_path_in_dict(path, value, _dict):
             # create non-existing value
             current[key] = value
         else:
-            if key in _dict:
+            if key in current:
                 _next = current[key]
                 if isinstance(_next, dict):
                     current = _next
