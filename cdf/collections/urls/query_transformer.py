@@ -1,4 +1,5 @@
 from cdf.exceptions import BotifyQueryException
+from copy import deepcopy
 
 
 def _get_untouched_field(field):
@@ -59,23 +60,21 @@ _PREDICATE_FORMATS = {
     'gt': lambda filters: {
         "range": {
             filters['field']: {
-                "from": filters['value'],
-                "include_lower": False
+                "gt": filters['value']
             }
         }
     },
     'lte': lambda filters: {
         "range": {
             filters['field']: {
-                "to": filters['value'],
+                "lte": filters['value'],
             }
         }
     },
     'lt': lambda filters: {
         "range": {
             filters['field']: {
-                "to": filters['value'],
-                "include_upper": False
+                "lt": filters['value'],
             }
         }
     },
@@ -87,8 +86,8 @@ _PREDICATE_FORMATS = {
     'between': lambda filters: {
         "range": {
             filters['field']: {
-                "from": filters['value'][0],
-                "to": filters['value'][1],
+                "gte": filters['value'][0],
+                "lte": filters['value'][1],
             }
         }
     },
@@ -118,27 +117,32 @@ def _process_filters(filters, has_parent=False):
 
 
 # TODO(darkjh) nested `and` and `or` can be simplified
-def _add_filters(botify_query, filters):
+def _add_filters(query, filters):
     """Append some filters to botify format query using `and` operator
 
     :param botify_query: the botify format query
     :param filters: a list of botify predicate to merge
+    :return: the appended query
     """
+    botify_query = deepcopy(query)
     if not 'filters' in botify_query:
         botify_query['filters'] = {'and': filters}
     elif isinstance(botify_query['filters'], dict) and not any(k in ('and', 'or') for
                                                                k in botify_query['filters'].keys()):
         botify_query['filters'] = {'and': filters + [botify_query['filters']]}
     elif 'and' in botify_query['filters']:
+        # TODO(darkjh) a dict inside and/or ???
         if isinstance(botify_query['filters']['and'], dict):
             botify_query['filters']['and'] = [botify_query['filters']['and'], filters]
         else:
-            botify_query['filters']['and'] += filters
+            botify_query['filters']['and'] = filters + botify_query['filters']['and']
     elif 'or' in botify_query['filters']:
         botify_query['filters']['and'] = [{'and': filters}, {'or': botify_query['filters']['or']}]
         del botify_query['filters']['or']
     else:
         raise Exception('filters are not valid for given es_query')
+
+    return botify_query
 
 
 def _process_sorts(sorts):
@@ -170,17 +174,35 @@ def _process_sorts(sorts):
     return es_sorts
 
 
+def _wrap_query(unwrapped):
+    """Wrap a processed botify query into its final form
+
+    Currently a `constant_score` query is used
+
+    :param unwrapped: processed botify query containing
+        `fields`, `filter` and `sort`
+    """
+    filters = {'filter': unwrapped['filter']}
+    return {
+        'query': {'constant_score': filters},
+        'sort': unwrapped['sort'],
+        'fields': unwrapped['fields']
+    }
+
+
 def get_es_query(botify_query, crawl_id):
     # By default all queries should have these filter/predicate
-    #   1. only query for urls whose http_code > 0 (crawled urls)
-    #   2. only query for current crawl/site
+    #   1. only query for current crawl/site
+    #   2. only query for urls whose http_code > 0 (crawled urls)
+    # The order is important for and/or/not filters in ElasticSearch
+    # See: http://www.elasticsearch.org/blog/all-about-elasticsearch-filter-bitsets/
     default_filters = [
-        {'field': 'http_code', 'value': 0, 'predicate': 'gt'},
-        {'field': 'crawl_id', 'value': crawl_id}
+        {'field': 'crawl_id', 'value': crawl_id},
+        {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
     ]
 
     # Merge default filters in botify format query
-    _add_filters(botify_query, default_filters)
+    botify_query = _add_filters(botify_query, default_filters)
 
     # Transform botify query to ElasticSearch query
     es_query = {}
@@ -198,4 +220,4 @@ def get_es_query(botify_query, crawl_id):
     else:
         es_query['fields'] = ['url']
 
-    return es_query
+    return _wrap_query(es_query)
