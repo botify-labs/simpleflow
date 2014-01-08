@@ -42,7 +42,8 @@ URLS_FIXTURE = [
         'http_code': 200,
         'metadata': {
             'title': ['My title'],
-            'h1': ['Welcome to our website']
+            'h1': ['Welcome to our website'],
+            'h2': ['abcd', 'abc', 'botify']
         },
         'metadata_nb': {
             'title': 1,
@@ -80,6 +81,9 @@ URLS_FIXTURE = [
             [3, 8, 4], # follow
             [4, 5, 1], # link, robots
         ],
+        'metadata': {
+            'h2': ['cba', 'foobar', 'botifyy']
+        },
         'inlinks_internal_nb': {
             'total_unique': 3,
             'nofollow': 0,
@@ -581,3 +585,25 @@ class TestQueryES(unittest.TestCase):
             {'id': 3},
         ]
         self.assertItemsEqual(result, expected)
+
+    def test_any_starts(self):
+        bql_query = _get_simple_bql_query('metadata.h2', 'any.starts', 'ab')
+        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        self.assertItemsEqual(results, [{'id': 1}])
+
+    def test_any_contains(self):
+        bql_query = _get_simple_bql_query('metadata.h2', 'any.contains', 'otif')
+        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        self.assertItemsEqual(results, [{'id': 1}, {'id': 2}])
+
+    def test_any_equals(self):
+        bql_query = _get_simple_bql_query('metadata.h2', 'any.eq', 'botify')
+        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+
+        # it's exact match, url 2 doesn't qualify
+        self.assertItemsEqual(results, [{'id': 1}])
+
+    def test_any_ends(self):
+        bql_query = _get_simple_bql_query('metadata.h2', 'any.ends', 'y')
+        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        self.assertItemsEqual(results, [{'id': 1}, {'id': 2}])

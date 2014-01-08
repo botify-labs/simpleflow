@@ -2,17 +2,6 @@ from cdf.exceptions import BotifyQueryException
 from copy import deepcopy
 
 
-def _get_untouched_field(field):
-    """Get the untouched field out of a `multi_field` element
-
-    returns the original field if it's not a `multi_field`
-    """
-    if field in _MULTI_FIELDS:
-        return '%s.untouched' % field
-    else:
-        return field
-
-
 # Elements that are of `multi_field` type
 _MULTI_FIELDS = [
     "metadata.h1",
@@ -21,9 +10,24 @@ _MULTI_FIELDS = [
     "metadata.title",
 ]
 
+# Elements in ES that are a list
+_LIST_FIELDS = [
+    'query_string_keys',
+    'metadata.h1',
+    'metadata.h2',
+    'metadata.h3',
+    'metadata.title',
+    'metadata.description',
+]
+
 
 _PREDICATE_FORMATS = {
     'eq': lambda filters: {
+        "term": {
+            filters['field']: filters['value'],
+        }
+    },
+    'any.eq': lambda filters: {
         "term": {
             filters['field']: filters['value'],
         }
@@ -34,13 +38,28 @@ _PREDICATE_FORMATS = {
             _get_untouched_field(filters['field']): filters['value'],
         }
     },
+    'any.starts': lambda filters: {
+        "prefix": {
+            _get_untouched_field(filters['field']): filters['value'],
+        }
+    },
     # 'ends' predicate should be applied on `untouched`
     'ends': lambda filters: {
         "regexp": {
             _get_untouched_field(filters['field']): "@%s" % filters['value']
         }
     },
+    'any.ends': lambda filters: {
+        "regexp": {
+            _get_untouched_field(filters['field']): "@%s" % filters['value']
+        }
+    },
     'contains': lambda filters: {
+        "regexp": {
+            _get_untouched_field(filters['field']): "@%s@" % filters['value']
+        }
+    },
+    'any.contains': lambda filters: {
         "regexp": {
             _get_untouched_field(filters['field']): "@%s@" % filters['value']
         }
@@ -94,10 +113,28 @@ _PREDICATE_FORMATS = {
 }
 
 
+def _get_untouched_field(field):
+    """Get the untouched field out of a `multi_field` element
+
+    returns the original field if it's not a `multi_field`
+    """
+    if field in _MULTI_FIELDS:
+        return '%s.untouched' % field
+    else:
+        return field
+
+
 def _is_boolean_filter(filter_dict):
     return isinstance(filter_dict, dict) and \
            len(filter_dict) == 1 and \
            filter_dict.keys()[0].lower() in ('and', 'or')
+
+
+# TODO impl validation when query format is fixed
+# TODO impl validation with some validation framwork (colander, valideer)
+def _botify_query_validate(botify_query):
+    """Validate the semantic of front-end's query"""
+    pass
 
 
 def _process_filters(filters, has_parent=False):
