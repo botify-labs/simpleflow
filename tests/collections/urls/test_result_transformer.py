@@ -2,6 +2,7 @@ import unittest
 import copy
 from mock import MagicMock
 
+from cdf.exceptions import ElasticSearchIncompleteIndex
 from cdf.collections.urls.result_transformer import IdToUrlTransformer, DefaultValueTransformer, ExternalUrlTransformer
 
 
@@ -159,3 +160,32 @@ class TestExternalUrlTransformer(unittest.TestCase):
         expected = [{'canonical_to': {'url': 'external', 'crawled': False}}]
 
         self.assertEqual(d.results, expected)
+
+
+class TestUnindexedUrlTransformer(unittest.TestCase):
+    def test_raise(self):
+        es_result = {
+            'error_links': {
+                '3xx': {
+                    'nb': 1,
+                    'urls': [2]
+                }
+            }
+        }
+
+        es_mock_conn = MagicMock()
+        es_mock_conn.mget.return_value={
+            u'docs': [{
+                          #some other values are also returned by
+                          #elasticsearch but they are not relevant for the test
+                          u'exists': False,
+                          }]
+
+        }
+
+        # partial transformation, controled by `fields` param
+        test_input = copy.deepcopy(es_result)
+        trans = IdToUrlTransformer(fields=['error_links.3xx'], es_result=[test_input],
+                                   es_conn=es_mock_conn, es_index=None,
+                                   es_doctype=None, crawl_id=CRAWL_ID)
+        self.assertRaises(ElasticSearchIncompleteIndex, trans.transform)
