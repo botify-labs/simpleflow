@@ -161,7 +161,7 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 
 class SuggestSummaryRegister(object):
 
-    def __init__(self, crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix):
+    def __init__(self, crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix, force_fetch=False):
         self.crawl_id = crawl_id
         self.s3_uri = s3_uri
         self.es_location = es_location
@@ -169,6 +169,7 @@ class SuggestSummaryRegister(object):
         self.es_doc_type = es_doc_type
         self.revision_number = revision_number
         self.tmp_dir_prefix = tmp_dir_prefix
+        self.force_fetch = force_fetch
         self._called = False
         self._queue = []
         self._scores = {}
@@ -180,7 +181,7 @@ class SuggestSummaryRegister(object):
         """
         Compute a specific item for the suggested patterns queue
         """
-        q = SuggestQuery.from_s3_uri(self.crawl_id, self.s3_uri)
+        q = SuggestQuery.from_s3_uri(self.crawl_id, self.s3_uri, force_fetch=self.force_fetch)
         results = q.query(query)
         for k, result in enumerate(results):
             hash_id_filters = [{'field': 'patterns', 'value': result['query_hash_id']}]
@@ -190,9 +191,14 @@ class SuggestSummaryRegister(object):
             urls_query_bgn = {
                 "filters": {'and': hash_id_filters + urls_filters}
             }
+
+            if isinstance(result['query'], dict):
+                urls_filters.append(result['query'])
+            else:
+                urls_filters += result['query']
             urls_query = {
                 "fields": ["url"] + urls_fields,
-                "filters": {'and': result['query'] + urls_filters}
+                "filters": {"and": urls_filters}
             }
 
             result["urls_query_bgn"] = urls_query_bgn
@@ -269,7 +275,9 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         'tmp_dir_prefix': tmp_dir_prefix,
     }
 
-    suggest = SuggestSummaryRegister(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix='/tmp')
+    suggest = SuggestSummaryRegister(crawl_id, s3_uri,
+                                     es_location, es_index, es_doc_type, revision_number,
+                                     tmp_dir_prefix='/tmp', force_fetch=force_fetch)
 
     # Full picture
     make_counter_file_from_query(
