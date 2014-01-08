@@ -90,11 +90,11 @@ class TestResultTransformer(unittest.TestCase):
             }
         }
 
-        self.assertItemsEqual(expected, test_input)
+        self.assertDictEqual(expected, test_input)
 
         # children fields transformation
         test_input = copy.deepcopy(es_result)
-        trans = IdToUrlTransformer(fields=['error_links.5xx'], es_result=[test_input],
+        trans = IdToUrlTransformer(fields=['error_links'], es_result=[test_input],
                                    es_conn=self.es_conn, es_index=None,
                                    es_doctype=None, crawl_id=CRAWL_ID)
         trans.transform()
@@ -112,7 +112,7 @@ class TestResultTransformer(unittest.TestCase):
             }
         }
 
-        self.assertItemsEqual(expected, test_input)
+        self.assertDictEqual(expected, test_input)
 
 
 class TestDefaultValueTransformer(unittest.TestCase):
