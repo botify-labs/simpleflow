@@ -37,6 +37,8 @@ def _transform_error_links(es_result, id_to_url, code_kind):
             original = es_result[key][code_kind]
             urls = []
             for url_id in original['urls']:
+                if url_id not in id_to_url:
+                    raise ElasticSearchIncompleteIndex
                 urls.append(id_to_url.get(url_id)[0])
                 # in-place
             original['urls'] = urls
@@ -86,6 +88,8 @@ def _prepare_single_id(es_result, field):
 def _transform_single_link_to(es_result, id_to_url, field):
     if field in es_result:
         if 'url_id' in es_result[field]:
+            if es_result[field]['url_id'] not in id_to_url:
+                raise ElasticSearchIncompleteIndex
             url, http_code = id_to_url.get(es_result[field]['url_id'])
             if http_code > 0:
                 es_result[field] = {
@@ -130,6 +134,8 @@ def _transform_canonical_from(es_result, id_to_url):
     if field in es_result:
         urls = []
         for url_id in es_result[field]:
+            if url_id not in id_to_url:
+                raise ElasticSearchIncompleteIndex
             urls.append(id_to_url.get(url_id)[0])
         es_result[field] = urls
 
@@ -148,6 +154,8 @@ def _transform_redirects_from(es_result, id_to_url):
     if field in es_result:
         urls = []
         for item in es_result[field]:
+            if item['url_id'] not in id_to_url:
+                raise ElasticSearchIncompleteIndex
             urls.append({
                 'http_code': item['http_code'],
                 'url': {
@@ -171,6 +179,8 @@ def _transform_metadata_duplicate(es_result, id_to_url, meta_type):
     if field in es_result and meta_type in es_result[field]:
         urls = []
         for url_id in es_result[field][meta_type]:
+            if url_id not in id_to_url:
+                raise ElasticSearchIncompleteIndex
             url, http_code = id_to_url.get(url_id)
             urls.append({
                 'url': url,
@@ -281,11 +291,6 @@ class IdToUrlTransformer(ResultTransformer):
                 for url_id in id_list:
                     self.ids.add(url_id)
 
-    def ignore_missing_entries(self):
-        #not all outlinks have been pushed to elasticsearch
-        #so we should not raise in case an entry is missing
-        return 'outlinks_internal' in self.fields
-
     def transform(self):
         self.prepare()
         if len(self.ids) == 0:
@@ -300,11 +305,9 @@ class IdToUrlTransformer(ResultTransformer):
                                           routing=self.crawl_id,
                                           fields=["url", "http_code"])
 
-        if self.ignore_missing_entries():
-            resolved_urls['docs'] = [url for url in resolved_urls['docs'] if url["exists"]]
-        elif not all([url["exists"] for url in resolved_urls['docs']]):
-            # All referenced urlids should be in ElasticSearch index.
-            raise ElasticSearchIncompleteIndex("Missing documents")
+
+        resolved_urls['docs'] = [url for url in resolved_urls['docs'] if url["exists"]]
+
 
         # Fill the (url_id -> url) lookup table
         # Also fetch the http_code
