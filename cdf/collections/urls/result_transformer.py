@@ -21,7 +21,6 @@ class ResultTransformer(object):
 # the list of url_ids
 
 # all `transform` functions here modifies ES result IN PLACE
-
 def _prepare_error_links(es_result, code_kind):
     key = 'error_links'
     if key in es_result:
@@ -282,6 +281,11 @@ class IdToUrlTransformer(ResultTransformer):
                 for url_id in id_list:
                     self.ids.add(url_id)
 
+    def ignore_missing_entries(self):
+        #not all outlinks have been pushed to elasticsearch
+        #so we should not raise in case an entry is missing
+        return 'outlinks_internal' in self.fields
+
     def transform(self):
         self.prepare()
         if len(self.ids) == 0:
@@ -295,8 +299,11 @@ class IdToUrlTransformer(ResultTransformer):
                                           doc_type=self.es_doctype,
                                           routing=self.crawl_id,
                                           fields=["url", "http_code"])
-        # All referenced urlids should be in ElasticSearch index.
-        if not all([url["exists"] for url in resolved_urls['docs']]):
+
+        if self.ignore_missing_entries():
+            resolved_urls['docs'] = [url for url in resolved_urls['docs'] if url["exists"]]
+        elif not all([url["exists"] for url in resolved_urls['docs']]):
+            # All referenced urlids should be in ElasticSearch index.
             raise ElasticSearchIncompleteIndex("Missing documents")
 
         # Fill the (url_id -> url) lookup table
