@@ -193,12 +193,12 @@ class SuggestSummaryRegister(object):
             }
 
             if isinstance(result['query'], dict):
-                urls_filters.append(result['query'])
+                filters = urls_filters + [result['query']]
             else:
-                urls_filters += result['query']
+                filters = urls_filters + result['query']
             urls_query = {
                 "fields": ["url"] + urls_fields,
-                "filters": {"and": urls_filters}
+                "filters": {"and": filters}
             }
 
             result["urls_query_bgn"] = urls_query_bgn
