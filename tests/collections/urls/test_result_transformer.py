@@ -189,3 +189,48 @@ class TestUnindexedUrlTransformer(unittest.TestCase):
                                    es_conn=es_mock_conn, es_index=None,
                                    es_doctype=None, crawl_id=CRAWL_ID)
         self.assertRaises(ElasticSearchIncompleteIndex, trans.transform)
+
+    def test_outlinks_internal_not_raise(self):
+        es_result = {
+            'outlinks_internal': [
+            [1, 2, 100], # follow
+            [2, 7, 1], # link, meta, robots
+        ]
+        }
+
+        es_mock_conn = MagicMock()
+        es_mock_conn.mget.return_value={
+            u'docs': [
+                {
+                    "_id": "1:1",
+                    "fields" : {
+                        u'url': "url1",
+                        u'http_code': 200,
+                        'crawled': True
+                    },
+                    #some other values are also returned by
+                    #elasticsearch but they are not relevant for the test
+                    u'exists': True,
+                    },
+                {
+                    #some other values are also returned by
+                    #elasticsearch but they are not relevant for the test
+                    u'exists': False,
+                    }]
+        }
+
+        # partial transformation, controled by `fields` param
+        test_input = copy.deepcopy(es_result)
+        trans = IdToUrlTransformer(fields=['outlinks_internal'], es_result=[test_input],
+                                   es_conn=es_mock_conn, es_index=None,
+                                   es_doctype=None, crawl_id=CRAWL_ID)
+        result = trans.transform()
+        expected = [{
+                        'outlinks_internal': [
+                            {'url': {'url': 'url1', 'crawled': True},
+                             'status': ['nofollow_meta'],
+                             'nb_links': 100}
+                        ]
+                    }]
+
+        self.assertEqual(expected, result)
