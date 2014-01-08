@@ -336,9 +336,9 @@ class DefaultValueTransformer(ResultTransformer):
         'metadata_duplicate_nb': 0,
         'metadata': [],
         'metadata_duplicate': [],
-        'redirects_to': [],
+        'redirects_to': None,
         'redirects_from_nb': 0,
-        'canonical_to': [],
+        'canonical_to': None,
         'canonical_from_nb': 0,
 
         'error_links.3xx.nb': 0,
