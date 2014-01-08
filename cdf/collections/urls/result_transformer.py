@@ -329,16 +329,33 @@ class DefaultValueTransformer(ResultTransformer):
     _META_STRATEGY = {
         'inlinks_internal_nb': 0,
         'outlinks_internal_nb': 0,
+        'outlinks_internal': [],
+        'inlinks_internal': [],
+        'outlinks_external_nb': 0,
         'metadata_nb': 0,
         'metadata_duplicate_nb': 0,
         'metadata': [],
-        'metadata_duplicate': []
+        'metadata_duplicate': [],
+        'redirects_to': None,
+        'redirects_from_nb': 0,
+        'canonical_to': None,
+        'canonical_from_nb': 0,
+
+        'error_links.3xx.nb': 0,
+        'error_links.4xx.nb': 0,
+        'error_links.5xx.nb': 0,
+        'error_links.3xx.urls': [],
+        'error_links.4xx.urls': [],
+        'error_links.5xx.urls': [],
     }
 
     _DEFAULT_VALUE_STRATEGY = {}
     for parent, default in _META_STRATEGY.iteritems():
-        for child in children_from_field(parent):
-            _DEFAULT_VALUE_STRATEGY[child] = default
+        if field_has_children(parent):
+            for child in children_from_field(parent):
+                _DEFAULT_VALUE_STRATEGY[child] = default
+        else:
+            _DEFAULT_VALUE_STRATEGY[parent] = default
 
     def __init__(self, es_result, query=None, **kwargs):
         # ES search result to transform
@@ -393,10 +410,9 @@ class ExternalUrlTransformer(ResultTransformer):
         else:
             self.fields = kwargs['fields']
 
-    # TODO if fields not in STRATEGY, return directly
     def transform(self):
         for result in self.results:
-            for required_field in self.fields:
+            for required_field in result:
                 if required_field in self._TRANSFORM_STRATEGY:
                     field = result[required_field]
                     if 'url' in field:

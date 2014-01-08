@@ -218,6 +218,12 @@ class TestQueryES(unittest.TestCase):
             'nb': 2,
             'urls': [self.urls[2], self.urls[3]]
         }
+        self.error_missing = {'nb': 0, 'urls': []}
+        self.error_all_missing = {
+            '3xx': self.error_missing,
+            '4xx': self.error_missing,
+            '5xx': self.error_missing
+        }
 
     def tearDown(self):
         pass
@@ -273,7 +279,8 @@ class TestQueryES(unittest.TestCase):
         expected = {
             'error_links': {
                 '3xx': self.error_3xx,
-                '5xx': self.error_5xx
+                '5xx': self.error_5xx,
+                '4xx': self.error_missing
             }
         }
         self.assertItemsEqual(results, [expected])
@@ -308,23 +315,26 @@ class TestQueryES(unittest.TestCase):
                                           fields=['id', 'error_links'])
         results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
         expected = [
-            {'id': 1},
-            {'id': 2},
+            {'id': 1, 'error_links': self.error_all_missing},
+            {'id': 2, 'error_links': self.error_all_missing},
             {
                 'id': 3,
                 'error_links': {
-                    '4xx': self.error_4xx
+                    '4xx': self.error_4xx,
+                    '3xx': self.error_missing,
+                    '5xx': self.error_missing
                 }
             },
             {
                 'id': 4,
                 'error_links': {
                     '3xx': self.error_3xx,
+                    '4xx': self.error_missing,
                     '5xx': self.error_5xx
                 }
             },
-            {'id': 6},
-            {'id': 7}
+            {'id': 6, 'error_links': self.error_all_missing},
+            {'id': 7, 'error_links': self.error_all_missing}
         ]
 
         self.assertItemsEqual(results, expected)
@@ -486,6 +496,17 @@ class TestQueryES(unittest.TestCase):
         }
         self.assertItemsEqual(result, [expected])
 
+    def test_no_redirects_canonical(self):
+        bql_query = _get_simple_bql_query('id', 'eq', 6,
+                                          fields=['redirects_to'])
+        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        self.assertItemsEqual(result, [{'redirects_to': None}])
+
+        bql_query = _get_simple_bql_query('id', 'eq', 6,
+                                          fields=['canonical_to'])
+        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        self.assertItemsEqual(result, [{'canonical_to': None}])
+
     def test_metadata_duplicate_query(self):
         bql_query = _get_simple_bql_query('metadata_duplicate_nb.title', 'gt', 0,
                                           fields=['metadata_duplicate'])
@@ -519,6 +540,12 @@ class TestQueryES(unittest.TestCase):
                 'title': 0, 'h1': 0, 'description': 0, 'h2': 0
             }
         }
+        self.assertItemsEqual(result, [expected])
+
+        bql_query = _get_simple_bql_query('id', 'eq', 6,
+                                          fields=['error_links.3xx'])
+        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        expected = {'error_links': {'3xx': self.error_missing}}
         self.assertItemsEqual(result, [expected])
 
     def test_sort_query(self):
