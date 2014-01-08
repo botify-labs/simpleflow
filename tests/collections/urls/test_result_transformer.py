@@ -163,23 +163,24 @@ class TestExternalUrlTransformer(unittest.TestCase):
 
 
 class TestUnindexedUrlTransformer(unittest.TestCase):
-    def test_raise(self):
+    def test_skip_entries(self):
         es_result = {
             'error_links': {
                 '3xx': {
                     'nb': 1,
-                    'urls': [2]
+                    'urls': [1]
                 }
             }
         }
 
         es_mock_conn = MagicMock()
         es_mock_conn.mget.return_value={
-            u'docs': [{
+            u'docs': [
+                      {
                           #some other values are also returned by
                           #elasticsearch but they are not relevant for the test
                           u'exists': False,
-                          }]
+                       }]
 
         }
 
@@ -188,7 +189,12 @@ class TestUnindexedUrlTransformer(unittest.TestCase):
         trans = IdToUrlTransformer(fields=['error_links.3xx'], es_result=[test_input],
                                    es_conn=es_mock_conn, es_index=None,
                                    es_doctype=None, crawl_id=CRAWL_ID)
-        self.assertRaises(ElasticSearchIncompleteIndex, trans.transform)
+        result = trans.transform()
+
+        #we should have skipped the unexisting doc
+        #please note the the 'nb' field is no more equal to the list lenght
+        expected = [{'error_links': {'3xx': {'nb': 1, 'urls': []}}}]
+        self.assertEqual(expected, result)
 
     def test_outlinks_internal_not_raise(self):
         es_result = {

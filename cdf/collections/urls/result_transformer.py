@@ -1,5 +1,6 @@
 import abc
 
+from cdf.log import logger
 from cdf.collections.urls.utils import children_from_field, field_has_children, get_es_id, get_url_id
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
 from cdf.exceptions import ElasticSearchIncompleteIndex
@@ -38,7 +39,8 @@ def _transform_error_links(es_result, id_to_url, code_kind):
             urls = []
             for url_id in original['urls']:
                 if url_id not in id_to_url:
-                    raise ElasticSearchIncompleteIndex
+                    logger.warning("Urlid %d could not be found in elasticsearch.", url_id)
+                    continue
                 urls.append(id_to_url.get(url_id)[0])
                 # in-place
             original['urls'] = urls
@@ -58,7 +60,7 @@ def _transform_links(es_result, id_to_url, link_kind):
             mask = follow_mask(link_item[1])
             url_id = link_item[0]
             if url_id not in id_to_url and link_kind != 'outlinks_internal':
-                raise ElasticSearchIncompleteIndex
+                logger.warning("Urlid %d could not be found in elasticsearch.", url_id)
             url, http_code = id_to_url.get(url_id, (None, None))
             if not url:
                 continue
@@ -90,9 +92,11 @@ def _prepare_single_id(es_result, field):
 def _transform_single_link_to(es_result, id_to_url, field):
     if field in es_result:
         if 'url_id' in es_result[field]:
-            if es_result[field]['url_id'] not in id_to_url:
-                raise ElasticSearchIncompleteIndex
-            url, http_code = id_to_url.get(es_result[field]['url_id'])
+            url_id = es_result[field]['url_id']
+            if url_id not in id_to_url:
+                logger.warning("Urlid %d could not be found in elasticsearch.", url_id)
+                return
+            url, http_code = id_to_url.get(url_id)
             if http_code > 0:
                 es_result[field] = {
                     'url': url,
@@ -137,7 +141,8 @@ def _transform_canonical_from(es_result, id_to_url):
         urls = []
         for url_id in es_result[field]:
             if url_id not in id_to_url:
-                raise ElasticSearchIncompleteIndex
+                logger.warning("Urlid %d could not be found in elasticsearch.", url_id)
+                continue
             urls.append(id_to_url.get(url_id)[0])
         es_result[field] = urls
 
@@ -156,12 +161,14 @@ def _transform_redirects_from(es_result, id_to_url):
     if field in es_result:
         urls = []
         for item in es_result[field]:
-            if item['url_id'] not in id_to_url:
-                raise ElasticSearchIncompleteIndex
+            url_id = item['url_id']
+            if url_id not in id_to_url:
+                logger.warning("Urlid %d could not be found in elasticsearch.", url_id)
+                continue
             urls.append({
                 'http_code': item['http_code'],
                 'url': {
-                    'url': id_to_url.get(item['url_id'])[0],
+                    'url': id_to_url.get(url_id)[0],
                     'crawled': True
                 }
             })
@@ -182,7 +189,8 @@ def _transform_metadata_duplicate(es_result, id_to_url, meta_type):
         urls = []
         for url_id in es_result[field][meta_type]:
             if url_id not in id_to_url:
-                raise ElasticSearchIncompleteIndex
+                logger.warning("Urlid %d could not be found in elasticsearch.", url_id)
+                continue
             url, http_code = id_to_url.get(url_id)
             urls.append({
                 'url': url,
