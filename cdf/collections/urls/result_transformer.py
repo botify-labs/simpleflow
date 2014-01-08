@@ -57,6 +57,8 @@ def _transform_links(es_result, id_to_url, link_kind):
         for link_item in es_result[link_kind]:
             mask = follow_mask(link_item[1])
             url_id = link_item[0]
+            if url_id not in id_to_url and link_kind != 'outlinks_internal':
+                raise ElasticSearchIncompleteIndex
             url, http_code = id_to_url.get(url_id, (None, None))
             if not url:
                 continue
