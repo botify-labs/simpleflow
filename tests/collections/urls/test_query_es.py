@@ -486,6 +486,17 @@ class TestQueryES(unittest.TestCase):
         }
         self.assertItemsEqual(result, [expected])
 
+    def test_no_redirects_canonical(self):
+        bql_query = _get_simple_bql_query('id', 'eq', 6,
+                                          fields=['redirects_to'])
+        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        self.assertItemsEqual(result, [{}])
+
+        bql_query = _get_simple_bql_query('id', 'eq', 6,
+                                          fields=['canonical_to'])
+        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        self.assertItemsEqual(result, [{}])
+
     def test_metadata_duplicate_query(self):
         bql_query = _get_simple_bql_query('metadata_duplicate_nb.title', 'gt', 0,
                                           fields=['metadata_duplicate'])

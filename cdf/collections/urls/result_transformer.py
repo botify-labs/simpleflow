@@ -393,10 +393,9 @@ class ExternalUrlTransformer(ResultTransformer):
         else:
             self.fields = kwargs['fields']
 
-    # TODO if fields not in STRATEGY, return directly
     def transform(self):
         for result in self.results:
-            for required_field in self.fields:
+            for required_field in result:
                 if required_field in self._TRANSFORM_STRATEGY:
                     field = result[required_field]
                     if 'url' in field:
