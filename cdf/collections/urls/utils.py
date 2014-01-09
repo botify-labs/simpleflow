@@ -29,3 +29,22 @@ def get_es_id(crawl_id, url_id):
 def get_url_id(es_id):
     """Get the url_id from the composed es doc id"""
     return int(es_id.split(':')[1])
+
+
+def query_is_predicate(query):
+    """
+    :param query: a Botify Url Query
+    :type query: dict
+    :returns bool
+    """
+    return isinstance(query, dict) and "field" in query
+
+
+def merge_queries(*args):
+    query = {"and": []}
+    for _q in args:
+        if query_is_predicate(_q) or "or" in _q:
+            query["and"].append(_q)
+        elif "and" in _q:
+            query["and"] += _q["and"]
+    return query
