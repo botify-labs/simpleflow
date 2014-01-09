@@ -27,8 +27,6 @@ def extract_patterns(attributes, stream_item):
         # The first character is ? we flush it in the split
         qs = [k.split('=') if '=' in k else [k, ''] for k in query_string[1:].split('&')]
         attributes['query_string_keys'] = [q[0] for q in qs]
-        attributes['query_string_keys_order'] = ';'.join(attributes['query_string_keys'])
-        attributes['query_string_items'] = qs
     attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
     attributes['metadata_duplicate'] = {verbose_content_type: [] for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
     attributes['metadata_duplicate_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
@@ -68,8 +66,15 @@ def extract_infos(attributes, stream_item):
     job_in_progress=2,
     """
 
-    stream_item[date_crawled_idx] = date_2k_mn_to_date(stream_item[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
-    attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item) if i[0] != 'infos_mask'})
+    stream_item[date_crawled_idx] = date_2k_mn_to_date(
+        stream_item[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
+    attributes.update(
+        {i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item)
+         if i[0] != 'infos_mask'})
+
+    # `?` should be rename to `not-set`
+    if attributes['content_type'] == '?':
+        attributes['content_type'] = 'not-set'
 
     # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
     infos_mask = stream_item[idx_from_stream('infos', 'infos_mask')]
@@ -329,8 +334,6 @@ class UrlDocumentGenerator(object):
             "path": "/fr/my-article-1",
             "query_string": "?p=comments&offset=10",
             "query_string_keys": ["p", "offset"],
-            "query_string_keys_order": "p;offset",
-            "query_string_items": [ ["p", "comments"], ["offset", "10] ],
             "id": 1,
             "date": "2013-10-10 09:10:12",
             "depth": 1,

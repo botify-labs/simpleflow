@@ -72,7 +72,6 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['delay_from_1s_to_2s'], 1)
         self.assertEqual(target['delay_gte_2s'], 1)
 
-
     def test_cross_property_keys(self):
         """Aggregator should generate correctly the cross property keys
 
@@ -85,7 +84,7 @@ class TestMetricsAggregator(unittest.TestCase):
             [2, 1, 'text/html', 1, 1, 300, 1024, 100, 100],
             [3, 8, 'text/html', 1, 1, 400, 1024, 100, 100],
             [4, 1, 'text/html', 0, 1, 200, 1024, 100, 100],
-            [5, 4, 'text/html', 3, 1, 200, 1024, 100, 100]
+            [5, 4, '?', 3, 1, 200, 1024, 100, 100]  # `?` should be replaced
         ]
 
         stream_suggest = [
@@ -102,7 +101,7 @@ class TestMetricsAggregator(unittest.TestCase):
             ['0', 'text/html', 0, 200, True, True],
             ['0', 'text/html', 1, 300, True, True],
             ['0', 'text/html', 1, 400, True, False],
-            ['0', 'text/html', 3, 200, False, True]
+            ['0', 'not-set', 3, 200, False, True]
         ]
 
         self.assertEqual(sorted(expected), sorted(properties))
@@ -184,7 +183,7 @@ class TestMetricsAggregator(unittest.TestCase):
             [1, ['robots', 'link', 'meta'], True, 3, 2],
             [2, ['follow'], True, 30, 25],
             [2, ['meta'], False, 10, 8],
-            [2, ['meta', 'link'], False, 2, 1],
+            [2, ['meta', 'link'], True, 2, 1],
         ]
 
         self.kwargs['stream_outlinks_counters'] = iter(stream_outlinks_counters)
@@ -194,42 +193,58 @@ class TestMetricsAggregator(unittest.TestCase):
         target_ext = result[0]['counters']['outlinks_external_nb']
         target_int = result[0]['counters']['outlinks_internal_nb']
 
-        # counters for this part are calculated with `score`
-        self.assertEqual(target_int['total'], 43)
+        # counters for internal outlinks
+        self.assertEqual(target_int['total'], 45)
         self.assertEqual(target_int['follow'], 40)
         self.assertEqual(target_int['follow_unique'], 30)
-        self.assertEqual(target_int['nofollow'], 3)
-        self.assertEqual(target_int['total_unique'], 32)
+        self.assertEqual(target_int['nofollow'], 5)
+        self.assertEqual(target_int['nofollow_unique'], 3)
+        self.assertEqual(target_int['total_unique'], 33)
         self.assertEqual(target_int['total_urls'], 2)
         self.assertEqual(target_int['follow_urls'], 2)
-        self.assertEqual(target_int[nfc_key]['link_meta_robots'], 2)
 
-        # counters for `nofollow` are calculated with `score_unique`
-        self.assertEqual(target_ext['nofollow'], 12)
-        self.assertEqual(target_ext[nfc_key]['meta'], 8)
-        self.assertEqual(target_ext[nfc_key]['link_meta'], 1)
+        # counters for external outlinks
+        self.assertEqual(target_ext['total'], 15)
+        self.assertEqual(target_ext['follow'], 5)
+        self.assertEqual(target_ext['nofollow'], 10)
+
+        # asserts on `nofollow_combinations`
+        # `nofollow_combinations_unique` calculated with `score_unique`
+        nfc_key = 'nofollow_combinations_unique'
+        self.assertEqual(target_int[nfc_key]['link_meta_robots'], 2)
+        self.assertEqual(target_int[nfc_key]['link_meta'], 1)
+
+        # `nofollow_combinations` calculated with `score`
+        nfc_key = 'nofollow_combinations'
+        self.assertEqual(target_int[nfc_key]['link_meta_robots'], 3)
+        self.assertEqual(target_int[nfc_key]['link_meta'], 2)
+        self.assertEqual(target_ext[nfc_key]['meta'], 10)
         self.assertEqual(target_ext[nfc_key]['link'], 0)
 
     def test_in_links(self):
         stream_inlinks_counters = [
             [1, ['follow'], 10, 5],
-            [1, ['robots', 'link', 'meta'], 3, 2],
+            [1, ['link', 'meta'], 3, 2],
             [2, ['follow'], 30, 25],
         ]
         self.kwargs['stream_inlinks_counters'] = iter(stream_inlinks_counters)
         result = list(MetricsAggregator(**self.kwargs).get())
         target = result[0]['counters']['inlinks_internal_nb']
-        nfc_key = 'nofollow_combinations'
 
         self.assertEqual(target['total'], 43)
         self.assertEqual(target['follow'], 40)
         self.assertEqual(target['follow_unique'], 30)
         self.assertEqual(target['nofollow'], 3)
+        self.assertEqual(target['nofollow_unique'], 2)
         self.assertEqual(target['total_unique'], 32)
         self.assertEqual(target['total_urls'], 2)
         self.assertEqual(target['follow_urls'], 2)
 
-        self.assertEqual(target[nfc_key]['link_meta_robots'], 2)
+        nfc_key = 'nofollow_combinations'
+        self.assertEqual(target[nfc_key]['link_meta'], 3)
+
+        nfc_key = 'nofollow_combinations_unique'
+        self.assertEqual(target[nfc_key]['link_meta'], 2)
 
     def test_redirects(self):
         stream_outredirect_counters = [
@@ -252,7 +267,6 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['redirects_to_nb'], 4)
         self.assertEqual(target['redirects_from_nb'], 10**7 + 50)
 
-    # TODO `not_filled`
     def test_canonicals(self):
         """Canonicals counters should be aggregated correctly
         """
@@ -284,5 +298,5 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['equal'], 2)
         self.assertEqual(target['not_equal'], 1)
         self.assertEqual(target['filled'], 3)
-        #self.assertEqual(target['not_filled'], 2)
+        self.assertEqual(target['not_filled'], 2)
         self.assertEqual(target['incoming'], 10**7 + 10)

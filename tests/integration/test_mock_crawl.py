@@ -83,8 +83,9 @@ def _mock_fetch_files(s3_uri, dest_dir,
     return [(f, True) for f in local_files]
 
 
-def _mock_nb_parts(s3_uri):
-    files = _list_local_files(TEST_DIR, 'urlids.txt.([0-9]+)')
+def _mock_nb_parts(s3_uri, dirpath=None):
+    files = _list_local_files(dirpath if dirpath else RESULT_DIR,
+                              'urlids.txt.([0-9]+)')
     return len(files)
 
 
@@ -105,9 +106,13 @@ class MockIntegrationTest(unittest.TestCase):
         if not os.path.exists(crawl_dir):
             os.makedirs(crawl_dir)
 
+        # copy `files.json`
+        shutil.copy(os.path.join(MOCK_CRAWL_DIR, 'files.json'),
+                    os.path.join(crawl_dir, 'files.json'))
+
         # split and gzip mock crawl files
-        for file in os.listdir(MOCK_CRAWL_DIR):
-            split_partition(os.path.join(MOCK_CRAWL_DIR, file), TEST_DIR)
+        for file in _list_local_files(MOCK_CRAWL_DIR, 'url.*'):
+            split_partition(os.path.join(MOCK_CRAWL_DIR, file), crawl_dir)
 
         # reload modules, mocks need this to take effect
         reload(im)
@@ -120,7 +125,7 @@ class MockIntegrationTest(unittest.TestCase):
 
         # figure out number of partitions
         from cdf.utils.remote_files import nb_parts_from_crawl_location
-        parts = nb_parts_from_crawl_location(S3_URI)
+        parts = nb_parts_from_crawl_location(S3_URI, crawl_dir)
 
         # bad link
         im.make_bad_link_file(CRAWL_ID, S3_URI, 4, 2, tmp_dir_prefix=TEST_DIR)
@@ -162,7 +167,6 @@ class MockIntegrationTest(unittest.TestCase):
                                            es_location, es_index, es_doc_type,
                                            tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
 
-
     @classmethod
     def tearDownClass(cls):
         # delete created files
@@ -173,7 +177,7 @@ class MockIntegrationTest(unittest.TestCase):
         ES.indices.refresh()
 
     def setUp(self):
-        pass
+        self.maxDiff = None
 
     def tearDown(self):
         pass
@@ -293,8 +297,8 @@ class MockIntegrationTest(unittest.TestCase):
 
     def test_bad_links_files(self):
         pattern = 'urlbadlinks.txt.{}.gz'
-
         self.assert_part_files(pattern, [0, 4])
+
 
         expected_contents = []
         # use list.extend and * for repeats

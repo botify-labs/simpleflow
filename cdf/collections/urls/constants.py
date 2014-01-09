@@ -18,14 +18,13 @@ CLUSTER_TYPE_TO_ID = {
     }
 }
 
-QUERY_FIELDS = (
+# TODO this should be de deducted from ElasticSearch mapping
+QUERY_FIELDS = {
     "url",
     "protocol",
     "path",
     "query_string",
     "query_string_keys",
-    "query_string_keys_order",
-    "query_string_items",
     "date_crawled",
     "depth",
     "http_code",
@@ -86,6 +85,12 @@ QUERY_FIELDS = (
 
     "error_links",
     "error_links.3xx",
+    "error_links.3xx.nb",
+    "error_links.3xx.urls",
     "error_links.4xx",
+    "error_links.4xx.nb",
+    "error_links.4xx.urls",
     "error_links.5xx",
-)
+    "error_links.5xx.nb",
+    "error_links.5xx.urls",
+}

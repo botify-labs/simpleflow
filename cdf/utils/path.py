@@ -2,6 +2,7 @@ import gzip
 import os
 import errno
 import itertools
+import codecs
 
 from cdf.collections.urls.utils import get_part_id
 from cdf.log import logger
@@ -54,3 +55,19 @@ def write_by_part(generator,
         with gzip.open(path, 'w') as f:
             for row in rows:
                 f.write(to_string_func(row))
+
+
+def utf8_writer(file_handler):
+    """Returns a wrapped file writer for utf-8 content
+
+    :param file_handler: a file handler to be wrapped
+    """
+    return codecs.getwriter("utf-8")(file_handler)
+
+
+def utf8_reader(file_handler):
+    """Returns a wrapped file reader for utf-8 content
+
+    :param file_handler: a file handler to be wrapped
+    """
+    return codecs.getreader("utf-8")(file_handler)

@@ -26,10 +26,13 @@ COUNTERS_FIELDS = (
     'inlinks_internal_nb.nofollow_combinations',
     'inlinks_internal_nb.nofollow_combinations.link',
     'inlinks_internal_nb.nofollow_combinations.link_meta',
-    'inlinks_internal_nb.nofollow_combinations.link_meta_robots',
-    'inlinks_internal_nb.nofollow_combinations.link_robots',
     'inlinks_internal_nb.nofollow_combinations.meta',
-    'inlinks_internal_nb.nofollow_combinations.meta_robots',
+
+    'inlinks_internal_nb.nofollow_unique',
+    'inlinks_internal_nb.nofollow_combinations_unique',
+    'inlinks_internal_nb.nofollow_combinations_unique.link',
+    'inlinks_internal_nb.nofollow_combinations_unique.link_meta',
+    'inlinks_internal_nb.nofollow_combinations_unique.meta',
 
     'inlinks_internal_nb.follow_distribution_urls.1',
     'inlinks_internal_nb.follow_distribution_urls.2',
@@ -92,6 +95,16 @@ COUNTERS_FIELDS = (
     'outlinks_internal_nb.nofollow_combinations.meta_robots',
     'outlinks_internal_nb.nofollow_combinations.robots',
 
+    'outlinks_internal_nb.nofollow_unique',
+    'outlinks_internal_nb.nofollow_combinations_unique',
+    'outlinks_internal_nb.nofollow_combinations_unique.link',
+    'outlinks_internal_nb.nofollow_combinations_unique.link_meta',
+    'outlinks_internal_nb.nofollow_combinations_unique.link_meta_robots',
+    'outlinks_internal_nb.nofollow_combinations_unique.link_robots',
+    'outlinks_internal_nb.nofollow_combinations_unique.meta',
+    'outlinks_internal_nb.nofollow_combinations_unique.meta_robots',
+    'outlinks_internal_nb.nofollow_combinations_unique.robots',
+
     'outlinks_external_nb',
     'outlinks_external_nb.total',
     'outlinks_external_nb.follow',
@@ -115,4 +128,5 @@ COUNTERS_FIELDS = (
 )
 
 for ct_txt in CONTENT_TYPE_INDEX.itervalues():
-    COUNTERS_FIELDS += ('metadata_nb.%s.not_filled' % ct_txt, 'metadata_nb.%s.filled' % ct_txt, 'metadata_nb.%s.unique' % ct_txt, 'metadata_nb.%s.duplicate' % ct_txt)
+    COUNTERS_FIELDS += ('metadata_nb.%s.not_filled' % ct_txt, 'metadata_nb.%s.filled' % ct_txt,
+                        'metadata_nb.%s.unique' % ct_txt, 'metadata_nb.%s.duplicate' % ct_txt)

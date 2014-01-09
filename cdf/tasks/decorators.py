@@ -1,6 +1,5 @@
 import tempfile
 import shutil
-import os
 
 
 class TemporaryDirTask(object):
@@ -32,8 +31,12 @@ class TemporaryDirTask(object):
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
 
-    def run(self, *args, **kwargs):
+    def run_in_temporary_dir(self, *args, **kwargs):
         self.setup()
-        result = self.func(*args, tmp_dir=self.tmp_dir, **kwargs)
+        try:
+            result = self.func(*args, tmp_dir=self.tmp_dir, **kwargs)
+        except Exception, e:
+            self.cleanup()
+            raise e
         self.cleanup()
         return result
