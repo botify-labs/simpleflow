@@ -2,6 +2,7 @@ import unittest
 import copy
 from mock import MagicMock
 
+from cdf.exceptions import ElasticSearchIncompleteIndex
 from cdf.collections.urls.result_transformer import IdToUrlTransformer, DefaultValueTransformer, ExternalUrlTransformer
 
 
@@ -90,11 +91,11 @@ class TestResultTransformer(unittest.TestCase):
             }
         }
 
-        self.assertItemsEqual(expected, test_input)
+        self.assertDictEqual(expected, test_input)
 
         # children fields transformation
         test_input = copy.deepcopy(es_result)
-        trans = IdToUrlTransformer(fields=['error_links.5xx'], es_result=[test_input],
+        trans = IdToUrlTransformer(fields=['error_links'], es_result=[test_input],
                                    es_conn=self.es_conn, es_index=None,
                                    es_doctype=None, crawl_id=CRAWL_ID)
         trans.transform()
@@ -112,7 +113,7 @@ class TestResultTransformer(unittest.TestCase):
             }
         }
 
-        self.assertItemsEqual(expected, test_input)
+        self.assertDictEqual(expected, test_input)
 
 
 class TestDefaultValueTransformer(unittest.TestCase):
@@ -159,3 +160,83 @@ class TestExternalUrlTransformer(unittest.TestCase):
         expected = [{'canonical_to': {'url': 'external', 'crawled': False}}]
 
         self.assertEqual(d.results, expected)
+
+
+class TestUnindexedUrlTransformer(unittest.TestCase):
+    def test_skip_entries(self):
+        es_result = {
+            'error_links': {
+                '3xx': {
+                    'nb': 1,
+                    'urls': [1]
+                }
+            }
+        }
+
+        es_mock_conn = MagicMock()
+        es_mock_conn.mget.return_value={
+            u'docs': [
+                      {
+                          #some other values are also returned by
+                          #elasticsearch but they are not relevant for the test
+                          u'exists': False,
+                       }]
+
+        }
+
+        # partial transformation, controled by `fields` param
+        test_input = copy.deepcopy(es_result)
+        trans = IdToUrlTransformer(fields=['error_links.3xx'], es_result=[test_input],
+                                   es_conn=es_mock_conn, es_index=None,
+                                   es_doctype=None, crawl_id=CRAWL_ID)
+        result = trans.transform()
+
+        #we should have skipped the unexisting doc
+        #please note the the 'nb' field is no more equal to the list lenght
+        expected = [{'error_links': {'3xx': {'nb': 1, 'urls': []}}}]
+        self.assertEqual(expected, result)
+
+    def test_outlinks_internal_not_raise(self):
+        es_result = {
+            'outlinks_internal': [
+            [1, 2, 100], # follow
+            [2, 7, 1], # link, meta, robots
+        ]
+        }
+
+        es_mock_conn = MagicMock()
+        es_mock_conn.mget.return_value={
+            u'docs': [
+                {
+                    "_id": "1:1",
+                    "fields" : {
+                        u'url': "url1",
+                        u'http_code': 200,
+                        'crawled': True
+                    },
+                    #some other values are also returned by
+                    #elasticsearch but they are not relevant for the test
+                    u'exists': True,
+                    },
+                {
+                    #some other values are also returned by
+                    #elasticsearch but they are not relevant for the test
+                    u'exists': False,
+                    }]
+        }
+
+        # partial transformation, controled by `fields` param
+        test_input = copy.deepcopy(es_result)
+        trans = IdToUrlTransformer(fields=['outlinks_internal'], es_result=[test_input],
+                                   es_conn=es_mock_conn, es_index=None,
+                                   es_doctype=None, crawl_id=CRAWL_ID)
+        result = trans.transform()
+        expected = [{
+                        'outlinks_internal': [
+                            {'url': {'url': 'url1', 'crawled': True},
+                             'status': ['nofollow_meta'],
+                             'nb_links': 100}
+                        ]
+                    }]
+
+        self.assertEqual(expected, result)
