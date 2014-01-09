@@ -31,7 +31,7 @@ def get_url_id(es_id):
     return int(es_id.split(':')[1])
 
 
-def query_is_predicate(query):
+def query_filter_is_predicate(query):
     """
     :param query: a Botify Url Query
     :type query: dict
@@ -40,10 +40,10 @@ def query_is_predicate(query):
     return isinstance(query, dict) and "field" in query
 
 
-def merge_queries(*args):
+def merge_queries_filters(*args):
     query = {"and": []}
     for _q in args:
-        if query_is_predicate(_q) or "or" in _q:
+        if query_filter_is_predicate(_q) or "or" in _q:
             query["and"].append(_q)
         elif "and" in _q:
             query["and"] += _q["and"]

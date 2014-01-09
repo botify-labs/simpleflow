@@ -21,7 +21,7 @@ from cdf.collections.urls.generators.suggestions import MetadataClusterMixin
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 from cdf.collections.suggestions.query import MetricsQuery, SuggestQuery
 from cdf.collections.urls.query import Query
-from cdf.collections.urls.utils import merge_queries
+from cdf.collections.urls.utils import merge_queries_filters
 from cdf.collections.urls.query_helpers import (
     get_filters_from_http_code_range,
     get_filters_from_agg_delay_field,
@@ -189,8 +189,14 @@ class SuggestSummaryRegister(object):
                 continue
 
             hash_id_filters = {'field': 'patterns', 'value': result['query_hash_id']}
-            result["urls_query_bgn"] = merge_queries(hash_id_filters, urls_filters)
-            result["urls_query"] = merge_queries(result["query"], urls_filters)
+            result["urls_query_bgn"] = {
+                "fields": ["url"] + urls_fields,
+                "filters": merge_queries_filters(hash_id_filters, urls_filters)
+            }
+            result["urls_query"] = {
+                "fields": ["url"] + urls_fields,
+                "filters": merge_queries_filters(result["query"], urls_filters)
+            }
 
         # Write suggestion file
         tmp_dir = os.path.join(self.tmp_dir_prefix, 'crawl_%d' % self.crawl_id)

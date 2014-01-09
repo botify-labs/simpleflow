@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import unittest
 import logging
-from cdf.collections.urls.utils import merge_queries
+from cdf.collections.urls.utils import merge_queries_filters
 
 
 class TestUtils(unittest.TestCase):
@@ -30,6 +30,6 @@ class TestUtils(unittest.TestCase):
             ]
         }
 
-        self.assertEquals(merge_queries(field_1, field_2), {"and": [field_1, field_2]})
-        self.assertEquals(merge_queries(field_1, _or), {"and": [field_1, _or]})
-        self.assertEquals(merge_queries(field_1, _and), {"and": [field_1] + _and["and"]})
+        self.assertEquals(merge_queries_filters(field_1, field_2), {"and": [field_1, field_2]})
+        self.assertEquals(merge_queries_filters(field_1, _or), {"and": [field_1, _or]})
+        self.assertEquals(merge_queries_filters(field_1, _and), {"and": [field_1] + _and["and"]})
