@@ -19,7 +19,7 @@ CLUSTER_TYPE_TO_ID = {
 }
 
 # TODO this should be de deducted from ElasticSearch mapping
-QUERY_FIELDS = {
+QUERY_FIELDS_DEPRECATED = {
     "url",
     "protocol",
     "path",

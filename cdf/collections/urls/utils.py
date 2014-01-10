@@ -1,14 +1,16 @@
-from .constants import QUERY_FIELDS
+from cdf.constants import URLS_DATA_FIELDS
 
 
+# TODO moved this to transformer module
 def field_has_children(field):
     prefix = field + '.'
-    return any(i[:len(prefix)] == prefix for i in QUERY_FIELDS)
+    return any(i[:len(prefix)] == prefix for i in URLS_DATA_FIELDS)
 
 
+# TODO moved this to transformer module
 def children_from_field(field):
     prefix = field + '.'
-    return [i for i in QUERY_FIELDS if i[:len(prefix)] == prefix]
+    return [i for i in URLS_DATA_FIELDS if i[:len(prefix)] == prefix]
 
 
 def get_part_id(url_id, first_part_size, part_size):
