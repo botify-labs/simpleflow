@@ -584,19 +584,24 @@ class TestUrlDocumentGenerator(unittest.TestCase):
             '5xx': {
                 'nb': 1,
                 'urls': [5]
+            },
+            'any': {
+                'nb': 5
             }
-
         }
         expected_2 = {
             '4xx': {
                 'nb': 11,
                 'urls': range(100, 110)
+            },
+            'any': {
+                'nb': 11
             }
         }
 
         key = 'error_links'
-        self.assertEquals(documents[0][1][key], expected_1)
-        self.assertEquals(documents[1][1][key], expected_2)
+        self.assertDictEqual(documents[0][1][key], expected_1)
+        self.assertDictEqual(documents[1][1][key], expected_2)
 
     def test_total_uniques(self):
         patterns = [

@@ -264,12 +264,17 @@ def extract_bad_links(attributes, stream_item):
             target_dict['3xx']['urls'].append(url_dest_id)
     elif 400 <= http_code < 500:
         target_dict['4xx']['nb'] += 1
-        if len(target_dict['4xx']['urls'])< 10:
+        if len(target_dict['4xx']['urls']) < 10:
             target_dict['4xx']['urls'].append(url_dest_id)
     elif http_code >= 500:
         target_dict['5xx']['nb'] += 1
         if len(target_dict['5xx']['urls']) < 10:
             target_dict['5xx']['urls'].append(url_dest_id)
+
+    # increment `any.nb` as a consolidate value
+    target_dict['any']['nb'] += 1
+    if 'urls' in target_dict['any']:
+        del target_dict['any']['urls']
 
 
 def end_extract_url(attributes):
