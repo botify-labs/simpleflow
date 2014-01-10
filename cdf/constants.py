@@ -1,6 +1,6 @@
-from cdf.utils.dict import update_path_in_dict
+from cdf.collections.urls.mapping_generation import construct_mapping
 
-URLS_DATA_MAPPING = {
+URLS_DATA_MAPPING_DEPRECATED = {
     "urls": {
         "_routing": {
             "required": True,
@@ -217,6 +217,20 @@ URLS_DATA_MAPPING = {
     }
 }
 
+
+# A intermediate definition of url data format
+# Keys are represented in a path format
+#   - ex. `metadata.h1`
+#       This means `metadata` will be an object type and it
+#       contains a field named `h1`
+# values contains
+#   - type: data type of this field
+#   - settings: a set of setting flags of this field
+#       - not_analyzed: this field should not be tokenized by ES
+#       - no_index: this field should not be indexed
+#       - list: this field is actually a list in ES
+#       - include_not_analyzed: 2 copies of this field, one tokenized,
+#           one untouched should be maintained, use `multi_field` in ES
 _URLS_DATA_META_MAPPING = {
     # url property data
     "url": {
@@ -458,73 +472,6 @@ _URLS_DATA_META_MAPPING = {
 }
 
 
-_PROPERTY = 'properties'
-_NO_INDEX = 'no_index'
-_INCLUDE_NOT_ANALYZED = 'include_not_analyzed'
-_LIST = 'list'
-_NOT_ANALYZED = 'not_analyzed'
-
-
-FIELDS = _URLS_DATA_META_MAPPING.keys()
-
-
-def split_path(path):
-    return path.split('.')
-
-
-def parse_field_path(path):
-    return ('.'+_PROPERTY+'.').join(split_path(path))
-
-
-def parse_field_settings(settings):
-    es_field_settings = {}
-    if _INCLUDE_NOT_ANALYZED in settings:
-        if _NO_INDEX in settings:
-            es_field_settings['index'] = 'no'
-        elif _NOT_ANALYZED in settings:
-            es_field_settings['index'] = 'not_analyzed'
-
-
-def parse_field_values(field_name, elem_vals):
-    es_field_settings = {}
-    elem_type = elem_vals['type']
-
-    if 'settings' in elem_vals:
-        elem_settings = elem_vals['settings']
-    else:
-        # trivial case, no settings
-        es_field_settings['type'] = elem_type
-        return es_field_settings
-
-    if _INCLUDE_NOT_ANALYZED in elem_settings:
-        # use `multi_field` in this case
-        es_field_settings['type'] = 'multi_field'
-        es_field_settings['fields'] = {
-            field_name: {
-                'type': elem_type
-            },
-            # included an untouched field
-            'untouched': {
-                'type': elem_type,
-                'index': 'not_analyzed'
-            }
-        }
-    else:
-        es_field_settings['type'] = elem_type
-        if _NO_INDEX in elem_settings:
-            es_field_settings['index'] = 'no'
-        elif _NOT_ANALYZED in elem_settings:
-            es_field_settings['index'] = 'not_analyzed'
-
-    return es_field_settings
-
-
-def construct_mapping(meta_mapping, routing_field=None):
-    mapping = {}
-    for path, value in meta_mapping.iteritems():
-        parsed_path = parse_field_path(path)
-        field_name = parsed_path.split('.')[-1]
-        parsed_value = parse_field_values(field_name, value)
-        update_path_in_dict(parsed_path, parsed_value, mapping)
-
-    return mapping
+# Generated constants
+URLS_DATA_FIELDS = _URLS_DATA_META_MAPPING.keys()
+URLS_DATA_MAPPING = construct_mapping(_URLS_DATA_META_MAPPING)
