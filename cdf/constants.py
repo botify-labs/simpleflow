@@ -211,6 +211,11 @@ URLS_DATA_MAPPING = {
                             "urls": {"type": "long", "index": "no"}
                         }
                     },
+                    "any": {
+                        "properties": {
+                            "nb": {"type": "long"}
+                        }
+                    }
                 }
             }
         }
