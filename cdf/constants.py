@@ -1,4 +1,4 @@
-from cdf.collections.urls.mapping_generation import construct_mapping
+from cdf.collections.urls.mapping_generation import generate_es_mapping
 
 URLS_DATA_MAPPING_DEPRECATED = {
     "urls": {
@@ -474,4 +474,4 @@ _URLS_DATA_META_MAPPING = {
 
 # Generated constants
 URLS_DATA_FIELDS = _URLS_DATA_META_MAPPING.keys()
-URLS_DATA_MAPPING = construct_mapping(_URLS_DATA_META_MAPPING)
+URLS_DATA_MAPPING = generate_es_mapping(_URLS_DATA_META_MAPPING)

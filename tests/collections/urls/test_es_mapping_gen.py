@@ -1,5 +1,6 @@
 import unittest
-from cdf.constants import parse_field_element, _PROPERTY, construct_mapping, parse_field_path, _URLS_DATA_META_MAPPING, URLS_DATA_MAPPING
+from cdf.collections.urls.mapping_generation import _parse_field_path, generate_es_mapping
+from cdf.constants import URLS_DATA_MAPPING_DEPRECATED, _URLS_DATA_META_MAPPING
 
 
 class TestMappingGeneration(unittest.TestCase):
@@ -9,15 +10,11 @@ class TestMappingGeneration(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_parse_single_elem(self):
-        result = parse_field_element('a.b.c', {1: 2})
-        expected = {'a': {_PROPERTY: {'b': {_PROPERTY: {'c': {1: 2}}}}}}
-        self.assertDictEqual(result, expected)
-
     def test_parse_field_path(self):
         path = 'a.b.c'
+        result = _parse_field_path(path)
         expected = 'a.properties.b.properties.c'
-        self.assertEqual(parse_field_path(path), expected)
+        self.assertEqual(result, expected)
 
     def test_mapping_generation(self):
         # simple case with no-index
@@ -32,7 +29,7 @@ class TestMappingGeneration(unittest.TestCase):
             }
         }
 
-        result = construct_mapping(meta_mapping)
+        result = generate_es_mapping(meta_mapping)
         expected = {
             "error_links": {
                 "properties": {
@@ -59,7 +56,7 @@ class TestMappingGeneration(unittest.TestCase):
             },
         }
 
-        result = construct_mapping(meta_mapping)
+        result = generate_es_mapping(meta_mapping)
         expected = {
             "metadata": {
                 "properties": {
@@ -80,9 +77,8 @@ class TestMappingGeneration(unittest.TestCase):
         }
         self.assertDictEqual(result, expected)
 
-
-        target = URLS_DATA_MAPPING['urls']['properties']
-        result = construct_mapping(_URLS_DATA_META_MAPPING)
+        target = URLS_DATA_MAPPING_DEPRECATED['urls']['properties']
+        result = generate_es_mapping(_URLS_DATA_META_MAPPING)
 
         for key in target:
             self.assertDictEqual(result[key], target[key])
