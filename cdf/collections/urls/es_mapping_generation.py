@@ -1,9 +1,9 @@
+from copy import deepcopy
+
 from cdf.utils.dict import update_path_in_dict
 
 _PROPERTY = 'properties'
 _NO_INDEX = 'no_index'
-_INCLUDE_NOT_ANALYZED = 'include_not_analyzed'
-_LIST = 'list'
 _NOT_ANALYZED = 'not_analyzed'
 
 
@@ -21,40 +21,54 @@ def _parse_field_path(path):
     return ('.'+_PROPERTY+'.').join(_split_path(path))
 
 
-def _parse_field_values(field_name, elem_vals):
+def _parse_field_values(field_name, elem_values):
     """Parse field's settings into ES field configurations"""
 
-    es_field_settings = {}
-    elem_type = elem_vals['type']
+    def parse_struct_field(parsed_settings, values):
+        values = deepcopy(values['values'])
+        for inner_field in values:
+            values[inner_field].update(parsed_settings)
+        return {'properties': values}
 
-    if 'settings' in elem_vals:
-        elem_settings = elem_vals['settings']
-    else:
-        # trivial case, no settings
-        es_field_settings['type'] = elem_type
-        return es_field_settings
-
-    if _INCLUDE_NOT_ANALYZED in elem_settings:
-        # use `multi_field` in this case
-        es_field_settings['type'] = 'multi_field'
-        es_field_settings['fields'] = {
-            field_name: {
-                'type': elem_type
-            },
-            # included an untouched field
-            'untouched': {
-                'type': elem_type,
-                'index': 'not_analyzed'
+    def parse_multi_field(field_name, values):
+        field_type = values['field_type']
+        return {
+            'type': 'multi_field',
+            'fields': {
+                field_name: {'type': field_type},
+                'untouched': {
+                    'type': field_type,
+                    'index': 'not_analyzed'
+                }
             }
         }
-    else:
-        es_field_settings['type'] = elem_type
-        if _NO_INDEX in elem_settings:
-            es_field_settings['index'] = 'no'
-        elif _NOT_ANALYZED in elem_settings:
-            es_field_settings['index'] = 'not_analyzed'
 
-    return es_field_settings
+    def parse_simple_field(parsed_settings, values):
+        sub_mapping = {'type': values['type']}
+        sub_mapping.update(parsed_settings)
+        return sub_mapping
+
+    def parse_settings(values):
+        if 'settings' in values:
+            settings = values['settings']
+            parsed_settings = {}
+            if _NOT_ANALYZED in settings:
+                parsed_settings['index'] = 'not_analyzed'
+            elif _NO_INDEX in settings:
+                parsed_settings['index'] = 'no'
+            return parsed_settings
+        else:
+            return {}
+
+    elem_type = elem_values['type']
+    parsed_settings = parse_settings(elem_values)
+
+    if elem_type == 'multi_field':
+        return parse_multi_field(field_name, elem_values)
+    elif elem_type == 'struct':
+        return parse_struct_field(parsed_settings, elem_values)
+    else:
+        return parse_simple_field(parsed_settings, elem_values)
 
 
 def generate_es_mapping(meta_mapping,

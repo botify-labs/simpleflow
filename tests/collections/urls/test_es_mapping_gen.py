@@ -49,9 +49,9 @@ class TestMappingGeneration(unittest.TestCase):
         # `multi_field` case
         meta_mapping = {
             "metadata.title": {
-                "type": "string",
+                "type": "multi_field",
+                "field_type": "string",
                 "settings": {
-                    "include_not_analyzed",
                     "list"
                 }
             },
@@ -72,6 +72,36 @@ class TestMappingGeneration(unittest.TestCase):
                                 "index": "not_analyzed"
                             }
                         }
+                    }
+                }
+            }
+        }
+        self.assertDictEqual(result['urls']['properties'], expected)
+
+    def test_struct_field(self):
+        meta_mapping = {
+            "canonical_to": {
+                "type": "struct",
+                "values": {
+                    "url": {"type": "string"},
+                    "url_id": {"type": "long"},
+                },
+                "settings": {
+                    "no_index"
+                }
+            }
+        }
+        result = generate_es_mapping(meta_mapping, routing_field=None)
+        expected = {
+            "canonical_to": {
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "index": "no"
+                    },
+                    "url_id": {
+                        "type": "long",
+                        "index": "no"
                     }
                 }
             }

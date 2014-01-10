@@ -219,18 +219,29 @@ URLS_DATA_MAPPING_DEPRECATED = {
 
 
 # A intermediate definition of url data format
+#
 # Keys are represented in a path format
 #   - ex. `metadata.h1`
 #       This means `metadata` will be an object type and it
 #       contains a field named `h1`
-# values contains
+#
+# Values contains
 #   - type: data type of this field
+#       - long: for numeric values
+#       - string: for string values
+#       - struct: struct can contains some inner fields, but these fields
+#           won't be visible when querying
+#           ex. `something.redirects_from:
+#               [{`id`: xx, `http_code`: xx}, {...}, ...]`
+#               `redirects_from` is visible, but `redirects_from.id` is not
+#       - multi_field: a multi_field type keeps multiple copies of the same
+#           data in different format (analyzed, not_analyzed etc.)
+#
 #   - settings: a set of setting flags of this field
 #       - not_analyzed: this field should not be tokenized by ES
 #       - no_index: this field should not be indexed
-#       - list: this field is actually a list in ES
-#       - include_not_analyzed: 2 copies of this field, one tokenized,
-#           one untouched should be maintained, use `multi_field` in ES
+#       - list: this field is actually a list of values in ES
+
 _URLS_DATA_META_MAPPING = {
     # url property data
     "url": {
@@ -297,30 +308,30 @@ _URLS_DATA_META_MAPPING = {
 
     # metadata contents
     "metadata.title": {
-        "type": "string",
+        "type": "multi_field",
+        "field_type": "string",
         "settings": {
-            "include_not_analyzed",
             "list"
         }
     },
     "metadata.h1": {
-        "type": "string",
+        "type": "multi_field",
+        "field_type": "string",
         "settings": {
-            "include_not_analyzed",
             "list"
         }
     },
     "metadata.h2": {
-        "type": "string",
+        "type": "multi_field",
+        "field_type": "string",
         "settings": {
-            "include_not_analyzed",
             "list"
         }
     },
     "metadata.description": {
-        "type": "string",
+        "type": "multi_field",
+        "field_type": "string",
         "settings": {
-            "include_not_analyzed",
             "list"
         }
     },
@@ -405,41 +416,39 @@ _URLS_DATA_META_MAPPING = {
     },
 
     # outgoing canonical link data
-    "canonical_to.url": {
-        "type": "string",
+    "canonical_to": {
+        "type": "struct",
+        "values": {
+            "url": {"type": "string"},
+            "url_id": {"type": "long"},
+        },
         "settings": {
-            "no_index",
-            "list"
-        }
-    },
-    "canonical_to.url_id": {
-        "type": "long",
-        "settings": {
-            "no_index",
-            "list"
+            "no_index"
         }
     },
     "canonical_to_equal": {"type": "boolean"},
 
     # outgoing redirection data
-    "redirects_to.http_code": {"type": "long"},
-    "redirects_to.url": {"type": "string"},
-    "redirects_to.url_id": {"type": "long"},
+    "redirects_to": {
+        "type": "struct",
+        "values": {
+            "http_code": {"type": "long"},
+            "url": {"type": "string"},
+            "url_id": {"type": "long"}
+        }
+    },
 
     # incoming redirections data
     "redirects_from_nb": {"type": "long"},
-    "redirects_from.http_code": {
-        "type": "long",
+    "redirects_from": {
+        "type": "struct",
+        "values": {
+            "http_code": {"type": "long"},
+            "url_id": {"type": "long"},
+        },
         "settings": {
-            "no_index",
-            "list"
-        }
-    },
-    "redirects_from.url_id": {
-        "type": "long",
-        "settings": {
-            "no_index",
-            "list"
+            "list",
+            "no_index"
         }
     },
 
