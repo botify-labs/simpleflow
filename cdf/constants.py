@@ -1,3 +1,5 @@
+from cdf.utils.dict import update_path_in_dict
+
 URLS_DATA_MAPPING = {
     "urls": {
         "_routing": {
@@ -214,3 +216,315 @@ URLS_DATA_MAPPING = {
         }
     }
 }
+
+_URLS_DATA_META_MAPPING = {
+    # url property data
+    "url": {
+        "type": "string",
+        "settings": {
+            "not_analyzed"
+        }
+    },
+    "url_hash": {"type": "long"},
+    "byte_size": {"type": "long"},
+    "date_crawled": {"type": "date"},
+    "delay1": {"type": "long"},
+    "delay2": {"type": "long"},
+    "depth": {"type": "long"},
+    "gzipped": {"type": "boolean"},
+    "host": {
+        "type": "string",
+        "settings": {
+            "not_analyzed"
+        }
+    },
+    "http_code": {"type": "long"},
+    "id": {"type": "long"},
+    "crawl_id": {"type": "long"},
+    "patterns": {"type": "long"},
+    "path": {
+        "type": "string",
+        "settings": {
+            "not_analyzed"
+        }
+    },
+    "protocol": {
+        "type": "string",
+        "settings": {
+            "not_analyzed"
+        }
+    },
+    "query_string": {
+        "type": "string",
+        "settings": {
+            "not_analyzed"
+        }
+    },
+    "query_string_keys": {
+        "type": "string",
+        "settings": {
+            "not_analyzed"
+        }
+    },
+
+    # metadata numbers
+    "metadata_nb.title": {
+        "type": "long"
+    },
+    "metadata_nb.h1": {
+        "type": "long"
+    },
+    "metadata_nb.h2": {
+        "type": "long"
+    },
+    "metadata_nb.description": {
+        "type": "long"
+    },
+
+    # metadata contents
+    "metadata.title": {
+        "type": "string",
+        "settings": {
+            "include_not_analyzed",
+            "list"
+        }
+    },
+    "metadata.h1": {
+        "type": "string",
+        "settings": {
+            "include_not_analyzed",
+            "list"
+        }
+    },
+    "metadata.h2": {
+        "type": "string",
+        "settings": {
+            "include_not_analyzed",
+            "list"
+        }
+    },
+    "metadata.description": {
+        "type": "string",
+        "settings": {
+            "include_not_analyzed",
+            "list"
+        }
+    },
+
+    # metadata duplication data
+    "metadata_duplicate_nb.title": {"type": "long"},
+    "metadata_duplicate_nb.description": {"type": "long"},
+    "metadata_duplicate_nb.h1": {"type": "long"},
+
+    "metadata_duplicate_is_first.title": {"type": "boolean"},
+    "metadata_duplicate_is_first.description": {"type": "boolean"},
+    "metadata_duplicate_is_first.h1": {"type": "boolean"},
+
+    "metadata_duplicate.title": {
+        "type": "long",
+        "settings": {
+            "list",
+            "no_index"
+        }
+    },
+    "metadata_duplicate.h1": {
+        "type": "long",
+        "settings": {
+            "list",
+            "no_index"
+        }
+    },
+    "metadata_duplicate.description": {
+        "type": "long",
+        "settings": {
+            "list",
+            "no_index"
+        }
+    },
+
+    # incoming links data
+    "inlinks_internal_nb.total": {"type": "long"},
+    "inlinks_internal_nb.follow_unique": {"type": "long"},
+    "inlinks_internal_nb.total_unique": {"type": "long"},
+    "inlinks_internal_nb.follow": {"type": "long"},
+    "inlinks_internal_nb.nofollow": {"type": "long"},
+    "inlinks_internal_nb.nofollow_combinations.key": {"type": "string"},
+    "inlinks_internal_nb.nofollow_combinations.value": {"type": "long"},
+    "inlinks_internal": {
+        "type": "long",
+        "settings": {
+            "no_index"
+        }
+    },
+
+    # outgoing links data
+    # internal outgoing links
+    "outlinks_internal_nb.total": {"type": "long"},
+    "outlinks_internal_nb.follow_unique": {"type": "long"},
+    "outlinks_internal_nb.total_unique": {"type": "long"},
+    "outlinks_internal_nb.follow": {"type": "long"},
+    "outlinks_internal_nb.nofollow": {"type": "long"},
+    "outlinks_internal_nb.nofollow_combinations.key": {"type": "string"},
+    "outlinks_internal_nb.nofollow_combinations.value": {"type": "long"},
+    "outlinks_internal": {
+        "type": "long",
+        "settings": {
+            "no_index"
+        }
+    },
+
+    # external outgoing links
+    "outlinks_external_nb.total": {"type": "long"},
+    "outlinks_external_nb.follow": {"type": "long"},
+    "outlinks_external_nb.nofollow": {"type": "long"},
+    "outlinks_external_nb.nofollow_combinations.key": {"type": "string"},
+    "outlinks_external_nb.nofollow_combinations.value": {"type": "long"},
+
+    # incoming canonical links data
+    "canonical_from_nb": {"type": "long"},
+    "canonical_from": {
+        "type": "long",
+        "settings": {
+            "no_index",
+            "list"
+        }
+    },
+
+    # outgoing canonical link data
+    "canonical_to.url": {
+        "type": "string",
+        "settings": {
+            "no_index",
+            "list"
+        }
+    },
+    "canonical_to.url_id": {
+        "type": "long",
+        "settings": {
+            "no_index",
+            "list"
+        }
+    },
+    "canonical_to_equal": {"type": "boolean"},
+
+    # outgoing redirection data
+    "redirects_to.http_code": {"type": "long"},
+    "redirects_to.url": {"type": "string"},
+    "redirects_to.url_id": {"type": "long"},
+
+    # incoming redirections data
+    "redirects_from_nb": {"type": "long"},
+    "redirects_from.http_code": {
+        "type": "long",
+        "settings": {
+            "no_index",
+            "list"
+        }
+    },
+    "redirects_from.url_id": {
+        "type": "long",
+        "settings": {
+            "no_index",
+            "list"
+        }
+    },
+
+    # erroneous links data
+    "error_links.3xx.nb": {"type": "long"},
+    "error_links.4xx.nb": {"type": "long"},
+    "error_links.5xx.nb": {"type": "long"},
+
+    "error_links.3xx.urls": {
+        "type": "long",
+        "settings": {
+            "no_index",
+            "list"
+        }
+    },
+    "error_links.4xx.urls": {
+        "type": "long",
+        "settings": {
+            "no_index",
+            "list"
+        }
+    },
+    "error_links.5xx.urls": {
+        "type": "long",
+        "settings": {
+            "no_index",
+            "list"
+        }
+    },
+}
+
+
+_PROPERTY = 'properties'
+_NO_INDEX = 'no_index'
+_INCLUDE_NOT_ANALYZED = 'include_not_analyzed'
+_LIST = 'list'
+_NOT_ANALYZED = 'not_analyzed'
+
+
+FIELDS = _URLS_DATA_META_MAPPING.keys()
+
+
+def split_path(path):
+    return path.split('.')
+
+
+def parse_field_path(path):
+    return ('.'+_PROPERTY+'.').join(split_path(path))
+
+
+def parse_field_settings(settings):
+    es_field_settings = {}
+    if _INCLUDE_NOT_ANALYZED in settings:
+        if _NO_INDEX in settings:
+            es_field_settings['index'] = 'no'
+        elif _NOT_ANALYZED in settings:
+            es_field_settings['index'] = 'not_analyzed'
+
+
+def parse_field_values(field_name, elem_vals):
+    es_field_settings = {}
+    elem_type = elem_vals['type']
+
+    if 'settings' in elem_vals:
+        elem_settings = elem_vals['settings']
+    else:
+        # trivial case, no settings
+        es_field_settings['type'] = elem_type
+        return es_field_settings
+
+    if _INCLUDE_NOT_ANALYZED in elem_settings:
+        # use `multi_field` in this case
+        es_field_settings['type'] = 'multi_field'
+        es_field_settings['fields'] = {
+            field_name: {
+                'type': elem_type
+            },
+            # included an untouched field
+            'untouched': {
+                'type': elem_type,
+                'index': 'not_analyzed'
+            }
+        }
+    else:
+        es_field_settings['type'] = elem_type
+        if _NO_INDEX in elem_settings:
+            es_field_settings['index'] = 'no'
+        elif _NOT_ANALYZED in elem_settings:
+            es_field_settings['index'] = 'not_analyzed'
+
+    return es_field_settings
+
+
+def construct_mapping(meta_mapping, routing_field=None):
+    mapping = {}
+    for path, value in meta_mapping.iteritems():
+        parsed_path = parse_field_path(path)
+        field_name = parsed_path.split('.')[-1]
+        parsed_value = parse_field_values(field_name, value)
+        update_path_in_dict(parsed_path, parsed_value, mapping)
+
+    return mapping
