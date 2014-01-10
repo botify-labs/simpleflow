@@ -102,3 +102,20 @@ def generate_es_mapping(meta_mapping,
         }
 
     return es_mapping
+
+
+def generate_multi_field_lookup(meta_mapping):
+    lookup = set()
+    for path in meta_mapping:
+        if meta_mapping[path]['type'] == 'multi_field':
+            lookup.add(path)
+    return lookup
+
+
+def generate_list_field_lookup(meta_mapping):
+    lookup = set()
+    for path in meta_mapping:
+        target = meta_mapping[path]
+        if 'settings' in target and 'list' in target['settings']:
+            lookup.add(path)
+    return lookup

@@ -1,17 +1,22 @@
+from cdf.collections.urls.es_mapping_generation import generate_multi_field_lookup, generate_list_field_lookup
 from cdf.exceptions import BotifyQueryException
 from copy import deepcopy
 
+from cdf.constants import _URLS_DATA_META_MAPPING
+
 
 # Elements that are of `multi_field` type
-_MULTI_FIELDS = [
+_MULTI_FIELDS_DEPRECATED = [
     "metadata.h1",
     "metadata.h2",
     "metadata.description",
     "metadata.title",
 ]
 
+_MULTI_FIELDS = generate_multi_field_lookup(_URLS_DATA_META_MAPPING)
+
 # Elements in ES that are a list
-_LIST_FIELDS = [
+_LIST_FIELDS_DEPRECATED = [
     'query_string_keys',
     'metadata.h1',
     'metadata.h2',
@@ -19,6 +24,8 @@ _LIST_FIELDS = [
     'metadata.title',
     'metadata.description',
 ]
+
+_LIST_FIELDS = generate_list_field_lookup(_URLS_DATA_META_MAPPING)
 
 
 _PREDICATE_FORMATS = {
