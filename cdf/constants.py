@@ -1,4 +1,4 @@
-from cdf.collections.urls.mapping_generation import generate_es_mapping
+from cdf.collections.urls.es_mapping_generation import generate_es_mapping
 
 URLS_DATA_MAPPING_DEPRECATED = {
     "urls": {
