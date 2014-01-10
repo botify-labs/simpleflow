@@ -11,7 +11,10 @@ from cdf.utils.es import bulk
 from cdf.streams.caster import Caster
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
 from cdf.collections.urls.generators.documents import UrlDocumentGenerator
-from cdf.streams.utils import split_file, split
+from cdf.streams.utils import split_file
+from .decorators import TemporaryDirTask as with_temporary_dir
+from cdf.constants import DEFAULT_FORCE_FETCH
+from cdf.tasks.base import make_tmp_dir_from_crawl_id
 
 
 def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type):
@@ -24,7 +27,8 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type):
     es.indices.put_mapping(es_index, es_doc_type, URLS_DATA_MAPPING)
 
 
-def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index, es_doc_type, tmp_dir_prefix='/tmp', force_fetch=False):
+@with_temporary_dir
+def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index, es_doc_type, tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     """
     Generate JSON type urls documents from a crawl's `part_id` and push it to elastic search
 
@@ -42,7 +46,8 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
     es = Elasticsearch([{'host': host, 'port': int(port)}])
 
     # Fetch locally the files from S3
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    if not tmp_dir:
+        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
 
     files_fetched = fetch_files(s3_uri, tmp_dir,
                                 regexp=['url(ids|infos|links|inlinks|contents|' +

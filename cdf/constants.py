@@ -1,3 +1,5 @@
+DEFAULT_FORCE_FETCH = True
+
 URLS_DATA_MAPPING = {
     "urls": {
         "_routing": {
