@@ -16,7 +16,7 @@ class TestMappingGeneration(unittest.TestCase):
         expected = 'a.properties.b.properties.c'
         self.assertEqual(result, expected)
 
-    def test_mapping_generation(self):
+    def test_generation_simple(self):
         # simple case with no-index
         meta_mapping = {
             "error_links.3xx.nb": {"type": "long"},
@@ -29,7 +29,7 @@ class TestMappingGeneration(unittest.TestCase):
             }
         }
 
-        result = generate_es_mapping(meta_mapping)
+        result = generate_es_mapping(meta_mapping, routing_field=None)
         expected = {
             "error_links": {
                 "properties": {
@@ -43,8 +43,9 @@ class TestMappingGeneration(unittest.TestCase):
             }
         }
 
-        self.assertDictEqual(result, expected)
+        self.assertDictEqual(result['urls']['properties'], expected)
 
+    def test_generation_multi_field(self):
         # `multi_field` case
         meta_mapping = {
             "metadata.title": {
@@ -56,7 +57,7 @@ class TestMappingGeneration(unittest.TestCase):
             },
         }
 
-        result = generate_es_mapping(meta_mapping)
+        result = generate_es_mapping(meta_mapping, routing_field=None)
         expected = {
             "metadata": {
                 "properties": {
@@ -75,11 +76,11 @@ class TestMappingGeneration(unittest.TestCase):
                 }
             }
         }
-        self.assertDictEqual(result, expected)
+        self.assertDictEqual(result['urls']['properties'], expected)
 
-        target = URLS_DATA_MAPPING_DEPRECATED['urls']['properties']
-        result = generate_es_mapping(_URLS_DATA_META_MAPPING)
-
-        for key in target:
-            self.assertDictEqual(result[key], target[key])
+    def test_generation_all_mapping(self):
+        doc_type = 'urls'
+        target = URLS_DATA_MAPPING_DEPRECATED
+        result = generate_es_mapping(_URLS_DATA_META_MAPPING,
+                                     doc_type=doc_type)
         self.assertDictEqual(result, target)

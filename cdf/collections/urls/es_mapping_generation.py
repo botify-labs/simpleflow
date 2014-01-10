@@ -57,18 +57,34 @@ def _parse_field_values(field_name, elem_vals):
     return es_field_settings
 
 
-def generate_es_mapping(meta_mapping, routing_field=None):
+def generate_es_mapping(meta_mapping,
+                        doc_type='urls',
+                        routing_field='crawl_id'):
     """Generate ES mapping from the intermediate format definition
 
     :param meta_mapping: internal intermediate format definition
+    :param doc_type: default doc_type for the generated mapping
     :param routing_field: routing parameter in mapping
     :return: a valid ES mapping
     """
-    mapping = {}
+    fields_mapping = {}
     for path, value in meta_mapping.iteritems():
         parsed_path = _parse_field_path(path)
         field_name = parsed_path.split('.')[-1]
         parsed_value = _parse_field_values(field_name, value)
-        update_path_in_dict(parsed_path, parsed_value, mapping)
+        update_path_in_dict(parsed_path, parsed_value, fields_mapping)
 
-    return mapping
+    es_mapping = {
+        doc_type: {
+            'properties': fields_mapping
+        }
+    }
+
+    if routing_field:
+        # insert routing configuration
+        es_mapping[doc_type]['_routing'] = {
+            "required": True,
+            "path": routing_field
+        }
+
+    return es_mapping
