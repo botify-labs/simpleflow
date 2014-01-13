@@ -234,13 +234,19 @@ URLS_DATA_MAPPING_DEPRECATED = {
 #           ex. `something.redirects_from:
 #               [{`id`: xx, `http_code`: xx}, {...}, ...]`
 #               `redirects_from` is visible, but `redirects_from.id` is not
+#           Struct's inner fields have their own types
 #       - multi_field: a multi_field type keeps multiple copies of the same
 #           data in different format (analyzed, not_analyzed etc.)
+#           In case of `multi_field`, `field_type` must be specified for
+#           determine the field's type
 #
-#   - settings: a set of setting flags of this field
+#   - settings (optional): a set of setting flags of this field
 #       - not_analyzed: this field should not be tokenized by ES
 #       - no_index: this field should not be indexed
 #       - list: this field is actually a list of values in ES
+#
+#   - default_value (optional): the default value if this field does not
+#       exist
 
 _URLS_DATA_META_MAPPING = {
     # url property data
@@ -436,6 +442,7 @@ _URLS_DATA_META_MAPPING = {
     # outgoing canonical link data
     "canonical_to": {
         "type": "struct",
+        "default_value": None,
         "values": {
             "url": {"type": "string"},
             "url_id": {"type": "long"},
@@ -449,6 +456,7 @@ _URLS_DATA_META_MAPPING = {
     # outgoing redirection data
     "redirects_to": {
         "type": "struct",
+        "default_value": None,
         "values": {
             "http_code": {"type": "long"},
             "url": {"type": "string"},
