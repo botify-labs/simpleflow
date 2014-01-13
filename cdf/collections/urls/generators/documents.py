@@ -235,7 +235,7 @@ def extract_inlinks(attributes, stream_item):
             attributes['canonical_from_nb'] = 0
 
         # only count for none self canonical
-        if url_dst is not url_src:
+        if url_dst != url_src:
             current_nb += 1
             attributes['canonical_from_nb'] = current_nb
 
