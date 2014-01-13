@@ -383,7 +383,8 @@ _URLS_DATA_META_MAPPING = {
     "inlinks_internal": {
         "type": "long",
         "settings": {
-            "no_index"
+            "no_index",
+            "list"
         }
     },
 
@@ -404,7 +405,8 @@ _URLS_DATA_META_MAPPING = {
     "outlinks_internal": {
         "type": "long",
         "settings": {
-            "no_index"
+            "no_index",
+            "list"
         }
     },
 
