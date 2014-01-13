@@ -373,8 +373,13 @@ _URLS_DATA_META_MAPPING = {
     "inlinks_internal_nb.total_unique": {"type": "long"},
     "inlinks_internal_nb.follow": {"type": "long"},
     "inlinks_internal_nb.nofollow": {"type": "long"},
-    "inlinks_internal_nb.nofollow_combinations.key": {"type": "string"},
-    "inlinks_internal_nb.nofollow_combinations.value": {"type": "long"},
+    "inlinks_internal_nb.nofollow_combinations": {
+        "type": "struct",
+        "values": {
+            "key": {"type": "string"},
+            "value": {"type": "long"}
+        }
+    },
     "inlinks_internal": {
         "type": "long",
         "settings": {
@@ -389,8 +394,13 @@ _URLS_DATA_META_MAPPING = {
     "outlinks_internal_nb.total_unique": {"type": "long"},
     "outlinks_internal_nb.follow": {"type": "long"},
     "outlinks_internal_nb.nofollow": {"type": "long"},
-    "outlinks_internal_nb.nofollow_combinations.key": {"type": "string"},
-    "outlinks_internal_nb.nofollow_combinations.value": {"type": "long"},
+    "outlinks_internal_nb.nofollow_combinations": {
+        "type": "struct",
+        "values": {
+            "key": {"type": "string"},
+            "value": {"type": "long"}
+        }
+    },
     "outlinks_internal": {
         "type": "long",
         "settings": {
@@ -402,8 +412,14 @@ _URLS_DATA_META_MAPPING = {
     "outlinks_external_nb.total": {"type": "long"},
     "outlinks_external_nb.follow": {"type": "long"},
     "outlinks_external_nb.nofollow": {"type": "long"},
-    "outlinks_external_nb.nofollow_combinations.key": {"type": "string"},
-    "outlinks_external_nb.nofollow_combinations.value": {"type": "long"},
+    "outlinks_external_nb.nofollow_combinations": {
+        "type": "struct",
+        "values": {
+            "key": {"type": "string"},
+            "value": {"type": "long"}
+        }
+    },
+
 
     # incoming canonical links data
     "canonical_from_nb": {"type": "long"},
