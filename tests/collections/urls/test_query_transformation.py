@@ -39,7 +39,8 @@ class TestQueryTransformation(unittest.TestCase):
         ES.indices.delete(ELASTICSEARCH_INDEX)
 
     def setUp(self):
-        pass
+        self.crawl_filter = {'term': {'crawl_id': CRAWL_ID}}
+        self.not_crawled_filter = {'not': {'term': {'http_code': 0}}}
 
     @staticmethod
     def is_valid_es_query(es_query):
@@ -85,17 +86,19 @@ class TestQueryTransformation(unittest.TestCase):
                 'constant_score': {
                     'filter': {
                         'and': [
-                            {'range': {'http_code': {'from': 0, 'include_lower': False}}},
-                            {'term': {'crawl_id': CRAWL_ID}}, {'term': {'http_code': 200}}]
+                            self.crawl_filter,
+                            self.not_crawled_filter,
+                            {'term': {'http_code': 200}}
+                        ]
                     }
                 }
             },
             'sort': [{'id': {'ignore_unmapped': True}}],
             'fields': ['id', 'url']
         }
+        result = get_es_query(query, CRAWL_ID)
 
-        self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
-        # self.assertTrue(self.is_valid_es_query(expected_es_query))
+        self.assertDictEqual(result, expected_es_query)
 
     def test_and_query(self):
         query = {
@@ -115,18 +118,19 @@ class TestQueryTransformation(unittest.TestCase):
                 'constant_score': {
                     'filter': {
                         'and': [
+                            self.crawl_filter,
+                            self.not_crawled_filter,
                             {'term': {'http_code': 200}},
                             {'range': {'delay2': {'from': 100}}},
-                            {'range': {'http_code': {'from': 0, 'include_lower': False}}},
-                            {'term': {'crawl_id': 1}}]
+                        ]
                     }
                 }
             },
             'fields': ['id']
         }
+        result = get_es_query(query, CRAWL_ID)
 
-        self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
-        # self.assertTrue(self.is_valid_es_query(expected_es_query))
+        self.assertDictEqual(result, expected_es_query)
 
     def test_or_query(self):
         query = {
@@ -146,8 +150,7 @@ class TestQueryTransformation(unittest.TestCase):
                 'constant_score': {
                     'filter': {
                         'and': [
-                            {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}},
-                                     {'term': {'crawl_id': 1}}]},
+                            {'and': [self.crawl_filter, self.not_crawled_filter]},
                             {'or': [{'term': {'http_code': 200}},
                                     {'term': {'http_code': 301}}]}
                         ]
@@ -156,9 +159,9 @@ class TestQueryTransformation(unittest.TestCase):
             },
             'fields': ['id']
         }
+        result = get_es_query(query, CRAWL_ID)
 
-        self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
-        # self.assertTrue(self.is_valid_es_query(expected_es_query))
+        self.assertDictEqual(result, expected_es_query)
 
     def test_empty_query(self):
         query = {}
@@ -167,16 +170,16 @@ class TestQueryTransformation(unittest.TestCase):
             'query': {
                 'constant_score': {
                     'filter': {
-                        'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}},
-                                {'term': {'crawl_id': 1}}]
+                        'and': [self.crawl_filter, self.not_crawled_filter]
                     }
                 }
             },
-            'sort': [{'id': {'ignore_unmapped': True}}, {'url': {'ignore_unmapped': True}}],
+            'sort': [{'id': {'ignore_unmapped': True}}],
             'fields': ['url']
         }
-        self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
-        # self.assertTrue(self.is_valid_es_query(expected_es_query))
+        result = get_es_query(query, CRAWL_ID)
+
+        self.assertDictEqual(result, expected_es_query)
 
     def test_multi_fields_query(self):
         query = {
@@ -222,8 +225,8 @@ class TestQueryTransformation(unittest.TestCase):
                 'constant_score': {
                     'filter': {
                         'and': [
-                            {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}},
-                                     {'term': {'crawl_id': 1}}]},
+                            self.crawl_filter,
+                            self.not_crawled_filter,
                             {'exists': {'field': 'metadata.title'}}
                         ]
                     }
@@ -231,12 +234,13 @@ class TestQueryTransformation(unittest.TestCase):
             },
             'sort': [{'id': {'ignore_unmapped': True}}]
         }
-        self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
-        # self.is_valid_es_query(expected_es_query)
+        result = get_es_query(query, CRAWL_ID)
+        self.assertDictEqual(result, expected_es_query)
 
     def test_sort(self):
         query = {
-            'sort': ['url', {'id': {'order': 'desc'}}, 'metadata.h1']
+            'sort': ['url', {'id': {'order': 'desc'}}, 'metadata.h1'],
+            'fields': ['metadata.h1']
         }
 
         expected_es_query = {
@@ -244,8 +248,7 @@ class TestQueryTransformation(unittest.TestCase):
             'query': {
                 'constant_score': {
                     'filter': {
-                        'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}},
-                                {'term': {'crawl_id': 1}}]
+                        'and': [self.crawl_filter, self.not_crawled_filter]
                     }
                 }
             },
@@ -255,12 +258,12 @@ class TestQueryTransformation(unittest.TestCase):
                 {'metadata.h1': {'ignore_unmapped': True}}
             ]
         }
-        self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
-        # self.is_valid_es_query(expected_es_query)
+        result = get_es_query(query, CRAWL_ID)
+        self.assertDictEqual(result, expected_es_query)
 
     def test_between(self):
         query = {
-            'fields': ['id'],
+            'fields': ['http_code'],
             'filters': {
                 'field': 'http_code',
                 'value': [123, 456],
@@ -274,14 +277,14 @@ class TestQueryTransformation(unittest.TestCase):
                 'constant_score': {
                     'filter': {
                         'and': [
-                            {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}},
-                                     {'term': {'crawl_id': 1}}]},
-                            {'range': {'http_code': {'from': 123, 'to': 456}}}
+                            self.crawl_filter,
+                            self.not_crawled_filter,
+                            {'range': {'http_code': {'gte': 123, 'lte': 456}}}
                         ]
                     }
                 }
             },
             'sort': [{'id': {'ignore_unmapped': True}}]
         }
-        self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
-        # self.is_valid_es_query(expected_es_query)
+        result = get_es_query(query, CRAWL_ID)
+        self.assertDictEqual(result, expected_es_query)
