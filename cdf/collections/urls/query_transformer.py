@@ -225,12 +225,12 @@ def _wrap_query(unwrapped):
 def get_es_query(botify_query, crawl_id):
     # By default all queries should have these filter/predicate
     #   1. only query for current crawl/site
-    #   2. only query for urls whose http_code > 0 (crawled urls)
+    #   2. only query for urls whose http_code != 0 (crawled urls)
     # The order is important for and/or/not filters in ElasticSearch
     # See: http://www.elasticsearch.org/blog/all-about-elasticsearch-filter-bitsets/
     default_filters = [
         {'field': 'crawl_id', 'value': crawl_id},
-        {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
+        {'field': 'http_code', 'value': 0, 'predicate': 'eq', 'not': True}
     ]
 
     # Merge default filters in botify format query

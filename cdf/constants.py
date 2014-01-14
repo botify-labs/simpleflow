@@ -1,5 +1,7 @@
 from cdf.collections.urls.es_mapping_generation import generate_es_mapping
 
+DEFAULT_FORCE_FETCH = True
+
 URLS_DATA_MAPPING_DEPRECATED = {
     "urls": {
         "_routing": {
@@ -211,6 +213,11 @@ URLS_DATA_MAPPING_DEPRECATED = {
                             "urls": {"type": "long", "index": "no"}
                         }
                     },
+                    "any": {
+                        "properties": {
+                            "nb": {"type": "long"}
+                        }
+                    }
                 }
             }
         }
@@ -482,6 +489,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     "error_links.3xx.nb": {"type": "long"},
     "error_links.4xx.nb": {"type": "long"},
     "error_links.5xx.nb": {"type": "long"},
+    "error_links.any.nb": {"type": "long"},
 
     "error_links.3xx.urls": {
         "type": "long",

@@ -93,4 +93,6 @@ QUERY_FIELDS_DEPRECATED = {
     "error_links.5xx",
     "error_links.5xx.nb",
     "error_links.5xx.urls",
+    "error_links.any",
+    "error_links.any.nb",
 }

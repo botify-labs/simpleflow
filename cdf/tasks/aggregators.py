@@ -2,7 +2,6 @@
 import os
 import gzip
 import json
-import copy
 
 import csv
 
@@ -20,17 +19,23 @@ from cdf.collections.suggestions.aggregator import MetricsAggregator, MetricsCon
 from cdf.collections.urls.generators.suggestions import MetadataClusterMixin
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 from cdf.collections.suggestions.query import MetricsQuery, SuggestQuery
-from cdf.collections.urls.query import Query
+from cdf.collections.urls.utils import merge_queries_filters
+
+from .decorators import TemporaryDirTask as with_temporary_dir
+from cdf.constants import DEFAULT_FORCE_FETCH
+from cdf.tasks.base import make_tmp_dir_from_crawl_id
+
 from cdf.collections.urls.query_helpers import (
     get_filters_from_http_code_range,
-    get_filters_from_agg_delay_field,
     get_filters_from_agg_canonical_field
 )
 
 
-def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='/tmp', force_fetch=False):
+@with_temporary_dir
+def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     # Fetch locally the files from S3
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    if not tmp_dir:
+        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
     suggest_dir_path = os.path.join(tmp_dir, 'suggest')
     makedirs(suggest_dir_path, exist_ok=True)
 
@@ -80,11 +85,13 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir_prefix='
     )
 
 
-def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch=False):
+@with_temporary_dir
+def consolidate_aggregators(crawl_id, s3_uri, tmp_dir=None, force_fetch=False):
     """
     Fetch all part_id's aggregators and merge them
     """
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
+    if not tmp_dir:
+        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
     makedirs(tmp_dir, exist_ok=True)
 
     # Fetch hdf5 file that already contains the full list of requests
@@ -161,14 +168,14 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir_prefix='/tmp', force_fetch
 
 class SuggestSummaryRegister(object):
 
-    def __init__(self, crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix, force_fetch=False):
+    def __init__(self, crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir, force_fetch=False):
         self.crawl_id = crawl_id
         self.s3_uri = s3_uri
         self.es_location = es_location
         self.es_index = es_index
         self.es_doc_type = es_doc_type
         self.revision_number = revision_number
-        self.tmp_dir_prefix = tmp_dir_prefix
+        self.tmp_dir = tmp_dir
         self.force_fetch = force_fetch
         self._called = False
         self._queue = []
@@ -184,29 +191,21 @@ class SuggestSummaryRegister(object):
         q = SuggestQuery.from_s3_uri(self.crawl_id, self.s3_uri, force_fetch=self.force_fetch)
         results = q.query(query)
         for k, result in enumerate(results):
-            hash_id_filters = [{'field': 'patterns', 'value': result['query_hash_id']}]
             if result["score"] == 0:
                 continue
 
-            urls_query_bgn = {
-                "filters": {'and': hash_id_filters + urls_filters}
-            }
-
-            if isinstance(result['query'], dict):
-                filters = urls_filters + [result['query']]
-            else:
-                filters = urls_filters + result['query']
-            urls_query = {
+            hash_id_filters = {'field': 'patterns', 'value': result['query_hash_id']}
+            result["urls_query_bgn"] = {
                 "fields": ["url"] + urls_fields,
-                "filters": {"and": filters}
+                "filters": merge_queries_filters(hash_id_filters, urls_filters)
             }
-
-            result["urls_query_bgn"] = urls_query_bgn
-            result["urls_query"] = urls_query
+            result["urls_query"] = {
+                "fields": ["url"] + urls_fields,
+                "filters": merge_queries_filters(result["query"], urls_filters)
+            }
 
         # Write suggestion file
-        tmp_dir = os.path.join(self.tmp_dir_prefix, 'crawl_%d' % self.crawl_id)
-        summary_file = os.path.join(tmp_dir, 'flat', 'metrics', 'suggest', '{}.json'.format(identifier))
+        summary_file = os.path.join(self.tmp_dir, 'flat', 'metrics', 'suggest', '{}.json'.format(identifier))
         makedirs(os.path.join(os.path.dirname(summary_file)), exist_ok=True)
         f = open(os.path.join(summary_file), 'w')
         f.write(json.dumps(results, indent=4))
@@ -220,8 +219,7 @@ class SuggestSummaryRegister(object):
     def _push_summary_scores(self):
         if not self._called:
             raise Exception('Summary has not be called yet')
-        tmp_dir = os.path.join(self.tmp_dir_prefix, 'crawl_%d' % self.crawl_id)
-        summary_file = os.path.join(tmp_dir, 'flat', 'metrics', 'suggest', 'index.json')
+        summary_file = os.path.join(self.tmp_dir, 'flat', 'metrics', 'suggest', 'index.json')
         f = open(os.path.join(summary_file), 'w')
         f.write(json.dumps(self._scores, indent=4))
         f.close()
@@ -241,7 +239,7 @@ class SuggestSummaryRegister(object):
             self._push_summary_scores()
 
 
-def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir_prefix, identifier, query):
+def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir, identifier, query):
     q = MetricsQuery.from_s3_uri(crawl_id, s3_uri)
 
     is_batch = isinstance(query, list)
@@ -255,7 +253,6 @@ def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir_pref
         results = {identifier: result for identifier, result in zip(identifiers, results)}
 
      # Write suggestion file
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
     summary_file = os.path.join(tmp_dir, 'flat', 'metrics', '{}.json'.format(identifier))
     makedirs(os.path.join(os.path.dirname(summary_file)), exist_ok=True)
     f = open(os.path.join(summary_file), 'w')
@@ -267,17 +264,21 @@ def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir_pref
     )
 
 
-def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir_prefix='/tmp', force_fetch=False):
+@with_temporary_dir
+def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir=None, force_fetch=False):
+    if not tmp_dir:
+        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
+
     counter_kwargs = {
         'crawl_id': crawl_id,
         's3_uri': s3_uri,
         'revision_number': revision_number,
-        'tmp_dir_prefix': tmp_dir_prefix,
+        'tmp_dir': tmp_dir,
     }
 
     suggest = SuggestSummaryRegister(crawl_id, s3_uri,
                                      es_location, es_index, es_doc_type, revision_number,
-                                     tmp_dir_prefix='/tmp', force_fetch=force_fetch)
+                                     tmp_dir=tmp_dir, force_fetch=force_fetch)
 
     # Full picture
     make_counter_file_from_query(
@@ -337,11 +338,11 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         "target_field": "redirects_from_nb",
     }
     urls_fields = ["redirects_from_nb", "redirects_from"]
-    urls_filters = [{
+    urls_filters = {
         "field": "redirects_from_nb",
         "value": 0,
         "predicate": "gt"
-    }]
+    }
     urls_sort = [{"redirects_from_nb": "desc"}]
     suggest.register(identifier='http_code/incoming_redirects', query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort)
 
@@ -354,14 +355,10 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             }
             if metadata_status == "duplicate":
                 urls_fields = ["metadata.{}".format(metadata_type), "metadata_duplicate.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)]
-                urls_filters = [
-                    {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1, "predicate": "gt"}
-                ]
+                urls_filters = {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1, "predicate": "gt"}
             else:
                 urls_fields = []
-                urls_filters = [
-                    {"field": "metadata_nb.{}".format(metadata_type), "value": 0}
-                ]
+                urls_filters = {"field": "metadata_nb.{}".format(metadata_type), "value": 0}
             suggest.register(identifier='metadata/{}/{}'.format(metadata_type, metadata_status), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # Speed
@@ -402,11 +399,11 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             }
         }
         urls_fields = ["depth"]
-        urls_filters = [{
+        urls_filters = {
             "field": "depth",
             "value": depth,
             "predicate": "gte"
-        }]
+        }
         suggest.register(identifier='distribution/depth_gte_{}'.format(depth), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # no-index urls
@@ -419,9 +416,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         "target_field": "pages_nb"
     }
     urls_fields = ["url"]
-    urls_filters = [
-        {"field": "meta.noindex", "value": True}
-    ]
+    urls_filters = {"field": "meta.noindex", "value": True}
     suggest.register(identifier='distribution/noindex', query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # internal/external outlinks
@@ -439,9 +434,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                     "filters": {"field": full_field, "value": 0, "predicate": "gt"}
                 }
                 urls_fields = [full_field]
-                urls_filters = [
-                    {"field": full_field, "value": 0, "predicate": "gt"}
-                ]
+                urls_filters = {"field": full_field, "value": 0, "predicate": "gt"}
                 sort_verbose = "top" if sort == "desc" else "lowest"
                 suggest.register(identifier='outlinks_{}/{}_{}'.format(status, sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
@@ -456,9 +449,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 "filters": {"field": full_field, "value": 0, "predicate": "gt"}
             }
             urls_fields = [full_field, "pages_nb"]
-            urls_filters = [
-                {"field": full_field, "value": 0, "predicate": "gt"}
-            ]
+            urls_filters = {"field": full_field, "value": 0, "predicate": "gt"}
             sort_verbose = "top" if sort == "desc" else "lowest"
             suggest.register(identifier='inlinks_internal/{}_{}'.format(sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
@@ -469,9 +460,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         "target_field": full_field
     }
     urls_fields = [full_field]
-    urls_filters = [
-        {"field": "inlinks_internal_nb.follow", "value": 1}
-    ]
+    urls_filters = {"field": "inlinks_internal_nb.follow", "value": 1}
     suggest.register(identifier='inlinks_internal/1_follow_link', query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # broken outlinks
@@ -481,9 +470,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             "target_field": full_field
         }
         urls_fields = [full_field]
-        urls_filters = [
-            {"field": "error_links.{}.nb".format(field), "value": 0, "predicate": "gt"}
-        ]
+        urls_filters = {"field": "error_links.{}.nb".format(field), "value": 0, "predicate": "gt"}
         urls_sort = [{"error_links.{}.nb".format(field): "desc"}]
         suggest.register(identifier='outlinks_internal/errors_links_{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort)
 
