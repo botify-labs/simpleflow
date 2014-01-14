@@ -1,5 +1,7 @@
 import unittest
-from cdf.collections.urls.es_mapping_generation import _parse_field_path, generate_es_mapping, generate_default_value_lookup
+from cdf.collections.urls.es_mapping_generation import (_parse_field_path,
+                                                        generate_es_mapping,
+                                                        generate_default_value_lookup)
 from cdf.constants import URLS_DATA_MAPPING_DEPRECATED, _URLS_DATA_META_MAPPING
 
 
