@@ -2,7 +2,7 @@ import unittest
 from cdf.collections.urls.es_mapping_generation import (_parse_field_path,
                                                         generate_es_mapping,
                                                         generate_default_value_lookup)
-from cdf.constants import URLS_DATA_MAPPING_DEPRECATED, _URLS_DATA_META_MAPPING
+from cdf.constants import URLS_DATA_MAPPING_DEPRECATED, URLS_DATA_FORMAT_DEFINITION
 
 
 class TestMappingGeneration(unittest.TestCase):
@@ -113,7 +113,7 @@ class TestMappingGeneration(unittest.TestCase):
     def test_generation_all_mapping(self):
         doc_type = 'urls'
         target = URLS_DATA_MAPPING_DEPRECATED
-        result = generate_es_mapping(_URLS_DATA_META_MAPPING,
+        result = generate_es_mapping(URLS_DATA_FORMAT_DEFINITION,
                                      doc_type=doc_type)
         self.assertDictEqual(result, target)
 

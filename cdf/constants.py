@@ -248,7 +248,7 @@ URLS_DATA_MAPPING_DEPRECATED = {
 #   - default_value (optional): the default value if this field does not
 #       exist
 
-_URLS_DATA_META_MAPPING = {
+URLS_DATA_FORMAT_DEFINITION = {
     # url property data
     "url": {
         "type": "string",
@@ -508,5 +508,5 @@ _URLS_DATA_META_MAPPING = {
 
 
 # Generated constants
-URLS_DATA_FIELDS = _URLS_DATA_META_MAPPING.keys()
-URLS_DATA_MAPPING = generate_es_mapping(_URLS_DATA_META_MAPPING)
+URLS_DATA_FIELDS = URLS_DATA_FORMAT_DEFINITION.keys()
+URLS_DATA_MAPPING = generate_es_mapping(URLS_DATA_FORMAT_DEFINITION)

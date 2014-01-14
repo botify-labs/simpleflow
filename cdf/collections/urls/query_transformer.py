@@ -2,18 +2,18 @@ from cdf.collections.urls.es_mapping_generation import generate_multi_field_look
 from cdf.exceptions import BotifyQueryException
 from copy import deepcopy
 
-from cdf.constants import _URLS_DATA_META_MAPPING
+from cdf.constants import URLS_DATA_FORMAT_DEFINITION
 
 
 __ALL__ = ['get_es_query']
 
 
 # Elements that are of `multi_field` type
-_MULTI_FIELDS = generate_multi_field_lookup(_URLS_DATA_META_MAPPING)
+_MULTI_FIELDS = generate_multi_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
 
 # Elements in ES that are a list
-_LIST_FIELDS = generate_list_field_lookup(_URLS_DATA_META_MAPPING)
+_LIST_FIELDS = generate_list_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
 
 _PREDICATE_FORMATS = {
