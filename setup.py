@@ -38,7 +38,8 @@ setup(
         'tables==3.0.0',
         'lockfile==0.9.1',
         'mock',
-        'nose'
+        'nose',
+        'valideer'
     ],
 
 
