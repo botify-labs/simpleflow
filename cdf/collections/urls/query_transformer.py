@@ -12,25 +12,11 @@ __ALL__ = ['get_es_query']
 _MULTI_FIELDS = generate_multi_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
 
-# Elements in ES that are a list
-_LIST_FIELDS = generate_list_field_lookup(URLS_DATA_FORMAT_DEFINITION)
-
-
-_PREDICATE_FORMATS = {
-    'eq': lambda filters: {
-        "term": {
-            filters['field']: filters['value'],
-        }
-    },
+# Predicates that workds only with list fields
+_LIST_PREDICATES = {
     'any.eq': lambda filters: {
         "term": {
             filters['field']: filters['value'],
-        }
-    },
-    # 'starts' predicate should be applied on `untouched`
-    'starts': lambda filters: {
-        "prefix": {
-            _get_untouched_field(filters['field']): filters['value'],
         }
     },
     'any.starts': lambda filters: {
@@ -38,27 +24,21 @@ _PREDICATE_FORMATS = {
             _get_untouched_field(filters['field']): filters['value'],
         }
     },
-    # 'ends' predicate should be applied on `untouched`
-    'ends': lambda filters: {
-        "regexp": {
-            _get_untouched_field(filters['field']): "@%s" % filters['value']
-        }
-    },
     'any.ends': lambda filters: {
         "regexp": {
             _get_untouched_field(filters['field']): "@%s" % filters['value']
         }
     },
-    'contains': lambda filters: {
-        "regexp": {
-            _get_untouched_field(filters['field']): "@%s@" % filters['value']
-        }
-    },
+
     'any.contains': lambda filters: {
         "regexp": {
             _get_untouched_field(filters['field']): "@%s@" % filters['value']
         }
-    },
+    }
+}
+
+# Predicates that works only with non-list fields
+_NON_LIST_PREDICATES = {
     're': lambda filters: {
         "regexp": {
             filters['field']: filters['value']
@@ -92,9 +72,26 @@ _PREDICATE_FORMATS = {
             }
         }
     },
-    'not_null': lambda filters: {
-        'exists': {
-            'field': filters['field']
+    'contains': lambda filters: {
+        "regexp": {
+            _get_untouched_field(filters['field']): "@%s@" % filters['value']
+        }
+    },
+    'eq': lambda filters: {
+        "term": {
+            filters['field']: filters['value'],
+        }
+    },
+    # 'starts' predicate should be applied on `untouched`
+    'starts': lambda filters: {
+        "prefix": {
+            _get_untouched_field(filters['field']): filters['value'],
+        }
+    },
+    # 'ends' predicate should be applied on `untouched`
+    'ends': lambda filters: {
+        "regexp": {
+            _get_untouched_field(filters['field']): "@%s" % filters['value']
         }
     },
     'between': lambda filters: {
@@ -104,8 +101,22 @@ _PREDICATE_FORMATS = {
                 "lte": filters['value'][1],
             }
         }
-    },
+    }
 }
+
+# Predicates that works both with list and non-list fields
+_UNIVERSAL_PREDICATES = {
+    'not_null': lambda filters: {
+        'exists': {
+            'field': filters['field']
+        }
+    }
+}
+
+# All available predicates
+_PREDICATE_FORMATS = dict(_LIST_PREDICATES.items() +
+                          _NON_LIST_PREDICATES.items() +
+                          _UNIVERSAL_PREDICATES.items())
 
 
 def _get_untouched_field(field):
