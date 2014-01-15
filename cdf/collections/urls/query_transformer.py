@@ -11,6 +11,8 @@ __ALL__ = ['get_es_query']
 # Elements that are of `multi_field` type
 _MULTI_FIELDS = generate_multi_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
+# Predicate by default
+_DEFAULT_PREDICATE = 'eq'
 
 # Predicates that workds only with list fields
 _LIST_PREDICATES = {
@@ -152,7 +154,7 @@ def _process_filters(filters, has_parent=False):
     elif isinstance(filters, list):
         return [_process_filters(f, True) for f in filters]
     else:
-        predicate = filters.get('predicate', 'eq')
+        predicate = filters.get('predicate', _DEFAULT_PREDICATE)
         if filters.get('not', False):
             return {"not": _PREDICATE_FORMATS[predicate](filters)}
         else:
