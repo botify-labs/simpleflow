@@ -2,9 +2,9 @@ import valideer as v
 import re
 
 from cdf.collections.urls.es_mapping_generation import generate_list_field_lookup
-from query_transformer import (_PREDICATE_FORMATS, _LIST_PREDICATES,
-                               _NON_LIST_PREDICATES, _UNIVERSAL_PREDICATES,
-                               _DEFAULT_PREDICATE)
+from predicate_constants import (PREDICATE_FORMATS, LIST_PREDICATES,
+                                 NON_LIST_PREDICATES, UNIVERSAL_PREDICATES,
+                                 DEFAULT_PREDICATE)
 from cdf.constants import URLS_DATA_FORMAT_DEFINITION
 
 
@@ -18,7 +18,7 @@ __ALL__ = ['validate_sorts',
 _LIST_FIELDS = generate_list_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
 # All available predicates
-_AVAILABLE_PREDICATES = _PREDICATE_FORMATS.keys()
+_AVAILABLE_PREDICATES = PREDICATE_FORMATS.keys()
 
 # Helper constants
 _DESC = 'desc'
@@ -121,7 +121,7 @@ class PredicateFilter(v.Object):
 
         # optional component
         if 'predicate' not in value:
-            predicate = _DEFAULT_PREDICATE
+            predicate = DEFAULT_PREDICATE
         else:
             predicate = value['predicate']
 
@@ -135,11 +135,11 @@ class PredicateFilter(v.Object):
         # validate predicate field semantic
         predicate_field = value['field']
         if predicate_field in _LIST_FIELDS:
-            if predicate in _NON_LIST_PREDICATES:
+            if predicate in NON_LIST_PREDICATES:
                 raise v.ValidationError(
                     'Apply non-list predicate on list field')
         else:
-            if predicate in _LIST_PREDICATES:
+            if predicate in LIST_PREDICATES:
                 raise v.ValidationError(
                     'Apply list predicate on non-list field')
 
