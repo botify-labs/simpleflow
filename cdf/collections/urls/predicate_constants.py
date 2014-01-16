@@ -5,7 +5,8 @@ from cdf.constants import URLS_DATA_FORMAT_DEFINITION
 __ALL__ = ['LIST_PREDICATES',
            'NON_LIST_PREDICATES',
            'UNIVERSAL_PREDICATES',
-           'DEFAULT_PREDICATE']
+           'DEFAULT_PREDICATE',
+           'BOOL_PREDICATES']
 
 
 # Elements that are of `multi_field` type
@@ -25,6 +26,10 @@ def _get_untouched_field(field):
 
 # Predicate by default
 DEFAULT_PREDICATE = 'eq'
+
+
+# Boolean filter predicates
+BOOL_PREDICATES = ['and', 'or', 'not']
 
 
 # Predicates that workds only with list fields

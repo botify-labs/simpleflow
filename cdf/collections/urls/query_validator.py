@@ -4,7 +4,7 @@ import re
 from cdf.collections.urls.es_mapping_generation import generate_list_field_lookup
 from predicate_constants import (PREDICATE_FORMATS, LIST_PREDICATES,
                                  NON_LIST_PREDICATES, UNIVERSAL_PREDICATES,
-                                 DEFAULT_PREDICATE)
+                                 DEFAULT_PREDICATE, BOOL_PREDICATES)
 from cdf.constants import URLS_DATA_FORMAT_DEFINITION
 
 
@@ -22,10 +22,10 @@ _AVAILABLE_PREDICATES = PREDICATE_FORMATS.keys()
 
 # Helper constants
 _DESC = 'desc'
-_DESC_REGEXP = re.compile('^desc$')
 _ORDER = 'order'
+_DESC_REGEXP = re.compile('^desc$')
 _ORDER_REGEXP = re.compile('^order$')
-_BOOL_REGEXP = re.compile('^(and|or|not)$')
+_BOOL_REGEXP = re.compile('^('+'|'.join(BOOL_PREDICATES)+')$')
 
 
 # Validators

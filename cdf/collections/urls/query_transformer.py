@@ -1,6 +1,7 @@
 from copy import deepcopy
-from cdf.collections.urls.predicate_constants import DEFAULT_PREDICATE, PREDICATE_FORMATS
 
+from cdf.collections.urls.predicate_constants import (DEFAULT_PREDICATE,
+                                                      PREDICATE_FORMATS, BOOL_PREDICATES)
 from cdf.exceptions import BotifyQueryException
 
 
@@ -10,7 +11,7 @@ __ALL__ = ['get_es_query']
 def _is_boolean_filter(filter_dict):
     return isinstance(filter_dict, dict) and \
            len(filter_dict) == 1 and \
-           filter_dict.keys()[0].lower() in ('and', 'or')
+           filter_dict.keys()[0].lower() in BOOL_PREDICATES
 
 
 def _process_filters(filters, has_parent=False):
