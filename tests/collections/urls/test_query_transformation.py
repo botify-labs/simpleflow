@@ -3,7 +3,7 @@ import unittest
 from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
 
-from cdf.collections.urls.query_transformer import get_es_query, _add_filters
+from cdf.collections.urls.query_transformer import get_es_query, _merge_filters
 from cdf.constants import URLS_DATA_MAPPING
 
 CRAWL_ID = 1
@@ -68,7 +68,7 @@ class TestQueryTransformation(unittest.TestCase):
             {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
         ]
 
-        query_filters = _add_filters(query_filters, default_filters)
+        query_filters = _merge_filters(query_filters, default_filters)
         target = query_filters['filters']['and']
         # assert on order
         # first filter should be that of the `crawl_id`
@@ -150,7 +150,8 @@ class TestQueryTransformation(unittest.TestCase):
                 'constant_score': {
                     'filter': {
                         'and': [
-                            {'and': [self.crawl_filter, self.not_crawled_filter]},
+                            self.crawl_filter,
+                            self.not_crawled_filter,
                             {'or': [{'term': {'http_code': 200}},
                                     {'term': {'http_code': 301}}]}
                         ]
