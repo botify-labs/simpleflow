@@ -5,6 +5,7 @@ from elasticsearch import Elasticsearch
 
 from cdf.collections.urls.query_transformer import get_es_query, _merge_filters
 from cdf.constants import URLS_DATA_MAPPING
+from cdf.exceptions import BotifyQueryException
 
 CRAWL_ID = 1
 ELASTICSEARCH_LOCATION = 'http://localhost:9200'
@@ -289,3 +290,19 @@ class TestQueryTransformation(unittest.TestCase):
         }
         result = get_es_query(query, CRAWL_ID)
         self.assertDictEqual(result, expected_es_query)
+
+    def test_bad_format_query(self):
+        query = {
+            'fields': ['http_code'],
+            'filters': []
+        }
+        self.assertRaises(BotifyQueryException,
+                          get_es_query, query, CRAWL_ID)
+
+        query = {
+            'filters': {'and': [{}]}
+        }
+        self.assertRaises(BotifyQueryException,
+                          get_es_query, query, CRAWL_ID)
+
+
