@@ -2,11 +2,9 @@ from cdf.collections.urls.es_mapping_generation import generate_multi_field_look
 from cdf.constants import URLS_DATA_FORMAT_DEFINITION
 
 
-__ALL__ = ['LIST_PREDICATES',
-           'NON_LIST_PREDICATES',
-           'UNIVERSAL_PREDICATES',
-           'DEFAULT_PREDICATE',
-           'BOOL_PREDICATES']
+__ALL__ = ['LIST_PREDICATES', 'NON_LIST_PREDICATES',
+           'UNIVERSAL_PREDICATES', 'DEFAULT_PREDICATE',
+           'BOOL_PREDICATES', 'NOT_PREDICATE']
 
 
 # Elements that are of `multi_field` type
@@ -29,7 +27,11 @@ DEFAULT_PREDICATE = 'eq'
 
 
 # Boolean filter predicates
-BOOL_PREDICATES = ['and', 'or', 'not']
+BOOL_PREDICATES = ['and', 'or']
+
+
+# Not filter predicate
+NOT_PREDICATE = 'not'
 
 
 # Predicates that workds only with list fields

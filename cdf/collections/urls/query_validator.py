@@ -4,14 +4,15 @@ import re
 from cdf.collections.urls.es_mapping_generation import generate_list_field_lookup
 from predicate_constants import (PREDICATE_FORMATS, LIST_PREDICATES,
                                  NON_LIST_PREDICATES, UNIVERSAL_PREDICATES,
-                                 DEFAULT_PREDICATE, BOOL_PREDICATES)
+                                 DEFAULT_PREDICATE, BOOL_PREDICATES, NOT_PREDICATE)
 from cdf.constants import URLS_DATA_FORMAT_DEFINITION
 
 
 __ALL__ = ['validate_sorts',
            'validate_predicate_filter',
            'validate_boolean_filter',
-           'validate_fields']
+           'validate_fields',
+           'validate_not_filter']
 
 
 # Elements in ES that are a list
@@ -66,7 +67,7 @@ _SORTS = v.HomogeneousSequence(v.AnyOf(_ORDERED_SORT_ELEM,
 # Verifies that a `boolean filter` component of a botify front-end query
 # is in the form of:
 #
-#   boolean_predicate = "and" | "or" | "not"
+#   boolean_predicate = "and" | "or"
 #   boolean_filter = {boolean_predicate : [...]}
 
 class BoolFilter(v.Mapping):
@@ -78,11 +79,33 @@ class BoolFilter(v.Mapping):
         bool, list_filter = value.iteritems().next()
         if not _BOOL_REGEXP.match(bool):
             raise v.ValidationError(
-                'Boolean filter key is not one of `and, or, not`')
+                'Boolean filter key is not one of `and, or`')
         if not isinstance(list_filter, list):
             raise v.ValidationError('Filter list is not a list')
 
 _BOOL_FILTER = BoolFilter()
+
+
+# Not filter
+# Verifies that a `not filter` component of a botify front-end query
+# is in the form of:
+#
+#   not_query = {"not": filter}
+
+class NotFilter(v.Mapping):
+    def validate(self, value, adapt=True):
+        super(NotFilter, self).validate(value)
+        if len(value) != 1:
+            raise v.ValidationError(
+                'Not predicate contains multiple mapping')
+        _not, filter = value.items()[0]
+        if _not != NOT_PREDICATE:
+            raise v.ValidationError(
+                'Not filter key is not `not`')
+        if not isinstance(filter, dict):
+            raise v.ValidationError('Filter is not a dict')
+
+_NOT_FILTER = NotFilter()
 
 
 # Predicate filter
@@ -179,6 +202,15 @@ def validate_boolean_filter(boolean_filter):
     :raises ValidationError: if boolean filter structure is not valid
     """
     _BOOL_FILTER.validate(boolean_filter)
+
+
+def validate_not_filter(not_filter):
+    """Validate a not filter in botify front-end query
+
+    :param not_filter: a dict
+    :raises ValidationError: if not filter structure is not valid
+    """
+    _NOT_FILTER.validate(not_filter)
 
 
 def validate_fields(fields):

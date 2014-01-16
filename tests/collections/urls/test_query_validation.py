@@ -76,9 +76,26 @@ class TestQueryValidation(unittest.TestCase):
         invalid = {'and': [], 'or': []}
         self.assertValidationError(validate_boolean_filter, invalid)
 
+        # bool predicate can only be `and` or `or`
+        invalid = {'not': []}
+        self.assertValidationError(validate_boolean_filter, invalid)
+
         # a valid one
         valid = {'and': ['something', 'not important']}
         validate_boolean_filter(valid)
+
+    def test_not_filter(self):
+        # predicate should only be `not`
+        invalid = {'and': {}}
+        self.assertValidationError(validate_not_filter, invalid)
+
+        # predicate should only be `not`
+        invalid = {'not': ['not', 'important']}
+        self.assertValidationError(validate_not_filter, invalid)
+
+        # a valid one
+        valid = {'not': {'and': []}}
+        validate_not_filter(valid)
 
     def test_validate_fields(self):
         # fields should be a list of strings
