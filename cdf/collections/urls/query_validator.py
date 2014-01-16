@@ -29,8 +29,21 @@ _BOOL_REGEXP = re.compile('^(and|or|not)$')
 
 
 # Validators
-# Sort
+
+# Sorts
+# Verifies that the `sorts` component of a botify front-end query is
+# in the form of:
+#
+#   simple_sort_elem = field
+#   ordered_sort_elem = {field: {"order": "desc"}}
+#   sorts = [simple_sort_elem | ordered_sort_elem]
+
 class OrderedSortElem(v.Mapping):
+    """Valideer validator for an ordered sort element
+
+    Need a custom class for this instead of `valideer.Mapping` b/c
+    we need to assert that only a single mapping is contained
+    """
     order_object = v.Mapping(v.Pattern('^order$'),
                              v.Pattern('^desc$'))
 
@@ -50,6 +63,12 @@ _SORTS = v.HomogeneousSequence(v.AnyOf(_ORDERED_SORT_ELEM,
 
 
 # Boolean filter
+# Verifies that a `boolean filter` component of a botify front-end query
+# is in the form of:
+#
+#   boolean_predicate = "and" | "or" | "not"
+#   boolean_filter = {boolean_predicate : [...]}
+
 class BoolFilter(v.Mapping):
     def validate(self, value, adapt=True):
         super(BoolFilter, self).validate(value)
@@ -67,6 +86,22 @@ _BOOL_FILTER = BoolFilter()
 
 
 # Predicate filter
+# Verifies that a `predicate filter` component of a botify front-end query
+# is in the form of:
+#
+#   basic_value = number | string
+#   value = basic_value | [basic_value]
+#   predicate_filter = {
+#        "predicate": predicate,
+#        "field": field,
+#        "value": value
+#   }
+#
+# It also verifies query's semantics:
+#   - predicate should be a defined operator
+#   - restrict list operator to be applied only on list fields, same for
+#       non-list operator and non-list fields
+
 class PredicateFilter(v.Object):
     # fields that can be validate by builtin validators
     basic_value_element = v.AnyOf(v.String(), v.Integer())
@@ -111,6 +146,11 @@ class PredicateFilter(v.Object):
 _PREDICATE_FILTER = PredicateFilter()
 
 # Fields
+# Verifies that a `fields` component of a botify front-end query
+# is in the form of:
+#
+#   fields = [field]
+
 _FIELDS = v.HomogeneousSequence(v.String())
 
 
@@ -124,12 +164,27 @@ def validate_sorts(sorts):
 
 
 def validate_predicate_filter(predicate_filter):
+    """Validate a predicate filter in botify front-end query
+
+    :param predicate_filter: a dict
+    :raises ValidationError: if predicate filter structure is not valid
+    """
     _PREDICATE_FILTER.validate(predicate_filter)
 
 
 def validate_boolean_filter(boolean_filter):
+    """Validate a boolean filter in botify front-end query
+
+    :param boolean_filter: a dict
+    :raises ValidationError: if boolean filter structure is not valid
+    """
     _BOOL_FILTER.validate(boolean_filter)
 
 
 def validate_fields(fields):
+    """Validate the required fileds list in botify front-end query
+
+    :param boolean_filter: a list of required fields
+    :raises ValidationError: if the structure is not valid
+    """
     _FIELDS.validate(fields)
