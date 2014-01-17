@@ -75,7 +75,7 @@ class BoolFilter(v.Mapping):
         super(BoolFilter, self).validate(value)
         if len(value) != 1:
             raise v.ValidationError(
-                'Boolean predicate contains multiple mapping')
+                'Boolean filter contains multiple mapping')
         bool, list_filter = value.iteritems().next()
         if not _BOOL_REGEXP.match(bool):
             raise v.ValidationError(
@@ -97,7 +97,7 @@ class NotFilter(v.Mapping):
         super(NotFilter, self).validate(value)
         if len(value) != 1:
             raise v.ValidationError(
-                'Not predicate contains multiple mapping')
+                'Not filter contains multiple mapping')
         _not, filter = value.items()[0]
         if _not != NOT_PREDICATE:
             raise v.ValidationError(
@@ -125,35 +125,37 @@ _NOT_FILTER = NotFilter()
 #   - restrict list operator to be applied only on list fields, same for
 #       non-list operator and non-list fields
 
+# TODO distinguish operator's operand number (values)
+
 class PredicateFilter(v.Object):
-    # fields that can be validate by builtin validators
     basic_value_element = v.AnyOf(v.String(), v.Integer())
     value_field = v.AnyOf(v.HomogeneousSequence(basic_value_element),
                           basic_value_element)
     field_field = v.String()
+    predicate_filter = v.Object(
+        required={
+            'field': field_field,
+        },
+        optional={
+            'predicate': v.String(),
+            'value': value_field
+        }
+    )
 
     def validate(self, value, adapt=True):
         super(PredicateFilter, self).validate(value)
-        # required components
-        if 'value' not in value:
-            raise v.ValidationError(
-                'Predicate filter should contain a value field')
-        if 'field' not in value:
-            raise v.ValidationError(
-                'Predicate filter should contain a value field')
+        # structural validation
+        self.predicate_filter.validate(value)
 
-        # optional component
+        # semantic validation
         if 'predicate' not in value:
             predicate = DEFAULT_PREDICATE
         else:
             predicate = value['predicate']
 
+        # TODO need to be separate from structural validation
         if predicate not in _AVAILABLE_PREDICATES:
             raise v.ValidationError('Wrong filter predicate')
-
-        # validate value and field structure
-        self.value_field.validate(value['value'])
-        self.field_field.validate(value['field'])
 
         # validate predicate field semantic
         predicate_field = value['field']

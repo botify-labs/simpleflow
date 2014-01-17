@@ -118,8 +118,8 @@ class TestQueryValidation(unittest.TestCase):
         invalid = 1
         self.assertValidationError(validate_predicate_filter, invalid)
 
-        invalid = {'predicate': 'any.eq', 'field': 'metadata.h1'}
-        self.assertValidationError(validate_predicate_filter, invalid)
+        # invalid = {'predicate': 'any.eq', 'field': 'metadata.h1'}
+        # self.assertValidationError(validate_predicate_filter, invalid)
 
         invalid = {'predicate': 'eq', 'field': 'metadata.h1', 'value': 'data'}
         self.assertValidationErrorWithMessage('Apply non-list predicate on list field',
@@ -131,4 +131,8 @@ class TestQueryValidation(unittest.TestCase):
 
         # valid predicate filter, should not throw anything
         valid = {'field': 'hash', 'value': 123456789098761111}
+        validate_predicate_filter(valid)
+
+        # value is optional
+        valid = {'field': 'hash', 'predicate': 'not_null'}
         validate_predicate_filter(valid)
