@@ -188,7 +188,7 @@ class TestQueryTransformation(unittest.TestCase):
             'fields': ["metadata"],
             'filters': {
                 'and': [
-                    {'field': 'metadata.title', 'predicate': 'starts', 'value': 'News'}
+                    {'field': 'metadata.title', 'predicate': 'any.starts', 'value': 'News'}
                 ]
             }
         }
@@ -200,16 +200,15 @@ class TestQueryTransformation(unittest.TestCase):
                 'constant_score': {
                     'filter': {
                         'and': [
-                            {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}},
-                                     {'term': {'crawl_id': 1}}]},
+                            self.crawl_filter, self.not_crawled_filter,
                             {'prefix': {'metadata.title.untouched': 'News'}}
                         ]
                     }
                 }
             }
         }
-        self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
-        # self.is_valid_es_query(expected_es_query)
+        result = get_es_query(query, CRAWL_ID)
+        self.assertDictEqual(result, expected_es_query)
 
     def test_not_null_query(self):
         query = {
