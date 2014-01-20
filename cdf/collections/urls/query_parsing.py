@@ -48,34 +48,6 @@ def _raise_parsing_error(msg, structure):
     raise BotifyQueryException(excp_msg)
 
 
-def _check_list_field(field, is_list_operator=True):
-    """Check that list operators are applied on list fields,
-    and vice-versa
-
-    :raises BotifyQueryException: if operator and field are mismatched
-    """
-    if field in _LIST_FIELDS and not is_list_operator:
-        _raise_parsing_error('Apply list predicate on non-list field',
-                             field)
-    elif field not in _LIST_FIELDS and is_list_operator:
-        _raise_parsing_error('Apply non-list predicate on list field',
-                             field)
-
-
-# TODO replace this with operand parsing
-def _check_operands(value, required_nb=1):
-    if required_nb == 0 and value != None:
-        _raise_parsing_error('0 operand required, found',
-                             value)
-    elif required_nb == 1 and value == None and not isinstance(value, list):
-        _raise_parsing_error('1 operand required, found',
-                             value)
-    elif required_nb > 1:
-        if not isinstance(value, list) or len(value) != required_nb:
-            _raise_parsing_error('Multiple operands required, found',
-                                 value)
-
-
 # Botify query parsing
 #
 # Query format definition see:
@@ -129,39 +101,100 @@ class PredicateFilter(Filter):
         self.value = value
         self.validate()
 
+    @abc.abstractmethod
+    def is_list_op(self):
+        """Does this operator works only on list fields?
+
+        :returns: True if it's a list-field specific operator,
+            False otherwise. None if it works for both kind of
+            fields
+        """
+        pass
+
+    @abc.abstractmethod
+    def nb_operands(self):
+        """Get the required number of operands
+
+        :returns: expected number of operands for this predicate
+        """
+        pass
+
     def validate(self):
         self.predicate_field.validate()
+        self.validate_list_field()
+        self.validate_operands()
+
+    def validate_list_field(self):
+        """Check that list operators are applied on list fields,
+        and vice-versa
+
+        :raises BotifyQueryException: if operator and field are mismatched
+        """
+        is_list_op = self.is_list_op()
+        if is_list_op is None:
+            return
+
+        if self.field_value in _LIST_FIELDS and not is_list_op:
+            _raise_parsing_error('Apply list predicate on non-list field',
+                                 self.field_value)
+        elif self.field_value not in _LIST_FIELDS and is_list_op:
+            _raise_parsing_error('Apply non-list predicate on list field',
+                                 self.field_value)
+
+    def validate_operands(self):
+        """Check operands requirement
+
+        :raises BotifyQueryException: if operands numbers mismatch
+        """
+        nb_operands = self.nb_operands()
+        if nb_operands == 0 and self.value is not None:
+            _raise_parsing_error('0 operand required, found', self.value)
+        elif nb_operands == 1 and (self.value is None or
+                                       isinstance(self.value, list)):
+            _raise_parsing_error('1 operand required, found', self.value)
+        elif nb_operands > 1:
+            if not isinstance(self.value, list) or len(self.value) != nb_operands:
+                _raise_parsing_error('Multiple operands required, found',
+                                     self.value)
 
 
 class AnyEq(PredicateFilter):
+    def is_list_op(self):
+        return True
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'term': {
                 self.field_value: self.value
             }
         }
-
-    def validate(self):
-        super(AnyEq, self).validate()
-        _check_list_field(self.field_value, is_list_operator=True)
-        _check_operands(self.value, 1)
 
 
 class AnyStarts(PredicateFilter):
+    def is_list_op(self):
+        return True
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'prefix': {
                 _get_untouched_field(self.field_value): self.value
             }
         }
-
-    def validate(self):
-        super(AnyStarts, self).validate()
-        _check_list_field(self.field_value, is_list_operator=True)
-        _check_operands(self.value, 1)
 
 
 class AnyEnds(PredicateFilter):
+    def is_list_op(self):
+        return True
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'regexp': {
@@ -169,27 +202,29 @@ class AnyEnds(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(AnyEnds, self).validate()
-        _check_list_field(self.field_value, is_list_operator=True)
-        _check_operands(self.value, 1)
-
 
 class AnyContains(PredicateFilter):
+    def is_list_op(self):
+        return True
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'regexp': {
                 _get_untouched_field(self.field_value): "@%s@" % self.value
             }
         }
-
-    def validate(self):
-        super(AnyContains, self).validate()
-        _check_list_field(self.field_value, is_list_operator=True)
-        _check_operands(self.value, 1)
 
 
 class Contains(PredicateFilter):
+    def is_list_op(self):
+        return False
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'regexp': {
@@ -197,13 +232,14 @@ class Contains(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(Contains, self).validate()
-        _check_list_field(self.field_value, is_list_operator=False)
-        _check_operands(self.value, 1)
-
 
 class Starts(PredicateFilter):
+    def is_list_op(self):
+        return False
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'prefix': {
@@ -211,13 +247,14 @@ class Starts(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(Starts, self).validate()
-        _check_list_field(self.field_value, is_list_operator=False)
-        _check_operands(self.value, 1)
-
 
 class Ends(PredicateFilter):
+    def is_list_op(self):
+        return False
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'regexp': {
@@ -225,13 +262,14 @@ class Ends(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(Ends, self).validate()
-        _check_list_field(self.field_value, is_list_operator=False)
-        _check_operands(self.value, 1)
-
 
 class Eq(PredicateFilter):
+    def is_list_op(self):
+        return False
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'term': {
@@ -239,13 +277,14 @@ class Eq(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(Eq, self).validate()
-        _check_list_field(self.field_value, is_list_operator=False)
-        _check_operands(self.value, 1)
-
 
 class Re(PredicateFilter):
+    def is_list_op(self):
+        return False
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'regexp': {
@@ -253,13 +292,14 @@ class Re(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(Re, self).validate()
-        _check_list_field(self.field_value, is_list_operator=False)
-        _check_operands(self.value, 1)
-
 
 class Gt(PredicateFilter):
+    def is_list_op(self):
+        return False
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'range': {
@@ -269,13 +309,14 @@ class Gt(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(Gt, self).validate()
-        _check_list_field(self.field_value, is_list_operator=False)
-        _check_operands(self.value, 1)
-
 
 class Gte(PredicateFilter):
+    def is_list_op(self):
+        return False
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'range': {
@@ -285,13 +326,14 @@ class Gte(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(Gte, self).validate()
-        _check_list_field(self.field_value, is_list_operator=False)
-        _check_operands(self.value, 1)
-
 
 class Lt(PredicateFilter):
+    def is_list_op(self):
+        return False
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'range': {
@@ -301,13 +343,14 @@ class Lt(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(Lt, self).validate()
-        _check_list_field(self.field_value, is_list_operator=False)
-        _check_operands(self.value, 1)
-
 
 class Lte(PredicateFilter):
+    def is_list_op(self):
+        return False
+
+    def nb_operands(self):
+        return 1
+
     def transform(self):
         return {
             'range': {
@@ -317,13 +360,14 @@ class Lte(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(Lte, self).validate()
-        _check_list_field(self.field_value, is_list_operator=False)
-        _check_operands(self.value, 1)
-
 
 class Between(PredicateFilter):
+    def is_list_op(self):
+        return False
+
+    def nb_operands(self):
+        return 2
+
     def transform(self):
         return {
             "range": {
@@ -334,23 +378,20 @@ class Between(PredicateFilter):
             }
         }
 
-    def validate(self):
-        super(Between, self).validate()
-        _check_list_field(self.field_value, is_list_operator=False)
-        _check_operands(self.value, 2)
-
 
 class NotNull(PredicateFilter):
+    def is_list_op(self):
+        return None
+
+    def nb_operands(self):
+        return 0
+
     def transform(self):
         return {
             'exists': {
                 'field': self.field_value
             }
         }
-
-    def validate(self):
-        super(NotNull, self).validate()
-        _check_operands(self.value, 0)
 
 
 _PREDICATE_LIST = {
@@ -607,7 +648,11 @@ class BotifyQuery(Term):
 
 
 def parse_botify_query(botify_query):
-    """Parse a botify front-end query into the intermediate form"""
+    """Parse a botify front-end query into the intermediate form
+
+    :param botify_query: a dict representing botify front-end query
+    :returns: an BotifyQuery object containing the hierarchy of this query
+    """
     if not isinstance(botify_query, dict):
         _raise_parsing_error('Botify query is not a dict',
                              botify_query)

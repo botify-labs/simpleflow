@@ -113,6 +113,10 @@ class TestFilterParsing(ParsingTestCase):
         invalid = {'predicate': 'not_null', 'field': 'path', 'value': 'data'}
         self.assertParsingError(parse_predicate_filter, invalid)
 
+        # value is of wrong type
+        invalid = {'predicate': 'eq', 'field': 'path', 'value': ['data']}
+        self.assertParsingError(parse_predicate_filter, invalid)
+
         # predicate field is not a child field
         # `error_links` is a valid query field, but not valid as a target
         # of predicate
