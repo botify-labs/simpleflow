@@ -55,7 +55,7 @@ def _is_list_field(field_values):
 
 
 def _is_multi_field(field_values):
-    return field_values['type'] == 'multi_field'
+    return field_values['type'] == _MULTI_FILED_TYPE
 
 
 def _parse_field_values(field_name, elem_values):
@@ -205,5 +205,22 @@ def generate_default_value_lookup(meta_mapping):
                 lookup[path] = infer_for_basic_types(values['field_type'])
             else:
                 lookup[path] = infer_for_basic_types(values['type'])
+
+    return lookup
+
+
+def generate_valid_field_lookup(meta_mapping):
+    """Generate a lookup set for query field membership check
+
+    Ex. there's a `error_links.3xx.urls` record in data definition
+        so valid fields will be:
+            {`error_links`, `error_links.3xx`, `error_links.3xx.urls`}
+    """
+    lookup = set()
+
+    for path in meta_mapping:
+        splits = _split_path(path)
+        for i, _ in enumerate(splits):
+            lookup.add('.'.join(splits[:i+1]))
 
     return lookup

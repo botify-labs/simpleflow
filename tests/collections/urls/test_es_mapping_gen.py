@@ -1,7 +1,7 @@
 import unittest
 from cdf.collections.urls.es_mapping_generation import (_parse_field_path,
                                                         generate_es_mapping,
-                                                        generate_default_value_lookup)
+                                                        generate_default_value_lookup, generate_valid_field_lookup)
 from cdf.constants import URLS_DATA_MAPPING_DEPRECATED, URLS_DATA_FORMAT_DEFINITION
 
 
@@ -149,3 +149,26 @@ class TestMappingGeneration(unittest.TestCase):
         result = generate_default_value_lookup(meta_mapping)
 
         self.assertDictEqual(result, expected)
+
+    def test_valid_field_lookup(self):
+        meta_mapping = {
+            'error_links.3xx.urls',
+            'error_links.3xx.nb',
+            'error_links.4xx.urls',
+            'error_links.4xx.nb',
+            'one_level_field'
+        }
+
+        result = generate_valid_field_lookup(meta_mapping)
+        expected = {
+            'error_links',
+            'error_links.3xx',
+            'error_links.4xx',
+            'error_links.3xx.urls',
+            'error_links.3xx.nb',
+            'error_links.4xx.urls',
+            'error_links.4xx.nb',
+            'one_level_field'
+        }
+
+        self.assertEqual(result, expected)
