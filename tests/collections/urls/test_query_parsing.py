@@ -1,5 +1,7 @@
 import unittest
-from cdf.collections.urls.query_parsing import parse_sorts, parse_fields, parse_predicate_filter, parse_not_filter, parse_boolean_filter
+from cdf.collections.urls.query_parsing import (parse_sorts, parse_fields,
+                                                parse_predicate_filter, parse_not_filter,
+                                                parse_boolean_filter)
 from cdf.exceptions import BotifyQueryException
 
 
@@ -13,7 +15,8 @@ class TestSortParsing(ParsingTestCase):
     def test_parsing(self):
         sort = ['field1', {'field3': {'order': 'desc'}}]
         result = parse_sorts(sort).transform()
-        expected = ['field1', {'field3': {'order': 'desc', 'ignore_unmapped': True}}]
+        expected = [{'field1': {'ignore_unmapped': True}},
+                    {'field3': {'order': 'desc', 'ignore_unmapped': True}}]
         self.assertEqual(result, expected)
 
     def test_wrong_sort_structure(self):

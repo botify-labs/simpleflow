@@ -122,7 +122,7 @@ class TestQueryTransformation(unittest.TestCase):
                             self.crawl_filter,
                             self.not_crawled_filter,
                             {'term': {'http_code': 200}},
-                            {'range': {'delay2': {'from': 100}}},
+                            {'range': {'delay2': {'gte': 100}}},
                         ]
                     }
                 }
