@@ -4,6 +4,7 @@ from cdf.collections.urls.es_mapping_generation import (generate_multi_field_loo
 from cdf.constants import URLS_DATA_FORMAT_DEFINITION
 from cdf.exceptions import BotifyQueryException
 
+__ALL__ = ['parse_botify_query']
 
 # Elements that are of `multi_field` type
 _MULTI_FIELDS = generate_multi_field_lookup(URLS_DATA_FORMAT_DEFINITION)
@@ -11,18 +12,16 @@ _MULTI_FIELDS = generate_multi_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 # Elements in ES that are a list
 _LIST_FIELDS = generate_list_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
-
+# Available sort options
 _SORT_OPTIONS = ['desc']
-
 
 # Boolean filter predicates
 _BOOL_PREDICATES = ['and', 'or']
 
-
 # Not filter predicate
 _NOT_PREDICATE = 'not'
 
-
+# Default ES query components
 _DEFAULT_SORT = ['id']
 _DEFAULT_FIELD = ['url']
 
@@ -39,11 +38,17 @@ def _get_untouched_field(field):
 
 
 def _raise_parsing_error(msg, structure):
+    """Helper for raising a query parsing exception"""
     excp_msg = '{} : {}'.format(msg, str(structure))
     raise BotifyQueryException(excp_msg)
 
 
 def _check_list_field(field, is_list_operator=True):
+    """Check that list operators are applied on list fields,
+    and vice-versa
+
+    :raises BotifyQueryException: if operator and field are mismatched
+    """
     if field in _LIST_FIELDS and not is_list_operator:
         _raise_parsing_error('Apply list predicate on non-list field',
                              field)
@@ -66,12 +71,16 @@ def _check_operands(value, required_nb=1):
                                  value)
 
 
+# Botify query parsing
+#
+# Query format definition see:
+# https://github.com/sem-io/botify-cdf/wiki/Url-Data-Query-Definition
 class Term(object):
     """Abstract class for basic component of a botify query
     """
     @abc.abstractmethod
     def transform(self):
-        """Transform the predicate structure"""
+        """Transform to a valid ElasticSearch query component"""
         pass
 
     @abc.abstractmethod
@@ -320,12 +329,14 @@ class NotNull(PredicateFilter):
         _check_operands(self.value, 0)
 
 
-_PREDICATE_DISPATCH = {
+_PREDICATE_LIST = {
+    # list operators
     'any.eq': AnyEq,
     'any.contains': AnyContains,
     'any.starts': AnyStarts,
     'any.ends': AnyEnds,
 
+    # non-list operators
     'eq': Eq,
     'contains': Contains,
     'starts': Starts,
@@ -335,8 +346,10 @@ _PREDICATE_DISPATCH = {
     'lte': Lte,
     'gt': Gt,
     'gte': Gte,
-    'not_null': NotNull,
-    'between': Between
+    'between': Between,
+
+    # universal operators
+    'not_null': NotNull
 }
 
 
@@ -349,13 +362,13 @@ def parse_predicate_filter(predicate_filter):
                              predicate_filter)
 
     predicate = predicate_filter.get('predicate', 'eq')
-    if predicate not in _PREDICATE_DISPATCH:
+    if predicate not in _PREDICATE_LIST:
         _raise_parsing_error('Unknown predicate', predicate)
     else:
-        return _PREDICATE_DISPATCH[predicate](predicate_filter['field'],
-                                              predicate_filter['value']
-                                              if 'value' in predicate_filter
-                                              else None)
+        return _PREDICATE_LIST[predicate](predicate_filter['field'],
+                                          predicate_filter['value']
+                                          if 'value' in predicate_filter
+                                          else None)
 
 
 def parse_not_filter(not_filter):
@@ -542,12 +555,13 @@ class BotifyQuery(Term):
 
 
 def parse_botify_query(botify_query):
+    """Parse a botify front-end query into the intermediate form"""
     if not isinstance(botify_query, dict):
-        _raise_parsing_error('Query is not a dict',
+        _raise_parsing_error('Botify query is not a dict',
                              botify_query)
 
     if 'filters' not in botify_query:
-        _raise_parsing_error('Filter is missing',
+        _raise_parsing_error('Filter is missing in botify query',
                              botify_query)
 
     if 'sort' not in botify_query:
