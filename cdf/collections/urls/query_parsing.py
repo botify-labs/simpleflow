@@ -78,6 +78,9 @@ class NotFilter(Filter):
     def transform(self):
         return {_NOT_PREDICATE: self.filter.transform()}
 
+    def validate(self):
+        self.filter.validate()
+
 
 class BooleanFilter(Filter):
     def __init__(self, boolean_predicate, filters):
@@ -92,6 +95,10 @@ class BooleanFilter(Filter):
             ]
         }
 
+    def validate(self):
+        for filter in self.filters:
+            filter.validate()
+
 
 # Predicate filter variants
 class PredicateFilter(Filter):
@@ -99,7 +106,6 @@ class PredicateFilter(Filter):
         self.predicate_field = predicate_field
         self.field_value = self.predicate_field.transform()
         self.value = value
-        self.validate()
 
     @abc.abstractmethod
     def is_list_op(self):
@@ -527,7 +533,6 @@ class OrderedSortElem(SortElem):
         self.sort_field = sort_field
         self.field_value = sort_field.transform()
         self.sort_option = sort_option
-        self.validate()
 
     def transform(self):
         return {
@@ -588,7 +593,6 @@ class Fields(Term):
 class Field(Term):
     def __init__(self, field):
         self.field_value = field
-        self.validate()
 
     def transform(self):
         return self.field_value
@@ -637,7 +641,6 @@ class BotifyQuery(Term):
         self.fields = fields
         self.sorts = sorts
         self.filter = filter
-        self.validate()
 
     def transform(self):
         return {
@@ -645,6 +648,11 @@ class BotifyQuery(Term):
             'sort': self.sorts.transform(),
             'fields': self.fields.transform()
         }
+
+    def validate(self):
+        self.fields.validate()
+        self.sorts.validate()
+        self.filter.validate()
 
 
 def parse_botify_query(botify_query):

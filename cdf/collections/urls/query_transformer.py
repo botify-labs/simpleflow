@@ -54,4 +54,11 @@ def get_es_query(botify_query, crawl_id):
     # Merge default filters in botify format query
     botify_query = _merge_filters(botify_query, default_filters)
 
-    return parse_botify_query(botify_query).transform()
+    # parse the merged query
+    parsed_query = parse_botify_query(botify_query)
+
+    # semantic validation
+    parsed_query.validate()
+
+    # return the transformed query
+    return parsed_query.transform()
