@@ -13,10 +13,10 @@ class ParsingTestCase(unittest.TestCase):
 
 class TestSortParsing(ParsingTestCase):
     def test_parsing(self):
-        sort = ['field1', {'field3': {'order': 'desc'}}]
+        sort = ['id', {'http_code': {'order': 'desc'}}]
         result = parse_sorts(sort).transform()
-        expected = [{'field1': {'ignore_unmapped': True}},
-                    {'field3': {'order': 'desc', 'ignore_unmapped': True}}]
+        expected = [{'id': {'ignore_unmapped': True}},
+                    {'http_code': {'order': 'desc', 'ignore_unmapped': True}}]
         self.assertEqual(result, expected)
 
     def test_wrong_sort_structure(self):
@@ -29,8 +29,8 @@ class TestSortParsing(ParsingTestCase):
         self.assertParsingError(parse_sorts, invalid)
 
         # order param should be `desc`
-        # invalid = ['field', {'field2': {'order': 'hey!!'}}]
-        # self.assertParsingError(parse_sorts, invalid)
+        invalid = ['field', {'field2': {'order': 'hey!!'}}]
+        self.assertParsingError(parse_sorts, invalid)
 
         # order object should be in correct structure
         invalid = [{'field': 'desc'}]
@@ -44,12 +44,18 @@ class TestSortParsing(ParsingTestCase):
         invalid = [{'field': {'order': 'desc'}, 'field2': {'order': 'desc'}}]
         self.assertParsingError(parse_sorts, invalid)
 
+    def test_wrong_sort_semantic(self):
+        # sort field is not a child field
+        # `error_links.3xx` is a valid query field but not a target for sort
+        invalid = [{'error_links.3xx': {'order': 'desc'}}]
+        self.assertParsingError(parse_sorts, invalid)
+
 
 class TestFieldsParsing(ParsingTestCase):
     def test_parsing(self):
-        fields = ['field1', 'field2']
+        fields = ['url', 'path']
         result = parse_fields(fields).transform()
-        expected = ['field1', 'field2']
+        expected = ['url', 'path']
         self.assertEqual(result, expected)
 
     def test_wrong_fields_structure(self):
@@ -58,11 +64,16 @@ class TestFieldsParsing(ParsingTestCase):
         self.assertParsingError(parse_fields, invalid)
 
         # fields should be a list of strings
-        invalid = [1, 'field1']
+        invalid = [1, 'url']
         self.assertParsingError(parse_fields, invalid)
 
         # fields should be a list of strings
-        invalid = {'field0', 'field1'}
+        invalid = {'url', 'path'}
+        self.assertParsingError(parse_fields, invalid)
+
+    def test_wrong_fields_semantic(self):
+        # field should be a valid one
+        invalid = ['field0', 'path']
         self.assertParsingError(parse_fields, invalid)
 
 
@@ -100,4 +111,10 @@ class TestFilterParsing(ParsingTestCase):
 
         # value is not required
         invalid = {'predicate': 'not_null', 'field': 'path', 'value': 'data'}
+        self.assertParsingError(parse_predicate_filter, invalid)
+
+        # predicate field is not a child field
+        # `error_links` is a valid query field, but not valid as a target
+        # of predicate
+        invalid = {'predicate': 'not_null', 'field': 'error_links'}
         self.assertParsingError(parse_predicate_filter, invalid)

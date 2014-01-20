@@ -1,7 +1,8 @@
 import abc
 from cdf.collections.urls.es_mapping_generation import (generate_multi_field_lookup,
-                                                        generate_list_field_lookup)
-from cdf.constants import URLS_DATA_FORMAT_DEFINITION
+                                                        generate_list_field_lookup,
+                                                        generate_valid_field_lookup)
+from cdf.constants import URLS_DATA_FORMAT_DEFINITION, URLS_DATA_FIELDS as CHILD_FIELDS
 from cdf.exceptions import BotifyQueryException
 
 __ALL__ = ['parse_botify_query']
@@ -11,6 +12,9 @@ _MULTI_FIELDS = generate_multi_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
 # Elements in ES that are a list
 _LIST_FIELDS = generate_list_field_lookup(URLS_DATA_FORMAT_DEFINITION)
+
+# All valid field for querying
+_VALID_FIELDS = generate_valid_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
 # Available sort options
 _SORT_OPTIONS = ['desc']
@@ -22,6 +26,7 @@ _BOOL_PREDICATES = ['and', 'or']
 _NOT_PREDICATE = 'not'
 
 # Default ES query components
+_DEFAULT_PREDICATE = 'eq'
 _DEFAULT_SORT = ['id']
 _DEFAULT_FIELD = ['url']
 
@@ -118,22 +123,27 @@ class BooleanFilter(Filter):
 
 # Predicate filter variants
 class PredicateFilter(Filter):
-    def __init__(self, field, value=None):
-        self.field = field
+    def __init__(self, predicate_field, value=None):
+        self.predicate_field = predicate_field
+        self.field_value = self.predicate_field.transform()
         self.value = value
         self.validate()
+
+    def validate(self):
+        self.predicate_field.validate()
 
 
 class AnyEq(PredicateFilter):
     def transform(self):
         return {
             'term': {
-                self.field: self.value
+                self.field_value: self.value
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=True)
+        super(AnyEq, self).validate()
+        _check_list_field(self.field_value, is_list_operator=True)
         _check_operands(self.value, 1)
 
 
@@ -141,12 +151,13 @@ class AnyStarts(PredicateFilter):
     def transform(self):
         return {
             'prefix': {
-                _get_untouched_field(self.field): self.value
+                _get_untouched_field(self.field_value): self.value
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=True)
+        super(AnyStarts, self).validate()
+        _check_list_field(self.field_value, is_list_operator=True)
         _check_operands(self.value, 1)
 
 
@@ -154,12 +165,13 @@ class AnyEnds(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                _get_untouched_field(self.field): "@%s" % self.value
+                _get_untouched_field(self.field_value): "@%s" % self.value
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=True)
+        super(AnyEnds, self).validate()
+        _check_list_field(self.field_value, is_list_operator=True)
         _check_operands(self.value, 1)
 
 
@@ -167,12 +179,13 @@ class AnyContains(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                _get_untouched_field(self.field): "@%s@" % self.value
+                _get_untouched_field(self.field_value): "@%s@" % self.value
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=True)
+        super(AnyContains, self).validate()
+        _check_list_field(self.field_value, is_list_operator=True)
         _check_operands(self.value, 1)
 
 
@@ -180,12 +193,13 @@ class Contains(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                _get_untouched_field(self.field): "@%s@" % self.value
+                _get_untouched_field(self.field_value): "@%s@" % self.value
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=False)
+        super(Contains, self).validate()
+        _check_list_field(self.field_value, is_list_operator=False)
         _check_operands(self.value, 1)
 
 
@@ -193,12 +207,13 @@ class Starts(PredicateFilter):
     def transform(self):
         return {
             'prefix': {
-                _get_untouched_field(self.field): self.value
+                _get_untouched_field(self.field_value): self.value
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=False)
+        super(Starts, self).validate()
+        _check_list_field(self.field_value, is_list_operator=False)
         _check_operands(self.value, 1)
 
 
@@ -206,12 +221,13 @@ class Ends(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                _get_untouched_field(self.field): "@%s" % self.value
+                _get_untouched_field(self.field_value): "@%s" % self.value
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=False)
+        super(Ends, self).validate()
+        _check_list_field(self.field_value, is_list_operator=False)
         _check_operands(self.value, 1)
 
 
@@ -219,12 +235,13 @@ class Eq(PredicateFilter):
     def transform(self):
         return {
             'term': {
-                self.field: self.value
+                self.field_value: self.value
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=False)
+        super(Eq, self).validate()
+        _check_list_field(self.field_value, is_list_operator=False)
         _check_operands(self.value, 1)
 
 
@@ -232,12 +249,13 @@ class Re(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                self.field: self.value
+                self.field_value: self.value
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=False)
+        super(Re, self).validate()
+        _check_list_field(self.field_value, is_list_operator=False)
         _check_operands(self.value, 1)
 
 
@@ -245,14 +263,15 @@ class Gt(PredicateFilter):
     def transform(self):
         return {
             'range': {
-                self.field: {
+                self.field_value: {
                     'gt': self.value
                 }
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=False)
+        super(Gt, self).validate()
+        _check_list_field(self.field_value, is_list_operator=False)
         _check_operands(self.value, 1)
 
 
@@ -260,14 +279,15 @@ class Gte(PredicateFilter):
     def transform(self):
         return {
             'range': {
-                self.field: {
+                self.field_value: {
                     'gte': self.value
                 }
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=False)
+        super(Gte, self).validate()
+        _check_list_field(self.field_value, is_list_operator=False)
         _check_operands(self.value, 1)
 
 
@@ -275,14 +295,15 @@ class Lt(PredicateFilter):
     def transform(self):
         return {
             'range': {
-                self.field: {
+                self.field_value: {
                     'lt': self.value
                 }
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=False)
+        super(Lt, self).validate()
+        _check_list_field(self.field_value, is_list_operator=False)
         _check_operands(self.value, 1)
 
 
@@ -290,14 +311,15 @@ class Lte(PredicateFilter):
     def transform(self):
         return {
             'range': {
-                self.field: {
+                self.field_value: {
                     'lte': self.value
                 }
             }
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=False)
+        super(Lte, self).validate()
+        _check_list_field(self.field_value, is_list_operator=False)
         _check_operands(self.value, 1)
 
 
@@ -305,7 +327,7 @@ class Between(PredicateFilter):
     def transform(self):
         return {
             "range": {
-                self.field: {
+                self.field_value: {
                     "gte": self.value[0],
                     "lte": self.value[1],
                 }
@@ -313,19 +335,21 @@ class Between(PredicateFilter):
         }
 
     def validate(self):
-        _check_list_field(self.field, is_list_operator=False)
+        super(Between, self).validate()
+        _check_list_field(self.field_value, is_list_operator=False)
         _check_operands(self.value, 2)
 
 
 class NotNull(PredicateFilter):
     def transform(self):
         return {
-           'exists': {
-                'field': self.field
+            'exists': {
+                'field': self.field_value
             }
         }
 
     def validate(self):
+        super(NotNull, self).validate()
         _check_operands(self.value, 0)
 
 
@@ -361,14 +385,14 @@ def parse_predicate_filter(predicate_filter):
         _raise_parsing_error('Field is missing in predicate filter',
                              predicate_filter)
 
-    predicate = predicate_filter.get('predicate', 'eq')
+    predicate = predicate_filter.get('predicate', _DEFAULT_PREDICATE)
     if predicate not in _PREDICATE_LIST:
         _raise_parsing_error('Unknown predicate', predicate)
     else:
-        return _PREDICATE_LIST[predicate](predicate_filter['field'],
-                                          predicate_filter['value']
-                                          if 'value' in predicate_filter
-                                          else None)
+        return _PREDICATE_LIST[predicate](
+            PredicateField(predicate_filter['field']),
+            predicate_filter['value']
+            if 'value' in predicate_filter else None)
 
 
 def parse_not_filter(not_filter):
@@ -432,6 +456,10 @@ class Sorts(Term):
         return [elem.transform()
                 for elem in self.sort_elems]
 
+    def validate(self):
+        for elem in self.sort_elems:
+            elem.validate()
+
 
 class SortElem(Term):
     pass
@@ -440,33 +468,36 @@ class SortElem(Term):
 class SimpleSortElem(SortElem):
     def __init__(self, sort_field):
         self.sort_field = sort_field
+        self.field_value = sort_field.transform()
 
     def transform(self):
         return {
-            self.sort_field: {
+            self.field_value: {
                 'ignore_unmapped': True
             }
         }
 
     def validate(self):
-        pass
+        self.sort_field.validate()
 
 
 class OrderedSortElem(SortElem):
     def __init__(self, sort_field, sort_option):
         self.sort_field = sort_field
+        self.field_value = sort_field.transform()
         self.sort_option = sort_option
         self.validate()
 
     def transform(self):
         return {
-            self.sort_field: {
+            self.field_value: {
                 'ignore_unmapped': True,
                 'order': self.sort_option
             }
         }
 
     def validate(self):
+        self.sort_field.validate()
         if self.sort_option not in _SORT_OPTIONS:
             _raise_parsing_error('Unknown sort option',
                                  self.sort_option)
@@ -474,7 +505,7 @@ class OrderedSortElem(SortElem):
 
 def parse_sort_elem(sort_elem):
     if isinstance(sort_elem, str):
-        return SimpleSortElem(sort_elem)
+        return SimpleSortElem(SortField(sort_elem))
     elif isinstance(sort_elem, dict):
         if len(sort_elem) != 1:
             _raise_parsing_error('Ordered sort element has multiple mapping',
@@ -484,7 +515,8 @@ def parse_sort_elem(sort_elem):
         if not (isinstance(sort_option, dict) and 'order' in sort_option):
             _raise_parsing_error('Sort option has wrong format',
                                  sort_option)
-        return OrderedSortElem(sort_field, sort_option['order'])
+        return OrderedSortElem(SortField(sort_field),
+                               sort_option['order'])
     else:
         _raise_parsing_error('Sort element has wrong format',
                              sort_elem)
@@ -508,26 +540,46 @@ class Fields(Term):
                 for field in self.fields]
 
     def validate(self):
-        pass
+        for field in self.fields:
+            field.validate()
 
 
-# TODO validate field
 class Field(Term):
     def __init__(self, field):
-        self.field = field
+        self.field_value = field
+        self.validate()
 
     def transform(self):
-        return self.field
+        return self.field_value
 
+
+class RequiredField(Field):
     def validate(self):
-        pass
+        if self.field_value not in _VALID_FIELDS:
+            _raise_parsing_error('Field is not valid for query',
+                                 self.field_value)
+
+
+class PredicateField(Field):
+    def validate(self):
+        if self.field_value not in CHILD_FIELDS:
+            _raise_parsing_error("Field is not valid for predicate",
+                                 self.field_value)
+
+
+# TODO allow only number fields ???
+class SortField(Field):
+    def validate(self):
+        if self.field_value not in CHILD_FIELDS:
+            _raise_parsing_error("Field is not valid for sort",
+                                 self.field_value)
 
 
 def parse_field(field):
     if not isinstance(field, str):
         _raise_parsing_error('Field is not a string',
                              field)
-    return Field(field)
+    return RequiredField(field)
 
 
 def parse_fields(fields):
