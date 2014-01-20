@@ -255,51 +255,56 @@ URLS_DATA_MAPPING_DEPRECATED = {
 #   - default_value (optional): the default value if this field does not
 #       exist
 
+_NUMBER = 'long'
+_STRING = 'string'
+_BOOLEAN = 'boolean'
+
+
 URLS_DATA_FORMAT_DEFINITION = {
     # url property data
     "url": {
-        "type": "string",
+        "type": _STRING,
         "settings": {
             "not_analyzed"
         }
     },
-    "url_hash": {"type": "long"},
-    "byte_size": {"type": "long"},
+    "url_hash": {"type": _NUMBER},
+    "byte_size": {"type": _NUMBER},
     "date_crawled": {"type": "date"},
-    "delay1": {"type": "long"},
-    "delay2": {"type": "long"},
-    "depth": {"type": "long"},
-    "gzipped": {"type": "boolean"},
+    "delay1": {"type": _NUMBER},
+    "delay2": {"type": _NUMBER},
+    "depth": {"type": _NUMBER},
+    "gzipped": {"type": _BOOLEAN},
     "host": {
-        "type": "string",
+        "type": _STRING,
         "settings": {
             "not_analyzed"
         }
     },
-    "http_code": {"type": "long"},
-    "id": {"type": "long"},
-    "crawl_id": {"type": "long"},
-    "patterns": {"type": "long"},
+    "http_code": {"type": _NUMBER},
+    "id": {"type": _NUMBER},
+    "crawl_id": {"type": _NUMBER},
+    "patterns": {"type": _NUMBER},
     "path": {
-        "type": "string",
+        "type": _STRING,
         "settings": {
             "not_analyzed"
         }
     },
     "protocol": {
-        "type": "string",
+        "type": _STRING,
         "settings": {
             "not_analyzed"
         }
     },
     "query_string": {
-        "type": "string",
+        "type": _STRING,
         "settings": {
             "not_analyzed"
         }
     },
     "query_string_keys": {
-        "type": "string",
+        "type": _STRING,
         "settings": {
             "not_analyzed"
         }
@@ -307,73 +312,73 @@ URLS_DATA_FORMAT_DEFINITION = {
 
     # metadata numbers
     "metadata_nb.title": {
-        "type": "long"
+        "type": _NUMBER
     },
     "metadata_nb.h1": {
-        "type": "long"
+        "type": _NUMBER
     },
     "metadata_nb.h2": {
-        "type": "long"
+        "type": _NUMBER
     },
     "metadata_nb.description": {
-        "type": "long"
+        "type": _NUMBER
     },
 
     # metadata contents
     "metadata.title": {
         "type": "multi_field",
-        "field_type": "string",
+        "field_type": _STRING,
         "settings": {
             "list"
         }
     },
     "metadata.h1": {
         "type": "multi_field",
-        "field_type": "string",
+        "field_type": _STRING,
         "settings": {
             "list"
         }
     },
     "metadata.h2": {
         "type": "multi_field",
-        "field_type": "string",
+        "field_type": _STRING,
         "settings": {
             "list"
         }
     },
     "metadata.description": {
         "type": "multi_field",
-        "field_type": "string",
+        "field_type": _STRING,
         "settings": {
             "list"
         }
     },
 
     # metadata duplication data
-    "metadata_duplicate_nb.title": {"type": "long"},
-    "metadata_duplicate_nb.description": {"type": "long"},
-    "metadata_duplicate_nb.h1": {"type": "long"},
+    "metadata_duplicate_nb.title": {"type": _NUMBER},
+    "metadata_duplicate_nb.description": {"type": _NUMBER},
+    "metadata_duplicate_nb.h1": {"type": _NUMBER},
 
-    "metadata_duplicate_is_first.title": {"type": "boolean"},
-    "metadata_duplicate_is_first.description": {"type": "boolean"},
-    "metadata_duplicate_is_first.h1": {"type": "boolean"},
+    "metadata_duplicate_is_first.title": {"type": _BOOLEAN},
+    "metadata_duplicate_is_first.description": {"type": _BOOLEAN},
+    "metadata_duplicate_is_first.h1": {"type": _BOOLEAN},
 
     "metadata_duplicate.title": {
-        "type": "long",
+        "type": _NUMBER,
         "settings": {
             "list",
             "no_index"
         }
     },
     "metadata_duplicate.h1": {
-        "type": "long",
+        "type": _NUMBER,
         "settings": {
             "list",
             "no_index"
         }
     },
     "metadata_duplicate.description": {
-        "type": "long",
+        "type": _NUMBER,
         "settings": {
             "list",
             "no_index"
@@ -381,20 +386,20 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
 
     # incoming links data
-    "inlinks_internal_nb.total": {"type": "long"},
-    "inlinks_internal_nb.follow_unique": {"type": "long"},
-    "inlinks_internal_nb.total_unique": {"type": "long"},
-    "inlinks_internal_nb.follow": {"type": "long"},
-    "inlinks_internal_nb.nofollow": {"type": "long"},
+    "inlinks_internal_nb.total": {"type": _NUMBER},
+    "inlinks_internal_nb.follow_unique": {"type": _NUMBER},
+    "inlinks_internal_nb.total_unique": {"type": _NUMBER},
+    "inlinks_internal_nb.follow": {"type": _NUMBER},
+    "inlinks_internal_nb.nofollow": {"type": _NUMBER},
     "inlinks_internal_nb.nofollow_combinations": {
         "type": "struct",
         "values": {
-            "key": {"type": "string"},
-            "value": {"type": "long"}
+            "key": {"type": _STRING},
+            "value": {"type": _NUMBER}
         }
     },
     "inlinks_internal": {
-        "type": "long",
+        "type": _NUMBER,
         "settings": {
             "no_index",
             "list"
@@ -403,20 +408,20 @@ URLS_DATA_FORMAT_DEFINITION = {
 
     # outgoing links data
     # internal outgoing links
-    "outlinks_internal_nb.total": {"type": "long"},
-    "outlinks_internal_nb.follow_unique": {"type": "long"},
-    "outlinks_internal_nb.total_unique": {"type": "long"},
-    "outlinks_internal_nb.follow": {"type": "long"},
-    "outlinks_internal_nb.nofollow": {"type": "long"},
+    "outlinks_internal_nb.total": {"type": _NUMBER},
+    "outlinks_internal_nb.follow_unique": {"type": _NUMBER},
+    "outlinks_internal_nb.total_unique": {"type": _NUMBER},
+    "outlinks_internal_nb.follow": {"type": _NUMBER},
+    "outlinks_internal_nb.nofollow": {"type": _NUMBER},
     "outlinks_internal_nb.nofollow_combinations": {
         "type": "struct",
         "values": {
-            "key": {"type": "string"},
-            "value": {"type": "long"}
+            "key": {"type": _STRING},
+            "value": {"type": _NUMBER}
         }
     },
     "outlinks_internal": {
-        "type": "long",
+        "type": _NUMBER,
         "settings": {
             "no_index",
             "list"
@@ -424,22 +429,22 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
 
     # external outgoing links
-    "outlinks_external_nb.total": {"type": "long"},
-    "outlinks_external_nb.follow": {"type": "long"},
-    "outlinks_external_nb.nofollow": {"type": "long"},
+    "outlinks_external_nb.total": {"type": _NUMBER},
+    "outlinks_external_nb.follow": {"type": _NUMBER},
+    "outlinks_external_nb.nofollow": {"type": _NUMBER},
     "outlinks_external_nb.nofollow_combinations": {
         "type": "struct",
         "values": {
-            "key": {"type": "string"},
-            "value": {"type": "long"}
+            "key": {"type": _STRING},
+            "value": {"type": _NUMBER}
         }
     },
 
 
     # incoming canonical links data
-    "canonical_from_nb": {"type": "long"},
+    "canonical_from_nb": {"type": _NUMBER},
     "canonical_from": {
-        "type": "long",
+        "type": _NUMBER,
         "settings": {
             "no_index",
             "list"
@@ -451,33 +456,33 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": "struct",
         "default_value": None,
         "values": {
-            "url": {"type": "string"},
-            "url_id": {"type": "long"},
+            "url": {"type": _STRING},
+            "url_id": {"type": _NUMBER},
         },
         "settings": {
             "no_index"
         }
     },
-    "canonical_to_equal": {"type": "boolean"},
+    "canonical_to_equal": {"type": _BOOLEAN},
 
     # outgoing redirection data
     "redirects_to": {
         "type": "struct",
         "default_value": None,
         "values": {
-            "http_code": {"type": "long"},
-            "url": {"type": "string"},
-            "url_id": {"type": "long"}
+            "http_code": {"type": _NUMBER},
+            "url": {"type": _STRING},
+            "url_id": {"type": _NUMBER}
         }
     },
 
     # incoming redirections data
-    "redirects_from_nb": {"type": "long"},
+    "redirects_from_nb": {"type": _NUMBER},
     "redirects_from": {
         "type": "struct",
         "values": {
-            "http_code": {"type": "long"},
-            "url_id": {"type": "long"},
+            "http_code": {"type": _NUMBER},
+            "url_id": {"type": _NUMBER},
         },
         "settings": {
             "list",
@@ -486,27 +491,27 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
 
     # erroneous links data
-    "error_links.3xx.nb": {"type": "long"},
-    "error_links.4xx.nb": {"type": "long"},
-    "error_links.5xx.nb": {"type": "long"},
-    "error_links.any.nb": {"type": "long"},
+    "error_links.3xx.nb": {"type": _NUMBER},
+    "error_links.4xx.nb": {"type": _NUMBER},
+    "error_links.5xx.nb": {"type": _NUMBER},
+    "error_links.any.nb": {"type": _NUMBER},
 
     "error_links.3xx.urls": {
-        "type": "long",
+        "type": _NUMBER,
         "settings": {
             "no_index",
             "list"
         }
     },
     "error_links.4xx.urls": {
-        "type": "long",
+        "type": _NUMBER,
         "settings": {
             "no_index",
             "list"
         }
     },
     "error_links.5xx.urls": {
-        "type": "long",
+        "type": _NUMBER,
         "settings": {
             "no_index",
             "list"

@@ -6,7 +6,8 @@ from cdf.utils.dict import update_path_in_dict
 __ALL__ = ['generate_es_mapping',
            'generate_multi_field_lookup',
            'generate_default_value_lookup',
-           'generate_list_field_lookup']
+           'generate_list_field_lookup',
+           'generate_valid_field_lookup']
 
 
 _PROPERTY = 'properties'
