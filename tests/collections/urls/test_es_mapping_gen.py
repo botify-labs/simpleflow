@@ -1,8 +1,10 @@
 import unittest
 from cdf.collections.urls.es_mapping_generation import (_parse_field_path,
                                                         generate_es_mapping,
-                                                        generate_default_value_lookup, generate_valid_field_lookup)
-from cdf.constants import URLS_DATA_MAPPING_DEPRECATED, URLS_DATA_FORMAT_DEFINITION
+                                                        generate_default_value_lookup,
+                                                        generate_valid_field_lookup)
+from cdf.collections.urls.constants import (URLS_DATA_MAPPING_DEPRECATED,
+                                            URLS_DATA_FORMAT_DEFINITION)
 
 
 class TestMappingGeneration(unittest.TestCase):

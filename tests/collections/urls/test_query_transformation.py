@@ -4,7 +4,7 @@ from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
 
 from cdf.collections.urls.query_transformer import get_es_query, _merge_filters
-from cdf.constants import URLS_DATA_MAPPING
+from cdf.collections.urls.constants import URLS_DATA_MAPPING
 from cdf.exceptions import BotifyQueryException
 
 CRAWL_ID = 1

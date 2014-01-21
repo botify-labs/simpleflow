@@ -15,8 +15,10 @@ import abc
 from cdf.collections.urls.es_mapping_generation import (generate_multi_field_lookup,
                                                         generate_list_field_lookup,
                                                         generate_valid_field_lookup)
-from cdf.constants import URLS_DATA_FORMAT_DEFINITION, URLS_DATA_FIELDS as CHILD_FIELDS
+from cdf.collections.urls.constants import (URLS_DATA_FORMAT_DEFINITION,
+                                            URLS_DATA_FIELDS as CHILD_FIELDS)
 from cdf.exceptions import BotifyQueryException
+
 
 __ALL__ = ['parse_botify_query']
 

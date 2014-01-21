@@ -4,7 +4,7 @@ import lz4
 
 from elasticsearch import Elasticsearch
 
-from cdf.constants import URLS_DATA_MAPPING
+from cdf.collections.urls.constants import URLS_DATA_MAPPING
 from cdf.log import logger
 from cdf.utils.s3 import fetch_files
 from cdf.utils.es import bulk
@@ -13,7 +13,7 @@ from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
 from cdf.collections.urls.generators.documents import UrlDocumentGenerator
 from cdf.streams.utils import split_file
 from .decorators import TemporaryDirTask as with_temporary_dir
-from cdf.constants import DEFAULT_FORCE_FETCH
+from .constants import DEFAULT_FORCE_FETCH
 from cdf.tasks.base import make_tmp_dir_from_crawl_id
 
 

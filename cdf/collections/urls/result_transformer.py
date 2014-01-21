@@ -1,7 +1,7 @@
 import abc
 
 from cdf.collections.urls.es_mapping_generation import generate_default_value_lookup
-from cdf.constants import URLS_DATA_FORMAT_DEFINITION
+from cdf.collections.urls.constants import URLS_DATA_FORMAT_DEFINITION
 from cdf.log import logger
 from cdf.collections.urls.utils import children_from_field, field_has_children, get_es_id, get_url_id
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict

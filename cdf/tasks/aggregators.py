@@ -22,7 +22,7 @@ from cdf.collections.suggestions.query import MetricsQuery, SuggestQuery
 from cdf.collections.urls.utils import merge_queries_filters
 
 from .decorators import TemporaryDirTask as with_temporary_dir
-from cdf.constants import DEFAULT_FORCE_FETCH
+from .constants import DEFAULT_FORCE_FETCH
 from cdf.tasks.base import make_tmp_dir_from_crawl_id
 
 from cdf.collections.urls.query_helpers import (

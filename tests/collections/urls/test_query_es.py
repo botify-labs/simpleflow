@@ -5,7 +5,8 @@ from elasticsearch import Elasticsearch
 import time
 
 from cdf.collections.urls.query import Query
-from cdf.constants import URLS_DATA_MAPPING
+from cdf.collections.urls.constants import  URLS_DATA_MAPPING
+
 
 ELASTICSEARCH_LOCATION = 'http://localhost:9200'
 ELASTICSEARCH_INDEX = 'cdf_test'

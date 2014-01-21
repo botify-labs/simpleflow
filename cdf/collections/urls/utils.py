@@ -1,4 +1,4 @@
-from cdf.constants import URLS_DATA_FIELDS
+from cdf.collections.urls.constants import URLS_DATA_FIELDS
 
 
 # TODO moved this to transformer module
