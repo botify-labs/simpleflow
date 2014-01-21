@@ -14,9 +14,9 @@ query API (such as ElasticSearch) and for semantic validation.
 import abc
 from cdf.collections.urls.es_mapping_generation import (generate_multi_field_lookup,
                                                         generate_list_field_lookup,
-                                                        generate_valid_field_lookup)
-from cdf.collections.urls.constants import (URLS_DATA_FORMAT_DEFINITION,
-                                            URLS_DATA_FIELDS as CHILD_FIELDS)
+                                                        generate_valid_field_lookup,
+                                                        generate_complete_field_lookup)
+from cdf.collections.urls.constants import URLS_DATA_FORMAT_DEFINITION
 from cdf.exceptions import BotifyQueryException
 
 
@@ -30,6 +30,10 @@ _LIST_FIELDS = generate_list_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
 # All valid field for querying
 _VALID_FIELDS = generate_valid_field_lookup(URLS_DATA_FORMAT_DEFINITION)
+
+# All complete fields path
+# Ex. `error_links.3xx.nb` but not a prefix like `error_links.3xx`
+_COMPLETE_FIELDS = generate_complete_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
 # Available sort options
 _SORT_OPTIONS = ['desc']
@@ -652,7 +656,7 @@ class RequiredField(Field):
 
 class PredicateField(Field):
     def validate(self):
-        if self.field_value not in CHILD_FIELDS:
+        if self.field_value not in _COMPLETE_FIELDS:
             _raise_parsing_error("Field is not valid for predicate",
                                  self.field_value)
 
@@ -660,7 +664,7 @@ class PredicateField(Field):
 # TODO allow only number fields ???
 class SortField(Field):
     def validate(self):
-        if self.field_value not in CHILD_FIELDS:
+        if self.field_value not in _COMPLETE_FIELDS:
             _raise_parsing_error("Field is not valid for sort",
                                  self.field_value)
 

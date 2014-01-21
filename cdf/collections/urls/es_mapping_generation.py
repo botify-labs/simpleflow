@@ -222,3 +222,11 @@ def generate_valid_field_lookup(meta_mapping):
             lookup.add('.'.join(splits[:i + 1]))
 
     return lookup
+
+
+def generate_complete_field_lookup(meta_mapping):
+    """Generate a lookup set for all complete fields
+
+    Ex. `error_links.3xx.nb` but not a prefix like `error_links.3xx`
+    """
+    return meta_mapping.keys()

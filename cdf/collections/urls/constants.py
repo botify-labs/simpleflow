@@ -1,4 +1,3 @@
-from cdf.collections.urls.es_mapping_generation import generate_es_mapping
 from cdf.streams.mapping import CONTENT_TYPE_NAME_TO_ID
 
 
@@ -321,7 +320,3 @@ URLS_DATA_FORMAT_DEFINITION = {
         }
     },
 }
-
-
-# Generated constants
-URLS_DATA_FIELDS = URLS_DATA_FORMAT_DEFINITION.keys()

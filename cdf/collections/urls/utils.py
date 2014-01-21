@@ -1,16 +1,19 @@
-from cdf.collections.urls.constants import URLS_DATA_FIELDS
+from cdf.collections.urls.constants import URLS_DATA_FORMAT_DEFINITION
+from cdf.collections.urls.es_mapping_generation import generate_complete_field_lookup
+
+_URLS_DATA_FIELDS = generate_complete_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
 
 # TODO moved this to transformer module
 def field_has_children(field):
     prefix = field + '.'
-    return any(i[:len(prefix)] == prefix for i in URLS_DATA_FIELDS)
+    return any(i[:len(prefix)] == prefix for i in _URLS_DATA_FIELDS)
 
 
 # TODO moved this to transformer module
 def children_from_field(field):
     prefix = field + '.'
-    return [i for i in URLS_DATA_FIELDS if i[:len(prefix)] == prefix]
+    return [i for i in _URLS_DATA_FIELDS if i[:len(prefix)] == prefix]
 
 
 def get_part_id(url_id, first_part_size, part_size):
