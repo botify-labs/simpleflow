@@ -9,12 +9,11 @@ __ALL__ = ['generate_es_mapping',
            'generate_list_field_lookup',
            'generate_valid_field_lookup']
 
-
 _PROPERTY = 'properties'
 _NO_INDEX = 'no_index'
 _NOT_ANALYZED = 'not_analyzed'
 _LIST = 'list'
-_MULTI_FIELD_TYPE = 'multi_field'
+_MULTI_FIELD = 'multi_field'
 _STRUCT_TYPE = 'struct'
 _NUMBER_TYPE = 'long'
 _STRING_TYPE = 'string'
@@ -32,7 +31,7 @@ def _parse_field_path(path):
         ex. `a.b.c` will be parsed as `a.properties.b.properties.c`
         `properties` is a marker for ElaticSearch's object-type
     """
-    return ('.'+_PROPERTY+'.').join(_split_path(path))
+    return ('.' + _PROPERTY + '.').join(_split_path(path))
 
 
 def _is_number_field(field_values):
@@ -56,7 +55,7 @@ def _is_list_field(field_values):
 
 
 def _is_multi_field(field_values):
-    return field_values['type'] == _MULTI_FIELD_TYPE
+    return 'settings' in field_values and 'multi_field' in field_values['settings']
 
 
 def _parse_field_values(field_name, elem_values):
@@ -68,25 +67,15 @@ def _parse_field_values(field_name, elem_values):
             values[inner_field].update(parsed_settings)
         return {'properties': values}
 
-    def parse_multi_field(field_name, values):
-        field_type = values['field_type']
-        return {
-            'type': 'multi_field',
-            'fields': {
-                field_name: {'type': field_type},
-                'untouched': {
-                    'type': field_type,
-                    'index': 'not_analyzed'
-                }
-            }
-        }
+    def parse_multi_field(parsed_settings, values):
+        return parsed_settings
 
     def parse_simple_field(parsed_settings, values):
         sub_mapping = {'type': values['type']}
         sub_mapping.update(parsed_settings)
         return sub_mapping
 
-    def parse_settings(values):
+    def parse_settings(field_name, values):
         if 'settings' in values:
             settings = values['settings']
             parsed_settings = {}
@@ -94,16 +83,27 @@ def _parse_field_values(field_name, elem_values):
                 parsed_settings['index'] = 'not_analyzed'
             elif _NO_INDEX in settings:
                 parsed_settings['index'] = 'no'
+            elif _MULTI_FIELD in settings:
+                field_type = values['type']
+                parsed_settings = {
+                    'type': 'multi_field',
+                    'fields': {
+                        field_name: {'type': field_type},
+                        'untouched': {
+                            'type': field_type,
+                            'index': 'not_analyzed'
+                        }
+                    }
+                }
             return parsed_settings
         else:
             return {}
 
-    elem_type = elem_values['type']
-    parsed_settings = parse_settings(elem_values)
+    parsed_settings = parse_settings(field_name, elem_values)
 
-    if elem_type == _MULTI_FIELD_TYPE:
-        return parse_multi_field(field_name, elem_values)
-    elif elem_type == _STRUCT_TYPE:
+    if _is_multi_field(elem_values):
+        return parse_multi_field(parsed_settings, elem_values)
+    elif _is_struct_field(elem_values):
         return parse_struct_field(parsed_settings, elem_values)
     else:
         return parse_simple_field(parsed_settings, elem_values)
@@ -201,11 +201,8 @@ def generate_default_value_lookup(meta_mapping):
                 lookup[path] = None
                 continue
 
-            # then infer from types
-            if _is_multi_field(values):
-                lookup[path] = infer_for_basic_types(values['field_type'])
-            else:
-                lookup[path] = infer_for_basic_types(values['type'])
+            # then infer from type
+            lookup[path] = infer_for_basic_types(values['type'])
 
     return lookup
 
@@ -222,6 +219,6 @@ def generate_valid_field_lookup(meta_mapping):
     for path in meta_mapping:
         splits = _split_path(path)
         for i, _ in enumerate(splits):
-            lookup.add('.'.join(splits[:i+1]))
+            lookup.add('.'.join(splits[:i + 1]))
 
     return lookup

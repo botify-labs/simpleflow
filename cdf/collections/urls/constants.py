@@ -281,7 +281,7 @@ _DATE_TYPE = 'date'
 _NO_INDEX = 'no_index'
 _NOT_ANALYZED = 'not_analyzed'
 _LIST = 'list'
-_MULTI_FIELD_TYPE = 'multi_field'
+_MULTI_FIELD = 'multi_field'
 
 
 URLS_DATA_FORMAT_DEFINITION = {
@@ -350,31 +350,31 @@ URLS_DATA_FORMAT_DEFINITION = {
 
     # metadata contents
     "metadata.title": {
-        "type": "multi_field",
-        "field_type": _STRING_TYPE,
+        "type": _STRING_TYPE,
         "settings": {
-            _LIST
+            _LIST,
+            _MULTI_FIELD
         }
     },
     "metadata.h1": {
-        "type": "multi_field",
-        "field_type": _STRING_TYPE,
+        "type": _STRING_TYPE,
         "settings": {
-            _LIST
+            _LIST,
+            _MULTI_FIELD
         }
     },
     "metadata.h2": {
-        "type": "multi_field",
-        "field_type": _STRING_TYPE,
+        "type": _STRING_TYPE,
         "settings": {
-            _LIST
+            _LIST,
+            _MULTI_FIELD
         }
     },
     "metadata.description": {
-        "type": "multi_field",
-        "field_type": _STRING_TYPE,
+        "type": _STRING_TYPE,
         "settings": {
-            _LIST
+            _LIST,
+            _MULTI_FIELD
         }
     },
 

@@ -53,10 +53,10 @@ class TestMappingGeneration(unittest.TestCase):
         # `multi_field` case
         meta_mapping = {
             'metadata.title': {
-                'type': 'multi_field',
-                'field_type': 'string',
+                'type': 'string',
                 'settings': {
-                    'list'
+                    'list',
+                    'multi_field'
                 }
             },
         }
@@ -130,8 +130,10 @@ class TestMappingGeneration(unittest.TestCase):
                 }
             },
             'multi_field': {
-                'type': 'multi_field',
-                'field_type': 'long',
+                'type': 'long',
+                'settings': {
+                    'multi_field'
+                }
             },
             'struct_with_default': {
                 'type': 'string',
