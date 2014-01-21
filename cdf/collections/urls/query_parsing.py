@@ -1,3 +1,16 @@
+""" Botify query parsing
+
+Query format definition see:
+https://github.com/sem-io/botify-cdf/wiki/Url-Data-Query-Definition
+
+This module parses the input query structure (a python dictionary) into
+a intermediate representation which is composed of a hierarchy of internal
+classes.
+The intermediate representation works like abstract syntax tree
+for language parsing, providing methods for transforming to any backend
+query API (such as ElasticSearch) and for semantic validation.
+"""
+
 import abc
 from cdf.collections.urls.es_mapping_generation import (generate_multi_field_lookup,
                                                         generate_list_field_lookup,
@@ -48,10 +61,8 @@ def _raise_parsing_error(msg, structure):
     raise BotifyQueryException(excp_msg)
 
 
-# Botify query parsing
-#
-# Query format definition see:
-# https://github.com/sem-io/botify-cdf/wiki/Url-Data-Query-Definition
+# Class hierarchy for representing the parsed query
+# All component is sub-class of Term
 class Term(object):
     """Abstract class for basic component of a botify query
     """
@@ -67,11 +78,22 @@ class Term(object):
 
 
 # Filter
+#
+# Filter
+#   - NotFilter
+#   - BooleanFilter
+#   - PredicateFilter
+#       - Variants (each predicate is a sub-class of PredicateFilter)
 class Filter(Term):
     pass
 
 
 class NotFilter(Filter):
+    """Class represents a `not` filter
+
+    Attributes:
+        filter  the contained filter in dict
+    """
     def __init__(self, filter):
         self.filter = filter
 
@@ -83,6 +105,12 @@ class NotFilter(Filter):
 
 
 class BooleanFilter(Filter):
+    """Class represents a `boolean` filter
+
+    Attributes:
+        boolean_predicate   boolean operator, could be `and` or `or`
+        filters             a list of contained filters
+    """
     def __init__(self, boolean_predicate, filters):
         self.boolean_predicate = boolean_predicate
         self.filters = filters
@@ -102,6 +130,13 @@ class BooleanFilter(Filter):
 
 # Predicate filter variants
 class PredicateFilter(Filter):
+    """Base class for all predicate filters
+
+    Attributes:
+        predicate_field     target field of this predicate, in string
+        value               value needed for this predicate, could be
+            a single value, a list or None
+    """
     def __init__(self, predicate_field, value=None):
         self.predicate_field = predicate_field
         self.field_value = self.predicate_field.transform()
@@ -425,6 +460,7 @@ _PREDICATE_LIST = {
 
 
 def parse_predicate_filter(predicate_filter):
+    """Parse a predicate filter structure"""
     if not isinstance(predicate_filter, dict):
         _raise_parsing_error('Predicate filter is not a dict',
                              predicate_filter)
@@ -443,6 +479,7 @@ def parse_predicate_filter(predicate_filter):
 
 
 def parse_not_filter(not_filter):
+    """Parse a not filter structure"""
     if not isinstance(not_filter, dict):
         _raise_parsing_error('Not filter is not a dict',
                              not_filter)
@@ -455,6 +492,7 @@ def parse_not_filter(not_filter):
 
 
 def parse_boolean_filter(boolean_filter):
+    """Parse a boolean filter structure"""
     if not isinstance(boolean_filter, dict):
         _raise_parsing_error('Boolean filter is not a dict',
                              boolean_filter)
@@ -484,6 +522,7 @@ def _is_not_filter(filter_dict):
 
 
 def parse_filter(filter):
+    """Parse the filter sub-structure of a botify query"""
     # boolean filter
     if _is_boolean_filter(filter):
         return parse_boolean_filter(filter)
@@ -496,6 +535,7 @@ def parse_filter(filter):
 
 # Sorts
 class Sorts(Term):
+    """Class represents the sort component of a botify query"""
     def __init__(self, sort_elems):
         self.sort_elems = sort_elems
 
@@ -550,6 +590,7 @@ class OrderedSortElem(SortElem):
 
 
 def parse_sort_elem(sort_elem):
+    """Parse a single sort option element"""
     if isinstance(sort_elem, str):
         return SimpleSortElem(SortField(sort_elem))
     elif isinstance(sort_elem, dict):
@@ -569,6 +610,7 @@ def parse_sort_elem(sort_elem):
 
 
 def parse_sorts(sorts):
+    """Parse a sort sub-structure of a botify query"""
     if not isinstance(sorts, list):
         _raise_parsing_error('Sorts is not a list',
                              sorts)
@@ -578,6 +620,7 @@ def parse_sorts(sorts):
 
 # Fields
 class Fields(Term):
+    """Class represents the required fields component of a botify query"""
     def __init__(self, fields):
         self.fields = fields
 
@@ -621,6 +664,7 @@ class SortField(Field):
 
 
 def parse_field(field):
+    """Parse a single field"""
     if not isinstance(field, str):
         _raise_parsing_error('Field is not a string',
                              field)
@@ -628,6 +672,7 @@ def parse_field(field):
 
 
 def parse_fields(fields):
+    """Parse the fields sub-structure of a botify query"""
     if not isinstance(fields, list):
         _raise_parsing_error('Fields is not a list',
                              fields)
@@ -637,6 +682,7 @@ def parse_fields(fields):
 
 
 class BotifyQuery(Term):
+    """Class represents the whole front-end query"""
     def __init__(self, fields, sorts, filter):
         self.fields = fields
         self.sorts = sorts
