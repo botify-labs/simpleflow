@@ -5,7 +5,7 @@ from elasticsearch import Elasticsearch
 import time
 
 from cdf.collections.urls.query import Query
-from cdf.collections.urls.constants import  URLS_DATA_MAPPING
+from cdf.tasks.constants import ES_MAPPING
 
 
 ELASTICSEARCH_LOCATION = 'http://localhost:9200'
@@ -198,7 +198,7 @@ class TestQueryES(unittest.TestCase):
         ES.indices.create(ELASTICSEARCH_INDEX)
         ES.indices.put_mapping(ELASTICSEARCH_INDEX,
                                'crawl_{}'.format(CRAWL_ID),
-                               URLS_DATA_MAPPING)
+                               ES_MAPPING)
         # Load test fixtures
         for url in URLS_FIXTURE:
             ES.index(ELASTICSEARCH_INDEX,

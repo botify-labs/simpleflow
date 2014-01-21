@@ -4,7 +4,7 @@ from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
 
 from cdf.collections.urls.query_transformer import get_es_query, _merge_filters
-from cdf.collections.urls.constants import URLS_DATA_MAPPING
+from cdf.tasks.constants import ES_MAPPING
 from cdf.exceptions import BotifyQueryException
 
 CRAWL_ID = 1
@@ -33,7 +33,7 @@ class TestQueryTransformation(unittest.TestCase):
         ES.indices.create(ELASTICSEARCH_INDEX)
         ES.indices.put_mapping(ELASTICSEARCH_INDEX,
                                DOC_TYPE,
-                               URLS_DATA_MAPPING)
+                               ES_MAPPING)
 
     @classmethod
     def tearDownClass(cls):
