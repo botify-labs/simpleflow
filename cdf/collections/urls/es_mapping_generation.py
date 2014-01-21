@@ -1,6 +1,9 @@
 from copy import deepcopy
 
 from cdf.utils.dict import update_path_in_dict
+from cdf.collections.urls.constants import (_NUMBER_TYPE, _STRING_TYPE, _BOOLEAN_TYPE,
+                                            _STRUCT_TYPE, _MULTI_FIELD, _LIST,
+                                            _NOT_ANALYZED, _NO_INDEX)
 
 
 __ALL__ = ['generate_es_mapping',
@@ -10,14 +13,11 @@ __ALL__ = ['generate_es_mapping',
            'generate_valid_field_lookup']
 
 _PROPERTY = 'properties'
-_NO_INDEX = 'no_index'
-_NOT_ANALYZED = 'not_analyzed'
-_LIST = 'list'
-_MULTI_FIELD = 'multi_field'
-_STRUCT_TYPE = 'struct'
-_NUMBER_TYPE = 'long'
-_STRING_TYPE = 'string'
-_BOOLEAN_TYPE = 'boolean'
+_SETTINGS = 'settings'
+
+
+def _get_type(field_values):
+    return field_values['type']
 
 
 def _split_path(path):
@@ -29,33 +29,33 @@ def _parse_field_path(path):
 
     :return: parsed path
         ex. `a.b.c` will be parsed as `a.properties.b.properties.c`
-        `properties` is a marker for ElaticSearch's object-type
+        `properties` is a marker for ElasticSearch's object-type
     """
     return ('.' + _PROPERTY + '.').join(_split_path(path))
 
 
 def _is_number_field(field_values):
-    return field_values['type'] == _NUMBER_TYPE
+    return _get_type(field_values) == _NUMBER_TYPE
 
 
 def _is_struct_field(field_values):
-    return field_values['type'] == _STRUCT_TYPE
+    return _get_type(field_values) == _STRUCT_TYPE
 
 
 def _is_boolean_field(field_values):
-    return field_values['type'] == _BOOLEAN_TYPE
+    return _get_type(field_values) == _BOOLEAN_TYPE
 
 
 def _is_string_field(field_values):
-    return field_values['type'] == _STRING_TYPE
+    return _get_type(field_values) == _STRING_TYPE
 
 
 def _is_list_field(field_values):
-    return 'settings' in field_values and 'list' in field_values['settings']
+    return _SETTINGS in field_values and _LIST in field_values[_SETTINGS]
 
 
 def _is_multi_field(field_values):
-    return 'settings' in field_values and 'multi_field' in field_values['settings']
+    return _SETTINGS in field_values and _MULTI_FIELD in field_values[_SETTINGS]
 
 
 def _parse_field_values(field_name, elem_values):
@@ -65,13 +65,13 @@ def _parse_field_values(field_name, elem_values):
         values = deepcopy(values['values'])
         for inner_field in values:
             values[inner_field].update(parsed_settings)
-        return {'properties': values}
+        return {_PROPERTY: values}
 
     def parse_multi_field(parsed_settings, values):
         return parsed_settings
 
     def parse_simple_field(parsed_settings, values):
-        sub_mapping = {'type': values['type']}
+        sub_mapping = {'type': _get_type(values)}
         sub_mapping.update(parsed_settings)
         return sub_mapping
 
@@ -84,7 +84,7 @@ def _parse_field_values(field_name, elem_values):
             elif _NO_INDEX in settings:
                 parsed_settings['index'] = 'no'
             elif _MULTI_FIELD in settings:
-                field_type = values['type']
+                field_type = _get_type(values)
                 parsed_settings = {
                     'type': 'multi_field',
                     'fields': {
