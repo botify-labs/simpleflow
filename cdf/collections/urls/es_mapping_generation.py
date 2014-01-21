@@ -14,7 +14,7 @@ _PROPERTY = 'properties'
 _NO_INDEX = 'no_index'
 _NOT_ANALYZED = 'not_analyzed'
 _LIST = 'list'
-_MULTI_FILED_TYPE = 'multi_field'
+_MULTI_FIELD_TYPE = 'multi_field'
 _STRUCT_TYPE = 'struct'
 _NUMBER_TYPE = 'long'
 _STRING_TYPE = 'string'
@@ -56,7 +56,7 @@ def _is_list_field(field_values):
 
 
 def _is_multi_field(field_values):
-    return field_values['type'] == _MULTI_FILED_TYPE
+    return field_values['type'] == _MULTI_FIELD_TYPE
 
 
 def _parse_field_values(field_name, elem_values):
@@ -101,7 +101,7 @@ def _parse_field_values(field_name, elem_values):
     elem_type = elem_values['type']
     parsed_settings = parse_settings(elem_values)
 
-    if elem_type == _MULTI_FILED_TYPE:
+    if elem_type == _MULTI_FIELD_TYPE:
         return parse_multi_field(field_name, elem_values)
     elif elem_type == _STRUCT_TYPE:
         return parse_struct_field(parsed_settings, elem_values)
