@@ -56,10 +56,10 @@ _BOOLEAN_TYPE = 'boolean'
 _STRUCT_TYPE = 'struct'
 _DATE_TYPE = 'date'
 
-_NO_INDEX = 'no_index'
-_NOT_ANALYZED = 'not_analyzed'
+_NO_INDEX = 'es:no_index'
+_NOT_ANALYZED = 'es:not_analyzed'
 _LIST = 'list'
-_MULTI_FIELD = 'multi_field'
+_MULTI_FIELD = 'es:multi_field'
 
 
 URLS_DATA_FORMAT_DEFINITION = {
@@ -169,21 +169,21 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _NUMBER_TYPE,
         "settings": {
             _LIST,
-            "no_index"
+            _NO_INDEX
         }
     },
     "metadata_duplicate.h1": {
         "type": _NUMBER_TYPE,
         "settings": {
             _LIST,
-            "no_index"
+            _NO_INDEX
         }
     },
     "metadata_duplicate.description": {
         "type": _NUMBER_TYPE,
         "settings": {
             _LIST,
-            "no_index"
+            _NO_INDEX
         }
     },
 
@@ -203,7 +203,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     "inlinks_internal": {
         "type": _NUMBER_TYPE,
         "settings": {
-            "no_index",
+            _NO_INDEX,
             _LIST
         }
     },
@@ -225,7 +225,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     "outlinks_internal": {
         "type": _NUMBER_TYPE,
         "settings": {
-            "no_index",
+            _NO_INDEX,
             _LIST
         }
     },
@@ -248,7 +248,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     "canonical_from": {
         "type": _NUMBER_TYPE,
         "settings": {
-            "no_index",
+            _NO_INDEX,
             _LIST
         }
     },
@@ -262,7 +262,7 @@ URLS_DATA_FORMAT_DEFINITION = {
             "url_id": {"type": _NUMBER_TYPE},
         },
         "settings": {
-            "no_index"
+            _NO_INDEX
         }
     },
     "canonical_to_equal": {"type": _BOOLEAN_TYPE},
@@ -288,7 +288,7 @@ URLS_DATA_FORMAT_DEFINITION = {
         },
         "settings": {
             _LIST,
-            "no_index"
+            _NO_INDEX
         }
     },
 
@@ -301,21 +301,21 @@ URLS_DATA_FORMAT_DEFINITION = {
     "error_links.3xx.urls": {
         "type": _NUMBER_TYPE,
         "settings": {
-            "no_index",
+            _NO_INDEX,
             _LIST
         }
     },
     "error_links.4xx.urls": {
         "type": _NUMBER_TYPE,
         "settings": {
-            "no_index",
+            _NO_INDEX,
             _LIST
         }
     },
     "error_links.5xx.urls": {
         "type": _NUMBER_TYPE,
         "settings": {
-            "no_index",
+            _NO_INDEX,
             _LIST
         }
     },

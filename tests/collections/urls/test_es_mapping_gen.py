@@ -26,7 +26,7 @@ class TestMappingGeneration(unittest.TestCase):
             'error_links.3xx.urls': {
                 'type': 'long',
                 'settings': {
-                    'no_index',
+                    'es:no_index',
                     'list'
                 }
             }
@@ -55,7 +55,7 @@ class TestMappingGeneration(unittest.TestCase):
                 'type': 'string',
                 'settings': {
                     'list',
-                    'multi_field'
+                    'es:multi_field'
                 }
             },
         }
@@ -90,7 +90,7 @@ class TestMappingGeneration(unittest.TestCase):
                     'url_id': {'type': 'long'},
                 },
                 'settings': {
-                    'no_index'
+                    'es:no_index'
                 }
             }
         }
@@ -122,16 +122,16 @@ class TestMappingGeneration(unittest.TestCase):
         meta_mapping = {
             'string': {'type': 'string', 'settings': {'no_index'}},
             'list': {
-                'type': 'multi_field',
-                'field_type': 'string',
+                'type': 'string',
                 'settings': {
-                    'list'
+                    'list',
+                    'es:multi_field'
                 }
             },
             'multi_field': {
                 'type': 'long',
                 'settings': {
-                    'multi_field'
+                    'es:multi_field'
                 }
             },
             'struct_with_default': {
