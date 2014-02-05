@@ -1,5 +1,6 @@
 import unittest
 import mock
+from tempfile import NamedTemporaryFile
 
 import pandas as pd
 
@@ -79,6 +80,22 @@ class TestSuggestQuery(unittest.TestCase):
 
     def test_is_child_unexisting_hash(self):
         self.assertFalse(self.suggest_query.is_child("does_not_exist", "1"))
+
+    def test_is_child_from_hdf5file(self):
+        #hdfstore is slightly different from a dict
+        #this can generate subtle bugs like
+        #https://github.com/sem-io/botify-cdf/issues/235
+        #that can be detected only if we actually create a hdf5 file
+        f = NamedTemporaryFile()
+        hdfstore = pd.HDFStore(f.name)
+        hdfstore["children"] = pd.DataFrame({
+            "parent": ["3"],
+            "child": ["1"]
+        })
+        hdfstore["suggest"] = pd.DataFrame()
+
+        suggest_query = SuggestQuery(hdfstore)
+        self.assertTrue(suggest_query.is_child("3", "1"))
 
     def test_compute_child_relationship_set(self):
         child_relationship = {
