@@ -49,6 +49,9 @@ _DEFAULT_PREDICATE = 'eq'
 _DEFAULT_SORT = ['id']
 _DEFAULT_FIELD = ['url']
 
+# String type
+_STR_TYPE = basestring
+
 
 def _get_untouched_field(field):
     """Get the untouched field out of a `multi_field` element
@@ -597,7 +600,7 @@ class OrderedSortElem(SortElem):
 
 def parse_sort_elem(sort_elem):
     """Parse a single sort option element"""
-    if isinstance(sort_elem, str):
+    if isinstance(sort_elem, _STR_TYPE):
         return SimpleSortElem(SortField(sort_elem))
     elif isinstance(sort_elem, dict):
         if len(sort_elem) != 1:
@@ -671,7 +674,7 @@ class SortField(Field):
 
 def parse_field(field):
     """Parse a single field"""
-    if not isinstance(field, str):
+    if not isinstance(field, _STR_TYPE):
         _raise_parsing_error('Field is not a string',
                              field)
     return RequiredField(field)
