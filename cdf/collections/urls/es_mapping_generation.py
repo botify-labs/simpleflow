@@ -76,28 +76,31 @@ def _parse_field_values(field_name, elem_values):
         return sub_mapping
 
     def parse_settings(field_name, values):
-        if 'settings' in values:
-            settings = values['settings']
-            parsed_settings = {}
-            if _NOT_ANALYZED in settings:
-                parsed_settings['index'] = 'not_analyzed'
-            elif _NO_INDEX in settings:
-                parsed_settings['index'] = 'no'
-            elif _MULTI_FIELD in settings:
-                field_type = _get_type(values)
-                parsed_settings = {
-                    'type': 'multi_field',
-                    'fields': {
-                        field_name: {'type': field_type},
-                        'untouched': {
-                            'type': field_type,
-                            'index': 'not_analyzed'
-                        }
+        if 'settings' not in values:
+            # return an empty dict for further processing
+            # if there's no special setting options associated
+            # with this field
+            return {}
+
+        settings = values['settings']
+        parsed_settings = {}
+        if _NOT_ANALYZED in settings:
+            parsed_settings['index'] = 'not_analyzed'
+        elif _NO_INDEX in settings:
+            parsed_settings['index'] = 'no'
+        elif _MULTI_FIELD in settings:
+            field_type = _get_type(values)
+            parsed_settings = {
+                'type': 'multi_field',
+                'fields': {
+                    field_name: {'type': field_type},
+                    'untouched': {
+                        'type': field_type,
+                        'index': 'not_analyzed'
                     }
                 }
-            return parsed_settings
-        else:
-            return {}
+            }
+        return parsed_settings
 
     parsed_settings = parse_settings(field_name, elem_values)
 
@@ -105,7 +108,7 @@ def _parse_field_values(field_name, elem_values):
         return parse_multi_field(parsed_settings, elem_values)
     elif _is_struct_field(elem_values):
         return parse_struct_field(parsed_settings, elem_values)
-    else:
+    else:  # if it's a simple field
         return parse_simple_field(parsed_settings, elem_values)
 
 
