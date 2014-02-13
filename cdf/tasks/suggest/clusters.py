@@ -102,7 +102,7 @@ def compute_mixed_clusters(crawl_id,
         logger.warning("Could not compute patterns on query string: '%s'.", str(e))
 
     ######################## metadata patterns ###########################
-    for metadata_type in ["title", "h1", "h2"]:
+    for metadata_type in ["title", "h1"]:
         logger.info("Discovering patterns on %s.", metadata_type)
         metadata_stream_factory = MetadataStreamFactory(tmp_dir,
                                                         metadata_type,
