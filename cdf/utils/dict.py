@@ -88,3 +88,10 @@ def update_path_in_dict(path, value, _dict):
             else:
                 current[key] = {}
                 current = current[key]
+
+
+def update_dict(dict_to_update, update):
+    """Merge an update dict in a non-overridden way"""
+    for item in flatten_dict(update).iteritems():
+        path, value = item
+        update_path_in_dict(path, value, dict_to_update)

@@ -3,8 +3,9 @@ import unittest
 from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
 
-from cdf.collections.urls.query_transformer import get_es_query, _add_filters
-from cdf.constants import URLS_DATA_MAPPING
+from cdf.collections.urls.query_transformer import get_es_query, _merge_filters
+from cdf.tasks.constants import ES_MAPPING
+from cdf.exceptions import BotifyQueryException
 
 CRAWL_ID = 1
 ELASTICSEARCH_LOCATION = 'http://localhost:9200'
@@ -32,7 +33,7 @@ class TestQueryTransformation(unittest.TestCase):
         ES.indices.create(ELASTICSEARCH_INDEX)
         ES.indices.put_mapping(ELASTICSEARCH_INDEX,
                                DOC_TYPE,
-                               URLS_DATA_MAPPING)
+                               ES_MAPPING)
 
     @classmethod
     def tearDownClass(cls):
@@ -68,7 +69,7 @@ class TestQueryTransformation(unittest.TestCase):
             {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
         ]
 
-        query_filters = _add_filters(query_filters, default_filters)
+        query_filters = _merge_filters(query_filters, default_filters)
         target = query_filters['filters']['and']
         # assert on order
         # first filter should be that of the `crawl_id`
@@ -121,7 +122,7 @@ class TestQueryTransformation(unittest.TestCase):
                             self.crawl_filter,
                             self.not_crawled_filter,
                             {'term': {'http_code': 200}},
-                            {'range': {'delay2': {'from': 100}}},
+                            {'range': {'delay2': {'gte': 100}}},
                         ]
                     }
                 }
@@ -150,7 +151,8 @@ class TestQueryTransformation(unittest.TestCase):
                 'constant_score': {
                     'filter': {
                         'and': [
-                            {'and': [self.crawl_filter, self.not_crawled_filter]},
+                            self.crawl_filter,
+                            self.not_crawled_filter,
                             {'or': [{'term': {'http_code': 200}},
                                     {'term': {'http_code': 301}}]}
                         ]
@@ -186,7 +188,7 @@ class TestQueryTransformation(unittest.TestCase):
             'fields': ["metadata"],
             'filters': {
                 'and': [
-                    {'field': 'metadata.title', 'predicate': 'starts', 'value': 'News'}
+                    {'field': 'metadata.title', 'predicate': 'any.starts', 'value': 'News'}
                 ]
             }
         }
@@ -198,16 +200,15 @@ class TestQueryTransformation(unittest.TestCase):
                 'constant_score': {
                     'filter': {
                         'and': [
-                            {'and': [{'range': {'http_code': {'from': 0, 'include_lower': False}}},
-                                     {'term': {'crawl_id': 1}}]},
+                            self.crawl_filter, self.not_crawled_filter,
                             {'prefix': {'metadata.title.untouched': 'News'}}
                         ]
                     }
                 }
             }
         }
-        self.assertItemsEqual(get_es_query(query, CRAWL_ID), expected_es_query)
-        # self.is_valid_es_query(expected_es_query)
+        result = get_es_query(query, CRAWL_ID)
+        self.assertDictEqual(result, expected_es_query)
 
     def test_not_null_query(self):
         query = {
@@ -288,3 +289,19 @@ class TestQueryTransformation(unittest.TestCase):
         }
         result = get_es_query(query, CRAWL_ID)
         self.assertDictEqual(result, expected_es_query)
+
+    def test_bad_format_query(self):
+        query = {
+            'fields': ['http_code'],
+            'filters': []
+        }
+        self.assertRaises(BotifyQueryException,
+                          get_es_query, query, CRAWL_ID)
+
+        query = {
+            'filters': {'and': [{}]}
+        }
+        self.assertRaises(BotifyQueryException,
+                          get_es_query, query, CRAWL_ID)
+
+

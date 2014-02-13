@@ -1,233 +1,46 @@
-from cdf.exceptions import BotifyQueryException
 from copy import deepcopy
 
-
-# Elements that are of `multi_field` type
-_MULTI_FIELDS = [
-    "metadata.h1",
-    "metadata.h2",
-    "metadata.description",
-    "metadata.title",
-]
-
-# Elements in ES that are a list
-_LIST_FIELDS = [
-    'query_string_keys',
-    'metadata.h1',
-    'metadata.h2',
-    'metadata.h3',
-    'metadata.title',
-    'metadata.description',
-]
+from cdf.collections.urls.query_parsing import parse_botify_query
 
 
-_PREDICATE_FORMATS = {
-    'eq': lambda filters: {
-        "term": {
-            filters['field']: filters['value'],
-        }
-    },
-    'any.eq': lambda filters: {
-        "term": {
-            filters['field']: filters['value'],
-        }
-    },
-    # 'starts' predicate should be applied on `untouched`
-    'starts': lambda filters: {
-        "prefix": {
-            _get_untouched_field(filters['field']): filters['value'],
-        }
-    },
-    'any.starts': lambda filters: {
-        "prefix": {
-            _get_untouched_field(filters['field']): filters['value'],
-        }
-    },
-    # 'ends' predicate should be applied on `untouched`
-    'ends': lambda filters: {
-        "regexp": {
-            _get_untouched_field(filters['field']): "@%s" % filters['value']
-        }
-    },
-    'any.ends': lambda filters: {
-        "regexp": {
-            _get_untouched_field(filters['field']): "@%s" % filters['value']
-        }
-    },
-    'contains': lambda filters: {
-        "regexp": {
-            _get_untouched_field(filters['field']): "@%s@" % filters['value']
-        }
-    },
-    'any.contains': lambda filters: {
-        "regexp": {
-            _get_untouched_field(filters['field']): "@%s@" % filters['value']
-        }
-    },
-    're': lambda filters: {
-        "regexp": {
-            filters['field']: filters['value']
-        }
-    },
-    'gte': lambda filters: {
-        "range": {
-            filters['field']: {
-                "from": filters['value'],
-            }
-        }
-    },
-    'gt': lambda filters: {
-        "range": {
-            filters['field']: {
-                "gt": filters['value']
-            }
-        }
-    },
-    'lte': lambda filters: {
-        "range": {
-            filters['field']: {
-                "lte": filters['value'],
-            }
-        }
-    },
-    'lt': lambda filters: {
-        "range": {
-            filters['field']: {
-                "lt": filters['value'],
-            }
-        }
-    },
-    'not_null': lambda filters: {
-        'exists': {
-            'field': filters['field']
-        }
-    },
-    'between': lambda filters: {
-        "range": {
-            filters['field']: {
-                "gte": filters['value'][0],
-                "lte": filters['value'][1],
-            }
-        }
-    },
-}
+__ALL__ = ['get_es_query']
 
 
-def _get_untouched_field(field):
-    """Get the untouched field out of a `multi_field` element
+def _merge_filters(query, filters):
+    """Merge filters to botify query using `and` filter
 
-    returns the original field if it's not a `multi_field`
-    """
-    if field in _MULTI_FIELDS:
-        return '%s.untouched' % field
-    else:
-        return field
+    New filters are places BEFORE the original filters.
 
-
-def _is_boolean_filter(filter_dict):
-    return isinstance(filter_dict, dict) and \
-           len(filter_dict) == 1 and \
-           filter_dict.keys()[0].lower() in ('and', 'or')
-
-
-# TODO impl validation when query format is fixed
-# TODO impl validation with some validation framwork (colander, valideer)
-def _botify_query_validate(botify_query):
-    """Validate the semantic of front-end's query"""
-    pass
-
-
-def _process_filters(filters, has_parent=False):
-    if _is_boolean_filter(filters):
-        operator = filters.keys()[0].lower()
-        return {operator: _process_filters(filters.values()[0], True)}
-    elif isinstance(filters, list) and not has_parent:
-        return {"and": [_process_filters(f, True) for f in filters]}
-    elif isinstance(filters, list):
-        return [_process_filters(f, True) for f in filters]
-    else:
-        predicate = filters.get('predicate', 'eq')
-        if filters.get('not', False):
-            return {"not": _PREDICATE_FORMATS[predicate](filters)}
-        else:
-            return _PREDICATE_FORMATS[predicate](filters)
-
-
-# TODO(darkjh) nested `and` and `or` can be simplified
-def _add_filters(query, filters):
-    """Append some filters to botify format query using `and` operator
-
-    :param botify_query: the botify format query
+    :param query: the botify format query
     :param filters: a list of botify predicate to merge
-    :return: the appended query
+    :return: the extended query
     """
     botify_query = deepcopy(query)
-    if not 'filters' in botify_query:
-        botify_query['filters'] = {'and': filters}
-    elif isinstance(botify_query['filters'], dict) and not any(k in ('and', 'or') for
-                                                               k in botify_query['filters'].keys()):
-        botify_query['filters'] = {'and': filters + [botify_query['filters']]}
-    elif 'and' in botify_query['filters']:
-        # TODO(darkjh) a dict inside and/or ???
-        if isinstance(botify_query['filters']['and'], dict):
-            botify_query['filters']['and'] = [botify_query['filters']['and'], filters]
-        else:
-            botify_query['filters']['and'] = filters + botify_query['filters']['and']
-    elif 'or' in botify_query['filters']:
-        botify_query['filters']['and'] = [{'and': filters}, {'or': botify_query['filters']['or']}]
-        del botify_query['filters']['or']
-    else:
-        raise Exception('filters are not valid for given es_query')
+    to_merge = deepcopy(filters)
 
+    if not 'filters' in botify_query:
+        botify_query['filters'] = {'and': to_merge}
+        return botify_query
+
+    # try to merge into existing, outer `and` filter
+    if 'and' in botify_query['filters']:
+        botify_query['filters']['and'] = filters + botify_query['filters']['and']
+        return botify_query
+
+    # create a new `and` filter for merging
+    to_merge.append(botify_query['filters'])
+    botify_query['filters'] = {'and': to_merge}
     return botify_query
 
 
-def _process_sorts(sorts):
-    """Process sort options and add default sort parameters
-
-    :param sorts: a list of sort options of botify_query format,
-        eg. ['url', {'depth': {'order': 'desc'}}]
-    """
-    es_sorts = []
-    for sort in sorts:
-        if isinstance(sort, dict):
-            # sort contains order option
-            field = list(sort.keys())[0]
-            es_sorts.append({
-                field: {
-                    'ignore_unmapped': True,
-                    'order': sort[field]['order']
-                }
-            })
-        elif isinstance(sort, str):
-            es_sorts.append({
-                sort: {
-                    'ignore_unmapped': True,
-                }
-            })
-        else:
-            raise BotifyQueryException(
-                "Wrong query format in sort: {}".format(sort))
-    return es_sorts
-
-
-def _wrap_query(unwrapped):
-    """Wrap a processed botify query into its final form
-
-    Currently a `constant_score` query is used
-
-    :param unwrapped: processed botify query containing
-        `fields`, `filter` and `sort`
-    """
-    filters = {'filter': unwrapped['filter']}
-    return {
-        'query': {'constant_score': filters},
-        'sort': unwrapped['sort'],
-        'fields': unwrapped['fields']
-    }
-
-
 def get_es_query(botify_query, crawl_id):
+    """Generate ElasticSearch query from a botify query
+
+    :param botify_query: a botify query generated by front-end
+    :param crawl_id: unique id of the crawl in question
+    :returns: a valid ElasticSearch query, in json format
+    """
+
     # By default all queries should have these filter/predicate
     #   1. only query for current crawl/site
     #   2. only query for urls whose http_code != 0 (crawled urls)
@@ -235,26 +48,17 @@ def get_es_query(botify_query, crawl_id):
     # See: http://www.elasticsearch.org/blog/all-about-elasticsearch-filter-bitsets/
     default_filters = [
         {'field': 'crawl_id', 'value': crawl_id},
-        {'field': 'http_code', 'value': 0, 'predicate': 'eq', 'not': True}
+        {'not': {'field': 'http_code', 'value': 0, 'predicate': 'eq'}}
     ]
 
     # Merge default filters in botify format query
-    botify_query = _add_filters(botify_query, default_filters)
+    botify_query = _merge_filters(botify_query, default_filters)
 
-    # Transform botify query to ElasticSearch query
-    es_query = {}
+    # parse the merged query
+    parsed_query = parse_botify_query(botify_query)
 
-    if 'sort' in botify_query:
-        es_query['sort'] = _process_sorts(botify_query['sort'])
-    else:
-        es_query['sort'] = [{'id': {'ignore_unmapped': True}}]
+    # semantic validation
+    parsed_query.validate()
 
-    if 'filters' in botify_query:
-        es_query['filter'] = _process_filters(botify_query['filters'])
-
-    if 'fields' in botify_query:
-        es_query['fields'] = botify_query['fields']
-    else:
-        es_query['fields'] = ['url']
-
-    return _wrap_query(es_query)
+    # return the transformed query
+    return parsed_query.transform()

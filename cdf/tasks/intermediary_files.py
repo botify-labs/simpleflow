@@ -15,7 +15,7 @@ from cdf.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.collections.urls.generators.bad_links import get_bad_links, get_bad_link_counters
 from .decorators import TemporaryDirTask as with_temporary_dir
-from cdf.constants import DEFAULT_FORCE_FETCH
+from .constants import DEFAULT_FORCE_FETCH
 from cdf.tasks.base import make_tmp_dir_from_crawl_id
 
 

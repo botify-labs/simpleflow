@@ -1,5 +1,7 @@
 import abc
 
+from cdf.collections.urls.es_mapping_generation import generate_default_value_lookup
+from cdf.collections.urls.constants import URLS_DATA_FORMAT_DEFINITION
 from cdf.log import logger
 from cdf.collections.urls.utils import children_from_field, field_has_children, get_es_id, get_url_id
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
@@ -342,40 +344,11 @@ class IdToUrlTransformer(ResultTransformer):
 class DefaultValueTransformer(ResultTransformer):
     """Assign default value to some missing field"""
 
+    # TODO default_value for nofollow_combinations
     # Strategies here defines the default value of all
     # children fields
-    #   if `metadata_nb` defaults to 0
-    #   so, `metadata_nb.*` all default to 0
-    _META_STRATEGY = {
-        'inlinks_internal_nb': 0,
-        'outlinks_internal_nb': 0,
-        'outlinks_internal': [],
-        'inlinks_internal': [],
-        'outlinks_external_nb': 0,
-        'metadata_nb': 0,
-        'metadata_duplicate_nb': 0,
-        'metadata': [],
-        'metadata_duplicate': [],
-        'redirects_to': None,
-        'redirects_from_nb': 0,
-        'canonical_to': None,
-        'canonical_from_nb': 0,
-
-        'error_links.3xx.nb': 0,
-        'error_links.4xx.nb': 0,
-        'error_links.5xx.nb': 0,
-        'error_links.3xx.urls': [],
-        'error_links.4xx.urls': [],
-        'error_links.5xx.urls': [],
-    }
-
-    _DEFAULT_VALUE_STRATEGY = {}
-    for parent, default in _META_STRATEGY.iteritems():
-        if field_has_children(parent):
-            for child in children_from_field(parent):
-                _DEFAULT_VALUE_STRATEGY[child] = default
-        else:
-            _DEFAULT_VALUE_STRATEGY[parent] = default
+    _DEFAULT_VALUE_STRATEGY = generate_default_value_lookup(
+        URLS_DATA_FORMAT_DEFINITION)
 
     def __init__(self, es_result, query=None, **kwargs):
         # ES search result to transform

@@ -5,7 +5,8 @@ from elasticsearch import Elasticsearch
 import time
 
 from cdf.collections.urls.query import Query
-from cdf.constants import URLS_DATA_MAPPING
+from cdf.tasks.constants import ES_MAPPING
+
 
 ELASTICSEARCH_LOCATION = 'http://localhost:9200'
 ELASTICSEARCH_INDEX = 'cdf_test'
@@ -26,7 +27,7 @@ def _get_simple_bql_query(field, predicate, value, fields=['id']):
         'filters': {
             'field': '{}'.format(field),
             'predicate': '{}'.format(predicate),
-            'value': '{}'.format(value)
+            'value': '{}'.format(value) if value is not None else None
         },
         'sort': ['id']
     }
@@ -111,7 +112,8 @@ URLS_FIXTURE = [
             '4xx': {
                 'nb': 1,
                 'urls': [4]
-            }
+            },
+            'any': {'nb': 1}
         }
     },
     {
@@ -128,7 +130,8 @@ URLS_FIXTURE = [
             "5xx": {
                 "nb": 2,
                 "urls": [2, 3]
-            }
+            },
+            "any": {"nb": 5}
         },
         'metadata_duplicate': {
             'title': [1],
@@ -195,7 +198,7 @@ class TestQueryES(unittest.TestCase):
         ES.indices.create(ELASTICSEARCH_INDEX)
         ES.indices.put_mapping(ELASTICSEARCH_INDEX,
                                'crawl_{}'.format(CRAWL_ID),
-                               URLS_DATA_MAPPING)
+                               ES_MAPPING)
         # Load test fixtures
         for url in URLS_FIXTURE:
             ES.index(ELASTICSEARCH_INDEX,
@@ -229,11 +232,13 @@ class TestQueryES(unittest.TestCase):
             'nb': 2,
             'urls': [self.urls[2], self.urls[3]]
         }
+        self.any_missing = {'nb': 0}
         self.error_missing = {'nb': 0, 'urls': []}
         self.error_all_missing = {
             '3xx': self.error_missing,
             '4xx': self.error_missing,
-            '5xx': self.error_missing
+            '5xx': self.error_missing,
+            'any': self.any_missing
         }
 
     def tearDown(self):
@@ -291,7 +296,8 @@ class TestQueryES(unittest.TestCase):
             'error_links': {
                 '3xx': self.error_3xx,
                 '5xx': self.error_5xx,
-                '4xx': self.error_missing
+                '4xx': self.error_missing,
+                'any': {'nb': 5}
             }
         }
         self.assertEqual(results, [expected])
@@ -333,7 +339,8 @@ class TestQueryES(unittest.TestCase):
                 'error_links': {
                     '4xx': self.error_4xx,
                     '3xx': self.error_missing,
-                    '5xx': self.error_missing
+                    '5xx': self.error_missing,
+                    'any': {'nb': 1}
                 }
             },
             {
@@ -341,7 +348,8 @@ class TestQueryES(unittest.TestCase):
                 'error_links': {
                     '3xx': self.error_3xx,
                     '4xx': self.error_missing,
-                    '5xx': self.error_5xx
+                    '5xx': self.error_5xx,
+                    'any': {'nb': 5}
                 }
             },
             {'id': 6, 'error_links': self.error_all_missing},
@@ -499,7 +507,7 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_redirects_to_not_crawled(self):
-        bql_query = _get_simple_bql_query('redirects_to', 'not_null', 0,
+        bql_query = _get_simple_bql_query('redirects_to', 'not_null', value=None,
                                           fields=['redirects_to'])
         result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
         expected = {
