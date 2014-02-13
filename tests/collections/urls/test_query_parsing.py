@@ -1,7 +1,7 @@
 import unittest
 from cdf.collections.urls.query_parsing import (parse_sorts, parse_fields,
                                                 parse_predicate_filter, parse_not_filter,
-                                                parse_boolean_filter)
+                                                parse_boolean_filter, parse_filter)
 from cdf.exceptions import BotifyQueryException
 
 
@@ -94,6 +94,10 @@ class TestFilterParsing(ParsingTestCase):
         self.assertDictEqual(expected, result)
 
     def test_parse_boolean_filter(self):
+        # boolean filter should contain a list of other filters
+        invalid = {'or': {'and': [{'field': 'http_code', 'value': 200}]}}
+        self.assertParsingError(parse_filter, invalid)
+
         valid = {'and': [{'field': 'http_code', 'value': 200}]}
         expected = {'and': [{'term': {'http_code': 200}}]}
         result = parse_boolean_filter(valid).transform()
