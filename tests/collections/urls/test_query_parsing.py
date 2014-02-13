@@ -19,6 +19,12 @@ class TestSortParsing(ParsingTestCase):
                     {'http_code': {'order': 'desc', 'ignore_unmapped': True}}]
         self.assertEqual(result, expected)
 
+        sort = ['id', {'http_code': {'order': 'asc'}}]
+        result = parse_sorts(sort).transform()
+        expected = [{'id': {'ignore_unmapped': True}},
+                    {'http_code': {'order': 'asc', 'ignore_unmapped': True}}]
+        self.assertEqual(result, expected)
+
     def test_wrong_sort_structure(self):
         # sorts should be a list
         invalid = {'sort': 'field'}

@@ -36,7 +36,7 @@ _VALID_FIELDS = generate_valid_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 _COMPLETE_FIELDS = generate_complete_field_lookup(URLS_DATA_FORMAT_DEFINITION)
 
 # Available sort options
-_SORT_OPTIONS = ['desc']
+_SORT_OPTIONS = ['desc', 'asc']
 
 # Boolean filter predicates
 _BOOL_PREDICATES = ['and', 'or']
@@ -587,6 +587,7 @@ class OrderedSortElem(SortElem):
         return {
             self.field_value: {
                 'ignore_unmapped': True,
+                # options other than `desc` is ignored by ES
                 'order': self.sort_option
             }
         }
