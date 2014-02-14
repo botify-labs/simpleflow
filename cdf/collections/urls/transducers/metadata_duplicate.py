@@ -10,7 +10,7 @@ from cdf.streams.utils import idx_from_stream
 
 # notset metadata is interpreted as an empty string
 # they should be ignored by duplication detection
-notset_hash_value = "-2078137563"
+notset_hash_value = 14695981039346656037
 
 
 def get_duplicate_metadata(stream_contents):
@@ -54,6 +54,7 @@ def get_duplicate_metadata(stream_contents):
 
         # Fetch --first-- hash from each content type and watch add it to hashes set
         ct_found = set()
+# they should be ignored by duplication detection
         for content in contents:
             # ignore notset metadata first, they don't count anything
             _hash = content[content_hash_idx]
