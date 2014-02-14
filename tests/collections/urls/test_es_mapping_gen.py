@@ -194,6 +194,8 @@ URLS_DATA_MAPPING_DEPRECATED = {
             "delay2": {"type": "long"},
             "depth": {"type": "long"},
             "gzipped": {"type": "boolean"},
+            "content_type": {"type": "string"},
+            "meta_no_index": {"type": "boolean"},
             "host": {
                 "type": "string",
                 "index": "not_analyzed"

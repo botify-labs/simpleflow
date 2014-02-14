@@ -61,9 +61,9 @@ class TestSortParsing(ParsingTestCase):
 
 class TestFieldsParsing(ParsingTestCase):
     def test_parsing(self):
-        fields = ['url', 'path']
+        fields = ['url', 'content_type']
         result = parse_fields(fields).transform()
-        expected = ['url', 'path']
+        expected = ['url', 'content_type']
         self.assertEqual(result, expected)
 
     def test_wrong_fields_structure(self):
