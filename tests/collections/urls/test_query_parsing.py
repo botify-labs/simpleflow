@@ -1,7 +1,7 @@
 import unittest
 from cdf.collections.urls.query_parsing import (parse_sorts, parse_fields,
                                                 parse_predicate_filter, parse_not_filter,
-                                                parse_boolean_filter)
+                                                parse_boolean_filter, parse_filter)
 from cdf.exceptions import BotifyQueryException
 
 
@@ -17,6 +17,12 @@ class TestSortParsing(ParsingTestCase):
         result = parse_sorts(sort).transform()
         expected = [{'id': {'ignore_unmapped': True}},
                     {'http_code': {'order': 'desc', 'ignore_unmapped': True}}]
+        self.assertEqual(result, expected)
+
+        sort = ['id', {'http_code': {'order': 'asc'}}]
+        result = parse_sorts(sort).transform()
+        expected = [{'id': {'ignore_unmapped': True}},
+                    {'http_code': {'order': 'asc', 'ignore_unmapped': True}}]
         self.assertEqual(result, expected)
 
     def test_wrong_sort_structure(self):
@@ -55,9 +61,9 @@ class TestSortParsing(ParsingTestCase):
 
 class TestFieldsParsing(ParsingTestCase):
     def test_parsing(self):
-        fields = ['url', 'path']
+        fields = ['url', 'content_type']
         result = parse_fields(fields).transform()
-        expected = ['url', 'path']
+        expected = ['url', 'content_type']
         self.assertEqual(result, expected)
 
     def test_wrong_fields_structure(self):
@@ -94,6 +100,10 @@ class TestFilterParsing(ParsingTestCase):
         self.assertDictEqual(expected, result)
 
     def test_parse_boolean_filter(self):
+        # boolean filter should contain a list of other filters
+        invalid = {'or': {'and': [{'field': 'http_code', 'value': 200}]}}
+        self.assertParsingError(parse_filter, invalid)
+
         valid = {'and': [{'field': 'http_code', 'value': 200}]}
         expected = {'and': [{'term': {'http_code': 200}}]}
         result = parse_boolean_filter(valid).transform()
