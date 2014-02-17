@@ -6,7 +6,7 @@ from cdf.utils.hashing import string_to_int64
 
 
 from cdf.log import logger
-from cdf.collections.urls.transducers.metadata_duplicate import get_duplicate_metadata
+from cdf.collections.urls.transducers.metadata_duplicate import get_duplicate_metadata, notset_hash_value
 
 logger.setLevel(logging.DEBUG)
 
@@ -53,14 +53,14 @@ class TestMetadataDuplicateGenerator(unittest.TestCase):
         `filled_nb` neither
         """
         stream_contents = iter((
-            [1, 4, '-2078137563', ''],
-            [1, 2, '456', 'My second H1'],
-            [1, 1, '-2078137563', ''],
-            [1, 4, '1111', 'My Desc'],
-            [2, 4, '-2078137563', ''],
-            [2, 4, '1111', 'My Desc'],
-            [2, 4, '1111', 'My Desc'],
-            [3, 1, '-2078137563', ''],
+            [1, 4, notset_hash_value, ''],
+            [1, 2, 456, 'My second H1'],
+            [1, 1, notset_hash_value, ''],
+            [1, 4, 1111, 'My Desc'],
+            [2, 4, notset_hash_value, ''],
+            [2, 4, 1111, 'My Desc'],
+            [2, 4, 1111, 'My Desc'],
+            [3, 1, notset_hash_value, ''],
         ))
 
         generator = get_duplicate_metadata(stream_contents)
