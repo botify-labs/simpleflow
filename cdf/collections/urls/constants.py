@@ -12,8 +12,9 @@ CLUSTER_TYPE_TO_ID = {
     },
     'metadata': {
         CONTENT_TYPE_NAME_TO_ID['title']: 20,
-        CONTENT_TYPE_NAME_TO_ID['h1']: 21,
-        CONTENT_TYPE_NAME_TO_ID['h2']: 22,
+        CONTENT_TYPE_NAME_TO_ID['description']: 21,
+        CONTENT_TYPE_NAME_TO_ID['h1']: 22,
+        CONTENT_TYPE_NAME_TO_ID['h2']: 23,
         CONTENT_TYPE_NAME_TO_ID['h3']: 32
     }
 }
