@@ -78,8 +78,13 @@ URLS_DATA_FORMAT_DEFINITION = {
     "delay2": {"type": _NUMBER_TYPE},
     "depth": {"type": _NUMBER_TYPE},
     "gzipped": {"type": _BOOLEAN_TYPE},
-    "content_type": {"type": _STRING_TYPE},
-    "meta_no_index": {"type": _BOOLEAN_TYPE},
+    "content_type": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _NOT_ANALYZED
+        }
+    },
+    "meta_noindex": {"type": _BOOLEAN_TYPE},
     "host": {
         "type": _STRING_TYPE,
         "settings": {
