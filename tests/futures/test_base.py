@@ -29,3 +29,12 @@ def test_future_init_running():
 
 def test_future_init_done():
     assert Future().done() is False
+
+
+def test_future_cancel():
+    future = Future()
+    assert future.cancel()
+    assert future._state == base.CANCELLED
+    assert future.running() is False
+    assert future.cancelled()
+    assert future.done()

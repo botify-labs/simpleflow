@@ -42,6 +42,19 @@ class Future(object):
             hex(id(self)),
             _STATE_TO_DESCRIPTION_MAP[self._state])
 
+    def cancel(self):
+        """Cancel a future.
+
+        Note: cannot cancel a future that is already running or finished.
+        It will not raise an exception but return ``False`` to notify it.
+
+        """
+        if self._state in [RUNNING, FINISHED]:
+            return False
+
+        self._state = CANCELLED
+        return True
+
     def cancelled(self):
         return self._state == CANCELLED
 
