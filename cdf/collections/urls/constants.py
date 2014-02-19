@@ -78,8 +78,13 @@ URLS_DATA_FORMAT_DEFINITION = {
     "delay2": {"type": _NUMBER_TYPE},
     "depth": {"type": _NUMBER_TYPE},
     "gzipped": {"type": _BOOLEAN_TYPE},
-    "content_type": {"type": _STRING_TYPE},
-    "meta_no_index": {"type": _BOOLEAN_TYPE},
+    "content_type": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _NOT_ANALYZED
+        }
+    },
+    "meta_noindex": {"type": _BOOLEAN_TYPE},
     "host": {
         "type": _STRING_TYPE,
         "settings": {
@@ -196,13 +201,9 @@ URLS_DATA_FORMAT_DEFINITION = {
     "inlinks_internal_nb.total_unique": {"type": _NUMBER_TYPE},
     "inlinks_internal_nb.follow": {"type": _NUMBER_TYPE},
     "inlinks_internal_nb.nofollow": {"type": _NUMBER_TYPE},
-    "inlinks_internal_nb.nofollow_combinations": {
-        "type": "struct",
-        "values": {
-            "key": {"type": _STRING_TYPE},
-            "value": {"type": _NUMBER_TYPE}
-        }
-    },
+    "inlinks_internal_nb.nofollow_combinations.key": {"type": _STRING_TYPE},
+    "inlinks_internal_nb.nofollow_combinations.value": {"type": _NUMBER_TYPE},
+
     "inlinks_internal": {
         "type": _NUMBER_TYPE,
         "settings": {
@@ -218,13 +219,9 @@ URLS_DATA_FORMAT_DEFINITION = {
     "outlinks_internal_nb.total_unique": {"type": _NUMBER_TYPE},
     "outlinks_internal_nb.follow": {"type": _NUMBER_TYPE},
     "outlinks_internal_nb.nofollow": {"type": _NUMBER_TYPE},
-    "outlinks_internal_nb.nofollow_combinations": {
-        "type": "struct",
-        "values": {
-            "key": {"type": _STRING_TYPE},
-            "value": {"type": _NUMBER_TYPE}
-        }
-    },
+    "outlinks_internal_nb.nofollow_combinations.key": {"type": _STRING_TYPE},
+    "outlinks_internal_nb.nofollow_combinations.value": {"type": _NUMBER_TYPE},
+
     "outlinks_internal": {
         "type": _NUMBER_TYPE,
         "settings": {
@@ -237,14 +234,8 @@ URLS_DATA_FORMAT_DEFINITION = {
     "outlinks_external_nb.total": {"type": _NUMBER_TYPE},
     "outlinks_external_nb.follow": {"type": _NUMBER_TYPE},
     "outlinks_external_nb.nofollow": {"type": _NUMBER_TYPE},
-    "outlinks_external_nb.nofollow_combinations": {
-        "type": "struct",
-        "values": {
-            "key": {"type": _STRING_TYPE},
-            "value": {"type": _NUMBER_TYPE}
-        }
-    },
-
+    "outlinks_external_nb.nofollow_combinations.key": {"type": _STRING_TYPE},
+    "outlinks_external_nb.nofollow_combinations.value": {"type": _NUMBER_TYPE},
 
     # incoming canonical links data
     "canonical_from_nb": {"type": _NUMBER_TYPE},
