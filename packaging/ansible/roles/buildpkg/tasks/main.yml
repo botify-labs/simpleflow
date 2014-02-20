@@ -1,13 +1,13 @@
 - name: Build boto
   tags: build
   sudo: no
-  command: "/opt/vagrant_ruby/bin/fpm -s python -t deb -v 2.9.8 boto"
+  command: "/opt/vagrant_ruby/bin/fpm -s python -t deb boto"
 
 - name: Build ujson
   tags: build
   sudo: no
   command: "/opt/vagrant_ruby/bin/fpm -s python -t deb -v 1.33 ujson"
-  
+
 - name: Build pyhash
   tags: build
   sudo: no
