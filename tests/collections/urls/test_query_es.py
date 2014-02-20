@@ -1,10 +1,10 @@
 import unittest
+import time
 
 from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
-import time
 
-from cdf.collections.urls.query import Query
+from cdf.query.query import Query
 from cdf.tasks.constants import ES_MAPPING
 
 

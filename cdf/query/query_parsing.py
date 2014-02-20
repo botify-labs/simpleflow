@@ -12,10 +12,10 @@ query API (such as ElasticSearch) and for semantic validation.
 """
 
 import abc
-from cdf.collections.urls.es_mapping_generation import (generate_multi_field_lookup,
-                                                        generate_list_field_lookup,
-                                                        generate_valid_field_lookup,
-                                                        generate_complete_field_lookup)
+from cdf.query.es_mapping_generation import (generate_multi_field_lookup,
+                                             generate_list_field_lookup,
+                                             generate_valid_field_lookup,
+                                             generate_complete_field_lookup)
 from cdf.collections.urls.constants import URLS_DATA_FORMAT_DEFINITION
 from cdf.exceptions import BotifyQueryException
 
@@ -75,6 +75,7 @@ def _raise_parsing_error(msg, structure):
 class Term(object):
     """Abstract class for basic component of a botify query
     """
+
     @abc.abstractmethod
     def transform(self):
         """Transform to a valid ElasticSearch query component"""
@@ -103,6 +104,7 @@ class NotFilter(Filter):
     Attributes:
         filter  the contained filter in dict
     """
+
     def __init__(self, filter):
         self.filter = filter
 
@@ -120,6 +122,7 @@ class BooleanFilter(Filter):
         boolean_predicate   boolean operator, could be `and` or `or`
         filters             a list of contained filters
     """
+
     def __init__(self, boolean_predicate, filters):
         self.boolean_predicate = boolean_predicate
         self.filters = filters
@@ -146,6 +149,7 @@ class PredicateFilter(Filter):
         value               value needed for this predicate, could be
             a single value, a list or None
     """
+
     def __init__(self, predicate_field, value=None):
         self.predicate_field = predicate_field
         self.field_value = self.predicate_field.transform()
@@ -545,6 +549,7 @@ def parse_filter(filter):
 # Sorts
 class Sorts(Term):
     """Class represents the sort component of a botify query"""
+
     def __init__(self, sort_elems):
         self.sort_elems = sort_elems
 
@@ -631,6 +636,7 @@ def parse_sorts(sorts):
 # Fields
 class Fields(Term):
     """Class represents the required fields component of a botify query"""
+
     def __init__(self, fields):
         self.fields = fields
 
@@ -693,6 +699,7 @@ def parse_fields(fields):
 
 class BotifyQuery(Term):
     """Class represents the whole front-end query"""
+
     def __init__(self, fields, sorts, filter):
         self.fields = fields
         self.sorts = sorts

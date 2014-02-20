@@ -2,8 +2,7 @@ import unittest
 import copy
 from mock import MagicMock
 
-from cdf.exceptions import ElasticSearchIncompleteIndex
-from cdf.collections.urls.result_transformer import IdToUrlTransformer, DefaultValueTransformer, ExternalUrlTransformer
+from cdf.query.result_transformer import IdToUrlTransformer, DefaultValueTransformer, ExternalUrlTransformer
 
 
 ELASTICSEARCH_INDEX = 'mock'

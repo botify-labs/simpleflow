@@ -1,5 +1,5 @@
 import unittest
-from cdf.collections.urls.es_mapping_generation import (_parse_field_path,
+from cdf.query.es_mapping_generation import (_parse_field_path,
                                                         generate_es_mapping,
                                                         generate_default_value_lookup,
                                                         generate_valid_field_lookup)

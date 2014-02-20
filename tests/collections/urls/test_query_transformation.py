@@ -3,7 +3,7 @@ import unittest
 from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
 
-from cdf.collections.urls.query_transformer import get_es_query, _merge_filters
+from cdf.query.query_transformer import get_es_query, _merge_filters
 from cdf.tasks.constants import ES_MAPPING
 from cdf.exceptions import BotifyQueryException
 

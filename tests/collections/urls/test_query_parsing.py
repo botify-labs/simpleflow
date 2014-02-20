@@ -1,5 +1,5 @@
 import unittest
-from cdf.collections.urls.query_parsing import (parse_sorts, parse_fields,
+from cdf.query.query_parsing import (parse_sorts, parse_fields,
                                                 parse_predicate_filter, parse_not_filter,
                                                 parse_boolean_filter, parse_filter)
 from cdf.exceptions import BotifyQueryException

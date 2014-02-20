@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from cdf.collections.urls.query_parsing import parse_botify_query
+from cdf.query.query_parsing import parse_botify_query
 
 
 __ALL__ = ['get_es_query']
