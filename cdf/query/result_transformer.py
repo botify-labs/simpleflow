@@ -1,7 +1,8 @@
 import abc
 
-from cdf.query.es_mapping_generation import generate_default_value_lookup, generate_complete_field_lookup
-from cdf.collections.urls.constants import URLS_DATA_FORMAT_DEFINITION
+from cdf.metadata.utils import field_has_children, children_from_field
+from cdf.query.es_mapping_generation import generate_default_value_lookup
+from cdf.metadata import URLS_DATA_FORMAT_DEFINITION
 from cdf.log import logger
 from cdf.collections.urls.utils import get_es_id, get_url_id
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
@@ -11,19 +12,6 @@ from cdf.streams.masks import follow_mask
 class ResultTransformer(object):
     """Post-processing for ElasticSearch search results
     """
-    _URL_DATA_FIELDS = generate_complete_field_lookup(
-        URLS_DATA_FORMAT_DEFINITION)
-
-    def _field_has_children(self, field):
-        prefix = field + '.'
-        return any(i[:len(prefix)] == prefix
-                   for i in ResultTransformer._URL_DATA_FIELDS)
-
-    def _children_from_field(self, field):
-        prefix = field + '.'
-        return [i for i in ResultTransformer._URL_DATA_FIELDS
-                if i[:len(prefix)] == prefix]
-
 
     @abc.abstractmethod
     def transform(self):
@@ -298,11 +286,11 @@ class IdToUrlTransformer(ResultTransformer):
     def prepare(self):
         # find all fields that needs to be transformed
         for field in self.fields:
-            if not self._field_has_children(field):
+            if not field_has_children(field):
                 if field in self.FIELD_TRANSFORM_STRATEGY:
                     self.fields_to_transform.add(field)
             else:
-                for child in self._children_from_field(field):
+                for child in children_from_field(field):
                     if child in self.FIELD_TRANSFORM_STRATEGY:
                         self.fields_to_transform.add(child)
 
@@ -379,14 +367,14 @@ class DefaultValueTransformer(ResultTransformer):
             # Update the result document for default value if any of the
             # children is missing in that document
             for required_field in self.fields:
-                if not self._field_has_children(required_field):
+                if not field_has_children(required_field):
                     if not path_in_dict(required_field, result) and \
                                     required_field in self._DEFAULT_VALUE_STRATEGY:
                         default = self._DEFAULT_VALUE_STRATEGY[required_field]
                         # in-place update
                         update_path_in_dict(required_field, default, result)
                 else:
-                    for child in self._children_from_field(required_field):
+                    for child in children_from_field(required_field):
                         if not path_in_dict(child, result) and \
                                         child in self._DEFAULT_VALUE_STRATEGY:
                             default = self._DEFAULT_VALUE_STRATEGY[child]

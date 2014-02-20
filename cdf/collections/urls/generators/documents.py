@@ -10,7 +10,7 @@ from cdf.streams.utils import idx_from_stream
 from cdf.streams.masks import list_to_mask
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
-from cdf.collections.urls.utils import children_from_field
+from cdf.metadata.utils import children_from_field
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 
 

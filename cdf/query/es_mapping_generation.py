@@ -1,9 +1,9 @@
 from copy import deepcopy
 
 from cdf.utils.dict import update_path_in_dict
-from cdf.collections.urls.constants import (_NUMBER_TYPE, _STRING_TYPE, _BOOLEAN_TYPE,
-                                            _STRUCT_TYPE, _MULTI_FIELD, _LIST,
-                                            _NOT_ANALYZED, _NO_INDEX)
+from cdf.metadata.url_metadata import (_NUMBER_TYPE, _STRING_TYPE, _BOOLEAN_TYPE,
+                                       _STRUCT_TYPE, _MULTI_FIELD, _LIST,
+                                       _NOT_ANALYZED, _NO_INDEX)
 
 
 __ALL__ = ['generate_es_mapping',

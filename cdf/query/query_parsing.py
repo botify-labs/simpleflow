@@ -16,7 +16,7 @@ from cdf.query.es_mapping_generation import (generate_multi_field_lookup,
                                              generate_list_field_lookup,
                                              generate_valid_field_lookup,
                                              generate_complete_field_lookup)
-from cdf.collections.urls.constants import URLS_DATA_FORMAT_DEFINITION
+from cdf.metadata import URLS_DATA_FORMAT_DEFINITION
 from cdf.exceptions import BotifyQueryException
 
 

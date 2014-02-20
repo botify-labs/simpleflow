@@ -2,7 +2,9 @@ import unittest
 import copy
 from mock import MagicMock
 
-from cdf.query.result_transformer import IdToUrlTransformer, DefaultValueTransformer, ExternalUrlTransformer
+from cdf.query.result_transformer import (IdToUrlTransformer,
+                                          DefaultValueTransformer,
+                                          ExternalUrlTransformer)
 
 
 ELASTICSEARCH_INDEX = 'mock'
@@ -173,13 +175,13 @@ class TestUnindexedUrlTransformer(unittest.TestCase):
         }
 
         es_mock_conn = MagicMock()
-        es_mock_conn.mget.return_value={
+        es_mock_conn.mget.return_value = {
             u'docs': [
-                      {
-                          #some other values are also returned by
-                          #elasticsearch but they are not relevant for the test
-                          u'exists': False,
-                       }]
+                {
+                    #some other values are also returned by
+                    #elasticsearch but they are not relevant for the test
+                    u'exists': False,
+                }]
 
         }
 
@@ -198,17 +200,17 @@ class TestUnindexedUrlTransformer(unittest.TestCase):
     def test_outlinks_internal_not_raise(self):
         es_result = {
             'outlinks_internal': [
-            [1, 2, 100], # follow
-            [2, 7, 1], # link, meta, robots
-        ]
+                [1, 2, 100], # follow
+                [2, 7, 1], # link, meta, robots
+            ]
         }
 
         es_mock_conn = MagicMock()
-        es_mock_conn.mget.return_value={
+        es_mock_conn.mget.return_value = {
             u'docs': [
                 {
                     "_id": "1:1",
-                    "fields" : {
+                    "fields": {
                         u'url': "url1",
                         u'http_code': 200,
                         'crawled': True
@@ -216,12 +218,12 @@ class TestUnindexedUrlTransformer(unittest.TestCase):
                     #some other values are also returned by
                     #elasticsearch but they are not relevant for the test
                     u'exists': True,
-                    },
+                },
                 {
                     #some other values are also returned by
                     #elasticsearch but they are not relevant for the test
                     u'exists': False,
-                    }]
+                }]
         }
 
         # partial transformation, controled by `fields` param
