@@ -4,16 +4,16 @@ import re
 import json
 import copy
 import operator
-from pandas import HDFStore
-import numpy
 import itertools
 
-from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS, COUNTERS_FIELDS
+from pandas import HDFStore
+import numpy
 
+from cdf.metadata.aggregates import CROSS_PROPERTIES_COLUMNS, COUNTERS_FIELDS
 from cdf.utils.s3 import fetch_files, fetch_file
 from cdf.utils.dict import deep_dict, deep_update, flatten_dict
 from cdf.streams.utils import split_file
-from .utils import field_has_children, children_from_field
+from cdf.metadata.aggregates import has_child, get_children
 
 
 def is_dict_filter(filter_dict):
@@ -152,8 +152,8 @@ class BaseMetricsQuery(object):
         for f in fields:
             #if f not in self.FIELDS:
             #    raise self.BadRequestException('Field {} not allowed in query'.format(f))
-            if field_has_children(f):
-                final_fields += children_from_field(f)
+            if has_child(f):
+                final_fields += get_children(f)
             else:
                 final_fields.append(f)
         return final_fields

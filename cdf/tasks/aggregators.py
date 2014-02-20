@@ -14,7 +14,7 @@ from cdf.streams.utils import split_file
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
 from cdf.utils.path import makedirs
 from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
-from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS
+from cdf.metadata.aggregates.aggregates_metadata import CROSS_PROPERTIES_COLUMNS
 from cdf.collections.suggestions.aggregator import MetricsAggregator, MetricsConsolidator
 from cdf.collections.urls.generators.suggestions import MetadataClusterMixin
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS

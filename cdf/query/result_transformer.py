@@ -1,8 +1,8 @@
 import abc
 
-from cdf.metadata.utils import field_has_children, children_from_field
-from cdf.query.es_mapping_generation import generate_default_value_lookup
-from cdf.metadata import URLS_DATA_FORMAT_DEFINITION
+from cdf.metadata.url import has_child, get_children
+from cdf.metadata.url.es_mapping_generation import generate_default_value_lookup
+from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 from cdf.log import logger
 from cdf.collections.urls.utils import get_es_id, get_url_id
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
@@ -286,11 +286,11 @@ class IdToUrlTransformer(ResultTransformer):
     def prepare(self):
         # find all fields that needs to be transformed
         for field in self.fields:
-            if not field_has_children(field):
+            if not has_child(field):
                 if field in self.FIELD_TRANSFORM_STRATEGY:
                     self.fields_to_transform.add(field)
             else:
-                for child in children_from_field(field):
+                for child in get_children(field):
                     if child in self.FIELD_TRANSFORM_STRATEGY:
                         self.fields_to_transform.add(child)
 
@@ -367,14 +367,14 @@ class DefaultValueTransformer(ResultTransformer):
             # Update the result document for default value if any of the
             # children is missing in that document
             for required_field in self.fields:
-                if not field_has_children(required_field):
+                if not has_child(required_field):
                     if not path_in_dict(required_field, result) and \
                                     required_field in self._DEFAULT_VALUE_STRATEGY:
                         default = self._DEFAULT_VALUE_STRATEGY[required_field]
                         # in-place update
                         update_path_in_dict(required_field, default, result)
                 else:
-                    for child in children_from_field(required_field):
+                    for child in get_children(required_field):
                         if not path_in_dict(child, result) and \
                                         child in self._DEFAULT_VALUE_STRATEGY:
                             default = self._DEFAULT_VALUE_STRATEGY[child]

@@ -10,7 +10,7 @@ from cdf.streams.utils import idx_from_stream
 from cdf.streams.masks import list_to_mask
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
-from cdf.metadata.utils import children_from_field
+from cdf.metadata.url import get_children
 from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 
 
@@ -31,13 +31,13 @@ def extract_patterns(attributes, stream_item):
     attributes['metadata_duplicate'] = {verbose_content_type: [] for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
     attributes['metadata_duplicate_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
     attributes['metadata_duplicate_is_first'] = {verbose_content_type: False for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
-    attributes['inlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('inlinks_internal_nb')}
+    attributes['inlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in get_children('inlinks_internal_nb')}
     attributes['inlinks_internal_nb']['nofollow_combinations'] = []
     # a list of [src, mask, count]
     attributes['inlinks_internal'] = []
-    attributes['outlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('outlinks_internal_nb')}
+    attributes['outlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in get_children('outlinks_internal_nb')}
     attributes['outlinks_internal_nb']['nofollow_combinations'] = []
-    attributes['outlinks_external_nb'] = {_f.split('.')[1]: 0 for _f in children_from_field('outlinks_external_nb')}
+    attributes['outlinks_external_nb'] = {_f.split('.')[1]: 0 for _f in get_children('outlinks_external_nb')}
     attributes['outlinks_external_nb']['nofollow_combinations'] = []
     # a list of [dest, mask, count]
     attributes['outlinks_internal'] = []

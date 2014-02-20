@@ -12,11 +12,11 @@ query API (such as ElasticSearch) and for semantic validation.
 """
 
 import abc
-from cdf.query.es_mapping_generation import (generate_multi_field_lookup,
+from cdf.metadata.url.es_mapping_generation import (generate_multi_field_lookup,
                                              generate_list_field_lookup,
                                              generate_valid_field_lookup,
                                              generate_complete_field_lookup)
-from cdf.metadata import URLS_DATA_FORMAT_DEFINITION
+from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 from cdf.exceptions import BotifyQueryException
 
 
