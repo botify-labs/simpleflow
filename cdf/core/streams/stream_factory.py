@@ -244,11 +244,26 @@ class QueryStringStreamFactory(DataStreamFactory):
                                                 part_id)
         super(self.__class__, self).__init__(file_stream_factory,
                                              crawler_metakeys)
+        # a flag to indicate wheter we should return the raw query string
+        # or parse it
+        # for instance if the flag is True the stream will generate stuff like
+        # - 0, {"foo": "bar", "baz": "qux"}
+        # if the flag is False the stream will generate stuff like
+        # - 0, "foo=bar&baz=qux"
+        self._parse_string = True
+
+    @property
+    def parse_string(self):
+        return self._parse_string
+
+    @parse_string.setter
+    def parse_string(self, value):
+        self._parse_string = value
 
     def get_stream(self):
         """Create a generator for the query strings
-        The generator creates tuples (urlid, query_string_dict)
-        where query_string_dict is a dict: param->list of values
+        The generator returns the raw query string.
+        For instance "category=shopping&page=2"
         :returns: generator
         """
         base_stream = self._file_stream_factory.get_stream()
@@ -265,7 +280,8 @@ class QueryStringStreamFactory(DataStreamFactory):
             query_string = url[query_string_index]
             query_string = unicode(query_string, encoding="utf-8")
             query_string = query_string[1:]
-            query_string = parse_qs(query_string)
+            if self._parse_string:
+                query_string = parse_qs(query_string)
             yield urlid, query_string
 
 
