@@ -12,7 +12,7 @@ import numpy
 from cdf.metadata.aggregates import CROSS_PROPERTIES_COLUMNS, COUNTERS_FIELDS
 from cdf.utils.s3 import fetch_files, fetch_file
 from cdf.utils.dict import deep_dict, deep_update, flatten_dict
-from cdf.streams.utils import split_file
+from cdf.core.streams.utils import split_file
 from cdf.metadata.aggregates import has_child, get_children
 
 

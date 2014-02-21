@@ -3,7 +3,6 @@ import re
 import gzip
 import itertools
 import json
-from lockfile import FileLock
 
 from urlparse import urlsplit, parse_qs
 
@@ -12,8 +11,8 @@ from cdf.log import logger
 from cdf.exceptions import MalformedFileNameError
 from cdf.metadata.raw import (STREAMS_HEADERS, STREAMS_FILES,
                               CONTENT_TYPE_NAME_TO_ID)
-from cdf.streams.caster import Caster
-from cdf.streams.utils import split_file, idx_from_stream
+from cdf.core.streams.caster import Caster
+from cdf.core.streams.utils import split_file, idx_from_stream
 
 
 def get_part_id_from_filename(filename):

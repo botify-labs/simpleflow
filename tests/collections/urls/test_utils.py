@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 import unittest
-import logging
-from cdf.collections.urls.utils import merge_queries_filters
+from cdf.core.analysis.urls.utils import merge_queries_filters
 
 
 class TestUtils(unittest.TestCase):

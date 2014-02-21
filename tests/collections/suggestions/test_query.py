@@ -1,12 +1,12 @@
 import unittest
-import mock
 from tempfile import NamedTemporaryFile
 
+import mock
 import pandas as pd
 
-from cdf.collections.suggestions.query import (is_dict_filter,
-                                               is_boolean_operation_filter,
-                                               SuggestQuery)
+from cdf.core.analysis.suggestions.query import (is_dict_filter,
+                                                 is_boolean_operation_filter,
+                                                 SuggestQuery)
 
 
 class TestIsDictFilter(unittest.TestCase):
@@ -42,14 +42,14 @@ class TestSuggestQuery(unittest.TestCase):
             "verbose_string": ['{"query": "v_string1"}',
                                '{"query": "v_string2"}',
                                '{"query": "v_string3"}']
-            }
+        }
         hdfstore["requests"] = pd.DataFrame(requests, index=hashes)
 
         #all patterns are children of pattern3
         children_relationship = {
             "parent": ["3", "3"],
             "child": ["1", "2"]
-            }
+        }
         hdfstore["children"] = pd.DataFrame(children_relationship)
 
         hdfstore["suggest"] = pd.DataFrame()
@@ -100,7 +100,7 @@ class TestSuggestQuery(unittest.TestCase):
     def test_compute_child_relationship_set(self):
         child_relationship = {
             "parent": ["1", "1", "3"],
-            "child":  ["2", "3", "4"]
+            "child": ["2", "3", "4"]
         }
         frame = pd.DataFrame(child_relationship)
         expected_result = set([("1", "2"), ("1", "3"), ("3", "4")])
@@ -137,11 +137,10 @@ class TestSuggestQuery(unittest.TestCase):
         self.assertListEqual(expected_result, actual_result)
 
     def test_remove_equivalent_parents(self):
-
         settings = {"target_field": "field"}
         results = [
             {"query": "1", "counters": {"pages_nb": 1, "field": 10}},
-            {"query": "2", "counters": {"pages_nb": 1, "field":  5}},
+            {"query": "2", "counters": {"pages_nb": 1, "field": 5}},
             {"query": "3", "counters": {"pages_nb": 2, "field": 10}}
         ]
 
@@ -158,7 +157,7 @@ class TestSuggestQuery(unittest.TestCase):
         #if the target field is "pages_nb",
         #the algorithm should not remove any element
         actual_result = self.suggest_query.remove_equivalent_parents({},
-                                                                     results)
+            results)
         self.assertListEqual(results, actual_result)
 
     def test_hide_less_relevant_children(self):
@@ -221,7 +220,7 @@ class TestSuggestQuery(unittest.TestCase):
                 "children": [{"query_hash_id": 2,
                               "query": {u"query": u"v_string2"},
                               "counters": {"pages_nb": 1}}
-                             ]
+                ]
             }]
 
         self.suggest_query._resolve_results(results)
@@ -241,9 +240,9 @@ class TestSuggestQuery(unittest.TestCase):
             {
                 "query": 1,
                 "score": 2,
-                "percent_total": 50,  # on 4 errors, 2 belong to the pattern
-                "score_pattern": 5,  # pattern size
-                "percent_pattern": 40,  # 2 urls on 5 are errors
+                "percent_total": 50, # on 4 errors, 2 belong to the pattern
+                "score_pattern": 5, # pattern size
+                "percent_pattern": 40, # 2 urls on 5 are errors
                 "counters": {"http_errors": 2}
             },
             {
@@ -272,9 +271,9 @@ class TestSuggestQuery(unittest.TestCase):
         expected_result = {
             "query": 1,
             "score": 2,
-            "percent_total": 50,  # on 4 errors, 2 belong to the pattern
-            "score_pattern": 5,  # pattern size
-            "percent_pattern": 40,  # 2 urls on 5 are errors
+            "percent_total": 50, # on 4 errors, 2 belong to the pattern
+            "score_pattern": 5, # pattern size
+            "percent_pattern": 40, # 2 urls on 5 are errors
             "counters": {"http_errors": 2}
         }
 
@@ -294,9 +293,9 @@ class TestSuggestQuery(unittest.TestCase):
         expected_result = {
             "query": 1,
             "score": 2,
-            "percent_total": -1,  # on 4 errors, 2 belong to the pattern
-            "score_pattern": 5,  # pattern size
-            "percent_pattern": 40,  # 2 urls on 5 are errors
+            "percent_total": -1, # on 4 errors, 2 belong to the pattern
+            "score_pattern": 5, # pattern size
+            "percent_pattern": 40, # 2 urls on 5 are errors
             "counters": {"http_errors": 2}
         }
 
@@ -365,9 +364,9 @@ class TestSuggestQuery(unittest.TestCase):
         actual_results = self.suggest_query._raw_query(dataframe, settings)
         self.assertListEqual(expected_results, actual_results)
 
-    @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results",
+    @mock.patch("cdf.core.analysis.suggestions.query.SuggestQuery._get_total_results",
                 new=lambda x, y: 10)
-    @mock.patch("cdf.collections.suggestions.query.SuggestQuery._get_total_results_by_pattern",
+    @mock.patch("cdf.core.analysis.suggestions.query.SuggestQuery._get_total_results_by_pattern",
                 new=lambda x, y: {1: 4, 2: 3, 3: 5})
     def test_query(self):
         data = {

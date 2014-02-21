@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from cdf.metadata.raw import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
-from cdf.streams.utils import idx_from_stream, group_left
 from BQL.parser.tagging import query_to_python
 from BQL.parser.metadata import query_to_python as metadata_query_to_python
-from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
-
 from pandas import DataFrame
+
+from cdf.metadata.raw import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
+from cdf.core.streams.utils import idx_from_stream, group_left
+from cdf.core.analysis.urls.constants import CLUSTER_TYPE_TO_ID
 
 
 def transform_queries(queries_lst, func=query_to_python):

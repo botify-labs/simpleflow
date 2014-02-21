@@ -7,7 +7,7 @@ from collections import defaultdict, Counter
 from pandas import DataFrame
 
 from cdf.metadata.raw import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES_IDS
-from cdf.streams.utils import group_left, idx_from_stream
+from cdf.core.streams.utils import group_left, idx_from_stream
 from cdf.metadata.aggregates import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
 from cdf.utils.dict import deep_update, flatten_dict
 from cdf.log import logger

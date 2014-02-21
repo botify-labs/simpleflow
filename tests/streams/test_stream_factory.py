@@ -1,10 +1,10 @@
 import unittest
-from mock import MagicMock, patch
-
 import StringIO
 
+from mock import MagicMock, patch
+
 from cdf.exceptions import MalformedFileNameError
-from cdf.streams.stream_factory import (get_part_id_from_filename,
+from cdf.core.streams.stream_factory import (get_part_id_from_filename,
                                         FileStreamFactory,
                                         HostStreamFactory,
                                         PathStreamFactory,

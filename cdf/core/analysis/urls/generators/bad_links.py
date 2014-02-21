@@ -1,7 +1,7 @@
 from collections import Counter
 from itertools import groupby
 
-from cdf.streams.utils import idx_from_stream
+from cdf.core.streams.utils import idx_from_stream
 
 def get_bad_links(stream_infos, stream_outlinks):
     """

@@ -1,6 +1,6 @@
 import unittest
 
-from cdf.collections.suggestions.aggregator import MetricsConsolidator
+from cdf.core.analysis.suggestions.aggregator import MetricsConsolidator
 
 
 class TestMetricsConsolidator(unittest.TestCase):

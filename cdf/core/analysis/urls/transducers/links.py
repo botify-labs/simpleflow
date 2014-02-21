@@ -1,7 +1,7 @@
 from collections import defaultdict
 from itertools import groupby
 from cdf.metadata.raw.masks import is_first_canonical
-from cdf.streams.utils import idx_from_stream
+from cdf.core.streams.utils import idx_from_stream
 
 
 class OutlinksTransducer(object):

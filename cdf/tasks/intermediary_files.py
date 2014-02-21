@@ -7,13 +7,13 @@ from boto.exception import S3ResponseError
 from cdf.log import logger
 from cdf.utils.path import write_by_part
 from cdf.utils.s3 import fetch_files, fetch_file, push_file
-from cdf.streams.caster import Caster
+from cdf.core.streams.caster import Caster
 from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
-from cdf.collections.urls.transducers.metadata_duplicate import get_duplicate_metadata
-from cdf.collections.urls.transducers.links import OutlinksTransducer, InlinksTransducer
-from cdf.streams.utils import split_file
+from cdf.core.analysis.urls.transducers.metadata_duplicate import get_duplicate_metadata
+from cdf.core.analysis.urls.transducers.links import OutlinksTransducer, InlinksTransducer
+from cdf.core.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
-from cdf.collections.urls.generators.bad_links import get_bad_links, get_bad_link_counters
+from cdf.core.analysis.urls.generators.bad_links import get_bad_links, get_bad_link_counters
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH
 from cdf.tasks.base import make_tmp_dir_from_crawl_id

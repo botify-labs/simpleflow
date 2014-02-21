@@ -2,7 +2,7 @@ from collections import defaultdict, Counter
 from itertools import groupby
 
 from cdf.metadata.raw import MANDATORY_CONTENT_TYPES_IDS
-from cdf.streams.utils import idx_from_stream
+from cdf.core.streams.utils import idx_from_stream
 
 
 # notset metadata is interpreted as an empty string

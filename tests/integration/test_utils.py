@@ -1,11 +1,11 @@
 import gzip
 import os
 import re
-from cdf.streams.caster import Caster
+from cdf.core.streams.caster import Caster
 from cdf.metadata.raw import STREAMS_FILES, STREAMS_HEADERS
 
-from cdf.streams.utils import split_file
-from cdf.collections.urls.utils import get_part_id
+from cdf.core.streams.utils import split_file
+from cdf.core.analysis.urls.utils import get_part_id
 
 
 def split_partition(input_file,

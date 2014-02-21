@@ -2,11 +2,8 @@
 import unittest
 import logging
 
-from cdf.utils.hashing import string_to_int64
-
-
 from cdf.log import logger
-from cdf.collections.urls.transducers.metadata_duplicate import get_duplicate_metadata, notset_hash_value
+from cdf.core.analysis.urls.transducers.metadata_duplicate import get_duplicate_metadata, notset_hash_value
 
 logger.setLevel(logging.DEBUG)
 

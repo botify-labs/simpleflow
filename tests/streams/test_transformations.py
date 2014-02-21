@@ -3,7 +3,7 @@ import unittest
 import logging
 
 from cdf.log import logger
-from cdf.streams.transformations import group_with, GroupWithSkipException
+from cdf.core.streams.transformations import group_with, GroupWithSkipException
 
 logger.setLevel(logging.DEBUG)
 

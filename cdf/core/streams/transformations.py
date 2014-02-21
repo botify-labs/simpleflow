@@ -1,4 +1,4 @@
-from .exceptions import GroupWithSkipException
+from cdf.core.streams.exceptions import GroupWithSkipException
 
 
 def group_with(left, final_func=None, **stream_defs):

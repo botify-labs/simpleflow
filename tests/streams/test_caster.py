@@ -5,8 +5,8 @@ from StringIO import StringIO
 
 from cdf.log import logger
 from cdf.metadata.raw.schema import _str_to_bool
-from cdf.streams.utils import split_file
-from cdf.streams.caster import Caster
+from cdf.core.streams.utils import split_file
+from cdf.core.streams.caster import Caster
 
 logger.setLevel(logging.DEBUG)
 
