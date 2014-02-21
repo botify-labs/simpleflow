@@ -8,7 +8,7 @@ from cdf.log import logger
 from cdf.utils.path import write_by_part
 from cdf.utils.s3 import fetch_files, fetch_file, push_file
 from cdf.streams.caster import Caster
-from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
+from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
 from cdf.collections.urls.transducers.metadata_duplicate import get_duplicate_metadata
 from cdf.collections.urls.transducers.links import OutlinksTransducer, InlinksTransducer
 from cdf.streams.utils import split_file

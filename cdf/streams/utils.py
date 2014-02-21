@@ -10,7 +10,7 @@ times on the values.
 """
 from itertools import izip
 
-from cdf.streams.mapping import STREAMS_HEADERS
+from cdf.metadata.raw import STREAMS_HEADERS
 
 
 __all__ = ['split', 'rstrip', 'split_file', 'idx_from_stream']

@@ -1,4 +1,4 @@
-from cdf.streams.mapping import CONTENT_TYPE_NAME_TO_ID
+from cdf.metadata.raw import CONTENT_TYPE_NAME_TO_ID
 
 
 SUGGEST_CLUSTERS = ['mixed']

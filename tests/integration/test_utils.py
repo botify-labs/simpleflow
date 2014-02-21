@@ -2,7 +2,7 @@ import gzip
 import os
 import re
 from cdf.streams.caster import Caster
-from cdf.streams.mapping import STREAMS_FILES, STREAMS_HEADERS
+from cdf.metadata.raw import STREAMS_FILES, STREAMS_HEADERS
 
 from cdf.streams.utils import split_file
 from cdf.collections.urls.utils import get_part_id

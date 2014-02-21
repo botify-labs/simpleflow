@@ -1,7 +1,9 @@
-from cdf.streams.mapping import CONTENT_TYPE_INDEX
+from cdf.metadata.raw import CONTENT_TYPE_INDEX
 
 
-CROSS_PROPERTIES_COLUMNS = ('query', 'content_type', 'depth', 'http_code', 'index', 'follow')
+CROSS_PROPERTIES_COLUMNS = ('query', 'content_type',
+                            'depth', 'http_code',
+                            'index', 'follow')
 
 COUNTERS_FIELDS = (
     'pages_nb',

@@ -1,4 +1,12 @@
-from .masks import follow_mask
+from cdf.metadata.raw.masks import follow_mask
+
+__all__ = ["STREAMS_FILES", "STREAMS_HEADERS",
+           "CONTENT_TYPE_INDEX", "CONTENT_TYPE_NAME_TO_ID",
+           "MANDATORY_CONTENT_TYPES", "MANDATORY_CONTENT_TYPES_IDS"]
+
+
+def _str_to_bool(string):
+    return string == '1'
 
 
 STREAMS_FILES = {
@@ -18,10 +26,6 @@ STREAMS_FILES = {
     'urlbadlinks': 'badlinks',
     'urlbadlinks_counters': 'badlinks_counters'
 }
-
-
-def str_to_bool(string):
-    return string == '1'
 
 
 STREAMS_HEADERS = {
@@ -54,7 +58,7 @@ STREAMS_HEADERS = {
         ('content_type', int),
         ('filled_nb', int),
         ('duplicates_nb', int),
-        ('is_first_url', str_to_bool),
+        ('is_first_url', _str_to_bool),
         ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
     ),
     'OUTLINKS_RAW': (
@@ -86,17 +90,17 @@ STREAMS_HEADERS = {
     'OUTLINKS_COUNTERS': (
         ('id', int),
         ('follow', follow_mask),
-        ('is_internal', str_to_bool),
+        ('is_internal', _str_to_bool),
         ('score', int),
         ('score_unique', int),
     ),
     'OUTREDIRECT_COUNTERS': (
         ('id', int),
-        ('is_internal', str_to_bool)
+        ('is_internal', _str_to_bool)
     ),
     'OUTCANONICAL_COUNTERS': (
         ('id', int),
-        ('equals', str_to_bool)
+        ('equals', _str_to_bool)
     ),
     'INLINKS_COUNTERS': (
         ('id', int),

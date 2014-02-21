@@ -14,7 +14,7 @@ from autotagging.visualization.textual import (save_mixed_clusters,
 
 from cdf.utils.path import makedirs
 from cdf.utils.remote_files import nb_parts_from_crawl_location
-from cdf.streams.mapping import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
+from cdf.metadata.raw import CONTENT_TYPE_NAME_TO_ID
 from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file

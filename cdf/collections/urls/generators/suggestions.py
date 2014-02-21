@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from cdf.streams.mapping import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
+from cdf.metadata.raw import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 from cdf.streams.utils import idx_from_stream, group_left
 from BQL.parser.tagging import query_to_python
 from BQL.parser.metadata import query_to_python as metadata_query_to_python

@@ -1,12 +1,10 @@
 # -*- coding:utf-8 -*-
 import unittest
 import logging
-from datetime import datetime
-
 
 from cdf.log import logger
 from cdf.collections.urls.generators.documents import UrlDocumentGenerator
-from cdf.streams.masks import list_to_mask, follow_mask
+from cdf.metadata.raw.masks import list_to_mask, follow_mask
 
 logger.setLevel(logging.DEBUG)
 

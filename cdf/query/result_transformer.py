@@ -6,7 +6,7 @@ from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 from cdf.log import logger
 from cdf.collections.urls.utils import get_es_id, get_url_id
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
-from cdf.streams.masks import follow_mask
+from cdf.metadata.raw.masks import follow_mask
 
 
 class ResultTransformer(object):

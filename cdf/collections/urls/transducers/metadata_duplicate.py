@@ -1,10 +1,7 @@
-import itertools
-
-
 from collections import defaultdict, Counter
 from itertools import groupby
 
-from cdf.streams.mapping import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES_IDS
+from cdf.metadata.raw import MANDATORY_CONTENT_TYPES_IDS
 from cdf.streams.utils import idx_from_stream
 
 

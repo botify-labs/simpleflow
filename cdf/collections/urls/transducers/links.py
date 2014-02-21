@@ -1,6 +1,6 @@
 from collections import defaultdict
 from itertools import groupby
-from cdf.streams.masks import is_first_canonical
+from cdf.metadata.raw.masks import is_first_canonical
 from cdf.streams.utils import idx_from_stream
 
 

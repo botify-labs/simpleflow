@@ -2,16 +2,15 @@ import ujson
 from itertools import izip
 from collections import defaultdict
 
-from cdf.streams.mapping import STREAMS_HEADERS, CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
-from cdf.log import logger
+from cdf.metadata.raw import (STREAMS_HEADERS, CONTENT_TYPE_INDEX,
+                              MANDATORY_CONTENT_TYPES)
 from cdf.streams.transformations import group_with
 from cdf.streams.exceptions import GroupWithSkipException
 from cdf.streams.utils import idx_from_stream
-from cdf.streams.masks import list_to_mask
+from cdf.metadata.raw.masks import list_to_mask
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 from cdf.metadata.url import get_children
-from cdf.collections.urls.constants import SUGGEST_CLUSTERS
 
 
 def extract_patterns(attributes, stream_item):
