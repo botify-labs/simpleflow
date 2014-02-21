@@ -1,7 +1,7 @@
 import abc
 
 from cdf.metadata.url import has_child, get_children
-from cdf.metadata.url.es_mapping_generation import generate_default_value_lookup
+from cdf.metadata.url.es_backend_utils import generate_default_value_lookup
 from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 from cdf.log import logger
 from cdf.collections.urls.utils import get_es_id, get_url_id

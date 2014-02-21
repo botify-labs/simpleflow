@@ -1,8 +1,8 @@
 import unittest
-from cdf.metadata.url.es_mapping_generation import (_parse_field_path,
-                                             generate_es_mapping,
-                                             generate_default_value_lookup,
-                                             generate_valid_field_lookup)
+from cdf.metadata.url.es_backend_utils import (_parse_field_path,
+                                               generate_es_mapping,
+                                               generate_default_value_lookup,
+                                               generate_valid_field_lookup)
 from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 
 

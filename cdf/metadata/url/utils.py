@@ -1,5 +1,5 @@
 from .url_metadata import URLS_DATA_FORMAT_DEFINITION
-from cdf.metadata.url.es_mapping_generation import generate_complete_field_lookup
+from .es_backend_utils import generate_complete_field_lookup
 import cdf.metadata.utils as util
 
 _COMPLETE_FIELDS = generate_complete_field_lookup(

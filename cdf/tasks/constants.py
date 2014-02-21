@@ -1,4 +1,4 @@
-from cdf.metadata.url.es_mapping_generation import generate_es_mapping
+from cdf.metadata.url.es_backend_utils import generate_es_mapping
 from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 
 # By default, when tasks pull files from s3, local files are ignored
