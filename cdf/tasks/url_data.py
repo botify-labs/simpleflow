@@ -26,9 +26,7 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type):
 
 
 @with_temporary_dir
-def push_urls_to_elastic_search(crawl_id, part_id, s3_uri,
-                                es_location, es_index, es_doc_type,
-                                tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
+def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index, es_doc_type, tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     """
     Generate JSON type urls documents from a crawl's `part_id` and push it to elastic search
 

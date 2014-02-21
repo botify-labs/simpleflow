@@ -17,8 +17,7 @@ def extract_patterns(attributes, stream_item):
     # Create initial dictionary
     attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
 
-    attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'],
-                                                                  attributes['query_string']))
+    attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
     attributes['url_hash'] = string_to_int64(attributes['url'])
 
     # query_string fields
@@ -27,17 +26,10 @@ def extract_patterns(attributes, stream_item):
         # The first character is ? we flush it in the split
         qs = [k.split('=') if '=' in k else [k, ''] for k in query_string[1:].split('&')]
         attributes['query_string_keys'] = [q[0] for q in qs]
-    attributes['metadata_nb'] = {verbose_content_type: 0
-                                 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
-    attributes['metadata_duplicate'] = {verbose_content_type: []
-                                        for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()
-                                        if verbose_content_type in MANDATORY_CONTENT_TYPES}
-    attributes['metadata_duplicate_nb'] = {verbose_content_type: 0
-                                           for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()
-                                           if verbose_content_type in MANDATORY_CONTENT_TYPES}
-    attributes['metadata_duplicate_is_first'] = {verbose_content_type: False
-                                                 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()
-                                                 if verbose_content_type in MANDATORY_CONTENT_TYPES}
+    attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
+    attributes['metadata_duplicate'] = {verbose_content_type: [] for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
+    attributes['metadata_duplicate_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
+    attributes['metadata_duplicate_is_first'] = {verbose_content_type: False for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
     attributes['inlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in get_children('inlinks_internal_nb')}
     attributes['inlinks_internal_nb']['nofollow_combinations'] = []
     # a list of [src, mask, count]
@@ -63,13 +55,15 @@ def extract_patterns(attributes, stream_item):
 def extract_infos(attributes, stream_item):
     date_crawled_idx = idx_from_stream('infos', 'date_crawled')
 
-    # Those codes should not be returned
-    # Some pages can be in the queue and not crawled
-    # from some reason (ex : max pages < to the queue
-    # ---------------
-    # job_not_done=0,
-    # job_todo=1,
-    # job_in_progress=2,
+    """
+    Those codes should not be returned
+    Some pages can be in the queue and not crawled
+    from some reason (ex : max pages < to the queue
+    ---------------
+    job_not_done=0,
+    job_todo=1,
+    job_in_progress=2,
+    """
 
     stream_item[date_crawled_idx] = date_2k_mn_to_date(
         stream_item[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
@@ -332,42 +326,43 @@ class UrlDocumentGenerator(object):
         self.stream_patterns = stream_patterns
         self.streams = kwargs
 
+    """
+    Return a document collection
+
+    Format :
+
+        {
+            "url": "http://www.site.com/fr/my-article-1",
+            "protocol": "http",
+            "host": "www.site.com",
+            "path": "/fr/my-article-1",
+            "query_string": "?p=comments&offset=10",
+            "query_string_keys": ["p", "offset"],
+            "id": 1,
+            "date": "2013-10-10 09:10:12",
+            "depth": 1,
+            "data_mask": 3, // See Data Mask explanations
+            "http_code": 200,
+            "delay1": 120,
+            "delay2": 300,
+            "outlinks_internal_follow_nb": 4,
+            "outlinks_internal_nofollow_nb": 1,
+            "outlinks_external_follow_nb": 5,
+            "outlinks_external_nofollow_nb": 2,
+            "bytesize": 14554,
+            "inlinks_internal_nb": 100,
+            "inlinks_external_nb": 100,
+            "metadata": {
+                "title": ["My title"],
+                "description": ["My description"],
+                "h1": ["My first H1", "My second H1"]
+            },
+        }
+
+    """
     def __iter__(self):
-        """Return a document collection
-
-        Format :
-
-            {
-                "url": "http://www.site.com/fr/my-article-1",
-                "protocol": "http",
-                "host": "www.site.com",
-                "path": "/fr/my-article-1",
-                "query_string": "?p=comments&offset=10",
-                "query_string_keys": ["p", "offset"],
-                "id": 1,
-                "date": "2013-10-10 09:10:12",
-                "depth": 1,
-                "data_mask": 3, // See Data Mask explanations
-                "http_code": 200,
-                "delay1": 120,
-                "delay2": 300,
-                "outlinks_internal_follow_nb": 4,
-                "outlinks_internal_nofollow_nb": 1,
-                "outlinks_external_follow_nb": 5,
-                "outlinks_external_nofollow_nb": 2,
-                "bytesize": 14554,
-                "inlinks_internal_nb": 100,
-                "inlinks_external_nb": 100,
-                "metadata": {
-                    "title": ["My title"],
-                    "description": ["My description"],
-                    "h1": ["My first H1", "My second H1"]
-                },
-            }
-        """
         left = (self.stream_patterns, 0, extract_patterns)
-        streams_ref = {key: (self.streams[key], idx_from_stream(key, 'id'), self.EXTRACTORS[key])
-                       for key in self.streams.keys()}
+        streams_ref = {key: (self.streams[key], idx_from_stream(key, 'id'), self.EXTRACTORS[key]) for key in self.streams.keys()}
         return group_with(left, final_func=end_extract_url, **streams_ref)
 
     def save_to_file(self, location):
