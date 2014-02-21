@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 import copy
-import pyhash
-hasher = pyhash.fnv1_32()
-
 from collections import defaultdict, Counter
 from pandas import DataFrame
 

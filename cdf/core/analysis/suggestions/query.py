@@ -121,7 +121,8 @@ class BaseMetricsQuery(object):
         if isinstance(filters, list):
             if filters[0].keys()[0].lower() in ('and', 'or'):
                 _sub_operator_key = filters[0].keys()[0]
-                filters_func = self._apply_filters_list(df, filters[0][_sub_operator_key], _operator=_sub_operator_key.lower())
+                filters_func = self._apply_filters_list(df, filters[0][_sub_operator_key],
+                                                        _operator=_sub_operator_key.lower())
             else:
                 filters_func = self._apply_filters_list(df, filters, _operator=parent_operator)
         elif is_dict_filter(filters):
@@ -134,7 +135,9 @@ class BaseMetricsQuery(object):
                 if filters_func is None:
                     filters_func = self._apply_filters(df, _filter, parent_operator=_operator)
                 else:
-                    getattr(operator, "__i%s__" % _operator)(filters_func, self._apply_filters(df, _filter, parent_operator=_operator))
+                    getattr(operator, "__i%s__" % _operator)(filters_func,
+                                                             self._apply_filters(df, _filter,
+                                                                                 parent_operator=_operator))
         else:
             raise Exception('Filter not well formated : %s' % filters)
         return filters_func
@@ -204,16 +207,16 @@ class BaseMetricsQuery(object):
             df = df.groupby(settings['group_by']).agg('sum').reset_index()
             df = self.df_filter_after_agg(df)
             if 'sort' in settings:
-                df.sort(columns=[k[0] for k in settings['sort']], ascending=[k[1] == "ASC" for k in settings['sort']], inplace=True)
+                df.sort(columns=[k[0] for k in settings['sort']],
+                        ascending=[k[1] == "ASC" for k in settings['sort']], inplace=True)
 
         else:
-            """
-            No group_by, we return a dictionnary with all counters
-            """
+            # No group_by, we return a dictionnary with all counters
             df = df.sum().reset_index()
             df = self.df_filter_after_agg(df)
             if 'sort' in settings:
-                df.sort(columns=[k[0] for k in settings['sort']], ascending=[k[1] == "ASC" for k in settings['sort']], inplace=True)
+                df.sort(columns=[k[0] for k in settings['sort']],
+                        ascending=[k[1] == "ASC" for k in settings['sort']], inplace=True)
             results = {}
             values = dict(df.values)
             for field in final_fields:
@@ -227,7 +230,8 @@ class BaseMetricsQuery(object):
             for field in final_fields:
                 deep_update(counters, deep_dict({field: transform_std_type(field, values)}))
             result = {
-                'properties': {field_: self._display_field(field_, values[field_]) for field_ in settings['group_by']},
+                'properties': {field_: self._display_field(field_, values[field_])
+                               for field_ in settings['group_by']},
                 'counters': counters
             }
             results.append(result)
@@ -365,7 +369,7 @@ class SuggestQuery(BaseMetricsQuery):
             den_field = target_field["div"][1]  # denominator field
 
             #multiply by 1.0 to convert to float
-            #cf http://stackoverflow.com/questions/12183432/typecasting-before-division-or-any-other-mathematical-operator-of-columns-in-d
+            #cf http://stackoverflow.com/questions/12183432
             df["score"] = df[num_field] * 1.0 / df[den_field]
             target_field = "score"
             settings["target_field"] = target_field
@@ -460,12 +464,14 @@ class SuggestQuery(BaseMetricsQuery):
         # based on a complex operation like "div"
         # So we cannot know the value from the full crawl
         if total_results:
-            result["percent_total"] = round(float(result["counters"][target_field]) * 100.00 / float(total_results), 1)
+            result["percent_total"] = round(
+                float(result["counters"][target_field]) * 100.00 / float(total_results), 1)
         else:
             result["percent_total"] = -1
 
         result["score_pattern"] = pattern_size
-        result["percent_pattern"] = round(float(result["counters"][target_field]) * 100.00 / float(pattern_size), 1)
+        result["percent_pattern"] = round(
+            float(result["counters"][target_field]) * 100.00 / float(pattern_size), 1)
 
     def _get_total_results(self, query):
         """Return the total number of items for the given query
@@ -625,12 +631,10 @@ class SuggestQuery(BaseMetricsQuery):
         :type df: pandas.DataFrame
         :returns: pandas.DataFrame
         """
-        """
-        if self.options['stats_urls_done']:
-            # Take only urls > 3%
-            threshold = int(float(self.options['stats_urls_done']) * 0.03)
-            return df[df['pages_nb'] > threshold]
-        """
+        # if self.options['stats_urls_done']:
+        #     # Take only urls > 3%
+        #     threshold = int(float(self.options['stats_urls_done']) * 0.03)
+        #     return df[df['pages_nb'] > threshold]
         return df
 
 

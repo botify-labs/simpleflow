@@ -3,6 +3,7 @@ from itertools import groupby
 
 from cdf.core.streams.utils import idx_from_stream
 
+
 def get_bad_links(stream_infos, stream_outlinks):
     """
     (url_src_id, url_dest_id, error_http_code)

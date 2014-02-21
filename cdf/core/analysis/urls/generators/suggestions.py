@@ -25,7 +25,8 @@ class MetadataClusterMixin(object):
     def add_metadata_cluster(self, metadata_type, cluster_list):
         if metadata_type not in CONTENT_TYPE_INDEX.values():
             raise Exception('{} is not a valid metadata type'.format(metadata_type))
-        self.metadata_clusters[CONTENT_TYPE_NAME_TO_ID[metadata_type]] = transform_queries(cluster_list, metadata_query_to_python)
+        self.metadata_clusters[CONTENT_TYPE_NAME_TO_ID[metadata_type]] = transform_queries(cluster_list,
+                                                                                           metadata_query_to_python)
 
     def make_clusters_dataframe(self):
         """
@@ -34,12 +35,14 @@ class MetadataClusterMixin(object):
         """
 
         final_dataframe = DataFrame()
-        for cluster_section, clusters in (("pattern", self.patterns_clusters), ("metadata", self.metadata_clusters)):
+        for cluster_section, clusters in (("pattern", self.patterns_clusters),
+                                          ("metadata", self.metadata_clusters)):
             for i, (cluster_name, suggestions) in enumerate(clusters.iteritems()):
                 if len(suggestions) == 0:
                     continue
-                # Temporary deduplicate queries, some are set 2 times like in path file for francetvinfo, Simon is fixing it
-                suggestions = list(set((q['hash'], q['string'], q['verbose_string']) for q in suggestions) )
+                # Temporary deduplicate queries, some are set 2 times
+                # like in path file for francetvinfo, Simon is fixing it
+                suggestions = list(set((q['hash'], q['string'], q['verbose_string']) for q in suggestions))
                 dataframe = DataFrame({"string": [q[1] for q in suggestions],
                                        "verbose_string": [q[2] for q in suggestions]})
                 dataframe.index = [q[0] for q in suggestions]
@@ -58,7 +61,9 @@ class UrlSuggestionsGenerator(MetadataClusterMixin):
 
     def __iter__(self):
         http_code_idx = idx_from_stream('infos', 'http_code')
-        for i in group_left((self.stream_patterns, 0), infos=(self.stream_infos, 0), contents=(self.stream_contents, 0)):
+        for i in group_left((self.stream_patterns, 0),
+                            infos=(self.stream_infos, 0),
+                            contents=(self.stream_contents, 0)):
             url_id, left_line, streams = i
             # If http_code in 0, 1, 2 > means than not crawled
             # If http_code < 0, it means that there were a fetcher error but the url was correctly crawled

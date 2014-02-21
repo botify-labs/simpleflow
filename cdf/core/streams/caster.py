@@ -1,5 +1,3 @@
-from itertools import izip
-
 """
 A stream is a generator of values. A value may be any object but usually is a
 string or a tuple. The purpose of this module is to provide simple operations
@@ -11,7 +9,7 @@ times on the values.
 
 Example:
 
->>> import streams.utils
+>>> from cdf.core.streams.utils import split_file
 >>> INFOS_FIELDS = [('id', int),
 ...                 ('depth', int),
 ...                 ('date_crawled', None),
@@ -21,9 +19,9 @@ Example:
 ...                 ('delay2', bool),
 ...                 ('gzipped', bool)]
 >>> cast = Caster(INFOS_FIELDS).cast
->>> inlinks = cast(streams.utils.split_file((open('test.data'))))
-
+>>> inlinks = cast(split_file((open('test.data'))))
 """
+from itertools import izip
 
 __all__ = ['Caster']
 

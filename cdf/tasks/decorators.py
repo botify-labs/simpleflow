@@ -3,8 +3,9 @@ import shutil
 
 
 class TemporaryDirTask(object):
-    """
-    This class aims to be called as decorator on functions needing to fetch S3 Files that will be removed at the end of the task
+    """This class aims to be called as decorator on functions
+    needing to fetch S3 Files that will be removed at the
+    end of the task
 
     Functions meed to have a `tmp_dir` argument
 
