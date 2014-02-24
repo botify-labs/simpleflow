@@ -18,6 +18,7 @@ from cdf.streams.mapping import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 from cdf.collections.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
+from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.streams.stream_factory import (PathStreamFactory,
                                         HostStreamFactory,
                                         QueryStringStreamFactory,
@@ -25,7 +26,7 @@ from cdf.streams.stream_factory import (PathStreamFactory,
                                         load_crawler_metakeys,
                                         get_nb_crawled_urls)
 
-
+@with_temporary_dir
 def compute_mixed_clusters(crawl_id,
                            s3_uri,
                            first_part_id_size,
