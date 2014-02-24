@@ -13,7 +13,6 @@ from cdf.collections.urls.generators.documents import UrlDocumentGenerator
 from cdf.streams.utils import split_file
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH, ES_MAPPING
-from cdf.tasks.base import make_tmp_dir_from_crawl_id
 
 
 def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type):
@@ -45,9 +44,6 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
     es = Elasticsearch([{'host': host, 'port': int(port)}])
 
     # Fetch locally the files from S3
-    if not tmp_dir:
-        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
-
     files_fetched = fetch_files(s3_uri, tmp_dir,
                                 regexp=['url(ids|infos|links|inlinks|contents|' +
                                         'contentsduplicate|_suggested_clusters|' +

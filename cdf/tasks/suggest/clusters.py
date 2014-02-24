@@ -31,13 +31,12 @@ def compute_mixed_clusters(crawl_id,
                            s3_uri,
                            first_part_id_size,
                            part_id_size,
-                           tmp_dir_prefix='/tmp',
+                           tmp_dir=None,
                            force_fetch=False):
 
     minimal_frequency = 0.03
 
     # Fetch locally the files from S3
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
     makedirs(tmp_dir, exist_ok=True)
 
     output_dir = tmp_dir
