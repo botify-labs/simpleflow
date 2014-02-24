@@ -358,7 +358,13 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 urls_filters = {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1, "predicate": "gt"}
             else:
                 urls_fields = []
-                urls_filters = {"field": "metadata_nb.{}".format(metadata_type), "value": 0}
+                urls_filters = {
+                    "and": [
+                        {"field": "metadata_nb.{}".format(metadata_type), "value": 0},
+                        {"field": "http_code", "value": [200, 299], "predicate": "between"}
+                    ]
+                }
+                # TODO : waiting for elasticsearch 1.0 to filter content_type : text/html
             suggest.register(identifier='metadata/{}/{}'.format(metadata_type, metadata_status), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # Speed
