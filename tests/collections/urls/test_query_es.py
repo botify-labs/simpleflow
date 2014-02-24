@@ -507,7 +507,7 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_redirects_to_not_crawled(self):
-        bql_query = _get_simple_bql_query('redirects_to', 'not_null', value=None,
+        bql_query = _get_simple_bql_query('redirects_to', 'exists', value=None,
                                           fields=['redirects_to'])
         result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
         expected = {
