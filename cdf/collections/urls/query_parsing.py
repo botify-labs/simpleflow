@@ -429,7 +429,7 @@ class Between(PredicateFilter):
         }
 
 
-class NotNull(PredicateFilter):
+class Exists(PredicateFilter):
     def is_list_op(self):
         return None
 
@@ -464,7 +464,7 @@ _PREDICATE_LIST = {
     'between': Between,
 
     # universal operators
-    'not_null': NotNull
+    'exists': Exists
 }
 
 

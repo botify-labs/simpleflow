@@ -210,12 +210,12 @@ class TestQueryTransformation(unittest.TestCase):
         result = get_es_query(query, CRAWL_ID)
         self.assertDictEqual(result, expected_es_query)
 
-    def test_not_null_query(self):
+    def test_exists_query(self):
         query = {
             'fields': ["metadata.h1"],
             'filters': {
                 'and': [
-                    {'field': 'metadata.title', 'predicate': 'not_null'}
+                    {'field': 'metadata.title', 'predicate': 'exists'}
                 ]
             }
         }
