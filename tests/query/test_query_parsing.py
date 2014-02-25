@@ -126,7 +126,7 @@ class TestFilterParsing(ParsingTestCase):
         self.assertParsingError(parsed.validate)
 
         # value is not required
-        invalid = {'predicate': 'not_null', 'field': 'path', 'value': 'data'}
+        invalid = {'predicate': 'exists', 'field': 'path', 'value': 'data'}
         parsed = parse_predicate_filter(invalid)
         self.assertParsingError(parsed.validate)
 
@@ -138,6 +138,6 @@ class TestFilterParsing(ParsingTestCase):
         # predicate field is not a child field
         # `error_links` is a valid query field, but not valid as a target
         # of predicate
-        invalid = {'predicate': 'not_null', 'field': 'error_links'}
+        invalid = {'predicate': 'exists', 'field': 'error_links'}
         parsed = parse_predicate_filter(invalid)
         self.assertParsingError(parsed.validate)

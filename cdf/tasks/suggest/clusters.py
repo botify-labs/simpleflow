@@ -18,24 +18,24 @@ from cdf.core.analysis.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
 from cdf.core.streams.stream_factory import (PathStreamFactory,
-                                        HostStreamFactory,
-                                        QueryStringStreamFactory,
-                                        MetadataStreamFactory,
-                                        load_crawler_metakeys,
-                                        get_nb_crawled_urls)
+                                             HostStreamFactory,
+                                             QueryStringStreamFactory,
+                                             MetadataStreamFactory,
+                                             load_crawler_metakeys,
+                                             get_nb_crawled_urls)
+from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 
 
+@with_temporary_dir
 def compute_mixed_clusters(crawl_id,
                            s3_uri,
                            first_part_id_size,
                            part_id_size,
-                           tmp_dir_prefix='/tmp',
+                           tmp_dir=None,
                            force_fetch=False):
-
     minimal_frequency = 0.03
 
     # Fetch locally the files from S3
-    tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
     makedirs(tmp_dir, exist_ok=True)
 
     output_dir = tmp_dir

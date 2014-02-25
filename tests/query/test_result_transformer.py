@@ -124,6 +124,30 @@ class TestDefaultValueTransformer(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_nested_fields(self):
+        es_result = [{
+            "url": "http://www.youtube.com/",
+            "inlinks_internal_nb": {
+                "total": 1006248,
+                "total_unique": 468100,
+                "follow_unique": 468100,
+                "nofollow": 209,
+                "nofollow_combinations": [
+                    {
+                        "value": 209,
+                        "key": [
+                            "link"
+                        ]
+                    }
+                ],
+                "follow": 1006039
+            }
+        }]
+        fields = ['url', 'inlinks_internal_nb']
+        d = DefaultValueTransformer(es_result, fields=fields)
+        # just test that no exception
+        d.transform()
+
     def test_simple(self):
         fields = ['metadata_nb.title']
         results = [{}, {}]

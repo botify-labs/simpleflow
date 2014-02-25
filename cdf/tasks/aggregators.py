@@ -23,7 +23,6 @@ from cdf.core.analysis.urls.utils import merge_queries_filters
 
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH
-from cdf.tasks.base import make_tmp_dir_from_crawl_id
 
 from cdf.core.analysis.urls.query_helpers import (
     get_filters_from_http_code_range,
@@ -34,8 +33,6 @@ from cdf.core.analysis.urls.query_helpers import (
 @with_temporary_dir
 def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     # Fetch locally the files from S3
-    if not tmp_dir:
-        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
     suggest_dir_path = os.path.join(tmp_dir, 'suggest')
     makedirs(suggest_dir_path, exist_ok=True)
 
@@ -90,8 +87,6 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir=None, force_fetch=False):
     """
     Fetch all part_id's aggregators and merge them
     """
-    if not tmp_dir:
-        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
     makedirs(tmp_dir, exist_ok=True)
 
     # Fetch hdf5 file that already contains the full list of requests
@@ -266,9 +261,6 @@ def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir, ide
 
 @with_temporary_dir
 def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number, tmp_dir=None, force_fetch=False):
-    if not tmp_dir:
-        tmp_dir = make_tmp_dir_from_crawl_id(crawl_id)
-
     counter_kwargs = {
         'crawl_id': crawl_id,
         's3_uri': s3_uri,

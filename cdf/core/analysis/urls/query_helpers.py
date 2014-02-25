@@ -1,6 +1,6 @@
 CANONICAL_FIELD_TO_FILTERS = {
-    "filled": {"field": "canonical_to", "predicate": "not_null"},
-    "not_filled": {"field": "canonical_to", "predicate": "not_null", "not": True},
+    "filled": {"field": "canonical_to", "predicate": "exists"},
+    "not_filled": {"field": "canonical_to", "predicate": "exists"},
     "equal": {"field": "canonical_to_equal", "value": True},
     "not_equal": {"field": "canonical_to_equal", "value": False},
     "incoming": {"field": "canonical_from_nb", "value": 0, "predicate": "gt"}
