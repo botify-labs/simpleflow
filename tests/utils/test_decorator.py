@@ -33,8 +33,9 @@ class TestTempDirDecorator(unittest.TestCase):
     def test_normal_execution_with_clean(self):
         temp_dir_param = tempfile.mkdtemp()
         # `tmp_dir` is given as a named argument
-        # so normal execution
-        temp_dir = task_func("param", tmp_dir=temp_dir_param)
+        # `cleanup` is set to True
+        temp_dir = task_func("param", tmp_dir=temp_dir_param,
+                             cleanup=True)
 
         # temp dir should not be modified
         self.assertEqual(temp_dir, temp_dir_param)
@@ -54,7 +55,8 @@ class TestTempDirDecorator(unittest.TestCase):
         # with `tmp_dir`, but no cleanup
         temp_dir_param = tempfile.mkdtemp()
         # `tmp_dir` is given as a named argument
-        temp_dir = task_func("param", tmp_dir=temp_dir_param, cleanup=False)
+        # `cleanup` defaults to False
+        temp_dir = task_func("param", tmp_dir=temp_dir_param)
 
         # temp dir should not be modified
         self.assertEqual(temp_dir, temp_dir_param)

@@ -1,5 +1,6 @@
 import tempfile
 import shutil
+from cdf.utils.path import makedirs
 
 
 class TemporaryDirTask(object):
@@ -52,7 +53,7 @@ class TemporaryDirTask(object):
         is_tmp = self.tmp_key not in kwargs or kwargs[self.tmp_key] is None
 
         # pops the `cleanup` kwargs
-        is_clean = kwargs.pop(self.clean_key, True)
+        is_clean = kwargs.pop(self.clean_key, False)
         # if execute in a temp directory, always cleanup
         is_clean = is_tmp or is_clean
 
@@ -65,6 +66,7 @@ class TemporaryDirTask(object):
             else:
                 # set the dirpath for cleanup
                 self.tmp_dir = kwargs[self.tmp_key]
+                makedirs(self.tmp_dir, exist_ok=True)
                 # execute in the given dir
                 result = self.func(*args, **kwargs)
 
