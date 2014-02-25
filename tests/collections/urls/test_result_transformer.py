@@ -123,6 +123,30 @@ class TestDefaultValueTransformer(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_nested_fields(self):
+        es_result = [{
+            "url": "http://www.youtube.com/",
+            "inlinks_internal_nb": {
+                "total": 1006248,
+                "total_unique": 468100,
+                "follow_unique": 468100,
+                "nofollow": 209,
+                "nofollow_combinations": [
+                    {
+                        "value": 209,
+                        "key": [
+                            "link"
+                        ]
+                    }
+                ],
+                "follow": 1006039
+            }
+        }]
+        fields = ['url', 'inlinks_internal_nb']
+        d = DefaultValueTransformer(es_result, fields=fields)
+        # just test that no exception
+        d.transform()
+
     def test_simple(self):
         fields = ['metadata_nb.title']
         results = [{}, {}]
@@ -174,13 +198,13 @@ class TestUnindexedUrlTransformer(unittest.TestCase):
         }
 
         es_mock_conn = MagicMock()
-        es_mock_conn.mget.return_value={
+        es_mock_conn.mget.return_value = {
             u'docs': [
-                      {
-                          #some other values are also returned by
-                          #elasticsearch but they are not relevant for the test
-                          u'exists': False,
-                       }]
+                {
+                    #some other values are also returned by
+                    #elasticsearch but they are not relevant for the test
+                    u'exists': False,
+                }]
 
         }
 
@@ -199,17 +223,17 @@ class TestUnindexedUrlTransformer(unittest.TestCase):
     def test_outlinks_internal_not_raise(self):
         es_result = {
             'outlinks_internal': [
-            [1, 2, 100], # follow
-            [2, 7, 1], # link, meta, robots
-        ]
+                [1, 2, 100], # follow
+                [2, 7, 1], # link, meta, robots
+            ]
         }
 
         es_mock_conn = MagicMock()
-        es_mock_conn.mget.return_value={
+        es_mock_conn.mget.return_value = {
             u'docs': [
                 {
                     "_id": "1:1",
-                    "fields" : {
+                    "fields": {
                         u'url': "url1",
                         u'http_code': 200,
                         'crawled': True
@@ -217,12 +241,12 @@ class TestUnindexedUrlTransformer(unittest.TestCase):
                     #some other values are also returned by
                     #elasticsearch but they are not relevant for the test
                     u'exists': True,
-                    },
+                },
                 {
                     #some other values are also returned by
                     #elasticsearch but they are not relevant for the test
                     u'exists': False,
-                    }]
+                }]
         }
 
         # partial transformation, controled by `fields` param
