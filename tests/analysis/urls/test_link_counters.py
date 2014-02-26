@@ -1,5 +1,5 @@
 import unittest
-from cdf.core.analysis.urls.transducers.links import OutlinksTransducer, InlinksTransducer
+from cdf.analysis.urls.transducers.links import OutlinksTransducer, InlinksTransducer
 
 
 class TestLinkCounters(unittest.TestCase):

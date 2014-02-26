@@ -1,6 +1,6 @@
 import unittest
 
-from cdf.core.analysis.suggestions.aggregator import (MetricsAggregator,
+from cdf.analysis.suggestions.aggregator import (MetricsAggregator,
                                                     get_keys_from_stream_suggest)
 
 

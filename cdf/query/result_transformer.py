@@ -4,7 +4,7 @@ from cdf.metadata.url import has_child, get_children
 from cdf.metadata.url.es_backend_utils import generate_default_value_lookup
 from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 from cdf.log import logger
-from cdf.core.analysis.urls.utils import get_es_id, get_url_id
+from cdf.analysis.urls.utils import get_es_id, get_url_id
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
 from cdf.metadata.raw.masks import follow_mask
 

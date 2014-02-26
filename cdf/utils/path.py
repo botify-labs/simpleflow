@@ -4,7 +4,7 @@ import errno
 import itertools
 import codecs
 
-from cdf.core.analysis.urls.utils import get_part_id
+from cdf.analysis.urls.utils import get_part_id
 from cdf.log import logger
 
 

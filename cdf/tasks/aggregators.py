@@ -15,16 +15,16 @@ from cdf.utils.s3 import fetch_file, fetch_files, push_file
 from cdf.utils.path import makedirs
 from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
 from cdf.metadata.aggregates.aggregates_metadata import CROSS_PROPERTIES_COLUMNS
-from cdf.core.analysis.suggestions.aggregator import MetricsAggregator, MetricsConsolidator
-from cdf.core.analysis.urls.generators.suggestions import MetadataClusterMixin
-from cdf.core.analysis.urls.constants import SUGGEST_CLUSTERS
-from cdf.core.analysis.suggestions.query import MetricsQuery, SuggestQuery
-from cdf.core.analysis.urls.utils import merge_queries_filters
+from cdf.analysis.suggestions.aggregator import MetricsAggregator, MetricsConsolidator
+from cdf.analysis.urls.generators.suggestions import MetadataClusterMixin
+from cdf.analysis.urls.constants import SUGGEST_CLUSTERS
+from cdf.analysis.suggestions.query import MetricsQuery, SuggestQuery
+from cdf.analysis.urls.utils import merge_queries_filters
 
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH
 
-from cdf.core.analysis.urls.query_helpers import (
+from cdf.analysis.urls.query_helpers import (
     get_filters_from_http_code_range,
     get_filters_from_agg_canonical_field
 )

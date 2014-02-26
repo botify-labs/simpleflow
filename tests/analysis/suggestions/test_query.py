@@ -4,9 +4,9 @@ from tempfile import NamedTemporaryFile
 import mock
 import pandas as pd
 
-from cdf.core.analysis.suggestions.query import (is_dict_filter,
-                                                 is_boolean_operation_filter,
-                                                 SuggestQuery)
+from cdf.analysis.suggestions.query import (is_dict_filter,
+                                            is_boolean_operation_filter,
+                                            SuggestQuery)
 
 
 class TestIsDictFilter(unittest.TestCase):
@@ -364,9 +364,9 @@ class TestSuggestQuery(unittest.TestCase):
         actual_results = self.suggest_query._raw_query(dataframe, settings)
         self.assertListEqual(expected_results, actual_results)
 
-    @mock.patch("cdf.core.analysis.suggestions.query.SuggestQuery._get_total_results",
+    @mock.patch("cdf.analysis.suggestions.query.SuggestQuery._get_total_results",
                 new=lambda x, y: 10)
-    @mock.patch("cdf.core.analysis.suggestions.query.SuggestQuery._get_total_results_by_pattern",
+    @mock.patch("cdf.analysis.suggestions.query.SuggestQuery._get_total_results_by_pattern",
                 new=lambda x, y: {1: 4, 2: 3, 3: 5})
     def test_query(self):
         data = {

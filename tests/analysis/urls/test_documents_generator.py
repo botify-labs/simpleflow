@@ -3,7 +3,7 @@ import unittest
 import logging
 
 from cdf.log import logger
-from cdf.core.analysis.urls.generators.documents import UrlDocumentGenerator
+from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.metadata.raw.masks import list_to_mask, follow_mask
 
 logger.setLevel(logging.DEBUG)
