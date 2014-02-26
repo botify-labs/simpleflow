@@ -1,16 +1,15 @@
 import os
 import gzip
-import lz4
 
 from elasticsearch import Elasticsearch
 
 from cdf.log import logger
 from cdf.utils.s3 import fetch_files
 from cdf.utils.es import bulk
-from cdf.streams.caster import Caster
-from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
-from cdf.collections.urls.generators.documents import UrlDocumentGenerator
-from cdf.streams.utils import split_file
+from cdf.core.streams.caster import Caster
+from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
+from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
+from cdf.core.streams.utils import split_file
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH, ES_MAPPING
 

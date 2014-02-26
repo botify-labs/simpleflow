@@ -9,22 +9,22 @@ from pandas import HDFStore, Index
 
 from cdf.exceptions import MissingResource
 from cdf.utils.loading import build_dataframe_from_csv
-from cdf.streams.caster import Caster
-from cdf.streams.utils import split_file
+from cdf.core.streams.caster import Caster
+from cdf.core.streams.utils import split_file
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
 from cdf.utils.path import makedirs
-from cdf.streams.mapping import STREAMS_HEADERS, STREAMS_FILES
-from cdf.collections.suggestions.constants import CROSS_PROPERTIES_COLUMNS
-from cdf.collections.suggestions.aggregator import MetricsAggregator, MetricsConsolidator
-from cdf.collections.urls.generators.suggestions import MetadataClusterMixin
-from cdf.collections.urls.constants import SUGGEST_CLUSTERS
-from cdf.collections.suggestions.query import MetricsQuery, SuggestQuery
-from cdf.collections.urls.utils import merge_queries_filters
+from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
+from cdf.metadata.aggregates.aggregates_metadata import CROSS_PROPERTIES_COLUMNS
+from cdf.analysis.suggestions.aggregator import MetricsAggregator, MetricsConsolidator
+from cdf.analysis.urls.generators.suggestions import MetadataClusterMixin
+from cdf.analysis.urls.constants import SUGGEST_CLUSTERS
+from cdf.analysis.suggestions.query import MetricsQuery, SuggestQuery
+from cdf.analysis.urls.utils import merge_queries_filters
 
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH
 
-from cdf.collections.urls.query_helpers import (
+from cdf.analysis.urls.query_helpers import (
     get_filters_from_http_code_range,
     get_filters_from_agg_canonical_field
 )
