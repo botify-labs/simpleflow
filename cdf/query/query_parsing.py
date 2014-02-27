@@ -222,7 +222,7 @@ class AnyEq(PredicateFilter):
     def transform(self):
         return {
             'term': {
-                self.field_value: self.value
+                _get_untouched_field(self.field_value): self.value
             }
         }
 
@@ -327,7 +327,7 @@ class Eq(PredicateFilter):
     def transform(self):
         return {
             'term': {
-                self.field_value: self.value
+                _get_untouched_field(self.field_value): self.value
             }
         }
 
@@ -342,7 +342,7 @@ class Re(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                self.field_value: self.value
+                _get_untouched_field(self.field_value): self.value
             }
         }
 
