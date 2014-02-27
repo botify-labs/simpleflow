@@ -698,7 +698,9 @@ class BotifyQuery(Term):
         return {
             'query': {'constant_score': {'filter': self.filter.transform()}},
             'sort': self.sorts.transform(),
-            'fields': self.fields.transform()
+            # start from ES v1, `fielddata` parsing is explicitly separated
+            # from `_source` parsing
+            '_source': self.fields.transform()
         }
 
     def validate(self):

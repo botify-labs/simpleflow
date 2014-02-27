@@ -95,7 +95,7 @@ class TestQueryTransformation(unittest.TestCase):
                 }
             },
             'sort': [{'id': {'ignore_unmapped': True}}],
-            'fields': ['id', 'url']
+            '_source': ['id', 'url']
         }
         result = get_es_query(query, CRAWL_ID)
 
@@ -127,7 +127,7 @@ class TestQueryTransformation(unittest.TestCase):
                     }
                 }
             },
-            'fields': ['id']
+            '_source': ['id']
         }
         result = get_es_query(query, CRAWL_ID)
 
@@ -159,7 +159,7 @@ class TestQueryTransformation(unittest.TestCase):
                     }
                 }
             },
-            'fields': ['id']
+            '_source': ['id']
         }
         result = get_es_query(query, CRAWL_ID)
 
@@ -177,7 +177,7 @@ class TestQueryTransformation(unittest.TestCase):
                 }
             },
             'sort': [{'id': {'ignore_unmapped': True}}],
-            'fields': ['url']
+            '_source': ['url']
         }
         result = get_es_query(query, CRAWL_ID)
 
@@ -194,14 +194,14 @@ class TestQueryTransformation(unittest.TestCase):
         }
 
         expected_es_query = {
-            'fields': ['metadata'],
+            '_source': ['metadata'],
             'sort': [{'id': {'ignore_unmapped': True}}],
             'query': {
                 'constant_score': {
                     'filter': {
                         'and': [
                             self.crawl_filter, self.not_crawled_filter,
-                            {'prefix': {'metadata.title.untouched': 'News'}}
+                            {'prefix': {'metadata.title': 'News'}}
                         ]
                     }
                 }
@@ -221,7 +221,7 @@ class TestQueryTransformation(unittest.TestCase):
         }
 
         expected_es_query = {
-            'fields': ['metadata.h1'],
+            '_source': ['metadata.h1'],
             'query': {
                 'constant_score': {
                     'filter': {
@@ -245,7 +245,7 @@ class TestQueryTransformation(unittest.TestCase):
         }
 
         expected_es_query = {
-            'fields': ['metadata.h1'],
+            '_source': ['metadata.h1'],
             'query': {
                 'constant_score': {
                     'filter': {
@@ -273,7 +273,7 @@ class TestQueryTransformation(unittest.TestCase):
         }
 
         expected_es_query = {
-            'fields': ['http_code'],
+            '_source': ['http_code'],
             'query': {
                 'constant_score': {
                     'filter': {
@@ -303,5 +303,3 @@ class TestQueryTransformation(unittest.TestCase):
         }
         self.assertRaises(BotifyQueryException,
                           get_es_query, query, CRAWL_ID)
-
-

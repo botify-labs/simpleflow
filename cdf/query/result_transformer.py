@@ -316,17 +316,17 @@ class IdToUrlTransformer(ResultTransformer):
                                           doc_type=self.es_doctype,
                                           routing=self.crawl_id,
                                           preference=self.crawl_id,
-                                          fields=["url", "http_code"])
+                                          _source=["url", "http_code"])
 
 
-        resolved_urls['docs'] = [url for url in resolved_urls['docs'] if url["exists"]]
+        resolved_urls['docs'] = [url for url in resolved_urls['docs'] if url["found"]]
 
 
         # Fill the (url_id -> url) lookup table
         # Also fetch the http_code
         # Assumption: we don't do query over multiple crawls, one site at a time
         self.id_to_url = {get_url_id(es_url['_id']):
-                              (es_url['fields']['url'], es_url['fields']['http_code']) for
+                              (es_url['_source']['url'], es_url['_source']['http_code']) for
                           es_url in resolved_urls['docs']}
 
         for result in self.results:

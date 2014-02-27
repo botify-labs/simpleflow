@@ -53,6 +53,10 @@ class Query(object):
         self._run()
         return self._count
 
+    @staticmethod
+    def _get_hit_count(es_result):
+        return es_result['hits']['total']
+
     def _run(self):
         """Launch the process of a ES query
             - Translation of a botify format query to ES search API
@@ -100,14 +104,14 @@ class Query(object):
                                                   from_=self.start)
 
         # Return directly if search has no result
-        if temp_results["hits"]["total"] == 0:
+        self._count = self._get_hit_count(temp_results)
+        if self._count == 0:
             self._results = []
             self._count = 0
             return
 
-        self._count = temp_results['hits']['total']
         self._results = []
-        self.fields = es_query['fields']
+        self.fields = es_query['_source']
 
         # make a copy of the fields part
         # need to use `deep_dict` since ES gives a dict with flatten path
@@ -120,8 +124,8 @@ class Query(object):
             # the only exception is that the document contains no required fields,
             # in which case we need to create an empty `fields` for default value
             # transformation
-            if 'fields' in result:
-                res = copy.deepcopy(deep_dict(result['fields']))
+            if '_source' in result:
+                res = copy.deepcopy(deep_dict(result['_source']))
                 self._results.append(res)
             else:
                 self._results.append({})

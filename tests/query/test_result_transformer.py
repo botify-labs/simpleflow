@@ -35,9 +35,9 @@ def _mock_es_mget(**kwargs):
 
         crt_doc = {
             u'_type': CRAWL_NAME,
-            u'exists': True,
+            u'found': True,
             u'_index': ELASTICSEARCH_INDEX,
-            u'fields': fields,
+            u'_source': fields,
             u'_version': 1,
             u'_id': _id
         }
@@ -204,7 +204,7 @@ class TestUnindexedUrlTransformer(unittest.TestCase):
                 {
                     #some other values are also returned by
                     #elasticsearch but they are not relevant for the test
-                    u'exists': False,
+                    u'found': False,
                 }]
 
         }
@@ -234,19 +234,19 @@ class TestUnindexedUrlTransformer(unittest.TestCase):
             u'docs': [
                 {
                     "_id": "1:1",
-                    "fields": {
+                    "_source": {
                         u'url': "url1",
                         u'http_code': 200,
                         'crawled': True
                     },
                     #some other values are also returned by
                     #elasticsearch but they are not relevant for the test
-                    u'exists': True,
+                    u'found': True,
                 },
                 {
                     #some other values are also returned by
                     #elasticsearch but they are not relevant for the test
-                    u'exists': False,
+                    u'found': False,
                 }]
         }
 
