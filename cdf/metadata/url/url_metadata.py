@@ -117,28 +117,28 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _STRING_TYPE,
         "settings": {
             _LIST,
-            _MULTI_FIELD
+            _NOT_ANALYZED
         }
     },
     "metadata.h1": {
         "type": _STRING_TYPE,
         "settings": {
             _LIST,
-            _MULTI_FIELD
+            _NOT_ANALYZED
         }
     },
     "metadata.h2": {
         "type": _STRING_TYPE,
         "settings": {
             _LIST,
-            _MULTI_FIELD
+            _NOT_ANALYZED
         }
     },
     "metadata.description": {
         "type": _STRING_TYPE,
         "settings": {
             _LIST,
-            _MULTI_FIELD
+            _NOT_ANALYZED
         }
     },
 

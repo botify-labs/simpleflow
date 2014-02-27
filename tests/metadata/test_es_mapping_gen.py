@@ -48,6 +48,7 @@ class TestMappingGeneration(unittest.TestCase):
 
         self.assertDictEqual(result['urls']['properties'], expected)
 
+    @unittest.skip
     def test_generation_multi_field(self):
         # `multi_field` case
         meta_mapping = {
@@ -176,6 +177,8 @@ class TestMappingGeneration(unittest.TestCase):
 
         self.assertEqual(result, expected)
 
+
+_NOT_ANALYZED = "not_analyzed"
 URLS_DATA_MAPPING_DEPRECATED = {
     "urls": {
         "_routing": {
@@ -185,7 +188,7 @@ URLS_DATA_MAPPING_DEPRECATED = {
         "properties": {
             "url": {
                 "type": "string",
-                "index": "not_analyzed"
+                "index": _NOT_ANALYZED
             },
             "url_hash": {"type": "long"},
             "byte_size": {"type": "long"},
@@ -196,12 +199,12 @@ URLS_DATA_MAPPING_DEPRECATED = {
             "gzipped": {"type": "boolean"},
             "content_type": {
                 "type": "string",
-                "index": "not_analyzed"
+                "index": _NOT_ANALYZED
             },
             "meta_noindex": {"type": "boolean"},
             "host": {
                 "type": "string",
-                "index": "not_analyzed"
+                "index": _NOT_ANALYZED
             },
             "http_code": {"type": "long"},
             "id": {"type": "long"},
@@ -218,52 +221,20 @@ URLS_DATA_MAPPING_DEPRECATED = {
             "metadata": {
                 "properties": {
                     "description": {
-                        "type": "multi_field",
-                        "fields": {
-                            "description": {
-                                "type": "string"
-                            },
-                            "untouched": {
-                                "type": "string",
-                                "index": "not_analyzed"
-                            }
-                        }
+                        "type": "string",
+                        "index": _NOT_ANALYZED
                     },
                     "h1": {
-                        "type": "multi_field",
-                        "fields": {
-                            "h1": {
-                                "type": "string"
-                            },
-                            "untouched": {
-                                "type": "string",
-                                "index": "not_analyzed"
-                            }
-                        }
+                        "type": "string",
+                        "index": _NOT_ANALYZED
                     },
                     "h2": {
-                        "type": "multi_field",
-                        "fields": {
-                            "h2": {
-                                "type": "string"
-                            },
-                            "untouched": {
-                                "type": "string",
-                                "index": "not_analyzed"
-                            }
-                        }
+                        "type": "string",
+                        "index": _NOT_ANALYZED
                     },
                     "title": {
-                        "type": "multi_field",
-                        "fields": {
-                            "title": {
-                                "type": "string"
-                            },
-                            "untouched": {
-                                "type": "string",
-                                "index": "not_analyzed"
-                            }
-                        }
+                        "type": "string",
+                        "index": _NOT_ANALYZED
                     }
                 }
             },
@@ -335,19 +306,19 @@ URLS_DATA_MAPPING_DEPRECATED = {
             },
             "path": {
                 "type": "string",
-                "index": "not_analyzed"
+                "index": _NOT_ANALYZED
             },
             "protocol": {
                 "type": "string",
-                "index": "not_analyzed"
+                "index": _NOT_ANALYZED
             },
             "query_string": {
                 "type": "string",
-                "index": "not_analyzed"
+                "index": _NOT_ANALYZED
             },
             "query_string_keys": {
                 "type": "string",
-                "index": "not_analyzed"
+                "index": _NOT_ANALYZED
             },
             "canonical_from_nb": {"type": "long"},
             "canonical_from": {"type": "long", "index": "no"},
