@@ -1,5 +1,6 @@
 import unittest
 import time
+import copy
 
 from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
@@ -11,13 +12,13 @@ from cdf.tasks.constants import ES_MAPPING
 ELASTICSEARCH_LOCATION = 'http://localhost:9200'
 ELASTICSEARCH_INDEX = 'cdf_test'
 CRAWL_ID = 1
-CRAWL_NAME = 'crawl_%d' % CRAWL_ID
+DOC_TYPE = 'crawls'
 REVISION_ID = 1
 
 ES = Elasticsearch()
 
 QUERY_ARGS = (ELASTICSEARCH_LOCATION, ELASTICSEARCH_INDEX,
-              'crawl_{}'.format(CRAWL_ID), CRAWL_ID, REVISION_ID)
+              DOC_TYPE, CRAWL_ID, REVISION_ID)
 
 
 def _get_simple_bql_query(field, predicate, value, fields=['id']):
@@ -195,14 +196,15 @@ class TestQueryES(unittest.TestCase):
             pass
 
         # Create index and put cdf's mapping
-        ES.indices.create(ELASTICSEARCH_INDEX)
-        ES.indices.put_mapping(ELASTICSEARCH_INDEX,
-                               'crawl_{}'.format(CRAWL_ID),
-                               ES_MAPPING)
+        mapping = {DOC_TYPE: copy.deepcopy(ES_MAPPING)['urls']}
+        assert mapping[DOC_TYPE] == ES_MAPPING['urls']
+        ES.indices.create(index=ELASTICSEARCH_INDEX)
+        ES.indices.put_mapping(index=ELASTICSEARCH_INDEX,
+                               doc_type=DOC_TYPE, body=mapping)
+
         # Load test fixtures
         for url in URLS_FIXTURE:
-            ES.index(ELASTICSEARCH_INDEX,
-                     'crawl_{}'.format(CRAWL_ID), url, url['_id'])
+            ES.index(ELASTICSEARCH_INDEX, DOC_TYPE, url, url['_id'])
 
         # Wait that all fixtures are indexed
         while ES.count(index=ELASTICSEARCH_INDEX)['count'] < len(URLS_FIXTURE):
