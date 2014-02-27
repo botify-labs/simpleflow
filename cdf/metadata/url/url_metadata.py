@@ -63,6 +63,7 @@ URLS_DATA_FORMAT_DEFINITION = {
         }
     },
     "meta_noindex": {"type": _BOOLEAN_TYPE},
+    "meta_nofollow": {"type": _BOOLEAN_TYPE},
     "host": {
         "type": _STRING_TYPE,
         "settings": {
