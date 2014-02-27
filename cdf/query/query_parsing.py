@@ -53,17 +53,6 @@ _DEFAULT_FIELD = ['url']
 _STR_TYPE = basestring
 
 
-def _get_untouched_field(field):
-    """Get the untouched field out of a `multi_field` element
-
-    returns the original field if it's not a `multi_field`
-    """
-    if field in _MULTI_FIELDS:
-        return '%s.untouched' % field
-    else:
-        return field
-
-
 def _raise_parsing_error(msg, structure):
     """Helper for raising a query parsing exception"""
     excp_msg = '{} : {}'.format(msg, str(structure))
@@ -237,7 +226,7 @@ class AnyStarts(PredicateFilter):
     def transform(self):
         return {
             'prefix': {
-                _get_untouched_field(self.field_value): self.value
+                self.field_value: self.value
             }
         }
 
@@ -252,7 +241,7 @@ class AnyEnds(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                _get_untouched_field(self.field_value): "@%s" % self.value
+                self.field_value: "@%s" % self.value
             }
         }
 
@@ -267,7 +256,7 @@ class AnyContains(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                _get_untouched_field(self.field_value): "@%s@" % self.value
+                self.field_value: "@%s@" % self.value
             }
         }
 
@@ -282,7 +271,7 @@ class Contains(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                _get_untouched_field(self.field_value): "@%s@" % self.value
+                self.field_value: "@%s@" % self.value
             }
         }
 
@@ -297,7 +286,7 @@ class Starts(PredicateFilter):
     def transform(self):
         return {
             'prefix': {
-                _get_untouched_field(self.field_value): self.value
+                self.field_value: self.value
             }
         }
 
@@ -312,7 +301,7 @@ class Ends(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                _get_untouched_field(self.field_value): "@%s" % self.value
+                self.field_value: "@%s" % self.value
             }
         }
 
