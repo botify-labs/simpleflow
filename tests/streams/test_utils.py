@@ -4,7 +4,7 @@ import logging
 from StringIO import StringIO
 
 from cdf.log import logger
-from cdf.streams.utils import split_file, group_left
+from cdf.core.streams.utils import split_file, group_left
 
 logger.setLevel(logging.DEBUG)
 
