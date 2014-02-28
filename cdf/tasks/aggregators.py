@@ -364,7 +364,8 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 urls_filters = {
                     "and": [
                         {"field": "metadata_nb.{}".format(metadata_type), "value": 0},
-                        {"field": "http_code", "value": [200, 299], "predicate": "between"}
+                        {"field": "http_code", "value": [200, 299], "predicate": "between"},
+                        {"field": "content_type", "value": "html"}
                     ]
                 }
                 # TODO : waiting for elasticsearch 1.0 to filter content_type : text/html
