@@ -30,7 +30,7 @@ class OutlinksTransducer(object):
                 # If the link is external and the follow_key is robots,
                 # that means that the url is finally internal (not linked once in follow)
                 # is_internal = dst_url_id > 0 or (dst_url_id == -1 and bitmask & 4 == 4)
-                is_internal = is_link_internal(bitmask, dst_url_id)
+                is_internal = is_link_internal(bitmask, dst_url_id, is_bitmask=True)
 
                 if link_type == 'a':
                     counter_by_type[(bitmask, 1 if is_internal else 0)].append(

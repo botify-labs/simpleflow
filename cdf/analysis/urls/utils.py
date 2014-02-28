@@ -37,7 +37,7 @@ def merge_queries_filters(*args):
     return query
 
 
-def is_link_internal(link_mask, dest):
+def is_link_internal(link_mask, dest, is_bitmask=False):
     """Determine if a link is an internal link
 
     A special case is handled here: if an internal link is blocked by
@@ -47,15 +47,12 @@ def is_link_internal(link_mask, dest):
 
     Accepts bitmask or decoded nofollow list.
 
-    :param bitmask: the bitmask of the link
+    :param link_mask: the bitmask of the link
     :type link_mask: int, list
     :param dest: the url id of the link destination
     :type dest: int
+    :param is_bitmask: flag indicates the type of `link_mask`
+    :type is_bitmask: bool
     """
-    is_robots = False
-    if isinstance(link_mask, int):
-        is_robots = link_mask & 4 == 4
-    elif isinstance(link_mask, list) and len(link_mask) == 1:
-        is_robots = 'robots' in link_mask
-
+    is_robots = link_mask & 4 == 4 if is_bitmask else 'robots' in link_mask
     return dest > 0 or (dest == -1 and is_robots)
