@@ -340,18 +340,39 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
 
     # Metadata types
     for metadata_type in ('title', 'description', 'h1'):
-        for metadata_status in ('duplicate', 'not_filled', 'filled', 'unique'):
+        for metadata_status in ('duplicate', 'not_filled', 'unique'):
             query = {
                 "fields": ["pages_nb", "metadata_nb.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)],
                 "target_field": "metadata_nb.{}.{}".format(metadata_type, metadata_status)
             }
             if metadata_status == "duplicate":
-                urls_fields = ["metadata.{}".format(metadata_type), "metadata_duplicate.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)]
+                urls_fields = [
+                    "metadata.{}".format(metadata_type),
+                    "metadata_duplicate.{}".format(metadata_type),
+                    "metadata_duplicate_nb.{}".format(metadata_type)
+                ]
                 urls_filters = {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1, "predicate": "gt"}
-            else:
+            elif metadata_status == "unique":
+                urls_fields = ["metadata.{}".format(metadata_type)]
+                urls_filters = {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1}
+            elif metadata_status == "not_filled":
                 urls_fields = []
-                urls_filters = {"field": "metadata_nb.{}".format(metadata_type), "value": 0}
-            suggest.register(identifier='metadata/{}/{}'.format(metadata_type, metadata_status), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
+                urls_filters = {
+                    "and": [
+                        {"field": "metadata_nb.{}".format(metadata_type), "value": 0},
+                        {"field": "http_code", "value": [200, 299], "predicate": "between"},
+                        {"field": "content_type", "value": "html"}
+                    ]
+                }
+                # TODO : waiting for elasticsearch 1.0 to filter content_type : text/html
+            else:
+                raise Exception("{} must handle urls_fields and urls_filters".format(metadata_status))
+            suggest.register(
+                identifier='metadata/{}/{}'.format(metadata_type, metadata_status),
+                query=query,
+                urls_filters=urls_filters,
+                urls_fields=urls_fields
+            )
 
     # Speed
     for sort in ('asc', 'desc'):
