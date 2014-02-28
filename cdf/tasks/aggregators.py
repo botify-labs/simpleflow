@@ -408,7 +408,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         "target_field": "pages_nb"
     }
     urls_fields = ["url"]
-    urls_filters = {"field": "meta.noindex", "value": True}
+    urls_filters = {"field": "meta_noindex", "value": True}
     suggest.register(identifier='distribution/noindex', query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # internal/external outlinks

@@ -199,6 +199,7 @@ URLS_DATA_MAPPING_DEPRECATED = {
                 "index": "not_analyzed"
             },
             "meta_noindex": {"type": "boolean"},
+            "meta_nofollow": {"type": "boolean"},
             "host": {
                 "type": "string",
                 "index": "not_analyzed"
