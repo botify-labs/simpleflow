@@ -346,7 +346,11 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 "target_field": "metadata_nb.{}.{}".format(metadata_type, metadata_status)
             }
             if metadata_status == "duplicate":
-                urls_fields = ["metadata.{}".format(metadata_type), "metadata_duplicate.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)]
+                urls_fields = [
+                    "metadata.{}".format(metadata_type),
+                    "metadata_duplicate.{}".format(metadata_type),
+                    "metadata_duplicate_nb.{}".format(metadata_type)
+                ]
                 urls_filters = {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1, "predicate": "gt"}
             elif metadata_status == "unique":
                 urls_fields = ["metadata.{}".format(metadata_type)]
@@ -363,7 +367,12 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 # TODO : waiting for elasticsearch 1.0 to filter content_type : text/html
             else:
                 raise Exception("{} must handle urls_fields and urls_filters".format(metadata_status))
-            suggest.register(identifier='metadata/{}/{}'.format(metadata_type, metadata_status), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
+            suggest.register(
+                identifier='metadata/{}/{}'.format(metadata_type, metadata_status),
+                query=query,
+                urls_filters=urls_filters,
+                urls_fields=urls_fields
+            )
 
     # Speed
     for sort in ('asc', 'desc'):
