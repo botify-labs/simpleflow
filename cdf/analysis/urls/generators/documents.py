@@ -1,6 +1,7 @@
 import ujson
 from itertools import izip
 from collections import defaultdict
+from cdf.analysis.urls.utils import is_link_internal
 
 from cdf.metadata.raw import (STREAMS_HEADERS, CONTENT_TYPE_INDEX,
                               MANDATORY_CONTENT_TYPES)
@@ -130,7 +131,8 @@ def extract_outlinks(attributes, stream_item):
         return "".join(k[0] for k in sorted(follow_keys))
 
     if link_type == "a":
-        is_internal = url_dst > 0
+        # is_internal = url_dst > 0
+        is_internal = is_link_internal(follow_keys, url_dst)
         is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
         outlink_type = "outlinks_internal_nb" if is_internal else "outlinks_external_nb"
         mask = list_to_mask(follow_keys)

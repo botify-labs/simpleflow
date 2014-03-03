@@ -269,10 +269,39 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         logger.info(document)
         self.assertEquals(document['outlinks_internal_nb']['total'], 4)
         self.assertEquals(document['outlinks_internal_nb']['nofollow'], 1)
-        self.assertEquals(document['outlinks_internal_nb']['nofollow_combinations'], [{"key": ["link"], "value": 1}])
+        self.assertEquals(document['outlinks_internal_nb']['nofollow_combinations'],
+                          [{"key": ["link"], "value": 1}])
         self.assertEquals(document['outlinks_internal_nb']['follow'], 3)
         self.assertEquals(document['outlinks_internal_nb']['follow_unique'], 2)
-        self.assertEquals(document['outlinks_internal'], [[2, list_to_mask(['follow']), 2], [2, list_to_mask(['link']), 1], [3, list_to_mask(['follow']), 1]])
+        self.assertEquals(document['outlinks_internal'],
+                          [[2, list_to_mask(['follow']), 2],
+                           [2, list_to_mask(['link']), 1],
+                           [3, list_to_mask(['follow']), 1]])
+
+    def test_outlinks_internal(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = (
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+        )
+
+        outlinks = [
+            [1, 'a', ['link'], -1, 'www.abc.com'],
+            [1, 'a', ['link', 'meta'], -1, 'www.abc.com'],
+            [1, 'a', ['meta'], -1, 'www.abc.com'],
+            # these 2 cases should be considered as internal link
+            [1, 'a', ['robots'], -1, 'www.site.com'],
+            [1, 'a', ['robots'], -1, 'www.site.com/abc'],
+        ]
+
+        u = UrlDocumentGenerator(iter(patterns), outlinks=iter(outlinks), infos=iter(infos))
+        documents = list(u)
+        document = documents[0][1]
+        self.assertEqual(document['outlinks_internal_nb']['nofollow'], 2)
+        self.assertEqual(document['outlinks_internal_nb']['follow'], 0)
+        self.assertEqual(document['outlinks_external_nb']['nofollow'], 3)
 
     def test_inlinks_follow(self):
         patterns = [
