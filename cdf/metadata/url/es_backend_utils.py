@@ -233,3 +233,22 @@ def generate_complete_field_lookup(meta_mapping):
     Ex. `error_links.3xx.nb` but not a prefix like `error_links.3xx`
     """
     return meta_mapping.keys()
+
+
+def generate_empty_document(meta_mapping, flatten=False):
+    """Generate an empty json document for ElasticSearch
+    :param meta_mapping: data format definition
+    :param flatten: if True, generate document in a flatten manner
+        eg. {'nested.field.flatten': None}
+    :return: an empty json document
+    """
+
+    document = {}
+    # initiate all fields with `None`
+    for path, value in meta_mapping.iteritems():
+        if flatten:
+            document[path] = None
+        else:
+            update_path_in_dict(path, None, document)
+
+    return document

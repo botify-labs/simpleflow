@@ -2,7 +2,9 @@ import unittest
 from cdf.metadata.url.es_backend_utils import (_parse_field_path,
                                                generate_es_mapping,
                                                generate_default_value_lookup,
-                                               generate_valid_field_lookup, generate_complete_field_lookup)
+                                               generate_valid_field_lookup,
+                                               generate_complete_field_lookup,
+                                               generate_empty_document)
 from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 
 
@@ -194,6 +196,43 @@ class TestMappingGeneration(unittest.TestCase):
 
         self.assertEqual(result, expected)
 
+    def test_empty_document_generation(self):
+        meta_mapping = {
+            'outlinks.nb.nofollow.combinations.link': {},
+            'outlinks.nb.nofollow.combinations.meta': {},
+            'outlinks.nb.follow.total': {},
+            'outlinks.nb.nofollow.unique': {},
+            'one_level_field': {}
+        }
+        non_flatten_expected = {
+            'outlinks': {
+                'nb': {
+                    'nofollow': {
+                        'combinations': {
+                            'link': None,
+                            'meta': None
+                        },
+                        'unique': None,
+                    },
+                    'follow': {
+                        'total': None
+                    },
+                },
+            },
+            'one_level_field': None
+        }
+        result = generate_empty_document(meta_mapping)
+        self.assertDictEqual(result, non_flatten_expected)
+
+        flatten_expected = {
+            'outlinks.nb.nofollow.combinations.link': None,
+            'outlinks.nb.nofollow.combinations.meta': None,
+            'outlinks.nb.follow.total': None,
+            'outlinks.nb.nofollow.unique': None,
+            'one_level_field': None
+        }
+        result = generate_empty_document(meta_mapping, flatten=True)
+        self.assertDictEqual(result, flatten_expected)
 
 _NOT_ANALYZED = "not_analyzed"
 URLS_DATA_MAPPING_DEPRECATED = {
