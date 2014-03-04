@@ -2,7 +2,7 @@ import unittest
 from cdf.metadata.url.es_backend_utils import (_parse_field_path,
                                                generate_es_mapping,
                                                generate_default_value_lookup,
-                                               generate_valid_field_lookup)
+                                               generate_valid_field_lookup, generate_complete_field_lookup)
 from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 
 
@@ -118,6 +118,23 @@ class TestMappingGeneration(unittest.TestCase):
         result = generate_es_mapping(URLS_DATA_FORMAT_DEFINITION,
                                      doc_type=doc_type)
         self.assertDictEqual(result, target)
+
+    def test_generation_all_mapping_new(self):
+        from cdf.metadata.url.url_metadata import URLS_DATA_FORMAT_DEFINITION_NEW
+        doc_type = 'urls'
+        target = NEW_MAPPING
+        result = generate_es_mapping(URLS_DATA_FORMAT_DEFINITION_NEW,
+                                     doc_type=doc_type)
+
+        r = target['urls']['properties']
+        for k, v in result['urls']['properties'].iteritems():
+            self.assertEqual(v, r[k])
+
+        self.assertEqual(target, result)
+
+    def test_simple(self):
+        from cdf.metadata.url.url_metadata import URLS_DATA_FORMAT_DEFINITION_NEW
+        print generate_complete_field_lookup(URLS_DATA_FORMAT_DEFINITION_NEW)
 
     def test_default_value_look_up(self):
         meta_mapping = {
@@ -370,6 +387,278 @@ URLS_DATA_MAPPING_DEPRECATED = {
                     }
                 }
             }
+        }
+    }
+}
+
+NEW_MAPPING = {
+    "urls": {
+        "_routing": {
+            "required": True,
+            "path": "crawl_id"
+        },
+        "properties": {
+            # simple properties for each url
+            "url": {
+                "type": "string",
+                "index": _NOT_ANALYZED
+            },
+            "url_hash": {"type": "long"},
+            "byte_size": {"type": "integer"},
+            "date_crawled": {"type": "date"},
+            "delay_first_byte": {"type": "integer"},
+            "delay_last_byte": {"type": "integer"},
+            "depth": {"type": "integer"},
+            "gzipped": {"type": "boolean"},
+            "content_type": {
+                "type": "string",
+                "index": _NOT_ANALYZED
+            },
+            "host": {
+                "type": "string",
+                "index": _NOT_ANALYZED
+            },
+            "http_code": {"type": "integer"},
+            "id": {"type": "integer"},
+            "crawl_id": {"type": "integer"},
+            "patterns": {"type": "long"},
+            "path": {
+                "type": "string",
+                "index": _NOT_ANALYZED
+            },
+            "protocol": {
+                "type": "string",
+                "index": _NOT_ANALYZED
+            },
+            "query_string": {
+                "type": "string",
+                "index": _NOT_ANALYZED
+            },
+            "query_string_keys": {
+                "type": "string",
+                "index": _NOT_ANALYZED
+            },
+
+            # metadata related properties
+            "metadata": {
+                "properties": {
+                    "robots": {
+                        "properties": {
+                            "nofollow": {"type": "boolean"},
+                            "noindex": {"type": "boolean"},
+                        }
+                    },
+
+                    "title": {
+                        "properties": {
+                            "nb": {"type": "integer"},
+                            "contents": {"type": "string", "index": _NOT_ANALYZED},
+                            "duplicates": {
+                                "properties": {
+                                    "nb": {"type": "integer"},
+                                    "is_first": {"type": "boolean"},
+                                    "urls": {"type": "integer", "index": "no"},
+                                    "urls_exists": {"type": "boolean"},
+                                }
+                            }
+                        }
+                    },
+                    "h1": {
+                        "properties": {
+                            "nb": {"type": "integer"},
+                            "contents": {"type": "string", "index": _NOT_ANALYZED},
+                            "duplicates": {
+                                "properties": {
+                                    "nb": {"type": "integer"},
+                                    "is_first": {"type": "boolean"},
+                                    "urls": {"type": "integer", "index": "no"},
+                                    "urls_exists": {"type": "boolean"}
+                                }
+                            }
+                        }
+                    },
+                    "h2": {
+                        "properties": {
+                            "nb": {"type": "integer"},
+                            "contents": {"type": "string", "index": _NOT_ANALYZED},
+                        }
+                    },
+                    "h3": {
+                        "properties": {
+                            "nb": {"type": "integer"},
+                            # limited to 5 contents in analysis phase
+                            "contents": {"type": "string", "index": _NOT_ANALYZED},
+                        }
+                    },
+                    "description": {
+                        "properties": {
+                            "nb": {"type": "integer"},
+                            "contents": {"type": "string", "index": _NOT_ANALYZED},
+                            "duplicates": {
+                                "properties": {
+                                    "nb": {"type": "integer"},
+                                    "is_first": {"type": "boolean"},
+                                    "urls": {"type": "integer", "index": "no"},
+                                    "urls_exists": {"type": "boolean"}
+                                }
+                            }
+                        }
+                    },
+                }
+            },
+
+            "inlinks_internal": {
+                "properties": {
+                    "nb": {
+                        "properties": {
+                            "total": {"type": "integer"},
+                            "unique": {"type": "integer"},
+                            "follow": {
+                                "properties": {
+                                    "unique": {"type": "integer"},
+                                    "total": {"type": "integer"},
+                                }
+                            },
+                            "nofollow": {
+                                "properties": {
+                                    "total": {"type": "integer"},
+                                    "combinations": {
+                                        "properties": {
+                                            "link": {"type": "integer"},
+                                            "meta": {"type": "integer"},
+                                            "link_meta": {"type": "integer"},
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    },
+                    # list of source urls of incoming links
+                    # truncated at 300 urls
+                    "urls": {"type": "integer", "index": "no"},
+                    "urls_exists": {"type": "boolean"}
+                }
+            },
+
+            "outlinks_internal": {
+                "properties": {
+                    "nb": {
+                        "properties": {
+                            "errors": {
+                                "properties": {
+                                    "total": {"type": "integer"},
+                                    "3xx": {"type": "integer"},
+                                    "4xx": {"type": "integer"},
+                                    "5xx": {"type": "integer"},
+                                }
+                            },
+                            "total": {"type": "integer"},
+                            "unique": {"type": "integer"},
+                            "follow": {
+                                "properties": {
+                                    "unique": {"type": "integer"},
+                                    "total": {"type": "integer"},
+                                }
+                            },
+                            "nofollow": {
+                                "properties": {
+                                    "total": {"type": "integer"},
+                                    "combinations": {
+                                        "properties": {
+                                            "link": {"type": "integer"},
+                                            "meta": {"type": "integer"},
+                                            "robots": {"type": "integer"},
+                                            "link_robots": {"type": "integer"},
+                                            "meta_robots": {"type": "integer"},
+                                            "link_meta": {"type": "integer"},
+                                            "link_meta_robots": {"type": "integer"},
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    },
+                    "urls": {
+                        "properties": {
+                            "all": {"type": "integer", "index": "no"},
+                            "3xx": {"type": "integer", "index": "no"},
+                            "4xx": {"type": "integer", "index": "no"},
+                            "5xx": {"type": "integer", "index": "no"},
+
+                            "all_exists": {"type": "boolean"},
+                            "3xx_exists": {"type": "boolean"},
+                            "4xx_exists": {"type": "boolean"},
+                            "5xx_exists": {"type": "boolean"},
+                        }
+                    },
+                }
+            },
+
+            "outlinks_external": {
+                "properties": {
+                    "nb": {
+                        "properties": {
+                            "total": {"type": "integer"},
+                            "follow": {
+                                "properties": {
+                                    "total": {"type": "integer"}
+                                }
+                            },
+                            "nofollow": {
+                                "properties": {
+                                    "total": {"type": "integer"},
+                                    "combinations": {
+                                        "properties": {
+                                            "link": {"type": "integer"},
+                                            "meta": {"type": "integer"},
+                                            "link_meta": {"type": "integer"}
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    }
+                }
+            },
+
+            "canonical": {
+                "properties": {
+                    "to": {
+                        "properties": {
+                            "url": {"type": "string", "index": _NOT_ANALYZED},
+                            "url_id": {"type": "integer"},
+                            "equal": {"type": "boolean"},
+                        }
+                    },
+
+                    "from": {
+                        "properties": {
+                            "nb": {"type": "integer"},
+                            "urls": {"type": "integer", "index": "no"},
+                            "urls_exists" : {"type": "boolean"}
+                        }
+                    }
+                }
+            },
+
+            "redirect": {
+                "properties": {
+                    "to": {
+                        "properties": {
+                            "http_code": {"type": "integer"},
+                            "url": {"type": "string", "index": _NOT_ANALYZED},
+                            "url_id": {"type": "integer"}
+                        }
+                    },
+                    "from": {
+                        "properties": {
+                            "nb": {"type": "integer"},
+                            "urls": {"type": "integer", "index": "no"},
+                            "urls_exists": {"type": "boolean"}
+                        }
+                    }
+                }
+            },
         }
     }
 }
