@@ -30,6 +30,8 @@
 #       exist
 
 _NUMBER_TYPE = 'long'
+_LONG_TYPE = 'long'
+_INT_TYPE = 'integer'
 _STRING_TYPE = 'string'
 _BOOLEAN_TYPE = 'boolean'
 _STRUCT_TYPE = 'struct'
@@ -305,4 +307,228 @@ URLS_DATA_FORMAT_DEFINITION = {
             _LIST
         }
     },
+}
+
+
+URLS_DATA_FORMAT_DEFINITION_NEW = {
+    # url property data
+    "url": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED}
+    },
+    "url_hash": {"type": _LONG_TYPE},
+    "byte_size": {"type": _INT_TYPE},
+    "date_crawled": {"type": _DATE_TYPE},
+    "delay_first_byte": {"type": _INT_TYPE},
+    "delay_last_byte": {"type": _INT_TYPE},
+    "depth": {"type": _INT_TYPE},
+    "gzipped": {"type": _BOOLEAN_TYPE},
+    "content_type": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED}
+    },
+    "host": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED}
+    },
+    "http_code": {"type": _INT_TYPE},
+    "id": {"type": _INT_TYPE},
+    "crawl_id": {"type": _INT_TYPE},
+    "patterns": {"type": _LONG_TYPE},
+    "path": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED}
+    },
+    "protocol": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED}
+    },
+    "query_string": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED}
+    },
+    "query_string_keys": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED}
+    },
+
+    # meta tag related
+    "metadata.robots.nofollow": {
+        "type": _BOOLEAN_TYPE
+    },
+    "metadata.robots.noindex": {
+        "type": _BOOLEAN_TYPE
+    },
+
+    # title tag
+    "metadata.title.nb": {
+        "type": _INT_TYPE,
+    },
+    "metadata.title.contents": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED, _LIST}
+    },
+    "metadata.title.duplicates.nb": {
+        "type": _INT_TYPE,
+    },
+    "metadata.title.duplicates.is_first": {
+        "type": _BOOLEAN_TYPE,
+    },
+    "metadata.title.duplicates.urls": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST}
+    },
+    "metadata.title.duplicates.urls_exists": {"type": "boolean"},
+
+    # h1 tag
+    "metadata.h1.nb": {
+        "type": _INT_TYPE,
+    },
+    "metadata.h1.contents": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED, _LIST}
+    },
+    "metadata.h1.duplicates.nb": {
+        "type": _INT_TYPE,
+    },
+    "metadata.h1.duplicates.is_first": {
+        "type": _BOOLEAN_TYPE,
+    },
+    "metadata.h1.duplicates.urls": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST}
+    },
+    "metadata.h1.duplicates.urls_exists": {"type": "boolean"},
+
+    # description tag
+    "metadata.description.nb": {
+        "type": _INT_TYPE,
+    },
+    "metadata.description.contents": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED, _LIST}
+    },
+    "metadata.description.duplicates.nb": {
+        "type": _INT_TYPE,
+    },
+    "metadata.description.duplicates.is_first": {
+        "type": _BOOLEAN_TYPE,
+    },
+    "metadata.description.duplicates.urls": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST}
+    },
+    "metadata.description.duplicates.urls_exists": {"type": "boolean"},
+
+    # h2 tag
+    "metadata.h2.nb": {
+        "type": _INT_TYPE,
+    },
+    "metadata.h2.contents": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED, _LIST}
+    },
+
+    # h3 tag
+    "metadata.h3.nb": {
+        "type": _INT_TYPE,
+    },
+    "metadata.h3.contents": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED, _LIST}
+    },
+
+    # incoming links, must be internal
+    "inlinks_internal.nb.total": {"type": _INT_TYPE},
+    "inlinks_internal.nb.unique": {"type": _INT_TYPE},
+    "inlinks_internal.nb.follow.unique": {"type": _INT_TYPE},
+    "inlinks_internal.nb.follow.total": {"type": _INT_TYPE},
+    "inlinks_internal.nb.nofollow.total": {"type": _INT_TYPE},
+    "inlinks_internal.nb.nofollow.combinations.link": {"type": _INT_TYPE},
+    "inlinks_internal.nb.nofollow.combinations.meta": {"type": _INT_TYPE},
+    "inlinks_internal.nb.nofollow.combinations.link_meta": {"type": _INT_TYPE},
+    "inlinks_internal.urls": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST}
+    },
+    "inlinks_internal.urls_exists": {"type": "boolean"},
+
+    # internal outgoing links (destination is a internal url)
+    "outlinks_internal.nb.errors.total": {"type": _INT_TYPE},
+    "outlinks_internal.nb.errors.3xx": {"type": _INT_TYPE},
+    "outlinks_internal.nb.errors.4xx": {"type": _INT_TYPE},
+    "outlinks_internal.nb.errors.5xx": {"type": _INT_TYPE},
+    "outlinks_internal.nb.total": {"type": _INT_TYPE},
+    "outlinks_internal.nb.unique": {"type": _INT_TYPE},
+    "outlinks_internal.nb.follow.unique": {"type": _INT_TYPE},
+    "outlinks_internal.nb.follow.total": {"type": _INT_TYPE},
+    "outlinks_internal.nb.nofollow.total": {"type": _INT_TYPE},
+    "outlinks_internal.nb.nofollow.combinations.link": {"type": _INT_TYPE},
+    "outlinks_internal.nb.nofollow.combinations.meta": {"type": _INT_TYPE},
+    "outlinks_internal.nb.nofollow.combinations.robots": {"type": _INT_TYPE},
+    "outlinks_internal.nb.nofollow.combinations.link_meta": {"type": _INT_TYPE},
+    "outlinks_internal.nb.nofollow.combinations.link_robots": {"type": _INT_TYPE},
+    "outlinks_internal.nb.nofollow.combinations.meta_robots": {"type": _INT_TYPE},
+    "outlinks_internal.nb.nofollow.combinations.link_meta_robots": {"type": _INT_TYPE},
+    "outlinks_internal.urls.all": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST},
+    },
+    "outlinks_internal.urls.3xx": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST},
+    },
+    "outlinks_internal.urls.4xx": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST},
+    },
+    "outlinks_internal.urls.5xx": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST},
+    },
+    "outlinks_internal.urls.all_exists": {"type": "boolean"},
+    "outlinks_internal.urls.3xx_exists": {"type": "boolean"},
+    "outlinks_internal.urls.4xx_exists": {"type": "boolean"},
+    "outlinks_internal.urls.5xx_exists": {"type": "boolean"},
+
+    # external outgoing links (destination is a external url)
+    "outlinks_external.nb.total": {"type": _INT_TYPE},
+    "outlinks_external.nb.follow.total": {"type": _INT_TYPE},
+    "outlinks_external.nb.nofollow.total": {"type": _INT_TYPE},
+    "outlinks_external.nb.nofollow.combinations.link": {"type": _INT_TYPE},
+    "outlinks_external.nb.nofollow.combinations.meta": {"type": _INT_TYPE},
+    "outlinks_external.nb.nofollow.combinations.link_meta": {"type": _INT_TYPE},
+
+    # outgoing canonical link, one per page
+    # if multiple, first one is taken into account
+    "canonical.to.url": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED}
+    },
+    "canonical.to.url_id": {"type": _INT_TYPE},
+    "canonical.to.equal": {"type": _BOOLEAN_TYPE},
+
+    # incoming canonical link
+    "canonical.from.nb": {"type": _INT_TYPE},
+    "canonical.from.urls": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST}
+    },
+    "canonical.from.urls_exists": {"type": "boolean"},
+
+    # outgoing redirection
+    "redirect.to.http_code": {"type": _INT_TYPE},
+    "redirect.to.url_id": {"type": _INT_TYPE},
+    "redirect.to.url": {
+        "type": _STRING_TYPE,
+        "settings": {_NOT_ANALYZED}
+    },
+
+    # incoming redirection
+    "redirect.from.nb": {"type": _INT_TYPE},
+    "redirect.from.urls": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST}
+    },
+    "redirect.from.urls_exists": {"type": "boolean"},
 }
