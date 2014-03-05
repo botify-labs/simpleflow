@@ -186,7 +186,8 @@ URLS_DATA_FORMAT_DEFINITION = {
         "values": {
             "key": {"type": _STRING_TYPE},
             "value": {"type": _NUMBER_TYPE}
-        }
+        },
+        "settings": {_LIST}
     },
     "inlinks_internal": {
         "type": _NUMBER_TYPE,
@@ -208,7 +209,8 @@ URLS_DATA_FORMAT_DEFINITION = {
         "values": {
             "key": {"type": _STRING_TYPE},
             "value": {"type": _NUMBER_TYPE}
-        }
+        },
+        "settings": {_LIST}
     },
     "outlinks_internal": {
         "type": _NUMBER_TYPE,
@@ -227,7 +229,8 @@ URLS_DATA_FORMAT_DEFINITION = {
         "values": {
             "key": {"type": _STRING_TYPE},
             "value": {"type": _NUMBER_TYPE}
-        }
+        },
+        "settings": {_LIST}
     },
 
 
