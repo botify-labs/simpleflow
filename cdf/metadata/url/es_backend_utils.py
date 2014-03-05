@@ -235,20 +235,30 @@ def generate_complete_field_lookup(meta_mapping):
     return meta_mapping.keys()
 
 
-def generate_empty_document(meta_mapping, flatten=False):
-    """Generate an empty json document for ElasticSearch
+def generate_default_document(meta_mapping, document=None, flatten=False):
+    """Generate an json document for ElasticSearch with all field filled
+    according to data format definition
+
     :param meta_mapping: data format definition
+    :param document: base mutable document to modify, default to an
+        empty document
     :param flatten: if True, generate document in a flatten manner
         eg. {'nested.field.flatten': None}
     :return: an empty json document
     """
-
-    document = {}
-    # initiate all fields with `None`
+    # initiate all fields with the correct default value
+    if document is None:
+        document = {}
     for path, value in meta_mapping.iteritems():
+        default = None
+        if 'settings' in value and _LIST in value['settings']:
+            default = []
+        elif value['type'] in ('long', 'integer'):
+            default = 0
+
         if flatten:
-            document[path] = None
+            document[path] = default
         else:
-            update_path_in_dict(path, None, document)
+            update_path_in_dict(path, default, document)
 
     return document

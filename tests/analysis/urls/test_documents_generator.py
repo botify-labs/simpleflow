@@ -90,6 +90,25 @@ class TestUrlDocumentGenerator(unittest.TestCase):
         self.assertEquals(document['query_string'], '?f1=v1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
 
+    def test_non_crawl_url(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', ''],
+            [2, 'http', 'www.site.com', '/path/name.html', ''],
+            [3, 'http', 'www.site.com', '/path/name.html', ''],
+        ]
+
+        infos = [
+            # http code is 0, 1, 2 respectively
+            # they should generate no result
+            [1, 1, 'text/html', 0, 1, 1, 1200, 303, 456],
+            [2, 1, 'text/html', 0, 1, 2, 1200, 303, 456],
+            [3, 1, 'text/html', 0, 1, 0, 1200, 303, 456],
+        ]
+
+        u = UrlDocumentGenerator(iter(patterns), infos=iter(infos))
+        document = list(u)
+        self.assertEqual(document, [])
+
     def test_info_content_type(self):
         patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1=v1&f2=v2'],

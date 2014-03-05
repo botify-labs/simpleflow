@@ -4,7 +4,7 @@ from cdf.metadata.url.es_backend_utils import (_parse_field_path,
                                                generate_default_value_lookup,
                                                generate_valid_field_lookup,
                                                generate_complete_field_lookup,
-                                               generate_empty_document)
+                                               generate_default_document)
 from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 
 
@@ -198,40 +198,46 @@ class TestMappingGeneration(unittest.TestCase):
 
     def test_empty_document_generation(self):
         meta_mapping = {
-            'outlinks.nb.nofollow.combinations.link': {},
-            'outlinks.nb.nofollow.combinations.meta': {},
-            'outlinks.nb.follow.total': {},
-            'outlinks.nb.nofollow.unique': {},
-            'one_level_field': {}
+            'outlinks.nb.nofollow.combinations.link': {
+                'type': 'integer',
+                'settings': {'list'}
+            },
+            'outlinks.nb.nofollow.combinations.meta': {
+                'type': 'long',
+                'settings': {'list'}
+            },
+            'outlinks.nb.follow.total': {'type': 'integer'},
+            'outlinks.nb.nofollow.unique': {'type': 'long'},
+            'one_level_field': {'type': 'struct'}
         }
         non_flatten_expected = {
             'outlinks': {
                 'nb': {
                     'nofollow': {
                         'combinations': {
-                            'link': None,
-                            'meta': None
+                            'link': [],
+                            'meta': []
                         },
-                        'unique': None,
+                        'unique': 0,
                     },
                     'follow': {
-                        'total': None
+                        'total': 0
                     },
                 },
             },
             'one_level_field': None
         }
-        result = generate_empty_document(meta_mapping)
+        result = generate_default_document(meta_mapping)
         self.assertDictEqual(result, non_flatten_expected)
 
         flatten_expected = {
-            'outlinks.nb.nofollow.combinations.link': None,
-            'outlinks.nb.nofollow.combinations.meta': None,
-            'outlinks.nb.follow.total': None,
-            'outlinks.nb.nofollow.unique': None,
+            'outlinks.nb.nofollow.combinations.link': [],
+            'outlinks.nb.nofollow.combinations.meta': [],
+            'outlinks.nb.follow.total': 0,
+            'outlinks.nb.nofollow.unique': 0,
             'one_level_field': None
         }
-        result = generate_empty_document(meta_mapping, flatten=True)
+        result = generate_default_document(meta_mapping, flatten=True)
         self.assertDictEqual(result, flatten_expected)
 
 _NOT_ANALYZED = "not_analyzed"
