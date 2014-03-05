@@ -1,7 +1,8 @@
 import os
 
 from autotagging.exceptions import TooManyCombinationsError
-from autotagging.association_rules.algorithm import (discover_host_patterns,
+from autotagging.association_rules.algorithm import (discover_protocol_patterns,
+                                                     discover_host_patterns,
                                                      discover_query_strings_patterns,
                                                      discover_metadata_patterns,
                                                      discover_path_patterns,
@@ -17,7 +18,8 @@ from cdf.metadata.raw import CONTENT_TYPE_NAME_TO_ID
 from cdf.analysis.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
-from cdf.core.streams.stream_factory import (PathStreamFactory,
+from cdf.core.streams.stream_factory import (ProtocolStreamFactory,
+                                             PathStreamFactory,
                                              HostStreamFactory,
                                              QueryStringStreamFactory,
                                              MetadataStreamFactory,
@@ -58,6 +60,21 @@ def compute_mixed_clusters(crawl_id,
     nb_crawled_urls = get_nb_crawled_urls(tmp_dir)
 
     patterns = []
+
+    ######################## host patterns ########################
+    logger.info("Discovering patterns on protocol.")
+    protocol_stream_factory = ProtocolStreamFactory(tmp_dir, crawler_metakeys)
+    try:
+        protocol_patterns = discover_protocol_patterns(protocol_stream_factory,
+                                                   nb_crawled_urls,
+                                                   minimal_frequency)
+
+        cluster_type = 0  # the cluster_type is not used. TODO remove.
+        patterns.append([(cluster_type, pattern, support) for
+                         pattern, support in protocol_patterns])
+    except TooManyCombinationsError as e:
+        logger.warning("Could not compute patterns on protocols: '%s'.", str(e))
+
     ######################## host patterns ########################
     logger.info("Discovering patterns on host.")
     host_stream_factory = HostStreamFactory(tmp_dir, crawler_metakeys)
