@@ -172,6 +172,9 @@ class ProtocolStreamFactory(DataStreamFactory):
                                                 part_id)
         super(self.__class__, self).__init__(file_stream_factory,
                                              crawler_metakeys)
+        #we support only these protocols,
+        #the other protocols are filtered out from the stream
+        self._allowed_protocols = ["http", "https"]
 
     def get_stream(self):
         """Create a generator for the protocls
@@ -184,6 +187,10 @@ class ProtocolStreamFactory(DataStreamFactory):
             urlid = url[idx_from_stream("PATTERNS", "id")]
             protocol = url[idx_from_stream("PATTERNS", "protocol")]
             protocol = unicode(protocol, encoding="utf-8")
+            if protocol not in self._allowed_protocols:
+                logger.debug("Not supported protocol : '%s'", protocol)
+                continue
+
             if urlid > max_crawled_urlid:
                 raise StopIteration
             else:
