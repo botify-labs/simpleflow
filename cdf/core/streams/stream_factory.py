@@ -317,11 +317,12 @@ class QueryStringStreamFactory(DataStreamFactory):
 
             query_string_index = idx_from_stream("PATTERNS", "query_string")
             if len(url) < query_string_index + 1:
-                continue
-            query_string = {}
-            query_string = url[query_string_index]
-            query_string = unicode(query_string, encoding="utf-8")
-            query_string = query_string[1:]
+                query_string = ''
+            else:
+                query_string = {}
+                query_string = url[query_string_index]
+                query_string = unicode(query_string, encoding="utf-8")
+                query_string = query_string[1:]
             if self._parse_string:
                 query_string = parse_qs(query_string)
             yield urlid, query_string
