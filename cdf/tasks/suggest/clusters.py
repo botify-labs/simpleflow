@@ -61,13 +61,13 @@ def compute_mixed_clusters(crawl_id,
 
     patterns = []
 
-    ######################## host patterns ########################
+    ######################## protocol patterns ########################
     logger.info("Discovering patterns on protocol.")
     protocol_stream_factory = ProtocolStreamFactory(tmp_dir, crawler_metakeys)
     try:
         protocol_patterns = discover_protocol_patterns(protocol_stream_factory,
-                                                   nb_crawled_urls,
-                                                   minimal_frequency)
+                                                       nb_crawled_urls,
+                                                       minimal_frequency)
 
         cluster_type = 0  # the cluster_type is not used. TODO remove.
         patterns.append([(cluster_type, pattern, support) for
