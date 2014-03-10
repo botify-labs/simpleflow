@@ -319,7 +319,6 @@ class QueryStringStreamFactory(DataStreamFactory):
             if len(url) < query_string_index + 1:
                 query_string = ''
             else:
-                query_string = {}
                 query_string = url[query_string_index]
                 query_string = unicode(query_string, encoding="utf-8")
                 query_string = query_string[1:]
