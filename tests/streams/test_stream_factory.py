@@ -223,10 +223,10 @@ class TestQueryStringStreamFactory(unittest.TestCase):
 
     def test_nominal_case(self):
 
-        #urlid 1 is not returned since it has no query string
         #urlid 3 is not returned since it has not been crawled
         expected_result = [
             (0, {"foo": ["1"]}),
+            (1, {}),
             (2, {"foo": ["bar"], "baz": ["2"]})
         ]
 
@@ -236,10 +236,10 @@ class TestQueryStringStreamFactory(unittest.TestCase):
     def test_do_not_parse_string(self):
         self.qs_stream_factory.parse_string = False
 
-        #urlid 1 is not returned since it has no query string
         #urlid 3 is not returned since it has not been crawled
         expected_result = [
             (0, "foo=1"),
+            (1, ""),
             (2, "foo=bar&baz=2")
         ]
 
