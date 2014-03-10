@@ -213,7 +213,7 @@ class MockIntegrationTest(unittest.TestCase):
     def test_in_links_files(self):
         pattern = 'url_in_links_counters.txt.{}.gz'
 
-        self.assert_part_files(pattern, [0, 2, 3, 4, 5])
+        self.assert_part_files(pattern, [0, 2, 3, 5])
 
         expected_contents = [
             [2, ['follow'], 1, 1],
@@ -221,19 +221,22 @@ class MockIntegrationTest(unittest.TestCase):
             [6, ['link'], 1, 1],
             [8, ['follow'], 3, 1],
             [8, ['follow'], 1, 1],
-            [8, ['robots', 'link'], 2, 1],
-            [8, ['robots', 'meta'], 2, 1],
             [8, ['link'], 2, 1],
             [9, ['follow'], 5, 1],
-            [10, ['robots', 'meta', 'link'], 3, 1],
             [12, ['follow'], 1, 1]
         ]
 
         self.assert_file_contents(pattern, expected_contents)
 
     def test_in_canonicals_files(self):
-        # TODO(darkjh) issue 128
-        pass
+        pattern = 'url_in_canonical_counters.txt.{}.gz'
+
+        self.assert_part_files(pattern, [0])
+
+        expected_contents = [
+            [2, 3],
+        ]
+        self.assert_file_contents(pattern, expected_contents)
 
     def test_in_redirects_files(self):
         pattern = 'url_in_redirect_counters.txt.{}.gz'
