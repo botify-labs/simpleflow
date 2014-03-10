@@ -343,14 +343,19 @@ class UrlDocumentGenerator(object):
         self.stream_patterns = stream_patterns
         self.streams = kwargs
 
-    # TODO iter impl here is WRONG, cant use next()
-    def __iter__(self):
         # `urlids` is the reference stream
         left = (self.stream_patterns, 0, _process_ids)
         streams_ref = {key: (self.streams[key], idx_from_stream(key, 'id'),
                              self.PROCESSORS[key])
                        for key in self.streams.keys()}
-        return group_with(left, final_func=_process_final, **streams_ref)
+        self.generator = group_with(left, final_func=_process_final,
+                                    **streams_ref)
+
+    def __iter__(self):
+        return self.generator
+
+    def next(self):
+        return next(self.generator)
 
     def save_to_file(self, location):
         for file_type in self.files.iterkeys():

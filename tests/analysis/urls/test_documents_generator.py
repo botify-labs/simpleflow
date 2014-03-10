@@ -21,6 +21,10 @@ from cdf.metadata.raw.masks import list_to_mask, follow_mask
 logger.setLevel(logging.DEBUG)
 
 
+def _next_doc(generator):
+    return next(generator)[1]
+
+
 class TestBasicInfoGeneration(unittest.TestCase):
     def setUp(self):
         self.ids = [
@@ -31,8 +35,8 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
     def test_url_infos(self):
-        u = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos))
-        document = list(u)[0]
+        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos))
+        document = list(gen)[0]
         document_expected = {
             'id': 1,
             'date_crawled': '2000-01-01T00:01:00',
@@ -62,22 +66,22 @@ class TestBasicInfoGeneration(unittest.TestCase):
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
         ]
 
-        u = UrlDocumentGenerator(iter(ids), infos=iter(self.infos))
-        document = u.__iter__().next()[1]
+        gen = UrlDocumentGenerator(iter(ids), infos=iter(self.infos))
+        document = _next_doc(gen)
         self.assertEquals(document['query_string'], '?f1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
 
     def test_info_content_type(self):
-        u = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos))
-        document = u.__iter__().next()[1]
+        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos))
+        document = _next_doc(gen)
         self.assertEquals(document['content_type'], 'not-set')
 
         infos = [
             [1, 1, 'text', 0, 1, 200, 1200, 303, 456],
         ]
 
-        u = UrlDocumentGenerator(iter(self.ids), infos=iter(infos))
-        document = u.__iter__().next()[1]
+        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(infos))
+        document = _next_doc(gen)
         self.assertEquals(document['content_type'], 'text')
 
     def test_query_string(self):
@@ -85,8 +89,8 @@ class TestBasicInfoGeneration(unittest.TestCase):
             [1, 'http', 'www.site.com', '/path/name.html', '?f1=v1&f2=v2'],
         ]
 
-        u = UrlDocumentGenerator(iter(ids), infos=iter(self.infos))
-        document = u.__iter__().next()[1]
+        gen = UrlDocumentGenerator(iter(ids), infos=iter(self.infos))
+        document = _next_doc(gen)
         self.assertEquals(document['query_string'], '?f1=v1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
 
@@ -111,19 +115,18 @@ class TestMetadataGeneration(unittest.TestCase):
             [3, 8, 'text/html', 1, 1, 200, 1200, 303, 456],
         ]
 
-        u = UrlDocumentGenerator(iter(self.ids), infos=iter(infos))
-        documents = list(u)
-        document = documents[0][1]
+        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(infos))
+        document = _next_doc(gen)
         self.assertEqual(document['gzipped'], True)
         self.assertEqual(document['metadata']['robots']['noindex'], False)
         self.assertEqual(document['metadata']['robots']['nofollow'], False)
 
-        document = documents[1][1]
+        document = _next_doc(gen)
         self.assertEqual(document['gzipped'], True)
         self.assertEqual(document['metadata']['robots']['noindex'], True)
         self.assertEqual(document['metadata']['robots']['nofollow'], False)
 
-        document = documents[2][1]
+        document = _next_doc(gen)
         self.assertEqual(document['gzipped'], False)
         self.assertEqual(document['metadata']['robots']['noindex'], False)
         self.assertEqual(document['metadata']['robots']['nofollow'], True)
@@ -137,9 +140,9 @@ class TestMetadataGeneration(unittest.TestCase):
             [1, 1, 0, 'My title']
         ]
 
-        u = UrlDocumentGenerator(iter(ids), infos=iter(infos),
+        gen = UrlDocumentGenerator(iter(ids), infos=iter(infos),
                                  contents=iter(contents))
-        document = list(u)[0][1]
+        document = _next_doc(gen)
         metadata = document['metadata']
         self.assertEquals(metadata['h1']['contents'],
                           ['My first H1', 'My second H1'])
@@ -154,9 +157,9 @@ class TestMetadataGeneration(unittest.TestCase):
             [3, 2, 0, 'My H1'],
         ]
 
-        u = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos),
+        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos),
                                  contents=iter(contents))
-        for url_id, document in u:
+        for url_id, document in gen:
             metadata = document['metadata']
             if document['id'] in (1, 3):
                 self.assertEquals(metadata['h1']['contents'], ['My H1'])
@@ -169,26 +172,25 @@ class TestMetadataGeneration(unittest.TestCase):
             [2, 2, 1, 0, True, []],
             [3, 4, 10, 3, False, [2, 3, 4]],
         ]
-        u = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos),
+        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos),
                                  contents_duplicate=iter(duplicates))
 
-        documents = list(u)
         # check for url1
-        document = documents[0][1]
+        document = _next_doc(gen)
         dup = document['metadata']
         self.assertEqual(dup['title']['nb'], 10)
         self.assertEqual(dup['title']['duplicates']['nb'], 3)
         self.assertEqual(dup['title']['duplicates']['urls'], [2, 3, 4])
 
         # check for url2
-        document = documents[1][1]
+        document = _next_doc(gen)
         dup = document['metadata']
         self.assertEqual(dup['h1']['nb'], 1)
         self.assertEqual(dup['h1']['duplicates']['nb'], 0)
         self.assertFalse('urls' in dup['h1']['duplicates'])
 
         # check for url3
-        document = documents[2][1]
+        document = _next_doc(gen)
         dup = document['metadata']
         self.assertEqual(dup['description']['nb'], 10)
         self.assertEqual(dup['description']['duplicates']['nb'], 3)
@@ -214,10 +216,9 @@ class TestInlinksGeneration(unittest.TestCase):
             [1, 'a', ['link_meta'], 3],
         ]
 
-        u = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
+        gen = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
                                  infos=iter(infos))
-        documents = list(u)
-        document = documents[0][1]
+        document = _next_doc(gen)
         inlinks = document['inlinks_internal']
         self.assertEquals(inlinks['nb']['total'], 5)
         self.assertEquals(inlinks['nb']['nofollow']['total'], 2)
@@ -268,12 +269,10 @@ class TestOutlinksGeneration(unittest.TestCase):
             [3, 'a', ['link'], 6, ''],
         ]
 
-        u = UrlDocumentGenerator(iter(self.ids), outlinks=iter(outlinks),
+        gen = UrlDocumentGenerator(iter(self.ids), outlinks=iter(outlinks),
                                  infos=iter(self.infos))
-        documents = list(u)
-
         # check for url1
-        document = documents[0][1]
+        document = _next_doc(gen)
         # assert nofollow combinations
         expected_combinations = {
             "link": 2,
@@ -304,7 +303,7 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         # check for url2
         # check that url 2 has no outlinks
-        document = documents[1][1]
+        document = _next_doc(gen)
         int_outlinks_nb = document['outlinks_internal']['nb']
         ext_outlinks_nb = document['outlinks_external']['nb']
         self.assertEqual(int_outlinks_nb['total'], 0)
@@ -324,7 +323,7 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         # check for url3
         # check that url 3 has 1 outlink
-        document = documents[2][1]
+        document = _next_doc(gen)
         int_outlinks_nb = document['outlinks_internal']['nb']
         ext_outlinks_nb = document['outlinks_external']['nb']
         self.assertEquals(ext_outlinks_nb['follow']['total'], 1)
@@ -347,6 +346,7 @@ class TestOutlinksGeneration(unittest.TestCase):
         ]
         self.assertItemsEqual(document['outlinks_internal']['urls']['all'],
                               expected_outlinks)
+
     def test_outlinks_follow(self):
         ids = self.ids[:1]
         infos = self.infos[:1]
@@ -357,16 +357,14 @@ class TestOutlinksGeneration(unittest.TestCase):
             [1, 'a', ['link'], 2, ''],
             [1, 'a', ['follow'], 2, ''],
             [1, 'a', ['follow'], 3, ''],
-            # TODO ask about this 1) nofollow_combination 2) outlink list
             # these 2 cases should be considered as internal link
             [1, 'a', ['robots'], -1, 'www.site.com'],
             [1, 'a', ['robots'], -1, 'www.site.com/abc'],
         ]
 
-        u = UrlDocumentGenerator(iter(ids), outlinks=iter(outlinks),
+        gen = UrlDocumentGenerator(iter(ids), outlinks=iter(outlinks),
                                  infos=iter(infos))
-        documents = list(u)
-        document = documents[0][1]
+        document = _next_doc(gen)
 
         int_outlinks_nb = document['outlinks_internal']['nb']
 
@@ -423,10 +421,9 @@ class TestOutlinksGeneration(unittest.TestCase):
             [2, 110, 402],
         ]
 
-        u = UrlDocumentGenerator(iter(patterns),
+        gen = UrlDocumentGenerator(iter(patterns),
                                  infos=iter(infos),
                                  badlinks=iter(badlinks))
-        documents = list(u)
 
         expected_nb_1 = {
             '3xx': 3,
@@ -465,13 +462,13 @@ class TestOutlinksGeneration(unittest.TestCase):
             '4xx': range(100, 110),
         }
 
-        document = documents[0][1]
+        document = _next_doc(gen)
         outlinks = document['outlinks_internal']
         self.assertEqual(outlinks['nb']['errors'], expected_nb_1)
 
         self.assertDictContainsSubset(expected_urls_1, outlinks['urls'])
 
-        document = documents[1][1]
+        document = _next_doc(gen)
         outlinks = document['outlinks_internal']
         self.assertEqual(outlinks['nb']['errors'], expected_nb_2)
         self.assertDictContainsSubset(expected_urls_2, outlinks['urls'])
@@ -511,30 +508,29 @@ class TestRedirectsGeneration(unittest.TestCase):
             [4, 'r301', ['follow'], 3],
         ]
 
-        u = UrlDocumentGenerator(iter(patterns),
+        gen = UrlDocumentGenerator(iter(patterns),
                                  outlinks=iter(outlinks),
                                  inlinks=iter(inlinks),
                                  infos=iter(infos))
-        documents = u.__iter__()
 
-        document = documents.next()[1]
+        document = _next_doc(gen)
         redirect_to = document['redirect']['to']
         self.assertEquals(redirect_to, {'url_id': 2, 'http_code': 301})
 
-        document = documents.next()[1]
+        document = _next_doc(gen)
         redirect_to = document['redirect']['to']
         self.assertEquals(redirect_to,
                           {'url': 'http://www.youtube.com', 'http_code': 302,
                            # 0 here
                            'url_id': 0})
 
-        document = documents.next()[1]
+        document = _next_doc(gen)
         redirect_to = document['redirect']['to']
         self.assertEquals(redirect_to, {'url_id': 4, 'http_code': 301})
 
         # this is a non-crawled page but has received an incoming redirection
         # so we generate a minimal document for it
-        document = documents.next()[1]
+        document = _next_doc(gen)
         expected = {
             'url': 'http://www.site.com/path/name4.html',
             'id': 4,
@@ -556,9 +552,9 @@ class TestRedirectsGeneration(unittest.TestCase):
             [1, 'r301', ['follow'], 2],
         ]
 
-        u = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
+        gen = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
                                  infos=iter(infos))
-        document = iter(u).next()[1]
+        document = _next_doc(gen)
         expected = {
             'urls': [
                 # url_id, http_code
@@ -610,29 +606,28 @@ class TestCanonicalGeneration(unittest.TestCase):
             [5, 'canonical', ['follow'], 4],
         ]
 
-        u = UrlDocumentGenerator(iter(patterns), outlinks=iter(outlinks),
+        gen = UrlDocumentGenerator(iter(patterns), outlinks=iter(outlinks),
                                  infos=iter(infos), inlinks=iter(inlinks))
-        documents = list(u)
 
         # Url 1
-        canonical_to = documents[0][1]['canonical']['to']
+        canonical_to = _next_doc(gen)['canonical']['to']
         self.assertEquals(canonical_to['url_id'], 2)
         self.assertEquals(canonical_to['equal'], False)
 
         # Url 2
-        canonical_to = documents[1][1]['canonical']['to']
+        canonical_to = _next_doc(gen)['canonical']['to']
         self.assertEquals(canonical_to['url_id'], 2)
         self.assertEquals(canonical_to['equal'], True)
 
         # Url 3
-        canonical_to = documents[2][1]['canonical']['to']
+        canonical_to = _next_doc(gen)['canonical']['to']
         self.assertEquals(canonical_to['url'], "http://www.youtube.com")
         # 0 here, should clean ???
         self.assertEquals(canonical_to['url_id'], 0)
         self.assertEquals(canonical_to['equal'], False)
 
         # # Url 4
-        canonical_to = documents[3][1]['canonical']['to']
+        canonical_to = _next_doc(gen)['canonical']['to']
         self.assertEquals(canonical_to['url_id'], 5)
         self.assertEquals(canonical_to['equal'], False)
 
@@ -642,7 +637,7 @@ class TestCanonicalGeneration(unittest.TestCase):
             'url': 'http://www.site.com/path/name4.html',
             'http_code': 0
         }
-        self.assertEquals(documents[4][1], expected)
+        self.assertEquals(_next_doc(gen), expected)
 
     def test_canonical_from(self):
         patterns = [
@@ -664,23 +659,22 @@ class TestCanonicalGeneration(unittest.TestCase):
             [3, 'canonical', ['follow'], 3],  # self canonical
         ]
 
-        u = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
+        gen = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
                                  infos=iter(infos))
-        documents = list(u)
 
         # Url 1
-        canonical_from = documents[0][1]['canonical']['from']
+        canonical_from = _next_doc(gen)['canonical']['from']
         self.assertEquals(canonical_from['nb'], 1)
         self.assertEquals(canonical_from['urls'], [5])
 
         # Url 2
-        canonical_from = documents[1][1]['canonical']['from']
+        canonical_from = _next_doc(gen)['canonical']['from']
         self.assertEquals(canonical_from['nb'], 2)
         self.assertEquals(canonical_from['urls'], [17, 20])
 
         # Url 3
         # should not count self canonical
-        self.assertEqual(documents[2][1]['canonical']['from'],
+        self.assertEqual(_next_doc(gen)['canonical']['from'],
                          {'nb': 0})
 
 
@@ -700,12 +694,9 @@ class TestGlobalDocumentGeneration(unittest.TestCase):
             [3, 1, 'text/html', 0, 1, 0, 1200, 303, 456],
         ]
 
-        u = UrlDocumentGenerator(iter(patterns), infos=iter(infos))
-        document = list(u)
-        self.assertEqual(document, [])
+        gen = UrlDocumentGenerator(iter(patterns), infos=iter(infos))
+        self.assertRaises(StopIteration, _next_doc, gen)
 
-    # TODO nofollow, noindex
-    # TODO make query test independent from url ES mapping
     def test_total_uniques(self):
         patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
@@ -734,13 +725,12 @@ class TestGlobalDocumentGeneration(unittest.TestCase):
             [1, 'a', follow_mask(3), 4],
         ]
 
-        u = UrlDocumentGenerator(iter(patterns),
+        gen = UrlDocumentGenerator(iter(patterns),
                                  infos=iter(infos),
                                  outlinks=iter(outlinks),
                                  inlinks=iter(inlinks))
-        documents = list(u)
 
-        document = documents[0][1]
+        document = _next_doc(gen)
         self.assertEqual(document['outlinks_internal']['nb']['unique'], 2)
         self.assertEqual(document['inlinks_internal']['nb']['unique'], 3)
         # assert that temporary data structures should be deleted
