@@ -6,8 +6,7 @@ from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
 
 from cdf.query.query import Query
-from cdf.tasks.constants import ES_MAPPING
-
+from .stub_mapping import STUB_MAPPING as ES_MAPPING
 
 ELASTICSEARCH_LOCATION = 'http://localhost:9200'
 ELASTICSEARCH_INDEX = 'cdf_test'
