@@ -8,7 +8,6 @@ from cdf.core.streams.exceptions import GroupWithSkipException
 from cdf.core.streams.utils import idx_from_stream
 from cdf.metadata.raw.masks import list_to_mask
 from cdf.utils.date import date_2k_mn_to_date
-from cdf.utils.dict import flatten_dict, deep_dict
 from cdf.utils.hashing import string_to_int64
 from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 from cdf.metadata.url.es_backend_utils import generate_default_document
@@ -25,14 +24,13 @@ def _init_document(doc):
 
 
 def _clean_document(doc):
-    # TODO maybe performance problem
-    # a hack for cleaning `None` fields
-    flatten = flatten_dict(doc)
-    for k, v in flatten.items():
-        if v is None or v == []:
-            del(flatten[k])
-    doc.clear()
-    doc.update(deep_dict(flatten))
+    def _recursive_clean(doc, access):
+        for k, v in doc.items():
+            if isinstance(v, dict):
+                _recursive_clean(v, doc[k])
+            elif v is None or v == []:
+                del(access[k])
+    _recursive_clean(doc, doc)
 
 
 def _content_types(mandatory=False):
