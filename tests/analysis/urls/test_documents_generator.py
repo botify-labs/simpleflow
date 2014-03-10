@@ -347,7 +347,6 @@ class TestOutlinksGeneration(unittest.TestCase):
         ]
         self.assertItemsEqual(document['outlinks_internal']['urls']['all'],
                               expected_outlinks)
-
     def test_outlinks_follow(self):
         ids = self.ids[:1]
         infos = self.infos[:1]
@@ -358,6 +357,10 @@ class TestOutlinksGeneration(unittest.TestCase):
             [1, 'a', ['link'], 2, ''],
             [1, 'a', ['follow'], 2, ''],
             [1, 'a', ['follow'], 3, ''],
+            # TODO ask about this 1) nofollow_combination 2) outlink list
+            # these 2 cases should be considered as internal link
+            [1, 'a', ['robots'], -1, 'www.site.com'],
+            [1, 'a', ['robots'], -1, 'www.site.com/abc'],
         ]
 
         u = UrlDocumentGenerator(iter(ids), outlinks=iter(outlinks),
@@ -367,12 +370,12 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         int_outlinks_nb = document['outlinks_internal']['nb']
 
-        self.assertEquals(int_outlinks_nb['total'], 4)
-        self.assertEquals(int_outlinks_nb['nofollow']['total'], 1)
+        self.assertEquals(int_outlinks_nb['total'], 6)
+        self.assertEquals(int_outlinks_nb['nofollow']['total'], 3)
         expected_combinations = {
             "link": 1,
             "meta": 0,
-            "robots": 0,
+            "robots": 2,
             "link_meta": 0,
             "meta_robots": 0,
             "link_robots": 0,

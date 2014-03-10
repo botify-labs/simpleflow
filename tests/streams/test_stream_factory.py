@@ -5,13 +5,14 @@ from mock import MagicMock, patch
 
 from cdf.exceptions import MalformedFileNameError
 from cdf.core.streams.stream_factory import (get_part_id_from_filename,
-                                        FileStreamFactory,
-                                        HostStreamFactory,
-                                        PathStreamFactory,
-                                        QueryStringStreamFactory,
-                                        MetadataStreamFactory,
-                                        get_max_crawled_urlid,
-                                        _get_nb_crawled_urls_from_stream)
+                                             FileStreamFactory,
+                                             ProtocolStreamFactory,
+                                             HostStreamFactory,
+                                             PathStreamFactory,
+                                             QueryStringStreamFactory,
+                                             MetadataStreamFactory,
+                                             get_max_crawled_urlid,
+                                             _get_nb_crawled_urls_from_stream)
 
 
 class TestGetPartIdFromFileName(unittest.TestCase):
@@ -128,6 +129,31 @@ class TestStreamFactory(unittest.TestCase):
         self.assertRaises(IOError,
                           file_stream_factory.get_stream)
 
+class TestProtocolStreamFactory(unittest.TestCase):
+    def test_nominal_case(self):
+        stream_factory = MagicMock()
+        urlids = [
+            (0, "http", "www.foo.com"),
+            (1, "https", "www.bar.com"),
+            (3, "https", "www.bar.com"),
+        ]
+        stream_factory.get_stream.return_value = iter(urlids)
+
+        path = None
+        crawler_metakeys = {"max_uid_we_crawled": 1}
+        protocol_stream_factory = ProtocolStreamFactory(path, crawler_metakeys)
+        protocol_stream_factory.set_file_stream_factory(stream_factory)
+
+        #urlid 3 is not returned since it has not been crawled
+        expected_result = [
+            (0, "http"),
+            (1, "https")
+        ]
+
+        self.assertEqual(expected_result,
+                         list(protocol_stream_factory.get_stream()))
+
+
 
 class TestHostStreamFactory(unittest.TestCase):
     def test_nominal_case(self):
@@ -180,30 +206,45 @@ class TestPathStreamFactory(unittest.TestCase):
 
 
 class TestQueryStringStreamFactory(unittest.TestCase):
-    def test_nominal_case(self):
-        stream_factory = MagicMock()
+    def setUp(self):
+        self.stream_factory = MagicMock()
         urlids = [
             (0, "http", "www.foo.com", "/", "?foo=1"),
             (1, "http", "www.foo.com", "/"),
             (2, "http", "www.foo.com", "/", "?foo=bar&baz=2"),
             (3, "http", "www.foo.com", "/", "?foo=2"),
         ]
-        stream_factory.get_stream.return_value = iter(urlids)
-
+        self.stream_factory.get_stream.return_value = iter(urlids)
         path = None
         crawler_metakeys = {"max_uid_we_crawled": 2}
-        qs_stream_factory = QueryStringStreamFactory(path, crawler_metakeys)
-        qs_stream_factory.set_file_stream_factory(stream_factory)
+        self.qs_stream_factory = QueryStringStreamFactory(path,
+                                                          crawler_metakeys)
+        self.qs_stream_factory.set_file_stream_factory(self.stream_factory)
 
-        #urlid 1 is not returned since it has no query string
+    def test_nominal_case(self):
+
         #urlid 3 is not returned since it has not been crawled
         expected_result = [
             (0, {"foo": ["1"]}),
+            (1, {}),
             (2, {"foo": ["bar"], "baz": ["2"]})
         ]
 
         self.assertEqual(expected_result,
-                         list(qs_stream_factory.get_stream()))
+                         list(self.qs_stream_factory.get_stream()))
+
+    def test_do_not_parse_string(self):
+        self.qs_stream_factory.parse_string = False
+
+        #urlid 3 is not returned since it has not been crawled
+        expected_result = [
+            (0, "foo=1"),
+            (1, ""),
+            (2, "foo=bar&baz=2")
+        ]
+
+        self.assertEqual(expected_result,
+                         list(self.qs_stream_factory.get_stream()))
 
 
 class TestMetadataStreamFactory(unittest.TestCase):

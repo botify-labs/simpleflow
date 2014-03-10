@@ -1,6 +1,6 @@
 import ujson
 from itertools import izip
-
+from cdf.analysis.urls.utils import is_link_internal
 from cdf.metadata.raw import (STREAMS_HEADERS, CONTENT_TYPE_INDEX,
                               MANDATORY_CONTENT_TYPES)
 from cdf.core.streams.transformations import group_with
@@ -149,8 +149,8 @@ def _process_outlinks(document, stream_oulinks):
     url_src, link_type, follow_keys, url_dst, external_url = stream_oulinks
 
     if link_type == "a":
-        # TODO dont forget to merge this
-        is_internal = url_dst > 0
+        # is_internal = url_dst > 0
+        is_internal = is_link_internal(follow_keys, url_dst)
         is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
         outlink_type = "outlinks_internal" if is_internal else "outlinks_external"
         mask = list_to_mask(follow_keys)
@@ -171,7 +171,9 @@ def _process_outlinks(document, stream_oulinks):
             follow['combinations'][key] += 1
 
         # internal outlinks
-        if is_internal:
+        # still need dest url id check since we can have internal url
+        # blocked by robots.txt
+        if is_internal and url_dst > 0:
             # add this link's dest to the processed set
             document['processed_outlink_url'].add(url_dst)
 
