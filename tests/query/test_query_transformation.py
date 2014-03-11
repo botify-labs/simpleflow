@@ -1,10 +1,6 @@
 import unittest
 
-from nose.plugins.attrib import attr
-from elasticsearch import Elasticsearch
-
 from cdf.query.query_transformer import get_es_query, _merge_filters
-from cdf.tasks.constants import ES_MAPPING
 from cdf.exceptions import BotifyQueryException
 
 CRAWL_ID = 1
@@ -13,46 +9,13 @@ ELASTICSEARCH_INDEX = 'cdf_query_test'
 DOC_TYPE = 'crawl_%d' % CRAWL_ID
 REVISION_ID = 1
 
-ES = Elasticsearch()
 
-
-@attr(tag='elasticsearch')
 class TestQueryTransformation(unittest.TestCase):
-    """Validation test for transformed ElasticSearch queries,
-    using ElasticSearch query validate API"""
-
-    @classmethod
-    def setUpClass(cls):
-        try:
-            # Try to delete test index if it exists
-            ES.indices.delete(ELASTICSEARCH_INDEX)
-        except:
-            pass
-
-        # Create index and put cdf's mapping
-        ES.indices.create(ELASTICSEARCH_INDEX)
-        ES.indices.put_mapping(ELASTICSEARCH_INDEX,
-                               DOC_TYPE,
-                               ES_MAPPING)
-
-    @classmethod
-    def tearDownClass(cls):
-        ES.indices.delete(ELASTICSEARCH_INDEX)
+    """Validation test for transformed ElasticSearch queries"""
 
     def setUp(self):
         self.crawl_filter = {'term': {'crawl_id': CRAWL_ID}}
         self.not_crawled_filter = {'not': {'term': {'http_code': 0}}}
-
-    @staticmethod
-    def is_valid_es_query(es_query):
-        # Every result ES query should have these 3 components
-        if ('fields' not in es_query or 'sort' not in es_query or
-                    'query' not in es_query):
-            return False
-
-        response = ES.indices.validate_query(ELASTICSEARCH_INDEX,
-                                             DOC_TYPE, es_query, explain=True)
-        return response['valid']
 
     def test_process_filter(self):
         query_filters = {
@@ -107,7 +70,7 @@ class TestQueryTransformation(unittest.TestCase):
             "filters": {
                 "and": [
                     {"field": "http_code", "value": 200},
-                    {"field": "delay2", "value": 100, "predicate": "gte"},
+                    {"field": "delay_first_byte", "value": 100, "predicate": "gte"},
                 ]
             },
             "sort": ["id"]
@@ -122,7 +85,7 @@ class TestQueryTransformation(unittest.TestCase):
                             self.crawl_filter,
                             self.not_crawled_filter,
                             {'term': {'http_code': 200}},
-                            {'range': {'delay2': {'gte': 100}}},
+                            {'range': {'delay_first_byte': {'gte': 100}}},
                         ]
                     }
                 }
@@ -188,7 +151,7 @@ class TestQueryTransformation(unittest.TestCase):
             'fields': ["metadata"],
             'filters': {
                 'and': [
-                    {'field': 'metadata.title', 'predicate': 'any.starts', 'value': 'News'}
+                    {'field': 'metadata.title.contents', 'predicate': 'any.starts', 'value': 'News'}
                 ]
             }
         }
@@ -201,7 +164,7 @@ class TestQueryTransformation(unittest.TestCase):
                     'filter': {
                         'and': [
                             self.crawl_filter, self.not_crawled_filter,
-                            {'prefix': {'metadata.title': 'News'}}
+                            {'prefix': {'metadata.title.contents': 'News'}}
                         ]
                     }
                 }
@@ -215,7 +178,7 @@ class TestQueryTransformation(unittest.TestCase):
             'fields': ["metadata.h1"],
             'filters': {
                 'and': [
-                    {'field': 'metadata.title', 'predicate': 'exists'}
+                    {'field': 'metadata.title.contents', 'predicate': 'exists'}
                 ]
             }
         }
@@ -228,7 +191,7 @@ class TestQueryTransformation(unittest.TestCase):
                         'and': [
                             self.crawl_filter,
                             self.not_crawled_filter,
-                            {'exists': {'field': 'metadata.title'}}
+                            {'exists': {'field': 'metadata.title.contents'}}
                         ]
                     }
                 }
@@ -240,12 +203,12 @@ class TestQueryTransformation(unittest.TestCase):
 
     def test_sort(self):
         query = {
-            'sort': ['url', {'id': {'order': 'desc'}}, 'metadata.h1'],
-            'fields': ['metadata.h1']
+            'sort': ['url', {'id': {'order': 'desc'}}, 'metadata.h1.nb'],
+            'fields': ['metadata.h1.contents']
         }
 
         expected_es_query = {
-            '_source': ['metadata.h1'],
+            '_source': ['metadata.h1.contents'],
             'query': {
                 'constant_score': {
                     'filter': {
@@ -256,7 +219,7 @@ class TestQueryTransformation(unittest.TestCase):
             'sort': [
                 {'url': {'ignore_unmapped': True}},
                 {'id': {'order': 'desc', 'ignore_unmapped': True}},
-                {'metadata.h1': {'ignore_unmapped': True}}
+                {'metadata.h1.nb': {'ignore_unmapped': True}}
             ]
         }
         result = get_es_query(query, CRAWL_ID)
