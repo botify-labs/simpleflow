@@ -1,19 +1,20 @@
 import unittest
 
-from cdf.query.query_transformer import get_es_query, _merge_filters
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
+from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
+from cdf.query.query_parsing import QueryParser
 from cdf.exceptions import BotifyQueryException
 
+
 CRAWL_ID = 1
-ELASTICSEARCH_LOCATION = 'http://localhost:9200'
-ELASTICSEARCH_INDEX = 'cdf_query_test'
-DOC_TYPE = 'crawl_%d' % CRAWL_ID
-REVISION_ID = 1
 
 
 class TestQueryTransformation(unittest.TestCase):
     """Validation test for transformed ElasticSearch queries"""
 
     def setUp(self):
+        self.es_backend = ElasticSearchBackend(URLS_DATA_FORMAT_DEFINITION)
+        self.parser = QueryParser(data_backend=self.es_backend)
         self.crawl_filter = {'term': {'crawl_id': CRAWL_ID}}
         self.not_crawled_filter = {'not': {'term': {'http_code': 0}}}
 
@@ -32,7 +33,7 @@ class TestQueryTransformation(unittest.TestCase):
             {'field': 'http_code', 'value': 0, 'predicate': 'gt'}
         ]
 
-        query_filters = _merge_filters(query_filters, default_filters)
+        query_filters = self.parser._merge_filters(query_filters, default_filters)
         target = query_filters['filters']['and']
         # assert on order
         # first filter should be that of the `crawl_id`
@@ -60,7 +61,7 @@ class TestQueryTransformation(unittest.TestCase):
             'sort': [{'id': {'ignore_unmapped': True}}],
             '_source': ['id', 'url']
         }
-        result = get_es_query(query, CRAWL_ID)
+        result = self.parser.get_es_query(query, CRAWL_ID)
 
         self.assertDictEqual(result, expected_es_query)
 
@@ -92,7 +93,7 @@ class TestQueryTransformation(unittest.TestCase):
             },
             '_source': ['id']
         }
-        result = get_es_query(query, CRAWL_ID)
+        result = self.parser.get_es_query(query, CRAWL_ID)
 
         self.assertDictEqual(result, expected_es_query)
 
@@ -124,7 +125,7 @@ class TestQueryTransformation(unittest.TestCase):
             },
             '_source': ['id']
         }
-        result = get_es_query(query, CRAWL_ID)
+        result = self.parser.get_es_query(query, CRAWL_ID)
 
         self.assertDictEqual(result, expected_es_query)
 
@@ -142,7 +143,7 @@ class TestQueryTransformation(unittest.TestCase):
             'sort': [{'id': {'ignore_unmapped': True}}],
             '_source': ['url']
         }
-        result = get_es_query(query, CRAWL_ID)
+        result = self.parser.get_es_query(query, CRAWL_ID)
 
         self.assertDictEqual(result, expected_es_query)
 
@@ -170,7 +171,7 @@ class TestQueryTransformation(unittest.TestCase):
                 }
             }
         }
-        result = get_es_query(query, CRAWL_ID)
+        result = self.parser.get_es_query(query, CRAWL_ID)
         self.assertDictEqual(result, expected_es_query)
 
     def test_exists_query(self):
@@ -198,7 +199,7 @@ class TestQueryTransformation(unittest.TestCase):
             },
             'sort': [{'id': {'ignore_unmapped': True}}]
         }
-        result = get_es_query(query, CRAWL_ID)
+        result = self.parser.get_es_query(query, CRAWL_ID)
         self.assertDictEqual(result, expected_es_query)
 
     def test_sort(self):
@@ -222,7 +223,7 @@ class TestQueryTransformation(unittest.TestCase):
                 {'metadata.h1.nb': {'ignore_unmapped': True}}
             ]
         }
-        result = get_es_query(query, CRAWL_ID)
+        result = self.parser.get_es_query(query, CRAWL_ID)
         self.assertDictEqual(result, expected_es_query)
 
     def test_between(self):
@@ -250,7 +251,7 @@ class TestQueryTransformation(unittest.TestCase):
             },
             'sort': [{'id': {'ignore_unmapped': True}}]
         }
-        result = get_es_query(query, CRAWL_ID)
+        result = self.parser.get_es_query(query, CRAWL_ID)
         self.assertDictEqual(result, expected_es_query)
 
     def test_bad_format_query(self):
@@ -259,10 +260,10 @@ class TestQueryTransformation(unittest.TestCase):
             'filters': []
         }
         self.assertRaises(BotifyQueryException,
-                          get_es_query, query, CRAWL_ID)
+                          self.parser.get_es_query, query, CRAWL_ID)
 
         query = {
             'filters': {'and': [{}]}
         }
         self.assertRaises(BotifyQueryException,
-                          get_es_query, query, CRAWL_ID)
+                          self.parser.get_es_query, query, CRAWL_ID)

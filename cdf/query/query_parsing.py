@@ -12,28 +12,12 @@ query API (such as ElasticSearch) and for semantic validation.
 """
 
 import abc
-from cdf.metadata.url.es_backend_utils import (generate_multi_field_lookup,
-                                               generate_list_field_lookup,
-                                               generate_valid_field_lookup,
-                                               generate_complete_field_lookup)
-from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
+from copy import deepcopy
+
 from cdf.exceptions import BotifyQueryException
 
 
-__ALL__ = ['parse_botify_query']
-
-# Elements that are of `multi_field` type
-_MULTI_FIELDS = generate_multi_field_lookup(URLS_DATA_FORMAT_DEFINITION)
-
-# Elements in ES that are a list
-_LIST_FIELDS = generate_list_field_lookup(URLS_DATA_FORMAT_DEFINITION)
-
-# All valid field for querying
-_VALID_FIELDS = generate_valid_field_lookup(URLS_DATA_FORMAT_DEFINITION)
-
-# All complete fields path
-# Ex. `error_links.3xx.nb` but not a prefix like `error_links.3xx`
-_COMPLETE_FIELDS = generate_complete_field_lookup(URLS_DATA_FORMAT_DEFINITION)
+__ALL__ = ['QueryParser']
 
 # Available sort options
 _SORT_OPTIONS = ['desc', 'asc']
@@ -139,10 +123,11 @@ class PredicateFilter(Filter):
             a single value, a list or None
     """
 
-    def __init__(self, predicate_field, value=None):
+    def __init__(self, predicate_field, value=None, list_fields=None):
         self.predicate_field = predicate_field
         self.field_value = self.predicate_field.transform()
         self.value = value
+        self.list_fields = list_fields
 
     @abc.abstractmethod
     def is_list_op(self):
@@ -174,13 +159,14 @@ class PredicateFilter(Filter):
         :raises BotifyQueryException: if operator and field are mismatched
         """
         is_list_op = self.is_list_op()
-        if is_list_op is None:
+        if is_list_op is None or self.list_fields is None:
+            # No validation needed
             return
 
-        if self.field_value in _LIST_FIELDS and not is_list_op:
+        if self.field_value in self.list_fields and not is_list_op:
             _raise_parsing_error('Apply list predicate on non-list field',
                                  self.field_value)
-        elif self.field_value not in _LIST_FIELDS and is_list_op:
+        elif self.field_value not in self.list_fields and is_list_op:
             _raise_parsing_error('Apply non-list predicate on list field',
                                  self.field_value)
 
@@ -211,7 +197,7 @@ class AnyEq(PredicateFilter):
     def transform(self):
         return {
             'term': {
-                _get_untouched_field(self.field_value): self.value
+                self.field_value: self.value
             }
         }
 
@@ -316,7 +302,7 @@ class Eq(PredicateFilter):
     def transform(self):
         return {
             'term': {
-                _get_untouched_field(self.field_value): self.value
+                self.field_value: self.value
             }
         }
 
@@ -331,7 +317,7 @@ class Re(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                _get_untouched_field(self.field_value): self.value
+                self.field_value: self.value
             }
         }
 
@@ -461,80 +447,6 @@ _PREDICATE_LIST = {
 }
 
 
-def parse_predicate_filter(predicate_filter):
-    """Parse a predicate filter structure"""
-    if not isinstance(predicate_filter, dict):
-        _raise_parsing_error('Predicate filter is not a dict',
-                             predicate_filter)
-    if not 'field' in predicate_filter:
-        _raise_parsing_error('Field is missing in predicate filter',
-                             predicate_filter)
-
-    predicate = predicate_filter.get('predicate', _DEFAULT_PREDICATE)
-    if predicate not in _PREDICATE_LIST:
-        _raise_parsing_error('Unknown predicate', predicate)
-    else:
-        return _PREDICATE_LIST[predicate](
-            PredicateField(predicate_filter['field']),
-            predicate_filter['value']
-            if 'value' in predicate_filter else None)
-
-
-def parse_not_filter(not_filter):
-    """Parse a not filter structure"""
-    if not isinstance(not_filter, dict):
-        _raise_parsing_error('Not filter is not a dict',
-                             not_filter)
-    if len(not_filter) != 1:
-        _raise_parsing_error('Not filter has multiple mapping',
-                             not_filter)
-
-    _, filter = not_filter.items()[0]
-    return NotFilter(parse_filter(filter))
-
-
-def parse_boolean_filter(boolean_filter):
-    """Parse a boolean filter structure"""
-    if not isinstance(boolean_filter, dict):
-        _raise_parsing_error('Boolean filter is not a dict',
-                             boolean_filter)
-
-    if len(boolean_filter) != 1:
-        _raise_parsing_error('Boolean filter has multiple mapping',
-                             boolean_filter)
-
-    bool_predicate, filters = boolean_filter.items()[0]
-    if not isinstance(filters, list):
-        _raise_parsing_error('Boolean filter does not contain a list',
-                             boolean_filter)
-    return BooleanFilter(bool_predicate,
-                         [parse_filter(filter) for filter in filters])
-
-
-def _is_boolean_filter(filter_dict):
-    return isinstance(filter_dict, dict) and \
-           len(filter_dict) == 1 and \
-           filter_dict.keys()[0].lower() in _BOOL_PREDICATES
-
-
-def _is_not_filter(filter_dict):
-    return isinstance(filter_dict, dict) and \
-           len(filter_dict) == 1 and \
-           filter_dict.keys()[0].lower() == _NOT_PREDICATE
-
-
-def parse_filter(filter):
-    """Parse the filter sub-structure of a botify query"""
-    # boolean filter
-    if _is_boolean_filter(filter):
-        return parse_boolean_filter(filter)
-    elif _is_not_filter(filter):
-        return parse_not_filter(filter)
-    # predicate filter
-    else:
-        return parse_predicate_filter(filter)
-
-
 # Sorts
 class Sorts(Term):
     """Class represents the sort component of a botify query"""
@@ -593,35 +505,6 @@ class OrderedSortElem(SortElem):
                                  self.sort_option)
 
 
-def parse_sort_elem(sort_elem):
-    """Parse a single sort option element"""
-    if isinstance(sort_elem, _STR_TYPE):
-        return SimpleSortElem(SortField(sort_elem))
-    elif isinstance(sort_elem, dict):
-        if len(sort_elem) != 1:
-            _raise_parsing_error('Ordered sort element has multiple mapping',
-                                 sort_elem)
-
-        sort_field, sort_option = sort_elem.items()[0]
-        if not (isinstance(sort_option, dict) and 'order' in sort_option):
-            _raise_parsing_error('Sort option has wrong format',
-                                 sort_option)
-        return OrderedSortElem(SortField(sort_field),
-                               sort_option['order'])
-    else:
-        _raise_parsing_error('Sort element has wrong format',
-                             sort_elem)
-
-
-def parse_sorts(sorts):
-    """Parse a sort sub-structure of a botify query"""
-    if not isinstance(sorts, list):
-        _raise_parsing_error('Sorts is not a list',
-                             sorts)
-
-    return Sorts([parse_sort_elem(elem) for elem in sorts])
-
-
 # Fields
 class Fields(Term):
     """Class represents the required fields component of a botify query"""
@@ -647,43 +530,43 @@ class Field(Term):
 
 
 class RequiredField(Field):
+    def __init__(self, field, select_fields=None):
+        super(RequiredField, self).__init__(field)
+        self.select_fields = select_fields
+
     def validate(self):
-        if self.field_value not in _VALID_FIELDS:
+        if self.select_fields is None:
+            return
+        if self.field_value not in self.select_fields:
             _raise_parsing_error('Field is not valid for query',
                                  self.field_value)
 
 
 class PredicateField(Field):
+    def __init__(self, field, query_fields=None):
+        super(PredicateField, self).__init__(field)
+        self.query_fields = query_fields
+
     def validate(self):
-        if self.field_value not in _COMPLETE_FIELDS:
+        if self.query_fields is None:
+            return
+        if self.field_value not in self.query_fields:
             _raise_parsing_error("Field is not valid for predicate",
                                  self.field_value)
 
 
 # TODO allow only number fields ???
 class SortField(Field):
+    def __init__(self, field, query_fields=None):
+        super(SortField, self).__init__(field)
+        self.query_fields = query_fields
+
     def validate(self):
-        if self.field_value not in _COMPLETE_FIELDS:
+        if self.query_fields is None:
+            return
+        if self.field_value not in self.query_fields:
             _raise_parsing_error("Field is not valid for sort",
                                  self.field_value)
-
-
-def parse_field(field):
-    """Parse a single field"""
-    if not isinstance(field, _STR_TYPE):
-        _raise_parsing_error('Field is not a string',
-                             field)
-    return RequiredField(field)
-
-
-def parse_fields(fields):
-    """Parse the fields sub-structure of a botify query"""
-    if not isinstance(fields, list):
-        _raise_parsing_error('Fields is not a list',
-                             fields)
-
-    return Fields([parse_field(field)
-                   for field in fields])
 
 
 class BotifyQuery(Term):
@@ -709,25 +592,215 @@ class BotifyQuery(Term):
         self.filter.validate()
 
 
-def parse_botify_query(botify_query):
-    """Parse a botify front-end query into the intermediate form
+class QueryParser(object):
+    """Parser for botify front-end query
 
-    :param botify_query: a dict representing botify front-end query
-    :returns: an BotifyQuery object containing the hierarchy of this query
+    The parser takes a botify front-end query, parse it, validates it
+    and finally transform it into an ElasticSearch query
+
+    It depends on a data backend for data format information in order
+    to do validation.
     """
-    if not isinstance(botify_query, dict):
-        _raise_parsing_error('Botify query is not a dict',
-                             botify_query)
 
-    if 'filters' not in botify_query:
-        _raise_parsing_error('Filter is missing in botify query',
-                             botify_query)
+    def __init__(self, data_backend):
+        """Constructor for QueryParser"""
+        self.backend = data_backend
+        self.list_fields = data_backend.list_fields()
+        self.query_fields = data_backend.query_fields()
+        self.select_fields = data_backend.select_fields()
 
-    if 'sort' not in botify_query:
-        botify_query['sort'] = _DEFAULT_SORT
-    if 'fields' not in botify_query:
-        botify_query['fields'] = _DEFAULT_FIELD
+    def parse_field(self, field):
+        """Parse a single field"""
+        if not isinstance(field, _STR_TYPE):
+            _raise_parsing_error('Field is not a string',
+                                 field)
+        return RequiredField(field, select_fields=self.select_fields)
 
-    return BotifyQuery(parse_fields(botify_query['fields']),
-                       parse_sorts(botify_query['sort']),
-                       parse_filter(botify_query['filters']))
+    def parse_fields(self, fields):
+        """Parse the fields sub-structure of a botify query"""
+        if not isinstance(fields, list):
+            _raise_parsing_error('Fields is not a list',
+                                 fields)
+
+        return Fields([self.parse_field(field)
+                       for field in fields])
+
+    def parse_sort_elem(self, sort_elem):
+        """Parse a single sort option element"""
+        if isinstance(sort_elem, _STR_TYPE):
+            return SimpleSortElem(SortField(sort_elem))
+        elif isinstance(sort_elem, dict):
+            if len(sort_elem) != 1:
+                _raise_parsing_error('Ordered sort element has multiple mapping',
+                                     sort_elem)
+
+            sort_field, sort_option = sort_elem.items()[0]
+            if not (isinstance(sort_option, dict) and 'order' in sort_option):
+                _raise_parsing_error('Sort option has wrong format',
+                                     sort_option)
+            return OrderedSortElem(SortField(sort_field,
+                                             query_fields=self.query_fields),
+                                   sort_option['order'])
+        else:
+            _raise_parsing_error('Sort element has wrong format',
+                                 sort_elem)
+
+    def parse_sorts(self, sorts):
+        """Parse a sort sub-structure of a botify query"""
+        if not isinstance(sorts, list):
+            _raise_parsing_error('Sorts is not a list',
+                                 sorts)
+
+        return Sorts([self.parse_sort_elem(elem) for elem in sorts])
+
+    def parse_not_filter(self, not_filter):
+        """Parse a not filter structure"""
+        if not isinstance(not_filter, dict):
+            _raise_parsing_error('Not filter is not a dict',
+                                 not_filter)
+        if len(not_filter) != 1:
+            _raise_parsing_error('Not filter has multiple mapping',
+                                 not_filter)
+
+        _, filter = not_filter.items()[0]
+        return NotFilter(self.parse_filter(filter))
+
+    def parse_boolean_filter(self, boolean_filter):
+        """Parse a boolean filter structure"""
+        if not isinstance(boolean_filter, dict):
+            _raise_parsing_error('Boolean filter is not a dict',
+                                 boolean_filter)
+
+        if len(boolean_filter) != 1:
+            _raise_parsing_error('Boolean filter has multiple mapping',
+                                 boolean_filter)
+
+        bool_predicate, filters = boolean_filter.items()[0]
+        if not isinstance(filters, list):
+            _raise_parsing_error('Boolean filter does not contain a list',
+                                 boolean_filter)
+        return BooleanFilter(bool_predicate,
+                             [self.parse_filter(filter) for filter in filters])
+
+    @staticmethod
+    def _is_boolean_filter(filter_dict):
+        return isinstance(filter_dict, dict) and \
+               len(filter_dict) == 1 and \
+               filter_dict.keys()[0].lower() in _BOOL_PREDICATES
+
+    @staticmethod
+    def _is_not_filter(filter_dict):
+        return isinstance(filter_dict, dict) and \
+               len(filter_dict) == 1 and \
+               filter_dict.keys()[0].lower() == _NOT_PREDICATE
+
+    def parse_predicate_filter(self, predicate_filter):
+        """Parse a predicate filter structure"""
+        if not isinstance(predicate_filter, dict):
+            _raise_parsing_error('Predicate filter is not a dict',
+                                 predicate_filter)
+        if not 'field' in predicate_filter:
+            _raise_parsing_error('Field is missing in predicate filter',
+                                 predicate_filter)
+
+        predicate = predicate_filter.get('predicate', _DEFAULT_PREDICATE)
+        if predicate not in _PREDICATE_LIST:
+            _raise_parsing_error('Unknown predicate', predicate)
+        else:
+            return _PREDICATE_LIST[predicate](
+                PredicateField(predicate_filter['field'],
+                               query_fields=self.query_fields),
+                predicate_filter['value']
+                if 'value' in predicate_filter else None,
+                list_fields=self.list_fields)
+
+    def parse_filter(self, filter):
+        """Parse the filter sub-structure of a botify query"""
+        # boolean filter
+        if self._is_boolean_filter(filter):
+            return self.parse_boolean_filter(filter)
+        elif self._is_not_filter(filter):
+            return self.parse_not_filter(filter)
+        # predicate filter
+        else:
+            return self.parse_predicate_filter(filter)
+
+    def parse_botify_query(self, botify_query):
+        """Parse a botify front-end query into the intermediate form
+
+        :param botify_query: a dict representing botify front-end query
+        :returns: an BotifyQuery object containing the hierarchy of this query
+        """
+        if not isinstance(botify_query, dict):
+            _raise_parsing_error('Botify query is not a dict',
+                                 botify_query)
+
+        if 'filters' not in botify_query:
+            _raise_parsing_error('Filter is missing in botify query',
+                                 botify_query)
+
+        if 'sort' not in botify_query:
+            botify_query['sort'] = _DEFAULT_SORT
+        if 'fields' not in botify_query:
+            botify_query['fields'] = _DEFAULT_FIELD
+
+        return BotifyQuery(self.parse_fields(botify_query['fields']),
+                           self.parse_sorts(botify_query['sort']),
+                           self.parse_filter(botify_query['filters']))
+
+    @staticmethod
+    def _merge_filters(query, filters):
+        """Merge filters to botify query using `and` filter
+
+        New filters are places BEFORE the original filters.
+
+        :param query: the botify format query
+        :param filters: a list of botify predicate to merge
+        :return: the extended query
+        """
+        botify_query = deepcopy(query)
+        to_merge = deepcopy(filters)
+
+        if not 'filters' in botify_query:
+            botify_query['filters'] = {'and': to_merge}
+            return botify_query
+
+        # try to merge into existing, outer `and` filter
+        if 'and' in botify_query['filters']:
+            botify_query['filters']['and'] = filters + botify_query['filters']['and']
+            return botify_query
+
+        # create a new `and` filter for merging
+        to_merge.append(botify_query['filters'])
+        botify_query['filters'] = {'and': to_merge}
+        return botify_query
+
+    def get_es_query(self, botify_query, crawl_id):
+        """Generate ElasticSearch query from a botify query
+
+        :param crawl_id: unique id of the crawl in question
+        :returns: a valid ElasticSearch query, in json format
+        """
+
+        # By default all queries should have these filter/predicate
+        #   1. only query for current crawl/site
+        #   2. only query for urls whose http_code != 0 (crawled urls)
+        # The order is important for and/or/not filters in ElasticSearch
+        # See: http://www.elasticsearch.org/blog/all-about-elasticsearch-filter-bitsets/
+        default_filters = [
+            {'field': 'crawl_id', 'value': crawl_id},
+            {'not': {'field': 'http_code', 'value': 0, 'predicate': 'eq'}}
+        ]
+
+        # Merge default filters in botify format query
+        botify_query = self._merge_filters(botify_query,
+                                           default_filters)
+
+        # parse the merged query
+        parsed_query = self.parse_botify_query(botify_query)
+
+        # semantic validation
+        parsed_query.validate()
+
+        # return the transformed query
+        return parsed_query.transform()
