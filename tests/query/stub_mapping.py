@@ -1,198 +1,281 @@
 """Stub ElasticSearch mapping for unit tests
 """
 
-_NOT_ANALYZED = 'not_analyzed'
-STUB_MAPPING = {
-    "urls": {
-        "_routing": {
-            "required": True,
-            "path": "crawl_id"
-        },
-        "properties": {
-            "url": {
-                "type": "string",
-                "index": _NOT_ANALYZED
-            },
-            "url_hash": {"type": "long"},
-            "byte_size": {"type": "long"},
-            "date_crawled": {"type": "date"},
-            "delay1": {"type": "long"},
-            "delay2": {"type": "long"},
-            "depth": {"type": "long"},
-            "gzipped": {"type": "boolean"},
-            "content_type": {
-                "type": "string",
-                "index": _NOT_ANALYZED
-            },
-            "meta_noindex": {"type": "boolean"},
-            "host": {
-                "type": "string",
-                "index": _NOT_ANALYZED
-            },
-            "http_code": {"type": "long"},
-            "id": {"type": "long"},
-            "crawl_id": {"type": "long"},
-            "patterns": {"type": "long"},
-            "metadata_nb": {
-                "properties": {
-                    "description": {"type": "long"},
-                    "h1": {"type": "long"},
-                    "h2": {"type": "long"},
-                    "title": {"type": "long"}
-                }
-            },
-            "metadata": {
-                "properties": {
-                    "description": {
-                        "type": "string",
-                        "index": _NOT_ANALYZED
-                    },
-                    "h1": {
-                        "type": "string",
-                        "index": _NOT_ANALYZED
-                    },
-                    "h2": {
-                        "type": "string",
-                        "index": _NOT_ANALYZED
-                    },
-                    "title": {
-                        "type": "string",
-                        "index": _NOT_ANALYZED
-                    }
-                }
-            },
-            "metadata_duplicate_nb": {
-                "properties": {
-                    "title": {"type": "long"},
-                    "description": {"type": "long"},
-                    "h1": {"type": "long"}
-                }
-            },
-            "metadata_duplicate": {
-                "properties": {
-                    "title": {"type": "long", "index": "no"},
-                    "description": {"type": "long", "index": "no"},
-                    "h1": {"type": "long", "index": "no"}
-                }
-            },
-            "metadata_duplicate_is_first": {
-                "properties": {
-                    "title": {"type": "boolean"},
-                    "description": {"type": "boolean"},
-                    "h1": {"type": "boolean"}
-                }
-            },
-            "inlinks_internal_nb": {
-                "properties": {
-                    "total": {"type": "long"},
-                    "follow_unique": {"type": "long"},
-                    "total_unique": {"type": "long"},
-                    "follow": {"type": "long"},
-                    "nofollow": {"type": "long"},
-                    "nofollow_combinations": {
-                        "properties": {
-                            "key": {"type": "string"},
-                            "value": {"type": "long"}
-                        }
-                    }
-                }
-            },
-            "inlinks_internal": {"type": "long", "index": "no"},
-            "outlinks_internal": {"type": "long", "index": "no"},
-            "outlinks_internal_nb": {
-                "properties": {
-                    "total": {"type": "long"},
-                    "follow_unique": {"type": "long"},
-                    "total_unique": {"type": "long"},
-                    "follow": {"type": "long"},
-                    "nofollow": {"type": "long"},
-                    "nofollow_combinations": {
-                        "properties": {
-                            "key": {"type": "string"},
-                            "value": {"type": "long"}
-                        }
-                    }
-                }
-            },
-            "outlinks_external_nb": {
-                "properties": {
-                    "total": {"type": "long"},
-                    "follow": {"type": "long"},
-                    "nofollow": {"type": "long"},
-                    "nofollow_combinations": {
-                        "properties": {
-                            "key": {"type": "string"},
-                            "value": {"type": "long"}
-                        }
-                    }
-                }
-            },
-            "path": {
-                "type": "string",
-                "index": _NOT_ANALYZED
-            },
-            "protocol": {
-                "type": "string",
-                "index": _NOT_ANALYZED
-            },
-            "query_string": {
-                "type": "string",
-                "index": _NOT_ANALYZED
-            },
-            "query_string_keys": {
-                "type": "string",
-                "index": _NOT_ANALYZED
-            },
-            "canonical_from_nb": {"type": "long"},
-            "canonical_from": {"type": "long", "index": "no"},
-            "canonical_to": {
-                "properties": {
-                    "url": {"type": "string", "index": "no"},
-                    "url_id": {"type": "long", "index": "no"}
-                }
-            },
-            "canonical_to_equal": {"type": "boolean"},
-            "redirects_to": {
-                "properties": {
-                    "http_code": {"type": "long"},
-                    "url": {"type": "string"},
-                    "url_id": {"type": "long"}
-                }
-            },
-            "redirects_from_nb": {"type": "long"},
-            "redirects_from": {
-                "properties": {
-                    "http_code": {"type": "long", "index": "no"},
-                    "url_id": {"type": "long", "index": "no"}
-                }
-            },
-            "error_links": {
-                "properties": {
-                    "3xx": {
-                        "properties": {
-                            "nb": {"type": "long"},
-                            "urls": {"type": "long", "index": "no"}
-                        }
-                    },
-                    "4xx": {
-                        "properties": {
-                            "nb": {"type": "long"},
-                            "urls": {"type": "long", "index": "no"}
-                        }
-                    },
-                    "5xx": {
-                        "properties": {
-                            "nb": {"type": "long"},
-                            "urls": {"type": "long", "index": "no"}
-                        }
-                    },
-                    "any": {
-                        "properties": {
-                            "nb": {"type": "long"}
-                        }
-                    }
-                }
-            }
+_NUMBER_TYPE = 'long'
+_STRING_TYPE = 'string'
+_BOOLEAN_TYPE = 'boolean'
+_STRUCT_TYPE = 'struct'
+_DATE_TYPE = 'date'
+
+_NO_INDEX = 'es:no_index'
+_NOT_ANALYZED = 'es:not_analyzed'
+_LIST = 'list'
+_MULTI_FIELD = 'es:multi_field'
+
+
+STUB_FORMAT = {
+    # url property data
+    "url": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _NOT_ANALYZED
         }
-    }
+    },
+    "url_hash": {"type": _NUMBER_TYPE},
+    "byte_size": {"type": _NUMBER_TYPE},
+    "date_crawled": {"type": _DATE_TYPE},
+    "delay1": {"type": _NUMBER_TYPE},
+    "delay2": {"type": _NUMBER_TYPE},
+    "depth": {"type": _NUMBER_TYPE},
+    "gzipped": {"type": _BOOLEAN_TYPE},
+    "content_type": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _NOT_ANALYZED
+        }
+    },
+    "meta_noindex": {"type": _BOOLEAN_TYPE},
+    "meta_nofollow": {"type": _BOOLEAN_TYPE},
+    "host": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _NOT_ANALYZED
+        }
+    },
+    "http_code": {"type": _NUMBER_TYPE},
+    "id": {"type": _NUMBER_TYPE},
+    "crawl_id": {"type": _NUMBER_TYPE},
+    "patterns": {"type": _NUMBER_TYPE},
+    "path": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _NOT_ANALYZED
+        }
+    },
+    "protocol": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _NOT_ANALYZED
+        }
+    },
+    "query_string": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _NOT_ANALYZED
+        }
+    },
+    "query_string_keys": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _NOT_ANALYZED
+        }
+    },
+
+    # metadata numbers
+    "metadata_nb.title": {
+        "type": _NUMBER_TYPE
+    },
+    "metadata_nb.h1": {
+        "type": _NUMBER_TYPE
+    },
+    "metadata_nb.h2": {
+        "type": _NUMBER_TYPE
+    },
+    "metadata_nb.description": {
+        "type": _NUMBER_TYPE
+    },
+
+    # metadata contents
+    "metadata.title": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _LIST,
+            _MULTI_FIELD
+        }
+    },
+    "metadata.h1": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _LIST,
+            _MULTI_FIELD
+        }
+    },
+    "metadata.h2": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _LIST,
+            _MULTI_FIELD
+        }
+    },
+    "metadata.description": {
+        "type": _STRING_TYPE,
+        "settings": {
+            _LIST,
+            _MULTI_FIELD
+        }
+    },
+
+    # metadata duplication data
+    "metadata_duplicate_nb.title": {"type": _NUMBER_TYPE},
+    "metadata_duplicate_nb.description": {"type": _NUMBER_TYPE},
+    "metadata_duplicate_nb.h1": {"type": _NUMBER_TYPE},
+
+    "metadata_duplicate_is_first.title": {"type": _BOOLEAN_TYPE},
+    "metadata_duplicate_is_first.description": {"type": _BOOLEAN_TYPE},
+    "metadata_duplicate_is_first.h1": {"type": _BOOLEAN_TYPE},
+
+    "metadata_duplicate.title": {
+        "type": _NUMBER_TYPE,
+        "settings": {
+            _LIST,
+            _NO_INDEX
+        }
+    },
+    "metadata_duplicate.h1": {
+        "type": _NUMBER_TYPE,
+        "settings": {
+            _LIST,
+            _NO_INDEX
+        }
+    },
+    "metadata_duplicate.description": {
+        "type": _NUMBER_TYPE,
+        "settings": {
+            _LIST,
+            _NO_INDEX
+        }
+    },
+
+    # incoming links data
+    "inlinks_internal_nb.total": {"type": _NUMBER_TYPE},
+    "inlinks_internal_nb.follow_unique": {"type": _NUMBER_TYPE},
+    "inlinks_internal_nb.total_unique": {"type": _NUMBER_TYPE},
+    "inlinks_internal_nb.follow": {"type": _NUMBER_TYPE},
+    "inlinks_internal_nb.nofollow": {"type": _NUMBER_TYPE},
+    "inlinks_internal_nb.nofollow_combinations": {
+        "type": "struct",
+        "values": {
+            "key": {"type": _STRING_TYPE},
+            "value": {"type": _NUMBER_TYPE}
+        }
+    },
+    "inlinks_internal": {
+        "type": _NUMBER_TYPE,
+        "settings": {
+            _NO_INDEX,
+            _LIST
+        }
+    },
+
+    # outgoing links data
+    # internal outgoing links
+    "outlinks_internal_nb.total": {"type": _NUMBER_TYPE},
+    "outlinks_internal_nb.follow_unique": {"type": _NUMBER_TYPE},
+    "outlinks_internal_nb.total_unique": {"type": _NUMBER_TYPE},
+    "outlinks_internal_nb.follow": {"type": _NUMBER_TYPE},
+    "outlinks_internal_nb.nofollow": {"type": _NUMBER_TYPE},
+    "outlinks_internal_nb.nofollow_combinations": {
+        "type": "struct",
+        "values": {
+            "key": {"type": _STRING_TYPE},
+            "value": {"type": _NUMBER_TYPE}
+        }
+    },
+    "outlinks_internal": {
+        "type": _NUMBER_TYPE,
+        "settings": {
+            _NO_INDEX,
+            _LIST
+        }
+    },
+
+    # external outgoing links
+    "outlinks_external_nb.total": {"type": _NUMBER_TYPE},
+    "outlinks_external_nb.follow": {"type": _NUMBER_TYPE},
+    "outlinks_external_nb.nofollow": {"type": _NUMBER_TYPE},
+    "outlinks_external_nb.nofollow_combinations": {
+        "type": "struct",
+        "values": {
+            "key": {"type": _STRING_TYPE},
+            "value": {"type": _NUMBER_TYPE}
+        }
+    },
+
+
+    # incoming canonical links data
+    "canonical_from_nb": {"type": _NUMBER_TYPE},
+    "canonical_from": {
+        "type": _NUMBER_TYPE,
+        "settings": {
+            _NO_INDEX,
+            _LIST
+        }
+    },
+
+    # outgoing canonical link data
+    "canonical_to": {
+        "type": "struct",
+        "default_value": None,
+        "values": {
+            "url": {"type": _STRING_TYPE},
+            "url_id": {"type": _NUMBER_TYPE},
+        },
+        "settings": {
+            _NO_INDEX
+        }
+    },
+    "canonical_to_equal": {"type": _BOOLEAN_TYPE},
+
+    # outgoing redirection data
+    "redirects_to": {
+        "type": "struct",
+        "default_value": None,
+        "values": {
+            "http_code": {"type": _NUMBER_TYPE},
+            "url": {"type": _STRING_TYPE},
+            "url_id": {"type": _NUMBER_TYPE}
+        }
+    },
+
+    # incoming redirections data
+    "redirects_from_nb": {"type": _NUMBER_TYPE},
+    "redirects_from": {
+        "type": "struct",
+        "values": {
+            "http_code": {"type": _NUMBER_TYPE},
+            "url_id": {"type": _NUMBER_TYPE},
+        },
+        "settings": {
+            _LIST,
+            _NO_INDEX
+        }
+    },
+
+    # erroneous links data
+    "error_links.3xx.nb": {"type": _NUMBER_TYPE},
+    "error_links.4xx.nb": {"type": _NUMBER_TYPE},
+    "error_links.5xx.nb": {"type": _NUMBER_TYPE},
+    "error_links.any.nb": {"type": _NUMBER_TYPE},
+
+    "error_links.3xx.urls": {
+        "type": _NUMBER_TYPE,
+        "settings": {
+            _NO_INDEX,
+            _LIST
+        }
+    },
+    "error_links.4xx.urls": {
+        "type": _NUMBER_TYPE,
+        "settings": {
+            _NO_INDEX,
+            _LIST
+        }
+    },
+    "error_links.5xx.urls": {
+        "type": _NUMBER_TYPE,
+        "settings": {
+            _NO_INDEX,
+            _LIST
+        }
+    },
 }

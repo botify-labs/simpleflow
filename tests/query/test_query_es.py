@@ -4,9 +4,11 @@ import copy
 
 from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 
 from cdf.query.query import Query
-from .stub_mapping import STUB_MAPPING as ES_MAPPING
+from cdf.query.query_parsing import QueryParser
+from stub_mapping import STUB_FORMAT
 
 ELASTICSEARCH_LOCATION = 'http://localhost:9200'
 ELASTICSEARCH_INDEX = 'cdf_test'
@@ -15,9 +17,18 @@ DOC_TYPE = 'crawls'
 REVISION_ID = 1
 
 ES = Elasticsearch()
+ES_BACKEND = ElasticSearchBackend(STUB_FORMAT)
+PARSER = QueryParser(data_backend=ES_BACKEND)
 
-QUERY_ARGS = (ELASTICSEARCH_LOCATION, ELASTICSEARCH_INDEX,
-              DOC_TYPE, CRAWL_ID, REVISION_ID)
+QUERY_ARGS = {
+    'es_location': ELASTICSEARCH_LOCATION,
+    'es_index': ELASTICSEARCH_INDEX,
+    'es_doc_type': DOC_TYPE,
+    'crawl_id': CRAWL_ID,
+    'revision_number': REVISION_ID,
+    'parser': PARSER,
+    'backend': ES_BACKEND
+}
 
 
 def _get_simple_bql_query(field, predicate, value, fields=['id']):
@@ -31,6 +42,10 @@ def _get_simple_bql_query(field, predicate, value, fields=['id']):
         },
         'sort': ['id']
     }
+
+
+def _get_query_result(botify_query):
+    return list(Query(botify_query=botify_query, **QUERY_ARGS).results)
 
 
 URLS_FIXTURE = [
@@ -195,8 +210,8 @@ class TestQueryES(unittest.TestCase):
             pass
 
         # Create index and put cdf's mapping
-        mapping = {DOC_TYPE: copy.deepcopy(ES_MAPPING)['urls']}
-        assert mapping[DOC_TYPE] == ES_MAPPING['urls']
+        mapping = {DOC_TYPE: copy.deepcopy(ES_BACKEND.mapping())['urls']}
+        assert mapping[DOC_TYPE] == ES_BACKEND.mapping()['urls']
         ES.indices.create(index=ELASTICSEARCH_INDEX)
         ES.indices.put_mapping(index=ELASTICSEARCH_INDEX,
                                doc_type=DOC_TYPE, body=mapping)
@@ -246,42 +261,42 @@ class TestQueryES(unittest.TestCase):
         pass
 
     def test_starts_query(self):
-        bql_query = _get_simple_bql_query('path', 'starts', '/france')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('path', 'starts', '/france')
+        results = _get_query_result(botify_query)
         self.assertEqual(results, [{'id': 1}])
 
         # `starts` predicate is strict, applied on `not_anlayzed`
-        bql_query = _get_simple_bql_query('path', 'starts', 'france')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('path', 'starts', 'france')
+        results = _get_query_result(botify_query)
         self.assertEqual(results, [])
 
-        bql_query = _get_simple_bql_query('path', 'starts', '/football')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('path', 'starts', '/football')
+        results = _get_query_result(botify_query)
         self.assertEqual(results, [{'id': 2}, {'id': 3}])
 
     def test_contains_query(self):
-        bql_query = _get_simple_bql_query('url', 'contains', '/france/football')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('url', 'contains', '/france/football')
+        results = _get_query_result(botify_query)
         self.assertEqual(results, [{'id': 1}])
 
         # this query should also succeed
-        bql_query = _get_simple_bql_query('url', 'contains', 'france/footb')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('url', 'contains', 'france/footb')
+        results = _get_query_result(botify_query)
         self.assertEqual(results, [{'id': 1}])
 
     def test_ends_query(self):
-        bql_query = _get_simple_bql_query('url', 'ends', 'article-s.html')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('url', 'ends', 'article-s.html')
+        results = _get_query_result(botify_query)
         self.assertEqual(results, [{'id': 3}])
 
-        bql_query = _get_simple_bql_query('url', 'ends', 'main')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('url', 'ends', 'main')
+        results = _get_query_result(botify_query)
         self.assertEqual(results, [])
 
     def test_error_link_query(self):
-        bql_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
-                                          fields=['error_links.3xx'])
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                             fields=['error_links.3xx'])
+        results = _get_query_result(botify_query)
         expected = {
             'error_links': {
                 '3xx': self.error_3xx
@@ -290,9 +305,9 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(results, [expected])
 
         # search for `error_links` field should return all error links
-        bql_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
-                                          fields=['error_links'])
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                             fields=['error_links'])
+        results = _get_query_result(botify_query)
         expected = {
             'error_links': {
                 '3xx': self.error_3xx,
@@ -304,9 +319,9 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(results, [expected])
 
         # search only for `nb`
-        bql_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
-                                          fields=['error_links.3xx.nb'])
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                             fields=['error_links.3xx.nb'])
+        results = _get_query_result(botify_query)
         expected = {
             'error_links': {
                 '3xx': {
@@ -316,9 +331,9 @@ class TestQueryES(unittest.TestCase):
         }
         self.assertEqual(results, [expected])
 
-        bql_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
-                                          fields=['error_links.3xx.urls'])
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                             fields=['error_links.3xx.urls'])
+        results = _get_query_result(botify_query)
         expected = {
             'error_links': {
                 '3xx': {'urls': self.error_3xx['urls']}
@@ -329,9 +344,9 @@ class TestQueryES(unittest.TestCase):
     def test_query_missing_fields(self):
         """`error_links` is missing in the first 2 docs"""
         # retrieve parent field
-        bql_query = _get_simple_bql_query('http_code', 'gt', 0,
-                                          fields=['id', 'error_links'])
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('http_code', 'gt', 0,
+                                             fields=['id', 'error_links'])
+        results = _get_query_result(botify_query)
         expected = [
             {'id': 1, 'error_links': self.error_all_missing},
             {'id': 2, 'error_links': self.error_all_missing},
@@ -360,9 +375,9 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(results, expected)
 
     def test_inlinks_query(self):
-        bql_query = _get_simple_bql_query('inlinks_internal_nb.total', 'gt', 0,
-                                          fields=['id', 'inlinks_internal'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('inlinks_internal_nb.total', 'gt', 0,
+                                             fields=['id', 'inlinks_internal'])
+        result = _get_query_result(botify_query)
         expected = {
             'id': 2,
             'inlinks_internal': [
@@ -395,9 +410,9 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(result, [expected])
 
     def test_outlinks_query(self):
-        bql_query = _get_simple_bql_query('outlinks_internal_nb.total', 'gt', 0,
+        botify_query = _get_simple_bql_query('outlinks_internal_nb.total', 'gt', 0,
                                           fields=['id', 'outlinks_internal'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         expected = {
             'id': 1,
             'outlinks_internal': [
@@ -431,9 +446,9 @@ class TestQueryES(unittest.TestCase):
 
     def test_canonical_to_query(self):
         # external url
-        bql_query = _get_simple_bql_query('id', 'eq', 1,
+        botify_query = _get_simple_bql_query('id', 'eq', 1,
                                           fields=['canonical_to'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         expected = {
             'canonical_to': {
                 'url': self.urls[3],
@@ -444,27 +459,27 @@ class TestQueryES(unittest.TestCase):
 
     def test_canonical_to_not_crawled(self):
         # internal url and it's not crawled
-        bql_query = _get_simple_bql_query('id', 'eq', 2,
+        botify_query = _get_simple_bql_query('id', 'eq', 2,
                                           fields=['canonical_to'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         expected = {
             'canonical_to': {'url': 'http://www.notcrawled.com', 'crawled': False},
         }
         self.assertEqual(result, [expected])
 
     def test_canonical_from_query(self):
-        bql_query = _get_simple_bql_query('canonical_from_nb', 'gt', 0,
+        botify_query = _get_simple_bql_query('canonical_from_nb', 'gt', 0,
                                           fields=['canonical_from'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         expected = {
             'canonical_from': [self.urls[2], self.urls[3], self.urls[4]]
         }
         self.assertEqual(result, [expected])
 
     def test_redirects_from_query(self):
-        bql_query = _get_simple_bql_query('redirects_from_nb', 'gt', 0,
+        botify_query = _get_simple_bql_query('redirects_from_nb', 'gt', 0,
                                           fields=['id', 'redirects_from'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         expected = [
             {
                 'id': 3,
@@ -508,29 +523,29 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_redirects_to_not_crawled(self):
-        bql_query = _get_simple_bql_query('redirects_to', 'exists', value=None,
+        botify_query = _get_simple_bql_query('redirects_to', 'exists', value=None,
                                           fields=['redirects_to'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         expected = {
             'redirects_to': {'url': self.urls[5], 'crawled': False}
         }
         self.assertEqual(result, [expected])
 
     def test_no_redirects_canonical(self):
-        bql_query = _get_simple_bql_query('id', 'eq', 6,
+        botify_query = _get_simple_bql_query('id', 'eq', 6,
                                           fields=['redirects_to'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         self.assertEqual(result, [{'redirects_to': None}])
 
-        bql_query = _get_simple_bql_query('id', 'eq', 6,
+        botify_query = _get_simple_bql_query('id', 'eq', 6,
                                           fields=['canonical_to'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         self.assertEqual(result, [{'canonical_to': None}])
 
     def test_metadata_duplicate_query(self):
-        bql_query = _get_simple_bql_query('metadata_duplicate_nb.title', 'gt', 0,
+        botify_query = _get_simple_bql_query('metadata_duplicate_nb.title', 'gt', 0,
                                           fields=['metadata_duplicate'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         expected = {
             'metadata_duplicate': {
                 'title': [
@@ -548,10 +563,10 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(result, [expected])
 
     def test_default_value(self):
-        bql_query = _get_simple_bql_query('id', 'eq', 6,
-                                          fields=['metadata_duplicate',
+        botify_query = _get_simple_bql_query('id', 'eq', 6,
+                                             fields=['metadata_duplicate',
                                                   'metadata_nb'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         expected = {
             'metadata_duplicate': {
                 'title': [], 'h1': [], 'description': []
@@ -562,18 +577,18 @@ class TestQueryES(unittest.TestCase):
         }
         self.assertEqual(result, [expected])
 
-        bql_query = _get_simple_bql_query('id', 'eq', 6,
-                                          fields=['error_links.3xx'])
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('id', 'eq', 6,
+                                             fields=['error_links.3xx'])
+        result = _get_query_result(botify_query)
         expected = {'error_links': {'3xx': self.error_missing}}
         self.assertEqual(result, [expected])
 
     def test_sort_query(self):
-        bql_query = {
+        botify_query = {
             'sort': [{'http_code': {'order': 'desc'}}, 'id'],
             'fields': ['id', 'http_code'],
         }
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         expected = [
             {'id': 2, 'http_code': 301},
             {'id': 7, 'http_code': 301},
@@ -587,7 +602,7 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_between_query(self):
-        bql_query = {
+        botify_query = {
             'fields': ['id'],
             'filters': {
                 'predicate': 'between',
@@ -595,7 +610,7 @@ class TestQueryES(unittest.TestCase):
                 'value': [0, 3]
             }
         }
-        result = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        result = _get_query_result(botify_query)
         expected = [
             {'id': 1},
             {'id': 2},
@@ -603,24 +618,25 @@ class TestQueryES(unittest.TestCase):
         ]
         self.assertEqual(result, expected)
 
+    #
     def test_any_starts(self):
-        bql_query = _get_simple_bql_query('metadata.h2', 'any.starts', 'ab')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('metadata.h2', 'any.starts', 'ab')
+        results = _get_query_result(botify_query)
         self.assertEqual(results, [{'id': 1}])
 
     def test_any_contains(self):
-        bql_query = _get_simple_bql_query('metadata.h2', 'any.contains', 'otif')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('metadata.h2', 'any.contains', 'otif')
+        results = _get_query_result(botify_query)
         self.assertEqual(results, [{'id': 1}, {'id': 2}])
 
     def test_any_equals(self):
-        bql_query = _get_simple_bql_query('metadata.h2', 'any.eq', 'botify')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('metadata.h2', 'any.eq', 'botify')
+        results = _get_query_result(botify_query)
 
         # it's exact match, url 2 doesn't qualify
         self.assertEqual(results, [{'id': 1}])
 
     def test_any_ends(self):
-        bql_query = _get_simple_bql_query('metadata.h2', 'any.ends', 'y')
-        results = list(Query(*QUERY_ARGS, botify_query=bql_query).results)
+        botify_query = _get_simple_bql_query('metadata.h2', 'any.ends', 'y')
+        results = _get_query_result(botify_query)
         self.assertEqual(results, [{'id': 1}, {'id': 2}])

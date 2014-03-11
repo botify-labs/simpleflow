@@ -1,9 +1,9 @@
 import copy
 
 from elasticsearch import Elasticsearch
-from cdf.query.result_transformer import RESULT_TRANSFORMERS
-
-from cdf.query.query_transformer import get_es_query
+from cdf.metadata.url import ELASTICSEARCH_BACKEND
+from cdf.query.query_parsing import QueryParser
+from cdf.query.result_transformer import transform_result
 from cdf.utils.dict import deep_dict
 
 
@@ -17,7 +17,8 @@ class Query(object):
     """
 
     def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number,
-                 botify_query, start=0, limit=100, sort=('id',), search_backend=None):
+                 botify_query, start=0, limit=100, sort=['id'],
+                 backend=ELASTICSEARCH_BACKEND, search_backend=None):
 
         """Constructor
         search_backend : the search backend to use. If None, use ElasticSearch.
@@ -35,11 +36,15 @@ class Query(object):
         self._count = 0
         self._results = []
         self.executed = False
+        self.backend = backend
+
         if search_backend:
             self.search_backend = search_backend
         else:
             host, port = self.es_location[7:].split(':')
             self.search_backend = Elasticsearch([{'host': host, 'port': int(port)}])
+
+        self.parser = QueryParser(data_backend=backend)
 
     @property
     def results(self):
@@ -92,7 +97,7 @@ class Query(object):
             return
 
         # Translation
-        es_query = get_es_query(self.botify_query, self.crawl_id)
+        es_query = self.parser.get_es_query(self.botify_query, self.crawl_id)
 
         # Issue a ES search
         temp_results = self.search_backend.search(body=es_query,
@@ -132,8 +137,7 @@ class Query(object):
 
         # Apply transformers
         # Reminder: in-place transformation
-        for trans in RESULT_TRANSFORMERS:
-            trans(self._results, self).transform()
+        transform_result(self._results, self, backend=self.backend)
 
         # Flip flag on execution success
         self.executed = True
