@@ -1,20 +1,10 @@
 import unittest
 from cdf.metadata.url.es_backend_utils import (_parse_field_path,
-                                               generate_es_mapping,
-                                               generate_default_value_lookup,
-                                               generate_valid_field_lookup,
-                                               generate_complete_field_lookup,
-                                               generate_default_document)
+                                               ElasticSearchBackend)
 from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 
 
 class TestMappingGeneration(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_parse_field_path(self):
         path = 'a.b.c'
         result = _parse_field_path(path)
@@ -23,7 +13,7 @@ class TestMappingGeneration(unittest.TestCase):
 
     def test_generation_simple(self):
         # simple case with no-index
-        meta_mapping = {
+        data_format = {
             'error_links.3xx.nb': {'type': 'long'},
             'error_links.3xx.urls': {
                 'type': 'long',
@@ -34,7 +24,8 @@ class TestMappingGeneration(unittest.TestCase):
             }
         }
 
-        result = generate_es_mapping(meta_mapping, routing_field=None)
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.mapping(routing_field=None)
         expected = {
             'error_links': {
                 'properties': {
@@ -50,42 +41,8 @@ class TestMappingGeneration(unittest.TestCase):
 
         self.assertDictEqual(result['urls']['properties'], expected)
 
-    @unittest.skip
-    def test_generation_multi_field(self):
-        # `multi_field` case
-        meta_mapping = {
-            'metadata.title': {
-                'type': 'string',
-                'settings': {
-                    'list',
-                    'es:multi_field'
-                }
-            },
-        }
-
-        result = generate_es_mapping(meta_mapping, routing_field=None)
-        expected = {
-            'metadata': {
-                'properties': {
-                    'title': {
-                        'type': 'multi_field',
-                        'fields': {
-                            'title': {
-                                'type': 'string'
-                            },
-                            'untouched': {
-                                'type': 'string',
-                                'index': 'not_analyzed'
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self.assertDictEqual(result['urls']['properties'], expected)
-
     def test_struct_field(self):
-        meta_mapping = {
+        data_format = {
             'canonical_to': {
                 'type': 'struct',
                 'values': {
@@ -97,7 +54,9 @@ class TestMappingGeneration(unittest.TestCase):
                 }
             }
         }
-        result = generate_es_mapping(meta_mapping, routing_field=None)
+
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.mapping(routing_field=None)
         expected = {
             'canonical_to': {
                 'properties': {
@@ -117,24 +76,19 @@ class TestMappingGeneration(unittest.TestCase):
     def test_generation_all_mapping(self):
         doc_type = 'urls'
         target = NEW_MAPPING
-        result = generate_es_mapping(URLS_DATA_FORMAT_DEFINITION,
-                                     doc_type=doc_type)
-        self.assertDictEqual(result, target)
+        es_backend = ElasticSearchBackend(URLS_DATA_FORMAT_DEFINITION)
+        result = es_backend.mapping(doc_type=doc_type)
 
-    def test_generation_all_mapping_new(self):
-        doc_type = 'urls'
-        target = NEW_MAPPING
-        result = generate_es_mapping(URLS_DATA_FORMAT_DEFINITION,
-                                     doc_type=doc_type)
-
+        # check individual sub-dict
         r = target['urls']['properties']
         for k, v in result['urls']['properties'].iteritems():
             self.assertEqual(v, r[k])
 
-        self.assertEqual(target, result)
+        # check all
+        self.assertEqual(result, target)
 
     def test_default_value_look_up(self):
-        meta_mapping = {
+        data_format = {
             'string': {'type': 'string', 'settings': {'no_index'}},
             'list': {
                 'type': 'string',
@@ -164,12 +118,13 @@ class TestMappingGeneration(unittest.TestCase):
             'struct_with_default': 1,
             'struct_without_default': None
         }
-        result = generate_default_value_lookup(meta_mapping)
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.field_default_value()
 
         self.assertDictEqual(result, expected)
 
-    def test_valid_field_lookup(self):
-        meta_mapping = {
+    def test_query_field_lookup(self):
+        data_format = {
             'error_links.3xx.urls',
             'error_links.3xx.nb',
             'error_links.4xx.urls',
@@ -177,7 +132,6 @@ class TestMappingGeneration(unittest.TestCase):
             'one_level_field'
         }
 
-        result = generate_valid_field_lookup(meta_mapping)
         expected = {
             'error_links',
             'error_links.3xx',
@@ -188,11 +142,13 @@ class TestMappingGeneration(unittest.TestCase):
             'error_links.4xx.nb',
             'one_level_field'
         }
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.select_fields()
 
         self.assertEqual(result, expected)
 
     def test_empty_document_generation(self):
-        meta_mapping = {
+        data_format = {
             'outlinks.nb.nofollow.combinations.link': {
                 'type': 'integer',
                 'settings': {'list'}
@@ -222,7 +178,9 @@ class TestMappingGeneration(unittest.TestCase):
             },
             'one_level_field': None
         }
-        result = generate_default_document(meta_mapping)
+
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.default_document()
         self.assertDictEqual(result, non_flatten_expected)
 
         flatten_expected = {
@@ -232,7 +190,7 @@ class TestMappingGeneration(unittest.TestCase):
             'outlinks.nb.nofollow.unique': 0,
             'one_level_field': None
         }
-        result = generate_default_document(meta_mapping, flatten=True)
+        result = es_backend.default_document(flatten=True)
         self.assertDictEqual(result, flatten_expected)
 
 _NOT_ANALYZED = "not_analyzed"

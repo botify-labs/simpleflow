@@ -9,8 +9,8 @@ from cdf.core.streams.utils import idx_from_stream
 from cdf.metadata.raw.masks import list_to_mask
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
-from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
-from cdf.metadata.url.es_backend_utils import generate_default_document
+from cdf.metadata.url import ELASTICSEARCH_BACKEND
+
 
 # TODO refactor into an ORM fashion
 #   data format => hierarchy of classes (ORM)
@@ -19,8 +19,8 @@ from cdf.metadata.url.es_backend_utils import generate_default_document
 
 
 def _init_document(doc):
-    return generate_default_document(
-        URLS_DATA_FORMAT_DEFINITION, document=doc)
+    return ELASTICSEARCH_BACKEND.default_document(
+        document=doc)
 
 
 def _clean_document(doc):

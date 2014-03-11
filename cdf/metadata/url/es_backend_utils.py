@@ -1,16 +1,12 @@
 from copy import deepcopy
 
 from cdf.utils.dict import update_path_in_dict
-from .url_metadata import (_NUMBER_TYPE, _STRING_TYPE, _BOOLEAN_TYPE,
+from .url_metadata import (_STRING_TYPE, _BOOLEAN_TYPE,
                            _STRUCT_TYPE, _MULTI_FIELD, _LIST,
-                           _NOT_ANALYZED, _NO_INDEX)
+                           _NOT_ANALYZED, _NO_INDEX, _LONG_TYPE, _INT_TYPE)
 
 
-__ALL__ = ['generate_es_mapping',
-           'generate_multi_field_lookup',
-           'generate_default_value_lookup',
-           'generate_list_field_lookup',
-           'generate_valid_field_lookup']
+__ALL__ = ['QueryParser']
 
 _PROPERTY = 'properties'
 _SETTINGS = 'settings'
@@ -35,7 +31,7 @@ def _parse_field_path(path):
 
 
 def _is_number_field(field_values):
-    return _get_type(field_values) == _NUMBER_TYPE
+    return _get_type(field_values) in (_LONG_TYPE, _INT_TYPE)
 
 
 def _is_struct_field(field_values):
@@ -145,120 +141,193 @@ def generate_es_mapping(meta_mapping,
     return es_mapping
 
 
-def generate_multi_field_lookup(meta_mapping):
-    """Generate a lookup table for multi_field field
-    from url data format definition
+class DataBackend(object):
+    """An abstract storage backend"""
 
-    :returns: a set for membership lookup
-    """
-    return {path for path, values in meta_mapping.iteritems()
-            if _is_multi_field(values)}
+    def __init__(self, data_format):
+        """Constructor for Backend"""
+        raise NotImplementedError()
 
+    # TODO abstract data format walk in the base class
+    def query_fields(self):
+        raise NotImplementedError()
 
-def generate_list_field_lookup(meta_mapping):
-    """Generate a lookup table for list field from
-    url data format definition
+    def select_fields(self):
+        raise NotImplementedError()
 
-    :returns: a set for membership lookup
-    """
-    return {path for path, values in meta_mapping.iteritems()
-            if _is_list_field(values)}
+    def list_fields(self):
+        raise NotImplementedError()
 
+    def field_default_value(self):
+        raise NotImplementedError()
 
-def generate_default_value_lookup(meta_mapping):
-    """Generate a lookup for resolving the default value
-    of a field
-
-    :returns: a dict for (field_name, default_value) look up
-    """
-    BASIC_TYPE_DEFAULTS = {
-        _NUMBER_TYPE: 0,
-        _STRING_TYPE: None,
-        _BOOLEAN_TYPE: False
-    }
-
-    def infer_for_basic_types(basic_type):
-        try:
-            default_value = BASIC_TYPE_DEFAULTS[basic_type]
-        except KeyError:
-            default_value = None
-        return default_value
-
-    lookup = {}
-    for path, values in meta_mapping.iteritems():
-        if 'default_value' in values:
-            lookup[path] = values['default_value']
-        else:
-            # infer default value from field's type
-            # order is IMPORTANT here
-            #   a list of structs is considered a list, so
-            #   it defaults to an empty list but not `None`
-
-            # if a list field, defaults to empty list
-            if _is_list_field(values):
-                lookup[path] = []
-                continue
-
-            # if a struct field, defaults to `None`
-            if _is_struct_field(values):
-                lookup[path] = None
-                continue
-
-            # then infer from type
-            lookup[path] = infer_for_basic_types(values['type'])
-
-    return lookup
+    def mapping(self):
+        raise NotImplementedError()
 
 
-def generate_valid_field_lookup(meta_mapping):
-    """Generate a lookup set for query field membership check
+class ElasticSearchBackend(DataBackend):
+    """ElasticSearch backend"""
 
-    Ex. there's a `error_links.3xx.urls` record in data definition
-        so valid fields will be:
-            {`error_links`, `error_links.3xx`, `error_links.3xx.urls`}
-    """
-    lookup = set()
+    def __init__(self, data_format):
+        self.data_format = data_format
+        # cache
+        self._select_fields = None
+        self._query_fields = None
+        self._list_fields = None
+        self._field_default_value = None
+        self._mapping = None
 
-    for path in meta_mapping:
-        splits = _split_path(path)
-        for i, _ in enumerate(splits):
-            lookup.add('.'.join(splits[:i + 1]))
+    def has_child(self, field):
+        """Check if this field have child fields"""
+        if self._query_fields is None:
+            self.query_fields()
+        return any(i.startswith('{}.'.format(field)) for i in self._query_fields)
 
-    return lookup
+    def get_children(self, field):
+        """Get all child fields of this field"""
+        if self._query_fields:
+            self.query_fields()
+        return filter(lambda i: i.startswith('{}.'.format(field)), self._query_fields)
 
+    def query_fields(self):
+        """Generate a lookup set for all complete fields
 
-def generate_complete_field_lookup(meta_mapping):
-    """Generate a lookup set for all complete fields
+        Ex. `error_links.3xx.nb` but not a prefix like `error_links.3xx`
+        """
+        if self._query_fields is None:
+            self._query_fields = self.data_format.keys()
+        return self._query_fields
 
-    Ex. `error_links.3xx.nb` but not a prefix like `error_links.3xx`
-    """
-    return meta_mapping.keys()
+    def select_fields(self):
+        """Generate a lookup set for query field membership check
 
+        Ex. there's a `error_links.3xx.urls` record in data definition
+            so valid fields will be:
+                {`error_links`, `error_links.3xx`, `error_links.3xx.urls`}
+        """
+        if self._select_fields is None:
+            lookup = set()
 
-def generate_default_document(meta_mapping, document=None, flatten=False):
-    """Generate an json document for ElasticSearch with all field filled
-    according to data format definition
+            for path in self.data_format:
+                splits = _split_path(path)
+                for i, _ in enumerate(splits):
+                    lookup.add('.'.join(splits[:i + 1]))
+            self._select_fields = lookup
 
-    :param meta_mapping: data format definition
-    :param document: base mutable document to modify, default to an
-        empty document
-    :param flatten: if True, generate document in a flatten manner
-        eg. {'nested.field.flatten': None}
-    :return: an empty json document
-    """
-    # initiate all fields with the correct default value
-    if document is None:
-        document = {}
-    for path, value in meta_mapping.iteritems():
-        default = None
-        if 'settings' in value and _LIST in value['settings']:
-            default = []
-        elif value['type'] in ('long', 'integer'):
-            default = 0
+        return self._select_fields
 
-        if flatten:
-            document[path] = default
-        else:
-            update_path_in_dict(path, default, document)
+    def field_default_value(self):
+        """Generate a lookup for resolving the default value
+        of a field
 
-    return document
+        :returns: a dict for (field_name, default_value) look up
+        """
+        BASIC_TYPE_DEFAULTS = {
+            _LONG_TYPE: 0,
+            _INT_TYPE: 0,
+            _STRING_TYPE: None,
+            _BOOLEAN_TYPE: False
+        }
+
+        def infer_for_basic_types(basic_type):
+            try:
+                default_value = BASIC_TYPE_DEFAULTS[basic_type]
+            except KeyError:
+                default_value = None
+            return default_value
+
+        if self._field_default_value is None:
+            lookup = {}
+            for path, values in self.data_format.iteritems():
+                if 'default_value' in values:
+                    lookup[path] = values['default_value']
+                else:
+                    # infer default value from field's type
+                    # order is IMPORTANT here
+                    #   a list of structs is considered a list, so
+                    #   it defaults to an empty list but not `None`
+
+                    # if a list field, defaults to empty list
+                    if _is_list_field(values):
+                        lookup[path] = []
+                        continue
+
+                    # if a struct field, defaults to `None`
+                    if _is_struct_field(values):
+                        lookup[path] = None
+                        continue
+
+                    # then infer from type
+                    lookup[path] = infer_for_basic_types(values['type'])
+            self._field_default_value = lookup
+        return self._field_default_value
+
+    def list_fields(self):
+        """Generate a lookup table for list field from
+        url data format definition
+
+        :returns: a set for membership lookup
+        """
+        if self._list_fields is None:
+            self._list_fields = {path for path, values in self.data_format.iteritems()
+                                 if _is_list_field(values)}
+        return self._list_fields
+
+    def mapping(self, doc_type='urls', routing_field='crawl_id'):
+        """Generate ES mapping from the intermediate format definition
+
+        :param meta_mapping: internal intermediate format definition
+        :param doc_type: default doc_type for the generated mapping
+        :param routing_field: routing parameter in mapping
+        :return: a valid ElasticSearch mapping
+        """
+        if self._mapping is None:
+            fields_mapping = {}
+            for path, value in self.data_format.iteritems():
+                parsed_path = _parse_field_path(path)
+                field_name = parsed_path.split('.')[-1]
+                parsed_value = _parse_field_values(field_name, value)
+                update_path_in_dict(parsed_path, parsed_value, fields_mapping)
+
+            es_mapping = {
+                doc_type: {
+                    _PROPERTY: fields_mapping
+                }
+            }
+
+            if routing_field:
+                # insert routing configuration
+                es_mapping[doc_type]['_routing'] = {
+                    "required": True,
+                    "path": routing_field
+                }
+            self._mapping = es_mapping
+
+        return self._mapping
+
+    def default_document(self, document=None, flatten=False):
+        """Generate an json document for ElasticSearch with all field filled
+        according to data format definition
+
+        :param document: base mutable document to modify, default to an
+            empty document
+        :param flatten: if True, generate document in a flatten manner
+            eg. {'nested.field.flatten': None}
+        :return: an empty json document
+        """
+        # initiate all fields with the correct default value
+        if document is None:
+            document = {}
+        for path, value in self.data_format.iteritems():
+            default = None
+            if 'settings' in value and _LIST in value['settings']:
+                default = []
+            elif value['type'] in ('long', 'integer'):
+                default = 0
+
+            if flatten:
+                document[path] = default
+            else:
+                update_path_in_dict(path, default, document)
+
+        return document
