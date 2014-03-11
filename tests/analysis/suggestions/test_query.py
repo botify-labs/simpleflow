@@ -398,6 +398,8 @@ class TestSuggestQuery(unittest.TestCase):
             }
         ]
 
+        #disable result filtering based on 'percent_pattern'
+        self.suggest_query._minimal_percent_pattern = 0
         actual_results = self.suggest_query._query(dataframe,
                                                    settings,
                                                    sort_results)

@@ -266,6 +266,10 @@ class SuggestQuery(BaseMetricsQuery):
             child_frame = self.hdfstore['children']
             self.child_relationship_set = self.compute_child_relationship_set(child_frame)
 
+        #patterns for which the target_field proportion
+        #is below this threshold will not be returned
+        self._minimal_percent_pattern = 80
+
     def query_hash_to_string(self, value):
         """get the full-letter query corresponding to a hash
         :param value: the hash
@@ -314,18 +318,21 @@ class SuggestQuery(BaseMetricsQuery):
         if len(results) == 0:
             return results
 
-        if sort_results:
-            results = self.sort_results_by_target_field(settings, results)
-            results = self.remove_equivalent_parents(settings, results)
-            results = self.hide_less_relevant_children(results)
-
         # Request Metrics query in order to get the total number of elements
         total_results = self._get_total_results(settings)
         total_results_by_pattern = self._get_total_results_by_pattern(settings)
 
         self._compute_scores(results, target_field,
                              total_results, total_results_by_pattern)
+        results = [r for r in results if
+                   r["percent_pattern"] > self._minimal_percent_pattern]
+
+        if sort_results:
+            results = self.sort_results_by_target_field(settings, results)
+            results = self.hide_less_relevant_children(results)
+
         self._resolve_results(results)
+
         return results[0:30]
 
     def _raw_query(self, df, settings):
