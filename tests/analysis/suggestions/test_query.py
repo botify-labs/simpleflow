@@ -136,30 +136,6 @@ class TestSuggestQuery(unittest.TestCase):
         actual_result = self.suggest_query.sort_results_by_target_field(query, results)
         self.assertListEqual(expected_result, actual_result)
 
-    def test_remove_equivalent_parents(self):
-        settings = {"target_field": "field"}
-        results = [
-            {"query": "1", "counters": {"pages_nb": 1, "field": 10}},
-            {"query": "2", "counters": {"pages_nb": 1, "field": 5}},
-            {"query": "3", "counters": {"pages_nb": 2, "field": 10}}
-        ]
-
-        expected_result = [
-            {"query": "1", "counters": {"pages_nb": 1, "field": 10}},
-            {"query": "2", "counters": {"pages_nb": 1, "field": 5}}
-        ]
-
-        actual_result = self.suggest_query.remove_equivalent_parents(settings,
-                                                                     results)
-        self.assertListEqual(expected_result, actual_result)
-
-        #if target_filed is not set use "pages_nb" as target field
-        #if the target field is "pages_nb",
-        #the algorithm should not remove any element
-        actual_result = self.suggest_query.remove_equivalent_parents({},
-            results)
-        self.assertListEqual(results, actual_result)
-
     def test_hide_less_relevant_children(self):
         results = [
             {"query": "1", "counters": {"pages_nb": 5}},
