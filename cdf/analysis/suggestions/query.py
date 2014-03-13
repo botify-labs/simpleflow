@@ -325,11 +325,10 @@ class SuggestQuery(BaseMetricsQuery):
         self._compute_scores(results, target_field,
                              total_results, total_results_by_pattern)
 
-        # if total_results is zero, it must comes from a target_field
-        # based on a complex operation like "div"
+        # if the target field is a continuous metric
         # "percent_pattern" does not make sense in this case,
         # we don't want to threshold on this value.
-        if total_results:
+        if not self._is_target_field_continuous_metric(total_results):
             results = [r for r in results if
                        r["percent_pattern"] > self._minimal_percent_pattern]
 
@@ -469,16 +468,26 @@ class SuggestQuery(BaseMetricsQuery):
         :type pattern_size: int
         """
         result["score"] = result["counters"][target_field]
-        # if total_results is zero, it must comes from a target_field
-        # based on a complex operation like "div"
-        # So we cannot know the value from the full crawl
-        if total_results:
+        if not self._is_target_field_continuous_metric(total_results):
             result["percent_total"] = round(float(result["counters"][target_field]) * 100.00 / float(total_results), 1)
         else:
             result["percent_total"] = -1
 
         result["score_pattern"] = pattern_size
         result["percent_pattern"] = round(float(result["counters"][target_field]) * 100.00 / float(pattern_size), 1)
+
+    def _is_target_field_continuous_metric(self, total_results):
+        """Return true if the current query has
+        a continuous metric as target filed.
+        For instance: load time, mean number of inlinks
+        :param total_results: the number of urls matching the query
+        :type total_results: int
+        :returns: bool
+        """
+        # if total_results is zero, it comes from a target_field
+        # based on a complex operation like "div"
+        # So the metric is continuous.
+        return total_results <= 0
 
     def _get_total_results(self, query):
         """Return the total number of items for the given query
