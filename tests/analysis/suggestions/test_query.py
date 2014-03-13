@@ -152,39 +152,20 @@ class TestSuggestQuery(unittest.TestCase):
                                                                         low_density_threshold)
         self.assertListEqual(expected_results, actual_results)
 
-    @mock.patch("cdf.analysis.suggestions.query.SuggestQuery._get_total_results",
-                new=lambda x, y: 10)
-    @mock.patch("cdf.analysis.suggestions.query.SuggestQuery._get_total_results_by_pattern",
-                new=lambda x, y: {1: 4, 2: 3, 3: 5})
-    @mock.patch("cdf.analysis.suggestions.query.SuggestQuery._is_target_field_continuous_metric")
     @mock.patch("cdf.analysis.suggestions.query.SuggestQuery.filter_low_density_patterns")
     def test_filter_low_density_patterns_trigger(self,
-                                                 filter_mock,
-                                                 continuous_metric_mock):
+                                                 filter_mock):
         #test that filter_low_density_patterns is not called if
         #_is_target_field_continuous_metric return true
 
-        continuous_metric_mock.return_value = True
-        #disable result filtering based on 'percent_pattern'
-
-        def side_effect(results, threshold):
-            return results
-        filter_mock.side_effect = side_effect
-
-        data = {
-            "query": [1, 2, 3],
-            "error_links.4xx": [1, 0, 2],
-        }
-        dataframe = pd.DataFrame(data)
-
-        sort_results = True
-        settings = {
-            "target_field": "error_links.4xx",
-            "fields": ["error_links.4xx"]
-        }
-
-        self.suggest_query._query(dataframe, settings, sort_results)
+        results = []
+        is_continuous_target_field = True
+        self.suggest_query._filter_results(results, is_continuous_target_field)
         self.assertFalse(filter_mock.called)
+
+        is_continuous_target_field = False
+        self.suggest_query._filter_results(results, is_continuous_target_field)
+        self.assertTrue(filter_mock.called)
 
     def test_hide_less_relevant_children(self):
         results = [
