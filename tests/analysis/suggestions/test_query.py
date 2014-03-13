@@ -360,6 +360,9 @@ class TestSuggestQuery(unittest.TestCase):
                 new=lambda x, y: 10)
     @mock.patch("cdf.analysis.suggestions.query.SuggestQuery._get_total_results_by_pattern",
                 new=lambda x, y: {1: 4, 2: 3, 3: 5})
+    #disable result filtering based on 'percent_pattern'
+    @mock.patch("cdf.analysis.suggestions.query.SuggestQuery.filter_low_density_patterns",
+                new=lambda s, x, y: x)
     def test_query(self):
         data = {
             "query": [1, 2, 3],
@@ -390,8 +393,6 @@ class TestSuggestQuery(unittest.TestCase):
             }
         ]
 
-        #disable result filtering based on 'percent_pattern'
-        self.suggest_query._minimal_percent_pattern = 0
         actual_results = self.suggest_query._query(dataframe,
                                                    settings,
                                                    sort_results)
