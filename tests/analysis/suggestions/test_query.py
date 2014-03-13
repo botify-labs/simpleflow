@@ -375,7 +375,7 @@ class TestSuggestQuery(unittest.TestCase):
                 new=lambda x, y: 10)
     @mock.patch("cdf.analysis.suggestions.query.SuggestQuery._get_total_results_by_pattern",
                 new=lambda x, y: {1: 4, 2: 3, 3: 5})
-    @mock.patch("cdf.analysis.suggestions.query.SuggestQuery.filter_low_density_patterns")
+    @mock.patch("cdf.analysis.suggestions.query.SuggestQuery._filter_results")
     def test_query(self, filter_mock):
 
         #disable result filtering based on 'percent_pattern'
@@ -410,7 +410,7 @@ class TestSuggestQuery(unittest.TestCase):
                 },
             }
         ]
-
+        is_continuous_target_field = False
         actual_results = self.suggest_query._query(dataframe,
                                                    settings)
         self.assertListEqual(expected_results, actual_results)
@@ -418,8 +418,7 @@ class TestSuggestQuery(unittest.TestCase):
         #low_density pattern filtering has been disabled.
         #but we check that it has been called
         filter_mock.assert_called_once_with(expected_results,
-                                            self.suggest_query._minimal_percent_pattern)
-
+                                            is_continuous_target_field)
 
     def test_query_empty_dataframe(self):
         dataframe = pd.DataFrame()
