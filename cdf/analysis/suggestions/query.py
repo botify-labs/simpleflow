@@ -327,18 +327,33 @@ class SuggestQuery(BaseMetricsQuery):
         self._compute_scores(results, target_field,
                              total_results, total_results_by_pattern)
 
-        # if the target field is a continuous metric
-        # "percent_pattern" does not make sense in this case,
-        # we don't want to threshold on this value.
-        if not self._is_target_field_continuous_metric(total_results):
-            results = self.filter_low_density_patterns(results,
-                                                       self._minimal_percent_pattern)
-
-        results = self.hide_less_relevant_children(results)
+        is_continuous_target_field = self._is_target_field_continuous_metric(total_results)
+        results = self._filter_results(results,
+                                       is_continuous_target_field)
 
         self._resolve_results(results)
 
         return results[0:30]
+
+    def _filter_results(self, results, is_continuous_target_field):
+        """Remove some irrelevant results either by effectively removing them
+        or by setting them as child patterns
+        :param results: the input results
+        :type results: list
+        :param is_continuous_target_field: if True, the target field
+                                           is a continuous variable
+                                           (for instance: page load time)
+        :type is_continuous_target_field: bool
+        :returns: list
+        """
+        # if the target field is a continuous metric
+        # "percent_pattern" does not make sense in this case,
+        # we don't want to threshold on this value.
+        if not is_continuous_target_field:
+            results = self.filter_low_density_patterns(results,
+                                                       self._minimal_percent_pattern)
+        results = self.hide_less_relevant_children(results)
+        return results
 
     def _raw_query(self, df, settings):
         """Run a query on the dataframe,
