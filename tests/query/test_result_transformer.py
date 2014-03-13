@@ -1,16 +1,17 @@
 import unittest
 import copy
 from mock import MagicMock
+from cdf.metadata.url import ELASTICSEARCH_BACKEND, ElasticSearchBackend
 
 from cdf.query.result_transformer import (IdToUrlTransformer,
                                           DefaultValueTransformer,
-                                          ExternalUrlTransformer)
-
+                                          ExternalUrlNormalizer)
 
 ELASTICSEARCH_INDEX = 'mock'
 CRAWL_ID = 1
 CRAWL_NAME = 'crawl_%d' % CRAWL_ID
 REVISION_ID = 1
+ES_BACKEND = ELASTICSEARCH_BACKEND
 
 _MOCK_URL_MAPPING = {
     '1:1': 'url1',
@@ -43,13 +44,16 @@ def _mock_es_mget(**kwargs):
         }
         docs.append(crt_doc)
 
+    # url 6 not indexed for some reason
+    docs.append({u'found': False})
+
     result = {
         u'docs': docs
     }
     return result
 
 
-class TestResultTransformer(unittest.TestCase):
+class TestIdToUrlTransformer(unittest.TestCase):
     def setUp(self):
         mock_conn = MagicMock()
         mock_conn.mget = _mock_es_mget
@@ -58,210 +62,300 @@ class TestResultTransformer(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_id_to_url(self):
+    def _get_id_url_transformer(self, fields, es_result):
+        return IdToUrlTransformer(fields=fields, es_result=es_result,
+                                  es_conn=self.es_conn, es_index=None, es_doctype=None,
+                                  crawl_id=CRAWL_ID, backend=ES_BACKEND)
+
+    def test_error_links(self):
         es_result = {
-            'error_links': {
-                '3xx': {
-                    'nb': 3,
-                    'urls': [1, 2, 3]
-                },
-                '5xx': {
-                    'nb': 4,
-                    'urls': [1, 3, 4, 5]
+            'outlinks_internal': {
+                'urls': {
+                    '3xx': [1, 2, 3],
+                    '5xx': [1, 3, 4, 5]
                 }
             }
         }
 
         # partial transformation, controled by `fields` param
         test_input = copy.deepcopy(es_result)
-        trans = IdToUrlTransformer(fields=['error_links.5xx'], es_result=[test_input],
-                                   es_conn=self.es_conn, es_index=None,
-                                   es_doctype=None, crawl_id=CRAWL_ID)
+        trans = self._get_id_url_transformer(fields=['outlinks_internal.urls.5xx'],
+                                             es_result=[test_input])
         trans.transform()
 
         expected = {
-            'error_links': {
-                '3xx': {
-                    'nb': 3,
-                    'urls': [1, 2, 3]
-                },
-                '5xx': {
-                    'nb': 4,
-                    'urls': ['url1', 'url3', 'url4', 'url5']
+            'outlinks_internal': {
+                'urls': {
+                    '3xx': [1, 2, 3],
+                    '5xx': ['url1', 'url3', 'url4', 'url5']
                 }
             }
         }
-
-        self.assertDictEqual(expected, test_input)
+        self.assertEqual(test_input, expected)
 
         # children fields transformation
         test_input = copy.deepcopy(es_result)
-        trans = IdToUrlTransformer(fields=['error_links'], es_result=[test_input],
-                                   es_conn=self.es_conn, es_index=None,
-                                   es_doctype=None, crawl_id=CRAWL_ID)
+        trans = self._get_id_url_transformer(fields=['outlinks_internal.urls'],
+                                             es_result=[test_input])
         trans.transform()
 
         expected = {
-            'error_links': {
-                '3xx': {
-                    'nb': 3,
-                    'urls': ['url1', 'url2', 'url3']
-                },
-                '5xx': {
-                    'nb': 4,
-                    'urls': ['url1', 'url3', 'url4', 'url5']
+            'outlinks_internal': {
+                'urls': {
+                    '3xx': ['url1', 'url2', 'url3'],
+                    '5xx': ['url1', 'url3', 'url4', 'url5']
                 }
             }
         }
 
         self.assertDictEqual(expected, test_input)
+
+    def test_links(self):
+        es_result = {
+            'outlinks_internal': {
+                'urls': {
+                    'all': [
+                        # uid, mask, link number
+                        [5, 7, 40],
+                    ]
+                }
+            }
+        }
+        trans = self._get_id_url_transformer(fields=['outlinks_internal.urls.all'],
+                                             es_result=[es_result])
+        trans.transform()
+
+        expected = {
+            'outlinks_internal': {
+                'urls': {
+                    'all': [
+                        {
+                            'url': {
+                                'url': 'url5',
+                                # mock http code = 0
+                                'crawled': False,
+                            },
+                            'nb_links': 40,
+                            'status': [
+                                'nofollow_robots',
+                                'nofollow_meta',
+                                'nofollow_link'
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+        self.assertDictEqual(expected, es_result)
+
+    def test_metadata_duplicate(self):
+        es_result = {
+            'metadata': {
+                'title': {
+                    'duplicates': {
+                        'urls': [1, 5]
+                    }
+                }
+            }
+        }
+        trans = self._get_id_url_transformer(fields=['metadata.title'],
+                                             es_result=[es_result])
+        trans.transform()
+
+        expected = {
+            'metadata': {
+                'title': {
+                    'duplicates': {
+                        'urls': [
+                            {'url': 'url1', 'crawled': True},
+                            {'url': 'url5', 'crawled': True},
+                        ]
+                    }
+                }
+            }
+        }
+        self.assertDictEqual(expected, es_result)
+
+    def test_metadata_duplicate_empty(self):
+        es_result = {'other_info': 1}
+        expected = copy.deepcopy(es_result)
+        trans = self._get_id_url_transformer(fields=['metadata.h1'],
+                                             es_result=[es_result])
+        trans.transform()
+        self.assertEqual(es_result, expected)
+
+    def test_redirect_from(self):
+        es_result = {
+            'redirect': {
+                'from': {
+                    'urls': [[1, 200]]
+                }
+            }
+        }
+        trans = self._get_id_url_transformer(fields=['redirect'],
+                                             es_result=[es_result])
+        trans.transform()
+
+        expected = {
+            'redirect': {
+                'from': {
+                    'urls': [
+                        # crawled is always true for redirect from
+                        # here http code comes from `redirect.from.urls`, in production
+                        # this should be the same code as in resolved pair (url, http_code)
+                        {'http_code': 200, 'url': {'url': 'url1', 'crawled': True}},
+                    ]
+                }
+            }
+        }
+
+        self.assertDictEqual(expected, es_result)
+
+    def test_canonical_from(self):
+        es_result = {
+            'canonical': {
+                'from': {
+                    'urls': [1, 2, 4, 5]
+                }
+            }
+        }
+        trans = self._get_id_url_transformer(fields=['canonical'],
+                                             es_result=[es_result])
+        trans.transform()
+
+        expected = {
+            'canonical': {
+                'from': {
+                    'urls': ['url1', 'url2', 'url4', 'url5']
+                }
+            }
+        }
+
+        self.assertDictEqual(expected, es_result)
+
+    # canonical to external url is handled by ExternalUrlNormalizer
+    def test_redirect_to_internal(self):
+        es_result = {
+            'redirect': {
+                'to': {
+                    'url_id': 4
+                }
+            }
+        }
+        trans = self._get_id_url_transformer(fields=['redirect.to'],
+                                             es_result=[es_result])
+        trans.transform()
+
+        expected = {
+            'redirect': {
+                'to': {'url': 'url4', 'crawled': False}
+            }
+        }
+
+        self.assertDictEqual(expected, es_result)
+
+    # canonical to external url is handled by ExternalUrlNormalizer
+    def test_canonical_to_internal(self):
+        es_result = {
+            'canonical': {
+                'to': {
+                    'url_id': 4,
+                    'equal': True
+                }
+            }
+        }
+        trans = self._get_id_url_transformer(fields=['canonical.to'],
+                                             es_result=[es_result])
+        trans.transform()
+
+        expected = {
+            'canonical': {
+                'to': {'url': 'url4', 'crawled': False, 'equal': True}
+            }
+        }
+
+        self.assertDictEqual(expected, es_result)
+
+
+class TestExternalUrlNormalizer(unittest.TestCase):
+    def test_redirect_to_external(self):
+        es_result = {
+            'redirect': {
+                'to': {
+                    'url': 'www.abc.com',
+                    'http_code': 300
+                }
+            }
+        }
+        trans = ExternalUrlNormalizer(fields=['redirect.to'],
+                                      es_result=[es_result])
+        trans.transform()
+
+        expected = {
+            'redirect': {
+                'to': {
+                    'url': 'www.abc.com',
+                    'crawled': False,
+                    'http_code': 300
+                }
+            }
+        }
+
+        self.assertDictEqual(expected, es_result)
 
 
 class TestDefaultValueTransformer(unittest.TestCase):
     def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_nested_fields(self):
-        es_result = [{
-            "url": "http://www.youtube.com/",
-            "inlinks_internal_nb": {
-                "total": 1006248,
-                "total_unique": 468100,
-                "follow_unique": 468100,
-                "nofollow": 209,
-                "nofollow_combinations": [
-                    {
-                        "value": 209,
-                        "key": [
-                            "link"
-                        ]
-                    }
-                ],
-                "follow": 1006039
+        data_format = {
+            'outer.middle.int': {
+                'type': 'integer'
+            },
+            'outer.middle.list': {
+                'type': 'string',
+                'settings': {'list'}
+            },
+            'special': {
+                'type': 'string',
+                'default_value': 'hey!!'
             }
-        }]
-        fields = ['url', 'inlinks_internal_nb']
-        d = DefaultValueTransformer(es_result, fields=fields)
-        # just test that no exception
-        d.transform()
+        }
+        self.backend = ElasticSearchBackend(data_format)
 
-    def test_simple(self):
-        fields = ['metadata_nb.title']
+    def test_int(self):
+        fields = ['outer.middle.int']
         results = [{}, {}]
-        d = DefaultValueTransformer(results, fields=fields)
+        d = DefaultValueTransformer(results, fields=fields,
+                                    backend=self.backend)
         d.transform()
+        self.assertEqual(results, [{'outer': {'middle': {'int': 0}}},
+                                   {'outer': {'middle': {'int': 0}}}])
 
-        self.assertEqual(results, [{'metadata_nb': {'title': 0}},
-                                   {'metadata_nb': {'title': 0}}])
-
-    def test_children(self):
-        fields = ['metadata_nb']
+    def test_list(self):
+        fields = ['outer.middle.list']
         results = [{}]
-        d = DefaultValueTransformer(results, fields=fields)
+        d = DefaultValueTransformer(results, fields=fields,
+                                    backend=self.backend)
         d.transform()
 
-        expected = [{'metadata_nb': {'title': 0, 'h1': 0,
-                                     'h2': 0, 'description': 0}}]
-
+        expected = [{'outer': {'middle': {'list': []}}}]
         self.assertEqual(d.results, expected)
 
-
-class TestExternalUrlTransformer(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_simple(self):
-        fields = ['canonical_to']
-        results = [{'canonical_to': {'url': 'external', 'crawled': True}}]
-        d = ExternalUrlTransformer(results, fields=fields)
+    def test_special_default_value(self):
+        fields = ['special']
+        results = [{}]
+        d = DefaultValueTransformer(results, fields=fields,
+                                    backend=self.backend)
         d.transform()
 
-        expected = [{'canonical_to': {'url': 'external', 'crawled': False}}]
-
+        expected = [{'special': 'hey!!'}]
         self.assertEqual(d.results, expected)
 
+    def test_multiple_fields(self):
+        fields = ['outer.middle.list', 'outer.middle.int']
+        results = [{}]
+        d = DefaultValueTransformer(results, fields=fields,
+                                    backend=self.backend)
+        d.transform()
 
-class TestUnindexedUrlTransformer(unittest.TestCase):
-    def test_skip_entries(self):
-        es_result = {
-            'error_links': {
-                '3xx': {
-                    'nb': 1,
-                    'urls': [1]
-                }
-            }
-        }
-
-        es_mock_conn = MagicMock()
-        es_mock_conn.mget.return_value = {
-            u'docs': [
-                {
-                    #some other values are also returned by
-                    #elasticsearch but they are not relevant for the test
-                    u'found': False,
-                }]
-
-        }
-
-        # partial transformation, controled by `fields` param
-        test_input = copy.deepcopy(es_result)
-        trans = IdToUrlTransformer(fields=['error_links.3xx'], es_result=[test_input],
-                                   es_conn=es_mock_conn, es_index=None,
-                                   es_doctype=None, crawl_id=CRAWL_ID)
-        result = trans.transform()
-
-        #we should have skipped the unexisting doc
-        #please note the the 'nb' field is no more equal to the list lenght
-        expected = [{'error_links': {'3xx': {'nb': 1, 'urls': []}}}]
-        self.assertEqual(expected, result)
-
-    def test_outlinks_internal_not_raise(self):
-        es_result = {
-            'outlinks_internal': [
-                [1, 2, 100], # follow
-                [2, 7, 1], # link, meta, robots
-            ]
-        }
-
-        es_mock_conn = MagicMock()
-        es_mock_conn.mget.return_value = {
-            u'docs': [
-                {
-                    "_id": "1:1",
-                    "_source": {
-                        u'url': "url1",
-                        u'http_code': 200,
-                        'crawled': True
-                    },
-                    #some other values are also returned by
-                    #elasticsearch but they are not relevant for the test
-                    u'found': True,
-                },
-                {
-                    #some other values are also returned by
-                    #elasticsearch but they are not relevant for the test
-                    u'found': False,
-                }]
-        }
-
-        # partial transformation, controled by `fields` param
-        test_input = copy.deepcopy(es_result)
-        trans = IdToUrlTransformer(fields=['outlinks_internal'], es_result=[test_input],
-                                   es_conn=es_mock_conn, es_index=None,
-                                   es_doctype=None, crawl_id=CRAWL_ID)
-        result = trans.transform()
-        expected = [{
-                        'outlinks_internal': [
-                            {'url': {'url': 'url1', 'crawled': True},
-                             'status': ['nofollow_meta'],
-                             'nb_links': 100}
-                        ]
-                    }]
-
-        self.assertEqual(expected, result)
+        expected = [{'outer': {'middle': {'list': [], 'int': 0}}}]
+        self.assertEqual(d.results, expected)
