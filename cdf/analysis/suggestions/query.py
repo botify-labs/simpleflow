@@ -318,6 +318,8 @@ class SuggestQuery(BaseMetricsQuery):
         if len(results) == 0:
             return results
 
+        results = self.sort_results_by_target_field(settings, results)
+
         # Request Metrics query in order to get the total number of elements
         total_results = self._get_total_results(settings)
         total_results_by_pattern = self._get_total_results_by_pattern(settings)
@@ -332,7 +334,6 @@ class SuggestQuery(BaseMetricsQuery):
             results = self.filter_low_density_patterns(results,
                                                        self._minimal_percent_pattern)
 
-        results = self.sort_results_by_target_field(settings, results)
         results = self.hide_less_relevant_children(results)
 
         self._resolve_results(results)
