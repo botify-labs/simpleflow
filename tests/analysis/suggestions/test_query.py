@@ -136,6 +136,22 @@ class TestSuggestQuery(unittest.TestCase):
         actual_result = self.suggest_query.sort_results_by_target_field(query, results)
         self.assertListEqual(expected_result, actual_result)
 
+    def test_filter_low_density_patterns(self):
+        results = [
+            {"query": "1", "percent_pattern": 50},
+            {"query": "2", "percent_pattern": 80},
+            {"query": "3", "percent_pattern": 90},
+        ]
+
+        expected_results = [
+            {"query": "2", "percent_pattern": 80},
+            {"query": "3", "percent_pattern": 90},
+        ]
+        low_density_threshold = 80
+        actual_results = self.suggest_query.filter_low_density_patterns(results,
+                                                                        low_density_threshold)
+        self.assertListEqual(expected_results, actual_results)
+
     def test_hide_less_relevant_children(self):
         results = [
             {"query": "1", "counters": {"pages_nb": 5}},

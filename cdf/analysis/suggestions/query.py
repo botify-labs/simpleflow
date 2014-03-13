@@ -329,8 +329,8 @@ class SuggestQuery(BaseMetricsQuery):
         # "percent_pattern" does not make sense in this case,
         # we don't want to threshold on this value.
         if not self._is_target_field_continuous_metric(total_results):
-            results = [r for r in results if
-                       r["percent_pattern"] > self._minimal_percent_pattern]
+            results = self.filter_low_density_patterns(results,
+                                                       self._minimal_percent_pattern)
 
         if sort_results:
             results = self.sort_results_by_target_field(settings, results)
@@ -573,6 +573,15 @@ class SuggestQuery(BaseMetricsQuery):
             result.add((parent_hash, child_hash))
         return result
 
+    def filter_low_density_patterns(self, results, threshold):
+        """Remove patterns for which percent_pattern is too low.
+        :param results: the result patterns
+        :type results: list
+        :param threshold: patterns with 'percent_pattern' below this threshold
+                          will be removed.
+        :returns: list
+        """
+        return [r for r in results if r["percent_pattern"] >= threshold]
 
     def hide_less_relevant_children(self, results):
         """Once we have displayed a node,
