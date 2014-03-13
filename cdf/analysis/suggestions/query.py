@@ -284,11 +284,11 @@ class SuggestQuery(BaseMetricsQuery):
         :returns: unicode - the full-letter query"""
         return json.loads(unicode(self.hdfstore['requests'].ix[str(value), 'verbose_string'], "utf8"))
 
-    def query(self, settings, sort_results=True):
+    def query(self, settings):
         df = self.df.copy()
-        return self._query(df, settings, sort_results)
+        return self._query(df, settings)
 
-    def _query(self, df, settings, sort_results):
+    def _query(self, df, settings):
         """The method that actually runs the query.
         The method is almost identical to the query() function
         but it is easier to test since we can pass the dataframe as parameter.
@@ -332,9 +332,8 @@ class SuggestQuery(BaseMetricsQuery):
             results = self.filter_low_density_patterns(results,
                                                        self._minimal_percent_pattern)
 
-        if sort_results:
-            results = self.sort_results_by_target_field(settings, results)
-            results = self.hide_less_relevant_children(results)
+        results = self.sort_results_by_target_field(settings, results)
+        results = self.hide_less_relevant_children(results)
 
         self._resolve_results(results)
 

@@ -409,7 +409,6 @@ class TestSuggestQuery(unittest.TestCase):
         }
         dataframe = pd.DataFrame(data)
 
-        sort_results = True
         settings = {
             "target_field": "error_links.4xx",
             "fields": ["error_links.4xx"],
@@ -432,8 +431,7 @@ class TestSuggestQuery(unittest.TestCase):
         ]
 
         actual_results = self.suggest_query._query(dataframe,
-                                                   settings,
-                                                   sort_results)
+                                                   settings)
         self.assertListEqual(expected_results, actual_results)
 
         #low_density pattern filtering has been disabled.
@@ -444,13 +442,11 @@ class TestSuggestQuery(unittest.TestCase):
 
     def test_query_empty_dataframe(self):
         dataframe = pd.DataFrame()
-        sort_results = True
         settings = {
             "target_field": "error_links.4xx",
             "fields": ["error_links.4xx"],
         }
 
         actual_results = self.suggest_query._query(dataframe,
-                                                   settings,
-                                                   sort_results)
+                                                   settings)
         self.assertListEqual([], actual_results)
