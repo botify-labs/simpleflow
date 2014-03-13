@@ -324,8 +324,14 @@ class SuggestQuery(BaseMetricsQuery):
 
         self._compute_scores(results, target_field,
                              total_results, total_results_by_pattern)
-        results = [r for r in results if
-                   r["percent_pattern"] > self._minimal_percent_pattern]
+
+        # if total_results is zero, it must comes from a target_field
+        # based on a complex operation like "div"
+        # "percent_pattern" does not make sense in this case,
+        # we don't want to threshold on this value.
+        if total_results:
+            results = [r for r in results if
+                       r["percent_pattern"] > self._minimal_percent_pattern]
 
         if sort_results:
             results = self.sort_results_by_target_field(settings, results)
