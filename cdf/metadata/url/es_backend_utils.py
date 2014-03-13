@@ -185,7 +185,7 @@ class ElasticSearchBackend(DataBackend):
 
     def get_children(self, field):
         """Get all child fields of this field"""
-        if self._query_fields:
+        if self._query_fields is None:
             self.query_fields()
         return filter(lambda i: i.startswith('{}.'.format(field)), self._query_fields)
 
