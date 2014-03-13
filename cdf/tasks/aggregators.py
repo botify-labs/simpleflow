@@ -403,6 +403,14 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             "fields": [full_field],
             "target_field": full_field
         }
+        if field == "not_filled":
+            query["filters"] = {
+                "and": [
+                    {"field": "content_type", "value": "text/html"},
+                    {"field": "http_code", "value": 200, "predicate": "gte"},
+                    {"field": "http_code", "value": 299, "predicate": "lte"},
+                ]
+            }
         if field == "incoming":
             urls_fields = ["canonical_from"]
         else:
