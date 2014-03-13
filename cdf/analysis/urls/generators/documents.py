@@ -188,8 +188,10 @@ def _process_outlinks(document, stream_oulinks):
         redirects_to = document['redirect']['to']
         if url_dst == -1:
             redirects_to['url'] = external_url
+            redirects_to.pop('url_id', None)
         else:
             redirects_to['url_id'] = url_dst
+            redirects_to.pop('url', None)
         redirects_to['http_code'] = int(http_code)
 
     elif link_type == "canonical":
@@ -199,8 +201,10 @@ def _process_outlinks(document, stream_oulinks):
             canonical_to['equal'] = url_src == url_dst
             if url_dst > 0:
                 canonical_to['url_id'] = url_dst
+                canonical_to.pop('url', None)
             else:
                 canonical_to['url'] = external_url
+                canonical_to.pop('url_id', None)
 
 
 def _process_inlinks(document, stream_inlinks):

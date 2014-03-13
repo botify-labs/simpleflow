@@ -520,9 +520,9 @@ class TestRedirectsGeneration(unittest.TestCase):
         document = _next_doc(gen)
         redirect_to = document['redirect']['to']
         self.assertEquals(redirect_to,
-                          {'url': 'http://www.youtube.com', 'http_code': 302,
-                           # 0 here
-                           'url_id': 0})
+                          {'url': 'http://www.youtube.com', 'http_code': 302})
+        # for external url, key `url_id` should be cleaned from the document
+        self.assertFalse('url_id' in redirect_to)
 
         document = _next_doc(gen)
         redirect_to = document['redirect']['to']
@@ -622,8 +622,8 @@ class TestCanonicalGeneration(unittest.TestCase):
         # Url 3
         canonical_to = _next_doc(gen)['canonical']['to']
         self.assertEquals(canonical_to['url'], "http://www.youtube.com")
-        # 0 here, should clean ???
-        self.assertEquals(canonical_to['url_id'], 0)
+        # for external url, key `url_id` should be cleaned from document
+        self.assertFalse('url_id' in canonical_to)
         self.assertEquals(canonical_to['equal'], False)
 
         # # Url 4
