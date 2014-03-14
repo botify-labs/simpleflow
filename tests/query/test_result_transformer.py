@@ -238,8 +238,8 @@ class TestIdToUrlTransformer(unittest.TestCase):
         es_result = {
             'redirect': {
                 'to': {
-                    'url_id': 4
-                }
+                    'url': {'url_id': 4, 'http_code': 300}
+                },
             }
         }
         trans = self._get_id_url_transformer(fields=['redirect.to'],
@@ -248,7 +248,9 @@ class TestIdToUrlTransformer(unittest.TestCase):
 
         expected = {
             'redirect': {
-                'to': {'url': 'url4', 'crawled': False}
+                'to': {
+                    'url': {'url': 'url4', 'crawled': False, 'http_code': 300}
+                },
             }
         }
 
@@ -259,9 +261,11 @@ class TestIdToUrlTransformer(unittest.TestCase):
         es_result = {
             'canonical': {
                 'to': {
-                    'url_id': 4,
-                    'equal': True
-                }
+                    'url': {
+                        'url_id': 4,
+                    }
+                },
+                'equal': True
             }
         }
         trans = self._get_id_url_transformer(fields=['canonical.to'],
@@ -270,7 +274,10 @@ class TestIdToUrlTransformer(unittest.TestCase):
 
         expected = {
             'canonical': {
-                'to': {'url': 'url4', 'crawled': False, 'equal': True}
+                'to': {
+                    'url': {'url': 'url4', 'crawled': False},
+                },
+                'equal': True
             }
         }
 
@@ -282,21 +289,24 @@ class TestExternalUrlNormalizer(unittest.TestCase):
         es_result = {
             'redirect': {
                 'to': {
-                    'url': 'www.abc.com',
-                    'http_code': 300
+                    'url': {
+                        'url': 'www.abc.com',
+                        'http_code': 300
+                    }
                 }
             }
         }
         trans = ExternalUrlNormalizer(fields=['redirect.to'],
                                       es_result=[es_result])
         trans.transform()
-
         expected = {
             'redirect': {
                 'to': {
-                    'url': 'www.abc.com',
-                    'crawled': False,
-                    'http_code': 300
+                    'url': {
+                        'url': 'www.abc.com',
+                        'crawled': False,
+                        'http_code': 300
+                    }
                 }
             }
         }

@@ -89,7 +89,7 @@ URLS_FIXTURE = [
             }
         },
         'canonical': {
-            'to': {'url_id': 3},
+            'to': {'url': {'url_id': 3}},
             'from': {'urls': [2, 3, 4], 'nb': 3}
         },
     },
@@ -124,7 +124,7 @@ URLS_FIXTURE = [
                 }
             }
         },
-        'canonical': {'to': {'url_id': 5}}
+        'canonical': {'to': {'url': {'url_id': 5}}}
     },
     {
         'id': 3,
@@ -192,8 +192,8 @@ URLS_FIXTURE = [
             'from': {
                 'nb': 2,
                 'urls': [
-                    [301, 1],
-                    [301, 2],
+                    [1, 301],
+                    [2, 301],
                 ]
             }
         },
@@ -217,7 +217,7 @@ URLS_FIXTURE = [
         'crawl_id': CRAWL_ID,
         'http_code': 301,
         'redirect': {
-            'to': {'url_id': 5, 'http_code': 301}
+            'to': {'url': {'url_id': 5, 'http_code': 301}}
         },
     },
     {
@@ -489,11 +489,12 @@ class TestQueryES(unittest.TestCase):
         expected = {
             'canonical': {
                 'to': {
-                    'url': self.urls[3],
-                    # auto-gen as a default value
-                    # will not impact front-end
-                    'url_id': 0,
-                    'crawled': True,
+                    'url': {
+                        'url': self.urls[3],
+                        # auto-gen as a default value
+                        # will not impact front-end
+                        'crawled': True,
+                    },
                     'equal': False
                 }
             },
@@ -508,9 +509,10 @@ class TestQueryES(unittest.TestCase):
         expected = {
             'canonical': {
                 'to': {
-                    'url': 'http://www.notcrawled.com',
-                    'url_id': 0,
-                    'crawled': False,
+                    'url': {
+                        'url': 'http://www.notcrawled.com',
+                        'crawled': False,
+                    },
                     'equal': False
                 }
             },
@@ -538,8 +540,7 @@ class TestQueryES(unittest.TestCase):
         expected = [
             {
                 'id': 3,
-                'redirects': {
-
+                'redirect': {
                     'from': {
                         'nb': 2,
                         'urls': [
@@ -563,7 +564,7 @@ class TestQueryES(unittest.TestCase):
             },
             {
                 'id': 4,
-                'redirects': {
+                'redirect': {
                     'from': {
                         'nb': 2,
                         'urls': [
@@ -604,15 +605,12 @@ class TestQueryES(unittest.TestCase):
         botify_query = _get_simple_bql_query('id', 'eq', 6,
                                              fields=['redirect.to'])
         result = _get_query_result(botify_query)
-        self.assertEqual(result, [{'redirect': {
-            'to': {'url_id': 0, 'http_code': 0, 'url': None}}}])
+        self.assertEqual(result, [{'redirect': {'to': {'url': None}}}])
 
         botify_query = _get_simple_bql_query('id', 'eq', 6,
                                              fields=['canonical.to'])
         result = _get_query_result(botify_query)
-        self.assertEqual(result, [{'redirects': {
-            'to': {'url_id': 0, 'http_code': 0, 'url': None, 'equal': False}}}])
-        self.assertEqual(result, [{'canonical_to': None}])
+        self.assertEqual(result, [{'canonical': {'to': {'url': None, 'equal': False}}}])
 
     def test_metadata_duplicate_query(self):
         botify_query = _get_simple_bql_query('metadata.title.duplicates.nb', 'gt', 0,

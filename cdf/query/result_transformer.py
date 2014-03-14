@@ -127,7 +127,6 @@ def _transform_single_link_to(es_result, id_to_url, path):
 
         # delete unused field
         target.pop('url_id', None)
-        target.pop('http_code', None)
 
 
 # 3 cases
@@ -136,11 +135,11 @@ def _transform_single_link_to(es_result, id_to_url, path):
 #   - external url
 # same for redirect_to
 def _transform_canonical_to(es_result, id_to_url):
-    _transform_single_link_to(es_result, id_to_url, 'canonical.to')
+    _transform_single_link_to(es_result, id_to_url, 'canonical.to.url')
 
 
 def _transform_redirects_to(es_result, id_to_url):
-    _transform_single_link_to(es_result, id_to_url, 'redirect.to')
+    _transform_single_link_to(es_result, id_to_url, 'redirect.to.url')
 
 
 def _transform_canonical_from(es_result, id_to_url):
@@ -225,8 +224,8 @@ class IdToUrlTransformer(ResultTransformer):
             'transform': lambda res, id_to_url: _transform_outlinks(res, id_to_url)
         },
 
-        'canonical.to.url_id': {
-            'extract': lambda res: _extract_single_id(res, 'canonical.to.url_id'),
+        'canonical.to.url': {
+            'extract': lambda res: _extract_single_id(res, 'canonical.to.url.url_id'),
             'transform': lambda res, id_to_url: _transform_canonical_to(res, id_to_url)
         },
         'canonical.from.urls': {
@@ -234,8 +233,8 @@ class IdToUrlTransformer(ResultTransformer):
             'transform': lambda res, id_to_url: _transform_canonical_from(res, id_to_url)
         },
 
-        'redirect.to.url_id': {
-            'extract': lambda res: _extract_single_id(res, 'redirect.to.url_id'),
+        'redirect.to.url': {
+            'extract': lambda res: _extract_single_id(res, 'redirect.to.url.url_id'),
             'transform': lambda res, id_to_url: _transform_redirects_to(res, id_to_url)
         },
         'redirect.from.urls': {
@@ -387,8 +386,8 @@ class ExternalUrlNormalizer(ResultTransformer):
     """External urls should also be marked as not crawled"""
 
     _TARGET_FIELDS = {
-        'redirect.to',
-        'canonical.to'
+        'redirect.to.url',
+        'canonical.to.url'
     }
 
     def __init__(self, es_result, query=None, **kwargs):

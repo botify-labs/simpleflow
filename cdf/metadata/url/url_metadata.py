@@ -245,10 +245,12 @@ URLS_DATA_FORMAT_DEFINITION = {
     # outgoing canonical link, one per page
     # if multiple, first one is taken into account
     "canonical.to.url": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED}
+        "type": _STRUCT_TYPE,
+        "values": {
+            "url_str": {"type": "string"},
+            "url_id": {"type": "integer"},
+        }
     },
-    "canonical.to.url_id": {"type": _INT_TYPE},
     "canonical.to.equal": {"type": _BOOLEAN_TYPE},
 
     # incoming canonical link
@@ -260,12 +262,15 @@ URLS_DATA_FORMAT_DEFINITION = {
     # "canonical.from.urls_exists": {"type": "boolean"},
 
     # outgoing redirection
-    "redirect.to.http_code": {"type": _INT_TYPE},
-    "redirect.to.url_id": {"type": _INT_TYPE},
     "redirect.to.url": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED}
+        "type": _STRUCT_TYPE,
+        "values": {
+            "url_str": {"type": "string"},
+            "url_id": {"type": "integer"},
+            "http_code": {"type": "integer"}
+        }
     },
+    # "redirect.to.url_exists": {"type": _BOOLEAN_TYPE},
 
     # incoming redirection
     "redirect.from.nb": {"type": _INT_TYPE},

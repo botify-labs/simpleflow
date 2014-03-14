@@ -261,7 +261,7 @@ NEW_MAPPING = {
                                     "nb": {"type": "integer"},
                                     "is_first": {"type": "boolean"},
                                     "urls": {"type": "integer", "index": "no"},
-                                    "urls_exists": {"type": "boolean"},
+                                    # "urls_exists": {"type": "boolean"},
                                 }
                             }
                         }
@@ -275,7 +275,7 @@ NEW_MAPPING = {
                                     "nb": {"type": "integer"},
                                     "is_first": {"type": "boolean"},
                                     "urls": {"type": "integer", "index": "no"},
-                                    "urls_exists": {"type": "boolean"}
+                                    # "urls_exists": {"type": "boolean"}
                                 }
                             }
                         }
@@ -302,7 +302,7 @@ NEW_MAPPING = {
                                     "nb": {"type": "integer"},
                                     "is_first": {"type": "boolean"},
                                     "urls": {"type": "integer", "index": "no"},
-                                    "urls_exists": {"type": "boolean"}
+                                    # "urls_exists": {"type": "boolean"}
                                 }
                             }
                         }
@@ -339,7 +339,7 @@ NEW_MAPPING = {
                     # list of source urls of incoming links
                     # truncated at 300 urls
                     "urls": {"type": "integer", "index": "no"},
-                    "urls_exists": {"type": "boolean"}
+                    # "urls_exists": {"type": "boolean"}
                 }
             },
 
@@ -374,7 +374,7 @@ NEW_MAPPING = {
                         }
                     },
                     "urls": {"type": "integer", "index": "no"},
-                    "urls_exists": {"type": "boolean"},
+                    # "urls_exists": {"type": "boolean"},
                 }
             },
 
@@ -411,21 +411,21 @@ NEW_MAPPING = {
                         "properties": {
                             "nb": {"type": "integer"},
                             "urls": {"type": "integer", "index": "no"},
-                            "urls_exists": {"type": "boolean"}
+                            # "urls_exists": {"type": "boolean"}
                         }
                     },
                     "4xx": {
                         "properties": {
                             "nb": {"type": "integer"},
                             "urls": {"type": "integer", "index": "no"},
-                            "urls_exists": {"type": "boolean"}
+                            # "urls_exists": {"type": "boolean"}
                         }
                     },
                     "5xx": {
                         "properties": {
                             "nb": {"type": "integer"},
                             "urls": {"type": "integer", "index": "no"},
-                            "urls_exists": {"type": "boolean"}
+                            # "urls_exists": {"type": "boolean"}
                         }
                     },
                     "total": {"type": "integer"}
@@ -436,8 +436,12 @@ NEW_MAPPING = {
                 "properties": {
                     "to": {
                         "properties": {
-                            "url": {"type": "string", "index": _NOT_ANALYZED},
-                            "url_id": {"type": "integer"},
+                            "url": {
+                                "properties": {
+                                    "url_str": {"type": "string"},
+                                    "url_id": {"type": "integer"},
+                                }
+                            },
                             "equal": {"type": "boolean"},
                         }
                     },
@@ -446,7 +450,7 @@ NEW_MAPPING = {
                         "properties": {
                             "nb": {"type": "integer"},
                             "urls": {"type": "integer", "index": "no"},
-                            "urls_exists": {"type": "boolean"}
+                            # "urls_exists": {"type": "boolean"}
                         }
                     }
                 }
@@ -456,16 +460,20 @@ NEW_MAPPING = {
                 "properties": {
                     "to": {
                         "properties": {
-                            "http_code": {"type": "integer"},
-                            "url": {"type": "string", "index": _NOT_ANALYZED},
-                            "url_id": {"type": "integer"}
+                            "url": {
+                                "properties": {
+                                    "http_code": {"type": "integer"},
+                                    "url_str": {"type": "string"},
+                                    "url_id": {"type": "integer"}
+                                }
+                            }
                         }
                     },
                     "from": {
                         "properties": {
                             "nb": {"type": "integer"},
                             "urls": {"type": "integer", "index": "no"},
-                            "urls_exists": {"type": "boolean"}
+                            # "urls_exists": {"type": "boolean"}
                         }
                     }
                 }
