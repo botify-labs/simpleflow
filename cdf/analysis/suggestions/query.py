@@ -266,6 +266,10 @@ class SuggestQuery(BaseMetricsQuery):
             child_frame = self.hdfstore['children']
             self.child_relationship_set = self.compute_child_relationship_set(child_frame)
 
+        #patterns for which the target_field proportion
+        #is below this threshold will not be returned
+        self._minimal_percent_pattern = 80
+
     def query_hash_to_string(self, value):
         """get the full-letter query corresponding to a hash
         :param value: the hash
@@ -280,11 +284,11 @@ class SuggestQuery(BaseMetricsQuery):
         :returns: unicode - the full-letter query"""
         return json.loads(unicode(self.hdfstore['requests'].ix[str(value), 'verbose_string'], "utf8"))
 
-    def query(self, settings, sort_results=True):
+    def query(self, settings):
         df = self.df.copy()
-        return self._query(df, settings, sort_results)
+        return self._query(df, settings)
 
-    def _query(self, df, settings, sort_results):
+    def _query(self, df, settings):
         """The method that actually runs the query.
         The method is almost identical to the query() function
         but it is easier to test since we can pass the dataframe as parameter.
@@ -314,10 +318,7 @@ class SuggestQuery(BaseMetricsQuery):
         if len(results) == 0:
             return results
 
-        if sort_results:
-            results = self.sort_results_by_target_field(settings, results)
-            results = self.remove_equivalent_parents(settings, results)
-            results = self.hide_less_relevant_children(results)
+        results = self.sort_results_by_target_field(settings, results)
 
         # Request Metrics query in order to get the total number of elements
         total_results = self._get_total_results(settings)
@@ -325,8 +326,34 @@ class SuggestQuery(BaseMetricsQuery):
 
         self._compute_scores(results, target_field,
                              total_results, total_results_by_pattern)
+
+        is_continuous_target_field = self._is_target_field_continuous_metric(total_results)
+        results = self._filter_results(results,
+                                       is_continuous_target_field)
+
         self._resolve_results(results)
+
         return results[0:30]
+
+    def _filter_results(self, results, is_continuous_target_field):
+        """Remove some irrelevant results either by effectively removing them
+        or by setting them as child patterns
+        :param results: the input results
+        :type results: list
+        :param is_continuous_target_field: if True, the target field
+                                           is a continuous variable
+                                           (for instance: page load time)
+        :type is_continuous_target_field: bool
+        :returns: list
+        """
+        # if the target field is a continuous metric
+        # "percent_pattern" does not make sense in this case,
+        # we don't want to threshold on this value.
+        if not is_continuous_target_field:
+            results = self.filter_low_density_patterns(results,
+                                                       self._minimal_percent_pattern)
+        results = self.hide_less_relevant_children(results)
+        return results
 
     def _raw_query(self, df, settings):
         """Run a query on the dataframe,
@@ -456,16 +483,26 @@ class SuggestQuery(BaseMetricsQuery):
         :type pattern_size: int
         """
         result["score"] = result["counters"][target_field]
-        # if total_results is zero, it must comes from a target_field
-        # based on a complex operation like "div"
-        # So we cannot know the value from the full crawl
-        if total_results:
+        if not self._is_target_field_continuous_metric(total_results):
             result["percent_total"] = round(float(result["counters"][target_field]) * 100.00 / float(total_results), 1)
         else:
             result["percent_total"] = -1
 
         result["score_pattern"] = pattern_size
         result["percent_pattern"] = round(float(result["counters"][target_field]) * 100.00 / float(pattern_size), 1)
+
+    def _is_target_field_continuous_metric(self, total_results):
+        """Return true if the current query has
+        a continuous metric as target filed.
+        For instance: load time, mean number of inlinks
+        :param total_results: the number of urls matching the query
+        :type total_results: int
+        :returns: bool
+        """
+        # if total_results is zero, it comes from a target_field
+        # based on a complex operation like "div"
+        # So the metric is continuous.
+        return total_results <= 0
 
     def _get_total_results(self, query):
         """Return the total number of items for the given query
@@ -551,42 +588,15 @@ class SuggestQuery(BaseMetricsQuery):
             result.add((parent_hash, child_hash))
         return result
 
-    def remove_equivalent_parents(self, settings, results):
-        """This method removes parent results if they have a child which
-        contains the same number of relevant elements.
-
-        For instance if we look for elements with title not set:
-        - pattern A has size 200 and contains 100 elements with h1 not set
-        - pattern B has size 110 and contains 100 elements with h1 not set
-
-        pattern A is a parent of pattern B.
-
-        Displaying pattern A to the user would not help him.
-        pattern B is more relevant as it is more specific.
-
-        The present method would remove pattern A from results
-
-        :param settings: the query settings
-        :type settings: dict
-        :param results: the query results
+    def filter_low_density_patterns(self, results, threshold):
+        """Remove patterns for which percent_pattern is too low.
+        :param results: the result patterns
         :type results: list
+        :param threshold: patterns with 'percent_pattern' below this threshold
+                          will be removed.
         :returns: list
         """
-
-        target_field = settings.get('target_field', 'pages_nb')
-        hashes_to_remove = []
-        #It depends if we assume that parent always come first in the list
-        for potential_parent, potential_child in itertools.permutations(results, 2):
-            potential_parent_hash = potential_parent["query"]
-            potential_child_hash = potential_child["query"]
-            if self.is_child(potential_parent_hash, potential_child_hash):
-                parent_target_field_count = potential_parent["counters"][target_field]
-                child_target_field_count = potential_child["counters"][target_field]
-                if parent_target_field_count == child_target_field_count:
-                    hashes_to_remove.append(potential_parent_hash)
-
-        results = [result for result in results if not result["query"] in hashes_to_remove]
-        return results
+        return [r for r in results if r["percent_pattern"] >= threshold]
 
     def hide_less_relevant_children(self, results):
         """Once we have displayed a node,
