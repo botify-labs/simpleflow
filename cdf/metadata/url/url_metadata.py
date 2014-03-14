@@ -7,7 +7,8 @@
 #
 # Values contains
 #   - type: data type of this field
-#       - long: for numeric values
+#       - long: for large numeric values, such as hash value
+#       - integer: for numeric values
 #       - string: for string values
 #       - struct: struct can contains some inner fields, but these fields
 #           won't be visible when querying
@@ -19,17 +20,16 @@
 #   - settings (optional): a set of setting flags of this field
 #       - es:not_analyzed: this field should not be tokenized by ES
 #       - es:no_index: this field should not be indexed
-#       - list: this field is actually a list of values in ES
 #       - es:multi_field: a multi_field type keeps multiple copies of the same
 #           data in different format (analyzed, not_analyzed etc.)
 #           In case of `multi_field`, `field_type` must be specified for
 #           determine the field's type
-
+#       - list: this field is actually a list of values in ES
 #
 #   - default_value (optional): the default value if this field does not
-#       exist
+#       exist. If this key is not present, the field's default value will be
+#       inferred based on its type
 
-_NUMBER_TYPE = 'long'
 _LONG_TYPE = 'long'
 _INT_TYPE = 'integer'
 _STRING_TYPE = 'string'
@@ -116,7 +116,7 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    "metadata.title.duplicates.urls_exists": {"type": "boolean"},
+    # "metadata.title.duplicates.urls_exists": {"type": "boolean"},
 
     # h1 tag
     "metadata.h1.nb": {
@@ -136,7 +136,7 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    "metadata.h1.duplicates.urls_exists": {"type": "boolean"},
+    # "metadata.h1.duplicates.urls_exists": {"type": "boolean"},
 
     # description tag
     "metadata.description.nb": {
@@ -156,7 +156,7 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    "metadata.description.duplicates.urls_exists": {"type": "boolean"},
+    # "metadata.description.duplicates.urls_exists": {"type": "boolean"},
 
     # h2 tag
     "metadata.h2.nb": {
@@ -189,13 +189,9 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    "inlinks_internal.urls_exists": {"type": "boolean"},
+    # "inlinks_internal.urls_exists": {"type": "boolean"},
 
     # internal outgoing links (destination is a internal url)
-    "outlinks_internal.nb.errors.total": {"type": _INT_TYPE},
-    "outlinks_internal.nb.errors.3xx": {"type": _INT_TYPE},
-    "outlinks_internal.nb.errors.4xx": {"type": _INT_TYPE},
-    "outlinks_internal.nb.errors.5xx": {"type": _INT_TYPE},
     "outlinks_internal.nb.total": {"type": _INT_TYPE},
     "outlinks_internal.nb.unique": {"type": _INT_TYPE},
     "outlinks_internal.nb.follow.unique": {"type": _INT_TYPE},
@@ -208,26 +204,11 @@ URLS_DATA_FORMAT_DEFINITION = {
     "outlinks_internal.nb.nofollow.combinations.link_robots": {"type": _INT_TYPE},
     "outlinks_internal.nb.nofollow.combinations.meta_robots": {"type": _INT_TYPE},
     "outlinks_internal.nb.nofollow.combinations.link_meta_robots": {"type": _INT_TYPE},
-    "outlinks_internal.urls.all": {
+    "outlinks_internal.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST},
     },
-    "outlinks_internal.urls.3xx": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST},
-    },
-    "outlinks_internal.urls.4xx": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST},
-    },
-    "outlinks_internal.urls.5xx": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST},
-    },
-    "outlinks_internal.urls.all_exists": {"type": "boolean"},
-    "outlinks_internal.urls.3xx_exists": {"type": "boolean"},
-    "outlinks_internal.urls.4xx_exists": {"type": "boolean"},
-    "outlinks_internal.urls.5xx_exists": {"type": "boolean"},
+    # "outlinks_internal.urls_exists": {"type": _BOOLEAN_TYPE},
 
     # external outgoing links (destination is a external url)
     "outlinks_external.nb.total": {"type": _INT_TYPE},
@@ -236,6 +217,30 @@ URLS_DATA_FORMAT_DEFINITION = {
     "outlinks_external.nb.nofollow.combinations.link": {"type": _INT_TYPE},
     "outlinks_external.nb.nofollow.combinations.meta": {"type": _INT_TYPE},
     "outlinks_external.nb.nofollow.combinations.link_meta": {"type": _INT_TYPE},
+
+    # erroneous outgoing internal links
+    "error_links.3xx.nb": {"type": _INT_TYPE},
+    "error_links.3xx.urls": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST}
+    },
+    # "error_links.3xx.urls_exists": {"type": "boolean"},
+
+    "error_links.4xx.nb": {"type": _INT_TYPE},
+    "error_links.4xx.urls": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST}
+    },
+    # "error_links.4xx.urls_exists": {"type": "boolean"},
+
+    "error_links.5xx.nb": {"type": _INT_TYPE},
+    "error_links.5xx.urls": {
+        "type": _INT_TYPE,
+        "settings": {_NO_INDEX, _LIST}
+    },
+    # "error_links.5xx.urls_exists": {"type": "boolean"},
+    # total error_links number
+    "error_links.total": {"type": "integer"},
 
     # outgoing canonical link, one per page
     # if multiple, first one is taken into account
@@ -252,7 +257,7 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    "canonical.from.urls_exists": {"type": "boolean"},
+    # "canonical.from.urls_exists": {"type": "boolean"},
 
     # outgoing redirection
     "redirect.to.http_code": {"type": _INT_TYPE},
@@ -268,5 +273,5 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    "redirect.from.urls_exists": {"type": "boolean"},
+    # "redirect.from.urls_exists": {"type": "boolean"},
 }

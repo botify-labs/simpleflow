@@ -71,13 +71,11 @@ URLS_FIXTURE = [
             },
         },
         'outlinks_internal': {
-            'urls': {
-                'all': [
-                    [2, 0, 100], # follow
-                    [3, 7, 1], # link, meta, robots
-                    [5, 3, 1], # link, meta / link to not crawled
-                ],
-            },
+            'urls': [
+                [2, 0, 100], # follow
+                [3, 7, 1], # link, meta, robots
+                [5, 3, 1], # link, meta / link to not crawled
+            ],
             'nb': {
                 'total': 102,
                 'unique': 2,
@@ -145,16 +143,12 @@ URLS_FIXTURE = [
                 ]
             }
         },
-        'outlinks_internal': {
-            'nb': {
-                'errors': {
-                    '4xx': 1,
-                    'total': 1
-                }
+        'error_links': {
+            '4xx': {
+                'nb': 1,
+                'urls': [4]
             },
-            'urls': {
-                '4xx': [4]
-            }
+            'total': 1,
         },
     },
     {
@@ -183,18 +177,16 @@ URLS_FIXTURE = [
                 }
             }
         },
-        'outlinks_internal': {
-            'nb': {
-                'errors': {
-                    '3xx': 3,
-                    '5xx': 2,
-                    'total': 5
-                }
+        'error_links': {
+            '3xx': {
+                'nb': 3,
+                'urls': [1, 2, 3]
             },
-            'urls': {
-                '3xx': [1, 2, 3],
-                '5xx': [2, 3],
-            }
+            '5xx': {
+                'nb': 2,
+                'urls': [2, 3]
+            },
+            'total': 5
         },
         'redirect': {
             'from': {
@@ -295,7 +287,7 @@ class TestQueryES(unittest.TestCase):
             '3xx': self.error_missing,
             '4xx': self.error_missing,
             '5xx': self.error_missing,
-            'any': self.any_missing
+            'total': 0
         }
 
     def tearDown(self):
@@ -335,61 +327,82 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(results, [])
 
     def test_error_link_query(self):
-        botify_query = _get_simple_bql_query('outlinks_internal.nb.errors.3xx', 'gt', 0,
-                                             fields=['outlinks_internal.urls.3xx'])
+        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                             fields=['error_links.3xx'])
         results = _get_query_result(botify_query)
         expected = {
-            'outlinks_internal': {
-                'urls': {
-                    '3xx': [self.urls[1], self.urls[2], self.urls[3]]
-                }
+            'error_links': {
+                '3xx': self.error_3xx
             }
         }
         self.assertEqual(results, [expected])
 
         # search for `error_links` field should return all error links
-        botify_query = _get_simple_bql_query('outlinks_internal.nb.errors.3xx', 'gt', 0,
-                                             fields=['outlinks_internal.urls'])
+        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                             fields=['error_links'])
         results = _get_query_result(botify_query)
         expected = {
-            'outlinks_internal': {
-                'urls': {
-                    '3xx': [self.urls[1], self.urls[2], self.urls[3]],
-                    '5xx': [self.urls[2], self.urls[3]],
-                    '4xx': [],
-                    'all': []
-                }
+            'error_links': {
+                '3xx': self.error_3xx,
+                '5xx': self.error_5xx,
+                '4xx': self.error_missing,
+                'total': 5
             }
         }
         self.assertEqual(results, [expected])
 
         # search only for `nb`
-        botify_query = _get_simple_bql_query('outlinks_internal.nb.errors.3xx', 'gt', 0,
-                                             fields=['outlinks_internal.nb.errors.3xx'])
+        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                             fields=['error_links.3xx.nb'])
         results = _get_query_result(botify_query)
         expected = {
-            'outlinks_internal': {'nb': {'errors': {'3xx': 3}}}
+            'error_links': {
+                '3xx': {
+                    'nb': 3
+                }
+            }
         }
         self.assertEqual(results, [expected])
 
-    # TODO better test case
+        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
+                                             fields=['error_links.3xx.urls'])
+        results = _get_query_result(botify_query)
+        expected = {
+            'error_links': {
+                '3xx': {'urls': self.error_3xx['urls']}
+            }
+        }
+        self.assertEqual(results, [expected])
+
     def test_query_missing_fields(self):
         """`error_links` is missing in the first 2 docs"""
         # retrieve parent field
         botify_query = _get_simple_bql_query('http_code', 'gt', 0,
-                                             fields=['id', 'outlinks_internal.urls.3xx'])
+                                             fields=['id', 'error_links'])
         results = _get_query_result(botify_query)
         expected = [
-            {'id': 1, 'outlinks_internal': {'urls': {'3xx': []}}},
-            {'id': 2, 'outlinks_internal': {'urls': {'3xx': []}}},
-            {'id': 3, 'outlinks_internal': {'urls': {'3xx': []}}},
+            {'id': 1, 'error_links': self.error_all_missing},
+            {'id': 2, 'error_links': self.error_all_missing},
+            {
+                'id': 3,
+                'error_links': {
+                    '4xx': self.error_4xx,
+                    '3xx': self.error_missing,
+                    '5xx': self.error_missing,
+                    'total': 1
+                }
+            },
             {
                 'id': 4,
-                'outlinks_internal': {'urls': {
-                    '3xx': [self.urls[1], self.urls[2], self.urls[3]]}}
+                'error_links': {
+                    '3xx': self.error_3xx,
+                    '4xx': self.error_missing,
+                    '5xx': self.error_5xx,
+                    'total': 5
+                }
             },
-            {'id': 6, 'outlinks_internal': {'urls': {'3xx': []}}},
-            {'id': 7, 'outlinks_internal': {'urls': {'3xx': []}}},
+            {'id': 6, 'error_links': self.error_all_missing},
+            {'id': 7, 'error_links': self.error_all_missing}
         ]
 
         self.assertEqual(results, expected)
@@ -433,39 +446,37 @@ class TestQueryES(unittest.TestCase):
 
     def test_outlinks_query(self):
         botify_query = _get_simple_bql_query('outlinks_internal.nb.total', 'gt', 0,
-                                             fields=['id', 'outlinks_internal.urls.all'])
+                                             fields=['id', 'outlinks_internal.urls'])
         result = _get_query_result(botify_query)
         expected = {
             'id': 1,
             'outlinks_internal': {
-                'urls': {
-                    'all': [
-                        {
-                            'url': {
-                                'url': self.urls[2],
-                                'crawled': True
-                            },
-                            'status': ['follow'],
-                            'nb_links': 100
+                'urls': [
+                    {
+                        'url': {
+                            'url': self.urls[2],
+                            'crawled': True
                         },
-                        {
-                            'url': {
-                                'url': self.urls[3],
-                                'crawled': True
-                            },
-                            'status': ['nofollow_robots', 'nofollow_meta', 'nofollow_link'],
-                            'nb_links': 1
+                        'status': ['follow'],
+                        'nb_links': 100
+                    },
+                    {
+                        'url': {
+                            'url': self.urls[3],
+                            'crawled': True
                         },
-                        {
-                            'url': {
-                                'url': self.urls[5],
-                                'crawled': False
-                            },
-                            'status': ['nofollow_meta', 'nofollow_link'],
-                            'nb_links': 1
-                        }
-                    ]
-                }
+                        'status': ['nofollow_robots', 'nofollow_meta', 'nofollow_link'],
+                        'nb_links': 1
+                    },
+                    {
+                        'url': {
+                            'url': self.urls[5],
+                            'crawled': False
+                        },
+                        'status': ['nofollow_meta', 'nofollow_link'],
+                        'nb_links': 1
+                    }
+                ]
             }
         }
         self.assertEqual(result, [expected])

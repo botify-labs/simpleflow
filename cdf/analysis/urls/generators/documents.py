@@ -176,7 +176,7 @@ def _process_outlinks(document, stream_oulinks):
             document['processed_outlink_url'].add(url_dst)
 
             url_idx = document["outlinks_id_to_idx"].get((url_dst, mask), None)
-            outlink_urls = document['outlinks_internal']['urls']['all']
+            outlink_urls = document['outlinks_internal']['urls']
             if url_idx is not None:
                 outlink_urls[url_idx][2] += 1
             else:
@@ -263,8 +263,7 @@ def _process_suggest(document, stream_suggests):
 def _process_badlinks(document, stream_badlinks):
     _, url_dest_id, http_code = stream_badlinks
 
-    errors_nb = document['outlinks_internal']['nb']['errors']
-    errors_urls = document['outlinks_internal']['urls']
+    errors = document['error_links']
 
     error_kind = None
     if 300 <= http_code < 400:
@@ -274,12 +273,13 @@ def _process_badlinks(document, stream_badlinks):
     elif http_code >= 500:
         error_kind = '5xx'
 
-    errors_nb[error_kind] += 1
-    if len(errors_urls[error_kind]) < 10:
-        errors_urls[error_kind].append(url_dest_id)
+    errors[error_kind]['nb'] += 1
+    error_urls = errors[error_kind]['urls']
+    if len(error_urls) < 10:
+        error_urls.append(url_dest_id)
 
     # increment the consolidate value
-    errors_nb['total'] += 1
+    errors['total'] += 1
 
 
 def _process_final(document):

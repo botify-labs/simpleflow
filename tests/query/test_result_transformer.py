@@ -69,25 +69,29 @@ class TestIdToUrlTransformer(unittest.TestCase):
 
     def test_error_links(self):
         es_result = {
-            'outlinks_internal': {
-                'urls': {
-                    '3xx': [1, 2, 3],
-                    '5xx': [1, 3, 4, 5]
+            'error_links': {
+                '3xx': {
+                    'urls': [1, 2, 3]
+                },
+                '5xx': {
+                    'urls': [1, 3, 4, 5]
                 }
             }
         }
 
         # partial transformation, controled by `fields` param
         test_input = copy.deepcopy(es_result)
-        trans = self._get_id_url_transformer(fields=['outlinks_internal.urls.5xx'],
+        trans = self._get_id_url_transformer(fields=['error_links.5xx'],
                                              es_result=[test_input])
         trans.transform()
 
         expected = {
-            'outlinks_internal': {
-                'urls': {
-                    '3xx': [1, 2, 3],
-                    '5xx': ['url1', 'url3', 'url4', 'url5']
+            'error_links': {
+                '3xx': {
+                    'urls': [1, 2, 3],
+                },
+                '5xx': {
+                    'urls': ['url1', 'url3', 'url4', 'url5']
                 }
             }
         }
@@ -95,15 +99,17 @@ class TestIdToUrlTransformer(unittest.TestCase):
 
         # children fields transformation
         test_input = copy.deepcopy(es_result)
-        trans = self._get_id_url_transformer(fields=['outlinks_internal.urls'],
+        trans = self._get_id_url_transformer(fields=['error_links'],
                                              es_result=[test_input])
         trans.transform()
 
         expected = {
-            'outlinks_internal': {
-                'urls': {
-                    '3xx': ['url1', 'url2', 'url3'],
-                    '5xx': ['url1', 'url3', 'url4', 'url5']
+            'error_links': {
+                '3xx': {
+                    'urls': ['url1', 'url2', 'url3'],
+                },
+                '5xx': {
+                    'urls': ['url1', 'url3', 'url4', 'url5']
                 }
             }
         }
@@ -113,37 +119,31 @@ class TestIdToUrlTransformer(unittest.TestCase):
     def test_links(self):
         es_result = {
             'outlinks_internal': {
-                'urls': {
-                    'all': [
-                        # uid, mask, link number
-                        [5, 7, 40],
-                    ]
-                }
+                # uid, mask, link number
+                'urls': [[5, 7, 40]]
             }
         }
-        trans = self._get_id_url_transformer(fields=['outlinks_internal.urls.all'],
+        trans = self._get_id_url_transformer(fields=['outlinks_internal.urls'],
                                              es_result=[es_result])
         trans.transform()
 
         expected = {
             'outlinks_internal': {
-                'urls': {
-                    'all': [
-                        {
-                            'url': {
-                                'url': 'url5',
-                                # mock http code = 0
-                                'crawled': False,
-                            },
-                            'nb_links': 40,
-                            'status': [
-                                'nofollow_robots',
-                                'nofollow_meta',
-                                'nofollow_link'
-                            ]
-                        }
-                    ]
-                }
+                'urls': [
+                    {
+                        'url': {
+                            'url': 'url5',
+                            # mock http code = 0
+                            'crawled': False,
+                        },
+                        'nb_links': 40,
+                        'status': [
+                            'nofollow_robots',
+                            'nofollow_meta',
+                            'nofollow_link'
+                        ]
+                    }
+                ]
             }
         }
         self.assertDictEqual(expected, es_result)

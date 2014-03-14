@@ -141,7 +141,7 @@ class TestMetadataGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator(iter(ids), infos=iter(infos),
-                                 contents=iter(contents))
+                                   contents=iter(contents))
         document = _next_doc(gen)
         metadata = document['metadata']
         self.assertEquals(metadata['h1']['contents'],
@@ -158,7 +158,7 @@ class TestMetadataGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos),
-                                 contents=iter(contents))
+                                   contents=iter(contents))
         for url_id, document in gen:
             metadata = document['metadata']
             if document['id'] in (1, 3):
@@ -173,7 +173,7 @@ class TestMetadataGeneration(unittest.TestCase):
             [3, 4, 10, 3, False, [2, 3, 4]],
         ]
         gen = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos),
-                                 contents_duplicate=iter(duplicates))
+                                   contents_duplicate=iter(duplicates))
 
         # check for url1
         document = _next_doc(gen)
@@ -217,7 +217,7 @@ class TestInlinksGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
-                                 infos=iter(infos))
+                                   infos=iter(infos))
         document = _next_doc(gen)
         inlinks = document['inlinks_internal']
         self.assertEquals(inlinks['nb']['total'], 5)
@@ -270,7 +270,7 @@ class TestOutlinksGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator(iter(self.ids), outlinks=iter(outlinks),
-                                 infos=iter(self.infos))
+                                   infos=iter(self.infos))
         # check for url1
         document = _next_doc(gen)
         # assert nofollow combinations
@@ -298,7 +298,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             [4, list_to_mask(['follow']), 2],
             [4, list_to_mask(['link']), 1]
         ]
-        self.assertEquals(document['outlinks_internal']['urls']['all'],
+        self.assertEquals(document['outlinks_internal']['urls'],
                           expected_outlinks_internal)
 
         # check for url2
@@ -344,7 +344,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             [5, list_to_mask(["robots", "link"]), 2],
             [6, list_to_mask(["link"]), 1]
         ]
-        self.assertItemsEqual(document['outlinks_internal']['urls']['all'],
+        self.assertItemsEqual(document['outlinks_internal']['urls'],
                               expected_outlinks)
 
     def test_outlinks_follow(self):
@@ -363,7 +363,7 @@ class TestOutlinksGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator(iter(ids), outlinks=iter(outlinks),
-                                 infos=iter(infos))
+                                   infos=iter(infos))
         document = _next_doc(gen)
 
         int_outlinks_nb = document['outlinks_internal']['nb']
@@ -388,7 +388,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             [2, list_to_mask(['link']), 1],
             [3, list_to_mask(['follow']), 1]
         ]
-        self.assertEquals(document['outlinks_internal']['urls']['all'],
+        self.assertEquals(document['outlinks_internal']['urls'],
                           expected_outlinks)
 
     def test_bad_links(self):
@@ -422,56 +422,47 @@ class TestOutlinksGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator(iter(patterns),
-                                 infos=iter(infos),
-                                 badlinks=iter(badlinks))
+                                   infos=iter(infos),
+                                   badlinks=iter(badlinks))
 
-        expected_nb_1 = {
-            '3xx': 3,
-            '4xx': 1,
-            '5xx': 1,
-            'total': 5,
+        expected_1 = {
+            '3xx': {
+                'nb': 3,
+                'urls': [100, 101, 102]
+            },
+            '4xx': {
+                'nb': 1,
+                'urls': [103]
+            },
+            '5xx': {
+                'nb': 1,
+                'urls': [5]
+            },
+            'total': 5
         }
-        expected_urls_1 = {
-            '3xx': [100, 101, 102],
-            '4xx': [103],
-            '5xx': [5],
-        }
-
         expected_2 = {
+            '3xx': {
+                'nb': 0
+            },
             '4xx': {
                 'nb': 11,
                 'urls': range(100, 110)
             },
-            '3xx': {
-                'nb': 0
-            },
             '5xx': {
                 'nb': 0
             },
-            'any': {
-                'nb': 11
-            }
-        }
-        expected_nb_2 = {
-            '3xx': 0,
-            '4xx': 11,
-            '5xx': 0,
-            'total': 11,
-        }
-        expected_urls_2 = {
-            '4xx': range(100, 110),
+            'total': 11
         }
 
+        key = 'error_links'
+
+        # check url1
         document = _next_doc(gen)
-        outlinks = document['outlinks_internal']
-        self.assertEqual(outlinks['nb']['errors'], expected_nb_1)
+        self.assertDictEqual(document[key], expected_1)
 
-        self.assertDictContainsSubset(expected_urls_1, outlinks['urls'])
-
+        # check url2
         document = _next_doc(gen)
-        outlinks = document['outlinks_internal']
-        self.assertEqual(outlinks['nb']['errors'], expected_nb_2)
-        self.assertDictContainsSubset(expected_urls_2, outlinks['urls'])
+        self.assertDictEqual(document[key], expected_2)
 
 
 class TestRedirectsGeneration(unittest.TestCase):
@@ -509,9 +500,9 @@ class TestRedirectsGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator(iter(patterns),
-                                 outlinks=iter(outlinks),
-                                 inlinks=iter(inlinks),
-                                 infos=iter(infos))
+                                   outlinks=iter(outlinks),
+                                   inlinks=iter(inlinks),
+                                   infos=iter(infos))
 
         document = _next_doc(gen)
         redirect_to = document['redirect']['to']
@@ -553,7 +544,7 @@ class TestRedirectsGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
-                                 infos=iter(infos))
+                                   infos=iter(infos))
         document = _next_doc(gen)
         expected = {
             'urls': [
@@ -607,7 +598,7 @@ class TestCanonicalGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator(iter(patterns), outlinks=iter(outlinks),
-                                 infos=iter(infos), inlinks=iter(inlinks))
+                                   infos=iter(infos), inlinks=iter(inlinks))
 
         # Url 1
         canonical_to = _next_doc(gen)['canonical']['to']
@@ -656,11 +647,11 @@ class TestCanonicalGeneration(unittest.TestCase):
             [1, 'canonical', ['follow'], 5],
             [2, 'canonical', ['follow'], 17],
             [2, 'canonical', ['follow'], 20],
-            [3, 'canonical', ['follow'], 3],  # self canonical
+            [3, 'canonical', ['follow'], 3], # self canonical
         ]
 
         gen = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
-                                 infos=iter(infos))
+                                   infos=iter(infos))
 
         # Url 1
         canonical_from = _next_doc(gen)['canonical']['from']
@@ -726,9 +717,9 @@ class TestGlobalDocumentGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator(iter(patterns),
-                                 infos=iter(infos),
-                                 outlinks=iter(outlinks),
-                                 inlinks=iter(inlinks))
+                                   infos=iter(infos),
+                                   outlinks=iter(outlinks),
+                                   inlinks=iter(inlinks))
 
         document = _next_doc(gen)
         self.assertEqual(document['outlinks_internal']['nb']['unique'], 2)

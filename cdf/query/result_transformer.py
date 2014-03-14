@@ -60,11 +60,11 @@ def _transform_single_field(es_result, path, func):
 
 
 def _transform_error_links(es_result, id_to_url, code_kind):
-    path = 'outlinks_internal.urls'
+    path = 'error_links'
     if path_in_dict(path, es_result):
         target = get_subdict_from_path(path, es_result)
         if code_kind in target:
-            original = target[code_kind]
+            original = target[code_kind]['urls']
             urls = []
             for url_id in original:
                 if url_id not in id_to_url:
@@ -72,7 +72,7 @@ def _transform_error_links(es_result, id_to_url, code_kind):
                     continue
                 urls.append(id_to_url.get(url_id)[0])
                 # in-place
-            target[code_kind] = urls
+            target[code_kind]['urls'] = urls
 
 
 def _transform_inlinks(es_results, id_to_url):
@@ -82,9 +82,9 @@ def _transform_inlinks(es_results, id_to_url):
 
 
 def _transform_outlinks(es_results, id_to_url):
-    if path_in_dict('outlinks_internal.urls.all', es_results):
-        target = es_results['outlinks_internal']['urls']
-        target['all'] = _transform_link_items(target['all'], id_to_url)
+    if path_in_dict('outlinks_internal.urls', es_results):
+        target = es_results['outlinks_internal']
+        target['urls'] = _transform_link_items(target['urls'], id_to_url)
 
 
 def _transform_link_items(items, id_to_url):
@@ -203,16 +203,16 @@ class IdToUrlTransformer(ResultTransformer):
     corresponding complete url"""
 
     FIELD_TRANSFORM_STRATEGY = {
-        'outlinks_internal.urls.3xx': {
-            'extract': lambda res: _extract_list_ids(res, 'outlinks_internal.urls.3xx'),
+        'error_links.3xx.urls': {
+            'extract': lambda res: _extract_list_ids(res, 'error_links.3xx.urls'),
             'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '3xx')
         },
-        'outlinks_internal.urls.4xx': {
-            'extract': lambda res: _extract_list_ids(res, 'outlinks_internal.urls.4xx'),
+        'error_links.4xx.urls': {
+            'extract': lambda res: _extract_list_ids(res, 'error_links.4xx.urls'),
             'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '4xx')
         },
-        'outlinks_internal.urls.5xx': {
-            'extract': lambda res: _extract_list_ids(res, 'outlinks_internal.urls.5xx'),
+        'error_links.5xx.urls': {
+            'extract': lambda res: _extract_list_ids(res, 'error_links.5xx.urls'),
             'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '5xx')
         },
 
@@ -220,8 +220,8 @@ class IdToUrlTransformer(ResultTransformer):
             'extract': lambda res: _extract_list_ids(res, 'inlinks_internal.urls', lambda l: l[0]),
             'transform': lambda res, id_to_url: _transform_inlinks(res, id_to_url)
         },
-        'outlinks_internal.urls.all': {
-            'extract': lambda res: _extract_list_ids(res, 'outlinks_internal.urls.all', lambda l: l[0]),
+        'outlinks_internal.urls': {
+            'extract': lambda res: _extract_list_ids(res, 'outlinks_internal.urls', lambda l: l[0]),
             'transform': lambda res, id_to_url: _transform_outlinks(res, id_to_url)
         },
 
@@ -414,6 +414,5 @@ def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):
         IdToUrlTransformer(results, query, backend),
         DefaultValueTransformer(results, query, backend)
     ]
-
     for trans in transformers:
         trans.transform()
