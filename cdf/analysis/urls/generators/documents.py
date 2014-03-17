@@ -138,7 +138,10 @@ def _process_metadata_duplicate(doc, stream_duplicate):
     dup = meta['duplicates']
     dup['nb'] = nb_duplicates
     # urls that have duplicates
-    dup['urls'] = duplicate_urls
+    if nb_duplicates > 0:
+        dup['urls'] = duplicate_urls
+        dup['urls_exists'] = True
+
     # is this the first one out of all duplicates
     dup['is_first'] = is_first
 
@@ -183,15 +186,18 @@ def _process_outlinks(document, stream_oulinks):
                 outlink_urls.append([url_dst, mask, 1])
                 document["outlinks_id_to_idx"][(url_dst, mask)] = len(outlink_urls) - 1
 
+            document['outlinks_internal']['urls_exists'] = True
+
     elif link_type.startswith('r'):
         http_code = link_type[1:]
-        document['redirect']['to']['url'] = {}
-        redirects_to = document['redirect']['to']['url']
+        redirects_to = document['redirect']['to']
+        redirects_to['url'] = {}
         if url_dst == -1:
-            redirects_to['url_str'] = external_url
+            redirects_to['url']['url_str'] = external_url
         else:
-            redirects_to['url_id'] = url_dst
-        redirects_to['http_code'] = int(http_code)
+            redirects_to['url']['url_id'] = url_dst
+        redirects_to['url']['http_code'] = int(http_code)
+        redirects_to['url_exists'] = True
 
     elif link_type == "canonical":
         canonical_to = document['canonical']['to']
@@ -203,6 +209,7 @@ def _process_outlinks(document, stream_oulinks):
                 canonical_to['url']['url_id'] = url_dst
             else:
                 canonical_to['url']['url_str'] = external_url
+            canonical_to['url_exists'] = True
 
 
 def _process_inlinks(document, stream_inlinks):
@@ -236,6 +243,8 @@ def _process_inlinks(document, stream_inlinks):
             inlink_urls.append([url_src, mask, 1])
             document["inlinks_id_to_idx"][(url_src, mask)] = len(inlink_urls) - 1
 
+        document['inlinks_internal']['urls_exists'] = True
+
     elif link_type.startswith('r'):
         # TODO dangerous assumption of crawl's string format to be 'r3xx'
         http_code = int(link_type[1:])
@@ -243,6 +252,7 @@ def _process_inlinks(document, stream_inlinks):
         redirects_from['nb'] += 1
         if len(redirects_from['urls']) < 300:
             redirects_from['urls'].append([url_src, http_code])
+        redirects_from['urls_exists'] = True
 
     elif link_type == "canonical":
         canonical_from = document['canonical']['from']
@@ -250,7 +260,9 @@ def _process_inlinks(document, stream_inlinks):
         # only count for none self canonical
         if url_dst != url_src:
             canonical_from['nb'] += 1
-            canonical_from['urls'].append(url_src)
+            if len(canonical_from['urls']) < 300:
+                canonical_from['urls'].append(url_src)
+            canonical_from['urls_exists'] = True
 
 
 def _process_suggest(document, stream_suggests):
@@ -278,6 +290,8 @@ def _process_badlinks(document, stream_badlinks):
 
     # increment the consolidate value
     errors['total'] += 1
+
+    errors[error_kind]['urls_exists'] = True
 
 
 def _process_final(document):
@@ -322,6 +336,9 @@ def _process_final(document):
             })
         else:
             raise GroupWithSkipException()
+
+    # add `exists` info.
+
 
     _clean_document(document)
 

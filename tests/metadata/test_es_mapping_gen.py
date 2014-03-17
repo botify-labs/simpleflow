@@ -96,7 +96,6 @@ class TestMappingGeneration(unittest.TestCase):
         r = target['urls']['properties']
         for k, v in result['urls']['properties'].iteritems():
             self.assertEqual(v, r[k])
-
         # check all
         self.assertEqual(result, target)
 
@@ -123,6 +122,10 @@ class TestMappingGeneration(unittest.TestCase):
             'struct_without_default': {
                 'type': 'struct',
             },
+            'no.default.value': {
+                'type': 'integer',
+                'default_value': None
+            }
         }
         expected = {
             'string': None,
@@ -213,6 +216,9 @@ NEW_MAPPING = {
             "required": True,
             "path": "crawl_id"
         },
+        "_source": {
+            "excludes": ["*_exists"]
+        },
         "properties": {
             # simple properties for each url
             "url": {
@@ -274,7 +280,7 @@ NEW_MAPPING = {
                                     "nb": {"type": "integer"},
                                     "is_first": {"type": "boolean"},
                                     "urls": {"type": "integer", "index": "no"},
-                                    # "urls_exists": {"type": "boolean"},
+                                    "urls_exists": {"type": "boolean"},
                                 }
                             }
                         }
@@ -288,7 +294,7 @@ NEW_MAPPING = {
                                     "nb": {"type": "integer"},
                                     "is_first": {"type": "boolean"},
                                     "urls": {"type": "integer", "index": "no"},
-                                    # "urls_exists": {"type": "boolean"}
+                                    "urls_exists": {"type": "boolean"}
                                 }
                             }
                         }
@@ -315,7 +321,7 @@ NEW_MAPPING = {
                                     "nb": {"type": "integer"},
                                     "is_first": {"type": "boolean"},
                                     "urls": {"type": "integer", "index": "no"},
-                                    # "urls_exists": {"type": "boolean"}
+                                    "urls_exists": {"type": "boolean"}
                                 }
                             }
                         }
@@ -352,7 +358,7 @@ NEW_MAPPING = {
                     # list of source urls of incoming links
                     # truncated at 300 urls
                     "urls": {"type": "integer", "index": "no"},
-                    # "urls_exists": {"type": "boolean"}
+                    "urls_exists": {"type": "boolean"}
                 }
             },
 
@@ -387,7 +393,7 @@ NEW_MAPPING = {
                         }
                     },
                     "urls": {"type": "integer", "index": "no"},
-                    # "urls_exists": {"type": "boolean"},
+                    "urls_exists": {"type": "boolean"},
                 }
             },
 
@@ -424,21 +430,21 @@ NEW_MAPPING = {
                         "properties": {
                             "nb": {"type": "integer"},
                             "urls": {"type": "integer", "index": "no"},
-                            # "urls_exists": {"type": "boolean"}
+                            "urls_exists": {"type": "boolean"}
                         }
                     },
                     "4xx": {
                         "properties": {
                             "nb": {"type": "integer"},
                             "urls": {"type": "integer", "index": "no"},
-                            # "urls_exists": {"type": "boolean"}
+                            "urls_exists": {"type": "boolean"}
                         }
                     },
                     "5xx": {
                         "properties": {
                             "nb": {"type": "integer"},
                             "urls": {"type": "integer", "index": "no"},
-                            # "urls_exists": {"type": "boolean"}
+                            "urls_exists": {"type": "boolean"}
                         }
                     },
                     "total": {"type": "integer"}
@@ -456,6 +462,7 @@ NEW_MAPPING = {
                                 }
                             },
                             "equal": {"type": "boolean"},
+                            "url_exists": {"type": "boolean"}
                         }
                     },
 
@@ -463,7 +470,7 @@ NEW_MAPPING = {
                         "properties": {
                             "nb": {"type": "integer"},
                             "urls": {"type": "integer", "index": "no"},
-                            # "urls_exists": {"type": "boolean"}
+                            "urls_exists": {"type": "boolean"}
                         }
                     }
                 }
@@ -479,14 +486,15 @@ NEW_MAPPING = {
                                     "url_str": {"type": "string", "index": "no"},
                                     "url_id": {"type": "integer", "index": "no"}
                                 }
-                            }
+                            },
+                            "url_exists": {"type": "boolean"}
                         }
                     },
                     "from": {
                         "properties": {
                             "nb": {"type": "integer"},
                             "urls": {"type": "integer", "index": "no"},
-                            # "urls_exists": {"type": "boolean"}
+                            "urls_exists": {"type": "boolean"}
                         }
                     }
                 }

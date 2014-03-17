@@ -181,6 +181,7 @@ class TestMetadataGeneration(unittest.TestCase):
         self.assertEqual(dup['title']['nb'], 10)
         self.assertEqual(dup['title']['duplicates']['nb'], 3)
         self.assertEqual(dup['title']['duplicates']['urls'], [2, 3, 4])
+        self.assertEqual(dup['title']['duplicates']['urls_exists'], True)
 
         # check for url2
         document = _next_doc(gen)
@@ -188,6 +189,7 @@ class TestMetadataGeneration(unittest.TestCase):
         self.assertEqual(dup['h1']['nb'], 1)
         self.assertEqual(dup['h1']['duplicates']['nb'], 0)
         self.assertFalse('urls' in dup['h1']['duplicates'])
+        self.assertFalse('urls_exists' in dup['h1']['duplicates'])
 
         # check for url3
         document = _next_doc(gen)
@@ -195,6 +197,7 @@ class TestMetadataGeneration(unittest.TestCase):
         self.assertEqual(dup['description']['nb'], 10)
         self.assertEqual(dup['description']['duplicates']['nb'], 3)
         self.assertEqual(dup['description']['duplicates']['urls'], [2, 3, 4])
+        self.assertEqual(dup['description']['duplicates']['urls_exists'], True)
 
 
 class TestInlinksGeneration(unittest.TestCase):
@@ -237,6 +240,7 @@ class TestInlinksGeneration(unittest.TestCase):
             [3, list_to_mask(['link_meta']), 1]
         ]
         self.assertEquals(inlinks['urls'], expected_inlinks)
+        self.assertEquals(inlinks['urls_exists'], True)
 
 
 class TestOutlinksGeneration(unittest.TestCase):
@@ -300,6 +304,7 @@ class TestOutlinksGeneration(unittest.TestCase):
         ]
         self.assertEquals(document['outlinks_internal']['urls'],
                           expected_outlinks_internal)
+        self.assertEquals(document['outlinks_internal']['urls_exists'], True)
 
         # check for url2
         # check that url 2 has no outlinks
@@ -344,8 +349,9 @@ class TestOutlinksGeneration(unittest.TestCase):
             [5, list_to_mask(["robots", "link"]), 2],
             [6, list_to_mask(["link"]), 1]
         ]
-        self.assertItemsEqual(document['outlinks_internal']['urls'],
+        self.assertEqual(document['outlinks_internal']['urls'],
                               expected_outlinks)
+        self.assertEqual(document['outlinks_internal']['urls_exists'], True)
 
     def test_outlinks_follow(self):
         ids = self.ids[:1]
@@ -390,6 +396,7 @@ class TestOutlinksGeneration(unittest.TestCase):
         ]
         self.assertEquals(document['outlinks_internal']['urls'],
                           expected_outlinks)
+        self.assertEquals(document['outlinks_internal']['urls_exists'], True)
 
     def test_bad_links(self):
         patterns = [
@@ -428,15 +435,18 @@ class TestOutlinksGeneration(unittest.TestCase):
         expected_1 = {
             '3xx': {
                 'nb': 3,
-                'urls': [100, 101, 102]
+                'urls': [100, 101, 102],
+                'urls_exists': True
             },
             '4xx': {
                 'nb': 1,
-                'urls': [103]
+                'urls': [103],
+                'urls_exists': True
             },
             '5xx': {
                 'nb': 1,
-                'urls': [5]
+                'urls': [5],
+                'urls_exists': True
             },
             'total': 5
         }
@@ -446,7 +456,8 @@ class TestOutlinksGeneration(unittest.TestCase):
             },
             '4xx': {
                 'nb': 11,
-                'urls': range(100, 110)
+                'urls': range(100, 110),
+                'urls_exists': True
             },
             '5xx': {
                 'nb': 0
@@ -505,19 +516,22 @@ class TestRedirectsGeneration(unittest.TestCase):
                                    infos=iter(infos))
 
         document = _next_doc(gen)
-        redirect_to = document['redirect']['to']['url']
-        self.assertEquals(redirect_to, {'url_id': 2, 'http_code': 301})
+        redirect_to = document['redirect']['to']
+        self.assertEquals(redirect_to['url'], {'url_id': 2, 'http_code': 301})
+        self.assertEqual(redirect_to['url_exists'], True)
 
         document = _next_doc(gen)
-        redirect_to = document['redirect']['to']['url']
-        self.assertEquals(redirect_to,
+        redirect_to = document['redirect']['to']
+        self.assertEquals(redirect_to['url'],
                           {'url_str': 'http://www.youtube.com', 'http_code': 302})
         # for external url, key `url_id` should be cleaned from the document
-        self.assertFalse('url_id' in redirect_to)
+        self.assertFalse('url_id' in redirect_to['url'])
+        self.assertEqual(redirect_to['url_exists'], True)
 
         document = _next_doc(gen)
-        redirect_to = document['redirect']['to']['url']
-        self.assertEquals(redirect_to, {'url_id': 4, 'http_code': 301})
+        redirect_to = document['redirect']['to']
+        self.assertEquals(redirect_to['url'], {'url_id': 4, 'http_code': 301})
+        self.assertEqual(redirect_to['url_exists'], True)
 
         # this is a non-crawled page but has received an incoming redirection
         # so we generate a minimal document for it
@@ -551,7 +565,8 @@ class TestRedirectsGeneration(unittest.TestCase):
                 # url_id, http_code
                 [2, 301]
             ],
-            'nb': 1
+            'nb': 1,
+            'urls_exists': True
         }
         self.assertEquals(document['redirect']['from'], expected)
 
@@ -604,11 +619,13 @@ class TestCanonicalGeneration(unittest.TestCase):
         canonical_to = _next_doc(gen)['canonical']['to']
         self.assertEquals(canonical_to['url']['url_id'], 2)
         self.assertEquals(canonical_to['equal'], False)
+        self.assertEquals(canonical_to['url_exists'], True)
 
         # Url 2
         canonical_to = _next_doc(gen)['canonical']['to']
         self.assertEquals(canonical_to['url']['url_id'], 2)
         self.assertEquals(canonical_to['equal'], True)
+        self.assertEquals(canonical_to['url_exists'], True)
 
         # Url 3
         canonical_to = _next_doc(gen)['canonical']['to']
@@ -616,11 +633,13 @@ class TestCanonicalGeneration(unittest.TestCase):
         # for external url, key `url_id` should be cleaned from document
         self.assertFalse('url_id' in canonical_to['url'])
         self.assertEquals(canonical_to['equal'], False)
+        self.assertEquals(canonical_to['url_exists'], True)
 
         # # Url 4
         canonical_to = _next_doc(gen)['canonical']['to']
         self.assertEquals(canonical_to['url']['url_id'], 5)
         self.assertEquals(canonical_to['equal'], False)
+        self.assertEquals(canonical_to['url_exists'], True)
 
         # Url 5
         expected = {
@@ -657,16 +676,19 @@ class TestCanonicalGeneration(unittest.TestCase):
         canonical_from = _next_doc(gen)['canonical']['from']
         self.assertEquals(canonical_from['nb'], 1)
         self.assertEquals(canonical_from['urls'], [5])
+        self.assertEquals(canonical_from['urls_exists'], True)
 
         # Url 2
         canonical_from = _next_doc(gen)['canonical']['from']
         self.assertEquals(canonical_from['nb'], 2)
         self.assertEquals(canonical_from['urls'], [17, 20])
+        self.assertEquals(canonical_from['urls_exists'], True)
 
         # Url 3
         # should not count self canonical
-        self.assertEqual(_next_doc(gen)['canonical']['from'],
-                         {'nb': 0})
+        canonical_from = _next_doc(gen)['canonical']['from']
+        self.assertEqual(canonical_from, {'nb': 0})
+        self.assertFalse('urls_exists' in canonical_from)
 
 
 class TestGlobalDocumentGeneration(unittest.TestCase):

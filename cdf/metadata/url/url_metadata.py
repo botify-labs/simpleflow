@@ -29,6 +29,8 @@
 #   - default_value (optional): the default value if this field does not
 #       exist. If this key is not present, the field's default value will be
 #       inferred based on its type
+#       Set to `None` to avoid any default values, so if this field is missing
+#       in ElasticSearch result, no default value will be added
 
 _LONG_TYPE = 'long'
 _INT_TYPE = 'integer'
@@ -116,7 +118,10 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "metadata.title.duplicates.urls_exists": {"type": "boolean"},
+    "metadata.title.duplicates.urls_exists": {
+        "type": "boolean",
+        "default_value": None
+    },
 
     # h1 tag
     "metadata.h1.nb": {
@@ -136,7 +141,10 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "metadata.h1.duplicates.urls_exists": {"type": "boolean"},
+    "metadata.h1.duplicates.urls_exists": {
+        "type": "boolean",
+        "default_value": None
+    },
 
     # description tag
     "metadata.description.nb": {
@@ -156,7 +164,10 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "metadata.description.duplicates.urls_exists": {"type": "boolean"},
+    "metadata.description.duplicates.urls_exists": {
+        "type": "boolean",
+        "default_value": None
+    },
 
     # h2 tag
     "metadata.h2.nb": {
@@ -189,7 +200,10 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "inlinks_internal.urls_exists": {"type": "boolean"},
+    "inlinks_internal.urls_exists": {
+        "type": "boolean",
+        "default_value": None
+    },
 
     # internal outgoing links (destination is a internal url)
     "outlinks_internal.nb.total": {"type": _INT_TYPE},
@@ -208,7 +222,10 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST},
     },
-    # "outlinks_internal.urls_exists": {"type": _BOOLEAN_TYPE},
+    "outlinks_internal.urls_exists": {
+        "type": _BOOLEAN_TYPE,
+        "default_value": None
+    },
 
     # external outgoing links (destination is a external url)
     "outlinks_external.nb.total": {"type": _INT_TYPE},
@@ -224,21 +241,30 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "outlinks_errors.3xx.urls_exists": {"type": "boolean"},
+    "outlinks_errors.3xx.urls_exists": {
+        "type": "boolean",
+        "default_value": None
+    },
 
     "outlinks_errors.4xx.nb": {"type": _INT_TYPE},
     "outlinks_errors.4xx.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "outlinks_errors.4xx.urls_exists": {"type": "boolean"},
+    "outlinks_errors.4xx.urls_exists": {
+        "type": "boolean",
+        "default_value": None
+    },
 
     "outlinks_errors.5xx.nb": {"type": _INT_TYPE},
     "outlinks_errors.5xx.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "outlinks_errors.5xx.urls_exists": {"type": "boolean"},
+    "outlinks_errors.5xx.urls_exists": {
+        "type": "boolean",
+        "default_value": None
+    },
     # total error_links number
     "outlinks_errors.total": {"type": "integer"},
 
@@ -255,6 +281,10 @@ URLS_DATA_FORMAT_DEFINITION = {
         }
     },
     "canonical.to.equal": {"type": _BOOLEAN_TYPE},
+    "canonical.to.url_exists": {
+        "type": "boolean",
+        "default_value": None
+    },
 
     # incoming canonical link
     "canonical.from.nb": {"type": _INT_TYPE},
@@ -262,7 +292,10 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "canonical.from.urls_exists": {"type": "boolean"},
+    "canonical.from.urls_exists": {
+        "type": "boolean",
+        "default_value": None
+    },
 
     # outgoing redirection
     "redirect.to.url": {
@@ -276,7 +309,10 @@ URLS_DATA_FORMAT_DEFINITION = {
             _NO_INDEX
         }
     },
-    # "redirect.to.url_exists": {"type": _BOOLEAN_TYPE},
+    "redirect.to.url_exists": {
+        "type": _BOOLEAN_TYPE,
+        "default_value": None
+    },
 
     # incoming redirection
     "redirect.from.nb": {"type": _INT_TYPE},
@@ -284,5 +320,8 @@ URLS_DATA_FORMAT_DEFINITION = {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "redirect.from.urls_exists": {"type": "boolean"},
+    "redirect.from.urls_exists": {
+        "type": "boolean",
+        "default_value": None
+    },
 }

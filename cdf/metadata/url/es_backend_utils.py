@@ -150,7 +150,7 @@ class DataBackend(object):
 
     def __init__(self, data_format):
         """Constructor for Backend"""
-        raise NotImplementedError()
+        self.data_format = data_format
 
     # TODO abstract data format walk in the base class
     def query_fields(self):
@@ -173,7 +173,7 @@ class ElasticSearchBackend(DataBackend):
     """ElasticSearch backend"""
 
     def __init__(self, data_format):
-        self.data_format = data_format
+        super(ElasticSearchBackend, self).__init__(data_format)
         # cache
         self._select_fields = None
         self._query_fields = None
@@ -181,6 +181,25 @@ class ElasticSearchBackend(DataBackend):
         self._field_default_value = None
         self._noindex_fields = None
         self._mapping = None
+
+    @classmethod
+    def _routing(cls, routing_field):
+        """Generate the routing setting"""
+        return {
+            "_routing": {
+                "required": True,
+                "path": routing_field
+            }
+        }
+
+    @classmethod
+    def _source(cls, excludes):
+        """Generate the source control setting"""
+        return {
+            "_source": {
+                "excludes": excludes
+            }
+        }
 
     def has_child(self, field):
         """Check if this field have child fields"""
@@ -235,16 +254,16 @@ class ElasticSearchBackend(DataBackend):
         }
 
         def infer_for_basic_types(basic_type):
-            try:
-                default_value = BASIC_TYPE_DEFAULTS[basic_type]
-            except KeyError:
-                default_value = None
-            return default_value
+            return BASIC_TYPE_DEFAULTS.get(basic_type, None)
 
         if self._field_default_value is None:
             lookup = {}
             for path, values in self.data_format.iteritems():
                 if 'default_value' in values:
+                    if values['default_value'] is None:
+                        # no default transform for this field
+                        continue
+                    # use user defined default value
                     lookup[path] = values['default_value']
                 else:
                     # infer default value from field's type
@@ -302,10 +321,12 @@ class ElasticSearchBackend(DataBackend):
 
             if routing_field:
                 # insert routing configuration
-                es_mapping[doc_type]['_routing'] = {
-                    "required": True,
-                    "path": routing_field
-                }
+                es_mapping[doc_type].update(
+                    self._routing(routing_field))
+
+            # excludes exists flags from `_source`
+            es_mapping[doc_type].update(self._source(['*_exists']))
+
             self._mapping = es_mapping
 
         return self._mapping
