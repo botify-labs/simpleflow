@@ -143,7 +143,7 @@ URLS_FIXTURE = [
                 ]
             }
         },
-        'error_links': {
+        'outlinks_errors': {
             '4xx': {
                 'nb': 1,
                 'urls': [4]
@@ -177,7 +177,7 @@ URLS_FIXTURE = [
                 }
             }
         },
-        'error_links': {
+        'outlinks_errors': {
             '3xx': {
                 'nb': 3,
                 'urls': [1, 2, 3]
@@ -327,22 +327,22 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(results, [])
 
     def test_error_link_query(self):
-        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
-                                             fields=['error_links.3xx'])
+        botify_query = _get_simple_bql_query('outlinks_errors.3xx.nb', 'gt', 0,
+                                             fields=['outlinks_errors.3xx'])
         results = _get_query_result(botify_query)
         expected = {
-            'error_links': {
+            'outlinks_errors': {
                 '3xx': self.error_3xx
             }
         }
         self.assertEqual(results, [expected])
 
-        # search for `error_links` field should return all error links
-        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
-                                             fields=['error_links'])
+        # search for `outlinks_errors` field should return all error links
+        botify_query = _get_simple_bql_query('outlinks_errors.3xx.nb', 'gt', 0,
+                                             fields=['outlinks_errors'])
         results = _get_query_result(botify_query)
         expected = {
-            'error_links': {
+            'outlinks_errors': {
                 '3xx': self.error_3xx,
                 '5xx': self.error_5xx,
                 '4xx': self.error_missing,
@@ -352,11 +352,11 @@ class TestQueryES(unittest.TestCase):
         self.assertEqual(results, [expected])
 
         # search only for `nb`
-        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
-                                             fields=['error_links.3xx.nb'])
+        botify_query = _get_simple_bql_query('outlinks_errors.3xx.nb', 'gt', 0,
+                                             fields=['outlinks_errors.3xx.nb'])
         results = _get_query_result(botify_query)
         expected = {
-            'error_links': {
+            'outlinks_errors': {
                 '3xx': {
                     'nb': 3
                 }
@@ -364,11 +364,11 @@ class TestQueryES(unittest.TestCase):
         }
         self.assertEqual(results, [expected])
 
-        botify_query = _get_simple_bql_query('error_links.3xx.nb', 'gt', 0,
-                                             fields=['error_links.3xx.urls'])
+        botify_query = _get_simple_bql_query('outlinks_errors.3xx.nb', 'gt', 0,
+                                             fields=['outlinks_errors.3xx.urls'])
         results = _get_query_result(botify_query)
         expected = {
-            'error_links': {
+            'outlinks_errors': {
                 '3xx': {'urls': self.error_3xx['urls']}
             }
         }
@@ -378,14 +378,14 @@ class TestQueryES(unittest.TestCase):
         """`error_links` is missing in the first 2 docs"""
         # retrieve parent field
         botify_query = _get_simple_bql_query('http_code', 'gt', 0,
-                                             fields=['id', 'error_links'])
+                                             fields=['id', 'outlinks_errors'])
         results = _get_query_result(botify_query)
         expected = [
-            {'id': 1, 'error_links': self.error_all_missing},
-            {'id': 2, 'error_links': self.error_all_missing},
+            {'id': 1, 'outlinks_errors': self.error_all_missing},
+            {'id': 2, 'outlinks_errors': self.error_all_missing},
             {
                 'id': 3,
-                'error_links': {
+                'outlinks_errors': {
                     '4xx': self.error_4xx,
                     '3xx': self.error_missing,
                     '5xx': self.error_missing,
@@ -394,15 +394,15 @@ class TestQueryES(unittest.TestCase):
             },
             {
                 'id': 4,
-                'error_links': {
+                'outlinks_errors': {
                     '3xx': self.error_3xx,
                     '4xx': self.error_missing,
                     '5xx': self.error_5xx,
                     'total': 5
                 }
             },
-            {'id': 6, 'error_links': self.error_all_missing},
-            {'id': 7, 'error_links': self.error_all_missing}
+            {'id': 6, 'outlinks_errors': self.error_all_missing},
+            {'id': 7, 'outlinks_errors': self.error_all_missing}
         ]
 
         self.assertEqual(results, expected)

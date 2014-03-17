@@ -219,28 +219,28 @@ URLS_DATA_FORMAT_DEFINITION = {
     "outlinks_external.nb.nofollow.combinations.link_meta": {"type": _INT_TYPE},
 
     # erroneous outgoing internal links
-    "error_links.3xx.nb": {"type": _INT_TYPE},
-    "error_links.3xx.urls": {
+    "outlinks_errors.3xx.nb": {"type": _INT_TYPE},
+    "outlinks_errors.3xx.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "error_links.3xx.urls_exists": {"type": "boolean"},
+    # "outlinks_errors.3xx.urls_exists": {"type": "boolean"},
 
-    "error_links.4xx.nb": {"type": _INT_TYPE},
-    "error_links.4xx.urls": {
+    "outlinks_errors.4xx.nb": {"type": _INT_TYPE},
+    "outlinks_errors.4xx.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "error_links.4xx.urls_exists": {"type": "boolean"},
+    # "outlinks_errors.4xx.urls_exists": {"type": "boolean"},
 
-    "error_links.5xx.nb": {"type": _INT_TYPE},
-    "error_links.5xx.urls": {
+    "outlinks_errors.5xx.nb": {"type": _INT_TYPE},
+    "outlinks_errors.5xx.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
     },
-    # "error_links.5xx.urls_exists": {"type": "boolean"},
+    # "outlinks_errors.5xx.urls_exists": {"type": "boolean"},
     # total error_links number
-    "error_links.total": {"type": "integer"},
+    "outlinks_errors.total": {"type": "integer"},
 
     # outgoing canonical link, one per page
     # if multiple, first one is taken into account

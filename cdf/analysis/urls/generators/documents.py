@@ -263,7 +263,7 @@ def _process_suggest(document, stream_suggests):
 def _process_badlinks(document, stream_badlinks):
     _, url_dest_id, http_code = stream_badlinks
 
-    errors = document['error_links']
+    errors = document['outlinks_errors']
 
     error_kind = None
     if 300 <= http_code < 400:

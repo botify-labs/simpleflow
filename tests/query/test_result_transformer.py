@@ -69,7 +69,7 @@ class TestIdToUrlTransformer(unittest.TestCase):
 
     def test_error_links(self):
         es_result = {
-            'error_links': {
+            'outlinks_errors': {
                 '3xx': {
                     'urls': [1, 2, 3]
                 },
@@ -81,12 +81,12 @@ class TestIdToUrlTransformer(unittest.TestCase):
 
         # partial transformation, controled by `fields` param
         test_input = copy.deepcopy(es_result)
-        trans = self._get_id_url_transformer(fields=['error_links.5xx'],
+        trans = self._get_id_url_transformer(fields=['outlinks_errors.5xx'],
                                              es_result=[test_input])
         trans.transform()
 
         expected = {
-            'error_links': {
+            'outlinks_errors': {
                 '3xx': {
                     'urls': [1, 2, 3],
                 },
@@ -99,12 +99,12 @@ class TestIdToUrlTransformer(unittest.TestCase):
 
         # children fields transformation
         test_input = copy.deepcopy(es_result)
-        trans = self._get_id_url_transformer(fields=['error_links'],
+        trans = self._get_id_url_transformer(fields=['outlinks_errors'],
                                              es_result=[test_input])
         trans.transform()
 
         expected = {
-            'error_links': {
+            'outlinks_errors': {
                 '3xx': {
                     'urls': ['url1', 'url2', 'url3'],
                 },

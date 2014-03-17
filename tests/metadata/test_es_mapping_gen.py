@@ -405,7 +405,7 @@ NEW_MAPPING = {
                 }
             },
 
-            "error_links": {
+            "outlinks_errors": {
                 "properties": {
                     "3xx": {
                         "properties": {

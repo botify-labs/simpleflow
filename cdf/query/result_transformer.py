@@ -60,7 +60,7 @@ def _transform_single_field(es_result, path, func):
 
 
 def _transform_error_links(es_result, id_to_url, code_kind):
-    path = 'error_links'
+    path = 'outlinks_errors'
     if path_in_dict(path, es_result):
         target = get_subdict_from_path(path, es_result)
         if code_kind in target:
@@ -202,16 +202,16 @@ class IdToUrlTransformer(ResultTransformer):
     corresponding complete url"""
 
     FIELD_TRANSFORM_STRATEGY = {
-        'error_links.3xx.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'error_links.3xx.urls'),
+        'outlinks_errors.3xx.urls': {
+            'extract': lambda res: _extract_list_ids(res, 'outlinks_errors.3xx.urls'),
             'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '3xx')
         },
-        'error_links.4xx.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'error_links.4xx.urls'),
+        'outlinks_errors.4xx.urls': {
+            'extract': lambda res: _extract_list_ids(res, 'outlinks_errors.4xx.urls'),
             'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '4xx')
         },
-        'error_links.5xx.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'error_links.5xx.urls'),
+        'outlinks_errors.5xx.urls': {
+            'extract': lambda res: _extract_list_ids(res, 'outlinks_errors.5xx.urls'),
             'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '5xx')
         },
 

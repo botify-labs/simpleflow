@@ -454,7 +454,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             'total': 11
         }
 
-        key = 'error_links'
+        key = 'outlinks_errors'
 
         # check url1
         document = _next_doc(gen)
