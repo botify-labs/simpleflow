@@ -73,6 +73,19 @@ class TestMappingGeneration(unittest.TestCase):
         }
         self.assertDictEqual(result['urls']['properties'], expected)
 
+    def test_noindex_field(self):
+        data_format = {
+            'field.noindex': {
+                'type': 'string',
+                'settings': {'es:no_index'}
+            },
+            'index': {'type': 'integer'}
+        }
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.noindex_fields()
+        expected = {'field.noindex'}
+        self.assertEqual(result, expected)
+
     def test_generation_all_mapping(self):
         doc_type = 'urls'
         target = NEW_MAPPING
@@ -438,8 +451,8 @@ NEW_MAPPING = {
                         "properties": {
                             "url": {
                                 "properties": {
-                                    "url_str": {"type": "string"},
-                                    "url_id": {"type": "integer"},
+                                    "url_str": {"type": "string", "index": "no"},
+                                    "url_id": {"type": "integer", "index": "no"},
                                 }
                             },
                             "equal": {"type": "boolean"},
@@ -462,9 +475,9 @@ NEW_MAPPING = {
                         "properties": {
                             "url": {
                                 "properties": {
-                                    "http_code": {"type": "integer"},
-                                    "url_str": {"type": "string"},
-                                    "url_id": {"type": "integer"}
+                                    "http_code": {"type": "integer", "index": "no"},
+                                    "url_str": {"type": "string", "index": "no"},
+                                    "url_id": {"type": "integer", "index": "no"}
                                 }
                             }
                         }

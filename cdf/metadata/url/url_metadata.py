@@ -249,6 +249,9 @@ URLS_DATA_FORMAT_DEFINITION = {
         "values": {
             "url_str": {"type": "string"},
             "url_id": {"type": "integer"},
+        },
+        "settings": {
+            _NO_INDEX
         }
     },
     "canonical.to.equal": {"type": _BOOLEAN_TYPE},
@@ -268,6 +271,9 @@ URLS_DATA_FORMAT_DEFINITION = {
             "url_str": {"type": "string"},
             "url_id": {"type": "integer"},
             "http_code": {"type": "integer"}
+        },
+        "settings": {
+            _NO_INDEX
         }
     },
     # "redirect.to.url_exists": {"type": _BOOLEAN_TYPE},
