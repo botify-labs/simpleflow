@@ -28,7 +28,7 @@ def _clean_document(doc):
         for k, v in doc.items():
             if isinstance(v, dict):
                 _recursive_clean(v, doc[k])
-            elif v is None or v == []:
+            elif v in (None, [], {}):
                 del(access[k])
     _recursive_clean(doc, doc)
 
