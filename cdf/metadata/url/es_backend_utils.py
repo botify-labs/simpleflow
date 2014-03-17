@@ -54,6 +54,10 @@ def _is_multi_field(field_values):
     return _SETTINGS in field_values and _MULTI_FIELD in field_values[_SETTINGS]
 
 
+def _is_noindex_field(field_values):
+    return _SETTINGS in field_values and _NO_INDEX in field_values[_SETTINGS]
+
+
 def _parse_field_values(field_name, elem_values):
     """Parse field's settings into ElasticSearch field configurations"""
 
@@ -175,6 +179,7 @@ class ElasticSearchBackend(DataBackend):
         self._query_fields = None
         self._list_fields = None
         self._field_default_value = None
+        self._noindex_fields = None
         self._mapping = None
 
     def has_child(self, field):
@@ -331,3 +336,14 @@ class ElasticSearchBackend(DataBackend):
                 update_path_in_dict(path, default, document)
 
         return document
+
+    def noindex_fields(self):
+        """Generate a lookup table for list field from
+        url data format definition
+
+        :returns: a set for membership lookup
+        """
+        if self._noindex_fields is None:
+            self._noindex_fields = {path for path, values in self.data_format.iteritems()
+                                 if _is_noindex_field(values)}
+        return self._noindex_fields
