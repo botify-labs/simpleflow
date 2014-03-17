@@ -192,7 +192,10 @@ class TestQueryTransformation(unittest.TestCase):
                         'and': [
                             self.crawl_filter,
                             self.not_crawled_filter,
-                            {'exists': {'field': 'metadata.title.contents'}}
+                            {'or': [
+                                {'exists': {'field': 'metadata.title.contents_exists'}},
+                                {'exists': {'field': 'metadata.title.contents'}},
+                            ]}
                         ]
                     }
                 }

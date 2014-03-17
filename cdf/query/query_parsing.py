@@ -409,6 +409,14 @@ class Between(PredicateFilter):
 
 
 class Exists(PredicateFilter):
+    """Check that the specified field exists in the document
+
+    In ElasticSearch no-index fields is not visible for search,
+    but we still need to support `exists` filter on these fields.
+    The workaround here is, in the document, we add a special
+    flag field for every no-index field, eg. `field_exists`. And
+    we check this flag field instead of the original, no-index field.
+    """
     def is_list_op(self):
         return None
 
@@ -416,10 +424,18 @@ class Exists(PredicateFilter):
         return 0
 
     def transform(self):
+        """Workaround by using an `or` filter
+
+        For no-index field, check is performed on the flag field with
+        postfix `_exists`. For normal fields, the first check will fail
+        since there's no such flag, however the second check does the work
+        """
         return {
-            'exists': {
-                'field': self.field_value
-            }
+            'or': [
+                {'exists': {'field': self.field_value + '_exists'}},
+                {'exists': {'field': self.field_value}}
+            ]
+
         }
 
 

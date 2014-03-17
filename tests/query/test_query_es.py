@@ -76,6 +76,7 @@ URLS_FIXTURE = [
                 [3, 7, 1], # link, meta, robots
                 [5, 3, 1], # link, meta / link to not crawled
             ],
+            'urls_exists': True,
             'nb': {
                 'total': 102,
                 'unique': 2,
@@ -89,8 +90,8 @@ URLS_FIXTURE = [
             }
         },
         'canonical': {
-            'to': {'url': {'url_id': 3}},
-            'from': {'urls': [2, 3, 4], 'nb': 3}
+            'to': {'url': {'url_id': 3}, 'url_exists': True},
+            'from': {'urls': [2, 3, 4], 'nb': 3, 'urls_exists': True}
         },
     },
     {
@@ -112,6 +113,7 @@ URLS_FIXTURE = [
                 [3, 8, 4], # follow
                 [4, 5, 1], # link, robots
             ],
+            'urls_exists': True,
             'nb': {
                 'total': 105,
                 'unique': 3,
@@ -124,7 +126,7 @@ URLS_FIXTURE = [
                 }
             }
         },
-        'canonical': {'to': {'url': {'url_id': 5}}}
+        'canonical': {'to': {'url': {'url_id': 5}}, 'url_exists': True}
     },
     {
         'id': 3,
@@ -140,13 +142,15 @@ URLS_FIXTURE = [
                 'urls': [
                     [1, 301],
                     [2, 301],
-                ]
+                ],
+                'urls_exists': True
             }
         },
         'outlinks_errors': {
             '4xx': {
                 'nb': 1,
-                'urls': [4]
+                'urls': [4],
+                'urls_exists': True,
             },
             'total': 1,
         },
@@ -161,30 +165,35 @@ URLS_FIXTURE = [
             'title': {
                 'duplicates': {
                     'nb': 1,
-                    'urls': [1]
+                    'urls': [1],
+                    'urls_exists': True
                 }
             },
             'h1': {
                 'duplicates': {
                     'nb': 2,
-                    'urls': [2, 3]
+                    'urls': [2, 3],
+                    'urls_exists': True
                 }
             },
             'description': {
                 'duplicates': {
                     'nb': 1,
-                    'urls': [4]
+                    'urls': [4],
+                    'urls_exists': True
                 }
             }
         },
         'outlinks_errors': {
             '3xx': {
                 'nb': 3,
-                'urls': [1, 2, 3]
+                'urls': [1, 2, 3],
+                'urls_exists': True
             },
             '5xx': {
                 'nb': 2,
-                'urls': [2, 3]
+                'urls': [2, 3],
+                'urls_exists': True
             },
             'total': 5
         },
@@ -194,7 +203,8 @@ URLS_FIXTURE = [
                 'urls': [
                     [1, 301],
                     [2, 301],
-                ]
+                ],
+                'urls_exists': True
             }
         },
     },
@@ -217,7 +227,8 @@ URLS_FIXTURE = [
         'crawl_id': CRAWL_ID,
         'http_code': 301,
         'redirect': {
-            'to': {'url': {'url_id': 5, 'http_code': 301}}
+            'to': {'url': {'url_id': 5, 'http_code': 301},
+                   'url_exists': True}
         },
     },
     {
@@ -589,15 +600,14 @@ class TestQueryES(unittest.TestCase):
         ]
         self.assertEqual(result, expected)
 
-    # TODO think `exists` query
-    @unittest.skip
-    def test_redirects_to_not_crawled(self):
+    def test_redirects_to_exists(self):
         botify_query = _get_simple_bql_query('redirect.to.url', 'exists', value=None,
                                              fields=['redirect.to'])
         result = _get_query_result(botify_query)
-        print result
         expected = {
-            'redirects_to': {'url': self.urls[5], 'crawled': False}
+            'redirect': {'to': {'url': {'url': self.urls[5],
+                                        'crawled': False,
+                                        'http_code': 301}}}
         }
         self.assertEqual(result, [expected])
 
