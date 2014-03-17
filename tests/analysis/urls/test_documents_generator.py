@@ -505,18 +505,18 @@ class TestRedirectsGeneration(unittest.TestCase):
                                    infos=iter(infos))
 
         document = _next_doc(gen)
-        redirect_to = document['redirect']['to']
+        redirect_to = document['redirect']['to']['url']
         self.assertEquals(redirect_to, {'url_id': 2, 'http_code': 301})
 
         document = _next_doc(gen)
-        redirect_to = document['redirect']['to']
+        redirect_to = document['redirect']['to']['url']
         self.assertEquals(redirect_to,
-                          {'url': 'http://www.youtube.com', 'http_code': 302})
+                          {'url_str': 'http://www.youtube.com', 'http_code': 302})
         # for external url, key `url_id` should be cleaned from the document
         self.assertFalse('url_id' in redirect_to)
 
         document = _next_doc(gen)
-        redirect_to = document['redirect']['to']
+        redirect_to = document['redirect']['to']['url']
         self.assertEquals(redirect_to, {'url_id': 4, 'http_code': 301})
 
         # this is a non-crawled page but has received an incoming redirection
@@ -602,24 +602,24 @@ class TestCanonicalGeneration(unittest.TestCase):
 
         # Url 1
         canonical_to = _next_doc(gen)['canonical']['to']
-        self.assertEquals(canonical_to['url_id'], 2)
+        self.assertEquals(canonical_to['url']['url_id'], 2)
         self.assertEquals(canonical_to['equal'], False)
 
         # Url 2
         canonical_to = _next_doc(gen)['canonical']['to']
-        self.assertEquals(canonical_to['url_id'], 2)
+        self.assertEquals(canonical_to['url']['url_id'], 2)
         self.assertEquals(canonical_to['equal'], True)
 
         # Url 3
         canonical_to = _next_doc(gen)['canonical']['to']
-        self.assertEquals(canonical_to['url'], "http://www.youtube.com")
+        self.assertEquals(canonical_to['url']['url_str'], "http://www.youtube.com")
         # for external url, key `url_id` should be cleaned from document
-        self.assertFalse('url_id' in canonical_to)
+        self.assertFalse('url_id' in canonical_to['url'])
         self.assertEquals(canonical_to['equal'], False)
 
         # # Url 4
         canonical_to = _next_doc(gen)['canonical']['to']
-        self.assertEquals(canonical_to['url_id'], 5)
+        self.assertEquals(canonical_to['url']['url_id'], 5)
         self.assertEquals(canonical_to['equal'], False)
 
         # Url 5
