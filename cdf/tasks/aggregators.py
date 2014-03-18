@@ -490,8 +490,8 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         "fields": [full_field, "pages_nb"],
         "target_field": full_field
     }
-    urls_fields = [full_field]
-    urls_filters = {"field": "inlinks_internal_nb.follow", "value": 1}
+    urls_fields = ["url"]
+    urls_filters = {"field": "inlinks_internal_nb.follow_unique", "value": 1}
     suggest.register(identifier='inlinks_internal/1_follow_link', query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # broken outlinks
