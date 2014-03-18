@@ -183,9 +183,11 @@ class ProtocolStreamFactory(DataStreamFactory):
         """
         base_stream = self._file_stream_factory.get_stream()
         max_crawled_urlid = get_max_crawled_urlid(self._crawler_metakeys)
+        urlid_idx = idx_from_stream("PATTERNS", "id")
+        protocol_idx = idx_from_stream("PATTERNS", "protocol")
         for url in base_stream:
-            urlid = url[idx_from_stream("PATTERNS", "id")]
-            protocol = url[idx_from_stream("PATTERNS", "protocol")]
+            urlid = url[urlid_idx]
+            protocol = url[protocol_idx]
             protocol = unicode(protocol, encoding="utf-8")
             if protocol not in self._allowed_protocols:
                 logger.debug("Not supported protocol : '%s'", protocol)
@@ -222,9 +224,11 @@ class HostStreamFactory(DataStreamFactory):
         """
         base_stream = self._file_stream_factory.get_stream()
         max_crawled_urlid = get_max_crawled_urlid(self._crawler_metakeys)
+        urlid_idx = idx_from_stream("PATTERNS", "id")
+        host_idx = idx_from_stream("PATTERNS", "host")
         for url in base_stream:
-            urlid = url[idx_from_stream("PATTERNS", "id")]
-            host = url[idx_from_stream("PATTERNS", "host")]
+            urlid = url[urlid_idx]
+            host = url[host_idx]
             host = unicode(host, encoding="utf-8")
             if urlid > max_crawled_urlid:
                 raise StopIteration
@@ -257,9 +261,11 @@ class PathStreamFactory(DataStreamFactory):
         """
         base_stream = self._file_stream_factory.get_stream()
         max_crawled_urlid = get_max_crawled_urlid(self._crawler_metakeys)
+        urlid_idx = idx_from_stream("PATTERNS", "id")
+        path_idx = idx_from_stream("PATTERNS", "path")
         for url in base_stream:
-            urlid = url[idx_from_stream("PATTERNS", "id")]
-            path = url[idx_from_stream("PATTERNS", "path")]
+            urlid = url[urlid_idx]
+            path = url[path_idx]
             path = unicode(path, encoding="utf-8")
             parsed_path = urlsplit(path)
             path = parsed_path.path
@@ -310,12 +316,13 @@ class QueryStringStreamFactory(DataStreamFactory):
         """
         base_stream = self._file_stream_factory.get_stream()
         max_crawled_urlid = get_max_crawled_urlid(self._crawler_metakeys)
+        urlid_idx = idx_from_stream("PATTERNS", "id")
+        query_string_index = idx_from_stream("PATTERNS", "query_string")
         for url in base_stream:
-            urlid = url[idx_from_stream("PATTERNS", "id")]
+            urlid = url[urlid_idx]
             if urlid > max_crawled_urlid:
                 raise StopIteration
 
-            query_string_index = idx_from_stream("PATTERNS", "query_string")
             if len(url) < query_string_index + 1:
                 query_string = ''
             else:
@@ -362,14 +369,16 @@ class MetadataStreamFactory(DataStreamFactory):
         """
         base_stream = self._file_stream_factory.get_stream()
         max_crawled_urlid = get_max_crawled_urlid(self._crawler_metakeys)
+        content_type_idx = idx_from_stream("CONTENTS", "content_type")
+        text_idx = idx_from_stream("CONTENTS", "txt")
         for urlid, lines in itertools.groupby(base_stream,
                                               key=lambda url: url[0]):
             result = []
             for line in lines:
-                metadata_code = line[idx_from_stream("CONTENTS", "content_type")]
+                metadata_code = line[content_type_idx]
                 if metadata_code != self._content_type_code:
                     continue
-                metadata = line[idx_from_stream("CONTENTS", "txt")]
+                metadata = line[text_idx]
                 metadata = unicode(metadata, encoding="utf-8")
                 result.append(metadata)
             if urlid > max_crawled_urlid:
@@ -435,9 +444,11 @@ def _get_nb_crawled_urls_from_stream(urlinfos_stream, max_crawled_urlid):
 
     """
     result = 0
+    urlid_idx = idx_from_stream("INFOS", "id")
+    httpcode_idx = idx_from_stream("INFOS", "http_code")
     for urlinfo in urlinfos_stream:
-        urlid = urlinfo[idx_from_stream("INFOS", "id")]
-        httpcode = urlinfo[idx_from_stream("INFOS", "http_code")]
+        urlid = urlinfo[urlid_idx]
+        httpcode = urlinfo[httpcode_idx]
         if urlid > max_crawled_urlid:
             break  # there will be no more crawled url
         if httpcode == 0:
