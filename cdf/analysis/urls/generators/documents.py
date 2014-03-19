@@ -75,10 +75,9 @@ def _process_ids(doc, stream_ids):
         doc['query_string_keys'] = [q[0] for q in qs]
 
     # temporary structures for analytic processing
-    # resolve a (src, mask) to its index in `outlinks_internal` list
-    doc["inlinks_id_to_idx"] = {}
+    doc["processed_inlink_link"] = set()
     # resolve a (dest, mask) to its index in `inlinks_internal` list
-    doc["outlinks_id_to_idx"] = {}
+    doc["processed_outlink_link"] = set()
     # a temp set to track all `seen` src url of incoming links
     doc["processed_inlink_url"] = set()
     # a temp set to track all `seen` dest url of outgoing links
@@ -164,7 +163,7 @@ def _process_outlinks(document, stream_oulinks):
         follow['total'] += 1
         if is_internal and is_follow:
             # increment follow counters
-            if not (url_dst, mask) in document["outlinks_id_to_idx"]:
+            if not (url_dst, mask) in document['processed_outlink_link']:
                 follow['unique'] += 1
         elif not is_follow:
             # increment nofollow combination counters
@@ -175,16 +174,14 @@ def _process_outlinks(document, stream_oulinks):
         # still need dest url id check since we can have internal url
         # blocked by robots.txt
         if is_internal and url_dst > 0:
+            outlink_urls = document['outlinks_internal']['urls']
+            exists = (url_dst, mask) in document['processed_outlink_link']
+            if len(outlink_urls) < 300 and not exists:
+                outlink_urls.append([url_dst, mask])
+
             # add this link's dest to the processed set
             document['processed_outlink_url'].add(url_dst)
-
-            url_idx = document["outlinks_id_to_idx"].get((url_dst, mask), None)
-            outlink_urls = document['outlinks_internal']['urls']
-            if url_idx is not None:
-                outlink_urls[url_idx][2] += 1
-            else:
-                outlink_urls.append([url_dst, mask, 1])
-                document["outlinks_id_to_idx"][(url_dst, mask)] = len(outlink_urls) - 1
+            document['processed_outlink_link'].add((url_dst, mask))
 
             document['outlinks_internal']['urls_exists'] = True
 
@@ -225,23 +222,21 @@ def _process_inlinks(document, stream_inlinks):
         follow = inlink_nb['follow' if is_follow else 'nofollow']
         follow['total'] += 1
 
-        # add src to processed set
-        document['processed_inlink_url'].add(url_src)
-
         if is_follow:
-            if not (url_src, mask) in document["inlinks_id_to_idx"]:
+            if not (url_src, mask) in document["processed_inlink_link"]:
                 follow['unique'] += 1
         else:
             key = _get_nofollow_combination_key(follow_keys)
             follow['combinations'][key] += 1
 
-        url_idx = document["inlinks_id_to_idx"].get((url_src, mask), None)
         inlink_urls = document['inlinks_internal']['urls']
-        if url_idx is not None:
-            inlink_urls[url_idx][2] += 1
-        else:
-            inlink_urls.append([url_src, mask, 1])
-            document["inlinks_id_to_idx"][(url_src, mask)] = len(inlink_urls) - 1
+        exists = (url_src, mask) in document['processed_inlink_link']
+        if len(inlink_urls) < 300 and not exists:
+            inlink_urls.append([url_src, mask])
+
+        # add src to processed set
+        document['processed_inlink_url'].add(url_src)
+        document['processed_inlink_link'].add((url_src, mask))
 
         document['inlinks_internal']['urls_exists'] = True
 
@@ -311,14 +306,8 @@ def _process_final(document):
     # delete intermediate data structures
     del document['processed_inlink_url']
     del document['processed_outlink_url']
-    del document["outlinks_id_to_idx"]
-    del document["inlinks_id_to_idx"]
-
-    # TODO can be restricted in link process
-    # only push up to 300 links information for each url
-    for link_direction in ('inlinks_internal', 'outlinks_internal'):
-        if len(document[link_direction]) > 300:
-            document[link_direction] = document[link_direction][0:300]
+    del document["processed_outlink_link"]
+    del document["processed_inlink_link"]
 
     # include not crawled url in generated document only if they've received
     # redirection or canonicals
@@ -338,7 +327,6 @@ def _process_final(document):
             raise GroupWithSkipException()
 
     # add `exists` info.
-
 
     _clean_document(document)
 

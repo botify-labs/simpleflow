@@ -235,9 +235,9 @@ class TestInlinksGeneration(unittest.TestCase):
         self.assertEquals(inlinks['nb']['follow']['total'], 3)
         self.assertEquals(inlinks['nb']['follow']['unique'], 1)
         expected_inlinks = [
-            [2, list_to_mask(['follow']), 3],
-            [3, list_to_mask(['link']), 1],
-            [3, list_to_mask(['link_meta']), 1]
+            [2, list_to_mask(['follow'])],
+            [3, list_to_mask(['link'])],
+            [3, list_to_mask(['link_meta'])]
         ]
         self.assertEquals(inlinks['urls'], expected_inlinks)
         self.assertEquals(inlinks['urls_exists'], True)
@@ -297,10 +297,10 @@ class TestOutlinksGeneration(unittest.TestCase):
         self.assertEquals(int_outlinks_nb['follow']['unique'], 2)
         self.assertEquals(ext_outlinks_nb['follow']['total'], 2)
         expected_outlinks_internal = [
-            [2, list_to_mask(['follow']), 1],
-            [3, list_to_mask(['link']), 1],
-            [4, list_to_mask(['follow']), 2],
-            [4, list_to_mask(['link']), 1]
+            [2, list_to_mask(['follow'])],
+            [3, list_to_mask(['link'])],
+            [4, list_to_mask(['follow'])],
+            [4, list_to_mask(['link'])]
         ]
         self.assertEquals(document['outlinks_internal']['urls'],
                           expected_outlinks_internal)
@@ -346,11 +346,11 @@ class TestOutlinksGeneration(unittest.TestCase):
         self.assertEquals(int_outlinks_nb['nofollow']['combinations'],
                           expected_combinations)
         expected_outlinks = [
-            [5, list_to_mask(["robots", "link"]), 2],
-            [6, list_to_mask(["link"]), 1]
+            [5, list_to_mask(["robots", "link"])],
+            [6, list_to_mask(["link"])]
         ]
         self.assertEqual(document['outlinks_internal']['urls'],
-                              expected_outlinks)
+                         expected_outlinks)
         self.assertEqual(document['outlinks_internal']['urls_exists'], True)
 
     def test_outlinks_follow(self):
@@ -390,9 +390,9 @@ class TestOutlinksGeneration(unittest.TestCase):
         self.assertEquals(int_outlinks_nb['follow']['total'], 3)
         self.assertEquals(int_outlinks_nb['follow']['unique'], 2)
         expected_outlinks = [
-            [2, list_to_mask(['follow']), 2],
-            [2, list_to_mask(['link']), 1],
-            [3, list_to_mask(['follow']), 1]
+            [2, list_to_mask(['follow'])],
+            [2, list_to_mask(['link'])],
+            [3, list_to_mask(['follow'])]
         ]
         self.assertEquals(document['outlinks_internal']['urls'],
                           expected_outlinks)

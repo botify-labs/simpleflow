@@ -264,6 +264,8 @@ class TestQueryES(unittest.TestCase):
         for url in URLS_FIXTURE:
             ES.index(ELASTICSEARCH_INDEX, DOC_TYPE, url, url['_id'])
 
+        ES.indices.refresh(ELASTICSEARCH_INDEX)
+
         # Wait that all fixtures are indexed
         while ES.count(index=ELASTICSEARCH_INDEX)['count'] < len(URLS_FIXTURE):
             time.sleep(0.1)
