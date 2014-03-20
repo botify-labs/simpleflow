@@ -180,6 +180,7 @@ class ElasticSearchBackend(DataBackend):
         self._list_fields = None
         self._field_default_value = None
         self._noindex_fields = None
+        self._default_document = None
         self._mapping = None
 
     @classmethod
@@ -331,32 +332,30 @@ class ElasticSearchBackend(DataBackend):
 
         return self._mapping
 
-    def default_document(self, document=None, flatten=False):
+    def default_document(self, flatten=False):
         """Generate an json document for ElasticSearch with all field filled
         according to data format definition
 
-        :param document: base mutable document to modify, default to an
-            empty document
         :param flatten: if True, generate document in a flatten manner
             eg. {'nested.field.flatten': None}
         :return: an empty json document
         """
-        # initiate all fields with the correct default value
-        if document is None:
-            document = {}
-        for path, value in self.data_format.iteritems():
-            default = None
-            if 'settings' in value and _LIST in value['settings']:
-                default = []
-            elif value['type'] in ('long', 'integer'):
-                default = 0
+        if self._default_document is None:
+            default_document = {}
+            for path, value in self.data_format.iteritems():
+                default = None
+                if 'settings' in value and _LIST in value['settings']:
+                    default = []
+                elif value['type'] in ('long', 'integer'):
+                    default = 0
 
-            if flatten:
-                document[path] = default
-            else:
-                update_path_in_dict(path, default, document)
+                if flatten:
+                    default_document[path] = default
+                else:
+                    update_path_in_dict(path, default, default_document)
+            self._default_document = default_document
 
-        return document
+        return deepcopy(self._default_document)
 
     def noindex_fields(self):
         """Generate a lookup table for list field from

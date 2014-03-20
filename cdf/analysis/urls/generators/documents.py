@@ -18,9 +18,8 @@ from cdf.metadata.url import ELASTICSEARCH_BACKEND
 # maybe ElasticUtils will be a good reference
 
 
-def _init_document(doc):
-    return ELASTICSEARCH_BACKEND.default_document(
-        document=doc)
+def _init_document():
+    return ELASTICSEARCH_BACKEND.default_document()
 
 
 def _clean_document(doc):
@@ -59,7 +58,7 @@ def _process_ids(doc, stream_ids):
     """
     # init the document with default field values
     # flatten, eg. {'a.b.c': None}
-    _init_document(doc)
+    doc.update(_init_document())
 
     # simple information about each url
     doc.update(_extract_stream_fields('PATTERNS', stream_ids))
