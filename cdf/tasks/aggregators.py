@@ -365,6 +365,16 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                     {"field": "content_type", "value": "text/html"},
                 ]}
             elif metadata_status == "not_filled":
+                #metadata is not really "not_filled" for pages other than 2XX
+                #and for which content_type is not text/html
+                query["filters"] = {
+                    "and": [
+                        {"field": "content_type", "value": "text/html"},
+                        {"field": "http_code", "value": 200, "predicate": "gte"},
+                        {"field": "http_code", "value": 299, "predicate": "lte"},
+                    ]
+                }
+
                 urls_fields = []
                 urls_filters = {
                     "and": [
@@ -401,6 +411,14 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             "fields": [full_field],
             "target_field": full_field
         }
+        if field == "not_filled":
+            query["filters"] = {
+                "and": [
+                    {"field": "content_type", "value": "text/html"},
+                    {"field": "http_code", "value": 200, "predicate": "gte"},
+                    {"field": "http_code", "value": 299, "predicate": "lte"},
+                ]
+            }
         if field == "incoming":
             urls_fields = ["canonical.from"]
         else:
@@ -479,9 +497,11 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 "target_sort": sort,
                 "filters": {"field": full_field, "value": 0, "predicate": "gt"}
             }
+
             urls_full_field = "inlinks_internal.nb.{}".format(field_url)
             urls_fields = [urls_full_field, "pages_nb"]
             urls_filters = {"field": urls_full_field, "value": 0, "predicate": "gt"}
+
             sort_verbose = "top" if sort == "desc" else "lowest"
             suggest.register(identifier='inlinks_internal/{}_{}'.format(sort_verbose, field_agg), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
@@ -492,7 +512,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         "target_field": full_field
     }
     urls_fields = ["url"]
-    urls_filters = {"field": "inlinks_internal_nb.follow", "value": 1}
+    urls_filters = {"field": "inlinks_internal.nb.follow.unique", "value": 1}
     suggest.register(identifier='inlinks_internal/1_follow_link', query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # broken outlinks

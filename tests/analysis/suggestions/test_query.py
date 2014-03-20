@@ -136,29 +136,36 @@ class TestSuggestQuery(unittest.TestCase):
         actual_result = self.suggest_query.sort_results_by_target_field(query, results)
         self.assertListEqual(expected_result, actual_result)
 
-    def test_remove_equivalent_parents(self):
-        settings = {"target_field": "field"}
+    def test_filter_low_density_patterns(self):
         results = [
-            {"query": "1", "counters": {"pages_nb": 1, "field": 10}},
-            {"query": "2", "counters": {"pages_nb": 1, "field": 5}},
-            {"query": "3", "counters": {"pages_nb": 2, "field": 10}}
+            {"query": "1", "percent_pattern": 50},
+            {"query": "2", "percent_pattern": 80},
+            {"query": "3", "percent_pattern": 90},
         ]
 
-        expected_result = [
-            {"query": "1", "counters": {"pages_nb": 1, "field": 10}},
-            {"query": "2", "counters": {"pages_nb": 1, "field": 5}}
+        expected_results = [
+            {"query": "2", "percent_pattern": 80},
+            {"query": "3", "percent_pattern": 90},
         ]
+        low_density_threshold = 80
+        actual_results = self.suggest_query.filter_low_density_patterns(results,
+                                                                        low_density_threshold)
+        self.assertListEqual(expected_results, actual_results)
 
-        actual_result = self.suggest_query.remove_equivalent_parents(settings,
-                                                                     results)
-        self.assertListEqual(expected_result, actual_result)
+    @mock.patch("cdf.analysis.suggestions.query.SuggestQuery.filter_low_density_patterns")
+    def test_filter_low_density_patterns_trigger(self,
+                                                 filter_mock):
+        #test that filter_low_density_patterns is not called if
+        #_is_target_field_continuous_metric return true
 
-        #if target_filed is not set use "pages_nb" as target field
-        #if the target field is "pages_nb",
-        #the algorithm should not remove any element
-        actual_result = self.suggest_query.remove_equivalent_parents({},
-            results)
-        self.assertListEqual(results, actual_result)
+        results = []
+        is_continuous_target_field = True
+        self.suggest_query._filter_results(results, is_continuous_target_field)
+        self.assertFalse(filter_mock.called)
+
+        is_continuous_target_field = False
+        self.suggest_query._filter_results(results, is_continuous_target_field)
+        self.assertTrue(filter_mock.called)
 
     def test_hide_less_relevant_children(self):
         results = [
@@ -368,7 +375,14 @@ class TestSuggestQuery(unittest.TestCase):
                 new=lambda x, y: 10)
     @mock.patch("cdf.analysis.suggestions.query.SuggestQuery._get_total_results_by_pattern",
                 new=lambda x, y: {1: 4, 2: 3, 3: 5})
-    def test_query(self):
+    @mock.patch("cdf.analysis.suggestions.query.SuggestQuery._filter_results")
+    def test_query(self, filter_mock):
+
+        #disable result filtering based on 'percent_pattern'
+        def side_effect(results, threshold):
+            return results
+        filter_mock.side_effect = side_effect
+
         data = {
             "query": [1, 2, 3],
             "error_links.4xx": [1, 0, 2],
@@ -376,7 +390,6 @@ class TestSuggestQuery(unittest.TestCase):
         }
         dataframe = pd.DataFrame(data)
 
-        sort_results = True
         settings = {
             "target_field": "error_links.4xx",
             "fields": ["error_links.4xx"],
@@ -397,21 +410,23 @@ class TestSuggestQuery(unittest.TestCase):
                 },
             }
         ]
-
+        is_continuous_target_field = False
         actual_results = self.suggest_query._query(dataframe,
-                                                   settings,
-                                                   sort_results)
+                                                   settings)
         self.assertListEqual(expected_results, actual_results)
+
+        #low_density pattern filtering has been disabled.
+        #but we check that it has been called
+        filter_mock.assert_called_once_with(expected_results,
+                                            is_continuous_target_field)
 
     def test_query_empty_dataframe(self):
         dataframe = pd.DataFrame()
-        sort_results = True
         settings = {
             "target_field": "error_links.4xx",
             "fields": ["error_links.4xx"],
         }
 
         actual_results = self.suggest_query._query(dataframe,
-                                                   settings,
-                                                   sort_results)
+                                                   settings)
         self.assertListEqual([], actual_results)

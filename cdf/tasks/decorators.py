@@ -75,6 +75,6 @@ class TemporaryDirTask(object):
 
             return result
 
-        except Exception, e:
+        except Exception:
             self.cleanup()
             raise
