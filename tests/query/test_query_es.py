@@ -72,9 +72,9 @@ URLS_FIXTURE = [
         },
         'outlinks_internal': {
             'urls': [
-                [2, 0, 100], # follow
-                [3, 7, 1], # link, meta, robots
-                [5, 3, 1], # link, meta / link to not crawled
+                [2, 0], # follow
+                [3, 7], # link, meta, robots
+                [5, 3], # link, meta / link to not crawled
             ],
             'urls_exists': True,
             'nb': {
@@ -109,9 +109,9 @@ URLS_FIXTURE = [
         },
         'inlinks_internal': {
             'urls': [
-                [1, 0, 100], # follow
-                [3, 8, 4], # follow
-                [4, 5, 1], # link, robots
+                [1, 0], # follow
+                [3, 8], # follow
+                [4, 5], # link, robots
             ],
             'urls_exists': True,
             'nb': {
@@ -434,7 +434,6 @@ class TestQueryES(unittest.TestCase):
                             'crawled': True
                         },
                         'status': ['follow'],
-                        'nb_links': 100
                     },
                     {
                         'url': {
@@ -442,7 +441,6 @@ class TestQueryES(unittest.TestCase):
                             'crawled': True
                         },
                         'status': ['follow'],
-                        'nb_links': 4
                     },
                     {
                         'url': {
@@ -450,7 +448,6 @@ class TestQueryES(unittest.TestCase):
                             'crawled': True
                         },
                         'status': ['nofollow_robots', 'nofollow_link'],
-                        'nb_links': 1
                     }
                 ]
             }
@@ -471,7 +468,6 @@ class TestQueryES(unittest.TestCase):
                             'crawled': True
                         },
                         'status': ['follow'],
-                        'nb_links': 100
                     },
                     {
                         'url': {
@@ -479,7 +475,6 @@ class TestQueryES(unittest.TestCase):
                             'crawled': True
                         },
                         'status': ['nofollow_robots', 'nofollow_meta', 'nofollow_link'],
-                        'nb_links': 1
                     },
                     {
                         'url': {
@@ -487,7 +482,6 @@ class TestQueryES(unittest.TestCase):
                             'crawled': False
                         },
                         'status': ['nofollow_meta', 'nofollow_link'],
-                        'nb_links': 1
                     }
                 ]
             }
