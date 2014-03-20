@@ -86,6 +86,31 @@ class TestMappingGeneration(unittest.TestCase):
         expected = {'field.noindex'}
         self.assertEqual(result, expected)
 
+    def test_doc_value(self):
+        data_format = {
+            'field.doc_value': {
+                'type': 'string',
+                'settings': {
+                    'es:doc_values',
+                    'es:no_index'
+                }
+            }
+        }
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.mapping(routing_field=None)
+        expectd = {
+            'field': {
+                'properties': {
+                    'doc_value': {
+                        'type': 'string',
+                        'fielddata': {'format': 'doc_values'},
+                        'index': 'no'
+                    }
+                }
+            }
+        }
+        self.assertEqual(result['urls']['properties'], expectd)
+
     def test_generation_all_mapping(self):
         doc_type = 'urls'
         target = NEW_MAPPING

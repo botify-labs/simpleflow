@@ -3,7 +3,8 @@ from copy import deepcopy
 from cdf.utils.dict import update_path_in_dict
 from .url_metadata import (_STRING_TYPE, _BOOLEAN_TYPE,
                            _STRUCT_TYPE, _MULTI_FIELD, _LIST,
-                           _NOT_ANALYZED, _NO_INDEX, _LONG_TYPE, _INT_TYPE)
+                           _NOT_ANALYZED, _NO_INDEX, _LONG_TYPE,
+                           _INT_TYPE, _DOC_VALUE)
 
 
 __ALL__ = ['QueryParser']
@@ -84,6 +85,12 @@ def _parse_field_values(field_name, elem_values):
 
         settings = values['settings']
         parsed_settings = {}
+
+        if _DOC_VALUE in settings:
+            parsed_settings['fielddata'] = {
+                'format': "doc_values"
+            }
+
         if _NOT_ANALYZED in settings:
             parsed_settings['index'] = 'not_analyzed'
         elif _NO_INDEX in settings:

@@ -41,6 +41,7 @@ _DATE_TYPE = 'date'
 
 _NO_INDEX = 'es:no_index'
 _NOT_ANALYZED = 'es:not_analyzed'
+_DOC_VALUE = 'es:doc_values'
 _LIST = 'list'
 _MULTI_FIELD = 'es:multi_field'
 
