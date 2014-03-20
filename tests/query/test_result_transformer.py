@@ -136,7 +136,6 @@ class TestIdToUrlTransformer(unittest.TestCase):
                             # mock http code = 0
                             'crawled': False,
                         },
-                        'nb_links': 40,
                         'status': [
                             'nofollow_robots',
                             'nofollow_meta',

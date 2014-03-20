@@ -104,8 +104,7 @@ def _transform_link_items(items, id_to_url):
                 'url': url,
                 'crawled': http_code > 0
             },
-            'status': mask,
-            'nb_links': item[2]
+            'status': mask
         })
     return res
 
