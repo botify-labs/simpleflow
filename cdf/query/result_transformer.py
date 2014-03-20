@@ -310,8 +310,7 @@ class IdToUrlTransformer(ResultTransformer):
         """
         urls = []
         for i in xrange(0, len(ids), MGET_CHUNKS_SIZE):
-            resolved_urls = self.es_conn.mget(body={"ids": list(get_es_id(self.crawl_id, url_id)
-                                                                for url_id in self.ids)},
+            resolved_urls = self.es_conn.mget(body={"ids": ids},
                                               index=self.es_index,
                                               doc_type=self.es_doctype,
                                               routing=self.crawl_id,
