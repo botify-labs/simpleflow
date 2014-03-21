@@ -316,7 +316,10 @@ class IdToUrlTransformer(ResultTransformer):
                                               routing=self.crawl_id,
                                               preference=self.crawl_id,
                                               fields=["url", "http_code"])
-            urls.update({get_url_id(url['_id']): (url['fields']['url'], url['fields']['http_code']) for url in resolved_urls['docs'] if url["exists"]})
+            urls.update({
+                get_url_id(url['_id']): (url['fields']['url'], url['fields']['http_code'])
+                for url in resolved_urls['docs'] if url["exists"]
+            })
         return urls
 
     def transform(self):
