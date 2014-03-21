@@ -7,6 +7,7 @@ from cdf.log import logger
 from cdf.analysis.urls.utils import get_es_id, get_url_id
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
 from cdf.metadata.raw.masks import follow_mask
+from cdf.query.constants import MGET_CHUNKS_SIZE
 
 
 class ResultTransformer(object):
@@ -303,6 +304,24 @@ class IdToUrlTransformer(ResultTransformer):
                 for url_id in id_list:
                     self.ids.add(url_id)
 
+    def _get_urls_from_ids(self, ids):
+        """
+        Return a dict with url_id as key a a tuple (url, http_code) as value
+        """
+        urls = {}
+        for i in xrange(0, len(ids), MGET_CHUNKS_SIZE):
+            resolved_urls = self.es_conn.mget(body={"ids": ids},
+                                              index=self.es_index,
+                                              doc_type=self.es_doctype,
+                                              routing=self.crawl_id,
+                                              preference=self.crawl_id,
+                                              fields=["url", "http_code"])
+            urls.update({
+                get_url_id(url['_id']): (url['fields']['url'], url['fields']['http_code'])
+                for url in resolved_urls['docs'] if url["exists"]
+            })
+        return urls
+
     def transform(self):
         self.prepare()
         if len(self.ids) == 0:
@@ -310,24 +329,10 @@ class IdToUrlTransformer(ResultTransformer):
             return
 
         # Resolve urls by requesting ElasticSearch
-        resolved_urls = self.es_conn.mget(body={"ids": list(get_es_id(self.crawl_id, url_id)
-                                                            for url_id in self.ids)},
-                                          index=self.es_index,
-                                          doc_type=self.es_doctype,
-                                          routing=self.crawl_id,
-                                          preference=self.crawl_id,
-                                          fields=["url", "http_code"])
-
-
-        resolved_urls['docs'] = [url for url in resolved_urls['docs'] if url["exists"]]
-
-
         # Fill the (url_id -> url) lookup table
         # Also fetch the http_code
         # Assumption: we don't do query over multiple crawls, one site at a time
-        self.id_to_url = {get_url_id(es_url['_id']):
-                              (es_url['fields']['url'], es_url['fields']['http_code']) for
-                          es_url in resolved_urls['docs']}
+        id_to_url = self._get_urls_from_ids([get_es_id(self.crawl_id, url_id) for url_id in self.ids])
 
         for result in self.results:
             # Resolve urls in each field found by prepare
@@ -336,7 +341,7 @@ class IdToUrlTransformer(ResultTransformer):
                     continue
                 trans_func = self.FIELD_TRANSFORM_STRATEGY[field]['transform']
                 # Reminder, in-place transformation
-                trans_func(result, self.id_to_url)
+                trans_func(result, id_to_url)
 
         return self.results
 
