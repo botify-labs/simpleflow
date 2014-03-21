@@ -306,9 +306,9 @@ class IdToUrlTransformer(ResultTransformer):
 
     def _get_urls_from_ids(self, ids):
         """
-        Return a list of tuples (url_id, url, http_code)
+        Return a dict with url_id as key a a tuple (url, http_code) as value
         """
-        urls = []
+        urls = {}
         for i in xrange(0, len(ids), MGET_CHUNKS_SIZE):
             resolved_urls = self.es_conn.mget(body={"ids": ids},
                                               index=self.es_index,
@@ -316,7 +316,7 @@ class IdToUrlTransformer(ResultTransformer):
                                               routing=self.crawl_id,
                                               preference=self.crawl_id,
                                               fields=["url", "http_code"])
-            urls += [(url['_id'], url['fields']['url'], url['fields']['http_code']) for url in resolved_urls['docs'] if url["exists"]]
+            urls.update({get_url_id(url['_id']): (url['fields']['url'], url['fields']['http_code']) for url in resolved_urls['docs'] if url["exists"]})
         return urls
 
     def transform(self):
@@ -326,14 +326,10 @@ class IdToUrlTransformer(ResultTransformer):
             return
 
         # Resolve urls by requesting ElasticSearch
-        urls = self._get_urls_from_ids([get_es_id(self.crawl_id, url_id) for url_id in self.ids])
-
         # Fill the (url_id -> url) lookup table
         # Also fetch the http_code
         # Assumption: we don't do query over multiple crawls, one site at a time
-        self.id_to_url = {
-            get_url_id(url_id): (url, http_code) for url_id, url, http_code in urls
-        }
+        id_to_url = self._get_urls_from_ids([get_es_id(self.crawl_id, url_id) for url_id in self.ids])
 
         for result in self.results:
             # Resolve urls in each field found by prepare
@@ -342,7 +338,7 @@ class IdToUrlTransformer(ResultTransformer):
                     continue
                 trans_func = self.FIELD_TRANSFORM_STRATEGY[field]['transform']
                 # Reminder, in-place transformation
-                trans_func(result, self.id_to_url)
+                trans_func(result, id_to_url)
 
         return self.results
 
