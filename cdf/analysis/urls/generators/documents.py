@@ -1,4 +1,5 @@
 import ujson
+from copy import deepcopy
 from itertools import izip
 from cdf.analysis.urls.utils import is_link_internal
 from cdf.metadata.raw import (STREAMS_HEADERS, CONTENT_TYPE_INDEX,
@@ -18,8 +19,7 @@ from cdf.metadata.url import ELASTICSEARCH_BACKEND
 # maybe ElasticUtils will be a good reference
 
 
-def _init_document():
-    return ELASTICSEARCH_BACKEND.default_document()
+_DEFAULT_DOCUMENT = ELASTICSEARCH_BACKEND.default_document()
 
 
 def _clean_document(doc):
@@ -57,8 +57,7 @@ def _process_ids(doc, stream_ids):
     """Init the document and process `urlids` stream
     """
     # init the document with default field values
-    # flatten, eg. {'a.b.c': None}
-    doc.update(_init_document())
+    doc.update(deepcopy(_DEFAULT_DOCUMENT))
 
     # simple information about each url
     doc.update(_extract_stream_fields('PATTERNS', stream_ids))

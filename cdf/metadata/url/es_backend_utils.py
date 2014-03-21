@@ -187,7 +187,6 @@ class ElasticSearchBackend(DataBackend):
         self._list_fields = None
         self._field_default_value = None
         self._noindex_fields = None
-        self._default_document = None
         self._mapping = None
 
     @classmethod
@@ -347,22 +346,20 @@ class ElasticSearchBackend(DataBackend):
             eg. {'nested.field.flatten': None}
         :return: an empty json document
         """
-        if self._default_document is None:
-            default_document = {}
-            for path, value in self.data_format.iteritems():
-                default = None
-                if 'settings' in value and _LIST in value['settings']:
-                    default = []
-                elif value['type'] in ('long', 'integer'):
-                    default = 0
+        default_document = {}
+        for path, value in self.data_format.iteritems():
+            default = None
+            if 'settings' in value and _LIST in value['settings']:
+                default = []
+            elif value['type'] in ('long', 'integer'):
+                default = 0
 
-                if flatten:
-                    default_document[path] = default
-                else:
-                    update_path_in_dict(path, default, default_document)
-            self._default_document = default_document
+            if flatten:
+                default_document[path] = default
+            else:
+                update_path_in_dict(path, default, default_document)
 
-        return deepcopy(self._default_document)
+        return default_document
 
     def noindex_fields(self):
         """Generate a lookup table for list field from
