@@ -53,22 +53,43 @@ URLS_DATA_FORMAT_DEFINITION = {
         "settings": {_NOT_ANALYZED}
     },
     "url_hash": {"type": _LONG_TYPE},
-    "byte_size": {"type": _INT_TYPE},
-    "date_crawled": {"type": _DATE_TYPE},
-    "delay_first_byte": {"type": _INT_TYPE},
-    "delay_last_byte": {"type": _INT_TYPE},
-    "depth": {"type": _INT_TYPE},
+    "byte_size": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "date_crawled": {
+        "type": _DATE_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "delay_first_byte": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "delay_last_byte": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "depth": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
     "gzipped": {"type": _BOOLEAN_TYPE},
     "content_type": {
         "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED}
+        "settings": {_NOT_ANALYZED, _DOC_VALUE}
     },
     "host": {
         "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED}
+        "settings": {_NOT_ANALYZED, _DOC_VALUE}
     },
-    "http_code": {"type": _INT_TYPE},
-    "id": {"type": _INT_TYPE},
+    "http_code": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "id": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
     "crawl_id": {"type": _INT_TYPE},
     "patterns": {
         "type": _LONG_TYPE,
@@ -82,7 +103,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
     "protocol": {
         "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED}
+        "settings": {_NOT_ANALYZED, _DOC_VALUE}
     },
     "query_string": {
         "type": _STRING_TYPE,
@@ -104,6 +125,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     # title tag
     "metadata.title.nb": {
         "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
     },
     "metadata.title.contents": {
         "type": _STRING_TYPE,
@@ -111,6 +133,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
     "metadata.title.duplicates.nb": {
         "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
     },
     "metadata.title.duplicates.is_first": {
         "type": _BOOLEAN_TYPE,
@@ -127,6 +150,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     # h1 tag
     "metadata.h1.nb": {
         "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
     },
     "metadata.h1.contents": {
         "type": _STRING_TYPE,
@@ -134,6 +158,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
     "metadata.h1.duplicates.nb": {
         "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
     },
     "metadata.h1.duplicates.is_first": {
         "type": _BOOLEAN_TYPE,
@@ -150,6 +175,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     # description tag
     "metadata.description.nb": {
         "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
     },
     "metadata.description.contents": {
         "type": _STRING_TYPE,
@@ -157,6 +183,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
     "metadata.description.duplicates.nb": {
         "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
     },
     "metadata.description.duplicates.is_first": {
         "type": _BOOLEAN_TYPE,
@@ -173,6 +200,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     # h2 tag
     "metadata.h2.nb": {
         "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
     },
     "metadata.h2.contents": {
         "type": _STRING_TYPE,
@@ -182,6 +210,7 @@ URLS_DATA_FORMAT_DEFINITION = {
     # h3 tag
     "metadata.h3.nb": {
         "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
     },
     "metadata.h3.contents": {
         "type": _STRING_TYPE,
@@ -189,14 +218,38 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
 
     # incoming links, must be internal
-    "inlinks_internal.nb.total": {"type": _INT_TYPE},
-    "inlinks_internal.nb.unique": {"type": _INT_TYPE},
-    "inlinks_internal.nb.follow.unique": {"type": _INT_TYPE},
-    "inlinks_internal.nb.follow.total": {"type": _INT_TYPE},
-    "inlinks_internal.nb.nofollow.total": {"type": _INT_TYPE},
-    "inlinks_internal.nb.nofollow.combinations.link": {"type": _INT_TYPE},
-    "inlinks_internal.nb.nofollow.combinations.meta": {"type": _INT_TYPE},
-    "inlinks_internal.nb.nofollow.combinations.link_meta": {"type": _INT_TYPE},
+    "inlinks_internal.nb.total": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "inlinks_internal.nb.unique": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "inlinks_internal.nb.follow.unique": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "inlinks_internal.nb.follow.total": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "inlinks_internal.nb.nofollow.total": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "inlinks_internal.nb.nofollow.combinations.link": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "inlinks_internal.nb.nofollow.combinations.meta": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "inlinks_internal.nb.nofollow.combinations.link_meta": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
     "inlinks_internal.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
@@ -207,18 +260,54 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
 
     # internal outgoing links (destination is a internal url)
-    "outlinks_internal.nb.total": {"type": _INT_TYPE},
-    "outlinks_internal.nb.unique": {"type": _INT_TYPE},
-    "outlinks_internal.nb.follow.unique": {"type": _INT_TYPE},
-    "outlinks_internal.nb.follow.total": {"type": _INT_TYPE},
-    "outlinks_internal.nb.nofollow.total": {"type": _INT_TYPE},
-    "outlinks_internal.nb.nofollow.combinations.link": {"type": _INT_TYPE},
-    "outlinks_internal.nb.nofollow.combinations.meta": {"type": _INT_TYPE},
-    "outlinks_internal.nb.nofollow.combinations.robots": {"type": _INT_TYPE},
-    "outlinks_internal.nb.nofollow.combinations.link_meta": {"type": _INT_TYPE},
-    "outlinks_internal.nb.nofollow.combinations.link_robots": {"type": _INT_TYPE},
-    "outlinks_internal.nb.nofollow.combinations.meta_robots": {"type": _INT_TYPE},
-    "outlinks_internal.nb.nofollow.combinations.link_meta_robots": {"type": _INT_TYPE},
+    "outlinks_internal.nb.total": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.unique": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.follow.unique": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.follow.total": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.nofollow.total": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.nofollow.combinations.link": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.nofollow.combinations.meta": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.nofollow.combinations.robots": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.nofollow.combinations.link_meta": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.nofollow.combinations.link_robots": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.nofollow.combinations.meta_robots": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_internal.nb.nofollow.combinations.link_meta_robots": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
     "outlinks_internal.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST},
@@ -229,15 +318,36 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
 
     # external outgoing links (destination is a external url)
-    "outlinks_external.nb.total": {"type": _INT_TYPE},
-    "outlinks_external.nb.follow.total": {"type": _INT_TYPE},
-    "outlinks_external.nb.nofollow.total": {"type": _INT_TYPE},
-    "outlinks_external.nb.nofollow.combinations.link": {"type": _INT_TYPE},
-    "outlinks_external.nb.nofollow.combinations.meta": {"type": _INT_TYPE},
-    "outlinks_external.nb.nofollow.combinations.link_meta": {"type": _INT_TYPE},
+    "outlinks_external.nb.total": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_external.nb.follow.total": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_external.nb.nofollow.total": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_external.nb.nofollow.combinations.link": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_external.nb.nofollow.combinations.meta": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
+    "outlinks_external.nb.nofollow.combinations.link_meta": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
 
     # erroneous outgoing internal links
-    "outlinks_errors.3xx.nb": {"type": _INT_TYPE},
+    "outlinks_errors.3xx.nb": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
     "outlinks_errors.3xx.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
@@ -247,7 +357,10 @@ URLS_DATA_FORMAT_DEFINITION = {
         "default_value": None
     },
 
-    "outlinks_errors.4xx.nb": {"type": _INT_TYPE},
+    "outlinks_errors.4xx.nb": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
     "outlinks_errors.4xx.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
@@ -257,7 +370,10 @@ URLS_DATA_FORMAT_DEFINITION = {
         "default_value": None
     },
 
-    "outlinks_errors.5xx.nb": {"type": _INT_TYPE},
+    "outlinks_errors.5xx.nb": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
     "outlinks_errors.5xx.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
@@ -267,7 +383,10 @@ URLS_DATA_FORMAT_DEFINITION = {
         "default_value": None
     },
     # total error_links number
-    "outlinks_errors.total": {"type": "integer"},
+    "outlinks_errors.total": {
+        "type": "integer",
+        "settings": {_DOC_VALUE}
+    },
 
     # outgoing canonical link, one per page
     # if multiple, first one is taken into account
@@ -288,7 +407,10 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
 
     # incoming canonical link
-    "canonical.from.nb": {"type": _INT_TYPE},
+    "canonical.from.nb": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
     "canonical.from.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}
@@ -316,7 +438,10 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
 
     # incoming redirection
-    "redirect.from.nb": {"type": _INT_TYPE},
+    "redirect.from.nb": {
+        "type": _INT_TYPE,
+        "settings": {_DOC_VALUE}
+    },
     "redirect.from.urls": {
         "type": _INT_TYPE,
         "settings": {_NO_INDEX, _LIST}

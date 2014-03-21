@@ -234,6 +234,7 @@ class TestMappingGeneration(unittest.TestCase):
         result = es_backend.default_document(flatten=True)
         self.assertDictEqual(result, flatten_expected)
 
+
 _NOT_ANALYZED = "not_analyzed"
 NEW_MAPPING = {
     "urls": {
@@ -251,22 +252,63 @@ NEW_MAPPING = {
                 "index": _NOT_ANALYZED
             },
             "url_hash": {"type": "long"},
-            "byte_size": {"type": "integer"},
-            "date_crawled": {"type": "date"},
-            "delay_first_byte": {"type": "integer"},
-            "delay_last_byte": {"type": "integer"},
-            "depth": {"type": "integer"},
+            "byte_size": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "date_crawled": {
+                "type": "date",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "delay_first_byte": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "delay_last_byte": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "depth": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
             "gzipped": {"type": "boolean"},
             "content_type": {
                 "type": "string",
+                "fielddata": {
+                    "format": "doc_values"
+                },
                 "index": _NOT_ANALYZED
             },
             "host": {
                 "type": "string",
+                "fielddata": {
+                    "format": "doc_values"
+                },
                 "index": _NOT_ANALYZED
             },
-            "http_code": {"type": "integer"},
-            "id": {"type": "integer"},
+            "http_code": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "id": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
             "crawl_id": {"type": "integer"},
             "patterns": {"type": "long"},
             "path": {
@@ -275,7 +317,10 @@ NEW_MAPPING = {
             },
             "protocol": {
                 "type": "string",
-                "index": _NOT_ANALYZED
+                "index": _NOT_ANALYZED,
+                "fielddata": {
+                    "format": "doc_values"
+                }
             },
             "query_string": {
                 "type": "string",
@@ -298,11 +343,21 @@ NEW_MAPPING = {
 
                     "title": {
                         "properties": {
-                            "nb": {"type": "integer"},
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             "contents": {"type": "string", "index": _NOT_ANALYZED},
                             "duplicates": {
                                 "properties": {
-                                    "nb": {"type": "integer"},
+                                    "nb": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
                                     "is_first": {"type": "boolean"},
                                     "urls": {"type": "integer", "index": "no"},
                                     "urls_exists": {"type": "boolean"},
@@ -312,11 +367,21 @@ NEW_MAPPING = {
                     },
                     "h1": {
                         "properties": {
-                            "nb": {"type": "integer"},
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             "contents": {"type": "string", "index": _NOT_ANALYZED},
                             "duplicates": {
                                 "properties": {
-                                    "nb": {"type": "integer"},
+                                    "nb": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
                                     "is_first": {"type": "boolean"},
                                     "urls": {"type": "integer", "index": "no"},
                                     "urls_exists": {"type": "boolean"}
@@ -326,24 +391,44 @@ NEW_MAPPING = {
                     },
                     "h2": {
                         "properties": {
-                            "nb": {"type": "integer"},
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             "contents": {"type": "string", "index": _NOT_ANALYZED},
                         }
                     },
                     "h3": {
                         "properties": {
-                            "nb": {"type": "integer"},
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             # limited to 5 contents in analysis phase
                             "contents": {"type": "string", "index": _NOT_ANALYZED},
                         }
                     },
                     "description": {
                         "properties": {
-                            "nb": {"type": "integer"},
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             "contents": {"type": "string", "index": _NOT_ANALYZED},
                             "duplicates": {
                                 "properties": {
-                                    "nb": {"type": "integer"},
+                                    "nb": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
                                     "is_first": {"type": "boolean"},
                                     "urls": {"type": "integer", "index": "no"},
                                     "urls_exists": {"type": "boolean"}
@@ -358,22 +443,62 @@ NEW_MAPPING = {
                 "properties": {
                     "nb": {
                         "properties": {
-                            "total": {"type": "integer"},
-                            "unique": {"type": "integer"},
+                            "total": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            "unique": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             "follow": {
                                 "properties": {
-                                    "unique": {"type": "integer"},
-                                    "total": {"type": "integer"},
+                                    "unique": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
                                 }
                             },
                             "nofollow": {
                                 "properties": {
-                                    "total": {"type": "integer"},
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
                                     "combinations": {
                                         "properties": {
-                                            "link": {"type": "integer"},
-                                            "meta": {"type": "integer"},
-                                            "link_meta": {"type": "integer"},
+                                            "link": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "link_meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
                                         }
                                     }
                                 }
@@ -391,26 +516,86 @@ NEW_MAPPING = {
                 "properties": {
                     "nb": {
                         "properties": {
-                            "total": {"type": "integer"},
-                            "unique": {"type": "integer"},
+                            "total": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            "unique": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             "follow": {
                                 "properties": {
-                                    "unique": {"type": "integer"},
-                                    "total": {"type": "integer"},
+                                    "unique": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
                                 }
                             },
                             "nofollow": {
                                 "properties": {
-                                    "total": {"type": "integer"},
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
                                     "combinations": {
                                         "properties": {
-                                            "link": {"type": "integer"},
-                                            "meta": {"type": "integer"},
-                                            "robots": {"type": "integer"},
-                                            "link_robots": {"type": "integer"},
-                                            "meta_robots": {"type": "integer"},
-                                            "link_meta": {"type": "integer"},
-                                            "link_meta_robots": {"type": "integer"},
+                                            "link": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "robots": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "link_robots": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "meta_robots": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "link_meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "link_meta_robots": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
                                         }
                                     }
                                 }
@@ -426,20 +611,50 @@ NEW_MAPPING = {
                 "properties": {
                     "nb": {
                         "properties": {
-                            "total": {"type": "integer"},
+                            "total": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             "follow": {
                                 "properties": {
-                                    "total": {"type": "integer"}
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    }
                                 }
                             },
                             "nofollow": {
                                 "properties": {
-                                    "total": {"type": "integer"},
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
                                     "combinations": {
                                         "properties": {
-                                            "link": {"type": "integer"},
-                                            "meta": {"type": "integer"},
-                                            "link_meta": {"type": "integer"}
+                                            "link": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "link_meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -453,26 +668,46 @@ NEW_MAPPING = {
                 "properties": {
                     "3xx": {
                         "properties": {
-                            "nb": {"type": "integer"},
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             "urls": {"type": "integer", "index": "no"},
                             "urls_exists": {"type": "boolean"}
                         }
                     },
                     "4xx": {
                         "properties": {
-                            "nb": {"type": "integer"},
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             "urls": {"type": "integer", "index": "no"},
                             "urls_exists": {"type": "boolean"}
                         }
                     },
                     "5xx": {
                         "properties": {
-                            "nb": {"type": "integer"},
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
                             "urls": {"type": "integer", "index": "no"},
                             "urls_exists": {"type": "boolean"}
                         }
                     },
-                    "total": {"type": "integer"}
+                    "total": {
+                        "type": "integer",
+                        "fielddata": {
+                            "format": "doc_values"
+                        }
+                    }
                 }
             },
 
@@ -493,7 +728,13 @@ NEW_MAPPING = {
 
                     "from": {
                         "properties": {
-                            "nb": {"type": "integer"},
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+
+                            },
                             "urls": {"type": "integer", "index": "no"},
                             "urls_exists": {"type": "boolean"}
                         }
@@ -517,7 +758,13 @@ NEW_MAPPING = {
                     },
                     "from": {
                         "properties": {
-                            "nb": {"type": "integer"},
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+
+                            },
                             "urls": {"type": "integer", "index": "no"},
                             "urls_exists": {"type": "boolean"}
                         }
