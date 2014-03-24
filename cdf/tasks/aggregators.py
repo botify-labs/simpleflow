@@ -189,7 +189,7 @@ class SuggestSummaryRegister(object):
             if result["score"] == 0:
                 continue
 
-            hash_id_filters = {'field': 'patterns', 'value': result['query_hash_id']}
+            hash_id_filters = {'field': 'patterns', 'value': result['query_hash_id'], 'predicate': 'any.eq'}
             result["urls_query_bgn"] = {
                 "fields": ["url"] + urls_fields,
                 "filters": merge_queries_filters(hash_id_filters, urls_filters)
@@ -318,7 +318,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
             }
         }
         if http_code == 300:
-            urls_fields = ["redirects_to"]
+            urls_fields = ["redirect.to.url"]
         else:
             urls_fields = ["http_code"]
         urls_filters = get_filters_from_http_code_range(http_code)
@@ -329,13 +329,13 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         "fields": ["redirects_from_nb"],
         "target_field": "redirects_from_nb",
     }
-    urls_fields = ["redirects_from_nb", "redirects_from"]
+    urls_fields = ["redirect.from.nb", "redirect.from.urls"]
     urls_filters = {
-        "field": "redirects_from_nb",
+        "field": "redirect.from.nb",
         "value": 0,
         "predicate": "gt"
     }
-    urls_sort = [{"redirects_from_nb": "desc"}]
+    urls_sort = [{"redirects.from.nb": "desc"}]
     suggest.register(identifier='http_code/incoming_redirects', query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort)
 
     # Metadata types
@@ -343,18 +343,27 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         for metadata_status in ('duplicate', 'not_filled', 'unique'):
             query = {
                 "fields": ["pages_nb", "metadata_nb.{}".format(metadata_type), "metadata_duplicate_nb.{}".format(metadata_type)],
+                "filters": {"and": [
+                    {"field": "content_type", "value": "text/html"},
+                    {"field": "http_code", "value": 200, "predicate": "gte"},
+                    {"field": "http_code", "value": 300, "predicate": "lt"},
+                ]},
                 "target_field": "metadata_nb.{}.{}".format(metadata_type, metadata_status)
             }
             if metadata_status == "duplicate":
                 urls_fields = [
-                    "metadata.{}".format(metadata_type),
-                    "metadata_duplicate.{}".format(metadata_type),
-                    "metadata_duplicate_nb.{}".format(metadata_type)
+                    "metadata.{}.contents".format(metadata_type),
+                    "metadata.{}.duplicates".format(metadata_type)
                 ]
-                urls_filters = {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 1, "predicate": "gt"}
+                urls_filters = {"field": "metadata.{}.duplicates.nb".format(metadata_type), "value": 1, "predicate": "gt"}
             elif metadata_status == "unique":
-                urls_fields = ["metadata.{}".format(metadata_type)]
-                urls_filters = {"field": "metadata_duplicate_nb.{}".format(metadata_type), "value": 0}
+                urls_fields = ["metadata.{}.contents".format(metadata_type)]
+                urls_filters = {"and": [
+                    {"field": "metadata.{}.nb".format(metadata_type), "value": 1},
+                    {"field": "metadata.{}.duplicates.nb".format(metadata_type), "value": 0},
+                    {"field": "http_code", "value": [200, 299], "predicate": "between"},
+                    {"field": "content_type", "value": "text/html"},
+                ]}
             elif metadata_status == "not_filled":
                 #metadata is not really "not_filled" for pages other than 2XX
                 #and for which content_type is not text/html
@@ -369,12 +378,11 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 urls_fields = []
                 urls_filters = {
                     "and": [
-                        {"field": "metadata_nb.{}".format(metadata_type), "value": 0},
+                        {"field": "metadata.{}.nb".format(metadata_type), "value": 0},
                         {"field": "http_code", "value": [200, 299], "predicate": "between"},
-                        {"field": "content_type", "value": "html"}
+                        {"field": "content_type", "value": "text/html"}
                     ]
                 }
-                # TODO : waiting for elasticsearch 1.0 to filter content_type : text/html
             else:
                 raise Exception("{} must handle urls_fields and urls_filters".format(metadata_status))
             suggest.register(
@@ -386,8 +394,8 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
 
     # Speed
     for sort in ('asc', 'desc'):
-        urls_sort = [{"delay2": sort}]
-        urls_fields = ["delay2"]
+        urls_sort = [{"delay_last_byte": sort}]
+        urls_fields = ["delay_last_byte"]
         query = {
             "fields": ["total_delay_ms", "pages_nb", "delay_lt_500ms", "delay_from_1s_to_2s", "delay_from_500ms_to_1s", "delay_gte_2s"],
             "target_field": {"div": ["total_delay_ms", "pages_nb"]},
@@ -412,9 +420,9 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
                 ]
             }
         if field == "incoming":
-            urls_fields = ["canonical_from"]
+            urls_fields = ["canonical.from"]
         else:
-            urls_fields = ["canonical_to"]
+            urls_fields = ["canonical.to"]
         urls_filters = get_filters_from_agg_canonical_field(field)
         suggest.register(identifier='canonical/{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
@@ -447,42 +455,55 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         "target_field": "pages_nb"
     }
     urls_fields = ["url"]
-    urls_filters = {"field": "meta_noindex", "value": True}
+    urls_filters = {"field": "metadata.robots.noindex", "value": True}
     suggest.register(identifier='distribution/noindex', query=query, urls_filters=urls_filters, urls_fields=urls_fields)
+
+    # map aggregation fields to urls fields
+    fields_mapping = {
+        'total': 'total',
+        'follow': 'follow.total',
+        'follow_unique': 'follow.unique',
+        'nofollow': 'nofollow.total',
+    }
 
     # internal/external outlinks
     for status in ('internal', 'external'):
         for sort in ('asc', 'desc'):
-            fields = ['total', 'follow', 'nofollow']
             if status == "internal":
-                fields.append('follow_unique')
-            for field in fields:
-                full_field = "outlinks_{}_nb.{}".format(status, field)
+                fields_mapping['follow_unique'] = 'follow.unique'
+            for field_agg in ["total", "follow", "nofollow"]:
+                field_url = fields_mapping[field_agg]
+                full_field = "outlinks_{}_nb.{}".format(status, field_agg)
                 query = {
                     "fields": ["score", full_field, "pages_nb"],
                     "target_field": {"div": [full_field, "pages_nb"]},
                     "target_sort": sort,
                     "filters": {"field": full_field, "value": 0, "predicate": "gt"}
                 }
-                urls_fields = [full_field]
-                urls_filters = {"field": full_field, "value": 0, "predicate": "gt"}
+                urls_full_field = "outlinks_{}.nb.{}".format(status, field_url)
+                urls_fields = [urls_full_field]
+                urls_filters = {"field": urls_full_field, "value": 0, "predicate": "gt"}
                 sort_verbose = "top" if sort == "desc" else "lowest"
-                suggest.register(identifier='outlinks_{}/{}_{}'.format(status, sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
+                suggest.register(identifier='outlinks_{}/{}_{}'.format(status, sort_verbose, field_agg), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # inlinks
-    for field in ('total', 'follow', 'follow_unique', 'nofollow'):
+    for field_agg in ('total', 'follow', 'follow_unique', 'nofollow'):
         for sort in ('asc', 'desc'):
-            full_field = "inlinks_internal_nb.{}".format(field)
+            field_url = fields_mapping[field_agg]
+            full_field = "inlinks_internal_nb.{}".format(field_agg)
             query = {
                 "fields": ["score", full_field, "pages_nb"],
                 "target_field": {"div": [full_field, "pages_nb"]},
                 "target_sort": sort,
                 "filters": {"field": full_field, "value": 0, "predicate": "gt"}
             }
-            urls_fields = [full_field]
-            urls_filters = {"field": full_field, "value": 0, "predicate": "gt"}
+
+            urls_full_field = "inlinks_internal.nb.{}".format(field_url)
+            urls_fields = [urls_full_field, "pages_nb"]
+            urls_filters = {"field": urls_full_field, "value": 0, "predicate": "gt"}
+
             sort_verbose = "top" if sort == "desc" else "lowest"
-            suggest.register(identifier='inlinks_internal/{}_{}'.format(sort_verbose, field), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
+            suggest.register(identifier='inlinks_internal/{}_{}'.format(sort_verbose, field_agg), query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # Only 1 follow link
     full_field = "inlinks_internal_nb.follow_distribution_urls.1"
@@ -491,7 +512,7 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         "target_field": full_field
     }
     urls_fields = ["url"]
-    urls_filters = {"field": "inlinks_internal_nb.follow_unique", "value": 1}
+    urls_filters = {"field": "inlinks_internal.nb.follow.unique", "value": 1}
     suggest.register(identifier='inlinks_internal/1_follow_link', query=query, urls_filters=urls_filters, urls_fields=urls_fields)
 
     # broken outlinks
@@ -500,9 +521,9 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         query = {
             "target_field": full_field
         }
-        urls_fields = [full_field]
-        urls_filters = {"field": "error_links.{}.nb".format(field), "value": 0, "predicate": "gt"}
-        urls_sort = [{"error_links.{}.nb".format(field): "desc"}]
+        urls_fields = ["outlinks_errors.{}".format(field)]
+        urls_filters = {"field": "outlinks_errors.{}.nb".format(field), "value": 0, "predicate": "gt"}
+        urls_sort = [{"outlinks_errors.{}.nb".format(field): "desc"}]
         suggest.register(identifier='outlinks_internal/errors_links_{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort)
 
     suggest.run()
