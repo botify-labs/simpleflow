@@ -175,6 +175,19 @@ class ElasticSearchBackend(DataBackend):
             }
         }
 
+    @classmethod
+    def index_settings(cls, nb_shards, nb_replicas, refresh):
+        """Generate index level settings"""
+        return {
+            'settings': {
+                'index': {
+                    'number_of_shards': nb_shards,
+                    'number_of_replicas': nb_replicas,
+                    'refresh_interval': refresh,
+                }
+            }
+        }
+
     def has_child(self, field):
         """Check if this field have child fields"""
         if self._query_fields is None:

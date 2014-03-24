@@ -4,6 +4,7 @@ import gzip
 from elasticsearch import Elasticsearch
 
 from cdf.log import logger
+from cdf.metadata.url import ELASTICSEARCH_BACKEND
 from cdf.utils.s3 import fetch_files
 from cdf.utils.es import bulk
 from cdf.core.streams.caster import Caster
@@ -11,17 +12,37 @@ from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.utils import split_file
 from .decorators import TemporaryDirTask as with_temporary_dir
-from .constants import DEFAULT_FORCE_FETCH, ES_MAPPING
+from .constants import DEFAULT_FORCE_FETCH
 
 
-def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type):
+def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
+                        es_nb_shards=10, es_nb_replicas=1, es_refresh='1m'):
+    """Prepare an ElasticSearch index
+
+    :param crawl_id: unique id of the user crawl
+    :param es_location: ElasticSearch location (ex: http://localhost:9200)
+    :param es_index: ElasticSearch index name
+    :param es_doc_type: ElasticSearch doc_type, defaults to `urls`
+    :param es_nb_shards: shard number of the index to be created
+    :param es_nb_replicas: replica number
+    :param es_refresh: refresh interval, in minutes
+    """
     host, port = es_location[7:].split(':')
     es = Elasticsearch([{'host': host, 'port': int(port)}])
+
+    if es.indices.exists(es_index):
+        logger.info("Index {} already exists".format(es_index))
+        return
+
+    settings = ELASTICSEARCH_BACKEND.index_settings(
+        es_nb_shards, es_nb_replicas, es_refresh)
+
     try:
-        es.indices.create(es_index)
+        es.indices.create(es_index, body=settings)
     except Exception, e:
         logger.error("{} : {}".format(type(e), str(e)))
-    es.indices.put_mapping(es_index, es_doc_type, ES_MAPPING)
+    es.indices.put_mapping(es_index, es_doc_type,
+                           ELASTICSEARCH_BACKEND.mapping())
 
 
 @with_temporary_dir
