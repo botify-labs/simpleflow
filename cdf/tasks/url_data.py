@@ -1,12 +1,14 @@
 import os
 import gzip
+import itertools
+import ujson as json
 
 from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
 
 from cdf.log import logger
 from cdf.metadata.url import ELASTICSEARCH_BACKEND
-from cdf.utils.s3 import fetch_files
-from cdf.utils.es import bulk
+from cdf.utils.s3 import fetch_files, push_file
 from cdf.core.streams.caster import Caster
 from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
@@ -46,22 +48,59 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
 
 
 @with_temporary_dir
-def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index, es_doc_type, tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
-    """
-    Generate JSON type urls documents from a crawl's `part_id` and push it to elastic search
+def push_documents_to_elastic_search(s3_uri, part_id,
+                                     es_location, es_index, es_doc_type,
+                                     tmp_dir=None,
+                                     force_fetch=DEFAULT_FORCE_FETCH):
+    """Push pre-generated url documents to ElasticSearch
 
-    Crawl dataset for this part_id is found by fetching all files finishing by .txt.[part_id] in the `s3_uri` called.
+    :param s3_uri: s3 bucket uri for the crawl in processing
+    :param part_id: part_id of the crawl, could be a list or an int
+    :param es_location: ES location, eg. `http://location_url:9200`
+    :param es_index: index name
+    :param es_doc_type: doc type in the index
+    :param tmp_dir: temporary directory for processing
+    """
+    host, port = es_location[7:].split(':')
+    es = Elasticsearch([{'host': host, 'port': int(port)}])
+    docs_uri = os.path.join(s3_uri, 'documents')
+
+    part_ids = part_id if isinstance(part_id, list) else [part_id]
+    fetch_regexp = ['url_documents.json.%d.gz' % i for i in part_ids]
+
+    files_fetched = fetch_files(docs_uri, tmp_dir,
+                                regexp=fetch_regexp,
+                                force_fetch=force_fetch)
+
+    reader = itertools.chain(*[gzip.open(f[0], 'r') for f in files_fetched])
+
+    docs = []
+    for i, line in enumerate(reader):
+        docs.append(json.loads(line))
+        if i % 3000 == 0:
+            logger.info('{} items pushed to ES index {} for part {}'.format(
+                i, es_index, part_id))
+            bulk(es, docs, doc_type=es_doc_type, index=es_index)
+            docs = []
+    if len(docs) > 0:
+        bulk(es, docs, doc_type=es_doc_type, index=es_index)
+
+
+@with_temporary_dir
+def generate_documents(crawl_id, part_id, s3_uri,
+                       tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
+    """Generate JSON type urls documents from a crawl's `part_id`
+
+    Crawl dataset for this part_id is found by fetching all files finishing
+    by .txt.[part_id] in the `s3_uri` called.
 
     :param part_id : part_id of the crawl
     :param s3_uri : location where raw files are fetched
-    :param es_location : elastic search location (ex: http://localhost:9200)
-    :param es_index : index name where to push the documents.
-    :param tmp_dir : temporary directory where the S3 files are fetched to compute the task
-    :param force_fetch : fetch the S3 files even if they are already in the temp directory
+    :param tmp_dir : temporary directory where the S3 files are fetched to
+        compute the task
+    :param force_fetch : fetch the S3 files even if they are already in the
+        temp directory
     """
-
-    host, port = es_location[7:].split(':')
-    es = Elasticsearch([{'host': host, 'port': int(port)}])
 
     # Fetch locally the files from S3
     files_fetched = fetch_files(s3_uri, tmp_dir,
@@ -82,15 +121,20 @@ def push_urls_to_elastic_search(crawl_id, part_id, s3_uri, es_location, es_index
 
     g = UrlDocumentGenerator(stream_patterns, **streams)
 
-    docs = []
-    for i, document in enumerate(g):
-        document[1]['crawl_id'] = crawl_id
-        document[1]['_id'] = '{}:{}'.format(crawl_id, document[0])
-        docs.append(document[1])
-        if i % 3000 == 2999:
-            logger.info('%d items imported to urls_data ES for %s (part %d)' % (i, es_index, part_id))
-            bulk(es, docs, doc_type=es_doc_type, index=es_index)
-            docs = []
-    # Push the missing documents
-    if docs:
-        bulk(es, docs, doc_type=es_doc_type, index=es_index)
+    output_name = 'url_documents.json.{}.gz'.format(part_id)
+    with gzip.open(os.path.join(tmp_dir, output_name), 'w') as output:
+        for i, document in enumerate(g):
+            document[1]['crawl_id'] = crawl_id
+            document[1]['_id'] = '{}:{}'.format(crawl_id, document[0])
+            output.write(json.dumps(document[1]) + '\n')
+
+            if i % 3000 == 0:
+                logger.info('Generated {} documents in {}'.format(
+                    i, output_name))
+
+    logger.info('Pushing {}'.format(output_name))
+    docs_uri = os.path.join(s3_uri, 'documents')
+    push_file(
+        os.path.join(docs_uri, output_name),
+        os.path.join(tmp_dir, output_name),
+    )
