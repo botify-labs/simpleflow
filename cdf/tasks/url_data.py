@@ -4,10 +4,10 @@ import itertools
 import ujson as json
 
 from elasticsearch import Elasticsearch
-from elasticsearch.helpers import bulk
 
 from cdf.log import logger
 from cdf.metadata.url import ELASTICSEARCH_BACKEND
+from cdf.utils.es import bulk
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.utils.s3 import fetch_files, push_file
 from cdf.core.streams.caster import Caster
