@@ -8,6 +8,7 @@ from elasticsearch.helpers import bulk
 
 from cdf.log import logger
 from cdf.metadata.url import ELASTICSEARCH_BACKEND
+from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.utils.s3 import fetch_files, push_file
 from cdf.core.streams.caster import Caster
 from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
@@ -55,7 +56,9 @@ def push_documents_to_elastic_search(s3_uri, part_id,
     """Push pre-generated url documents to ElasticSearch
 
     :param s3_uri: s3 bucket uri for the crawl in processing
-    :param part_id: part_id of the crawl, could be a list or an int
+    :param part_id: part_id of the crawl
+        - if `None`, will push for all possible part_id
+        - if is a list or an int, will push the specified parts
     :param es_location: ES location, eg. `http://location_url:9200`
     :param es_index: index name
     :param es_doc_type: doc type in the index
@@ -65,9 +68,14 @@ def push_documents_to_elastic_search(s3_uri, part_id,
     es = Elasticsearch([{'host': host, 'port': int(port)}])
     docs_uri = os.path.join(s3_uri, 'documents')
 
-    part_ids = part_id if isinstance(part_id, list) else [part_id]
-    fetch_regexp = ['url_documents.json.%d.gz' % i for i in part_ids]
+    # support for different `part_id` param
+    if part_id is None:
+        parts = nb_parts_from_crawl_location(s3_uri)
+        part_ids = range(parts)
+    else:
+        part_ids = part_id if isinstance(part_id, list) else [part_id]
 
+    fetch_regexp = ['url_documents.json.%d.gz' % i for i in part_ids]
     files_fetched = fetch_files(docs_uri, tmp_dir,
                                 regexp=fetch_regexp,
                                 force_fetch=force_fetch)
@@ -79,7 +87,7 @@ def push_documents_to_elastic_search(s3_uri, part_id,
         docs.append(json.loads(line))
         if i % 3000 == 0:
             logger.info('{} items pushed to ES index {} for part {}'.format(
-                i, es_index, part_id))
+                i, es_index, part_ids))
             bulk(es, docs, doc_type=es_doc_type, index=es_index)
             docs = []
     if len(docs) > 0:
