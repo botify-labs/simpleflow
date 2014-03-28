@@ -15,7 +15,15 @@ from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.utils import split_file
 from .decorators import TemporaryDirTask as with_temporary_dir
-from .constants import DEFAULT_FORCE_FETCH
+from .constants import DEFAULT_FORCE_FETCH, DOCS_NAME_PATTERN, DOCS_DIRPATH
+
+
+def _get_docs_filename(part_id):
+    return DOCS_NAME_PATTERN.format(part_id)
+
+
+def _get_docs_dirpath(s3_path):
+    return os.path.join(s3_path, DOCS_DIRPATH)
 
 
 def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
@@ -66,7 +74,7 @@ def push_documents_to_elastic_search(s3_uri, part_id,
     """
     host, port = es_location[7:].split(':')
     es = Elasticsearch([{'host': host, 'port': int(port)}])
-    docs_uri = os.path.join(s3_uri, 'documents')
+    docs_uri = _get_docs_dirpath(s3_uri)
 
     # support for different `part_id` param
     if part_id is None:
@@ -75,7 +83,7 @@ def push_documents_to_elastic_search(s3_uri, part_id,
     else:
         part_ids = part_id if isinstance(part_id, list) else [part_id]
 
-    fetch_regexp = ['url_documents.json.%d.gz' % i for i in part_ids]
+    fetch_regexp = [_get_docs_filename(i) for i in part_ids]
     files_fetched = fetch_files(docs_uri, tmp_dir,
                                 regexp=fetch_regexp,
                                 force_fetch=force_fetch)
@@ -129,7 +137,7 @@ def generate_documents(crawl_id, part_id, s3_uri,
 
     g = UrlDocumentGenerator(stream_patterns, **streams)
 
-    output_name = 'url_documents.json.{}.gz'.format(part_id)
+    output_name = DOCS_NAME_PATTERN.format(part_id)
     with gzip.open(os.path.join(tmp_dir, output_name), 'w') as output:
         for i, document in enumerate(g):
             document[1]['crawl_id'] = crawl_id
@@ -141,7 +149,7 @@ def generate_documents(crawl_id, part_id, s3_uri,
                     i, output_name))
 
     logger.info('Pushing {}'.format(output_name))
-    docs_uri = os.path.join(s3_uri, 'documents')
+    docs_uri = _get_docs_dirpath(s3_uri)
     push_file(
         os.path.join(docs_uri, output_name),
         os.path.join(tmp_dir, output_name),
