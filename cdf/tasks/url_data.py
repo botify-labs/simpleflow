@@ -57,7 +57,7 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
 
 
 @with_temporary_dir
-def push_documents_to_elastic_search(s3_uri, part_id,
+def push_documents_to_elastic_search(crawl_id, s3_uri, part_id,
                                      es_location, es_index, es_doc_type,
                                      tmp_dir=None,
                                      force_fetch=DEFAULT_FORCE_FETCH):
@@ -103,7 +103,7 @@ def push_documents_to_elastic_search(s3_uri, part_id,
 
 
 @with_temporary_dir
-def generate_documents(crawl_id, part_id, s3_uri,
+def generate_documents(crawl_id, s3_uri, part_id,
                        tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     """Generate JSON type urls documents from a crawl's `part_id`
 
@@ -148,6 +148,7 @@ def generate_documents(crawl_id, part_id, s3_uri,
                 logger.info('Generated {} documents in {}'.format(
                     i, output_name))
 
+    output.close()
     logger.info('Pushing {}'.format(output_name))
     docs_uri = _get_docs_dirpath(s3_uri)
     push_file(

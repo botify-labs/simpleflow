@@ -11,7 +11,7 @@ from cdf.exceptions import MissingResource
 from cdf.utils.loading import build_dataframe_from_csv
 from cdf.core.streams.caster import Caster
 from cdf.core.streams.utils import split_file
-from cdf.utils.s3 import fetch_file, fetch_files, push_file
+from cdf.utils.s3 import fetch_file, fetch_files, push_file, push_content
 from cdf.utils.path import makedirs
 from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
 from cdf.metadata.aggregates.aggregates_metadata import CROSS_PROPERTIES_COLUMNS
@@ -200,13 +200,13 @@ class SuggestSummaryRegister(object):
             }
 
         # Write suggestion file
-        summary_file = os.path.join(self.tmp_dir, 'flat', 'metrics', 'suggest', '{}.json'.format(identifier))
+        summary_file = os.path.join(self.tmp_dir, 'flat_v1.1', 'metrics', 'suggest', '{}.json'.format(identifier))
         makedirs(os.path.join(os.path.dirname(summary_file)), exist_ok=True)
         f = open(os.path.join(summary_file), 'w')
         f.write(json.dumps(results, indent=4))
         f.close()
         push_file(
-            os.path.join(self.s3_uri, 'flat', 'metrics', 'suggest', '{}.json'.format(identifier)),
+            os.path.join(self.s3_uri, 'flat_v1.1', 'metrics', 'suggest', '{}.json'.format(identifier)),
             summary_file
         )
         return len(results)
@@ -214,12 +214,12 @@ class SuggestSummaryRegister(object):
     def _push_summary_scores(self):
         if not self._called:
             raise Exception('Summary has not be called yet')
-        summary_file = os.path.join(self.tmp_dir, 'flat', 'metrics', 'suggest', 'index.json')
+        summary_file = os.path.join(self.tmp_dir, 'flat_v1.1', 'metrics', 'suggest', 'index.json')
         f = open(os.path.join(summary_file), 'w')
         f.write(json.dumps(self._scores, indent=4))
         f.close()
         push_file(
-            os.path.join(self.s3_uri, 'flat', 'metrics', 'suggest', 'index.json'),
+            os.path.join(self.s3_uri, 'flat_v1.1', 'metrics', 'suggest', 'index.json'),
             summary_file
         )
 
@@ -248,13 +248,13 @@ def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir, ide
         results = {identifier: result for identifier, result in zip(identifiers, results)}
 
      # Write suggestion file
-    summary_file = os.path.join(tmp_dir, 'flat', 'metrics', '{}.json'.format(identifier))
+    summary_file = os.path.join(tmp_dir, 'flat_v1.1', 'metrics', '{}.json'.format(identifier))
     makedirs(os.path.join(os.path.dirname(summary_file)), exist_ok=True)
     f = open(os.path.join(summary_file), 'w')
     f.write(json.dumps(results, indent=4))
     f.close()
     push_file(
-        os.path.join(s3_uri, 'flat', 'metrics', '{}.json'.format(identifier)),
+        os.path.join(s3_uri, 'flat_v1.1', 'metrics', '{}.json'.format(identifier)),
         summary_file
     )
 
@@ -527,3 +527,19 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
         suggest.register(identifier='outlinks_internal/errors_links_{}'.format(field), query=query, urls_filters=urls_filters, urls_fields=urls_fields, urls_sort=urls_sort)
 
     suggest.run()
+
+
+@with_temporary_dir
+def update_migration_es_v1_documents(crawl_id, s3_uri, tmp_dir=None, force_fetch=False):
+    push_content(
+        os.path.join(s3_uri, "migration_es_v1", "documents_{}".format(crawl_id)),
+        "done"
+    )
+
+
+@with_temporary_dir
+def update_migration_es_v1_push(crawl_id, s3_uri, tmp_dir=None, force_fetch=False):
+    push_content(
+        os.path.join(s3_uri, "migration_es_v1", "push_{}".format(crawl_id)),
+        "done"
+    )
