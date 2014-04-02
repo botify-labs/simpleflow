@@ -121,41 +121,41 @@ class MockIntegrationTest(unittest.TestCase):
         reload(ud)
 
         # launch cdf's analyse process
-        force_fetch = False
+        force_fetch = True
 
         # figure out number of partitions
         from cdf.utils.remote_files import nb_parts_from_crawl_location
         parts = nb_parts_from_crawl_location(S3_URI, crawl_dir)
 
         # bad link
-        im.make_bad_link_file(CRAWL_ID, S3_URI, 4, 2, tmp_dir_prefix=TEST_DIR)
+        im.make_bad_link_file(CRAWL_ID, TEST_DIR, 4, 2, tmp_dir=RESULT_DIR)
 
         # aggregate bad links on (url, http_code)
         for part_id in xrange(0, parts):
-            im.make_bad_link_counter_file(CRAWL_ID, S3_URI, part_id, tmp_dir_prefix=TEST_DIR)
+            im.make_bad_link_counter_file(CRAWL_ID, TEST_DIR, part_id, tmp_dir=RESULT_DIR)
 
         # metadata duplication detection
-        im.make_metadata_duplicates_file(CRAWL_ID, S3_URI, 4, 2,
-                                         tmp_dir_prefix=TEST_DIR)
+        im.make_metadata_duplicates_file(CRAWL_ID, TEST_DIR, 4, 2,
+                                         tmp_dir=RESULT_DIR)
 
         # clustering
-        clusters.compute_mixed_clusters(CRAWL_ID, S3_URI, 4, 2,
-                                        tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
+        clusters.compute_mixed_clusters(CRAWL_ID, TEST_DIR, 4, 2,
+                                        tmp_dir=RESULT_DIR, force_fetch=force_fetch)
 
         # aggregation for each partition
         for part_id in xrange(0, parts):
             logger.info("Compute inlinks counter file")
-            im.make_links_counter_file(CRAWL_ID, S3_URI, part_id, "in",
-                                       tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
+            im.make_links_counter_file(CRAWL_ID, TEST_DIR, part_id, "in",
+                                       tmp_dir=RESULT_DIR, force_fetch=force_fetch)
             logger.info("Compute outlinks counter file")
-            im.make_links_counter_file(CRAWL_ID, S3_URI, part_id, "out",
-                                       tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
-            agg.compute_aggregators_from_part_id(CRAWL_ID, S3_URI, part_id,
-                                                 tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
+            im.make_links_counter_file(CRAWL_ID, TEST_DIR, part_id, "out",
+                                       tmp_dir=RESULT_DIR, force_fetch=force_fetch)
+            agg.compute_aggregators_from_part_id(CRAWL_ID, TEST_DIR, part_id,
+                                                 tmp_dir=RESULT_DIR, force_fetch=force_fetch)
 
         # consolidation of partitions
-        agg.consolidate_aggregators(CRAWL_ID, S3_URI,
-                                    tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
+        agg.consolidate_aggregators(CRAWL_ID, TEST_DIR,
+                                    tmp_dir=RESULT_DIR, force_fetch=force_fetch)
 
         # TODO(darkjh) mock ElasticSearch
         es_location = 'http://localhost:9200'
@@ -163,9 +163,10 @@ class MockIntegrationTest(unittest.TestCase):
         es_doc_type = 'crawls'
         ud.prepare_crawl_index(CRAWL_ID, es_location, es_index, es_doc_type)
         for part_id in xrange(0, parts):
-            ud.push_urls_to_elastic_search(CRAWL_ID, part_id, S3_URI,
-                                           es_location, es_index, es_doc_type,
-                                           tmp_dir_prefix=TEST_DIR, force_fetch=force_fetch)
+            ud.generate_documents(CRAWL_ID, part_id, TEST_DIR, force_fetch=force_fetch, tmp_dir=RESULT_DIR)
+            ud.push_documents_to_elastic_search(TEST_DIR, part_id, es_location,
+                                                es_index, es_doc_type,
+                                                force_fetch=force_fetch, tmp_dir=RESULT_DIR)
 
     @classmethod
     def tearDownClass(cls):
@@ -213,7 +214,7 @@ class MockIntegrationTest(unittest.TestCase):
     def test_in_links_files(self):
         pattern = 'url_in_links_counters.txt.{}.gz'
 
-        self.assert_part_files(pattern, [0, 2, 3, 4, 5])
+        self.assert_part_files(pattern, [0, 2, 3, 5])
 
         expected_contents = [
             [2, ['follow'], 1, 1],
@@ -221,19 +222,22 @@ class MockIntegrationTest(unittest.TestCase):
             [6, ['link'], 1, 1],
             [8, ['follow'], 3, 1],
             [8, ['follow'], 1, 1],
-            [8, ['robots', 'link'], 2, 1],
-            [8, ['robots', 'meta'], 2, 1],
             [8, ['link'], 2, 1],
             [9, ['follow'], 5, 1],
-            [10, ['robots', 'meta', 'link'], 3, 1],
             [12, ['follow'], 1, 1]
         ]
 
         self.assert_file_contents(pattern, expected_contents)
 
     def test_in_canonicals_files(self):
-        # TODO(darkjh) issue 128
-        pass
+        pattern = 'url_in_canonical_counters.txt.{}.gz'
+
+        self.assert_part_files(pattern, [0])
+
+        expected_contents = [
+            [2, 3],
+        ]
+        self.assert_file_contents(pattern, expected_contents)
 
     def test_in_redirects_files(self):
         pattern = 'url_in_redirect_counters.txt.{}.gz'

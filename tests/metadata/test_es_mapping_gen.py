@@ -1,18 +1,10 @@
 import unittest
 from cdf.metadata.url.es_backend_utils import (_parse_field_path,
-                                               generate_es_mapping,
-                                               generate_default_value_lookup,
-                                               generate_valid_field_lookup)
+                                               ElasticSearchBackend)
 from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
 
 
 class TestMappingGeneration(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_parse_field_path(self):
         path = 'a.b.c'
         result = _parse_field_path(path)
@@ -21,7 +13,7 @@ class TestMappingGeneration(unittest.TestCase):
 
     def test_generation_simple(self):
         # simple case with no-index
-        meta_mapping = {
+        data_format = {
             'error_links.3xx.nb': {'type': 'long'},
             'error_links.3xx.urls': {
                 'type': 'long',
@@ -32,7 +24,8 @@ class TestMappingGeneration(unittest.TestCase):
             }
         }
 
-        result = generate_es_mapping(meta_mapping, routing_field=None)
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.mapping(routing_field=None)
         expected = {
             'error_links': {
                 'properties': {
@@ -48,41 +41,8 @@ class TestMappingGeneration(unittest.TestCase):
 
         self.assertDictEqual(result['urls']['properties'], expected)
 
-    def test_generation_multi_field(self):
-        # `multi_field` case
-        meta_mapping = {
-            'metadata.title': {
-                'type': 'string',
-                'settings': {
-                    'list',
-                    'es:multi_field'
-                }
-            },
-        }
-
-        result = generate_es_mapping(meta_mapping, routing_field=None)
-        expected = {
-            'metadata': {
-                'properties': {
-                    'title': {
-                        'type': 'multi_field',
-                        'fields': {
-                            'title': {
-                                'type': 'string'
-                            },
-                            'untouched': {
-                                'type': 'string',
-                                'index': 'not_analyzed'
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self.assertDictEqual(result['urls']['properties'], expected)
-
     def test_struct_field(self):
-        meta_mapping = {
+        data_format = {
             'canonical_to': {
                 'type': 'struct',
                 'values': {
@@ -94,7 +54,9 @@ class TestMappingGeneration(unittest.TestCase):
                 }
             }
         }
-        result = generate_es_mapping(meta_mapping, routing_field=None)
+
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.mapping(routing_field=None)
         expected = {
             'canonical_to': {
                 'properties': {
@@ -111,15 +73,59 @@ class TestMappingGeneration(unittest.TestCase):
         }
         self.assertDictEqual(result['urls']['properties'], expected)
 
+    def test_noindex_field(self):
+        data_format = {
+            'field.noindex': {
+                'type': 'string',
+                'settings': {'es:no_index'}
+            },
+            'index': {'type': 'integer'}
+        }
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.noindex_fields()
+        expected = {'field.noindex'}
+        self.assertEqual(result, expected)
+
+    def test_doc_value(self):
+        data_format = {
+            'field.doc_value': {
+                'type': 'string',
+                'settings': {
+                    'es:doc_values',
+                    'es:no_index'
+                }
+            }
+        }
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.mapping(routing_field=None)
+        expectd = {
+            'field': {
+                'properties': {
+                    'doc_value': {
+                        'type': 'string',
+                        'fielddata': {'format': 'doc_values'},
+                        'index': 'no'
+                    }
+                }
+            }
+        }
+        self.assertEqual(result['urls']['properties'], expectd)
+
     def test_generation_all_mapping(self):
         doc_type = 'urls'
-        target = URLS_DATA_MAPPING_DEPRECATED
-        result = generate_es_mapping(URLS_DATA_FORMAT_DEFINITION,
-                                     doc_type=doc_type)
-        self.assertDictEqual(result, target)
+        target = NEW_MAPPING
+        es_backend = ElasticSearchBackend(URLS_DATA_FORMAT_DEFINITION)
+        result = es_backend.mapping(doc_type=doc_type)
+
+        # check individual sub-dict
+        r = target['urls']['properties']
+        for k, v in result['urls']['properties'].iteritems():
+            self.assertEqual(v, r[k])
+        # check all
+        self.assertEqual(result, target)
 
     def test_default_value_look_up(self):
-        meta_mapping = {
+        data_format = {
             'string': {'type': 'string', 'settings': {'no_index'}},
             'list': {
                 'type': 'string',
@@ -141,6 +147,10 @@ class TestMappingGeneration(unittest.TestCase):
             'struct_without_default': {
                 'type': 'struct',
             },
+            'no.default.value': {
+                'type': 'integer',
+                'default_value': None
+            }
         }
         expected = {
             'string': None,
@@ -149,12 +159,13 @@ class TestMappingGeneration(unittest.TestCase):
             'struct_with_default': 1,
             'struct_without_default': None
         }
-        result = generate_default_value_lookup(meta_mapping)
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.field_default_value()
 
         self.assertDictEqual(result, expected)
 
-    def test_valid_field_lookup(self):
-        meta_mapping = {
+    def test_query_field_lookup(self):
+        data_format = {
             'error_links.3xx.urls',
             'error_links.3xx.nb',
             'error_links.4xx.urls',
@@ -162,7 +173,6 @@ class TestMappingGeneration(unittest.TestCase):
             'one_level_field'
         }
 
-        result = generate_valid_field_lookup(meta_mapping)
         expected = {
             'error_links',
             'error_links.3xx',
@@ -173,233 +183,594 @@ class TestMappingGeneration(unittest.TestCase):
             'error_links.4xx.nb',
             'one_level_field'
         }
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.select_fields()
 
         self.assertEqual(result, expected)
 
-URLS_DATA_MAPPING_DEPRECATED = {
+    def test_empty_document_generation(self):
+        data_format = {
+            'outlinks.nb.nofollow.combinations.link': {
+                'type': 'integer',
+                'settings': {'list'}
+            },
+            'outlinks.nb.nofollow.combinations.meta': {
+                'type': 'long',
+                'settings': {'list'}
+            },
+            'outlinks.nb.follow.total': {'type': 'integer'},
+            'outlinks.nb.nofollow.unique': {'type': 'long'},
+            'one_level_field': {'type': 'struct'}
+        }
+        non_flatten_expected = {
+            'outlinks': {
+                'nb': {
+                    'nofollow': {
+                        'combinations': {
+                            'link': [],
+                            'meta': []
+                        },
+                        'unique': 0,
+                    },
+                    'follow': {
+                        'total': 0
+                    },
+                },
+            },
+            'one_level_field': None
+        }
+
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.default_document()
+        self.assertDictEqual(result, non_flatten_expected)
+
+        flatten_expected = {
+            'outlinks.nb.nofollow.combinations.link': [],
+            'outlinks.nb.nofollow.combinations.meta': [],
+            'outlinks.nb.follow.total': 0,
+            'outlinks.nb.nofollow.unique': 0,
+            'one_level_field': None
+        }
+        result = es_backend.default_document(flatten=True)
+        self.assertDictEqual(result, flatten_expected)
+
+
+_NOT_ANALYZED = "not_analyzed"
+NEW_MAPPING = {
     "urls": {
         "_routing": {
             "required": True,
             "path": "crawl_id"
         },
+        "_source": {
+            "excludes": ["*_exists"]
+        },
         "properties": {
+            # simple properties for each url
             "url": {
                 "type": "string",
-                "index": "not_analyzed"
+                "index": _NOT_ANALYZED
             },
             "url_hash": {"type": "long"},
-            "byte_size": {"type": "long"},
-            "date_crawled": {"type": "date"},
-            "delay1": {"type": "long"},
-            "delay2": {"type": "long"},
-            "depth": {"type": "long"},
+            "byte_size": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "date_crawled": {
+                "type": "date",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "delay_first_byte": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "delay_last_byte": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "depth": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
             "gzipped": {"type": "boolean"},
             "content_type": {
                 "type": "string",
-                "index": "not_analyzed"
+                "fielddata": {
+                    "format": "doc_values"
+                },
+                "index": _NOT_ANALYZED
             },
-            "meta_noindex": {"type": "boolean"},
-            "meta_nofollow": {"type": "boolean"},
             "host": {
                 "type": "string",
-                "index": "not_analyzed"
+                "fielddata": {
+                    "format": "doc_values"
+                },
+                "index": _NOT_ANALYZED
             },
-            "http_code": {"type": "long"},
-            "id": {"type": "long"},
-            "crawl_id": {"type": "long"},
-            "patterns": {"type": "long"},
-            "metadata_nb": {
-                "properties": {
-                    "description": {"type": "long"},
-                    "h1": {"type": "long"},
-                    "h2": {"type": "long"},
-                    "title": {"type": "long"}
+            "http_code": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
                 }
             },
+            "id": {
+                "type": "integer",
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "crawl_id": {"type": "integer"},
+            "patterns": {"type": "long"},
+            "path": {
+                "type": "string",
+                "index": _NOT_ANALYZED
+            },
+            "protocol": {
+                "type": "string",
+                "index": _NOT_ANALYZED,
+                "fielddata": {
+                    "format": "doc_values"
+                }
+            },
+            "query_string": {
+                "type": "string",
+                "index": _NOT_ANALYZED
+            },
+            "query_string_keys": {
+                "type": "string",
+                "index": _NOT_ANALYZED
+            },
+
+            # metadata related properties
             "metadata": {
                 "properties": {
-                    "description": {
-                        "type": "multi_field",
-                        "fields": {
-                            "description": {
-                                "type": "string"
+                    "robots": {
+                        "properties": {
+                            "nofollow": {"type": "boolean"},
+                            "noindex": {"type": "boolean"},
+                        }
+                    },
+
+                    "title": {
+                        "properties": {
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
                             },
-                            "untouched": {
-                                "type": "string",
-                                "index": "not_analyzed"
+                            "contents": {"type": "string", "index": _NOT_ANALYZED},
+                            "duplicates": {
+                                "properties": {
+                                    "nb": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                    "is_first": {"type": "boolean"},
+                                    "urls": {"type": "integer", "index": "no"},
+                                    "urls_exists": {"type": "boolean"},
+                                }
                             }
                         }
                     },
                     "h1": {
-                        "type": "multi_field",
-                        "fields": {
-                            "h1": {
-                                "type": "string"
+                        "properties": {
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
                             },
-                            "untouched": {
-                                "type": "string",
-                                "index": "not_analyzed"
+                            "contents": {"type": "string", "index": _NOT_ANALYZED},
+                            "duplicates": {
+                                "properties": {
+                                    "nb": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                    "is_first": {"type": "boolean"},
+                                    "urls": {"type": "integer", "index": "no"},
+                                    "urls_exists": {"type": "boolean"}
+                                }
                             }
                         }
                     },
                     "h2": {
-                        "type": "multi_field",
-                        "fields": {
-                            "h2": {
-                                "type": "string"
+                        "properties": {
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
                             },
-                            "untouched": {
-                                "type": "string",
-                                "index": "not_analyzed"
+                            "contents": {"type": "string", "index": _NOT_ANALYZED},
+                        }
+                    },
+                    "h3": {
+                        "properties": {
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            # limited to 5 contents in analysis phase
+                            "contents": {"type": "string", "index": _NOT_ANALYZED},
+                        }
+                    },
+                    "description": {
+                        "properties": {
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            "contents": {"type": "string", "index": _NOT_ANALYZED},
+                            "duplicates": {
+                                "properties": {
+                                    "nb": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                    "is_first": {"type": "boolean"},
+                                    "urls": {"type": "integer", "index": "no"},
+                                    "urls_exists": {"type": "boolean"}
+                                }
                             }
                         }
                     },
-                    "title": {
-                        "type": "multi_field",
-                        "fields": {
-                            "title": {
-                                "type": "string"
+                }
+            },
+
+            "inlinks_internal": {
+                "properties": {
+                    "nb": {
+                        "properties": {
+                            "total": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
                             },
-                            "untouched": {
-                                "type": "string",
-                                "index": "not_analyzed"
-                            }
+                            "unique": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            "follow": {
+                                "properties": {
+                                    "unique": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                }
+                            },
+                            "nofollow": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                    "combinations": {
+                                        "properties": {
+                                            "link": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "link_meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                        }
+                                    }
+                                }
+                            },
                         }
-                    }
+                    },
+                    # list of source urls of incoming links
+                    # truncated at 300 urls
+                    "urls": {"type": "integer", "index": "no"},
+                    "urls_exists": {"type": "boolean"}
                 }
             },
-            "metadata_duplicate_nb": {
+
+            "outlinks_internal": {
                 "properties": {
-                    "title": {"type": "long"},
-                    "description": {"type": "long"},
-                    "h1": {"type": "long"}
-                }
-            },
-            "metadata_duplicate": {
-                "properties": {
-                    "title": {"type": "long", "index": "no"},
-                    "description": {"type": "long", "index": "no"},
-                    "h1": {"type": "long", "index": "no"}
-                }
-            },
-            "metadata_duplicate_is_first": {
-                "properties": {
-                    "title": {"type": "boolean"},
-                    "description": {"type": "boolean"},
-                    "h1": {"type": "boolean"}
-                }
-            },
-            "inlinks_internal_nb": {
-                "properties": {
-                    "total": {"type": "long"},
-                    "follow_unique": {"type": "long"},
-                    "total_unique": {"type": "long"},
-                    "follow": {"type": "long"},
-                    "nofollow": {"type": "long"},
-                    "nofollow_combinations": {
+                    "nb": {
                         "properties": {
-                            "key": {"type": "string"},
-                            "value": {"type": "long"}
+                            "total": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            "unique": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            "follow": {
+                                "properties": {
+                                    "unique": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                }
+                            },
+                            "nofollow": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                    "combinations": {
+                                        "properties": {
+                                            "link": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "robots": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "link_robots": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "meta_robots": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "link_meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "link_meta_robots": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                        }
+                                    }
+                                }
+                            },
                         }
-                    }
+                    },
+                    "urls": {"type": "integer", "index": "no"},
+                    "urls_exists": {"type": "boolean"},
                 }
             },
-            "inlinks_internal": {"type": "long", "index": "no"},
-            "outlinks_internal": {"type": "long", "index": "no"},
-            "outlinks_internal_nb": {
+
+            "outlinks_external": {
                 "properties": {
-                    "total": {"type": "long"},
-                    "follow_unique": {"type": "long"},
-                    "total_unique": {"type": "long"},
-                    "follow": {"type": "long"},
-                    "nofollow": {"type": "long"},
-                    "nofollow_combinations": {
+                    "nb": {
                         "properties": {
-                            "key": {"type": "string"},
-                            "value": {"type": "long"}
+                            "total": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            "follow": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    }
+                                }
+                            },
+                            "nofollow": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "fielddata": {
+                                            "format": "doc_values"
+                                        }
+                                    },
+                                    "combinations": {
+                                        "properties": {
+                                            "link": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            },
+                                            "link_meta": {
+                                                "type": "integer",
+                                                "fielddata": {
+                                                    "format": "doc_values"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
                         }
                     }
                 }
             },
-            "outlinks_external_nb": {
-                "properties": {
-                    "total": {"type": "long"},
-                    "follow": {"type": "long"},
-                    "nofollow": {"type": "long"},
-                    "nofollow_combinations": {
-                        "properties": {
-                            "key": {"type": "string"},
-                            "value": {"type": "long"}
-                        }
-                    }
-                }
-            },
-            "path": {
-                "type": "string",
-                "index": "not_analyzed"
-            },
-            "protocol": {
-                "type": "string",
-                "index": "not_analyzed"
-            },
-            "query_string": {
-                "type": "string",
-                "index": "not_analyzed"
-            },
-            "query_string_keys": {
-                "type": "string",
-                "index": "not_analyzed"
-            },
-            "canonical_from_nb": {"type": "long"},
-            "canonical_from": {"type": "long", "index": "no"},
-            "canonical_to": {
-                "properties": {
-                    "url": {"type": "string", "index": "no"},
-                    "url_id": {"type": "long", "index": "no"}
-                }
-            },
-            "canonical_to_equal": {"type": "boolean"},
-            "redirects_to": {
-                "properties": {
-                    "http_code": {"type": "long"},
-                    "url": {"type": "string"},
-                    "url_id": {"type": "long"}
-                }
-            },
-            "redirects_from_nb": {"type": "long"},
-            "redirects_from": {
-                "properties": {
-                    "http_code": {"type": "long", "index": "no"},
-                    "url_id": {"type": "long", "index": "no"}
-                }
-            },
-            "error_links": {
+
+            "outlinks_errors": {
                 "properties": {
                     "3xx": {
                         "properties": {
-                            "nb": {"type": "long"},
-                            "urls": {"type": "long", "index": "no"}
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            "urls": {"type": "integer", "index": "no"},
+                            "urls_exists": {"type": "boolean"}
                         }
                     },
                     "4xx": {
                         "properties": {
-                            "nb": {"type": "long"},
-                            "urls": {"type": "long", "index": "no"}
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            "urls": {"type": "integer", "index": "no"},
+                            "urls_exists": {"type": "boolean"}
                         }
                     },
                     "5xx": {
                         "properties": {
-                            "nb": {"type": "long"},
-                            "urls": {"type": "long", "index": "no"}
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+                            },
+                            "urls": {"type": "integer", "index": "no"},
+                            "urls_exists": {"type": "boolean"}
                         }
                     },
-                    "any": {
-                        "properties": {
-                            "nb": {"type": "long"}
+                    "total": {
+                        "type": "integer",
+                        "fielddata": {
+                            "format": "doc_values"
                         }
                     }
                 }
-            }
+            },
+
+            "canonical": {
+                "properties": {
+                    "to": {
+                        "properties": {
+                            "url": {
+                                "properties": {
+                                    "url_str": {"type": "string", "index": "no"},
+                                    "url_id": {"type": "integer", "index": "no"},
+                                }
+                            },
+                            "equal": {"type": "boolean"},
+                            "url_exists": {"type": "boolean"}
+                        }
+                    },
+
+                    "from": {
+                        "properties": {
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+
+                            },
+                            "urls": {"type": "integer", "index": "no"},
+                            "urls_exists": {"type": "boolean"}
+                        }
+                    }
+                }
+            },
+
+            "redirect": {
+                "properties": {
+                    "to": {
+                        "properties": {
+                            "url": {
+                                "properties": {
+                                    "http_code": {"type": "integer", "index": "no"},
+                                    "url_str": {"type": "string", "index": "no"},
+                                    "url_id": {"type": "integer", "index": "no"}
+                                }
+                            },
+                            "url_exists": {"type": "boolean"}
+                        }
+                    },
+                    "from": {
+                        "properties": {
+                            "nb": {
+                                "type": "integer",
+                                "fielddata": {
+                                    "format": "doc_values"
+                                }
+
+                            },
+                            "urls": {"type": "integer", "index": "no"},
+                            "urls_exists": {"type": "boolean"}
+                        }
+                    }
+                }
+            },
         }
     }
 }

@@ -2,7 +2,7 @@ import gzip
 import os
 import re
 from cdf.core.streams.caster import Caster
-from cdf.metadata.raw import STREAMS_FILES, STREAMS_HEADERS
+from cdf.metadata.raw import STREAMS_FILES, STREAMS_HEADERS, follow_mask
 
 from cdf.core.streams.utils import split_file
 from cdf.analysis.urls.utils import get_part_id
@@ -45,8 +45,11 @@ def generate_inlink_file(outlink_file, inlink_file):
     buffer = []
 
     for src, type, mask, dest, ext in split_file(outlink):
+        # TODO correct this
+        masks = follow_mask(int(mask))
         is_internal = int(dest) > 0
-        if is_internal:
+        # we do not crawl pages that blocked by robots.txt
+        if is_internal and 'robots' not in masks:
             buffer.append([dest, type, mask, src])
     outlink.close()
 

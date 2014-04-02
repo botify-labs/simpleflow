@@ -1,3 +1,4 @@
 from .url_metadata import URLS_DATA_FORMAT_DEFINITION
+from es_backend_utils import ElasticSearchBackend
 
-from .utils import has_child, get_children
+ELASTICSEARCH_BACKEND = ElasticSearchBackend(URLS_DATA_FORMAT_DEFINITION)

@@ -1,8 +1,7 @@
 import ujson
+from copy import deepcopy
 from itertools import izip
-from collections import defaultdict
 from cdf.analysis.urls.utils import is_link_internal
-
 from cdf.metadata.raw import (STREAMS_HEADERS, CONTENT_TYPE_INDEX,
                               MANDATORY_CONTENT_TYPES)
 from cdf.core.streams.transformations import group_with
@@ -11,300 +10,313 @@ from cdf.core.streams.utils import idx_from_stream
 from cdf.metadata.raw.masks import list_to_mask
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
-from cdf.metadata.url import get_children
+from cdf.metadata.url import ELASTICSEARCH_BACKEND
 
 
-def extract_patterns(attributes, stream_item):
-    # Create initial dictionary
-    attributes.update({i[0]: value for i, value in izip(STREAMS_HEADERS['PATTERNS'], stream_item)})
+# TODO refactor into an ORM fashion
+#   data format => hierarchy of classes (ORM)
+#   ORM objects knows how to index themselves to ES
+# maybe ElasticUtils will be a good reference
 
-    attributes['url'] = attributes['protocol'] + '://' + ''.join((attributes['host'], attributes['path'], attributes['query_string']))
-    attributes['url_hash'] = string_to_int64(attributes['url'])
 
-    # query_string fields
-    query_string = stream_item[4]
+_DEFAULT_DOCUMENT = ELASTICSEARCH_BACKEND.default_document()
+
+
+def _clean_document(doc):
+    def _recursive_clean(doc, access):
+        for k, v in doc.items():
+            if isinstance(v, dict):
+                _recursive_clean(v, doc[k])
+            elif v in (None, [], {}):
+                del(access[k])
+    _recursive_clean(doc, doc)
+
+
+def _content_types(mandatory=False):
+    for content_name in CONTENT_TYPE_INDEX.itervalues():
+        if not mandatory:
+            yield content_name
+        if mandatory and content_name in MANDATORY_CONTENT_TYPES:
+            yield content_name
+
+
+def _get_nofollow_combination_key(keys):
+    return '_'.join(sorted(keys))
+
+
+def _extract_stream_fields(stream_identifier, stream):
+    """
+    :param stream_identifier: stream's id, like 'ids', 'infos'
+    :return: a dict containing `field: value` mapping
+    """
+    return {field[0]: value for field, value in
+            izip(STREAMS_HEADERS[stream_identifier], stream)}
+
+
+def _process_ids(doc, stream_ids):
+    """Init the document and process `urlids` stream
+    """
+    # init the document with default field values
+    doc.update(deepcopy(_DEFAULT_DOCUMENT))
+
+    # simple information about each url
+    doc.update(_extract_stream_fields('PATTERNS', stream_ids))
+    doc['url'] = doc['protocol'] + '://' + ''.join(
+        (doc['host'], doc['path'], doc['query_string']))
+    doc['url_hash'] = string_to_int64(doc['url'])
+
+    query_string = stream_ids[4]
     if query_string:
         # The first character is ? we flush it in the split
-        qs = [k.split('=') if '=' in k else [k, ''] for k in query_string[1:].split('&')]
-        attributes['query_string_keys'] = [q[0] for q in qs]
-    attributes['metadata_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues()}
-    attributes['metadata_duplicate'] = {verbose_content_type: [] for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
-    attributes['metadata_duplicate_nb'] = {verbose_content_type: 0 for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
-    attributes['metadata_duplicate_is_first'] = {verbose_content_type: False for verbose_content_type in CONTENT_TYPE_INDEX.itervalues() if verbose_content_type in MANDATORY_CONTENT_TYPES}
-    attributes['inlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in get_children('inlinks_internal_nb')}
-    attributes['inlinks_internal_nb']['nofollow_combinations'] = []
-    # a list of [src, mask, count]
-    attributes['inlinks_internal'] = []
-    attributes['outlinks_internal_nb'] = {_f.split('.')[1]: 0 for _f in get_children('outlinks_internal_nb')}
-    attributes['outlinks_internal_nb']['nofollow_combinations'] = []
-    attributes['outlinks_external_nb'] = {_f.split('.')[1]: 0 for _f in get_children('outlinks_external_nb')}
-    attributes['outlinks_external_nb']['nofollow_combinations'] = []
-    # a list of [dest, mask, count]
-    attributes['outlinks_internal'] = []
-    # resolve a (src, mask) to its index in `outlinks_internal` list
-    attributes["inlinks_id_to_idx"] = {}
+        qs = [k.split('=') if '=' in k else [k, '']
+              for k in query_string[1:].split('&')]
+        doc['query_string_keys'] = [q[0] for q in qs]
+
+    # temporary structures for analytic processing
+    doc["processed_inlink_link"] = set()
     # resolve a (dest, mask) to its index in `inlinks_internal` list
-    attributes["outlinks_id_to_idx"] = {}
-    # TODO need renaming, `pattern` is used both for `cluster` and for `urlids`
-    attributes["patterns"] = []
+    doc["processed_outlink_link"] = set()
     # a temp set to track all `seen` src url of incoming links
-    attributes["processed_inlink_url"] = set()
+    doc["processed_inlink_url"] = set()
     # a temp set to track all `seen` dest url of outgoing links
-    attributes["processed_outlink_url"] = set()
+    doc["processed_outlink_url"] = set()
 
 
-def extract_infos(attributes, stream_item):
+def _process_infos(doc, stream_infos):
+    """Process `urlinfos` stream
+    """
     date_crawled_idx = idx_from_stream('infos', 'date_crawled')
+    stream_infos[date_crawled_idx] = date_2k_mn_to_date(
+        stream_infos[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
+    # TODO could skip non-crawled url here
+    # http code 0, 1, 2 are reserved for non-crawled urls
 
-    """
-    Those codes should not be returned
-    Some pages can be in the queue and not crawled
-    from some reason (ex : max pages < to the queue
-    ---------------
-    job_not_done=0,
-    job_todo=1,
-    job_in_progress=2,
-    """
-
-    stream_item[date_crawled_idx] = date_2k_mn_to_date(
-        stream_item[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
-    attributes.update(
-        {i[0]: value for i, value in izip(STREAMS_HEADERS['INFOS'], stream_item)
-         if i[0] != 'infos_mask'})
+    doc.update(_extract_stream_fields('INFOS', stream_infos))
+    # infos_mask has a special process
+    del(doc['infos_mask'])
 
     # `?` should be rename to `not-set`
-    if attributes['content_type'] == '?':
-        attributes['content_type'] = 'not-set'
+    if doc['content_type'] == '?':
+        doc['content_type'] = 'not-set'
 
-    # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
-    infos_mask = stream_item[idx_from_stream('infos', 'infos_mask')]
-    attributes['gzipped'] = 1 & infos_mask == 1
-    attributes['meta_noindex'] = 4 & infos_mask == 4
-    attributes['meta_nofollow'] = 8 & infos_mask == 8
+    # rename `delay1` and `delay2`
+    # they are kept in the stream schema for compatibility with
+    doc['delay_first_byte'] = doc['delay1']
+    doc['delay_last_byte'] = doc['delay2']
+    del(doc['delay1'])
+    del(doc['delay2'])
 
+    # mask:
+    # 1 gzipped, 2 notused, 4 meta_noindex
+    # 8 meta_nofollow 16 has_canonical 32 bad canonical
+    infos_mask = stream_infos[idx_from_stream('infos', 'infos_mask')]
+    doc['gzipped'] = 1 & infos_mask == 1
 
-def extract_contents(attributes, stream_item):
-    content_type_id = stream_item[idx_from_stream('contents', 'content_type')]
-    txt = stream_item[idx_from_stream('contents', 'txt')]
-    if "metadata" not in attributes:
-        attributes["metadata"] = {}
-
-    verbose_content_type = CONTENT_TYPE_INDEX[content_type_id]
-    if verbose_content_type not in attributes["metadata"]:
-        attributes["metadata"][verbose_content_type] = [txt]
-    else:
-        attributes["metadata"][verbose_content_type].append(txt)
+    target = doc['metadata']['robots']
+    target['noindex'] = 4 & infos_mask == 4
+    target['nofollow'] = 8 & infos_mask == 8
 
 
-def extract_contents_duplicate(attributes, stream_item):
-    _, metadata_idx, nb_filled, nb_duplicates, is_first, duplicate_urls = stream_item
+def _process_contents(doc, stream_contents):
+    content_type_id = stream_contents[idx_from_stream('contents', 'content_type')]
+    content_type = CONTENT_TYPE_INDEX[content_type_id]
+    content = stream_contents[idx_from_stream('contents', 'txt')]
+    doc['metadata'][content_type]['contents'].append(content)
+
+
+def _process_metadata_duplicate(doc, stream_duplicate):
+    _, metadata_idx, nb_filled, nb_duplicates, is_first, duplicate_urls = stream_duplicate
     metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
-    attributes['metadata_nb'][metadata_type] = nb_filled
-    attributes['metadata_duplicate_nb'][metadata_type] = nb_duplicates
-    attributes['metadata_duplicate'][metadata_type] = duplicate_urls
-    attributes['metadata_duplicate_is_first'][metadata_type] = is_first
+
+    meta = doc['metadata'][metadata_type]
+    # number of metadata of this kind
+    meta['nb'] = nb_filled
+    # number of duplications of this piece of metadata
+    dup = meta['duplicates']
+    dup['nb'] = nb_duplicates
+    # urls that have duplicates
+    if nb_duplicates > 0:
+        dup['urls'] = duplicate_urls
+        dup['urls_exists'] = True
+
+    # is this the first one out of all duplicates
+    dup['is_first'] = is_first
 
 
-def extract_outlinks(attributes, stream_item):
-    url_src, link_type, follow_keys, url_dst, external_url = stream_item
-
-    def increments_follow_unique():
-        if not (url_dst, mask) in attributes["outlinks_id_to_idx"]:
-            attributes[outlink_type]['follow_unique'] += 1
-
-    def increments_nofollow_combination():
-        found = False
-        for _d in attributes[outlink_type]['nofollow_combinations']:
-            if _d["key"] == follow_keys:
-                _d["value"] += 1
-                found = True
-                break
-        if not found:
-            attributes[outlink_type]['nofollow_combinations'].append(
-                {
-                    "key": follow_keys,
-                    "value": 1
-                }
-            )
-
-    def follow_keys_to_acronym():
-        return "".join(k[0] for k in sorted(follow_keys))
+def _process_outlinks(document, stream_oulinks):
+    url_src, link_type, follow_keys, url_dst, external_url = stream_oulinks
 
     if link_type == "a":
         # is_internal = url_dst > 0
         is_internal = is_link_internal(follow_keys, url_dst)
         is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
-        outlink_type = "outlinks_internal_nb" if is_internal else "outlinks_external_nb"
+        outlink_type = "outlinks_internal" if is_internal else "outlinks_external"
         mask = list_to_mask(follow_keys)
 
-        attributes[outlink_type]['total'] += 1
-        attributes[outlink_type]['follow' if is_follow else 'nofollow'] += 1
+        outlink_nb = document[outlink_type]['nb']
+        outlink_nb['total'] += 1
+
+        # target dict changes with link follow status
+        follow = outlink_nb['follow' if is_follow else 'nofollow']
+        follow['total'] += 1
         if is_internal and is_follow:
-            increments_follow_unique()
+            # increment follow counters
+            if not (url_dst, mask) in document['processed_outlink_link']:
+                follow['unique'] += 1
         elif not is_follow:
-            increments_nofollow_combination()
+            # increment nofollow combination counters
+            key = _get_nofollow_combination_key(follow_keys)
+            follow['combinations'][key] += 1
 
-        if is_internal:
+        # internal outlinks
+        # still need dest url id check since we can have internal url
+        # blocked by robots.txt
+        if is_internal and url_dst > 0:
+            outlink_urls = document['outlinks_internal']['urls']
+            exists = (url_dst, mask) in document['processed_outlink_link']
+            if len(outlink_urls) < 300 and not exists:
+                outlink_urls.append([url_dst, mask])
+
             # add this link's dest to the processed set
-            attributes['processed_outlink_url'].add(url_dst)
+            document['processed_outlink_url'].add(url_dst)
+            document['processed_outlink_link'].add((url_dst, mask))
 
-            url_idx = attributes["outlinks_id_to_idx"].get((url_dst, mask), None)
-            if url_idx is not None:
-                attributes["outlinks_internal"][url_idx][2] += 1
-            else:
-                attributes["outlinks_internal"].append([url_dst, mask, 1])
-                attributes["outlinks_id_to_idx"][(url_dst, mask)] = len(attributes["outlinks_internal"]) - 1
+            document['outlinks_internal']['urls_exists'] = True
+
     elif link_type.startswith('r'):
         http_code = link_type[1:]
+        redirects_to = document['redirect']['to']
+        redirects_to['url'] = {}
         if url_dst == -1:
-            attributes['redirects_to'] = {'url': external_url, 'http_code': int(http_code)}
+            redirects_to['url']['url_str'] = external_url
         else:
-            attributes['redirects_to'] = {'url_id': url_dst, 'http_code': int(http_code)}
+            redirects_to['url']['url_id'] = url_dst
+        redirects_to['url']['http_code'] = int(http_code)
+        redirects_to['url_exists'] = True
+
     elif link_type == "canonical":
-        if not 'canonical_to_equal' in attributes:
+        canonical_to = document['canonical']['to']
+        if canonical_to.get('equal', None) is None:
             # We take only the first canonical found
-            attributes['canonical_to_equal'] = url_src == url_dst
+            canonical_to['equal'] = url_src == url_dst
+            canonical_to['url'] = {}
             if url_dst > 0:
-                attributes['canonical_to'] = {'url_id': url_dst}
+                canonical_to['url']['url_id'] = url_dst
             else:
-                attributes['canonical_to'] = {'url': external_url}
+                canonical_to['url']['url_str'] = external_url
+            canonical_to['url_exists'] = True
 
 
-def extract_inlinks(attributes, stream_item):
-    url_dst, link_type, follow_keys, url_src = stream_item
-
-    def increments_follow_unique():
-        if not (url_src, mask) in attributes["inlinks_id_to_idx"]:
-            attributes['inlinks_internal_nb']['follow_unique'] += 1
-
-    def increments_nofollow_combination():
-        found = False
-        for _d in attributes['inlinks_internal_nb']['nofollow_combinations']:
-            if _d["key"] == follow_keys:
-                _d["value"] += 1
-                found = True
-                break
-        if not found:
-            attributes['inlinks_internal_nb']['nofollow_combinations'].append(
-                {
-                    "key": follow_keys,
-                    "value": 1
-                }
-            )
-
-    def follow_keys_to_acronym():
-        return "".join(k[0] for k in sorted(follow_keys))
+def _process_inlinks(document, stream_inlinks):
+    url_dst, link_type, follow_keys, url_src = stream_inlinks
 
     if link_type == "a":
         is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
         mask = list_to_mask(follow_keys)
 
-        attributes['inlinks_internal_nb']['total'] += 1
-        attributes['inlinks_internal_nb']['follow' if is_follow else 'nofollow'] += 1
+        inlink_nb = document['inlinks_internal']['nb']
+        inlink_nb['total'] += 1
 
-        # add src to processed set
-        attributes['processed_inlink_url'].add(url_src)
+        follow = inlink_nb['follow' if is_follow else 'nofollow']
+        follow['total'] += 1
 
         if is_follow:
-            increments_follow_unique()
+            if not (url_src, mask) in document["processed_inlink_link"]:
+                follow['unique'] += 1
         else:
-            increments_nofollow_combination()
+            key = _get_nofollow_combination_key(follow_keys)
+            follow['combinations'][key] += 1
 
-        url_idx = attributes["inlinks_id_to_idx"].get((url_src, mask), None)
-        if url_idx is not None:
-            attributes["inlinks_internal"][url_idx][2] += 1
-        else:
-            attributes["inlinks_internal"].append([url_src, mask, 1])
-            attributes["inlinks_id_to_idx"][(url_src, mask)] = len(attributes["inlinks_internal"]) - 1
+        inlink_urls = document['inlinks_internal']['urls']
+        exists = (url_src, mask) in document['processed_inlink_link']
+        if len(inlink_urls) < 300 and not exists:
+            inlink_urls.append([url_src, mask])
+
+        # add src to processed set
+        document['processed_inlink_url'].add(url_src)
+        document['processed_inlink_link'].add((url_src, mask))
+
+        document['inlinks_internal']['urls_exists'] = True
 
     elif link_type.startswith('r'):
         # TODO dangerous assumption of crawl's string format to be 'r3xx'
         http_code = int(link_type[1:])
-        if 'redirects_from' not in attributes:
-            attributes['redirects_from'] = []
-            attributes['redirects_from_nb'] = 0
-
-        attributes['redirects_from_nb'] += 1
-        if len(attributes['redirects_from']) < 300:
-            attributes['redirects_from'].append({'url_id': url_src, 'http_code': http_code})
+        redirects_from = document['redirect']['from']
+        redirects_from['nb'] += 1
+        if len(redirects_from['urls']) < 300:
+            redirects_from['urls'].append([url_src, http_code])
+        redirects_from['urls_exists'] = True
 
     elif link_type == "canonical":
-        current_nb = attributes.get('canonical_from_nb', 0)
-
-        if current_nb is 0:
-            # init the counter
-            attributes['canonical_from_nb'] = 0
+        canonical_from = document['canonical']['from']
 
         # only count for none self canonical
         if url_dst != url_src:
-            current_nb += 1
-            attributes['canonical_from_nb'] = current_nb
-
-            if current_nb == 1:
-                attributes['canonical_from'] = [url_src]
-            else:
-                attributes['canonical_from'].append(url_src)
+            canonical_from['nb'] += 1
+            if len(canonical_from['urls']) < 300:
+                canonical_from['urls'].append(url_src)
+            canonical_from['urls_exists'] = True
 
 
-def extract_suggest(attributes, stream_item):
-    url_id, query_hash = stream_item
-    attributes['patterns'].append(query_hash)
+def _process_suggest(document, stream_suggests):
+    url_id, pattern_hash = stream_suggests
+    document['patterns'].append(pattern_hash)
 
 
-def extract_bad_links(attributes, stream_item):
-    _, url_dest_id, http_code = stream_item
-    error_link_key = 'error_links'
-    if error_link_key not in attributes:
-        attributes[error_link_key] = defaultdict(lambda: {'nb': 0, 'urls': []})
+def _process_badlinks(document, stream_badlinks):
+    _, url_dest_id, http_code = stream_badlinks
 
-    target_dict = attributes[error_link_key]
+    errors = document['outlinks_errors']
 
+    error_kind = None
     if 300 <= http_code < 400:
-        target_dict['3xx']['nb'] += 1
-        if len(target_dict['3xx']['urls']) < 10:
-            target_dict['3xx']['urls'].append(url_dest_id)
+        error_kind = '3xx'
     elif 400 <= http_code < 500:
-        target_dict['4xx']['nb'] += 1
-        if len(target_dict['4xx']['urls']) < 10:
-            target_dict['4xx']['urls'].append(url_dest_id)
+        error_kind = '4xx'
     elif http_code >= 500:
-        target_dict['5xx']['nb'] += 1
-        if len(target_dict['5xx']['urls']) < 10:
-            target_dict['5xx']['urls'].append(url_dest_id)
+        error_kind = '5xx'
 
-    # increment `any.nb` as a consolidate value
-    target_dict['any']['nb'] += 1
-    if 'urls' in target_dict['any']:
-        del target_dict['any']['urls']
+    errors[error_kind]['nb'] += 1
+    error_urls = errors[error_kind]['urls']
+    if len(error_urls) < 10:
+        error_urls.append(url_dest_id)
+
+    # increment the consolidate value
+    errors['total'] += 1
+
+    errors[error_kind]['urls_exists'] = True
 
 
-def end_extract_url(attributes):
+def _process_final(document):
+    """Final process the whole generated document
+
+    It does several things:
+        - remove temporary attributes used by other processing
+        - remove non-crawled url document unless it receives redirection
+          or canonical links
+        - some analytic processing that needs a global view of the whole
+          document
+        - control the size of some list (eg. list of links)
     """
-    If the url has not been crawled but received redirections or canonicals, we exceptionnaly
-    this one into elasticsearch
-    """
-    attributes['outlinks_internal_nb']['total_unique'] = len(attributes['processed_outlink_url'])
-    attributes['inlinks_internal_nb']['total_unique'] = len(attributes['processed_inlink_url'])
+    document['outlinks_internal']['nb']['unique'] = len(document['processed_outlink_url'])
+    document['inlinks_internal']['nb']['unique'] = len(document['processed_inlink_url'])
 
     # delete intermediate data structures
-    del attributes['processed_inlink_url']
-    del attributes['processed_outlink_url']
-    del attributes["outlinks_id_to_idx"]
-    del attributes["inlinks_id_to_idx"]
-
-    # only push up to 300 links information for each url
-    for link_direction in ('inlinks_internal', 'outlinks_internal'):
-        if len(attributes[link_direction]) > 300:
-            attributes[link_direction] = attributes[link_direction][0:300]
+    del document['processed_inlink_url']
+    del document['processed_outlink_url']
+    del document["processed_outlink_link"]
+    del document["processed_inlink_link"]
 
     # include not crawled url in generated document only if they've received
     # redirection or canonicals
-    if attributes['http_code'] in (0, 1, 2):
-        if 'redirects_from_nb' in attributes or 'canonical_from_nb' in attributes:
-            url = attributes['url']
-            url_id = attributes['id']
-            attributes.clear()
-            attributes.update({
+    if document['http_code'] in (0, 1, 2):
+        redirect_from_nb = document['redirect']['from']['nb']
+        canonical_from_nb = document['canonical']['from']['nb']
+        if redirect_from_nb > 0 or canonical_from_nb > 0:
+            url = document['url']
+            url_id = document['id']
+            document.clear()
+            document.update({
                 'id': url_id,
                 'url': url,
                 'http_code': 0
@@ -312,60 +324,43 @@ def end_extract_url(attributes):
         else:
             raise GroupWithSkipException()
 
+    # add `exists` info.
+
+    _clean_document(document)
+
 
 class UrlDocumentGenerator(object):
-    EXTRACTORS = {
-        'infos': extract_infos,
-        'contents': extract_contents,
-        'contents_duplicate': extract_contents_duplicate,
-        'inlinks': extract_inlinks,
-        'outlinks': extract_outlinks,
-        'suggest': extract_suggest,
-        'badlinks': extract_bad_links
+    """Aggregates incoming streams, produces a json document for each url
+
+    Format see `cdf.metadata.url` package
+    """
+    PROCESSORS = {
+        'infos': _process_infos,
+        'contents': _process_contents,
+        'contents_duplicate': _process_metadata_duplicate,
+        'inlinks': _process_inlinks,
+        'outlinks': _process_outlinks,
+        'suggest': _process_suggest,
+        'badlinks': _process_badlinks
     }
 
     def __init__(self, stream_patterns, **kwargs):
         self.stream_patterns = stream_patterns
         self.streams = kwargs
 
-    """
-    Return a document collection
+        # `urlids` is the reference stream
+        left = (self.stream_patterns, 0, _process_ids)
+        streams_ref = {key: (self.streams[key], idx_from_stream(key, 'id'),
+                             self.PROCESSORS[key])
+                       for key in self.streams.keys()}
+        self.generator = group_with(left, final_func=_process_final,
+                                    **streams_ref)
 
-    Format :
-
-        {
-            "url": "http://www.site.com/fr/my-article-1",
-            "protocol": "http",
-            "host": "www.site.com",
-            "path": "/fr/my-article-1",
-            "query_string": "?p=comments&offset=10",
-            "query_string_keys": ["p", "offset"],
-            "id": 1,
-            "date": "2013-10-10 09:10:12",
-            "depth": 1,
-            "data_mask": 3, // See Data Mask explanations
-            "http_code": 200,
-            "delay1": 120,
-            "delay2": 300,
-            "outlinks_internal_follow_nb": 4,
-            "outlinks_internal_nofollow_nb": 1,
-            "outlinks_external_follow_nb": 5,
-            "outlinks_external_nofollow_nb": 2,
-            "bytesize": 14554,
-            "inlinks_internal_nb": 100,
-            "inlinks_external_nb": 100,
-            "metadata": {
-                "title": ["My title"],
-                "description": ["My description"],
-                "h1": ["My first H1", "My second H1"]
-            },
-        }
-
-    """
     def __iter__(self):
-        left = (self.stream_patterns, 0, extract_patterns)
-        streams_ref = {key: (self.streams[key], idx_from_stream(key, 'id'), self.EXTRACTORS[key]) for key in self.streams.keys()}
-        return group_with(left, final_func=end_extract_url, **streams_ref)
+        return self.generator
+
+    def next(self):
+        return next(self.generator)
 
     def save_to_file(self, location):
         for file_type in self.files.iterkeys():
