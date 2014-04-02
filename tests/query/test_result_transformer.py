@@ -289,7 +289,7 @@ class TestExternalUrlNormalizer(unittest.TestCase):
             'redirect': {
                 'to': {
                     'url': {
-                        'url': 'www.abc.com',
+                        'url_str': 'www.abc.com',
                         'http_code': 300
                     }
                 }

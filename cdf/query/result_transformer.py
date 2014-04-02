@@ -407,8 +407,12 @@ class ExternalUrlNormalizer(ResultTransformer):
             for field in self._TARGET_FIELDS:
                 if path_in_dict(field, result):
                     target = get_subdict_from_path(field, result)
-                    if 'url' in target:
+                    if 'url_str' in target:
+                        # signals that this url is not crawled (external)
                         target['crawled'] = False
+                        # normalize `url_str` to `url`
+                        target['url'] = target['url_str']
+                        target.pop('url_str')
 
 
 def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):
