@@ -85,7 +85,7 @@ apt-get -y install python-virtualenv
 
 #install elasticsearch
 apt-get install openjdk-7-jre-headless -y
-ES_VERSION="0.90.7"
+ES_VERSION="1.0.1"
 wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-$ES_VERSION.deb
 sudo dpkg -i elasticsearch-$ES_VERSION.deb
 sudo service elasticsearch start
