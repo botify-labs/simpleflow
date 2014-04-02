@@ -163,9 +163,9 @@ class MockIntegrationTest(unittest.TestCase):
         es_doc_type = 'crawls'
         ud.prepare_crawl_index(CRAWL_ID, es_location, es_index, es_doc_type)
         for part_id in xrange(0, parts):
-            ud.generate_documents(CRAWL_ID, part_id, TEST_DIR, force_fetch=force_fetch, tmp_dir=RESULT_DIR)
-            ud.push_documents_to_elastic_search(TEST_DIR, part_id, es_location,
-                                                es_index, es_doc_type,
+            ud.generate_documents(CRAWL_ID, TEST_DIR, part_id, force_fetch=force_fetch, tmp_dir=RESULT_DIR)
+            ud.push_documents_to_elastic_search(CRAWL_ID, TEST_DIR, es_location,
+                                                es_index, es_doc_type, part_id=None,
                                                 force_fetch=force_fetch, tmp_dir=RESULT_DIR)
 
     @classmethod
