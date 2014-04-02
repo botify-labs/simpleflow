@@ -2,8 +2,8 @@
 import os
 import gzip
 import json
-
 import csv
+from urlparse import urlparse
 
 from pandas import HDFStore, Index
 
@@ -531,15 +531,17 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
 
 @with_temporary_dir
 def update_migration_es_v1_documents(crawl_id, s3_uri, tmp_dir=None, force_fetch=False):
+    s3_parse = urlparse(s3_uri)
     push_content(
-        os.path.join(s3_uri, "migration_es_v1", "documents_{}".format(crawl_id)),
+        os.path.join("s3://{}".format(s3_parse.netloc), "migration_es_v1", "documents_{}".format(crawl_id)),
         "done"
     )
 
 
 @with_temporary_dir
 def update_migration_es_v1_push(crawl_id, s3_uri, tmp_dir=None, force_fetch=False):
+    s3_parse = urlparse(s3_uri)
     push_content(
-        os.path.join(s3_uri, "migration_es_v1", "push_{}".format(crawl_id)),
+        os.path.join("s3://{}".format(s3_parse.netloc), "migration_es_v1", "push_{}".format(crawl_id)),
         "done"
     )

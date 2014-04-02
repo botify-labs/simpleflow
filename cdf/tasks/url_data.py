@@ -57,8 +57,9 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
 
 
 @with_temporary_dir
-def push_documents_to_elastic_search(crawl_id, s3_uri, part_id,
+def push_documents_to_elastic_search(crawl_id, s3_uri,
                                      es_location, es_index, es_doc_type,
+                                     part_id=None,
                                      tmp_dir=None,
                                      force_fetch=DEFAULT_FORCE_FETCH):
     """Push pre-generated url documents to ElasticSearch
