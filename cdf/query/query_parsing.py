@@ -247,6 +247,21 @@ class AnyContains(PredicateFilter):
         }
 
 
+class AnyRe(PredicateFilter):
+    def is_list_op(self):
+        return True
+
+    def nb_operands(self):
+        return 1
+
+    def transform(self):
+        return {
+            'regexp': {
+                self.field_value: self.value
+            }
+        }
+
+
 class Contains(PredicateFilter):
     def is_list_op(self):
         return False
@@ -445,6 +460,7 @@ _PREDICATE_LIST = {
     'any.contains': AnyContains,
     'any.starts': AnyStarts,
     'any.ends': AnyEnds,
+    'any.re': AnyRe,
 
     # non-list operators
     'eq': Eq,
