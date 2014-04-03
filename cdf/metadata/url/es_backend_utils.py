@@ -7,8 +7,6 @@ from .url_metadata import (STRING_TYPE, BOOLEAN_TYPE,
                            INT_TYPE, ES_DOC_VALUE)
 
 
-__ALL__ = ['QueryParser']
-
 _PROPERTY = 'properties'
 _SETTINGS = 'settings'
 
