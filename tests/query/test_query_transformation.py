@@ -9,15 +9,16 @@ from cdf.exceptions import BotifyQueryException
 CRAWL_ID = 1
 
 
-class TestQueryTransformation(unittest.TestCase):
-    """Validation test for transformed ElasticSearch queries"""
-
+class QueryTransformationTestCase(unittest.TestCase):
     def setUp(self):
         self.es_backend = ElasticSearchBackend(URLS_DATA_FORMAT_DEFINITION)
         self.parser = QueryParser(data_backend=self.es_backend)
         self.crawl_filter = {'term': {'crawl_id': CRAWL_ID}}
         self.not_crawled_filter = {'not': {'term': {'http_code': 0}}}
 
+
+class TestQueryTransformation(QueryTransformationTestCase):
+    """Validation test for transformed ElasticSearch queries"""
     def test_process_filter(self):
         query_filters = {
             "filters": {
@@ -270,3 +271,54 @@ class TestQueryTransformation(unittest.TestCase):
         }
         self.assertRaises(BotifyQueryException,
                           self.parser.get_es_query, query, CRAWL_ID)
+
+
+class TestAggregationTransformation(QueryTransformationTestCase):
+    def test_distinct_agg(self):
+        query = {
+            'aggs': {
+                'my_agg': {
+                    'group': [{
+                        'distinct': {
+                            'field': 'http_code',
+                            'size': 5
+                        }
+                    }],
+                    'metric': 'count'
+                }
+            }
+        }
+
+        expected_agg = {
+            'my_agg': {
+                'terms': {
+                    'field': 'http_code',
+                    'size': 5
+                }
+            }
+        }
+
+        result = self.get_es_query(query, CRAWL_ID)
+        self.assertEqual(expected_agg, result['aggs'])
+
+    def test_multiple_aggs(self):
+        query = {
+            'aggs': {
+                'my_agg_1': {
+                    'group': [{'distinct': {'field': 'field1'}}],
+                    'metric': 'count'
+                },
+                'my_agg_2': {
+                    'group': [{'distinct': {'field': 'field2'}}],
+                    'metric': 'count'
+                }
+            }
+        }
+
+        expected_agg = {
+            'my_agg_1': {'terms': {'field': 'field1', 'size': 50}},
+            'my_agg_2': {'terms': {'field': 'field2', 'size': 50}}
+        }
+
+        result = self.get_es_query(query, CRAWL_ID)
+        self.assertEqual(expected_agg, result['aggs'])

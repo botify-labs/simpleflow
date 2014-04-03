@@ -601,27 +601,130 @@ class SortField(Field):
                                  self.field_value)
 
 
-class BotifyQuery(Term):
-    """Class represents the whole front-end query"""
+# Aggregations
+class Aggs(Term):
+    """Aggregation component of the query
+    """
+    def __init__(self, named_aggs):
+        self.named_aggs = named_aggs
 
-    def __init__(self, fields, sorts, filter):
-        self.fields = fields
-        self.sorts = sorts
-        self.filter = filter
+    def transform(self):
+        return {agg.name: agg.transform()
+                for agg in self.named_aggs}
+
+    def validate(self):
+        for agg in self.named_aggs:
+            agg.validate()
+
+
+class NamedAgg(Term):
+    """An named aggregation term that contains multiple group
+    aggregator and metric operator
+    """
+    def __init__(self, name, group_ops, metric_ops):
+        self.name = name
+        self.group_ops = group_ops
+        self.metric_ops = metric_ops
+
+    # TODO support nested transform
+    def transform(self):
+        op = self.group_ops[0]
+        return op.transform()
+
+    def validate(self):
+        pass
+
+
+class AggOp(Term):
+    """Base for all aggregator (aggregation operator)
+    """
+    pass
+
+
+class GroupAggOp(AggOp):
+    """Group aggregator creates groups of elements
+    """
+    pass
+
+
+class DistinctOp(GroupAggOp):
+    """Create a group for each distinct value
+    """
+    def __init__(self, content):
+        """Init a distinct group aggregator
+
+        :param field: aggregation field, eg. `http_code`
+        :param size: size of the result set, default to 50
+        """
+        self.field = content['field']
+        self.size = content.get('size', 50)
 
     def transform(self):
         return {
-            'query': {'constant_score': {'filter': self.filter.transform()}},
-            'sort': self.sorts.transform(),
-            # start from ES v1, `fielddata` parsing is explicitly separated
-            # from `_source` parsing
-            '_source': self.fields.transform()
+            "terms": {
+                "field": self.field,
+                "size": self.size
+            }
         }
+
+    # TODO validate that this is on categorical fields
+    def validate(self):
+        pass
+
+
+class MetricAggOp(AggOp):
+    """Metric aggregator calculates metrics inside each group
+    """
+    pass
+
+
+class CountOp(MetricAggOp):
+    """Simple counting metric aggregator
+    """
+    # no impl needed for the moment
+    # in ElasticSearch each bucket always returns a `doc_count`
+    # which is exactly this aggregator is for
+    pass
+
+
+_GROUP_AGGS_LIST = {
+    'distinct': DistinctOp,
+}
+
+_METRIC_AGGS_LIST = {
+    'count': CountOp,
+}
+
+
+class BotifyQuery(Term):
+    """Class represents the whole front-end query"""
+
+    def __init__(self, fields, sorts, filter, aggs=None):
+        self.fields = fields
+        self.sorts = sorts
+        self.filter = filter
+        self.aggs = aggs
+
+    def transform(self):
+        result = {}
+        result['query'] = {'constant_score': {
+            'filter': self.filter.transform()}}
+        result['sort'] = self.sorts.transform()
+        # start from ES v1, `fielddata` parsing is explicitly separated
+        # from `_source` parsing
+        result['_source'] = self.fields.transform()
+
+        if self.aggs:
+            result['aggs'] = self.aggs.transform()
+
+        return result
 
     def validate(self):
         self.fields.validate()
         self.sorts.validate()
         self.filter.validate()
+        if self.aggs:
+            self.aggs.validate()
 
 
 class QueryParser(object):
@@ -757,6 +860,34 @@ class QueryParser(object):
         else:
             return self.parse_predicate_filter(filter)
 
+    def parse_aggregations(self, aggs):
+        if not isinstance(aggs, dict):
+            _raise_parsing_error('Aggs is not a dict', aggs)
+
+        named_aggs = [self.parse_named_aggregation(name, agg)
+                      for name, agg in aggs.iteritems()]
+        return Aggs(named_aggs)
+
+    def parse_named_aggregation(self, name, agg_content):
+        group_ops = agg_content['group']
+        metric_op = agg_content['metric']
+
+        return NamedAgg(name,
+                        [self.parse_group_aggregator(op) for op in group_ops],
+                        self.parse_metric_aggregator(metric_op))
+
+    # TODO support alias for `distinct`
+    def parse_group_aggregator(self, group_op):
+        op_name, content = next(group_op.iteritems())
+        if op_name not in _GROUP_AGGS_LIST:
+            _raise_parsing_error('Unknown group aggregator', group_op)
+        return _GROUP_AGGS_LIST[op_name](content)
+
+    # nothing to do for the moment
+    def parse_metric_aggregator(self, metric_op):
+        if metric_op not in _METRIC_AGGS_LIST:
+            _raise_parsing_error('Unknown metric aggregator', metric_op)
+
     def parse_botify_query(self, botify_query):
         """Parse a botify front-end query into the intermediate form
 
@@ -776,9 +907,15 @@ class QueryParser(object):
         if 'fields' not in botify_query:
             botify_query['fields'] = _DEFAULT_FIELD
 
-        return BotifyQuery(self.parse_fields(botify_query['fields']),
-                           self.parse_sorts(botify_query['sort']),
-                           self.parse_filter(botify_query['filters']))
+        fields = self.parse_fields(botify_query['fields'])
+        sorts = self.parse_sorts(botify_query['sort'])
+        filter = self.parse_filter(botify_query['filters'])
+        if 'aggs' in botify_query:
+            aggs = self.parse_aggregations(botify_query['aggs'])
+        else:
+            aggs = None
+
+        return BotifyQuery(fields, sorts, filter, aggs)
 
     @staticmethod
     def _merge_filters(query, filters):
