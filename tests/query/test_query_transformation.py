@@ -16,6 +16,10 @@ class QueryTransformationTestCase(unittest.TestCase):
         self.crawl_filter = {'term': {'crawl_id': CRAWL_ID}}
         self.not_crawled_filter = {'not': {'term': {'http_code': 0}}}
 
+    def get_es_query(self, query, crawl_id):
+        # no need to validate here
+        return self.parser.get_es_query(query, crawl_id, validate=False)
+
 
 class TestQueryTransformation(QueryTransformationTestCase):
     """Validation test for transformed ElasticSearch queries"""

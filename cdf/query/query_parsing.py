@@ -944,10 +944,11 @@ class QueryParser(object):
         botify_query['filters'] = {'and': to_merge}
         return botify_query
 
-    def get_es_query(self, botify_query, crawl_id):
+    def get_es_query(self, botify_query, crawl_id, validate=True):
         """Generate ElasticSearch query from a botify query
 
         :param crawl_id: unique id of the crawl in question
+        :param validate: will query validation be performed
         :returns: a valid ElasticSearch query, in json format
         """
 
@@ -969,7 +970,8 @@ class QueryParser(object):
         parsed_query = self.parse_botify_query(botify_query)
 
         # semantic validation
-        parsed_query.validate()
+        if validate:
+            parsed_query.validate()
 
         # return the transformed query
         return parsed_query.transform()
