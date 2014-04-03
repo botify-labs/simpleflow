@@ -32,6 +32,7 @@
 #       Set to `None` to avoid any default values, so if this field is missing
 #       in ElasticSearch result, no default value will be added
 
+# Type related
 LONG_TYPE = 'long'
 INT_TYPE = 'integer'
 STRING_TYPE = 'string'
@@ -39,11 +40,17 @@ BOOLEAN_TYPE = 'boolean'
 STRUCT_TYPE = 'struct'
 DATE_TYPE = 'date'
 
+# Data format related
 ES_NO_INDEX = 'es:no_index'
 ES_NOT_ANALYZED = 'es:not_analyzed'
 ES_DOC_VALUE = 'es:doc_values'
 LIST = 'list'
 MULTI_FIELD = 'es:multi_field'
+
+# Aggregation related
+# categorical fields have a finite cardinality of distinct values
+AGG_CATEGORICAL = 'agg:categorical'
+AGG_NUMERICAL = 'agg:numerical'
 
 
 URLS_DATA_FORMAT_DEFINITION = {
@@ -55,7 +62,10 @@ URLS_DATA_FORMAT_DEFINITION = {
     "url_hash": {"type": LONG_TYPE},
     "byte_size": {
         "type": INT_TYPE,
-        "settings": {ES_DOC_VALUE}
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "date_crawled": {
         "type": DATE_TYPE,
@@ -63,28 +73,51 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
     "delay_first_byte": {
         "type": INT_TYPE,
-        "settings": {ES_DOC_VALUE}
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "delay_last_byte": {
         "type": INT_TYPE,
-        "settings": {ES_DOC_VALUE}
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "depth": {
         "type": INT_TYPE,
-        "settings": {ES_DOC_VALUE}
+        "settings": {
+            ES_DOC_VALUE,
+            # assume possible depth is finite
+            AGG_CATEGORICAL
+        }
     },
     "gzipped": {"type": BOOLEAN_TYPE},
     "content_type": {
         "type": STRING_TYPE,
-        "settings": {ES_NOT_ANALYZED, ES_DOC_VALUE}
+        "settings": {
+            ES_NOT_ANALYZED,
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL
+        }
     },
     "host": {
         "type": STRING_TYPE,
-        "settings": {ES_NOT_ANALYZED, ES_DOC_VALUE}
+        "settings": {
+            ES_NOT_ANALYZED,
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL
+        }
     },
     "http_code": {
         "type": INT_TYPE,
-        "settings": {ES_DOC_VALUE}
+        "settings": {
+            ES_DOC_VALUE,
+            # `http_code` have 2 roles
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "id": {
         "type": INT_TYPE,
@@ -103,7 +136,11 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
     "protocol": {
         "type": STRING_TYPE,
-        "settings": {ES_NOT_ANALYZED, ES_DOC_VALUE}
+        "settings": {
+            ES_NOT_ANALYZED,
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL
+        }
     },
     "query_string": {
         "type": STRING_TYPE,
@@ -116,10 +153,12 @@ URLS_DATA_FORMAT_DEFINITION = {
 
     # meta tag related
     "metadata.robots.nofollow": {
-        "type": BOOLEAN_TYPE
+        "type": BOOLEAN_TYPE,
+        "settings": {AGG_CATEGORICAL}
     },
     "metadata.robots.noindex": {
-        "type": BOOLEAN_TYPE
+        "type": BOOLEAN_TYPE,
+        "settings": {AGG_CATEGORICAL}
     },
 
     # title tag
@@ -400,7 +439,10 @@ URLS_DATA_FORMAT_DEFINITION = {
             ES_NO_INDEX
         }
     },
-    "canonical.to.equal": {"type": BOOLEAN_TYPE},
+    "canonical.to.equal": {
+        "type": BOOLEAN_TYPE,
+        "settings": {AGG_CATEGORICAL}
+    },
     "canonical.to.url_exists": {
         "type": "boolean",
         "default_value": None
