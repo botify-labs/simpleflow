@@ -695,6 +695,8 @@ _METRIC_AGGS_LIST = {
     'count': CountOp,
 }
 
+_DEFAULT_METRIC = 'count'
+
 
 class BotifyQuery(Term):
     """Class represents the whole front-end query"""
@@ -869,16 +871,26 @@ class QueryParser(object):
         return Aggs(named_aggs)
 
     def parse_named_aggregation(self, name, agg_content):
+        if 'group' not in agg_content:
+            raise _raise_parsing_error('Group aggregators are missing',
+                                       agg_content)
+
         group_ops = agg_content['group']
-        metric_op = agg_content['metric']
+        if not isinstance(group_ops, list):
+            raise _raise_parsing_error('Group aggregators are not in a list',
+                                       agg_content)
+        # metric op default to `count`
+        metric_op = agg_content.get('metric', _DEFAULT_METRIC)
 
         return NamedAgg(name,
                         [self.parse_group_aggregator(op) for op in group_ops],
                         self.parse_metric_aggregator(metric_op))
 
-    # TODO support alias for `distinct`
     def parse_group_aggregator(self, group_op):
-        op_name, content = next(group_op.iteritems())
+        if isinstance(group_op, _STR_TYPE):
+            op_name, content = 'distinct', {'field': group_op}
+        else:
+            op_name, content = next(group_op.iteritems())
         if op_name not in _GROUP_AGGS_LIST:
             _raise_parsing_error('Unknown group aggregator', group_op)
         return _GROUP_AGGS_LIST[op_name](content)

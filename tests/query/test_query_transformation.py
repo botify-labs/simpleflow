@@ -305,6 +305,28 @@ class TestAggregationTransformation(QueryTransformationTestCase):
         result = self.get_es_query(query, CRAWL_ID)
         self.assertEqual(expected_agg, result['aggs'])
 
+    def test_distinct_agg_alias(self):
+        query = {
+            'aggs': {
+                'my_agg': {
+                    'group': ['http_code'],
+                    'metric': 'count'
+                }
+            }
+        }
+
+        expected_agg = {
+            'my_agg': {
+                'terms': {
+                    'field': 'http_code',
+                    'size': 50
+                }
+            }
+        }
+
+        result = self.get_es_query(query, CRAWL_ID)
+        self.assertEqual(expected_agg, result['aggs'])
+
     def test_multiple_aggs(self):
         query = {
             'aggs': {

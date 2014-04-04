@@ -145,3 +145,52 @@ class TestFilterParsing(ParsingTestCase):
         invalid = {'predicate': 'exists', 'field': 'error_links'}
         parsed = self.parser.parse_predicate_filter(invalid)
         self.assertParsingError(parsed.validate)
+
+
+class TestAggregationParsing(ParsingTestCase):
+    def test_parse_single_agg(self):
+        valid = {'a1': {'group': [{'distinct': {'field': 'http_code'}}],
+                        'metric': 'count'}}
+        parsed = self.parser.parse_aggregations(valid)
+        parsed.validate()
+
+    def test_parse_default_metric(self):
+        valid = {'a1': {'group': [{'distinct': {'field': 'http_code'}}]}}
+        parsed = self.parser.parse_aggregations(valid)
+        parsed.validate()
+
+    def test_parse_distinct_alias(self):
+        valid = {'a1': {'group': ['http_code'],
+                        'metric': 'count'}}
+        parsed = self.parser.parse_aggregations(valid)
+        parsed.validate()
+
+    def test_parse_multiple_aggs(self):
+        valid = {'a1': {'group': [{'distinct': {'field': 'http_code'}}],
+                        'metric': 'count'},
+                 'a2': {'group': [{'distinct': {'field': 'http_code'}}],
+                        'metric': 'count'}}
+        parsed = self.parser.parse_aggregations(valid)
+        parsed.validate()
+
+    def test_parse_unknown_group_op(self):
+        invalid = {'a1': {'group': [{'unknown': {'field': 'http_code'}}],
+                          'metric': 'count'}}
+        self.assertParsingError(self.parser.parse_aggregations, invalid)
+
+    def test_parse_unknown_metric_op(self):
+        invalid = {'a1': {'group': [{'distinct': {'field': 'http_code'}}],
+                          'metric': 'unknown'}}
+        self.assertParsingError(self.parser.parse_aggregations, invalid)
+
+    def test_parse_missing_group(self):
+        invalid = {'a1': {'metric': 'count'}}
+        self.assertParsingError(self.parser.parse_aggregations, invalid)
+
+    def test_parse_wrong_group_format(self):
+        # group should be a list of group ops
+        invalid = {'a1': {'group': {'unknown': {'field': 'http_code'}},
+                          'metric': 'count'}}
+        self.assertParsingError(self.parser.parse_aggregations, invalid)
+
+    # TODO semantic validation of aggregate ops
