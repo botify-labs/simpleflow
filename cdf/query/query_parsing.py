@@ -652,9 +652,6 @@ class DistinctOp(GroupAggOp):
     """
     def __init__(self, content):
         """Init a distinct group aggregator
-
-        :param field: aggregation field, eg. `http_code`
-        :param size: size of the result set, default to 50
         """
         self.field = content['field']
         self.size = content.get('size', 50)
@@ -669,6 +666,30 @@ class DistinctOp(GroupAggOp):
 
     # TODO validate that this is on categorical fields
     def validate(self):
+        pass
+
+
+class RangeOp(GroupAggOp):
+    """Create a group for each numeric range
+    """
+    def __init__(self, content):
+        """Init a range group aggregator
+        """
+        self.ranges = content['ranges']
+        self.field = content['field']
+
+    def transform(self):
+        return {
+            'range': {
+                'field': self.field,
+                'ranges': self.ranges
+            }
+        }
+
+    # TODO validate semantics
+    def validate(self):
+        # validate ranges format
+        # validate numerical fields
         pass
 
 
@@ -689,6 +710,7 @@ class CountOp(MetricAggOp):
 
 _GROUP_AGGS_LIST = {
     'distinct': DistinctOp,
+    'range': RangeOp
 }
 
 _METRIC_AGGS_LIST = {
@@ -888,6 +910,7 @@ class QueryParser(object):
 
     def parse_group_aggregator(self, group_op):
         if isinstance(group_op, _STR_TYPE):
+            # alias for `distinct` op
             op_name, content = 'distinct', {'field': group_op}
         else:
             op_name, content = next(group_op.iteritems())

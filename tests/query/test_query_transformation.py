@@ -327,6 +327,34 @@ class TestAggregationTransformation(QueryTransformationTestCase):
         result = self.get_es_query(query, CRAWL_ID)
         self.assertEqual(expected_agg, result['aggs'])
 
+    def test_range_agg(self):
+        ranges = [{'from': 30, 'to': 40},
+                  {'from': 50}]
+        query = {
+            'aggs': {
+                'my_agg': {
+                    'group': [{
+                        'range': {
+                            'field': 'http_code',
+                            'ranges': ranges
+                        }
+                    }],
+                }
+            }
+        }
+
+        expected_agg = {
+            'my_agg': {
+                'range': {
+                    'field': 'http_code',
+                    'ranges': ranges
+                }
+            }
+        }
+
+        result = self.get_es_query(query, CRAWL_ID)
+        self.assertEqual(expected_agg, result['aggs'])
+
     def test_multiple_aggs(self):
         query = {
             'aggs': {
