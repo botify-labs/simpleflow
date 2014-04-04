@@ -415,6 +415,26 @@ class ExternalUrlNormalizer(ResultTransformer):
                         target.pop('url_str')
 
 
+class AggregationTransformer(ResultTransformer):
+    """Unify aggregation result format"""
+
+    def __init__(self, agg_results):
+        self.agg_results = agg_results
+
+    # simple solution for the moment
+    #   - no nested bucket
+    #   - only support count metric
+    def transform(self):
+        for name, results in self.agg_results.iteritems():
+            if 'buckets' in results:
+                # rename `doc_count` to `count`
+                for bucket in results['buckets']:
+                    bucket['count'] = bucket.pop('doc_count')
+
+                # rename `buckets` to `groups`
+                results['groups'] = results.pop('buckets')
+
+
 def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):
     """Walk through every result and transform it"""
     transformers = [
@@ -424,3 +444,7 @@ def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):
     ]
     for trans in transformers:
         trans.transform()
+
+
+def transform_aggregation_result(agg_results):
+    AggregationTransformer(agg_results).transform()

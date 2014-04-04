@@ -5,7 +5,8 @@ from cdf.metadata.url import ELASTICSEARCH_BACKEND, ElasticSearchBackend
 
 from cdf.query.result_transformer import (IdToUrlTransformer,
                                           DefaultValueTransformer,
-                                          ExternalUrlNormalizer)
+                                          ExternalUrlNormalizer,
+                                          AggregationTransformer)
 
 ELASTICSEARCH_INDEX = 'mock'
 CRAWL_ID = 1
@@ -368,3 +369,101 @@ class TestDefaultValueTransformer(unittest.TestCase):
 
         expected = [{'outer': {'middle': {'list': [], 'int': 0}}}]
         self.assertEqual(d.results, expected)
+
+
+class TestAggregationResultTransformer(unittest.TestCase):
+    def setUp(self):
+        self._distinct_result = {
+            "my_agg_1": {
+                "buckets": [
+                    {
+                        "key": "a",
+                        "doc_count": 10
+                    },
+                    {
+                        "key": "b",
+                        "doc_count": 10
+                    },
+                ]
+            }
+        }
+
+        self._range_result = {
+            "my_agg_2": {
+                "buckets": [
+                    {
+                        "to": 50,
+                        "doc_count": 2
+                    },
+                    {
+                        "from": 50,
+                        "to": 100,
+                        "doc_count": 4
+                    }
+                ]
+            }
+        }
+
+    def test_distinct_result(self):
+        results = self._distinct_result
+        d = AggregationTransformer(results)
+        d.transform()
+
+        expected = {
+            "my_agg_1": {
+                "groups": [
+                    {
+                        "key": "a",
+                        "count": 10
+                    },
+                    {
+                        "key": "b",
+                        "count": 10
+                    },
+                ]
+            }
+        }
+        self.assertEqual(results, expected)
+
+    def test_range_result(self):
+        results = self._range_result
+        d = AggregationTransformer(results)
+        d.transform()
+
+        expected = {
+            "my_agg_2": {
+                "groups": [
+                    {
+                        "to": 50,
+                        "count": 2
+                    },
+                    {
+                        "from": 50,
+                        "to": 100,
+                        "count": 4
+                    }
+                ]
+            }
+        }
+        self.assertEqual(results, expected)
+
+    def test_empty_result(self):
+        results = {}
+        d = AggregationTransformer(results)
+        d.transform()
+        self.assertEqual(results, {})
+
+    def test_multiple_aggs(self):
+        results = {
+            'agg1': {'buckets': [{'key': 'a', 'doc_count': 1}]},
+            'agg2': {'buckets': [{'key': 'b', 'doc_count': 2}]}
+        }
+
+        d = AggregationTransformer(results)
+        d.transform()
+
+        expected = {
+            'agg1': {'groups': [{'key': 'a', 'count': 1}]},
+            'agg2': {'groups': [{'key': 'b', 'count': 2}]}
+        }
+        self.assertEqual(results, expected)
