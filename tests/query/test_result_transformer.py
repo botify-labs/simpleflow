@@ -413,11 +413,11 @@ class TestAggregationResultTransformer(unittest.TestCase):
             "my_agg_1": {
                 "groups": [
                     {
-                        "key": "a",
+                        "key": ["a"],
                         "count": 10
                     },
                     {
-                        "key": "b",
+                        "key": ["b"],
                         "count": 10
                     },
                 ]
@@ -434,12 +434,11 @@ class TestAggregationResultTransformer(unittest.TestCase):
             "my_agg_2": {
                 "groups": [
                     {
-                        "to": 50,
+                        "key": [{"to": 50}],
                         "count": 2
                     },
                     {
-                        "from": 50,
-                        "to": 100,
+                        "key": [{"from": 50, "to": 100}],
                         "count": 4
                     }
                 ]
@@ -463,7 +462,7 @@ class TestAggregationResultTransformer(unittest.TestCase):
         d.transform()
 
         expected = {
-            'agg1': {'groups': [{'key': 'a', 'count': 1}]},
-            'agg2': {'groups': [{'key': 'b', 'count': 2}]}
+            'agg1': {'groups': [{'key': ['a'], 'count': 1}]},
+            'agg2': {'groups': [{'key': ['b'], 'count': 2}]}
         }
         self.assertEqual(results, expected)

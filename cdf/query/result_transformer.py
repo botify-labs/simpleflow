@@ -421,14 +421,32 @@ class AggregationTransformer(ResultTransformer):
     def __init__(self, agg_results):
         self.agg_results = agg_results
 
+    @classmethod
+    def _is_terms(cls, bucket):
+        return 'key' in bucket
+
+    @classmethod
+    def _is_range(cls, bucket):
+        return 'to' in bucket or 'from' in bucket
+
     # simple solution for the moment
     #   - no nested bucket
     #   - only support count metric
     def transform(self):
         for name, results in self.agg_results.iteritems():
             if 'buckets' in results:
-                # rename `doc_count` to `count`
                 for bucket in results['buckets']:
+                    # arrange aggregation keys
+                    if self._is_terms(bucket):
+                        bucket['key'] = [bucket.pop('key')]
+                    if self._is_range(bucket):
+                        key = {}
+                        for k in ('from', 'to'):
+                            if k in bucket:
+                                key[k] = bucket.pop(k)
+                        bucket['key'] = [key]
+
+                    # rename `doc_count` to `count`
                     bucket['count'] = bucket.pop('doc_count')
 
                 # rename `buckets` to `groups`
