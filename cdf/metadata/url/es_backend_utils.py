@@ -4,7 +4,8 @@ from cdf.utils.dict import update_path_in_dict
 from .url_metadata import (STRING_TYPE, BOOLEAN_TYPE,
                            STRUCT_TYPE, MULTI_FIELD, LIST,
                            ES_NOT_ANALYZED, ES_NO_INDEX, LONG_TYPE,
-                           INT_TYPE, ES_DOC_VALUE)
+                           INT_TYPE, ES_DOC_VALUE,
+                           AGG_CATEGORICAL, AGG_NUMERICAL)
 
 
 _PROPERTY = 'properties'
@@ -55,6 +56,14 @@ def _is_multi_field(field_values):
 
 def _is_noindex_field(field_values):
     return _SETTINGS in field_values and ES_NO_INDEX in field_values[_SETTINGS]
+
+
+def _is_categorical_field(field_values):
+    return _SETTINGS in field_values and AGG_CATEGORICAL in field_values[_SETTINGS]
+
+
+def _is_numerical_field(field_values):
+    return _SETTINGS in field_values and AGG_NUMERICAL in field_values[_SETTINGS]
 
 
 def _parse_field_values(field_name, elem_values):
@@ -137,6 +146,9 @@ class DataBackend(object):
     def field_default_value(self):
         raise NotImplementedError()
 
+    def aggregation_fields(self):
+        raise NotImplementedError()
+
     def mapping(self):
         raise NotImplementedError()
 
@@ -152,6 +164,9 @@ class ElasticSearchBackend(DataBackend):
         self._list_fields = None
         self._field_default_value = None
         self._noindex_fields = None
+        self._aggregation_fields = None
+        self._categorical_agg_fields = None
+        self._numerical_agg_fields = None
         self._mapping = None
 
     @classmethod
@@ -346,6 +361,40 @@ class ElasticSearchBackend(DataBackend):
         :returns: a set for membership lookup
         """
         if self._noindex_fields is None:
-            self._noindex_fields = {path for path, values in self.data_format.iteritems()
-                                 if _is_noindex_field(values)}
+            self._noindex_fields = {
+                path for path, values in self.data_format.iteritems()
+                if _is_noindex_field(values)}
         return self._noindex_fields
+
+    def categorical_agg_fields(self):
+        if self._categorical_agg_fields is None:
+            self._categorical_agg_fields = {
+                path for path, values in self.data_format.iteritems()
+                if _is_categorical_field(values)}
+        return self._categorical_agg_fields
+
+    def numerical_agg_fields(self):
+        if self._numerical_agg_fields is None:
+            self._numerical_agg_fields = {
+                path for path, values in self.data_format.iteritems()
+                if _is_numerical_field(values)}
+        return self._numerical_agg_fields
+
+    def aggregation_fields(self):
+        """Generate a lookup for all aggregation fields
+
+        :return: a dict which contains 2 sub-dict
+            {'categorical': {...}, 'numerical': {...}}
+        """
+        if self._aggregation_fields is None:
+            result = {'categorical': set(),
+                      'numerical': set()}
+
+            for path, values in self.data_format.iteritems():
+                if _is_numerical_field(values):
+                    result['numerical'].add(path)
+                if _is_categorical_field(values):
+                    result['categorical'].add(path)
+            self._aggregation_fields = result
+
+        return self._aggregation_fields
