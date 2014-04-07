@@ -3,7 +3,7 @@ import copy
 from elasticsearch import Elasticsearch
 from cdf.metadata.url import ELASTICSEARCH_BACKEND
 from cdf.query.query_parsing import QueryParser
-from cdf.query.result_transformer import transform_result
+from cdf.query.result_transformer import transform_result, transform_aggregation_result
 from cdf.utils.dict import deep_dict
 
 
@@ -35,6 +35,7 @@ class Query(object):
         self.sort = sort
         self._count = 0
         self._results = []
+        self._aggs = {}
         self.executed = False
         self.backend = backend
 
@@ -58,9 +59,17 @@ class Query(object):
         self._run()
         return self._count
 
+    @property
+    def aggs(self):
+        self._run()
+        return self._aggs
+
     @staticmethod
     def _get_hit_count(es_result):
         return es_result['hits']['total']
+
+    def _has_agg(self):
+        return 'aggs' in self.botify_query
 
     def _run(self):
         """Launch the process of a ES query
@@ -138,6 +147,10 @@ class Query(object):
         # Apply transformers
         # Reminder: in-place transformation
         transform_result(self._results, self, backend=self.backend)
+
+        if self._has_agg():
+            self._aggs = temp_results['aggregations']
+            transform_aggregation_result(self._aggs)
 
         # Flip flag on execution success
         self.executed = True
