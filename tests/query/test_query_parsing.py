@@ -3,12 +3,33 @@ from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
 from cdf.exceptions import BotifyQueryException
 
-from stub_mapping import STUB_FORMAT
+
+_STUB_FORMAT = {
+    'http_code': {
+        'type': 'integer',
+        'settings': {
+            'agg:categorical',
+            'agg:numerical',
+        }
+    },
+    'host': {
+        'type': 'string',
+        'settings': {
+            'agg:categorical',
+        }
+    },
+    'metadata.title.nb': {
+        'type': 'integer',
+        'settings': {
+            'agg:numerical'
+        }
+    }
+}
 
 
 class ParsingTestCase(unittest.TestCase):
     def setUp(self):
-        self.parser = QueryParser(ElasticSearchBackend(STUB_FORMAT))
+        self.parser = QueryParser(ElasticSearchBackend(_STUB_FORMAT))
 
     def assertParsingError(self, func, *args, **kwargs):
         self.assertRaises(BotifyQueryException,
@@ -160,7 +181,7 @@ class TestAggregationParsing(ParsingTestCase):
         parsed.validate()
 
     def test_parse_distinct_alias(self):
-        valid = {'a1': {'group': ['http_code'],
+        valid = {'a1': {'group': ['host'],
                         'metric': 'count'}}
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
@@ -193,4 +214,40 @@ class TestAggregationParsing(ParsingTestCase):
                           'metric': 'count'}}
         self.assertParsingError(self.parser.parse_aggregations, invalid)
 
-    # TODO semantic validation of aggregate ops
+    def test_wrong_agg_field(self):
+        # `path` is not an aggregation field
+        invalid = {'a1': {'group': ['path']}}
+        parsed = self.parser.parse_aggregations(invalid)
+        self.assertParsingError(parsed.validate)
+
+    def test_wrong_distinct_field(self):
+        # `metadata.title.nb` is not a categorical field
+        invalid = {'a1': {'group': ['metadata.title.nb']}}
+        parsed = self.parser.parse_aggregations(invalid)
+        self.assertParsingError(parsed.validate)
+
+    def test_wrong_range_field(self):
+        # `host` is not a numerical field
+        invalid = {'a1': {'group': [
+            {'range': {'field': 'host', 'ranges': [{'to': 20}]}}]}}
+        parsed = self.parser.parse_aggregations(invalid)
+        self.assertParsingError(parsed.validate)
+
+    def test_wrong_range_structure(self):
+        # unknown range param
+        invalid = {'a1': {'group': [{
+            'range': {
+                'field': 'http_code',
+                'ranges': [{'a': 100, 'b': 200}]
+            }}]}}
+        parsed = self.parser.parse_aggregations(invalid)
+        self.assertParsingError(parsed.validate)
+
+        # too much param
+        invalid = {'a1': {'group': [{
+            'range': {
+                'field': 'http_code',
+                'ranges': [{'from': 100, 'to': 200, 'tooooo': 250}]
+            }}]}}
+        parsed = self.parser.parse_aggregations(invalid)
+        self.assertParsingError(parsed.validate)

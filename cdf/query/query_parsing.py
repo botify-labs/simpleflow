@@ -632,7 +632,9 @@ class NamedAgg(Term):
         return op.transform()
 
     def validate(self):
-        pass
+        for op in self.group_ops:
+            op.validate()
+        self.metric_ops.validate()
 
 
 class AggOp(Term):
@@ -650,11 +652,12 @@ class GroupAggOp(AggOp):
 class DistinctOp(GroupAggOp):
     """Create a group for each distinct value
     """
-    def __init__(self, content):
+    def __init__(self, content, agg_fields):
         """Init a distinct group aggregator
         """
         self.field = content['field']
         self.size = content.get('size', 50)
+        self.valid_fields = agg_fields['categorical']
 
     def transform(self):
         return {
@@ -664,19 +667,21 @@ class DistinctOp(GroupAggOp):
             }
         }
 
-    # TODO validate that this is on categorical fields
     def validate(self):
-        pass
+        if self.field not in self.valid_fields:
+            _raise_parsing_error('Field is not valid for distinct aggregation',
+                                 self.field)
 
 
 class RangeOp(GroupAggOp):
     """Create a group for each numeric range
     """
-    def __init__(self, content):
+    def __init__(self, content, agg_fields):
         """Init a range group aggregator
         """
         self.ranges = content['ranges']
         self.field = content['field']
+        self.valid_fields = agg_fields['numerical']
 
     def transform(self):
         return {
@@ -686,11 +691,20 @@ class RangeOp(GroupAggOp):
             }
         }
 
-    # TODO validate semantics
     def validate(self):
-        # validate ranges format
-        # validate numerical fields
-        pass
+        # validate aggregation field
+        if self.field not in self.valid_fields:
+            _raise_parsing_error('Field is not valid for range aggregation',
+                                 self.field)
+
+        # validate range structure
+        for range in self.ranges:
+            if len(range) > 2:
+                _raise_parsing_error('Range structure is not valid',
+                                     self.ranges)
+            if 'to' not in range and 'from' not in range:
+                _raise_parsing_error('Range structure is not valid',
+                                     self.ranges)
 
 
 class MetricAggOp(AggOp):
@@ -705,7 +719,11 @@ class CountOp(MetricAggOp):
     # no impl needed for the moment
     # in ElasticSearch each bucket always returns a `doc_count`
     # which is exactly this aggregator is for
-    pass
+    def transform(self):
+        pass
+
+    def validate(self):
+        pass
 
 
 _GROUP_AGGS_LIST = {
@@ -751,6 +769,7 @@ class BotifyQuery(Term):
             self.aggs.validate()
 
 
+# TODO refactor split class
 class QueryParser(object):
     """Parser for botify front-end query
 
@@ -767,6 +786,7 @@ class QueryParser(object):
         self.list_fields = data_backend.list_fields()
         self.query_fields = data_backend.query_fields()
         self.select_fields = data_backend.select_fields()
+        self.agg_fields = data_backend.aggregation_fields()
 
     def parse_field(self, field):
         """Parse a single field"""
@@ -916,12 +936,13 @@ class QueryParser(object):
             op_name, content = next(group_op.iteritems())
         if op_name not in _GROUP_AGGS_LIST:
             _raise_parsing_error('Unknown group aggregator', group_op)
-        return _GROUP_AGGS_LIST[op_name](content)
+        return _GROUP_AGGS_LIST[op_name](content, self.agg_fields)
 
     # nothing to do for the moment
     def parse_metric_aggregator(self, metric_op):
         if metric_op not in _METRIC_AGGS_LIST:
             _raise_parsing_error('Unknown metric aggregator', metric_op)
+        return _METRIC_AGGS_LIST[metric_op]()
 
     def parse_botify_query(self, botify_query):
         """Parse a botify front-end query into the intermediate form
