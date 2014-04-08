@@ -2,6 +2,7 @@ import ujson
 from copy import deepcopy
 from itertools import izip
 from cdf.analysis.urls.utils import is_link_internal
+from cdf.log import logger
 from cdf.metadata.raw import (STREAMS_HEADERS, CONTENT_TYPE_INDEX,
                               MANDATORY_CONTENT_TYPES)
 from cdf.core.streams.transformations import group_with
@@ -225,7 +226,10 @@ def _process_inlinks(document, stream_inlinks):
                 follow['unique'] += 1
         else:
             key = _get_nofollow_combination_key(follow_keys)
-            follow['combinations'][key] += 1
+            if 'robots' in key:
+                logger.warn('Skip `robots` mask in inlink mask')
+            else:
+                follow['combinations'][key] += 1
 
         inlink_urls = document['inlinks_internal']['urls']
         exists = (url_src, mask) in document['processed_inlink_link']
