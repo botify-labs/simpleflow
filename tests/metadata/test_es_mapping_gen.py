@@ -188,6 +188,31 @@ class TestMappingGeneration(unittest.TestCase):
 
         self.assertEqual(result, expected)
 
+    def test_agg_fields(self):
+        data_format = {
+            'error_links.3xx.urls': {},
+            'error_links.3xx.nb': {
+                'settings': {
+                    'agg:numerical'
+                }
+            },
+            'http_code': {
+                'settings': {
+                    'agg:numerical',
+                    'agg:categorical'
+                }
+            }
+        }
+
+        expected = {
+            'numerical': {'http_code', 'error_links.3xx.nb'},
+            'categorical': {'http_code'}
+        }
+
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.aggregation_fields()
+        self.assertEqual(result, expected)
+
     def test_empty_document_generation(self):
         data_format = {
             'outlinks.nb.nofollow.combinations.link': {

@@ -1,13 +1,12 @@
 from copy import deepcopy
 
 from cdf.utils.dict import update_path_in_dict
-from .url_metadata import (_STRING_TYPE, _BOOLEAN_TYPE,
-                           _STRUCT_TYPE, _MULTI_FIELD, _LIST,
-                           _NOT_ANALYZED, _NO_INDEX, _LONG_TYPE,
-                           _INT_TYPE, _DOC_VALUE)
+from .url_metadata import (STRING_TYPE, BOOLEAN_TYPE,
+                           STRUCT_TYPE, MULTI_FIELD, LIST,
+                           ES_NOT_ANALYZED, ES_NO_INDEX, LONG_TYPE,
+                           INT_TYPE, ES_DOC_VALUE,
+                           AGG_CATEGORICAL, AGG_NUMERICAL)
 
-
-__ALL__ = ['QueryParser']
 
 _PROPERTY = 'properties'
 _SETTINGS = 'settings'
@@ -32,31 +31,39 @@ def _parse_field_path(path):
 
 
 def _is_number_field(field_values):
-    return _get_type(field_values) in (_LONG_TYPE, _INT_TYPE)
+    return _get_type(field_values) in (LONG_TYPE, INT_TYPE)
 
 
 def _is_struct_field(field_values):
-    return _get_type(field_values) == _STRUCT_TYPE
+    return _get_type(field_values) == STRUCT_TYPE
 
 
 def _is_boolean_field(field_values):
-    return _get_type(field_values) == _BOOLEAN_TYPE
+    return _get_type(field_values) == BOOLEAN_TYPE
 
 
 def _is_string_field(field_values):
-    return _get_type(field_values) == _STRING_TYPE
+    return _get_type(field_values) == STRING_TYPE
 
 
 def _is_list_field(field_values):
-    return _SETTINGS in field_values and _LIST in field_values[_SETTINGS]
+    return _SETTINGS in field_values and LIST in field_values[_SETTINGS]
 
 
 def _is_multi_field(field_values):
-    return _SETTINGS in field_values and _MULTI_FIELD in field_values[_SETTINGS]
+    return _SETTINGS in field_values and MULTI_FIELD in field_values[_SETTINGS]
 
 
 def _is_noindex_field(field_values):
-    return _SETTINGS in field_values and _NO_INDEX in field_values[_SETTINGS]
+    return _SETTINGS in field_values and ES_NO_INDEX in field_values[_SETTINGS]
+
+
+def _is_categorical_field(field_values):
+    return _SETTINGS in field_values and AGG_CATEGORICAL in field_values[_SETTINGS]
+
+
+def _is_numerical_field(field_values):
+    return _SETTINGS in field_values and AGG_NUMERICAL in field_values[_SETTINGS]
 
 
 def _parse_field_values(field_name, elem_values):
@@ -86,16 +93,16 @@ def _parse_field_values(field_name, elem_values):
         settings = values['settings']
         parsed_settings = {}
 
-        if _DOC_VALUE in settings:
+        if ES_DOC_VALUE in settings:
             parsed_settings['fielddata'] = {
                 'format': "doc_values"
             }
 
-        if _NOT_ANALYZED in settings:
+        if ES_NOT_ANALYZED in settings:
             parsed_settings['index'] = 'not_analyzed'
-        elif _NO_INDEX in settings:
+        elif ES_NO_INDEX in settings:
             parsed_settings['index'] = 'no'
-        elif _MULTI_FIELD in settings:
+        elif MULTI_FIELD in settings:
             field_type = _get_type(values)
             parsed_settings = {
                 'type': 'multi_field',
@@ -139,6 +146,9 @@ class DataBackend(object):
     def field_default_value(self):
         raise NotImplementedError()
 
+    def aggregation_fields(self):
+        raise NotImplementedError()
+
     def mapping(self):
         raise NotImplementedError()
 
@@ -154,6 +164,9 @@ class ElasticSearchBackend(DataBackend):
         self._list_fields = None
         self._field_default_value = None
         self._noindex_fields = None
+        self._aggregation_fields = None
+        self._categorical_agg_fields = None
+        self._numerical_agg_fields = None
         self._mapping = None
 
     @classmethod
@@ -234,10 +247,10 @@ class ElasticSearchBackend(DataBackend):
         :returns: a dict for (field_name, default_value) look up
         """
         BASIC_TYPE_DEFAULTS = {
-            _LONG_TYPE: 0,
-            _INT_TYPE: 0,
-            _STRING_TYPE: None,
-            _BOOLEAN_TYPE: False
+            LONG_TYPE: 0,
+            INT_TYPE: 0,
+            STRING_TYPE: None,
+            BOOLEAN_TYPE: False
         }
 
         def infer_for_basic_types(basic_type):
@@ -329,7 +342,7 @@ class ElasticSearchBackend(DataBackend):
         default_document = {}
         for path, value in self.data_format.iteritems():
             default = None
-            if 'settings' in value and _LIST in value['settings']:
+            if 'settings' in value and LIST in value['settings']:
                 default = []
             elif value['type'] in ('long', 'integer'):
                 default = 0
@@ -348,6 +361,40 @@ class ElasticSearchBackend(DataBackend):
         :returns: a set for membership lookup
         """
         if self._noindex_fields is None:
-            self._noindex_fields = {path for path, values in self.data_format.iteritems()
-                                 if _is_noindex_field(values)}
+            self._noindex_fields = {
+                path for path, values in self.data_format.iteritems()
+                if _is_noindex_field(values)}
         return self._noindex_fields
+
+    def categorical_agg_fields(self):
+        if self._categorical_agg_fields is None:
+            self._categorical_agg_fields = {
+                path for path, values in self.data_format.iteritems()
+                if _is_categorical_field(values)}
+        return self._categorical_agg_fields
+
+    def numerical_agg_fields(self):
+        if self._numerical_agg_fields is None:
+            self._numerical_agg_fields = {
+                path for path, values in self.data_format.iteritems()
+                if _is_numerical_field(values)}
+        return self._numerical_agg_fields
+
+    def aggregation_fields(self):
+        """Generate a lookup for all aggregation fields
+
+        :return: a dict which contains 2 sub-dict
+            {'categorical': {...}, 'numerical': {...}}
+        """
+        if self._aggregation_fields is None:
+            result = {'categorical': set(),
+                      'numerical': set()}
+
+            for path, values in self.data_format.iteritems():
+                if _is_numerical_field(values):
+                    result['numerical'].add(path)
+                if _is_categorical_field(values):
+                    result['categorical'].add(path)
+            self._aggregation_fields = result
+
+        return self._aggregation_fields

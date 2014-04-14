@@ -415,6 +415,44 @@ class ExternalUrlNormalizer(ResultTransformer):
                         target.pop('url_str')
 
 
+class AggregationTransformer(ResultTransformer):
+    """Unify aggregation result format"""
+
+    def __init__(self, agg_results):
+        self.agg_results = agg_results
+
+    @classmethod
+    def _is_terms(cls, bucket):
+        return 'key' in bucket
+
+    @classmethod
+    def _is_range(cls, bucket):
+        return 'to' in bucket or 'from' in bucket
+
+    # simple solution for the moment
+    #   - no nested bucket
+    #   - only support count metric
+    def transform(self):
+        for name, results in self.agg_results.iteritems():
+            if 'buckets' in results:
+                for bucket in results['buckets']:
+                    # arrange aggregation keys
+                    if self._is_terms(bucket):
+                        bucket['key'] = [bucket.pop('key')]
+                    if self._is_range(bucket):
+                        key = {}
+                        for k in ('from', 'to'):
+                            if k in bucket:
+                                key[k] = int(bucket.pop(k))
+                        bucket['key'] = [key]
+
+                    # rename `doc_count` to `count`
+                    bucket['count'] = bucket.pop('doc_count')
+
+                # rename `buckets` to `groups`
+                results['groups'] = results.pop('buckets')
+
+
 def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):
     """Walk through every result and transform it"""
     transformers = [
@@ -424,3 +462,7 @@ def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):
     ]
     for trans in transformers:
         trans.transform()
+
+
+def transform_aggregation_result(agg_results):
+    AggregationTransformer(agg_results).transform()

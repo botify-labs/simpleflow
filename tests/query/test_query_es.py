@@ -47,6 +47,10 @@ def _get_query_result(botify_query):
     return list(Query(botify_query=botify_query, **QUERY_ARGS).results)
 
 
+def _get_query_agg_result(botify_query):
+    return Query(botify_query=botify_query, **QUERY_ARGS).aggs
+
+
 URLS_FIXTURE = [
     {
         'id': 1,
@@ -710,3 +714,69 @@ class TestQueryES(unittest.TestCase):
         botify_query = _get_simple_bql_query('metadata.h2.contents', 'any.ends', 'y')
         results = _get_query_result(botify_query)
         self.assertEqual(results, [{'id': 1}, {'id': 2}])
+
+    def test_agg_distinct(self):
+        botify_query = {
+            'aggs': {
+                'http_code_distinct': {
+                    'group': ['http_code']
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        # pages with `0` http_code are filtered out by query
+        expected = {
+            'http_code_distinct': {
+                'groups': [{'count': 4, 'key': [200]},
+                           {'count': 2, 'key': [301]},
+                           {'count': 1, 'key': [-160]}]
+            }
+        }
+        self.assertEqual(results, expected)
+
+    # TODO possible bug in elasticsearch-py
+    def test_agg_range(self):
+        botify_query = {
+            'aggs': {
+                'http_code_range': {
+                    'group': [
+                        {'range': {
+                            'field': 'http_code',
+                            'ranges': [
+                                {'to': '1'},
+                                {'from': '1', 'to': '201'},
+                                {'from': '201'}
+                            ]
+                        }}
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = {
+            'http_code_range': {
+                'groups': [
+                    {'key': [{'to': 1}], 'count': 1},
+                    {'key': [{'to': 201, 'from': 1}], 'count': 4},
+                    {'key': [{'from': 201}], 'count': 2},
+                ]
+            }
+        }
+        self.assertEqual(results, expected)
+
+    def test_agg_multiple_aggs(self):
+        botify_query = {
+            'aggs': {
+                'http_code_1': {'group': ['http_code']},
+                'http_code_2': {'group': ['http_code']}
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected_groups = [{'count': 4, 'key': [200]},
+                           {'count': 2, 'key': [301]},
+                           {'count': 1, 'key': [-160]}]
+        expected = {
+            'http_code_1': {'groups': expected_groups},
+            'http_code_2': {'groups': expected_groups}
+        }
+        self.assertEqual(results, expected)

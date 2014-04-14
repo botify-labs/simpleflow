@@ -32,115 +32,163 @@
 #       Set to `None` to avoid any default values, so if this field is missing
 #       in ElasticSearch result, no default value will be added
 
-_LONG_TYPE = 'long'
-_INT_TYPE = 'integer'
-_STRING_TYPE = 'string'
-_BOOLEAN_TYPE = 'boolean'
-_STRUCT_TYPE = 'struct'
-_DATE_TYPE = 'date'
+# Type related
+LONG_TYPE = 'long'
+INT_TYPE = 'integer'
+STRING_TYPE = 'string'
+BOOLEAN_TYPE = 'boolean'
+STRUCT_TYPE = 'struct'
+DATE_TYPE = 'date'
 
-_NO_INDEX = 'es:no_index'
-_NOT_ANALYZED = 'es:not_analyzed'
-_DOC_VALUE = 'es:doc_values'
-_LIST = 'list'
-_MULTI_FIELD = 'es:multi_field'
+# Data format related
+ES_NO_INDEX = 'es:no_index'
+ES_NOT_ANALYZED = 'es:not_analyzed'
+ES_DOC_VALUE = 'es:doc_values'
+LIST = 'list'
+MULTI_FIELD = 'es:multi_field'
+
+# Aggregation related
+# categorical fields have a finite cardinality of distinct values
+AGG_CATEGORICAL = 'agg:categorical'
+AGG_NUMERICAL = 'agg:numerical'
 
 
 URLS_DATA_FORMAT_DEFINITION = {
     # url property data
     "url": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED}
+        "type": STRING_TYPE,
+        "settings": {ES_NOT_ANALYZED}
     },
-    "url_hash": {"type": _LONG_TYPE},
+    "url_hash": {"type": LONG_TYPE},
     "byte_size": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "date_crawled": {
-        "type": _DATE_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": DATE_TYPE,
+        "settings": {ES_DOC_VALUE}
     },
     "delay_first_byte": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "delay_last_byte": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "depth": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            # assume possible depth is finite
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
-    "gzipped": {"type": _BOOLEAN_TYPE},
+    "gzipped": {"type": BOOLEAN_TYPE},
     "content_type": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED, _DOC_VALUE}
+        "type": STRING_TYPE,
+        "settings": {
+            ES_NOT_ANALYZED,
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL
+        }
     },
     "host": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED, _DOC_VALUE}
+        "type": STRING_TYPE,
+        "settings": {
+            ES_NOT_ANALYZED,
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL
+        }
     },
     "http_code": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            # `http_code` have 2 roles
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "id": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {ES_DOC_VALUE}
     },
-    "crawl_id": {"type": _INT_TYPE},
+    "crawl_id": {"type": INT_TYPE},
     "patterns": {
-        "type": _LONG_TYPE,
+        "type": LONG_TYPE,
         "settings": {
-            _LIST
+            LIST
         }
     },
     "path": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED}
+        "type": STRING_TYPE,
+        "settings": {ES_NOT_ANALYZED}
     },
     "protocol": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED, _DOC_VALUE}
+        "type": STRING_TYPE,
+        "settings": {
+            ES_NOT_ANALYZED,
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL
+        }
     },
     "query_string": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED}
+        "type": STRING_TYPE,
+        "settings": {ES_NOT_ANALYZED}
     },
     "query_string_keys": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED}
+        "type": STRING_TYPE,
+        "settings": {ES_NOT_ANALYZED}
     },
 
     # meta tag related
     "metadata.robots.nofollow": {
-        "type": _BOOLEAN_TYPE
+        "type": BOOLEAN_TYPE,
+        "settings": {AGG_CATEGORICAL}
     },
     "metadata.robots.noindex": {
-        "type": _BOOLEAN_TYPE
+        "type": BOOLEAN_TYPE,
+        "settings": {AGG_CATEGORICAL}
     },
 
     # title tag
     "metadata.title.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL,
+            AGG_CATEGORICAL
+        }
     },
     "metadata.title.contents": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED, _LIST}
+        "type": STRING_TYPE,
+        "settings": {ES_NOT_ANALYZED, LIST}
     },
     "metadata.title.duplicates.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "metadata.title.duplicates.is_first": {
-        "type": _BOOLEAN_TYPE,
+        "type": BOOLEAN_TYPE,
     },
     "metadata.title.duplicates.urls": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST}
+        "type": INT_TYPE,
+        "settings": {ES_NO_INDEX, LIST}
     },
     "metadata.title.duplicates.urls_exists": {
         "type": "boolean",
@@ -149,23 +197,31 @@ URLS_DATA_FORMAT_DEFINITION = {
 
     # h1 tag
     "metadata.h1.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "metadata.h1.contents": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED, _LIST}
+        "type": STRING_TYPE,
+        "settings": {ES_NOT_ANALYZED, LIST}
     },
     "metadata.h1.duplicates.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "metadata.h1.duplicates.is_first": {
-        "type": _BOOLEAN_TYPE,
+        "type": BOOLEAN_TYPE,
     },
     "metadata.h1.duplicates.urls": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST}
+        "type": INT_TYPE,
+        "settings": {ES_NO_INDEX, LIST}
     },
     "metadata.h1.duplicates.urls_exists": {
         "type": "boolean",
@@ -174,23 +230,31 @@ URLS_DATA_FORMAT_DEFINITION = {
 
     # description tag
     "metadata.description.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "metadata.description.contents": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED, _LIST}
+        "type": STRING_TYPE,
+        "settings": {ES_NOT_ANALYZED, LIST}
     },
     "metadata.description.duplicates.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "metadata.description.duplicates.is_first": {
-        "type": _BOOLEAN_TYPE,
+        "type": BOOLEAN_TYPE,
     },
     "metadata.description.duplicates.urls": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST}
+        "type": INT_TYPE,
+        "settings": {ES_NO_INDEX, LIST}
     },
     "metadata.description.duplicates.urls_exists": {
         "type": "boolean",
@@ -199,60 +263,92 @@ URLS_DATA_FORMAT_DEFINITION = {
 
     # h2 tag
     "metadata.h2.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "metadata.h2.contents": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED, _LIST}
+        "type": STRING_TYPE,
+        "settings": {ES_NOT_ANALYZED, LIST}
     },
 
     # h3 tag
     "metadata.h3.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "metadata.h3.contents": {
-        "type": _STRING_TYPE,
-        "settings": {_NOT_ANALYZED, _LIST}
+        "type": STRING_TYPE,
+        "settings": {ES_NOT_ANALYZED, LIST}
     },
 
     # incoming links, must be internal
     "inlinks_internal.nb.total": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "inlinks_internal.nb.unique": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "inlinks_internal.nb.follow.unique": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "inlinks_internal.nb.follow.total": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "inlinks_internal.nb.nofollow.total": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "inlinks_internal.nb.nofollow.combinations.link": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "inlinks_internal.nb.nofollow.combinations.meta": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "inlinks_internal.nb.nofollow.combinations.link_meta": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "inlinks_internal.urls": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST}
+        "type": INT_TYPE,
+        "settings": {ES_NO_INDEX, LIST}
     },
     "inlinks_internal.urls_exists": {
         "type": "boolean",
@@ -261,96 +357,153 @@ URLS_DATA_FORMAT_DEFINITION = {
 
     # internal outgoing links (destination is a internal url)
     "outlinks_internal.nb.total": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.unique": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.follow.unique": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.follow.total": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.nofollow.total": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.nofollow.combinations.link": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.nofollow.combinations.meta": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.nofollow.combinations.robots": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.nofollow.combinations.link_meta": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.nofollow.combinations.link_robots": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.nofollow.combinations.meta_robots": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.nb.nofollow.combinations.link_meta_robots": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_internal.urls": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST},
+        "type": INT_TYPE,
+        "settings": {ES_NO_INDEX, LIST},
     },
     "outlinks_internal.urls_exists": {
-        "type": _BOOLEAN_TYPE,
+        "type": BOOLEAN_TYPE,
         "default_value": None
     },
 
     # external outgoing links (destination is a external url)
     "outlinks_external.nb.total": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_external.nb.follow.total": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_external.nb.nofollow.total": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_external.nb.nofollow.combinations.link": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_external.nb.nofollow.combinations.meta": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_external.nb.nofollow.combinations.link_meta": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
 
     # erroneous outgoing internal links
     "outlinks_errors.3xx.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_errors.3xx.urls": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST}
+        "type": INT_TYPE,
+        "settings": {ES_NO_INDEX, LIST}
     },
     "outlinks_errors.3xx.urls_exists": {
         "type": "boolean",
@@ -358,12 +511,15 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
 
     "outlinks_errors.4xx.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_errors.4xx.urls": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST}
+        "type": INT_TYPE,
+        "settings": {ES_NO_INDEX, LIST}
     },
     "outlinks_errors.4xx.urls_exists": {
         "type": "boolean",
@@ -371,12 +527,15 @@ URLS_DATA_FORMAT_DEFINITION = {
     },
 
     "outlinks_errors.5xx.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
     "outlinks_errors.5xx.urls": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST}
+        "type": INT_TYPE,
+        "settings": {ES_NO_INDEX, LIST}
     },
     "outlinks_errors.5xx.urls_exists": {
         "type": "boolean",
@@ -385,22 +544,28 @@ URLS_DATA_FORMAT_DEFINITION = {
     # total error_links number
     "outlinks_errors.total": {
         "type": "integer",
-        "settings": {_DOC_VALUE}
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
     },
 
     # outgoing canonical link, one per page
     # if multiple, first one is taken into account
     "canonical.to.url": {
-        "type": _STRUCT_TYPE,
+        "type": STRUCT_TYPE,
         "values": {
             "url_str": {"type": "string"},
             "url_id": {"type": "integer"},
         },
         "settings": {
-            _NO_INDEX
+            ES_NO_INDEX
         }
     },
-    "canonical.to.equal": {"type": _BOOLEAN_TYPE},
+    "canonical.to.equal": {
+        "type": BOOLEAN_TYPE,
+        "settings": {AGG_CATEGORICAL}
+    },
     "canonical.to.url_exists": {
         "type": "boolean",
         "default_value": None
@@ -408,12 +573,16 @@ URLS_DATA_FORMAT_DEFINITION = {
 
     # incoming canonical link
     "canonical.from.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "canonical.from.urls": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST}
+        "type": INT_TYPE,
+        "settings": {ES_NO_INDEX, LIST}
     },
     "canonical.from.urls_exists": {
         "type": "boolean",
@@ -422,29 +591,33 @@ URLS_DATA_FORMAT_DEFINITION = {
 
     # outgoing redirection
     "redirect.to.url": {
-        "type": _STRUCT_TYPE,
+        "type": STRUCT_TYPE,
         "values": {
             "url_str": {"type": "string"},
             "url_id": {"type": "integer"},
             "http_code": {"type": "integer"}
         },
         "settings": {
-            _NO_INDEX
+            ES_NO_INDEX
         }
     },
     "redirect.to.url_exists": {
-        "type": _BOOLEAN_TYPE,
+        "type": BOOLEAN_TYPE,
         "default_value": None
     },
 
     # incoming redirection
     "redirect.from.nb": {
-        "type": _INT_TYPE,
-        "settings": {_DOC_VALUE}
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_CATEGORICAL,
+            AGG_NUMERICAL
+        }
     },
     "redirect.from.urls": {
-        "type": _INT_TYPE,
-        "settings": {_NO_INDEX, _LIST}
+        "type": INT_TYPE,
+        "settings": {ES_NO_INDEX, LIST}
     },
     "redirect.from.urls_exists": {
         "type": "boolean",
