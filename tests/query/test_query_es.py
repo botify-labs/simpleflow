@@ -758,7 +758,7 @@ class TestQueryES(unittest.TestCase):
                 'groups': [
                     {'key': [{'to': 1}], 'count': 1},
                     {'key': [{'to': 201, 'from': 1}], 'count': 4},
-                    {'key': [{'from': 201}], 'count': 4},
+                    {'key': [{'from': 201}], 'count': 2},
                 ]
             }
         }

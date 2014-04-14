@@ -443,7 +443,7 @@ class AggregationTransformer(ResultTransformer):
                         key = {}
                         for k in ('from', 'to'):
                             if k in bucket:
-                                key[k] = bucket.pop(k)
+                                key[k] = int(bucket.pop(k))
                         bucket['key'] = [key]
 
                     # rename `doc_count` to `count`
