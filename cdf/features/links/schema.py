@@ -1,8 +1,6 @@
-from cdf.metadata.raw.masks import follow_mask
+from .helpers.masks import follow_mask
 
-__all__ = ["STREAMS_FILES", "STREAMS_HEADERS",
-           "CONTENT_TYPE_INDEX", "CONTENT_TYPE_NAME_TO_ID",
-           "MANDATORY_CONTENT_TYPES", "MANDATORY_CONTENT_TYPES_IDS"]
+__all__ = ["STREAMS_FILES", "STREAMS_HEADERS"]
 
 
 def _str_to_bool(string):
@@ -10,10 +8,6 @@ def _str_to_bool(string):
 
 
 STREAMS_FILES = {
-    'urlids': 'patterns',
-    'urlinfos': 'infos',
-    'urlcontents': 'contents',
-    'urlcontentsduplicate': 'contents_duplicate',
     'urllinks': 'outlinks',
     'urlinlinks': 'inlinks',
     'url_out_links_counters': 'outlinks_counters',
@@ -22,45 +16,12 @@ STREAMS_FILES = {
     'url_in_links_counters': 'inlinks_counters',
     'url_in_redirect_counters': 'inredirect_counters',
     'url_in_canonical_counters': 'incanonical_counters',
-    'url_suggested_clusters': 'suggest',
     'urlbadlinks': 'badlinks',
     'urlbadlinks_counters': 'badlinks_counters'
 }
 
 
 STREAMS_HEADERS = {
-    'PATTERNS': (
-        ('id', int),
-        ('protocol', str),
-        ('host', str),
-        ('path', str),
-        ('query_string', str),
-    ),
-    'INFOS': (
-        ('id', int),
-        ('infos_mask', int),
-        ('content_type', str),
-        ('depth', int),
-        ('date_crawled', int),
-        ('http_code', int),
-        ('byte_size', int),
-        ('delay1', int),
-        ('delay2', int),
-    ),
-    'CONTENTS': (
-        ('id', int),
-        ('content_type', int),
-        ('hash', int),
-        ('txt', str)
-    ),
-    'CONTENTS_DUPLICATE': (
-        ('id', int),
-        ('content_type', int),
-        ('filled_nb', int),
-        ('duplicates_nb', int),
-        ('is_first_url', _str_to_bool),
-        ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
-    ),
     'OUTLINKS_RAW': (
         ('id', int),
         ('link_type', str),
@@ -116,10 +77,6 @@ STREAMS_HEADERS = {
         ('id', int),
         ('score', int)
     ),
-    'SUGGEST': (
-        ('id', int),
-        ('query_hash', str)
-    ),
     'BADLINKS': (
         ('id', int),
         ('dst_url_id', int),
@@ -131,15 +88,3 @@ STREAMS_HEADERS = {
         ('score', int)
     )
 }
-
-CONTENT_TYPE_INDEX = {
-    1: 'title',
-    2: 'h1',
-    3: 'h2',
-    4: 'description',
-    5: 'h3'
-}
-CONTENT_TYPE_NAME_TO_ID = {v: k for k, v in CONTENT_TYPE_INDEX.iteritems()}
-
-MANDATORY_CONTENT_TYPES = ('title', 'h1', 'description')
-MANDATORY_CONTENT_TYPES_IDS = (1, 2, 4)
