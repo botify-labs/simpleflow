@@ -62,17 +62,6 @@ def split_file(iterable, char='\t'):
     return split(rstrip(iterable))
 
 
-def idx_from_stream(key, field):
-    """
-    Return the field position of 'id' field from a specific stream
-
-    :param key: stream key
-    :field field name from stream
-
-    """
-    return map(lambda i: i[0], STREAMS_HEADERS[key.upper()]).index(field)
-
-
 def group_left(left, **stream_defs):
     """
     :param left: (stream, key_index)

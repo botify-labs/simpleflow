@@ -127,7 +127,6 @@ def generate_documents(crawl_id, s3_uri, part_id,
         for s in streams:
             files.append(s.FILE)
             file_to_stream[s.FILE] = s
-
     # Fetch locally the files from S3
     files_fetched = fetch_files(s3_uri, tmp_dir,
                                 regexp=['{}.txt.{}.gz'.format(f, part_id) for f in files],
@@ -136,7 +135,7 @@ def generate_documents(crawl_id, s3_uri, part_id,
     right_streams = []
     for path_local, fetched in files_fetched:
         for filename, stream in file_to_stream.iteritems():
-            if path_local.startswith(os.path.join(tmp_dir, filename)):
+            if path_local.startswith(os.path.join(tmp_dir, "{}.txt".format(filename))):
                 if stream.__class__.__name__ == "PatternsStream":
                     left_stream = stream.get_stream_from_path(path_local)
                 else:

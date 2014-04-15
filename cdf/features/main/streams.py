@@ -1,5 +1,4 @@
 from cdf.core.streams.exceptions import GroupWithSkipException
-from cdf.core.streams.utils import idx_from_stream
 from cdf.core.streams.base import StreamBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
@@ -52,7 +51,7 @@ class InfosStream(StreamBase):
     def process_document(self, document, stream):
         """Process `urlinfos` stream
         """
-        date_crawled_idx = idx_from_stream('infos', 'date_crawled')
+        date_crawled_idx = self.field_idx('date_crawled')
         stream[date_crawled_idx] = date_2k_mn_to_date(
             stream[date_crawled_idx]).strftime("%Y-%m-%dT%H:%M:%S")
         # TODO could skip non-crawled url here
@@ -76,7 +75,7 @@ class InfosStream(StreamBase):
         # mask:
         # 1 gzipped, 2 notused, 4 meta_noindex
         # 8 meta_nofollow 16 has_canonical 32 bad canonical
-        infos_mask = stream[idx_from_stream('infos', 'infos_mask')]
+        infos_mask = stream[self.field_idx('infos_mask')]
         document['gzipped'] = 1 & infos_mask == 1
 
         target = document['metadata']['robots']

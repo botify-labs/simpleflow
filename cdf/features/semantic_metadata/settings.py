@@ -1,41 +1,16 @@
 from cdf.metadata.url.url_metadata import (
-    LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
-    STRUCT_TYPE, DATE_TYPE,
+    INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, MULTI_FIELD,
-    AGG_CATEGORICAL, AGG_NUMERICAL
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL
 )
 
-__all__ = ["STREAMS_FILES", "STREAMS_HEADERS",
-           "CONTENT_TYPE_INDEX", "CONTENT_TYPE_NAME_TO_ID",
+__all__ = ["CONTENT_TYPE_INDEX", "CONTENT_TYPE_NAME_TO_ID",
            "MANDATORY_CONTENT_TYPES", "MANDATORY_CONTENT_TYPES_IDS"]
 
 
 def _str_to_bool(string):
     return string == '1'
 
-
-STREAMS_FILES = {
-    'urlcontents': 'contents',
-    'urlcontentsduplicate': 'contents_duplicate',
-}
-
-STREAMS_HEADERS = {
-    'CONTENTS': (
-        ('id', int),
-        ('content_type', int),
-        ('hash', int),
-        ('txt', str)
-    ),
-    'CONTENTS_DUPLICATE': (
-        ('id', int),
-        ('content_type', int),
-        ('filled_nb', int),
-        ('duplicates_nb', int),
-        ('is_first_url', _str_to_bool),
-        ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
-    ),
-}
 
 CONTENT_TYPE_INDEX = {
     1: 'title',

@@ -1,23 +1,7 @@
 import ujson
 from copy import deepcopy
-from itertools import izip
-from cdf.analysis.urls.utils import is_link_internal
-from cdf.log import logger
-from cdf.metadata.raw import (STREAMS_HEADERS, CONTENT_TYPE_INDEX,
-                              MANDATORY_CONTENT_TYPES)
 from cdf.core.streams.transformations import group_with
-from cdf.core.streams.exceptions import GroupWithSkipException
-from cdf.core.streams.utils import idx_from_stream
-from cdf.metadata.raw.masks import list_to_mask
-from cdf.utils.date import date_2k_mn_to_date
-from cdf.utils.hashing import string_to_int64
 from cdf.metadata.url import ELASTICSEARCH_BACKEND
-
-
-# TODO refactor into an ORM fashion
-#   data format => hierarchy of classes (ORM)
-#   ORM objects knows how to index themselves to ES
-# maybe ElasticUtils will be a good reference
 
 
 _DEFAULT_DOCUMENT = ELASTICSEARCH_BACKEND.default_document()
@@ -33,30 +17,21 @@ def _clean_document(doc):
     _recursive_clean(doc, doc)
 
 
-def _extract_stream_fields(stream_identifier, stream):
-    """
-    :param stream_identifier: stream's id, like 'ids', 'infos'
-    :return: a dict containing `field: value` mapping
-    """
-    return {field[0]: value for field, value in
-            izip(STREAMS_HEADERS[stream_identifier], stream)}
-
-
-def _process_main_stream(preparing_processors):
+def _pre_process_document(pre_processors):
     def func(doc, stream_ids):
         """Init the document and process `urlids` stream
         """
         # init the document with default field values
         doc.update(deepcopy(_DEFAULT_DOCUMENT))
-        for p in preparing_processors:
+        for p in pre_processors:
             p(doc)
 
     return func
 
 
-def _process_final(final_processors):
+def _post_process_document(post_processors):
     def func(document):
-        for p in final_processors:
+        for p in post_processors:
             p(document)
         _clean_document(document)
     return func
@@ -82,14 +57,14 @@ class UrlDocumentGenerator(object):
                     hooks_processors[hook].append(getattr(stream.stream_type, method_name))
 
         # `urlids` is the reference stream
-        left = (self.left_stream.stream, 0, _process_main_stream(hooks_processors['pre']))
+        left = (self.left_stream.stream, 0, _pre_process_document(hooks_processors['pre']))
         streams_ref = {
             right_stream.stream_type.__class__.__name__: (
                 right_stream.stream,
                 right_stream.stream_type.primary_key_idx,
                 right_stream.stream_type.process_document
             ) for right_stream in self.right_streams}
-        self.generator = group_with(left, final_func=_process_final(hooks_processors['post']),
+        self.generator = group_with(left, final_func=_post_process_document(hooks_processors['post']),
                                     **streams_ref)
 
     def __iter__(self):

@@ -17,6 +17,12 @@ class StreamBase(object):
                 return i
         raise Exception('Primary key not found')
 
+    def field_idx(self, field):
+        """
+        Return the field position of field in HEADERS
+        """
+        return map(lambda i: i[0], self.HEADERS).index(field)
+
     def get_stream_from_path(self, path):
         cast = Caster(self.HEADERS).cast
         return StreamInstance(

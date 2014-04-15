@@ -1,11 +1,8 @@
 import os
 import inspect
-import gzip
 from importlib import import_module
 
 from cdf.core.streams.base import StreamBase
-from cdf.core.streams.caster import Caster
-from cdf.core.streams.utils import split_file
 
 
 class Feature(object):
@@ -38,6 +35,9 @@ class Feature(object):
         self.streams_files = streams_files
         self.streams_headers = streams_headers
         self.urls_data_format_definition = urls_data_format_definition
+
+    def __unicode__(self):
+        return unicode(self.identifier)
 
     def get_streams_objects(self):
         """
