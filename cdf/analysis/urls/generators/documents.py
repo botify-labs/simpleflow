@@ -42,13 +42,17 @@ class UrlDocumentGenerator(object):
 
     Format see `cdf.metadata.url` package
     """
-    def __init__(self, left_stream, right_streams):
-        self.left_stream = left_stream
-        self.right_streams = right_streams
+    def __init__(self, streams):
+        self.right_streams = []
+        for stream in streams:
+            if stream.stream_type.__class__.__name__ == "PatternsStream":
+                self.left_stream = stream
+            else:
+                self.right_streams.append(stream)
 
         hooks_processors = {'pre': [], 'post': []}
 
-        for hook in ('pre', 'posts'):
+        for hook in ('pre', 'post'):
             method_name = '{}_process_document'.format(hook)
             if hasattr(self.left_stream.stream_type, method_name):
                 hooks_processors[hook].append(getattr(self.left_stream.stream_type, method_name))

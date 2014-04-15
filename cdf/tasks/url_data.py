@@ -10,9 +10,8 @@ from cdf.metadata.url import ELASTICSEARCH_BACKEND
 from cdf.utils.es import bulk
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.utils.s3 import fetch_files, push_file
-from cdf.core.streams.caster import Caster
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
-from cdf.core.streams.utils import split_file
+from cdf.core.streams.utils import get_data_streams_from_storage
 from cdf.core.features import Feature
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH, DOCS_NAME_PATTERN, DOCS_DIRPATH
@@ -119,30 +118,19 @@ def generate_documents(crawl_id, s3_uri, part_id,
         temp directory
     """
 
-    files = []
-    file_to_stream = {}
-
+    streams = []
     for feature in Feature.get_features():
-        streams = feature.get_streams_objects_processing_document()
-        for s in streams:
-            files.append(s.FILE)
-            file_to_stream[s.FILE] = s
-    # Fetch locally the files from S3
-    files_fetched = fetch_files(s3_uri, tmp_dir,
-                                regexp=['{}.txt.{}.gz'.format(f, part_id) for f in files],
-                                force_fetch=force_fetch)
+        streams += feature.get_streams_objects_processing_document()
 
-    right_streams = []
-    for path_local, fetched in files_fetched:
-        for filename, stream in file_to_stream.iteritems():
-            if path_local.startswith(os.path.join(tmp_dir, "{}.txt".format(filename))):
-                if stream.__class__.__name__ == "PatternsStream":
-                    left_stream = stream.get_stream_from_path(path_local)
-                else:
-                    right_streams.append(stream.get_stream_from_path(path_local))
+    data_streams = get_data_streams_from_storage(
+        streams,
+        storage_uri=s3_uri,
+        tmp_dir=tmp_dir,
+        force_fetch=force_fetch,
+        part_id=part_id
+    )
 
-    g = UrlDocumentGenerator(left_stream,
-                             right_streams)
+    g = UrlDocumentGenerator(data_streams)
 
     output_name = DOCS_NAME_PATTERN.format(part_id)
     with gzip.open(os.path.join(tmp_dir, output_name), 'w') as output:

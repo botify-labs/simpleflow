@@ -8,12 +8,11 @@ values on-demand. Calling a stream operation after another does not iterate two
 times on the values.
 
 """
-from itertools import izip
+import os
+from cdf.utils.s3 import fetch_files
 
-from cdf.metadata.raw import STREAMS_HEADERS
 
-
-__all__ = ['split', 'rstrip', 'split_file', 'idx_from_stream']
+__all__ = ['split', 'rstrip', 'split_file', 'get_data_streams_from_storage']
 
 
 def split(iterable, char='\t'):
@@ -99,3 +98,28 @@ def group_left(left, **stream_defs):
                 except StopIteration:
                     break
         yield current_id, line, stream_lines
+
+
+def get_data_streams_from_storage(streams, storage_uri, tmp_dir, part_id=None, force_fetch=False):
+    """
+    :param streams : a StreamBase object
+    :param storage_uri : an S3 uri
+    :param tmp_dir : path location where to fetch files
+    :param part_id : fetch from a specific part_id
+    :param force_fetch : fetch the file even if already downloaded in tmp_dir
+    """
+    if part_id:
+        files = ['{}.txt.{}.gz'.format(s.FILE, part_id) for s in streams]
+    else:
+        files = ['{}.txt.([0-9]+).gz'.format(s.FILE) for s in streams]
+
+    files_fetched = fetch_files(storage_uri, tmp_dir,
+                                regexp=files,
+                                force_fetch=force_fetch)
+
+    data_streams = []
+    for path_local, fetched in files_fetched:
+        for s in streams:
+            if path_local.startswith(os.path.join(tmp_dir, "{}.txt".format(s.FILE))):
+                data_streams.append(s.get_stream_from_path(path_local))
+    return data_streams

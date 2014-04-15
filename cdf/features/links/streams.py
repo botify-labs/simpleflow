@@ -118,11 +118,11 @@ class OutlinksStream(OutlinksRawStream):
 
 
 class InlinksStream(StreamBase):
-    FILE = 'urllinks'
+    FILE = 'urlinlinks'
     HEADERS = (
         ('id', int),
         ('link_type', str),
-        ('bitmask', int),
+        ('follow', follow_mask),
         ('src_url_id', int),
     )
 
