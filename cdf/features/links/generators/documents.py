@@ -11,6 +11,15 @@ def _get_nofollow_combination_key(keys):
 
 
 def _process_outlinks(document, stream_oulinks):
+    # temporary structures for analytic processing
+    document["processed_inlink_link"] = set()
+    # resolve a (dest, mask) to its index in `inlinks_internal` list
+    document["processed_outlink_link"] = set()
+    # a temp set to track all `seen` src url of incoming links
+    document["processed_inlink_url"] = set()
+    # a temp set to track all `seen` dest url of outgoing links
+    document["processed_outlink_url"] = set()
+
     url_src, link_type, follow_keys, url_dst, external_url = stream_oulinks
 
     if link_type == "a":
