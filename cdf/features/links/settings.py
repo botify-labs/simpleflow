@@ -5,29 +5,14 @@ from cdf.metadata.url.url_metadata import (
     LIST, MULTI_FIELD,
     AGG_CATEGORICAL, AGG_NUMERICAL
 )
-
-
 from .helpers.masks import follow_mask
 
-__all__ = ["STREAMS_FILES", "STREAMS_HEADERS", "URLS_DATA_FORMAT_DEFINITION"]
+
+__all__ = ["URLS_DATA_FORMAT_DEFINITION"]
 
 
 def _str_to_bool(string):
     return string == '1'
-
-
-STREAMS_FILES = {
-    'urllinks': 'outlinks',
-    'urlinlinks': 'inlinks',
-    'url_out_links_counters': 'outlinks_counters',
-    'url_out_redirect_counters': 'outredirect_counters',
-    'url_out_canonical_counters': 'outcanonical_counters',
-    'url_in_links_counters': 'inlinks_counters',
-    'url_in_redirect_counters': 'inredirect_counters',
-    'url_in_canonical_counters': 'incanonical_counters',
-    'urlbadlinks': 'badlinks',
-    'urlbadlinks_counters': 'badlinks_counters'
-}
 
 
 STREAMS_HEADERS = {

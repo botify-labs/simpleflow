@@ -13,10 +13,7 @@ from cdf.utils.s3 import fetch_files, push_file
 from cdf.core.streams.caster import Caster
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.utils import split_file
-from cdf.utils.features import (
-    get_features_modules, get_document_generator_settings,
-    get_streams_headers, get_streams_files
-)
+from cdf.core.features import Feature
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH, DOCS_NAME_PATTERN, DOCS_DIRPATH
 
@@ -122,45 +119,31 @@ def generate_documents(crawl_id, s3_uri, part_id,
         temp directory
     """
 
-    processors = {}
-    final_processors = []
-    preparing_processors = []
-    files = ["urlids"]
+    files = []
+    file_to_stream = {}
 
-    STREAMS_HEADERS = get_streams_headers()
-    STREAMS_FILES = get_streams_files()
-
-    for feature in get_features_modules():
-        _files, _processors, _preparing_processors, _final_processors = get_document_generator_settings(feature)
-        if _files:
-            files += _files
-        if _processors:
-            processors.update(_processors)
-        if _preparing_processors:
-            preparing_processors += _preparing_processors
-        if _final_processors:
-            final_processors += _final_processors
+    for feature in Feature.get_features():
+        streams = feature.get_streams_objects_processing_document()
+        for s in streams:
+            files.append(s.FILE)
+            file_to_stream[s.FILE] = s
 
     # Fetch locally the files from S3
     files_fetched = fetch_files(s3_uri, tmp_dir,
                                 regexp=['{}.txt.{}.gz'.format(f, part_id) for f in files],
                                 force_fetch=force_fetch)
-    streams = {}
 
+    right_streams = []
     for path_local, fetched in files_fetched:
-        stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
-        cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
+        for filename, stream in file_to_stream.iteritems():
+            if path_local.startswith(os.path.join(tmp_dir, filename)):
+                if stream.__class__.__name__ == "PatternsStream":
+                    left_stream = stream.get_stream_from_path(path_local)
+                else:
+                    right_streams.append(stream.get_stream_from_path(path_local))
 
-        if stream_identifier == "patterns":
-            stream_patterns = cast(split_file(gzip.open(path_local)))
-        else:
-            streams[stream_identifier] = cast(split_file(gzip.open(path_local)))
-
-    g = UrlDocumentGenerator(stream_patterns,
-                             processors=processors,
-                             preparing_processors=preparing_processors,
-                             final_processors=final_processors,
-                             **streams)
+    g = UrlDocumentGenerator(left_stream,
+                             right_streams)
 
     output_name = DOCS_NAME_PATTERN.format(part_id)
     with gzip.open(os.path.join(tmp_dir, output_name), 'w') as output:

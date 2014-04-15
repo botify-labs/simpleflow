@@ -7,44 +7,13 @@ from cdf.metadata.url.url_metadata import (
 )
 
 
-__all__ = ["STREAMS_FILES", "STREAMS_HEADERS", "URLS_DATA_FORMAT_DEFINITION"]
+__all__ = ["URLS_DATA_FORMAT_DEFINITION"]
 
 
 def _str_to_bool(string):
     return string == '1'
 
 
-STREAMS_FILES = {
-    'urlids': 'patterns',
-    'urlinfos': 'infos',
-    'url_suggested_clusters': 'suggest'
-}
-
-
-STREAMS_HEADERS = {
-    'PATTERNS': (
-        ('id', int),
-        ('protocol', str),
-        ('host', str),
-        ('path', str),
-        ('query_string', str),
-    ),
-    'INFOS': (
-        ('id', int),
-        ('infos_mask', int),
-        ('content_type', str),
-        ('depth', int),
-        ('date_crawled', int),
-        ('http_code', int),
-        ('byte_size', int),
-        ('delay1', int),
-        ('delay2', int),
-    ),
-    'SUGGEST': (
-        ('id', int),
-        ('query_hash', str)
-    ),
-}
 
 URLS_DATA_FORMAT_DEFINITION = {
     # url property data
