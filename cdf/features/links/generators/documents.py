@@ -3,23 +3,25 @@ from cdf.log import logger
 from cdf.metadata.raw.masks import list_to_mask
 
 
-__all__ = ["PROCESSORS", "FINAL_PROCESSORS"]
+__all__ = ["PROCESSORS", "FINAL_PROCESSORS", "PREPARING_PROCESSORS", "GENERATOR_FILES"]
 
 
 def _get_nofollow_combination_key(keys):
     return '_'.join(sorted(keys))
 
 
-def _process_outlinks(document, stream_oulinks):
-    # temporary structures for analytic processing
-    document["processed_inlink_link"] = set()
+def _process_init(document):
     # resolve a (dest, mask) to its index in `inlinks_internal` list
     document["processed_outlink_link"] = set()
-    # a temp set to track all `seen` src url of incoming links
-    document["processed_inlink_url"] = set()
     # a temp set to track all `seen` dest url of outgoing links
     document["processed_outlink_url"] = set()
+    # temporary structures for analytic processing
+    document["processed_inlink_link"] = set()
+    # a temp set to track all `seen` src url of incoming links
+    document["processed_inlink_url"] = set()
 
+
+def _process_outlinks(document, stream_oulinks):
     url_src, link_type, follow_keys, url_dst, external_url = stream_oulinks
 
     if link_type == "a":
@@ -162,6 +164,10 @@ def _process_badlinks(document, stream_badlinks):
 
 
 def _process_final(document):
+    # If not "outlinks_internal" : we want to store a non-crawled url
+    if not 'outlinks_internal' in document:
+        return
+
     document['outlinks_internal']['nb']['unique'] = len(document['processed_outlink_url'])
     document['inlinks_internal']['nb']['unique'] = len(document['processed_inlink_url'])
 
@@ -179,3 +185,11 @@ PROCESSORS = {
 }
 
 FINAL_PROCESSORS = [_process_final]
+
+GENERATOR_FILES = [
+    'urllinks',
+    'urlinlinks',
+    'urlbadlinks'
+]
+
+PREPARING_PROCESSORS = [_process_init]

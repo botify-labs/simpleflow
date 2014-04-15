@@ -5,6 +5,9 @@ from cdf.utils.date import date_2k_mn_to_date
 from cdf.metadata.raw import STREAMS_HEADERS
 
 
+__all__ = ["PROCESSORS", "FINAL_PROCESSORS", "GENERATOR_FILES"]
+
+
 def _extract_stream_fields(stream_identifier, stream):
     """
     :param stream_identifier: stream's id, like 'ids', 'infos'
@@ -88,3 +91,8 @@ PROCESSORS = {
 }
 
 FINAL_PROCESSORS = [_process_final]
+
+GENERATOR_FILES = [
+    "urlinfos",
+    "url_suggested_clusters"
+]

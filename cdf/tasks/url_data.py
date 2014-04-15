@@ -11,9 +11,12 @@ from cdf.utils.es import bulk
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.utils.s3 import fetch_files, push_file
 from cdf.core.streams.caster import Caster
-from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.utils import split_file
+from cdf.utils.features import (
+    get_features_modules, get_document_generator_settings,
+    get_streams_headers, get_streams_files
+)
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH, DOCS_NAME_PATTERN, DOCS_DIRPATH
 
@@ -119,11 +122,28 @@ def generate_documents(crawl_id, s3_uri, part_id,
         temp directory
     """
 
+    processors = {}
+    final_processors = []
+    preparing_processors = []
+    files = ["urlids"]
+
+    STREAMS_HEADERS = get_streams_headers()
+    STREAMS_FILES = get_streams_files()
+
+    for feature in get_features_modules():
+        _files, _processors, _preparing_processors, _final_processors = get_document_generator_settings(feature)
+        if _files:
+            files += _files
+        if _processors:
+            processors.update(_processors)
+        if _preparing_processors:
+            preparing_processors += _preparing_processors
+        if _final_processors:
+            final_processors += _final_processors
+
     # Fetch locally the files from S3
     files_fetched = fetch_files(s3_uri, tmp_dir,
-                                regexp=['url(ids|infos|links|inlinks|contents|' +
-                                        'contentsduplicate|_suggested_clusters|' +
-                                        'badlinks).txt.%d.gz' % part_id],
+                                regexp=['{}.txt.{}.gz'.format(f, part_id) for f in files],
                                 force_fetch=force_fetch)
     streams = {}
 
@@ -136,7 +156,11 @@ def generate_documents(crawl_id, s3_uri, part_id,
         else:
             streams[stream_identifier] = cast(split_file(gzip.open(path_local)))
 
-    g = UrlDocumentGenerator(stream_patterns, **streams)
+    g = UrlDocumentGenerator(stream_patterns,
+                             processors=processors,
+                             preparing_processors=preparing_processors,
+                             final_processors=final_processors,
+                             **streams)
 
     output_name = DOCS_NAME_PATTERN.format(part_id)
     with gzip.open(os.path.join(tmp_dir, output_name), 'w') as output:

@@ -42,24 +42,30 @@ def _extract_stream_fields(stream_identifier, stream):
             izip(STREAMS_HEADERS[stream_identifier], stream)}
 
 
-def _process_ids(doc, stream_ids):
-    """Init the document and process `urlids` stream
-    """
-    # init the document with default field values
-    doc.update(deepcopy(_DEFAULT_DOCUMENT))
+def _process_main_stream(preparing_processors):
+    def func(doc, stream_ids):
+        """Init the document and process `urlids` stream
+        """
+        # init the document with default field values
+        doc.update(deepcopy(_DEFAULT_DOCUMENT))
 
-    # simple information about each url
-    doc.update(_extract_stream_fields('PATTERNS', stream_ids))
-    doc['url'] = doc['protocol'] + '://' + ''.join(
-        (doc['host'], doc['path'], doc['query_string']))
-    doc['url_hash'] = string_to_int64(doc['url'])
+        # simple information about each url
+        doc.update(_extract_stream_fields('PATTERNS', stream_ids))
+        doc['url'] = doc['protocol'] + '://' + ''.join(
+            (doc['host'], doc['path'], doc['query_string']))
+        doc['url_hash'] = string_to_int64(doc['url'])
 
-    query_string = stream_ids[4]
-    if query_string:
-        # The first character is ? we flush it in the split
-        qs = [k.split('=') if '=' in k else [k, '']
-              for k in query_string[1:].split('&')]
-        doc['query_string_keys'] = [q[0] for q in qs]
+        query_string = stream_ids[4]
+        if query_string:
+            # The first character is ? we flush it in the split
+            qs = [k.split('=') if '=' in k else [k, '']
+                  for k in query_string[1:].split('&')]
+            doc['query_string_keys'] = [q[0] for q in qs]
+
+        for p in preparing_processors:
+            p(doc)
+
+    return func
 
 
 def _process_final(final_processors):
@@ -75,24 +81,19 @@ class UrlDocumentGenerator(object):
 
     Format see `cdf.metadata.url` package
     """
-    def register_processors(self, processors):
-        self._processors.update(processors)
-
-    def register_final_processors(self, processors):
-        self._final_processors += processors
-
-    def __init__(self, stream_patterns, **kwargs):
+    def __init__(self, stream_patterns, processors, preparing_processors, final_processors, **kwargs):
         self.stream_patterns = stream_patterns
         self.streams = kwargs
-        self._processors = {}
-        self._final_processors = []
+        self.processors = processors
+        self.preparing_processors = preparing_processors
+        self.final_processors = final_processors
 
         # `urlids` is the reference stream
-        left = (self.stream_patterns, 0, _process_ids)
+        left = (self.stream_patterns, 0, _process_main_stream(self.preparing_processors))
         streams_ref = {key: (self.streams[key], idx_from_stream(key, 'id'),
-                             self._processors[key])
+                             self.processors[key])
                        for key in self.streams.keys()}
-        self.generator = group_with(left, final_func=_process_final(self._final_processors),
+        self.generator = group_with(left, final_func=_process_final(self.final_processors),
                                     **streams_ref)
 
     def __iter__(self):

@@ -1,5 +1,8 @@
-from cdf.features.semnatic_data.settings import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
+from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES
 from cdf.core.streams.utils import idx_from_stream
+
+
+__all__ = ["PROCESSORS", "GENERATOR_FILES"]
 
 
 def _content_types(mandatory=False):
@@ -39,3 +42,8 @@ PROCESSORS = {
     'contents': _process_contents,
     'contents_duplicate': _process_metadata_duplicate,
 }
+
+GENERATOR_FILES = [
+    "urlcontents",
+    "urlcontentsduplicate"
+]
