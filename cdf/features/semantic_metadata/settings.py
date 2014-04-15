@@ -4,13 +4,9 @@ from cdf.metadata.url.url_metadata import (
     LIST, AGG_CATEGORICAL, AGG_NUMERICAL
 )
 
-__all__ = ["CONTENT_TYPE_INDEX", "CONTENT_TYPE_NAME_TO_ID",
-           "MANDATORY_CONTENT_TYPES", "MANDATORY_CONTENT_TYPES_IDS"]
 
-
-def _str_to_bool(string):
-    return string == '1'
-
+NAME = "Semantic metadata"
+DESCRIPTION = "title, description, h1, h2 and h3 values"
 
 CONTENT_TYPE_INDEX = {
     1: 'title',

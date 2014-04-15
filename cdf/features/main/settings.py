@@ -1,19 +1,12 @@
 from cdf.metadata.url.url_metadata import (
     LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
-    STRUCT_TYPE, DATE_TYPE,
-    ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, MULTI_FIELD,
-    AGG_CATEGORICAL, AGG_NUMERICAL
+    DATE_TYPE, ES_NOT_ANALYZED, ES_DOC_VALUE,
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL
 )
 
 
-__all__ = ["URLS_DATA_FORMAT_DEFINITION"]
-
-
-def _str_to_bool(string):
-    return string == '1'
-
-
+NAME = "main"
+DESCRIPTION = "Retrieve main data from a given url : http code, delays, date crawled, depth..."
 
 URLS_DATA_FORMAT_DEFINITION = {
     # url property data

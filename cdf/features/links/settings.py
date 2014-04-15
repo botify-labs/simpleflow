@@ -1,88 +1,12 @@
 from cdf.metadata.url.url_metadata import (
-    LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
-    STRUCT_TYPE, DATE_TYPE,
-    ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, MULTI_FIELD,
-    AGG_CATEGORICAL, AGG_NUMERICAL
+    INT_TYPE, BOOLEAN_TYPE, STRUCT_TYPE,
+    ES_NO_INDEX, ES_DOC_VALUE,
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL
 )
-from .helpers.masks import follow_mask
 
 
-__all__ = ["URLS_DATA_FORMAT_DEFINITION"]
-
-
-def _str_to_bool(string):
-    return string == '1'
-
-
-STREAMS_HEADERS = {
-    'OUTLINKS_RAW': (
-        ('id', int),
-        ('link_type', str),
-        ('bitmask', int),
-        ('dst_url_id', int),
-        ('external_url', str)
-    ),
-    'INLINKS_RAW': (
-        ('id', int),
-        ('link_type', str),
-        ('bitmask', int),
-        ('src_url_id', int),
-    ),
-    'OUTLINKS': (
-        ('id', int),
-        ('link_type', str),
-        ('follow', follow_mask),
-        ('dst_url_id', int),
-        ('external_url', str)
-    ),
-    'INLINKS': (
-        ('id', int),
-        ('link_type', str),
-        ('follow', follow_mask),
-        ('src_url_id', int),
-    ),
-    'OUTLINKS_COUNTERS': (
-        ('id', int),
-        ('follow', follow_mask),
-        ('is_internal', _str_to_bool),
-        ('score', int),
-        ('score_unique', int),
-    ),
-    'OUTREDIRECT_COUNTERS': (
-        ('id', int),
-        ('is_internal', _str_to_bool)
-    ),
-    'OUTCANONICAL_COUNTERS': (
-        ('id', int),
-        ('equals', _str_to_bool)
-    ),
-    'INLINKS_COUNTERS': (
-        ('id', int),
-        ('follow', follow_mask),
-        ('score', int),
-        ('score_unique', int),
-    ),
-    'INREDIRECT_COUNTERS': (
-        ('id', int),
-        ('score', int)
-    ),
-    'INCANONICAL_COUNTERS': (
-        ('id', int),
-        ('score', int)
-    ),
-    'BADLINKS': (
-        ('id', int),
-        ('dst_url_id', int),
-        ('http_code', int)
-    ),
-    'BADLINKS_COUNTERS': (
-        ('id', int),
-        ('http_code', int),
-        ('score', int)
-    )
-}
-
+NAME = "Link Graph"
+DESCRIPTION = "Retrieve outlinks, inlinks and its status (follow, no-follow), canonicals and redirections"
 
 URLS_DATA_FORMAT_DEFINITION = {
     # incoming links, must be internal
