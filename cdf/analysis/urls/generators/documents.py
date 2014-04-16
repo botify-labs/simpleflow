@@ -45,7 +45,7 @@ class UrlDocumentGenerator(object):
     def __init__(self, streams):
         self.right_streams = []
         for stream in streams:
-            if stream.stream_type.__class__.__name__ == "PatternsStream":
+            if stream.stream_type.__class__.__name__ == "IdStream":
                 self.left_stream = stream
             else:
                 self.right_streams.append(stream)

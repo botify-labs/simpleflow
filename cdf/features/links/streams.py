@@ -117,8 +117,17 @@ class OutlinksStream(OutlinksRawStream):
         del document["processed_outlink_link"]
 
 
-class InlinksStream(StreamBase):
+class InlinksRawStream(StreamBase):
     FILE = 'urlinlinks'
+    HEADERS = (
+        ('id', int),
+        ('link_type', str),
+        ('bitmask', int),
+        ('src_url_id', int),
+    )
+
+
+class InlinksStream(InlinksRawStream):
     HEADERS = (
         ('id', int),
         ('link_type', str),

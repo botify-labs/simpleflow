@@ -1,15 +1,15 @@
 from collections import Counter
 from itertools import groupby
 
-from cdf.core.streams.utils import idx_from_stream
+#from cdf.core.streams.utils import idx_from_stream
 
 def get_bad_links(stream_infos, stream_outlinks):
     """
     (url_src_id, url_dest_id, error_http_code)
     """
     # Resolve indexes
-    http_code_idx = idx_from_stream('infos', 'http_code')
-    url_id_idx = idx_from_stream('infos', 'id')
+    http_code_idx = stream_infos.field_idx('http_code')
+    url_id_idx = stream_infos.fields_idx('id')
     dest_url_idx = idx_from_stream('outlinks', 'dst_url_id')
     src_url_idx = idx_from_stream('outlinks', 'id')
     link_type_idx = idx_from_stream('outlinks', 'link_type')

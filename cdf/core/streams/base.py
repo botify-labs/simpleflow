@@ -1,8 +1,10 @@
 from itertools import izip
+import os
 import gzip
 
 from cdf.core.streams.caster import Caster
 from cdf.core.streams.utils import split_file
+from cdf.utils.s3 import fetch_file
 
 
 class StreamBase(object):
@@ -29,6 +31,14 @@ class StreamBase(object):
             self,
             cast(split_file(gzip.open(path)))
         )
+
+    def get_stream_from_storage(self, storage_uri, tmp_dir, part_id, force_fetch=False):
+        path, fetched = fetch_file(
+            os.path.join(storage_uri, '{}.txt.{}.gz'.format(self.FILE, part_id)),
+            os.path.join(tmp_dir, '{}.txt.{}.gz'.format(self.FILE, part_id)),
+            force_fetch=force_fetch
+        )
+        return self.get_stream_from_path(path)
 
     def to_dict(self, stream):
         return {field[0]: value for field, value in izip(self.HEADERS, stream)}

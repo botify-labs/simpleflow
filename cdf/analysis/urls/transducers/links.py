@@ -2,7 +2,6 @@ from collections import defaultdict
 from itertools import groupby
 from cdf.analysis.urls.utils import is_link_internal
 from cdf.metadata.raw.masks import is_first_canonical
-from cdf.core.streams.utils import idx_from_stream
 
 
 class OutlinksTransducer(object):
@@ -61,10 +60,10 @@ class InlinksTransducer(object):
         self.stream_inlinks = stream_inlinks
 
     def get(self):
-        url_id_idx = idx_from_stream('inlinks_raw', 'id')
+        url_id_idx = self.stream_inlinks.stream_type.field_idx('id')
 
         # Group the stream by url_id using itertools.groupby
-        for url_id, group in groupby(self.stream_inlinks, lambda x: x[url_id_idx]):
+        for url_id, group in groupby(self.stream_inlinks.stream, lambda x: x[url_id_idx]):
             counter_by_type = defaultdict(list)
             redirects = 0
             canonicals = set()

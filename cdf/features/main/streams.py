@@ -3,10 +3,10 @@ from cdf.core.streams.base import StreamBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 
-__all__ = ["PatternsStream", "InfosStream", "SuggestStream"]
+__all__ = ["IdStream", "InfosStream", "SuggestStream"]
 
 
-class PatternsStream(StreamBase):
+class IdStream(StreamBase):
     FILE = 'urlids'
     HEADERS = (
         ('id', int),
@@ -44,8 +44,8 @@ class InfosStream(StreamBase):
         ('date_crawled', int),
         ('http_code', int),
         ('byte_size', int),
-        ('delay1', int),
-        ('delay2', int),
+        ('delay_first_byte', int),
+        ('delay_last_byte', int),
     )
 
     def process_document(self, document, stream):
@@ -64,13 +64,6 @@ class InfosStream(StreamBase):
         # `?` should be rename to `not-set`
         if document['content_type'] == '?':
             document['content_type'] = 'not-set'
-
-        # rename `delay1` and `delay2`
-        # they are kept in the stream schema for compatibility with
-        document['delay_first_byte'] = document['delay1']
-        document['delay_last_byte'] = document['delay2']
-        del(document['delay1'])
-        del(document['delay2'])
 
         # mask:
         # 1 gzipped, 2 notused, 4 meta_noindex
