@@ -39,9 +39,9 @@ class Feature(object):
     def __unicode__(self):
         return unicode(self.identifier)
 
-    def get_streams_objects(self):
+    def get_streams_def(self):
         """
-        Return streams from the current feature
+        Return streams definition from the current feature
         """
         obj = []
         try:
@@ -55,12 +55,12 @@ class Feature(object):
                     obj.append(klass())
             return obj
 
-    def get_streams_objects_processing_document(self):
+    def get_streams_def_processing_document(self):
         """
         Return all streams needed to compute urls documents
         """
         obj = []
-        for s in self.get_streams_objects():
+        for s in self.get_streams_def():
             if hasattr(s, 'process_document'):
                 obj.append(s)
         return obj

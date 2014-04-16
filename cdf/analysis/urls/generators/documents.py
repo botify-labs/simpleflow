@@ -1,7 +1,7 @@
 import ujson
 from copy import deepcopy
 from cdf.core.streams.transformations import group_with
-from cdf.metadata.url import ELASTICSEARCH_BACKEND
+from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 
 
 _DEFAULT_DOCUMENT = ELASTICSEARCH_BACKEND.default_document()

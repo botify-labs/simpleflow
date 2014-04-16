@@ -1,4 +1,0 @@
-from es_backend_utils import ElasticSearchBackend
-from cdf.utils.features import get_urls_data_format_definition
-
-ELASTICSEARCH_BACKEND = ElasticSearchBackend(get_urls_data_format_definition())

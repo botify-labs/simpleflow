@@ -1,3 +1,8 @@
+from cdf.metadata.url.url_metadata import (
+    LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
+    DATE_TYPE, ES_NOT_ANALYZED, ES_DOC_VALUE,
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL
+)
 from cdf.core.streams.exceptions import GroupWithSkipException
 from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
@@ -15,6 +20,47 @@ class IdStreamDef(StreamDefBase):
         ('path', str),
         ('query_string', str),
     )
+    MAPPING = {
+        # url property data
+        "url": {
+            "type": STRING_TYPE,
+            "settings": {ES_NOT_ANALYZED}
+        },
+        "url_hash": {"type": LONG_TYPE},
+        "host": {
+            "type": STRING_TYPE,
+            "settings": {
+                ES_NOT_ANALYZED,
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            }
+        },
+        "id": {
+            "type": INT_TYPE,
+            "settings": {ES_DOC_VALUE}
+        },
+        "crawl_id": {"type": INT_TYPE},
+        "path": {
+            "type": STRING_TYPE,
+            "settings": {ES_NOT_ANALYZED}
+        },
+        "protocol": {
+            "type": STRING_TYPE,
+            "settings": {
+                ES_NOT_ANALYZED,
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            }
+        },
+        "query_string": {
+            "type": STRING_TYPE,
+            "settings": {ES_NOT_ANALYZED}
+        },
+        "query_string_keys": {
+            "type": STRING_TYPE,
+            "settings": {ES_NOT_ANALYZED}
+        },
+    }
 
     def process_document(self, document, stream):
         """Init the document and process `urlids` stream
@@ -47,6 +93,60 @@ class InfosStreamDef(StreamDefBase):
         ('delay_first_byte', int),
         ('delay_last_byte', int),
     )
+    MAPPING = {
+        "byte_size": {
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
+        "date_crawled": {
+            "type": DATE_TYPE,
+            "settings": {ES_DOC_VALUE}
+        },
+        "delay_first_byte": {
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
+        "delay_last_byte": {
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
+        "depth": {
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                # assume possible depth is finite
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL
+            }
+        },
+        "gzipped": {"type": BOOLEAN_TYPE},
+        "content_type": {
+            "type": STRING_TYPE,
+            "settings": {
+                ES_NOT_ANALYZED,
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            }
+        },
+        # meta tag related
+        "metadata.robots.nofollow": {
+            "type": BOOLEAN_TYPE,
+            "settings": {AGG_CATEGORICAL}
+        },
+        "metadata.robots.noindex": {
+            "type": BOOLEAN_TYPE,
+            "settings": {AGG_CATEGORICAL}
+        }
+    }
 
     def process_document(self, document, stream):
         """Process `urlinfos` stream
@@ -110,6 +210,14 @@ class SuggestStreamDef(StreamDefBase):
         ('id', int),
         ('query_hash', str)
     )
+    MAPPING = {
+        "patterns": {
+            "type": LONG_TYPE,
+            "settings": {
+                LIST
+            }
+        },
+    }
 
     def process_document(self, document, stream):
         url_id, pattern_hash = stream
