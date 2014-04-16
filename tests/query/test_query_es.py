@@ -7,7 +7,7 @@ import copy
 
 from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
-from cdf.metadata.url import ELASTICSEARCH_BACKEND
+from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 
 from cdf.query.query import Query
 

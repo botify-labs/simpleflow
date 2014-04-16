@@ -17,6 +17,10 @@ import logging
 from cdf.log import logger
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.metadata.raw.masks import list_to_mask, follow_mask
+from cdf.features.main.streams import IdStreamDef, InfosStreamDef
+from cdf.features.links.streams import OutlinksStreamDef, InlinksStreamDef, BadLinksStreamDef
+from cdf.features.semantic_metadata.streams import ContentsStreamDef, ContentsDuplicateStreamDef
+
 
 logger.setLevel(logging.DEBUG)
 
@@ -35,7 +39,10 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
     def test_url_infos(self):
-        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos))
+        ])
         document = list(gen)[0]
         document_expected = {
             'id': 1,
@@ -66,13 +73,20 @@ class TestBasicInfoGeneration(unittest.TestCase):
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
         ]
 
-        gen = UrlDocumentGenerator(iter(ids), infos=iter(self.infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos))
+        ])
+
         document = _next_doc(gen)
         self.assertEquals(document['query_string'], '?f1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
 
     def test_info_content_type(self):
-        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos))
+        ])
         document = _next_doc(gen)
         self.assertEquals(document['content_type'], 'not-set')
 
@@ -80,7 +94,10 @@ class TestBasicInfoGeneration(unittest.TestCase):
             [1, 1, 'text', 0, 1, 200, 1200, 303, 456],
         ]
 
-        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos))
+        ])
         document = _next_doc(gen)
         self.assertEquals(document['content_type'], 'text')
 
@@ -89,7 +106,10 @@ class TestBasicInfoGeneration(unittest.TestCase):
             [1, 'http', 'www.site.com', '/path/name.html', '?f1=v1&f2=v2'],
         ]
 
-        gen = UrlDocumentGenerator(iter(ids), infos=iter(self.infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos))
+        ])
         document = _next_doc(gen)
         self.assertEquals(document['query_string'], '?f1=v1&f2=v2')
         self.assertEquals(document['query_string_keys'], ['f1', 'f2'])
@@ -115,7 +135,10 @@ class TestMetadataGeneration(unittest.TestCase):
             [3, 8, 'text/html', 1, 1, 200, 1200, 303, 456],
         ]
 
-        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos))
+        ])
         document = _next_doc(gen)
         self.assertEqual(document['gzipped'], True)
         self.assertEqual(document['metadata']['robots']['noindex'], False)
@@ -140,8 +163,12 @@ class TestMetadataGeneration(unittest.TestCase):
             [1, 1, 0, 'My title']
         ]
 
-        gen = UrlDocumentGenerator(iter(ids), infos=iter(infos),
-                                   contents=iter(contents))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            ContentsStreamDef.get_stream_from_iterator(iter(contents)),
+        ])
+
         document = _next_doc(gen)
         metadata = document['metadata']
         self.assertEquals(metadata['h1']['contents'],
@@ -157,8 +184,12 @@ class TestMetadataGeneration(unittest.TestCase):
             [3, 2, 0, 'My H1'],
         ]
 
-        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos),
-                                   contents=iter(contents))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
+            ContentsStreamDef.get_stream_from_iterator(iter(contents)),
+        ])
+
         for url_id, document in gen:
             metadata = document['metadata']
             if document['id'] in (1, 3):
@@ -172,8 +203,12 @@ class TestMetadataGeneration(unittest.TestCase):
             [2, 2, 1, 0, True, []],
             [3, 4, 10, 3, False, [2, 3, 4]],
         ]
-        gen = UrlDocumentGenerator(iter(self.ids), infos=iter(self.infos),
-                                   contents_duplicate=iter(duplicates))
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
+            ContentsDuplicateStreamDef.get_stream_from_iterator(iter(duplicates))
+        ])
 
         # check for url1
         document = _next_doc(gen)
@@ -219,8 +254,12 @@ class TestInlinksGeneration(unittest.TestCase):
             [1, 'a', ['link_meta'], 3],
         ]
 
-        gen = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
-                                   infos=iter(infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+        ])
+
         document = _next_doc(gen)
         inlinks = document['inlinks_internal']
         self.assertEquals(inlinks['nb']['total'], 5)
@@ -273,8 +312,12 @@ class TestOutlinksGeneration(unittest.TestCase):
             [3, 'a', ['link'], 6, ''],
         ]
 
-        gen = UrlDocumentGenerator(iter(self.ids), outlinks=iter(outlinks),
-                                   infos=iter(self.infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
+            OutlinksStreamDef.get_stream_from_iterator(iter(outlinks))
+        ])
+
         # check for url1
         document = _next_doc(gen)
         # assert nofollow combinations
@@ -368,8 +411,11 @@ class TestOutlinksGeneration(unittest.TestCase):
             [1, 'a', ['robots'], -1, 'www.site.com/abc'],
         ]
 
-        gen = UrlDocumentGenerator(iter(ids), outlinks=iter(outlinks),
-                                   infos=iter(infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            OutlinksStreamDef.get_stream_from_iterator(iter(outlinks))
+        ])
         document = _next_doc(gen)
 
         int_outlinks_nb = document['outlinks_internal']['nb']
@@ -428,9 +474,11 @@ class TestOutlinksGeneration(unittest.TestCase):
             [2, 110, 402],
         ]
 
-        gen = UrlDocumentGenerator(iter(patterns),
-                                   infos=iter(infos),
-                                   badlinks=iter(badlinks))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            BadLinksStreamDef.get_stream_from_iterator(iter(badlinks))
+        ])
 
         expected_1 = {
             '3xx': {
@@ -510,10 +558,12 @@ class TestRedirectsGeneration(unittest.TestCase):
             [4, 'r301', ['follow'], 3],
         ]
 
-        gen = UrlDocumentGenerator(iter(patterns),
-                                   outlinks=iter(outlinks),
-                                   inlinks=iter(inlinks),
-                                   infos=iter(infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(patterns)),
+            OutlinksStreamDef.get_stream_from_iterator(iter(outlinks)),
+            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos))
+        ])
 
         document = _next_doc(gen)
         redirect_to = document['redirect']['to']
@@ -557,8 +607,12 @@ class TestRedirectsGeneration(unittest.TestCase):
             [1, 'r301', ['follow'], 2],
         ]
 
-        gen = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
-                                   infos=iter(infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(patterns)),
+            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos))
+        ])
+
         document = _next_doc(gen)
         expected = {
             'urls': [
@@ -612,8 +666,12 @@ class TestCanonicalGeneration(unittest.TestCase):
             [5, 'canonical', ['follow'], 4],
         ]
 
-        gen = UrlDocumentGenerator(iter(patterns), outlinks=iter(outlinks),
-                                   infos=iter(infos), inlinks=iter(inlinks))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+            OutlinksStreamDef.get_stream_from_iterator(iter(outlinks))
+        ])
 
         # Url 1
         canonical_to = _next_doc(gen)['canonical']['to']
@@ -666,11 +724,14 @@ class TestCanonicalGeneration(unittest.TestCase):
             [1, 'canonical', ['follow'], 5],
             [2, 'canonical', ['follow'], 17],
             [2, 'canonical', ['follow'], 20],
-            [3, 'canonical', ['follow'], 3], # self canonical
+            [3, 'canonical', ['follow'], 3],  # self canonical
         ]
 
-        gen = UrlDocumentGenerator(iter(patterns), inlinks=iter(inlinks),
-                                   infos=iter(infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            InlinksStreamDef.get_stream_from_iterator(iter(inlinks))
+        ])
 
         # Url 1
         canonical_from = _next_doc(gen)['canonical']['from']
@@ -707,7 +768,10 @@ class TestGlobalDocumentGeneration(unittest.TestCase):
             [3, 1, 'text/html', 0, 1, 0, 1200, 303, 456],
         ]
 
-        gen = UrlDocumentGenerator(iter(patterns), infos=iter(infos))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+        ])
         self.assertRaises(StopIteration, _next_doc, gen)
 
     def test_total_uniques(self):
@@ -738,10 +802,12 @@ class TestGlobalDocumentGeneration(unittest.TestCase):
             [1, 'a', follow_mask(3), 4],
         ]
 
-        gen = UrlDocumentGenerator(iter(patterns),
-                                   infos=iter(infos),
-                                   outlinks=iter(outlinks),
-                                   inlinks=iter(inlinks))
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+            OutlinksStreamDef.get_stream_from_iterator(iter(outlinks)),
+        ])
 
         document = _next_doc(gen)
         self.assertEqual(document['outlinks_internal']['nb']['unique'], 2)

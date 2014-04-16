@@ -17,12 +17,13 @@ def _clean_document(doc):
     _recursive_clean(doc, doc)
 
 
-def _pre_process_document(pre_processors):
-    def func(doc, stream_ids):
+def _pre_process_document(left_stream_def, pre_processors):
+    def func(doc, stream):
         """Init the document and process `urlids` stream
         """
         # init the document with default field values
         doc.update(deepcopy(_DEFAULT_DOCUMENT))
+        left_stream_def.process_document(doc, stream)
         for p in pre_processors:
             p(doc)
 
@@ -61,11 +62,11 @@ class UrlDocumentGenerator(object):
                     hooks_processors[hook].append(getattr(stream.stream_def, method_name))
 
         # `urlids` is the reference stream
-        left = (self.left_stream.stream, 0, _pre_process_document(hooks_processors['pre']))
+        left = (self.left_stream.stream, 0, _pre_process_document(self.left_stream.stream_def, hooks_processors['pre']))
         streams_ref = {
             right_stream.stream_def.__class__.__name__: (
                 right_stream.stream,
-                right_stream.stream_def.primary_key_idx,
+                right_stream.stream_def.field_idx('id'),
                 right_stream.stream_def.process_document
             ) for right_stream in self.right_streams}
         self.generator = group_with(left, final_func=_post_process_document(hooks_processors['post']),

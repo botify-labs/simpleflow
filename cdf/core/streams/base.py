@@ -16,33 +16,40 @@ class StreamDefBase(object):
         """
         return map(lambda i: i[0], cls.HEADERS).index(field)
 
-    def get_stream_from_path(self, path):
-        cast = Caster(self.HEADERS).cast
+    @classmethod
+    def get_stream_from_path(cls, path):
+        cast = Caster(cls.HEADERS).cast
         return Stream(
-            self,
+            cls(),
             cast(split_file(gzip.open(path)))
         )
 
-    def get_stream_from_storage(self, storage_uri, tmp_dir, part_id, force_fetch=False):
+    @classmethod
+    def get_stream_from_storage(cls, storage_uri, tmp_dir, part_id, force_fetch=False):
         path, fetched = fetch_file(
-            os.path.join(storage_uri, '{}.txt.{}.gz'.format(self.FILE, part_id)),
-            os.path.join(tmp_dir, '{}.txt.{}.gz'.format(self.FILE, part_id)),
+            os.path.join(storage_uri, '{}.txt.{}.gz'.format(cls.FILE, part_id)),
+            os.path.join(tmp_dir, '{}.txt.{}.gz'.format(cls.FILE, part_id)),
             force_fetch=force_fetch
         )
-        return self.get_stream_from_path(path)
+        return cls.get_stream_from_path(path)
 
-    def get_stream_from_file(self, f):
-        cast = Caster(self.HEADERS).cast
+    @classmethod
+    def get_stream_from_file(cls, f):
+        cast = Caster(cls.HEADERS).cast
         return Stream(
-            self,
+            cls(),
             cast(split_file(f))
         )
+
+    @classmethod
+    def get_stream_from_iterator(cls, i):
+        return Stream(cls(), i)
 
     def persist(self, stream, path, part_id=None, first_part_id_size=1024, part_id_size=300000):
         pass
 
-    def to_dict(self, stream):
-        return {field[0]: value for field, value in izip(self.HEADERS, stream)}
+    def to_dict(self, entry):
+        return {field[0]: value for field, value in izip(self.HEADERS, entry)}
 
 
 class Stream(object):

@@ -65,9 +65,8 @@ class IdStreamDef(StreamDefBase):
     def process_document(self, document, stream):
         """Init the document and process `urlids` stream
         """
-
         # simple information about each url
-        document.update(self.extract_stream_fields(stream))
+        document.update(self.to_dict(stream))
         document['url'] = document['protocol'] + '://' + ''.join(
             (document['host'], document['path'], document['query_string']))
         document['url_hash'] = string_to_int64(document['url'])
@@ -98,6 +97,15 @@ class InfosStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
+        "http_code": {
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                # `http_code` have 2 roles
+                AGG_CATEGORICAL,
                 AGG_NUMERICAL
             }
         },
