@@ -11,6 +11,13 @@ from cdf.core.streams.utils import group_left
 from cdf.metadata.aggregates import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
 from cdf.utils.dict import deep_update, flatten_dict
 from cdf.log import logger
+from cdf.features.main.streams import InfosStreamDef
+from cdf.features.links.streams import (
+    InlinksCountersStreamDef, OutlinksCountersStreamDef,
+    OutcanonicalCountersStreamDef, IncanonicalCountersStreamDef,
+    InredirectCountersStreamDef
+)
+from cdf.features.semantic_metadata.streams import ContentsDuplicateStreamDef
 
 
 def delay_to_range(delay):
@@ -127,42 +134,35 @@ class MetricsAggregator(object):
         streams_ref = {
             'suggest': (self.stream_suggest, 0),
             'infos': (self.stream_infos, 0),
-            'in_links_counters': (self.stream_in_links_counters,
-                                  idx_from_stream('inlinks_counters', 'id')),
-            'in_canonical_counters': (self.stream_in_canonical_counters,
-                                      idx_from_stream('incanonical_counters', 'id')),
-            'in_redirect_counters': (self.stream_in_redirect_counters,
-                                     idx_from_stream('inredirect_counters', 'id')),
-            'out_links_counters': (self.stream_out_links_counters, idx_from_stream('outlinks_counters', 'id')),
-            'out_canonical_counters': (self.stream_out_canonical_counters,
-                                       idx_from_stream('outcanonical_counters', 'id')),
-            'out_redirect_counters': (self.stream_out_redirect_counters,
-                                      idx_from_stream('outredirect_counters', 'id')),
-            'contents_duplicate': (self.stream_contents_duplicate,
-                                   idx_from_stream('contents_duplicate', 'id')),
-            'badlinks_counters': (self.stream_badlinks_counters,
-                                  idx_from_stream('badlinks_counters', 'id'))
+            'in_links_counters': (self.stream_in_links_counters, 0),
+            'in_canonical_counters': (self.stream_in_canonical_counters, 0),
+            'in_redirect_counters': (self.stream_in_redirect_counters, 0),
+            'out_links_counters': (self.stream_out_links_counters, 0),
+            'out_canonical_counters': (self.stream_out_canonical_counters, 0),
+            'out_redirect_counters': (self.stream_out_redirect_counters, 0),
+            'contents_duplicate': (self.stream_contents_duplicate, 0),
+            'badlinks_counters': (self.stream_badlinks_counters, 0)
         }
 
-        depth_idx = idx_from_stream('infos', 'depth')
-        content_type_idx = idx_from_stream('infos', 'content_type')
-        infos_mask_idx = idx_from_stream('infos', 'infos_mask')
+        depth_idx = InfosStreamDef.field_idx('depth')
+        content_type_idx = InfosStreamDef.field_idx('content_type')
+        infos_mask_idx = InfosStreamDef.field_idx('infos_mask')
 
-        http_code_idx = idx_from_stream('infos', 'http_code')
-        delay2_idx = idx_from_stream('infos', 'delay2')
+        http_code_idx = InfosStreamDef.field_idx('http_code')
+        delay2_idx = InfosStreamDef.field_idx('delay_last_byte')
 
-        inlinks_score_idx = idx_from_stream('inlinks_counters', 'score')
+        inlinks_score_idx = InlinksCountersStreamDef.field_idx('score')
 
-        outlinks_score_idx = idx_from_stream('outlinks_counters', 'score')
-        outlinks_score_unique_idx = idx_from_stream('outlinks_counters', 'score_unique')
+        outlinks_score_idx = OutlinksCountersStreamDef.field_idx('score')
+        outlinks_score_unique_idx = OutlinksCountersStreamDef.field_idx('score_unique')
 
-        outcanonical_equals_idx = idx_from_stream('outcanonical_counters', 'equals')
+        outcanonical_equals_idx = OutcanonicalCountersStreamDef.field_idx('equals')
 
-        incanonical_score_idx = idx_from_stream('incanonical_counters', 'score')
+        incanonical_score_idx = IncanonicalCountersStreamDef.field_idx('score')
 
-        inredirect_score_idx = idx_from_stream('inredirect_counters', 'score')
+        inredirect_score_idx = InredirectCountersStreamDef.field_idx('score')
 
-        content_duplicate_meta_type_idx = idx_from_stream('contents_duplicate', 'content_type')
+        content_duplicate_meta_type_idx = ContentsDuplicateStreamDef.field_idx('content_type')
 
         counter_dict = {}
         for field in COUNTERS_FIELDS:

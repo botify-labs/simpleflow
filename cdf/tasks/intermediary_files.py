@@ -25,10 +25,10 @@ def make_links_counter_file(crawl_id, s3_uri,
                             tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     if link_direction == "out":
         transducer = OutlinksTransducer
-        stream_name = OutlinksRawStream
+        stream_name = OutlinksRawStreamDef
     else:
         transducer = InlinksTransducer
-        stream_name = InlinksRawStream
+        stream_name = InlinksRawStreamDef
 
     stream_links = stream_name().get_stream_from_storage(s3_uri, tmp_dir, part_id, force_fetch)
     generator = transducer(stream_links).get()
