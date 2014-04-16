@@ -9,21 +9,12 @@ from cdf.utils.s3 import fetch_file
 
 class StreamDefBase(object):
 
-    @property
-    def primary_key_idx(self):
-        """
-        Return the index of "id" field
-        """
-        for i, field in enumerate(self.HEADERS):
-            if field[0] == 'id':
-                return i
-        raise Exception('Primary key not found')
-
-    def field_idx(self, field):
+    @classmethod
+    def field_idx(cls, field):
         """
         Return the field position of field in HEADERS
         """
-        return map(lambda i: i[0], self.HEADERS).index(field)
+        return map(lambda i: i[0], cls.HEADERS).index(field)
 
     def get_stream_from_path(self, path):
         cast = Caster(self.HEADERS).cast
@@ -39,6 +30,13 @@ class StreamDefBase(object):
             force_fetch=force_fetch
         )
         return self.get_stream_from_path(path)
+
+    def get_stream_from_file(self, f):
+        cast = Caster(self.HEADERS).cast
+        return Stream(
+            self,
+            cast(split_file(f))
+        )
 
     def persist(self, stream, path, part_id=None, first_part_id_size=1024, part_id_size=300000):
         pass
@@ -56,3 +54,6 @@ class Stream(object):
         """
         self.stream_def = stream_def
         self.stream = stream
+
+    def __iter__(self):
+        return self.stream

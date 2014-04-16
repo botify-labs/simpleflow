@@ -51,7 +51,7 @@ class Feature(object):
         else:
             methods = inspect.getmembers(streams, predicate=inspect.isclass)
             for method_name, klass in methods:
-                if type(klass) == type(StreamDefBase):
+                if issubclass(klass, StreamDefBase) and klass != StreamDefBase:
                     obj.append(klass())
             return obj
 
