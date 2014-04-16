@@ -45,7 +45,7 @@ class UrlDocumentGenerator(object):
     def __init__(self, streams):
         self.right_streams = []
         for stream in streams:
-            if stream.stream_type.__class__.__name__ == "IdStream":
+            if stream.stream_def.__class__.__name__ == "IdStreamDef":
                 self.left_stream = stream
             else:
                 self.right_streams.append(stream)
@@ -54,19 +54,19 @@ class UrlDocumentGenerator(object):
 
         for hook in ('pre', 'post'):
             method_name = '{}_process_document'.format(hook)
-            if hasattr(self.left_stream.stream_type, method_name):
-                hooks_processors[hook].append(getattr(self.left_stream.stream_type, method_name))
+            if hasattr(self.left_stream.stream_def, method_name):
+                hooks_processors[hook].append(getattr(self.left_stream.stream_def, method_name))
             for stream in self.right_streams:
-                if hasattr(stream.stream_type, method_name):
-                    hooks_processors[hook].append(getattr(stream.stream_type, method_name))
+                if hasattr(stream.stream_def, method_name):
+                    hooks_processors[hook].append(getattr(stream.stream_def, method_name))
 
         # `urlids` is the reference stream
         left = (self.left_stream.stream, 0, _pre_process_document(hooks_processors['pre']))
         streams_ref = {
-            right_stream.stream_type.__class__.__name__: (
+            right_stream.stream_def.__class__.__name__: (
                 right_stream.stream,
-                right_stream.stream_type.primary_key_idx,
-                right_stream.stream_type.process_document
+                right_stream.stream_def.primary_key_idx,
+                right_stream.stream_def.process_document
             ) for right_stream in self.right_streams}
         self.generator = group_with(left, final_func=_post_process_document(hooks_processors['post']),
                                     **streams_ref)

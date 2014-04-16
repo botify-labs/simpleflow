@@ -1,12 +1,12 @@
 from cdf.core.streams.exceptions import GroupWithSkipException
-from cdf.core.streams.base import StreamBase
+from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 
-__all__ = ["IdStream", "InfosStream", "SuggestStream"]
+__all__ = ["IdStreamDef", "InfosStreamDef", "SuggestStreamDef"]
 
 
-class IdStream(StreamBase):
+class IdStreamDef(StreamDefBase):
     FILE = 'urlids'
     HEADERS = (
         ('id', int),
@@ -34,7 +34,7 @@ class IdStream(StreamBase):
             document['query_string_keys'] = [q[0] for q in qs]
 
 
-class InfosStream(StreamBase):
+class InfosStreamDef(StreamDefBase):
     FILE = 'urlinfos'
     HEADERS = (
         ('id', int),
@@ -104,7 +104,7 @@ class InfosStream(StreamBase):
                 raise GroupWithSkipException()
 
 
-class SuggestStream(StreamBase):
+class SuggestStreamDef(StreamDefBase):
     FILE = 'url_suggested_clusters'
     HEADERS = (
         ('id', int),

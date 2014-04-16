@@ -7,7 +7,7 @@ from cdf.core.streams.utils import split_file
 from cdf.utils.s3 import fetch_file
 
 
-class StreamBase(object):
+class StreamDefBase(object):
 
     @property
     def primary_key_idx(self):
@@ -27,7 +27,7 @@ class StreamBase(object):
 
     def get_stream_from_path(self, path):
         cast = Caster(self.HEADERS).cast
-        return StreamInstance(
+        return Stream(
             self,
             cast(split_file(gzip.open(path)))
         )
@@ -40,16 +40,19 @@ class StreamBase(object):
         )
         return self.get_stream_from_path(path)
 
+    def persist(self, stream, path, part_id=None, first_part_id_size=1024, part_id_size=300000):
+        pass
+
     def to_dict(self, stream):
         return {field[0]: value for field, value in izip(self.HEADERS, stream)}
 
 
-class StreamInstance(object):
+class Stream(object):
 
-    def __init__(self, stream_type, stream):
+    def __init__(self, stream_def, stream):
         """
         :param stream_type : A StreamBase instance
         :param stream : a python stream
         """
-        self.stream_type = stream_type
+        self.stream_def = stream_def
         self.stream = stream

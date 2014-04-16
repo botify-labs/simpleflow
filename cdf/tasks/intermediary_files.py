@@ -14,7 +14,7 @@ from cdf.analysis.urls.transducers.links import OutlinksTransducer, InlinksTrans
 from cdf.core.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.analysis.urls.generators.bad_links import get_bad_links, get_bad_link_counters
-from cdf.features.links.streams import OutlinksRawStream, InlinksRawStream
+from cdf.features.links.streams import OutlinksRawStreamDef, InlinksRawStreamDef
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH
 

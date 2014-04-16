@@ -1,12 +1,12 @@
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
-from cdf.core.streams.base import StreamBase
+from cdf.core.streams.base import StreamDefBase
 
 
 def _str_to_bool(string):
     return string == '1'
 
 
-class ContentsStream(StreamBase):
+class ContentsStreamDef(StreamDefBase):
     FILE = 'urlcontents'
     HEADERS = (
         ('id', int),
@@ -22,7 +22,7 @@ class ContentsStream(StreamBase):
         document['metadata'][content_type]['contents'].append(content)
 
 
-class ContentsDuplicateStream(StreamBase):
+class ContentsDuplicateStreamDef(StreamDefBase):
     FILE = 'urlcontentsduplicate'
     HEADERS = (
         ('id', int),

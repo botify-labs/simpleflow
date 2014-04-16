@@ -1,4 +1,4 @@
-from cdf.core.streams.base import StreamBase
+from cdf.core.streams.base import StreamDefBase
 from cdf.analysis.urls.utils import is_link_internal
 from cdf.log import logger
 from cdf.metadata.raw.masks import list_to_mask
@@ -13,7 +13,7 @@ def _get_nofollow_combination_key(keys):
     return '_'.join(sorted(keys))
 
 
-class OutlinksRawStream(StreamBase):
+class OutlinksRawStreamDef(StreamDefBase):
     FILE = 'urllinks'
     HEADERS = (
         ('id', int),
@@ -24,7 +24,7 @@ class OutlinksRawStream(StreamBase):
     )
 
 
-class OutlinksStream(OutlinksRawStream):
+class OutlinksStreamDef(OutlinksRawStreamDef):
     """
     We just change the type of "follow"
     """
@@ -117,7 +117,7 @@ class OutlinksStream(OutlinksRawStream):
         del document["processed_outlink_link"]
 
 
-class InlinksRawStream(StreamBase):
+class InlinksRawStreamDef(StreamDefBase):
     FILE = 'urlinlinks'
     HEADERS = (
         ('id', int),
@@ -127,7 +127,7 @@ class InlinksRawStream(StreamBase):
     )
 
 
-class InlinksStream(InlinksRawStream):
+class InlinksStreamDef(InlinksRawStreamDef):
     HEADERS = (
         ('id', int),
         ('link_type', str),
@@ -206,7 +206,7 @@ class InlinksStream(InlinksRawStream):
         del document["processed_inlink_link"]
 
 
-class OutlinksCountersStream(StreamBase):
+class OutlinksCountersStreamDef(StreamDefBase):
     FILE = 'url_out_links_counters'
     HEADERS = (
         ('id', int),
@@ -217,7 +217,7 @@ class OutlinksCountersStream(StreamBase):
     )
 
 
-class OutredirectCountersStream(StreamBase):
+class OutredirectCountersStreamDef(StreamDefBase):
     FILE = 'url_out_redirect_counters'
     HEADERS = (
         ('id', int),
@@ -225,7 +225,7 @@ class OutredirectCountersStream(StreamBase):
     )
 
 
-class OutcanonicalCountersStream(StreamBase):
+class OutcanonicalCountersStreamDef(StreamDefBase):
     FILE = 'url_out_canonical_counters'
     HEADERS = (
         ('id', int),
@@ -233,7 +233,7 @@ class OutcanonicalCountersStream(StreamBase):
     )
 
 
-class InlinksCountersStream(StreamBase):
+class InlinksCountersStreamDef(StreamDefBase):
     FILE = 'url_in_links_counters'
     HEADERS = (
         ('id', int),
@@ -243,7 +243,7 @@ class InlinksCountersStream(StreamBase):
     )
 
 
-class InredirectCountersStream(StreamBase):
+class InredirectCountersStreamDef(StreamDefBase):
     FILE = 'url_in_redirect_counters'
     HEADERS = (
         ('id', int),
@@ -251,7 +251,7 @@ class InredirectCountersStream(StreamBase):
     )
 
 
-class IncanonicalCountersStream(StreamBase):
+class IncanonicalCountersStreamDef(StreamDefBase):
     FILE = 'url_in_canonical_counters'
     HEADERS = (
         ('id', int),
@@ -259,7 +259,7 @@ class IncanonicalCountersStream(StreamBase):
     )
 
 
-class BadLinksStream(StreamBase):
+class BadLinksStreamDef(StreamDefBase):
     FILE = 'urlbadlinks'
     HEADERS = (
         ('id', int),
@@ -291,7 +291,7 @@ class BadLinksStream(StreamBase):
         errors[error_kind]['urls_exists'] = True
 
 
-class BadLinksCountersStream(StreamBase):
+class BadLinksCountersStreamDef(StreamDefBase):
     FILE = 'urlbadlinks_counters'
     HEADERS = (
         ('id', int),

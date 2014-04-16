@@ -2,7 +2,7 @@ import os
 import inspect
 from importlib import import_module
 
-from cdf.core.streams.base import StreamBase
+from cdf.core.streams.base import StreamDefBase
 
 
 class Feature(object):
@@ -51,7 +51,7 @@ class Feature(object):
         else:
             methods = inspect.getmembers(streams, predicate=inspect.isclass)
             for method_name, klass in methods:
-                if type(klass) == type(StreamBase):
+                if type(klass) == type(StreamDefBase):
                     obj.append(klass())
             return obj
 
