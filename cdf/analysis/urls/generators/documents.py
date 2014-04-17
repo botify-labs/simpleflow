@@ -2,6 +2,7 @@ import ujson
 from copy import deepcopy
 from cdf.core.streams.transformations import group_with
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
+from cdf.features.main.streams import IdStreamDef
 
 
 _DEFAULT_DOCUMENT = ELASTICSEARCH_BACKEND.default_document()
@@ -45,7 +46,7 @@ class UrlDocumentGenerator(object):
     def __init__(self, streams):
         self.right_streams = []
         for stream in streams:
-            if stream.stream_def.__class__.__name__ == "IdStreamDef":
+            if isinstance(stream.stream_def, IdStreamDef):
                 self.left_stream = stream
             else:
                 self.right_streams.append(stream)
