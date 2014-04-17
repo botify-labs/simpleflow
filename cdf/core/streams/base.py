@@ -10,6 +10,13 @@ from boto.exception import S3ResponseError
 
 
 class StreamDefBase(object):
+    """
+    StremDefBase is an abstractable object waiting for some constants : 
+    FILE : the prefix of the document in the storage backend (ex : urlids, urlcontents...)
+    HEADERS : the definition of the streams fields
+              Ex : [('id', int), ('url', str), ('http_code', int)
+    URL_DOCUMENT_MAPPING : the mapping of the final document generated for a given url
+    """
 
     @classmethod
     def field_idx(cls, field):
@@ -20,6 +27,9 @@ class StreamDefBase(object):
 
     @classmethod
     def get_stream_from_path(cls, path):
+        """
+        Return a Stream instance from a file path (the file must be gzip encoded)
+        """
         cast = Caster(cls.HEADERS).cast
         return Stream(
             cls(),
@@ -28,6 +38,9 @@ class StreamDefBase(object):
 
     @classmethod
     def get_stream_from_storage(cls, storage_uri, tmp_dir, part_id, force_fetch=False):
+        """
+        Return a Stream instance from a root storage uri.
+        """
         try:
             path, fetched = s3.fetch_file(
                 os.path.join(storage_uri, '{}.txt.{}.gz'.format(cls.FILE, part_id)),
@@ -40,6 +53,9 @@ class StreamDefBase(object):
 
     @classmethod
     def get_stream_from_file(cls, f):
+        """
+        Return a stream from a `file` instance
+        """
         cast = Caster(cls.HEADERS).cast
         return Stream(
             cls(),
@@ -48,24 +64,37 @@ class StreamDefBase(object):
 
     @classmethod
     def get_stream_from_iterator(cls, i):
+        """
+        Return a stream from a iterable object
+        """
         return Stream(cls(), i)
 
     def persist(self, stream, path, part_id=None, first_part_id_size=1024, part_id_size=300000):
         pass
 
     def to_dict(self, entry):
+        """
+        Return a dictionnary from a stream entry
+        Ex : (5, "http://www.site.com/", 200) will return {"id": 5, "url": "http://www.site.com/", "http_code": 200}
+        """
         return {field[0]: value for field, value in izip(self.HEADERS, entry)}
 
 
 class Stream(object):
+    """
+    A Stream instance is the union of a StreamDefBase instance and an iterable
+    """
 
-    def __init__(self, stream_def, stream):
+    def __init__(self, stream_def, iterator):
         """
-        :param stream_type : A StreamBase instance
-        :param stream : a python stream
+        :param stream_def : A StreamDefBase's subclass instance
+        :param iterator : an iterator
         """
         self.stream_def = stream_def
-        self.stream = stream
+        self.iterator = iterator
 
     def __iter__(self):
-        return self.stream
+        return self.iterator
+
+    def next(self):
+        return self.iterator.next()

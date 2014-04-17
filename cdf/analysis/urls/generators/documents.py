@@ -54,10 +54,10 @@ class UrlDocumentGenerator(object):
                 self.right_streams.append(stream)
 
         # `urlids` is the reference stream
-        left = (self.left_stream.stream, 0, _pre_process_document(self.left_stream.stream_def, self.get_pre_processors()))
+        left = (self.left_stream, 0, _pre_process_document(self.left_stream.stream_def, self.get_pre_processors()))
         streams_ref = {
             right_stream.stream_def.__class__.__name__: (
-                right_stream.stream,
+                right_stream,
                 right_stream.stream_def.field_idx('id'),
                 right_stream.stream_def.process_document
             ) for right_stream in self.right_streams}
