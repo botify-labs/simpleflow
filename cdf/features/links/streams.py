@@ -7,13 +7,10 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.analysis.urls.utils import is_link_internal
 from cdf.log import logger
 from cdf.metadata.raw.masks import list_to_mask
+from cdf.utils.convert import _str_to_bool
 from .helpers.masks import follow_mask
 
 __all__ = ["OutlinksRawStreamDef", "OutlinksStreamDef"]
-
-
-def _str_to_bool(string):
-    return string == '1'
 
 
 def _get_nofollow_combination_key(keys):

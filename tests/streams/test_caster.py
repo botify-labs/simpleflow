@@ -4,7 +4,7 @@ import logging
 from StringIO import StringIO
 
 from cdf.log import logger
-from cdf.metadata.raw.schema import _str_to_bool
+from cdf.utils.convert import _str_to_bool
 from cdf.core.streams.utils import split_file
 from cdf.core.streams.caster import Caster
 

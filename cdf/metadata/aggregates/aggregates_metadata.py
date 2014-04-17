@@ -1,4 +1,4 @@
-from cdf.metadata.raw import CONTENT_TYPE_INDEX
+from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 
 
 CROSS_PROPERTIES_COLUMNS = ('query', 'content_type',
