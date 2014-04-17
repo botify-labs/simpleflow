@@ -1,7 +1,6 @@
 import unittest
 import os
 import re
-import itertools
 import shutil
 from elasticsearch import Elasticsearch
 
@@ -24,7 +23,7 @@ from cdf.features.links.streams import (
     InlinksCountersStreamDef,
     IncanonicalCountersStreamDef
 )
-from cdf.features.main.streams import IdStreamDef
+from cdf.features.semantic_metadata.streams import ContentsDuplicateStreamDef
 
 CRAWL_ID = 0
 S3_URI = ''
@@ -341,4 +340,4 @@ class MockIntegrationTest(unittest.TestCase):
             [11, 1, 1, 0, 1, []]
         ]
 
-        self.assert_file_contents(IdStreamDef, pattern, expected_contents)
+        self.assert_file_contents(ContentsDuplicateStreamDef, pattern, expected_contents)
