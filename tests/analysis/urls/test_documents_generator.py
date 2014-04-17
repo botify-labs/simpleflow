@@ -16,7 +16,7 @@ import logging
 
 from cdf.log import logger
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
-from cdf.metadata.raw.masks import list_to_mask, follow_mask
+from cdf.features.links.helpers.masks import list_to_mask, follow_mask
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.links.streams import OutlinksStreamDef, InlinksStreamDef, BadLinksStreamDef
 from cdf.features.semantic_metadata.streams import ContentsStreamDef, ContentsDuplicateStreamDef

@@ -4,7 +4,7 @@ import logging
 import itertools
 
 from cdf.log import logger
-from cdf.metadata.raw.masks import follow_mask, _NOFOLLOW_MASKS
+from cdf.features.links.helpers.masks import follow_mask, _NOFOLLOW_MASKS
 
 logger.setLevel(logging.DEBUG)
 

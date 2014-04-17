@@ -256,16 +256,19 @@ class TestMetricsAggregator(unittest.TestCase):
 
         stream_inredirect_counters = [
             [1, 50],
-            [2, 10**7]
+            [2, 10]
         ]
 
-        self.kwargs['stream_outredirect_counters'] = iter(stream_outredirect_counters)
-        self.kwargs['stream_inredirect_counters'] = iter(stream_inredirect_counters)
-        result = list(MetricsAggregator(**self.kwargs).get())
+        streams = [
+            OutredirectCountersStreamDef.get_stream_from_iterator(iter(stream_outredirect_counters)),
+            InredirectCountersStreamDef.get_stream_from_iterator(iter(stream_inredirect_counters))
+        ]
+
+        result = list(MetricsAggregator(streams).get())
         target = result[0]['counters']
 
         self.assertEqual(target['redirects_to_nb'], 4)
-        self.assertEqual(target['redirects_from_nb'], 10**7 + 50)
+        self.assertEqual(target['redirects_from_nb'], 10 + 50)
 
     def test_canonicals(self):
         """Canonicals counters should be aggregated correctly
@@ -286,7 +289,7 @@ class TestMetricsAggregator(unittest.TestCase):
 
         stream_incanonical_counters = [
             [1, 10],
-            [2, 10**7]
+            [2, 10]
         ]
 
         self.kwargs['stream_outcanonical_counters'] = iter(stream_outcanonical_counters)
@@ -299,4 +302,4 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(target['not_equal'], 1)
         self.assertEqual(target['filled'], 3)
         self.assertEqual(target['not_filled'], 2)
-        self.assertEqual(target['incoming'], 10**7 + 10)
+        self.assertEqual(target['incoming'], 10 + 10)

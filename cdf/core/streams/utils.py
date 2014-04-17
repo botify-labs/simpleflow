@@ -123,3 +123,14 @@ def get_data_streams_from_storage(streams, storage_uri, tmp_dir, part_id=None, f
             if path_local.startswith(os.path.join(tmp_dir, "{}.txt".format(s.FILE))):
                 data_streams.append(s.get_stream_from_path(path_local))
     return data_streams
+
+
+def identifier_to_stream_def_object(identifier):
+    """
+    Return a StreamDef from its file identifier
+    """
+    from cdf.core.features import Feature
+    for f in Feature.get_all():
+        for s in f.get_streams_objects:
+            if s.FILE == identifier:
+                return s

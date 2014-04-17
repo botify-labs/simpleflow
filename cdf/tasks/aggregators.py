@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import gzip
 import json
 import csv
 from urlparse import urlparse
@@ -9,11 +8,8 @@ from pandas import HDFStore, Index
 
 from cdf.exceptions import MissingResource
 from cdf.utils.loading import build_dataframe_from_csv
-from cdf.core.streams.caster import Caster
-from cdf.core.streams.utils import split_file
 from cdf.utils.s3 import fetch_file, fetch_files, push_file, push_content
 from cdf.utils.path import makedirs
-from cdf.metadata.raw import STREAMS_HEADERS, STREAMS_FILES
 from cdf.metadata.aggregates.aggregates_metadata import CROSS_PROPERTIES_COLUMNS
 from cdf.analysis.suggestions.aggregator import MetricsAggregator, MetricsConsolidator
 from cdf.analysis.urls.generators.suggestions import MetadataClusterMixin
@@ -29,49 +25,28 @@ from cdf.analysis.urls.query_helpers import (
     get_filters_from_agg_canonical_field
 )
 
+from cdf.features.main.streams import IdStreamDef, InfosStreamDef, SuggestStreamDef
+from cdf.features.links.streams import (
+    OutlinksCountersStreamDef, OutcanonicalCountersStreamDef, OutredirectCountersStreamDef,
+    InlinksCountersStreamDef, IncanonicalCountersStreamDef, InredirectCountersStreamDef,
+    BadLinksCountersStreamDef
+)
+from cdf.features.semantic_metadata.streams import ContentsDuplicateStreamDef
+
 
 @with_temporary_dir
 def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
-    # Fetch locally the files from S3
-    suggest_dir_path = os.path.join(tmp_dir, 'suggest')
-    makedirs(suggest_dir_path, exist_ok=True)
+    streams_def = [
+        IdStreamDef, InfosStreamDef,
+        OutlinksCountersStreamDef, OutcanonicalCountersStreamDef, OutredirectCountersStreamDef,
+        InlinksCountersStreamDef, IncanonicalCountersStreamDef, InredirectCountersStreamDef,
+        SuggestStreamDef, ContentsDuplicateStreamDef, BadLinksCountersStreamDef
+    ]
+    streams = []
+    for s in streams_def:
+        s.get_stream_from_storage(s3_uri, part_id=part_id, tmp_dir=tmp_dir, force_fetch=force_fetch)
 
-    files = ('ids', 'infos',
-             '_out_links_counters', '_out_canonical_counters', '_out_redirect_counters',
-             '_in_links_counters', '_in_canonical_counters', '_in_redirect_counters',
-             '_suggested_clusters',
-             'contentsduplicate',
-             'badlinks_counters')
-    mandatory_files = ('ids', 'infos')
-
-    streams = {}
-    fetched_files = []
-    missing_files = []
-    for file_type in files:
-        filename = 'url%s.txt.%d.gz' % (file_type, part_id)
-        crt_fetched_files = fetch_files(s3_uri,
-                                        tmp_dir,
-                                        regexp=[filename],
-                                        force_fetch=force_fetch)
-        if len(crt_fetched_files) == 0:
-            if file_type in mandatory_files:
-                raise MissingResource("Could not fetch file : {}".format(filename))
-            missing_files.append(os.path.join(s3_uri, filename))
-        else:
-            fetched_files.extend(crt_fetched_files)
-
-    # Create an empty stream for all missing files (not mandatory)
-    if missing_files:
-        for filename in missing_files:
-            stream_identifier = STREAMS_FILES[os.path.basename(filename).split('.')[0]]
-            streams["stream_{}".format(stream_identifier)] = iter([])
-
-    for path_local, fetched in fetched_files:
-        stream_identifier = STREAMS_FILES[os.path.basename(path_local).split('.')[0]]
-        cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
-        streams["stream_%s" % stream_identifier] = cast(split_file(gzip.open(path_local)))
-
-    aggregator = MetricsAggregator(**streams)
+    aggregator = MetricsAggregator(streams)
     content = json.dumps(aggregator.get())
     f = open(os.path.join(tmp_dir, 'suggest/counters.{}.json'.format(part_id)), 'w')
     f.write(content)
