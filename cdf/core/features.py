@@ -21,20 +21,14 @@ class Feature(object):
                     identifier=n,
                     name=getattr(mod, "NAME", None),
                     description=getattr(mod, "DESCRIPTION", None),
-                    streams_files=getattr(mod, "STREAMS_FILES", None),
-                    streams_headers=getattr(mod, "STREAMS_HEADERS", None),
-                    urls_data_format_definition=getattr(mod, "URLS_DATA_FORMAT_DEFINITION", None),
                 )
                 cls.FEATURES.append(feature)
         return cls.FEATURES
 
-    def __init__(self, identifier, name, description, streams_files, streams_headers, urls_data_format_definition):
+    def __init__(self, identifier, name, description):
         self.identifier = identifier
         self.name = name
         self.description = description
-        self.streams_files = streams_files
-        self.streams_headers = streams_headers
-        self.urls_data_format_definition = urls_data_format_definition
 
     def __unicode__(self):
         return unicode(self.identifier)
