@@ -1,7 +1,7 @@
 import unittest
 import copy
 from mock import MagicMock
-from cdf.metadata.url import ELASTICSEARCH_BACKEND, ElasticSearchBackend
+from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND, ElasticSearchBackend
 
 from cdf.query.result_transformer import (IdToUrlTransformer,
                                           DefaultValueTransformer,

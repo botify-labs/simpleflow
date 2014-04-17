@@ -3,9 +3,10 @@ from BQL.parser.tagging import query_to_python
 from BQL.parser.metadata import query_to_python as metadata_query_to_python
 from pandas import DataFrame
 
-from cdf.metadata.raw import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
-from cdf.core.streams.utils import idx_from_stream, group_left
+from cdf.core.streams.utils import group_left
 from cdf.analysis.urls.constants import CLUSTER_TYPE_TO_ID
+from cdf.features.main.streams import InfosStreamDef
+from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 
 
 def transform_queries(queries_lst, func=query_to_python):
@@ -39,7 +40,7 @@ class MetadataClusterMixin(object):
                 if len(suggestions) == 0:
                     continue
                 # Temporary deduplicate queries, some are set 2 times like in path file for francetvinfo, Simon is fixing it
-                suggestions = list(set((q['hash'], q['string'], q['verbose_string']) for q in suggestions) )
+                suggestions = list(set((q['hash'], q['string'], q['verbose_string']) for q in suggestions))
                 dataframe = DataFrame({"string": [q[1] for q in suggestions],
                                        "verbose_string": [q[2] for q in suggestions]})
                 dataframe.index = [q[0] for q in suggestions]
@@ -57,7 +58,7 @@ class UrlSuggestionsGenerator(MetadataClusterMixin):
         self.stream_contents = stream_contents
 
     def __iter__(self):
-        http_code_idx = idx_from_stream('infos', 'http_code')
+        http_code_idx = InfosStreamDef.field_idx('http_code')
         for i in group_left((self.stream_patterns, 0), infos=(self.stream_infos, 0), contents=(self.stream_contents, 0)):
             url_id, left_line, streams = i
             # If http_code in 0, 1, 2 > means than not crawled

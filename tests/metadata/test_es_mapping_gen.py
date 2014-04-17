@@ -1,7 +1,7 @@
 import unittest
 from cdf.metadata.url.es_backend_utils import (_parse_field_path,
                                                ElasticSearchBackend)
-from cdf.metadata.url import URLS_DATA_FORMAT_DEFINITION
+from cdf.utils.features import get_urls_data_format_definition
 
 
 class TestMappingGeneration(unittest.TestCase):
@@ -114,7 +114,7 @@ class TestMappingGeneration(unittest.TestCase):
     def test_generation_all_mapping(self):
         doc_type = 'urls'
         target = NEW_MAPPING
-        es_backend = ElasticSearchBackend(URLS_DATA_FORMAT_DEFINITION)
+        es_backend = ElasticSearchBackend(get_urls_data_format_definition())
         result = es_backend.mapping(doc_type=doc_type)
 
         # check individual sub-dict

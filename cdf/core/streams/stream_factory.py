@@ -9,10 +9,12 @@ from urlparse import urlsplit, parse_qs
 from cdf.log import logger
 
 from cdf.exceptions import MalformedFileNameError
-from cdf.metadata.raw import (STREAMS_HEADERS, STREAMS_FILES,
-                              CONTENT_TYPE_NAME_TO_ID)
+from cdf.core.features import Feature
 from cdf.core.streams.caster import Caster
-from cdf.core.streams.utils import split_file, idx_from_stream
+from cdf.core.streams.utils import split_file
+from cdf.features.main.streams import IdStreamDef, InfosStreamDef
+from cdf.features.semantic_metadata.streams import ContentsStreamDef
+from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
 
 
 def get_part_id_from_filename(filename):
@@ -59,7 +61,13 @@ class FileStreamFactory(object):
         self._crawler_metakeys = crawler_metakeys
 
         # pre-check on file basename
-        if content in STREAMS_FILES:
+        found = False
+        for f in Feature.get_features():
+            for stream_def in f.get_streams_def():
+                if content == stream_def.FILE:
+                    self.stream_def = stream_def
+                    found = True
+        if found:
             self.content = content
         else:
             raise Exception("{} is not a known raw file basename".format(content))
@@ -103,9 +111,7 @@ class FileStreamFactory(object):
                                with each field correctly casted.
 
         """
-        stream_identifier = STREAMS_FILES[self.content]
-        cast = Caster(STREAMS_HEADERS[stream_identifier.upper()]).cast
-        return cast(split_file(input_file))
+        return self.stream_def.get_stream_from_file(input_file)
 
     def get_stream(self):
         """:returns: generator -- the desired generator"""
@@ -183,8 +189,9 @@ class ProtocolStreamFactory(DataStreamFactory):
         """
         base_stream = self._file_stream_factory.get_stream()
         max_crawled_urlid = get_max_crawled_urlid(self._crawler_metakeys)
-        urlid_idx = idx_from_stream("PATTERNS", "id")
-        protocol_idx = idx_from_stream("PATTERNS", "protocol")
+        urlid_idx = IdStreamDef.field_idx("id")
+        protocol_idx = IdStreamDef.field_idx("protocol")
+
         for url in base_stream:
             urlid = url[urlid_idx]
             protocol = url[protocol_idx]
@@ -224,8 +231,8 @@ class HostStreamFactory(DataStreamFactory):
         """
         base_stream = self._file_stream_factory.get_stream()
         max_crawled_urlid = get_max_crawled_urlid(self._crawler_metakeys)
-        urlid_idx = idx_from_stream("PATTERNS", "id")
-        host_idx = idx_from_stream("PATTERNS", "host")
+        urlid_idx = IdStreamDef.field_idx("id")
+        host_idx = IdStreamDef.field_idx("host")
         for url in base_stream:
             urlid = url[urlid_idx]
             host = url[host_idx]
@@ -261,8 +268,8 @@ class PathStreamFactory(DataStreamFactory):
         """
         base_stream = self._file_stream_factory.get_stream()
         max_crawled_urlid = get_max_crawled_urlid(self._crawler_metakeys)
-        urlid_idx = idx_from_stream("PATTERNS", "id")
-        path_idx = idx_from_stream("PATTERNS", "path")
+        urlid_idx = IdStreamDef.field_idx("id")
+        path_idx = IdStreamDef.field_idx("path")
         for url in base_stream:
             urlid = url[urlid_idx]
             path = url[path_idx]
@@ -316,8 +323,8 @@ class QueryStringStreamFactory(DataStreamFactory):
         """
         base_stream = self._file_stream_factory.get_stream()
         max_crawled_urlid = get_max_crawled_urlid(self._crawler_metakeys)
-        urlid_idx = idx_from_stream("PATTERNS", "id")
-        query_string_index = idx_from_stream("PATTERNS", "query_string")
+        urlid_idx = IdStreamDef.field_idx("id")
+        query_string_index = IdStreamDef.field_idx("query_string")
         for url in base_stream:
             urlid = url[urlid_idx]
             if urlid > max_crawled_urlid:
@@ -369,8 +376,8 @@ class MetadataStreamFactory(DataStreamFactory):
         """
         base_stream = self._file_stream_factory.get_stream()
         max_crawled_urlid = get_max_crawled_urlid(self._crawler_metakeys)
-        content_type_idx = idx_from_stream("CONTENTS", "content_type")
-        text_idx = idx_from_stream("CONTENTS", "txt")
+        content_type_idx = ContentsStreamDef.field_idx("content_type")
+        text_idx = ContentsStreamDef.field_idx("txt")
         for urlid, lines in itertools.groupby(base_stream,
                                               key=lambda url: url[0]):
             result = []
@@ -444,8 +451,8 @@ def _get_nb_crawled_urls_from_stream(urlinfos_stream, max_crawled_urlid):
 
     """
     result = 0
-    urlid_idx = idx_from_stream("INFOS", "id")
-    httpcode_idx = idx_from_stream("INFOS", "http_code")
+    urlid_idx = InfosStreamDef.field_idx("id")
+    httpcode_idx = InfosStreamDef.field_idx("http_code")
     for urlinfo in urlinfos_stream:
         urlid = urlinfo[urlid_idx]
         httpcode = urlinfo[httpcode_idx]

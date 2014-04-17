@@ -1,8 +1,26 @@
+# -*- coding: utf-8 -*-
+"""
+Real bitmask is :
+1 link no follow
+2 meta no follow
+4 robots no follow
+8 config no follow
+16 extra link (if set & canonical -> this is NOT the¬
+              first canonical in the page)¬
+32 link with rel=prev
+64 link with rel=next
+"""
+
 # Order of masks is important !
 _NOFOLLOW_MASKS = [
     (4, "robots"),
     (2, "meta"),
     (1, "link"),
+]
+
+_PREV_NEXT_MASKS = [
+    (32, "prev"),
+    (64, "next")
 ]
 
 
@@ -24,6 +42,14 @@ def follow_mask(mask):
         if bitmask & _mask == bitmask:
             masks.append(term)
     return masks
+
+
+def prev_next_mask(mask):
+    flags = []
+    for local_mask, name in _PREV_NEXT_MASKS:
+        if int(mask) & local_mask == local_mask:
+            flags.append(name)
+    return flags
 
 
 def list_to_mask(lst):

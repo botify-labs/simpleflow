@@ -1,7 +1,7 @@
 import copy
 
 from elasticsearch import Elasticsearch
-from cdf.metadata.url import ELASTICSEARCH_BACKEND
+from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.query.query_parsing import QueryParser
 from cdf.query.result_transformer import transform_result, transform_aggregation_result
 from cdf.utils.dict import deep_dict

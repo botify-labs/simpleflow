@@ -1,6 +1,7 @@
 import gzip
 import os
 import re
+from cdf.log import logger
 from cdf.core.streams.caster import Caster
 from cdf.metadata.raw import STREAMS_FILES, STREAMS_HEADERS, follow_mask
 
@@ -54,6 +55,7 @@ def generate_inlink_file(outlink_file, inlink_file):
     outlink.close()
 
     inlink = open(inlink_file, 'w')
+    logger.info('Write inlink file %s' % inlink_file)
     # sorted on dest
     for line in sorted(buffer, key=lambda x: int(x[0])):
         inlink.write('\t'.join(line) + '\n')

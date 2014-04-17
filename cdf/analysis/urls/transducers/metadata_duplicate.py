@@ -2,7 +2,7 @@ from collections import defaultdict, Counter
 from itertools import groupby
 
 from cdf.metadata.raw import MANDATORY_CONTENT_TYPES_IDS
-from cdf.core.streams.utils import idx_from_stream
+from cdf.features.semantic_metadata.streams import ContentsStreamDef
 
 
 # notset metadata is interpreted as an empty string
@@ -25,10 +25,9 @@ def get_duplicate_metadata(stream_contents):
     (url_id, content_type, filled_nb, duplicates_nb, is_first_url_found, [url_id_1, url_id2 ...])
     """
     # Resolve indexes
-    url_id_idx = idx_from_stream('contents', 'id')
-    content_meta_type_idx = idx_from_stream('contents', 'content_type')
-    content_hash_idx = idx_from_stream('contents', 'hash')
-
+    url_id_idx = ContentsStreamDef.field_idx('id')
+    content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
+    content_hash_idx = ContentsStreamDef.field_idx('hash')
 
     hashes = defaultdict(lambda: defaultdict(list))
     hashes_count = defaultdict(Counter)

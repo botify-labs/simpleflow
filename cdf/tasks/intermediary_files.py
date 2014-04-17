@@ -14,6 +14,7 @@ from cdf.analysis.urls.transducers.links import OutlinksTransducer, InlinksTrans
 from cdf.core.streams.utils import split_file
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.analysis.urls.generators.bad_links import get_bad_links, get_bad_link_counters
+from cdf.features.links.streams import OutlinksRawStreamDef, InlinksRawStreamDef
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import DEFAULT_FORCE_FETCH
 
@@ -24,26 +25,12 @@ def make_links_counter_file(crawl_id, s3_uri,
                             tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     if link_direction == "out":
         transducer = OutlinksTransducer
-        stream_name = "outlinks_raw"
+        stream_name = OutlinksRawStreamDef
     else:
         transducer = InlinksTransducer
-        stream_name = "inlinks_raw"
+        stream_name = InlinksRawStreamDef
 
-    logger.info('Fetching files from s3 for part {}'.format(part_id))
-    links_file_path = 'url{}.txt.{}.gz'.format(
-        "links" if link_direction == "out" else "inlinks", part_id)
-    try:
-        links_file, fecthed = fetch_file(
-            os.path.join(s3_uri, links_file_path),
-            os.path.join(tmp_dir, links_file_path),
-            force_fetch=force_fetch
-        )
-    except S3ResponseError as e:
-        logger.error(str(e))
-        return
-
-    cast = Caster(STREAMS_HEADERS[stream_name.upper()]).cast
-    stream_links = cast(split_file(gzip.open(links_file)))
+    stream_links = stream_name().get_stream_from_storage(s3_uri, tmp_dir, part_id, force_fetch)
     generator = transducer(stream_links).get()
 
     filenames = {
