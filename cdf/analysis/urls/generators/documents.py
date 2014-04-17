@@ -24,9 +24,9 @@ def _pre_process_document(left_stream_def, pre_processors):
         """
         # init the document with default field values
         doc.update(deepcopy(_DEFAULT_DOCUMENT))
-        left_stream_def.process_document(doc, stream)
         for p in pre_processors:
             p(doc)
+        left_stream_def.process_document(doc, stream)
     return func
 
 
@@ -43,7 +43,9 @@ class UrlDocumentGenerator(object):
 
     Format see `cdf.metadata.url` package
     """
+
     def __init__(self, streams):
+        self.streams = streams
         self.right_streams = []
         for stream in streams:
             if isinstance(stream.stream_def, IdStreamDef):
@@ -51,25 +53,15 @@ class UrlDocumentGenerator(object):
             else:
                 self.right_streams.append(stream)
 
-        hooks_processors = {'pre': [], 'post': []}
-
-        for hook in ('pre', 'post'):
-            method_name = '{}_process_document'.format(hook)
-            if hasattr(self.left_stream.stream_def, method_name):
-                hooks_processors[hook].append(getattr(self.left_stream.stream_def, method_name))
-            for stream in self.right_streams:
-                if hasattr(stream.stream_def, method_name):
-                    hooks_processors[hook].append(getattr(stream.stream_def, method_name))
-
         # `urlids` is the reference stream
-        left = (self.left_stream.stream, 0, _pre_process_document(self.left_stream.stream_def, hooks_processors['pre']))
+        left = (self.left_stream.stream, 0, _pre_process_document(self.left_stream.stream_def, self.get_pre_processors()))
         streams_ref = {
             right_stream.stream_def.__class__.__name__: (
                 right_stream.stream,
                 right_stream.stream_def.field_idx('id'),
                 right_stream.stream_def.process_document
             ) for right_stream in self.right_streams}
-        self.generator = group_with(left, final_func=_post_process_document(hooks_processors['post']),
+        self.generator = group_with(left, final_func=_post_process_document(self.get_post_processors()),
                                     **streams_ref)
 
     def __iter__(self):
@@ -77,6 +69,20 @@ class UrlDocumentGenerator(object):
 
     def next(self):
         return next(self.generator)
+
+    def get_pre_processors(self):
+        processors = []
+        for s in self.streams:
+            if hasattr(s.stream_def, 'pre_process_document'):
+                processors.append(s.stream_def.pre_process_document)
+        return processors
+
+    def get_post_processors(self):
+        processors = []
+        for s in self.streams:
+            if hasattr(s.stream_def, 'post_process_document'):
+                processors.append(s.stream_def.post_process_document)
+        return processors
 
     def save_to_file(self, location):
         for file_type in self.files.iterkeys():
