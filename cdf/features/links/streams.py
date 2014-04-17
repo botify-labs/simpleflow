@@ -42,7 +42,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         ('dst_url_id', int),
         ('external_url', str)
     )
-    MAPPING = {
+    URL_DOCUMENT_MAPPING = {
         # internal outgoing links (destination is a internal url)
         "outlinks_internal.nb.total": {
             "type": INT_TYPE,
@@ -354,7 +354,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         ('follow', follow_mask),
         ('src_url_id', int),
     )
-    MAPPING = {
+    URL_DOCUMENT_MAPPING = {
         # incoming links, must be internal
         "inlinks_internal.nb.total": {
             "type": INT_TYPE,
@@ -553,7 +553,7 @@ class BadLinksStreamDef(StreamDefBase):
         ('dst_url_id', int),
         ('http_code', int)
     )
-    MAPPING = {
+    URL_DOCUMENT_MAPPING = {
         # erroneous outgoing internal links
         "outlinks_errors.3xx.nb": {
             "type": INT_TYPE,

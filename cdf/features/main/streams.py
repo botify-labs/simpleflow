@@ -20,7 +20,7 @@ class IdStreamDef(StreamDefBase):
         ('path', str),
         ('query_string', str),
     )
-    MAPPING = {
+    URL_DOCUMENT_MAPPING = {
         # url property data
         "url": {
             "type": STRING_TYPE,
@@ -92,7 +92,7 @@ class InfosStreamDef(StreamDefBase):
         ('delay_first_byte', int),
         ('delay_last_byte', int),
     )
-    MAPPING = {
+    URL_DOCUMENT_MAPPING = {
         "byte_size": {
             "type": INT_TYPE,
             "settings": {
@@ -219,7 +219,7 @@ class SuggestStreamDef(StreamDefBase):
         ('id', int),
         ('query_hash', str)
     )
-    MAPPING = {
+    URL_DOCUMENT_MAPPING = {
         "patterns": {
             "type": LONG_TYPE,
             "settings": {

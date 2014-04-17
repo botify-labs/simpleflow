@@ -19,7 +19,7 @@ class ContentsStreamDef(StreamDefBase):
         ('hash', int),
         ('txt', str)
     )
-    MAPPING = {
+    URL_DOCUMENT_MAPPING = {
         # title tag
         "metadata.title.nb": {
             "type": INT_TYPE,
@@ -105,7 +105,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         ('is_first_url', _str_to_bool),
         ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
     )
-    MAPPING = {
+    URL_DOCUMENT_MAPPING = {
         "metadata.title.duplicates.nb": {
             "type": INT_TYPE,
             "settings": {
