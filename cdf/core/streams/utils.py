@@ -9,7 +9,7 @@ times on the values.
 
 """
 import os
-from cdf.utils.s3 import fetch_files
+from cdf.utils import s3
 
 
 __all__ = ['split', 'rstrip', 'split_file', 'get_data_streams_from_storage']
@@ -113,9 +113,9 @@ def get_data_streams_from_storage(streams, storage_uri, tmp_dir, part_id=None, f
     else:
         files = ['{}.txt.([0-9]+).gz'.format(s.FILE) for s in streams]
 
-    files_fetched = fetch_files(storage_uri, tmp_dir,
-                                regexp=files,
-                                force_fetch=force_fetch)
+    files_fetched = s3.fetch_files(storage_uri, tmp_dir,
+                                   regexp=files,
+                                   force_fetch=force_fetch)
 
     data_streams = []
     for path_local, fetched in files_fetched:

@@ -4,7 +4,9 @@ import gzip
 
 from cdf.core.streams.caster import Caster
 from cdf.core.streams.utils import split_file
-from cdf.utils.s3 import fetch_file
+from cdf.utils import s3
+
+from boto.exception import S3ResponseError
 
 
 class StreamDefBase(object):
@@ -26,11 +28,14 @@ class StreamDefBase(object):
 
     @classmethod
     def get_stream_from_storage(cls, storage_uri, tmp_dir, part_id, force_fetch=False):
-        path, fetched = fetch_file(
-            os.path.join(storage_uri, '{}.txt.{}.gz'.format(cls.FILE, part_id)),
-            os.path.join(tmp_dir, '{}.txt.{}.gz'.format(cls.FILE, part_id)),
-            force_fetch=force_fetch
-        )
+        try:
+            path, fetched = s3.fetch_file(
+                os.path.join(storage_uri, '{}.txt.{}.gz'.format(cls.FILE, part_id)),
+                os.path.join(tmp_dir, '{}.txt.{}.gz'.format(cls.FILE, part_id)),
+                force_fetch=force_fetch
+            )
+        except S3ResponseError:
+            return iter([])
         return cls.get_stream_from_path(path)
 
     @classmethod

@@ -197,9 +197,10 @@ class InfosStreamDef(StreamDefBase):
         # include not crawled url in generated document only if they've received
         # redirection or canonicals
         if document['http_code'] in (0, 1, 2):
-            redirect_from_nb = document['redirect']['from']['nb']
-            canonical_from_nb = document['canonical']['from']['nb']
-            if redirect_from_nb > 0 or canonical_from_nb > 0:
+            if (
+                ('redirect' in document and document['redirect']['from']['nb'] > 0) or
+                ('canonical' in document and document['canonical']['from']['nb'] > 0)
+            ):
                 url = document['url']
                 url_id = document['id']
                 document.clear()

@@ -171,7 +171,7 @@ class MockIntegrationTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         # delete created files
-        shutil.rmtree(TEST_DIR)
+        #shutil.rmtree(TEST_DIR)
         # delete ES index
         ES = Elasticsearch()
         ES.indices.delete('integration-test')

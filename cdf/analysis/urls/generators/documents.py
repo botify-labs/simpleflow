@@ -26,7 +26,6 @@ def _pre_process_document(left_stream_def, pre_processors):
         left_stream_def.process_document(doc, stream)
         for p in pre_processors:
             p(doc)
-
     return func
 
 

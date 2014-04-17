@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Real bitmask is :
 1 link no follow
