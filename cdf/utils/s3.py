@@ -127,12 +127,13 @@ def fetch_file(s3_uri, dest_dir, force_fetch, lock=True):
 def get_key_from_s3_uri(s3_uri):
     bucket, location = uri_parse(s3_uri)
     bucket = Connection.get().get_bucket(bucket)
-    key = Key(bucket, location)
-    return key
+    return Key(bucket, location)
 
 
-def push_content(s3_uri, content):
+def push_content(s3_uri, content, content_type=None):
     key = get_key_from_s3_uri(s3_uri)
+    if content_type:
+        key.content_type = content_type
     key.set_contents_from_string(content)
 
 
