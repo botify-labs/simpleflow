@@ -162,7 +162,7 @@ class MockIntegrationTest(unittest.TestCase):
             im.make_links_counter_file(CRAWL_ID, TEST_DIR, part_id, "out",
                                        tmp_dir=RESULT_DIR, force_fetch=force_fetch)
             agg.compute_aggregators_from_part_id(CRAWL_ID, TEST_DIR, part_id,
-                                                 tmp_dir=RESUT_DIR, force_fetch=force_fetch)
+                                                 tmp_dir=RESULT_DIR, force_fetch=force_fetch)
 
         # consolidation of partitions
         agg.consolidate_aggregators(CRAWL_ID, TEST_DIR,
@@ -214,13 +214,9 @@ class MockIntegrationTest(unittest.TestCase):
         :param file_pattern: should be of form 'some_name.txt.{}.gz'
         :param expedted_contents: order is NOT important
         """
-        file_regexp = file_pattern.format('*')
-        # list full path, need to open them
-        files = list_result_files(RESULT_DIR, file_regexp, full_path=True)
-        stream = itertools.chain(*map(stream_def.get_stream_from_path(file_pattern), files))
-
-        l = list(stream)
-        self.assertItemsEqual(l, expected_contents)
+        stream = stream_def.get_stream_from_directory(RESULT_DIR)
+        results = list(stream)
+        self.assertItemsEqual(results, expected_contents)
 
     def test_in_links_files(self):
         pattern = 'url_in_links_counters.txt.{}.gz'

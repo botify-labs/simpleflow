@@ -117,11 +117,11 @@ class MetricsAggregator(object):
         """
 
         right_streams = {}
-        for s in self.streams:
-            if isinstance(s, IdStreamDef):
-                left_stream = s
+        for stream in self.streams:
+            if isinstance(stream.stream_def, IdStreamDef):
+                left_stream = (stream, 0)
             else:
-                right_streams[s.__class__.__name__].append((s, 0))
+                right_streams[stream.stream_def.__class__.__name__.lower().replace('streamdef', '')] = (stream, 0)
 
         depth_idx = InfosStreamDef.field_idx('depth')
         content_type_idx = InfosStreamDef.field_idx('content_type')
@@ -322,17 +322,17 @@ class MetricsAggregator(object):
             #if k == 2:
             #    break
             infos = result[2]['infos'][0]
-            outlinks = result[2]['out_links_counters']
-            inlinks = result[2]['in_links_counters']
-            contents_duplicate = result[2]['contents_duplicate']
+            outlinks = result[2]['outlinkscounters']
+            inlinks = result[2]['inlinkscounters']
+            contents_duplicate = result[2]['contentsduplicate']
 
-            outcanonical = result[2]['out_canonical_counters'][0] if result[2]['out_canonical_counters'] else None
-            outredirect = result[2]['out_redirect_counters'][0] if result[2]['out_redirect_counters'] else None
+            outcanonical = result[2]['outcanonicalcounters'][0] if result[2]['outcanonicalcounters'] else None
+            outredirect = result[2]['outredirectcounters'][0] if result[2]['outredirectcounters'] else None
 
-            incanonicals = result[2]['in_canonical_counters'][0] if result[2]['in_canonical_counters'] else None
-            inredirects = result[2]['in_redirect_counters'][0] if result[2]['in_redirect_counters'] else None
+            incanonicals = result[2]['incanonicalcounters'][0] if result[2]['incanonicalcounters'] else None
+            inredirects = result[2]['inredirectcounters'][0] if result[2]['inredirectcounters'] else None
 
-            badlinks = result[2]['badlinks_counters']
+            badlinks = result[2]['badlinkscounters']
 
             # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
             index = not (4 & infos[infos_mask_idx] == 4)

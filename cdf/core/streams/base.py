@@ -1,4 +1,5 @@
-from itertools import izip
+from itertools import izip, chain
+import re
 import os
 import gzip
 
@@ -26,14 +27,45 @@ class StreamDefBase(object):
         return map(lambda i: i[0], cls.HEADERS).index(field)
 
     @classmethod
+    def get_stream_from_directory(cls, directory, part_id=None):
+        """
+        Return a Stream instance from a directory
+        """
+        if part_id:
+            return cls.get_stream_from_path(os.path.join(directory, "{}.txt.{}.gz".format(cls.FILE, part_id)))
+
+        # We fetch all files and we sort them by part_id
+        # We don't only sort on os.listdir, because 'file.9.txt' > 'file.10.txt'
+        file_by_part_id = {}
+        streams = []
+        pattern = "{}.txt.([0-9]+).gz".format(cls.FILE)
+        file_regexp = re.compile(pattern)
+        for f in sorted(os.listdir(directory)):
+            m = file_regexp.match(f)
+            if m:
+                file_by_part_id[int(m.groups()[0])] = f
+
+        for key in sorted(file_by_part_id.keys()):
+            streams.append(cls.get_stream_from_path(os.path.join(directory, file_by_part_id[key])))
+
+        return Stream(
+            cls(),
+            chain(*streams)
+        )
+
+    @classmethod
     def get_stream_from_path(cls, path):
         """
         Return a Stream instance from a file path (the file must be gzip encoded)
         """
         cast = Caster(cls.HEADERS).cast
+        if os.path.exists(path):
+            iterator = cast(split_file(gzip.open(path)))
+        else:
+            iterator = iter([])
         return Stream(
             cls(),
-            cast(split_file(gzip.open(path)))
+            iterator
         )
 
     @classmethod
@@ -48,7 +80,7 @@ class StreamDefBase(object):
                 force_fetch=force_fetch
             )
         except S3ResponseError:
-            return iter([])
+            return cls.get_stream_from_iterator(iter([]))
         return cls.get_stream_from_path(path)
 
     @classmethod

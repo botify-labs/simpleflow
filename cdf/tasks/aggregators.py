@@ -36,6 +36,9 @@ from cdf.features.semantic_metadata.streams import ContentsDuplicateStreamDef
 
 @with_temporary_dir
 def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
+    suggest_dir_path = os.path.join(tmp_dir, 'suggest')
+    makedirs(suggest_dir_path, exist_ok=True)
+
     streams_def = [
         IdStreamDef, InfosStreamDef,
         OutlinksCountersStreamDef, OutcanonicalCountersStreamDef, OutredirectCountersStreamDef,
@@ -44,7 +47,7 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir=None, fo
     ]
     streams = []
     for s in streams_def:
-        s.get_stream_from_storage(s3_uri, part_id=part_id, tmp_dir=tmp_dir, force_fetch=force_fetch)
+        streams.append(s.get_stream_from_storage(s3_uri, part_id=part_id, tmp_dir=tmp_dir, force_fetch=force_fetch))
 
     aggregator = MetricsAggregator(streams)
     content = json.dumps(aggregator.get())
