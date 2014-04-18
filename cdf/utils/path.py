@@ -3,6 +3,7 @@ import os
 import errno
 import itertools
 import codecs
+import re
 
 from cdf.analysis.urls.utils import get_part_id
 from cdf.log import logger
@@ -71,3 +72,17 @@ def utf8_reader(file_handler):
     :param file_handler: a file handler to be wrapped
     """
     return codecs.getreader("utf-8")(file_handler)
+
+
+def get_files_ordered_by_part_id(directory, file_identifier):
+    """
+    Return a list of files ordered by part_id
+    """
+    file_by_part_id = {}
+    pattern = "{}.txt.([0-9]+).gz".format(file_identifier)
+    file_regexp = re.compile(pattern)
+    for f in sorted(os.listdir(directory)):
+        m = file_regexp.match(f)
+        if m:
+            file_by_part_id[int(m.groups()[0])] = f
+    return [file_by_part_id[k] for k in sorted(file_by_part_id)]

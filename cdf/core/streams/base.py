@@ -1,18 +1,18 @@
 from itertools import izip, chain
-import re
 import os
 import gzip
 
 from cdf.core.streams.caster import Caster
 from cdf.core.streams.utils import split_file
 from cdf.utils import s3
+from cdf.utils.path import get_files_ordered_by_part_id
 
 from boto.exception import S3ResponseError
 
 
 class StreamDefBase(object):
     """
-    StremDefBase is an abstractable object waiting for some constants : 
+    StremDefBase is an abstractable object waiting for some constants :
     FILE : the prefix of the document in the storage backend (ex : urlids, urlcontents...)
     HEADERS : the definition of the streams fields
               Ex : [('id', int), ('url', str), ('http_code', int)
@@ -36,17 +36,9 @@ class StreamDefBase(object):
 
         # We fetch all files and we sort them by part_id
         # We don't only sort on os.listdir, because 'file.9.txt' > 'file.10.txt'
-        file_by_part_id = {}
         streams = []
-        pattern = "{}.txt.([0-9]+).gz".format(cls.FILE)
-        file_regexp = re.compile(pattern)
-        for f in sorted(os.listdir(directory)):
-            m = file_regexp.match(f)
-            if m:
-                file_by_part_id[int(m.groups()[0])] = f
-
-        for key in sorted(file_by_part_id.keys()):
-            streams.append(cls.get_stream_from_path(os.path.join(directory, file_by_part_id[key])))
+        for f in get_files_ordered_by_part_id(directory, cls.FILE):
+            streams.append(cls.get_stream_from_path(os.path.join(directory, f)))
 
         return Stream(
             cls(),
