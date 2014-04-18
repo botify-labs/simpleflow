@@ -175,6 +175,11 @@ class TestAggregationParsing(ParsingTestCase):
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
 
+        self.assertEquals(
+            parsed.named_aggs[0].transform(),
+            {'terms': {'field': 'http_code', 'size': 50, 'order': {'_term': 'asc'}}}
+        )
+
     def test_parse_default_metric(self):
         valid = {'a1': {'group': [{'distinct': {'field': 'http_code'}}]}}
         parsed = self.parser.parse_aggregations(valid)
@@ -193,6 +198,30 @@ class TestAggregationParsing(ParsingTestCase):
                         'metric': 'count'}}
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
+
+    def test_parse_multiple_groups(self):
+        valid = {'a1': {'group': [{'distinct': {'field': 'http_code'}}, "depth"],
+                        'metric': 'count'}}
+        parsed = self.parser.parse_aggregations(valid)
+        self.assertEquals(
+            parsed.named_aggs[0].transform(),
+            {
+                'terms': {
+                    'field': 'http_code',
+                    'size': 50,
+                    'order': {'_term': 'asc'}
+                },
+                'aggs': {
+                    'subagg': {
+                        'terms': {
+                            'field': 'depth',
+                            'size': 50,
+                            'order': {'_term': 'asc'}
+                        }
+                    }
+                }
+            }
+        )
 
     def test_parse_unknown_group_op(self):
         invalid = {'a1': {'group': [{'unknown': {'field': 'http_code'}}],

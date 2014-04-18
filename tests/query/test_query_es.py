@@ -58,6 +58,7 @@ URLS_FIXTURE = [
         'crawl_id': CRAWL_ID,
         'url': u'http://www.mysite.com/france/football/abcde/main.html',
         'path': u'/france/football/abcde/main.html',
+        'depth': 1,
         'http_code': 200,
         'metadata': {
             'title': {
@@ -104,6 +105,7 @@ URLS_FIXTURE = [
         'crawl_id': CRAWL_ID,
         'url': u'http://www.mysite.com/football/france/abc/abcde',
         'path': u'/football/france/abc/abcde',
+        'depth': 2,
         'http_code': 301,
         'metadata': {
             'h2': {
@@ -139,7 +141,7 @@ URLS_FIXTURE = [
         'url': u'http://www.mysite.com/football/article-s.html',
         'path': u'/football/article-s.html',
         'http_code': 200,
-
+        'depth': 2,
         'redirect': {
             'from': {
                 'nb': 2,
@@ -165,6 +167,7 @@ URLS_FIXTURE = [
         'crawl_id': CRAWL_ID,
         'url': u'http://www.mysite.com/errors',
         'http_code': 200,
+        'depth': 2,
         'metadata': {
             'title': {
                 'duplicates': {
@@ -229,6 +232,7 @@ URLS_FIXTURE = [
         'id': 7,
         '_id': '%d:%d' % (CRAWL_ID, 7),
         'crawl_id': CRAWL_ID,
+        'depth': 2,
         'http_code': 301,
         'redirect': {
             'to': {'url': {'url_id': 5, 'http_code': 301},
@@ -727,9 +731,9 @@ class TestQueryES(unittest.TestCase):
         # pages with `0` http_code are filtered out by query
         expected = {
             'http_code_distinct': {
-                'groups': [{'count': 4, 'key': [200]},
-                           {'count': 2, 'key': [301]},
-                           {'count': 1, 'key': [-160]}]
+                'groups': [{'count': 1, 'key': [-160]},
+                           {'count': 4, 'key': [200]},
+                           {'count': 2, 'key': [301]}]
             }
         }
         self.assertEqual(results, expected)
@@ -772,11 +776,27 @@ class TestQueryES(unittest.TestCase):
             }
         }
         results = _get_query_agg_result(botify_query)
-        expected_groups = [{'count': 4, 'key': [200]},
-                           {'count': 2, 'key': [301]},
-                           {'count': 1, 'key': [-160]}]
+        expected_groups = [{'count': 1, 'key': [-160]},
+                           {'count': 4, 'key': [200]},
+                           {'count': 2, 'key': [301]}]
         expected = {
             'http_code_1': {'groups': expected_groups},
             'http_code_2': {'groups': expected_groups}
         }
         self.assertEqual(results, expected)
+
+    def test_agg_nested(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'group': ['http_code', 'depth']
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = [
+            {'key': [200, 1], 'count': 1},
+            {'key': [200, 2], 'count': 2},
+            {'key': [301, 2], 'count': 2},
+        ]
+        self.assertItemsEqual(results['multi']['groups'], expected)

@@ -466,3 +466,51 @@ class TestAggregationResultTransformer(unittest.TestCase):
             'agg2': {'groups': [{'key': ['b'], 'count': 2}]}
         }
         self.assertEqual(results, expected)
+
+    def test_agg_group_nested_fields(self):
+        results = {
+            'agg1': {
+                'buckets': [{
+                    'key': 'a',
+                    'doc_count': 100,
+                    'subagg': {
+                        'buckets': [
+                            {
+                                'key': 'b',
+                                'doc_count': 20,
+                                'subagg': {
+                                    'buckets': [
+                                        {'key': 'd',
+                                         'doc_count': 5},
+                                        {'key': 'e',
+                                         'doc_count': 15},
+                                    ]
+                                }
+                            },
+                            {
+                                'key': 'c',
+                                'doc_count': 80,
+                                'subagg': {
+                                    'buckets': [
+                                        {'key': 'e',
+                                         'doc_count': 80}
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }]
+            }
+        }
+
+        expected = {
+            'agg1': {'groups': [
+                {'key': ['a', 'b', 'd'], 'count': 5},
+                {'key': ['a', 'b', 'e'], 'count': 15},
+                {'key': ['a', 'c', 'e'], 'count': 80},
+            ]}
+        }
+
+        d = AggregationTransformer(results)
+        d.transform()
+        self.assertEqual(results, expected)

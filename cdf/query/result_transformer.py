@@ -426,31 +426,59 @@ class AggregationTransformer(ResultTransformer):
         return 'key' in bucket
 
     @classmethod
+    def _transform_terms(cls, bucket):
+        return bucket['key']
+
+    @classmethod
     def _is_range(cls, bucket):
         return 'to' in bucket or 'from' in bucket
 
+    @classmethod
+    def _transform_range(cls, bucket):
+        bucket_key = {}
+        for k in ('from', 'to'):
+            if k in bucket:
+                bucket_key[k] = int(bucket.pop(k))
+        return bucket_key
+
+    @classmethod
+    def _is_bucket(cls, bucket):
+        return 'buckets' in bucket
+
+    @classmethod
+    def parse_bucket(cls, bucket):
+        """
+        Return a list of key/value dictionnaries
+        Ex : 
+            [
+                {"key": ["a", "b", "e"], "count": 100},
+                {"key": ["a", "c", "e"], "count": 120}
+            ]
+        """
+        if 'subagg' in bucket:
+            subbucket = cls.parse_bucket(bucket["subagg"])
+            for results in subbucket:
+                results["key"].insert(0, bucket['key'])
+            return subbucket
+
+        if cls._is_terms(bucket):
+            return [{"key": [cls._transform_terms(bucket)], "count": bucket.pop('doc_count')}]
+
+        if cls._is_range(bucket):
+            return [{"key": [cls._transform_range(bucket)], "count": bucket.pop('doc_count')}]
+
+        if cls._is_bucket(bucket):
+            buckets_list = []
+            for sub_bucket in bucket["buckets"]:
+                buckets_list += cls.parse_bucket(sub_bucket)
+            return buckets_list
+
     # simple solution for the moment
-    #   - no nested bucket
     #   - only support count metric
     def transform(self):
         for name, results in self.agg_results.iteritems():
-            if 'buckets' in results:
-                for bucket in results['buckets']:
-                    # arrange aggregation keys
-                    if self._is_terms(bucket):
-                        bucket['key'] = [bucket.pop('key')]
-                    if self._is_range(bucket):
-                        key = {}
-                        for k in ('from', 'to'):
-                            if k in bucket:
-                                key[k] = int(bucket.pop(k))
-                        bucket['key'] = [key]
-
-                    # rename `doc_count` to `count`
-                    bucket['count'] = bucket.pop('doc_count')
-
-                # rename `buckets` to `groups`
-                results['groups'] = results.pop('buckets')
+            results["groups"] = self.parse_bucket(results)
+            del results["buckets"]
 
 
 def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):
