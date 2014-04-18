@@ -672,7 +672,8 @@ class DistinctOp(GroupAggOp):
         return {
             "terms": {
                 "field": self.field,
-                "size": self.size
+                "size": self.size,
+                "order": {"_term": "asc"}
             }
         }
 
