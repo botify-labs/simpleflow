@@ -177,7 +177,7 @@ class TestAggregationParsing(ParsingTestCase):
 
         self.assertEquals(
             parsed.named_aggs[0].transform(),
-            {'terms': {'field': 'http_code', 'size': 50}}
+            {'terms': {'field': 'http_code', 'size': 50, 'order': {'_term': 'asc'}}}
         )
 
     def test_parse_default_metric(self):
@@ -208,13 +208,15 @@ class TestAggregationParsing(ParsingTestCase):
             {
                 'terms': {
                     'field': 'http_code',
-                    'size': 50
+                    'size': 50,
+                    'order': {'_term': 'asc'}
                 },
                 'aggs': {
                     'subagg': {
                         'terms': {
                             'field': 'depth',
-                            'size': 50
+                            'size': 50,
+                            'order': {'_term': 'asc'}
                         }
                     }
                 }

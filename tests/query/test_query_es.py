@@ -731,9 +731,9 @@ class TestQueryES(unittest.TestCase):
         # pages with `0` http_code are filtered out by query
         expected = {
             'http_code_distinct': {
-                'groups': [{'count': 4, 'key': [200]},
-                           {'count': 2, 'key': [301]},
-                           {'count': 1, 'key': [-160]}]
+                'groups': [{'count': 1, 'key': [-160]},
+                           {'count': 4, 'key': [200]},
+                           {'count': 2, 'key': [301]}]
             }
         }
         self.assertEqual(results, expected)
@@ -776,9 +776,9 @@ class TestQueryES(unittest.TestCase):
             }
         }
         results = _get_query_agg_result(botify_query)
-        expected_groups = [{'count': 4, 'key': [200]},
-                           {'count': 2, 'key': [301]},
-                           {'count': 1, 'key': [-160]}]
+        expected_groups = [{'count': 1, 'key': [-160]},
+                           {'count': 4, 'key': [200]},
+                           {'count': 2, 'key': [301]}]
         expected = {
             'http_code_1': {'groups': expected_groups},
             'http_code_2': {'groups': expected_groups}

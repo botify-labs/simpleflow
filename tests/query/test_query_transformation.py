@@ -296,7 +296,8 @@ class TestAggregationTransformation(QueryTransformationTestCase):
             'my_agg': {
                 'terms': {
                     'field': 'http_code',
-                    'size': 5
+                    'size': 5,
+                    'order': {'_term': 'asc'}
                 }
             }
         }
@@ -318,7 +319,8 @@ class TestAggregationTransformation(QueryTransformationTestCase):
             'my_agg': {
                 'terms': {
                     'field': 'http_code',
-                    'size': 50
+                    'size': 50,
+                    'order': {'_term': 'asc'}
                 }
             }
         }
@@ -369,8 +371,8 @@ class TestAggregationTransformation(QueryTransformationTestCase):
         }
 
         expected_agg = {
-            'my_agg_1': {'terms': {'field': 'field1', 'size': 50}},
-            'my_agg_2': {'terms': {'field': 'field2', 'size': 50}}
+            'my_agg_1': {'terms': {'field': 'field1', 'size': 50, 'order': {'_term': 'asc'}}},
+            'my_agg_2': {'terms': {'field': 'field2', 'size': 50, 'order': {'_term': 'asc'}}}
         }
 
         result = self.get_es_query(query, CRAWL_ID)
