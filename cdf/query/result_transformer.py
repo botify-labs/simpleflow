@@ -455,7 +455,6 @@ class AggregationTransformer(ResultTransformer):
                 {"key": ["a", "c", "e"], "count": 120}
             ]
         """
-        #import pdb; pdb.set_trace()
         if 'subagg' in bucket:
             subbucket = cls.parse_bucket(bucket["subagg"])
             for results in subbucket:
