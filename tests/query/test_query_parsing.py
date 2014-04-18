@@ -191,6 +191,28 @@ class TestAggregationParsing(ParsingTestCase):
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
 
+    def test_parse_sum_metric(self):
+        valid = {'a1': {'group': [{'distinct': {'field': 'host'}}], "metric": {"sum": "metadata.title.nb"}}}
+        parsed = self.parser.parse_aggregations(valid)
+        parsed.validate()
+        self.assertEquals(
+            parsed.named_aggs[0].transform(),
+            {
+                'terms': {
+                    'field': 'host',
+                    'size': 50,
+                    'order': {'_term': 'asc'}
+                },
+                'aggs': {
+                    'sum_agg': {
+                        'sum': {
+                            'field': 'metadata.title.nb'
+                        }
+                    }
+                }
+            }
+        )
+
     def test_parse_multiple_aggs(self):
         valid = {'a1': {'group': [{'distinct': {'field': 'http_code'}}],
                         'metric': 'count'},

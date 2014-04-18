@@ -638,6 +638,8 @@ class NamedAgg(Term):
                 "subagg": group.transform()
             }
             cursor = cursor["aggs"]["subagg"]
+        if getattr(self.metric_ops, 'IS_SUB_AGG', False):
+            cursor["aggs"] = self.metric_ops.transform()
         return query
 
     def validate(self):
@@ -720,7 +722,8 @@ class RangeOp(GroupAggOp):
 class MetricAggOp(AggOp):
     """Metric aggregator calculates metrics inside each group
     """
-    pass
+    def __init__(self, options=None):
+        self.options = options
 
 
 class CountOp(MetricAggOp):
@@ -736,6 +739,24 @@ class CountOp(MetricAggOp):
         pass
 
 
+class SumOp(MetricAggOp):
+    """Simple sum metric aggregator
+    """
+    IS_SUB_AGG = True
+
+    def transform(self):
+        return {
+            "sum_agg": {
+                "sum": {
+                    "field": self.options
+                }
+            }
+        }
+
+    def validate(self):
+        pass
+
+
 _GROUP_AGGS_LIST = {
     'distinct': DistinctOp,
     'range': RangeOp
@@ -743,6 +764,7 @@ _GROUP_AGGS_LIST = {
 
 _METRIC_AGGS_LIST = {
     'count': CountOp,
+    'sum': SumOp
 }
 
 _DEFAULT_METRIC = 'count'
@@ -950,9 +972,16 @@ class QueryParser(object):
 
     # nothing to do for the moment
     def parse_metric_aggregator(self, metric_op):
-        if metric_op not in _METRIC_AGGS_LIST:
+        # If op is {"op_name": options}
+        if isinstance(metric_op, dict) and len(metric_op) == 1:
+            op = metric_op.keys()[0]
+            options = metric_op[op]
+        elif isinstance(metric_op, str):
+            op = metric_op
+            options = None
+        if op not in _METRIC_AGGS_LIST:
             _raise_parsing_error('Unknown metric aggregator', metric_op)
-        return _METRIC_AGGS_LIST[metric_op]()
+        return _METRIC_AGGS_LIST[op](options)
 
     def parse_botify_query(self, botify_query):
         """Parse a botify front-end query into the intermediate form
