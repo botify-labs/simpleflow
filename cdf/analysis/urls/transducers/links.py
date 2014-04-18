@@ -1,8 +1,9 @@
 from collections import defaultdict
 from itertools import groupby
 from cdf.analysis.urls.utils import is_link_internal
-from cdf.metadata.raw.masks import is_first_canonical
+from cdf.features.links.helpers.masks import is_first_canonical
 from cdf.features.links.streams import InlinksRawStreamDef, OutlinksRawStreamDef
+
 
 class OutlinksTransducer(object):
     """This transducers aggregates counters for outgoing links

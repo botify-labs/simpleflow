@@ -6,7 +6,7 @@ from cdf.metadata.url.url_metadata import (
 from cdf.core.streams.base import StreamDefBase
 from cdf.analysis.urls.utils import is_link_internal
 from cdf.log import logger
-from cdf.metadata.raw.masks import list_to_mask
+from cdf.features.links.helpers.masks import list_to_mask
 from cdf.utils.convert import _str_to_bool
 from .helpers.masks import follow_mask
 

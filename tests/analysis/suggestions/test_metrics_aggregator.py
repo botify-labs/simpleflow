@@ -2,23 +2,35 @@ import unittest
 
 from cdf.analysis.suggestions.aggregator import (MetricsAggregator,
                                                     get_keys_from_stream_suggest)
+from cdf.features.main.streams import IdStreamDef, InfosStreamDef, SuggestStreamDef
+from cdf.features.links.streams import (
+    OutlinksCountersStreamDef, OutcanonicalCountersStreamDef, OutredirectCountersStreamDef,
+    InlinksCountersStreamDef, IncanonicalCountersStreamDef, InredirectCountersStreamDef,
+    BadLinksCountersStreamDef
+)
+from cdf.features.semantic_metadata.streams import ContentsDuplicateStreamDef
 
 
 class TestMetricsAggregator(unittest.TestCase):
+
+    def register_stream(self, stream_def, l):
+        self.streams_dict[stream_def] = stream_def.get_stream_from_iterator(iter(l))
+
+    def get_streams(self):
+        return self.streams_dict.values()
+
     def setUp(self):
-        self.param_streams = [
-            "stream_patterns",
-            "stream_infos",
-            "stream_suggest",
-            "stream_contents_duplicate",
-            "stream_outlinks_counters",
-            "stream_outcanonical_counters",
-            "stream_outredirect_counters",
-            "stream_inlinks_counters",
-            "stream_incanonical_counters",
-            "stream_inredirect_counters",
-            "stream_badlinks_counters"
+        self.streams_dict = {}
+        self.streams_def = [
+            IdStreamDef, InfosStreamDef,
+            OutlinksCountersStreamDef, OutcanonicalCountersStreamDef, OutredirectCountersStreamDef,
+            InlinksCountersStreamDef, IncanonicalCountersStreamDef, InredirectCountersStreamDef,
+            SuggestStreamDef, ContentsDuplicateStreamDef, BadLinksCountersStreamDef
         ]
+
+        # By default all stream other than `patterns` and `infos` are empty
+        for stream_def in self.streams_def:
+            self.streams_dict[stream_def] = stream_def.get_stream_from_iterator(iter([]))
 
         # Canonical streams
         # These two streams are also MANDATORY
@@ -38,10 +50,8 @@ class TestMetricsAggregator(unittest.TestCase):
             [5, 1, 'text/html', 0, 1, 200, 1024, 100, 1500]
         ]
 
-        # By default all stream other than `patterns` and `infos` are empty
-        self.kwargs = {k: iter([]) for k in self.param_streams}
-        self.kwargs['stream_patterns'] = iter(self.stream_patterns)
-        self.kwargs['stream_infos'] = iter(self.stream_infos)
+        self.register_stream(IdStreamDef, self.stream_patterns)
+        self.register_stream(InfosStreamDef, self.stream_infos)
 
     def tearDown(self):
         pass
@@ -56,13 +66,15 @@ class TestMetricsAggregator(unittest.TestCase):
                          ['0', '1', '2'])
 
     def test_empty(self):
-        result = list(MetricsAggregator(**{k: iter([]) for k in self.param_streams}).get())
+        result = list(
+            MetricsAggregator([stream_def.get_stream_from_iterator(iter([])) for stream_def in self.streams_def]).get()
+        )
 
         # noting in, nothing out
         self.assertEqual(result, [])
 
     def test_basics(self):
-        result = list(MetricsAggregator(**self.kwargs).get())
+        result = list(MetricsAggregator(self.get_streams()).get())
         target = result[0]['counters']
         self.assertEqual(target['pages_nb'], 5)
         self.assertEqual(target['total_delay_ms'], 4400)
@@ -91,9 +103,9 @@ class TestMetricsAggregator(unittest.TestCase):
             [1, '1']  # so url 1 results in 2 cross properties
         ]
 
-        self.kwargs['stream_infos'] = iter(stream_infos)
-        self.kwargs['stream_suggest'] = iter(stream_suggest)
-        result = list(MetricsAggregator(**self.kwargs).get())
+        self.register_stream(InfosStreamDef, stream_infos)
+        self.register_stream(SuggestStreamDef, stream_suggest)
+        result = list(MetricsAggregator(self.get_streams()).get())
         properties = [property['cross_properties'] for property in result]
 
         expected = [
@@ -114,8 +126,8 @@ class TestMetricsAggregator(unittest.TestCase):
             [2, 505, 3],
         ]
 
-        self.kwargs['stream_badlinks_counters'] = iter(stream_badlinks_counters)
-        result = list(MetricsAggregator(**self.kwargs).get())
+        self.register_stream(BadLinksCountersStreamDef, stream_badlinks_counters)
+        result = list(MetricsAggregator(self.get_streams()).get())
 
         self.assertEqual(1, len(result))
         target = result[0]['counters']['error_links']
@@ -129,11 +141,11 @@ class TestMetricsAggregator(unittest.TestCase):
             [1, ['follow'], 100, 99],
             [2, ['follow'], 3, 2],
             [3, ['follow'], 12, 9],
-            [4, ['follow'], 10**7, 10**7],
+            [4, ['follow'], 10 ** 7, 10 ** 7],
         ]
 
-        self.kwargs['stream_inlinks_counters'] = iter(stream_inlink_counters)
-        result = list(MetricsAggregator(**self.kwargs).get())
+        self.register_stream(InlinksCountersStreamDef, stream_inlink_counters)
+        result = list(MetricsAggregator(self.get_streams()).get())
 
         self.assertEqual(1, len(result))
         urls_target = result[0]['counters']['inlinks_internal_nb']['follow_distribution_urls']
@@ -151,7 +163,7 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertEqual(links_target['lte_3'], 2)
         self.assertEqual(links_target['lt_10'], 11)
         self.assertEqual(links_target['50_to_99'], 99)
-        self.assertEqual(links_target['gte_1M'], 10**7)
+        self.assertEqual(links_target['gte_1M'], 10 ** 7)
 
     def test_contents_duplicates(self):
         """
@@ -163,8 +175,8 @@ class TestMetricsAggregator(unittest.TestCase):
             [1, 4, 1, 0, True, []],
             [2, 1, 1, 1, True, [15]],
         ]
-        self.kwargs['stream_contents_duplicate'] = iter(stream_contents_duplicate)
-        result = list(MetricsAggregator(**self.kwargs).get())
+        self.register_stream(ContentsDuplicateStreamDef, stream_contents_duplicate)
+        result = list(MetricsAggregator(self.get_streams()).get())
         target = result[0]['counters']['metadata_nb']
 
         # only url 1 has metadata, others haven't got enough
@@ -186,8 +198,8 @@ class TestMetricsAggregator(unittest.TestCase):
             [2, ['meta', 'link'], True, 2, 1],
         ]
 
-        self.kwargs['stream_outlinks_counters'] = iter(stream_outlinks_counters)
-        result = list(MetricsAggregator(**self.kwargs).get())
+        self.register_stream(OutlinksCountersStreamDef, stream_outlinks_counters)
+        result = list(MetricsAggregator(self.get_streams()).get())
 
         nfc_key = 'nofollow_combinations'
         target_ext = result[0]['counters']['outlinks_external_nb']
@@ -227,8 +239,8 @@ class TestMetricsAggregator(unittest.TestCase):
             [1, ['link', 'meta'], 3, 2],
             [2, ['follow'], 30, 25],
         ]
-        self.kwargs['stream_inlinks_counters'] = iter(stream_inlinks_counters)
-        result = list(MetricsAggregator(**self.kwargs).get())
+        self.register_stream(InlinksCountersStreamDef, stream_inlinks_counters)
+        result = list(MetricsAggregator(self.get_streams()).get())
         target = result[0]['counters']['inlinks_internal_nb']
 
         self.assertEqual(target['total'], 43)
@@ -256,16 +268,17 @@ class TestMetricsAggregator(unittest.TestCase):
 
         stream_inredirect_counters = [
             [1, 50],
-            [2, 10**7]
+            [2, 10]
         ]
 
-        self.kwargs['stream_outredirect_counters'] = iter(stream_outredirect_counters)
-        self.kwargs['stream_inredirect_counters'] = iter(stream_inredirect_counters)
-        result = list(MetricsAggregator(**self.kwargs).get())
+        self.register_stream(OutredirectCountersStreamDef, stream_outredirect_counters)
+        self.register_stream(InredirectCountersStreamDef, stream_inredirect_counters)
+
+        result = list(MetricsAggregator(self.get_streams()).get())
         target = result[0]['counters']
 
         self.assertEqual(target['redirects_to_nb'], 4)
-        self.assertEqual(target['redirects_from_nb'], 10**7 + 50)
+        self.assertEqual(target['redirects_from_nb'], 10 + 50)
 
     def test_canonicals(self):
         """Canonicals counters should be aggregated correctly
@@ -286,17 +299,17 @@ class TestMetricsAggregator(unittest.TestCase):
 
         stream_incanonical_counters = [
             [1, 10],
-            [2, 10**7]
+            [2, 10]
         ]
 
-        self.kwargs['stream_outcanonical_counters'] = iter(stream_outcanonical_counters)
-        self.kwargs['stream_incanonical_counters'] = iter(stream_incanonical_counters)
-        self.kwargs['stream_infos'] = iter(stream_infos)
-        result = list(MetricsAggregator(**self.kwargs).get())
+        self.register_stream(OutcanonicalCountersStreamDef, stream_outcanonical_counters)
+        self.register_stream(IncanonicalCountersStreamDef, stream_incanonical_counters)
+        self.register_stream(InfosStreamDef, stream_infos)
+        result = list(MetricsAggregator(self.get_streams()).get())
         target = result[0]['counters']['canonical_nb']
 
         self.assertEqual(target['equal'], 2)
         self.assertEqual(target['not_equal'], 1)
         self.assertEqual(target['filled'], 3)
         self.assertEqual(target['not_filled'], 2)
-        self.assertEqual(target['incoming'], 10**7 + 10)
+        self.assertEqual(target['incoming'], 10 + 10)

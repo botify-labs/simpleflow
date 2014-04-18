@@ -1,7 +1,6 @@
 import unittest
 import os
 import re
-import itertools
 import shutil
 from elasticsearch import Elasticsearch
 
@@ -13,7 +12,18 @@ import cdf.tasks.url_data as ud
 import cdf.tasks.suggest.clusters as clusters
 import cdf.tasks.intermediary_files as im
 import cdf.tasks.aggregators as agg
-from test_utils import split_partition, list_result_files, generate_inlink_file, get_stream_from_file
+from test_utils import split_partition, list_result_files, generate_inlink_file
+
+from cdf.features.links.streams import (
+    BadLinksStreamDef,
+    OutcanonicalCountersStreamDef,
+    OutredirectCountersStreamDef,
+    OutlinksCountersStreamDef,
+    InredirectCountersStreamDef,
+    InlinksCountersStreamDef,
+    IncanonicalCountersStreamDef
+)
+from cdf.features.semantic_metadata.streams import ContentsDuplicateStreamDef
 
 CRAWL_ID = 0
 S3_URI = ''
@@ -197,19 +207,15 @@ class MockIntegrationTest(unittest.TestCase):
             self.assertEqual([file_pattern.format(part)],
                              list_result_files(RESULT_DIR, file_pattern.format(part)))
 
-    def assert_file_contents(self, file_pattern, expedted_contents):
+    def assert_file_contents(self, stream_def, file_pattern, expected_contents):
         """Assert that result files contain the correct content
 
         :param file_pattern: should be of form 'some_name.txt.{}.gz'
         :param expedted_contents: order is NOT important
         """
-        file_regexp = file_pattern.format('*')
-        # list full path, need to open them
-        files = list_result_files(RESULT_DIR, file_regexp, full_path=True)
-        stream = itertools.chain(*map(get_stream_from_file, files))
-
-        l = list(stream)
-        self.assertItemsEqual(l, expedted_contents)
+        stream = stream_def.get_stream_from_directory(RESULT_DIR)
+        results = list(stream)
+        self.assertItemsEqual(results, expected_contents)
 
     def test_in_links_files(self):
         pattern = 'url_in_links_counters.txt.{}.gz'
@@ -227,7 +233,7 @@ class MockIntegrationTest(unittest.TestCase):
             [12, ['follow'], 1, 1]
         ]
 
-        self.assert_file_contents(pattern, expected_contents)
+        self.assert_file_contents(InlinksCountersStreamDef, pattern, expected_contents)
 
     def test_in_canonicals_files(self):
         pattern = 'url_in_canonical_counters.txt.{}.gz'
@@ -237,7 +243,7 @@ class MockIntegrationTest(unittest.TestCase):
         expected_contents = [
             [2, 3],
         ]
-        self.assert_file_contents(pattern, expected_contents)
+        self.assert_file_contents(IncanonicalCountersStreamDef, pattern, expected_contents)
 
     def test_in_redirects_files(self):
         pattern = 'url_in_redirect_counters.txt.{}.gz'
@@ -250,14 +256,14 @@ class MockIntegrationTest(unittest.TestCase):
             [10, 1]
         ]
 
-        self.assert_file_contents(pattern, expected_contents)
+        self.assert_file_contents(InredirectCountersStreamDef, pattern, expected_contents)
 
     def test_out_links_files(self):
         pattern = 'url_out_links_counters.txt.{}.gz'
 
         self.assert_part_files(pattern, [0, 4])
 
-        expectec_contents = [
+        expected_contents = [
             [1, ['follow'], True, 10, 4],
             [1, ['robots', 'meta', 'link'], True, 3, 1],
             [1, ['follow'], True, 1, 1],
@@ -269,7 +275,7 @@ class MockIntegrationTest(unittest.TestCase):
             [11, ['follow'], False, 3, 1]
         ]
 
-        self.assert_file_contents(pattern, expectec_contents)
+        self.assert_file_contents(OutlinksCountersStreamDef, pattern, expected_contents)
 
     def test_out_redirects_files(self):
         pattern = 'url_out_redirect_counters.txt.{}.gz'
@@ -282,7 +288,7 @@ class MockIntegrationTest(unittest.TestCase):
             [12, 1]
         ]
 
-        self.assert_file_contents(pattern, expected_contents)
+        self.assert_file_contents(OutredirectCountersStreamDef, pattern, expected_contents)
 
     def test_out_canonicals_files(self):
         pattern = 'url_out_canonical_counters.txt.{}.gz'
@@ -297,12 +303,11 @@ class MockIntegrationTest(unittest.TestCase):
             [5, 0],
         ]
 
-        self.assert_file_contents(pattern, expected_contents)
+        self.assert_file_contents(OutcanonicalCountersStreamDef, pattern, expected_contents)
 
     def test_bad_links_files(self):
         pattern = 'urlbadlinks.txt.{}.gz'
         self.assert_part_files(pattern, [0, 4])
-
 
         expected_contents = []
         # use list.extend and * for repeats
@@ -312,7 +317,7 @@ class MockIntegrationTest(unittest.TestCase):
         expected_contents.extend([[1, 10, 404]] * 3)
         expected_contents.append([11, 12, 303])
 
-        self.assert_file_contents(pattern, expected_contents)
+        self.assert_file_contents(BadLinksStreamDef, pattern, expected_contents)
 
     def test_metadata_duplication_files(self):
         pattern = 'urlcontentsduplicate.txt.{}.gz'
@@ -335,4 +340,4 @@ class MockIntegrationTest(unittest.TestCase):
             [11, 1, 1, 0, 1, []]
         ]
 
-        self.assert_file_contents(pattern, expected_contents)
+        self.assert_file_contents(ContentsDuplicateStreamDef, pattern, expected_contents)

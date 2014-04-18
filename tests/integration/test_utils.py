@@ -3,7 +3,7 @@ import os
 import re
 from cdf.log import logger
 from cdf.core.streams.caster import Caster
-from cdf.metadata.raw import STREAMS_FILES, STREAMS_HEADERS, follow_mask
+from cdf.features.links.helpers.masks import follow_mask
 
 from cdf.core.streams.utils import split_file
 from cdf.analysis.urls.utils import get_part_id
@@ -65,18 +65,3 @@ def generate_inlink_file(outlink_file, inlink_file):
 def list_result_files(dir, regexp, full_path=False):
     return [os.path.join(dir, f) if full_path else f
             for f in os.listdir(dir) if re.match(regexp, f)]
-
-
-def get_stream_from_file(file_path):
-    """Open, cast and get the stream from a file
-
-    :param file_path: should be a generated file of cdf or a raw crawl file
-    """
-    # resolve file type by its canonical name
-    identifier = STREAMS_FILES[os.path.basename(file_path).split('.')[0]]
-
-    # then, resolve the format of its content
-    content_format = STREAMS_HEADERS[identifier.upper()]
-
-    # open, split the file then cast it to the right type
-    return Caster(content_format).cast(split_file(gzip.open(file_path)))

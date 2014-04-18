@@ -1,4 +1,4 @@
-from cdf.metadata.raw import CONTENT_TYPE_NAME_TO_ID
+from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
 
 
 SUGGEST_CLUSTERS = ['mixed']

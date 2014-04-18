@@ -1,17 +1,18 @@
-from itertools import izip
+from itertools import izip, chain
 import os
 import gzip
 
 from cdf.core.streams.caster import Caster
 from cdf.core.streams.utils import split_file
 from cdf.utils import s3
+from cdf.utils.path import get_files_ordered_by_part_id
 
 from boto.exception import S3ResponseError
 
 
 class StreamDefBase(object):
     """
-    StremDefBase is an abstractable object waiting for some constants : 
+    StremDefBase is an abstractable object waiting for some constants :
     FILE : the prefix of the document in the storage backend (ex : urlids, urlcontents...)
     HEADERS : the definition of the streams fields
               Ex : [('id', int), ('url', str), ('http_code', int)
@@ -26,14 +27,37 @@ class StreamDefBase(object):
         return map(lambda i: i[0], cls.HEADERS).index(field)
 
     @classmethod
+    def get_stream_from_directory(cls, directory, part_id=None):
+        """
+        Return a Stream instance from a directory
+        """
+        if part_id:
+            return cls.get_stream_from_path(os.path.join(directory, "{}.txt.{}.gz".format(cls.FILE, part_id)))
+
+        # We fetch all files and we sort them by part_id
+        # We don't only sort on os.listdir, because 'file.9.txt' > 'file.10.txt'
+        streams = []
+        for f in get_files_ordered_by_part_id(directory, cls.FILE):
+            streams.append(cls.get_stream_from_path(os.path.join(directory, f)))
+
+        return Stream(
+            cls(),
+            chain(*streams)
+        )
+
+    @classmethod
     def get_stream_from_path(cls, path):
         """
         Return a Stream instance from a file path (the file must be gzip encoded)
         """
         cast = Caster(cls.HEADERS).cast
+        if os.path.exists(path):
+            iterator = cast(split_file(gzip.open(path)))
+        else:
+            iterator = iter([])
         return Stream(
             cls(),
-            cast(split_file(gzip.open(path)))
+            iterator
         )
 
     @classmethod
@@ -48,7 +72,7 @@ class StreamDefBase(object):
                 force_fetch=force_fetch
             )
         except S3ResponseError:
-            return iter([])
+            return cls.get_stream_from_iterator(iter([]))
         return cls.get_stream_from_path(path)
 
     @classmethod

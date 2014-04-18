@@ -6,14 +6,13 @@ hasher = pyhash.fnv1_32()
 from collections import defaultdict, Counter
 from pandas import DataFrame
 
-from cdf.metadata.raw import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES_IDS
+from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX, MANDATORY_CONTENT_TYPES_IDS
 from cdf.core.streams.utils import group_left
 from cdf.metadata.aggregates import COUNTERS_FIELDS, CROSS_PROPERTIES_COLUMNS
 from cdf.utils.dict import deep_update, flatten_dict
 from cdf.log import logger
-from cdf.features.main.streams import InfosStreamDef
+from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.links.streams import (
-    InlinksCountersStreamDef, OutlinksCountersStreamDef,
     OutcanonicalCountersStreamDef, IncanonicalCountersStreamDef,
     InredirectCountersStreamDef
 )
@@ -55,21 +54,8 @@ def get_http_code_kind(http_code):
 
 
 class MetricsAggregator(object):
-    def __init__(self, stream_patterns, stream_infos, stream_suggest, stream_contents_duplicate,
-                 stream_outlinks_counters, stream_outcanonical_counters, stream_outredirect_counters,
-                 stream_inlinks_counters, stream_incanonical_counters, stream_inredirect_counters,
-                 stream_badlinks_counters):
-        self.stream_patterns = stream_patterns
-        self.stream_infos = stream_infos
-        self.stream_suggest = stream_suggest
-        self.stream_contents_duplicate = stream_contents_duplicate
-        self.stream_out_links_counters = stream_outlinks_counters
-        self.stream_out_canonical_counters = stream_outcanonical_counters
-        self.stream_out_redirect_counters = stream_outredirect_counters
-        self.stream_in_links_counters = stream_inlinks_counters
-        self.stream_in_canonical_counters = stream_incanonical_counters
-        self.stream_in_redirect_counters = stream_inredirect_counters
-        self.stream_badlinks_counters = stream_badlinks_counters
+    def __init__(self, streams):
+        self.streams = streams
 
     def get(self):
         """
@@ -130,19 +116,12 @@ class MetricsAggregator(object):
         }
         """
 
-        left = (self.stream_patterns, 0)
-        streams_ref = {
-            'suggest': (self.stream_suggest, 0),
-            'infos': (self.stream_infos, 0),
-            'in_links_counters': (self.stream_in_links_counters, 0),
-            'in_canonical_counters': (self.stream_in_canonical_counters, 0),
-            'in_redirect_counters': (self.stream_in_redirect_counters, 0),
-            'out_links_counters': (self.stream_out_links_counters, 0),
-            'out_canonical_counters': (self.stream_out_canonical_counters, 0),
-            'out_redirect_counters': (self.stream_out_redirect_counters, 0),
-            'contents_duplicate': (self.stream_contents_duplicate, 0),
-            'badlinks_counters': (self.stream_badlinks_counters, 0)
-        }
+        right_streams = {}
+        for stream in self.streams:
+            if isinstance(stream.stream_def, IdStreamDef):
+                left_stream = (stream, 0)
+            else:
+                right_streams[stream.stream_def.__class__.__name__.lower().replace('streamdef', '')] = (stream, 0)
 
         depth_idx = InfosStreamDef.field_idx('depth')
         content_type_idx = InfosStreamDef.field_idx('content_type')
@@ -151,17 +130,9 @@ class MetricsAggregator(object):
         http_code_idx = InfosStreamDef.field_idx('http_code')
         delay2_idx = InfosStreamDef.field_idx('delay_last_byte')
 
-        inlinks_score_idx = InlinksCountersStreamDef.field_idx('score')
-
-        outlinks_score_idx = OutlinksCountersStreamDef.field_idx('score')
-        outlinks_score_unique_idx = OutlinksCountersStreamDef.field_idx('score_unique')
-
         outcanonical_equals_idx = OutcanonicalCountersStreamDef.field_idx('equals')
-
         incanonical_score_idx = IncanonicalCountersStreamDef.field_idx('score')
-
         inredirect_score_idx = InredirectCountersStreamDef.field_idx('score')
-
         content_duplicate_meta_type_idx = ContentsDuplicateStreamDef.field_idx('content_type')
 
         counter_dict = {}
@@ -345,23 +316,23 @@ class MetricsAggregator(object):
                 _, http_code, count = entry
                 aggregate_badlinks(results[key]['error_links'], http_code, count)
 
-        for k, result in enumerate(group_left(left, **streams_ref)):
+        for k, result in enumerate(group_left(left_stream, **right_streams)):
             if k % 1000 == 999:
                 logger.info('MetricAggregator iter {}'.format(k))
             #if k == 2:
             #    break
             infos = result[2]['infos'][0]
-            outlinks = result[2]['out_links_counters']
-            inlinks = result[2]['in_links_counters']
-            contents_duplicate = result[2]['contents_duplicate']
+            outlinks = result[2]['outlinkscounters']
+            inlinks = result[2]['inlinkscounters']
+            contents_duplicate = result[2]['contentsduplicate']
 
-            outcanonical = result[2]['out_canonical_counters'][0] if result[2]['out_canonical_counters'] else None
-            outredirect = result[2]['out_redirect_counters'][0] if result[2]['out_redirect_counters'] else None
+            outcanonical = result[2]['outcanonicalcounters'][0] if result[2]['outcanonicalcounters'] else None
+            outredirect = result[2]['outredirectcounters'][0] if result[2]['outredirectcounters'] else None
 
-            incanonicals = result[2]['in_canonical_counters'][0] if result[2]['in_canonical_counters'] else None
-            inredirects = result[2]['in_redirect_counters'][0] if result[2]['in_redirect_counters'] else None
+            incanonicals = result[2]['incanonicalcounters'][0] if result[2]['incanonicalcounters'] else None
+            inredirects = result[2]['inredirectcounters'][0] if result[2]['inredirectcounters'] else None
 
-            badlinks = result[2]['badlinks_counters']
+            badlinks = result[2]['badlinkscounters']
 
             # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
             index = not (4 & infos[infos_mask_idx] == 4)
