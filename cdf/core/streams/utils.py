@@ -108,7 +108,7 @@ def get_data_streams_from_storage(streams, storage_uri, tmp_dir, part_id=None, f
     :param part_id : fetch from a specific part_id
     :param force_fetch : fetch the file even if already downloaded in tmp_dir
     """
-    if part_id:
+    if part_id is not None:
         files = ['{}.txt.{}.gz'.format(s.FILE, part_id) for s in streams]
     else:
         files = ['{}.txt.([0-9]+).gz'.format(s.FILE) for s in streams]

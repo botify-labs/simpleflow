@@ -31,7 +31,7 @@ class StreamDefBase(object):
         """
         Return a Stream instance from a directory
         """
-        if part_id:
+        if part_id is not None:
             return cls.get_stream_from_path(os.path.join(directory, "{}.txt.{}.gz".format(cls.FILE, part_id)))
 
         # We fetch all files and we sort them by part_id
