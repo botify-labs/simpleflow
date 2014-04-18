@@ -620,16 +620,25 @@ class Aggs(Term):
 class NamedAgg(Term):
     """An named aggregation term that contains multiple group
     aggregator and metric operator
+
+    If more than 1 field into "groups", we create subaggregation
+    The default name of subaggreagtion is "subagg"
     """
     def __init__(self, name, group_ops, metric_ops):
         self.name = name
         self.group_ops = group_ops
         self.metric_ops = metric_ops
 
-    # TODO support nested transform
     def transform(self):
-        op = self.group_ops[0]
-        return op.transform()
+        op = self.group_ops
+        query = op[0].transform()
+        cursor = query
+        for i, group in enumerate(op[1:]):
+            cursor["aggs"] = {
+                "subagg": group.transform()
+            }
+            cursor = cursor["aggs"]["subagg"]
+        return query
 
     def validate(self):
         for op in self.group_ops:
