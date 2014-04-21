@@ -192,7 +192,7 @@ class TestAggregationParsing(ParsingTestCase):
         parsed.validate()
 
     def test_parse_sum_metric(self):
-        valid = {'a1': {'group': [{'distinct': {'field': 'host'}}], "metric": {"sum": "metadata.title.nb"}}}
+        valid = {'a1': {'group': [{'distinct': {'field': 'host'}}], "metrics": [{"sum": "metadata.title.nb"}]}}
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
         self.assertEquals(
@@ -204,7 +204,7 @@ class TestAggregationParsing(ParsingTestCase):
                     'order': {'_term': 'asc'}
                 },
                 'aggs': {
-                    'sum_agg': {
+                    'metricagg_00': {
                         'sum': {
                             'field': 'metadata.title.nb'
                         }
@@ -247,22 +247,22 @@ class TestAggregationParsing(ParsingTestCase):
 
     def test_parse_unknown_group_op(self):
         invalid = {'a1': {'group': [{'unknown': {'field': 'http_code'}}],
-                          'metric': 'count'}}
+                          'metrics': ['count']}}
         self.assertParsingError(self.parser.parse_aggregations, invalid)
 
     def test_parse_unknown_metric_op(self):
         invalid = {'a1': {'group': [{'distinct': {'field': 'http_code'}}],
-                          'metric': 'unknown'}}
+                          'metrics': ['unknown']}}
         self.assertParsingError(self.parser.parse_aggregations, invalid)
 
     def test_parse_missing_group(self):
-        invalid = {'a1': {'metric': 'count'}}
+        invalid = {'a1': {'metrics': ['count']}}
         self.assertParsingError(self.parser.parse_aggregations, invalid)
 
     def test_parse_wrong_group_format(self):
         # group should be a list of group ops
         invalid = {'a1': {'group': {'unknown': {'field': 'http_code'}},
-                          'metric': 'count'}}
+                          'metrics': ['count']}}
         self.assertParsingError(self.parser.parse_aggregations, invalid)
 
     def test_wrong_agg_field(self):

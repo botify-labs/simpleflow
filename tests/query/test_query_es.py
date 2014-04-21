@@ -731,9 +731,9 @@ class TestQueryES(unittest.TestCase):
         # pages with `0` http_code are filtered out by query
         expected = {
             'http_code_distinct': {
-                'groups': [{'count': 1, 'key': [-160]},
-                           {'count': 4, 'key': [200]},
-                           {'count': 2, 'key': [301]}]
+                'groups': [{'metrics': [1], 'key': [-160]},
+                           {'metrics': [4], 'key': [200]},
+                           {'metrics': [2], 'key': [301]}]
             }
         }
         self.assertEqual(results, expected)
@@ -760,9 +760,9 @@ class TestQueryES(unittest.TestCase):
         expected = {
             'http_code_range': {
                 'groups': [
-                    {'key': [{'to': 1}], 'count': 1},
-                    {'key': [{'to': 201, 'from': 1}], 'count': 4},
-                    {'key': [{'from': 201}], 'count': 2},
+                    {'key': [{'to': 1}], 'metrics': [1]},
+                    {'key': [{'to': 201, 'from': 1}], 'metrics': [4]},
+                    {'key': [{'from': 201}], 'metrics': [2]},
                 ]
             }
         }
@@ -776,9 +776,9 @@ class TestQueryES(unittest.TestCase):
             }
         }
         results = _get_query_agg_result(botify_query)
-        expected_groups = [{'count': 1, 'key': [-160]},
-                           {'count': 4, 'key': [200]},
-                           {'count': 2, 'key': [301]}]
+        expected_groups = [{'metrics': [1], 'key': [-160]},
+                           {'metrics': [4], 'key': [200]},
+                           {'metrics': [2], 'key': [301]}]
         expected = {
             'http_code_1': {'groups': expected_groups},
             'http_code_2': {'groups': expected_groups}
@@ -795,8 +795,8 @@ class TestQueryES(unittest.TestCase):
         }
         results = _get_query_agg_result(botify_query)
         expected = [
-            {'key': [200, 1], 'count': 1},
-            {'key': [200, 2], 'count': 2},
-            {'key': [301, 2], 'count': 2},
+            {'key': [200, 1], 'metrics': [1]},
+            {'key': [200, 2], 'metrics': [2]},
+            {'key': [301, 2], 'metrics': [2]},
         ]
         self.assertItemsEqual(results['multi']['groups'], expected)

@@ -1,3 +1,4 @@
+import re
 import abc
 
 from cdf.log import logger
@@ -446,13 +447,26 @@ class AggregationTransformer(ResultTransformer):
         return 'buckets' in bucket
 
     @classmethod
+    def nb_metric_agg_from_bucket(cls, bucket):
+        """
+        Return the number of metrics aggregators in this bucket
+        """
+        metric_agg_keys = [k for k in bucket.iterkeys() if k.startswith('metricagg_')]
+        # If no aggregator asked, we will return at less the "count" aggregation
+        if not metric_agg_keys:
+            return 1
+        max_agg = max(metric_agg_keys)
+        match = re.match('metricagg_([0-9]+)', max_agg)
+        return int(match.groups(0)[0]) + 1
+
+    @classmethod
     def parse_bucket(cls, bucket):
         """
         Return a list of key/value dictionnaries
-        Ex : 
+        Ex :
             [
-                {"key": ["a", "b", "e"], "count": 100},
-                {"key": ["a", "c", "e"], "count": 120}
+                {"key": ["a", "b", "e"], "metrics": [100]},
+                {"key": ["a", "c", "e"], "metrics": [120]}
             ]
         """
         if 'subagg' in bucket:
@@ -461,11 +475,19 @@ class AggregationTransformer(ResultTransformer):
                 results["key"].insert(0, bucket['key'])
             return subbucket
 
-        if cls._is_terms(bucket):
-            return [{"key": [cls._transform_terms(bucket)], "count": bucket.pop('doc_count')}]
-
-        if cls._is_range(bucket):
-            return [{"key": [cls._transform_range(bucket)], "count": bucket.pop('doc_count')}]
+        if cls._is_terms(bucket) or cls._is_range(bucket):
+            _transform_func = cls._transform_terms if cls._is_terms(bucket) else cls._transform_range
+            result = {"key": [_transform_func(bucket)], "metrics": []}
+            nb_aggregators = cls.nb_metric_agg_from_bucket(bucket)
+            for i in xrange(0, nb_aggregators):
+                metric_agg_key = 'metricagg_{}'.format(str(i).zfill(2))
+                # If the bucket name doesn't exist, that meane it's
+                # a "count" aggregation
+                if not metric_agg_key in bucket:
+                    result["metrics"].append(bucket["doc_count"])
+                else:
+                    result["metrics"].append(bucket[metric_agg_key]["value"])
+            return [result]
 
         if cls._is_bucket(bucket):
             buckets_list = []

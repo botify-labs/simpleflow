@@ -638,14 +638,19 @@ class NamedAgg(Term):
                 "subagg": group.transform()
             }
             cursor = cursor["aggs"]["subagg"]
-        if getattr(self.metric_ops, 'IS_SUB_AGG', False):
-            cursor["aggs"] = self.metric_ops.transform()
+        for idx, metric_op in enumerate(self.metric_ops):
+            agg = metric_op.transform()
+            if agg:
+                if not "aggs" in cursor:
+                    cursor["aggs"] = {}
+                cursor["aggs"]["metricagg_{}".format(str(idx).zfill(2))] = agg
         return query
 
     def validate(self):
         for op in self.group_ops:
             op.validate()
-        self.metric_ops.validate()
+        for op in self.metric_ops:
+            op.validate()
 
 
 class AggOp(Term):
@@ -742,14 +747,10 @@ class CountOp(MetricAggOp):
 class SumOp(MetricAggOp):
     """Simple sum metric aggregator
     """
-    IS_SUB_AGG = True
-
     def transform(self):
         return {
-            "sum_agg": {
-                "sum": {
-                    "field": self.options
-                }
+            "sum": {
+                "field": self.options
             }
         }
 
@@ -954,11 +955,14 @@ class QueryParser(object):
             raise _raise_parsing_error('Group aggregators are not in a list',
                                        agg_content)
         # metric op default to `count`
-        metric_op = agg_content.get('metric', _DEFAULT_METRIC)
+        metrics_op = agg_content.get('metrics', [_DEFAULT_METRIC])
+
+        if metrics_op != [_DEFAULT_METRIC] and not isinstance(metrics_op, list):
+            _raise_parsing_error('Metrics aggregator is not a list', metrics_op)
 
         return NamedAgg(name,
                         [self.parse_group_aggregator(op) for op in group_ops],
-                        self.parse_metric_aggregator(metric_op))
+                        [self.parse_metric_aggregator(metric_op) for metric_op in metrics_op])
 
     def parse_group_aggregator(self, group_op):
         if isinstance(group_op, _STR_TYPE):
