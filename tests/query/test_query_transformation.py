@@ -361,11 +361,11 @@ class TestAggregationTransformation(QueryTransformationTestCase):
             'aggs': {
                 'my_agg_1': {
                     'group': [{'distinct': {'field': 'field1'}}],
-                    'metric': 'count'
+                    'metrics': ['count']
                 },
                 'my_agg_2': {
                     'group': [{'distinct': {'field': 'field2'}}],
-                    'metric': 'count'
+                    'metrics': ['count']
                 }
             }
         }

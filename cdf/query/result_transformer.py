@@ -455,9 +455,8 @@ class AggregationTransformer(ResultTransformer):
         # If no aggregator asked, we will return at less the "count" aggregation
         if not metric_agg_keys:
             return 1
-        max_agg = max(metric_agg_keys)
-        match = re.match('metricagg_([0-9]+)', max_agg)
-        return int(match.groups(0)[0]) + 1
+        match = re.match('metricagg_([0-9]+)_([0-9]+)', metric_agg_keys[0])
+        return int(match.groups(0)[1])
 
     @classmethod
     def parse_bucket(cls, bucket):
@@ -480,7 +479,7 @@ class AggregationTransformer(ResultTransformer):
             result = {"key": [_transform_func(bucket)], "metrics": []}
             nb_aggregators = cls.nb_metric_agg_from_bucket(bucket)
             for i in xrange(0, nb_aggregators):
-                metric_agg_key = 'metricagg_{}'.format(str(i).zfill(2))
+                metric_agg_key = 'metricagg_{}_{}'.format(str(i).zfill(2), nb_aggregators)
                 # If the bucket name doesn't exist, that meane it's
                 # a "count" aggregation
                 if not metric_agg_key in bucket:

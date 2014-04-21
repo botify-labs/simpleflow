@@ -800,3 +800,23 @@ class TestQueryES(unittest.TestCase):
             {'key': [301, 2], 'metrics': [2]},
         ]
         self.assertItemsEqual(results['multi']['groups'], expected)
+
+    def test_agg_query_nested_multiple(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'group': ['http_code', 'depth'],
+                    'metrics': [
+                        {"sum": "outlinks_internal.nb.total"},
+                        "count"
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = [
+            {'key': [200, 1], 'metrics': [102.0, 1]},
+            {'key': [200, 2], 'metrics': [0.0, 2]},
+            {'key': [301, 2], 'metrics': [0.0, 2]},
+        ]
+        self.assertItemsEqual(results['multi']['groups'], expected)

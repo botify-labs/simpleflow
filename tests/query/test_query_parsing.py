@@ -204,7 +204,7 @@ class TestAggregationParsing(ParsingTestCase):
                     'order': {'_term': 'asc'}
                 },
                 'aggs': {
-                    'metricagg_00': {
+                    'metricagg_00_1': {
                         'sum': {
                             'field': 'metadata.title.nb'
                         }

@@ -459,14 +459,14 @@ class TestAggregationResultTransformer(unittest.TestCase):
                     {
                         'key': 'a',
                         'doc_count': 100,
-                        'metricagg_00': {
+                        'metricagg_00_1': {
                             'value': 10
                         }
                     },
                     {
                         'key': 'b',
                         'doc_count': 50,
-                        'metricagg_00': {
+                        'metricagg_00_1': {
                             'value': 5
                         }
                     }

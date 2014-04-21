@@ -643,7 +643,9 @@ class NamedAgg(Term):
             if agg:
                 if not "aggs" in cursor:
                     cursor["aggs"] = {}
-                cursor["aggs"]["metricagg_{}".format(str(idx).zfill(2))] = agg
+                # We record the total number of aggregator because we may have implicit aggregators
+                # like "count" which doesn't need an aggregation in ES
+                cursor["aggs"]["metricagg_{}_{}".format(str(idx).zfill(2), len(self.metric_ops))] = agg
         return query
 
     def validate(self):
