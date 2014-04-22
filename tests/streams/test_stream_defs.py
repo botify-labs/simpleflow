@@ -1,5 +1,8 @@
+import os
+import tempfile
 import unittest
 import StringIO
+import shutil
 
 from cdf.core.streams.base import StreamDefBase
 
@@ -44,3 +47,114 @@ class TestStreamsDef(unittest.TestCase):
             CustomStreamDef().to_dict(entry),
             {'id': 1, 'url': 'http://www.site.com/'}
         )
+
+    def test_persist(self):
+        iterator = iter([
+            [0, 'http://www.site.com/'],
+            [1, 'http://www.site.com/1'],
+            [2, 'http://www.site.com/2'],
+            [3, 'http://www.site.com/3'],
+            [4, 'http://www.site.com/4'],
+            [5, 'http://www.site.com/5'],
+            [6, 'http://www.site.com/6']
+        ])
+        tmp_dir = tempfile.mkdtemp()
+        CustomStreamDef().persist(
+            iterator,
+            tmp_dir,
+            first_part_id_size=2,
+            part_id_size=3
+        )
+        self.assertEquals(
+            os.listdir(tmp_dir),
+            ['test.txt.0.gz', 'test.txt.1.gz', 'test.txt.2.gz']
+        )
+        self.assertEquals(
+            list(CustomStreamDef.get_stream_from_directory(tmp_dir, part_id=0)),
+            [
+                [0, 'http://www.site.com/'],
+                [1, 'http://www.site.com/1'],
+            ]
+        )
+        self.assertEquals(
+            list(CustomStreamDef.get_stream_from_directory(tmp_dir, part_id=1)),
+            [
+                [2, 'http://www.site.com/2'],
+                [3, 'http://www.site.com/3'],
+                [4, 'http://www.site.com/4'],
+            ]
+        )
+        self.assertEquals(
+            list(CustomStreamDef.get_stream_from_directory(tmp_dir, part_id=2)),
+            [
+                [5, 'http://www.site.com/5'],
+                [6, 'http://www.site.com/6']
+            ]
+        )
+
+        # Test without part_id
+        self.assertEquals(
+            list(CustomStreamDef.get_stream_from_directory(tmp_dir)),
+            [
+                [0, 'http://www.site.com/'],
+                [1, 'http://www.site.com/1'],
+                [2, 'http://www.site.com/2'],
+                [3, 'http://www.site.com/3'],
+                [4, 'http://www.site.com/4'],
+                [5, 'http://www.site.com/5'],
+                [6, 'http://www.site.com/6']
+            ]
+        )
+        shutil.rmtree(tmp_dir)
+
+    def test_persist_with_part_id(self):
+        iterator = iter([
+            [0, 'http://www.site.com/'],
+            [1, 'http://www.site.com/1'],
+            [2, 'http://www.site.com/2'],
+            [3, 'http://www.site.com/3'],
+            [4, 'http://www.site.com/4'],
+            [5, 'http://www.site.com/5'],
+            [6, 'http://www.site.com/6']
+        ])
+        tmp_dir = tempfile.mkdtemp()
+        CustomStreamDef().persist(
+            iterator,
+            tmp_dir,
+            part_id=1
+        )
+        self.assertEquals(
+            list(CustomStreamDef.get_stream_from_directory(tmp_dir, part_id=1)),
+            [
+                [0, 'http://www.site.com/'],
+                [1, 'http://www.site.com/1'],
+                [2, 'http://www.site.com/2'],
+                [3, 'http://www.site.com/3'],
+                [4, 'http://www.site.com/4'],
+                [5, 'http://www.site.com/5'],
+                [6, 'http://www.site.com/6']
+            ]
+        )
+        shutil.rmtree(tmp_dir)
+
+    def test_temporary_dataset(self):
+        dataset = CustomStreamDef.create_temporary_dataset()
+        # Write in reversed to ensure that the dataset will be sorted
+        for i in xrange(6, -1, -1):
+            dataset.append(i, 'http://www.site.com/{}'.format(i))
+        tmp_dir = tempfile.mkdtemp()
+        dataset.persist(tmp_dir, first_part_id_size=2, part_id_size=3)
+
+        self.assertEquals(
+            list(CustomStreamDef.get_stream_from_directory(tmp_dir)),
+            [
+                [0, 'http://www.site.com/0'],
+                [1, 'http://www.site.com/1'],
+                [2, 'http://www.site.com/2'],
+                [3, 'http://www.site.com/3'],
+                [4, 'http://www.site.com/4'],
+                [5, 'http://www.site.com/5'],
+                [6, 'http://www.site.com/6']
+            ]
+        )
+        shutil.rmtree(tmp_dir)
