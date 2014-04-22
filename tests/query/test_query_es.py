@@ -833,5 +833,47 @@ class TestQueryES(unittest.TestCase):
             }
         }
         results = _get_query_agg_result(botify_query)
-        expected = {'metrics': [102.0, 1]}
-        self.assertItemsEqual(results['multi'], expected)
+        expected = {'metrics': [102.0, 7]}
+        self.assertEquals(results['multi'], expected)
+
+    def test_min_aggregator(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'metrics': [
+                        {"min": "http_code"}
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = {'metrics': [-160.0]}
+        self.assertEquals(results['multi'], expected)
+
+    def test_max_aggregator(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'metrics': [
+                        {"max": "http_code"}
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = {'metrics': [301.0]}
+        self.assertEquals(results['multi'], expected)
+
+    def test_avg_aggregator(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'metrics': [
+                        {"avg": "depth"}
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = {'metrics': [1.8]}
+        self.assertEquals(results['multi'], expected)
