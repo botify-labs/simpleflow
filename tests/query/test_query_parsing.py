@@ -177,7 +177,7 @@ class TestAggregationParsing(ParsingTestCase):
 
         self.assertEquals(
             parsed.named_aggs[0].transform(),
-            {'terms': {'field': 'http_code', 'size': 50, 'order': {'_term': 'asc'}}}
+            {'terms': {'field': 'http_code', 'size': 50, 'order': {'_term': 'asc'}}, 'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}}
         )
 
     def test_parse_default_metric(self):
@@ -204,7 +204,7 @@ class TestAggregationParsing(ParsingTestCase):
                     'order': {'_term': 'asc'}
                 },
                 'aggs': {
-                    'metricagg_00_1': {
+                    'metricagg_00': {
                         'sum': {
                             'field': 'metadata.title.nb'
                         }
@@ -215,9 +215,9 @@ class TestAggregationParsing(ParsingTestCase):
 
     def test_parse_multiple_aggs(self):
         valid = {'a1': {'group': [{'distinct': {'field': 'http_code'}}],
-                        'metric': 'count'},
+                        'metrics': ['count']},
                  'a2': {'group': [{'distinct': {'field': 'http_code'}}],
-                        'metric': 'count'}}
+                        'metrics': ['count']}}
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
 
@@ -239,6 +239,13 @@ class TestAggregationParsing(ParsingTestCase):
                             'field': 'depth',
                             'size': 50,
                             'order': {'_term': 'asc'}
+                        },
+                        'aggs': {
+                            'metricagg_00': {
+                                'value_count': {
+                                    'field': 'id'
+                                }
+                            }
                         }
                     }
                 }
@@ -256,8 +263,11 @@ class TestAggregationParsing(ParsingTestCase):
         self.assertParsingError(self.parser.parse_aggregations, invalid)
 
     def test_parse_missing_group(self):
-        invalid = {'a1': {'metrics': ['count']}}
-        self.assertParsingError(self.parser.parse_aggregations, invalid)
+        valid = {'a1': {'metrics': ['count']}}
+        parsed = self.parser.parse_aggregations(valid)
+        parsed.validate()
+        expected = {'metricagg_00_a1': {'value_count': {'field': 'id'}}}
+        self.assertEqual(parsed.transform(), expected)
 
     def test_parse_wrong_group_format(self):
         # group should be a list of group ops

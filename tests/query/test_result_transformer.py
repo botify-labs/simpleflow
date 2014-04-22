@@ -378,11 +378,17 @@ class TestAggregationResultTransformer(unittest.TestCase):
                 "buckets": [
                     {
                         "key": "a",
-                        "doc_count": 10
+                        "doc_count": 10,
+                        "metricagg_00": {
+                            "value": 10
+                        }
                     },
                     {
                         "key": "b",
-                        "doc_count": 10
+                        "doc_count": 10,
+                        "metricagg_00": {
+                            "value": 10
+                        }
                     },
                 ]
             }
@@ -393,12 +399,18 @@ class TestAggregationResultTransformer(unittest.TestCase):
                 "buckets": [
                     {
                         "to": 50,
-                        "doc_count": 2
+                        "doc_count": 2,
+                        "metricagg_00": {
+                            "value": 2
+                        }
                     },
                     {
                         "from": 50,
                         "to": 100,
-                        "doc_count": 4
+                        "doc_count": 4,
+                        "metricagg_00": {
+                            "value": 4
+                        }
                     }
                 ]
             }
@@ -459,14 +471,14 @@ class TestAggregationResultTransformer(unittest.TestCase):
                     {
                         'key': 'a',
                         'doc_count': 100,
-                        'metricagg_00_1': {
+                        'metricagg_00': {
                             'value': 10
                         }
                     },
                     {
                         'key': 'b',
                         'doc_count': 50,
-                        'metricagg_00_1': {
+                        'metricagg_00': {
                             'value': 5
                         }
                     }
@@ -493,8 +505,8 @@ class TestAggregationResultTransformer(unittest.TestCase):
 
     def test_multiple_aggs(self):
         results = {
-            'agg1': {'buckets': [{'key': 'a', 'doc_count': 1}]},
-            'agg2': {'buckets': [{'key': 'b', 'doc_count': 2}]}
+            'agg1': {'buckets': [{'key': 'a', 'doc_count': 1, 'metricagg_00': {'value': 1}}]},
+            'agg2': {'buckets': [{'key': 'b', 'doc_count': 2, 'metricagg_00': {'value': 2}}]}
         }
 
         d = AggregationTransformer(results)
@@ -520,9 +532,11 @@ class TestAggregationResultTransformer(unittest.TestCase):
                                 'subagg': {
                                     'buckets': [
                                         {'key': 'd',
-                                         'doc_count': 5},
+                                         'doc_count': 5,
+                                         'metricagg_00': {'value': 5}},
                                         {'key': 'e',
-                                         'doc_count': 15},
+                                         'doc_count': 15,
+                                         'metricagg_00': {'value': 15}},
                                     ]
                                 }
                             },
@@ -532,7 +546,8 @@ class TestAggregationResultTransformer(unittest.TestCase):
                                 'subagg': {
                                     'buckets': [
                                         {'key': 'e',
-                                         'doc_count': 80}
+                                         'doc_count': 80,
+                                         'metricagg_00': {'value': 80}}
                                     ]
                                 }
                             }

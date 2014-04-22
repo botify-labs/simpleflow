@@ -609,8 +609,14 @@ class Aggs(Term):
         self.named_aggs = named_aggs
 
     def transform(self):
-        return {agg.name: agg.transform()
-                for agg in self.named_aggs}
+        aggs = {}
+        for agg in self.named_aggs:
+            if agg.group_ops:
+                aggs[agg.name] = agg.transform()
+            else:
+                # If no group, all aggreations are made on root
+                aggs.update(agg.transform())
+        return aggs
 
     def validate(self):
         for agg in self.named_aggs:
@@ -631,26 +637,35 @@ class NamedAgg(Term):
 
     def transform(self):
         op = self.group_ops
-        query = op[0].transform()
-        cursor = query
-        for i, group in enumerate(op[1:]):
-            cursor["aggs"] = {
-                "subagg": group.transform()
-            }
-            cursor = cursor["aggs"]["subagg"]
+        if op:
+            query = op[0].transform()
+            cursor = query
+            for i, group in enumerate(op[1:]):
+                cursor["aggs"] = {
+                    "subagg": group.transform()
+                }
+                cursor = cursor["aggs"]["subagg"]
+        else:
+            query = {}
+            cursor = query
+
         for idx, metric_op in enumerate(self.metric_ops):
             agg = metric_op.transform()
             if agg:
-                if not "aggs" in cursor:
-                    cursor["aggs"] = {}
-                # We record the total number of aggregator because we may have implicit aggregators
-                # like "count" which doesn't need an aggregation in ES
-                cursor["aggs"]["metricagg_{}_{}".format(str(idx).zfill(2), len(self.metric_ops))] = agg
+                if not op:
+                    key = "metricagg_{}_{}".format(str(idx).zfill(2), self.name)
+                    cursor[key] = agg
+                else:
+                    if not "aggs" in cursor:
+                        cursor["aggs"] = {}
+                    key = "metricagg_{}".format(str(idx).zfill(2))
+                    cursor["aggs"][key] = agg
         return query
 
     def validate(self):
-        for op in self.group_ops:
-            op.validate()
+        if self.group_ops:
+            for op in self.group_ops:
+                op.validate()
         for op in self.metric_ops:
             op.validate()
 
@@ -736,11 +751,12 @@ class MetricAggOp(AggOp):
 class CountOp(MetricAggOp):
     """Simple counting metric aggregator
     """
-    # no impl needed for the moment
-    # in ElasticSearch each bucket always returns a `doc_count`
-    # which is exactly this aggregator is for
     def transform(self):
-        pass
+        return {
+            "value_count": {
+                "field": "id"
+            }
+        }
 
     def validate(self):
         pass
@@ -948,12 +964,8 @@ class QueryParser(object):
         return Aggs(named_aggs)
 
     def parse_named_aggregation(self, name, agg_content):
-        if 'group' not in agg_content:
-            raise _raise_parsing_error('Group aggregators are missing',
-                                       agg_content)
-
-        group_ops = agg_content['group']
-        if not isinstance(group_ops, list):
+        group_ops = agg_content.get('group', None)
+        if group_ops and not isinstance(group_ops, list):
             raise _raise_parsing_error('Group aggregators are not in a list',
                                        agg_content)
         # metric op default to `count`
@@ -963,7 +975,7 @@ class QueryParser(object):
             _raise_parsing_error('Metrics aggregator is not a list', metrics_op)
 
         return NamedAgg(name,
-                        [self.parse_group_aggregator(op) for op in group_ops],
+                        [self.parse_group_aggregator(op) for op in group_ops] if group_ops else None,
                         [self.parse_metric_aggregator(metric_op) for metric_op in metrics_op])
 
     def parse_group_aggregator(self, group_op):

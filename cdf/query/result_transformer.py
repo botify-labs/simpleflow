@@ -447,16 +447,9 @@ class AggregationTransformer(ResultTransformer):
         return 'buckets' in bucket
 
     @classmethod
-    def nb_metric_agg_from_bucket(cls, bucket):
-        """
-        Return the number of metrics aggregators in this bucket
-        """
-        metric_agg_keys = [k for k in bucket.iterkeys() if k.startswith('metricagg_')]
-        # If no aggregator asked, we will return at less the "count" aggregation
-        if not metric_agg_keys:
-            return 1
-        match = re.match('metricagg_([0-9]+)_([0-9]+)', metric_agg_keys[0])
-        return int(match.groups(0)[1])
+    def _is_no_group_agg(cls, bucket):
+        # If the name is 'metricagg_00_myaggname', this means it a non-group bucket
+        return any(k for k in bucket.iterkeys() if k.startswith('metricagg') and k.count('_') > 1)
 
     @classmethod
     def parse_bucket(cls, bucket):
@@ -468,6 +461,12 @@ class AggregationTransformer(ResultTransformer):
                 {"key": ["a", "c", "e"], "metrics": [120]}
             ]
         """
+        if cls._is_no_group_agg(bucket):
+            result = {"metrics": []}
+            for key in sorted([k for k in bucket.keys() if k.startswith('metricagg_')]):
+                result["metrics"].append(bucket[key]["value"])
+            return result
+
         if 'subagg' in bucket:
             subbucket = cls.parse_bucket(bucket["subagg"])
             for results in subbucket:
@@ -477,15 +476,8 @@ class AggregationTransformer(ResultTransformer):
         if cls._is_terms(bucket) or cls._is_range(bucket):
             _transform_func = cls._transform_terms if cls._is_terms(bucket) else cls._transform_range
             result = {"key": [_transform_func(bucket)], "metrics": []}
-            nb_aggregators = cls.nb_metric_agg_from_bucket(bucket)
-            for i in xrange(0, nb_aggregators):
-                metric_agg_key = 'metricagg_{}_{}'.format(str(i).zfill(2), nb_aggregators)
-                # If the bucket name doesn't exist, that meane it's
-                # a "count" aggregation
-                if not metric_agg_key in bucket:
-                    result["metrics"].append(bucket["doc_count"])
-                else:
-                    result["metrics"].append(bucket[metric_agg_key]["value"])
+            for key in sorted([k for k in bucket.keys() if k.startswith('metricagg_')]):
+                result["metrics"].append(bucket[key]["value"])
             return [result]
 
         if cls._is_bucket(bucket):
@@ -494,12 +486,18 @@ class AggregationTransformer(ResultTransformer):
                 buckets_list += cls.parse_bucket(sub_bucket)
             return buckets_list
 
-    # simple solution for the moment
-    #   - only support count metric
     def transform(self):
-        for name, results in self.agg_results.iteritems():
-            results["groups"] = self.parse_bucket(results)
-            del results["buckets"]
+        if self._is_no_group_agg(self.agg_results):
+            agg_name = self.agg_results.keys()[0].split('_', 2)[2]
+            self.agg_results[agg_name] = self.parse_bucket(self.agg_results)
+            # Delete old agg results
+            for name in self.agg_results.keys():
+                if name.startswith('metricagg'):
+                    del self.agg_results[name]
+        else:
+            for name, results in self.agg_results.iteritems():
+                results["groups"] = self.parse_bucket(results)
+                del results["buckets"]
 
 
 def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):

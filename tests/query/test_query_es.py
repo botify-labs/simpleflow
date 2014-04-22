@@ -820,3 +820,18 @@ class TestQueryES(unittest.TestCase):
             {'key': [301, 2], 'metrics': [0.0, 2]},
         ]
         self.assertItemsEqual(results['multi']['groups'], expected)
+
+    def test_agg_without_group(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'metrics': [
+                        {"sum": "outlinks_internal.nb.total"},
+                        "count"
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = {'metrics': [102.0, 1]}
+        self.assertItemsEqual(results['multi'], expected)
