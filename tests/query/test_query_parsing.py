@@ -262,6 +262,20 @@ class TestAggregationParsing(ParsingTestCase):
                           'metrics': ['unknown']}}
         self.assertParsingError(self.parser.parse_aggregations, invalid)
 
+    def test_invalid_agg_op(self):
+        invalid = {'a1': {'group': ['http_code'], 'metrics': ['avg']}}
+        self.assertParsingError(self.parser.parse_aggregations, invalid)
+        invalid = {'a1': {'group': ['http_code'], 'metrics': ['min']}}
+        self.assertParsingError(self.parser.parse_aggregations, invalid)
+        invalid = {'a1': {'group': ['http_code'], 'metrics': ['max']}}
+        self.assertParsingError(self.parser.parse_aggregations, invalid)
+        # aggregator avg is ok, but value is not a string
+        invalid = {'a1': {'group': ['http_code'], 'metrics': {'avg': 2}}}
+        self.assertParsingError(self.parser.parse_aggregations, invalid)
+        valid = {'a1': {'group': ['http_code'], 'metrics': ['count']}}
+        parsed = self.parser.parse_aggregations(valid)
+        parsed.validate()
+
     def test_parse_missing_group(self):
         valid = {'a1': {'metrics': ['count']}}
         parsed = self.parser.parse_aggregations(valid)

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Botify query parsing
 
 Query format definition see:
@@ -747,33 +748,57 @@ class MetricAggOp(AggOp):
     def __init__(self, options=None):
         self.options = options
 
-
-class CountOp(MetricAggOp):
-    """Simple counting metric aggregator
-    """
     def transform(self):
         return {
-            "value_count": {
-                "field": "id"
-            }
-        }
-
-    def validate(self):
-        pass
-
-
-class SumOp(MetricAggOp):
-    """Simple sum metric aggregator
-    """
-    def transform(self):
-        return {
-            "sum": {
+            self.METRIC_AGGREGATOR: {
                 "field": self.options
             }
         }
 
     def validate(self):
-        pass
+        if not isinstance(self.options, str):
+            _raise_parsing_error('{} value is not valid'.format(self.VERBOSE_NAME),
+                                 self.options)
+
+
+class CountOp(MetricAggOp):
+    """Simple counting metric aggregator
+    """
+    VERBOSE_NAME = 'count'
+    METRIC_AGGREGATOR = "value_count"
+
+    def __init__(self, options=None):
+        if not options:
+            options = "id"
+        super(CountOp, self).__init__(options)
+
+
+class SumOp(MetricAggOp):
+    """Simple sum metric aggregator
+    """
+    VERBOSE_NAME = 'sum'
+    METRIC_AGGREGATOR = "sum"
+
+
+class AvgOp(MetricAggOp):
+    """Simple avg metric aggregator
+    """
+    VERBOSE_NAME = 'avg'
+    METRIC_AGGREGATOR = "avg"
+
+
+class MinOp(MetricAggOp):
+    """Simple min metric aggregator
+    """
+    VERBOSE_NAME = 'min'
+    METRIC_AGGREGATOR = "min"
+
+
+class MaxOp(MetricAggOp):
+    """Simple max metric aggregator
+    """
+    VERBOSE_NAME = 'max'
+    METRIC_AGGREGATOR = "max"
 
 
 _GROUP_AGGS_LIST = {
@@ -783,7 +808,10 @@ _GROUP_AGGS_LIST = {
 
 _METRIC_AGGS_LIST = {
     'count': CountOp,
-    'sum': SumOp
+    'sum': SumOp,
+    'min': MinOp,
+    'max': MaxOp,
+    'avg': AvgOp
 }
 
 _DEFAULT_METRIC = 'count'
@@ -991,15 +1019,19 @@ class QueryParser(object):
     # nothing to do for the moment
     def parse_metric_aggregator(self, metric_op):
         # If op is {"op_name": options}
+        # An exception is "count"
+        op = None
         if isinstance(metric_op, dict) and len(metric_op) == 1:
             op = metric_op.keys()[0]
             options = metric_op[op]
-        elif isinstance(metric_op, str):
+        elif metric_op == "count":
             op = metric_op
             options = None
         if op not in _METRIC_AGGS_LIST:
             _raise_parsing_error('Unknown metric aggregator', metric_op)
-        return _METRIC_AGGS_LIST[op](options)
+        aggregator = _METRIC_AGGS_LIST[op](options)
+        aggregator.validate()
+        return aggregator
 
     def parse_botify_query(self, botify_query):
         """Parse a botify front-end query into the intermediate form
