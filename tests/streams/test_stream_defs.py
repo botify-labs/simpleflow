@@ -66,7 +66,7 @@ class TestStreamsDef(unittest.TestCase):
             part_id_size=3
         )
         self.assertEquals(
-            os.listdir(tmp_dir),
+            sorted(os.listdir(tmp_dir)),
             ['test.txt.0.gz', 'test.txt.1.gz', 'test.txt.2.gz']
         )
         self.assertEquals(
