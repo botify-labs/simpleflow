@@ -107,7 +107,6 @@ class StreamDefBase(object):
         f, current_part_id = None, None
 
         for entry in stream:
-            print entry
             local_part_id = get_part_id(entry[0], first_part_id_size, part_id_size)
             if local_part_id != current_part_id:
                 if f:
