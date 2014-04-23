@@ -1,3 +1,4 @@
+import gzip
 import os
 import tempfile
 import unittest
@@ -55,26 +56,18 @@ class TestStreamsDef(unittest.TestCase):
             {'id': 1, 'url': 'http://www.site.com/'}
         )
 
-    def test_persist(self):
-        iterator = iter([
-            [0, 'http://www.site.com/'],
-            [1, 'http://www.site.com/1'],
-            [2, 'http://www.site.com/2'],
-            [3, 'http://www.site.com/3'],
-            [4, 'http://www.site.com/4'],
-            [5, 'http://www.site.com/5'],
-            [6, 'http://www.site.com/6']
-        ])
-        files = CustomStreamDef().persist(
-            iterator,
-            self.tmp_dir,
-            first_part_id_size=2,
-            part_id_size=3
-        )
-        self.assertEquals(
-            files,
-            [os.path.join(self.tmp_dir, '{}.txt.{}.gz'.format(CustomStreamDef().FILE, part_id)) for part_id in xrange(0, 3)]
-        )
+    def test_load_from_directory(self):
+        with gzip.open(os.path.join(self.tmp_dir, 'test.txt.0.gz'), 'w') as f:
+            f.write('0\thttp://www.site.com/\n')
+            f.write('1\thttp://www.site.com/1\n')
+        with gzip.open(os.path.join(self.tmp_dir, 'test.txt.1.gz'), 'w') as f:
+            f.write('2\thttp://www.site.com/2\n')
+            f.write('3\thttp://www.site.com/3\n')
+            f.write('4\thttp://www.site.com/4\n')
+        with gzip.open(os.path.join(self.tmp_dir, 'test.txt.2.gz'), 'w') as f:
+            f.write('5\thttp://www.site.com/5\n')
+            f.write('6\thttp://www.site.com/6\n')
+
         self.assertEquals(
             list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=0)),
             [
@@ -96,6 +89,41 @@ class TestStreamsDef(unittest.TestCase):
                 [5, 'http://www.site.com/5'],
                 [6, 'http://www.site.com/6']
             ]
+        )
+
+        # Test without part_id
+        self.assertEquals(
+            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir)),
+            [
+                [0, 'http://www.site.com/'],
+                [1, 'http://www.site.com/1'],
+                [2, 'http://www.site.com/2'],
+                [3, 'http://www.site.com/3'],
+                [4, 'http://www.site.com/4'],
+                [5, 'http://www.site.com/5'],
+                [6, 'http://www.site.com/6']
+            ]
+        )
+
+    def test_persist(self):
+        iterator = iter([
+            [0, 'http://www.site.com/'],
+            [1, 'http://www.site.com/1'],
+            [2, 'http://www.site.com/2'],
+            [3, 'http://www.site.com/3'],
+            [4, 'http://www.site.com/4'],
+            [5, 'http://www.site.com/5'],
+            [6, 'http://www.site.com/6']
+        ])
+        files = CustomStreamDef().persist(
+            iterator,
+            self.tmp_dir,
+            first_part_id_size=2,
+            part_id_size=3
+        )
+        self.assertEquals(
+            files,
+            [os.path.join(self.tmp_dir, '{}.txt.{}.gz'.format(CustomStreamDef().FILE, part_id)) for part_id in xrange(0, 3)]
         )
 
         # Test without part_id
