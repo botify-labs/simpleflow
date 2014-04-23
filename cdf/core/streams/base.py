@@ -98,18 +98,14 @@ class StreamDefBase(object):
         """
         return Stream(cls(), i)
 
-    def persist(self, stream, directory, part_id=None, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE):
+    def persist(self, stream, directory, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE):
         """
         Persist a stream into a file located in a `directory`
-        The filename will be automatically generated depending on the `StreamDef`'s stream and the given `part_id`
-        If no `part_id` is set, it will create as many files as `part_id`s.
+        The filename will be automatically generated depending on the `StreamDef`'s stream and all `part_id`s found
         :return a list of files location
         """
         if not os.path.isdir(directory):
             raise Exception('{} must be a directory'.format(directory))
-
-        if part_id is not None:
-            return [self._persist_part_id(stream, directory, part_id, first_part_id_size, part_id_size)]
 
         files_generated = []
         for part_id, local_stream in groupby(stream, lambda k: get_part_id(k[0], first_part_id_size, part_id_size)):
@@ -129,9 +125,9 @@ class StreamDefBase(object):
         self.f.close()
         return filename
 
-    def persist_to_s3(self, stream, s3_uri, part_id=None, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE):
+    def persist_to_s3(self, stream, s3_uri, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE):
         tmp_dir = tempfile.mkdtemp()
-        files = self.persist(stream, directory=tmp_dir, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
+        files = self.persist(stream, directory=tmp_dir, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
         for f in files:
             s3.push_file(
                 s3_uri,
@@ -199,12 +195,18 @@ class TemporaryDataset(object):
         """
         self.dataset = sorted(self.dataset, key=itemgetter(0))
 
-    def persist(self, directory, part_id=None, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE, sort=True):
+    def persist(self, directory, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE, sort=True):
         if sort:
             self.sort()
-        self.stream_def.persist(stream=iter(self.dataset), directory=directory, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
+        self.stream_def.persist(stream=iter(self.dataset),
+                                directory=directory,
+                                first_part_id_size=first_part_id_size,
+                                part_id_size=part_id_size)
 
-    def persist_to_s3(self, s3_uri, part_id=None, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE, sort=True):
+    def persist_to_s3(self, s3_uri, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE, sort=True):
         if sort:
             self.sort()
-        self.stream_def.persist_to_s3(stream=iter(self.dataset), s3_uri=s3_uri, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
+        self.stream_def.persist_to_s3(stream=iter(self.dataset),
+                                      s3_uri=s3_uri,
+                                      first_part_id_size=first_part_id_size,
+                                      part_id_size=part_id_size)
