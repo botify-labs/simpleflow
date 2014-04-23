@@ -16,6 +16,13 @@ class CustomStreamDef(StreamDefBase):
 
 
 class TestStreamsDef(unittest.TestCase):
+
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
     def test_field_idx(self):
         self.assertEquals(CustomStreamDef.field_idx('id'), 0)
         self.assertEquals(CustomStreamDef.field_idx('url'), 1)
@@ -117,14 +124,13 @@ class TestStreamsDef(unittest.TestCase):
             [5, 'http://www.site.com/5'],
             [6, 'http://www.site.com/6']
         ])
-        tmp_dir = tempfile.mkdtemp()
         CustomStreamDef().persist(
             iterator,
-            tmp_dir,
+            self.tmp_dir,
             part_id=1
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(tmp_dir, part_id=1)),
+            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=1)),
             [
                 [0, 'http://www.site.com/'],
                 [1, 'http://www.site.com/1'],
@@ -135,18 +141,16 @@ class TestStreamsDef(unittest.TestCase):
                 [6, 'http://www.site.com/6']
             ]
         )
-        shutil.rmtree(tmp_dir)
 
     def test_temporary_dataset(self):
         dataset = CustomStreamDef.create_temporary_dataset()
         # Write in reversed to ensure that the dataset will be sorted
         for i in xrange(6, -1, -1):
             dataset.append(i, 'http://www.site.com/{}'.format(i))
-        tmp_dir = tempfile.mkdtemp()
-        dataset.persist(tmp_dir, first_part_id_size=2, part_id_size=3)
+        dataset.persist(self.tmp_dir, first_part_id_size=2, part_id_size=3)
 
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(tmp_dir)),
+            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir)),
             [
                 [0, 'http://www.site.com/0'],
                 [1, 'http://www.site.com/1'],
@@ -157,4 +161,3 @@ class TestStreamsDef(unittest.TestCase):
                 [6, 'http://www.site.com/6']
             ]
         )
-        shutil.rmtree(tmp_dir)

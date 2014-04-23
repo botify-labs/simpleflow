@@ -65,7 +65,7 @@ class StreamDefBase(object):
         )
 
     @classmethod
-    def get_stream_from_storage(cls, storage_uri, tmp_dir, part_id=None, force_fetch=False):
+    def get_stream_from_s3(cls, s3_uri, tmp_dir, part_id=None, force_fetch=False):
         """
         Return a Stream instance from a root storage uri.
         """
@@ -74,7 +74,7 @@ class StreamDefBase(object):
         else:
             regexp = '{}.txt.([0-9]+).gz'
         s3.fetch_files(
-            storage_uri,
+            s3_uri,
             tmp_dir,
             regexp=regexp,
             force_fetch=force_fetch
@@ -126,12 +126,12 @@ class StreamDefBase(object):
             self.f.write('\t'.join(str(k).encode('utf-8') for k in entry) + '\n')
         self.f.close()
 
-    def persist_to_storage(self, stream, storage_uri, part_id=None, first_part_id_size=1024, part_id_size=300000):
+    def persist_to_s3(self, stream, s3_uri, part_id=None, first_part_id_size=1024, part_id_size=300000):
         tmp_dir = tempfile.mkdtemp()
         self.persist(stream, directory=tmp_dir, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
         for f in os.listdir(tmp_dir):
             s3.push_file(
-                storage_uri,
+                s3_uri,
                 os.path.join(tmp_dir, f)
             )
         shutil.rmtree(tmp_dir)
@@ -191,7 +191,7 @@ class TemporaryDataset(object):
             self.sort()
         self.stream_def.persist(stream=iter(self.dataset), directory=directory, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
 
-    def persist_to_storage(self, storage_uri, part_id=None, first_part_id_size=1024, part_id_size=300000, sort=True):
+    def persist_to_s3(self, s3_uri, part_id=None, first_part_id_size=1024, part_id_size=300000, sort=True):
         if sort:
             self.sort()
-        self.stream_def.persist_to_storage(stream=iter(self.dataset), storage_uri=storage_uri, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
+        self.stream_def.persist_to_s3(stream=iter(self.dataset), s3_uri=s3_uri, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
