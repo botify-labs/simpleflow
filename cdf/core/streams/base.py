@@ -1,5 +1,5 @@
 from operator import itemgetter
-from itertools import izip, chain
+from itertools import izip, chain, groupby
 import os
 import gzip
 import tempfile
@@ -110,23 +110,11 @@ class StreamDefBase(object):
             raise Exception('{} must be a directory'.format(directory))
 
         if part_id is not None:
-            return [self._persist_part_id(stream, directory, part_id, first_part_id_size=1024, part_id_size=300000)]
+            return [self._persist_part_id(stream, directory, part_id, first_part_id_size, part_id_size)]
 
         files_generated = []
-        f, current_part_id = None, None
-
-        for entry in stream:
-            local_part_id = get_part_id(entry[0], first_part_id_size, part_id_size)
-            if local_part_id != current_part_id:
-                if f:
-                    f.close()
-                current_part_id = local_part_id
-                location = '{}.txt.{}.gz'.format(self.FILE, local_part_id)
-                files_generated.append(os.path.join(directory, location))
-                f = gzip.open(os.path.join(directory, location), 'w')
-            f.write('\t'.join(str(k).encode('utf-8') for k in entry) + '\n')
-        if f:
-            f.close()
+        for part_id, local_stream in groupby(stream, lambda k: get_part_id(k[0], first_part_id_size, part_id_size)):
+            files_generated.append(self._persist_part_id(local_stream, directory, part_id, first_part_id_size, part_id_size))
         return files_generated
 
     def _persist_part_id(self, stream, directory, part_id, first_part_id_size=1024, part_id_size=300000):
