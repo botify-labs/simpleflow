@@ -65,19 +65,21 @@ class StreamDefBase(object):
         )
 
     @classmethod
-    def get_stream_from_storage(cls, storage_uri, tmp_dir, part_id, force_fetch=False):
+    def get_stream_from_storage(cls, storage_uri, tmp_dir, part_id=None, force_fetch=False):
         """
         Return a Stream instance from a root storage uri.
         """
-        try:
-            path, fetched = s3.fetch_file(
-                os.path.join(storage_uri, '{}.txt.{}.gz'.format(cls.FILE, part_id)),
-                os.path.join(tmp_dir, '{}.txt.{}.gz'.format(cls.FILE, part_id)),
-                force_fetch=force_fetch
-            )
-        except S3ResponseError:
-            return cls.get_stream_from_iterator(iter([]))
-        return cls.get_stream_from_path(path)
+        if part_id:
+            regexp = '{}.txt.{}.gz'.format(cls.FILE, part_id)
+        else:
+            regexp = '{}.txt.([0-9]+).gz'
+        s3.fetch_files(
+            storage_uri,
+            tmp_dir,
+            regexp=regexp,
+            force_fetch=force_fetch
+        )
+        return cls.get_stream_from_directory(tmp_dir, part_id)
 
     @classmethod
     def get_stream_from_file(cls, f):
@@ -129,7 +131,7 @@ class StreamDefBase(object):
         self.persist(stream, directory=tmp_dir, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
         for f in os.listdir(tmp_dir):
             s3.push_file(
-                self.location,
+                storage_uri,
                 os.path.join(tmp_dir, f)
             )
         shutil.rmtree(tmp_dir)
