@@ -188,3 +188,8 @@ class TemporaryDataset(object):
         if sort:
             self.sort()
         self.stream_def.persist(stream=iter(self.dataset), directory=directory, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
+
+    def persist_to_storage(self, storage_uri, part_id=None, first_part_id_size=1024, part_id_size=300000, sort=True):
+        if sort:
+            self.sort()
+        self.stream_def.persist_to_storage(stream=iter(self.dataset), storage_uri=storage_uri, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
