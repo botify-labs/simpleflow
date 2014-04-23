@@ -65,26 +65,25 @@ class TestStreamsDef(unittest.TestCase):
             [5, 'http://www.site.com/5'],
             [6, 'http://www.site.com/6']
         ])
-        tmp_dir = tempfile.mkdtemp()
-        CustomStreamDef().persist(
+        files = CustomStreamDef().persist(
             iterator,
-            tmp_dir,
+            self.tmp_dir,
             first_part_id_size=2,
             part_id_size=3
         )
         self.assertEquals(
-            sorted(os.listdir(tmp_dir)),
-            ['test.txt.0.gz', 'test.txt.1.gz', 'test.txt.2.gz']
+            files,
+            [os.path.join(self.tmp_dir, '{}.txt.{}.gz'.format(CustomStreamDef().FILE, part_id)) for part_id in xrange(0, 3)]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(tmp_dir, part_id=0)),
+            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=0)),
             [
                 [0, 'http://www.site.com/'],
                 [1, 'http://www.site.com/1'],
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(tmp_dir, part_id=1)),
+            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=1)),
             [
                 [2, 'http://www.site.com/2'],
                 [3, 'http://www.site.com/3'],
@@ -92,7 +91,7 @@ class TestStreamsDef(unittest.TestCase):
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(tmp_dir, part_id=2)),
+            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=2)),
             [
                 [5, 'http://www.site.com/5'],
                 [6, 'http://www.site.com/6']
@@ -101,7 +100,7 @@ class TestStreamsDef(unittest.TestCase):
 
         # Test without part_id
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(tmp_dir)),
+            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir)),
             [
                 [0, 'http://www.site.com/'],
                 [1, 'http://www.site.com/1'],
@@ -112,7 +111,6 @@ class TestStreamsDef(unittest.TestCase):
                 [6, 'http://www.site.com/6']
             ]
         )
-        shutil.rmtree(tmp_dir)
 
     def test_persist_with_part_id(self):
         iterator = iter([
@@ -124,10 +122,14 @@ class TestStreamsDef(unittest.TestCase):
             [5, 'http://www.site.com/5'],
             [6, 'http://www.site.com/6']
         ])
-        CustomStreamDef().persist(
+        files = CustomStreamDef().persist(
             iterator,
             self.tmp_dir,
             part_id=1
+        )
+        self.assertEquals(
+            files,
+            [os.path.join(self.tmp_dir, '{}.txt.1.gz'.format(CustomStreamDef().FILE))]
         )
         self.assertEquals(
             list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=1)),

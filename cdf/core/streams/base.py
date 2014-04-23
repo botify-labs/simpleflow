@@ -100,12 +100,19 @@ class StreamDefBase(object):
         return Stream(cls(), i)
 
     def persist(self, stream, directory, part_id=None, first_part_id_size=1024, part_id_size=300000):
+        """
+        Persist a stream into a file located in a `directory`
+        The filename will be automatically generated depending on the `StreamDef`'s stream and the given `part_id`
+        If no `part_id` is set, it will create as many files as `part_id`s.
+        :return a list of files location
+        """
         if not os.path.isdir(directory):
             raise Exception('{} must be a directory'.format(directory))
 
         if part_id is not None:
-            self._persist_part_id(stream, directory, part_id, first_part_id_size=1024, part_id_size=300000)
+            return [self._persist_part_id(stream, directory, part_id, first_part_id_size=1024, part_id_size=300000)]
 
+        files_generated = []
         f, current_part_id = None, None
 
         for entry in stream:
@@ -115,24 +122,33 @@ class StreamDefBase(object):
                     f.close()
                 current_part_id = local_part_id
                 location = '{}.txt.{}.gz'.format(self.FILE, local_part_id)
+                files_generated.append(os.path.join(directory, location))
                 f = gzip.open(os.path.join(directory, location), 'w')
             f.write('\t'.join(str(k).encode('utf-8') for k in entry) + '\n')
         if f:
             f.close()
+        return files_generated
 
     def _persist_part_id(self, stream, directory, part_id, first_part_id_size=1024, part_id_size=300000):
-        self.f = gzip.open(os.path.join(directory, '{}.txt.{}.gz'.format(self.FILE, part_id)), 'w')
+        """
+        Persist a stream into a file located in a `directory`
+        The filename will be automatically generated depending on the `StreamDef`'s stream and the given `part_id`
+        :return the file location where the stream has been stored
+        """
+        filename = os.path.join(directory, '{}.txt.{}.gz'.format(self.FILE, part_id))
+        self.f = gzip.open(filename, 'w')
         for entry in stream:
             self.f.write('\t'.join(str(k).encode('utf-8') for k in entry) + '\n')
         self.f.close()
+        return filename
 
     def persist_to_s3(self, stream, s3_uri, part_id=None, first_part_id_size=1024, part_id_size=300000):
         tmp_dir = tempfile.mkdtemp()
-        self.persist(stream, directory=tmp_dir, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
-        for f in os.listdir(tmp_dir):
+        files = self.persist(stream, directory=tmp_dir, part_id=part_id, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
+        for f in files:
             s3.push_file(
                 s3_uri,
-                os.path.join(tmp_dir, f)
+                f
             )
         shutil.rmtree(tmp_dir)
 
