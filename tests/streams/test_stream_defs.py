@@ -192,38 +192,6 @@ class TestStreamsDef(unittest.TestCase):
             ]
         )
 
-    def test_persist_with_part_id(self):
-        iterator = iter([
-            [0, 'http://www.site.com/'],
-            [1, 'http://www.site.com/1'],
-            [2, 'http://www.site.com/2'],
-            [3, 'http://www.site.com/3'],
-            [4, 'http://www.site.com/4'],
-            [5, 'http://www.site.com/5'],
-            [6, 'http://www.site.com/6']
-        ])
-        files = CustomStreamDef().persist(
-            iterator,
-            self.tmp_dir,
-            part_id=1
-        )
-        self.assertEquals(
-            files,
-            [os.path.join(self.tmp_dir, '{}.txt.1.gz'.format(CustomStreamDef().FILE))]
-        )
-        self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=1)),
-            [
-                [0, 'http://www.site.com/'],
-                [1, 'http://www.site.com/1'],
-                [2, 'http://www.site.com/2'],
-                [3, 'http://www.site.com/3'],
-                [4, 'http://www.site.com/4'],
-                [5, 'http://www.site.com/5'],
-                [6, 'http://www.site.com/6']
-            ]
-        )
-
     def test_temporary_dataset(self):
         dataset = CustomStreamDef.create_temporary_dataset()
         # Write in reversed to ensure that the dataset will be sorted
