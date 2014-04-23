@@ -34,7 +34,7 @@ def _mock_push_file(s3_uri, filename):
     """
     :param s3_uri : a local path prefixed by s3://
     """
-    shutil.copy(filename, s3_uri[5:])
+    shutil.copy(filename, os.path.join(s3_uri[5:], os.path.basename(filename)))
 
 
 def _mock_push_content(s3_uri, content):
@@ -62,6 +62,10 @@ def _mock_fetch_files(s3_uri, dest_dir,
     """
     local_files = _list_local_files(s3_uri[5:], regexp)
 
-    # it could return an empty list, this is managed by the tasks
-    # that use it
-    return [(f, True) for f in local_files]
+    files = []
+    for f in local_files:
+        new_file = os.path.join(dest_dir, os.path.basename(f))
+        shutil.copy(f, os.path.join(dest_dir, os.path.basename(f)))
+        files.append((new_file, True))
+
+    return files

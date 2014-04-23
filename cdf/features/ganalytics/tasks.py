@@ -19,15 +19,15 @@ def transform_visits_to_local_ids(raw_data_file, crawl_storage_uri, first_part_i
     576 organic google 12
     165 organic google 50
     """
-    url_to_id = get_url_to_id_dict_from_stream(IdStreamDef.get_stream_from_storage(crawl_storage_uri, tmp_dir=tmp_dir))
+    url_to_id = get_url_to_id_dict_from_stream(IdStreamDef.get_stream_from_s3(crawl_storage_uri, tmp_dir=tmp_dir))
     dataset = VisitsStreamDef.create_temporary_dataset()
 
     for url, medium, source, nb_visits in RowVisitsStreamDef.get_stream_from_path(raw_data_file):
         if not url.startswith('http'):
-            url = '{}://{}'.format(protocol, url)
+            url = '{}:{}'.format(protocol, url)
 
         url_id = url_to_id.get(url, None)
         if url_id:
             dataset.append(url_id, medium, source, nb_visits)
 
-    dataset.persist_to_storage(crawl_storage_uri, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
+    dataset.persist_to_s3(crawl_storage_uri, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
