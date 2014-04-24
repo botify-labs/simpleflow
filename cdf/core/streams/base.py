@@ -81,6 +81,18 @@ class StreamDefBase(object):
         return cls.get_stream_from_directory(tmp_dir, part_id)
 
     @classmethod
+    def get_stream_from_s3_path(cls, s3_uri_path, tmp_dir, force_fetch=False):
+        """
+        Return a Stream instance from a gzip file stored in S3
+        """
+        path, fetched = s3.fetch_file(
+            s3_uri_path,
+            os.path.join(tmp_dir, os.path.basename(s3_uri_path)),
+            force_fetch=force_fetch
+        )
+        return cls.get_stream_from_path(path)
+
+    @classmethod
     def get_stream_from_file(cls, f):
         """
         Return a stream from a `file` instance
@@ -131,7 +143,7 @@ class StreamDefBase(object):
         files = []
         for f in local_files:
             s3.push_file(
-                s3_uri,
+                os.path.join(s3_uri, os.path.basename(f)),
                 f
             )
             files.append(os.path.join(s3_uri, os.path.basename(f)))

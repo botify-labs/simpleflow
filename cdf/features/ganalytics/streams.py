@@ -4,7 +4,7 @@ from cdf.metadata.url.url_metadata import (
 from cdf.core.features import StreamDefBase
 
 
-class RowVisitsStreamDef(StreamDefBase):
+class RawVisitsStreamDef(StreamDefBase):
     FILE = 'analytics_raw_data'
     HEADERS = (
         ('url', str),

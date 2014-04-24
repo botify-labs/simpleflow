@@ -34,7 +34,7 @@ def _mock_push_file(s3_uri, filename):
     """
     :param s3_uri : a local path prefixed by s3://
     """
-    shutil.copy(filename, os.path.join(s3_uri[5:], os.path.basename(filename)))
+    shutil.copy(filename, s3_uri[5:])
 
 
 def _mock_push_content(s3_uri, content):
@@ -46,13 +46,12 @@ def _mock_fetch_file(s3_uri, dest_path, force_fetch, lock=True):
     """
     Fetch file from a fake S3 Uri (s3://local_path)
     """
-    filename = os.path.basename(dest_path)
-    if not os.path.exists(os.path.join(s3_uri[5:], filename)):
+    if not os.path.exists(s3_uri[5:]):
         # this should be managed correctly by tasks
         raise S3ResponseError('', '{} not found'.format(dest_path))
     else:
-        shutil.copy(s3_uri[5:], os.path.join(dest_path, filename))
-        return os.path.join(dest_path, filename), True
+        shutil.copy(s3_uri[5:], dest_path)
+        return dest_path, True
 
 
 def _mock_fetch_files(s3_uri, dest_dir,
