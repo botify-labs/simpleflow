@@ -2,7 +2,7 @@ import requests
 
 from oauth2client.client import AccessTokenCredentials
 
-from cdf.core.settings import SOCIAL_AUTH_GOOGLE_OAUTH2_KEY, SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
+from cdf.core.settings import GOOGLE_OAUTH2_KEY, GOOGLE_OAUTH2_SECRET
 
 
 def get_credentials(access_token, refresh_token=None):
@@ -21,6 +21,7 @@ def get_credentials(access_token, refresh_token=None):
         return get_credentials(access_token)
     raise Exception('Token is not valid and refresh_token is not set')
 
+
 def token_is_valid(access_token):
     token = requests.get(
         'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={}'.format(access_token)
@@ -32,8 +33,8 @@ def refresh_access_token(refresh_token):
     token = requests.post(
         'https://accounts.google.com/o/oauth2/token',
         data={
-            'client_id': SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
-            'client_secret': SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET,
+            'client_id': GOOGLE_OAUTH2_KEY,
+            'client_secret': GOOGLE_OAUTH2_SECRET,
             'refresh_token': refresh_token,
             'grant_type': 'refresh_token',
         }
