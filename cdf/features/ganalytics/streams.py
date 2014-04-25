@@ -22,7 +22,7 @@ class VisitsStreamDef(StreamDefBase):
         ('source', str),
         ('nb_visits', int),
     )
-    URLS_DOCUMENT_MAPPING = {
+    URL_DOCUMENT_MAPPING = {
         "visits.organic.google.nb": {
             "type": INT_TYPE,
             "settings": {

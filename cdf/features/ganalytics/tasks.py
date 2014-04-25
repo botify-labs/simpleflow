@@ -6,6 +6,7 @@ from cdf.features.ganalytics.streams import RawVisitsStreamDef, VisitsStreamDef
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.utils import s3
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
+from cdf.core.decorators import feature_enabled
 
 from analytics.import_analytics import import_data
 
@@ -13,6 +14,7 @@ from cdf.utils.auth import get_credentials
 
 
 @with_temporary_dir
+@feature_enabled('ganalytics')
 def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id, s3_uri,
                                 tmp_dir=None, force_fetch=False):
     """
@@ -33,6 +35,7 @@ def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id,
 
 
 @with_temporary_dir
+@feature_enabled('ganalytics')
 def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE,
                                   protocol='http', tmp_dir=None, force_fetch=False):
     """
