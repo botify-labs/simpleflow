@@ -646,7 +646,7 @@ class NamedAgg(Term):
                 cursor["aggs"] = {
                     SUB_AGG: group.transform()
                 }
-                cursor = cursor["aggs"]["subagg"]
+                cursor = cursor["aggs"][SUB_AGG]
         else:
             query = {}
             cursor = query
