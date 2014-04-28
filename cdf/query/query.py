@@ -71,6 +71,10 @@ class Query(object):
     def _has_agg(self):
         return 'aggs' in self.botify_query
 
+    @property
+    def es_query(self):
+        return self.parser.get_es_query(self.botify_query, self.crawl_id)
+
     def _run(self):
         """Launch the process of a ES query
             - Translation of a botify format query to ES search API
@@ -106,7 +110,7 @@ class Query(object):
             return
 
         # Translation
-        es_query = self.parser.get_es_query(self.botify_query, self.crawl_id)
+        es_query = self.es_query
 
         # Issue a ES search
         temp_results = self.search_backend.search(body=es_query,

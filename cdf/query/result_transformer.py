@@ -474,7 +474,7 @@ class AggregationTransformer(ResultTransformer):
             return subbucket
 
         if cls._is_terms(bucket) or cls._is_range(bucket):
-            _transform_func = cls._transform_terms if cls._is_terms(bucket) else cls._transform_range
+            _transform_func = cls._transform_range if cls._is_range(bucket) else cls._transform_terms
             result = {"key": [_transform_func(bucket)], "metrics": []}
             for key in sorted([k for k in bucket.keys() if k.startswith(METRIC_AGG_PREFIX)]):
                 result["metrics"].append(bucket[key]["value"])

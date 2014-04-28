@@ -400,6 +400,7 @@ class TestAggregationResultTransformer(unittest.TestCase):
                     {
                         "to": 50,
                         "doc_count": 2,
+                        "key": "*-50",
                         "metricagg_00": {
                             "value": 2
                         }
@@ -407,6 +408,7 @@ class TestAggregationResultTransformer(unittest.TestCase):
                     {
                         "from": 50,
                         "to": 100,
+                        "key": "50-100",
                         "doc_count": 4,
                         "metricagg_00": {
                             "value": 4
