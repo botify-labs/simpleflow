@@ -1010,7 +1010,7 @@ class QueryParser(object):
         # metric op default to `count`
         metrics_op = agg_content.get('metrics', [_DEFAULT_METRIC])
 
-        if metrics_op != [_DEFAULT_METRIC] and not isinstance(metrics_op, list):
+        if not isinstance(metrics_op, list):
             _raise_parsing_error('Metrics aggregator is not a list', metrics_op)
 
         return NamedAgg(name,
