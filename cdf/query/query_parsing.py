@@ -756,27 +756,27 @@ class RangeOp(GroupAggOp):
 class MetricAggOp(AggOp):
     """Metric aggregator calculates metrics inside each group
     """
-    def __init__(self, options=None):
-        self.options = options
+    def __init__(self, field=None):
+        self.field = field
 
     def transform(self):
         return {
-            self.METRIC_AGGREGATOR: {
-                "field": self.options
+            self.ES_METRIC_AGGREGATOR: {
+                "field": self.field
             }
         }
 
     def validate(self):
-        if not isinstance(self.options, str):
-            _raise_parsing_error('{} value is not valid'.format(self.VERBOSE_NAME),
-                                 self.options)
+        if not isinstance(self.field, str):
+            _raise_parsing_error('{} value is not valid'.format(self.OPERATOR),
+                                 self.field)
 
 
 class CountOp(MetricAggOp):
     """Simple counting metric aggregator
     """
-    VERBOSE_NAME = 'count'
-    METRIC_AGGREGATOR = "value_count"
+    OPERATOR = 'count'
+    ES_METRIC_AGGREGATOR = "value_count"
 
     def __init__(self, options=None):
         if not options:
@@ -787,29 +787,29 @@ class CountOp(MetricAggOp):
 class SumOp(MetricAggOp):
     """Simple sum metric aggregator
     """
-    VERBOSE_NAME = 'sum'
-    METRIC_AGGREGATOR = "sum"
+    OPERATOR = 'sum'
+    ES_METRIC_AGGREGATOR = "sum"
 
 
 class AvgOp(MetricAggOp):
     """Simple avg metric aggregator
     """
-    VERBOSE_NAME = 'avg'
-    METRIC_AGGREGATOR = "avg"
+    OPERATOR = 'avg'
+    ES_METRIC_AGGREGATOR = "avg"
 
 
 class MinOp(MetricAggOp):
     """Simple min metric aggregator
     """
-    VERBOSE_NAME = 'min'
-    METRIC_AGGREGATOR = "min"
+    OPERATOR = 'min'
+    ES_METRIC_AGGREGATOR = "min"
 
 
 class MaxOp(MetricAggOp):
     """Simple max metric aggregator
     """
-    VERBOSE_NAME = 'max'
-    METRIC_AGGREGATOR = "max"
+    OPERATOR = 'max'
+    ES_METRIC_AGGREGATOR = "max"
 
 
 _GROUP_AGGS_LIST = {
@@ -817,13 +817,13 @@ _GROUP_AGGS_LIST = {
     'range': RangeOp
 }
 
-_METRIC_AGGS_LIST = {
-    'count': CountOp,
-    'sum': SumOp,
-    'min': MinOp,
-    'max': MaxOp,
-    'avg': AvgOp
-}
+_METRIC_AGGS_LIST = [
+    CountOp,
+    SumOp,
+    MinOp,
+    MaxOp,
+    AvgOp
+]
 
 _DEFAULT_METRIC = 'count'
 
@@ -1029,20 +1029,19 @@ class QueryParser(object):
 
     # nothing to do for the moment
     def parse_metric_aggregator(self, metric_op):
-        # If op is {"op_name": options}
-        # An exception is "count"
         op = None
-        if isinstance(metric_op, dict) and len(metric_op) == 1:
+        if metric_op == "count":
+            return CountOp()
+        elif isinstance(metric_op, dict) and len(metric_op) == 1:
             op = metric_op.keys()[0]
-            options = metric_op[op]
-        elif metric_op == "count":
-            op = metric_op
-            options = None
-        if op not in _METRIC_AGGS_LIST:
-            _raise_parsing_error('Unknown metric aggregator', metric_op)
-        aggregator = _METRIC_AGGS_LIST[op](options)
-        aggregator.validate()
-        return aggregator
+            field = metric_op[op]
+            for _op_class in _METRIC_AGGS_LIST:
+                if op == _op_class.OPERATOR:
+                    aggregator = _op_class(field)
+                    aggregator.validate()
+                    return aggregator
+        # Otherwise we raise an error
+        _raise_parsing_error('Unknown metric aggregator', metric_op)
 
     def parse_botify_query(self, botify_query):
         """Parse a botify front-end query into the intermediate form
