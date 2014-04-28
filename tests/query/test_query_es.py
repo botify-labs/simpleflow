@@ -723,7 +723,7 @@ class TestQueryES(unittest.TestCase):
         botify_query = {
             'aggs': {
                 'http_code_distinct': {
-                    'group': ['http_code']
+                    'group_by': ['http_code']
                 }
             }
         }
@@ -743,7 +743,7 @@ class TestQueryES(unittest.TestCase):
         botify_query = {
             'aggs': {
                 'http_code_range': {
-                    'group': [
+                    'group_by': [
                         {'range': {
                             'field': 'http_code',
                             'ranges': [
@@ -771,8 +771,8 @@ class TestQueryES(unittest.TestCase):
     def test_agg_multiple_aggs(self):
         botify_query = {
             'aggs': {
-                'http_code_1': {'group': ['http_code']},
-                'http_code_2': {'group': ['http_code']}
+                'http_code_1': {'group_by': ['http_code']},
+                'http_code_2': {'group_by': ['http_code']}
             }
         }
         results = _get_query_agg_result(botify_query)
@@ -789,7 +789,7 @@ class TestQueryES(unittest.TestCase):
         botify_query = {
             'aggs': {
                 'multi': {
-                    'group': ['http_code', 'depth']
+                    'group_by': ['http_code', 'depth']
                 }
             }
         }
@@ -805,7 +805,7 @@ class TestQueryES(unittest.TestCase):
         botify_query = {
             'aggs': {
                 'multi': {
-                    'group': ['http_code', 'depth'],
+                    'group_by': ['http_code', 'depth'],
                     'metrics': [
                         {"sum": "outlinks_internal.nb.total"},
                         "count"

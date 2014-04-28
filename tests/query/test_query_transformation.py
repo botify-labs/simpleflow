@@ -281,7 +281,7 @@ class TestAggregationTransformation(QueryTransformationTestCase):
         query = {
             'aggs': {
                 'my_agg': {
-                    'group': [{
+                    'group_by': [{
                         'distinct': {
                             'field': 'http_code',
                             'size': 5
@@ -316,7 +316,7 @@ class TestAggregationTransformation(QueryTransformationTestCase):
         query = {
             'aggs': {
                 'my_agg': {
-                    'group': ['http_code'],
+                    'group_by': ['http_code'],
                     'metric': 'count'
                 }
             }
@@ -348,7 +348,7 @@ class TestAggregationTransformation(QueryTransformationTestCase):
         query = {
             'aggs': {
                 'my_agg': {
-                    'group': [{
+                    'group_by': [{
                         'range': {
                             'field': 'http_code',
                             'ranges': ranges
@@ -381,11 +381,11 @@ class TestAggregationTransformation(QueryTransformationTestCase):
         query = {
             'aggs': {
                 'my_agg_1': {
-                    'group': [{'distinct': {'field': 'field1'}}],
+                    'group_by': [{'distinct': {'field': 'field1'}}],
                     'metrics': ['count']
                 },
                 'my_agg_2': {
-                    'group': [{'distinct': {'field': 'field2'}}],
+                    'group_by': [{'distinct': {'field': 'field2'}}],
                     'metrics': ['count']
                 }
             }

@@ -1003,7 +1003,7 @@ class QueryParser(object):
         return Aggs(named_aggs)
 
     def parse_named_aggregation(self, name, agg_content):
-        group_ops = agg_content.get('group', None)
+        group_ops = agg_content.get('group_by', None)
         if group_ops and not isinstance(group_ops, list):
             _raise_parsing_error('Group aggregators are not in a list',
                                  agg_content)
