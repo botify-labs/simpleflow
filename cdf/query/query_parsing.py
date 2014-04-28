@@ -16,6 +16,7 @@ import abc
 from copy import deepcopy
 
 from cdf.exceptions import BotifyQueryException
+from .constants import SUB_AGG, METRIC_AGG_PREFIX
 
 
 __ALL__ = ['QueryParser']
@@ -643,7 +644,7 @@ class NamedAgg(Term):
             cursor = query
             for i, group in enumerate(op[1:]):
                 cursor["aggs"] = {
-                    "subagg": group.transform()
+                    SUB_AGG: group.transform()
                 }
                 cursor = cursor["aggs"]["subagg"]
         else:
@@ -654,12 +655,22 @@ class NamedAgg(Term):
             agg = metric_op.transform()
             if agg:
                 if not op:
-                    key = "metricagg_{}_{}".format(str(idx).zfill(2), self.name)
+                    # Identifier for metrics aggregations
+                    # Since the query format is
+                    # [
+                    #    {"sum": {"field": "my_field"},
+                    #    "count"
+                    # ]
+                    # And ES format asks for a dictionnary,
+                    # We use aggregations prefixed by _METRIC_AGG_PREFIX that will store the total number of aggregations
+                    # + the current aggregation (zero-filled on 2 numbers) to ensure
+                    # the sorting and correctly return results as a list
+                    key = "_".join((METRIC_AGG_PREFIX, str(idx).zfill(2), self.name))
                     cursor[key] = agg
                 else:
                     if not "aggs" in cursor:
                         cursor["aggs"] = {}
-                    key = "metricagg_{}".format(str(idx).zfill(2))
+                    key = "_".join((METRIC_AGG_PREFIX, str(idx).zfill(2)))
                     cursor["aggs"][key] = agg
         return query
 
