@@ -1005,8 +1005,8 @@ class QueryParser(object):
     def parse_named_aggregation(self, name, agg_content):
         group_ops = agg_content.get('group', None)
         if group_ops and not isinstance(group_ops, list):
-            raise _raise_parsing_error('Group aggregators are not in a list',
-                                       agg_content)
+            _raise_parsing_error('Group aggregators are not in a list',
+                                 agg_content)
         # metric op default to `count`
         metrics_op = agg_content.get('metrics', [_DEFAULT_METRIC])
 
