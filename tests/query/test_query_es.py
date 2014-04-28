@@ -723,7 +723,7 @@ class TestQueryES(unittest.TestCase):
         botify_query = {
             'aggs': {
                 'http_code_distinct': {
-                    'group': ['http_code']
+                    'group_by': ['http_code']
                 }
             }
         }
@@ -731,9 +731,9 @@ class TestQueryES(unittest.TestCase):
         # pages with `0` http_code are filtered out by query
         expected = {
             'http_code_distinct': {
-                'groups': [{'count': 1, 'key': [-160]},
-                           {'count': 4, 'key': [200]},
-                           {'count': 2, 'key': [301]}]
+                'groups': [{'metrics': [1], 'key': [-160]},
+                           {'metrics': [4], 'key': [200]},
+                           {'metrics': [2], 'key': [301]}]
             }
         }
         self.assertEqual(results, expected)
@@ -743,7 +743,7 @@ class TestQueryES(unittest.TestCase):
         botify_query = {
             'aggs': {
                 'http_code_range': {
-                    'group': [
+                    'group_by': [
                         {'range': {
                             'field': 'http_code',
                             'ranges': [
@@ -760,9 +760,9 @@ class TestQueryES(unittest.TestCase):
         expected = {
             'http_code_range': {
                 'groups': [
-                    {'key': [{'to': 1}], 'count': 1},
-                    {'key': [{'to': 201, 'from': 1}], 'count': 4},
-                    {'key': [{'from': 201}], 'count': 2},
+                    {'key': [{'to': 1}], 'metrics': [1]},
+                    {'key': [{'to': 201, 'from': 1}], 'metrics': [4]},
+                    {'key': [{'from': 201}], 'metrics': [2]},
                 ]
             }
         }
@@ -771,14 +771,14 @@ class TestQueryES(unittest.TestCase):
     def test_agg_multiple_aggs(self):
         botify_query = {
             'aggs': {
-                'http_code_1': {'group': ['http_code']},
-                'http_code_2': {'group': ['http_code']}
+                'http_code_1': {'group_by': ['http_code']},
+                'http_code_2': {'group_by': ['http_code']}
             }
         }
         results = _get_query_agg_result(botify_query)
-        expected_groups = [{'count': 1, 'key': [-160]},
-                           {'count': 4, 'key': [200]},
-                           {'count': 2, 'key': [301]}]
+        expected_groups = [{'metrics': [1], 'key': [-160]},
+                           {'metrics': [4], 'key': [200]},
+                           {'metrics': [2], 'key': [301]}]
         expected = {
             'http_code_1': {'groups': expected_groups},
             'http_code_2': {'groups': expected_groups}
@@ -789,14 +789,91 @@ class TestQueryES(unittest.TestCase):
         botify_query = {
             'aggs': {
                 'multi': {
-                    'group': ['http_code', 'depth']
+                    'group_by': ['http_code', 'depth']
                 }
             }
         }
         results = _get_query_agg_result(botify_query)
         expected = [
-            {'key': [200, 1], 'count': 1},
-            {'key': [200, 2], 'count': 2},
-            {'key': [301, 2], 'count': 2},
+            {'key': [200, 1], 'metrics': [1]},
+            {'key': [200, 2], 'metrics': [2]},
+            {'key': [301, 2], 'metrics': [2]},
         ]
         self.assertItemsEqual(results['multi']['groups'], expected)
+
+    def test_agg_query_nested_multiple(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'group_by': ['http_code', 'depth'],
+                    'metrics': [
+                        {"sum": "outlinks_internal.nb.total"},
+                        "count"
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = [
+            {'key': [200, 1], 'metrics': [102.0, 1]},
+            {'key': [200, 2], 'metrics': [0.0, 2]},
+            {'key': [301, 2], 'metrics': [0.0, 2]},
+        ]
+        self.assertItemsEqual(results['multi']['groups'], expected)
+
+    def test_agg_without_group(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'metrics': [
+                        {"sum": "outlinks_internal.nb.total"},
+                        "count"
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = {'metrics': [102.0, 7]}
+        self.assertEquals(results['multi'], expected)
+
+    def test_min_aggregator(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'metrics': [
+                        {"min": "http_code"}
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = {'metrics': [-160.0]}
+        self.assertEquals(results['multi'], expected)
+
+    def test_max_aggregator(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'metrics': [
+                        {"max": "http_code"}
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = {'metrics': [301.0]}
+        self.assertEquals(results['multi'], expected)
+
+    def test_avg_aggregator(self):
+        botify_query = {
+            'aggs': {
+                'multi': {
+                    'metrics': [
+                        {"avg": "depth"}
+                    ]
+                }
+            }
+        }
+        results = _get_query_agg_result(botify_query)
+        expected = {'metrics': [1.8]}
+        self.assertEquals(results['multi'], expected)

@@ -1,3 +1,4 @@
+import re
 import abc
 
 from cdf.log import logger
@@ -5,7 +6,7 @@ from cdf.analysis.urls.utils import get_es_id, get_url_id
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
 from cdf.features.links.helpers.masks import follow_mask
-from cdf.query.constants import MGET_CHUNKS_SIZE
+from cdf.query.constants import MGET_CHUNKS_SIZE, SUB_AGG, METRIC_AGG_PREFIX
 
 
 class ResultTransformer(object):
@@ -446,26 +447,38 @@ class AggregationTransformer(ResultTransformer):
         return 'buckets' in bucket
 
     @classmethod
+    def _is_no_group_agg(cls, bucket):
+        # If the name is 'metricagg_00_myaggname', this means it a non-group bucket
+        return any(k for k in bucket.iterkeys() if k.startswith(METRIC_AGG_PREFIX) and k.count('_') > 1)
+
+    @classmethod
     def parse_bucket(cls, bucket):
         """
         Return a list of key/value dictionnaries
-        Ex : 
+        Ex :
             [
-                {"key": ["a", "b", "e"], "count": 100},
-                {"key": ["a", "c", "e"], "count": 120}
+                {"key": ["a", "b", "e"], "metrics": [100]},
+                {"key": ["a", "c", "e"], "metrics": [120]}
             ]
         """
-        if 'subagg' in bucket:
-            subbucket = cls.parse_bucket(bucket["subagg"])
+        if cls._is_no_group_agg(bucket):
+            result = {"metrics": []}
+            for key in sorted([k for k in bucket.keys() if k.startswith(METRIC_AGG_PREFIX)]):
+                result["metrics"].append(bucket[key]["value"])
+            return result
+
+        if SUB_AGG in bucket:
+            subbucket = cls.parse_bucket(bucket[SUB_AGG])
             for results in subbucket:
                 results["key"].insert(0, bucket['key'])
             return subbucket
 
-        if cls._is_terms(bucket):
-            return [{"key": [cls._transform_terms(bucket)], "count": bucket.pop('doc_count')}]
-
-        if cls._is_range(bucket):
-            return [{"key": [cls._transform_range(bucket)], "count": bucket.pop('doc_count')}]
+        if cls._is_terms(bucket) or cls._is_range(bucket):
+            _transform_func = cls._transform_terms if cls._is_terms(bucket) else cls._transform_range
+            result = {"key": [_transform_func(bucket)], "metrics": []}
+            for key in sorted([k for k in bucket.keys() if k.startswith(METRIC_AGG_PREFIX)]):
+                result["metrics"].append(bucket[key]["value"])
+            return [result]
 
         if cls._is_bucket(bucket):
             buckets_list = []
@@ -473,12 +486,18 @@ class AggregationTransformer(ResultTransformer):
                 buckets_list += cls.parse_bucket(sub_bucket)
             return buckets_list
 
-    # simple solution for the moment
-    #   - only support count metric
     def transform(self):
-        for name, results in self.agg_results.iteritems():
-            results["groups"] = self.parse_bucket(results)
-            del results["buckets"]
+        if self._is_no_group_agg(self.agg_results):
+            agg_name = self.agg_results.keys()[0].split('_', 2)[2]
+            self.agg_results[agg_name] = self.parse_bucket(self.agg_results)
+            # Delete old agg results
+            for name in self.agg_results.keys():
+                if name.startswith(METRIC_AGG_PREFIX):
+                    del self.agg_results[name]
+        else:
+            for name, results in self.agg_results.iteritems():
+                results["groups"] = self.parse_bucket(results)
+                del results["buckets"]
 
 
 def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):

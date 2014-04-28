@@ -378,11 +378,17 @@ class TestAggregationResultTransformer(unittest.TestCase):
                 "buckets": [
                     {
                         "key": "a",
-                        "doc_count": 10
+                        "doc_count": 10,
+                        "metricagg_00": {
+                            "value": 10
+                        }
                     },
                     {
                         "key": "b",
-                        "doc_count": 10
+                        "doc_count": 10,
+                        "metricagg_00": {
+                            "value": 10
+                        }
                     },
                 ]
             }
@@ -393,12 +399,18 @@ class TestAggregationResultTransformer(unittest.TestCase):
                 "buckets": [
                     {
                         "to": 50,
-                        "doc_count": 2
+                        "doc_count": 2,
+                        "metricagg_00": {
+                            "value": 2
+                        }
                     },
                     {
                         "from": 50,
                         "to": 100,
-                        "doc_count": 4
+                        "doc_count": 4,
+                        "metricagg_00": {
+                            "value": 4
+                        }
                     }
                 ]
             }
@@ -414,11 +426,11 @@ class TestAggregationResultTransformer(unittest.TestCase):
                 "groups": [
                     {
                         "key": ["a"],
-                        "count": 10
+                        "metrics": [10]
                     },
                     {
                         "key": ["b"],
-                        "count": 10
+                        "metrics": [10]
                     },
                 ]
             }
@@ -428,22 +440,22 @@ class TestAggregationResultTransformer(unittest.TestCase):
     def test_range_result(self):
         results = self._range_result
         d = AggregationTransformer(results)
-        d.transform()
 
         expected = {
             "my_agg_2": {
                 "groups": [
                     {
                         "key": [{"to": 50}],
-                        "count": 2
+                        "metrics": [2]
                     },
                     {
                         "key": [{"from": 50, "to": 100}],
-                        "count": 4
+                        "metrics": [4]
                     }
                 ]
             }
         }
+        d.transform()
         self.assertEqual(results, expected)
 
     def test_empty_result(self):
@@ -452,18 +464,57 @@ class TestAggregationResultTransformer(unittest.TestCase):
         d.transform()
         self.assertEqual(results, {})
 
+    def test_sum_op(self):
+        sum_result = {
+            'my_agg': {
+                'buckets': [
+                    {
+                        'key': 'a',
+                        'doc_count': 100,
+                        'metricagg_00': {
+                            'value': 10
+                        }
+                    },
+                    {
+                        'key': 'b',
+                        'doc_count': 50,
+                        'metricagg_00': {
+                            'value': 5
+                        }
+                    }
+                ]
+            }
+        }
+        d = AggregationTransformer(sum_result)
+        expected = {
+            'my_agg': {
+                'groups': [
+                    {
+                        'key': ['a'],
+                        'metrics': [10]
+                    },
+                    {
+                        'key': ['b'],
+                        'metrics': [5]
+                    }
+                ]
+            }
+        }
+        d.transform()
+        self.assertEqual(sum_result, expected)
+
     def test_multiple_aggs(self):
         results = {
-            'agg1': {'buckets': [{'key': 'a', 'doc_count': 1}]},
-            'agg2': {'buckets': [{'key': 'b', 'doc_count': 2}]}
+            'agg1': {'buckets': [{'key': 'a', 'doc_count': 1, 'metricagg_00': {'value': 1}}]},
+            'agg2': {'buckets': [{'key': 'b', 'doc_count': 2, 'metricagg_00': {'value': 2}}]}
         }
 
         d = AggregationTransformer(results)
         d.transform()
 
         expected = {
-            'agg1': {'groups': [{'key': ['a'], 'count': 1}]},
-            'agg2': {'groups': [{'key': ['b'], 'count': 2}]}
+            'agg1': {'groups': [{'key': ['a'], 'metrics': [1]}]},
+            'agg2': {'groups': [{'key': ['b'], 'metrics': [2]}]}
         }
         self.assertEqual(results, expected)
 
@@ -481,9 +532,11 @@ class TestAggregationResultTransformer(unittest.TestCase):
                                 'subagg': {
                                     'buckets': [
                                         {'key': 'd',
-                                         'doc_count': 5},
+                                         'doc_count': 5,
+                                         'metricagg_00': {'value': 5}},
                                         {'key': 'e',
-                                         'doc_count': 15},
+                                         'doc_count': 15,
+                                         'metricagg_00': {'value': 15}},
                                     ]
                                 }
                             },
@@ -493,7 +546,8 @@ class TestAggregationResultTransformer(unittest.TestCase):
                                 'subagg': {
                                     'buckets': [
                                         {'key': 'e',
-                                         'doc_count': 80}
+                                         'doc_count': 80,
+                                         'metricagg_00': {'value': 80}}
                                     ]
                                 }
                             }
@@ -505,9 +559,9 @@ class TestAggregationResultTransformer(unittest.TestCase):
 
         expected = {
             'agg1': {'groups': [
-                {'key': ['a', 'b', 'd'], 'count': 5},
-                {'key': ['a', 'b', 'e'], 'count': 15},
-                {'key': ['a', 'c', 'e'], 'count': 80},
+                {'key': ['a', 'b', 'd'], 'metrics': [5]},
+                {'key': ['a', 'b', 'e'], 'metrics': [15]},
+                {'key': ['a', 'c', 'e'], 'metrics': [80]},
             ]}
         }
 

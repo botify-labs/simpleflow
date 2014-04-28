@@ -147,7 +147,6 @@ class Query(object):
         # Apply transformers
         # Reminder: in-place transformation
         transform_result(self._results, self, backend=self.backend)
-
         if self._has_agg():
             self._aggs = temp_results['aggregations']
             transform_aggregation_result(self._aggs)

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Botify query parsing
 
 Query format definition see:
@@ -15,6 +16,7 @@ import abc
 from copy import deepcopy
 
 from cdf.exceptions import BotifyQueryException
+from .constants import SUB_AGG, METRIC_AGG_PREFIX
 
 
 __ALL__ = ['QueryParser']
@@ -609,8 +611,14 @@ class Aggs(Term):
         self.named_aggs = named_aggs
 
     def transform(self):
-        return {agg.name: agg.transform()
-                for agg in self.named_aggs}
+        aggs = {}
+        for agg in self.named_aggs:
+            if agg.group_ops:
+                aggs[agg.name] = agg.transform()
+            else:
+                # If no group, all aggreations are made on root
+                aggs.update(agg.transform())
+        return aggs
 
     def validate(self):
         for agg in self.named_aggs:
@@ -631,19 +639,47 @@ class NamedAgg(Term):
 
     def transform(self):
         op = self.group_ops
-        query = op[0].transform()
-        cursor = query
-        for i, group in enumerate(op[1:]):
-            cursor["aggs"] = {
-                "subagg": group.transform()
-            }
-            cursor = cursor["aggs"]["subagg"]
+        if op:
+            query = op[0].transform()
+            cursor = query
+            for i, group in enumerate(op[1:]):
+                cursor["aggs"] = {
+                    SUB_AGG: group.transform()
+                }
+                cursor = cursor["aggs"][SUB_AGG]
+        else:
+            query = {}
+            cursor = query
+
+        for idx, metric_op in enumerate(self.metric_ops):
+            agg = metric_op.transform()
+            if agg:
+                if not op:
+                    # Identifier for metrics aggregations
+                    # Since the query format is
+                    # [
+                    #    {"sum": {"field": "my_field"},
+                    #    "count"
+                    # ]
+                    # And ES format asks for a dictionnary,
+                    # We use aggregations prefixed by _METRIC_AGG_PREFIX that will store the total number of aggregations
+                    # + the current aggregation (zero-filled on 2 numbers) to ensure
+                    # the sorting and correctly return results as a list
+                    key = "_".join((METRIC_AGG_PREFIX, str(idx).zfill(2), self.name))
+                    cursor[key] = agg
+                else:
+                    if not "aggs" in cursor:
+                        cursor["aggs"] = {}
+                    key = "_".join((METRIC_AGG_PREFIX, str(idx).zfill(2)))
+                    cursor["aggs"][key] = agg
         return query
 
     def validate(self):
-        for op in self.group_ops:
+        if self.group_ops:
+            for op in self.group_ops:
+                op.validate()
+        for op in self.metric_ops:
             op.validate()
-        self.metric_ops.validate()
 
 
 class AggOp(Term):
@@ -720,20 +756,60 @@ class RangeOp(GroupAggOp):
 class MetricAggOp(AggOp):
     """Metric aggregator calculates metrics inside each group
     """
-    pass
+    def __init__(self, field=None):
+        self.field = field
+
+    def transform(self):
+        return {
+            self.ES_METRIC_AGGREGATOR: {
+                "field": self.field
+            }
+        }
+
+    def validate(self):
+        if not isinstance(self.field, str):
+            _raise_parsing_error('{} value is not valid'.format(self.OPERATOR),
+                                 self.field)
 
 
 class CountOp(MetricAggOp):
     """Simple counting metric aggregator
     """
-    # no impl needed for the moment
-    # in ElasticSearch each bucket always returns a `doc_count`
-    # which is exactly this aggregator is for
-    def transform(self):
-        pass
+    OPERATOR = 'count'
+    ES_METRIC_AGGREGATOR = "value_count"
 
-    def validate(self):
-        pass
+    def __init__(self, options=None):
+        if not options:
+            options = "id"
+        super(CountOp, self).__init__(options)
+
+
+class SumOp(MetricAggOp):
+    """Simple sum metric aggregator
+    """
+    OPERATOR = 'sum'
+    ES_METRIC_AGGREGATOR = "sum"
+
+
+class AvgOp(MetricAggOp):
+    """Simple avg metric aggregator
+    """
+    OPERATOR = 'avg'
+    ES_METRIC_AGGREGATOR = "avg"
+
+
+class MinOp(MetricAggOp):
+    """Simple min metric aggregator
+    """
+    OPERATOR = 'min'
+    ES_METRIC_AGGREGATOR = "min"
+
+
+class MaxOp(MetricAggOp):
+    """Simple max metric aggregator
+    """
+    OPERATOR = 'max'
+    ES_METRIC_AGGREGATOR = "max"
 
 
 _GROUP_AGGS_LIST = {
@@ -741,9 +817,13 @@ _GROUP_AGGS_LIST = {
     'range': RangeOp
 }
 
-_METRIC_AGGS_LIST = {
-    'count': CountOp,
-}
+_METRIC_AGGS_LIST = [
+    CountOp,
+    SumOp,
+    MinOp,
+    MaxOp,
+    AvgOp
+]
 
 _DEFAULT_METRIC = 'count'
 
@@ -923,20 +1003,19 @@ class QueryParser(object):
         return Aggs(named_aggs)
 
     def parse_named_aggregation(self, name, agg_content):
-        if 'group' not in agg_content:
-            raise _raise_parsing_error('Group aggregators are missing',
-                                       agg_content)
-
-        group_ops = agg_content['group']
-        if not isinstance(group_ops, list):
-            raise _raise_parsing_error('Group aggregators are not in a list',
-                                       agg_content)
+        group_ops = agg_content.get('group_by', None)
+        if group_ops and not isinstance(group_ops, list):
+            _raise_parsing_error('Group aggregators are not in a list',
+                                 agg_content)
         # metric op default to `count`
-        metric_op = agg_content.get('metric', _DEFAULT_METRIC)
+        metrics_op = agg_content.get('metrics', [_DEFAULT_METRIC])
+
+        if not isinstance(metrics_op, list):
+            _raise_parsing_error('Metrics aggregator is not a list', metrics_op)
 
         return NamedAgg(name,
-                        [self.parse_group_aggregator(op) for op in group_ops],
-                        self.parse_metric_aggregator(metric_op))
+                        [self.parse_group_aggregator(op) for op in group_ops] if group_ops else None,
+                        [self.parse_metric_aggregator(metric_op) for metric_op in metrics_op])
 
     def parse_group_aggregator(self, group_op):
         if isinstance(group_op, _STR_TYPE):
@@ -950,9 +1029,19 @@ class QueryParser(object):
 
     # nothing to do for the moment
     def parse_metric_aggregator(self, metric_op):
-        if metric_op not in _METRIC_AGGS_LIST:
-            _raise_parsing_error('Unknown metric aggregator', metric_op)
-        return _METRIC_AGGS_LIST[metric_op]()
+        op = None
+        if metric_op == "count":
+            return CountOp()
+        elif isinstance(metric_op, dict) and len(metric_op) == 1:
+            op = metric_op.keys()[0]
+            field = metric_op[op]
+            for _op_class in _METRIC_AGGS_LIST:
+                if op == _op_class.OPERATOR:
+                    aggregator = _op_class(field)
+                    aggregator.validate()
+                    return aggregator
+        # Otherwise we raise an error
+        _raise_parsing_error('Unknown metric aggregator', metric_op)
 
     def parse_botify_query(self, botify_query):
         """Parse a botify front-end query into the intermediate form
