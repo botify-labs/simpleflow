@@ -71,7 +71,7 @@ class StreamDefBase(object):
         if part_id:
             regexp = '{}.txt.{}.gz'.format(cls.FILE, part_id)
         else:
-            regexp = '{}.txt.([0-9]+).gz'
+            regexp = '{}.txt.([0-9]+).gz'.format(cls.FILE)
         s3.fetch_files(
             s3_uri,
             tmp_dir,
