@@ -63,9 +63,8 @@ class BaseMetricsQuery(object):
         self.options = options
 
     @classmethod
-    def from_s3_uri(cls, crawl_id, s3_uri, options=None, tmp_dir_prefix='/tmp', force_fetch=False):
+    def from_s3_uri(cls, crawl_id, s3_uri, tmp_dir, options=None, force_fetch=False):
         # Fetch locally the files from S3
-        tmp_dir = os.path.join(tmp_dir_prefix, 'crawl_%d' % crawl_id)
         files_fetched = fetch_files(s3_uri, tmp_dir, regexp='suggest.h5', force_fetch=force_fetch)
         store = HDFStore(files_fetched[0][0])
         return cls(store, options)
@@ -672,11 +671,8 @@ class SuggestedPatternsQuery(object):
 
     @classmethod
     def from_s3_uri(cls, crawl_id, s3_uri,
-                    tmp_dir_prefix='/tmp', force_fetch=False):
+                    tmp_dir, force_fetch=False):
         # Fetch locally the files from S3
-        tmp_dir = os.path.join(tmp_dir_prefix,
-                               'crawl_%d' % crawl_id,
-                               'clusters_mixed.tsv')
         fetch_file(os.path.join(s3_uri, 'clusters_mixed.tsv'),
                    tmp_dir, force_fetch=force_fetch)
         return cls(split_file(open(tmp_dir)))

@@ -157,12 +157,11 @@ class SuggestSummaryRegister(object):
     def register(self, identifier, query, urls_fields=[], urls_filters=[], urls_sort=None):
         self._queue.append([identifier, query, urls_fields, urls_filters, urls_sort])
 
-    def _compute_item(self, identifier, query, urls_fields=[], urls_filters=[], urls_sort=None):
+    def _compute_item(self, suggest_query_object, identifier, query, urls_fields=[], urls_filters=[], urls_sort=None):
         """
         Compute a specific item for the suggested patterns queue
         """
-        q = SuggestQuery.from_s3_uri(self.crawl_id, self.s3_uri, force_fetch=self.force_fetch)
-        results = q.query(query)
+        results = suggest_query_object.query(query)
         for k, result in enumerate(results):
             if result["score"] == 0:
                 continue
@@ -206,14 +205,15 @@ class SuggestSummaryRegister(object):
         Run all suggested patterns registered
         """
         if not self._called:
+            q = SuggestQuery.from_s3_uri(self.crawl_id, self.s3_uri, tmp_dir=self.tmp_dir, force_fetch=self.force_fetch)
             for params in self._queue:
-                self._scores[params[0]] = self._compute_item(*params)
+                self._scores[params[0]] = self._compute_item(q, *params)
             self._called = True
             self._push_summary_scores()
 
 
 def make_counter_file_from_query(crawl_id, s3_uri, revision_number, tmp_dir, identifier, query):
-    q = MetricsQuery.from_s3_uri(crawl_id, s3_uri)
+    q = MetricsQuery.from_s3_uri(crawl_id, s3_uri, tmp_dir=tmp_dir)
 
     is_batch = isinstance(query, list)
     if is_batch:

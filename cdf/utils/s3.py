@@ -114,7 +114,7 @@ def fetch_file(s3_uri, dest_dir, force_fetch, lock=True):
     will be raised when calling `get_contents_to_filename`
     """
     makedirs(os.path.dirname(dest_dir), exist_ok=True)
-    logger.info('Fetch %s' % s3_uri)
+    logger.info('Fetch %s to %s' % (s3_uri, dest_dir))
     if lock:
         lock_obj = FileLock(dest_dir)
         with lock_obj:
