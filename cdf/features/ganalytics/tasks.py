@@ -54,12 +54,12 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
     dataset = VisitsStreamDef.create_temporary_dataset()
 
     stream = RawVisitsStreamDef.get_stream_from_s3_path(os.path.join(s3_uri, 'analytics.data.gz'), tmp_dir=tmp_dir, force_fetch=force_fetch)
-    for url, medium, source, nb_visits in stream:
+    for url, medium, source, social_network, nb_visits in stream:
         if not url.startswith('http'):
             url = '{}://{}'.format(protocol, url)
 
         url_id = url_to_id.get(url, None)
         if url_id:
-            dataset.append(url_id, medium, source, nb_visits)
+            dataset.append(url_id, medium, source, social_network, nb_visits)
 
     dataset.persist_to_s3(s3_uri, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
