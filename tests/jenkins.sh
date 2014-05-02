@@ -22,6 +22,8 @@ pip install nose
 pip install BQL
 
 
+pip install coverage
+
 python setup.py install
 #ignore integration tests
 nosetests --with-xunit --with-coverage --cover-package=cdf --cover-xml -e=*integration*
