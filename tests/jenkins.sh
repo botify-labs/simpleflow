@@ -26,6 +26,7 @@ python setup.py install
 #ignore integration tests
 nosetests --with-xunit --with-coverage --cover-package=cdf --cover-xml -e=*integration*
 [ $? -ne 0 ] && STATUS=1
+sloccount --duplicates --wide --details cdf > sloccount.out
 
 deactivate
 exit $STATUS
