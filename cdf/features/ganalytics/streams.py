@@ -71,30 +71,18 @@ class VisitsStreamDef(StreamDefBase):
     }
 
     def pre_process_document(self, document):
-        document["visits"] = {
-            "organic": {
-                "google": {
-                    "nb": 0
-                },
-                "bing": {
-                    "nb": 0
-                },
-                "yahoo": {
-                    "nb": 0
-                }
-            },
-            "social": {
-                "facebook": {
-                    "nb": 0
-                },
-                "twitter": {
-                    "nb": 0
-                },
-                "pinterest": {
-                    "nb": 0
-                }
-            }
-        }
+        document["visits"] = {}
+        organic = {}
+        for search_engine in ORGANIC_SOURCES:
+            search_engine_dict = {"nb": 0}
+            organic[search_engine] = search_engine_dict
+        document["visits"]["organic"] = organic
+
+        social = {}
+        for social_network in SOCIAL_SOURCES:
+            social_dict = {"nb": 0}
+            social[social_network] = social_dict
+        document["visits"]["social"] = social
 
     def process_document(self, document, stream):
         _, medium, source, social_network, nb_visits = stream
