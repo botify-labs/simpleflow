@@ -19,9 +19,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         self.visits = [
-            [1, "organic", "google", 10],
-            [1, "organic", "bing", 15],
-            [3, "organic", "google", 7],
+            [1, "organic", "google", "(not set)", 10],
+            [1, "organic", "bing", "(not set)", 15],
+            [3, "organic", "google", "(not set)", 7],
         ]
 
     def test_url_infos(self):
@@ -41,6 +41,20 @@ class TestBasicInfoGeneration(unittest.TestCase):
                     },
                     "bing": {
                         "nb": 15
+                    },
+                    "yahoo": {
+                        "nb": 0
+                    }
+                },
+                "social": {
+                    "facebook": {
+                        "nb": 0
+                    },
+                    "twitter": {
+                        "nb": 0
+                    },
+                    "pinterest": {
+                        "nb": 0
                     }
                 }
             }
@@ -55,6 +69,20 @@ class TestBasicInfoGeneration(unittest.TestCase):
                     },
                     "bing": {
                         "nb": 0
+                    },
+                    "yahoo": {
+                        "nb": 0
+                    }
+                },
+                "social": {
+                    "facebook": {
+                        "nb": 0
+                    },
+                    "twitter": {
+                        "nb": 0
+                    },
+                    "pinterest": {
+                        "nb": 0
                     }
                 }
             }
@@ -68,6 +96,20 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "nb": 7
                     },
                     "bing": {
+                        "nb": 0
+                    },
+                    "yahoo": {
+                        "nb": 0
+                    }
+                },
+                "social": {
+                    "facebook": {
+                        "nb": 0
+                    },
+                    "twitter": {
+                        "nb": 0
+                    },
+                    "pinterest": {
                         "nb": 0
                     }
                 }

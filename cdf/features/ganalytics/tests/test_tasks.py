@@ -31,11 +31,11 @@ class TestTasks(unittest.TestCase):
     def test_match_analytics_to_crawl_urls(self):
         raw_visits_location = os.path.join(self.s3_dir[5:], 'analytics.data.gz')
         f = gzip.open(raw_visits_location, 'w')
-        f.write('www.site.com/5?sid=5\torganic\tgoogle\t40\n')
-        f.write('www.site.com/1\torganic\tgoogle\t5\n')
-        f.write('www.site.com/3\torganic\tgoogle\t10\n')
-        f.write('www.site.com/2\torganic\tgoogle\t3\n')
-        f.write('www.site.com/4\torganic\tgoogle\t12\n')
+        f.write('www.site.com/5?sid=5\torganic\tgoogle\t(not set)\t40\n')
+        f.write('www.site.com/1\torganic\tgoogle\t(not set)\t5\n')
+        f.write('www.site.com/3\torganic\tgoogle\t(not set)\t10\n')
+        f.write('www.site.com/2\torganic\tgoogle\t(not set)\t3\n')
+        f.write('www.site.com/4\torganic\tgoogle\t(not set)\t12\n')
         f.close()
 
         f = IdStreamDef.create_temporary_dataset()
@@ -55,10 +55,10 @@ class TestTasks(unittest.TestCase):
         self.assertEquals(
             list(VisitsStreamDef.get_stream_from_s3(self.s3_dir, tmp_dir=self.tmp_dir)),
             [
-                [1, "organic", "google", 5],
-                [2, "organic", "google", 3],
-                [3, "organic", "google", 10],
-                [4, "organic", "google", 12],
-                [5, "organic", "google", 40],
+                [1, "organic", "google", 'None', 5],
+                [2, "organic", "google", 'None', 3],
+                [3, "organic", "google", 'None', 10],
+                [4, "organic", "google", 'None', 12],
+                [5, "organic", "google", 'None', 40],
             ]
         )
