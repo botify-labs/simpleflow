@@ -16,6 +16,33 @@ class RawVisitsStreamDef(StreamDefBase):
     )
 
 
+def _get_url_document_mapping(organic_sources, social_sources):
+    """Helper function to generate the mapping for VisitsStreamDef
+    :param organic_sources: the list of organic traffic sources to consider.
+                            each traffic source is represented as a string.
+    :type organic_sources: list
+    :param social_sources: the list of social traffic sources to consider.
+                           each traffic source is represented as a string.
+    :type social_sources: list
+    """
+    result = {}
+    entry = {
+        "type": INT_TYPE,
+        "settings": {
+            ES_DOC_VALUE,
+            AGG_NUMERICAL
+        }
+    }
+    for search_engine in organic_sources:
+        key = "visits.organic.{}.nb".format(search_engine)
+        result[key] = dict(entry)
+
+    for social_network in social_sources:
+        key = "visits.social.{}.nb".format(social_network)
+        result[key] = dict(entry)
+    return result
+
+
 class VisitsStreamDef(StreamDefBase):
     FILE = 'analytics_data'
     HEADERS = (
@@ -25,50 +52,9 @@ class VisitsStreamDef(StreamDefBase):
         ('social_network', str),
         ('nb_visits', int),
     )
-    URL_DOCUMENT_MAPPING = {
-        "visits.organic.google.nb": {
-            "type": INT_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL
-            }
-        },
-        "visits.organic.bing.nb": {
-            "type": INT_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL
-            }
-        },
-        "visits.organic.yahoo.nb": {
-            "type": INT_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL
-            }
-        },
-        "visits.social.facebook.nb": {
-            "type": INT_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL
-            }
-        },
-        "visits.social.twitter.nb": {
-            "type": INT_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL
-            }
-        },
-        "visits.social.pinterest.nb": {
-            "type": INT_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL
-            }
-        }
-    }
+
+    URL_DOCUMENT_MAPPING = _get_url_document_mapping(ORGANIC_SOURCES,
+                                                     SOCIAL_SOURCES)
 
     def pre_process_document(self, document):
         document["visits"] = {}

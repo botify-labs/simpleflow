@@ -2,7 +2,9 @@ import unittest
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, ES_DOC_VALUE, AGG_NUMERICAL
 )
-from cdf.features.ganalytics.streams import VisitsStreamDef
+from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
+from cdf.features.ganalytics.streams import (VisitsStreamDef,
+                                             _get_url_document_mapping)
 
 
 class TestVisitsStreamDef(unittest.TestCase):
@@ -38,7 +40,7 @@ class TestVisitsStreamDef(unittest.TestCase):
         }
         self.assertEqual(expected_document, document)
 
-    def test_url_document_mapping(self):
+    def test_get_url_document_mapping(self):
         expected_mapping = {
             "visits.organic.google.nb": {
                 "type": INT_TYPE,
@@ -83,5 +85,6 @@ class TestVisitsStreamDef(unittest.TestCase):
                 }
             }
         }
-        self.assertEqual(expected_mapping,
-                         VisitsStreamDef.URL_DOCUMENT_MAPPING)
+        actual_mapping = _get_url_document_mapping(ORGANIC_SOURCES,
+                                                   SOCIAL_SOURCES)
+        self.assertEqual(expected_mapping, actual_mapping)
