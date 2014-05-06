@@ -12,5 +12,9 @@ ORGANIC_SOURCES = (
 SOCIAL_SOURCES = (
     'facebook',
     'twitter',
-    'pinterest'
+    'pinterest',
+    'linkedin',
+    'reddit',
+    'google+',
+    'tumblr'
 )

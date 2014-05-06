@@ -25,10 +25,12 @@ class TestBasicInfoGeneration(unittest.TestCase):
             [3, "organic", "google", "(not set)", 7],
         ]
 
-    #patch organic sources to be able to add organic sources without
-    #having to change the sources
+    #patch sources to be able to add sources without
+    #having to change the test
     @mock.patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES",
                 ["google", "bing", "yahoo"])
+    @mock.patch("cdf.features.ganalytics.streams.SOCIAL_SOURCES",
+                ["facebook", "twitter", "pinterest"])
     def test_url_infos(self):
         gen = UrlDocumentGenerator([
             IdStreamDef.get_stream_from_iterator(iter(self.ids)),

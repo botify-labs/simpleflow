@@ -9,10 +9,12 @@ from cdf.features.ganalytics.streams import (VisitsStreamDef,
 
 
 class TestVisitsStreamDef(unittest.TestCase):
-    #patch organic sources to be able to add organic sources without
-    #having to change the sources
+    #patch organic and social sources to be able to add sources without
+    #having to change the test
     @mock.patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES",
                 ["google", "bing", "yahoo"])
+    @mock.patch("cdf.features.ganalytics.streams.SOCIAL_SOURCES",
+                ["facebook", "twitter", "pinterest"])
     def test_preprocess(self):
         document = {}
         VisitsStreamDef().pre_process_document(document)
