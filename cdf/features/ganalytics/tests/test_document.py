@@ -1,4 +1,5 @@
 import unittest
+import mock
 
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
@@ -24,6 +25,10 @@ class TestBasicInfoGeneration(unittest.TestCase):
             [3, "organic", "google", "(not set)", 7],
         ]
 
+    #patch organic sources to be able to add organic sources without
+    #having to change the sources
+    @mock.patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES",
+                ["google", "bing", "yahoo"])
     def test_url_infos(self):
         gen = UrlDocumentGenerator([
             IdStreamDef.get_stream_from_iterator(iter(self.ids)),

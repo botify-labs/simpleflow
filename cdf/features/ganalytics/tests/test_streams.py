@@ -1,4 +1,5 @@
 import unittest
+import mock
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, ES_DOC_VALUE, AGG_NUMERICAL
 )
@@ -8,6 +9,10 @@ from cdf.features.ganalytics.streams import (VisitsStreamDef,
 
 
 class TestVisitsStreamDef(unittest.TestCase):
+    #patch organic sources to be able to add organic sources without
+    #having to change the sources
+    @mock.patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES",
+                ["google", "bing", "yahoo"])
     def test_preprocess(self):
         document = {}
         VisitsStreamDef().pre_process_document(document)
@@ -49,13 +54,6 @@ class TestVisitsStreamDef(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
-            "visits.organic.bing.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
             "visits.organic.yahoo.nb": {
                 "type": INT_TYPE,
                 "settings": {
@@ -77,14 +75,9 @@ class TestVisitsStreamDef(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
-            "visits.social.pinterest.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            }
         }
-        actual_mapping = _get_url_document_mapping(ORGANIC_SOURCES,
-                                                   SOCIAL_SOURCES)
+        organic_sources = ["google", "yahoo"]
+        social_sources = ["facebook", "twitter"]
+        actual_mapping = _get_url_document_mapping(organic_sources,
+                                                   social_sources)
         self.assertEqual(expected_mapping, actual_mapping)
