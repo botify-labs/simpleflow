@@ -20,9 +20,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         self.visits = [
-            [1, "organic", "google", "(not set)", 10, 9, 80.0, 4.0, 32.4, 45.0, 90.0],
-            [1, "organic", "bing", "(not set)", 15, 15, 60.4, 3.2, 5.0, 88.12, 12.4],
-            [3, "organic", "google", "(not set)", 7, 6, 50.41, 2.1, 60.41, 12.11, 80.41],
+            [1, "organic", "google", "(not set)", 10, 9, 9, 4.0, 32.4, 45.0, 90.0],
+            [1, "organic", "bing", "(not set)", 15, 15, 10, 3.2, 5.0, 88.12, 12.4],
+            [3, "organic", "google", "(not set)", 7, 6, 3, 2.1, 60.41, 12.11, 80.41],
         ]
 
     #patch sources to be able to add sources without
@@ -44,24 +44,30 @@ class TestBasicInfoGeneration(unittest.TestCase):
             {
                 "organic": {
                     "google": {
-                        "nb": 10
+                        "nb": 10,
+                        "bounce_rate": 100
                     },
                     "bing": {
-                        "nb": 15
+                        "nb": 15,
+                        "bounce_rate": 66.67
                     },
                     "yahoo": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     }
                 },
                 "social": {
                     "facebook": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     },
                     "twitter": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     },
                     "pinterest": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     }
                 }
             }
@@ -72,24 +78,30 @@ class TestBasicInfoGeneration(unittest.TestCase):
             {
                 "organic": {
                     "google": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     },
                     "bing": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     },
                     "yahoo": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     }
                 },
                 "social": {
                     "facebook": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     },
                     "twitter": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     },
                     "pinterest": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     }
                 }
             }
@@ -100,24 +112,30 @@ class TestBasicInfoGeneration(unittest.TestCase):
             {
                 "organic": {
                     "google": {
-                        "nb": 7
+                        "nb": 7,
+                        "bounce_rate": 50
                     },
                     "bing": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     },
                     "yahoo": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     }
                 },
                 "social": {
                     "facebook": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     },
                     "twitter": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     },
                     "pinterest": {
-                        "nb": 0
+                        "nb": 0,
+                        "bounce_rate": 0
                     }
                 }
             }
