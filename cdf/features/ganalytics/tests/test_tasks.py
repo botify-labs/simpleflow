@@ -31,11 +31,11 @@ class TestTasks(unittest.TestCase):
     def test_match_analytics_to_crawl_urls(self):
         raw_visits_location = os.path.join(self.s3_dir[5:], 'analytics.data.gz')
         f = gzip.open(raw_visits_location, 'w')
-        f.write('www.site.com/5?sid=5\torganic\tgoogle\t(not set)\t40\n')
-        f.write('www.site.com/1\torganic\tgoogle\t(not set)\t5\n')
-        f.write('www.site.com/3\torganic\tgoogle\t(not set)\t10\n')
-        f.write('www.site.com/2\torganic\tgoogle\t(not set)\t3\n')
-        f.write('www.site.com/4\torganic\tgoogle\t(not set)\t12\n')
+        f.write('www.site.com/5?sid=5\torganic\tgoogle\t(not set)\t40\t30\t80.25\t2.14\t3.0\t50.0\t25.0\n')
+        f.write('www.site.com/1\torganic\tgoogle\t(not set)\t5\t5\t55.20\t1.4\t2.6\t24.0\t32.41\n')
+        f.write('www.site.com/3\torganic\tgoogle\t(not set)\t10\t8\t60.41\t1.21\t5\t10.25\t45.10\n')
+        f.write('www.site.com/2\torganic\tgoogle\t(not set)\t3\t3\t84.10\t2.3\t10.2\t20.4\t65.2\n')
+        f.write('www.site.com/4\torganic\tgoogle\t(not set)\t12\t11\t74.22\t2.51\t5.4\t10.51\t10.24\n')
         f.close()
 
         f = IdStreamDef.create_temporary_dataset()
@@ -55,10 +55,10 @@ class TestTasks(unittest.TestCase):
         self.assertEquals(
             list(VisitsStreamDef.get_stream_from_s3(self.s3_dir, tmp_dir=self.tmp_dir)),
             [
-                [1, "organic", "google", 'None', 5],
-                [2, "organic", "google", 'None', 3],
-                [3, "organic", "google", 'None', 10],
-                [4, "organic", "google", 'None', 12],
-                [5, "organic", "google", 'None', 40],
+                [1, "organic", "google", 'None', 5, 5, 55.20, 1.4, 2.6, 24.0, 32.41],
+                [2, "organic", "google", 'None', 3, 3, 84.10, 2.3, 10.2, 20.4, 65.2],
+                [3, "organic", "google", 'None', 10, 8, 60.41, 1.21, 5, 10.25, 45.10],
+                [4, "organic", "google", 'None', 12, 11, 74.22, 2.51, 5.4, 10.51, 10.24],
+                [5, "organic", "google", 'None', 40, 30, 80.25, 2.14, 3.0, 50.0, 25.0],
             ]
         )

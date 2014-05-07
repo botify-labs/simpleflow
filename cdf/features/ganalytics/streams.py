@@ -13,7 +13,13 @@ class RawVisitsStreamDef(StreamDefBase):
         ('source', str),
         ('social_network', lambda i: i.lower() if i != '(not set)' else None),
         ('nb_visits', int),
-    )
+        ('nb_sessions', int),
+        ('bounce_rate', float),
+        ('pages_per_session', float),
+        ('average_session_duration', float),
+        ('percentage_new_sessions', float),
+        ('goal_conversion_rate_all', float)
+   )
 
 
 def _get_url_document_mapping(organic_sources, social_sources):
@@ -51,6 +57,12 @@ class VisitsStreamDef(StreamDefBase):
         ('source', str),
         ('social_network', str),
         ('nb_visits', int),
+        ('nb_sessions', int),
+        ('bounce_rate', float),
+        ('pages_per_session', float),
+        ('average_session_duration', float),
+        ('percentage_new_sessions', float),
+        ('goal_conversion_rate_all', float)
     )
 
     URL_DOCUMENT_MAPPING = _get_url_document_mapping(ORGANIC_SOURCES,
@@ -71,7 +83,7 @@ class VisitsStreamDef(StreamDefBase):
         document["visits"]["social"] = social
 
     def process_document(self, document, stream):
-        _, medium, source, social_network, nb_visits = stream
+        _, medium, source, social_network, nb_visits, nb_sessions, bounce_rate, pages_per_session, average_session_duration, percentage_new_sessions, goal_conversion_rate_all = stream
         if social_network and social_network in SOCIAL_SOURCES:
             document['visits']['social'][social_network]['nb'] += nb_visits
         elif medium == 'organic' and source in ORGANIC_SOURCES:
