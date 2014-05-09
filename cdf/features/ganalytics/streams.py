@@ -16,7 +16,7 @@ class RawVisitsStreamDef(StreamDefBase):
         ('nb_sessions', int),
         ('bounces', int),
         ('page_views', int),
-        ('average_session_duration', float),
+        ('session_duration', int),
         ('percentage_new_sessions', float),
         ('goal_conversion_rate_all', float)
    )
@@ -47,7 +47,7 @@ def _get_url_document_mapping(organic_sources, social_sources):
         }
     }
 
-    metrics = ["bounce_rate", "pages_per_session"]
+    metrics = ["bounce_rate", "pages_per_session", "average_session_duration"]
     for search_engine in organic_sources:
         key = "visits.organic.{}.nb".format(search_engine)
         result[key] = dict(int_entry)
@@ -75,7 +75,7 @@ class VisitsStreamDef(StreamDefBase):
         ('nb_sessions', int),
         ('bounces', int),
         ('page_views', int),
-        ('average_session_duration', float),
+        ('session_duration', int),
         ('percentage_new_sessions', float),
         ('goal_conversion_rate_all', float)
     )
@@ -86,7 +86,13 @@ class VisitsStreamDef(StreamDefBase):
     def pre_process_document(self, document):
         document["visits"] = {}
         organic = {}
-        metrics = ["nb", "sessions", "bounces", "page_views"]
+        metrics = [
+            "nb",
+            "sessions",
+            "bounces",
+            "page_views",
+            "session_duration"
+        ]
         for search_engine in ORGANIC_SOURCES:
             search_engine_dict = {metric: 0 for metric in metrics}
             organic[search_engine] = search_engine_dict
@@ -99,7 +105,7 @@ class VisitsStreamDef(StreamDefBase):
         document["visits"]["social"] = social
 
     def process_document(self, document, stream):
-        _, medium, source, social_network, nb_visits, nb_sessions, bounces, page_views, average_session_duration, percentage_new_sessions, goal_conversion_rate_all = stream
+        _, medium, source, social_network, nb_visits, nb_sessions, bounces, page_views, session_duration, percentage_new_sessions, goal_conversion_rate_all = stream
         update_document = False
         if social_network and social_network in SOCIAL_SOURCES:
             update_document = True
@@ -111,10 +117,13 @@ class VisitsStreamDef(StreamDefBase):
             visit_source = source
 
         if update_document:
-            document['visits'][visit_type][visit_source]['nb'] += nb_visits
-            document['visits'][visit_type][visit_source]['sessions'] += nb_sessions
-            document['visits'][visit_type][visit_source]['bounces'] += bounces
-            document['visits'][visit_type][visit_source]['page_views'] += page_views
+            current_entry = document['visits'][visit_type][visit_source]
+
+            current_entry['nb'] += nb_visits
+            current_entry['sessions'] += nb_sessions
+            current_entry['bounces'] += bounces
+            current_entry['page_views'] += page_views
+            current_entry['session_duration'] += session_duration
 
         return
 
@@ -147,6 +156,12 @@ class VisitsStreamDef(StreamDefBase):
         input_dict["pages_per_session"] = self.compute_pages_per_session(page_views,
                                                                          sessions)
 
+        session_duration = input_dict["session_duration"]
+        average_session_duration = self.compute_average_session_duration(
+            session_duration,
+            sessions)
+        input_dict["average_session_duration"] = average_session_duration
+
     def compute_bounce_rate(self, bounces, sessions):
         """Compute the bounce rate.
         :param bounces: the number of bounces
@@ -165,8 +180,8 @@ class VisitsStreamDef(StreamDefBase):
 
     def compute_pages_per_session(self, page_views, sessions):
         """Compute the number of pages per sessions.
-        :param bounces: the total number of page_views
-        :type bounces: int
+        :param page_views: the total number of page_views
+        :type page_views: int
         :param sessions: the number of sessions
         :type sessions: int
         :returns: float
@@ -178,6 +193,21 @@ class VisitsStreamDef(StreamDefBase):
         pages_per_session = round(pages_per_session, 2)
         return pages_per_session
 
+    def compute_average_session_duration(self, session_duration, sessions):
+        """Compute the average session duration (in seconds)
+        :param session_duration: the total session duration
+        :type session_duration: int
+        :param sessions: the number of sessions
+        :type sessions: int
+        :returns: float
+        """
+        if sessions != 0:
+            average_session_duration = float(session_duration)/float(sessions)
+        else:
+            average_session_duration = 0.0
+        average_session_duration = round(average_session_duration, 2)
+        return average_session_duration
+
     def delete_intermediary_metrics(self, traffic_source_data):
         """Deletes entries from a dict representing a traffic source
         that will not be exported to the final document.
@@ -188,6 +218,6 @@ class VisitsStreamDef(StreamDefBase):
                                     source
         :type traffic_source_dict: dict:
         """
-        for key in ["bounces", "sessions", "page_views"]:
+        for key in ["bounces", "sessions", "page_views", "session_duration"]:
             if key in traffic_source_data:
                 del traffic_source_data[key]

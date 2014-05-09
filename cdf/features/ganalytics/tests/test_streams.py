@@ -25,19 +25,22 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
-                        "page_views": 0
+                        "page_views": 0,
+                        "session_duration": 0
                     },
                     "bing": {
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
-                        "page_views": 0
+                        "page_views": 0,
+                        "session_duration": 0
                     },
                     "yahoo": {
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
-                        "page_views": 0
+                        "page_views": 0,
+                        "session_duration": 0
                     }
                 },
                 "social": {
@@ -45,19 +48,22 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
-                        "page_views": 0
+                        "page_views": 0,
+                        "session_duration": 0
                     },
                     "twitter": {
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
-                        "page_views": 0
+                        "page_views": 0,
+                        "session_duration": 0
                     },
                     "pinterest": {
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
-                        "page_views": 0
+                        "page_views": 0,
+                        "session_duration": 0
                     }
                 }
             }
@@ -87,6 +93,13 @@ class TestVisitsStreamDef(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
+            "visits.organic.google.average_session_duration": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
             "visits.organic.yahoo.nb": {
                 "type": INT_TYPE,
                 "settings": {
@@ -108,6 +121,13 @@ class TestVisitsStreamDef(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
+            "visits.organic.yahoo.average_session_duration": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
             "visits.social.facebook.nb": {
                 "type": INT_TYPE,
                 "settings": {
@@ -122,34 +142,48 @@ class TestVisitsStreamDef(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
-        "visits.social.facebook.pages_per_session": {
-            "type": FLOAT_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL
-            }
-        },
-        "visits.social.twitter.nb": {
-            "type": INT_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL
-            }
-        },
-        "visits.social.twitter.bounce_rate": {
-            "type": FLOAT_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL
-            }
-        },
-        "visits.social.twitter.pages_per_session": {
-            "type": FLOAT_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL
-            }
-        }
+            "visits.social.facebook.pages_per_session": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.facebook.average_session_duration": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.twitter.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.twitter.bounce_rate": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.twitter.pages_per_session": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.twitter.average_session_duration": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
         }
         organic_sources = ["google", "yahoo"]
         social_sources = ["facebook", "twitter"]
@@ -161,7 +195,8 @@ class TestVisitsStreamDef(unittest.TestCase):
         input_d = {
             "sessions": 3,
             "bounces": 2,
-            "page_views": 6
+            "page_views": 6,
+            "session_duration": 8
         }
         VisitsStreamDef().compute_metrics(input_d)
         expected_result = {
@@ -169,7 +204,9 @@ class TestVisitsStreamDef(unittest.TestCase):
             "bounces": 2,
             "bounce_rate": 66.67,
             "page_views": 6,
-            "pages_per_session": 2
+            "pages_per_session": 2,
+            "session_duration": 8,
+            "average_session_duration": 2.67
         }
         self.assertEqual(expected_result, input_d)
 
@@ -209,3 +246,8 @@ class TestVisitsStreamDef(unittest.TestCase):
         stream = VisitsStreamDef()
         self.assertEqual(1.33, stream.compute_pages_per_session(4, 3))
         self.assertEqual(0, stream.compute_pages_per_session(4, 0))
+
+    def test_compute_average_session_duration(self):
+        stream = VisitsStreamDef()
+        self.assertEqual(2.33, stream.compute_average_session_duration(7, 3))
+        self.assertEqual(0, stream.compute_average_session_duration(4, 0))
