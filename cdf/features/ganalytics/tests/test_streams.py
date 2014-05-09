@@ -26,21 +26,24 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "sessions": 0,
                         "bounces": 0,
                         "page_views": 0,
-                        "session_duration": 0
+                        "session_duration": 0,
+                        "new_users": 0
                     },
                     "bing": {
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
                         "page_views": 0,
-                        "session_duration": 0
+                        "session_duration": 0,
+                        "new_users": 0
                     },
                     "yahoo": {
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
                         "page_views": 0,
-                        "session_duration": 0
+                        "session_duration": 0,
+                        "new_users": 0
                     }
                 },
                 "social": {
@@ -49,21 +52,24 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "sessions": 0,
                         "bounces": 0,
                         "page_views": 0,
-                        "session_duration": 0
+                        "session_duration": 0,
+                        "new_users": 0
                     },
                     "twitter": {
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
                         "page_views": 0,
-                        "session_duration": 0
+                        "session_duration": 0,
+                        "new_users": 0
                     },
                     "pinterest": {
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
                         "page_views": 0,
-                        "session_duration": 0
+                        "session_duration": 0,
+                        "new_users": 0
                     }
                 }
             }
@@ -196,7 +202,8 @@ class TestVisitsStreamDef(unittest.TestCase):
             "sessions": 3,
             "bounces": 2,
             "page_views": 6,
-            "session_duration": 8
+            "session_duration": 8,
+            "new_users": 2
         }
         VisitsStreamDef().compute_metrics(input_d)
         expected_result = {
@@ -206,7 +213,9 @@ class TestVisitsStreamDef(unittest.TestCase):
             "page_views": 6,
             "pages_per_session": 2,
             "session_duration": 8,
-            "average_session_duration": 2.67
+            "average_session_duration": 2.67,
+            "new_users": 2,
+            "percentage_new_sessions": 66.67
         }
         self.assertEqual(expected_result, input_d)
 
@@ -216,6 +225,8 @@ class TestVisitsStreamDef(unittest.TestCase):
             "bounces": 3,
             "sessions": 4,
             "page_views": 5,
+            "session_duration": 6,
+            "new_users": 7
         }
         VisitsStreamDef().delete_intermediary_metrics(input_d)
         expected_result = {
@@ -251,3 +262,8 @@ class TestVisitsStreamDef(unittest.TestCase):
         stream = VisitsStreamDef()
         self.assertEqual(2.33, stream.compute_average_session_duration(7, 3))
         self.assertEqual(0, stream.compute_average_session_duration(4, 0))
+
+    def test_percentage_new_session(self):
+        stream = VisitsStreamDef()
+        self.assertEqual(42.86, stream.compute_percentage_new_sessions(3, 7))
+        self.assertEqual(0, stream.compute_percentage_new_sessions(7, 0))

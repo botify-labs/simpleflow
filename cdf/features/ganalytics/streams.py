@@ -17,7 +17,7 @@ class RawVisitsStreamDef(StreamDefBase):
         ('bounces', int),
         ('page_views', int),
         ('session_duration', int),
-        ('percentage_new_sessions', float),
+        ('new_users', int),
         ('goal_conversion_rate_all', float)
    )
 
@@ -76,7 +76,7 @@ class VisitsStreamDef(StreamDefBase):
         ('bounces', int),
         ('page_views', int),
         ('session_duration', int),
-        ('percentage_new_sessions', float),
+        ('new_users', int),
         ('goal_conversion_rate_all', float)
     )
 
@@ -91,7 +91,8 @@ class VisitsStreamDef(StreamDefBase):
             "sessions",
             "bounces",
             "page_views",
-            "session_duration"
+            "session_duration",
+            "new_users"
         ]
         for search_engine in ORGANIC_SOURCES:
             search_engine_dict = {metric: 0 for metric in metrics}
@@ -105,7 +106,7 @@ class VisitsStreamDef(StreamDefBase):
         document["visits"]["social"] = social
 
     def process_document(self, document, stream):
-        _, medium, source, social_network, nb_visits, nb_sessions, bounces, page_views, session_duration, percentage_new_sessions, goal_conversion_rate_all = stream
+        _, medium, source, social_network, nb_visits, nb_sessions, bounces, page_views, session_duration, new_users, goal_conversion_rate_all = stream
         update_document = False
         if social_network and social_network in SOCIAL_SOURCES:
             update_document = True
@@ -124,6 +125,7 @@ class VisitsStreamDef(StreamDefBase):
             current_entry['bounces'] += bounces
             current_entry['page_views'] += page_views
             current_entry['session_duration'] += session_duration
+            current_entry['new_users'] += new_users
 
         return
 
@@ -161,6 +163,12 @@ class VisitsStreamDef(StreamDefBase):
             session_duration,
             sessions)
         input_dict["average_session_duration"] = average_session_duration
+
+        new_users = input_dict["new_users"]
+        percentage_new_sessions = self.compute_percentage_new_sessions(
+            new_users,
+            sessions)
+        input_dict["percentage_new_sessions"] = percentage_new_sessions
 
     def compute_bounce_rate(self, bounces, sessions):
         """Compute the bounce rate.
@@ -208,6 +216,22 @@ class VisitsStreamDef(StreamDefBase):
         average_session_duration = round(average_session_duration, 2)
         return average_session_duration
 
+    def compute_percentage_new_sessions(self, new_users, sessions):
+        """Compute the percentage of new sessions
+        :param new_users: the total number of new users
+                          (corresponds to "ga:newUsers" metric)
+        :type new_session: int
+        :param sessions: the number of sessions
+        :type sessions: int
+        :returns: float
+        """
+        if sessions != 0:
+            percentage_new_sessions = 100 * float(new_users)/float(sessions)
+        else:
+            percentage_new_sessions = 0.0
+        percentage_new_sessions = round(percentage_new_sessions, 2)
+        return percentage_new_sessions
+
     def delete_intermediary_metrics(self, traffic_source_data):
         """Deletes entries from a dict representing a traffic source
         that will not be exported to the final document.
@@ -218,6 +242,13 @@ class VisitsStreamDef(StreamDefBase):
                                     source
         :type traffic_source_dict: dict:
         """
-        for key in ["bounces", "sessions", "page_views", "session_duration"]:
+        intermediary_metrics = [
+            "bounces",
+            "sessions",
+            "page_views",
+            "session_duration",
+            "new_users"
+        ]
+        for key in intermediary_metrics:
             if key in traffic_source_data:
                 del traffic_source_data[key]
