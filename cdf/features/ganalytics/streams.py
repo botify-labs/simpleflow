@@ -168,31 +168,17 @@ class VisitsStreamDef(StreamDefBase):
         :type traffic_source_data: dict
         """
         sessions = input_dict["sessions"]
-
-        bounces = input_dict["bounces"]
-        input_dict["bounce_rate"] = self.compute_bounce_rate(bounces, sessions)
-
-        page_views = input_dict["page_views"]
-        input_dict["pages_per_session"] = self.compute_pages_per_session(page_views,
-                                                                         sessions)
-
-        session_duration = input_dict["session_duration"]
-        average_session_duration = self.compute_average_session_duration(
-            session_duration,
-            sessions)
-        input_dict["average_session_duration"] = average_session_duration
-
-        new_users = input_dict["new_users"]
-        percentage_new_sessions = self.compute_percentage_new_sessions(
-            new_users,
-            sessions)
-        input_dict["percentage_new_sessions"] = percentage_new_sessions
-
-        goal_completions_all = input_dict["goal_completions_all"]
-        goal_conversion_rate_all = self.compute_goal_conversion_rate(
-            goal_completions_all,
-            sessions)
-        input_dict["goal_conversion_rate_all"] = goal_conversion_rate_all
+        l = [
+            ("bounces", self.compute_bounce_rate, "bounce_rate"),
+            ("page_views", self.compute_pages_per_session, "pages_per_session"),
+            ("session_duration", self.compute_average_session_duration, "average_session_duration"),
+            ("new_users", self.compute_percentage_new_sessions, "percentage_new_sessions"),
+            ("goal_completions_all", self.compute_goal_conversion_rate, "goal_conversion_rate_all")
+        ]
+        for raw_metric_name, averaging_function, average_metric_name in l:
+            raw_metric = input_dict[raw_metric_name]
+            input_dict[average_metric_name] = averaging_function(raw_metric,
+                                                                 sessions)
 
     def compute_bounce_rate(self, bounces, sessions):
         """Compute the bounce rate.
