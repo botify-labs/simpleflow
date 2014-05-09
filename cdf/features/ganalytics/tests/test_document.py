@@ -20,9 +20,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         self.visits = [
-            [1, "organic", "google", "(not set)", 10, 9, 9, 4.0, 32.4, 45.0, 90.0],
-            [1, "organic", "bing", "(not set)", 15, 15, 10, 3.2, 5.0, 88.12, 12.4],
-            [3, "organic", "google", "(not set)", 7, 6, 3, 2.1, 60.41, 12.11, 80.41],
+            [1, "organic", "google", "(not set)", 10, 9, 9, 12, 32.4, 45.0, 90.0],
+            [1, "organic", "bing", "(not set)", 15, 15, 10, 20, 5.0, 88.12, 12.4],
+            [3, "organic", "google", "(not set)", 7, 6, 3, 6, 60.41, 12.11, 80.41],
         ]
 
     #patch sources to be able to add sources without
@@ -45,29 +45,35 @@ class TestBasicInfoGeneration(unittest.TestCase):
                 "organic": {
                     "google": {
                         "nb": 10,
-                        "bounce_rate": 100
+                        "bounce_rate": 100,
+                        "pages_per_session": 1.33
                     },
                     "bing": {
                         "nb": 15,
-                        "bounce_rate": 66.67
+                        "bounce_rate": 66.67,
+                        "pages_per_session": 1.33
                     },
                     "yahoo": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     }
                 },
                 "social": {
                     "facebook": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     },
                     "twitter": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     },
                     "pinterest": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     }
                 }
             }
@@ -79,29 +85,35 @@ class TestBasicInfoGeneration(unittest.TestCase):
                 "organic": {
                     "google": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     },
                     "bing": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     },
                     "yahoo": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     }
                 },
                 "social": {
                     "facebook": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     },
                     "twitter": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     },
                     "pinterest": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     }
                 }
             }
@@ -113,29 +125,35 @@ class TestBasicInfoGeneration(unittest.TestCase):
                 "organic": {
                     "google": {
                         "nb": 7,
-                        "bounce_rate": 50
+                        "bounce_rate": 50,
+                        "pages_per_session": 1
                     },
                     "bing": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     },
                     "yahoo": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     }
                 },
                 "social": {
                     "facebook": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     },
                     "twitter": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     },
                     "pinterest": {
                         "nb": 0,
-                        "bounce_rate": 0
+                        "bounce_rate": 0,
+                        "pages_per_session": 0
                     }
                 }
             }
