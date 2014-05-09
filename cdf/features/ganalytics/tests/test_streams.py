@@ -83,7 +83,82 @@ class TestVisitsStreamDef(unittest.TestCase):
         }
         self.assertEqual(expected_document, document)
 
-    def test_get_url_document_mapping(self):
+    def test_get_url_document_mapping_organic_parameter(self):
+        expected_mapping = {
+            "visits.organic.google.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.organic.yahoo.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+        }
+        organic_sources = ["google", "yahoo"]
+        social_sources = []
+        metrics = []
+        actual_mapping = _get_url_document_mapping(organic_sources,
+                                                   social_sources,
+                                                   metrics)
+        self.assertEqual(expected_mapping, actual_mapping)
+
+    def test_get_url_document_mapping_social_parameter(self):
+        expected_mapping = {
+            "visits.social.facebook.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.twitter.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+        }
+        organic_sources = []
+        social_sources = ["facebook", "twitter"]
+        metrics = []
+        actual_mapping = _get_url_document_mapping(organic_sources,
+                                                   social_sources,
+                                                   metrics)
+        self.assertEqual(expected_mapping, actual_mapping)
+
+    def test_get_url_document_mapping_organic_social_parameters(self):
+        expected_mapping = {
+            "visits.organic.google.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.twitter.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+        }
+        organic_sources = ["google"]
+        social_sources = ["twitter"]
+        metrics = []
+        actual_mapping = _get_url_document_mapping(organic_sources,
+                                                   social_sources,
+                                                   metrics)
+        self.assertEqual(expected_mapping, actual_mapping)
+
+    def test_get_url_document_mapping_metrics_parameters(self):
         expected_mapping = {
             "visits.organic.google.nb": {
                 "type": INT_TYPE,
@@ -105,77 +180,11 @@ class TestVisitsStreamDef(unittest.TestCase):
                     ES_DOC_VALUE,
                     AGG_NUMERICAL
                 }
-            },
-            "visits.organic.yahoo.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.yahoo.bounce_rate": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.yahoo.pages_per_session": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.facebook.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.facebook.bounce_rate": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.facebook.pages_per_session": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.twitter.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.twitter.bounce_rate": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.twitter.pages_per_session": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
+            }
         }
-        organic_sources = ["google", "yahoo"]
-        social_sources = ["facebook", "twitter"]
-        metrics = [
-            "bounce_rate",
-            "pages_per_session",
-        ]
+        organic_sources = ["google"]
+        social_sources = []
+        metrics = ["bounce_rate", "pages_per_session"]
         actual_mapping = _get_url_document_mapping(organic_sources,
                                                    social_sources,
                                                    metrics)
@@ -188,7 +197,6 @@ class TestVisitsStreamDef(unittest.TestCase):
 
         self.assertEqual(expected_mapping,
                          VisitsStreamDef.URL_DOCUMENT_MAPPING)
-                         
 
     def test_compute_metrics_nominal_case(self):
         input_d = {
