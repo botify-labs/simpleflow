@@ -112,6 +112,20 @@ class TestVisitsStreamDef(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
+            "visits.organic.google.percentage_new_sessions": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.organic.google.goal_conversion_rate_all": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
             "visits.organic.yahoo.nb": {
                 "type": INT_TYPE,
                 "settings": {
@@ -134,6 +148,20 @@ class TestVisitsStreamDef(unittest.TestCase):
                 }
             },
             "visits.organic.yahoo.average_session_duration": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.organic.yahoo.percentage_new_sessions": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.organic.yahoo.goal_conversion_rate_all": {
                 "type": FLOAT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
@@ -168,6 +196,20 @@ class TestVisitsStreamDef(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
+            "visits.social.facebook.percentage_new_sessions": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.facebook.goal_conversion_rate_all": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
             "visits.social.twitter.nb": {
                 "type": INT_TYPE,
                 "settings": {
@@ -190,6 +232,20 @@ class TestVisitsStreamDef(unittest.TestCase):
                 }
             },
             "visits.social.twitter.average_session_duration": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.twitter.percentage_new_sessions": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.twitter.goal_conversion_rate_all": {
                 "type": FLOAT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,

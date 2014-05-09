@@ -47,7 +47,13 @@ def _get_url_document_mapping(organic_sources, social_sources):
         }
     }
 
-    metrics = ["bounce_rate", "pages_per_session", "average_session_duration"]
+    metrics = [
+        "bounce_rate",
+        "pages_per_session",
+        "average_session_duration",
+        "percentage_new_sessions",
+        "goal_conversion_rate_all"
+    ]
     for search_engine in organic_sources:
         key = "visits.organic.{}.nb".format(search_engine)
         result[key] = dict(int_entry)
