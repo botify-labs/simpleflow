@@ -22,7 +22,7 @@ class RawVisitsStreamDef(StreamDefBase):
    )
 
 
-def _get_url_document_mapping(organic_sources, social_sources):
+def _get_url_document_mapping(organic_sources, social_sources, metrics):
     """Helper function to generate the mapping for VisitsStreamDef
     :param organic_sources: the list of organic traffic sources to consider.
                             each traffic source is represented as a string.
@@ -30,6 +30,9 @@ def _get_url_document_mapping(organic_sources, social_sources):
     :param social_sources: the list of social traffic sources to consider.
                            each traffic source is represented as a string.
     :type social_sources: list
+    :param metrics: the list of metrics to be included in the mapping,
+                    It is given as a list of strings.
+    :type metrics: list
     """
     result = {}
     int_entry = {
@@ -47,13 +50,6 @@ def _get_url_document_mapping(organic_sources, social_sources):
         }
     }
 
-    metrics = [
-        "bounce_rate",
-        "pages_per_session",
-        "average_session_duration",
-        "percentage_new_sessions",
-        "goal_conversion_rate_all"
-    ]
     for search_engine in organic_sources:
         key = "visits.organic.{}.nb".format(search_engine)
         result[key] = dict(int_entry)
@@ -86,8 +82,17 @@ class VisitsStreamDef(StreamDefBase):
         ('goal_completions_all', int)
     )
 
+    _METRICS = [
+        "bounce_rate",
+        "pages_per_session",
+        "average_session_duration",
+        "percentage_new_sessions",
+        "goal_conversion_rate_all"
+    ]
+
     URL_DOCUMENT_MAPPING = _get_url_document_mapping(ORGANIC_SOURCES,
-                                                     SOCIAL_SOURCES)
+                                                     SOCIAL_SOURCES,
+                                                     _METRICS)
 
     def pre_process_document(self, document):
         document["visits"] = {}

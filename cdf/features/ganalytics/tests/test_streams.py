@@ -3,6 +3,7 @@ import mock
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, FLOAT_TYPE, ES_DOC_VALUE, AGG_NUMERICAL
 )
+from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 from cdf.features.ganalytics.streams import (VisitsStreamDef,
                                              _get_url_document_mapping)
 
@@ -105,27 +106,6 @@ class TestVisitsStreamDef(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
-            "visits.organic.google.average_session_duration": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.google.percentage_new_sessions": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.google.goal_conversion_rate_all": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
             "visits.organic.yahoo.nb": {
                 "type": INT_TYPE,
                 "settings": {
@@ -141,27 +121,6 @@ class TestVisitsStreamDef(unittest.TestCase):
                 }
             },
             "visits.organic.yahoo.pages_per_session": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.yahoo.average_session_duration": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.yahoo.percentage_new_sessions": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.yahoo.goal_conversion_rate_all": {
                 "type": FLOAT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
@@ -189,27 +148,6 @@ class TestVisitsStreamDef(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
-            "visits.social.facebook.average_session_duration": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.facebook.percentage_new_sessions": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.facebook.goal_conversion_rate_all": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
             "visits.social.twitter.nb": {
                 "type": INT_TYPE,
                 "settings": {
@@ -231,33 +169,26 @@ class TestVisitsStreamDef(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
-            "visits.social.twitter.average_session_duration": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.twitter.percentage_new_sessions": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.twitter.goal_conversion_rate_all": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
         }
         organic_sources = ["google", "yahoo"]
         social_sources = ["facebook", "twitter"]
+        metrics = [
+            "bounce_rate",
+            "pages_per_session",
+        ]
         actual_mapping = _get_url_document_mapping(organic_sources,
-                                                   social_sources)
+                                                   social_sources,
+                                                   metrics)
         self.assertEqual(expected_mapping, actual_mapping)
+
+    def test_url_document_mapping(self):
+        expected_mapping = _get_url_document_mapping(ORGANIC_SOURCES,
+                                                     SOCIAL_SOURCES,
+                                                     VisitsStreamDef._METRICS)
+
+        self.assertEqual(expected_mapping,
+                         VisitsStreamDef.URL_DOCUMENT_MAPPING)
+                         
 
     def test_compute_metrics_nominal_case(self):
         input_d = {
