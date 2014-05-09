@@ -31,11 +31,11 @@ class TestTasks(unittest.TestCase):
     def test_match_analytics_to_crawl_urls(self):
         raw_visits_location = os.path.join(self.s3_dir[5:], 'analytics.data.gz')
         f = gzip.open(raw_visits_location, 'w')
-        f.write('www.site.com/5?sid=5\torganic\tgoogle\t(not set)\t40\t30\t25\t32\t100\t16\t25.0\n')
-        f.write('www.site.com/1\torganic\tgoogle\t(not set)\t5\t5\t3\t4\t26\t3\t32.41\n')
-        f.write('www.site.com/3\torganic\tgoogle\t(not set)\t10\t8\t1\t8\t5\t5\t45.10\n')
-        f.write('www.site.com/2\torganic\tgoogle\t(not set)\t3\t3\t3\t2\t10\t1\t65.2\n')
-        f.write('www.site.com/4\torganic\tgoogle\t(not set)\t12\t11\t4\t15\t54\t8\t10.24\n')
+        f.write('www.site.com/5?sid=5\torganic\tgoogle\t(not set)\t40\t30\t25\t32\t100\t16\t25\n')
+        f.write('www.site.com/1\torganic\tgoogle\t(not set)\t5\t5\t3\t4\t26\t3\t1\n')
+        f.write('www.site.com/3\torganic\tgoogle\t(not set)\t10\t8\t1\t8\t5\t5\t5\n')
+        f.write('www.site.com/2\torganic\tgoogle\t(not set)\t3\t3\t3\t2\t10\t1\t0\n')
+        f.write('www.site.com/4\torganic\tgoogle\t(not set)\t12\t11\t4\t15\t54\t8\t8\n')
         f.close()
 
         f = IdStreamDef.create_temporary_dataset()
@@ -55,10 +55,10 @@ class TestTasks(unittest.TestCase):
         self.assertEquals(
             list(VisitsStreamDef.get_stream_from_s3(self.s3_dir, tmp_dir=self.tmp_dir)),
             [
-                [1, "organic", "google", 'None', 5, 5, 3, 4, 26, 3, 32.41],
-                [2, "organic", "google", 'None', 3, 3, 3, 2, 10, 1, 65.2],
-                [3, "organic", "google", 'None', 10, 8, 1, 8, 5, 5, 45.10],
-                [4, "organic", "google", 'None', 12, 11, 4, 15, 54, 8, 10.24],
-                [5, "organic", "google", 'None', 40, 30, 25, 32, 100, 16, 25.0],
+                [1, "organic", "google", 'None', 5, 5, 3, 4, 26, 3, 1],
+                [2, "organic", "google", 'None', 3, 3, 3, 2, 10, 1, 0],
+                [3, "organic", "google", 'None', 10, 8, 1, 8, 5, 5, 5],
+                [4, "organic", "google", 'None', 12, 11, 4, 15, 54, 8, 8],
+                [5, "organic", "google", 'None', 40, 30, 25, 32, 100, 16, 25],
             ]
         )

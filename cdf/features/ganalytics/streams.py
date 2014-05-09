@@ -18,7 +18,7 @@ class RawVisitsStreamDef(StreamDefBase):
         ('page_views', int),
         ('session_duration', int),
         ('new_users', int),
-        ('goal_conversion_rate_all', float)
+        ('goal_completions_all', int)
    )
 
 
@@ -77,7 +77,7 @@ class VisitsStreamDef(StreamDefBase):
         ('page_views', int),
         ('session_duration', int),
         ('new_users', int),
-        ('goal_conversion_rate_all', float)
+        ('goal_completions_all', int)
     )
 
     URL_DOCUMENT_MAPPING = _get_url_document_mapping(ORGANIC_SOURCES,
@@ -92,7 +92,8 @@ class VisitsStreamDef(StreamDefBase):
             "bounces",
             "page_views",
             "session_duration",
-            "new_users"
+            "new_users",
+            "goal_completions_all"
         ]
         for search_engine in ORGANIC_SOURCES:
             search_engine_dict = {metric: 0 for metric in metrics}
@@ -106,7 +107,7 @@ class VisitsStreamDef(StreamDefBase):
         document["visits"]["social"] = social
 
     def process_document(self, document, stream):
-        _, medium, source, social_network, nb_visits, nb_sessions, bounces, page_views, session_duration, new_users, goal_conversion_rate_all = stream
+        _, medium, source, social_network, nb_visits, nb_sessions, bounces, page_views, session_duration, new_users, goal_completions_all = stream
         update_document = False
         if social_network and social_network in SOCIAL_SOURCES:
             update_document = True
@@ -126,6 +127,7 @@ class VisitsStreamDef(StreamDefBase):
             current_entry['page_views'] += page_views
             current_entry['session_duration'] += session_duration
             current_entry['new_users'] += new_users
+            current_entry['goal_completions_all'] += goal_completions_all
 
         return
 
@@ -169,6 +171,12 @@ class VisitsStreamDef(StreamDefBase):
             new_users,
             sessions)
         input_dict["percentage_new_sessions"] = percentage_new_sessions
+
+        goal_completions_all = input_dict["goal_completions_all"]
+        goal_conversion_rate_all = self.compute_goal_conversion_rate(
+            goal_completions_all,
+            sessions)
+        input_dict["goal_conversion_rate_all"] = goal_conversion_rate_all
 
     def compute_bounce_rate(self, bounces, sessions):
         """Compute the bounce rate.
@@ -232,6 +240,22 @@ class VisitsStreamDef(StreamDefBase):
         percentage_new_sessions = round(percentage_new_sessions, 2)
         return percentage_new_sessions
 
+    def compute_goal_conversion_rate(self, goal_completions, sessions):
+        """Compute the goal conversion rate
+        :param goal_completions: the total number of goal completions
+                                 for a given goal
+        :type goal_completions: int
+        :param sessions: the number of sessions
+        :type sessions: int
+        :returns: float
+        """
+        if sessions != 0:
+            goal_conversion_rate = 100 * float(goal_completions)/float(sessions)
+        else:
+            goal_conversion_rate = 0.0
+        goal_conversion_rate = round(goal_conversion_rate, 2)
+        return goal_conversion_rate
+
     def delete_intermediary_metrics(self, traffic_source_data):
         """Deletes entries from a dict representing a traffic source
         that will not be exported to the final document.
@@ -247,7 +271,8 @@ class VisitsStreamDef(StreamDefBase):
             "sessions",
             "page_views",
             "session_duration",
-            "new_users"
+            "new_users",
+            "goal_completions_all"
         ]
         for key in intermediary_metrics:
             if key in traffic_source_data:

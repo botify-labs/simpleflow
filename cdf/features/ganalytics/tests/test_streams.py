@@ -27,7 +27,8 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "bounces": 0,
                         "page_views": 0,
                         "session_duration": 0,
-                        "new_users": 0
+                        "new_users": 0,
+                        "goal_completions_all": 0
                     },
                     "bing": {
                         "nb": 0,
@@ -35,7 +36,8 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "bounces": 0,
                         "page_views": 0,
                         "session_duration": 0,
-                        "new_users": 0
+                        "new_users": 0,
+                        "goal_completions_all": 0
                     },
                     "yahoo": {
                         "nb": 0,
@@ -43,7 +45,8 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "bounces": 0,
                         "page_views": 0,
                         "session_duration": 0,
-                        "new_users": 0
+                        "new_users": 0,
+                        "goal_completions_all": 0
                     }
                 },
                 "social": {
@@ -53,7 +56,8 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "bounces": 0,
                         "page_views": 0,
                         "session_duration": 0,
-                        "new_users": 0
+                        "new_users": 0,
+                        "goal_completions_all": 0
                     },
                     "twitter": {
                         "nb": 0,
@@ -61,7 +65,8 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "bounces": 0,
                         "page_views": 0,
                         "session_duration": 0,
-                        "new_users": 0
+                        "new_users": 0,
+                        "goal_completions_all": 0
                     },
                     "pinterest": {
                         "nb": 0,
@@ -69,7 +74,8 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "bounces": 0,
                         "page_views": 0,
                         "session_duration": 0,
-                        "new_users": 0
+                        "new_users": 0,
+                        "goal_completions_all": 0
                     }
                 }
             }
@@ -203,7 +209,8 @@ class TestVisitsStreamDef(unittest.TestCase):
             "bounces": 2,
             "page_views": 6,
             "session_duration": 8,
-            "new_users": 2
+            "new_users": 2,
+            "goal_completions_all": 1
         }
         VisitsStreamDef().compute_metrics(input_d)
         expected_result = {
@@ -215,7 +222,9 @@ class TestVisitsStreamDef(unittest.TestCase):
             "session_duration": 8,
             "average_session_duration": 2.67,
             "new_users": 2,
-            "percentage_new_sessions": 66.67
+            "percentage_new_sessions": 66.67,
+            "goal_completions_all": 1,
+            "goal_conversion_rate_all": 33.33
         }
         self.assertEqual(expected_result, input_d)
 
@@ -226,7 +235,8 @@ class TestVisitsStreamDef(unittest.TestCase):
             "sessions": 4,
             "page_views": 5,
             "session_duration": 6,
-            "new_users": 7
+            "new_users": 7,
+            "goal_completions_all": 8
         }
         VisitsStreamDef().delete_intermediary_metrics(input_d)
         expected_result = {
@@ -263,7 +273,12 @@ class TestVisitsStreamDef(unittest.TestCase):
         self.assertEqual(2.33, stream.compute_average_session_duration(7, 3))
         self.assertEqual(0, stream.compute_average_session_duration(4, 0))
 
-    def test_percentage_new_session(self):
+    def test_compute_percentage_new_session(self):
         stream = VisitsStreamDef()
         self.assertEqual(42.86, stream.compute_percentage_new_sessions(3, 7))
         self.assertEqual(0, stream.compute_percentage_new_sessions(7, 0))
+
+    def test_compute_goal_conversion_rate(self):
+        stream = VisitsStreamDef()
+        self.assertEqual(37.5, stream.compute_goal_conversion_rate(3, 8))
+        self.assertEqual(0, stream.compute_goal_conversion_rate(7, 0))
