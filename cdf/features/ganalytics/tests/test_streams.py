@@ -5,7 +5,26 @@ from cdf.metadata.url.url_metadata import (
 )
 from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 from cdf.features.ganalytics.streams import (VisitsStreamDef,
+                                             _iterate_sources,
                                              _get_url_document_mapping)
+
+class TestIterateSources(unittest.TestCase):
+    #patch organic and social sources to be able to add sources without
+    #having to change the test
+    @mock.patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES",
+                ["google", "bing", "yahoo"])
+    @mock.patch("cdf.features.ganalytics.streams.SOCIAL_SOURCES",
+                ["facebook", "twitter", "pinterest"])
+    def test_nominal_case(self):
+        expected_result = [
+            ("organic", "google"),
+            ("organic", "bing"),
+            ("organic", "yahoo"),
+            ("social", "facebook"),
+            ("social", "twitter"),
+            ("social", "pinterest")
+        ]
+        self.assertEqual(expected_result, list(_iterate_sources()))
 
 
 class TestVisitsStreamDef(unittest.TestCase):

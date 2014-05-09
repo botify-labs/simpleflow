@@ -22,6 +22,17 @@ class RawVisitsStreamDef(StreamDefBase):
    )
 
 
+def _iterate_sources():
+    """Iterate over the considered traffic sources.
+    Generate tuples (medium, source) for instance
+    ('organic', 'google') or ('social', 'facebook')
+    """
+    for search_engine in ORGANIC_SOURCES:
+        yield "organic", search_engine
+    for social_network in SOCIAL_SOURCES:
+        yield "social", social_network
+
+
 def _get_url_document_mapping(organic_sources, social_sources, metrics):
     """Helper function to generate the mapping for VisitsStreamDef
     :param organic_sources: the list of organic traffic sources to consider.
@@ -31,6 +42,8 @@ def _get_url_document_mapping(organic_sources, social_sources, metrics):
                            each traffic source is represented as a string.
     :type social_sources: list
     :param metrics: the list of metrics to be included in the mapping,
+                    in addition to the number of visits which is always
+                    in the mapping;
                     It is given as a list of strings.
     :type metrics: list
     """
@@ -95,8 +108,7 @@ class VisitsStreamDef(StreamDefBase):
                                                      _METRICS)
 
     def pre_process_document(self, document):
-        document["visits"] = {}
-        organic = {}
+
         metrics = [
             "nb",
             "sessions",
@@ -106,16 +118,14 @@ class VisitsStreamDef(StreamDefBase):
             "new_users",
             "goal_completions_all"
         ]
-        for search_engine in ORGANIC_SOURCES:
-            search_engine_dict = {metric: 0 for metric in metrics}
-            organic[search_engine] = search_engine_dict
-        document["visits"]["organic"] = organic
 
-        social = {}
-        for social_network in SOCIAL_SOURCES:
-            social_dict = {metric: 0 for metric in metrics}
-            social[social_network] = social_dict
-        document["visits"]["social"] = social
+        document["visits"] = {}
+        document["visits"]["organic"] = {}
+        document["visits"]["social"] = {}
+
+        for medium, source in _iterate_sources():
+            entry = {metric: 0 for metric in metrics}
+            document["visits"][medium][source] = entry
 
     def process_document(self, document, stream):
         _, medium, source, social_network, nb_visits, nb_sessions, bounces, page_views, session_duration, new_users, goal_completions_all = stream
@@ -143,13 +153,8 @@ class VisitsStreamDef(StreamDefBase):
         return
 
     def post_process_document(self, document):
-        for search_engine in ORGANIC_SOURCES:
-            current_entry = document["visits"]["organic"][search_engine]
-            self.compute_metrics(current_entry)
-            self.delete_intermediary_metrics(current_entry)
-
-        for social_network in SOCIAL_SOURCES:
-            current_entry = document["visits"]["social"][social_network]
+        for medium, source in _iterate_sources():
+            current_entry = document["visits"][medium][source]
             self.compute_metrics(current_entry)
             self.delete_intermediary_metrics(current_entry)
 
