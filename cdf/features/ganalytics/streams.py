@@ -16,7 +16,7 @@ class RawVisitsStreamDef(StreamDefBase):
         ('nb_sessions', int),
         ('bounces', int),
         ('page_views', int),
-        ('session_duration', int),
+        ('session_duration', float),
         ('new_users', int),
         ('goal_completions_all', int)
    )
@@ -75,7 +75,7 @@ class VisitsStreamDef(StreamDefBase):
         ('nb_sessions', int),
         ('bounces', int),
         ('page_views', int),
-        ('session_duration', int),
+        ('session_duration', float),
         ('new_users', int),
         ('goal_completions_all', int)
     )
