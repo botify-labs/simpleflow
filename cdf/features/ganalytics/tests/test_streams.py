@@ -8,6 +8,7 @@ from cdf.features.ganalytics.streams import (VisitsStreamDef,
                                              _iterate_sources,
                                              _get_url_document_mapping)
 
+
 class TestIterateSources(unittest.TestCase):
     #patch organic and social sources to be able to add sources without
     #having to change the test
@@ -27,42 +28,7 @@ class TestIterateSources(unittest.TestCase):
         self.assertEqual(expected_result, list(_iterate_sources()))
 
 
-class TestVisitsStreamDef(unittest.TestCase):
-    #patch organic and social sources to be able to add sources without
-    #having to change the test
-    @mock.patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES",
-                ["google", "bing", "yahoo"])
-    @mock.patch("cdf.features.ganalytics.streams.SOCIAL_SOURCES",
-                ["facebook", "twitter", "pinterest"])
-    def test_preprocess(self):
-        document = {}
-        VisitsStreamDef().pre_process_document(document)
-        entry = {
-            "nb": 0,
-            "sessions": 0,
-            "bounces": 0,
-            "page_views": 0,
-            "session_duration": 0,
-            "new_users": 0,
-            "goal_completions_all": 0
-        }
-        expected_document = {
-            "visits":
-            {
-                "organic": {
-                    "google": dict(entry),
-                    "bing": dict(entry),
-                    "yahoo": dict(entry)
-                },
-                "social": {
-                    "facebook": dict(entry),
-                    "twitter": dict(entry),
-                    "pinterest": dict(entry)
-                }
-            }
-        }
-        self.assertEqual(expected_document, document)
-
+class TestGetUrlDocumentMapping(unittest.TestCase):
     def test_get_url_document_mapping_organic_parameter(self):
         expected_mapping = {
             "visits.organic.google.nb": {
@@ -169,6 +135,43 @@ class TestVisitsStreamDef(unittest.TestCase):
                                                    social_sources,
                                                    metrics)
         self.assertEqual(expected_mapping, actual_mapping)
+
+
+class TestVisitsStreamDef(unittest.TestCase):
+    #patch organic and social sources to be able to add sources without
+    #having to change the test
+    @mock.patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES",
+                ["google", "bing", "yahoo"])
+    @mock.patch("cdf.features.ganalytics.streams.SOCIAL_SOURCES",
+                ["facebook", "twitter", "pinterest"])
+    def test_preprocess(self):
+        document = {}
+        VisitsStreamDef().pre_process_document(document)
+        entry = {
+            "nb": 0,
+            "sessions": 0,
+            "bounces": 0,
+            "page_views": 0,
+            "session_duration": 0,
+            "new_users": 0,
+            "goal_completions_all": 0
+        }
+        expected_document = {
+            "visits":
+            {
+                "organic": {
+                    "google": dict(entry),
+                    "bing": dict(entry),
+                    "yahoo": dict(entry)
+                },
+                "social": {
+                    "facebook": dict(entry),
+                    "twitter": dict(entry),
+                    "pinterest": dict(entry)
+                }
+            }
+        }
+        self.assertEqual(expected_document, document)
 
     def test_url_document_mapping(self):
         calculated_metric_names = [
