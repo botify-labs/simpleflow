@@ -37,66 +37,27 @@ class TestVisitsStreamDef(unittest.TestCase):
     def test_preprocess(self):
         document = {}
         VisitsStreamDef().pre_process_document(document)
+        entry = {
+            "nb": 0,
+            "sessions": 0,
+            "bounces": 0,
+            "page_views": 0,
+            "session_duration": 0,
+            "new_users": 0,
+            "goal_completions_all": 0
+        }
         expected_document = {
             "visits":
             {
                 "organic": {
-                    "google": {
-                        "nb": 0,
-                        "sessions": 0,
-                        "bounces": 0,
-                        "page_views": 0,
-                        "session_duration": 0,
-                        "new_users": 0,
-                        "goal_completions_all": 0
-                    },
-                    "bing": {
-                        "nb": 0,
-                        "sessions": 0,
-                        "bounces": 0,
-                        "page_views": 0,
-                        "session_duration": 0,
-                        "new_users": 0,
-                        "goal_completions_all": 0
-                    },
-                    "yahoo": {
-                        "nb": 0,
-                        "sessions": 0,
-                        "bounces": 0,
-                        "page_views": 0,
-                        "session_duration": 0,
-                        "new_users": 0,
-                        "goal_completions_all": 0
-                    }
+                    "google": dict(entry),
+                    "bing": dict(entry),
+                    "yahoo": dict(entry)
                 },
                 "social": {
-                    "facebook": {
-                        "nb": 0,
-                        "sessions": 0,
-                        "bounces": 0,
-                        "page_views": 0,
-                        "session_duration": 0,
-                        "new_users": 0,
-                        "goal_completions_all": 0
-                    },
-                    "twitter": {
-                        "nb": 0,
-                        "sessions": 0,
-                        "bounces": 0,
-                        "page_views": 0,
-                        "session_duration": 0,
-                        "new_users": 0,
-                        "goal_completions_all": 0
-                    },
-                    "pinterest": {
-                        "nb": 0,
-                        "sessions": 0,
-                        "bounces": 0,
-                        "page_views": 0,
-                        "session_duration": 0,
-                        "new_users": 0,
-                        "goal_completions_all": 0
-                    }
+                    "facebook": dict(entry),
+                    "twitter": dict(entry),
+                    "pinterest": dict(entry)
                 }
             }
         }
