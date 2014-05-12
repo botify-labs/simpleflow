@@ -212,7 +212,7 @@ class TestVisitsStreamDef(unittest.TestCase):
     def test_url_document_mapping(self):
         expected_mapping = _get_url_document_mapping(ORGANIC_SOURCES,
                                                      SOCIAL_SOURCES,
-                                                     VisitsStreamDef._METRICS)
+                                                     VisitsStreamDef._CALCULATED_METRICS)
 
         self.assertEqual(expected_mapping,
                          VisitsStreamDef.URL_DOCUMENT_MAPPING)

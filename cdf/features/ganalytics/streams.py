@@ -95,7 +95,7 @@ class VisitsStreamDef(StreamDefBase):
         ('goal_completions_all', int)
     )
 
-    _METRICS = [
+    _CALCULATED_METRICS = [
         "bounce_rate",
         "pages_per_session",
         "average_session_duration",
@@ -126,7 +126,7 @@ class VisitsStreamDef(StreamDefBase):
 
     URL_DOCUMENT_MAPPING = _get_url_document_mapping(ORGANIC_SOURCES,
                                                      SOCIAL_SOURCES,
-                                                     _METRICS)
+                                                     _CALCULATED_METRICS)
 
     def pre_process_document(self, document):
         document["visits"] = {}
