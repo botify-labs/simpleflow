@@ -20,9 +20,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         self.visits = [
-            [1, "organic", "google", "(not set)", 10, 9, 9, 12, 32, 4, 9],
-            [1, "organic", "bing", "(not set)", 15, 15, 10, 20, 35, 8, 4],
-            [3, "organic", "google", "(not set)", 7, 6, 3, 6, 60, 5, 4],
+            [1, "organic", "google", "None", 10, 9, 9, 12, 32, 4, 9],
+            [1, "organic", "bing", "None", 15, 15, 10, 20, 35, 8, 4],
+            [3, "organic", "google", "None", 7, 6, 3, 6, 60, 5, 4],
         ]
 
     #patch sources to be able to add sources without

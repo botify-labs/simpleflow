@@ -166,7 +166,7 @@ class VisitsStreamDef(StreamDefBase):
         social_network = stream_line[self.field_idx("social_network")]
 
         visit_medium, visit_source = (None, None)
-        if social_network and social_network != "(not set)":
+        if social_network and social_network != "None":
             #according to Google Analytics not all visits from
             #social networks are social visits
             #However we choose to keep things simple

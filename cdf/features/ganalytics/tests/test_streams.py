@@ -187,15 +187,15 @@ class TestVisitsStreamDef(unittest.TestCase):
                          VisitsStreamDef.URL_DOCUMENT_MAPPING)
 
     def test_ignore_stream_line(self):
-        stream = [0, "organic", "google", "(not set)"]
+        stream = [0, "organic", "google", "None"]
         self.assertFalse(VisitsStreamDef().ignore_stream_line(stream))
 
         #ignored search engine
-        stream = [0, "organic", "foo", "(not set)"]
+        stream = [0, "organic", "foo", "None"]
         self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
 
         #non organic google traffic
-        stream = [0, "(cpc)", "google", "(not set)"]
+        stream = [0, "(cpc)", "google", "None"]
         self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
 
         stream = [0, "social", "twitter.com", "twitter"]
@@ -210,7 +210,7 @@ class TestVisitsStreamDef(unittest.TestCase):
         self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
 
     def test_get_visit_medium_source(self):
-        stream = [0, "organic", "google", "(not set)"]
+        stream = [0, "organic", "google", "None"]
         self.assertEqual(("organic", "google"),
                          VisitsStreamDef().get_visit_medium_source(stream))
         stream = [0, "referral", "t.co", "twitter"]
@@ -218,12 +218,12 @@ class TestVisitsStreamDef(unittest.TestCase):
                          VisitsStreamDef().get_visit_medium_source(stream))
 
         #ignored search engine
-        stream = [0, "organic", "foo", "(not set)"]
+        stream = [0, "organic", "foo", "None"]
         self.assertEqual(("organic", "foo"),
                          VisitsStreamDef().get_visit_medium_source(stream))
 
         #referral traffic with no social network
-        stream = [0, "referral", "foo", "(not set)"]
+        stream = [0, "referral", "foo", "None"]
         self.assertEqual((None, None),
                          VisitsStreamDef().get_visit_medium_source(stream))
 
@@ -243,7 +243,7 @@ class TestVisitsStreamDef(unittest.TestCase):
                 }
             }
         }
-        stream = [0, "organic", "google", "(not set)", 1, 2, 3, 4, 5, 6, 7]
+        stream = [0, "organic", "google", "None", 1, 2, 3, 4, 5, 6, 7]
         VisitsStreamDef().process_document(document, stream)
         expected_document = {
             "visits": {
@@ -278,7 +278,7 @@ class TestVisitsStreamDef(unittest.TestCase):
                 }
             }
         }
-        stream = [0, "organic", "foo", "(not set)", 1, 2, 3, 4, 5, 6, 7]
+        stream = [0, "organic", "foo", "None", 1, 2, 3, 4, 5, 6, 7]
         VisitsStreamDef().process_document(document, stream)
         expected_document = {
             "visits": {
