@@ -13,7 +13,7 @@ class RawVisitsStreamDef(StreamDefBase):
         ('source', str),
         ('social_network', lambda i: i.lower() if i != '(not set)' else None),
         ('nb_visits', int),
-        ('nb_sessions', int),
+        ('sessions', int),
         ('bounces', int),
         ('page_views', int),
         ('session_duration', float),
@@ -86,8 +86,8 @@ class VisitsStreamDef(StreamDefBase):
         ('medium', str),
         ('source', str),
         ('social_network', str),
-        ('nb_visits', int),
-        ('nb_sessions', int),
+        ('nb', int),
+        ('sessions', int),
         ('bounces', int),
         ('page_views', int),
         ('session_duration', float),
@@ -138,32 +138,36 @@ class VisitsStreamDef(StreamDefBase):
             document["visits"][medium][source] = entry
 
     def process_document(self, document, stream):
-        entry_description = {
-            "id": 0,
-            "medium": 1,
-            "source": 2,
-            "social_network": 3,
-            "nb": 4,  # nb visits
-            "sessions": 5,
-            "bounces": 6,
-            "page_views": 7,
-            "session_duration": 8,
-            "new_users": 9,
-            "goal_completions_all": 10
-        }
-        _, medium, source, social_network, _, _, _, _, _, _, _ = stream
+        entry_description = {}
+        for idx, (field, caster) in enumerate(VisitsStreamDef.HEADERS):
+            entry_description[field] = idx
+
+        medium = stream[entry_description["medium"]]
+        source = stream[entry_description["source"]]
+        social_network = stream[entry_description["social_network"]]
+
+        #decide whether or not to use this entry to update the document
+        #if so set the visit source and medium
         update_document = False
         if social_network and social_network in SOCIAL_SOURCES:
             update_document = True
-            visit_type = "social"
+            #according to Google Analytics not all visits from
+            #social networks are social visits
+            #However we choose to keep things simple
+            #and to set the medium to social
+            visit_medium = "social"
+            #the social network is not really a source
+            #(for instance the source for Twitter might be t.co)
+            #but to keep things simple
+            #we abusively assign social network to source
             visit_source = social_network
         elif medium == 'organic' and source in ORGANIC_SOURCES:
             update_document = True
-            visit_type = "organic"
+            visit_medium = "organic"
             visit_source = source
 
         if update_document:
-            current_entry = document['visits'][visit_type][visit_source]
+            current_entry = document['visits'][visit_medium][visit_source]
             for metric in VisitsStreamDef._RAW_METRICS:
                 metric_index = entry_description[metric]
                 current_entry[metric] += stream[metric_index]
