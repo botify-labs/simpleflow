@@ -113,6 +113,8 @@ class VisitsStreamDef(StreamDefBase):
         "goal_completions_all"
     ]
 
+    # metrics that are stored only for intermediary computation and should
+    # be removed from the final document
     _RAW_METRICS_TO_DELETE = [
         "bounces",
         "sessions",
