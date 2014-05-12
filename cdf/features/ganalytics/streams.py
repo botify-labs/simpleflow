@@ -139,7 +139,7 @@ class VisitsStreamDef(StreamDefBase):
 
     def process_document(self, document, stream):
         entry_description = {
-            "url": 0,
+            "id": 0,
             "medium": 1,
             "source": 2,
             "social_network": 3,
