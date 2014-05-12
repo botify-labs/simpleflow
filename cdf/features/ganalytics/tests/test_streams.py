@@ -138,6 +138,7 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
 
 
 class TestVisitsStreamDef(unittest.TestCase):
+
     #patch organic and social sources to be able to add sources without
     #having to change the test
     @mock.patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES",
@@ -184,6 +185,117 @@ class TestVisitsStreamDef(unittest.TestCase):
 
         self.assertEqual(expected_mapping,
                          VisitsStreamDef.URL_DOCUMENT_MAPPING)
+
+    def test_ignore_stream_line(self):
+        stream = [0, "organic", "google", "(not set)"]
+        self.assertFalse(VisitsStreamDef().ignore_stream_line(stream))
+
+        #ignored search engine
+        stream = [0, "organic", "foo", "(not set)"]
+        self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
+
+        #non organic google traffic
+        stream = [0, "(cpc)", "google", "(not set)"]
+        self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
+
+        stream = [0, "social", "twitter.com", "twitter"]
+        self.assertFalse(VisitsStreamDef().ignore_stream_line(stream))
+
+        #non "social" traffic from a social network
+        stream = [0, "referral", "t.co", "twitter"]
+        self.assertFalse(VisitsStreamDef().ignore_stream_line(stream))
+
+        #ignored social network
+        stream = [0, "social", "twitter.com", "foo"]
+        self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
+
+    def test_get_visit_medium_source(self):
+        stream = [0, "organic", "google", "(not set)"]
+        self.assertEqual(("organic", "google"),
+                         VisitsStreamDef().get_visit_medium_source(stream))
+        stream = [0, "referral", "t.co", "twitter"]
+        self.assertEqual(("social", "twitter"),
+                         VisitsStreamDef().get_visit_medium_source(stream))
+
+        #ignored search engine
+        stream = [0, "organic", "foo", "(not set)"]
+        self.assertEqual(("organic", "foo"),
+                         VisitsStreamDef().get_visit_medium_source(stream))
+
+        #referral traffic with no social network
+        stream = [0, "referral", "foo", "(not set)"]
+        self.assertEqual((None, None),
+                         VisitsStreamDef().get_visit_medium_source(stream))
+
+    def test_process_document_organic_source(self):
+        document = {
+            "visits": {
+                "organic": {
+                    "google": {
+                        "nb": 7,
+                        "sessions": 6,
+                        "bounces": 5,
+                        "page_views": 4,
+                        "session_duration": 3,
+                        "new_users": 2,
+                        "goal_completions_all": 1
+                    }
+                }
+            }
+        }
+        stream = [0, "organic", "google", "(not set)", 1, 2, 3, 4, 5, 6, 7]
+        VisitsStreamDef().process_document(document, stream)
+        expected_document = {
+            "visits": {
+                "organic": {
+                    "google": {
+                        "nb": 8,
+                        "sessions": 8,
+                        "bounces": 8,
+                        "page_views": 8,
+                        "session_duration": 8,
+                        "new_users": 8,
+                        "goal_completions_all": 8
+                    }
+                }
+            }
+        }
+        self.assertEqual(expected_document, document)
+
+    def test_process_document_ignored_organic_source(self):
+        document = {
+            "visits": {
+                "organic": {
+                    "google": {
+                        "nb": 7,
+                        "sessions": 6,
+                        "bounces": 5,
+                        "page_views": 4,
+                        "session_duration": 3,
+                        "new_users": 2,
+                        "goal_completions_all": 1
+                    }
+                }
+            }
+        }
+        stream = [0, "organic", "foo", "(not set)", 1, 2, 3, 4, 5, 6, 7]
+        VisitsStreamDef().process_document(document, stream)
+        expected_document = {
+            "visits": {
+                "organic": {
+                    "google": {
+                        "nb": 7,
+                        "sessions": 6,
+                        "bounces": 5,
+                        "page_views": 4,
+                        "session_duration": 3,
+                        "new_users": 2,
+                        "goal_completions_all": 1
+                    }
+                }
+            }
+        }
+        self.assertEqual(expected_document, document)
 
     def test_compute_metrics_nominal_case(self):
         input_d = {

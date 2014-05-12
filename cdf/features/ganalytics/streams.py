@@ -122,6 +122,8 @@ class VisitsStreamDef(StreamDefBase):
                                                      SOCIAL_SOURCES,
                                                      [t[0] for t in _CALCULATED_METRICS])
 
+
+
     def pre_process_document(self, document):
         document["visits"] = {}
         document["visits"]["organic"] = {}
@@ -132,19 +134,39 @@ class VisitsStreamDef(StreamDefBase):
             document["visits"][medium][source] = entry
 
     def process_document(self, document, stream):
-        entry_description = {}
-        for idx, (field, caster) in enumerate(VisitsStreamDef.HEADERS):
-            entry_description[field] = idx
+        if not self.ignore_stream_line(stream):
+            visit_medium, visit_source = self.get_visit_medium_source(stream)
+            #visits field is updated anyway
+            current_entry = document['visits'][visit_medium][visit_source]
+            for metric in VisitsStreamDef._RAW_METRICS:
+                metric_index = self.field_idx(metric)
+                current_entry[metric] += stream[metric_index]
 
-        medium = stream[entry_description["medium"]]
-        source = stream[entry_description["source"]]
-        social_network = stream[entry_description["social_network"]]
+        return
 
-        #decide whether or not to use this entry to update the document
-        #if so set the visit source and medium
-        update_document = False
+    def ignore_stream_line(self, stream_line):
+        """Decides whether or not a stream line should be ignored"""
+        medium = stream_line[self.field_idx("medium")]
+        source = stream_line[self.field_idx("source")]
+        social_network = stream_line[self.field_idx("social_network")]
+
+        result = True
         if social_network and social_network in SOCIAL_SOURCES:
-            update_document = True
+            result = False
+        elif medium == 'organic' and source in ORGANIC_SOURCES:
+            result = False
+        return result
+
+    def get_visit_medium_source(self, stream_line):
+        """Return a tuple (medium, source) for a given stream line
+        The medium/source are slightly different from the corresponding
+        google analytics dimensions"""
+        medium = stream_line[self.field_idx("medium")]
+        source = stream_line[self.field_idx("source")]
+        social_network = stream_line[self.field_idx("social_network")]
+
+        visit_medium, visit_source = (None, None)
+        if social_network and social_network != "(not set)":
             #according to Google Analytics not all visits from
             #social networks are social visits
             #However we choose to keep things simple
@@ -155,18 +177,10 @@ class VisitsStreamDef(StreamDefBase):
             #but to keep things simple
             #we abusively assign social network to source
             visit_source = social_network
-        elif medium == 'organic' and source in ORGANIC_SOURCES:
-            update_document = True
+        elif medium == 'organic':
             visit_medium = "organic"
             visit_source = source
-
-        if update_document:
-            current_entry = document['visits'][visit_medium][visit_source]
-            for metric in VisitsStreamDef._RAW_METRICS:
-                metric_index = entry_description[metric]
-                current_entry[metric] += stream[metric_index]
-
-        return
+        return (visit_medium, visit_source)
 
     def post_process_document(self, document):
         for medium, source in _iterate_sources():
