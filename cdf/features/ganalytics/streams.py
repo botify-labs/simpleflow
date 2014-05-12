@@ -95,12 +95,17 @@ class VisitsStreamDef(StreamDefBase):
         ('goal_completions_all', int)
     )
 
+    #defines a list of calculated metric definitions
+    #a calculated metric is a metric computed from raw metrics
+    #each calculated metric is defined by a 3-tuple:
+    #  - (calculated metric name, f, raw_metric_name)i
+    # such that calculted metric = f(raw_metric, nb_sessions)
     _CALCULATED_METRICS = [
-        "bounce_rate",
-        "pages_per_session",
-        "average_session_duration",
-        "percentage_new_sessions",
-        "goal_conversion_rate_all"
+        ("bounce_rate", compute_percentage, "bounces"),
+        ("pages_per_session", compute_average_value, "page_views"),
+        ("average_session_duration", compute_average_value, "session_duration"),
+        ("percentage_new_sessions", compute_percentage, "new_users"),
+        ("goal_conversion_rate_all", compute_percentage, "goal_completions_all")
     ]
 
     _RAW_METRICS = [
@@ -126,7 +131,7 @@ class VisitsStreamDef(StreamDefBase):
 
     URL_DOCUMENT_MAPPING = _get_url_document_mapping(ORGANIC_SOURCES,
                                                      SOCIAL_SOURCES,
-                                                     _CALCULATED_METRICS)
+                                                     [t[0] for t in _CALCULATED_METRICS])
 
     def pre_process_document(self, document):
         document["visits"] = {}
@@ -190,18 +195,11 @@ class VisitsStreamDef(StreamDefBase):
         :type traffic_source_data: dict
         """
         sessions = input_dict["sessions"]
-        l = [
-            ("bounces", compute_percentage, "bounce_rate"),
-            ("page_views", compute_average_value, "pages_per_session"),
-            ("session_duration", compute_average_value, "average_session_duration"),
-            ("new_users", compute_percentage, "percentage_new_sessions"),
-            ("goal_completions_all", compute_percentage, "goal_conversion_rate_all")
-        ]
-        for raw_metric_name, averaging_function, average_metric_name in l:
+        l = VisitsStreamDef._CALCULATED_METRICS
+        for calculated_metric_name, averaging_function, raw_metric_name in l:
             raw_metric = input_dict[raw_metric_name]
-            input_dict[average_metric_name] = averaging_function(raw_metric,
-                                                                 sessions)
-
+            input_dict[calculated_metric_name] = averaging_function(raw_metric,
+                                                                    sessions)
 
     def delete_intermediary_metrics(self, traffic_source_data):
         """Deletes entries from a dict representing a traffic source

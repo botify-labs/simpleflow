@@ -210,9 +210,13 @@ class TestVisitsStreamDef(unittest.TestCase):
         self.assertEqual(expected_mapping, actual_mapping)
 
     def test_url_document_mapping(self):
+        calculated_metric_names = [
+            metric_name for metric_name, _, _ in
+            VisitsStreamDef._CALCULATED_METRICS
+        ]
         expected_mapping = _get_url_document_mapping(ORGANIC_SOURCES,
                                                      SOCIAL_SOURCES,
-                                                     VisitsStreamDef._CALCULATED_METRICS)
+                                                     calculated_metric_names)
 
         self.assertEqual(expected_mapping,
                          VisitsStreamDef.URL_DOCUMENT_MAPPING)
