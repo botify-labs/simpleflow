@@ -180,6 +180,40 @@ class VisitsStreamDef(StreamDefBase):
             input_dict[average_metric_name] = averaging_function(raw_metric,
                                                                  sessions)
 
+    def compute_average_value(self, sum_values, total_sessions):
+        """Compute the average of a metric.
+        If the number of sessions is null, returns 0.
+        The returned result is rounded to two decimals
+        :param sum_values: the sum of the values of the considered metric
+        :value sum_values: int
+        :param total_sessions: the total number of sessions
+        :param total_sessions: int
+        :returns: float
+        """
+        if total_sessions != 0:
+            result = float(sum_values)/float(total_sessions)
+        else:
+            result = 0.0
+        result = round(result, 2)
+        return result
+
+    def compute_percentage(self, concerned_sessions, total_sessions):
+        """Compute the percentage of sessions concerned by a property.
+        If the number of sessions is null, returns 0.
+        The returned result is rounded to two decimals
+        :param concerned_session: the number of concerned sessions
+        :value sum_values: int
+        :param total_sessions: the toal number of sessions
+        :param total_sessions: int
+        :returns: float
+        """
+        if total_sessions != 0:
+            result = 100 * float(concerned_sessions)/float(total_sessions)
+        else:
+            result = 0.0
+        result = round(result, 2)
+        return result
+
     def compute_bounce_rate(self, bounces, sessions):
         """Compute the bounce rate.
         :param bounces: the number of bounces
@@ -189,12 +223,7 @@ class VisitsStreamDef(StreamDefBase):
         :type sessions: int
         :returns: float
         """
-        if sessions != 0:
-            bounce_rate = 100 * float(bounces)/float(sessions)
-        else:
-            bounce_rate = 0.0
-        bounce_rate = round(bounce_rate, 2)
-        return bounce_rate
+        return self.compute_percentage(bounces, sessions)
 
     def compute_pages_per_session(self, page_views, sessions):
         """Compute the number of pages per sessions.
@@ -204,12 +233,7 @@ class VisitsStreamDef(StreamDefBase):
         :type sessions: int
         :returns: float
         """
-        if sessions != 0:
-            pages_per_session = float(page_views)/float(sessions)
-        else:
-            pages_per_session = 0.0
-        pages_per_session = round(pages_per_session, 2)
-        return pages_per_session
+        return self.compute_average_value(page_views, sessions)
 
     def compute_average_session_duration(self, session_duration, sessions):
         """Compute the average session duration (in seconds)
@@ -219,12 +243,7 @@ class VisitsStreamDef(StreamDefBase):
         :type sessions: int
         :returns: float
         """
-        if sessions != 0:
-            average_session_duration = float(session_duration)/float(sessions)
-        else:
-            average_session_duration = 0.0
-        average_session_duration = round(average_session_duration, 2)
-        return average_session_duration
+        return self.compute_average_value(session_duration, sessions)
 
     def compute_percentage_new_sessions(self, new_users, sessions):
         """Compute the percentage of new sessions
@@ -235,12 +254,7 @@ class VisitsStreamDef(StreamDefBase):
         :type sessions: int
         :returns: float
         """
-        if sessions != 0:
-            percentage_new_sessions = 100 * float(new_users)/float(sessions)
-        else:
-            percentage_new_sessions = 0.0
-        percentage_new_sessions = round(percentage_new_sessions, 2)
-        return percentage_new_sessions
+        return self.compute_percentage(new_users, sessions)
 
     def compute_goal_conversion_rate(self, goal_completions, sessions):
         """Compute the goal conversion rate
@@ -251,12 +265,7 @@ class VisitsStreamDef(StreamDefBase):
         :type sessions: int
         :returns: float
         """
-        if sessions != 0:
-            goal_conversion_rate = 100 * float(goal_completions)/float(sessions)
-        else:
-            goal_conversion_rate = 0.0
-        goal_conversion_rate = round(goal_conversion_rate, 2)
-        return goal_conversion_rate
+        return self.compute_percentage(goal_completions, sessions)
 
     def delete_intermediary_metrics(self, traffic_source_data):
         """Deletes entries from a dict representing a traffic source

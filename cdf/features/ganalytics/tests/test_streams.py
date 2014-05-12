@@ -272,27 +272,31 @@ class TestVisitsStreamDef(unittest.TestCase):
 
         self.assertEqual(expected_result, input_d)
 
+    def test_compute_average_value(self):
+        stream = VisitsStreamDef()
+        self.assertEqual(16.67, stream.compute_average_value(50, 3))
+        self.assertEqual(0, stream.compute_average_value(2, 0))
+
+    def test_compute_percentage(self):
+        stream = VisitsStreamDef()
+        self.assertEqual(66.67, stream.compute_percentage(2, 3))
+
     def test_compute_bounce_rate(self):
         stream = VisitsStreamDef()
         self.assertEqual(66.67, stream.compute_bounce_rate(2, 3))
-        self.assertEqual(0, stream.compute_bounce_rate(2, 0))
 
     def test_compute_pages_per_session(self):
         stream = VisitsStreamDef()
         self.assertEqual(1.33, stream.compute_pages_per_session(4, 3))
-        self.assertEqual(0, stream.compute_pages_per_session(4, 0))
 
     def test_compute_average_session_duration(self):
         stream = VisitsStreamDef()
         self.assertEqual(2.33, stream.compute_average_session_duration(7, 3))
-        self.assertEqual(0, stream.compute_average_session_duration(4, 0))
 
     def test_compute_percentage_new_session(self):
         stream = VisitsStreamDef()
         self.assertEqual(42.86, stream.compute_percentage_new_sessions(3, 7))
-        self.assertEqual(0, stream.compute_percentage_new_sessions(7, 0))
 
     def test_compute_goal_conversion_rate(self):
         stream = VisitsStreamDef()
         self.assertEqual(37.5, stream.compute_goal_conversion_rate(3, 8))
-        self.assertEqual(0, stream.compute_goal_conversion_rate(7, 0))
