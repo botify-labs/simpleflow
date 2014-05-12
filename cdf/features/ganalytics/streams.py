@@ -118,17 +118,6 @@ class VisitsStreamDef(StreamDefBase):
         "goal_completions_all"
     ]
 
-    # metrics that are stored only for intermediary computation and should
-    # be removed from the final document
-    _RAW_METRICS_TO_DELETE = [
-        "bounces",
-        "sessions",
-        "page_views",
-        "session_duration",
-        "new_users",
-        "goal_completions_all"
-    ]
-
     URL_DOCUMENT_MAPPING = _get_url_document_mapping(ORGANIC_SOURCES,
                                                      SOCIAL_SOURCES,
                                                      [t[0] for t in _CALCULATED_METRICS])
@@ -211,6 +200,10 @@ class VisitsStreamDef(StreamDefBase):
                                     source
         :type traffic_source_dict: dict:
         """
-        for key in VisitsStreamDef._RAW_METRICS_TO_DELETE:
+        raw_metrics_to_delete = [
+            metric for metric in VisitsStreamDef._RAW_METRICS if
+            metric != "nb"
+        ]
+        for key in raw_metrics_to_delete:
             if key in traffic_source_data:
                 del traffic_source_data[key]
