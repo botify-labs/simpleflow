@@ -3,7 +3,7 @@ from cdf.metadata.url.url_metadata import (
 )
 from cdf.core.features import StreamDefBase
 from .settings import ORGANIC_SOURCES, SOCIAL_SOURCES
-
+from .metrics import compute_average_value, compute_percentage
 
 class RawVisitsStreamDef(StreamDefBase):
     FILE = 'analytics_raw_data'
@@ -191,50 +191,17 @@ class VisitsStreamDef(StreamDefBase):
         """
         sessions = input_dict["sessions"]
         l = [
-            ("bounces", self.compute_percentage, "bounce_rate"),
-            ("page_views", self.compute_average_value, "pages_per_session"),
-            ("session_duration", self.compute_average_value, "average_session_duration"),
-            ("new_users", self.compute_percentage, "percentage_new_sessions"),
-            ("goal_completions_all", self.compute_percentage, "goal_conversion_rate_all")
+            ("bounces", compute_percentage, "bounce_rate"),
+            ("page_views", compute_average_value, "pages_per_session"),
+            ("session_duration", compute_average_value, "average_session_duration"),
+            ("new_users", compute_percentage, "percentage_new_sessions"),
+            ("goal_completions_all", compute_percentage, "goal_conversion_rate_all")
         ]
         for raw_metric_name, averaging_function, average_metric_name in l:
             raw_metric = input_dict[raw_metric_name]
             input_dict[average_metric_name] = averaging_function(raw_metric,
                                                                  sessions)
 
-    def compute_average_value(self, sum_values, total_sessions):
-        """Compute the average of a metric.
-        If the number of sessions is null, returns 0.
-        The returned result is rounded to two decimals
-        :param sum_values: the sum of the values of the considered metric
-        :value sum_values: int
-        :param total_sessions: the total number of sessions
-        :param total_sessions: int
-        :returns: float
-        """
-        if total_sessions != 0:
-            result = float(sum_values)/float(total_sessions)
-        else:
-            result = 0.0
-        result = round(result, 2)
-        return result
-
-    def compute_percentage(self, concerned_sessions, total_sessions):
-        """Compute the percentage of sessions concerned by a property.
-        If the number of sessions is null, returns 0.
-        The returned result is rounded to two decimals
-        :param concerned_session: the number of concerned sessions
-        :value sum_values: int
-        :param total_sessions: the toal number of sessions
-        :param total_sessions: int
-        :returns: float
-        """
-        if total_sessions != 0:
-            result = 100 * float(concerned_sessions)/float(total_sessions)
-        else:
-            result = 0.0
-        result = round(result, 2)
-        return result
 
     def delete_intermediary_metrics(self, traffic_source_data):
         """Deletes entries from a dict representing a traffic source

@@ -272,11 +272,4 @@ class TestVisitsStreamDef(unittest.TestCase):
 
         self.assertEqual(expected_result, input_d)
 
-    def test_compute_average_value(self):
-        stream = VisitsStreamDef()
-        self.assertEqual(16.67, stream.compute_average_value(50, 3))
-        self.assertEqual(0, stream.compute_average_value(2, 0))
 
-    def test_compute_percentage(self):
-        stream = VisitsStreamDef()
-        self.assertEqual(66.67, stream.compute_percentage(2, 3))
