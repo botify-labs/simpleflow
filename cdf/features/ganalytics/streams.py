@@ -182,10 +182,10 @@ class VisitsStreamDef(StreamDefBase):
     def post_process_document(self, document):
         for medium, source in _iterate_sources():
             current_entry = document["visits"][medium][source]
-            self.compute_metrics(current_entry)
+            self.compute_calculated_metrics(current_entry)
             self.delete_intermediary_metrics(current_entry)
 
-    def compute_metrics(self, input_dict):
+    def compute_calculated_metrics(self, input_dict):
         """Compute some metrics for a traffic sources.
         Some metric can only be computed as a postprocessing.
         For instance to compute the bounce rate we need to have the full number

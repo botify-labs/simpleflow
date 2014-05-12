@@ -230,7 +230,7 @@ class TestVisitsStreamDef(unittest.TestCase):
             "new_users": 2,
             "goal_completions_all": 1
         }
-        VisitsStreamDef().compute_metrics(input_d)
+        VisitsStreamDef().compute_calculated_metrics(input_d)
         expected_result = {
             "sessions": 3,
             "bounces": 2,
