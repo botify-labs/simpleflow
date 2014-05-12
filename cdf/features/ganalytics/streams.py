@@ -185,11 +185,11 @@ class VisitsStreamDef(StreamDefBase):
         """
         sessions = input_dict["sessions"]
         l = [
-            ("bounces", self.compute_bounce_rate, "bounce_rate"),
-            ("page_views", self.compute_pages_per_session, "pages_per_session"),
-            ("session_duration", self.compute_average_session_duration, "average_session_duration"),
-            ("new_users", self.compute_percentage_new_sessions, "percentage_new_sessions"),
-            ("goal_completions_all", self.compute_goal_conversion_rate, "goal_conversion_rate_all")
+            ("bounces", self.compute_percentage, "bounce_rate"),
+            ("page_views", self.compute_average_value, "pages_per_session"),
+            ("session_duration", self.compute_average_value, "average_session_duration"),
+            ("new_users", self.compute_percentage, "percentage_new_sessions"),
+            ("goal_completions_all", self.compute_percentage, "goal_conversion_rate_all")
         ]
         for raw_metric_name, averaging_function, average_metric_name in l:
             raw_metric = input_dict[raw_metric_name]
@@ -229,59 +229,6 @@ class VisitsStreamDef(StreamDefBase):
             result = 0.0
         result = round(result, 2)
         return result
-
-    def compute_bounce_rate(self, bounces, sessions):
-        """Compute the bounce rate.
-        :param bounces: the number of bounces
-                        (sessions with only one page)
-        :type bounces: int
-        :param sessions: the number of sessions
-        :type sessions: int
-        :returns: float
-        """
-        return self.compute_percentage(bounces, sessions)
-
-    def compute_pages_per_session(self, page_views, sessions):
-        """Compute the number of pages per sessions.
-        :param page_views: the total number of page_views
-        :type page_views: int
-        :param sessions: the number of sessions
-        :type sessions: int
-        :returns: float
-        """
-        return self.compute_average_value(page_views, sessions)
-
-    def compute_average_session_duration(self, session_duration, sessions):
-        """Compute the average session duration (in seconds)
-        :param session_duration: the total session duration
-        :type session_duration: int
-        :param sessions: the number of sessions
-        :type sessions: int
-        :returns: float
-        """
-        return self.compute_average_value(session_duration, sessions)
-
-    def compute_percentage_new_sessions(self, new_users, sessions):
-        """Compute the percentage of new sessions
-        :param new_users: the total number of new users
-                          (corresponds to "ga:newUsers" metric)
-        :type new_session: int
-        :param sessions: the number of sessions
-        :type sessions: int
-        :returns: float
-        """
-        return self.compute_percentage(new_users, sessions)
-
-    def compute_goal_conversion_rate(self, goal_completions, sessions):
-        """Compute the goal conversion rate
-        :param goal_completions: the total number of goal completions
-                                 for a given goal
-        :type goal_completions: int
-        :param sessions: the number of sessions
-        :type sessions: int
-        :returns: float
-        """
-        return self.compute_percentage(goal_completions, sessions)
 
     def delete_intermediary_metrics(self, traffic_source_data):
         """Deletes entries from a dict representing a traffic source

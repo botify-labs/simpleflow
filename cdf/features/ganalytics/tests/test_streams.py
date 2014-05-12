@@ -280,23 +280,3 @@ class TestVisitsStreamDef(unittest.TestCase):
     def test_compute_percentage(self):
         stream = VisitsStreamDef()
         self.assertEqual(66.67, stream.compute_percentage(2, 3))
-
-    def test_compute_bounce_rate(self):
-        stream = VisitsStreamDef()
-        self.assertEqual(66.67, stream.compute_bounce_rate(2, 3))
-
-    def test_compute_pages_per_session(self):
-        stream = VisitsStreamDef()
-        self.assertEqual(1.33, stream.compute_pages_per_session(4, 3))
-
-    def test_compute_average_session_duration(self):
-        stream = VisitsStreamDef()
-        self.assertEqual(2.33, stream.compute_average_session_duration(7, 3))
-
-    def test_compute_percentage_new_session(self):
-        stream = VisitsStreamDef()
-        self.assertEqual(42.86, stream.compute_percentage_new_sessions(3, 7))
-
-    def test_compute_goal_conversion_rate(self):
-        stream = VisitsStreamDef()
-        self.assertEqual(37.5, stream.compute_goal_conversion_rate(3, 8))
