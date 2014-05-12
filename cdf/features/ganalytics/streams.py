@@ -103,32 +103,53 @@ class VisitsStreamDef(StreamDefBase):
         "goal_conversion_rate_all"
     ]
 
+    _RAW_METRICS = [
+        "nb",
+        "sessions",
+        "bounces",
+        "page_views",
+        "session_duration",
+        "new_users",
+        "goal_completions_all"
+    ]
+
+    _RAW_METRICS_TO_DELETE = [
+        "bounces",
+        "sessions",
+        "page_views",
+        "session_duration",
+        "new_users",
+        "goal_completions_all"
+    ]
+
     URL_DOCUMENT_MAPPING = _get_url_document_mapping(ORGANIC_SOURCES,
                                                      SOCIAL_SOURCES,
                                                      _METRICS)
 
     def pre_process_document(self, document):
-
-        metrics = [
-            "nb",
-            "sessions",
-            "bounces",
-            "page_views",
-            "session_duration",
-            "new_users",
-            "goal_completions_all"
-        ]
-
         document["visits"] = {}
         document["visits"]["organic"] = {}
         document["visits"]["social"] = {}
 
         for medium, source in _iterate_sources():
-            entry = {metric: 0 for metric in metrics}
+            entry = {metric: 0 for metric in VisitsStreamDef._RAW_METRICS}
             document["visits"][medium][source] = entry
 
     def process_document(self, document, stream):
-        _, medium, source, social_network, nb_visits, nb_sessions, bounces, page_views, session_duration, new_users, goal_completions_all = stream
+        entry_description = {
+            "url": 0,
+            "medium": 1,
+            "source": 2,
+            "social_network": 3,
+            "nb": 4,  # nb visits
+            "sessions": 5,
+            "bounces": 6,
+            "page_views": 7,
+            "session_duration": 8,
+            "new_users": 9,
+            "goal_completions_all": 10
+        }
+        _, medium, source, social_network, _, _, _, _, _, _, _ = stream
         update_document = False
         if social_network and social_network in SOCIAL_SOURCES:
             update_document = True
@@ -141,14 +162,9 @@ class VisitsStreamDef(StreamDefBase):
 
         if update_document:
             current_entry = document['visits'][visit_type][visit_source]
-
-            current_entry['nb'] += nb_visits
-            current_entry['sessions'] += nb_sessions
-            current_entry['bounces'] += bounces
-            current_entry['page_views'] += page_views
-            current_entry['session_duration'] += session_duration
-            current_entry['new_users'] += new_users
-            current_entry['goal_completions_all'] += goal_completions_all
+            for metric in VisitsStreamDef._RAW_METRICS:
+                metric_index = entry_description[metric]
+                current_entry[metric] += stream[metric_index]
 
         return
 
@@ -277,14 +293,6 @@ class VisitsStreamDef(StreamDefBase):
                                     source
         :type traffic_source_dict: dict:
         """
-        intermediary_metrics = [
-            "bounces",
-            "sessions",
-            "page_views",
-            "session_duration",
-            "new_users",
-            "goal_completions_all"
-        ]
-        for key in intermediary_metrics:
+        for key in VisitsStreamDef._RAW_METRICS_TO_DELETE:
             if key in traffic_source_data:
                 del traffic_source_data[key]
