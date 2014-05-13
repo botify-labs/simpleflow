@@ -60,6 +60,16 @@ class TestStreamsDef(unittest.TestCase):
             {'id': 1, 'url': 'http://www.site.com/'}
         )
 
+    def test_stream_filters(self):
+        iterator = iter([
+            [1, 'http://www.site.com/'],
+            [2, 'http://www.site.com/2']
+        ])
+        stream = CustomStreamDef.get_stream_from_iterator(iterator)
+        stream.add_filter('url', lambda i: 'site.com' in i)
+        stream.add_filter('url', lambda i: '/2' in i)
+        self.assertEquals(list(stream), [[2, 'http://www.site.com/2']])
+
     def _write_custom_parts(self):
         """
         Write files mapping to a `CustomStreamDef` schema

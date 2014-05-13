@@ -1,3 +1,4 @@
+from collections import Iterator
 from operator import itemgetter
 from itertools import izip, chain, groupby
 import os
@@ -161,12 +162,29 @@ class Stream(object):
         """
         self.stream_def = stream_def
         self.iterator = iterator
+        self._has_filters = False
+        self._filters = []
 
     def __iter__(self):
-        return self.iterator
+        return self
 
     def next(self):
-        return self.iterator.next()
+        if not self._has_filters:
+            return self.iterator.next()
+
+        v = self.iterator.next()
+        for field_idx, func in self._filters:
+            if not func(v[field_idx]):
+                return self.next()
+        return v
+
+    def add_filter(self, field, func):
+        """
+        Apply a filter func to a field
+        Ex : self.add_filter('http_code', lambda i: i == '200')
+        """
+        self._has_filters = True
+        self._filters.append((self.stream_def.field_idx(field), func))
 
 
 class TemporaryDataset(object):
