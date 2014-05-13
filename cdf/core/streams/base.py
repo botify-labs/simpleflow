@@ -1,4 +1,3 @@
-from collections import Iterator
 from operator import itemgetter
 from itertools import izip, chain, groupby
 import os
