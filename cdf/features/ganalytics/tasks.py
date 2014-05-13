@@ -55,13 +55,30 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
 
     stream = RawVisitsStreamDef.get_stream_from_s3_path(os.path.join(s3_uri, 'analytics.data.gz'), tmp_dir=tmp_dir, force_fetch=force_fetch)
     for entry in stream:
-        url = entry[0]
-        if not url.startswith('http'):
-            url = '{}://{}'.format(protocol, url)
-        url_id = url_to_id.get(url, None)
+        url_id = get_urlid(entry, url_to_id, protocol)
         if url_id:
             dataset_entry = list(entry)
             dataset_entry[0] = url_id
             dataset.append(*dataset_entry)
 
     dataset.persist_to_s3(s3_uri, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
+
+
+def get_urlid(visit_stream_entry, url_to_id, preferred_protocol):
+    """Find the url id corresponding to an entry in a visit stream.
+    Returns None if no url_id could be found
+    :param visit_stream_entry: an entry from the visit stream.
+    :type visit_stream_entry: list
+    :param url_to_id: the dict url -> urlid
+    :type url_to_id: dict
+    :param preferred_protocol: the protocol to prefer in case
+                               the http and https
+                               versions of the url exist
+    :type preferred_protocol: str
+    :returns: int
+    """
+    url = visit_stream_entry[0]
+    if not url.startswith('http'):
+        url = '{}://{}'.format(preferred_protocol, url)
+    return url_to_id.get(url, None)
+

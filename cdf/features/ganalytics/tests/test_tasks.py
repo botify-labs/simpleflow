@@ -8,7 +8,8 @@ from mock import patch
 
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.ganalytics.streams import VisitsStreamDef
-from cdf.features.ganalytics.tasks import match_analytics_to_crawl_urls
+from cdf.features.ganalytics.tasks import (match_analytics_to_crawl_urls,
+                                          get_urlid)
 from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
 
 
@@ -53,6 +54,7 @@ class TestTasks(unittest.TestCase):
                                       tmp_dir=self.tmp_dir)
 
         self.assertEquals(
+            #
             list(VisitsStreamDef.get_stream_from_s3(self.s3_dir, tmp_dir=self.tmp_dir)),
             [
                 [1, "organic", "google", 'None', 5, 5, 3, 4, 26, 3, 1],
@@ -62,3 +64,43 @@ class TestTasks(unittest.TestCase):
                 [5, "organic", "google", 'None', 40, 30, 25, 32, 100, 16, 25],
             ]
         )
+
+
+class TestGetUrlid(unittest.TestCase):
+    def setUp(self):
+        self.url_to_id = {
+            "http://foo.com": 0,
+            "http://foo.com/bar": 1,
+            "https://foo.com/baz": 2
+        }
+
+    def test_nominal_case_http(self):
+        entry = ["foo.com/bar"]
+        actual_result = get_urlid(entry, self.url_to_id, "http")
+        self.assertEqual(1, actual_result)
+
+    def test_nominal_case_https(self):
+        entry = ["foo.com/baz"]
+        actual_result = get_urlid(entry, self.url_to_id, "https")
+        self.assertEqual(2, actual_result)
+
+    def test_ambiguity(self):
+        url_to_id = {
+            "http://foo.com": 0,
+            "https://foo.com": 1,
+        }
+        entry = ["foo.com"]
+        #depending on the preferred protocol, the url id changes
+        self.assertEqual(0, get_urlid(entry, url_to_id, "http"))
+        self.assertEqual(1, get_urlid(entry, url_to_id, "https"))
+
+    def test_wrong_protocol(self):
+        entry = ["foo.com/baz"]
+        actual_result = get_urlid(entry, self.url_to_id, "http")
+        #the url id is not found since its protocol is not http
+        self.assertIsNone(actual_result)
+
+    def test_unexisting_url(self):
+        entry = ["bar.com"]
+        actual_result = get_urlid(entry, self.url_to_id, "http")
+        self.assertIsNone(actual_result)
