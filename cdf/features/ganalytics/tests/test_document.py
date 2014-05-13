@@ -42,6 +42,14 @@ class TestBasicInfoGeneration(unittest.TestCase):
             documents[0]["visits"],
             {
                 "organic": {
+                    "sum": {
+                        "nb": 25,
+                        "bounce_rate": 79.17,
+                        "pages_per_session": 1.33,
+                        "average_session_duration": 2.79,
+                        "percentage_new_sessions": 50,
+                        "goal_conversion_rate_all": 54.17
+                    },
                     "google": {
                         "nb": 10,
                         "bounce_rate": 100,
@@ -60,6 +68,14 @@ class TestBasicInfoGeneration(unittest.TestCase):
                     },
                 },
                 "social": {
+                    "sum": {
+                        "nb": 0,
+                        "bounce_rate": 0,
+                        "pages_per_session": 0,
+                        "average_session_duration": 0,
+                        "percentage_new_sessions": 0,
+                        "goal_conversion_rate_all": 0
+                    },
                     "facebook": {
                         "nb": 0,
                         "bounce_rate": 0,
@@ -76,6 +92,14 @@ class TestBasicInfoGeneration(unittest.TestCase):
             documents[1]["visits"],
             {
                 "organic": {
+                    "sum": {
+                        "nb": 0,
+                        "bounce_rate": 0,
+                        "pages_per_session": 0,
+                        "average_session_duration": 0,
+                        "percentage_new_sessions": 0,
+                        "goal_conversion_rate_all": 0
+                    },
                     "google": {
                         "nb": 0,
                         "bounce_rate": 0,
@@ -94,6 +118,14 @@ class TestBasicInfoGeneration(unittest.TestCase):
                     },
                 },
                 "social": {
+                    "sum": {
+                        "nb": 0,
+                        "bounce_rate": 0,
+                        "pages_per_session": 0,
+                        "average_session_duration": 0,
+                        "percentage_new_sessions": 0,
+                        "goal_conversion_rate_all": 0
+                    },
                     "facebook": {
                         "nb": 0,
                         "bounce_rate": 0,
@@ -110,6 +142,14 @@ class TestBasicInfoGeneration(unittest.TestCase):
             documents[2]["visits"],
             {
                 "organic": {
+                    "sum": {
+                        "nb": 7,
+                        "bounce_rate": 50,
+                        "pages_per_session": 1,
+                        "average_session_duration": 10,
+                        "percentage_new_sessions": 83.33,
+                        "goal_conversion_rate_all": 66.67
+                    },
                     "google": {
                         "nb": 7,
                         "bounce_rate": 50,
@@ -128,6 +168,14 @@ class TestBasicInfoGeneration(unittest.TestCase):
                     },
                 },
                 "social": {
+                    "sum": {
+                        "nb": 0,
+                        "bounce_rate": 0,
+                        "pages_per_session": 0,
+                        "average_session_duration": 0,
+                        "percentage_new_sessions": 0,
+                        "goal_conversion_rate_all": 0
+                    },
                     "facebook": {
                         "nb": 0,
                         "bounce_rate": 0,

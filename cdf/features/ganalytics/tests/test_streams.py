@@ -18,9 +18,11 @@ class TestIterateSources(unittest.TestCase):
                 ["facebook", "twitter", "pinterest"])
     def test_nominal_case(self):
         expected_result = [
+            ("organic", "sum"),
             ("organic", "google"),
             ("organic", "bing"),
             ("organic", "yahoo"),
+            ("social", "sum"),
             ("social", "facebook"),
             ("social", "twitter"),
             ("social", "pinterest")
@@ -210,11 +212,13 @@ class TestVisitsStreamDef(unittest.TestCase):
             "visits":
             {
                 "organic": {
+                    "sum": dict(entry),
                     "google": dict(entry),
                     "bing": dict(entry),
                     "yahoo": dict(entry)
                 },
                 "social": {
+                    "sum": dict(entry),
                     "facebook": dict(entry),
                     "twitter": dict(entry),
                     "pinterest": dict(entry)
@@ -280,6 +284,15 @@ class TestVisitsStreamDef(unittest.TestCase):
         document = {
             "visits": {
                 "organic": {
+                    "sum": {
+                        "nb": 0,
+                        "sessions": 0,
+                        "bounces": 0,
+                        "page_views": 0,
+                        "session_duration": 0,
+                        "new_users": 0,
+                        "goal_completions_all": 0
+                    },
                     "google": {
                         "nb": 7,
                         "sessions": 6,
@@ -297,6 +310,15 @@ class TestVisitsStreamDef(unittest.TestCase):
         expected_document = {
             "visits": {
                 "organic": {
+                    "sum": {
+                        "nb": 1,
+                        "sessions": 2,
+                        "bounces": 3,
+                        "page_views": 4,
+                        "session_duration": 5,
+                        "new_users": 6,
+                        "goal_completions_all": 7
+                    },
                     "google": {
                         "nb": 8,
                         "sessions": 8,

@@ -27,10 +27,15 @@ def _iterate_sources():
     Generate tuples (medium, source) for instance
     ('organic', 'google') or ('social', 'facebook')
     """
-    for search_engine in ORGANIC_SOURCES:
-        yield "organic", search_engine
-    for social_network in SOCIAL_SOURCES:
-        yield "social", social_network
+    if len(ORGANIC_SOURCES) > 0:
+        yield "organic", "sum"
+        for search_engine in ORGANIC_SOURCES:
+            yield "organic", search_engine
+
+    if len(SOCIAL_SOURCES) > 0:
+        yield "social", "sum"
+        for social_network in SOCIAL_SOURCES:
+            yield "social", social_network
 
 
 def _get_url_document_mapping(organic_sources, social_sources, metrics):
@@ -137,7 +142,6 @@ class VisitsStreamDef(StreamDefBase):
                                                      [t[0] for t in _CALCULATED_METRICS])
 
 
-
     def pre_process_document(self, document):
         document["visits"] = {}
         document["visits"]["organic"] = {}
@@ -152,9 +156,11 @@ class VisitsStreamDef(StreamDefBase):
             visit_medium, visit_source = self.get_visit_medium_source(stream)
             #visits field is updated anyway
             current_entry = document['visits'][visit_medium][visit_source]
+            sum_entry = document['visits'][visit_medium]["sum"]
             for metric in VisitsStreamDef._RAW_METRICS:
                 metric_index = self.field_idx(metric)
                 current_entry[metric] += stream[metric_index]
+                sum_entry[metric] += stream[metric_index]
 
         return
 
