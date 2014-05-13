@@ -94,11 +94,12 @@ class TestGetUrlid(unittest.TestCase):
         self.assertEqual(0, get_urlid(entry, url_to_id, "http"))
         self.assertEqual(1, get_urlid(entry, url_to_id, "https"))
 
-    def test_wrong_protocol(self):
+    def test_wrong_preferred_protocol(self):
         entry = ["foo.com/baz"]
         actual_result = get_urlid(entry, self.url_to_id, "http")
-        #the url id is not found since its protocol is not http
-        self.assertIsNone(actual_result)
+        #the url id is found even if the preferred protocol is not the actual
+        #protocol
+        self.assertEqual(2, actual_result)
 
     def test_unexisting_url(self):
         entry = ["bar.com"]
