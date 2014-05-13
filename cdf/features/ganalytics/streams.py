@@ -70,7 +70,10 @@ def _get_url_document_mapping(organic_sources, social_sources, metrics):
 
     if len(organic_sources) > 0:
         #create a key prefix for organic traffic
-        organic_key_prefixes = ["visits.organic.considered"]
+        organic_key_prefixes = [
+            "visits.organic.all",
+            "visits.organic.considered"
+        ]
         #and one for each considered search engine
         for search_engine in organic_sources:
             organic_key_prefixes.append("visits.organic.{}".format(search_engine))
@@ -84,7 +87,10 @@ def _get_url_document_mapping(organic_sources, social_sources, metrics):
 
     if len(social_sources) > 0:
         #create a key prefix for social traffic
-        social_key_prefixes = ["visits.social.considered"]
+        social_key_prefixes = [
+            "visits.social.all",
+            "visits.social.considered"
+        ]
         #and one for each considered social network
         for social_network in social_sources:
             social_key_prefixes.append("visits.social.{}".format(social_network))
