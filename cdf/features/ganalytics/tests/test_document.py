@@ -28,9 +28,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
     #patch sources to be able to add sources without
     #having to change the test
     @mock.patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES",
-                ["google", "bing", "yahoo"])
+                ["google", "bing"])
     @mock.patch("cdf.features.ganalytics.streams.SOCIAL_SOURCES",
-                ["facebook", "twitter", "pinterest"])
+                ["facebook"])
     def test_url_infos(self):
         gen = UrlDocumentGenerator([
             IdStreamDef.get_stream_from_iterator(iter(self.ids)),
@@ -58,14 +58,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "percentage_new_sessions": 53.33,
                         "goal_conversion_rate_all": 26.67
                     },
-                    "yahoo": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    }
                 },
                 "social": {
                     "facebook": {
@@ -76,22 +68,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "percentage_new_sessions": 0,
                         "goal_conversion_rate_all": 0
                     },
-                    "twitter": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
-                    "pinterest": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    }
                 }
             }
         )
@@ -116,14 +92,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "percentage_new_sessions": 0,
                         "goal_conversion_rate_all": 0
                     },
-                    "yahoo": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    }
                 },
                 "social": {
                     "facebook": {
@@ -134,22 +102,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "percentage_new_sessions": 0,
                         "goal_conversion_rate_all": 0
                     },
-                    "twitter": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
-                    "pinterest": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    }
                 }
             }
         )
@@ -174,14 +126,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "percentage_new_sessions": 0,
                         "goal_conversion_rate_all": 0
                     },
-                    "yahoo": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    }
                 },
                 "social": {
                     "facebook": {
@@ -192,22 +136,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "percentage_new_sessions": 0,
                         "goal_conversion_rate_all": 0
                     },
-                    "twitter": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
-                    "pinterest": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    }
                 }
             }
         )
