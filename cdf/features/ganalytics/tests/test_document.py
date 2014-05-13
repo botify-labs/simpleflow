@@ -23,6 +23,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
             [1, "organic", "google", "None", 10, 9, 9, 12, 32, 4, 9],
             [1, "organic", "bing", "None", 15, 15, 10, 20, 35, 8, 4],
             [3, "organic", "google", "None", 7, 6, 3, 6, 60, 5, 4],
+            [3, "organic", "foo", "None", 2, 2, 1, 6, 10, 1, 0],
         ]
 
     #patch sources to be able to add sources without
@@ -37,11 +38,27 @@ class TestBasicInfoGeneration(unittest.TestCase):
             InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
             VisitsStreamDef.get_stream_from_iterator(iter(self.visits)),
         ])
+        null_entry = {
+            "nb": 0,
+            "bounce_rate": 0,
+            "pages_per_session": 0,
+            "average_session_duration": 0,
+            "percentage_new_sessions": 0,
+            "goal_conversion_rate_all": 0
+        }
         documents = [k[1] for k in gen]
         self.assertEquals(
             documents[0]["visits"],
             {
                 "organic": {
+                    "all": {
+                        "nb": 25,
+                        "bounce_rate": 79.17,
+                        "pages_per_session": 1.33,
+                        "average_session_duration": 2.79,
+                        "percentage_new_sessions": 50,
+                        "goal_conversion_rate_all": 54.17
+                    },
                     "considered": {
                         "nb": 25,
                         "bounce_rate": 79.17,
@@ -68,22 +85,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
                     },
                 },
                 "social": {
-                    "considered": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
-                    "facebook": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
+                    "all": null_entry,
+                    "considered": null_entry,
+                    "facebook": null_entry,
                 }
             }
         )
@@ -92,48 +96,15 @@ class TestBasicInfoGeneration(unittest.TestCase):
             documents[1]["visits"],
             {
                 "organic": {
-                    "considered": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
-                    "google": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
-                    "bing": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
+                    "all": null_entry,
+                    "considered": null_entry,
+                    "google": null_entry,
+                    "bing": null_entry,
                 },
                 "social": {
-                    "considered": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
-                    "facebook": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
+                    "all": null_entry,
+                    "considered": null_entry,
+                    "facebook": null_entry,
                 }
             }
         )
@@ -142,6 +113,14 @@ class TestBasicInfoGeneration(unittest.TestCase):
             documents[2]["visits"],
             {
                 "organic": {
+                    "all": {
+                        "nb": 9,
+                        "bounce_rate": 50,
+                        "pages_per_session": 1.5,
+                        "average_session_duration": 8.75,
+                        "percentage_new_sessions": 75,
+                        "goal_conversion_rate_all": 50
+                    },
                     "considered": {
                         "nb": 7,
                         "bounce_rate": 50,
@@ -158,32 +137,12 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "percentage_new_sessions": 83.33,
                         "goal_conversion_rate_all": 66.67
                     },
-                    "bing": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
+                    "bing": null_entry,
                 },
                 "social": {
-                    "considered": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
-                    "facebook": {
-                        "nb": 0,
-                        "bounce_rate": 0,
-                        "pages_per_session": 0,
-                        "average_session_duration": 0,
-                        "percentage_new_sessions": 0,
-                        "goal_conversion_rate_all": 0
-                    },
+                    "all": null_entry,
+                    "considered": null_entry,
+                    "facebook": null_entry,
                 }
             }
         )

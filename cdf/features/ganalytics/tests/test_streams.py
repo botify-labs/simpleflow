@@ -18,10 +18,12 @@ class TestIterateSources(unittest.TestCase):
                 ["facebook", "twitter", "pinterest"])
     def test_nominal_case(self):
         expected_result = [
+            ("organic", "all"),
             ("organic", "considered"),
             ("organic", "google"),
             ("organic", "bing"),
             ("organic", "yahoo"),
+            ("social", "all"),
             ("social", "considered"),
             ("social", "facebook"),
             ("social", "twitter"),
@@ -261,12 +263,14 @@ class TestVisitsStreamDef(unittest.TestCase):
             "visits":
             {
                 "organic": {
+                    "all": dict(entry),
                     "considered": dict(entry),
                     "google": dict(entry),
                     "bing": dict(entry),
                     "yahoo": dict(entry)
                 },
                 "social": {
+                    "all": dict(entry),
                     "considered": dict(entry),
                     "facebook": dict(entry),
                     "twitter": dict(entry),
@@ -333,6 +337,15 @@ class TestVisitsStreamDef(unittest.TestCase):
         document = {
             "visits": {
                 "organic": {
+                    "all": {
+                        "nb": 1,
+                        "sessions": 2,
+                        "bounces": 3,
+                        "page_views": 4,
+                        "session_duration": 5,
+                        "new_users": 6,
+                        "goal_completions_all": 7
+                    },
                     "considered": {
                         "nb": 0,
                         "sessions": 0,
@@ -359,6 +372,15 @@ class TestVisitsStreamDef(unittest.TestCase):
         expected_document = {
             "visits": {
                 "organic": {
+                    "all": {
+                        "nb": 2,
+                        "sessions": 4,
+                        "bounces": 6,
+                        "page_views": 8,
+                        "session_duration": 10,
+                        "new_users": 12,
+                        "goal_completions_all": 14
+                    },
                     "considered": {
                         "nb": 1,
                         "sessions": 2,
@@ -386,6 +408,24 @@ class TestVisitsStreamDef(unittest.TestCase):
         document = {
             "visits": {
                 "organic": {
+                    "all": {
+                        "nb": 1,
+                        "sessions": 2,
+                        "bounces": 3,
+                        "page_views": 4,
+                        "session_duration": 5,
+                        "new_users": 6,
+                        "goal_completions_all": 7
+                    },
+                    "considered": {
+                        "nb": 0,
+                        "sessions": 0,
+                        "bounces": 0,
+                        "page_views": 0,
+                        "session_duration": 0,
+                        "new_users": 0,
+                        "goal_completions_all": 0
+                    },
                     "google": {
                         "nb": 7,
                         "sessions": 6,
@@ -400,9 +440,28 @@ class TestVisitsStreamDef(unittest.TestCase):
         }
         stream = [0, "organic", "foo", "None", 1, 2, 3, 4, 5, 6, 7]
         VisitsStreamDef().process_document(document, stream)
+        #only the "all" entry has been updated
         expected_document = {
             "visits": {
                 "organic": {
+                    "all": {
+                        "nb": 2,
+                        "sessions": 4,
+                        "bounces": 6,
+                        "page_views": 8,
+                        "session_duration": 10,
+                        "new_users": 12,
+                        "goal_completions_all": 14
+                    },
+                    "considered": {
+                        "nb": 0,
+                        "sessions": 0,
+                        "bounces": 0,
+                        "page_views": 0,
+                        "session_duration": 0,
+                        "new_users": 0,
+                        "goal_completions_all": 0
+                    },
                     "google": {
                         "nb": 7,
                         "sessions": 6,

@@ -28,11 +28,13 @@ def _iterate_sources():
     ('organic', 'google') or ('social', 'facebook')
     """
     if len(ORGANIC_SOURCES) > 0:
+        yield "organic", "all"
         yield "organic", "considered"
         for search_engine in ORGANIC_SOURCES:
             yield "organic", search_engine
 
     if len(SOCIAL_SOURCES) > 0:
+        yield "social", "all"
         yield "social", "considered"
         for social_network in SOCIAL_SOURCES:
             yield "social", social_network
@@ -147,7 +149,6 @@ class VisitsStreamDef(StreamDefBase):
                                                      SOCIAL_SOURCES,
                                                      [t[0] for t in _CALCULATED_METRICS])
 
-
     def pre_process_document(self, document):
         document["visits"] = {}
         document["visits"]["organic"] = {}
@@ -158,15 +159,25 @@ class VisitsStreamDef(StreamDefBase):
             document["visits"][medium][source] = entry
 
     def process_document(self, document, stream):
-        if not self.ignore_stream_line(stream):
-            visit_medium, visit_source = self.get_visit_medium_source(stream)
-            #visits field is updated anyway
-            current_entry = document['visits'][visit_medium][visit_source]
-            sum_entry = document['visits'][visit_medium]["considered"]
-            for metric in VisitsStreamDef._RAW_METRICS:
-                metric_index = self.field_idx(metric)
-                current_entry[metric] += stream[metric_index]
-                sum_entry[metric] += stream[metric_index]
+        visit_medium, visit_source = self.get_visit_medium_source(stream)
+        if visit_medium != "organic" and visit_medium != "social":
+            return
+
+        all_entry = document['visits'][visit_medium]["all"]
+        for metric in VisitsStreamDef._RAW_METRICS:
+            metric_index = self.field_idx(metric)
+            all_entry[metric] += stream[metric_index]
+
+        if self.ignore_stream_line(stream):
+            return
+
+        #visits field is updated anyway
+        considered_entry = document['visits'][visit_medium]["considered"]
+        current_entry = document['visits'][visit_medium][visit_source]
+        for metric in VisitsStreamDef._RAW_METRICS:
+            metric_index = self.field_idx(metric)
+            current_entry[metric] += stream[metric_index]
+            considered_entry[metric] += stream[metric_index]
 
         return
 
