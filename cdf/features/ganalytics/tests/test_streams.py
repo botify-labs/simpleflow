@@ -18,11 +18,11 @@ class TestIterateSources(unittest.TestCase):
                 ["facebook", "twitter", "pinterest"])
     def test_nominal_case(self):
         expected_result = [
-            ("organic", "sum"),
+            ("organic", "considered"),
             ("organic", "google"),
             ("organic", "bing"),
             ("organic", "yahoo"),
-            ("social", "sum"),
+            ("social", "considered"),
             ("social", "facebook"),
             ("social", "twitter"),
             ("social", "pinterest")
@@ -33,7 +33,7 @@ class TestIterateSources(unittest.TestCase):
 class TestGetUrlDocumentMapping(unittest.TestCase):
     def test_get_url_document_mapping_organic_parameter(self):
         expected_mapping = {
-            "visits.organic.sum.nb": {
+            "visits.organic.considered.nb": {
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
@@ -65,7 +65,7 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
 
     def test_get_url_document_mapping_social_parameter(self):
         expected_mapping = {
-            "visits.social.sum.nb": {
+            "visits.social.considered.nb": {
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
@@ -97,7 +97,7 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
 
     def test_get_url_document_mapping_organic_social_parameters(self):
         expected_mapping = {
-            "visits.organic.sum.nb": {
+            "visits.organic.considered.nb": {
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
@@ -111,7 +111,7 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
                     AGG_NUMERICAL
                 }
             },
-            "visits.social.sum.nb": {
+            "visits.social.considered.nb": {
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
@@ -136,21 +136,21 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
 
     def test_get_url_document_mapping_metrics_parameters(self):
         expected_mapping = {
-            "visits.organic.sum.nb": {
+            "visits.organic.considered.nb": {
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
                     AGG_NUMERICAL
                 }
             },
-            "visits.organic.sum.bounce_rate": {
+            "visits.organic.considered.bounce_rate": {
                 "type": FLOAT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
                     AGG_NUMERICAL
                 }
             },
-            "visits.organic.sum.pages_per_session": {
+            "visits.organic.considered.pages_per_session": {
                 "type": FLOAT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
@@ -212,13 +212,13 @@ class TestVisitsStreamDef(unittest.TestCase):
             "visits":
             {
                 "organic": {
-                    "sum": dict(entry),
+                    "considered": dict(entry),
                     "google": dict(entry),
                     "bing": dict(entry),
                     "yahoo": dict(entry)
                 },
                 "social": {
-                    "sum": dict(entry),
+                    "considered": dict(entry),
                     "facebook": dict(entry),
                     "twitter": dict(entry),
                     "pinterest": dict(entry)
@@ -284,7 +284,7 @@ class TestVisitsStreamDef(unittest.TestCase):
         document = {
             "visits": {
                 "organic": {
-                    "sum": {
+                    "considered": {
                         "nb": 0,
                         "sessions": 0,
                         "bounces": 0,
@@ -310,7 +310,7 @@ class TestVisitsStreamDef(unittest.TestCase):
         expected_document = {
             "visits": {
                 "organic": {
-                    "sum": {
+                    "considered": {
                         "nb": 1,
                         "sessions": 2,
                         "bounces": 3,

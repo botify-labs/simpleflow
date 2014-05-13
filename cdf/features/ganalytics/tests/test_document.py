@@ -42,7 +42,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
             documents[0]["visits"],
             {
                 "organic": {
-                    "sum": {
+                    "considered": {
                         "nb": 25,
                         "bounce_rate": 79.17,
                         "pages_per_session": 1.33,
@@ -68,7 +68,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
                     },
                 },
                 "social": {
-                    "sum": {
+                    "considered": {
                         "nb": 0,
                         "bounce_rate": 0,
                         "pages_per_session": 0,
@@ -92,7 +92,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
             documents[1]["visits"],
             {
                 "organic": {
-                    "sum": {
+                    "considered": {
                         "nb": 0,
                         "bounce_rate": 0,
                         "pages_per_session": 0,
@@ -118,7 +118,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
                     },
                 },
                 "social": {
-                    "sum": {
+                    "considered": {
                         "nb": 0,
                         "bounce_rate": 0,
                         "pages_per_session": 0,
@@ -142,7 +142,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
             documents[2]["visits"],
             {
                 "organic": {
-                    "sum": {
+                    "considered": {
                         "nb": 7,
                         "bounce_rate": 50,
                         "pages_per_session": 1,
@@ -168,7 +168,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
                     },
                 },
                 "social": {
-                    "sum": {
+                    "considered": {
                         "nb": 0,
                         "bounce_rate": 0,
                         "pages_per_session": 0,

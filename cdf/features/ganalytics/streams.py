@@ -28,12 +28,12 @@ def _iterate_sources():
     ('organic', 'google') or ('social', 'facebook')
     """
     if len(ORGANIC_SOURCES) > 0:
-        yield "organic", "sum"
+        yield "organic", "considered"
         for search_engine in ORGANIC_SOURCES:
             yield "organic", search_engine
 
     if len(SOCIAL_SOURCES) > 0:
-        yield "social", "sum"
+        yield "social", "considered"
         for social_network in SOCIAL_SOURCES:
             yield "social", social_network
 
@@ -70,7 +70,7 @@ def _get_url_document_mapping(organic_sources, social_sources, metrics):
 
     if len(organic_sources) > 0:
         #create a key prefix for organic traffic
-        organic_key_prefixes = ["visits.organic.sum"]
+        organic_key_prefixes = ["visits.organic.considered"]
         #and one for each considered search engine
         for search_engine in organic_sources:
             organic_key_prefixes.append("visits.organic.{}".format(search_engine))
@@ -84,7 +84,7 @@ def _get_url_document_mapping(organic_sources, social_sources, metrics):
 
     if len(social_sources) > 0:
         #create a key prefix for social traffic
-        social_key_prefixes = ["visits.social.sum"]
+        social_key_prefixes = ["visits.social.considered"]
         #and one for each considered social network
         for social_network in social_sources:
             social_key_prefixes.append("visits.social.{}".format(social_network))
@@ -156,7 +156,7 @@ class VisitsStreamDef(StreamDefBase):
             visit_medium, visit_source = self.get_visit_medium_source(stream)
             #visits field is updated anyway
             current_entry = document['visits'][visit_medium][visit_source]
-            sum_entry = document['visits'][visit_medium]["sum"]
+            sum_entry = document['visits'][visit_medium]["considered"]
             for metric in VisitsStreamDef._RAW_METRICS:
                 metric_index = self.field_idx(metric)
                 current_entry[metric] += stream[metric_index]
