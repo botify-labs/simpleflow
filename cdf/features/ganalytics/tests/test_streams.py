@@ -31,6 +31,13 @@ class TestIterateSources(unittest.TestCase):
 class TestGetUrlDocumentMapping(unittest.TestCase):
     def test_get_url_document_mapping_organic_parameter(self):
         expected_mapping = {
+            "visits.organic.sum.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
             "visits.organic.google.nb": {
                 "type": INT_TYPE,
                 "settings": {
@@ -56,6 +63,13 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
 
     def test_get_url_document_mapping_social_parameter(self):
         expected_mapping = {
+            "visits.social.sum.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
             "visits.social.facebook.nb": {
                 "type": INT_TYPE,
                 "settings": {
@@ -81,7 +95,21 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
 
     def test_get_url_document_mapping_organic_social_parameters(self):
         expected_mapping = {
+            "visits.organic.sum.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
             "visits.organic.google.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.social.sum.nb": {
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
@@ -106,6 +134,27 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
 
     def test_get_url_document_mapping_metrics_parameters(self):
         expected_mapping = {
+            "visits.organic.sum.nb": {
+                "type": INT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.organic.sum.bounce_rate": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
+            "visits.organic.sum.pages_per_session": {
+                "type": FLOAT_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                }
+            },
             "visits.organic.google.nb": {
                 "type": INT_TYPE,
                 "settings": {

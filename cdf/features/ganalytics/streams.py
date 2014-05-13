@@ -63,19 +63,33 @@ def _get_url_document_mapping(organic_sources, social_sources, metrics):
         }
     }
 
-    for search_engine in organic_sources:
-        key = "visits.organic.{}.nb".format(search_engine)
-        result[key] = dict(int_entry)
-        for metric in metrics:
-            key = "visits.organic.{}.{}".format(search_engine, metric)
-            result[key] = dict(float_entry)
+    if len(organic_sources) > 0:
+        #create a key prefix for organic traffic
+        organic_key_prefixes = ["visits.organic.sum"]
+        #and one for each considered search engine
+        for search_engine in organic_sources:
+            organic_key_prefixes.append("visits.organic.{}".format(search_engine))
 
-    for social_network in social_sources:
-        key = "visits.social.{}.nb".format(social_network)
-        result[key] = dict(int_entry)
-        for metric in metrics:
-            key = "visits.social.{}.{}".format(social_network, metric)
-            result[key] = dict(float_entry)
+        for key_prefix in organic_key_prefixes:
+            key = "{}.nb".format(key_prefix)
+            result[key] = dict(int_entry)
+            for metric in metrics:
+                key = "{}.{}".format(key_prefix, metric)
+                result[key] = dict(float_entry)
+
+    if len(social_sources) > 0:
+        #create a key prefix for social traffic
+        social_key_prefixes = ["visits.social.sum"]
+        #and one for each considered social network
+        for social_network in social_sources:
+            social_key_prefixes.append("visits.social.{}".format(social_network))
+
+        for key_prefix in social_key_prefixes:
+            key = "{}.nb".format(key_prefix)
+            result[key] = dict(int_entry)
+            for metric in metrics:
+                key = "{}.{}".format(key_prefix, metric)
+                result[key] = dict(float_entry)
     return result
 
 
