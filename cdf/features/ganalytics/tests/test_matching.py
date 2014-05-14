@@ -1,7 +1,6 @@
 import unittest
 
-from cdf.features.ganalytics.matching import get_urlid
-
+from cdf.features.ganalytics.matching import get_urlid, has_been_crawled
 
 class TestGetUrlid(unittest.TestCase):
     def setUp(self):
@@ -71,3 +70,23 @@ class TestGetUrlid(unittest.TestCase):
         actual_result = get_urlid(entry, self.url_to_id,
                                   self.url_to_id)
         self.assertIsNone(actual_result)
+
+
+class TestHasBeenCrawled(unittest.TestCase):
+    def test_crawled_url(self):
+        urlid_to_http_code = {
+            2: 200,
+            3: 301,
+            4: 404
+        }
+        self.assertTrue(has_been_crawled(2, urlid_to_http_code))
+        self.assertTrue(has_been_crawled(3, urlid_to_http_code))
+        self.assertTrue(has_been_crawled(4, urlid_to_http_code))
+
+    def test_non_crawled_url(self):
+        urlid_to_http_code = {2: 0}
+        self.assertFalse(has_been_crawled(2, urlid_to_http_code))
+
+    def test_unknown_urlid(self):
+        urlid_to_http_code = {2: 0}
+        self.assertFalse(has_been_crawled(3, urlid_to_http_code))

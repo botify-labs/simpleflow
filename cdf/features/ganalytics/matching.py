@@ -29,15 +29,6 @@ def get_urlid(visit_stream_entry,
             continue
         candidates.append((protocol, url_id))
 
-    def has_been_crawled(url_id, urlid_to_http_code):
-        http_code = urlid_to_http_code.get(url_id, None)
-        if http_code is None:
-            return False
-        #do not consider urls that have not been crawled
-        if http_code == 0:
-            return False
-        return True
-
     #remove candidates that have not been crawled
     candidates = [(protocol, urlid) for protocol, urlid in candidates if
                   has_been_crawled(urlid, urlid_to_http_code)]
@@ -58,3 +49,20 @@ def get_urlid(visit_stream_entry,
         else:
             return http_urlid
     return None
+
+
+def has_been_crawled(url_id, urlid_to_http_code):
+    """Determine whether or not a url has been crawled
+    :param url_id: the consider url id
+    :type url_id: int
+    :param urlid_to_http_code: a dict url id -> http code
+    :type urlid_to_http_code: dict
+    :returns: bool
+    """
+    http_code = urlid_to_http_code.get(url_id, None)
+    if http_code is None:
+        return False
+    #do not consider urls that have not been crawled
+    if http_code == 0:
+        return False
+    return True
