@@ -88,7 +88,7 @@ class TestStreamFactory(unittest.TestCase):
         file = StringIO.StringIO(file_content)
 
         expected_result = [[1, "http", "www.foo.com", "/bar", "?param=value"],
-                           [3, "http", "www.foo.com", "/bar/baz"]]
+                           [3, "http", "www.foo.com", "/bar/baz", ""]]
         actual_result = stream_factory._get_stream_from_file(file)
         self.assertEqual(expected_result, list(actual_result))
 
@@ -98,8 +98,8 @@ class TestStreamFactory(unittest.TestCase):
         def side_effect(*args, **kwargs):
             filepath = args[0]
             file_contents = {
-                "/tmp/crawl-1/urlids.txt.0.gz": ['1\thttp\twww.foo.com\n'],
-                "/tmp/crawl-1/urlids.txt.2.gz": ['3\thttp\twww.bar.com\n']
+                "/tmp/crawl-1/urlids.txt.0.gz": ['1\thttp\twww.foo.com\t/\t\n'],
+                "/tmp/crawl-1/urlids.txt.2.gz": ['3\thttp\twww.bar.com\t/\t\n']
             }
             mock = MagicMock()
             mock.__iter__.return_value = iter(file_contents[filepath])
@@ -114,8 +114,8 @@ class TestStreamFactory(unittest.TestCase):
                                                 "urlids",
                                                 crawler_metakeys)
         #result stream should respect part_id order
-        expected_result = [[1, "http", "www.foo.com"],
-                           [3, "http", "www.bar.com"]]
+        expected_result = [[1, "http", "www.foo.com", "/", ""],
+                           [3, "http", "www.bar.com", "/", ""]]
         self.assertEqual(expected_result,
                          list(file_stream_factory.get_stream()))
 

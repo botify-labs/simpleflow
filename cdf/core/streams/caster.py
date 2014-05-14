@@ -32,12 +32,22 @@ Example:
 
 __all__ = ['Caster']
 
+MISSING_OPTION = 'missing'
+DEFAULT_OPTION = 'default'
+
+MISSING_VALUE = '[missing]'
+
 
 def return_value(value, cast_func, options):
-    if value == 'missing' and 'missing' in options:
-        return cast_func(options['missing'])
-    elif value == '' and 'default' in options:
-        return cast_func(options['default'])
+    if value == MISSING_VALUE:
+        if MISSING_OPTION in options:
+            return cast_func(options[MISSING_OPTION])
+        elif DEFAULT_OPTION in options:
+            return cast_func(options[DEFAULT_OPTION])
+        else:
+            return cast_func('')
+    elif value == '' and DEFAULT_OPTION in options:
+        return cast_func(options[DEFAULT_OPTION])
     return cast_func(value)
 
 
@@ -58,7 +68,7 @@ class Caster(object):
 
     def cast_line(self, line):
         return [(return_value(value, cast, options) if cast else value) for
-                (name, cast, options), value in izip_longest(self._fields, line, fillvalue='missing')]
+                (name, cast, options), value in izip_longest(self._fields, line, fillvalue=MISSING_VALUE)]
 
     def cast(self, iterable):
         for i in iterable:
