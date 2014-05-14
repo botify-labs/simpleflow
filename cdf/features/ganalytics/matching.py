@@ -1,7 +1,9 @@
 from cdf.log import logger
 
 
-def get_urlid(visit_stream_entry, url_to_id, preferred_protocol):
+def get_urlid(visit_stream_entry,
+              url_to_id,
+              preferred_protocol):
     """Find the url id corresponding to an entry in a visit stream.
     The function checks if the http and https version of the url exist.
     If only one of them exists, it returns the corresponding url id.
@@ -18,24 +20,27 @@ def get_urlid(visit_stream_entry, url_to_id, preferred_protocol):
     :returns: int
     """
     url = visit_stream_entry[0]
-    if not url.startswith('http'):
-        http_url = 'http://{}'.format(url)
-        https_url = 'https://{}'.format(url)
-    http_url_id = url_to_id.get(http_url, None)
-    https_url_id = url_to_id.get(https_url, None)
+    #generate candidate url ids
+    candidates = []
+    for protocol in ["http", "https"]:
+        candidate_url = '{}://{}'.format(protocol, url)
+        url_id = url_to_id.get(candidate_url, None)
+        if url_id is None:
+            continue
+        candidates.append((protocol, url_id))
 
-    if http_url_id is not None and https_url_id is None:
-        url_id = http_url_id
-    elif http_url_id is None and https_url_id is not None:
-        url_id = https_url_id
-    elif http_url_id is not None and https_url_id is not None:
-        #in case of ambiguity, choose the preferred protocol
-        if preferred_protocol == "http":
-            url_id = http_url_id
-        elif preferred_protocol == "https":
-            url_id = https_url_id
-        else:
-            logger.warning("Invalid preferred protocol %s", preferred_protocol)
-    else:
-        url_id = None
-    return url_id
+    #make a decision
+    if len(candidates) == 0:
+        return None
+    elif len(candidates) == 1:
+        protocol, urlid = candidates[0]
+        return urlid
+    elif len(candidates) == 2:
+        #take the urlid corresponding to the preferred protocol
+        preferred_candidates = [urlid for protocol, urlid in candidates if
+                                protocol == preferred_protocol]
+        if len(preferred_candidates) != 1:
+            raise ValueError("Could not find only one candidate")
+        urlid = preferred_candidates[0]
+        return urlid
+    return None
