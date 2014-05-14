@@ -1,6 +1,6 @@
 import os
 
-from cdf.features.main.streams import IdStreamDef
+from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.main.utils import get_url_to_id_dict_from_stream
 from cdf.features.ganalytics.streams import RawVisitsStreamDef, VisitsStreamDef
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
@@ -50,12 +50,18 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
     576 organic google 12
     165 organic google 50
     """
-    url_to_id = get_url_to_id_dict_from_stream(IdStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir))
+    id_stream = IdStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
+    info_stream = InfosStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
+    id_idx = InfosStreamDef.field_idx("id")
+    http_code_idx = InfosStreamDef.field_idx("http_code")
+    urlid_to_http_code = {s[id_idx]: s[http_code_idx] for s in info_stream}
+
+    url_to_id = get_url_to_id_dict_from_stream(id_stream)
     dataset = VisitsStreamDef.create_temporary_dataset()
 
     stream = RawVisitsStreamDef.get_stream_from_s3_path(os.path.join(s3_uri, 'analytics.data.gz'), tmp_dir=tmp_dir, force_fetch=force_fetch)
     for entry in stream:
-        url_id = get_urlid(entry, url_to_id, protocol)
+        url_id = get_urlid(entry, url_to_id, urlid_to_http_code)
         if url_id:
             dataset_entry = list(entry)
             dataset_entry[0] = url_id

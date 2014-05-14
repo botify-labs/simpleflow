@@ -6,7 +6,7 @@ import shutil
 
 from mock import patch
 
-from cdf.features.main.streams import IdStreamDef
+from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.ganalytics.streams import VisitsStreamDef
 from cdf.features.ganalytics.tasks import (match_analytics_to_crawl_urls,
                                           get_urlid)
@@ -46,6 +46,24 @@ class TestTasks(unittest.TestCase):
         f.append(4, "http", "www.site.com", "/4", "")
         f.append(5, "http", "www.site.com", "/5", "?sid=5")
         f.append(6, "http", "www.site.com", "/6", "")
+        f.persist_to_s3(self.s3_dir, first_part_id_size=self.first_part_id_size, part_id_size=self.part_id_size)
+        ('id', int),
+        ('infos_mask', int),
+        ('content_type', str),
+        ('depth', int),
+        ('date_crawled', int),
+        ('http_code', int),
+        ('byte_size', int),
+        ('delay_first_byte', int),
+        ('delay_last_byte', int),
+
+        f = InfosStreamDef.create_temporary_dataset()
+        f.append(1, 0, "", 0, 0, 200, 0, 0, 0)
+        f.append(2, 0, "", 0, 0, 200, 0, 0, 0)
+        f.append(3, 0, "", 0, 0, 200, 0, 0, 0)
+        f.append(4, 0, "", 0, 0, 200, 0, 0, 0)
+        f.append(5, 0, "", 0, 0, 200, 0, 0, 0)
+        f.append(6, 0, "", 0, 0, 200, 0, 0, 0)
         f.persist_to_s3(self.s3_dir, first_part_id_size=self.first_part_id_size, part_id_size=self.part_id_size)
 
         match_analytics_to_crawl_urls(self.s3_dir,
