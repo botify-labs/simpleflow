@@ -292,28 +292,28 @@ class TestVisitsStreamDef(unittest.TestCase):
         self.assertEqual(expected_mapping,
                          VisitsStreamDef.URL_DOCUMENT_MAPPING)
 
-    def test_ignore_stream_line(self):
+    def test_consider_source(self):
         stream = [0, "organic", "google", "None"]
-        self.assertFalse(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertTrue(VisitsStreamDef().consider_source(stream))
 
-        #ignored search engine
+        #considerd search engine
         stream = [0, "organic", "foo", "None"]
-        self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertFalse(VisitsStreamDef().consider_source(stream))
 
         #non organic google traffic
         stream = [0, "(cpc)", "google", "None"]
-        self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertFalse(VisitsStreamDef().consider_source(stream))
 
         stream = [0, "social", "twitter.com", "twitter"]
-        self.assertFalse(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertTrue(VisitsStreamDef().consider_source(stream))
 
         #non "social" traffic from a social network
         stream = [0, "referral", "t.co", "twitter"]
-        self.assertFalse(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertTrue(VisitsStreamDef().consider_source(stream))
 
-        #ignored social network
+        #considerd social network
         stream = [0, "social", "twitter.com", "foo"]
-        self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertFalse(VisitsStreamDef().consider_source(stream))
 
     def test_get_visit_medium_source(self):
         stream = [0, "organic", "google", "None"]

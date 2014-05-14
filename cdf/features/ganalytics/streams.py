@@ -168,7 +168,7 @@ class VisitsStreamDef(StreamDefBase):
             metric_index = self.field_idx(metric)
             all_entry[metric] += stream[metric_index]
 
-        if self.ignore_stream_line(stream):
+        if not self.consider_source(stream):
             return
 
         #visits field is updated anyway
@@ -181,17 +181,18 @@ class VisitsStreamDef(StreamDefBase):
 
         return
 
-    def ignore_stream_line(self, stream_line):
-        """Decides whether or not a stream line should be ignored"""
+    def consider_source(self, stream_line):
+        """Decides whether or not the source of a stream entry should be
+        considered"""
         medium = stream_line[self.field_idx("medium")]
         source = stream_line[self.field_idx("source")]
         social_network = stream_line[self.field_idx("social_network")]
 
-        result = True
+        result = False
         if social_network and social_network in SOCIAL_SOURCES:
-            result = False
+            result = True
         elif medium == 'organic' and source in ORGANIC_SOURCES:
-            result = False
+            result = True
         return result
 
     def get_visit_medium_source(self, stream_line):
