@@ -292,6 +292,30 @@ class TestVisitsStreamDef(unittest.TestCase):
         self.assertEqual(expected_mapping,
                          VisitsStreamDef.URL_DOCUMENT_MAPPING)
 
+    def test_update_entry(self):
+        entry = {
+            "nb": 1,
+            "sessions": 2,
+            "bounces": 3,
+            "page_views": 4,
+            "session_duration": 5,
+            "new_users": 6,
+            "goal_completions_all": 7
+        }
+        stream_line = [0, "organic", "google", "None", 7, 6, 5, 4, 3, 2, 1]
+
+        expected_result = {
+            "nb": 8,
+            "sessions": 8,
+            "bounces": 8,
+            "page_views": 8,
+            "session_duration": 8,
+            "new_users": 8,
+            "goal_completions_all": 8
+        }
+        VisitsStreamDef().update_entry(entry, stream_line)
+        self.assertEquals(expected_result, entry)
+
     def test_consider_source(self):
         stream = [0, "organic", "google", "None"]
         self.assertTrue(VisitsStreamDef().consider_source(stream))

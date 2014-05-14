@@ -164,22 +164,30 @@ class VisitsStreamDef(StreamDefBase):
             return
 
         all_entry = document['visits'][visit_medium]["all"]
-        for metric in VisitsStreamDef._RAW_METRICS:
-            metric_index = self.field_idx(metric)
-            all_entry[metric] += stream[metric_index]
+        self.update_entry(all_entry, stream)
 
         if not self.consider_source(stream):
             return
 
-        #visits field is updated anyway
+        #update aggregate field "considered" that represents the considered
+        #sources
         considered_entry = document['visits'][visit_medium]["considered"]
+        self.update_entry(considered_entry, stream)
+
+        #update the field corresponding to the current source
         current_entry = document['visits'][visit_medium][visit_source]
+        self.update_entry(current_entry, stream)
+
+    def update_entry(self, document_entry, stream_line):
+        """Update a document entry with data from a stream line
+        :param document_entry: the document entry to update
+        :type document_entry: dict
+        :param stream_line: the stream line containing the data
+        :type stream_line: list
+        """
         for metric in VisitsStreamDef._RAW_METRICS:
             metric_index = self.field_idx(metric)
-            current_entry[metric] += stream[metric_index]
-            considered_entry[metric] += stream[metric_index]
-
-        return
+            document_entry[metric] += stream_line[metric_index]
 
     def consider_source(self, stream_line):
         """Decides whether or not the source of a stream entry should be
