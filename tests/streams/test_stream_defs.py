@@ -63,7 +63,8 @@ class TestStreamsDef(unittest.TestCase):
     def test_stream_filters(self):
         iterator = iter([
             [1, 'http://www.site.com/'],
-            [2, 'http://www.site.com/2']
+            [2, 'http://www.site.com/2'],
+            [3, 'http://www.bad.com/2']
         ])
         stream = CustomStreamDef.get_stream_from_iterator(iterator)
         stream.add_filter('url', lambda i: 'site.com' in i)

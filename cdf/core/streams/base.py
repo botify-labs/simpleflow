@@ -1,5 +1,5 @@
 from operator import itemgetter
-from itertools import izip, chain, groupby
+from itertools import izip, chain, groupby, ifilter
 import os
 import gzip
 import tempfile
@@ -170,12 +170,7 @@ class Stream(object):
     def next(self):
         if not self._has_filters:
             return self.iterator.next()
-
-        v = self.iterator.next()
-        for field_idx, func in self._filters:
-            if not func(v[field_idx]):
-                return self.next()
-        return v
+        return self._filtered_iterator.next()
 
     def add_filter(self, field, func):
         """
@@ -184,6 +179,10 @@ class Stream(object):
         """
         self._has_filters = True
         self._filters.append((self.stream_def.field_idx(field), func))
+        self._filtered_iterator = ifilter(
+            lambda v: all(func(v[field_idx]) for field_idx, func in self._filters),
+            self.iterator
+        )
 
 
 class TemporaryDataset(object):
