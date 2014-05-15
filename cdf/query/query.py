@@ -71,6 +71,10 @@ class Query(object):
     def _has_agg(self):
         return 'aggs' in self.botify_query
 
+    @property
+    def es_query(self):
+        return self.parser.get_es_query(self.botify_query, self.crawl_id)
+
     def _run(self):
         """Launch the process of a ES query
             - Translation of a botify format query to ES search API
@@ -106,7 +110,7 @@ class Query(object):
             return
 
         # Translation
-        es_query = self.parser.get_es_query(self.botify_query, self.crawl_id)
+        es_query = self.es_query
 
         # Issue a ES search
         temp_results = self.search_backend.search(body=es_query,
@@ -145,12 +149,9 @@ class Query(object):
                 self._results.append({})
 
         # Apply transformers
-        # Reminder: in-place transformation
         transform_result(self._results, self, backend=self.backend)
-
         if self._has_agg():
-            self._aggs = temp_results['aggregations']
-            transform_aggregation_result(self._aggs)
+            self._aggs = transform_aggregation_result(temp_results['aggregations'])
 
         # Flip flag on execution success
         self.executed = True

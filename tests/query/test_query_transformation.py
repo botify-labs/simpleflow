@@ -279,9 +279,9 @@ class TestQueryTransformation(QueryTransformationTestCase):
 class TestAggregationTransformation(QueryTransformationTestCase):
     def test_distinct_agg(self):
         query = {
-            'aggs': {
-                'my_agg': {
-                    'group': [{
+            'aggs': [
+                {
+                    'group_by': [{
                         'distinct': {
                             'field': 'http_code',
                             'size': 5
@@ -289,15 +289,22 @@ class TestAggregationTransformation(QueryTransformationTestCase):
                     }],
                     'metric': 'count'
                 }
-            }
+            ]
         }
 
         expected_agg = {
-            'my_agg': {
+            'queryagg_00': {
                 'terms': {
                     'field': 'http_code',
                     'size': 5,
                     'order': {'_term': 'asc'}
+                },
+                'aggs': {
+                    'metricagg_00': {
+                        'value_count': {
+                            'field': 'id'
+                        }
+                    }
                 }
             }
         }
@@ -307,20 +314,27 @@ class TestAggregationTransformation(QueryTransformationTestCase):
 
     def test_distinct_agg_alias(self):
         query = {
-            'aggs': {
-                'my_agg': {
-                    'group': ['http_code'],
+            'aggs': [
+                {
+                    'group_by': ['http_code'],
                     'metric': 'count'
                 }
-            }
+            ]
         }
 
         expected_agg = {
-            'my_agg': {
+            'queryagg_00': {
                 'terms': {
                     'field': 'http_code',
                     'size': 50,
                     'order': {'_term': 'asc'}
+                },
+                'aggs': {
+                    'metricagg_00': {
+                        'value_count': {
+                            'field': 'id'
+                        }
+                    }
                 }
             }
         }
@@ -332,23 +346,30 @@ class TestAggregationTransformation(QueryTransformationTestCase):
         ranges = [{'from': 30, 'to': 40},
                   {'from': 50}]
         query = {
-            'aggs': {
-                'my_agg': {
-                    'group': [{
+            'aggs': [
+                {
+                    'group_by': [{
                         'range': {
                             'field': 'http_code',
                             'ranges': ranges
                         }
                     }],
                 }
-            }
+            ]
         }
 
         expected_agg = {
-            'my_agg': {
+            'queryagg_00': {
                 'range': {
                     'field': 'http_code',
                     'ranges': ranges
+                },
+                'aggs': {
+                    'metricagg_00': {
+                        'value_count': {
+                            'field': 'id'
+                        }
+                    }
                 }
             }
         }
@@ -358,21 +379,46 @@ class TestAggregationTransformation(QueryTransformationTestCase):
 
     def test_multiple_aggs(self):
         query = {
-            'aggs': {
-                'my_agg_1': {
-                    'group': [{'distinct': {'field': 'field1'}}],
-                    'metric': 'count'
+            'aggs': [
+                {
+                    'group_by': [{'distinct': {'field': 'field1'}}],
+                    'metrics': ['count']
                 },
-                'my_agg_2': {
-                    'group': [{'distinct': {'field': 'field2'}}],
-                    'metric': 'count'
+                {
+                    'group_by': [{'distinct': {'field': 'field2'}}],
+                    'metrics': ['count']
                 }
-            }
+            ]
         }
 
         expected_agg = {
-            'my_agg_1': {'terms': {'field': 'field1', 'size': 50, 'order': {'_term': 'asc'}}},
-            'my_agg_2': {'terms': {'field': 'field2', 'size': 50, 'order': {'_term': 'asc'}}}
+            'queryagg_00': {'terms': {'field': 'field1', 'size': 50, 'order': {'_term': 'asc'}}, 'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}},
+            'queryagg_01': {'terms': {'field': 'field2', 'size': 50, 'order': {'_term': 'asc'}}, 'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}}
+        }
+
+        result = self.get_es_query(query, CRAWL_ID)
+        self.assertEqual(expected_agg, result['aggs'])
+
+    def test_agg_without_group(self):
+        query = {
+            'aggs': [
+                {
+                    'metrics': [{'sum': 'depth'}, 'count'],
+                }
+            ]
+        }
+
+        expected_agg = {
+            'metricagg_00_queryagg_00': {
+                'sum': {
+                    'field': 'depth'
+                }
+            },
+            'metricagg_01_queryagg_00': {
+                'value_count': {
+                    'field': 'id'
+                }
+            }
         }
 
         result = self.get_es_query(query, CRAWL_ID)
