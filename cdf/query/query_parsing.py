@@ -16,7 +16,7 @@ import abc
 from copy import deepcopy
 
 from cdf.exceptions import BotifyQueryException
-from .constants import SUB_AGG, METRIC_AGG_PREFIX
+from .constants import QUERY_AGG, SUB_AGG, METRIC_AGG_PREFIX
 
 
 __ALL__ = ['QueryParser']
@@ -995,14 +995,13 @@ class QueryParser(object):
             return self.parse_predicate_filter(filter)
 
     def parse_aggregations(self, aggs):
-        if not isinstance(aggs, dict):
-            _raise_parsing_error('Aggs is not a dict', aggs)
+        if not isinstance(aggs, list):
+            _raise_parsing_error('Aggs is not a list', aggs)
 
-        named_aggs = [self.parse_named_aggregation(name, agg)
-                      for name, agg in aggs.iteritems()]
+        named_aggs = [self.parse_aggregation('{}_{}'.format(QUERY_AGG, str(i).zfill(2)), agg) for i, agg in enumerate(aggs)]
         return Aggs(named_aggs)
 
-    def parse_named_aggregation(self, name, agg_content):
+    def parse_aggregation(self, name, agg_content):
         group_ops = agg_content.get('group_by', None)
         if group_ops and not isinstance(group_ops, list):
             _raise_parsing_error('Group aggregators are not in a list',
@@ -1013,9 +1012,11 @@ class QueryParser(object):
         if not isinstance(metrics_op, list):
             _raise_parsing_error('Metrics aggregator is not a list', metrics_op)
 
-        return NamedAgg(name,
-                        [self.parse_group_aggregator(op) for op in group_ops] if group_ops else None,
-                        [self.parse_metric_aggregator(metric_op) for metric_op in metrics_op])
+        return NamedAgg(
+            name,
+            [self.parse_group_aggregator(op) for op in group_ops] if group_ops else None,
+            [self.parse_metric_aggregator(metric_op) for metric_op in metrics_op]
+        )
 
     def parse_group_aggregator(self, group_op):
         if isinstance(group_op, _STR_TYPE):
