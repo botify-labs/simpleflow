@@ -78,6 +78,21 @@ class TestCaster(unittest.TestCase):
             [1, 'http://www.site.com/', 'en'],
         ]
 
+        # Test with no default value
+        f = StringIO()
+        f.write('1\thttp://www.site.com/\t\n')
+        f.seek(0)
+
+        FIELDS = [('id', int),
+                  ('url', str),
+                  ('lang', str)]
+        cast = Caster(FIELDS).cast
+        urls = cast(split_file(f))
+        expected = [
+            [1, 'http://www.site.com/', ''],
+        ]
+        self.assertEquals(list(urls), expected)
+
     def test_bad_number_of_columns(self):
         # We plan to append columns over time to existing files
         # For old crawls, we need to add a default value for missing column
