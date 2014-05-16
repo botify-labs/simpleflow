@@ -40,12 +40,16 @@ def get_urlid(visit_stream_entry,
         protocol, urlid = candidates[0]
         return urlid
     elif len(candidates) == 2:
-        protocol_to_urlid = {protocol: urlid for protocol, urlid in candidates}
-        https_urlid = protocol_to_urlid["https"]
-        http_urlid = protocol_to_urlid["http"]
-        if is_redirection(http_urlid, urlid_to_http_code):
-            return https_urlid
+        candidates_no_redirection = [
+            (protocol, urlid) for protocol, urlid in candidates if
+            not is_redirection(urlid, urlid_to_http_code)
+        ]
+        if len(candidates_no_redirection) == 1:
+            protocol, urlid = candidates_no_redirection[0]
+            return urlid
         else:
+            protocol_to_urlid = {protocol: urlid for protocol, urlid in candidates}
+            http_urlid = protocol_to_urlid["http"]
             return http_urlid
     return None
 

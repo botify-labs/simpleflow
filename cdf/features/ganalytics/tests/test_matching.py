@@ -64,7 +64,17 @@ class TestGetUrlid(unittest.TestCase):
         }
 
         entry = ["foo.com"]
-        #http is not a redirection so we should return http url (by default)
+        #https a redirection so we should return http url
+        self.assertEqual(0, get_urlid(entry, self.url_to_id, id_to_http_code))
+
+    def test_ambiguity_http_https_not_redirections(self):
+        id_to_http_code = {
+            0: 200,
+            1: 200
+        }
+        entry = ["foo.com"]
+        #http and https are not redirections,
+        #so we should return http url (by default)
         self.assertEqual(0, get_urlid(entry, self.url_to_id, id_to_http_code))
 
     def test_unexisting_url(self):
