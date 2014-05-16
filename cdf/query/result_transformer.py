@@ -468,9 +468,11 @@ class AggregationTransformer(ResultTransformer):
             return result
 
         if SUB_AGG in bucket:
+            _transform_func = cls._transform_range if cls._is_range(bucket) else cls._transform_terms
             subbucket = cls.parse_bucket(bucket[SUB_AGG])
+	    bucket_key = _transform_func(bucket)
             for results in subbucket:
-                results["key"].insert(0, bucket['key'])
+		results["key"].insert(0, bucket_key)
             return subbucket
 
         if cls._is_terms(bucket) or cls._is_range(bucket):
