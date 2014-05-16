@@ -1,7 +1,10 @@
+import operator
+
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, BOOLEAN_TYPE, STRUCT_TYPE,
     ES_NO_INDEX, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL,
+    STRING_TYPE, ES_NOT_ANALYZED
 )
 from cdf.core.streams.base import StreamDefBase
 from cdf.analysis.urls.utils import is_link_internal
@@ -350,6 +353,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
         ('link_type', str),
         ('follow', follow_mask),
         ('src_url_id', int),
+        ('text_hash', str),
+        ('text', str)
     )
     URL_DOCUMENT_MAPPING = {
         # incoming links, must be internal
@@ -416,6 +421,18 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.urls_exists": {
             "type": "boolean",
             "default_value": None
+        },
+        "inlinks_internal.top_anchors.text": {
+            "type": STRING_TYPE,
+            "settings": {ES_NOT_ANALYZED, LIST}
+        },
+        "inlinks_internal.top_anchors.nb": {
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                LIST
+            }
         }
     }
 
@@ -424,9 +441,11 @@ class InlinksStreamDef(InlinksRawStreamDef):
         document["processed_inlink_link"] = set()
         # a temp set to track all `seen` src url of incoming links
         document["processed_inlink_url"] = set()
+        document["tmp_anchors_txt"] = {}
+        document["tmp_anchors_scores"] = {}
 
     def process_document(self, document, stream):
-        url_dst, link_type, follow_keys, url_src = stream
+        url_dst, link_type, follow_keys, url_src, text_hash, text = stream
 
         if link_type == "a":
             is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
@@ -441,6 +460,13 @@ class InlinksStreamDef(InlinksRawStreamDef):
             if is_follow:
                 if not (url_src, mask) in document["processed_inlink_link"]:
                     follow['unique'] += 1
+                if text_hash:
+                    if text and text_hash not in document['tmp_anchors_txt']:
+                        document['tmp_anchors_txt'][text_hash] = text
+                    if not text_hash in document['tmp_anchors_scores']:
+                        document['tmp_anchors_scores'][text_hash] = 1
+                    else:
+                        document['tmp_anchors_scores'][text_hash] += 1
             else:
                 key = _get_nofollow_combination_key(follow_keys)
                 if 'robots' in key:
@@ -483,11 +509,25 @@ class InlinksStreamDef(InlinksRawStreamDef):
         if not 'inlinks_internal' in document:
             return
 
+        document["inlinks_internal"]["top_anchors"]["text"] = []
+        document["inlinks_internal"]["top_anchors"]["nb"] = []
+
+        if document["tmp_anchors_scores"]:
+            sorted_anchors = sorted(
+                document["tmp_anchors_scores"].iteritems(),
+                key=operator.itemgetter(1),
+                reverse=True)[0:5]
+            for text_hash, nb in sorted_anchors:
+                document["inlinks_internal"]["top_anchors"]["text"].append(document["tmp_anchors_txt"][text_hash])
+                document["inlinks_internal"]["top_anchors"]["nb"].append(nb)
+
         document['inlinks_internal']['nb']['unique'] = len(document['processed_inlink_url'])
 
         # delete intermediate data structures
         del document['processed_inlink_url']
         del document["processed_inlink_link"]
+        del document["tmp_anchors_txt"]
+        del document["tmp_anchors_scores"]
 
 
 class OutlinksCountersStreamDef(StreamDefBase):

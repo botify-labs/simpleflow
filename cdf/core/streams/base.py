@@ -96,7 +96,8 @@ class StreamDefBase(object):
         """
         Return a stream from a iterable object
         """
-        return Stream(cls(), i)
+        cast = Caster(cls.HEADERS).cast
+        return Stream(cls(), cast(i))
 
     def persist(self, stream, directory, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE):
         """

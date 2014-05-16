@@ -1,0 +1,92 @@
+# -*- coding:utf-8 -*-
+"""Unit test for url document generation
+Source stream format reminder:
+    - urlids: uid, protocol, host, path
+    - urlinfos: uid, mask, content type, depth, date,
+        http code, size, delay_first_byte, delay_last_byte
+    - urllinks: src uid, link type, follow mask, dest uid
+    - urlinlinks: dest uid, link type, follow mask, src uid
+    - urlcontents: uid, content type code, hash.fnv64.unsigned, content
+    - content_duplicate: uid, content_type, filled number,
+        duplicate number, is_first, duplicating url list
+"""
+
+import unittest
+import logging
+
+from cdf.log import logger
+from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
+from cdf.features.links.helpers.masks import follow_mask
+from cdf.features.main.streams import IdStreamDef, InfosStreamDef
+from cdf.features.links.streams import InlinksStreamDef
+
+
+logger.setLevel(logging.DEBUG)
+
+
+def _next_doc(generator):
+    return next(generator)[1]
+
+
+class TestBasicInfoGeneration(unittest.TestCase):
+
+    def test_top_anchors(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+        ]
+
+        inlinks = [
+            [1, 'a', 0, 2, "12D", "Yeah"],
+            [1, 'r301', 0, 3, None, None],
+            [1, 'a', 0, 3, "12D", "Yeah"],
+            [1, 'a', 0, 4, "13D", "Oops"],
+            [1, 'a', 0, 4, "13D", "Oops"],
+            [1, 'a', 0, 4, "12D", "Yeah"],
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+        ])
+
+        document = _next_doc(gen)
+        self.assertEquals(
+            document["inlinks_internal"]["top_anchors"]['text'],
+            ["Yeah", "Oops"]
+        )
+        self.assertEquals(
+            document["inlinks_internal"]["top_anchors"]['nb'],
+            [3, 2]
+        )
+
+    def test_top_anchors_not_set(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+        ]
+
+        infos = [
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+        ]
+
+        inlinks = [
+            [1, 'a', 0, 2],
+            [1, 'r301', 0, 3],
+            [1, 'a', 0, 3],
+            [1, 'a', 0, 4],
+            [1, 'a', 0, 4],
+            [1, 'a', 0, 4],
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+        ])
+
+        document = _next_doc(gen)
+        self.assertTrue("nb" not in document["inlinks_internal"]["top_anchors"])

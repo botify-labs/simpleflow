@@ -1,7 +1,8 @@
 import unittest
 
+from cdf.features.links.helpers.masks import list_to_mask
 from cdf.analysis.suggestions.aggregator import (MetricsAggregator,
-                                                    get_keys_from_stream_suggest)
+                                                 get_keys_from_stream_suggest)
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef, SuggestStreamDef
 from cdf.features.links.streams import (
     OutlinksCountersStreamDef, OutcanonicalCountersStreamDef, OutredirectCountersStreamDef,
@@ -235,9 +236,9 @@ class TestMetricsAggregator(unittest.TestCase):
 
     def test_in_links(self):
         stream_inlinks_counters = [
-            [1, ['follow'], 10, 5],
-            [1, ['link', 'meta'], 3, 2],
-            [2, ['follow'], 30, 25],
+            [1, list_to_mask(['follow']), 10, 5],
+            [1, list_to_mask(['link', 'meta']), 3, 2],
+            [2, list_to_mask(['follow']), 30, 25],
         ]
         self.register_stream(InlinksCountersStreamDef, stream_inlinks_counters)
         result = list(MetricsAggregator(self.get_streams()).get())
