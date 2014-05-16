@@ -201,7 +201,6 @@ class TestVisitsStreamDef(unittest.TestCase):
         VisitsStreamDef().pre_process_document(document)
         entry = {
             "nb": 0,
-            "sessions": 0,
             "bounces": 0,
             "page_views": 0,
             "session_duration": 0,
@@ -244,18 +243,16 @@ class TestVisitsStreamDef(unittest.TestCase):
     def test_update_entry(self):
         entry = {
             "nb": 1,
-            "sessions": 2,
-            "bounces": 3,
-            "page_views": 4,
-            "session_duration": 5,
-            "new_users": 6,
-            "goal_completions_all": 7
+            "bounces": 2,
+            "page_views": 3,
+            "session_duration": 4,
+            "new_users": 5,
+            "goal_completions_all": 6
         }
         stream_line = [0, "organic", "google", "None", 7, 6, 5, 4, 3, 2, 1]
 
         expected_result = {
             "nb": 8,
-            "sessions": 8,
             "bounces": 8,
             "page_views": 8,
             "session_duration": 8,
@@ -312,16 +309,14 @@ class TestVisitsStreamDef(unittest.TestCase):
                 "organic": {
                     "all": {
                         "nb": 1,
-                        "sessions": 2,
-                        "bounces": 3,
-                        "page_views": 4,
-                        "session_duration": 5,
-                        "new_users": 6,
-                        "goal_completions_all": 7
+                        "bounces": 2,
+                        "page_views": 3,
+                        "session_duration": 4,
+                        "new_users": 5,
+                        "goal_completions_all": 6
                     },
                     "considered": {
                         "nb": 0,
-                        "sessions": 0,
                         "bounces": 0,
                         "page_views": 0,
                         "session_duration": 0,
@@ -329,8 +324,7 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "goal_completions_all": 0
                     },
                     "google": {
-                        "nb": 7,
-                        "sessions": 6,
+                        "nb": 6,
                         "bounces": 5,
                         "page_views": 4,
                         "session_duration": 3,
@@ -340,41 +334,39 @@ class TestVisitsStreamDef(unittest.TestCase):
                 }
             }
         }
-        stream = [0, "organic", "google", "None", 1, 2, 3, 4, 5, 6, 7]
+        stream = [0, "organic", "google", "None", 1, 2, 3, 4, 5, 6]
         VisitsStreamDef().process_document(document, stream)
         expected_document = {
             "visits": {
                 "organic": {
                     "all": {
                         "nb": 2,
-                        "sessions": 4,
-                        "bounces": 6,
-                        "page_views": 8,
-                        "session_duration": 10,
-                        "new_users": 12,
-                        "goal_completions_all": 14
+                        "bounces": 4,
+                        "page_views": 6,
+                        "session_duration": 8,
+                        "new_users": 10,
+                        "goal_completions_all": 12
                     },
                     "considered": {
                         "nb": 1,
-                        "sessions": 2,
-                        "bounces": 3,
-                        "page_views": 4,
-                        "session_duration": 5,
-                        "new_users": 6,
-                        "goal_completions_all": 7
+                        "bounces": 2,
+                        "page_views": 3,
+                        "session_duration": 4,
+                        "new_users": 5,
+                        "goal_completions_all": 6
                     },
                     "google": {
-                        "nb": 8,
-                        "sessions": 8,
-                        "bounces": 8,
-                        "page_views": 8,
-                        "session_duration": 8,
-                        "new_users": 8,
-                        "goal_completions_all": 8
+                        "nb": 7,
+                        "bounces": 7,
+                        "page_views": 7,
+                        "session_duration": 7,
+                        "new_users": 7,
+                        "goal_completions_all": 7
                     }
                 }
             }
         }
+        print document["visits"]["organic"]["all"]
         self.assertEqual(expected_document, document)
 
     def test_process_document_ignored_organic_source(self):
@@ -383,16 +375,14 @@ class TestVisitsStreamDef(unittest.TestCase):
                 "organic": {
                     "all": {
                         "nb": 1,
-                        "sessions": 2,
-                        "bounces": 3,
-                        "page_views": 4,
-                        "session_duration": 5,
-                        "new_users": 6,
-                        "goal_completions_all": 7
+                        "bounces": 2,
+                        "page_views": 3,
+                        "session_duration": 4,
+                        "new_users": 5,
+                        "goal_completions_all": 6
                     },
                     "considered": {
                         "nb": 0,
-                        "sessions": 0,
                         "bounces": 0,
                         "page_views": 0,
                         "session_duration": 0,
@@ -400,8 +390,7 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "goal_completions_all": 0
                     },
                     "google": {
-                        "nb": 7,
-                        "sessions": 6,
+                        "nb": 6,
                         "bounces": 5,
                         "page_views": 4,
                         "session_duration": 3,
@@ -419,16 +408,14 @@ class TestVisitsStreamDef(unittest.TestCase):
                 "organic": {
                     "all": {
                         "nb": 2,
-                        "sessions": 4,
-                        "bounces": 6,
-                        "page_views": 8,
-                        "session_duration": 10,
-                        "new_users": 12,
-                        "goal_completions_all": 14
+                        "bounces": 4,
+                        "page_views": 6,
+                        "session_duration": 8,
+                        "new_users": 10,
+                        "goal_completions_all": 12
                     },
                     "considered": {
                         "nb": 0,
-                        "sessions": 0,
                         "bounces": 0,
                         "page_views": 0,
                         "session_duration": 0,
@@ -436,8 +423,7 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "goal_completions_all": 0
                     },
                     "google": {
-                        "nb": 7,
-                        "sessions": 6,
+                        "nb": 6,
                         "bounces": 5,
                         "page_views": 4,
                         "session_duration": 3,
@@ -451,7 +437,7 @@ class TestVisitsStreamDef(unittest.TestCase):
 
     def test_compute_metrics_nominal_case(self):
         input_d = {
-            "sessions": 3,
+            "nb": 3,
             "bounces": 2,
             "page_views": 6,
             "session_duration": 8,
@@ -460,7 +446,7 @@ class TestVisitsStreamDef(unittest.TestCase):
         }
         VisitsStreamDef().compute_calculated_metrics(input_d)
         expected_result = {
-            "sessions": 3,
+            "nb": 3,
             "bounces": 2,
             "bounce_rate": 66.67,
             "page_views": 6,
@@ -478,11 +464,10 @@ class TestVisitsStreamDef(unittest.TestCase):
         input_d = {
             "foo": 2,
             "bounces": 3,
-            "sessions": 4,
-            "page_views": 5,
-            "session_duration": 6,
-            "new_users": 7,
-            "goal_completions_all": 8
+            "page_views": 4,
+            "session_duration": 5,
+            "new_users": 6,
+            "goal_completions_all": 7
         }
         VisitsStreamDef().delete_intermediary_metrics(input_d)
         expected_result = {

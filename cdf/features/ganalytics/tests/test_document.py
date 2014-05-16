@@ -20,10 +20,10 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         self.visits = [
-            [1, "organic", "google", "None", 10, 9, 9, 12, 32, 4, 9],
-            [1, "organic", "bing", "None", 15, 15, 10, 20, 35, 8, 4],
-            [3, "organic", "google", "None", 7, 6, 3, 6, 60, 5, 4],
-            [3, "organic", "foo", "None", 2, 2, 1, 6, 10, 1, 0],
+            [1, "organic", "google", "None", 9, 9, 12, 32, 4, 9],
+            [1, "organic", "bing", "None", 15, 10, 20, 35, 8, 4],
+            [3, "organic", "google", "None", 6, 3, 6, 60, 5, 4],
+            [3, "organic", "foo", "None", 2, 1, 6, 10, 1, 0],
         ]
 
     #patch sources to be able to add sources without
@@ -52,7 +52,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
             {
                 "organic": {
                     "all": {
-                        "nb": 25,
+                        "nb": 24,
                         "bounce_rate": 79.17,
                         "pages_per_session": 1.33,
                         "average_session_duration": 2.79,
@@ -60,7 +60,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "goal_conversion_rate_all": 54.17
                     },
                     "considered": {
-                        "nb": 25,
+                        "nb": 24,
                         "bounce_rate": 79.17,
                         "pages_per_session": 1.33,
                         "average_session_duration": 2.79,
@@ -68,7 +68,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "goal_conversion_rate_all": 54.17
                     },
                     "google": {
-                        "nb": 10,
+                        "nb": 9,
                         "bounce_rate": 100,
                         "pages_per_session": 1.33,
                         "average_session_duration": 3.56,
@@ -114,7 +114,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
             {
                 "organic": {
                     "all": {
-                        "nb": 9,
+                        "nb": 8,
                         "bounce_rate": 50,
                         "pages_per_session": 1.5,
                         "average_session_duration": 8.75,
@@ -122,7 +122,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "goal_conversion_rate_all": 50
                     },
                     "considered": {
-                        "nb": 7,
+                        "nb": 6,
                         "bounce_rate": 50,
                         "pages_per_session": 1,
                         "average_session_duration": 10,
@@ -130,7 +130,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "goal_conversion_rate_all": 66.67
                     },
                     "google": {
-                        "nb": 7,
+                        "nb": 6,
                         "bounce_rate": 50,
                         "pages_per_session": 1,
                         "average_session_duration": 10,
