@@ -21,6 +21,7 @@ pip install elasticsearch==0.4.1
 pip install nose
 pip install BQL
 
+pip install python-google-analytics
 
 python setup.py install
 #ignore integration tests
