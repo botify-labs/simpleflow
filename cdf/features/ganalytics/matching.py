@@ -43,8 +43,7 @@ def get_urlid(visit_stream_entry,
         protocol_to_urlid = {protocol: urlid for protocol, urlid in candidates}
         https_urlid = protocol_to_urlid["https"]
         http_urlid = protocol_to_urlid["http"]
-        http_code = urlid_to_http_code.get(http_urlid, None)
-        if 300 <= http_code and http_code < 400:
+        if is_redirection(http_urlid, urlid_to_http_code):
             return https_urlid
         else:
             return http_urlid
@@ -66,3 +65,20 @@ def has_been_crawled(url_id, urlid_to_http_code):
     if http_code == 0:
         return False
     return True
+
+
+def is_redirection(url_id, urlid_to_http_code):
+    """Determine wheter or not a url is a redirection.
+    :param url_id: the consider url id
+    :type url_id: int
+    :param urlid_to_http_code: a dict url id -> http code
+    :type urlid_to_http_code: dict
+    :returns: bool
+    """
+    http_code = urlid_to_http_code.get(url_id, None)
+    if http_code is None:
+        return False
+    #do not consider urls that have not been crawled
+    if 300 <= http_code and http_code < 400:
+        return True
+    return False

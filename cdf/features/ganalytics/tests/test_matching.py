@@ -1,6 +1,8 @@
 import unittest
 
-from cdf.features.ganalytics.matching import get_urlid, has_been_crawled
+from cdf.features.ganalytics.matching import (get_urlid,
+                                              has_been_crawled,
+                                              is_redirection)
 
 class TestGetUrlid(unittest.TestCase):
     def setUp(self):
@@ -90,3 +92,27 @@ class TestHasBeenCrawled(unittest.TestCase):
     def test_unknown_urlid(self):
         urlid_to_http_code = {2: 0}
         self.assertFalse(has_been_crawled(3, urlid_to_http_code))
+
+
+class TestIsRedirection(unittest.TestCase):
+    def test_redirections(self):
+        urlid_to_http_code = {
+            3: 300,
+            4: 301,
+            5: 399,
+        }
+        self.assertTrue(is_redirection(3, urlid_to_http_code))
+        self.assertTrue(is_redirection(4, urlid_to_http_code))
+        self.assertTrue(is_redirection(5, urlid_to_http_code))
+
+    def test_not_redirection(self):
+        urlid_to_http_code = {
+            2: 200,
+            3: 404
+        }
+        self.assertFalse(is_redirection(2, urlid_to_http_code))
+        self.assertFalse(is_redirection(3, urlid_to_http_code))
+
+    def test_unknown_urlid(self):
+        urlid_to_http_code = {2: 0}
+        self.assertFalse(is_redirection(3, urlid_to_http_code))
