@@ -91,6 +91,7 @@ class InfosStreamDef(StreamDefBase):
         ('byte_size', int),
         ('delay_first_byte', int),
         ('delay_last_byte', int),
+        ('lang', str, {"default": "notset", "missing": "notset"})
     )
     URL_DOCUMENT_MAPPING = {
         "byte_size": {
@@ -153,6 +154,14 @@ class InfosStreamDef(StreamDefBase):
         "metadata.robots.noindex": {
             "type": BOOLEAN_TYPE,
             "settings": {AGG_CATEGORICAL}
+        },
+        "lang": {
+            "type": STRING_TYPE,
+            "settings": {
+                ES_NOT_ANALYZED,
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            }
         }
     }
 
