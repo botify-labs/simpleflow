@@ -111,19 +111,6 @@ class TestMappingGeneration(unittest.TestCase):
         }
         self.assertEqual(result['urls']['properties'], expectd)
 
-    def test_generation_all_mapping(self):
-        doc_type = 'urls'
-        target = NEW_MAPPING
-        es_backend = ElasticSearchBackend(get_urls_data_format_definition())
-        result = es_backend.mapping(doc_type=doc_type)
-
-        # check individual sub-dict
-        r = target['urls']['properties']
-        for k, v in result['urls']['properties'].iteritems():
-            self.assertEqual(v, r[k])
-        # check all
-        self.assertEqual(result, target)
-
     def test_default_value_look_up(self):
         data_format = {
             'string': {'type': 'string', 'settings': {'no_index'}},

@@ -16,7 +16,7 @@ import logging
 
 from cdf.log import logger
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
-from cdf.features.links.helpers.masks import list_to_mask, follow_mask
+from cdf.features.links.helpers.masks import list_to_mask
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.links.streams import OutlinksStreamDef, InlinksStreamDef, BadLinksStreamDef
 from cdf.features.semantic_metadata.streams import ContentsStreamDef, ContentsDuplicateStreamDef
@@ -199,9 +199,9 @@ class TestMetadataGeneration(unittest.TestCase):
 
     def test_metadata_duplicate(self):
         duplicates = [
-            [1, 1, 10, 3, True, [2, 3, 4]],
-            [2, 2, 1, 0, True, []],
-            [3, 4, 10, 3, False, [2, 3, 4]],
+            [1, 1, 10, 3, True, "2;3;4"],
+            [2, 2, 1, 0, True, ""],
+            [3, 4, 10, 3, False, "2;3;4"],
         ]
 
         gen = UrlDocumentGenerator([
@@ -247,11 +247,11 @@ class TestInlinksGeneration(unittest.TestCase):
 
         #format : dst_url_id link_type      follow? src_urlid
         inlinks = [
-            [1, 'a', ['follow'], 2],
-            [1, 'a', ['follow'], 2],
-            [1, 'a', ['follow'], 2],
-            [1, 'a', ['link'], 3],
-            [1, 'a', ['link_meta'], 3],
+            [1, 'a', list_to_mask(['follow']), 2],
+            [1, 'a', list_to_mask(['follow']), 2],
+            [1, 'a', list_to_mask(['follow']), 2],
+            [1, 'a', list_to_mask(['link']), 3],
+            [1, 'a', list_to_mask(['link_meta']), 3],
         ]
 
         gen = UrlDocumentGenerator([
@@ -299,17 +299,17 @@ class TestOutlinksGeneration(unittest.TestCase):
     def test_outlinks(self):
         #format : link_type      follow? src_urlid       dst_urlid       or_external_url
         outlinks = [
-            [1, 'a', ['follow'], 2, ''],
-            [1, 'a', ['link'], 3, ''],
-            [1, 'a', ['follow'], 4, ''],
-            [1, 'a', ['follow'], 4, ''],
-            [1, 'a', ['link'], 4, ''],
-            [1, 'a', ['follow'], -1, 'http://www.youtube.com'],
-            [1, 'a', ['follow'], -1, 'http://www.youtube.com'],
-            [3, 'a', ['follow'], -1, 'http://www.youtube.com'],
-            [3, 'a', ['robots', 'link'], 5, ''],
-            [3, 'a', ['robots', 'link'], 5, ''],
-            [3, 'a', ['link'], 6, ''],
+            [1, 'a', list_to_mask(['follow']), 2, ''],
+            [1, 'a', list_to_mask(['link']), 3, ''],
+            [1, 'a', list_to_mask(['follow']), 4, ''],
+            [1, 'a', list_to_mask(['follow']), 4, ''],
+            [1, 'a', list_to_mask(['link']), 4, ''],
+            [1, 'a', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
+            [1, 'a', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
+            [3, 'a', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
+            [3, 'a', list_to_mask(['robots', 'link']), 5, ''],
+            [3, 'a', list_to_mask(['robots', 'link']), 5, ''],
+            [3, 'a', list_to_mask(['link']), 6, ''],
         ]
 
         gen = UrlDocumentGenerator([
@@ -402,13 +402,13 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         #format : link_type      follow? src_urlid       dst_urlid       or_external_url
         outlinks = [
-            [1, 'a', ['follow'], 2, ''],
-            [1, 'a', ['link'], 2, ''],
-            [1, 'a', ['follow'], 2, ''],
-            [1, 'a', ['follow'], 3, ''],
+            [1, 'a', list_to_mask(['follow']), 2, ''],
+            [1, 'a', list_to_mask(['link']), 2, ''],
+            [1, 'a', list_to_mask(['follow']), 2, ''],
+            [1, 'a', list_to_mask(['follow']), 3, ''],
             # these 2 cases should be considered as internal link
-            [1, 'a', ['robots'], -1, 'www.site.com'],
-            [1, 'a', ['robots'], -1, 'www.site.com/abc'],
+            [1, 'a', list_to_mask(['robots']), -1, 'www.site.com'],
+            [1, 'a', list_to_mask(['robots']), -1, 'www.site.com/abc'],
         ]
 
         gen = UrlDocumentGenerator([
@@ -548,14 +548,14 @@ class TestRedirectsGeneration(unittest.TestCase):
 
         #format : link_type      follow? src_urlid       dst_urlid       or_external_url
         outlinks = [
-            [1, 'r301', ['follow'], 2, ''],
-            [2, 'r302', ['follow'], -1, 'http://www.youtube.com'],
-            [3, 'r301', ['follow'], 4, ''],
+            [1, 'r301', list_to_mask(['follow']), 2, ''],
+            [2, 'r302', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
+            [3, 'r301', list_to_mask(['follow']), 4, ''],
         ]
 
         inlinks = [
-            [2, 'r301', ['follow'], 1],
-            [4, 'r301', ['follow'], 3],
+            [2, 'r301', list_to_mask(['follow']), 1],
+            [4, 'r301', list_to_mask(['follow']), 3],
         ]
 
         gen = UrlDocumentGenerator([
@@ -604,7 +604,7 @@ class TestRedirectsGeneration(unittest.TestCase):
 
         #format : link_type      follow? dst_urlid       src_urlid
         inlinks = [
-            [1, 'r301', ['follow'], 2],
+            [1, 'r301', list_to_mask(['follow']), 2],
         ]
 
         gen = UrlDocumentGenerator([
@@ -652,18 +652,18 @@ class TestCanonicalGeneration(unittest.TestCase):
         ]
 
         outlinks = [
-            [1, 'canonical', ['follow'], 2, ''],
-            [2, 'canonical', ['follow'], 2, ''],
-            [3, 'canonical', ['follow'], -1, 'http://www.youtube.com'],
-            [4, 'canonical', ['follow'], 5, ''],
+            [1, 'canonical', list_to_mask(['follow']), 2, ''],
+            [2, 'canonical', list_to_mask(['follow']), 2, ''],
+            [3, 'canonical', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
+            [4, 'canonical', list_to_mask(['follow']), 5, ''],
             # Check that we take only the first canonical for url 4
-            [4, 'canonical', ['follow'], 6, ''],
+            [4, 'canonical', list_to_mask(['follow']), 6, ''],
         ]
 
         inlinks = [
-            [2, 'canonical', ['follow'], 1],
-            [2, 'canonical', ['follow'], 2],
-            [5, 'canonical', ['follow'], 4],
+            [2, 'canonical', list_to_mask(['follow']), 1],
+            [2, 'canonical', list_to_mask(['follow']), 2],
+            [5, 'canonical', list_to_mask(['follow']), 4],
         ]
 
         gen = UrlDocumentGenerator([
