@@ -1,5 +1,17 @@
 from cdf.log import logger
 
+import collections
+
+MATCHING_STATUS = collections.namedtuple('MATCHING_STATUS', [
+    'OK',  # one corresponding url id has been found
+    'AMBIGUOUS',  # more than one corresponding url id have been found
+    'NOT_FOUND'  # no corresponding url id has been found
+])(
+    OK='ok',
+    AMBIGUOUS='ambiguous',
+    NOT_FOUND='not found'
+)
+
 
 def get_urlid(visit_stream_entry,
               url_to_id,
@@ -11,6 +23,9 @@ def get_urlid(visit_stream_entry,
     If none exist, it returns None.
     If both exist, it returns https id if the http is a redirection
     and http id in all other case.
+    The function returns a tuple (urlid, matching_status)
+    The first is the urlid that has matched (None if no urlid has been found),
+    The second indicates whether or not there was an ambiguity.
     :param visit_stream_entry: an entry from the visit stream.
     :type visit_stream_entry: list
     :param url_to_id: the dict url -> urlid
@@ -35,10 +50,10 @@ def get_urlid(visit_stream_entry,
 
     #make a decision
     if len(candidates) == 0:
-        return None
+        return None, MATCHING_STATUS.NOT_FOUND
     elif len(candidates) == 1:
         protocol, urlid = candidates[0]
-        return urlid
+        return urlid, MATCHING_STATUS.OK
     elif len(candidates) == 2:
         candidates_no_redirection = [
             (protocol, urlid) for protocol, urlid in candidates if
@@ -46,11 +61,11 @@ def get_urlid(visit_stream_entry,
         ]
         if len(candidates_no_redirection) == 1:
             protocol, urlid = candidates_no_redirection[0]
-            return urlid
+            return urlid, MATCHING_STATUS.OK
         else:
             protocol_to_urlid = {protocol: urlid for protocol, urlid in candidates}
             http_urlid = protocol_to_urlid["http"]
-            return http_urlid
+            return http_urlid, MATCHING_STATUS.AMBIGUOUS
     return None
 
 
