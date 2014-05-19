@@ -12,8 +12,7 @@ class RawVisitsStreamDef(StreamDefBase):
         ('medium', str),
         ('source', str),
         ('social_network', lambda i: i.lower() if i != '(not set)' else None),
-        ('nb_visits', int),
-        ('sessions', int),
+        ('nb', int),
         ('bounces', int),
         ('page_views', int),
         ('session_duration', float),
@@ -128,7 +127,6 @@ class VisitsStreamDef(StreamDefBase):
         ('source', str),
         ('social_network', str),
         ('nb', int),
-        ('sessions', int),
         ('bounces', int),
         ('page_views', int),
         ('session_duration', float),
@@ -151,7 +149,6 @@ class VisitsStreamDef(StreamDefBase):
 
     _RAW_METRICS = [
         "nb",
-        "sessions",
         "bounces",
         "page_views",
         "session_duration",
@@ -257,7 +254,7 @@ class VisitsStreamDef(StreamDefBase):
                                     source
         :type traffic_source_data: dict
         """
-        sessions = input_dict["sessions"]
+        sessions = input_dict["nb"]
         l = VisitsStreamDef._CALCULATED_METRICS
         for calculated_metric_name, averaging_function, raw_metric_name in l:
             raw_metric = input_dict[raw_metric_name]
