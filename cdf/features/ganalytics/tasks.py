@@ -1,10 +1,10 @@
 import os
+import gzip
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.main.utils import get_url_to_id_dict_from_stream
 from cdf.features.ganalytics.streams import (RawVisitsStreamDef,
-                                             VisitsStreamDef,
-                                             AmbiguousVisitsStreamDef)
+                                             VisitsStreamDef)
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.utils import s3
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
@@ -60,21 +60,39 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
 
     url_to_id = get_url_to_id_dict_from_stream(id_stream)
     dataset = VisitsStreamDef.create_temporary_dataset()
-    ambiguous_urls_dataset = AmbiguousVisitsStreamDef.create_temporary_dataset()
 
-    stream = RawVisitsStreamDef.get_stream_from_s3_path(os.path.join(s3_uri, 'analytics.data.gz'), tmp_dir=tmp_dir, force_fetch=force_fetch)
-    for entry in stream:
-        url_id, matching_status = get_urlid(entry, url_to_id, urlid_to_http_code)
-        if url_id:
-            dataset_entry = list(entry)
-            dataset_entry[0] = url_id
-            dataset.append(*dataset_entry)
-            if matching_status == MATCHING_STATUS.AMBIGUOUS:
-                ambiguous_urls_dataset.append(*dataset_entry)
+    #create a gzip file to store ambiguous visits
+    #we cannot use stream defs as the entries do not have any urlids
+    #(by definition)
+    #thus they cannot be split.
+    ambiguous_urls_filename = 'ambiguous_urls_dataset.gz'
+    ambiguous_urls_filepath = os.path.join(tmp_dir,
+                                           ambiguous_urls_filename)
 
-    ambiguous_urls_dataset.persist_to_s3(s3_uri,
-                                         first_part_id_size=first_part_id_size,
-                                         part_id_size=part_id_size)
+    with gzip.open(ambiguous_urls_filepath, 'wb') as ambiguous_urls_file:
+
+        stream = RawVisitsStreamDef.get_stream_from_s3_path(
+            os.path.join(s3_uri, 'analytics.data.gz'),
+            tmp_dir=tmp_dir,
+            force_fetch=force_fetch
+        )
+        for entry in stream:
+            url_id, matching_status = get_urlid(entry, url_to_id, urlid_to_http_code)
+            if url_id:
+                dataset_entry = list(entry)
+                dataset_entry[0] = url_id
+                dataset.append(*dataset_entry)
+                #store ambiguous url ids
+                if matching_status == MATCHING_STATUS.AMBIGUOUS:
+                    line = "\t".join([str(i) for i in entry])
+                    line = "{}\n".format(line)
+                    line = unicode(line)
+                    ambiguous_urls_file.write(line)
+
+    s3.push_file(
+        os.path.join(s3_uri, ambiguous_urls_filename),
+        ambiguous_urls_filepath
+    )
     dataset.persist_to_s3(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)

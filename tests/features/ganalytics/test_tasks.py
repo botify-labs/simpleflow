@@ -7,8 +7,7 @@ import shutil
 from mock import patch
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
-from cdf.features.ganalytics.streams import (VisitsStreamDef,
-                                             AmbiguousVisitsStreamDef)
+from cdf.features.ganalytics.streams import VisitsStreamDef
 from cdf.features.ganalytics.tasks import (match_analytics_to_crawl_urls,
                                           get_urlid)
 from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
@@ -87,11 +86,6 @@ class TestTasks(unittest.TestCase):
         )
 
         #check ambiguous visits
-        self.assertEquals(
-            #
-            list(AmbiguousVisitsStreamDef.get_stream_from_s3(self.s3_dir, tmp_dir=self.tmp_dir)),
-            [
-                [4, "organic", "google", 'None', 11, 4, 15, 54, 8, 8],
-            ]
-        )
-
+        with gzip.open(os.path.join(self.s3_dir[5:], 'ambiguous_urls_dataset.gz')) as f:
+            expected_result = ['www.site.com/4\torganic\tgoogle\tNone\t11\t4\t15\t54.0\t8\t8\n']
+            self.assertEquals(expected_result, f.readlines())
