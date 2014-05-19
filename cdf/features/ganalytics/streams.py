@@ -53,8 +53,40 @@ def _get_url_document_mapping(organic_sources, social_sources, metrics):
                     in the mapping;
                     It is given as a list of strings.
     :type metrics: list
+    :returns: dict
     """
     result = {}
+
+    if len(organic_sources) > 0:
+        _update_document_mapping(result,
+                                 "organic",
+                                 organic_sources,
+                                 metrics)
+
+    if len(social_sources) > 0:
+        _update_document_mapping(result,
+                                 "social",
+                                 social_sources,
+                                 metrics)
+    return result
+
+
+def _update_document_mapping(mapping, medium, sources, metrics):
+    """Helper function to update a mapping for VisitsStreamDef for a given
+    medium.
+    :param mapping: the mapping to update
+    :type mapping: dict
+    :param medium: the medium to use to update the mapping
+    :type medium: str
+    :param sources: the list of sources to consider
+                    each traffic source is represented as a string.
+    :type sources: list
+    :param metrics: the list of metrics to be included in the mapping,
+                    in addition to the number of visits which is always
+                    in the mapping;
+                    It is given as a list of strings.
+    :type metrics: list
+    """
     int_entry = {
         "type": INT_TYPE,
         "settings": {
@@ -70,40 +102,22 @@ def _get_url_document_mapping(organic_sources, social_sources, metrics):
         }
     }
 
-    if len(organic_sources) > 0:
-        #create a key prefix for organic traffic
-        organic_key_prefixes = [
-            "visits.organic.all",
-            "visits.organic.considered"
-        ]
-        #and one for each considered search engine
-        for search_engine in organic_sources:
-            organic_key_prefixes.append("visits.organic.{}".format(search_engine))
+    #create a key prefix for current medium
+    key_prefixes = [
+        "visits.{}.all".format(medium),
+        "visits.{}.considered".format(medium)
+    ]
 
-        for key_prefix in organic_key_prefixes:
-            key = "{}.nb".format(key_prefix)
-            result[key] = dict(int_entry)
-            for metric in metrics:
-                key = "{}.{}".format(key_prefix, metric)
-                result[key] = dict(float_entry)
+    #and one for each considered source
+    for source in sources:
+        key_prefixes.append("visits.{}.{}".format(medium, source))
 
-    if len(social_sources) > 0:
-        #create a key prefix for social traffic
-        social_key_prefixes = [
-            "visits.social.all",
-            "visits.social.considered"
-        ]
-        #and one for each considered social network
-        for social_network in social_sources:
-            social_key_prefixes.append("visits.social.{}".format(social_network))
-
-        for key_prefix in social_key_prefixes:
-            key = "{}.nb".format(key_prefix)
-            result[key] = dict(int_entry)
-            for metric in metrics:
-                key = "{}.{}".format(key_prefix, metric)
-                result[key] = dict(float_entry)
-    return result
+    for key_prefix in key_prefixes:
+        key = "{}.nb".format(key_prefix)
+        mapping[key] = dict(int_entry)
+        for metric in metrics:
+            key = "{}.{}".format(key_prefix, metric)
+            mapping[key] = dict(float_entry)
 
 
 class VisitsStreamDef(StreamDefBase):

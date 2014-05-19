@@ -6,7 +6,8 @@ from cdf.metadata.url.url_metadata import (
 from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 from cdf.features.ganalytics.streams import (VisitsStreamDef,
                                              _iterate_sources,
-                                             _get_url_document_mapping)
+                                             _get_url_document_mapping,
+                                             _update_document_mapping)
 
 
 class TestIterateSources(unittest.TestCase):
@@ -32,8 +33,9 @@ class TestIterateSources(unittest.TestCase):
         self.assertEqual(expected_result, list(_iterate_sources()))
 
 
-class TestGetUrlDocumentMapping(unittest.TestCase):
-    def test_get_url_document_mapping_organic_parameter(self):
+class TestUpdateDocumentMapping(unittest.TestCase):
+    def test_update_document_mapping_sources_parameter(self):
+        mapping = {}
         expected_mapping = {
             "visits.organic.all.nb": {
                 "type": INT_TYPE,
@@ -65,53 +67,13 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
             },
         }
         organic_sources = ["google", "yahoo"]
-        social_sources = []
         metrics = []
-        actual_mapping = _get_url_document_mapping(organic_sources,
-                                                   social_sources,
-                                                   metrics)
-        self.assertEqual(expected_mapping, actual_mapping)
+        _update_document_mapping(mapping, "organic",
+                                 organic_sources, metrics)
+        self.assertEqual(expected_mapping, mapping)
 
-    def test_get_url_document_mapping_social_parameter(self):
-        expected_mapping = {
-            "visits.social.all.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.considered.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.facebook.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.twitter.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-        }
-        organic_sources = []
-        social_sources = ["facebook", "twitter"]
-        metrics = []
-        actual_mapping = _get_url_document_mapping(organic_sources,
-                                                   social_sources,
-                                                   metrics)
-        self.assertEqual(expected_mapping, actual_mapping)
-
-    def test_get_url_document_mapping_organic_social_parameters(self):
+    def test_update_document_mapping_empty_sources_parameter(self):
+        mapping = {}
         expected_mapping = {
             "visits.organic.all.nb": {
                 "type": INT_TYPE,
@@ -126,45 +88,16 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
                     ES_DOC_VALUE,
                     AGG_NUMERICAL
                 }
-            },
-            "visits.organic.google.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.all.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.considered.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.social.twitter.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
+            }
         }
-        organic_sources = ["google"]
-        social_sources = ["twitter"]
+        organic_sources = []
         metrics = []
-        actual_mapping = _get_url_document_mapping(organic_sources,
-                                                   social_sources,
-                                                   metrics)
-        self.assertEqual(expected_mapping, actual_mapping)
+        _update_document_mapping(mapping, "organic",
+                                 organic_sources, metrics)
+        self.assertEqual(expected_mapping, mapping)
 
-    def test_get_url_document_mapping_metrics_parameters(self):
+    def test_update_document_mapping_metrics_parameters(self):
+        mapping = {}
         expected_mapping = {
             "visits.organic.all.nb": {
                 "type": INT_TYPE,
@@ -207,36 +140,52 @@ class TestGetUrlDocumentMapping(unittest.TestCase):
                     ES_DOC_VALUE,
                     AGG_NUMERICAL
                 }
-            },
-            "visits.organic.google.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.google.bounce_rate": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.google.pages_per_session": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
             }
         }
-        organic_sources = ["google"]
-        social_sources = []
+        organic_sources = []
         metrics = ["bounce_rate", "pages_per_session"]
+        _update_document_mapping(mapping, "organic",
+                                 organic_sources, metrics)
+        self.assertEqual(expected_mapping, mapping)
+
+
+class TestGetUrlDocumentMapping(unittest.TestCase):
+    @mock.patch("cdf.features.ganalytics.streams._update_document_mapping")
+    def test_get_url_document_mapping_organic_parameter(self, mock):
+        organic_sources = ["google", "yahoo"]
+        social_sources = []
+        metrics = []
         actual_mapping = _get_url_document_mapping(organic_sources,
                                                    social_sources,
                                                    metrics)
-        self.assertEqual(expected_mapping, actual_mapping)
+        self.assertIsInstance(actual_mapping, dict)
+        mock.assert_called_once_with({}, "organic", ["google", "yahoo"], [])
+
+    @mock.patch("cdf.features.ganalytics.streams._update_document_mapping")
+    def test_get_url_document_mapping_social_parameter(self, mock):
+        organic_sources = []
+        social_sources = ["facebook", "twitter"]
+        metrics = []
+        actual_mapping = _get_url_document_mapping(organic_sources,
+                                                   social_sources,
+                                                   metrics)
+        self.assertIsInstance(actual_mapping, dict)
+        mock.assert_called_once_with({}, "social", ["facebook", "twitter"], [])
+
+    @mock.patch("cdf.features.ganalytics.streams._update_document_mapping")
+    def test_get_url_document_mapping_nominal_case(self, mock):
+        organic_sources = ["google"]
+        social_sources = ["twitter"]
+        metrics = ["bounces"]
+        actual_mapping = _get_url_document_mapping(organic_sources,
+                                                   social_sources,
+                                                   metrics)
+        self.assertIsInstance(actual_mapping, dict)
+        expected_calls = [
+            mock.call({}, "organic", ["google"], []),
+            mock.call({}, "social", ["twitter"], [])
+        ]
+        mock.assert_call_with(expected_calls)
 
 
 class TestVisitsStreamDef(unittest.TestCase):
