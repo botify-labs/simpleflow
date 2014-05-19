@@ -2,7 +2,9 @@ import os
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.main.utils import get_url_to_id_dict_from_stream
-from cdf.features.ganalytics.streams import RawVisitsStreamDef, VisitsStreamDef
+from cdf.features.ganalytics.streams import (RawVisitsStreamDef,
+                                             VisitsStreamDef,
+                                             AmbiguousVisitsStreamDef)
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.utils import s3
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
@@ -11,7 +13,7 @@ from cdf.core.decorators import feature_enabled
 from analytics.import_analytics import import_data
 
 from cdf.utils.auth import get_credentials
-from cdf.features.ganalytics.matching import get_urlid
+from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
 
 @with_temporary_dir
 @feature_enabled('ganalytics')
@@ -58,13 +60,21 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
 
     url_to_id = get_url_to_id_dict_from_stream(id_stream)
     dataset = VisitsStreamDef.create_temporary_dataset()
+    ambiguous_urls_dataset = AmbiguousVisitsStreamDef.create_temporary_dataset()
 
     stream = RawVisitsStreamDef.get_stream_from_s3_path(os.path.join(s3_uri, 'analytics.data.gz'), tmp_dir=tmp_dir, force_fetch=force_fetch)
     for entry in stream:
-        url_id = get_urlid(entry, url_to_id, urlid_to_http_code)
+        url_id, matching_status = get_urlid(entry, url_to_id, urlid_to_http_code)
         if url_id:
             dataset_entry = list(entry)
             dataset_entry[0] = url_id
             dataset.append(*dataset_entry)
+            if matching_status == MATCHING_STATUS.AMBIGUOUS:
+                ambiguous_urls_dataset.append(*dataset_entry)
 
-    dataset.persist_to_s3(s3_uri, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
+    ambiguous_urls_dataset.persist_to_s3(s3_uri,
+                                         first_part_id_size=first_part_id_size,
+                                         part_id_size=part_id_size)
+    dataset.persist_to_s3(s3_uri,
+                          first_part_id_size=first_part_id_size,
+                          part_id_size=part_id_size)

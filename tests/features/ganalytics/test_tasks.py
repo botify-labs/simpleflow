@@ -7,7 +7,8 @@ import shutil
 from mock import patch
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
-from cdf.features.ganalytics.streams import VisitsStreamDef
+from cdf.features.ganalytics.streams import (VisitsStreamDef,
+                                             AmbiguousVisitsStreamDef)
 from cdf.features.ganalytics.tasks import (match_analytics_to_crawl_urls,
                                           get_urlid)
 from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
@@ -46,6 +47,7 @@ class TestTasks(unittest.TestCase):
         f.append(4, "http", "www.site.com", "/4", "")
         f.append(5, "http", "www.site.com", "/5", "?sid=5")
         f.append(6, "http", "www.site.com", "/6", "")
+        f.append(7, "https", "www.site.com", "/4", "")  # ambiguous url (http version exists)
         f.persist_to_s3(self.s3_dir, first_part_id_size=self.first_part_id_size, part_id_size=self.part_id_size)
         ('id', int),
         ('infos_mask', int),
@@ -64,6 +66,7 @@ class TestTasks(unittest.TestCase):
         f.append(4, 0, "", 0, 0, 200, 0, 0, 0)
         f.append(5, 0, "", 0, 0, 200, 0, 0, 0)
         f.append(6, 0, "", 0, 0, 200, 0, 0, 0)
+        f.append(7, 0, "", 0, 0, 200, 0, 0, 0)  # ambiguous url has code 200
         f.persist_to_s3(self.s3_dir, first_part_id_size=self.first_part_id_size, part_id_size=self.part_id_size)
 
         match_analytics_to_crawl_urls(self.s3_dir,
@@ -80,6 +83,15 @@ class TestTasks(unittest.TestCase):
                 [3, "organic", "google", 'None', 8, 1, 8, 5, 5, 5],
                 [4, "organic", "google", 'None', 11, 4, 15, 54, 8, 8],
                 [5, "organic", "google", 'None', 30, 25, 32, 100, 16, 25],
+            ]
+        )
+
+        #check ambiguous visits
+        self.assertEquals(
+            #
+            list(AmbiguousVisitsStreamDef.get_stream_from_s3(self.s3_dir, tmp_dir=self.tmp_dir)),
+            [
+                [4, "organic", "google", 'None', 11, 4, 15, 54, 8, 8],
             ]
         )
 
