@@ -1,7 +1,8 @@
 import unittest
 
-from cdf.features.ganalytics.matching import get_urlid
-
+from cdf.features.ganalytics.matching import (get_urlid,
+                                              has_been_crawled,
+                                              is_redirection)
 
 class TestGetUrlid(unittest.TestCase):
     def setUp(self):
@@ -63,7 +64,17 @@ class TestGetUrlid(unittest.TestCase):
         }
 
         entry = ["foo.com"]
-        #http is not a redirection so we should return http url (by default)
+        #https a redirection so we should return http url
+        self.assertEqual(0, get_urlid(entry, self.url_to_id, id_to_http_code))
+
+    def test_ambiguity_http_https_not_redirections(self):
+        id_to_http_code = {
+            0: 200,
+            1: 200
+        }
+        entry = ["foo.com"]
+        #http and https are not redirections,
+        #so we should return http url (by default)
         self.assertEqual(0, get_urlid(entry, self.url_to_id, id_to_http_code))
 
     def test_unexisting_url(self):
@@ -71,3 +82,47 @@ class TestGetUrlid(unittest.TestCase):
         actual_result = get_urlid(entry, self.url_to_id,
                                   self.url_to_id)
         self.assertIsNone(actual_result)
+
+
+class TestHasBeenCrawled(unittest.TestCase):
+    def test_crawled_url(self):
+        urlid_to_http_code = {
+            2: 200,
+            3: 301,
+            4: 404
+        }
+        self.assertTrue(has_been_crawled(2, urlid_to_http_code))
+        self.assertTrue(has_been_crawled(3, urlid_to_http_code))
+        self.assertTrue(has_been_crawled(4, urlid_to_http_code))
+
+    def test_non_crawled_url(self):
+        urlid_to_http_code = {2: 0}
+        self.assertFalse(has_been_crawled(2, urlid_to_http_code))
+
+    def test_unknown_urlid(self):
+        urlid_to_http_code = {2: 0}
+        self.assertFalse(has_been_crawled(3, urlid_to_http_code))
+
+
+class TestIsRedirection(unittest.TestCase):
+    def test_redirections(self):
+        urlid_to_http_code = {
+            3: 300,
+            4: 301,
+            5: 399,
+        }
+        self.assertTrue(is_redirection(3, urlid_to_http_code))
+        self.assertTrue(is_redirection(4, urlid_to_http_code))
+        self.assertTrue(is_redirection(5, urlid_to_http_code))
+
+    def test_not_redirection(self):
+        urlid_to_http_code = {
+            2: 200,
+            3: 404
+        }
+        self.assertFalse(is_redirection(2, urlid_to_http_code))
+        self.assertFalse(is_redirection(3, urlid_to_http_code))
+
+    def test_unknown_urlid(self):
+        urlid_to_http_code = {2: 0}
+        self.assertFalse(is_redirection(3, urlid_to_http_code))

@@ -29,15 +29,6 @@ def get_urlid(visit_stream_entry,
             continue
         candidates.append((protocol, url_id))
 
-    def has_been_crawled(url_id, urlid_to_http_code):
-        http_code = urlid_to_http_code.get(url_id, None)
-        if http_code is None:
-            return False
-        #do not consider urls that have not been crawled
-        if http_code == 0:
-            return False
-        return True
-
     #remove candidates that have not been crawled
     candidates = [(protocol, urlid) for protocol, urlid in candidates if
                   has_been_crawled(urlid, urlid_to_http_code)]
@@ -49,12 +40,49 @@ def get_urlid(visit_stream_entry,
         protocol, urlid = candidates[0]
         return urlid
     elif len(candidates) == 2:
-        protocol_to_urlid = {protocol: urlid for protocol, urlid in candidates}
-        https_urlid = protocol_to_urlid["https"]
-        http_urlid = protocol_to_urlid["http"]
-        http_code = urlid_to_http_code.get(http_urlid, None)
-        if 300 <= http_code and http_code < 400:
-            return https_urlid
+        candidates_no_redirection = [
+            (protocol, urlid) for protocol, urlid in candidates if
+            not is_redirection(urlid, urlid_to_http_code)
+        ]
+        if len(candidates_no_redirection) == 1:
+            protocol, urlid = candidates_no_redirection[0]
+            return urlid
         else:
+            protocol_to_urlid = {protocol: urlid for protocol, urlid in candidates}
+            http_urlid = protocol_to_urlid["http"]
             return http_urlid
     return None
+
+
+def has_been_crawled(url_id, urlid_to_http_code):
+    """Determine whether or not a url has been crawled
+    :param url_id: the consider url id
+    :type url_id: int
+    :param urlid_to_http_code: a dict url id -> http code
+    :type urlid_to_http_code: dict
+    :returns: bool
+    """
+    http_code = urlid_to_http_code.get(url_id, None)
+    if http_code is None:
+        return False
+    #do not consider urls that have not been crawled
+    if http_code == 0:
+        return False
+    return True
+
+
+def is_redirection(url_id, urlid_to_http_code):
+    """Determine wheter or not a url is a redirection.
+    :param url_id: the consider url id
+    :type url_id: int
+    :param urlid_to_http_code: a dict url id -> http code
+    :type urlid_to_http_code: dict
+    :returns: bool
+    """
+    http_code = urlid_to_http_code.get(url_id, None)
+    if http_code is None:
+        return False
+    #do not consider urls that have not been crawled
+    if 300 <= http_code and http_code < 400:
+        return True
+    return False
