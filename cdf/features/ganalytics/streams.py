@@ -280,7 +280,7 @@ class VisitsStreamDef(StreamDefBase):
                 del traffic_source_data[key]
 
 
-class AmbiguousVisitsStreamDef(VisitsStreamDef):
+class AmbiguousVisitsStreamDef(RawVisitsStreamDef):
     """A stream to represent ambiguous visits in Google Analytics
     Ambiguous urls are visits urls for which we could not determine
     what their actual protocol (http or https) is.
