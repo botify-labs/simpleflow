@@ -450,7 +450,6 @@ class InlinksStreamDef(InlinksRawStreamDef):
         if link_type == "a":
             is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
             mask = list_to_mask(follow_keys)
-
             inlink_nb = document['inlinks_internal']['nb']
             inlink_nb['total'] += 1
 

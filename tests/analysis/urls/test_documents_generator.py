@@ -251,7 +251,7 @@ class TestInlinksGeneration(unittest.TestCase):
             [1, 'a', list_to_mask(['follow']), 2],
             [1, 'a', list_to_mask(['follow']), 2],
             [1, 'a', list_to_mask(['link']), 3],
-            [1, 'a', list_to_mask(['link_meta']), 3],
+            [1, 'a', list_to_mask(['link', 'meta']), 3],
         ]
 
         gen = UrlDocumentGenerator([
@@ -276,7 +276,7 @@ class TestInlinksGeneration(unittest.TestCase):
         expected_inlinks = [
             [2, list_to_mask(['follow'])],
             [3, list_to_mask(['link'])],
-            [3, list_to_mask(['link_meta'])]
+            [3, list_to_mask(['link', 'meta'])]
         ]
         self.assertEquals(inlinks['urls'], expected_inlinks)
         self.assertEquals(inlinks['urls_exists'], True)
