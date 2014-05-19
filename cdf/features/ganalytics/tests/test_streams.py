@@ -292,28 +292,52 @@ class TestVisitsStreamDef(unittest.TestCase):
         self.assertEqual(expected_mapping,
                          VisitsStreamDef.URL_DOCUMENT_MAPPING)
 
-    def test_ignore_stream_line(self):
-        stream = [0, "organic", "google", "None"]
-        self.assertFalse(VisitsStreamDef().ignore_stream_line(stream))
+    def test_update_entry(self):
+        entry = {
+            "nb": 1,
+            "sessions": 2,
+            "bounces": 3,
+            "page_views": 4,
+            "session_duration": 5,
+            "new_users": 6,
+            "goal_completions_all": 7
+        }
+        stream_line = [0, "organic", "google", "None", 7, 6, 5, 4, 3, 2, 1]
 
-        #ignored search engine
+        expected_result = {
+            "nb": 8,
+            "sessions": 8,
+            "bounces": 8,
+            "page_views": 8,
+            "session_duration": 8,
+            "new_users": 8,
+            "goal_completions_all": 8
+        }
+        VisitsStreamDef().update_entry(entry, stream_line)
+        self.assertEquals(expected_result, entry)
+
+    def test_consider_source(self):
+        stream = [0, "organic", "google", "None"]
+        self.assertTrue(VisitsStreamDef().consider_source(stream))
+
+        #considerd search engine
         stream = [0, "organic", "foo", "None"]
-        self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertFalse(VisitsStreamDef().consider_source(stream))
 
         #non organic google traffic
         stream = [0, "(cpc)", "google", "None"]
-        self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertFalse(VisitsStreamDef().consider_source(stream))
 
         stream = [0, "social", "twitter.com", "twitter"]
-        self.assertFalse(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertTrue(VisitsStreamDef().consider_source(stream))
 
         #non "social" traffic from a social network
         stream = [0, "referral", "t.co", "twitter"]
-        self.assertFalse(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertTrue(VisitsStreamDef().consider_source(stream))
 
-        #ignored social network
+        #considerd social network
         stream = [0, "social", "twitter.com", "foo"]
-        self.assertTrue(VisitsStreamDef().ignore_stream_line(stream))
+        self.assertFalse(VisitsStreamDef().consider_source(stream))
 
     def test_get_visit_medium_source(self):
         stream = [0, "organic", "google", "None"]
