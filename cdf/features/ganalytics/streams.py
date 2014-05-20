@@ -28,13 +28,11 @@ def _iterate_sources():
     """
     if len(ORGANIC_SOURCES) > 0:
         yield "organic", "all"
-        yield "organic", "considered"
         for search_engine in ORGANIC_SOURCES:
             yield "organic", search_engine
 
     if len(SOCIAL_SOURCES) > 0:
         yield "social", "all"
-        yield "social", "considered"
         for social_network in SOCIAL_SOURCES:
             yield "social", social_network
 
@@ -104,7 +102,6 @@ def _update_document_mapping(mapping, medium, sources, metrics):
     #create a key prefix for current medium
     key_prefixes = [
         "visits.{}.all".format(medium),
-        "visits.{}.considered".format(medium)
     ]
 
     #and one for each considered source
@@ -179,11 +176,6 @@ class VisitsStreamDef(StreamDefBase):
 
         if not self.consider_source(stream):
             return
-
-        #update aggregate field "considered" that represents the considered
-        #sources
-        considered_entry = document['visits'][visit_medium]["considered"]
-        self.update_entry(considered_entry, stream)
 
         #update the field corresponding to the current source
         current_entry = document['visits'][visit_medium][visit_source]

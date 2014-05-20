@@ -20,12 +20,10 @@ class TestIterateSources(unittest.TestCase):
     def test_nominal_case(self):
         expected_result = [
             ("organic", "all"),
-            ("organic", "considered"),
             ("organic", "google"),
             ("organic", "bing"),
             ("organic", "yahoo"),
             ("social", "all"),
-            ("social", "considered"),
             ("social", "facebook"),
             ("social", "twitter"),
             ("social", "pinterest")
@@ -38,13 +36,6 @@ class TestUpdateDocumentMapping(unittest.TestCase):
         mapping = {}
         expected_mapping = {
             "visits.organic.all.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.considered.nb": {
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
@@ -81,13 +72,6 @@ class TestUpdateDocumentMapping(unittest.TestCase):
                     ES_DOC_VALUE,
                     AGG_NUMERICAL
                 }
-            },
-            "visits.organic.considered.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
             }
         }
         organic_sources = []
@@ -114,27 +98,6 @@ class TestUpdateDocumentMapping(unittest.TestCase):
                 }
             },
             "visits.organic.all.pages_per_session": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.considered.nb": {
-                "type": INT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.considered.bounce_rate": {
-                "type": FLOAT_TYPE,
-                "settings": {
-                    ES_DOC_VALUE,
-                    AGG_NUMERICAL
-                }
-            },
-            "visits.organic.considered.pages_per_session": {
                 "type": FLOAT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
@@ -212,14 +175,12 @@ class TestVisitsStreamDef(unittest.TestCase):
             {
                 "organic": {
                     "all": dict(entry),
-                    "considered": dict(entry),
                     "google": dict(entry),
                     "bing": dict(entry),
                     "yahoo": dict(entry)
                 },
                 "social": {
                     "all": dict(entry),
-                    "considered": dict(entry),
                     "facebook": dict(entry),
                     "twitter": dict(entry),
                     "pinterest": dict(entry)
@@ -315,14 +276,6 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "new_users": 5,
                         "goal_completions_all": 6
                     },
-                    "considered": {
-                        "nb": 0,
-                        "bounces": 0,
-                        "page_views": 0,
-                        "session_duration": 0,
-                        "new_users": 0,
-                        "goal_completions_all": 0
-                    },
                     "google": {
                         "nb": 6,
                         "bounces": 5,
@@ -346,14 +299,6 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "session_duration": 8,
                         "new_users": 10,
                         "goal_completions_all": 12
-                    },
-                    "considered": {
-                        "nb": 1,
-                        "bounces": 2,
-                        "page_views": 3,
-                        "session_duration": 4,
-                        "new_users": 5,
-                        "goal_completions_all": 6
                     },
                     "google": {
                         "nb": 7,
@@ -381,14 +326,6 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "new_users": 5,
                         "goal_completions_all": 6
                     },
-                    "considered": {
-                        "nb": 0,
-                        "bounces": 0,
-                        "page_views": 0,
-                        "session_duration": 0,
-                        "new_users": 0,
-                        "goal_completions_all": 0
-                    },
                     "google": {
                         "nb": 6,
                         "bounces": 5,
@@ -413,14 +350,6 @@ class TestVisitsStreamDef(unittest.TestCase):
                         "session_duration": 8,
                         "new_users": 10,
                         "goal_completions_all": 12
-                    },
-                    "considered": {
-                        "nb": 0,
-                        "bounces": 0,
-                        "page_views": 0,
-                        "session_duration": 0,
-                        "new_users": 0,
-                        "goal_completions_all": 0
                     },
                     "google": {
                         "nb": 6,
