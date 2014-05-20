@@ -20,7 +20,7 @@ class IdStreamDef(StreamDefBase):
         ('path', str),
         ('query_string', str),
     )
-    URL_DOCUMENT_DEFAULT_GROUP = "metrics"
+    URL_DOCUMENT_DEFAULT_GROUP = "scheme"
     URL_DOCUMENT_MAPPING = {
         # url property data
         "url": {
@@ -104,8 +104,10 @@ class InfosStreamDef(StreamDefBase):
         ('delay_last_byte', int),
         ('lang', str, {"default": "notset", "missing": "notset"})
     )
+    URL_DOCUMENT_DEFAULT_GROUP = "main"
     URL_DOCUMENT_MAPPING = {
         "byte_size": {
+            "verbose_name": "Byte Size",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -113,6 +115,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "http_code": {
+            "verbose_name": "Http Code",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -122,10 +125,12 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "date_crawled": {
+            "verbose_name": "Date crawled",
             "type": DATE_TYPE,
             "settings": {ES_DOC_VALUE}
         },
         "delay_first_byte": {
+            "verbose_name": "Delay first byte received",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -133,6 +138,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "delay_last_byte": {
+            "verbose_name": "Delay total",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -140,6 +146,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "depth": {
+            "verbose_name": "Depth",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -148,8 +155,12 @@ class InfosStreamDef(StreamDefBase):
                 AGG_NUMERICAL
             }
         },
-        "gzipped": {"type": BOOLEAN_TYPE},
+        "gzipped": {
+            "verbose_name": "Url compressed",
+            "type": BOOLEAN_TYPE,
+        },
         "content_type": {
+            "verbose_name": "Content-type",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -159,14 +170,17 @@ class InfosStreamDef(StreamDefBase):
         },
         # meta tag related
         "metadata.robots.nofollow": {
+            "verbose_name": "Has robots anchors as `nofollow`",
             "type": BOOLEAN_TYPE,
             "settings": {AGG_CATEGORICAL}
         },
         "metadata.robots.noindex": {
+            "verbose_name": "Has robots anchors as `noindex`",
             "type": BOOLEAN_TYPE,
             "settings": {AGG_CATEGORICAL}
         },
         "lang": {
+            "verbose_name": "lang",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -242,6 +256,7 @@ class SuggestStreamDef(StreamDefBase):
     )
     URL_DOCUMENT_MAPPING = {
         "patterns": {
+            "verbose_name": "Suggested patterns",
             "type": LONG_TYPE,
             "settings": {
                 LIST
