@@ -58,3 +58,9 @@ class Feature(object):
             if hasattr(s, 'process_document'):
                 obj.append(s)
         return obj
+
+    def get_document_fields_from_options(self, options):
+        fields = []
+        for stream_def in self.get_streams_def():
+            fields += stream_def.get_document_fields_from_options(options)
+        return fields

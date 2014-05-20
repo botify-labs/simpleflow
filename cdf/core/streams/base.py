@@ -148,6 +148,17 @@ class StreamDefBase(object):
             stream_def=cls()
         )
 
+    def get_document_fields_from_options(self, options):
+        """
+        Return the document fields enabled depending on options defined
+        for the given feature
+        """
+        fields = []
+        for field, settings in self.URL_DOCUMENT_MAPPING.iteritems():
+            if not "enabled" in settings or settings["enabled"](options):
+                fields.append((field, settings))
+        return fields
+
 
 class Stream(object):
     """
