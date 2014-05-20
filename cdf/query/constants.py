@@ -20,3 +20,7 @@ SUB_AGG = 'subagg'
 # + the current aggregation (zero-filled on 2 numbers) to ensure
 # the sorting and correctly return results as a list
 METRIC_AGG_PREFIX = "metricagg"
+
+# If this flag is in a field's settings
+# This means that a url is stored
+FLAG_STRING_URL = 'cdf:url'

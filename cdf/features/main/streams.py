@@ -20,14 +20,20 @@ class IdStreamDef(StreamDefBase):
         ('path', str),
         ('query_string', str),
     )
+    URL_DOCUMENT_DEFAULT_GROUP = "metrics"
     URL_DOCUMENT_MAPPING = {
         # url property data
         "url": {
+            "verbose_name": "Url",
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
-        "url_hash": {"type": LONG_TYPE},
+        "url_hash": {
+            "verbose_name": "Url Hash",
+            "type": LONG_TYPE
+        },
         "host": {
+            "verbose_name": "Host",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -36,15 +42,18 @@ class IdStreamDef(StreamDefBase):
             }
         },
         "id": {
+            "verbose_name": "Id",
             "type": INT_TYPE,
             "settings": {ES_DOC_VALUE}
         },
         "crawl_id": {"type": INT_TYPE},
         "path": {
+            "verbose_name": "Path",
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
         "protocol": {
+            "verbose_name": "Protocol",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -53,10 +62,12 @@ class IdStreamDef(StreamDefBase):
             }
         },
         "query_string": {
+            "verbose_name": "Query String",
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
         "query_string_keys": {
+            "verbose_name": "Query String Keys",
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
