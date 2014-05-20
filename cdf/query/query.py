@@ -149,11 +149,9 @@ class Query(object):
                 self._results.append({})
 
         # Apply transformers
-        # Reminder: in-place transformation
         transform_result(self._results, self, backend=self.backend)
         if self._has_agg():
-            self._aggs = temp_results['aggregations']
-            transform_aggregation_result(self._aggs)
+            self._aggs = transform_aggregation_result(temp_results['aggregations'])
 
         # Flip flag on execution success
         self.executed = True

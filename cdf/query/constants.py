@@ -1,5 +1,7 @@
 MGET_CHUNKS_SIZE = 1000
 
+QUERY_AGG = 'queryagg'
+
 # When you translate an aggregation query on multiple fields
 # (like : "groups": ["http_code", "depth"] into ES format,
 # Each item from the list become a subaggregation from the previous one
