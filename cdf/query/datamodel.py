@@ -1,4 +1,4 @@
-from cdf.query.constants import FLAG_STRING_URL
+from cdf.query.constants import FLAG_URL, FLAG_TIME_SEC, FLAG_TIME_MIN, FLAG_PERCENT
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 from cdf.core.features import Feature
 
@@ -8,15 +8,17 @@ def _render_field_to_end_user(stream_def, field):
     settings = field_conf.get("settings", [])
     group = field_conf.get("group", getattr(stream_def, 'URL_DOCUMENT_DEFAULT_GROUP', ''))
 
-    if FLAG_STRING_URL in settings:
-        field_type = "url"
-    else:
-        field_type = field_conf["type"]
+    field_type = field_conf["type"]
+    for flag in (FLAG_URL, FLAG_TIME_SEC, FLAG_TIME_MIN, FLAG_PERCENT):
+        if flag in settings:
+            field_type = flag[4:]
+            break
 
     return {
         "name": field_conf.get("verbose_name", ""),
         "value": field,
-        "type": field_type,
+        "data_type": field_conf["type"],
+        "field_type": field_type,
         "is_sortable": True,
         "group": group,
         "multiple": LIST in settings,

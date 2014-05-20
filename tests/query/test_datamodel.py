@@ -1,7 +1,7 @@
 import unittest
 from cdf.core.streams.base import StreamDefBase
 from cdf.query.datamodel import get_document_fields_from_features_options, _render_field_to_end_user
-from cdf.query.constants import FLAG_STRING_URL
+from cdf.query.constants import FLAG_URL, FLAG_TIME_SEC
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 
 
@@ -17,13 +17,16 @@ class CustomStreamDef(StreamDefBase):
             "verbose_name": "Url",
             "type": "string",
             "settings": {
-                FLAG_STRING_URL
+                FLAG_URL
             }
         },
-        "depth": {
-            "verbose_name": "Depth",
+        "delay": {
+            "verbose_name": "Delay",
             "type": "integer",
-            "group": "metrics"
+            "group": "metrics",
+            "settings": {
+                FLAG_TIME_SEC
+            }
         },
         "content": {
             "verbose_name": "Contents",
@@ -45,7 +48,8 @@ class FieldsTestCase(unittest.TestCase):
             {
                 "value": "url",
                 "name": "Url",
-                "type": "url",
+                "data_type": "string",
+                "field_type": "url",
                 "is_sortable": True,
                 "group": "main_group",
                 "multiple": False,
@@ -54,11 +58,12 @@ class FieldsTestCase(unittest.TestCase):
         )
 
         self.assertEquals(
-            _render_field_to_end_user(CustomStreamDef, "depth"),
+            _render_field_to_end_user(CustomStreamDef, "delay"),
             {
-                "value": "depth",
-                "name": "Depth",
-                "type": "integer",
+                "value": "delay",
+                "name": "Delay",
+                "data_type": "integer",
+                "field_type": "time_sec",
                 "is_sortable": True,
                 "group": "metrics",
                 "searchable": True,

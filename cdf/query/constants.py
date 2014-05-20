@@ -21,6 +21,8 @@ SUB_AGG = 'subagg'
 # the sorting and correctly return results as a list
 METRIC_AGG_PREFIX = "metricagg"
 
-# If this flag is in a field's settings
-# This means that a url is stored
-FLAG_STRING_URL = 'cdf:url'
+# Fields flags to return a specific field type rendering
+FLAG_URL = 'cdf:url'
+FLAG_TIME_SEC = 'cdf:time_sec'
+FLAG_TIME_MIN = 'cdf:time_min'
+FLAG_PERCENT = 'cdf:percent'
