@@ -161,7 +161,8 @@ class InfosStreamDef(StreamDefBase):
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL
-            }
+            },
+            "enabled": lambda options: options and options.get("lang", False)
         }
     }
 

@@ -172,7 +172,7 @@ class StreamDefBase(object):
         """
         fields = []
         for field, settings in self.URL_DOCUMENT_MAPPING.iteritems():
-            if not "enabled" in settings or settings["enabled"](options):
+            if settings.get("enabled", lambda options: False)(options):
                 fields.append((field, settings))
         return fields
 
