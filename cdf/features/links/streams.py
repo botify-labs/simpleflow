@@ -1,4 +1,5 @@
 import operator
+from collections import Counter
 
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, BOOLEAN_TYPE, STRUCT_TYPE,
@@ -348,6 +349,11 @@ class InlinksRawStreamDef(StreamDefBase):
 
 
 class InlinksStreamDef(InlinksRawStreamDef):
+    """
+    `text` anchors are not always filled in the stream
+    They can be found at least one time per `id` and `text_hash`,
+    and are not always found in the first iteration of its given `text_hash`
+    """
     HEADERS = (
         ('id', int),
         ('link_type', str),
@@ -440,7 +446,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         # a temp set to track all `seen` src url of incoming links
         document["processed_inlink_url"] = set()
         document["tmp_anchors_txt"] = {}
-        document["tmp_anchors_scores"] = {}
+        document["tmp_anchors_nb"] = Counter()
 
     def process_document(self, document, stream):
         url_dst, link_type, follow_keys, url_src, text_hash, text = stream
@@ -460,10 +466,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
                 if text_hash:
                     if text and text_hash not in document['tmp_anchors_txt']:
                         document['tmp_anchors_txt'][text_hash] = text
-                    if not text_hash in document['tmp_anchors_scores']:
-                        document['tmp_anchors_scores'][text_hash] = 1
-                    else:
-                        document['tmp_anchors_scores'][text_hash] += 1
+                    document['tmp_anchors_nb'][text_hash] += 1
             else:
                 key = _get_nofollow_combination_key(follow_keys)
                 if 'robots' in key:
@@ -509,12 +512,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
         document["inlinks_internal"]["top_anchors"]["text"] = []
         document["inlinks_internal"]["top_anchors"]["nb"] = []
 
-        if document["tmp_anchors_scores"]:
-            sorted_anchors = sorted(
-                document["tmp_anchors_scores"].iteritems(),
-                key=operator.itemgetter(1),
-                reverse=True)[0:5]
-            for text_hash, nb in sorted_anchors:
+        if document["tmp_anchors_nb"]:
+            for text_hash, nb in document["tmp_anchors_nb"].most_common(5):
                 document["inlinks_internal"]["top_anchors"]["text"].append(document["tmp_anchors_txt"][text_hash])
                 document["inlinks_internal"]["top_anchors"]["nb"].append(nb)
 
@@ -524,7 +523,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         del document['processed_inlink_url']
         del document["processed_inlink_link"]
         del document["tmp_anchors_txt"]
-        del document["tmp_anchors_scores"]
+        del document["tmp_anchors_nb"]
 
 
 class OutlinksCountersStreamDef(StreamDefBase):
