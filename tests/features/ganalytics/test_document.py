@@ -59,14 +59,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "percentage_new_sessions": 50,
                         "goal_conversion_rate_all": 54.17
                     },
-                    "considered": {
-                        "nb": 24,
-                        "bounce_rate": 79.17,
-                        "pages_per_session": 1.33,
-                        "average_session_duration": 2.79,
-                        "percentage_new_sessions": 50,
-                        "goal_conversion_rate_all": 54.17
-                    },
                     "google": {
                         "nb": 9,
                         "bounce_rate": 100,
@@ -86,7 +78,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
                 },
                 "social": {
                     "all": null_entry,
-                    "considered": null_entry,
                     "facebook": null_entry,
                 }
             }
@@ -97,13 +88,11 @@ class TestBasicInfoGeneration(unittest.TestCase):
             {
                 "organic": {
                     "all": null_entry,
-                    "considered": null_entry,
                     "google": null_entry,
                     "bing": null_entry,
                 },
                 "social": {
                     "all": null_entry,
-                    "considered": null_entry,
                     "facebook": null_entry,
                 }
             }
@@ -121,14 +110,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
                         "percentage_new_sessions": 75,
                         "goal_conversion_rate_all": 50
                     },
-                    "considered": {
-                        "nb": 6,
-                        "bounce_rate": 50,
-                        "pages_per_session": 1,
-                        "average_session_duration": 10,
-                        "percentage_new_sessions": 83.33,
-                        "goal_conversion_rate_all": 66.67
-                    },
                     "google": {
                         "nb": 6,
                         "bounce_rate": 50,
@@ -141,7 +122,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
                 },
                 "social": {
                     "all": null_entry,
-                    "considered": null_entry,
                     "facebook": null_entry,
                 }
             }
