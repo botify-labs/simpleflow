@@ -1,0 +1,5 @@
+import os
+
+
+GOOGLE_OAUTH2_KEY = os.getenv('GOOGLE_OAUTH2_KEY')
+GOOGLE_OAUTH2_SECRET = os.getenv('GOOGLE_OAUTH2_SECRET')
