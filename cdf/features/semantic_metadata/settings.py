@@ -12,3 +12,7 @@ CONTENT_TYPE_NAME_TO_ID = {v: k for k, v in CONTENT_TYPE_INDEX.iteritems()}
 
 MANDATORY_CONTENT_TYPES = ('title', 'h1', 'description')
 MANDATORY_CONTENT_TYPES_IDS = (1, 2, 4)
+
+GROUPS = [
+    {"id": "semantic_metadata", "name": "Metadata"}
+]

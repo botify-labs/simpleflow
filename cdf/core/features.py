@@ -21,14 +21,16 @@ class Feature(object):
                     identifier=n,
                     name=getattr(mod, "NAME", None),
                     description=getattr(mod, "DESCRIPTION", None),
+                    groups=getattr(mod, "GROUPS", [])
                 )
                 cls.FEATURES.append(feature)
         return cls.FEATURES
 
-    def __init__(self, identifier, name, description):
+    def __init__(self, identifier, name, description, groups):
         self.identifier = identifier
         self.name = name
         self.description = description
+        self.groups = groups
 
     def __unicode__(self):
         return unicode(self.identifier)
@@ -58,9 +60,3 @@ class Feature(object):
             if hasattr(s, 'process_document'):
                 obj.append(s)
         return obj
-
-    def get_document_fields_from_options(self, options):
-        fields = []
-        for stream_def in self.get_streams_def():
-            fields += stream_def.get_document_fields_from_options(options)
-        return fields

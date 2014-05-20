@@ -1,6 +1,10 @@
 import unittest
 from cdf.core.streams.base import StreamDefBase
-from cdf.query.datamodel import get_document_fields_from_features_options, _render_field_to_end_user
+from cdf.query.datamodel import (
+    get_fields,
+    get_groups,
+    _render_field_to_end_user
+)
 from cdf.query.constants import FLAG_URL, FLAG_TIME_SEC
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 
@@ -77,11 +81,18 @@ class FieldsTestCase(unittest.TestCase):
         self.assertFalse(_render_field_to_end_user(CustomStreamDef, "content")["searchable"])
 
     def test_enabled(self):
-        fields = get_document_fields_from_features_options({"main": {"lang": True}})
-        self.assertTrue('lang' in [k[0] for k in fields])
+        fields = get_fields({"main": {"lang": True}})
+        self.assertTrue('lang' in [k["name"] for k in fields])
 
-        fields = get_document_fields_from_features_options({"main": {"lang": False}})
-        self.assertFalse('lang' in [k[0] for k in fields])
+        fields = get_fields({"main": {"lang": False}})
+        self.assertFalse('lang' in [k["name"] for k in fields])
 
-        fields = get_document_fields_from_features_options({"main": None})
-        self.assertFalse('lang' in [k[0] for k in fields])
+        fields = get_fields({"main": None})
+        self.assertFalse('lang' in [k["name"] for k in fields])
+
+    def test_groups(self):
+        groups = get_groups({"main": {"lang": True}})
+        self.assertEquals(
+            [g['id'] for g in groups],
+            ['scheme', 'main']
+        )

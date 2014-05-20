@@ -174,8 +174,8 @@ class StreamDefBase(object):
         for field, settings in self.URL_DOCUMENT_MAPPING.iteritems():
             if field.endswith('_exists'):
                 continue
-            if settings.get("enabled", lambda options: False)(options):
-                fields.append((field, settings))
+            if settings.get("enabled", lambda options: True)(options):
+                fields.append(field)
         return fields
 
 
