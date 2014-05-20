@@ -429,8 +429,6 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.top_anchors.nb": {
             "type": INT_TYPE,
             "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL,
                 LIST
             }
         }
