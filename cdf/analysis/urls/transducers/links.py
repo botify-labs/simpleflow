@@ -68,7 +68,7 @@ class InlinksTransducer(object):
             counter_by_type = defaultdict(list)
             redirects = 0
             canonicals = set()
-            for url, link_type, bitmask, src_url_id in group:
+            for url, link_type, bitmask, src_url_id, txt_hash, txt in group:
                 if link_type == 'a':
                     counter_by_type[bitmask].append(src_url_id)
                 elif link_type.startswith('r'):

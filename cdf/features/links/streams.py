@@ -341,6 +341,8 @@ class InlinksRawStreamDef(StreamDefBase):
         ('link_type', str),
         ('bitmask', int),
         ('src_url_id', int),
+        ('text_hash', str),
+        ('text', str),
     )
 
 
@@ -350,6 +352,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
         ('link_type', str),
         ('follow', follow_mask),
         ('src_url_id', int),
+        ('text_hash', str),
+        ('text', str),
     )
     URL_DOCUMENT_MAPPING = {
         # incoming links, must be internal
