@@ -7,6 +7,7 @@ from cdf.core.streams.exceptions import GroupWithSkipException
 from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
+from cdf.query.constants import PRIVATE
 
 __all__ = ["IdStreamDef", "InfosStreamDef", "SuggestStreamDef"]
 
@@ -26,15 +27,20 @@ class IdStreamDef(StreamDefBase):
         "url": {
             "verbose_name": "Url",
             "type": STRING_TYPE,
+            "priority": 0,
             "settings": {ES_NOT_ANALYZED}
         },
         "url_hash": {
             "verbose_name": "Url Hash",
-            "type": LONG_TYPE
+            "type": LONG_TYPE,
+            "settings": {
+                PRIVATE
+            }
         },
         "host": {
             "verbose_name": "Host",
             "type": STRING_TYPE,
+            "priority": 1,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
@@ -44,16 +50,21 @@ class IdStreamDef(StreamDefBase):
         "id": {
             "verbose_name": "Id",
             "type": INT_TYPE,
-            "settings": {ES_DOC_VALUE}
+            "settings": {ES_DOC_VALUE, PRIVATE}
         },
-        "crawl_id": {"type": INT_TYPE},
+        "crawl_id": {
+            "type": INT_TYPE,
+            "settings": {PRIVATE}
+        },
         "path": {
             "verbose_name": "Path",
             "type": STRING_TYPE,
+            "priority": 2,
             "settings": {ES_NOT_ANALYZED}
         },
         "protocol": {
             "verbose_name": "Protocol",
+            "priority": 3,
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -63,11 +74,13 @@ class IdStreamDef(StreamDefBase):
         },
         "query_string": {
             "verbose_name": "Query String",
+            "priority": 4,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
         "query_string_keys": {
             "verbose_name": "Query String Keys",
+            "priority": 5,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
@@ -109,6 +122,7 @@ class InfosStreamDef(StreamDefBase):
         "byte_size": {
             "verbose_name": "Byte Size",
             "type": INT_TYPE,
+            "priority": 0,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -117,6 +131,7 @@ class InfosStreamDef(StreamDefBase):
         "http_code": {
             "verbose_name": "Http Code",
             "type": INT_TYPE,
+            "priority": 1,
             "settings": {
                 ES_DOC_VALUE,
                 # `http_code` have 2 roles
@@ -127,11 +142,13 @@ class InfosStreamDef(StreamDefBase):
         "date_crawled": {
             "verbose_name": "Date crawled",
             "type": DATE_TYPE,
+            "priority": 2,
             "settings": {ES_DOC_VALUE}
         },
         "delay_first_byte": {
             "verbose_name": "Delay first byte received",
             "type": INT_TYPE,
+            "priority": 3,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -140,6 +157,7 @@ class InfosStreamDef(StreamDefBase):
         "delay_last_byte": {
             "verbose_name": "Delay total",
             "type": INT_TYPE,
+            "priority": 4,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -148,6 +166,7 @@ class InfosStreamDef(StreamDefBase):
         "depth": {
             "verbose_name": "Depth",
             "type": INT_TYPE,
+            "priority": 5,
             "settings": {
                 ES_DOC_VALUE,
                 # assume possible depth is finite
@@ -158,10 +177,12 @@ class InfosStreamDef(StreamDefBase):
         "gzipped": {
             "verbose_name": "Url compressed",
             "type": BOOLEAN_TYPE,
+            "priority": 7
         },
         "content_type": {
             "verbose_name": "Content-type",
             "type": STRING_TYPE,
+            "priority": 8,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
@@ -172,16 +193,19 @@ class InfosStreamDef(StreamDefBase):
         "metadata.robots.nofollow": {
             "verbose_name": "Has robots anchors as `nofollow`",
             "type": BOOLEAN_TYPE,
+            "priority": 9,
             "settings": {AGG_CATEGORICAL}
         },
         "metadata.robots.noindex": {
             "verbose_name": "Has robots anchors as `noindex`",
             "type": BOOLEAN_TYPE,
+            "priority": 10,
             "settings": {AGG_CATEGORICAL}
         },
         "lang": {
             "verbose_name": "lang",
             "type": STRING_TYPE,
+            "priority": 6,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,

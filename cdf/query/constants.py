@@ -26,3 +26,6 @@ FLAG_URL = 'cdf:url'
 FLAG_TIME_SEC = 'cdf:time_sec'
 FLAG_TIME_MIN = 'cdf:time_min'
 FLAG_PERCENT = 'cdf:percent'
+
+# Field is private and won't be displayed publicly
+PRIVATE = 'private'

@@ -1,5 +1,6 @@
 from cdf.query.constants import FLAG_URL, FLAG_TIME_SEC, FLAG_TIME_MIN, FLAG_PERCENT
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
+from cdf.query.constants import PRIVATE
 from cdf.core.features import Feature
 
 __all__ = ['get_fields', 'get_groups']
@@ -27,11 +28,11 @@ def _render_field_to_end_user(stream_def, field):
         "is_sortable": True,
         "group": group,
         "multiple": LIST in settings,
-        "searchable": ES_NO_INDEX not in settings
+        "searchable": ES_NO_INDEX not in settings,
     }
 
 
-def _get_document_fields_mapping_from_features_options(features_options):
+def _get_document_fields_mapping_from_features_options(features_options, remove_private=True):
     """
     Returns a list of tuples (StreamDef, field) from StreamDef.URL_DOCUMENT_MAPPING matching with `features_options`
     """
@@ -40,11 +41,14 @@ def _get_document_fields_mapping_from_features_options(features_options):
         if not feature.identifier in features_options:
             continue
         for stream_def in feature.get_streams_def():
-            fields += [(stream_def, field) for field in stream_def.get_document_fields_from_options(features_options[feature.identifier])]
+            stream_fields = [(stream_def, field) for field in stream_def.get_document_fields_from_options(features_options[feature.identifier], remove_private=True)]
+            # Sort fields by priority
+            stream_fields = sorted(stream_fields, key=lambda k: k[0].URL_DOCUMENT_MAPPING[k[1]].get('priority', None))
+            fields += stream_fields
     return fields
 
 
-def get_fields(features_options):
+def get_fields(features_options, remove_private=True):
     """
     Returns a list of allowed fields depending on enabled features and options
     Ex :
@@ -55,7 +59,7 @@ def get_fields(features_options):
     >> ]
     """
     fields = []
-    for entry in _get_document_fields_mapping_from_features_options(features_options):
+    for entry in _get_document_fields_mapping_from_features_options(features_options, remove_private=True):
         stream_def, field = entry
         fields.append(_render_field_to_end_user(stream_def, field))
     return fields

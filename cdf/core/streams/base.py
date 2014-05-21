@@ -11,6 +11,7 @@ from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils import s3
 from cdf.utils.path import get_files_ordered_by_part_id
 from cdf.analysis.urls.utils import get_part_id
+from cdf.query.constants import PRIVATE
 
 
 class StreamDefBase(object):
@@ -165,7 +166,7 @@ class StreamDefBase(object):
             stream_def=cls()
         )
 
-    def get_document_fields_from_options(self, options):
+    def get_document_fields_from_options(self, options, remove_private=False):
         """
         Return the document fields enabled depending on options defined
         for the given feature
@@ -174,7 +175,7 @@ class StreamDefBase(object):
             return []
         fields = []
         for field, settings in self.URL_DOCUMENT_MAPPING.iteritems():
-            if field.endswith('_exists'):
+            if field.endswith('_exists') or PRIVATE in settings.get("settings", set()):
                 continue
             if settings.get("enabled", lambda options: True)(options):
                 fields.append(field)
