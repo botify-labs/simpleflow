@@ -81,6 +81,18 @@ class StreamDefBase(object):
         return cls.get_stream_from_directory(tmp_dir, part_id)
 
     @classmethod
+    def get_stream_from_s3_path(cls, s3_uri_path, tmp_dir, force_fetch=False):
+        """
+        Return a Stream instance from a gzip file stored in S3
+        """
+        path, fetched = s3.fetch_file(
+            s3_uri_path,
+            os.path.join(tmp_dir, os.path.basename(s3_uri_path)),
+            force_fetch=force_fetch
+        )
+        return cls.get_stream_from_path(path)
+
+    @classmethod
     def get_stream_from_file(cls, f):
         """
         Return a stream from a `file` instance
@@ -127,13 +139,16 @@ class StreamDefBase(object):
 
     def persist_to_s3(self, stream, s3_uri, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE):
         tmp_dir = tempfile.mkdtemp()
-        files = self.persist(stream, directory=tmp_dir, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
-        for f in files:
+        local_files = self.persist(stream, directory=tmp_dir, first_part_id_size=first_part_id_size, part_id_size=part_id_size)
+        files = []
+        for f in local_files:
             s3.push_file(
-                s3_uri,
+                os.path.join(s3_uri, os.path.basename(f)),
                 f
             )
+            files.append(os.path.join(s3_uri, os.path.basename(f)))
         shutil.rmtree(tmp_dir)
+        return files
 
     def to_dict(self, entry):
         """
@@ -214,15 +229,15 @@ class TemporaryDataset(object):
     def persist(self, directory, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE, sort=True):
         if sort:
             self.sort()
-        self.stream_def.persist(stream=iter(self.dataset),
-                                directory=directory,
-                                first_part_id_size=first_part_id_size,
-                                part_id_size=part_id_size)
+        return self.stream_def.persist(stream=iter(self.dataset),
+                                       directory=directory,
+                                       first_part_id_size=first_part_id_size,
+                                       part_id_size=part_id_size)
 
     def persist_to_s3(self, s3_uri, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE, sort=True):
         if sort:
             self.sort()
-        self.stream_def.persist_to_s3(stream=iter(self.dataset),
-                                      s3_uri=s3_uri,
-                                      first_part_id_size=first_part_id_size,
-                                      part_id_size=part_id_size)
+        return self.stream_def.persist_to_s3(stream=iter(self.dataset),
+                                             s3_uri=s3_uri,
+                                             first_part_id_size=first_part_id_size,
+                                             part_id_size=part_id_size)
