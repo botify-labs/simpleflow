@@ -430,7 +430,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         document["processed_inlink_url"] = set()
 
     def process_document(self, document, stream):
-        url_dst, link_type, follow_keys, url_src = stream
+        url_dst, link_type, follow_keys, url_src, txt_hash, txt = stream
 
         if link_type == "a":
             is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
