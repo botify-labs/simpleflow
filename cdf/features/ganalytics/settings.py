@@ -22,3 +22,7 @@ SOCIAL_SOURCES = (
     'google+',
     'tumblr'
 )
+
+
+GROUPS = [{'id': 'visits.organic.{}'.format(source), 'name': 'Visits from {}'.format(source)} for source in ORGANIC_SOURCES] + \
+         [{'id': 'visits.social.{}'.format(source), 'name': 'Visits from {}'.format(source)} for source in SOCIAL_SOURCES]

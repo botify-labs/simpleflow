@@ -4,6 +4,8 @@ from cdf.metadata.url.url_metadata import (
 from cdf.core.features import StreamDefBase
 from .settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 from .metrics import compute_average_value, compute_percentage
+from cdf.query.constants import FLAG_TIME_SEC, FLAG_PERCENT
+
 
 class RawVisitsStreamDef(StreamDefBase):
     FILE = 'analytics_raw_data'
@@ -18,7 +20,7 @@ class RawVisitsStreamDef(StreamDefBase):
         ('session_duration', float),
         ('new_users', int),
         ('goal_completions_all', int)
-   )
+    )
 
 
 def _iterate_sources():
@@ -99,21 +101,31 @@ def _update_document_mapping(mapping, medium, sources, metrics):
         }
     }
 
-    #create a key prefix for current medium
-    key_prefixes = [
-        "visits.{}.all".format(medium),
-    ]
+    sources += ('all', )
 
     #and one for each considered source
     for source in sources:
-        key_prefixes.append("visits.{}.{}".format(medium, source))
+        if source == "all":
+            source_target = medium
+        else:
+            source_target = source
 
-    for key_prefix in key_prefixes:
+        key_prefix = "visits.{}.{}".format(medium, source)
         key = "{}.nb".format(key_prefix)
         mapping[key] = dict(int_entry)
-        for metric in metrics:
-            key = "{}.{}".format(key_prefix, metric)
+        mapping[key]["verbose_name"] = "Number of visits on {}".format(source_target)
+        mapping[key]["priority"] = 0
+        mapping[key]["group"] = key_prefix
+
+        for i, metric in enumerate(metrics):
+            field_name, _, _, verbose_name, flag = metric
+            key = "{}.{}".format(key_prefix, field_name)
             mapping[key] = dict(float_entry)
+            mapping[key]["verbose_name"] = "{} on {}".format(verbose_name, source_target)
+            mapping[key]["group"] = key_prefix
+            mapping[key]["priority"] = i + 1
+            if flag:
+                mapping[key]["settings"].add(flag)
 
 
 class VisitsStreamDef(StreamDefBase):
@@ -137,11 +149,11 @@ class VisitsStreamDef(StreamDefBase):
     #  - (calculated metric name, f, raw_metric_name)i
     # such that calculted metric = f(raw_metric, nb_sessions)
     _CALCULATED_METRICS = [
-        ("bounce_rate", compute_percentage, "bounces"),
-        ("pages_per_session", compute_average_value, "page_views"),
-        ("average_session_duration", compute_average_value, "session_duration"),
-        ("percentage_new_sessions", compute_percentage, "new_users"),
-        ("goal_conversion_rate_all", compute_percentage, "goal_completions_all")
+        ("bounce_rate", compute_percentage, "bounces", "Bounce Rate", FLAG_PERCENT),
+        ("pages_per_session", compute_average_value, "page_views", "Pages per session", None),
+        ("average_session_duration", compute_average_value, "session_duration", "Session duration", FLAG_TIME_SEC),
+        ("percentage_new_sessions", compute_percentage, "new_users", "Percentage of new sessions", FLAG_PERCENT),
+        ("goal_conversion_rate_all", compute_percentage, "goal_completions_all", "Goal conversion rate", FLAG_PERCENT)
     ]
 
     _RAW_METRICS = [
@@ -155,7 +167,7 @@ class VisitsStreamDef(StreamDefBase):
 
     URL_DOCUMENT_MAPPING = _get_url_document_mapping(ORGANIC_SOURCES,
                                                      SOCIAL_SOURCES,
-                                                     [t[0] for t in _CALCULATED_METRICS])
+                                                     _CALCULATED_METRICS)
 
     def pre_process_document(self, document):
         document["visits"] = {}
@@ -248,7 +260,7 @@ class VisitsStreamDef(StreamDefBase):
         """
         sessions = input_dict["nb"]
         l = VisitsStreamDef._CALCULATED_METRICS
-        for calculated_metric_name, averaging_function, raw_metric_name in l:
+        for calculated_metric_name, averaging_function, raw_metric_name, _, _ in l:
             raw_metric = input_dict[raw_metric_name]
             input_dict[calculated_metric_name] = averaging_function(raw_metric,
                                                                     sessions)
