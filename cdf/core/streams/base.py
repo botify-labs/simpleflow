@@ -106,7 +106,9 @@ class StreamDefBase(object):
     @classmethod
     def get_stream_from_iterator(cls, i):
         """
-        Return a stream from a iterable object
+        Return a stream from an iterable object
+        Warning : consider that the iterable object is already transformed
+        It won't add missing/default values when necessary
         """
         return Stream(cls(), i)
 
