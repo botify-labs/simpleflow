@@ -11,6 +11,9 @@ def _render_field_to_end_user(stream_def, field):
     group = field_conf.get("group", getattr(stream_def, 'URL_DOCUMENT_DEFAULT_GROUP', ''))
 
     field_type = field_conf["type"]
+    data_type = field_conf["type"]
+    if FLAG_URL in settings:
+        data_type = "string"
     for flag in (FLAG_URL, FLAG_TIME_SEC, FLAG_TIME_MIN, FLAG_PERCENT):
         if flag in settings:
             field_type = flag[4:]
@@ -19,7 +22,7 @@ def _render_field_to_end_user(stream_def, field):
     return {
         "name": field_conf.get("verbose_name", ""),
         "value": field,
-        "data_type": field_conf["type"],
+        "data_type": data_type,
         "field_type": field_type,
         "is_sortable": True,
         "group": group,

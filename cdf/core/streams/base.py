@@ -170,6 +170,8 @@ class StreamDefBase(object):
         Return the document fields enabled depending on options defined
         for the given feature
         """
+        if not hasattr(self, 'URL_DOCUMENT_MAPPING'):
+            return []
         fields = []
         for field, settings in self.URL_DOCUMENT_MAPPING.iteritems():
             if field.endswith('_exists'):
