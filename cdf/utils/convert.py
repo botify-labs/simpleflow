@@ -15,5 +15,5 @@ def to_int32(number):
     return ctypes.c_ulong(number).value
 
 
-def _str_to_bool(string):
+def _raw_to_bool(string):
     return string == '1' or string == 1 or string is True

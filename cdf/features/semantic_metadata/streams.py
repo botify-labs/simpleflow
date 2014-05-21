@@ -7,7 +7,7 @@ from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
 
 
-def _str_to_bool(string):
+def _raw_to_bool(string):
     return string == '1'
 
 
@@ -102,7 +102,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         ('content_type', int),
         ('filled_nb', int),
         ('duplicates_nb', int),
-        ('is_first_url', _str_to_bool),
+        ('is_first_url', _raw_to_bool),
         ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
     )
     URL_DOCUMENT_MAPPING = {

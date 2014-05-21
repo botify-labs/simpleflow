@@ -11,7 +11,7 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.analysis.urls.utils import is_link_internal
 from cdf.log import logger
 from cdf.features.links.helpers.masks import list_to_mask
-from cdf.utils.convert import _str_to_bool
+from cdf.utils.convert import _raw_to_bool
 from .helpers.masks import follow_mask
 
 __all__ = ["OutlinksRawStreamDef", "OutlinksStreamDef"]
@@ -540,7 +540,7 @@ class OutlinksCountersStreamDef(StreamDefBase):
     HEADERS = (
         ('id', int),
         ('follow', follow_mask),
-        ('is_internal', _str_to_bool),
+        ('is_internal', _raw_to_bool),
         ('score', int),
         ('score_unique', int),
     )
@@ -550,7 +550,7 @@ class OutredirectCountersStreamDef(StreamDefBase):
     FILE = 'url_out_redirect_counters'
     HEADERS = (
         ('id', int),
-        ('is_internal', _str_to_bool)
+        ('is_internal', _raw_to_bool)
     )
 
 
@@ -558,7 +558,7 @@ class OutcanonicalCountersStreamDef(StreamDefBase):
     FILE = 'url_out_canonical_counters'
     HEADERS = (
         ('id', int),
-        ('equals', _str_to_bool)
+        ('equals', _raw_to_bool)
     )
 
 
