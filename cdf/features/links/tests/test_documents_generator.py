@@ -30,15 +30,16 @@ def _next_doc(generator):
 
 class TestBasicInfoGeneration(unittest.TestCase):
 
-    def test_top_anchors(self):
-        patterns = [
+    def setUp(self):
+        self.patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
         ]
 
-        infos = [
+        self.infos = [
             [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         ]
 
+    def test_top_anchors(self):
         inlinks = [
             [1, 'a', 0, 2, "12D", "Yeah"],
             [1, 'r301', 0, 3, None, None],
@@ -49,8 +50,8 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
             InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
         ])
 
@@ -65,14 +66,6 @@ class TestBasicInfoGeneration(unittest.TestCase):
         )
 
     def test_top_anchors_not_set(self):
-        patterns = [
-            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
-        ]
-
-        infos = [
-            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
-        ]
-
         inlinks = [
             [1, 'a', 0, 2],
             [1, 'r301', 0, 3],
@@ -83,8 +76,8 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
             InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
         ])
 
