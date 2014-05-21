@@ -463,6 +463,11 @@ class InlinksStreamDef(InlinksRawStreamDef):
             if is_follow:
                 if not (url_src, mask) in document["processed_inlink_link"]:
                     follow['unique'] += 1
+
+                # `text` is not always filled, so we have to push it in a temporary
+                # dictionnary when found
+                # We increment the number of occurrences found for `text_hash` only
+                # for follow inlinks
                 if text_hash:
                     if text and text_hash not in document['tmp_anchors_txt']:
                         document['tmp_anchors_txt'][text_hash] = text
@@ -512,6 +517,10 @@ class InlinksStreamDef(InlinksRawStreamDef):
         document["inlinks_internal"]["top_anchors"]["text"] = []
         document["inlinks_internal"]["top_anchors"]["nb"] = []
 
+        # We map the number of occurrences from each `text_hash` to the original text,
+        # we don't store the `text_hash` in the final document
+        # Elasticsearch would imply to create nested documents, so we push a first list
+        # containing texts, and a second one (`nb`) containing number of occurrences
         if document["tmp_anchors_nb"]:
             for text_hash, nb in document["tmp_anchors_nb"].most_common(5):
                 document["inlinks_internal"]["top_anchors"]["text"].append(document["tmp_anchors_txt"][text_hash])
