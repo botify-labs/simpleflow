@@ -374,7 +374,7 @@ class TestDefaultValueTransformer(unittest.TestCase):
 class TestAggregationResultTransformer(unittest.TestCase):
     def setUp(self):
         self._distinct_result = {
-            "my_agg_1": {
+            "queryagg_00": {
                 "buckets": [
                     {
                         "key": "a",
@@ -395,7 +395,7 @@ class TestAggregationResultTransformer(unittest.TestCase):
         }
 
         self._range_result = {
-            "my_agg_2": {
+            "queryagg_00": {
                 "buckets": [
                     {
                         "to": 50,
@@ -421,10 +421,9 @@ class TestAggregationResultTransformer(unittest.TestCase):
     def test_distinct_result(self):
         results = self._distinct_result
         d = AggregationTransformer(results)
-        d.transform()
 
-        expected = {
-            "my_agg_1": {
+        expected = [
+            {
                 "groups": [
                     {
                         "key": ["a"],
@@ -436,15 +435,15 @@ class TestAggregationResultTransformer(unittest.TestCase):
                     },
                 ]
             }
-        }
-        self.assertEqual(results, expected)
+        ]
+        self.assertEqual(d.transform(), expected)
 
     def test_range_result(self):
         results = self._range_result
         d = AggregationTransformer(results)
 
-        expected = {
-            "my_agg_2": {
+        expected = [
+            {
                 "groups": [
                     {
                         "key": [{"to": 50}],
@@ -456,9 +455,8 @@ class TestAggregationResultTransformer(unittest.TestCase):
                     }
                 ]
             }
-        }
-        d.transform()
-        self.assertEqual(results, expected)
+        ]
+        self.assertEqual(d.transform(), expected)
 
     def test_empty_result(self):
         results = {}
@@ -468,7 +466,7 @@ class TestAggregationResultTransformer(unittest.TestCase):
 
     def test_sum_op(self):
         sum_result = {
-            'my_agg': {
+            'queryagg_00': {
                 'buckets': [
                     {
                         'key': 'a',
@@ -488,8 +486,8 @@ class TestAggregationResultTransformer(unittest.TestCase):
             }
         }
         d = AggregationTransformer(sum_result)
-        expected = {
-            'my_agg': {
+        expected = [
+            {
                 'groups': [
                     {
                         'key': ['a'],
@@ -501,28 +499,26 @@ class TestAggregationResultTransformer(unittest.TestCase):
                     }
                 ]
             }
-        }
-        d.transform()
-        self.assertEqual(sum_result, expected)
+        ]
+        self.assertEqual(d.transform(), expected)
 
     def test_multiple_aggs(self):
         results = {
-            'agg1': {'buckets': [{'key': 'a', 'doc_count': 1, 'metricagg_00': {'value': 1}}]},
-            'agg2': {'buckets': [{'key': 'b', 'doc_count': 2, 'metricagg_00': {'value': 2}}]}
+            'queryagg_00': {'buckets': [{'key': 'a', 'doc_count': 1, 'metricagg_00': {'value': 1}}]},
+            'queryagg_01': {'buckets': [{'key': 'b', 'doc_count': 2, 'metricagg_00': {'value': 2}}]}
         }
 
         d = AggregationTransformer(results)
-        d.transform()
 
-        expected = {
-            'agg1': {'groups': [{'key': ['a'], 'metrics': [1]}]},
-            'agg2': {'groups': [{'key': ['b'], 'metrics': [2]}]}
-        }
-        self.assertEqual(results, expected)
+        expected = [
+            {'groups': [{'key': ['a'], 'metrics': [1]}]},
+            {'groups': [{'key': ['b'], 'metrics': [2]}]}
+        ]
+        self.assertEqual(d.transform(), expected)
 
     def test_agg_group_nested_fields(self):
         results = {
-            'agg1': {
+            'queryagg_00': {
                 'buckets': [{
                     'key': 'a',
                     'doc_count': 100,
@@ -559,14 +555,13 @@ class TestAggregationResultTransformer(unittest.TestCase):
             }
         }
 
-        expected = {
-            'agg1': {'groups': [
+        expected = [
+            {'groups': [
                 {'key': ['a', 'b', 'd'], 'metrics': [5]},
                 {'key': ['a', 'b', 'e'], 'metrics': [15]},
                 {'key': ['a', 'c', 'e'], 'metrics': [80]},
             ]}
-        }
+        ]
 
         d = AggregationTransformer(results)
-        d.transform()
-        self.assertEqual(results, expected)
+        self.assertEqual(d.transform(), expected)

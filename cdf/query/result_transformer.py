@@ -6,7 +6,7 @@ from cdf.analysis.urls.utils import get_es_id, get_url_id
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
 from cdf.features.links.helpers.masks import follow_mask
-from cdf.query.constants import MGET_CHUNKS_SIZE, SUB_AGG, METRIC_AGG_PREFIX
+from cdf.query.constants import MGET_CHUNKS_SIZE, QUERY_AGG, SUB_AGG, METRIC_AGG_PREFIX
 
 
 class ResultTransformer(object):
@@ -468,9 +468,11 @@ class AggregationTransformer(ResultTransformer):
             return result
 
         if SUB_AGG in bucket:
+            _transform_func = cls._transform_range if cls._is_range(bucket) else cls._transform_terms
             subbucket = cls.parse_bucket(bucket[SUB_AGG])
+	    bucket_key = _transform_func(bucket)
             for results in subbucket:
-                results["key"].insert(0, bucket['key'])
+		results["key"].insert(0, bucket_key)
             return subbucket
 
         if cls._is_terms(bucket) or cls._is_range(bucket):
@@ -488,16 +490,12 @@ class AggregationTransformer(ResultTransformer):
 
     def transform(self):
         if self._is_no_group_agg(self.agg_results):
-            agg_name = self.agg_results.keys()[0].split('_', 2)[2]
-            self.agg_results[agg_name] = self.parse_bucket(self.agg_results)
-            # Delete old agg results
-            for name in self.agg_results.keys():
-                if name.startswith(METRIC_AGG_PREFIX):
-                    del self.agg_results[name]
+            return [self.parse_bucket(self.agg_results)]
         else:
-            for name, results in self.agg_results.iteritems():
-                results["groups"] = self.parse_bucket(results)
-                del results["buckets"]
+            groups = []
+            for name in sorted(self.agg_results):
+                groups.append({"groups": self.parse_bucket(self.agg_results[name])})
+            return groups
 
 
 def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):
@@ -512,4 +510,4 @@ def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):
 
 
 def transform_aggregation_result(agg_results):
-    AggregationTransformer(agg_results).transform()
+    return AggregationTransformer(agg_results).transform()
