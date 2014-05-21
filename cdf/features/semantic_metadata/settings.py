@@ -1,5 +1,6 @@
 NAME = "Semantic metadata"
 DESCRIPTION = "title, description, h1, h2 and h3 values"
+PRIORITY = 50
 
 CONTENT_TYPE_INDEX = {
     1: 'title',
