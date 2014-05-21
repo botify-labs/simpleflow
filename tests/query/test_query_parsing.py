@@ -170,8 +170,12 @@ class TestFilterParsing(ParsingTestCase):
 
 class TestAggregationParsing(ParsingTestCase):
     def test_parse_single_agg(self):
-        valid = {'a1': {'group_by': [{'distinct': {'field': 'http_code'}}],
-                        'metric': 'count'}}
+        valid = [
+            {
+                'group_by': [{'distinct': {'field': 'http_code'}}],
+                'metric': 'count'
+            }
+        ]
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
 
@@ -181,18 +185,17 @@ class TestAggregationParsing(ParsingTestCase):
         )
 
     def test_parse_default_metric(self):
-        valid = {'a1': {'group_by': [{'distinct': {'field': 'http_code'}}]}}
+        valid = [{'group_by': [{'distinct': {'field': 'http_code'}}]}]
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
 
     def test_parse_distinct_alias(self):
-        valid = {'a1': {'group_by': ['host'],
-                        'metrics': ['count']}}
+        valid = [{'group_by': ['host'], 'metrics': ['count']}]
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
 
     def test_parse_sum_metric(self):
-        valid = {'a1': {'group_by': [{'distinct': {'field': 'host'}}], "metrics": [{"sum": "metadata.title.nb"}]}}
+        valid = [{'group_by': [{'distinct': {'field': 'host'}}], "metrics": [{"sum": "metadata.title.nb"}]}]
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
         self.assertEquals(
@@ -214,16 +217,16 @@ class TestAggregationParsing(ParsingTestCase):
         )
 
     def test_parse_multiple_aggs(self):
-        valid = {'a1': {'group_by': [{'distinct': {'field': 'http_code'}}],
-                        'metrics': ['count']},
-                 'a2': {'group_by': [{'distinct': {'field': 'http_code'}}],
-                        'metrics': ['count']}}
+        valid = [{'group_by': [{'distinct': {'field': 'http_code'}}],
+                  'metrics': ['count']},
+                 {'group_by': [{'distinct': {'field': 'http_code'}}],
+                  'metrics': ['count']}]
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
 
     def test_parse_multiple_groups(self):
-        valid = {'a1': {'group_by': [{'distinct': {'field': 'http_code'}}, "depth"],
-                        'metric': 'count'}}
+        valid = [{'group_by': [{'distinct': {'field': 'http_code'}}, "depth"],
+                  'metric': 'count'}]
         parsed = self.parser.parse_aggregations(valid)
         self.assertEquals(
             parsed.named_aggs[0].transform(),
@@ -253,80 +256,90 @@ class TestAggregationParsing(ParsingTestCase):
         )
 
     def test_parse_unknown_group_op(self):
-        invalid = {'a1': {'group_by': [{'unknown': {'field': 'http_code'}}],
-                          'metrics': ['count']}}
+        invalid = [{'group_by': [{'unknown': {'field': 'http_code'}}],
+                    'metrics': ['count']}]
         self.assertParsingError(self.parser.parse_aggregations, invalid)
 
     def test_parse_unknown_metric_op(self):
-        invalid = {'a1': {'group_by': [{'distinct': {'field': 'http_code'}}],
-                          'metrics': ['unknown']}}
+        invalid = [{'group_by': [{'distinct': {'field': 'http_code'}}],
+                    'metrics': ['unknown']}]
         self.assertParsingError(self.parser.parse_aggregations, invalid)
 
     def test_invalid_agg_op(self):
         # metric should be {'avg': {'field': 'my_field'}}
-        invalid = {'a1': {'group_by': ['http_code'], 'metrics': ['avg']}}
+        invalid = [{'group_by': ['http_code'], 'metrics': ['avg']}]
         self.assertParsingError(self.parser.parse_aggregations, invalid)
         # metric should be {'min': {'field': 'my_field'}}
-        invalid = {'a1': {'group_by': ['http_code'], 'metrics': ['min']}}
+        invalid = [{'group_by': ['http_code'], 'metrics': ['min']}]
         self.assertParsingError(self.parser.parse_aggregations, invalid)
         # metric should be {'avg': {'max': 'my_field'}}
-        invalid = {'a1': {'group_by': ['http_code'], 'metrics': ['max']}}
+        invalid = [{'group_by': ['http_code'], 'metrics': ['max']}]
         self.assertParsingError(self.parser.parse_aggregations, invalid)
         # aggregator avg is ok, but value is not a string
-        invalid = {'a1': {'group_by': ['http_code'], 'metrics': {'avg': 2}}}
+        invalid = [{'group_by': ['http_code'], 'metrics': {'avg': 2}}]
         self.assertParsingError(self.parser.parse_aggregations, invalid)
         # Exceptionnaly, "count" is allowad as a string, it a shortcut to {"count": {"field": "id"}
-        valid = {'a1': {'group_by': ['http_code'], 'metrics': ['count']}}
+        valid = [{'group_by': ['http_code'], 'metrics': ['count']}]
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
 
     def test_parse_missing_group(self):
-        valid = {'a1': {'metrics': ['count']}}
+        valid = [{'metrics': ['count']}]
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
-        expected = {'metricagg_00_a1': {'value_count': {'field': 'id'}}}
+        expected = {'metricagg_00_queryagg_00': {'value_count': {'field': 'id'}}}
         self.assertEqual(parsed.transform(), expected)
 
     def test_parse_wrong_group_format(self):
         # group should be a list of group ops
-        invalid = {'a1': {'group_by': {'unknown': {'field': 'http_code'}},
-                          'metrics': ['count']}}
+        invalid = [{'group_by': {'unknown': {'field': 'http_code'}},
+                    'metrics': ['count']}]
         self.assertParsingError(self.parser.parse_aggregations, invalid)
 
     def test_wrong_agg_field(self):
         # `path` is not an aggregation field
-        invalid = {'a1': {'group_by': ['path']}}
+        invalid = [{'group_by': ['path']}]
         parsed = self.parser.parse_aggregations(invalid)
         self.assertParsingError(parsed.validate)
 
     def test_wrong_distinct_field(self):
         # `metadata.title.nb` is not a categorical field
-        invalid = {'a1': {'group_by': ['metadata.title.nb']}}
+        invalid = [{'group_by': ['metadata.title.nb']}]
         parsed = self.parser.parse_aggregations(invalid)
         self.assertParsingError(parsed.validate)
 
     def test_wrong_range_field(self):
         # `host` is not a numerical field
-        invalid = {'a1': {'group_by': [
-            {'range': {'field': 'host', 'ranges': [{'to': 20}]}}]}}
+        invalid = [
+            {
+                'group_by': [
+                    {'range': {'field': 'host', 'ranges': [{'to': 20}]}}
+                ]
+            }
+        ]
         parsed = self.parser.parse_aggregations(invalid)
         self.assertParsingError(parsed.validate)
 
     def test_wrong_range_structure(self):
         # unknown range param
-        invalid = {'a1': {'group_by': [{
-            'range': {
-                'field': 'http_code',
-                'ranges': [{'a': 100, 'b': 200}]
-            }}]}}
+        invalid = [
+            {
+                'group_by': [{
+                    'range': {
+                        'field': 'http_code',
+                        'ranges': [{'a': 100, 'b': 200}]
+                    }
+                }]
+            }
+        ]
         parsed = self.parser.parse_aggregations(invalid)
         self.assertParsingError(parsed.validate)
 
         # too much param
-        invalid = {'a1': {'group_by': [{
+        invalid = [{'group_by': [{
             'range': {
                 'field': 'http_code',
                 'ranges': [{'from': 100, 'to': 200, 'tooooo': 250}]
-            }}]}}
+            }}]}]
         parsed = self.parser.parse_aggregations(invalid)
         self.assertParsingError(parsed.validate)

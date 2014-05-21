@@ -35,6 +35,7 @@
 # Type related
 LONG_TYPE = 'long'
 INT_TYPE = 'integer'
+FLOAT_TYPE = 'float'
 STRING_TYPE = 'string'
 BOOLEAN_TYPE = 'boolean'
 STRUCT_TYPE = 'struct'
