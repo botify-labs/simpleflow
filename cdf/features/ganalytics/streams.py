@@ -86,24 +86,9 @@ def _update_document_mapping(mapping, medium, sources, metrics):
                     It is given as a list of strings.
     :type metrics: list
     """
-    int_entry = {
-        "type": INT_TYPE,
-        "settings": {
-            ES_DOC_VALUE,
-            AGG_NUMERICAL
-        }
-    }
-    float_entry = {
-        "type": FLOAT_TYPE,
-        "settings": {
-            ES_DOC_VALUE,
-            AGG_NUMERICAL
-        }
-    }
-
     sources += ('all', )
 
-    #and one for each considered source
+    # Iterate over sources
     for source in sources:
         if source == "all":
             source_target = medium
@@ -111,19 +96,19 @@ def _update_document_mapping(mapping, medium, sources, metrics):
             source_target = source
 
         key_prefix = "visits.{}.{}".format(medium, source)
-        key = "{}.nb".format(key_prefix)
-        mapping[key] = dict(int_entry)
-        mapping[key]["verbose_name"] = "Number of visits on {}".format(source_target)
-        mapping[key]["order"] = 0
-        mapping[key]["group"] = key_prefix
-
         for i, metric in enumerate(metrics):
-            field_name, _, _, verbose_name, flag = metric
+            field_name, _, _, verbose_name, data_type, flag = metric
             key = "{}.{}".format(key_prefix, field_name)
-            mapping[key] = dict(float_entry)
-            mapping[key]["verbose_name"] = "{} on {}".format(verbose_name, source_target)
-            mapping[key]["group"] = key_prefix
-            mapping[key]["order"] = i + 1
+            mapping[key] = {
+                "type": data_type,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_NUMERICAL
+                },
+                "verbose_name": verbose_name.format(source=source_target),
+                "group": key_prefix,
+                "priority": i + 1
+            }
             if flag:
                 mapping[key]["settings"].add(flag)
 
@@ -145,15 +130,16 @@ class VisitsStreamDef(StreamDefBase):
 
     #defines a list of calculated metric definitions
     #a calculated metric is a metric computed from raw metrics
-    #each calculated metric is defined by a 3-tuple:
-    #  - (calculated metric name, f, raw_metric_name)i
+    #each calculated metric is defined by a 6-tuple:
+    #  - (calculated metric name, f, raw_metric_name, verbose_name, type, rendering_flag)
     # such that calculted metric = f(raw_metric, nb_sessions)
-    _CALCULATED_METRICS = [
-        ("bounce_rate", compute_percentage, "bounces", "Bounce Rate", RENDERING.PERCENT),
-        ("pages_per_session", compute_average_value, "page_views", "Pages per session", None),
-        ("average_session_duration", compute_average_value, "session_duration", "Session duration", RENDERING.TIME_SEC),
-        ("percentage_new_sessions", compute_percentage, "new_users", "Percentage of new sessions", RENDERING.PERCENT),
-        ("goal_conversion_rate_all", compute_percentage, "goal_completions_all", "Goal conversion rate", RENDERING.PERCENT)
+    _METRICS = [
+        ("nb", None, "nb", "Number of visits from {source}", INT_TYPE, None),
+        ("bounce_rate", compute_percentage, "bounces", "Bounce Rate on {source}", FLOAT_TYPE, RENDERING.PERCENT),
+        ("pages_per_session", compute_average_value, "page_views", "Pages per session on {source}", FLOAT_TYPE, None),
+        ("average_session_duration", compute_average_value, "session_duration", "Session duration on {source}", FLOAT_TYPE, RENDERING.TIME_SEC),
+        ("percentage_new_sessions", compute_percentage, "new_users", "Percentage of new sessions on {source}", FLOAT_TYPE, RENDERING.PERCENT),
+        ("goal_conversion_rate_all", compute_percentage, "goal_completions_all", "Goal conversion rate on {source}", FLOAT_TYPE, RENDERING.PERCENT)
     ]
 
     _RAW_METRICS = [
@@ -167,7 +153,7 @@ class VisitsStreamDef(StreamDefBase):
 
     URL_DOCUMENT_MAPPING = _get_url_document_mapping(ORGANIC_SOURCES,
                                                      SOCIAL_SOURCES,
-                                                     _CALCULATED_METRICS)
+                                                     _METRICS)
 
     def pre_process_document(self, document):
         document["visits"] = {}
@@ -259,8 +245,8 @@ class VisitsStreamDef(StreamDefBase):
         :type traffic_source_data: dict
         """
         sessions = input_dict["nb"]
-        l = VisitsStreamDef._CALCULATED_METRICS
-        for calculated_metric_name, averaging_function, raw_metric_name, _, _ in l:
+        l = filter(lambda i: i[1] is not None, VisitsStreamDef._METRICS)
+        for calculated_metric_name, averaging_function, raw_metric_name, _, _, _ in l:
             raw_metric = input_dict[raw_metric_name]
             input_dict[calculated_metric_name] = averaging_function(raw_metric,
                                                                     sessions)

@@ -58,7 +58,9 @@ class TestUpdateDocumentMapping(unittest.TestCase):
             },
         }
         organic_sources = ["google", "yahoo"]
-        metrics = []
+        metrics = [
+            ("nb", None, "nb", "Number of visits from {source}", INT_TYPE, None),
+        ]
         _update_document_mapping(mapping, "organic",
                                  organic_sources, metrics)
         self.assertItemsEqual(mapping.keys(), ["visits.organic.all.nb", "visits.organic.google.nb", "visits.organic.yahoo.nb"])
@@ -81,7 +83,9 @@ class TestUpdateDocumentMapping(unittest.TestCase):
             }
         }
         organic_sources = []
-        metrics = []
+        metrics = [
+            ("nb", None, "nb", "Number of visits from {source}", INT_TYPE, None),
+        ]
         _update_document_mapping(mapping, "organic",
                                  organic_sources, metrics)
         self.assertEquals(mapping.keys(), ["visits.organic.all.nb"])
@@ -123,8 +127,9 @@ class TestUpdateDocumentMapping(unittest.TestCase):
         }
         organic_sources = []
         metrics = [
-            ("bounce_rate", lambda i:i, "bounces", "Bounce Rate", None),
-            ("pages_per_session", lambda i:i, "page_views", "Pages per session", None),
+            ("nb", None, "nb", "Number of visits from {source}", INT_TYPE, None),
+            ("bounce_rate", lambda i:i, "bounces", "Bounce Rate", FLOAT_TYPE, None),
+            ("pages_per_session", lambda i:i, "page_views", "Pages per session", FLOAT_TYPE, None),
         ]
         _update_document_mapping(mapping, "organic",
                                  organic_sources, metrics)
@@ -214,7 +219,7 @@ class TestVisitsStreamDef(unittest.TestCase):
     def test_url_document_mapping(self):
         expected_mapping = _get_url_document_mapping(ORGANIC_SOURCES,
                                                      SOCIAL_SOURCES,
-                                                     VisitsStreamDef._CALCULATED_METRICS)
+                                                     VisitsStreamDef._METRICS)
 
         self.assertEqual(expected_mapping,
                          VisitsStreamDef.URL_DOCUMENT_MAPPING)

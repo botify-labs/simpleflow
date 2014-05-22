@@ -30,6 +30,15 @@ class Feature(object):
         return cls.FEATURES
 
     def __init__(self, identifier, name, description, groups, order=None):
+        """
+        :param identifier : Identifier of the feature (ex : amin)
+        :param name: Verbose name of the feature
+        :param description : Description of the feature
+        :param groups : a list of dict. ex : [{"id": "metrics", "name": "Main metrics"}, ..]
+        :param priority : Worth of the feature (smaller is better).
+                          When generating concatenated groups/fields from a crawl,
+                          it will iterate on features sorted by priority
+        """
         self.identifier = identifier
         self.name = name
         self.description = description
