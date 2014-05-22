@@ -114,7 +114,7 @@ def _update_document_mapping(mapping, medium, sources, metrics):
         key = "{}.nb".format(key_prefix)
         mapping[key] = dict(int_entry)
         mapping[key]["verbose_name"] = "Number of visits on {}".format(source_target)
-        mapping[key]["priority"] = 0
+        mapping[key]["order"] = 0
         mapping[key]["group"] = key_prefix
 
         for i, metric in enumerate(metrics):
@@ -123,7 +123,7 @@ def _update_document_mapping(mapping, medium, sources, metrics):
             mapping[key] = dict(float_entry)
             mapping[key]["verbose_name"] = "{} on {}".format(verbose_name, source_target)
             mapping[key]["group"] = key_prefix
-            mapping[key]["priority"] = i + 1
+            mapping[key]["order"] = i + 1
             if flag:
                 mapping[key]["settings"].add(flag)
 

@@ -26,7 +26,7 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.title.nb": {
             "verbose_name": "Number of Page Titles",
             "type": INT_TYPE,
-            "priority": 10,
+            "order": 10,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
@@ -35,7 +35,7 @@ class ContentsStreamDef(StreamDefBase):
         },
         "metadata.title.contents": {
             "verbose_name": "Title",
-            "priority": 1,
+            "order": 1,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED, LIST}
         },
@@ -43,7 +43,7 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.h1.nb": {
             "verbose_name": "Number of H1",
             "type": INT_TYPE,
-            "priority": 12,
+            "order": 12,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -52,7 +52,7 @@ class ContentsStreamDef(StreamDefBase):
         },
         "metadata.h1.contents": {
             "verbose_name": "H1",
-            "priority": 3,
+            "order": 3,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED, LIST}
         },
@@ -60,7 +60,7 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.description.nb": {
             "verbose_name": "Number of Page Description",
             "type": INT_TYPE,
-            "priority": 11,
+            "order": 11,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -70,14 +70,14 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.description.contents": {
             "verbose_name": "Page description",
             "type": STRING_TYPE,
-            "priority": 2,
+            "order": 2,
             "settings": {ES_NOT_ANALYZED, LIST}
         },
         # h2 tag
         "metadata.h2.nb": {
             "verbose_name": "Number of H2",
             "type": INT_TYPE,
-            "priority": 13,
+            "order": 13,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -86,7 +86,7 @@ class ContentsStreamDef(StreamDefBase):
         },
         "metadata.h2.contents": {
             "verbose_name": "H2",
-            "priority": 4,
+            "order": 4,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED, LIST}
         },
@@ -95,7 +95,7 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.h3.nb": {
             "verbose_name": "Number of H3",
             "type": INT_TYPE,
-            "priority": 14,
+            "order": 14,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -105,7 +105,7 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.h3.contents": {
             "verbose_name": "H3",
             "type": STRING_TYPE,
-            "priority": 5,
+            "order": 5,
             "settings": {ES_NOT_ANALYZED, LIST}
         },
     }
@@ -132,7 +132,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         "metadata.title.duplicates.nb": {
             "verbose_name": "Number of Duplicate Title",
             "type": INT_TYPE,
-            "priority": 100,
+            "order": 100,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -141,13 +141,13 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         },
         "metadata.title.duplicates.is_first": {
             "verbose_name": "First duplicate Title found",
-            "priority": 120,
+            "order": 120,
             "type": BOOLEAN_TYPE,
         },
         "metadata.title.duplicates.urls": {
             "verbose_name": "Pages with the same Title",
             "type": INT_TYPE,
-            "priority": 110,
+            "order": 110,
             "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "metadata.title.duplicates.urls_exists": {
@@ -157,7 +157,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         "metadata.h1.duplicates.urls": {
             "verbose_name": "Pages with the same H1",
             "type": INT_TYPE,
-            "priority": 112,
+            "order": 112,
             "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "metadata.h1.duplicates.urls_exists": {
@@ -167,7 +167,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         "metadata.h1.duplicates.nb": {
             "verbose_name": "Number of pages with the same H1",
             "type": INT_TYPE,
-            "priority": 102,
+            "order": 102,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -176,14 +176,14 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         },
         "metadata.h1.duplicates.is_first": {
             "verbose_name": "First duplicate H1 found",
-            "priority": 122,
+            "order": 122,
             "type": BOOLEAN_TYPE,
         },
 
         "metadata.description.duplicates.nb": {
             "verbose_name": "Number of pagers with the same Description",
             "type": INT_TYPE,
-            "priority": 101,
+            "order": 101,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -193,7 +193,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         "metadata.description.duplicates.urls": {
             "verbose_name": "Pages with the same Description",
             "type": INT_TYPE,
-            "priority": 111,
+            "order": 111,
             "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "metadata.description.duplicates.urls_exists": {
@@ -202,7 +202,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         },
         "metadata.description.duplicates.is_first": {
             "verbose_name": "First duplicate Description found",
-            "priority": 121,
+            "order": 121,
             "type": BOOLEAN_TYPE,
         },
 

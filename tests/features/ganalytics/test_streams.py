@@ -77,7 +77,7 @@ class TestUpdateDocumentMapping(unittest.TestCase):
                     AGG_NUMERICAL
                 },
                 "verbose_name": "Number of visits on organic",
-                "priority": 0
+                "order": 0
             }
         }
         organic_sources = []
@@ -92,7 +92,7 @@ class TestUpdateDocumentMapping(unittest.TestCase):
         expected_mapping = {
             "visits.organic.all.nb": {
                 "type": INT_TYPE,
-                "priority": 0,
+                "order": 0,
                 "verbose_name": "Number of visits on organic",
                 "group": "visits.organic.all",
                 "settings": {
@@ -102,7 +102,7 @@ class TestUpdateDocumentMapping(unittest.TestCase):
             },
             "visits.organic.all.bounce_rate": {
                 "type": FLOAT_TYPE,
-                "priority": 1,
+                "order": 1,
                 "verbose_name": "Bounce Rate on organic",
                 "group": "visits.organic.all",
                 "settings": {
@@ -112,7 +112,7 @@ class TestUpdateDocumentMapping(unittest.TestCase):
             },
             "visits.organic.all.pages_per_session": {
                 "type": FLOAT_TYPE,
-                "priority": 2,
+                "order": 2,
                 "verbose_name": "Pages per sesssion on organic",
                 "group": "visits.organic.all",
                 "settings": {

@@ -27,7 +27,7 @@ class IdStreamDef(StreamDefBase):
         "url": {
             "verbose_name": "Url",
             "type": STRING_TYPE,
-            "priority": 0,
+            "order": 0,
             "settings": {ES_NOT_ANALYZED}
         },
         "url_hash": {
@@ -40,7 +40,7 @@ class IdStreamDef(StreamDefBase):
         "host": {
             "verbose_name": "Host",
             "type": STRING_TYPE,
-            "priority": 1,
+            "order": 1,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
@@ -59,12 +59,12 @@ class IdStreamDef(StreamDefBase):
         "path": {
             "verbose_name": "Path",
             "type": STRING_TYPE,
-            "priority": 2,
+            "order": 2,
             "settings": {ES_NOT_ANALYZED}
         },
         "protocol": {
             "verbose_name": "Protocol",
-            "priority": 3,
+            "order": 3,
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -74,13 +74,13 @@ class IdStreamDef(StreamDefBase):
         },
         "query_string": {
             "verbose_name": "Query String",
-            "priority": 4,
+            "order": 4,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
         "query_string_keys": {
             "verbose_name": "Query String Keys",
-            "priority": 5,
+            "order": 5,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
@@ -122,7 +122,7 @@ class InfosStreamDef(StreamDefBase):
         "byte_size": {
             "verbose_name": "Byte Size",
             "type": INT_TYPE,
-            "priority": 0,
+            "order": 0,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -131,7 +131,7 @@ class InfosStreamDef(StreamDefBase):
         "http_code": {
             "verbose_name": "Http Code",
             "type": INT_TYPE,
-            "priority": 1,
+            "order": 1,
             "settings": {
                 ES_DOC_VALUE,
                 # `http_code` have 2 roles
@@ -142,13 +142,13 @@ class InfosStreamDef(StreamDefBase):
         "date_crawled": {
             "verbose_name": "Date crawled",
             "type": DATE_TYPE,
-            "priority": 2,
+            "order": 2,
             "settings": {ES_DOC_VALUE}
         },
         "delay_first_byte": {
             "verbose_name": "Delay first byte received",
             "type": INT_TYPE,
-            "priority": 3,
+            "order": 3,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -157,7 +157,7 @@ class InfosStreamDef(StreamDefBase):
         "delay_last_byte": {
             "verbose_name": "Delay total",
             "type": INT_TYPE,
-            "priority": 4,
+            "order": 4,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -166,7 +166,7 @@ class InfosStreamDef(StreamDefBase):
         "depth": {
             "verbose_name": "Depth",
             "type": INT_TYPE,
-            "priority": 5,
+            "order": 5,
             "settings": {
                 ES_DOC_VALUE,
                 # assume possible depth is finite
@@ -177,12 +177,12 @@ class InfosStreamDef(StreamDefBase):
         "gzipped": {
             "verbose_name": "Url compressed",
             "type": BOOLEAN_TYPE,
-            "priority": 7
+            "order": 7
         },
         "content_type": {
             "verbose_name": "Content-type",
             "type": STRING_TYPE,
-            "priority": 8,
+            "order": 8,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
@@ -193,19 +193,19 @@ class InfosStreamDef(StreamDefBase):
         "metadata.robots.nofollow": {
             "verbose_name": "Has robots anchors as `nofollow`",
             "type": BOOLEAN_TYPE,
-            "priority": 9,
+            "order": 9,
             "settings": {AGG_CATEGORICAL}
         },
         "metadata.robots.noindex": {
             "verbose_name": "Has robots anchors as `noindex`",
             "type": BOOLEAN_TYPE,
-            "priority": 10,
+            "order": 10,
             "settings": {AGG_CATEGORICAL}
         },
         "lang": {
             "verbose_name": "lang",
             "type": STRING_TYPE,
-            "priority": 6,
+            "order": 6,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,

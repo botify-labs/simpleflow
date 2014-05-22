@@ -22,19 +22,19 @@ class Feature(object):
                     name=getattr(mod, "NAME", None),
                     description=getattr(mod, "DESCRIPTION", None),
                     groups=getattr(mod, "GROUPS", []),
-                    priority=getattr(mod, "PRIORITY", None)
+                    order=getattr(mod, "ORDER", None)
                 )
                 cls.FEATURES.append(feature)
-        # Sort features by priority
-        cls.FEATURES = sorted(cls.FEATURES, key=lambda f: f.priority)
+        # Sort features by order
+        cls.FEATURES = sorted(cls.FEATURES, key=lambda f: f.order)
         return cls.FEATURES
 
-    def __init__(self, identifier, name, description, groups, priority=None):
+    def __init__(self, identifier, name, description, groups, order=None):
         self.identifier = identifier
         self.name = name
         self.description = description
         self.groups = groups
-        self.priority = priority
+        self.order = order
 
     def __unicode__(self):
         return unicode(self.identifier)

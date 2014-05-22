@@ -54,8 +54,8 @@ def _get_document_fields_mapping_from_features_options(features_options, remove_
             continue
         for stream_def in feature.get_streams_def():
             stream_fields = [(stream_def, field) for field in stream_def.get_document_fields_from_options(features_options[feature.identifier], remove_private=True)]
-            # Sort fields by priority
-            stream_fields = sorted(stream_fields, key=lambda k: k[0].URL_DOCUMENT_MAPPING[k[1]].get('priority', None))
+            # Sort fields by order
+            stream_fields = sorted(stream_fields, key=lambda k: k[0].URL_DOCUMENT_MAPPING[k[1]].get('order', None))
             fields += stream_fields
     return fields
 

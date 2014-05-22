@@ -3,7 +3,7 @@ from enum import Enum
 
 NAME = "Analytics import"
 DESCRIPTION = ""
-PRIORITY = 1000
+ORDER = 1000
 
 ORGANIC_SOURCES = (
     'google',
