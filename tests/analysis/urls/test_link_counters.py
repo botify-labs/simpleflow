@@ -109,14 +109,14 @@ class TestLinkCounters(unittest.TestCase):
 
     def test_in_links(self):
         stream_inlinks = [
-            [1, 'a', 0, 2],
-            [1, 'a', 1, 3],
-            [1, 'a', 0, 4],
-            [1, 'a', 1, 4],
-            [1, 'a', 5, 4],
-            [1, 'a', 5, 4],
-            [3, 'a', 5, 5],
-            [3, 'a', 5, 5],
+            [1, 'a', 0, 2, '', ''],
+            [1, 'a', 1, 3, '', ''],
+            [1, 'a', 0, 4, '', ''],
+            [1, 'a', 1, 4, '', ''],
+            [1, 'a', 5, 4, '', ''],
+            [1, 'a', 5, 4, '', ''],
+            [3, 'a', 5, 5, '', ''],
+            [3, 'a', 5, 5, '', ''],
         ]
 
         result = list(InlinksTransducer(stream_inlinks).get())
@@ -132,11 +132,11 @@ class TestLinkCounters(unittest.TestCase):
 
     def test_in_redirects(self):
         stream_inlinks = [
-            [1, 'r301', 0, 2],
-            [1, 'r302', 0, 3],
-            [1, 'r303', 5, 4],
-            [2, 'a', 0, 1],
-            [3, 'r302', 5, 5],
+            [1, 'r301', 0, 2, '', ''],
+            [1, 'r302', 0, 3, '', ''],
+            [1, 'r303', 5, 4, '', ''],
+            [2, 'a', 0, 1, '', ''],
+            [3, 'r302', 5, 5, '', ''],
         ]
 
         result = list(InlinksTransducer(stream_inlinks).get())
@@ -151,17 +151,17 @@ class TestLinkCounters(unittest.TestCase):
 
     def test_in_canonicals(self):
         stream_inlinks = [
-            [1, 'canonical', 24, 1],  # self canonical
-            [1, 'canonical', 0, 2],
-            [1, 'canonical', 0, 2],
-            [1, 'canonical', 0, 2],
-            [1, 'canonical', 0, 3],
-            [1, 'canonical', 5, 4],
-            [2, 'canonical', 0, 2],  # self canonical
-            [2, 'canonical', 17, 1],
-            [3, 'canonical', 5, 5],
-            [3, 'canonical', 8, 1],  # first canonical of url 1
-            [4, 'canonical', 16, 1]
+            [1, 'canonical', 24, 1, '', ''],  # self canonical
+            [1, 'canonical', 0, 2, '', ''],
+            [1, 'canonical', 0, 2, '', ''],
+            [1, 'canonical', 0, 2, '', ''],
+            [1, 'canonical', 0, 3, '', ''],
+            [1, 'canonical', 5, 4, '', ''],
+            [2, 'canonical', 0, 2, '', ''],  # self canonical
+            [2, 'canonical', 17, 1, '', ''],
+            [3, 'canonical', 5, 5, '', ''],
+            [3, 'canonical', 8, 1, '', ''],  # first canonical of url 1
+            [4, 'canonical', 16, 1, '', '']
         ]
 
         result = list(InlinksTransducer(stream_inlinks).get())

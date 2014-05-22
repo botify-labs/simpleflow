@@ -256,11 +256,11 @@ class TestInlinksGeneration(unittest.TestCase):
 
         #format : dst_url_id link_type      follow? src_urlid
         inlinks = [
-            [1, 'a', ['follow'], 2],
-            [1, 'a', ['follow'], 2],
-            [1, 'a', ['follow'], 2],
-            [1, 'a', ['link'], 3],
-            [1, 'a', ['link_meta'], 3],
+            [1, 'a', ['follow'], 2, '', ''],
+            [1, 'a', ['follow'], 2, '', ''],
+            [1, 'a', ['follow'], 2, '', ''],
+            [1, 'a', ['link'], 3, '', ''],
+            [1, 'a', ['link_meta'], 3, '', ''],
         ]
 
         gen = UrlDocumentGenerator([
@@ -563,8 +563,8 @@ class TestRedirectsGeneration(unittest.TestCase):
         ]
 
         inlinks = [
-            [2, 'r301', ['follow'], 1],
-            [4, 'r301', ['follow'], 3],
+            [2, 'r301', ['follow'], 1, '', ''],
+            [4, 'r301', ['follow'], 3, '', ''],
         ]
 
         gen = UrlDocumentGenerator([
@@ -613,7 +613,7 @@ class TestRedirectsGeneration(unittest.TestCase):
 
         #format : link_type      follow? dst_urlid       src_urlid
         inlinks = [
-            [1, 'r301', ['follow'], 2],
+            [1, 'r301', ['follow'], 2, '', ''],
         ]
 
         gen = UrlDocumentGenerator([
@@ -670,9 +670,9 @@ class TestCanonicalGeneration(unittest.TestCase):
         ]
 
         inlinks = [
-            [2, 'canonical', ['follow'], 1],
-            [2, 'canonical', ['follow'], 2],
-            [5, 'canonical', ['follow'], 4],
+            [2, 'canonical', ['follow'], 1, '', ''],
+            [2, 'canonical', ['follow'], 2, '', ''],
+            [5, 'canonical', ['follow'], 4, '', ''],
         ]
 
         gen = UrlDocumentGenerator([
@@ -730,10 +730,10 @@ class TestCanonicalGeneration(unittest.TestCase):
         )
 
         inlinks = [
-            [1, 'canonical', ['follow'], 5],
-            [2, 'canonical', ['follow'], 17],
-            [2, 'canonical', ['follow'], 20],
-            [3, 'canonical', ['follow'], 3],  # self canonical
+            [1, 'canonical', ['follow'], 5, '', ''],
+            [2, 'canonical', ['follow'], 17, '', ''],
+            [2, 'canonical', ['follow'], 20, '', ''],
+            [3, 'canonical', ['follow'], 3, '', ''],  # self canonical
         ]
 
         gen = UrlDocumentGenerator([
@@ -803,12 +803,12 @@ class TestGlobalDocumentGeneration(unittest.TestCase):
         ]
 
         inlinks = [
-            [1, 'a', follow_mask(0), 2],
-            [1, 'r301', follow_mask(0), 3],
-            [1, 'a', follow_mask(2), 3],
-            [1, 'a', follow_mask(2), 4],
-            [1, 'a', follow_mask(2), 4],
-            [1, 'a', follow_mask(3), 4],
+            [1, 'a', follow_mask(0), 2, '', ''],
+            [1, 'r301', follow_mask(0), 3, '', ''],
+            [1, 'a', follow_mask(2), 3, '', ''],
+            [1, 'a', follow_mask(2), 4, '', ''],
+            [1, 'a', follow_mask(2), 4, '', ''],
+            [1, 'a', follow_mask(3), 4, '', ''],
         ]
 
         gen = UrlDocumentGenerator([
