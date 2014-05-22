@@ -90,6 +90,6 @@ def get_groups(features_options):
     groups = []
     for feature in Feature.get_features():
         for group in feature.groups:
-            if group['id'] in allowed_groups:
-                groups.append(group)
+            if group.name in allowed_groups:
+                groups.append({'id': group.name, 'name': group.value})
     return groups

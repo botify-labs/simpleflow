@@ -44,16 +44,12 @@ class Feature(object):
         Return streams definition from the current feature
         """
         obj = []
-        try:
-            streams = import_module('cdf.features.{}.streams'.format(self.identifier))
-        except ImportError:
-            return []
-        else:
-            methods = inspect.getmembers(streams, predicate=inspect.isclass)
-            for method_name, klass in methods:
-                if issubclass(klass, StreamDefBase) and klass != StreamDefBase:
-                    obj.append(klass())
-            return obj
+        streams = import_module('cdf.features.{}.streams'.format(self.identifier))
+        methods = inspect.getmembers(streams, predicate=inspect.isclass)
+        for method_name, klass in methods:
+            if issubclass(klass, StreamDefBase) and klass != StreamDefBase:
+                obj.append(klass())
+        return obj
 
     def get_streams_def_processing_document(self):
         """

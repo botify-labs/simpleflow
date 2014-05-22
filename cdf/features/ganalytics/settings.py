@@ -1,3 +1,6 @@
+from enum import Enum
+
+
 NAME = "Analytics import"
 DESCRIPTION = ""
 PRIORITY = 1000
@@ -24,5 +27,8 @@ SOCIAL_SOURCES = (
 )
 
 
-GROUPS = [{'id': 'visits.organic.{}'.format(source), 'name': 'Visits from {}'.format(source)} for source in ORGANIC_SOURCES] + \
-         [{'id': 'visits.social.{}'.format(source), 'name': 'Visits from {}'.format(source)} for source in SOCIAL_SOURCES]
+GROUPS = Enum(
+    'Groups',
+    [('visits.organic.{}'.format(source), 'Visits from {}'.format(source)) for source in ORGANIC_SOURCES] +
+    [('visits.social.{}'.format(source), 'Visits from {}'.format(source)) for source in SOCIAL_SOURCES]
+)

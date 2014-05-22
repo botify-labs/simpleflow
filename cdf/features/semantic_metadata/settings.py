@@ -1,3 +1,6 @@
+from enum import Enum
+
+
 NAME = "Semantic metadata"
 DESCRIPTION = "title, description, h1, h2 and h3 values"
 PRIORITY = 50
@@ -14,6 +17,4 @@ CONTENT_TYPE_NAME_TO_ID = {v: k for k, v in CONTENT_TYPE_INDEX.iteritems()}
 MANDATORY_CONTENT_TYPES = ('title', 'h1', 'description')
 MANDATORY_CONTENT_TYPES_IDS = (1, 2, 4)
 
-GROUPS = [
-    {"id": "semantic_metadata", "name": "Metadata"}
-]
+GROUPS = Enum('Groups', [('semantic_metadata', 'Metadata')])
