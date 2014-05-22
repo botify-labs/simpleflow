@@ -13,10 +13,10 @@ class ContentsExtendedStreamDef(StreamDefBase):
     FILE = 'urlcontents_x'
     HEADERS = (
         ('id', int),
-        ('type', str),
-        ('position', int),
-        ('field', str),
-        ('value', str),
+        ('type', str),  # Type of the extracted field (currently only m.prop)
+        ('position', int),  # Position of the extracted field
+        ('field', str),  # field name
+        ('value', str),  # field value
     )
     URL_DOCUMENT_MAPPING = {
         "main_image": {
