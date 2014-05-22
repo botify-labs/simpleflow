@@ -1,12 +1,24 @@
 from cdf.query.constants import FLAG_URL, FLAG_TIME_SEC, FLAG_TIME_MIN, FLAG_PERCENT
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
-from cdf.query.constants import PRIVATE
 from cdf.core.features import Feature
 
 __all__ = ['get_fields', 'get_groups']
 
 
 def _render_field_to_end_user(stream_def, field):
+    """
+    Returns a user-friendly view of a field, that may be returned by the API
+    Ex :
+    >> {
+    >>   "name": "Verbose name of the field",
+    >>   "value": "field_name",
+    >>   "data_type": "string",
+    >>   "field_type": "url",
+    >>   "group": "my_group",
+    >>   "multiple": false,
+    >>   "searchable": true
+    >> }
+    """
     field_conf = stream_def.URL_DOCUMENT_MAPPING[field]
     settings = field_conf.get("settings", [])
     group = field_conf.get("group", getattr(stream_def, 'URL_DOCUMENT_DEFAULT_GROUP', ''))
