@@ -90,8 +90,10 @@ def _update_document_mapping(mapping, medium, sources, metrics):
 
     # Iterate over sources
     for source in sources:
+        # Id source == "all", the target is "organic" or "social"
         if source == "all":
             source_target = medium
+        # Otherwise, the target is the plaform name (twitter, faceboook, google, etc..)
         else:
             source_target = source
 
@@ -132,6 +134,8 @@ class VisitsStreamDef(StreamDefBase):
     #a calculated metric is a metric computed from raw metrics
     #each calculated metric is defined by a 6-tuple:
     #  - (calculated metric name, f, raw_metric_name, verbose_name, type, rendering_flag)
+    # - if metric name doensn't need any computation, set it to None
+    # - if you don't need to set a specific rendering, set it to None
     # such that calculted metric = f(raw_metric, nb_sessions)
     _METRICS = [
         ("nb", None, "nb", "Number of visits from {source}", INT_TYPE, None),
