@@ -5,7 +5,7 @@ from cdf.metadata.url.url_metadata import (
 )
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
-from cdf.query.constants import FLAG_URL
+from cdf.query.constants import RENDERING
 
 
 def _str_to_bool(string):
@@ -148,7 +148,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
             "verbose_name": "Pages with the same Title",
             "type": INT_TYPE,
             "priority": 110,
-            "settings": {ES_NO_INDEX, LIST, FLAG_URL}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "metadata.title.duplicates.urls_exists": {
             "type": "boolean",
@@ -158,7 +158,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
             "verbose_name": "Pages with the same H1",
             "type": INT_TYPE,
             "priority": 112,
-            "settings": {ES_NO_INDEX, LIST, FLAG_URL}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "metadata.h1.duplicates.urls_exists": {
             "type": "boolean",
@@ -194,7 +194,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
             "verbose_name": "Pages with the same Description",
             "type": INT_TYPE,
             "priority": 111,
-            "settings": {ES_NO_INDEX, LIST, FLAG_URL}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "metadata.description.duplicates.urls_exists": {
             "type": "boolean",

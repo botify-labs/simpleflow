@@ -8,7 +8,7 @@ from cdf.analysis.urls.utils import is_link_internal
 from cdf.log import logger
 from cdf.features.links.helpers.masks import list_to_mask
 from cdf.utils.convert import _str_to_bool
-from cdf.query.constants import FLAG_URL
+from cdf.query.constants import RENDERING
 from .helpers.masks import follow_mask
 from .settings import GROUPS
 
@@ -169,7 +169,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "group": GROUPS.outlinks_internal,
             "priority": 13,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, FLAG_URL},
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL},
         },
         "outlinks_internal.urls_exists": {
             "type": BOOLEAN_TYPE,
@@ -250,7 +250,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 "url_id": {"type": "integer"},
             },
             "settings": {
-                ES_NO_INDEX, FLAG_URL
+                ES_NO_INDEX, RENDERING.URL
             }
         },
         "canonical.to.equal": {
@@ -282,7 +282,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "group": GROUPS.canonical,
             "priority": 4,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, FLAG_URL}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "canonical.from.urls_exists": {
             "type": "boolean",
@@ -302,7 +302,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             },
             "settings": {
                 ES_NO_INDEX,
-                FLAG_URL
+                RENDERING.URL
             }
         },
         "redirect.to.url_exists": {
@@ -327,7 +327,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "group": GROUPS.redirects,
             "priority": 4,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, FLAG_URL}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "redirect.from.urls_exists": {
             "type": "boolean",
@@ -521,7 +521,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "group": GROUPS.inlinks,
             "priority": 9,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, FLAG_URL}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "inlinks_internal.urls_exists": {
             "type": "boolean",

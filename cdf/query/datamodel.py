@@ -1,4 +1,4 @@
-from cdf.query.constants import FLAG_URL, FLAG_TIME_SEC, FLAG_TIME_MIN, FLAG_PERCENT
+from cdf.query.constants import RENDERING
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 from cdf.core.features import Feature
 
@@ -25,11 +25,11 @@ def _render_field_to_end_user(stream_def, field):
 
     field_type = field_conf["type"]
     data_type = field_conf["type"]
-    if FLAG_URL in settings:
+    if RENDERING.URL in settings:
         data_type = "string"
-    for flag in (FLAG_URL, FLAG_TIME_SEC, FLAG_TIME_MIN, FLAG_PERCENT):
+    for flag in (RENDERING.URL, RENDERING.TIME_SEC, RENDERING.TIME_MIN, RENDERING.PERCENT):
         if flag in settings:
-            field_type = flag[4:]
+            field_type = flag.value
             break
 
     return {

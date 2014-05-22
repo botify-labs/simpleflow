@@ -1,3 +1,5 @@
+from enum import Enum
+
 MGET_CHUNKS_SIZE = 1000
 
 QUERY_AGG = 'queryagg'
@@ -22,10 +24,15 @@ SUB_AGG = 'subagg'
 METRIC_AGG_PREFIX = "metricagg"
 
 # Fields flags to return a specific field type rendering
-FLAG_URL = 'cdf:url'
-FLAG_TIME_SEC = 'cdf:time_sec'
-FLAG_TIME_MIN = 'cdf:time_min'
-FLAG_PERCENT = 'cdf:percent'
+RENDERING = Enum(
+    'Rendering',
+    [
+        ('URL', 'url'),
+        ('TIME_SEC', 'time_sec'),
+        ('TIME_MIN', 'time_min'),
+        ('PERCENT', 'percent')
+    ]
+)
 
 # Field is private and won't be displayed publicly
 PRIVATE = 'private'

@@ -4,7 +4,7 @@ from cdf.metadata.url.url_metadata import (
 from cdf.core.features import StreamDefBase
 from .settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 from .metrics import compute_average_value, compute_percentage
-from cdf.query.constants import FLAG_TIME_SEC, FLAG_PERCENT
+from cdf.query.constants import RENDERING
 
 
 class RawVisitsStreamDef(StreamDefBase):
@@ -149,11 +149,11 @@ class VisitsStreamDef(StreamDefBase):
     #  - (calculated metric name, f, raw_metric_name)i
     # such that calculted metric = f(raw_metric, nb_sessions)
     _CALCULATED_METRICS = [
-        ("bounce_rate", compute_percentage, "bounces", "Bounce Rate", FLAG_PERCENT),
+        ("bounce_rate", compute_percentage, "bounces", "Bounce Rate", RENDERING.PERCENT),
         ("pages_per_session", compute_average_value, "page_views", "Pages per session", None),
-        ("average_session_duration", compute_average_value, "session_duration", "Session duration", FLAG_TIME_SEC),
-        ("percentage_new_sessions", compute_percentage, "new_users", "Percentage of new sessions", FLAG_PERCENT),
-        ("goal_conversion_rate_all", compute_percentage, "goal_completions_all", "Goal conversion rate", FLAG_PERCENT)
+        ("average_session_duration", compute_average_value, "session_duration", "Session duration", RENDERING.TIME_SEC),
+        ("percentage_new_sessions", compute_percentage, "new_users", "Percentage of new sessions", RENDERING.PERCENT),
+        ("goal_conversion_rate_all", compute_percentage, "goal_completions_all", "Goal conversion rate", RENDERING.PERCENT)
     ]
 
     _RAW_METRICS = [

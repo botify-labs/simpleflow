@@ -5,7 +5,7 @@ from cdf.query.datamodel import (
     get_groups,
     _render_field_to_end_user
 )
-from cdf.query.constants import FLAG_URL, FLAG_TIME_SEC
+from cdf.query.constants import RENDERING
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 
 
@@ -21,7 +21,7 @@ class CustomStreamDef(StreamDefBase):
             "verbose_name": "Url",
             "type": "string",
             "settings": {
-                FLAG_URL
+                RENDERING.URL
             }
         },
         "delay": {
@@ -29,7 +29,7 @@ class CustomStreamDef(StreamDefBase):
             "type": "integer",
             "group": "metrics",
             "settings": {
-                FLAG_TIME_SEC
+                RENDERING.TIME_SEC
             }
         },
         "content": {
