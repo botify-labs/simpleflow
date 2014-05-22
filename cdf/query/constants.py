@@ -1,3 +1,5 @@
+from enum import Enum
+
 MGET_CHUNKS_SIZE = 1000
 
 QUERY_AGG = 'queryagg'
@@ -20,3 +22,17 @@ SUB_AGG = 'subagg'
 # + the current aggregation (zero-filled on 2 numbers) to ensure
 # the sorting and correctly return results as a list
 METRIC_AGG_PREFIX = "metricagg"
+
+# Fields flags to return a specific field type rendering
+RENDERING = Enum(
+    'Rendering',
+    [
+        ('URL', 'url'),
+        ('TIME_SEC', 'time_sec'),
+        ('TIME_MIN', 'time_min'),
+        ('PERCENT', 'percent')
+    ]
+)
+
+# Field is private and won't be displayed publicly
+PRIVATE = 'private'
