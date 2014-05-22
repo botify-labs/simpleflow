@@ -21,14 +21,29 @@ class Feature(object):
                     identifier=n,
                     name=getattr(mod, "NAME", None),
                     description=getattr(mod, "DESCRIPTION", None),
+                    groups=getattr(mod, "GROUPS", []),
+                    order=getattr(mod, "ORDER", None)
                 )
                 cls.FEATURES.append(feature)
+        # Sort features by order
+        cls.FEATURES = sorted(cls.FEATURES, key=lambda f: f.order)
         return cls.FEATURES
 
-    def __init__(self, identifier, name, description):
+    def __init__(self, identifier, name, description, groups, order=None):
+        """
+        :param identifier : Identifier of the feature (ex : amin)
+        :param name: Verbose name of the feature
+        :param description : Description of the feature
+        :param groups : a list of dict. ex : [{"id": "metrics", "name": "Main metrics"}, ..]
+        :param priority : Worth of the feature (smaller is better).
+                          When generating concatenated groups/fields from a crawl,
+                          it will iterate on features sorted by priority
+        """
         self.identifier = identifier
         self.name = name
         self.description = description
+        self.groups = groups
+        self.order = order
 
     def __unicode__(self):
         return unicode(self.identifier)
@@ -38,16 +53,12 @@ class Feature(object):
         Return streams definition from the current feature
         """
         obj = []
-        try:
-            streams = import_module('cdf.features.{}.streams'.format(self.identifier))
-        except ImportError:
-            return []
-        else:
-            methods = inspect.getmembers(streams, predicate=inspect.isclass)
-            for method_name, klass in methods:
-                if issubclass(klass, StreamDefBase) and klass != StreamDefBase:
-                    obj.append(klass())
-            return obj
+        streams = import_module('cdf.features.{}.streams'.format(self.identifier))
+        methods = inspect.getmembers(streams, predicate=inspect.isclass)
+        for method_name, klass in methods:
+            if issubclass(klass, StreamDefBase) and klass != StreamDefBase:
+                obj.append(klass())
+        return obj
 
     def get_streams_def_processing_document(self):
         """

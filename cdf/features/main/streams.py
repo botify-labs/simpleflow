@@ -7,6 +7,7 @@ from cdf.core.streams.exceptions import GroupWithSkipException
 from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
+from cdf.query.constants import PRIVATE
 
 __all__ = ["IdStreamDef", "InfosStreamDef", "SuggestStreamDef"]
 
@@ -20,15 +21,26 @@ class IdStreamDef(StreamDefBase):
         ('path', str),
         ('query_string', str),
     )
+    URL_DOCUMENT_DEFAULT_GROUP = "scheme"
     URL_DOCUMENT_MAPPING = {
         # url property data
         "url": {
+            "verbose_name": "Url",
             "type": STRING_TYPE,
+            "order": 0,
             "settings": {ES_NOT_ANALYZED}
         },
-        "url_hash": {"type": LONG_TYPE},
+        "url_hash": {
+            "verbose_name": "Url Hash",
+            "type": LONG_TYPE,
+            "settings": {
+                PRIVATE
+            }
+        },
         "host": {
+            "verbose_name": "Host",
             "type": STRING_TYPE,
+            "order": 1,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
@@ -36,15 +48,23 @@ class IdStreamDef(StreamDefBase):
             }
         },
         "id": {
+            "verbose_name": "Id",
             "type": INT_TYPE,
-            "settings": {ES_DOC_VALUE}
+            "settings": {ES_DOC_VALUE, PRIVATE}
         },
-        "crawl_id": {"type": INT_TYPE},
+        "crawl_id": {
+            "type": INT_TYPE,
+            "settings": {PRIVATE}
+        },
         "path": {
+            "verbose_name": "Path",
             "type": STRING_TYPE,
+            "order": 2,
             "settings": {ES_NOT_ANALYZED}
         },
         "protocol": {
+            "verbose_name": "Protocol",
+            "order": 3,
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -53,10 +73,14 @@ class IdStreamDef(StreamDefBase):
             }
         },
         "query_string": {
+            "verbose_name": "Query String",
+            "order": 4,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
         "query_string_keys": {
+            "verbose_name": "Query String Keys",
+            "order": 5,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
@@ -91,17 +115,23 @@ class InfosStreamDef(StreamDefBase):
         ('byte_size', int),
         ('delay_first_byte', int),
         ('delay_last_byte', int),
+        ('lang', str, {"default": "notset", "missing": "notset"})
     )
+    URL_DOCUMENT_DEFAULT_GROUP = "main"
     URL_DOCUMENT_MAPPING = {
         "byte_size": {
+            "verbose_name": "Byte Size",
             "type": INT_TYPE,
+            "order": 0,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
             }
         },
         "http_code": {
+            "verbose_name": "Http Code",
             "type": INT_TYPE,
+            "order": 1,
             "settings": {
                 ES_DOC_VALUE,
                 # `http_code` have 2 roles
@@ -110,25 +140,33 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "date_crawled": {
+            "verbose_name": "Date crawled",
             "type": DATE_TYPE,
+            "order": 2,
             "settings": {ES_DOC_VALUE}
         },
         "delay_first_byte": {
+            "verbose_name": "Delay first byte received",
             "type": INT_TYPE,
+            "order": 3,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
             }
         },
         "delay_last_byte": {
+            "verbose_name": "Delay total",
             "type": INT_TYPE,
+            "order": 4,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
             }
         },
         "depth": {
+            "verbose_name": "Depth",
             "type": INT_TYPE,
+            "order": 5,
             "settings": {
                 ES_DOC_VALUE,
                 # assume possible depth is finite
@@ -136,9 +174,15 @@ class InfosStreamDef(StreamDefBase):
                 AGG_NUMERICAL
             }
         },
-        "gzipped": {"type": BOOLEAN_TYPE},
+        "gzipped": {
+            "verbose_name": "Url compressed",
+            "type": BOOLEAN_TYPE,
+            "order": 7
+        },
         "content_type": {
+            "verbose_name": "Content-type",
             "type": STRING_TYPE,
+            "order": 8,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
@@ -147,12 +191,27 @@ class InfosStreamDef(StreamDefBase):
         },
         # meta tag related
         "metadata.robots.nofollow": {
+            "verbose_name": "Has robots anchors as `nofollow`",
             "type": BOOLEAN_TYPE,
+            "order": 9,
             "settings": {AGG_CATEGORICAL}
         },
         "metadata.robots.noindex": {
+            "verbose_name": "Has robots anchors as `noindex`",
             "type": BOOLEAN_TYPE,
+            "order": 10,
             "settings": {AGG_CATEGORICAL}
+        },
+        "lang": {
+            "verbose_name": "lang",
+            "type": STRING_TYPE,
+            "order": 6,
+            "settings": {
+                ES_NOT_ANALYZED,
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            },
+            "enabled": lambda options: options and options.get("lang", False)
         }
     }
 
@@ -221,6 +280,7 @@ class SuggestStreamDef(StreamDefBase):
     )
     URL_DOCUMENT_MAPPING = {
         "patterns": {
+            "verbose_name": "Suggested patterns",
             "type": LONG_TYPE,
             "settings": {
                 LIST

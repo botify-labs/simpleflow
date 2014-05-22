@@ -1,4 +1,3 @@
-import operator
 from collections import Counter
 
 from cdf.metadata.url.url_metadata import (
@@ -12,7 +11,10 @@ from cdf.analysis.urls.utils import is_link_internal
 from cdf.log import logger
 from cdf.features.links.helpers.masks import list_to_mask
 from cdf.utils.convert import _raw_to_bool
+from cdf.query.constants import RENDERING
 from .helpers.masks import follow_mask
+from .settings import GROUPS
+
 
 __all__ = ["OutlinksRawStreamDef", "OutlinksStreamDef"]
 
@@ -46,6 +48,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
     URL_DOCUMENT_MAPPING = {
         # internal outgoing links (destination is a internal url)
         "outlinks_internal.nb.total": {
+            "verbose_name": "Number of Internal Incoming Links",
+            "group": GROUPS.outlinks_internal,
+            "order": 1,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -53,6 +58,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.unique": {
+            "verbose_name": "Unique Number of Internal Incoming Links",
+            "group": GROUPS.outlinks_internal,
+            "order": 2,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -60,6 +68,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.follow.unique": {
+            "verbose_name": "Unique Number of Follow Internal Incoming Links",
+            "group": GROUPS.outlinks_internal,
+            "order": 4,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -67,6 +78,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.follow.total": {
+            "verbose_name": "Number of Internal Follow Outlinks",
+            "group": GROUPS.outlinks_internal,
+            "order": 3,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -74,6 +88,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.nofollow.total": {
+            "verbose_name": "Number of Internal NoFollow Outlinks",
+            "group": GROUPS.outlinks_internal_nofollow,
+            "order": 5,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -81,6 +98,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.nofollow.combinations.link": {
+            "verbose_name": "Number of Internal NoFollow Outlinks strictly in link nofollow",
+            "group": GROUPS.outlinks_internal_nofollow,
+            "order": 6,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -88,6 +108,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.nofollow.combinations.meta": {
+            "verbose_name": "Number of Internal NoFollow Outlinks strictly in meta nofollow",
+            "group": GROUPS.outlinks_internal_nofollow,
+            "order": 7,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -95,6 +118,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.nofollow.combinations.robots": {
+            "verbose_name": "Number of Internal NoFollow Outlinks strictly disallowed by robots.txt",
+            "group": GROUPS.outlinks_internal_nofollow,
+            "order": 8,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -102,6 +128,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.nofollow.combinations.link_meta": {
+            "verbose_name": "Number of Internal NoFollow Outlinks both in link and meta nofollow",
+            "group": GROUPS.outlinks_internal_nofollow,
+            "order": 9,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -109,6 +138,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.nofollow.combinations.link_robots": {
+            "verbose_name": "Number of Internal NoFollow Outlinks both in link nofollow and disallowed by robots.txt",
+            "group": GROUPS.outlinks_internal_nofollow,
+            "order": 10,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -116,22 +148,31 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.nofollow.combinations.meta_robots": {
+            "verbose_name": "Number of Internal NoFollow Outlinks both in meta nofollow and disallowed by robots.txt",
+            "group": GROUPS.outlinks_internal_nofollow,
             "type": INT_TYPE,
+            "order": 11,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
             }
         },
         "outlinks_internal.nb.nofollow.combinations.link_meta_robots": {
+            "verbose_name": "Number of Internal NoFollow Outlinks both in link, meta nofollow and disallowed by robots.txt",
+            "group": GROUPS.outlinks_internal_nofollow,
             "type": INT_TYPE,
+            "order": 12,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
             }
         },
         "outlinks_internal.urls": {
+            "verbose_name": "Sample of Internal outlinks",
+            "group": GROUPS.outlinks_internal,
+            "order": 13,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST},
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL},
         },
         "outlinks_internal.urls_exists": {
             "type": BOOLEAN_TYPE,
@@ -140,6 +181,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
 
         # external outgoing links (destination is a external url)
         "outlinks_external.nb.total": {
+            "verbose_name": "Number of External Outlinks",
+            "group": GROUPS.outlinks_external,
+            "order": 1,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -147,6 +191,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_external.nb.follow.total": {
+            "verbose_name": "Number of External Follow Outlinks",
+            "group": GROUPS.outlinks_external,
+            "order": 2,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -154,6 +201,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_external.nb.nofollow.total": {
+            "verbose_name": "Number of External NoFollow Outlinks",
+            "group": GROUPS.outlinks_external_nofollow,
+            "order": 1,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -161,6 +211,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_external.nb.nofollow.combinations.link": {
+            "verbose_name": "Number of External NoFollow Outlinks strictly in link nofollow",
+            "group": GROUPS.outlinks_external_nofollow,
+            "order": 2,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -168,6 +221,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_external.nb.nofollow.combinations.meta": {
+            "verbose_name": "Number of External NoFollow Outlinks strictly in meta nofollow",
+            "group": GROUPS.outlinks_external_nofollow,
+            "order": 3,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -175,6 +231,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_external.nb.nofollow.combinations.link_meta": {
+            "verbose_name": "Number of External NoFollow Outlinks both in link and meta nofollow",
+            "group": GROUPS.outlinks_external_nofollow,
+            "order": 4,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -185,16 +244,22 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         # outgoing canonical link, one per page
         # if multiple, first one is taken into account
         "canonical.to.url": {
+            "verbose_name": "Canonical To",
+            "group": GROUPS.canonical,
+            "order": 1,
             "type": STRUCT_TYPE,
             "values": {
                 "url_str": {"type": "string"},
                 "url_id": {"type": "integer"},
             },
             "settings": {
-                ES_NO_INDEX
+                ES_NO_INDEX, RENDERING.URL
             }
         },
         "canonical.to.equal": {
+            "verbose_name": "Canonical is the Same Url",
+            "group": GROUPS.canonical,
+            "order": 2,
             "type": BOOLEAN_TYPE,
             "settings": {AGG_CATEGORICAL}
         },
@@ -205,6 +270,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
 
         # incoming canonical link
         "canonical.from.nb": {
+            "verbose_name": "Number of Incoming Canonical",
+            "group": GROUPS.canonical,
+            "order": 3,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -213,8 +281,11 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "canonical.from.urls": {
+            "verbose_name": "Canonical From",
+            "group": GROUPS.canonical,
+            "order": 4,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "canonical.from.urls_exists": {
             "type": "boolean",
@@ -223,6 +294,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
 
         # outgoing redirection
         "redirect.to.url": {
+            "verbose_name": "Redirects to",
+            "group": GROUPS.redirects,
+            "order": 1,
             "type": STRUCT_TYPE,
             "values": {
                 "url_str": {"type": "string"},
@@ -230,16 +304,20 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 "http_code": {"type": "integer"}
             },
             "settings": {
-                ES_NO_INDEX
+                ES_NO_INDEX,
+                RENDERING.URL
             }
         },
         "redirect.to.url_exists": {
             "type": BOOLEAN_TYPE,
-            "default_value": None
+            "default_value": None,
         },
 
         # incoming redirection
         "redirect.from.nb": {
+            "verbose_name": "Number of Incoming Redirects",
+            "group": GROUPS.redirects,
+            "order": 3,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -248,8 +326,11 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "redirect.from.urls": {
+            "verbose_name": "Redirected From",
+            "group": GROUPS.redirects,
+            "order": 4,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "redirect.from.urls_exists": {
             "type": "boolean",
@@ -345,6 +426,8 @@ class InlinksRawStreamDef(StreamDefBase):
         ('link_type', str),
         ('bitmask', int),
         ('src_url_id', int),
+        ('text_hash', str),
+        ('text', str),
     )
 
 
@@ -362,37 +445,49 @@ class InlinksStreamDef(InlinksRawStreamDef):
         ('text_hash', str),
         ('text', str)
     )
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.inlinks
     URL_DOCUMENT_MAPPING = {
         # incoming links, must be internal
         "inlinks_internal.nb.total": {
+            "verbose_name": "Number of Internal Incoming Links",
             "type": INT_TYPE,
+            "order": 1,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
             }
         },
         "inlinks_internal.nb.unique": {
+            "verbose_name": "Unique Number of Internal Incoming Links",
             "type": INT_TYPE,
+            "order": 2,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
             }
         },
         "inlinks_internal.nb.follow.unique": {
+            "verbose_name": "Unique Number of Follow Internal Incoming Links",
             "type": INT_TYPE,
+            "order": 4,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
             }
         },
         "inlinks_internal.nb.follow.total": {
+            "verbose_name": "Number of Internal Incoming Follow Links",
             "type": INT_TYPE,
+            "order": 3,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
             }
         },
         "inlinks_internal.nb.nofollow.total": {
+            "verbose_name": "Number of Internal Incoming NoFollow Links",
+            "group": GROUPS.inlinks_nofollow,
+            "order": 5,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -400,6 +495,9 @@ class InlinksStreamDef(InlinksRawStreamDef):
             }
         },
         "inlinks_internal.nb.nofollow.combinations.link": {
+            "verbose_name": "Number of NoFollow links strictly in link nofollow",
+            "group": GROUPS.inlinks_nofollow,
+            "order": 6,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -407,6 +505,9 @@ class InlinksStreamDef(InlinksRawStreamDef):
             }
         },
         "inlinks_internal.nb.nofollow.combinations.meta": {
+            "verbose_name": "Number of NoFollow links strictly in meta nofollow",
+            "group": GROUPS.inlinks_nofollow,
+            "order": 7,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -414,6 +515,9 @@ class InlinksStreamDef(InlinksRawStreamDef):
             }
         },
         "inlinks_internal.nb.nofollow.combinations.link_meta": {
+            "verbose_name": "Number of NoFollow links both in link and meta nofollow",
+            "group": GROUPS.inlinks_nofollow,
+            "order": 8,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -421,8 +525,11 @@ class InlinksStreamDef(InlinksRawStreamDef):
             }
         },
         "inlinks_internal.urls": {
+            "verbose_name": "Sample of internal inlinks urls",
+            "group": GROUPS.inlinks,
+            "order": 9,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
         },
         "inlinks_internal.urls_exists": {
             "type": "boolean",
@@ -595,10 +702,13 @@ class BadLinksStreamDef(StreamDefBase):
         ('dst_url_id', int),
         ('http_code', int)
     )
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal
     URL_DOCUMENT_MAPPING = {
         # erroneous outgoing internal links
         "outlinks_errors.3xx.nb": {
             "type": INT_TYPE,
+            "verbose_name": "Number of error links in 3xx",
+            "order": 100,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -606,6 +716,8 @@ class BadLinksStreamDef(StreamDefBase):
         },
         "outlinks_errors.3xx.urls": {
             "type": INT_TYPE,
+            "verbose_name": "Sample of error links in 3xx",
+            "order": 101,
             "settings": {ES_NO_INDEX, LIST}
         },
         "outlinks_errors.3xx.urls_exists": {
@@ -615,6 +727,8 @@ class BadLinksStreamDef(StreamDefBase):
 
         "outlinks_errors.4xx.nb": {
             "type": INT_TYPE,
+            "verbose_name": "Number of error links in 4xx",
+            "order": 102,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -622,6 +736,8 @@ class BadLinksStreamDef(StreamDefBase):
         },
         "outlinks_errors.4xx.urls": {
             "type": INT_TYPE,
+            "verbose_name": "Sample of error links in 4xx",
+            "order": 103,
             "settings": {ES_NO_INDEX, LIST}
         },
         "outlinks_errors.4xx.urls_exists": {
@@ -631,6 +747,8 @@ class BadLinksStreamDef(StreamDefBase):
 
         "outlinks_errors.5xx.nb": {
             "type": INT_TYPE,
+            "verbose_name": "Number of error links in 5xx",
+            "order": 104,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -638,6 +756,8 @@ class BadLinksStreamDef(StreamDefBase):
         },
         "outlinks_errors.5xx.urls": {
             "type": INT_TYPE,
+            "verbose_name": "Sample of error links in 5xx",
+            "order": 105,
             "settings": {ES_NO_INDEX, LIST}
         },
         "outlinks_errors.5xx.urls_exists": {
@@ -647,6 +767,8 @@ class BadLinksStreamDef(StreamDefBase):
         # total error_links number
         "outlinks_errors.total": {
             "type": "integer",
+            "verbose_name": "Number of error links in 3xx/4xx/5xx",
+            "order": 99,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL

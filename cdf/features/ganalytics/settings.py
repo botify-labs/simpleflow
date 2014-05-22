@@ -1,3 +1,10 @@
+from enum import Enum
+
+
+NAME = "Analytics import"
+DESCRIPTION = ""
+ORDER = 1000
+
 ORGANIC_SOURCES = (
     'google',
     'bing',
@@ -17,4 +24,11 @@ SOCIAL_SOURCES = (
     'reddit',
     'google+',
     'tumblr'
+)
+
+
+GROUPS = Enum(
+    'Groups',
+    [('visits.organic.{}'.format(source), 'Visits from {}'.format(source)) for source in ORGANIC_SOURCES] +
+    [('visits.social.{}'.format(source), 'Visits from {}'.format(source)) for source in SOCIAL_SOURCES]
 )

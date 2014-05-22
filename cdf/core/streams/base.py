@@ -11,6 +11,7 @@ from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils import s3
 from cdf.utils.path import get_files_ordered_by_part_id
 from cdf.analysis.urls.utils import get_part_id
+from cdf.query.constants import PRIVATE
 
 
 class StreamDefBase(object):
@@ -106,7 +107,9 @@ class StreamDefBase(object):
     @classmethod
     def get_stream_from_iterator(cls, i):
         """
-        Return a stream from a iterable object
+        Return a stream from an iterable object
+        Warning : consider that the iterable object is already transformed
+        It won't add missing/default values when necessary
         """
         cast = Caster(cls.HEADERS).cast
         return Stream(cls(), cast(i))
@@ -163,6 +166,23 @@ class StreamDefBase(object):
         return TemporaryDataset(
             stream_def=cls()
         )
+
+    def get_document_fields_from_options(self, options, remove_private=False):
+        """
+        Return the document fields enabled depending on options defined
+        for the given feature
+        :param options : a dictionnary with key as feature's identifier and sub-dict as value (k/v settings)
+        :param remove_private : if PRIVATE flag is in field's `settings`, the field will be skipped
+        """
+        if not hasattr(self, 'URL_DOCUMENT_MAPPING'):
+            return []
+        fields = []
+        for field, settings in self.URL_DOCUMENT_MAPPING.iteritems():
+            if field.endswith('_exists') or PRIVATE in settings.get("settings", set()):
+                continue
+            if settings.get("enabled", lambda options: True)(options):
+                fields.append(field)
+        return fields
 
 
 class Stream(object):

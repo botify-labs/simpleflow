@@ -59,7 +59,7 @@ class TestBasicInfoGeneration(unittest.TestCase):
             'byte_size': 1200,
             'depth': 0,
             'http_code': 200,
-            'delay_last_byte': 456
+            'delay_last_byte': 456,
         }
 
         for key, expected in document_expected.items():
@@ -67,6 +67,15 @@ class TestBasicInfoGeneration(unittest.TestCase):
 
         self.assertFalse('delay1' in document)
         self.assertFalse('delay2' in document)
+
+    def test_url_infos_with_lang(self):
+        self.infos[0].append('fr')
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos))
+        ])
+        document = list(gen)[0][1]
+        self.assertEquals(document['lang'], 'fr')
 
     def test_query_string_without_value(self):
         ids = [
@@ -556,7 +565,7 @@ class TestRedirectsGeneration(unittest.TestCase):
         inlinks = [
             [2, 'r301', list_to_mask(['follow']), 1],
             [4, 'r301', list_to_mask(['follow']), 3],
-        ]
+    ]
 
         gen = UrlDocumentGenerator([
             IdStreamDef.get_stream_from_iterator(iter(patterns)),
