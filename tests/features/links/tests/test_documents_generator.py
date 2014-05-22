@@ -57,11 +57,14 @@ class TestBasicInfoGeneration(unittest.TestCase):
 
         document = _next_doc(gen)
         self.assertEquals(
-            document["inlinks_internal"]["top_anchors"]['text'],
+            document["inlinks_internal"]["anchors"]["nb"], 2
+        )
+        self.assertEquals(
+            document["inlinks_internal"]["anchors"]["top"]['text'],
             ["Yeah", "Oops"]
         )
         self.assertEquals(
-            document["inlinks_internal"]["top_anchors"]['nb'],
+            document["inlinks_internal"]["anchors"]["top"]['nb'],
             [3, 2]
         )
 
@@ -82,4 +85,4 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ])
 
         document = _next_doc(gen)
-        self.assertTrue("nb" not in document["inlinks_internal"]["top_anchors"])
+        self.assertTrue("nb" not in document["inlinks_internal"]["anchors"]["top"])

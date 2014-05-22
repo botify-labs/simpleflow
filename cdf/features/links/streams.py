@@ -558,14 +558,21 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "type": "boolean",
             "default_value": None
         },
-        "inlinks_internal.top_anchors": {
+        "inlinks_internal.anchors.nb": {
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
+        "inlinks_internal.anchors.top": {
             "type": STRUCT_TYPE,
             "values": STRING_NB_MAP_MAPPING,
             "settings": {LIST, RENDERING.STRING_NB_MAP, FIELD_RIGHTS.RESULTS}
         },
         # The following field is already created with the above one (as a STRUCT_TYPE)
         # But we need to return is to request it
-        "inlinks_internal.top_anchors.text": {
+        "inlinks_internal.anchors.top.text": {
             "type": STRING_TYPE,
             "settings": {
                 FAKE_FIELD, FIELD_RIGHTS.FILTERS
@@ -647,16 +654,17 @@ class InlinksStreamDef(InlinksRawStreamDef):
         if not 'inlinks_internal' in document:
             return
 
-        document["inlinks_internal"]["top_anchors"] = {"text": [], "nb": []}
+        document["inlinks_internal"]["anchors"]["top"] = {"text": [], "nb": []}
 
         # We map the number of occurrences from each `text_hash` to the original text,
         # we don't store the `text_hash` in the final document
         # Elasticsearch would imply to create nested documents, so we push a first list
         # containing texts, and a second one (`nb`) containing number of occurrences
         if document["tmp_anchors_nb"]:
+            document["inlinks_internal"]["anchors"]["nb"] = len(document["tmp_anchors_nb"])
             for text_hash, nb in document["tmp_anchors_nb"].most_common(5):
-                document["inlinks_internal"]["top_anchors"]["text"].append(document["tmp_anchors_txt"][text_hash])
-                document["inlinks_internal"]["top_anchors"]["nb"].append(nb)
+                document["inlinks_internal"]["anchors"]["top"]["text"].append(document["tmp_anchors_txt"][text_hash])
+                document["inlinks_internal"]["anchors"]["top"]["nb"].append(nb)
 
         document['inlinks_internal']['nb']['unique'] = len(document['processed_inlink_url'])
 
