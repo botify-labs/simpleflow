@@ -28,6 +28,7 @@ RENDERING = Enum(
     'Rendering',
     [
         ('URL', 'url'),
+        ('IMAGE_URL', 'image_url'),
         ('TIME_SEC', 'time_sec'),
         ('TIME_MIN', 'time_min'),
         ('PERCENT', 'percent')
