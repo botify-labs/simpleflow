@@ -170,6 +170,8 @@ class StreamDefBase(object):
         """
         Return the document fields enabled depending on options defined
         for the given feature
+        :param options : dict of options (sent by frontend)
+        :param remove_private : do not return fields having a PRIVATE flags in field's settings
         """
         if not hasattr(self, 'URL_DOCUMENT_MAPPING'):
             return []
