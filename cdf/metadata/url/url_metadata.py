@@ -52,3 +52,15 @@ MULTI_FIELD = 'es:multi_field'
 # categorical fields have a finite cardinality of distinct values
 AGG_CATEGORICAL = 'agg:categorical'
 AGG_NUMERICAL = 'agg:numerical'
+
+# Returns a mapping of text / nb_occurrences
+# Will be notably used to store top_anchors and their number
+# of occcurrences
+STRING_NB_MAP_MAPPING = {
+    "text": {"type": "string", "index": "not_analyzed"},
+    "nb": {"type": "integer", "index": "no"},
+}
+
+# Do not push a field with this flag
+# in elasticsearch mapping
+FAKE_FIELD = 'es:fake'

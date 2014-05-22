@@ -1,4 +1,4 @@
-from cdf.query.constants import RENDERING
+from cdf.query.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 from cdf.core.features import Feature
 
@@ -32,6 +32,13 @@ def _render_field_to_end_user(stream_def, field):
             field_type = flag.value
             break
 
+    rights = []
+    for field_right in FIELD_RIGHTS:
+        if field_right in settings:
+            rights.append(field_right.value)
+    if not rights:
+        rights = [FIELD_RIGHTS.FILTERS.value, FIELD_RIGHTS.RESULTS.value]
+
     return {
         "name": field_conf.get("verbose_name", ""),
         "value": field,
@@ -40,7 +47,7 @@ def _render_field_to_end_user(stream_def, field):
         "is_sortable": True,
         "group": group,
         "multiple": LIST in settings,
-        "searchable": ES_NO_INDEX not in settings,
+        "rights": rights
     }
 
 

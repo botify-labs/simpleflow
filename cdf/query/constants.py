@@ -28,11 +28,20 @@ RENDERING = Enum(
     'Rendering',
     [
         ('URL', 'url'),
+        ('URL_HTTP_CODE', 'url_http_code'),  # Returns a 2-tuple list of (url, http_code)
+        ('STRING_NB_MAP', 'string_nb_map'),  # Returns a map dict {'text': ["My text", "My other text", ..], 'nb': [20, 10..]}
         ('TIME_SEC', 'time_sec'),
         ('TIME_MIN', 'time_min'),
         ('PERCENT', 'percent')
     ]
 )
 
-# Field is private and won't be displayed publicly
-PRIVATE = 'private'
+FIELD_RIGHTS = Enum(
+    'FieldRights',
+    [
+        ('PRIVATE', 'private'),  # This field is private and cannot be requested outside
+        ('FILTERS', 'filters'),  # This field can be called in filtering operations
+        ('FILTERS_EXIST', 'filters_exist'),  # This field can be called in filtering operations but just to check if it exists
+        ('RESULTS', 'results'),  # This field can be returned in the query results
+    ]
+)

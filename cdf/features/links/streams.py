@@ -4,14 +4,15 @@ from cdf.metadata.url.url_metadata import (
     INT_TYPE, BOOLEAN_TYPE, STRUCT_TYPE,
     ES_NO_INDEX, ES_DOC_VALUE,
     LIST, AGG_CATEGORICAL, AGG_NUMERICAL,
-    STRING_TYPE, ES_NOT_ANALYZED
+    STRING_TYPE, ES_NOT_ANALYZED, STRING_NB_MAP_MAPPING,
+    FAKE_FIELD
 )
 from cdf.core.streams.base import StreamDefBase
 from cdf.analysis.urls.utils import is_link_internal
 from cdf.log import logger
 from cdf.features.links.helpers.masks import list_to_mask
 from cdf.utils.convert import _raw_to_bool
-from cdf.query.constants import RENDERING
+from cdf.query.constants import RENDERING, FIELD_RIGHTS
 from .helpers.masks import follow_mask
 from .settings import GROUPS
 
@@ -172,7 +173,12 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "group": GROUPS.outlinks_internal,
             "order": 13,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL},
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL,
+                FIELD_RIGHTS.RESULTS
+            },
         },
         "outlinks_internal.urls_exists": {
             "type": BOOLEAN_TYPE,
@@ -253,7 +259,10 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 "url_id": {"type": "integer"},
             },
             "settings": {
-                ES_NO_INDEX, RENDERING.URL
+                ES_NO_INDEX,
+                RENDERING.URL,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.RESULTS
             }
         },
         "canonical.to.equal": {
@@ -285,7 +294,13 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "group": GROUPS.canonical,
             "order": 4,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.RESULTS
+            }
         },
         "canonical.from.urls_exists": {
             "type": "boolean",
@@ -305,7 +320,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             },
             "settings": {
                 ES_NO_INDEX,
-                RENDERING.URL
+                RENDERING.URL_HTTP_CODE,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.RESULTS
             }
         },
         "redirect.to.url_exists": {
@@ -330,7 +347,13 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "group": GROUPS.redirects,
             "order": 4,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.RESULTS
+            }
         },
         "redirect.from.urls_exists": {
             "type": "boolean",
@@ -529,20 +552,23 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "group": GROUPS.inlinks,
             "order": 9,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL, FIELD_RIGHTS.RESULTS}
         },
         "inlinks_internal.urls_exists": {
             "type": "boolean",
             "default_value": None
         },
+        "inlinks_internal.top_anchors": {
+            "type": STRUCT_TYPE,
+            "values": STRING_NB_MAP_MAPPING,
+            "settings": {LIST, RENDERING.STRING_NB_MAP, FIELD_RIGHTS.RESULTS}
+        },
+        # The following field is already created with the above one (as a STRUCT_TYPE)
+        # But we need to return is to request it
         "inlinks_internal.top_anchors.text": {
             "type": STRING_TYPE,
-            "settings": {ES_NOT_ANALYZED, LIST}
-        },
-        "inlinks_internal.top_anchors.nb": {
-            "type": INT_TYPE,
             "settings": {
-                LIST
+                FAKE_FIELD, FIELD_RIGHTS.FILTERS
             }
         }
     }
@@ -621,8 +647,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         if not 'inlinks_internal' in document:
             return
 
-        document["inlinks_internal"]["top_anchors"]["text"] = []
-        document["inlinks_internal"]["top_anchors"]["nb"] = []
+        document["inlinks_internal"]["top_anchors"] = {"text": [], "nb": []}
 
         # We map the number of occurrences from each `text_hash` to the original text,
         # we don't store the `text_hash` in the final document
@@ -718,7 +743,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 3xx",
             "order": 101,
-            "settings": {ES_NO_INDEX, LIST}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.RESULTS}
         },
         "outlinks_errors.3xx.urls_exists": {
             "type": "boolean",
@@ -738,7 +763,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 4xx",
             "order": 103,
-            "settings": {ES_NO_INDEX, LIST}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.RESULTS}
         },
         "outlinks_errors.4xx.urls_exists": {
             "type": "boolean",
@@ -758,7 +783,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 5xx",
             "order": 105,
-            "settings": {ES_NO_INDEX, LIST}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.RESULTS}
         },
         "outlinks_errors.5xx.urls_exists": {
             "type": "boolean",

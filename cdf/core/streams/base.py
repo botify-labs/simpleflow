@@ -11,7 +11,7 @@ from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils import s3
 from cdf.utils.path import get_files_ordered_by_part_id
 from cdf.analysis.urls.utils import get_part_id
-from cdf.query.constants import PRIVATE
+from cdf.query.constants import FIELD_RIGHTS
 
 
 class StreamDefBase(object):
@@ -178,7 +178,7 @@ class StreamDefBase(object):
             return []
         fields = []
         for field, settings in self.URL_DOCUMENT_MAPPING.iteritems():
-            if field.endswith('_exists') or PRIVATE in settings.get("settings", set()):
+            if field.endswith('_exists') or FIELD_RIGHTS.PRIVATE in settings.get("settings", set()):
                 continue
             if settings.get("enabled", lambda options: True)(options):
                 fields.append(field)

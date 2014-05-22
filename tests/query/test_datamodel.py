@@ -5,7 +5,7 @@ from cdf.query.datamodel import (
     get_groups,
     _render_field_to_end_user
 )
-from cdf.query.constants import RENDERING
+from cdf.query.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 
 
@@ -29,14 +29,26 @@ class CustomStreamDef(StreamDefBase):
             "type": "integer",
             "group": "metrics",
             "settings": {
-                RENDERING.TIME_SEC
+                RENDERING.TIME_SEC,
+                FIELD_RIGHTS.RESULTS
             }
         },
         "content": {
             "verbose_name": "Contents",
             "type": "string",
             "settings": {
-                LIST, ES_NO_INDEX
+                LIST,
+                FIELD_RIGHTS.FILTERS
+            }
+        },
+        "content_same_urls": {
+            "verbose_name": "Contents with the same url",
+            "type": "string",
+            "settings": {
+                LIST,
+                ES_NO_INDEX,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.RESULTS
             }
         }
     }
@@ -57,7 +69,7 @@ class FieldsTestCase(unittest.TestCase):
                 "is_sortable": True,
                 "group": "main_group",
                 "multiple": False,
-                "searchable": True
+                "rights": ["filters", "results"]
             }
         )
 
@@ -70,15 +82,18 @@ class FieldsTestCase(unittest.TestCase):
                 "field_type": "time_sec",
                 "is_sortable": True,
                 "group": "metrics",
-                "searchable": True,
-                "multiple": False
+                "multiple": False,
+                "rights": ["results"]
             }
         )
 
         # `content` field is `multiple`
         self.assertTrue(_render_field_to_end_user(CustomStreamDef, "content")["multiple"])
-        # `content` field is NOT `searchable`
-        self.assertFalse(_render_field_to_end_user(CustomStreamDef, "content")["searchable"])
+        # `content` field can be filtered but no returned in the results
+        self.assertEquals(_render_field_to_end_user(CustomStreamDef, "content")["rights"], ["filters"])
+
+        # `content_same_urls` field can be filtered but only with `exists` check and  returned in the results
+        self.assertEquals(_render_field_to_end_user(CustomStreamDef, "content_same_urls")["rights"], ["filters_exist", "results"])
 
     def test_enabled(self):
         fields = get_fields({"main": {"lang": True}})
