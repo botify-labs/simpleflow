@@ -19,3 +19,5 @@ GROUPS = Enum(
         ("canonical", "Canonicals"),
     ]
 )
+
+

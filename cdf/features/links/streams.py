@@ -468,6 +468,14 @@ class InlinksStreamDef(InlinksRawStreamDef):
         ('text_hash', str),
         ('text', str)
     )
+
+    # Check this value if the text is already set
+    # If test is an empty string, it will means that it is
+    # a real empty link
+    TEXT_HASH_ALREADY_SET = '\x00'
+    # If the text is really empty, we will flag it as empty
+    TEXT_EMPTY = '[empty]'
+
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.inlinks
     URL_DOCUMENT_MAPPING = {
         # incoming links, must be internal
@@ -609,7 +617,9 @@ class InlinksStreamDef(InlinksRawStreamDef):
                 # We increment the number of occurrences found for `text_hash` only
                 # for follow inlinks
                 if text_hash:
-                    if text and text_hash not in document['tmp_anchors_txt']:
+                    if text != self.TEXT_HASH_ALREADY_SET and text_hash not in document['tmp_anchors_txt']:
+                        if text == '':
+                            text = self.TEXT_EMPTY
                         document['tmp_anchors_txt'][text_hash] = text
                     document['tmp_anchors_nb'][text_hash] += 1
             else:

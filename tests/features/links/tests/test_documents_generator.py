@@ -43,10 +43,11 @@ class TestBasicInfoGeneration(unittest.TestCase):
         inlinks = [
             [1, 'a', 0, 2, "12D", "Yeah"],
             [1, 'r301', 0, 3, None, None],
-            [1, 'a', 0, 3, "12D", "Yeah"],
+            [1, 'a', 0, 3, "12D", "\x00"],
             [1, 'a', 0, 4, "13D", "Oops"],
-            [1, 'a', 0, 4, "13D", "Oops"],
-            [1, 'a', 0, 4, "12D", "Yeah"],
+            [1, 'a', 0, 4, "13D", "\x00"],
+            [1, 'a', 0, 4, "12D", "\x00"],
+            [1, 'a', 0, 4, "14D", ""],  # Empty text
         ]
 
         gen = UrlDocumentGenerator([
@@ -56,16 +57,14 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ])
 
         document = _next_doc(gen)
-        self.assertEquals(
-            document["inlinks_internal"]["anchors"]["nb"], 2
-        )
+        self.assertEquals(document["inlinks_internal"]["anchors"]["nb"], 3)
         self.assertEquals(
             document["inlinks_internal"]["anchors"]["top"]['text'],
-            ["Yeah", "Oops"]
+            ["Yeah", "Oops", "[empty]"]
         )
         self.assertEquals(
             document["inlinks_internal"]["anchors"]["top"]['nb'],
-            [3, 2]
+            [3, 2, 1]
         )
 
     def test_top_anchors_not_set(self):
