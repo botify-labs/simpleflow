@@ -571,7 +571,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "settings": {LIST, RENDERING.STRING_NB_MAP, FIELD_RIGHTS.RESULTS}
         },
         # The following field is already created with the above one (as a STRUCT_TYPE)
-        # But we need to return is to request it
+        # But we need to return it to request it
         "inlinks_internal.anchors.top.text": {
             "type": STRING_TYPE,
             "settings": {
