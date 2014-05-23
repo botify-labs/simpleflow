@@ -1,5 +1,6 @@
 import os
 import gzip
+import json
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.main.utils import get_url_to_id_dict_from_stream
@@ -10,7 +11,6 @@ from cdf.utils import s3
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.core.decorators import feature_enabled
 
-import json
 from analytics.import_analytics import import_data
 
 from cdf.utils.auth import get_credentials
