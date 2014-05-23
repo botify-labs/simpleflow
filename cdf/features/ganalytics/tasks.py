@@ -37,7 +37,7 @@ def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id,
             os.path.join(tmp_dir, f)
         )
 
-    metadata = json.loads(open(os.path.join(tmp_dir, 'analytics.meta.json').read()))
+    metadata = json.loads(open(os.path.join(tmp_dir, 'analytics.meta.json')).read())
     # Advise the workflow that we need to send data to the remote db
     # through the api by calling a feature endpoint (prefixed by its revision)
     return {
