@@ -10,10 +10,12 @@ from cdf.utils import s3
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.core.decorators import feature_enabled
 
+import json
 from analytics.import_analytics import import_data
 
 from cdf.utils.auth import get_credentials
 from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
+
 
 @with_temporary_dir
 @feature_enabled('ganalytics')
@@ -34,6 +36,23 @@ def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id,
             os.path.join(s3_uri, f),
             os.path.join(tmp_dir, f)
         )
+
+    metadata = json.loads(open(os.path.join(tmp_dir, 'analytics.meta.json').read()))
+    # Advise the workflow that we need to send data to the remote db
+    # through the api by calling a feature endpoint (prefixed by its revision)
+    return {
+        "api": {
+            "method": "patch",
+            "endpoint_url": "revision",
+            "endpoint_suffix": "ganalytics/",
+            "data": {
+                "sample_rate": metadata["sample_rate"],
+                "sample_size": metadata["sample_size"],
+                "sampled": metadata["sampled"],
+                "queries_count": metadata["queries_count"]
+            }
+        }
+    }
 
 
 @with_temporary_dir
