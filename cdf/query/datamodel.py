@@ -37,7 +37,7 @@ def _render_field_to_end_user(stream_def, field):
         if field_right in settings:
             rights.append(field_right.value)
     if not rights:
-        rights = [FIELD_RIGHTS.FILTERS.value, FIELD_RIGHTS.RESULTS.value]
+        rights = [FIELD_RIGHTS.FILTERS.value, FIELD_RIGHTS.SELECT.value]
 
     return {
         "name": field_conf.get("verbose_name", ""),

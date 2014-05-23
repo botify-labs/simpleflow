@@ -30,7 +30,7 @@ class CustomStreamDef(StreamDefBase):
             "group": "metrics",
             "settings": {
                 RENDERING.TIME_SEC,
-                FIELD_RIGHTS.RESULTS
+                FIELD_RIGHTS.SELECT
             }
         },
         "content": {
@@ -48,7 +48,7 @@ class CustomStreamDef(StreamDefBase):
                 LIST,
                 ES_NO_INDEX,
                 FIELD_RIGHTS.FILTERS_EXIST,
-                FIELD_RIGHTS.RESULTS
+                FIELD_RIGHTS.SELECT
             }
         }
     }
@@ -69,7 +69,7 @@ class FieldsTestCase(unittest.TestCase):
                 "is_sortable": True,
                 "group": "main_group",
                 "multiple": False,
-                "rights": ["filters", "results"]
+                "rights": ["filters", "select"]
             }
         )
 
@@ -83,7 +83,7 @@ class FieldsTestCase(unittest.TestCase):
                 "is_sortable": True,
                 "group": "metrics",
                 "multiple": False,
-                "rights": ["results"]
+                "rights": ["select"]
             }
         )
 
@@ -93,7 +93,7 @@ class FieldsTestCase(unittest.TestCase):
         self.assertEquals(_render_field_to_end_user(CustomStreamDef, "content")["rights"], ["filters"])
 
         # `content_same_urls` field can be filtered but only with `exists` check and  returned in the results
-        self.assertEquals(_render_field_to_end_user(CustomStreamDef, "content_same_urls")["rights"], ["filters_exist", "results"])
+        self.assertEquals(_render_field_to_end_user(CustomStreamDef, "content_same_urls")["rights"], ["filters_exist", "select"])
 
     def test_enabled(self):
         fields = get_fields({"main": {"lang": True}})

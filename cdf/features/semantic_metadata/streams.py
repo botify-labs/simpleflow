@@ -152,7 +152,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 ES_NO_INDEX,
                 LIST,
                 RENDERING.URL,
-                FIELD_RIGHTS.RESULTS
+                FIELD_RIGHTS.SELECT
             }
         },
         "metadata.title.duplicates.urls_exists": {
@@ -167,7 +167,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 ES_NO_INDEX,
                 LIST,
                 RENDERING.URL,
-                FIELD_RIGHTS.RESULTS
+                FIELD_RIGHTS.SELECT
             }
         },
         "metadata.h1.duplicates.urls_exists": {

@@ -42,6 +42,6 @@ FIELD_RIGHTS = Enum(
         ('PRIVATE', 'private'),  # This field is private and cannot be requested outside
         ('FILTERS', 'filters'),  # This field can be called in filtering operations
         ('FILTERS_EXIST', 'filters_exist'),  # This field can be called in filtering operations but just to check if it exists
-        ('RESULTS', 'results'),  # This field can be returned in the query results
+        ('SELECT', 'select'),  # This field can only be selected for results
     ]
 )

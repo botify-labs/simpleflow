@@ -177,7 +177,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 ES_NO_INDEX,
                 LIST,
                 RENDERING.URL,
-                FIELD_RIGHTS.RESULTS
+                FIELD_RIGHTS.SELECT
             },
         },
         "outlinks_internal.urls_exists": {
@@ -262,7 +262,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 ES_NO_INDEX,
                 RENDERING.URL,
                 FIELD_RIGHTS.FILTERS_EXIST,
-                FIELD_RIGHTS.RESULTS
+                FIELD_RIGHTS.SELECT
             }
         },
         "canonical.to.equal": {
@@ -299,7 +299,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 LIST,
                 RENDERING.URL,
                 FIELD_RIGHTS.FILTERS_EXIST,
-                FIELD_RIGHTS.RESULTS
+                FIELD_RIGHTS.SELECT
             }
         },
         "canonical.from.urls_exists": {
@@ -322,7 +322,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 ES_NO_INDEX,
                 RENDERING.URL_HTTP_CODE,
                 FIELD_RIGHTS.FILTERS_EXIST,
-                FIELD_RIGHTS.RESULTS
+                FIELD_RIGHTS.SELECT
             }
         },
         "redirect.to.url_exists": {
@@ -352,7 +352,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 LIST,
                 RENDERING.URL,
                 FIELD_RIGHTS.FILTERS_EXIST,
-                FIELD_RIGHTS.RESULTS
+                FIELD_RIGHTS.SELECT
             }
         },
         "redirect.from.urls_exists": {
@@ -552,7 +552,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "group": GROUPS.inlinks,
             "order": 9,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL, FIELD_RIGHTS.RESULTS}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL, FIELD_RIGHTS.SELECT}
         },
         "inlinks_internal.urls_exists": {
             "type": "boolean",
@@ -568,7 +568,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.anchors.top": {
             "type": STRUCT_TYPE,
             "values": STRING_NB_MAP_MAPPING,
-            "settings": {LIST, RENDERING.STRING_NB_MAP, FIELD_RIGHTS.RESULTS}
+            "settings": {LIST, RENDERING.STRING_NB_MAP, FIELD_RIGHTS.SELECT}
         },
         # The following field is already created with the above one (as a STRUCT_TYPE)
         # But we need to return it to request it
@@ -751,7 +751,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 3xx",
             "order": 101,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.RESULTS}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT}
         },
         "outlinks_errors.3xx.urls_exists": {
             "type": "boolean",
@@ -771,7 +771,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 4xx",
             "order": 103,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.RESULTS}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT}
         },
         "outlinks_errors.4xx.urls_exists": {
             "type": "boolean",
@@ -791,7 +791,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 5xx",
             "order": 105,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.RESULTS}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT}
         },
         "outlinks_errors.5xx.urls_exists": {
             "type": "boolean",
