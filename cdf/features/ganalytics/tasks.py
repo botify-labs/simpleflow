@@ -41,17 +41,19 @@ def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id,
     # Advise the workflow that we need to send data to the remote db
     # through the api by calling a feature endpoint (prefixed by its revision)
     return {
-        "api": {
-            "method": "patch",
-            "endpoint_url": "revision",
-            "endpoint_suffix": "ganalytics/",
-            "data": {
-                "sample_rate": metadata["sample_rate"],
-                "sample_size": metadata["sample_size"],
-                "sampled": metadata["sampled"],
-                "queries_count": metadata["queries_count"]
+        "api_requests": [
+            {
+                "method": "patch",
+                "endpoint_url": "revision",
+                "endpoint_suffix": "ganalytics/",
+                "data": {
+                    "sample_rate": metadata["sample_rate"],
+                    "sample_size": metadata["sample_size"],
+                    "sampled": metadata["sampled"],
+                    "queries_count": metadata["queries_count"]
+                }
             }
-        }
+        ]
     }
 
 
