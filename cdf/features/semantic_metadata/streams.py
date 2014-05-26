@@ -5,10 +5,10 @@ from cdf.metadata.url.url_metadata import (
 )
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
-from cdf.query.constants import RENDERING
+from cdf.query.constants import RENDERING, FIELD_RIGHTS
 
 
-def _str_to_bool(string):
+def _raw_to_bool(string):
     return string == '1'
 
 
@@ -124,7 +124,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         ('content_type', int),
         ('filled_nb', int),
         ('duplicates_nb', int),
-        ('is_first_url', _str_to_bool),
+        ('is_first_url', _raw_to_bool),
         ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
     )
     URL_DOCUMENT_DEFAULT_GROUP = "metadata"
@@ -148,7 +148,12 @@ class ContentsDuplicateStreamDef(StreamDefBase):
             "verbose_name": "Pages with the same Title",
             "type": INT_TYPE,
             "order": 110,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL,
+                FIELD_RIGHTS.SELECT
+            }
         },
         "metadata.title.duplicates.urls_exists": {
             "type": "boolean",
@@ -158,7 +163,12 @@ class ContentsDuplicateStreamDef(StreamDefBase):
             "verbose_name": "Pages with the same H1",
             "type": INT_TYPE,
             "order": 112,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL,
+                FIELD_RIGHTS.SELECT
+            }
         },
         "metadata.h1.duplicates.urls_exists": {
             "type": "boolean",
@@ -194,7 +204,12 @@ class ContentsDuplicateStreamDef(StreamDefBase):
             "verbose_name": "Pages with the same Description",
             "type": INT_TYPE,
             "order": 111,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL,
+                FIELD_RIGHTS.FILTERS_EXIST
+            }
         },
         "metadata.description.duplicates.urls_exists": {
             "type": "boolean",
