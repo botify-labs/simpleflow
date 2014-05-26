@@ -1,5 +1,6 @@
 import os
 import gzip
+import datetime
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.main.utils import get_url_to_id_dict_from_stream
@@ -20,9 +21,9 @@ from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
 def import_data_from_ganalytics(access_token,
                                 refresh_token,
                                 ganalytics_site_id,
-                                date_start,
-                                date_end,
                                 s3_uri,
+                                date_start=None,
+                                date_end=None,
                                 tmp_dir=None,
                                 force_fetch=False):
     """
@@ -44,10 +45,14 @@ def import_data_from_ganalytics(access_token,
                                where the traffic from inside the company is
                                filtered).
     :type ganalytics_size_id: int
-    :param date_start: Beginning date to retrieve data
-    :param date_start: datetime
-    :param date_end: Final date to retrieve data
-    :param date_end: datetime
+    :param date_start: Beginning date to retrieve data.
+                       If None, the task uses the date from 31 days ago.
+                       (so that if both date_start and date_end are None,
+                       the import period is the last 30 days)
+    :param date_start: date
+    :param date_end: Final date to retrieve data.
+                     If none, the task uses the date from yesterday.
+    :param date_end: date
     :param s3_uri: the uri where to store the data
     :type s3_uri: str
     :param tmp_dir: the path to the tmp directory to use.
@@ -58,6 +63,12 @@ def import_data_from_ganalytics(access_token,
                         if False, files that are present in the tmp_directory
                         will not be downloaded from s3.
     """
+
+    #set date_start and date_end default values if necessary
+    if date_start is None:
+        date_start = datetime.date.today() - datetime.timedelta(31)
+    if date_end is None:
+        date_end = datetime.date.today() - datetime.timedelta(1)
     credentials = get_credentials(access_token, refresh_token)
     import_data(
         "ga:{}".format(ganalytics_site_id),
