@@ -34,3 +34,43 @@ class TestBasicInfoGeneration(unittest.TestCase):
             document["main_image"],
             'http://www.site.com/image.jpg'
         )
+
+    def test_main_image_type_position(self):
+        contents = [
+            [1, 'm.prop', 1, 'og:type', 'article'],
+            [1, 'm.prop', 3, 'og:image', 'http://www.site.com/image.jpg'],
+            [1, 'm.prop', 2, 'og:image', 'http://www.site.com/another_image.jpg']
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
+            ContentsExtendedStreamDef.get_stream_from_iterator(iter(contents)),
+        ])
+
+        # We want image with position 2
+        document = gen.next()[1]
+        self.assertEquals(
+            document["main_image"],
+            'http://www.site.com/another_image.jpg'
+        )
+
+    def test_main_image_type_priority(self):
+        contents = [
+            [1, 'm.prop', 1, 'og:type', 'article'],
+            [1, 'm.prop', 2, 'twitter:image', 'http://www.site.com/image.jpg'],
+            [1, 'm.prop', 3, 'og:image', 'http://www.site.com/another_image.jpg']
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
+            ContentsExtendedStreamDef.get_stream_from_iterator(iter(contents)),
+        ])
+
+        # We want image with og:image (prior to twitter:image) despite a small position
+        document = gen.next()[1]
+        self.assertEquals(
+            document["main_image"],
+            'http://www.site.com/another_image.jpg'
+        )
