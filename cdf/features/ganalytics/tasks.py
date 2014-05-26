@@ -22,6 +22,31 @@ def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id,
     """
     Request data from google analytics
     TODO (maybe) : take a `refresh_token` instead of an `access_token`
+    :param access_token: the access token to retrieve the data from
+                         Google Analytics Core Reporting API
+    :type access_token: str
+    :param refresh_token: the refresh token.
+                          The refresh token is used to regenerate an access
+                          token when the current one has expired.
+    :type refresh_token: str
+    :param ganalytics_site_id: the id of the Google Analytics view to retrieve
+                               data from.
+                               It is an integer with 8 digits.
+                               Caution: this is NOT the property id.
+                               There may be multiple views for a given property
+                               id. (for instance one unfiltered view and one
+                               where the traffic from inside the company is
+                               filtered).
+    :type ganalytics_size_id: int
+    :param s3_uri: the uri where to store the data
+    :type s3_uri: str
+    :param tmp_dir: the path to the tmp directory to use.
+                    If None, a new tmp directory will be created.
+    :param tmp_dir: str
+    :param force_fetch: if True, the files will be downloaded from s3
+                        even if they are in the tmp directory.
+                        if False, files that are present in the tmp_directory
+                        will not be downloaded from s3.
     """
     credentials = get_credentials(access_token, refresh_token)
     import_data(
