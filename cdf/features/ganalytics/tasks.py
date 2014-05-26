@@ -17,8 +17,14 @@ from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
 
 @with_temporary_dir
 @feature_enabled('ganalytics')
-def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id, s3_uri,
-                                tmp_dir=None, force_fetch=False):
+def import_data_from_ganalytics(access_token,
+                                refresh_token,
+                                ganalytics_site_id,
+                                date_start,
+                                date_end,
+                                s3_uri,
+                                tmp_dir=None,
+                                force_fetch=False):
     """
     Request data from google analytics
     TODO (maybe) : take a `refresh_token` instead of an `access_token`
@@ -38,6 +44,10 @@ def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id,
                                where the traffic from inside the company is
                                filtered).
     :type ganalytics_size_id: int
+    :param date_start: Beginning date to retrieve data
+    :param date_start: datetime
+    :param date_end: Final date to retrieve data
+    :param date_end: datetime
     :param s3_uri: the uri where to store the data
     :type s3_uri: str
     :param tmp_dir: the path to the tmp directory to use.
@@ -52,6 +62,8 @@ def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id,
     import_data(
         "ga:{}".format(ganalytics_site_id),
         credentials,
+        date_start,
+        date_end,
         tmp_dir
     )
     for f in ['analytics.data.gz', 'analytics.meta.json']:
