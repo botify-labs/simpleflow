@@ -3,14 +3,51 @@ import os
 import gzip
 import unittest
 import shutil
+import datetime
 
 from mock import patch
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.ganalytics.streams import VisitsStreamDef
-from cdf.features.ganalytics.tasks import (match_analytics_to_crawl_urls,
-                                          get_urlid)
+from cdf.features.ganalytics.tasks import (import_data_from_ganalytics,
+                                           match_analytics_to_crawl_urls,
+                                           get_urlid)
 from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
+
+
+class TestImportDataFromGanalytics(unittest.TestCase):
+
+    @patch("cdf.features.ganalytics.tasks.get_credentials")
+    @patch("cdf.features.ganalytics.tasks.import_data")
+    @patch('cdf.utils.s3.push_file')
+    def test_date_start_date_end_default_values(self, mock_push, mock_import,
+                                                mock_credentials):
+
+        mock_credentials.return_value = "mock_credentials"
+
+        access_token = "access_token"
+        refresh_token = "refresh_token"
+        ganalytics_site_id = "12345678"
+        s3_uri = "s3_uri"
+        tmp_dir = "/tmp/mock"
+        force_fetch = False
+        import_data_from_ganalytics(access_token,
+                                    refresh_token,
+                                    ganalytics_site_id,
+                                    s3_uri,
+                                    date_start=None,
+                                    date_end=None,
+                                    tmp_dir=tmp_dir,
+                                    force_fetch=force_fetch)
+
+        expected_start_date = datetime.date.today() - datetime.timedelta(31)
+        expected_end_date = datetime.date.today() - datetime.timedelta(1)
+
+        mock_import.assert_called_once_with("ga:12345678",
+                                            'mock_credentials',
+                                            expected_start_date,
+                                            expected_end_date,
+                                            tmp_dir)
 
 
 class TestTasks(unittest.TestCase):
@@ -89,3 +126,5 @@ class TestTasks(unittest.TestCase):
         with gzip.open(os.path.join(self.s3_dir[5:], 'ambiguous_urls_dataset.gz')) as f:
             expected_result = ['www.site.com/4\torganic\tgoogle\tNone\t11\t4\t15\t54.0\t8\t8\n']
             self.assertEquals(expected_result, f.readlines())
+
+
