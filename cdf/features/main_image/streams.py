@@ -14,6 +14,27 @@ __all__ = ["ContentsExtendedStreamDef"]
 MainImage = namedtuple('MainImage', ['field', 'value', 'position', 'prior'])
 
 
+def _is_prioritary_field(image_tmp, field, position):
+    """Decide whether a new image field has priority over the existing one"""
+
+    #if the new field has a different type, use the field priority to determine
+    #the result
+    if (
+        field != image_tmp.field and
+        IMAGE_FIELDS.index(field) < image_tmp.prior
+    ):
+        return True
+
+    #if the field are identical, the field position determines the priority
+    if (
+        field == image_tmp.field and
+        position < image_tmp.position
+    ):
+        return True
+
+    return False
+
+
 class ContentsExtendedStreamDef(StreamDefBase):
     FILE = 'urlcontents_x'
     HEADERS = (
@@ -39,19 +60,11 @@ class ContentsExtendedStreamDef(StreamDefBase):
     def process_document(self, document, stream):
         # Extraction of the main_image
         url_id, ftype, position, field, value = stream
-        if (
-            ftype == "m.prop" and
-            field in IMAGE_FIELDS and
-            not document["main_image_tmp"] or (document["main_image_tmp"] and (
-                (
-                    field != document["main_image_tmp"].field and
-                    IMAGE_FIELDS.index(field) < document["main_image_tmp"].prior
-                ) or (
-                    field == document["main_image_tmp"].field and
-                    position < document["main_image_tmp"].position
-                )
-            ))
-        ):
+        if ftype != "m.prop":
+            return
+        if field not in IMAGE_FIELDS:
+            return
+        if not document["main_image_tmp"] or (document["main_image_tmp"] and _is_prioritary_field(document["main_image_tmp"], field, position)):
             # Store the field name of the main_image and its values into an Enum instance
             # (field_name, image_url, position, index)
             # field_name : ex: og:image, twitter:image...

@@ -2,7 +2,7 @@ import unittest
 
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
-from cdf.features.main_image.streams import ContentsExtendedStreamDef
+from cdf.features.main_image.streams import ContentsExtendedStreamDef, _is_prioritary_field, MainImage
 
 
 class TestBasicInfoGeneration(unittest.TestCase):
@@ -33,6 +33,19 @@ class TestBasicInfoGeneration(unittest.TestCase):
         self.assertEquals(
             document["main_image"],
             'http://www.site.com/image.jpg'
+        )
+
+    def test_is_prioritary_field(self):
+        image_tmp = MainImage(value='url', position=2, field='twitter:image', prior=2)
+
+        # og:image is prior to twitter:image
+        self.assertTrue(
+            _is_prioritary_field(image_tmp, field='og:image', position=3)
+        )
+
+        # position 1 is prior to 2
+        self.assertTrue(
+            _is_prioritary_field(image_tmp, field='twitter:image', position=1)
         )
 
     def test_main_image_type_position(self):
