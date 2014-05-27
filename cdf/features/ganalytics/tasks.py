@@ -85,7 +85,7 @@ def import_data_from_ganalytics(access_token,
             os.path.join(tmp_dir, f)
         )
 
-    metadata = json.loads(open(os.path.join(tmp_dir, 'analytics.meta.json')).read())
+    metadata = load_analytics_metadata(tmp_dir)
     # Advise the workflow that we need to send data to the remote db
     # through the api by calling a feature endpoint (prefixed by its revision)
     return {
@@ -103,6 +103,16 @@ def import_data_from_ganalytics(access_token,
             }
         ]
     }
+
+
+def load_analytics_metadata(tmp_dir):
+    """Load the analytics metadata and returns it as a dict.
+    This function was introduced to make test writing easier
+    :param tmp_dir: the tmp directory used by the task
+    :type tmp_dir: str
+    """
+    return json.loads(open(os.path.join(tmp_dir, 'analytics.meta.json')).read())
+
 
 
 @with_temporary_dir
