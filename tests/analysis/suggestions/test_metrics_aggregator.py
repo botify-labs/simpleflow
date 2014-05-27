@@ -1,7 +1,8 @@
 import unittest
 
+from cdf.features.links.helpers.masks import list_to_mask
 from cdf.analysis.suggestions.aggregator import (MetricsAggregator,
-                                                    get_keys_from_stream_suggest)
+                                                 get_keys_from_stream_suggest)
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef, SuggestStreamDef
 from cdf.features.links.streams import (
     OutlinksCountersStreamDef, OutcanonicalCountersStreamDef, OutredirectCountersStreamDef,
@@ -138,10 +139,10 @@ class TestMetricsAggregator(unittest.TestCase):
 
     def test_inlink_follow_dist(self):
         stream_inlink_counters = [
-            [1, ['follow'], 100, 99],
-            [2, ['follow'], 3, 2],
-            [3, ['follow'], 12, 9],
-            [4, ['follow'], 10 ** 7, 10 ** 7],
+            [1, list_to_mask(['follow']), 100, 99],
+            [2, list_to_mask(['follow']), 3, 2],
+            [3, list_to_mask(['follow']), 12, 9],
+            [4, list_to_mask(['follow']), 10 ** 7, 10 ** 7],
         ]
 
         self.register_stream(InlinksCountersStreamDef, stream_inlink_counters)
@@ -170,10 +171,10 @@ class TestMetricsAggregator(unittest.TestCase):
         (url_id, content_type, filled_nb, dup_nb, if_first, dup_urls)
         """
         stream_contents_duplicate = [
-            [1, 1, 2, 3, True, [10, 11]],
-            [1, 2, 10, 1, True, [11]],
-            [1, 4, 1, 0, True, []],
-            [2, 1, 1, 1, True, [15]],
+            [1, 1, 2, 3, True, "10;11"],
+            [1, 2, 10, 1, True, "11"],
+            [1, 4, 1, 0, True, ""],
+            [2, 1, 1, 1, True, "15"],
         ]
         self.register_stream(ContentsDuplicateStreamDef, stream_contents_duplicate)
         result = list(MetricsAggregator(self.get_streams()).get())
@@ -190,12 +191,12 @@ class TestMetricsAggregator(unittest.TestCase):
 
     def test_out_links(self):
         stream_outlinks_counters = [
-            [1, ['follow'], True, 10, 5],
-            [1, ['follow'], False, 5, 3],
-            [1, ['robots', 'link', 'meta'], True, 3, 2],
-            [2, ['follow'], True, 30, 25],
-            [2, ['meta'], False, 10, 8],
-            [2, ['meta', 'link'], True, 2, 1],
+            [1, list_to_mask(['follow']), True, 10, 5],
+            [1, list_to_mask(['follow']), False, 5, 3],
+            [1, list_to_mask(['robots', 'link', 'meta']), True, 3, 2],
+            [2, list_to_mask(['follow']), True, 30, 25],
+            [2, list_to_mask(['meta']), False, 10, 8],
+            [2, list_to_mask(['meta', 'link']), True, 2, 1],
         ]
 
         self.register_stream(OutlinksCountersStreamDef, stream_outlinks_counters)
@@ -235,9 +236,9 @@ class TestMetricsAggregator(unittest.TestCase):
 
     def test_in_links(self):
         stream_inlinks_counters = [
-            [1, ['follow'], 10, 5],
-            [1, ['link', 'meta'], 3, 2],
-            [2, ['follow'], 30, 25],
+            [1, list_to_mask(['follow']), 10, 5],
+            [1, list_to_mask(['link', 'meta']), 3, 2],
+            [2, list_to_mask(['follow']), 30, 25],
         ]
         self.register_stream(InlinksCountersStreamDef, stream_inlinks_counters)
         result = list(MetricsAggregator(self.get_streams()).get())
@@ -292,9 +293,9 @@ class TestMetricsAggregator(unittest.TestCase):
         ]
 
         stream_outcanonical_counters = [
-            [1, True],
-            [2, False],
-            [3, True],
+            [1, 1],
+            [2, 0],
+            [3, 1],
         ]
 
         stream_incanonical_counters = [

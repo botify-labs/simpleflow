@@ -5,7 +5,7 @@ from .url_metadata import (STRING_TYPE, BOOLEAN_TYPE,
                            STRUCT_TYPE, MULTI_FIELD, LIST,
                            ES_NOT_ANALYZED, ES_NO_INDEX, LONG_TYPE,
                            INT_TYPE, ES_DOC_VALUE,
-                           AGG_CATEGORICAL, AGG_NUMERICAL)
+                           AGG_CATEGORICAL, AGG_NUMERICAL, FAKE_FIELD)
 
 
 _PROPERTY = 'properties'
@@ -66,6 +66,10 @@ def _is_numerical_field(field_values):
     return _SETTINGS in field_values and AGG_NUMERICAL in field_values[_SETTINGS]
 
 
+def _is_fake_field(field_values):
+    return _SETTINGS in field_values and FAKE_FIELD in field_values[_SETTINGS]
+
+
 def _parse_field_values(field_name, elem_values):
     """Parse field's settings into ElasticSearch field configurations"""
 
@@ -118,6 +122,8 @@ def _parse_field_values(field_name, elem_values):
 
     parsed_settings = parse_settings(field_name, elem_values)
 
+    if _is_fake_field(elem_values):
+        return {}
     if _is_multi_field(elem_values):
         return parse_multi_field(parsed_settings, elem_values)
     elif _is_struct_field(elem_values):
@@ -311,7 +317,8 @@ class ElasticSearchBackend(DataBackend):
                 parsed_path = _parse_field_path(path)
                 field_name = parsed_path.split('.')[-1]
                 parsed_value = _parse_field_values(field_name, value)
-                update_path_in_dict(parsed_path, parsed_value, fields_mapping)
+                if parsed_value:
+                    update_path_in_dict(parsed_path, parsed_value, fields_mapping)
 
             es_mapping = {
                 doc_type: {

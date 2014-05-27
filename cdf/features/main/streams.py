@@ -7,7 +7,7 @@ from cdf.core.streams.exceptions import GroupWithSkipException
 from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
-from cdf.query.constants import PRIVATE
+from cdf.query.constants import FIELD_RIGHTS
 
 __all__ = ["IdStreamDef", "InfosStreamDef", "SuggestStreamDef"]
 
@@ -34,7 +34,7 @@ class IdStreamDef(StreamDefBase):
             "verbose_name": "Url Hash",
             "type": LONG_TYPE,
             "settings": {
-                PRIVATE
+                FIELD_RIGHTS.PRIVATE
             }
         },
         "host": {
@@ -50,11 +50,11 @@ class IdStreamDef(StreamDefBase):
         "id": {
             "verbose_name": "Id",
             "type": INT_TYPE,
-            "settings": {ES_DOC_VALUE, PRIVATE}
+            "settings": {ES_DOC_VALUE, FIELD_RIGHTS.PRIVATE}
         },
         "crawl_id": {
             "type": INT_TYPE,
-            "settings": {PRIVATE}
+            "settings": {FIELD_RIGHTS.PRIVATE}
         },
         "path": {
             "verbose_name": "Path",

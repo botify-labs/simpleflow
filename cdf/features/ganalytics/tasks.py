@@ -1,5 +1,6 @@
 import os
 import gzip
+import datetime
 import json
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
@@ -19,16 +20,63 @@ from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
 
 @with_temporary_dir
 @feature_enabled('ganalytics')
-def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id, s3_uri,
-                                tmp_dir=None, force_fetch=False):
+def import_data_from_ganalytics(access_token,
+                                refresh_token,
+                                ganalytics_site_id,
+                                s3_uri,
+                                date_start=None,
+                                date_end=None,
+                                tmp_dir=None,
+                                force_fetch=False):
     """
     Request data from google analytics
     TODO (maybe) : take a `refresh_token` instead of an `access_token`
+    :param access_token: the access token to retrieve the data from
+                         Google Analytics Core Reporting API
+    :type access_token: str
+    :param refresh_token: the refresh token.
+                          The refresh token is used to regenerate an access
+                          token when the current one has expired.
+    :type refresh_token: str
+    :param ganalytics_site_id: the id of the Google Analytics view to retrieve
+                               data from.
+                               It is an integer with 8 digits.
+                               Caution: this is NOT the property id.
+                               There may be multiple views for a given property
+                               id. (for instance one unfiltered view and one
+                               where the traffic from inside the company is
+                               filtered).
+    :type ganalytics_size_id: int
+    :param date_start: Beginning date to retrieve data.
+                       If None, the task uses the date from 31 days ago.
+                       (so that if both date_start and date_end are None,
+                       the import period is the last 30 days)
+    :param date_start: date
+    :param date_end: Final date to retrieve data.
+                     If none, the task uses the date from yesterday.
+    :param date_end: date
+    :param s3_uri: the uri where to store the data
+    :type s3_uri: str
+    :param tmp_dir: the path to the tmp directory to use.
+                    If None, a new tmp directory will be created.
+    :param tmp_dir: str
+    :param force_fetch: if True, the files will be downloaded from s3
+                        even if they are in the tmp directory.
+                        if False, files that are present in the tmp_directory
+                        will not be downloaded from s3.
     """
+
+    #set date_start and date_end default values if necessary
+    if date_start is None:
+        date_start = datetime.date.today() - datetime.timedelta(31)
+    if date_end is None:
+        date_end = datetime.date.today() - datetime.timedelta(1)
     credentials = get_credentials(access_token, refresh_token)
     import_data(
         "ga:{}".format(ganalytics_site_id),
         credentials,
+        date_start,
+        date_end,
         tmp_dir
     )
     for f in ['analytics.data.gz', 'analytics.meta.json']:
@@ -37,7 +85,7 @@ def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id,
             os.path.join(tmp_dir, f)
         )
 
-    metadata = json.loads(open(os.path.join(tmp_dir, 'analytics.meta.json')).read())
+    metadata = load_analytics_metadata(tmp_dir)
     # Advise the workflow that we need to send data to the remote db
     # through the api by calling a feature endpoint (prefixed by its revision)
     return {
@@ -55,6 +103,15 @@ def import_data_from_ganalytics(access_token, refresh_token, ganalytics_site_id,
             }
         ]
     }
+
+
+def load_analytics_metadata(tmp_dir):
+    """Load the analytics metadata and returns it as a dict.
+    This function was introduced to make test writing easier
+    :param tmp_dir: the tmp directory used by the task
+    :type tmp_dir: str
+    """
+    return json.loads(open(os.path.join(tmp_dir, 'analytics.meta.json')).read())
 
 
 @with_temporary_dir

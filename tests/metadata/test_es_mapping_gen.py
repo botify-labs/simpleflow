@@ -1,6 +1,7 @@
 import unittest
 from cdf.metadata.url.es_backend_utils import (_parse_field_path,
                                                ElasticSearchBackend)
+from cdf.metadata.url.url_metadata import FAKE_FIELD
 
 
 class TestMappingGeneration(unittest.TestCase):
@@ -109,6 +110,19 @@ class TestMappingGeneration(unittest.TestCase):
             }
         }
         self.assertEqual(result['urls']['properties'], expectd)
+
+    def test_fake_field(self):
+        data_format = {
+            'fake_field': {
+                'settings': {
+                    FAKE_FIELD
+                }
+            }
+        }
+
+        es_backend = ElasticSearchBackend(data_format)
+        result = es_backend.mapping(routing_field=None)
+        self.assertEquals(result['urls']['properties'], {})
 
     def test_default_value_look_up(self):
         data_format = {

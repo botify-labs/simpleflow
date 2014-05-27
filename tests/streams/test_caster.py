@@ -4,7 +4,7 @@ import logging
 from StringIO import StringIO
 
 from cdf.log import logger
-from cdf.utils.convert import _str_to_bool
+from cdf.utils.convert import _raw_to_bool
 from cdf.core.streams.utils import split_file
 from cdf.core.streams.caster import Caster
 
@@ -28,7 +28,7 @@ class TestCaster(unittest.TestCase):
 
         INFOS_FIELDS = [('id', int),
                         ('url', str),
-                        ('gzipped', _str_to_bool)]
+                        ('gzipped', _raw_to_bool)]
         cast = Caster(INFOS_FIELDS).cast
         urls = cast(split_file(f))
         expected_urls = [

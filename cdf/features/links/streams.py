@@ -1,14 +1,18 @@
+from collections import Counter
+
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, BOOLEAN_TYPE, STRUCT_TYPE,
     ES_NO_INDEX, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL,
+    STRING_TYPE, ES_NOT_ANALYZED, STRING_NB_MAP_MAPPING,
+    FAKE_FIELD
 )
 from cdf.core.streams.base import StreamDefBase
 from cdf.analysis.urls.utils import is_link_internal
 from cdf.log import logger
 from cdf.features.links.helpers.masks import list_to_mask
-from cdf.utils.convert import _str_to_bool
-from cdf.query.constants import RENDERING
+from cdf.utils.convert import _raw_to_bool
+from cdf.query.constants import RENDERING, FIELD_RIGHTS
 from .helpers.masks import follow_mask
 from .settings import GROUPS
 
@@ -169,7 +173,12 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "group": GROUPS.outlinks_internal,
             "order": 13,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL},
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL,
+                FIELD_RIGHTS.SELECT
+            },
         },
         "outlinks_internal.urls_exists": {
             "type": BOOLEAN_TYPE,
@@ -250,7 +259,10 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 "url_id": {"type": "integer"},
             },
             "settings": {
-                ES_NO_INDEX, RENDERING.URL
+                ES_NO_INDEX,
+                RENDERING.URL,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.SELECT
             }
         },
         "canonical.to.equal": {
@@ -282,7 +294,13 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "group": GROUPS.canonical,
             "order": 4,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.SELECT
+            }
         },
         "canonical.from.urls_exists": {
             "type": "boolean",
@@ -302,7 +320,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             },
             "settings": {
                 ES_NO_INDEX,
-                RENDERING.URL
+                RENDERING.URL_HTTP_CODE,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.SELECT
             }
         },
         "redirect.to.url_exists": {
@@ -327,7 +347,13 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "group": GROUPS.redirects,
             "order": 4,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.SELECT
+            }
         },
         "redirect.from.urls_exists": {
             "type": "boolean",
@@ -429,14 +455,27 @@ class InlinksRawStreamDef(StreamDefBase):
 
 
 class InlinksStreamDef(InlinksRawStreamDef):
+    """
+    `text` anchors are not always filled in the stream
+    They can be found at least one time per `id` and `text_hash`,
+    and are not always found in the first iteration of its given `text_hash`
+    """
     HEADERS = (
         ('id', int),
         ('link_type', str),
         ('follow', follow_mask),
         ('src_url_id', int),
         ('text_hash', str),
-        ('text', str),
+        ('text', str)
     )
+
+    # Check this value if the text is already set
+    # If test is an empty string, it will means that it is
+    # a real empty link
+    TEXT_HASH_ALREADY_SET = '\x00'
+    # If the text is really empty, we will flag it as empty
+    TEXT_EMPTY = '[empty]'
+
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.inlinks
     URL_DOCUMENT_MAPPING = {
         # incoming links, must be internal
@@ -521,11 +560,31 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "group": GROUPS.inlinks,
             "order": 9,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL, FIELD_RIGHTS.SELECT}
         },
         "inlinks_internal.urls_exists": {
             "type": "boolean",
             "default_value": None
+        },
+        "inlinks_internal.anchors.nb": {
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
+        "inlinks_internal.anchors.top": {
+            "type": STRUCT_TYPE,
+            "values": STRING_NB_MAP_MAPPING,
+            "settings": {LIST, RENDERING.STRING_NB_MAP, FIELD_RIGHTS.SELECT}
+        },
+        # The following field is already created with the above one (as a STRUCT_TYPE)
+        # But we need to return it to request it
+        "inlinks_internal.anchors.top.text": {
+            "type": STRING_TYPE,
+            "settings": {
+                FAKE_FIELD, FIELD_RIGHTS.FILTERS
+            }
         }
     }
 
@@ -534,14 +593,15 @@ class InlinksStreamDef(InlinksRawStreamDef):
         document["processed_inlink_link"] = set()
         # a temp set to track all `seen` src url of incoming links
         document["processed_inlink_url"] = set()
+        document["tmp_anchors_txt"] = {}
+        document["tmp_anchors_nb"] = Counter()
 
     def process_document(self, document, stream):
-        url_dst, link_type, follow_keys, url_src, txt_hash, txt = stream
+        url_dst, link_type, follow_keys, url_src, text_hash, text = stream
 
         if link_type == "a":
             is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
             mask = list_to_mask(follow_keys)
-
             inlink_nb = document['inlinks_internal']['nb']
             inlink_nb['total'] += 1
 
@@ -551,6 +611,17 @@ class InlinksStreamDef(InlinksRawStreamDef):
             if is_follow:
                 if not (url_src, mask) in document["processed_inlink_link"]:
                     follow['unique'] += 1
+
+                # `text` is not always filled, so we have to push it in a temporary
+                # dictionnary when found
+                # We increment the number of occurrences found for `text_hash` only
+                # for follow inlinks
+                if text_hash:
+                    if text != self.TEXT_HASH_ALREADY_SET and text_hash not in document['tmp_anchors_txt']:
+                        if text == '':
+                            text = self.TEXT_EMPTY
+                        document['tmp_anchors_txt'][text_hash] = text
+                    document['tmp_anchors_nb'][text_hash] += 1
             else:
                 key = _get_nofollow_combination_key(follow_keys)
                 if 'robots' in key:
@@ -593,11 +664,25 @@ class InlinksStreamDef(InlinksRawStreamDef):
         if not 'inlinks_internal' in document:
             return
 
+        document["inlinks_internal"]["anchors"]["top"] = {"text": [], "nb": []}
+
+        # We map the number of occurrences from each `text_hash` to the original text,
+        # we don't store the `text_hash` in the final document
+        # Elasticsearch would imply to create nested documents, so we push a first list
+        # containing texts, and a second one (`nb`) containing number of occurrences
+        if document["tmp_anchors_nb"]:
+            document["inlinks_internal"]["anchors"]["nb"] = len(document["tmp_anchors_nb"])
+            for text_hash, nb in document["tmp_anchors_nb"].most_common(5):
+                document["inlinks_internal"]["anchors"]["top"]["text"].append(document["tmp_anchors_txt"][text_hash])
+                document["inlinks_internal"]["anchors"]["top"]["nb"].append(nb)
+
         document['inlinks_internal']['nb']['unique'] = len(document['processed_inlink_url'])
 
         # delete intermediate data structures
         del document['processed_inlink_url']
         del document["processed_inlink_link"]
+        del document["tmp_anchors_txt"]
+        del document["tmp_anchors_nb"]
 
 
 class OutlinksCountersStreamDef(StreamDefBase):
@@ -605,7 +690,7 @@ class OutlinksCountersStreamDef(StreamDefBase):
     HEADERS = (
         ('id', int),
         ('follow', follow_mask),
-        ('is_internal', _str_to_bool),
+        ('is_internal', _raw_to_bool),
         ('score', int),
         ('score_unique', int),
     )
@@ -615,7 +700,7 @@ class OutredirectCountersStreamDef(StreamDefBase):
     FILE = 'url_out_redirect_counters'
     HEADERS = (
         ('id', int),
-        ('is_internal', _str_to_bool)
+        ('is_internal', _raw_to_bool)
     )
 
 
@@ -623,7 +708,7 @@ class OutcanonicalCountersStreamDef(StreamDefBase):
     FILE = 'url_out_canonical_counters'
     HEADERS = (
         ('id', int),
-        ('equals', _str_to_bool)
+        ('equals', _raw_to_bool)
     )
 
 
@@ -676,7 +761,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 3xx",
             "order": 101,
-            "settings": {ES_NO_INDEX, LIST}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT}
         },
         "outlinks_errors.3xx.urls_exists": {
             "type": "boolean",
@@ -696,7 +781,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 4xx",
             "order": 103,
-            "settings": {ES_NO_INDEX, LIST}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT}
         },
         "outlinks_errors.4xx.urls_exists": {
             "type": "boolean",
@@ -716,7 +801,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 5xx",
             "order": 105,
-            "settings": {ES_NO_INDEX, LIST}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT}
         },
         "outlinks_errors.5xx.urls_exists": {
             "type": "boolean",
