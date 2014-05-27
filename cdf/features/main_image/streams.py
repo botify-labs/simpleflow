@@ -34,14 +34,6 @@ class ContentsExtendedStreamDef(StreamDefBase):
     }
 
     def pre_process_document(self, document):
-        # Store the field name of the main_image and its values into an Enum instance
-        # (field_name, image_url, position, index)
-        # field_name : ex: og:image, twitter:image...
-        # image_url : url of the main image
-        # position : position of the meta property (if we find property name with an index less than the current one, it will
-        #            become the current one
-        # index : index of the field_name in IMAGE_FIELDS. If we find a line with a field_name with a smaller index,
-        #         it will become the new one (ex: og:image is prior to twitter:image)
         document["main_image_tmp"] = None
 
     def process_document(self, document, stream):
@@ -60,6 +52,14 @@ class ContentsExtendedStreamDef(StreamDefBase):
                 )
             ))
         ):
+            # Store the field name of the main_image and its values into an Enum instance
+            # (field_name, image_url, position, index)
+            # field_name : ex: og:image, twitter:image...
+            # image_url : url of the main image
+            # position : position of the meta property (if we find property name with an index less than the current one, it will
+            #            become the current one)
+            # index : index of the field_name in IMAGE_FIELDS. If we find a line with a field_name with a smaller index,
+            #         it will become the new one (ex: og:image is prior to twitter:image)
             document["main_image_tmp"] = MainImage(field, value, position, IMAGE_FIELDS.index(field))
 
     def post_process_document(self, document):
