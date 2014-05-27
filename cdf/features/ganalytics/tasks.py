@@ -1,6 +1,7 @@
 import os
 import gzip
 import datetime
+import json
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.main.utils import get_url_to_id_dict_from_stream
@@ -15,6 +16,7 @@ from analytics.import_analytics import import_data
 
 from cdf.utils.auth import get_credentials
 from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
+
 
 @with_temporary_dir
 @feature_enabled('ganalytics')
@@ -82,6 +84,34 @@ def import_data_from_ganalytics(access_token,
             os.path.join(s3_uri, f),
             os.path.join(tmp_dir, f)
         )
+
+    metadata = load_analytics_metadata(tmp_dir)
+    # Advise the workflow that we need to send data to the remote db
+    # through the api by calling a feature endpoint (prefixed by its revision)
+    return {
+        "api_requests": [
+            {
+                "method": "patch",
+                "endpoint_url": "revision",
+                "endpoint_suffix": "ganalytics/",
+                "data": {
+                    "sample_rate": metadata["sample_rate"],
+                    "sample_size": metadata["sample_size"],
+                    "sampled": metadata["sampled"],
+                    "queries_count": metadata["queries_count"]
+                }
+            }
+        ]
+    }
+
+
+def load_analytics_metadata(tmp_dir):
+    """Load the analytics metadata and returns it as a dict.
+    This function was introduced to make test writing easier
+    :param tmp_dir: the tmp directory used by the task
+    :type tmp_dir: str
+    """
+    return json.loads(open(os.path.join(tmp_dir, 'analytics.meta.json')).read())
 
 
 @with_temporary_dir

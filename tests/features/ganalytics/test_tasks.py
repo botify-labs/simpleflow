@@ -16,14 +16,21 @@ from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file
 
 
 class TestImportDataFromGanalytics(unittest.TestCase):
-
+    @patch("cdf.features.ganalytics.tasks.load_analytics_metadata")
     @patch("cdf.features.ganalytics.tasks.get_credentials")
     @patch("cdf.features.ganalytics.tasks.import_data")
     @patch('cdf.utils.s3.push_file')
     def test_date_start_date_end_default_values(self, mock_push, mock_import,
-                                                mock_credentials):
+                                                mock_credentials,
+                                                mock_load_metadata):
 
         mock_credentials.return_value = "mock_credentials"
+        mock_load_metadata.return_value = {
+            "sample_rate": 1.0,
+            "sample_size": 100,
+            "sampled": False,
+            "queries_count": 10
+        }
 
         access_token = "access_token"
         refresh_token = "refresh_token"
