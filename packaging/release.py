@@ -1,7 +1,31 @@
-"""This script release versions of cdf
+"""This script releases versions of cdf
 There are two kinds of release:
+- official releases: with tag and version bump
 - dev releases: without any tags
-- offficial releases: with tag and version bump
+
+Concerning the version numbers:
+
+- For official releases, the script reads the previous release version
+from cdf/__init__.py. It increments its micro version and modify
+cdf/__init__.py consequently.
+
+- For dev releases, the script reads the previous release version from
+cdf/__init__.py and increments its micro version to get the version
+of the next release.
+Then it appends a dev suffix devXXX where XXX is the number of commits since
+the last tag (obtained through "git describe").
+We use the number of commits since the last tag only to be sure that the dev
+number are increasing over time.
+For instance: if last release was 0.1.5 and we have made 12 since the release,
+the dev release number will be 0.1.6dev12.
+This is a prelease of cdf 0.1.6 with a dev number equal to 12.
+If we create an other dev release two days after we may have
+a dev release number of 0.1.6dev26.
+
+Limitations:
+This script only increases the micro version,
+if you want to increase the major or minor version, you will have to do it
+by yourself.
 
 Official releases can not be launched by jenkins as
 it does not have sufficient rights
@@ -27,7 +51,7 @@ def get_last_release_version():
 
 def get_dev_number():
     """Return the current dev number.
-    It is simply the number of commit since last tag.
+    It is simply the number of commit since the last tag.
     It has the advantage of monotony (always increase)
     However it does not garantee that the dev versions are consecutive.
     :returns: int
