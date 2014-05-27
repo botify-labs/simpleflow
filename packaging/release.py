@@ -17,6 +17,9 @@ import cdf
 
 
 def get_last_release_version():
+    """Returns the version number of the last release.
+    :returns: str
+    """
     #get current VERSION
     release_version = cdf.__version__
     return [int(i) for i in release_version.split(".")]
@@ -27,6 +30,7 @@ def get_dev_number():
     It is simply the number of commit since last tag.
     It has the advantage of monotony (always increase)
     However it does not garantee that the dev versions are consecutive.
+    :returns: int
     """
     #use --match option to get only tags of the form x.x.x
     label = subprocess.check_output(["git", "describe", "--match", "*.*.*"])
@@ -47,13 +51,16 @@ def get_dev_number():
 
 
 def get_dev_suffix():
-    """Return the suffix to apply to dev versions"""
+    """Return the suffix to apply to dev versions
+    :returns: str
+    """
     dev_number = get_dev_number()
     return "dev%s" % dev_number
 
 
 def get_dev_version():
-    """Return the current dev version number"""
+    """Return the current dev version number
+    returns: str"""
     major, minor, micro = get_last_release_version()
     #increment minor version and reset micro version (implicit)
     result = [major, minor + 1]
@@ -66,6 +73,9 @@ def get_dev_version():
 
 
 def get_release_version():
+    """Returns the version number of the next release version.
+    :returns: str
+    """
     major, minor, micro = get_last_release_version()
     #increment micro version and reset micro version
     result = [major, minor, micro + 1]
@@ -76,12 +86,20 @@ def get_release_version():
 
 
 def get_init_filepath():
+    """Return the path to cdf.__init__.py file
+    :returns: str
+    """
     filepath = os.path.join(os.path.dirname(cdf.__file__),
                             "__init__.py")
     return filepath
 
 
 def set_version(version):
+    """Change the version of the package.
+    This function modifies __init__.py
+    :param version: the new version to set
+    :param version: str
+    """
     #find file location
     filename = get_init_filepath()
     regex = re.compile("VERSION\s*=\s*'\d+\.\d+\.\d+'")
@@ -186,7 +204,7 @@ if __name__ == "__main__":
         raise ValueError("You must choose option '--devel' or '--official'")
 
     if args.devel and args.official:
-        raise ValueError("You can choose both options '--devel' and '--official'")
+        raise ValueError("You cannot choose both options '--devel' and '--official'")
 
     if args.official:
         release_official_version(args.dry_run)
