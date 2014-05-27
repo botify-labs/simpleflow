@@ -1,33 +1,22 @@
-"""This script releases versions of cdf
-There are two kinds of release:
-- official releases: with tag and version bump
-- dev releases: without any tags
+"""This script releases versions of cdf.
+It :
+- bumps the version,
+- tags it
+- push the bump commit to github
+- push the tag to github
+- upload the pip package to pypo
 
-Concerning the version numbers:
-
-- For official releases, the script reads the previous release version
+Concerning the version numbers, the script reads the previous release version
 from cdf/__init__.py. It increments its micro version and modify
 cdf/__init__.py consequently.
 
-- For dev releases, the script reads the previous release version from
-cdf/__init__.py and increments its micro version to get the version
-of the next release.
-Then it appends a dev suffix devXXX where XXX is the number of commits since
-the last tag (obtained through "git describe").
-We use the number of commits since the last tag only to be sure that the dev
-number are increasing over time.
-For instance: if last release was 0.1.5 and we have made 12 since the release,
-the dev release number will be 0.1.6dev12.
-This is a prelease of cdf 0.1.6 with a dev number equal to 12.
-If we create an other dev release two days after we may have
-a dev release number of 0.1.6dev26.
 
 Limitations:
 This script only increases the micro version,
 if you want to increase the major or minor version, you will have to do it
 by yourself.
 
-Official releases can not be launched by jenkins as
+Releases can not be launched by jenkins as
 it does not have sufficient rights
 """
 
@@ -47,53 +36,6 @@ def get_last_release_version():
     #get current VERSION
     release_version = cdf.__version__
     return [int(i) for i in release_version.split(".")]
-
-
-def get_dev_number():
-    """Return the current dev number.
-    It is simply the number of commit since the last tag.
-    It has the advantage of monotony (always increase)
-    However it does not garantee that the dev versions are consecutive.
-    :returns: int
-    """
-    #use --match option to get only tags of the form x.x.x
-    label = subprocess.check_output(["git", "describe", "--match", "*.*.*"])
-    #'git describe' usually  returns something like 0.1.29-95-gaf4ad71
-    #with
-    # - 0.1.29 the latest tag
-    # - 95 the number of commits since latest tag
-    # - gaf4ad71 the sha1 of the latest version
-    #
-    #but when it is run on a tag it simply return the tag
-    version_chunks = label.split("-")
-    if len(version_chunks) == 3:
-        version, nb_commits, sha1 = version_chunks
-        result = int(nb_commits)
-    else:
-        result = 0
-    return result
-
-
-def get_dev_suffix():
-    """Return the suffix to apply to dev versions
-    :returns: str
-    """
-    dev_number = get_dev_number()
-    return "dev%s" % dev_number
-
-
-def get_dev_version():
-    """Return the current dev version number
-    returns: str"""
-    major, minor, micro = get_last_release_version()
-    #increment minor version and reset micro version (implicit)
-    result = [major, minor + 1]
-    result = [str(i) for i in result]
-
-    #append dev suffix
-    result.append(get_dev_suffix())
-    result = ".".join(result)
-    return result
 
 
 def get_release_version():
@@ -185,36 +127,17 @@ def release_official_version(dry_run):
     upload_package(dry_run)
 
 
-def release_dev_version(dry_run):
-    """Create a dev version of cdf and upload it to pypi
-    :param dry_run: if True, nothing is actually done.
-                    the function just prints what it would do
-    :type dry_run: bool"""
-    version = get_dev_version()
-    print "Creating cdf %s" % version
-    if not dry_run:
-        #update __init__.py with version
-        set_version(version)
-
-    #upload package
-    upload_package(dry_run)
-
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description='Release version of cdf.'
     )
 
-    parser.add_argument('--devel',
+    parser.add_argument('-f',
+                        dest="force",
                         default=False,
                         action="store_true",
-                        help='Create an devel release')
-
-    parser.add_argument('--official',
-                        default=False,
-                        action="store_true",
-                        help='Create an official release')
+                        help='Dry run')
 
     parser.add_argument('-n',
                         dest="dry_run",
@@ -224,13 +147,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if not args.devel and not args.official:
-        raise ValueError("You must choose option '--devel' or '--official'")
+    if not args.force and not args.dry_run:
+        raise ValueError("You must choose option '-f' or '-n'")
 
-    if args.devel and args.official:
-        raise ValueError("You cannot choose both options '--devel' and '--official'")
+    if args.force and args.dry_run:
+        raise ValueError("You cannot choose both options '-f' and '-n'")
 
-    if args.official:
-        release_official_version(args.dry_run)
-    else:
-        release_dev_version(args.dry_run)
+    release_official_version(args.dry_run)
