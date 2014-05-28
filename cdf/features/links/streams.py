@@ -608,19 +608,20 @@ class InlinksStreamDef(InlinksRawStreamDef):
             follow = inlink_nb['follow' if is_follow else 'nofollow']
             follow['total'] += 1
 
+            # `text` is not always filled, so we have to push it in a temporary
+            # dictionnary when found
+            if text != self.TEXT_HASH_ALREADY_SET and text_hash not in document['tmp_anchors_txt']:
+                if text == '':
+                    text = self.TEXT_EMPTY
+                document['tmp_anchors_txt'][text_hash] = text
+
             if is_follow:
                 if not (url_src, mask) in document["processed_inlink_link"]:
                     follow['unique'] += 1
 
-                # `text` is not always filled, so we have to push it in a temporary
-                # dictionnary when found
                 # We increment the number of occurrences found for `text_hash` only
                 # for follow inlinks
                 if text_hash:
-                    if text != self.TEXT_HASH_ALREADY_SET and text_hash not in document['tmp_anchors_txt']:
-                        if text == '':
-                            text = self.TEXT_EMPTY
-                        document['tmp_anchors_txt'][text_hash] = text
                     document['tmp_anchors_nb'][text_hash] += 1
             else:
                 key = _get_nofollow_combination_key(follow_keys)
