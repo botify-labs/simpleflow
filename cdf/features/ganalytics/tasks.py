@@ -1,4 +1,5 @@
 import os
+import itertools
 import gzip
 import datetime
 import json
@@ -158,21 +159,26 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
         )
 
         ghost_pages = {}
-
-        for entry in stream:
-            url_id, matching_status = get_urlid(entry, url_to_id, urlid_to_http_code)
-            if url_id:
-                dataset_entry = list(entry)
-                dataset_entry[0] = url_id
-                dataset.append(*dataset_entry)
-                #store ambiguous url ids
-                if matching_status == MATCHING_STATUS.AMBIGUOUS:
-                    line = "\t".join([str(i) for i in entry])
-                    line = "{}\n".format(line)
-                    line = unicode(line)
-                    ambiguous_urls_file.write(line)
-            elif matching_status == MATCHING_STATUS.NOT_FOUND:
-                update_ghost_pages(ghost_pages, entry)
+        url_field_idx = RawVisitsStreamDef.field_idx("url")
+        #get all the entries corresponding the the same url
+        for url_without_protocol, entries in itertools.groupby(stream,
+                                                               lambda x: x[url_field_idx]):
+            url_id, matching_status = get_urlid(url_without_protocol,
+                                                url_to_id,
+                                                urlid_to_http_code)
+            for entry in entries:
+                if url_id:
+                    dataset_entry = list(entry)
+                    dataset_entry[0] = url_id
+                    dataset.append(*dataset_entry)
+                    #store ambiguous url ids
+                    if matching_status == MATCHING_STATUS.AMBIGUOUS:
+                        line = "\t".join([str(i) for i in entry])
+                        line = "{}\n".format(line)
+                        line = unicode(line)
+                        ambiguous_urls_file.write(line)
+                elif matching_status == MATCHING_STATUS.NOT_FOUND:
+                    update_ghost_pages(ghost_pages, entry)
 
     #save ghost pages in dedicated files
     ghost_file_paths = []
