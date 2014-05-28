@@ -28,6 +28,7 @@ RENDERING = Enum(
     'Rendering',
     [
         ('URL', 'url'),
+        ('IMAGE_URL', 'image_url'),
         ('URL_HTTP_CODE', 'url_http_code'),  # Returns a 2-tuple list of (url, http_code)
         ('STRING_NB_MAP', 'string_nb_map'),  # Returns a map dict {'text': ["My text", "My other text", ..], 'nb': [20, 10..]}
         ('TIME_SEC', 'time_sec'),
