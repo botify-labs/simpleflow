@@ -159,7 +159,15 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
         )
 
         ghost_pages = {}
+
+        #precompute field indexes as it would be too long to compute them
+        #inside the loop
         url_field_idx = RawVisitsStreamDef.field_idx("url")
+        medium_field_idx = RawVisitsStreamDef.field_idx("medium")
+        source_field_idx = RawVisitsStreamDef.field_idx("source")
+        social_network_field_idx = RawVisitsStreamDef.field_idx("social_network")
+        sessions_field_idx = RawVisitsStreamDef.field_idx("nb")
+
         #get all the entries corresponding the the same url
         for url_without_protocol, entries in itertools.groupby(stream,
                                                                lambda x: x[url_field_idx]):
@@ -178,7 +186,15 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                         line = unicode(line)
                         ambiguous_urls_file.write(line)
                 elif matching_status == MATCHING_STATUS.NOT_FOUND:
-                    update_ghost_pages(ghost_pages, entry)
+
+                    url = entry[url_field_idx]
+                    medium = entry[medium_field_idx]
+                    source = entry[source_field_idx]
+                    social_network = entry[social_network_field_idx]
+                    nb_sessions = entry[sessions_field_idx]
+
+                    update_ghost_pages(ghost_pages, url, medium, source,
+                                       social_network, nb_sessions)
 
     #save ghost pages in dedicated files
     ghost_file_paths = []

@@ -1,23 +1,29 @@
 import os
 
 from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
-from cdf.features.ganalytics.streams import RawVisitsStreamDef
 
-
-def update_ghost_pages(ghost_pages, entry):
+def update_ghost_pages(ghost_pages, url, medium, source, social_network, nb_sessions):
     """Update the dict that stores the ghost pages.
     :param ghost_pages: a dict source -> ghost_pages where ghost_pages is
                         a dict url -> nb sessions
                         that stores the ghost pages.
                         It will be updated by the function
     :type ghost_pages: dict
+    :param url: the url of the current entry (without protocol)
+    :type url: stri
+    :param medium: the traffic medium of the current entry
+    :type medium: str
+    :param source: the traffic source of the current entry
+    :type source: str
+    :param social_network: the social network of the current entry
+    :type social_network: str
+    :param nb_sessions: the number of sessions of the current entry
+    :type nb_sessions: int
     :param entry: the entry to use to update the ghost pages.
                   this is a RawVisitsStreamDef entry
     :type entry: list
     """
-    url = entry[RawVisitsStreamDef.field_idx("url")]
-    nb_sessions = entry[RawVisitsStreamDef.field_idx("nb")]
-    for source in get_sources(entry):
+    for source in get_sources(medium, source, social_network):
         if source not in ghost_pages:
             ghost_pages[source] = {}
         if url not in ghost_pages[source]:
@@ -25,19 +31,18 @@ def update_ghost_pages(ghost_pages, entry):
         ghost_pages[source][url] += nb_sessions
 
 
-def get_sources(entry):
+def get_sources(medium, source, social_network):
     """Returns a list of traffic sources the input entry contributes to.
     For instance a visit from google counts as an organic visit but also
     as a google visit.
     Thus this function will return ["organic", "visit"]
-    :param entry: the input stream entry to consider
-                  This is an entry from a RawVisitsStreamDef
-    :type entry: list
-    :returns: list
+    :param medium: the traffic medium to consider.
+    :type medium: str
+    :param source: the traffic source to consider.
+    :type source: str
+    :param social_network: the social network to consider
+    :type social_network: str
     """
-    medium = entry[RawVisitsStreamDef.field_idx("medium")]
-    source = entry[RawVisitsStreamDef.field_idx("source")]
-    social_network = entry[RawVisitsStreamDef.field_idx("social_network")]
     result = []
     if medium == "organic":
         result.append("organic")

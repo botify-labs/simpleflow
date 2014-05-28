@@ -20,6 +20,11 @@ class TestUpdateGhostPages(unittest.TestCase):
         #some RawVisitsStreamDef fields are missing,
         #but it should be ok for the function
         self.entry = ["foo", "organic", "bing", None, 5]
+        self.url = "foo"
+        self.medium = "organic"
+        self.source = "bing"
+        self.social_network = None
+        self.nb_sessions = 5
 
     def test_nominal_case(self):
         ghost_pages = {
@@ -27,7 +32,8 @@ class TestUpdateGhostPages(unittest.TestCase):
             "google": {"foo": 5},
             "bing": {"foo": 4}
         }
-        update_ghost_pages(ghost_pages, self.entry)
+        update_ghost_pages(ghost_pages, self.url, self.medium, self.source,
+                           self.social_network, self.nb_sessions)
 
         expected_ghost_pages = {
             "organic": {"foo": 14, "bar": 2},
@@ -42,7 +48,8 @@ class TestUpdateGhostPages(unittest.TestCase):
         ghost_pages = {
             "bing": {"foo": 4}
         }
-        update_ghost_pages(ghost_pages, self.entry)
+        update_ghost_pages(ghost_pages, self.url, self.medium, self.source,
+                           self.social_network, self.nb_sessions)
 
         expected_ghost_pages = {
             "organic": {"foo": 5},
@@ -55,7 +62,8 @@ class TestUpdateGhostPages(unittest.TestCase):
         ghost_pages = {
             "organic": {"foo": 9, "bar": 2},
         }
-        update_ghost_pages(ghost_pages, self.entry)
+        update_ghost_pages(ghost_pages, self.url, self.medium, self.source,
+                           self.social_network, self.nb_sessions)
 
         expected_ghost_pages = {
             "organic": {"foo": 14, "bar": 2},
