@@ -208,6 +208,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 ES_NO_INDEX,
                 LIST,
                 RENDERING.URL,
+                FIELD_RIGHTS.SELECT,
                 FIELD_RIGHTS.FILTERS_EXIST
             }
         },
