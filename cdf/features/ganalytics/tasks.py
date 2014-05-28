@@ -16,6 +16,8 @@ from analytics.import_analytics import import_data
 
 from cdf.utils.auth import get_credentials
 from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
+from cdf.features.ganalytics.ghost import (update_ghost_pages,
+                                           save_ghost_pages)
 
 
 @with_temporary_dir
@@ -154,6 +156,9 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
             tmp_dir=tmp_dir,
             force_fetch=force_fetch
         )
+
+        ghost_pages = {}
+
         for entry in stream:
             url_id, matching_status = get_urlid(entry, url_to_id, urlid_to_http_code)
             if url_id:
@@ -166,6 +171,24 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                     line = "{}\n".format(line)
                     line = unicode(line)
                     ambiguous_urls_file.write(line)
+            elif matching_status == MATCHING_STATUS.NOT_FOUND:
+                update_ghost_pages(ghost_pages, entry)
+
+    #save ghost pages in dedicated files
+    ghost_file_paths = []
+    for key, values in ghost_pages.iteritems():
+        #create a dedicated file
+        crt_ghost_file_path = save_ghost_pages(key, values, tmp_dir)
+        ghost_file_paths.append(crt_ghost_file_path)
+
+
+    #push ghost files to s3
+    for ghost_file_path in ghost_file_paths:
+        s3.push_file(
+            os.path.join(s3_uri, os.path.basename(ghost_file_path)),
+            ghost_file_path
+        )
+
 
     s3.push_file(
         os.path.join(s3_uri, ambiguous_urls_filename),
