@@ -3,8 +3,8 @@ import itertools
 import gzip
 import datetime
 import json
-import heapq
 
+from cdf.utils.dict import update_path_in_dict
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.main.utils import get_url_to_id_dict_from_stream
 from cdf.features.ganalytics.streams import (RawVisitsStreamDef,
@@ -18,7 +18,7 @@ from analytics.import_analytics import import_data
 
 from cdf.utils.auth import get_credentials
 from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
-from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
+from cdf.features.ganalytics.streams import _iterate_sources
 from cdf.features.ganalytics.ghost import (update_session_count,
                                            update_top_ghost_pages,
                                            update_ghost_pages_session_count,
@@ -163,19 +163,15 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
             force_fetch=force_fetch
         )
 
-        top_ghost_pages = {
-            "organic": [],
-            "social": [],
-        }
-        for source in itertools.chain(ORGANIC_SOURCES, SOCIAL_SOURCES):
-            top_ghost_pages[source] = []
-
-        ghost_pages_session_count = {
-            "organic": 0,
-            "social": 0
-        }
-        for source in itertools.chain(ORGANIC_SOURCES, SOCIAL_SOURCES):
-            ghost_pages_session_count[source] = 0
+        #init data structures to save the top ghost pages
+        #and the number of sessions for ghost pages
+        top_ghost_pages = {}
+        ghost_pages_session_count = {}
+        for medium, source in _iterate_sources():
+            crt_source = "{}.{}".format(medium, source)
+            #update_path_in_dict(crt_source, [], top_ghost_pages)
+            top_ghost_pages[crt_source] = []
+            ghost_pages_session_count[crt_source] = 0
 
         #precompute field indexes as it would be too long to compute them
         #inside the loop

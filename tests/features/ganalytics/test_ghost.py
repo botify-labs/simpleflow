@@ -32,17 +32,17 @@ class TestUpdateSessionCount(unittest.TestCase):
 
     def test_nominal_case(self):
         ghost_pages = {
-            "organic": 9,
-            "google": 5,
-            "bing": 4
+            "organic.all": 9,
+            "organic.google": 5,
+            "organic.bing": 4
         }
         update_session_count(ghost_pages, self.medium, self.source,
                              self.social_network, self.nb_sessions)
 
         expected_ghost_pages = {
-            "organic": 14,
-            "google": 5,
-            "bing": 9
+            "organic.all": 14,
+            "organic.google": 5,
+            "organic.bing": 9
         }
         self.assertEqual(expected_ghost_pages, ghost_pages)
 
@@ -50,28 +50,28 @@ class TestUpdateSessionCount(unittest.TestCase):
         #organic key is missing. This should never happen at runtime
         #since bing is an organic source
         ghost_pages = {
-            "bing": 4
+            "organic.bing": 4
         }
         update_session_count(ghost_pages, self.medium, self.source,
                              self.social_network, self.nb_sessions)
 
         expected_ghost_pages = {
-            "organic": 5,
-            "bing": 9
+            "organic.all": 5,
+            "organic.bing": 9
         }
         self.assertEqual(expected_ghost_pages, ghost_pages)
 
     def test_missing_source(self):
         #there is currently no key for bing
         ghost_pages = {
-            "organic": 9
+            "organic.all": 9
         }
         update_session_count(ghost_pages, self.medium, self.source,
                              self.social_network, self.nb_sessions)
 
         expected_ghost_pages = {
-            "organic": 14,
-            "bing": 5
+            "organic.all": 14,
+            "organic.bing": 5
         }
         self.assertEqual(expected_ghost_pages, ghost_pages)
 
