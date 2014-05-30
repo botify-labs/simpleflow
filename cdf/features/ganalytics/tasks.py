@@ -231,6 +231,8 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
     for key, values in top_ghost_pages.iteritems():
         #convert the heap into a sorted list
         values = sorted(values, reverse=True)
+        #protocol is missing, we arbitrarly prefix all the urls with http
+        values = [(count, "http://{}".format(url)) for count, url in values]
         #create a dedicated file
         crt_ghost_file_path = save_ghost_pages(key, values, tmp_dir)
         ghost_file_paths.append(crt_ghost_file_path)
