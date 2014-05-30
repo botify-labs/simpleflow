@@ -35,7 +35,8 @@ class IdStreamDef(StreamDefBase):
             "type": LONG_TYPE,
             "settings": {
                 FIELD_RIGHTS.PRIVATE,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS
             }
         },
         "host": {
