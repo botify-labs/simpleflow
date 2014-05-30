@@ -118,7 +118,6 @@ def save_ghost_pages(source, ghost_pages, output_dir):
     :param output_dir: the directory where to save the file
     :type output_dir: str
     :returns: str - the path to the generated file."""
-    #TODO: save it as gzip?
     ghost_file_path = os.path.join(output_dir,
                                    "top_ghost_pages_{}.tsv".format(source))
     #save the entry in it

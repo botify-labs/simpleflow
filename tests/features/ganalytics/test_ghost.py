@@ -6,17 +6,19 @@ import heapq
 from cdf.features.ganalytics.ghost import (get_sources,
                                            update_session_count,
                                            update_top_ghost_pages,
+                                           update_ghost_pages_session_count,
                                            save_ghost_pages,
                                            save_ghost_pages_session_count)
 
 
 class TestGetSources(unittest.TestCase):
-    @unittest.skip
     def test_nominal_case(self):
-        expected_result = ["organic", "google", "bing", "yahoo", "social",
-                           "twitter", "facebook"]
-        actual_result = get_sources()
-        self.assertSetEqual(set(expected_result), set(actual_result))
+        self.assertEqual(["organic.all", "organic.google"],
+                         get_sources("organic", "google", None))
+        self.assertEqual(["social.all", "social.facebook"],
+                         get_sources("social", "facebook.com", "facebook"))
+        self.assertEqual(["social.all"],
+                         get_sources("social", "facebook.com", "foo"))
 
 
 class TestUpdateSessionCount(unittest.TestCase):
@@ -127,6 +129,26 @@ class TestUpdateTopGhostPages(unittest.TestCase):
         }
 
         self.assertEqual(expected_result, top_ghost_pages)
+
+
+class TestUpdateGhostPageSessionCount(unittest.TestCase):
+    def test_nominal_case(self):
+        ghost_pages_session_count = {"organic.all": 10, "organic.google": 5}
+        session_count = {"organic.all": 5, "organic.google": 2}
+        update_ghost_pages_session_count(ghost_pages_session_count,
+                                         session_count)
+        expected_result = {"organic.all": 15, "organic.google": 7}
+        self.assertEqual(expected_result, ghost_pages_session_count)
+
+    def test_missing_source_medium(self):
+        ghost_pages_session_count = {"organic.all": 10}
+        session_count = {"organic.all": 5, "organic.google": 2}
+        update_ghost_pages_session_count(ghost_pages_session_count,
+                                         session_count)
+        expected_result = {"organic.all": 15, "organic.google": 2}
+        self.assertEqual(expected_result, ghost_pages_session_count)
+
+
 
 
 class TestSaveGhostPages(unittest.TestCase):
