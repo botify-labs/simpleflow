@@ -168,10 +168,9 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
         top_ghost_pages = {}
         ghost_pages_session_count = {}
         for medium, source in _iterate_sources():
-            crt_source = "{}.{}".format(medium, source)
-            #update_path_in_dict(crt_source, [], top_ghost_pages)
-            top_ghost_pages[crt_source] = []
-            ghost_pages_session_count[crt_source] = 0
+            medium_source = "{}.{}".format(medium, source)
+            top_ghost_pages[medium_source] = []
+            ghost_pages_session_count[medium_source] = 0
 
         #precompute field indexes as it would be too long to compute them
         #inside the loop

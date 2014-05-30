@@ -26,7 +26,7 @@ def update_session_count(ghost_pages, medium, source, social_network, nb_session
                   this is a RawVisitsStreamDef entry
     :type entry: list
     """
-    for medium_source in get_sources(medium, source, social_network):
+    for medium_source in get_medium_sources(medium, source, social_network):
         if medium_source not in ghost_pages:
             ghost_pages[medium_source] = 0
         ghost_pages[medium_source] += nb_sessions
@@ -83,8 +83,8 @@ def update_ghost_pages_session_count(ghost_pages_session_count,
         ghost_pages_session_count[medium_source] += count
 
 
-def get_sources(medium, source, social_network):
-    """Returns a list of traffic sources the input entry contributes to.
+def get_medium_sources(medium, source, social_network):
+    """Returns a list of traffic medium/sources the input entry contributes to.
     For instance a visit from google counts as an organic visit but also
     as a google visit.
     Thus this function will return ["organic", "visit"]

@@ -3,7 +3,7 @@ import mock
 
 import heapq
 
-from cdf.features.ganalytics.ghost import (get_sources,
+from cdf.features.ganalytics.ghost import (get_medium_sources,
                                            update_session_count,
                                            update_top_ghost_pages,
                                            update_ghost_pages_session_count,
@@ -11,14 +11,14 @@ from cdf.features.ganalytics.ghost import (get_sources,
                                            save_ghost_pages_session_count)
 
 
-class TestGetSources(unittest.TestCase):
+class TestGetMediumSources(unittest.TestCase):
     def test_nominal_case(self):
         self.assertEqual(["organic.all", "organic.google"],
-                         get_sources("organic", "google", None))
+                         get_medium_sources("organic", "google", None))
         self.assertEqual(["social.all", "social.facebook"],
-                         get_sources("social", "facebook.com", "facebook"))
+                         get_medium_sources("social", "facebook.com", "facebook"))
         self.assertEqual(["social.all"],
-                         get_sources("social", "facebook.com", "foo"))
+                         get_medium_sources("social", "facebook.com", "foo"))
 
 
 class TestUpdateSessionCount(unittest.TestCase):
