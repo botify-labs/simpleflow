@@ -6,7 +6,8 @@ import heapq
 from cdf.features.ganalytics.ghost import (get_sources,
                                            update_session_count,
                                            update_top_ghost_pages,
-                                           save_ghost_pages)
+                                           save_ghost_pages,
+                                           save_ghost_pages_session_count)
 
 
 class TestGetSources(unittest.TestCase):
@@ -145,4 +146,25 @@ class TestSaveGhostPages(unittest.TestCase):
         file_handle = mock_open.return_value.__enter__.return_value
         self.assertEqual([mock.call('foo\t9\n'),
                           mock.call('bar\t2\n')],
+                         file_handle.write.call_args_list)
+
+
+class TestSaveGhostPagesSessionCount(unittest.TestCase):
+    @mock.patch('__builtin__.open')
+    def test_nominal_case(self, mock_open):
+        mock_open.return_value = mock.MagicMock(spec=file)
+
+        session_count = {
+            "organic": 10,
+            "google": 5
+        }
+        output_dir = "/tmp/tests"
+        save_ghost_pages_session_count(session_count, output_dir)
+
+        #test that the correct file was open
+        mock_open.assert_call_with("/tmp/tests/ghost_pages_session_count.json")
+
+        #test what is written in the file
+        file_handle = mock_open.return_value.__enter__.return_value
+        self.assertEqual([mock.call('{"google": 5, "organic": 10}')],
                          file_handle.write.call_args_list)

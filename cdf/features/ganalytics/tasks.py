@@ -21,7 +21,9 @@ from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
 from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 from cdf.features.ganalytics.ghost import (update_session_count,
                                            update_top_ghost_pages,
-                                           save_ghost_pages)
+                                           update_ghost_pages_session_count,
+                                           save_ghost_pages,
+                                           save_ghost_pages_session_count)
 
 
 @with_temporary_dir
@@ -168,6 +170,13 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
         for source in itertools.chain(ORGANIC_SOURCES, SOCIAL_SOURCES):
             top_ghost_pages[source] = []
 
+        ghost_pages_session_count = {
+            "organic": 0,
+            "social": 0
+        }
+        for source in itertools.chain(ORGANIC_SOURCES, SOCIAL_SOURCES):
+            ghost_pages_session_count[source] = 0
+
         #precompute field indexes as it would be too long to compute them
         #inside the loop
         url_field_idx = RawVisitsStreamDef.field_idx("url")
@@ -218,7 +227,11 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                                        url_without_protocol,
                                        aggregated_session_count)
 
-    #save ghost pages in dedicated files
+                #update the session count
+                update_ghost_pages_session_count(ghost_pages_session_count,
+                                                 aggregated_session_count)
+
+    #save top ghost pages in dedicated files
     ghost_file_paths = []
     for key, values in top_ghost_pages.iteritems():
         #convert the heap into a sorted list
@@ -227,13 +240,20 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
         crt_ghost_file_path = save_ghost_pages(key, values, tmp_dir)
         ghost_file_paths.append(crt_ghost_file_path)
 
-
-    #push ghost files to s3
+    #push top ghost files to s3
     for ghost_file_path in ghost_file_paths:
         s3.push_file(
             os.path.join(s3_uri, os.path.basename(ghost_file_path)),
             ghost_file_path
         )
+
+    session_count_path = save_ghost_pages_session_count(
+        ghost_pages_session_count,
+        tmp_dir)
+    s3.push_file(
+        os.path.join(s3_uri, os.path.basename(session_count_path)),
+        session_count_path
+    )
 
     s3.push_file(
         os.path.join(s3_uri, ambiguous_urls_filename),

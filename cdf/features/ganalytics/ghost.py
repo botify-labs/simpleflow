@@ -1,4 +1,5 @@
 import os
+import json
 import heapq
 
 from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
@@ -59,6 +60,14 @@ def update_top_ghost_pages(top_ghost_pages, nb_top_ghost_pages,
             heapq.heappushpop(ghost_pages_source_heap, (nb_sessions, url))
 
 
+def update_ghost_pages_session_count(ghost_pages_session_count,
+                                     aggregated_session_count):
+    for source, count in aggregated_session_count.iteritems():
+        if source not in ghost_pages_session_count:
+            ghost_pages_session_count[source] = 0
+        ghost_pages_session_count[source] += count
+
+
 def get_sources(medium, source, social_network):
     """Returns a list of traffic sources the input entry contributes to.
     For instance a visit from google counts as an organic visit but also
@@ -102,3 +111,20 @@ def save_ghost_pages(source, ghost_pages, output_dir):
         for nb_sessions, url in ghost_pages:
             ghost_file.write("{}\t{}\n".format(url, nb_sessions))
     return ghost_file_path
+
+
+def save_ghost_pages_session_count(ghost_pages_session_count, output_dir):
+    """Save the session count of ghost pages in a json file.
+    There is one entry per traffic source.
+    :param ghost_pages_session_count: a dict traffic source -> nb sessions
+    :type ghost_pages_session_count: dict
+    :param output_dir: the directory where to save the file.
+    :type output_dir: str
+    :returns: str - the path to the generated file
+    """
+    output_file_path = os.path.join(output_dir,
+                                    "ghost_pages_session_count.json")
+    with open(output_file_path, "w") as output_file:
+        session_count_json = json.dumps(ghost_pages_session_count)
+        output_file.write(session_count_json)
+    return output_file_path
