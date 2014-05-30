@@ -765,7 +765,7 @@ class MetricAggOp(AggOp):
         }
 
     def validate(self):
-        if not isinstance(self.field, str):
+        if not isinstance(self.field, basestring):
             _raise_parsing_error('{} value is not valid'.format(self.OPERATOR),
                                  self.field)
 
