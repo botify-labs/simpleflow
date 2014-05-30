@@ -20,6 +20,7 @@ from cdf.utils.auth import get_credentials
 from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
 from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 from cdf.features.ganalytics.ghost import (update_session_count,
+                                           update_top_ghost_pages,
                                            save_ghost_pages)
 
 
@@ -185,6 +186,7 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                                                 url_to_id,
                                                 urlid_to_http_code)
             if url_id:
+                #if url is in the crawl, add its data to the dataset
                 for entry in entries:
                     dataset_entry = list(entry)
                     dataset_entry[0] = url_id
@@ -196,40 +198,35 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                         line = unicode(line)
                         ambiguous_urls_file.write(line)
             elif matching_status == MATCHING_STATUS.NOT_FOUND:
-                session_count = {}
+                #if it is not in the crawl, aggregate the sessions
+                aggregated_session_count = {}
                 for entry in entries:
                     medium = entry[medium_field_idx]
                     source = entry[source_field_idx]
                     social_network = entry[social_network_field_idx]
                     nb_sessions = entry[sessions_field_idx]
 
-                    update_session_count(session_count,
+                    update_session_count(aggregated_session_count,
                                          medium,
                                          source,
                                          social_network,
                                          nb_sessions)
 
                 #update the top ghost pages for this url
-                for source, nb_sessions in session_count.iteritems():
-                    #update each source
-                    ghost_pages_source_heap = top_ghost_pages[source]
-                    if len(ghost_pages_source_heap) < nb_top_ghost_pages:
-                        heapq.heappush(ghost_pages_source_heap, (nb_sessions,
-                                       url_without_protocol))
-                    else:
-                        heapq.heappushpop(ghost_pages_source_heap,
-                                          (nb_sessions, url_without_protocol))
+                update_top_ghost_pages(top_ghost_pages,
+                                       nb_top_ghost_pages,
+                                       url_without_protocol,
+                                       aggregated_session_count)
 
     #save ghost pages in dedicated files
     ghost_file_paths = []
     for key, values in top_ghost_pages.iteritems():
-
         #convert the heap into a sorted list
         values = sorted(values, reverse=True)
-
         #create a dedicated file
         crt_ghost_file_path = save_ghost_pages(key, values, tmp_dir)
         ghost_file_paths.append(crt_ghost_file_path)
+
 
     #push ghost files to s3
     for ghost_file_path in ghost_file_paths:
@@ -237,7 +234,6 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
             os.path.join(s3_uri, os.path.basename(ghost_file_path)),
             ghost_file_path
         )
-
 
     s3.push_file(
         os.path.join(s3_uri, ambiguous_urls_filename),

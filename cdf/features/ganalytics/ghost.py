@@ -1,4 +1,5 @@
 import os
+import heapq
 
 from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 
@@ -25,6 +26,37 @@ def update_session_count(ghost_pages, medium, source, social_network, nb_session
         if source not in ghost_pages:
             ghost_pages[source] = 0
         ghost_pages[source] += nb_sessions
+
+
+def update_top_ghost_pages(top_ghost_pages, nb_top_ghost_pages,
+                           url, session_count):
+    """Update the top ghost pages with the sessions from one url
+    :param top_ghost_pages: a dict source -> top_source_ghost_pages
+                            with top_source_ghost_pages a heap of tuples
+                            (nb_sessions, url) that stores the top ghost pages
+                            for the current source
+    :type top_ghost_pages: dict
+    :param nb_top_ghost_pages: the number of ghost pages to keep for each
+                               traffic source
+    :type nb_top_ghost_pages: int
+    :param url: the url to update top ghost pages with
+    :type url: str
+    :param session_count: a list of tuples (nb_sessions, source)
+                          that represents all the sessions for the input url
+    :type session_count: int
+    """
+    #update the top ghost pages for this url
+    for source, nb_sessions in session_count.iteritems():
+        if source not in top_ghost_pages:
+            top_ghost_pages[source] = []
+
+        #update each source
+        ghost_pages_source_heap = top_ghost_pages[source]
+
+        if len(ghost_pages_source_heap) < nb_top_ghost_pages:
+            heapq.heappush(ghost_pages_source_heap, (nb_sessions, url))
+        else:
+            heapq.heappushpop(ghost_pages_source_heap, (nb_sessions, url))
 
 
 def get_sources(medium, source, social_network):

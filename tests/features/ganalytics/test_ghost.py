@@ -1,8 +1,11 @@
 import unittest
 import mock
 
+import heapq
+
 from cdf.features.ganalytics.ghost import (get_sources,
                                            update_session_count,
+                                           update_top_ghost_pages,
                                            save_ghost_pages)
 
 
@@ -70,6 +73,59 @@ class TestUpdateSessionCount(unittest.TestCase):
             "bing": 5
         }
         self.assertEqual(expected_ghost_pages, ghost_pages)
+
+
+class TestUpdateTopGhostPages(unittest.TestCase):
+    def test_nominal_case(self):
+        top_ghost_pages = {
+            "organic": [(8, "foo"), (4, "bar")],
+            "google": [(5, "foo")],
+            "social": [(10, "foo"), (5, "bar")],
+        }
+        for value in top_ghost_pages.itervalues():
+            heapq.heapify(value)
+
+        nb_top_ghost_pages = 2
+        url = "baz"
+        session_count = {
+            "organic": 6,
+            "google": 4,
+            "social": 2
+        }
+
+        update_top_ghost_pages(top_ghost_pages, nb_top_ghost_pages,
+                               url, session_count)
+
+        expected_result = {
+            #baz is now in the top 2 organic ghost pages
+            "organic": [(8, "foo"), (6, "baz")],
+            #baz is now in the top 2 google ghost pages
+            "google": [(5, "foo"), (4, "baz")],
+            #baz is NOT in the top 2  ghost pages
+            "social": [(10, "foo"), (5, "bar")],
+        }
+        for value in expected_result.itervalues():
+            heapq.heapify(value)
+
+        self.assertEqual(expected_result, top_ghost_pages)
+
+    def test_missing_source(self):
+        top_ghost_pages = {}
+
+        nb_top_ghost_pages = 2
+        url = "foo"
+        session_count = {
+            "organic": 6,
+        }
+
+        update_top_ghost_pages(top_ghost_pages, nb_top_ghost_pages,
+                               url, session_count)
+
+        expected_result = {
+            "organic": [(6, "foo")],
+        }
+
+        self.assertEqual(expected_result, top_ghost_pages)
 
 
 class TestSaveGhostPages(unittest.TestCase):
