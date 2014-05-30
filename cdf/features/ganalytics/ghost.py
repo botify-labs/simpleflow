@@ -2,15 +2,13 @@ import os
 
 from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 
-def update_ghost_pages(ghost_pages, url, medium, source, social_network, nb_sessions):
+def update_session_count(ghost_pages, medium, source, social_network, nb_sessions):
     """Update the dict that stores the ghost pages.
     :param ghost_pages: a dict source -> ghost_pages where ghost_pages is
                         a dict url -> nb sessions
                         that stores the ghost pages.
                         It will be updated by the function
     :type ghost_pages: dict
-    :param url: the url of the current entry (without protocol)
-    :type url: stri
     :param medium: the traffic medium of the current entry
     :type medium: str
     :param source: the traffic source of the current entry
@@ -25,10 +23,8 @@ def update_ghost_pages(ghost_pages, url, medium, source, social_network, nb_sess
     """
     for source in get_sources(medium, source, social_network):
         if source not in ghost_pages:
-            ghost_pages[source] = {}
-        if url not in ghost_pages[source]:
-            ghost_pages[source][url] = 0
-        ghost_pages[source][url] += nb_sessions
+            ghost_pages[source] = 0
+        ghost_pages[source] += nb_sessions
 
 
 def get_sources(medium, source, social_network):
@@ -60,9 +56,9 @@ def save_ghost_pages(source, ghost_pages, output_dir):
     """Save ghost pages as a tsv file
     :param source: the traffic source
     :type source: str
-    :param ghost_pages: a dict url -> nb_sessions that stores the ghost pages
-                        for the input source
-    :type ghost_pages: dict
+    :param ghost_pages: a list dict of tuples (nb_sessions, url)
+                        that stores the ghost pages for the input source
+    :type ghost_pages: list
     :param output_dir: the directory where to save the file
     :type output_dir: str
     :returns: str - the path to the generated file."""
@@ -71,6 +67,6 @@ def save_ghost_pages(source, ghost_pages, output_dir):
                                    "top_ghost_pages_{}.tsv".format(source))
     #save the entry in it
     with open(ghost_file_path, "w") as ghost_file:
-        for url, nb_sessions in ghost_pages.iteritems():
+        for nb_sessions, url in ghost_pages:
             ghost_file.write("{}\t{}\n".format(url, nb_sessions))
     return ghost_file_path
