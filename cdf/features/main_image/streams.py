@@ -77,6 +77,7 @@ class ContentsExtendedStreamDef(StreamDefBase):
 
     def post_process_document(self, document):
         # Store the final image url only
-        document["main_image"] = document["main_image_tmp"].value
+        if document["main_image_tmp"]:
+            document["main_image"] = document["main_image_tmp"].value
         # Remove temporary key
         del document["main_image_tmp"]
