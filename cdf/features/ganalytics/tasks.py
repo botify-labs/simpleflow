@@ -17,6 +17,7 @@ from cdf.core.decorators import feature_enabled
 from analytics.import_analytics import import_data
 
 from cdf.utils.auth import get_credentials
+from cdf.features.ganalytics.constants import TOP_GHOST_PAGES_NB
 from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
 from cdf.features.ganalytics.streams import _iterate_sources
 from cdf.features.ganalytics.ghost import (update_session_count,
@@ -180,9 +181,6 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
         social_network_field_idx = RawVisitsStreamDef.field_idx("social_network")
         sessions_field_idx = RawVisitsStreamDef.field_idx("nb")
 
-        #the number of ghost pages to keep for each source
-        nb_top_ghost_pages = 1000
-
         #get all the entries corresponding the the same url
         for url_without_protocol, entries in itertools.groupby(stream,
                                                                lambda x: x[url_field_idx]):
@@ -203,6 +201,13 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                         ambiguous_urls_file.write(line)
             elif matching_status == MATCHING_STATUS.NOT_FOUND:
                 #if it is not in the crawl, aggregate the sessions
+                #so that you can decide whether or not the url belongs to
+                #the top ghost pages and thus either keep the entry
+                #or delete to save memory.
+                #If you are not sure that you got all the entries for a given
+                #url, you can not decide to throw it away, as its number of
+                #sessions may be increased by a new entry and
+                #it then may become a top ghost page.
                 aggregated_session_count = {}
                 for entry in entries:
                     medium = entry[medium_field_idx]
@@ -218,7 +223,7 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
 
                 #update the top ghost pages for this url
                 update_top_ghost_pages(top_ghost_pages,
-                                       nb_top_ghost_pages,
+                                       TOP_GHOST_PAGES_NB,
                                        url_without_protocol,
                                        aggregated_session_count)
 
@@ -244,6 +249,7 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
             ghost_file_path
         )
 
+    #save session counts for ghost pages
     session_count_path = save_ghost_pages_session_count(
         ghost_pages_session_count,
         tmp_dir)
