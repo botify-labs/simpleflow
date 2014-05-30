@@ -4,7 +4,6 @@ import gzip
 import datetime
 import json
 
-from cdf.utils.dict import update_path_in_dict
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.main.utils import get_url_to_id_dict_from_stream
 from cdf.features.ganalytics.streams import (RawVisitsStreamDef,
