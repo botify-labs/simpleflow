@@ -137,7 +137,7 @@ if __name__ == "__main__":
                         dest="force",
                         default=False,
                         action="store_true",
-                        help='Dry run')
+                        help='Force release')
 
     parser.add_argument('-n',
                         dest="dry_run",
