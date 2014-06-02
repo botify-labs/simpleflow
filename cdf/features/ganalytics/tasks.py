@@ -174,15 +174,10 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
 
         #precompute field indexes as it would be too long to compute them
         #inside the loop
-        url_field_idx = RawVisitsStreamDef.field_idx("url")
-        medium_field_idx = RawVisitsStreamDef.field_idx("medium")
-        source_field_idx = RawVisitsStreamDef.field_idx("source")
-        social_network_field_idx = RawVisitsStreamDef.field_idx("social_network")
-        sessions_field_idx = RawVisitsStreamDef.field_idx("nb")
-
+        fields_list = ["url", "medium", "source", "social_network", "nb"]
+        url_idx, medium_idx, source_idx, social_network_idx, sessions_idx = RawVisitsStreamDef.fields_idx(fields_list)
         #get all the entries corresponding the the same url
-        for url_without_protocol, entries in itertools.groupby(stream,
-                                                               lambda x: x[url_field_idx]):
+        for url_without_protocol, entries in itertools.groupby(stream, lambda x: x[url_idx]):
             url_id, matching_status = get_urlid(url_without_protocol,
                                                 url_to_id,
                                                 urlid_to_http_code)
@@ -209,10 +204,10 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                 #it then may become a top ghost page.
                 aggregated_session_count = {}
                 for entry in entries:
-                    medium = entry[medium_field_idx]
-                    source = entry[source_field_idx]
-                    social_network = entry[social_network_field_idx]
-                    nb_sessions = entry[sessions_field_idx]
+                    medium = entry[medium_idx]
+                    source = entry[source_idx]
+                    social_network = entry[social_network_idx]
+                    nb_sessions = entry[sessions_idx]
 
                     update_session_count(aggregated_session_count,
                                          medium,

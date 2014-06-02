@@ -31,6 +31,15 @@ class StreamDefBase(object):
         return map(lambda i: i[0], cls.HEADERS).index(field)
 
     @classmethod
+    def fields_idx(cls, fields):
+        """
+        Return the positions of input fields in HEADERS
+        :param fields: the list of input fields
+        :type fields: iterable
+        """
+        return [cls.field_idx(field) for field in fields]
+
+    @classmethod
     def get_stream_from_directory(cls, directory, part_id=None):
         """
         Return a Stream instance from a directory

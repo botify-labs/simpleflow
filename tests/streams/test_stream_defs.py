@@ -32,6 +32,13 @@ class TestStreamsDef(unittest.TestCase):
         self.assertEquals(CustomStreamDef.field_idx('id'), 0)
         self.assertEquals(CustomStreamDef.field_idx('url'), 1)
 
+    def test_fields_idx(self):
+        self.assertEquals(CustomStreamDef.fields_idx(['id', 'url']), [0, 1])
+        #test that the function respect the input field order
+        self.assertEquals(CustomStreamDef.fields_idx(['url', 'id']), [1, 0])
+        #edge case, empty input field list
+        self.assertEquals(CustomStreamDef.fields_idx([]), [])
+
     def test_file(self):
         f = StringIO.StringIO()
         f.write('1\thttp://www.site.com/\n')
