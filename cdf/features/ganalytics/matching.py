@@ -13,10 +13,10 @@ MATCHING_STATUS = collections.namedtuple('MATCHING_STATUS', [
 )
 
 
-def get_urlid(visit_stream_entry,
+def get_urlid(url,
               url_to_id,
               urlid_to_http_code):
-    """Find the url id corresponding to an entry in a visit stream.
+    """Find the url id corresponding to a url without any protocol.
     The function checks if the http and https version of the url exist.
     (ie pages have been crawled)
     If only one of them exists, it returns the corresponding url id.
@@ -34,7 +34,6 @@ def get_urlid(visit_stream_entry,
     :type urlid_to_http_code: dic
     :returns: int
     """
-    url = visit_stream_entry[0]
     #generate candidate url ids
     candidates = []
     for protocol in ["http", "https"]:

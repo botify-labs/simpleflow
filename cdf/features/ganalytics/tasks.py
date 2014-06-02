@@ -1,4 +1,5 @@
 import os
+import itertools
 import gzip
 import datetime
 import json
@@ -15,7 +16,14 @@ from cdf.core.decorators import feature_enabled
 from analytics.import_analytics import import_data
 
 from cdf.utils.auth import get_credentials
+from cdf.features.ganalytics.constants import TOP_GHOST_PAGES_NB
 from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
+from cdf.features.ganalytics.streams import _iterate_sources
+from cdf.features.ganalytics.ghost import (update_session_count,
+                                           update_top_ghost_pages,
+                                           update_ghost_pages_session_count,
+                                           save_ghost_pages,
+                                           save_ghost_pages_session_count)
 
 
 @with_temporary_dir
@@ -154,18 +162,95 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
             tmp_dir=tmp_dir,
             force_fetch=force_fetch
         )
-        for entry in stream:
-            url_id, matching_status = get_urlid(entry, url_to_id, urlid_to_http_code)
+
+        #init data structures to save the top ghost pages
+        #and the number of sessions for ghost pages
+        top_ghost_pages = {}
+        ghost_pages_session_count = {}
+        for medium, source in _iterate_sources():
+            medium_source = "{}.{}".format(medium, source)
+            top_ghost_pages[medium_source] = []
+            ghost_pages_session_count[medium_source] = 0
+
+        #precompute field indexes as it would be too long to compute them
+        #inside the loop
+        fields_list = ["url", "medium", "source", "social_network", "nb"]
+        url_idx, medium_idx, source_idx, social_network_idx, sessions_idx = RawVisitsStreamDef.fields_idx(fields_list)
+        #get all the entries corresponding the the same url
+        for url_without_protocol, entries in itertools.groupby(stream, lambda x: x[url_idx]):
+            url_id, matching_status = get_urlid(url_without_protocol,
+                                                url_to_id,
+                                                urlid_to_http_code)
             if url_id:
-                dataset_entry = list(entry)
-                dataset_entry[0] = url_id
-                dataset.append(*dataset_entry)
-                #store ambiguous url ids
-                if matching_status == MATCHING_STATUS.AMBIGUOUS:
-                    line = "\t".join([str(i) for i in entry])
-                    line = "{}\n".format(line)
-                    line = unicode(line)
-                    ambiguous_urls_file.write(line)
+                #if url is in the crawl, add its data to the dataset
+                for entry in entries:
+                    dataset_entry = list(entry)
+                    dataset_entry[0] = url_id
+                    dataset.append(*dataset_entry)
+                    #store ambiguous url ids
+                    if matching_status == MATCHING_STATUS.AMBIGUOUS:
+                        line = "\t".join([str(i) for i in entry])
+                        line = "{}\n".format(line)
+                        line = unicode(line)
+                        ambiguous_urls_file.write(line)
+            elif matching_status == MATCHING_STATUS.NOT_FOUND:
+                #if it is not in the crawl, aggregate the sessions
+                #so that you can decide whether or not the url belongs to
+                #the top ghost pages and thus either keep the entry
+                #or delete to save memory.
+                #If you are not sure that you got all the entries for a given
+                #url, you can not decide to throw it away, as its number of
+                #sessions may be increased by a new entry and
+                #it then may become a top ghost page.
+                aggregated_session_count = {}
+                for entry in entries:
+                    medium = entry[medium_idx]
+                    source = entry[source_idx]
+                    social_network = entry[social_network_idx]
+                    nb_sessions = entry[sessions_idx]
+
+                    update_session_count(aggregated_session_count,
+                                         medium,
+                                         source,
+                                         social_network,
+                                         nb_sessions)
+
+                #update the top ghost pages for this url
+                update_top_ghost_pages(top_ghost_pages,
+                                       TOP_GHOST_PAGES_NB,
+                                       url_without_protocol,
+                                       aggregated_session_count)
+
+                #update the session count
+                update_ghost_pages_session_count(ghost_pages_session_count,
+                                                 aggregated_session_count)
+
+    #save top ghost pages in dedicated files
+    ghost_file_paths = []
+    for key, values in top_ghost_pages.iteritems():
+        #convert the heap into a sorted list
+        values = sorted(values, reverse=True)
+        #protocol is missing, we arbitrarly prefix all the urls with http
+        values = [(count, "http://{}".format(url)) for count, url in values]
+        #create a dedicated file
+        crt_ghost_file_path = save_ghost_pages(key, values, tmp_dir)
+        ghost_file_paths.append(crt_ghost_file_path)
+
+    #push top ghost files to s3
+    for ghost_file_path in ghost_file_paths:
+        s3.push_file(
+            os.path.join(s3_uri, os.path.basename(ghost_file_path)),
+            ghost_file_path
+        )
+
+    #save session counts for ghost pages
+    session_count_path = save_ghost_pages_session_count(
+        ghost_pages_session_count,
+        tmp_dir)
+    s3.push_file(
+        os.path.join(s3_uri, os.path.basename(session_count_path)),
+        session_count_path
+    )
 
     s3.push_file(
         os.path.join(s3_uri, ambiguous_urls_filename),

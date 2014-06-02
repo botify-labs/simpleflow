@@ -21,21 +21,21 @@ class TestGetUrlid(unittest.TestCase):
         }
 
     def test_nominal_case_http(self):
-        entry = ["foo.com/bar"]
-        actual_result = get_urlid(entry, self.url_to_id,
+        url = "foo.com/bar"
+        actual_result = get_urlid(url, self.url_to_id,
                                   self.id_to_http_code)
         self.assertEqual((2, MATCHING_STATUS.OK), actual_result)
 
     def test_nominal_case_https(self):
-        entry = ["foo.com/baz"]
-        actual_result = get_urlid(entry, self.url_to_id,
+        url = "foo.com/baz"
+        actual_result = get_urlid(url, self.url_to_id,
                                   self.id_to_http_code)
         self.assertEqual((3, MATCHING_STATUS.OK), actual_result)
 
     def test_uncrawled_url(self):
-        entry = ["foo.com/bar"]
+        url = "foo.com/bar"
         id_to_http_code = {2: 0}
-        actual_result = get_urlid(entry, self.url_to_id, id_to_http_code)
+        actual_result = get_urlid(url, self.url_to_id, id_to_http_code)
         self.assertEquals((None, MATCHING_STATUS.NOT_FOUND), actual_result)
 
     def test_ambiguity_uncrawled_url(self):
@@ -43,11 +43,11 @@ class TestGetUrlid(unittest.TestCase):
             0: 0,
             1: 200
         }
-        entry = ["foo.com"]
+        url = "foo.com"
         #one of the ambiguous urls has not been crawled,
         #so we return the id of the url that has been crawled
         self.assertEqual((1, MATCHING_STATUS.OK),
-                         get_urlid(entry, self.url_to_id, id_to_http_code))
+                         get_urlid(url, self.url_to_id, id_to_http_code))
 
     def test_ambiguity_http_redirection(self):
         id_to_http_code = {
@@ -55,10 +55,10 @@ class TestGetUrlid(unittest.TestCase):
             1: 404
         }
 
-        entry = ["foo.com"]
+        url = "foo.com"
         #http redirects to https, so we should return https url
         self.assertEqual((1, MATCHING_STATUS.OK),
-                         get_urlid(entry, self.url_to_id, id_to_http_code))
+                         get_urlid(url, self.url_to_id, id_to_http_code))
 
     def test_ambiguity_http_not_redirection(self):
         id_to_http_code = {
@@ -66,25 +66,25 @@ class TestGetUrlid(unittest.TestCase):
             1: 301
         }
 
-        entry = ["foo.com"]
+        url = "foo.com"
         #https a redirection so we should return http url
         self.assertEqual((0, MATCHING_STATUS.OK),
-                         get_urlid(entry, self.url_to_id, id_to_http_code))
+                         get_urlid(url, self.url_to_id, id_to_http_code))
 
     def test_ambiguity_http_https_not_redirections(self):
         id_to_http_code = {
             0: 200,
             1: 200
         }
-        entry = ["foo.com"]
+        url = "foo.com"
         #http and https are not redirections,
         #so we should return http url (by default)
         self.assertEqual((0, MATCHING_STATUS.AMBIGUOUS),
-                         get_urlid(entry, self.url_to_id, id_to_http_code))
+                         get_urlid(url, self.url_to_id, id_to_http_code))
 
     def test_unexisting_url(self):
-        entry = ["bar.com"]
-        actual_result = get_urlid(entry, self.url_to_id,
+        url = "bar.com"
+        actual_result = get_urlid(url, self.url_to_id,
                                   self.url_to_id)
         self.assertEquals((None, MATCHING_STATUS.NOT_FOUND), actual_result)
 
