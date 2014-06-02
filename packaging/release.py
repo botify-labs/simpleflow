@@ -112,7 +112,7 @@ def release_official_version(dry_run):
         #tag current commit
         ["git", "tag", "-a", version, "-m", version],
         #push commits
-        ["git", "push", "origin"],
+        ["git", "push", "origin", "devel"],
         #upload package
         ["git", "push", "origin", version]
     ]
