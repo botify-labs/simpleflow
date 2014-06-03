@@ -628,7 +628,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
 
                 # We increment the number of occurrences found for `text_hash` only
                 # for follow inlinks
-                if text_hash:
+                if text_hash is not None:
                     document['tmp_anchors_nb'][text_hash] += 1
             else:
                 key = _get_nofollow_combination_key(follow_keys)
@@ -681,6 +681,11 @@ class InlinksStreamDef(InlinksRawStreamDef):
         if document["tmp_anchors_nb"]:
             document["inlinks_internal"]["anchors"]["nb"] = len(document["tmp_anchors_nb"])
             for text_hash, nb in document["tmp_anchors_nb"].most_common(NB_TOP_ANCHORS):
+                # An empty hash (0) can be located into canonical or redirection line
+                # (we don't check those lines for performances reasons)
+                # As it maps to an empty string, we replace it in post processing
+                if text_hash == '0' and text_hash not in document["tmp_anchors_txt"]:
+                    document["tmp_anchors_txt"][text_hash] = self.TEXT_EMPTY
                 document["inlinks_internal"]["anchors"]["top"]["text"].append(document["tmp_anchors_txt"][text_hash])
                 document["inlinks_internal"]["anchors"]["top"]["nb"].append(nb)
 
