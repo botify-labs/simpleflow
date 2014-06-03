@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collections import Counter
 
 from cdf.metadata.url.url_metadata import (
@@ -14,7 +15,7 @@ from cdf.features.links.helpers.masks import list_to_mask
 from cdf.utils.convert import _raw_to_bool
 from cdf.query.constants import RENDERING, FIELD_RIGHTS
 from .helpers.masks import follow_mask
-from .settings import GROUPS
+from .settings import GROUPS, NB_TOP_ANCHORS
 
 
 __all__ = ["OutlinksRawStreamDef", "OutlinksStreamDef"]
@@ -576,7 +577,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             }
         },
         "inlinks_internal.anchors.top": {
-            "verbose_name": "Top 5 of incoming text anchors",
+            "verbose_name": "Top {nb} of incoming text anchors".format(nb=NB_TOP_ANCHORS),
             "type": STRUCT_TYPE,
             "values": STRING_NB_MAP_MAPPING,
             "settings": {LIST, RENDERING.STRING_NB_MAP, FIELD_RIGHTS.SELECT},
@@ -585,7 +586,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         # The following field is already created with the above one (as a STRUCT_TYPE)
         # But we need to return it to request it
         "inlinks_internal.anchors.top.text": {
-            "verbose_name": "Incoming text anchors (top 5)",
+            "verbose_name": "Incoming text anchors (top {nb})".format(nb=NB_TOP_ANCHORS),
             "type": STRING_TYPE,
             "settings": {
                 FAKE_FIELD, FIELD_RIGHTS.FILTERS
@@ -679,7 +680,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         # containing texts, and a second one (`nb`) containing number of occurrences
         if document["tmp_anchors_nb"]:
             document["inlinks_internal"]["anchors"]["nb"] = len(document["tmp_anchors_nb"])
-            for text_hash, nb in document["tmp_anchors_nb"].most_common(5):
+            for text_hash, nb in document["tmp_anchors_nb"].most_common(NB_TOP_ANCHORS):
                 document["inlinks_internal"]["anchors"]["top"]["text"].append(document["tmp_anchors_txt"][text_hash])
                 document["inlinks_internal"]["anchors"]["top"]["nb"].append(nb)
 
