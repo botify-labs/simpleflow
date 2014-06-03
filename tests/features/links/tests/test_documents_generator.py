@@ -67,6 +67,30 @@ class TestBasicInfoGeneration(unittest.TestCase):
             [3, 2, 1]
         )
 
+    def test_top_anchors_empty_text_canonical(self):
+        # Empty text is in the canonical line,
+        # Which is not analyzed
+        inlinks = [
+            [1, 'canonical', 0, 3, "0", ""],
+            [1, 'a', 0, 3, "0", "\x00"],
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
+            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+        ])
+
+        document = _next_doc(gen)
+        self.assertEquals(
+            document["inlinks_internal"]["anchors"]["top"]['text'],
+            ["[empty]"]
+        )
+        self.assertEquals(
+            document["inlinks_internal"]["anchors"]["top"]['nb'],
+            [1]
+        )
+
     def test_top_anchors_not_set(self):
         inlinks = [
             [1, 'a', 0, 2],
