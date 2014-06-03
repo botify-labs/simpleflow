@@ -1,6 +1,8 @@
 """Integration test for url query with ElasticSearch backend
 """
 
+import ast
+import json
 import unittest
 import time
 import copy
@@ -43,8 +45,19 @@ def _get_simple_bql_query(field, predicate, value, fields=['id']):
     }
 
 
+def convert(input):
+    if isinstance(input, dict):
+        return {convert(key): convert(value) for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [convert(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
+
+
 def _get_query_result(botify_query):
-    return list(Query(botify_query=botify_query, **QUERY_ARGS).results)
+    return convert(list(Query(botify_query=botify_query, **QUERY_ARGS).results))
 
 
 def _get_query_agg_result(botify_query):
@@ -57,8 +70,8 @@ URLS_FIXTURE = [
         'id': 1,
         '_id': '%d:%d' % (CRAWL_ID, 1),
         'crawl_id': CRAWL_ID,
-        'url': u'http://www.mysite.com/france/football/abcde/main.html',
-        'path': u'/france/football/abcde/main.html',
+        'url': 'http://www.mysite.com/france/football/abcde/main.html',
+        'path': '/france/football/abcde/main.html',
         'depth': 1,
         'http_code': 200,
         'metadata': {
@@ -104,8 +117,8 @@ URLS_FIXTURE = [
         'id': 2,
         '_id': '%d:%d' % (CRAWL_ID, 2),
         'crawl_id': CRAWL_ID,
-        'url': u'http://www.mysite.com/football/france/abc/abcde',
-        'path': u'/football/france/abc/abcde',
+        'url': 'http://www.mysite.com/football/france/abc/abcde',
+        'path': '/football/france/abc/abcde',
         'depth': 2,
         'http_code': 301,
         'metadata': {
@@ -139,8 +152,8 @@ URLS_FIXTURE = [
         'id': 3,
         '_id': '%d:%d' % (CRAWL_ID, 3),
         'crawl_id': CRAWL_ID,
-        'url': u'http://www.mysite.com/football/article-s.html',
-        'path': u'/football/article-s.html',
+        'url': 'http://www.mysite.com/football/article-s.html',
+        'path': '/football/article-s.html',
         'http_code': 200,
         'depth': 2,
         'redirect': {
@@ -166,7 +179,7 @@ URLS_FIXTURE = [
         'id': 4,
         '_id': '%d:%d' % (CRAWL_ID, 4),
         'crawl_id': CRAWL_ID,
-        'url': u'http://www.mysite.com/errors',
+        'url': 'http://www.mysite.com/errors',
         'http_code': 200,
         'depth': 2,
         'metadata': {
@@ -220,7 +233,7 @@ URLS_FIXTURE = [
         'id': 5,
         '_id': '%d:%d' % (CRAWL_ID, 5),
         'crawl_id': CRAWL_ID,
-        'url': u'http://www.notcrawled.com',
+        'url': 'http://www.notcrawled.com',
         'http_code': 0
     },
     {
@@ -244,7 +257,7 @@ URLS_FIXTURE = [
         'id': 8,
         '_id': '%d:%d' % (CRAWL_ID, 8),
         'crawl_id': CRAWL_ID,
-        'url': u'http://www.error.com',
+        'url': 'http://www.error.com',
         'http_code': -160
     }
 ]
@@ -661,7 +674,7 @@ class TestQueryES(unittest.TestCase):
                 }
             }
         }
-        self.assertEqual(result, [expected])
+        self.assertEqual(convert(result), [expected])
 
     def test_sort_query(self):
         botify_query = {

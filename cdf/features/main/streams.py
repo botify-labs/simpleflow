@@ -34,7 +34,9 @@ class IdStreamDef(StreamDefBase):
             "verbose_name": "Url Hash",
             "type": LONG_TYPE,
             "settings": {
-                FIELD_RIGHTS.PRIVATE
+                FIELD_RIGHTS.PRIVATE,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS
             }
         },
         "host": {
@@ -50,11 +52,11 @@ class IdStreamDef(StreamDefBase):
         "id": {
             "verbose_name": "Id",
             "type": INT_TYPE,
-            "settings": {ES_DOC_VALUE, FIELD_RIGHTS.PRIVATE}
+            "settings": {ES_DOC_VALUE, FIELD_RIGHTS.PRIVATE, FIELD_RIGHTS.SELECT, FIELD_RIGHTS.FILTERS}
         },
         "crawl_id": {
             "type": INT_TYPE,
-            "settings": {FIELD_RIGHTS.PRIVATE}
+            "settings": {FIELD_RIGHTS.PRIVATE, FIELD_RIGHTS.SELECT, FIELD_RIGHTS.FILTERS}
         },
         "path": {
             "verbose_name": "Path",

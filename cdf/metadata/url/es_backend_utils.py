@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from cdf.utils.dict import update_path_in_dict
+from cdf.query.constants import FIELD_RIGHTS
 from .url_metadata import (STRING_TYPE, BOOLEAN_TYPE,
                            STRUCT_TYPE, MULTI_FIELD, LIST,
                            ES_NOT_ANALYZED, ES_NO_INDEX, LONG_TYPE,
@@ -209,23 +210,34 @@ class ElasticSearchBackend(DataBackend):
 
     def has_child(self, field):
         """Check if this field have child fields"""
-        if self._query_fields is None:
-            self.query_fields()
-        return any(i.startswith('{}.'.format(field)) for i in self._query_fields)
+        return any(i.startswith('{}.'.format(field)) for i in self.select_fields())
 
     def get_children(self, field):
         """Get all child fields of this field"""
-        if self._query_fields is None:
-            self.query_fields()
-        return filter(lambda i: i.startswith('{}.'.format(field)), self._query_fields)
+        return filter(lambda i: i.startswith('{}.'.format(field)), self.select_fields())
 
     def query_fields(self):
         """Generate a lookup set for all complete fields
 
         Ex. `error_links.3xx.nb` but not a prefix like `error_links.3xx`
         """
-        if self._query_fields is None:
-            self._query_fields = self.data_format.keys()
+        if self._query_fields:
+            return self._query_fields
+
+        lookup = set()
+
+        for field_name, values in self.data_format.iteritems():
+            settings = values.get('settings', {})
+            if (
+                any(f in settings for f in FIELD_RIGHTS) and
+                (FIELD_RIGHTS.FILTERS not in settings and FIELD_RIGHTS.FILTERS_EXIST not in settings)
+            ):
+                continue
+            splits = _split_path(field_name)
+            for i, _ in enumerate(splits):
+                lookup.add('.'.join(splits[:i + 1]))
+
+        self._query_fields = lookup
         return self._query_fields
 
     def select_fields(self):
@@ -238,12 +250,15 @@ class ElasticSearchBackend(DataBackend):
         if self._select_fields is None:
             lookup = set()
 
-            for path in self.data_format:
-                splits = _split_path(path)
+            for field_name, values in self.data_format.iteritems():
+                settings = values.get('settings', {})
+                # If FIELD_RIGHTS are set in settings, check that there is a selectable right
+                if any(f in settings for f in FIELD_RIGHTS) and FIELD_RIGHTS.SELECT not in settings:
+                    continue
+                splits = _split_path(field_name)
                 for i, _ in enumerate(splits):
                     lookup.add('.'.join(splits[:i + 1]))
             self._select_fields = lookup
-
         return self._select_fields
 
     def field_default_value(self):

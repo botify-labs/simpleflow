@@ -569,8 +569,6 @@ class RequiredField(Field):
         self.select_fields = select_fields
 
     def validate(self):
-        if self.select_fields is None:
-            return
         if self.field_value not in self.select_fields:
             _raise_parsing_error('Field is not valid for query',
                                  self.field_value)
@@ -767,7 +765,7 @@ class MetricAggOp(AggOp):
         }
 
     def validate(self):
-        if not isinstance(self.field, str):
+        if not isinstance(self.field, basestring):
             _raise_parsing_error('{} value is not valid'.format(self.OPERATOR),
                                  self.field)
 

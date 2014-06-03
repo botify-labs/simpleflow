@@ -166,11 +166,11 @@ class TestMappingGeneration(unittest.TestCase):
 
     def test_query_field_lookup(self):
         data_format = {
-            'error_links.3xx.urls',
-            'error_links.3xx.nb',
-            'error_links.4xx.urls',
-            'error_links.4xx.nb',
-            'one_level_field'
+            'error_links.3xx.urls': {},
+            'error_links.3xx.nb': {},
+            'error_links.4xx.urls': {},
+            'error_links.4xx.nb': {},
+            'one_level_field': {},
         }
 
         expected = {

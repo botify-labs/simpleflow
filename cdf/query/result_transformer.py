@@ -1,4 +1,3 @@
-import re
 import abc
 
 from cdf.log import logger
@@ -6,7 +5,7 @@ from cdf.analysis.urls.utils import get_es_id, get_url_id
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
 from cdf.features.links.helpers.masks import follow_mask
-from cdf.query.constants import MGET_CHUNKS_SIZE, QUERY_AGG, SUB_AGG, METRIC_AGG_PREFIX
+from cdf.query.constants import MGET_CHUNKS_SIZE, SUB_AGG, METRIC_AGG_PREFIX
 
 
 class ResultTransformer(object):

@@ -5,6 +5,7 @@ NAME = "Link Graph"
 DESCRIPTION = "Retrieve outlinks, inlinks and its status (follow, no-follow), canonicals and redirections"
 ORDER = 100
 
+NB_TOP_ANCHORS = 5
 
 GROUPS = Enum(
     'Groups',
@@ -19,5 +20,3 @@ GROUPS = Enum(
         ("canonical", "Canonicals"),
     ]
 )
-
-

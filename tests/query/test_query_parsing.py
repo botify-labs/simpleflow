@@ -1,6 +1,7 @@
 import unittest
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
+from cdf.query.constants import FIELD_RIGHTS
 from cdf.exceptions import BotifyQueryException
 
 
@@ -22,6 +23,18 @@ _STUB_FORMAT = {
         'type': 'integer',
         'settings': {
             'agg:numerical'
+        }
+    },
+    'filterable_only_field': {
+        'type': 'string',
+        'settings': {
+            FIELD_RIGHTS.FILTERS
+        }
+    },
+    'selectable_only_field': {
+        'type': 'string',
+        'settings': {
+            FIELD_RIGHTS.SELECT
         }
     }
 }
@@ -103,6 +116,16 @@ class TestFieldsParsing(ParsingTestCase):
         # fields should be a list of strings
         invalid = {'url', 'path'}
         self.assertParsingError(self.parser.parse_fields, invalid)
+
+    def test_wrong_fields_select(self):
+        fields = ['filterable_only_field']
+        parsed = self.parser.parse_fields(fields)
+        self.assertParsingError(parsed.validate)
+
+    def test_wrong_fields_filter(self):
+        _filter = {'field': 'selectable_only_field', 'value': 1}
+        parsed = self.parser.parse_predicate_filter(_filter)
+        self.assertParsingError(parsed.validate)
 
     def test_wrong_fields_semantic(self):
         # field should be a valid one

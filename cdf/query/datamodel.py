@@ -27,7 +27,7 @@ def _render_field_to_end_user(stream_def, field):
     data_type = field_conf["type"]
     if RENDERING.URL in settings:
         data_type = "string"
-    for flag in (RENDERING.URL, RENDERING.TIME_SEC, RENDERING.TIME_MIN, RENDERING.PERCENT):
+    for flag in RENDERING:
         if flag in settings:
             field_type = flag.value
             break
