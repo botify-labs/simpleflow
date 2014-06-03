@@ -26,6 +26,14 @@ import os.path
 import fileinput
 import re
 
+#get the path to the local cdf directory
+regex = ".*/botify-cdf"
+LOCAL_PACKAGE_PATH = re.search(regex, os.path.abspath(__file__)).group(0)
+
+#modify sys.path so that the local cdf is loaded
+import sys
+sys.path.insert(0, LOCAL_PACKAGE_PATH)
+
 import cdf
 
 
@@ -112,7 +120,7 @@ def release_official_version(dry_run):
         #tag current commit
         ["git", "tag", "-a", version, "-m", version],
         #push commits
-        ["git", "push", "origin"],
+        ["git", "push", "origin", "devel"],
         #upload package
         ["git", "push", "origin", version]
     ]
@@ -137,7 +145,7 @@ if __name__ == "__main__":
                         dest="force",
                         default=False,
                         action="store_true",
-                        help='Dry run')
+                        help='Force release')
 
     parser.add_argument('-n',
                         dest="dry_run",
