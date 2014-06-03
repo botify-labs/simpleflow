@@ -628,7 +628,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
 
                 # We increment the number of occurrences found for `text_hash` only
                 # for follow inlinks
-                if text_hash is not None:
+                if text_hash:
                     document['tmp_anchors_nb'][text_hash] += 1
             else:
                 key = _get_nofollow_combination_key(follow_keys)
