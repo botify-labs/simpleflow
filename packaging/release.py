@@ -38,8 +38,9 @@ import cdf
 
 
 def get_last_release_version():
-    """Returns the version number of the last release.
-    :returns: str
+    """Returns the version number of the last release
+    as a tuple (major, minor, micro).
+    :returns: contents_duplicate
     """
     #get current VERSION
     release_version = cdf.__version__
@@ -47,15 +48,15 @@ def get_last_release_version():
 
 
 def get_release_version():
-    """Returns the version number of the next release version.
-    :returns: str
+    """Returns the version number of the next release version
+    as a tuple (major, minor, micro).
+    :returns: tuple
     """
     major, minor, micro = get_last_release_version()
     #increment micro version and reset micro version
     result = [major, minor, micro + 1]
-    result = [str(i) for i in result]
-
-    result = ".".join(result)
+    result = [int(i) for i in result]
+    result = tuple(result)
     return result
 
 
@@ -71,17 +72,18 @@ def get_init_filepath():
 def set_version(version):
     """Change the version of the package.
     This function modifies __init__.py
-    :param version: the new version to set
-    :param version: str
+    :param version: the new version to set as a tuple of integers
+                    (major, minor, micro)
+    :param version: tuple
     """
     #find file location
     filename = get_init_filepath()
-    regex = re.compile("VERSION\s*=\s*'\d+\.\d+\.\d+'")
+    regex = re.compile("version\s*=\s*\(\d+, \d+, \d+\)")
     #inplace replacement
     #cf http://stackoverflow.com/questions/39086/search-and-replace-a-line-in-a-file-in-python
     for line in fileinput.input(filename, inplace=True):
         if regex.match(line):
-            print "VERSION = '%s'" % version
+            print "version = {}".format(str(version))
         else:
             print line
 
@@ -106,23 +108,24 @@ def release_official_version(dry_run):
     :type dry_run: bool"""
     #bump version
     version = get_release_version()
-    print "Creating cdf %s" % version
-    #in case of dry run, we do not want toi modify the files
+    tag = ".".join([str(i) for i in version])
+    print "Creating cdf {}".format(tag)
+    #in case of dry run, we do not want to modify the files
     if not dry_run:
         set_version(version)
     init_filepath = get_init_filepath()
-    commit_message = "bump version to %s" % version
+    commit_message = "bump version to {}".format(tag)
 
     commands = [
         #commit version bump
         ["git", "add", init_filepath],
         ["git", "commit", "-m", commit_message],
         #tag current commit
-        ["git", "tag", "-a", version, "-m", version],
+        ["git", "tag", "-a", tag, "-m", tag],
         #push commits
         ["git", "push", "origin", "devel"],
         #upload package
-        ["git", "push", "origin", version]
+        ["git", "push", "origin", tag]
     ]
     if not dry_run:
         for command in commands:
