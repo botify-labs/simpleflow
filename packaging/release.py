@@ -40,7 +40,7 @@ import cdf
 def get_last_release_version():
     """Returns the version number of the last release
     as a tuple (major, minor, micro).
-    :returns: contents_duplicate
+    :returns: tuple
     """
     #get current VERSION
     release_version = cdf.__version__
