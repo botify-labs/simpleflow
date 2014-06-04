@@ -79,13 +79,17 @@ def set_version(version):
     #find file location
     filename = get_init_filepath()
     regex = re.compile("version\s*=\s*\(\d+, \d+, \d+\)")
+    version_line_found = False
     #inplace replacement
     #cf http://stackoverflow.com/questions/39086/search-and-replace-a-line-in-a-file-in-python
     for line in fileinput.input(filename, inplace=True):
         if regex.match(line):
             sys.stdout.write("version = {}\n".format(str(version)))
+            version_line_found = True
         else:
             sys.stdout.write(line)
+    if not version_line_found:
+        raise ValueError("Error line defining version not found in {}".format(filename))
 
 
 def upload_package(dry_run):
