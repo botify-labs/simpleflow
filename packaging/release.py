@@ -83,9 +83,9 @@ def set_version(version):
     #cf http://stackoverflow.com/questions/39086/search-and-replace-a-line-in-a-file-in-python
     for line in fileinput.input(filename, inplace=True):
         if regex.match(line):
-            print "version = {}".format(str(version))
+            sys.stdout.write("version = {}\n".format(str(version)))
         else:
-            print line
+            sys.stdout.write(line)
 
 
 def upload_package(dry_run):
