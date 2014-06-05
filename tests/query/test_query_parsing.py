@@ -204,7 +204,10 @@ class TestAggregationParsing(ParsingTestCase):
 
         self.assertEquals(
             parsed.named_aggs[0].transform(),
-            {'terms': {'field': 'http_code', 'size': 50, 'order': {'_term': 'asc'}}, 'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}}
+            {'terms': {
+                'field': 'http_code', 'size': 50,
+                'order': {'_term': 'asc'}},
+             'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}}
         )
 
     def test_parse_default_metric(self):
@@ -306,11 +309,19 @@ class TestAggregationParsing(ParsingTestCase):
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
 
-    def test_parse_missing_group(self):
-        valid = [{'metrics': ['count']}]
+    def test_parse_no_group_by(self):
+        valid = [{'metrics': ['count', {'sum': 'http_code'}]}]
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
-        expected = {'metricagg_00_queryagg_00': {'value_count': {'field': 'id'}}}
+        expected = {
+            'queryagg_00': {
+                'filter': {'match_all': {}},
+                'aggs': {
+                    'metricagg_00': {'value_count': {'field': 'id'}},
+                    'metricagg_01': {'sum': {'field': 'http_code'}}
+                }
+            }
+        }
         self.assertEqual(parsed.transform(), expected)
 
     def test_parse_wrong_group_format(self):
@@ -348,11 +359,11 @@ class TestAggregationParsing(ParsingTestCase):
         invalid = [
             {
                 'group_by': [{
-                    'range': {
-                        'field': 'http_code',
-                        'ranges': [{'a': 100, 'b': 200}]
-                    }
-                }]
+                                 'range': {
+                                     'field': 'http_code',
+                                     'ranges': [{'a': 100, 'b': 200}]
+                                 }
+                             }]
             }
         ]
         parsed = self.parser.parse_aggregations(invalid)
@@ -360,9 +371,9 @@ class TestAggregationParsing(ParsingTestCase):
 
         # too much param
         invalid = [{'group_by': [{
-            'range': {
-                'field': 'http_code',
-                'ranges': [{'from': 100, 'to': 200, 'tooooo': 250}]
-            }}]}]
+                                     'range': {
+                                         'field': 'http_code',
+                                         'ranges': [{'from': 100, 'to': 200, 'tooooo': 250}]
+                                     }}]}]
         parsed = self.parser.parse_aggregations(invalid)
         self.assertParsingError(parsed.validate)

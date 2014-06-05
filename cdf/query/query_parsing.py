@@ -692,6 +692,21 @@ class GroupAggOp(AggOp):
     pass
 
 
+class SingleBucketOp(GroupAggOp):
+    """Explicitly creates a single group, mainly for translation reason
+    """
+    def __init__(self):
+        pass
+
+    def transform(self):
+        return {
+            "filter": {"match_all": {}}
+        }
+
+    def validate(self):
+        pass
+
+
 class DistinctOp(GroupAggOp):
     """Create a group for each distinct value
     """
@@ -1005,15 +1020,15 @@ class QueryParser(object):
             _raise_parsing_error('Group aggregators are not in a list',
                                  agg_content)
         # metric op default to `count`
-        metrics_op = agg_content.get('metrics', [_DEFAULT_METRIC])
+        metric_ops = agg_content.get('metrics', [_DEFAULT_METRIC])
 
-        if not isinstance(metrics_op, list):
-            _raise_parsing_error('Metrics aggregator is not a list', metrics_op)
+        if not isinstance(metric_ops, list):
+            _raise_parsing_error('Metrics aggregator is not a list', metric_ops)
 
         return NamedAgg(
             name,
-            [self.parse_group_aggregator(op) for op in group_ops] if group_ops else None,
-            [self.parse_metric_aggregator(metric_op) for metric_op in metrics_op]
+            [self.parse_group_aggregator(op) for op in group_ops] if group_ops else [SingleBucketOp()],
+            [self.parse_metric_aggregator(metric_op) for metric_op in metric_ops]
         )
 
     def parse_group_aggregator(self, group_op):
