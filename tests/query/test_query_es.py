@@ -891,3 +891,67 @@ class TestQueryES(unittest.TestCase):
         results = _get_query_agg_result(botify_query)
         expected = {'metrics': [1.8]}
         self.assertEquals(results[0], expected)
+
+    def test_mixed_aggregation(self):
+        botify_query = {
+            "filters": {
+                "and": [
+                    {
+                        "field": "http_code",
+                        "value": [
+                            200,
+                            299
+                        ],
+                        "predicate": "between"
+                    }
+                ]
+            },
+            "aggs": [
+                # first aggregation,
+                # have name, default metric: `count` documents
+                {
+                    "name": "depth_http_code",
+                    "group_by": ["http_code", "depth"],
+                },
+                # second aggregation
+                # have name, have `group_by`
+                {
+                    "name": "title",
+                    "group_by": [
+                        {
+                            "range": {
+                                "field": "metadata.title.nb",
+                                "ranges": [
+                                    {
+                                        "from": 0,
+                                        "to": 1
+                                    },
+                                    {
+                                        "from": 1
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                # third aggregation
+                # no name, no `group_by`, multiple metrics
+                {
+                    "metrics": [
+                        {
+                            "avg": "depth"
+                        },
+                        "count"
+                    ]
+                },
+            ]
+        }
+        result = _get_query_agg_result(botify_query)
+        expected = [
+            {'groups': [{'key': [200, 1], 'metrics': [1]},
+                        {'key': [200, 2], 'metrics': [2]}]},
+            {'groups': [{'key': [{'to': 1, 'from': 0}], 'metrics': [0]},
+                        {'key': [{'from': 1}], 'metrics': [1]}]},
+            {'metrics': [1.6666666666666667, 4]}
+        ]
+        self.assertEqual(result, expected)
