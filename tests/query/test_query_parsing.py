@@ -304,7 +304,8 @@ class TestAggregationParsing(ParsingTestCase):
         # aggregator avg is ok, but value is not a string
         invalid = [{'group_by': ['http_code'], 'metrics': {'avg': 2}}]
         self.assertParsingError(self.parser.parse_aggregations, invalid)
-        # Exceptionnaly, "count" is allowad as a string, it a shortcut to {"count": {"field": "id"}
+        # Exceptionally, "count" is allowed as a string,
+        # it a shortcut to {"count": {"field": "id"}}
         valid = [{'group_by': ['http_code'], 'metrics': ['count']}]
         parsed = self.parser.parse_aggregations(valid)
         parsed.validate()
@@ -358,22 +359,27 @@ class TestAggregationParsing(ParsingTestCase):
         # unknown range param
         invalid = [
             {
-                'group_by': [{
-                                 'range': {
-                                     'field': 'http_code',
-                                     'ranges': [{'a': 100, 'b': 200}]
-                                 }
-                             }]
+                'group_by': [
+                    {
+                        'range': {
+                            'field': 'http_code',
+                            'ranges': [{'a': 100, 'b': 200}]
+                        }
+                    }
+                ]
             }
         ]
         parsed = self.parser.parse_aggregations(invalid)
         self.assertParsingError(parsed.validate)
 
         # too much param
-        invalid = [{'group_by': [{
-                                     'range': {
-                                         'field': 'http_code',
-                                         'ranges': [{'from': 100, 'to': 200, 'tooooo': 250}]
-                                     }}]}]
+        invalid = [{'group_by': [
+            {
+                'range': {
+                    'field': 'http_code',
+                    'ranges': [{'from': 100, 'to': 200, 'tooooo': 250}]
+                }
+            }
+        ]}]
         parsed = self.parser.parse_aggregations(invalid)
         self.assertParsingError(parsed.validate)
