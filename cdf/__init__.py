@@ -2,13 +2,9 @@
 
 # -*- coding: utf-8 -*-
 
-version = (0, 2, 21)
-
+version = (0, 2, 23)
 __title__ = "botify-cdf"
-
 __author__ = "ampelmann"
-
 __license__ = "MIT"
-
 __version__ = '.'.join(map(str, version))
 
