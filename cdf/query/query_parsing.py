@@ -1011,7 +1011,13 @@ class QueryParser(object):
         if not isinstance(aggs, list):
             _raise_parsing_error('Aggs is not a list', aggs)
 
-        named_aggs = [self.parse_aggregation('{}_{}'.format(QUERY_AGG, str(i).zfill(2)), agg) for i, agg in enumerate(aggs)]
+        # a query can contain multiple aggregations
+        # each aggregation is called a `NamedAgg` internally
+        # an artificial name is also assigned to each translated aggregation
+        # Eg. if a query contains 2 aggregations, the first one will have name
+        # `queryagg_00` and the second one `queryagg_01`
+        named_aggs = [self.parse_aggregation('{}_{}'.format(QUERY_AGG, str(i).zfill(2)), agg)
+                      for i, agg in enumerate(aggs)]
         return Aggs(named_aggs)
 
     def parse_aggregation(self, name, agg_content):
@@ -1036,12 +1042,12 @@ class QueryParser(object):
             # alias for `distinct` op
             op_name, content = 'distinct', {'field': group_op}
         else:
+            # unpack the dict structure
             op_name, content = next(group_op.iteritems())
         if op_name not in _GROUP_AGGS_LIST:
             _raise_parsing_error('Unknown group aggregator', group_op)
         return _GROUP_AGGS_LIST[op_name](content, self.agg_fields)
 
-    # nothing to do for the moment
     def parse_metric_aggregator(self, metric_op):
         op = None
         if metric_op == "count":
