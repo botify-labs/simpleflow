@@ -442,16 +442,19 @@ class AggregationTransformer(ResultTransformer):
         return bucket_key
 
     @classmethod
-    def _is_bucket(cls, bucket):
+    def _has_buckets(cls, bucket):
         return 'buckets' in bucket
 
     @classmethod
-    def _is_no_group_agg(cls, bucket):
-        # If the name is 'metricagg_00_myaggname', this means it a non-group bucket
-        return any(k for k in bucket.iterkeys() if k.startswith(METRIC_AGG_PREFIX) and k.count('_') > 1)
+    def _is_single_bucket_agg(cls, agg_result):
+        """Single bucket aggregation has no `buckets` sub-structure
+        """
+        return not 'buckets' in agg_result
 
     @classmethod
-    def parse_bucket(cls, bucket):
+    # TODO further simplifies this function
+    # TODO unify term usage (bucket, agg_result set etc.)
+    def parse_complex_result(cls, agg_result):
         """
         Return a list of key/value dictionnaries
         Ex :
@@ -460,41 +463,59 @@ class AggregationTransformer(ResultTransformer):
                 {"key": ["a", "c", "e"], "metrics": [120]}
             ]
         """
-        if cls._is_no_group_agg(bucket):
-            result = {"metrics": []}
-            for key in sorted([k for k in bucket.keys() if k.startswith(METRIC_AGG_PREFIX)]):
-                result["metrics"].append(bucket[key]["value"])
-            return result
+        if SUB_AGG in agg_result:
+            _transform_func = cls._transform_range if cls._is_range(agg_result) else cls._transform_terms
+            sub_bucket = cls.parse_complex_result(agg_result[SUB_AGG])
+            bucket_key = _transform_func(agg_result)
+            for results in sub_bucket:
+                results["key"].insert(0, bucket_key)
+            return sub_bucket
 
-        if SUB_AGG in bucket:
-            _transform_func = cls._transform_range if cls._is_range(bucket) else cls._transform_terms
-            subbucket = cls.parse_bucket(bucket[SUB_AGG])
-	    bucket_key = _transform_func(bucket)
-            for results in subbucket:
-		results["key"].insert(0, bucket_key)
-            return subbucket
-
-        if cls._is_terms(bucket) or cls._is_range(bucket):
-            _transform_func = cls._transform_range if cls._is_range(bucket) else cls._transform_terms
-            result = {"key": [_transform_func(bucket)], "metrics": []}
-            for key in sorted([k for k in bucket.keys() if k.startswith(METRIC_AGG_PREFIX)]):
-                result["metrics"].append(bucket[key]["value"])
+        if cls._is_terms(agg_result) or cls._is_range(agg_result):
+            _transform_func = cls._transform_range if cls._is_range(agg_result) else cls._transform_terms
+            result = {"key": [_transform_func(agg_result)], "metrics": []}
+            for key in sorted([k for k in agg_result.keys() if k.startswith(METRIC_AGG_PREFIX)]):
+                result["metrics"].append(agg_result[key]["value"])
             return [result]
 
-        if cls._is_bucket(bucket):
+        if cls._has_buckets(agg_result):
             buckets_list = []
-            for sub_bucket in bucket["buckets"]:
-                buckets_list += cls.parse_bucket(sub_bucket)
+            for sub_bucket in agg_result["buckets"]:
+                buckets_list += cls.parse_complex_result(sub_bucket)
             return buckets_list
 
-    def transform(self):
-        if self._is_no_group_agg(self.agg_results):
-            return [self.parse_bucket(self.agg_results)]
+    @classmethod
+    def parse_simple_result(cls, agg_result):
+        results = []
+        for _, result in sorted(agg_result.iteritems()):
+            # need this check here since there could be
+            # other things in the ES result
+            if isinstance(result, dict):
+                results.append(result['value'])
+        return results
+
+    @classmethod
+    def parse_single_agg_result(cls, agg_result):
+        """Parse a single aggregation result
+
+        The result to parse can be:
+          - simple, single bucket aggregation
+          - multi-bucket aggregation (with explicit `group_by` clause)
+        """
+        if cls._is_single_bucket_agg(agg_result):
+            # if `group_by` clause is missing
+            # no `buckets` in the ES result
+            return {'metrics': cls.parse_simple_result(agg_result)}
         else:
-            groups = []
-            for name in sorted(self.agg_results):
-                groups.append({"groups": self.parse_bucket(self.agg_results[name])})
-            return groups
+            # if there's a `group_by` clause
+            # need to parse group buckets
+            return {'groups': cls.parse_complex_result(agg_result)}
+
+    def transform(self):
+        res = []
+        for _, agg_result in sorted(self.agg_results.iteritems()):
+            res.append(self.parse_single_agg_result(agg_result))
+        return res
 
 
 def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):

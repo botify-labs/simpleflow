@@ -692,6 +692,21 @@ class GroupAggOp(AggOp):
     pass
 
 
+class SingleBucketOp(GroupAggOp):
+    """Explicitly creates a single group, mainly for translation reason
+    """
+    def __init__(self):
+        pass
+
+    def transform(self):
+        return {
+            "filter": {"match_all": {}}
+        }
+
+    def validate(self):
+        pass
+
+
 class DistinctOp(GroupAggOp):
     """Create a group for each distinct value
     """
@@ -996,7 +1011,13 @@ class QueryParser(object):
         if not isinstance(aggs, list):
             _raise_parsing_error('Aggs is not a list', aggs)
 
-        named_aggs = [self.parse_aggregation('{}_{}'.format(QUERY_AGG, str(i).zfill(2)), agg) for i, agg in enumerate(aggs)]
+        # a query can contain multiple aggregations
+        # each aggregation is called a `NamedAgg` internally
+        # an artificial name is also assigned to each translated aggregation
+        # Eg. if a query contains 2 aggregations, the first one will have name
+        # `queryagg_00` and the second one `queryagg_01`
+        named_aggs = [self.parse_aggregation('{}_{}'.format(QUERY_AGG, str(i).zfill(2)), agg)
+                      for i, agg in enumerate(aggs)]
         return Aggs(named_aggs)
 
     def parse_aggregation(self, name, agg_content):
@@ -1005,15 +1026,15 @@ class QueryParser(object):
             _raise_parsing_error('Group aggregators are not in a list',
                                  agg_content)
         # metric op default to `count`
-        metrics_op = agg_content.get('metrics', [_DEFAULT_METRIC])
+        metric_ops = agg_content.get('metrics', [_DEFAULT_METRIC])
 
-        if not isinstance(metrics_op, list):
-            _raise_parsing_error('Metrics aggregator is not a list', metrics_op)
+        if not isinstance(metric_ops, list):
+            _raise_parsing_error('Metrics aggregator is not a list', metric_ops)
 
         return NamedAgg(
             name,
-            [self.parse_group_aggregator(op) for op in group_ops] if group_ops else None,
-            [self.parse_metric_aggregator(metric_op) for metric_op in metrics_op]
+            [self.parse_group_aggregator(op) for op in group_ops] if group_ops else [SingleBucketOp()],
+            [self.parse_metric_aggregator(metric_op) for metric_op in metric_ops]
         )
 
     def parse_group_aggregator(self, group_op):
@@ -1021,12 +1042,12 @@ class QueryParser(object):
             # alias for `distinct` op
             op_name, content = 'distinct', {'field': group_op}
         else:
+            # unpack the dict structure
             op_name, content = next(group_op.iteritems())
         if op_name not in _GROUP_AGGS_LIST:
             _raise_parsing_error('Unknown group aggregator', group_op)
         return _GROUP_AGGS_LIST[op_name](content, self.agg_fields)
 
-    # nothing to do for the moment
     def parse_metric_aggregator(self, metric_op):
         op = None
         if metric_op == "count":
