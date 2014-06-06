@@ -100,7 +100,7 @@ def upload_package(dry_run):
     :type dry_run: bool"""
     command = ["python", "setup.py", "sdist", "upload", "-r", "botify"]
     if not dry_run:
-        subprocess.check_output(command)
+        print subprocess.check_output(command)
     else:
         print " ".join(command)
 
