@@ -7,7 +7,7 @@ from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 
 
 def update_session_count(ghost_pages, medium, source, social_network, nb_sessions):
-    """Update the dict that stores the number of ghost page sessions per medium/source
+    """Update the counter that stores the number of ghost page sessions per medium/source
     :param ghost_pages: a Counter medium/source -> ghost_pages where ghost_pages is
                         a dict url -> nb sessions
                         that stores the ghost pages.
