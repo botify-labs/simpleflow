@@ -7,7 +7,7 @@ from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 
 
 def update_session_count(ghost_pages, medium, source, social_network, nb_sessions):
-    """Update the dict that stores the ghost pages.
+    """Update the dict that stores the number of ghost page sessions per medium/source
     :param ghost_pages: a dict medium/source -> ghost_pages where ghost_pages is
                         a dict url -> nb sessions
                         that stores the ghost pages.
@@ -30,6 +30,28 @@ def update_session_count(ghost_pages, medium, source, social_network, nb_session
         if medium_source not in ghost_pages:
             ghost_pages[medium_source] = 0
         ghost_pages[medium_source] += nb_sessions
+
+
+def update_urls_count(ghost_pages, medium, source, social_network):
+    """Update the dict that stores the number of ghost urls per medium/source
+    :param ghost_urls: a dict medium/source -> number of ghost_pages
+                        It will be updated by the function.
+                        Keys have the form "organic.all", "organic.google", etc.
+    :type update_ghost_urls_count: dict
+    :param medium: the traffic medium of the current entry
+    :type medium: str
+    :param source: the traffic source of the current entry
+    :type source: str
+    :param social_network: the social network of the current entry
+    :type social_network: str
+    :param nb_sessions: the number of sessions of the current entry
+    :type nb_sessions: int
+    :param entry: the entry to use to update the ghost pages.
+                  this is a RawVisitsStreamDef entry
+    :type entry: list
+    """
+    for medium_source in get_medium_sources(medium, source, social_network):
+        ghost_pages[medium_source] = 1
 
 
 def update_top_ghost_pages(top_ghost_pages, nb_top_ghost_pages,
@@ -63,12 +85,11 @@ def update_top_ghost_pages(top_ghost_pages, nb_top_ghost_pages,
             heapq.heappushpop(crt_ghost_pages_heap, (nb_sessions, url))
 
 
-def update_ghost_pages_session_count(ghost_pages_session_count,
-                                     session_count):
-    """Update the number of sessions for ghost pages for each considered
-    medium/source combination.
-    :param ghost_pages_sessions_count: a dict medium/source -> nb sessions
-                                       that stores the number of sessions
+def update_ghost_count(ghost_pages_session_count, session_count):
+    """Update a dict that stores counting information about ghost pages
+    with aggregated data from a given url.
+    :param ghost_pages_sessions_count: a dict medium/source -> count
+                                       that stores a count
                                        for each considerd medium/source
                                        medium/source have the form
                                        "organic.all", "social.facebook", etc
@@ -81,6 +102,25 @@ def update_ghost_pages_session_count(ghost_pages_session_count,
         if medium_source not in ghost_pages_session_count:
             ghost_pages_session_count[medium_source] = 0
         ghost_pages_session_count[medium_source] += count
+
+
+def update_ghost_urls_count(ghost_urls_count, url_count):
+    """Update the number of ghost pages for each considered
+    medium/source combination.
+    :param ghost_urls_count: a dict medium/source -> nb urls
+                              that stores the number of ghost urls
+                              for each considerd medium/source
+                              medium/source have the form
+                             "organic.all", "social.facebook", etc
+    :type ghost_urls_session_count: dict
+    :param url_count: the session data corresponding to a ghost url.
+                          It is dict medium/source -> nb sessions
+    :type url_count: dict
+    """
+    for medium_source, count in ghost_urls_count.iteritems():
+        if medium_source not in ghost_urls_count:
+            ghost_urls_count[medium_source] = 0
+        ghost_urls_count[medium_source] += count
 
 
 def get_medium_sources(medium, source, social_network):
@@ -108,6 +148,35 @@ def get_medium_sources(medium, source, social_network):
     return result
 
 
+def build_ghost_counts_dict(ghost_pages_session_count, ghost_pages_url_count):
+    """Build a dict that stores counts about ghost pages.
+    It mixes the ghost url counts with the number of sessions for ghost pages.
+    The result dict has the form
+    {
+        "organic.all.nb_visits": 10,
+        "organic.all.nb_urls: 5
+        "organic.google.nb_visits": ...
+    }
+    :param ghost_pages_session_count: a dict medium/source -> nb sessions
+                                      keys have the form "organic.all",
+                                      "social.facebook".
+    :type ghost_pages_session_count: dict
+    :param ghost_pages_url_count: a dict medium/source -> nb urls
+                                      keys have the form "organic.all",
+                                      "social.facebook".
+    :type ghost_pages_url_count: dict
+    :returns: dict
+    """
+    result = {}
+    for medium_source, count in ghost_pages_session_count.iteritems():
+        key = "{}.nb_visits".format(medium_source)
+        result[key] = count
+    for medium_source, count in ghost_pages_url_count.iteritems():
+        key = "{}.nb_urls".format(medium_source)
+        result[key] = count
+    return result
+
+
 def save_ghost_pages(source, ghost_pages, output_dir):
     """Save ghost pages as a tsv file
     :param source: the traffic source
@@ -127,18 +196,21 @@ def save_ghost_pages(source, ghost_pages, output_dir):
     return ghost_file_path
 
 
-def save_ghost_pages_session_count(ghost_pages_session_count, output_dir):
-    """Save the session count of ghost pages in a json file.
+def save_ghost_pages_count(ghost_pages_count, output_dir):
+    """Save the session count and the number of urls of ghost pages in a json file.
     There is one entry per traffic source.
-    :param ghost_pages_session_count: a dict traffic source -> nb sessions
+    :param ghost_pages_session_count: a dict traffic source -> nb sessions or nb_urls
+                                      keys have the form:
+                                      - "organic.all.nb_visits"
+                                      - "social.facebook.nb_urls"
     :type ghost_pages_session_count: dict
     :param output_dir: the directory where to save the file.
     :type output_dir: str
     :returns: str - the path to the generated file
     """
     output_file_path = os.path.join(output_dir,
-                                    "ghost_pages_session_count.json")
+                                    "ghost_pages_count.json")
     with open(output_file_path, "w") as output_file:
-        session_count_json = json.dumps(deep_dict(ghost_pages_session_count))
-        output_file.write(session_count_json)
+        count_json = json.dumps(deep_dict(ghost_pages_count))
+        output_file.write(count_json)
     return output_file_path

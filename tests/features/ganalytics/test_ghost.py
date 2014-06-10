@@ -6,9 +6,11 @@ import heapq
 from cdf.features.ganalytics.ghost import (get_medium_sources,
                                            update_session_count,
                                            update_top_ghost_pages,
-                                           update_ghost_pages_session_count,
+                                           update_ghost_count,
+                                           update_urls_count,
+                                           build_ghost_counts_dict,
                                            save_ghost_pages,
-                                           save_ghost_pages_session_count)
+                                           save_ghost_pages_count)
 
 
 class TestGetMediumSources(unittest.TestCase):
@@ -78,6 +80,50 @@ class TestUpdateSessionCount(unittest.TestCase):
         self.assertEqual(expected_ghost_pages, ghost_pages)
 
 
+class TestUpdateUrlCount(unittest.TestCase):
+    def setUp(self):
+        #some RawVisitsStreamDef fields are missing,
+        #but it should be ok for the function
+        self.entry = ["foo", "organic", "bing", None, 5]
+        self.url = "foo"
+        self.medium = "organic"
+        self.source = "bing"
+        self.social_network = None
+        self.nb_sessions = 5
+
+    def test_nominal_case(self):
+        ghost_pages = {
+            "organic.all": 0,
+            "organic.google": 0,
+            "organic.bing": 0
+        }
+        update_urls_count(ghost_pages, self.medium, self.source,
+                          self.social_network)
+
+        expected_ghost_pages = {
+            "organic.all": 1,
+            "organic.google": 0,
+            "organic.bing": 1
+        }
+        self.assertEqual(expected_ghost_pages, ghost_pages)
+
+    def test_counter_already_set(self):
+        ghost_pages = {
+            "organic.all": 1,
+            "organic.google": 0,
+            "organic.bing": 0
+        }
+        update_urls_count(ghost_pages, self.medium, self.source,
+                          self.social_network)
+
+        expected_ghost_pages = {
+            "organic.all": 1,
+            "organic.google": 0,
+            "organic.bing": 1
+        }
+        self.assertEqual(expected_ghost_pages, ghost_pages)
+
+
 class TestUpdateTopGhostPages(unittest.TestCase):
     def test_nominal_case(self):
         top_ghost_pages = {
@@ -131,24 +177,43 @@ class TestUpdateTopGhostPages(unittest.TestCase):
         self.assertEqual(expected_result, top_ghost_pages)
 
 
-class TestUpdateGhostPageSessionCount(unittest.TestCase):
+class TestUpdateGhostCount(unittest.TestCase):
     def test_nominal_case(self):
         ghost_pages_session_count = {"organic.all": 10, "organic.google": 5}
         session_count = {"organic.all": 5, "organic.google": 2}
-        update_ghost_pages_session_count(ghost_pages_session_count,
-                                         session_count)
+        update_ghost_count(ghost_pages_session_count, session_count)
         expected_result = {"organic.all": 15, "organic.google": 7}
         self.assertEqual(expected_result, ghost_pages_session_count)
 
     def test_missing_source_medium(self):
         ghost_pages_session_count = {"organic.all": 10}
         session_count = {"organic.all": 5, "organic.google": 2}
-        update_ghost_pages_session_count(ghost_pages_session_count,
-                                         session_count)
+        update_ghost_count(ghost_pages_session_count, session_count)
         expected_result = {"organic.all": 15, "organic.google": 2}
         self.assertEqual(expected_result, ghost_pages_session_count)
 
 
+class TestBuildGhostCountsDict(unittest.TestCase):
+    def test_nominal_case(self):
+        session_count = {
+            "organic.all": 100,
+            "organic.google": 70,
+        }
+
+        url_count = {
+            "organic.all": 80,
+            "organic.google": 10,
+            "organic.bing": 5
+        }
+        actual_result = build_ghost_counts_dict(session_count, url_count)
+        expected_result = {
+            "organic.all.nb_visits": 100,
+            "organic.all.nb_urls": 80,
+            "organic.google.nb_visits": 70,
+            "organic.google.nb_urls": 10,
+            "organic.bing.nb_urls": 5
+        }
+        self.assertEqual(expected_result, actual_result)
 
 
 class TestSaveGhostPages(unittest.TestCase):
@@ -177,16 +242,16 @@ class TestSaveGhostPagesSessionCount(unittest.TestCase):
         mock_open.return_value = mock.MagicMock(spec=file)
 
         session_count = {
-            "organic": 10,
-            "google": 5
+            "organic.all": 10,
+            "social.all": 5
         }
         output_dir = "/tmp/tests"
-        save_ghost_pages_session_count(session_count, output_dir)
+        save_ghost_pages_count(session_count, output_dir)
 
         #test that the correct file was open
-        mock_open.assert_call_with("/tmp/tests/ghost_pages_session_count.json")
+        mock_open.assert_call_with("/tmp/tests/ghost_pages_count.json")
 
         #test what is written in the file
         file_handle = mock_open.return_value.__enter__.return_value
-        self.assertEqual([mock.call('{"google": 5, "organic": 10}')],
+        self.assertEqual([mock.call('{"organic": {"all": 10}, "social": {"all": 5}}')],
                          file_handle.write.call_args_list)
