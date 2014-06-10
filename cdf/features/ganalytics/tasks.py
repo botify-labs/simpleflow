@@ -3,6 +3,7 @@ import itertools
 import gzip
 import datetime
 import json
+from collections import Counter
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.main.utils import get_url_to_id_dict_from_stream
@@ -21,10 +22,9 @@ from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
 from cdf.features.ganalytics.streams import _iterate_sources
 from cdf.features.ganalytics.ghost import (update_session_count,
                                            update_top_ghost_pages,
-                                           update_ghost_pages_session_count,
+                                           build_ghost_counts_dict,
                                            save_ghost_pages,
-                                           save_ghost_pages_session_count)
-
+                                           save_ghost_pages_count)
 
 @with_temporary_dir
 @feature_enabled('ganalytics')
@@ -166,11 +166,13 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
         #init data structures to save the top ghost pages
         #and the number of sessions for ghost pages
         top_ghost_pages = {}
-        ghost_pages_session_count = {}
+        ghost_pages_session_count = Counter()
+        ghost_pages_url_count = Counter()
         for medium, source in _iterate_sources():
             medium_source = "{}.{}".format(medium, source)
             top_ghost_pages[medium_source] = []
             ghost_pages_session_count[medium_source] = 0
+            ghost_pages_url_count[medium_source] = 0
 
         #precompute field indexes as it would be too long to compute them
         #inside the loop
@@ -202,7 +204,7 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                 #url, you can not decide to throw it away, as its number of
                 #sessions may be increased by a new entry and
                 #it then may become a top ghost page.
-                aggregated_session_count = {}
+                aggregated_session_count = Counter()
                 for entry in entries:
                     medium = entry[medium_idx]
                     source = entry[source_idx]
@@ -222,8 +224,11 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                                        aggregated_session_count)
 
                 #update the session count
-                update_ghost_pages_session_count(ghost_pages_session_count,
-                                                 aggregated_session_count)
+                ghost_pages_session_count += aggregated_session_count
+
+                #the number of urls for each medium/source is at most 1
+                #since we are processing all entries of the same url
+                ghost_pages_url_count += Counter(aggregated_session_count.keys())
 
     #save top ghost pages in dedicated files
     ghost_file_paths = []
@@ -243,9 +248,15 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
             ghost_file_path
         )
 
-    #save session counts for ghost pages
-    session_count_path = save_ghost_pages_session_count(
+    #mix url counts and session counts dictionaries
+    ghost_pages_count = build_ghost_counts_dict(
         ghost_pages_session_count,
+        ghost_pages_url_count
+    )
+
+    #save session & url counts for ghost pages
+    session_count_path = save_ghost_pages_count(
+        ghost_pages_count,
         tmp_dir)
     s3.push_file(
         os.path.join(s3_uri, os.path.basename(session_count_path)),
