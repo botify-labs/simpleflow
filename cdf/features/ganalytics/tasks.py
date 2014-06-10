@@ -93,9 +93,20 @@ def import_data_from_ganalytics(access_token,
             os.path.join(tmp_dir, f)
         )
 
-    metadata = load_analytics_metadata(tmp_dir)
+    analytics_metadata = load_analytics_metadata(tmp_dir)
+    api_requests = get_api_requests(analytics_metadata)
     # Advise the workflow that we need to send data to the remote db
     # through the api by calling a feature endpoint (prefixed by its revision)
+    return api_requests
+
+
+def get_api_requests(analytics_metadata):
+    """Build the dict to use to update the API values.
+    :param analytics_metadata: a dict that contains metadata about what has be
+                               retrieved from Google Analytics Core Reporting API.
+    :type analytics_metadata: dict
+    :returns: dict
+    """
     return {
         "api_requests": [
             {
@@ -103,10 +114,10 @@ def import_data_from_ganalytics(access_token,
                 "endpoint_url": "revision",
                 "endpoint_suffix": "ganalytics/",
                 "data": {
-                    "sample_rate": metadata["sample_rate"],
-                    "sample_size": metadata["sample_size"],
-                    "sampled": metadata["sampled"],
-                    "queries_count": metadata["queries_count"]
+                    "sample_rate": analytics_metadata["sample_rate"],
+                    "sample_size": analytics_metadata["sample_size"],
+                    "sampled": analytics_metadata["sampled"],
+                    "queries_count": analytics_metadata["queries_count"]
                 }
             }
         ]

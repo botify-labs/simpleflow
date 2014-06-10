@@ -10,6 +10,7 @@ from mock import patch
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.ganalytics.streams import VisitsStreamDef
 from cdf.features.ganalytics.tasks import (import_data_from_ganalytics,
+                                           get_api_requests,
                                            match_analytics_to_crawl_urls,
                                            get_urlid)
 from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
@@ -55,6 +56,34 @@ class TestImportDataFromGanalytics(unittest.TestCase):
                                             expected_start_date,
                                             expected_end_date,
                                             tmp_dir)
+
+
+class TestGetApiRequests(unittest.TestCase):
+    def test_nominal_case(self):
+        analytics_metadata = {
+            "sample_rate": 1.0,
+            "sample_size": 100,
+            "sampled": False,
+            "queries_count": 10
+        }
+
+        actual_result = get_api_requests(analytics_metadata)
+        expected_result = {
+            "api_requests": [
+                {
+                    "method": "patch",
+                    "endpoint_url": "revision",
+                    "endpoint_suffix": "ganalytics/",
+                    "data": {
+                        "sample_rate": 1.0,
+                        "sample_size": 100,
+                        "sampled": False,
+                        "queries_count": 10,
+                    }
+                }
+            ]
+        }
+        self.assertEqual(expected_result, actual_result)
 
 
 class TestTasks(unittest.TestCase):
