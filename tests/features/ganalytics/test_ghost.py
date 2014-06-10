@@ -7,7 +7,6 @@ from collections import Counter
 from cdf.features.ganalytics.ghost import (get_medium_sources,
                                            update_session_count,
                                            update_top_ghost_pages,
-                                           update_urls_count,
                                            build_ghost_counts_dict,
                                            save_ghost_pages,
                                            save_ghost_pages_count)
@@ -79,50 +78,6 @@ class TestUpdateSessionCount(unittest.TestCase):
         expected_ghost_pages = {
             "organic.all": 14,
             "organic.bing": 5
-        }
-        self.assertEqual(expected_ghost_pages, ghost_pages)
-
-
-class TestUpdateUrlCount(unittest.TestCase):
-    def setUp(self):
-        #some RawVisitsStreamDef fields are missing,
-        #but it should be ok for the function
-        self.entry = ["foo", "organic", "bing", None, 5]
-        self.url = "foo"
-        self.medium = "organic"
-        self.source = "bing"
-        self.social_network = None
-        self.nb_sessions = 5
-
-    def test_nominal_case(self):
-        ghost_pages = {
-            "organic.all": 0,
-            "organic.google": 0,
-            "organic.bing": 0
-        }
-        update_urls_count(ghost_pages, self.medium, self.source,
-                          self.social_network)
-
-        expected_ghost_pages = {
-            "organic.all": 1,
-            "organic.google": 0,
-            "organic.bing": 1
-        }
-        self.assertEqual(expected_ghost_pages, ghost_pages)
-
-    def test_counter_already_set(self):
-        ghost_pages = {
-            "organic.all": 1,
-            "organic.google": 0,
-            "organic.bing": 0
-        }
-        update_urls_count(ghost_pages, self.medium, self.source,
-                          self.social_network)
-
-        expected_ghost_pages = {
-            "organic.all": 1,
-            "organic.google": 0,
-            "organic.bing": 1
         }
         self.assertEqual(expected_ghost_pages, ghost_pages)
 

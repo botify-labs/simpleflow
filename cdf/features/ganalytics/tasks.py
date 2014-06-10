@@ -21,7 +21,6 @@ from cdf.features.ganalytics.constants import TOP_GHOST_PAGES_NB
 from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
 from cdf.features.ganalytics.streams import _iterate_sources
 from cdf.features.ganalytics.ghost import (update_session_count,
-                                           update_urls_count,
                                            update_top_ghost_pages,
                                            build_ghost_counts_dict,
                                            save_ghost_pages,
@@ -206,7 +205,6 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                 #sessions may be increased by a new entry and
                 #it then may become a top ghost page.
                 aggregated_session_count = Counter()
-                aggregated_url_count = Counter()
                 for entry in entries:
                     medium = entry[medium_idx]
                     source = entry[source_idx]
@@ -219,11 +217,6 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                                          social_network,
                                          nb_sessions)
 
-                    update_urls_count(aggregated_url_count,
-                                      medium,
-                                      source,
-                                      social_network)
-
                 #update the top ghost pages for this url
                 update_top_ghost_pages(top_ghost_pages,
                                        TOP_GHOST_PAGES_NB,
@@ -232,8 +225,10 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
 
                 #update the session count
                 ghost_pages_session_count += aggregated_session_count
-                #update the url count
-                ghost_pages_url_count += aggregated_url_count
+
+                #the number of urls for each medium/source is at most 1
+                #since we are processing all entries of the same url
+                ghost_pages_url_count += Counter(aggregated_session_count.keys())
 
     #save top ghost pages in dedicated files
     ghost_file_paths = []

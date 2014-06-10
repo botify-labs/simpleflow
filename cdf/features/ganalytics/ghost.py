@@ -30,28 +30,6 @@ def update_session_count(ghost_pages, medium, source, social_network, nb_session
         ghost_pages[medium_source] += nb_sessions
 
 
-def update_urls_count(ghost_pages, medium, source, social_network):
-    """Update the dict that stores the number of ghost urls per medium/source
-    :param ghost_urls: a Counter medium/source -> number of ghost_pages
-                        It will be updated by the function.
-                        Keys have the form "organic.all", "organic.google", etc.
-    :type update_ghost_urls_count: dict
-    :param medium: the traffic medium of the current entry
-    :type medium: str
-    :param source: the traffic source of the current entry
-    :type source: str
-    :param social_network: the social network of the current entry
-    :type social_network: str
-    :param nb_sessions: the number of sessions of the current entry
-    :type nb_sessions: int
-    :param entry: the entry to use to update the ghost pages.
-                  this is a RawVisitsStreamDef entry
-    :type entry: list
-    """
-    for medium_source in get_medium_sources(medium, source, social_network):
-        ghost_pages[medium_source] = 1
-
-
 def update_top_ghost_pages(top_ghost_pages, nb_top_ghost_pages,
                            url, session_count):
     """Update the top ghost pages with the sessions from one url
