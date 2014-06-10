@@ -67,7 +67,17 @@ class TestGetApiRequests(unittest.TestCase):
             "queries_count": 10
         }
 
-        actual_result = get_api_requests(analytics_metadata)
+        ghost_pages_session_count = {
+            'organic.all': 100,
+            'organic.google': 80,
+            'organic.bing': 5,
+            'social.all': 100,
+            'social.facebook': 70,
+            'social.twitter': 20
+        }
+
+        actual_result = get_api_requests(analytics_metadata,
+                                         ghost_pages_session_count)
         expected_result = {
             "api_requests": [
                 {
@@ -79,6 +89,19 @@ class TestGetApiRequests(unittest.TestCase):
                         "sample_size": 100,
                         "sampled": False,
                         "queries_count": 10,
+                        "ghost": {
+                            "organic": {
+                                "all": 100,
+                                "google": 80,
+                                "bing": 5
+                            },
+                            "social": {
+                                "all": 100,
+                                "facebook": 70,
+                                "twitter": 20
+                            }
+                        }
+
                     }
                 }
             ]
@@ -98,6 +121,8 @@ class TestTasks(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         shutil.rmtree(self.s3_dir[5:])
 
+    @patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES", ["google"])
+    @patch("cdf.features.ganalytics.streams.SOCIAL_SOURCES", ["facebook"])
     @patch('cdf.utils.s3.push_file', _mock_push_file)
     @patch('cdf.utils.s3.push_content', _mock_push_content)
     @patch('cdf.utils.s3.fetch_file', _mock_fetch_file)
@@ -110,6 +135,7 @@ class TestTasks(unittest.TestCase):
         f.write('www.site.com/3\torganic\tgoogle\t(not set)\t8\t1\t8\t5\t5\t5\n')
         f.write('www.site.com/2\torganic\tgoogle\t(not set)\t3\t3\t2\t10\t1\t0\n')
         f.write('www.site.com/4\torganic\tgoogle\t(not set)\t11\t4\t15\t54\t8\t8\n')
+        f.write('www.site.com/5\torganic\tgoogle\t(not set)\t7\t3\t1\t23\t7\t9\n')  # ghost page
         f.close()
 
         f = IdStreamDef.create_temporary_dataset()
@@ -141,10 +167,17 @@ class TestTasks(unittest.TestCase):
         f.append(7, 0, "", 0, 0, 200, 0, 0, 0)  # ambiguous url has code 200
         f.persist_to_s3(self.s3_dir, first_part_id_size=self.first_part_id_size, part_id_size=self.part_id_size)
 
-        match_analytics_to_crawl_urls(self.s3_dir,
-                                      first_part_id_size=self.first_part_id_size,
-                                      part_id_size=self.part_id_size,
-                                      tmp_dir=self.tmp_dir)
+        #fake analytics metadata
+        analytics_metadata_location = os.path.join(self.s3_dir[5:], 'analytics.meta.json')
+        f = open(analytics_metadata_location, "w")
+        f.write('{"sample_rate": 1.0, "sample_size": 100, "sampled": false, "queries_count": 10}')
+        f.close()
+
+        actual_result = match_analytics_to_crawl_urls(
+            self.s3_dir,
+            first_part_id_size=self.first_part_id_size,
+            part_id_size=self.part_id_size,
+            tmp_dir=self.tmp_dir)
 
         self.assertEquals(
             #
@@ -163,4 +196,41 @@ class TestTasks(unittest.TestCase):
             expected_result = ['www.site.com/4\torganic\tgoogle\tNone\t11\t4\t15\t54.0\t8\t8\n']
             self.assertEquals(expected_result, f.readlines())
 
-
+        expected_result = {
+            "api_requests": [
+                {
+                    "method": "patch",
+                    "endpoint_url": "revision",
+                    "endpoint_suffix": "ganalytics/",
+                    "data": {
+                        "sample_rate": 1.0,
+                        "sample_size": 100,
+                        "sampled": False,
+                        "queries_count": 10,
+                        "ghost": {
+                            "organic": {
+                                "all": {
+                                    "nb_urls": 1,
+                                    "nb_visits": 7
+                                },
+                                "google": {
+                                    "nb_urls": 1,
+                                    "nb_visits": 7
+                                }
+                            },
+                            "social": {
+                                "all": {
+                                    "nb_urls": 0,
+                                    "nb_visits": 0
+                                },
+                                "facebook": {
+                                    "nb_urls": 0,
+                                    "nb_visits": 0
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+        self.assertEqual(expected_result, actual_result)
