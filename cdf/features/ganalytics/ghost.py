@@ -8,12 +8,12 @@ from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 
 def update_session_count(ghost_pages, medium, source, social_network, nb_sessions):
     """Update the dict that stores the number of ghost page sessions per medium/source
-    :param ghost_pages: a dict medium/source -> ghost_pages where ghost_pages is
+    :param ghost_pages: a Counter medium/source -> ghost_pages where ghost_pages is
                         a dict url -> nb sessions
                         that stores the ghost pages.
                         It will be updated by the function.
                         Keys have the form "organic.all", "organic.google", etc.
-    :type ghost_pages: dict
+    :type ghost_pages: Counter
     :param medium: the traffic medium of the current entry
     :type medium: str
     :param source: the traffic source of the current entry
@@ -27,14 +27,12 @@ def update_session_count(ghost_pages, medium, source, social_network, nb_session
     :type entry: list
     """
     for medium_source in get_medium_sources(medium, source, social_network):
-        if medium_source not in ghost_pages:
-            ghost_pages[medium_source] = 0
         ghost_pages[medium_source] += nb_sessions
 
 
 def update_urls_count(ghost_pages, medium, source, social_network):
     """Update the dict that stores the number of ghost urls per medium/source
-    :param ghost_urls: a dict medium/source -> number of ghost_pages
+    :param ghost_urls: a Counter medium/source -> number of ghost_pages
                         It will be updated by the function.
                         Keys have the form "organic.all", "organic.google", etc.
     :type update_ghost_urls_count: dict
@@ -83,44 +81,6 @@ def update_top_ghost_pages(top_ghost_pages, nb_top_ghost_pages,
             heapq.heappush(crt_ghost_pages_heap, (nb_sessions, url))
         else:
             heapq.heappushpop(crt_ghost_pages_heap, (nb_sessions, url))
-
-
-def update_ghost_count(ghost_pages_session_count, session_count):
-    """Update a dict that stores counting information about ghost pages
-    with aggregated data from a given url.
-    :param ghost_pages_sessions_count: a dict medium/source -> count
-                                       that stores a count
-                                       for each considerd medium/source
-                                       medium/source have the form
-                                       "organic.all", "social.facebook", etc
-    :type ghost_pages_session_count: dict
-    :param session_count: the session data corresponding to a ghost url.
-                          It is dict medium/source -> nb sessions
-    :type session_count: dict
-    """
-    for medium_source, count in session_count.iteritems():
-        if medium_source not in ghost_pages_session_count:
-            ghost_pages_session_count[medium_source] = 0
-        ghost_pages_session_count[medium_source] += count
-
-
-def update_ghost_urls_count(ghost_urls_count, url_count):
-    """Update the number of ghost pages for each considered
-    medium/source combination.
-    :param ghost_urls_count: a dict medium/source -> nb urls
-                              that stores the number of ghost urls
-                              for each considerd medium/source
-                              medium/source have the form
-                             "organic.all", "social.facebook", etc
-    :type ghost_urls_session_count: dict
-    :param url_count: the session data corresponding to a ghost url.
-                          It is dict medium/source -> nb sessions
-    :type url_count: dict
-    """
-    for medium_source, count in ghost_urls_count.iteritems():
-        if medium_source not in ghost_urls_count:
-            ghost_urls_count[medium_source] = 0
-        ghost_urls_count[medium_source] += count
 
 
 def get_medium_sources(medium, source, social_network):

@@ -2,11 +2,11 @@ import unittest
 import mock
 
 import heapq
+from collections import Counter
 
 from cdf.features.ganalytics.ghost import (get_medium_sources,
                                            update_session_count,
                                            update_top_ghost_pages,
-                                           update_ghost_count,
                                            update_urls_count,
                                            build_ghost_counts_dict,
                                            save_ghost_pages,
@@ -40,6 +40,7 @@ class TestUpdateSessionCount(unittest.TestCase):
             "organic.google": 5,
             "organic.bing": 4
         }
+        ghost_pages = Counter(ghost_pages)
         update_session_count(ghost_pages, self.medium, self.source,
                              self.social_network, self.nb_sessions)
 
@@ -56,6 +57,7 @@ class TestUpdateSessionCount(unittest.TestCase):
         ghost_pages = {
             "organic.bing": 4
         }
+        ghost_pages = Counter(ghost_pages)
         update_session_count(ghost_pages, self.medium, self.source,
                              self.social_network, self.nb_sessions)
 
@@ -70,6 +72,7 @@ class TestUpdateSessionCount(unittest.TestCase):
         ghost_pages = {
             "organic.all": 9
         }
+        ghost_pages = Counter(ghost_pages)
         update_session_count(ghost_pages, self.medium, self.source,
                              self.social_network, self.nb_sessions)
 
@@ -175,22 +178,6 @@ class TestUpdateTopGhostPages(unittest.TestCase):
         }
 
         self.assertEqual(expected_result, top_ghost_pages)
-
-
-class TestUpdateGhostCount(unittest.TestCase):
-    def test_nominal_case(self):
-        ghost_pages_session_count = {"organic.all": 10, "organic.google": 5}
-        session_count = {"organic.all": 5, "organic.google": 2}
-        update_ghost_count(ghost_pages_session_count, session_count)
-        expected_result = {"organic.all": 15, "organic.google": 7}
-        self.assertEqual(expected_result, ghost_pages_session_count)
-
-    def test_missing_source_medium(self):
-        ghost_pages_session_count = {"organic.all": 10}
-        session_count = {"organic.all": 5, "organic.google": 2}
-        update_ghost_count(ghost_pages_session_count, session_count)
-        expected_result = {"organic.all": 15, "organic.google": 2}
-        self.assertEqual(expected_result, ghost_pages_session_count)
 
 
 class TestBuildGhostCountsDict(unittest.TestCase):
