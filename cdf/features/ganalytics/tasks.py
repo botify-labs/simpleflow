@@ -237,11 +237,13 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
                                        aggregated_session_count)
 
                 #update the session count
-                ghost_pages_session_count += aggregated_session_count
+                ghost_pages_session_count.update(aggregated_session_count)
 
                 #the number of urls for each medium/source is at most 1
                 #since we are processing all entries of the same url
-                ghost_pages_url_count += Counter(aggregated_session_count.keys())
+                ghost_pages_url_count.update(
+                    Counter(aggregated_session_count.keys())
+                )
 
     #save top ghost pages in dedicated files
     ghost_file_paths = []
@@ -266,7 +268,6 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
         ghost_pages_session_count,
         ghost_pages_url_count
     )
-
     #save session & url counts for ghost pages
     session_count_path = save_ghost_pages_count(
         ghost_pages_count,
@@ -292,7 +293,7 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
 
     analytics_metadata = load_analytics_metadata(tmp_dir)
     api_requests = get_api_requests(analytics_metadata,
-                                    ghost_pages_session_count)
+                                    ghost_pages_count)
     # Advise the workflow that we need to send data to the remote db
     # through the api by calling a feature endpoint (prefixed by its revision)
     return api_requests
