@@ -39,7 +39,8 @@ setup(
         'lockfile==0.9.1',
         'mock',
         'nose',
-        'enum34'
+        'enum34',
+        'requests'
     ],
 
 
