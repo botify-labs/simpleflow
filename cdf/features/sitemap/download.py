@@ -27,7 +27,7 @@ def download_sitemaps(input_url, output_directory):
     try:
         sitemap_document = parse_sitemap_file(output_file_path)
     except ParsingError as e:
-        logger.error("Error while parsing {}: {}".format(input_url, e.msg))
+        logger.error("Error while parsing {}: {}".format(input_url, e.message))
         return {}
 
     #if it is a sitemap

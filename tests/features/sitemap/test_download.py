@@ -6,6 +6,9 @@ from cdf.features.sitemap.download import (download_sitemaps,
                                            get_output_file_path)
 
 from cdf.features.sitemap.document import SiteMapDocument, SiteMapType
+from cdf.features.sitemap.exceptions import (ParsingError,
+                                             DownloadError,
+                                             UnhandledFileType)
 
 
 class TestGetOutputFilePath(unittest.TestCase):
@@ -61,6 +64,29 @@ class TestDownloadSiteMaps(unittest.TestCase):
         download_url_mock.assert_called_once_with("http://foo/bar.xml", "/tmp/foo/bar.xml")
         download_sitemaps_from_urls_mock.assert_called_once_with(["http://bar/baz.xml"], "/tmp/foo")
         remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
+
+    @mock.patch("cdf.features.sitemap.download.download_url")
+    @mock.patch("cdf.features.sitemap.download.parse_sitemap_file")
+    def test_invalid_xml(self, parse_sitemap_file_mock, download_url_mock):
+        parse_sitemap_file_mock.side_effect = ParsingError("error")
+
+        input_url = "http://foo/bar.xml"
+        output_directory = "/tmp/foo"
+        actual_result = download_sitemaps(input_url, output_directory)
+        self.assertEqual({}, actual_result)
+
+
+    @mock.patch("cdf.features.sitemap.download.download_url")
+    @mock.patch("cdf.features.sitemap.download.parse_sitemap_file")
+    def test_not_sitemap_file(self, parse_sitemap_file_mock, download_url_mock):
+        parse_sitemap_file_mock.return_value = SiteMapDocument(None, None)
+        input_url = "http://foo/bar.xml"
+        output_directory = "/tmp/foo"
+        self.assertRaises(
+            UnhandledFileType,
+            download_sitemaps,
+            input_url,
+            output_directory)
 
 
 class TestDownloadSitemapsFromUrls(unittest.TestCase):
@@ -119,5 +145,36 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         self.assertEqual(expected_calls, download_url_mock.mock_calls)
         remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
 
-    def test_name_collision(self):
-        pass
+
+    @mock.patch("os.remove")
+    @mock.patch("os.path.isfile")
+    @mock.patch("cdf.features.sitemap.download.download_url")
+    @mock.patch("cdf.features.sitemap.download.parse_sitemap_file")
+    def test_inv_file(self, parse_sitemap_file_mock, download_url_mock,
+                      is_file_mock, remove_mock):
+        download_url_mock.side_effect = [DownloadError, "/tmp/foo/baz.xml"]
+
+        parse_sitemap_file_mock.side_effect = [
+            SiteMapDocument(SiteMapType.SITEMAP, None),
+        ]
+
+        is_file_mock.return_value = True
+
+        urls = [
+            "http://foo/bar.xml",
+            "http://foo/baz.xml",
+        ]
+        output_directory = "/tmp/foo"
+        actual_result = download_sitemaps_from_urls(urls, output_directory)
+
+        expected_result = {
+            "http://foo/baz.xml": "/tmp/foo/baz.xml"
+        }
+        self.assertEqual(expected_result, actual_result)
+        expected_calls = [
+            mock.call("http://foo/bar.xml", "/tmp/foo/bar.xml"),
+            mock.call("http://foo/baz.xml", "/tmp/foo/baz.xml")
+        ]
+        self.assertEqual(expected_calls, download_url_mock.mock_calls)
+        remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
+
