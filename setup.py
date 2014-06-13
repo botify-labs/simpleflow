@@ -40,7 +40,8 @@ setup(
         'mock',
         'nose',
         'enum34',
-        'requests'
+        'requests',
+        'retrying'
     ],
 
 
