@@ -40,6 +40,7 @@ setup(
         'mock',
         'nose',
         'enum34',
+        'lxml',
         'requests',
         'retrying'
     ],
