@@ -27,6 +27,7 @@ def download_url(url, output_file_path):
 
 
 #retry with exponential backoff.
+#FIXME this reponsibility should be delegated to the workflow.
 @retry(wait_exponential_multiplier=1000,
        stop_max_attempt_number=7)
 def download_url_helper(url, output_file_path):
