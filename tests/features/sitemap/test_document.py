@@ -3,6 +3,7 @@ import StringIO
 
 from cdf.features.sitemap.document import (parse_sitemap_file,
                                            SiteMapType)
+from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
 
 
 class TestParseSiteMapFile(unittest.TestCase):
@@ -34,6 +35,7 @@ class TestParseSiteMapFile(unittest.TestCase):
         self.assertEqual(SiteMapType.SITEMAP, actual_result.type)
         self.assertEqual(["http://foo/bar"], actual_result.get_urls())
 
+
     def test_sitemap_multiple_namespaces(self):
         file_content = ('<?xml version="1.0" encoding="UTF-8"?>'
                         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'
@@ -53,4 +55,15 @@ class TestParseSiteMapFile(unittest.TestCase):
         self.assertEqual(SiteMapType.SITEMAP_INDEX, actual_result.type)
         self.assertEqual(["http://foo.com/bar"], actual_result.get_urls())
 
+    def test_xml_parsing_error(self):
+        file_content = '<urlset><url></url>'
+        self.assertRaises(ParsingError,
+                          parse_sitemap_file,
+                          StringIO.StringIO(file_content))
+
+    def test_not_sitemap(self):
+        file_content = '<foo></foo>'  # valid xml but not a sitemap
+        self.assertRaises(UnhandledFileType,
+                          parse_sitemap_file,
+                          StringIO.StringIO(file_content))
 
