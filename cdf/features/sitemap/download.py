@@ -20,6 +20,7 @@ def download_sitemaps(input_url, output_directory):
     :param output_directory: the path to the directory where to save the files
     :type output_directory: str
     :returns: dict - a dict url -> output file path
+    :raises: UnhandledFileType
     """
     #download input url
     output_file_path = get_output_file_path(input_url, output_directory)

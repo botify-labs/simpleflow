@@ -60,28 +60,46 @@ def parse_sitemap_file(file_path):
 
 
 def is_sitemap_index(xml_doc):
+    """Determine whether a xml document is a sitemap index or not.
+    Document type is naively detected by detecting the presence of
+    sitemapindex tag.
+    :param xml_doc: the parsed xml document
+    :type xml_doc: lxml.etree._ElementTree
+    :returns: bool
+    """
     namespaces = get_namespace_dict(xml_doc)
     if namespaces is not None:
-        sitemap_index_elts = xml_doc.xpath("/ns:sitemapindex", namespaces=namespaces)
+        sitemap_index_elts = xml_doc.xpath("/ns:sitemapindex",
+                                           namespaces=namespaces)
     else:
         sitemap_index_elts = xml_doc.xpath("/sitemapindex")
-    #document type is naively detected by detecting the presence of sitemapindex
+
     return len(sitemap_index_elts) == 1
 
 
 def is_sitemap(xml_doc):
+    """Determine whether a xml document is a sitemap index or not.
+    Document type is naively detected by detecting the presence of
+    urlset tag.
+    :param xml_doc: the parsed xml document
+    :type xml_doc: lxml.etree._ElementTree
+    :returns: bool
+    """
     namespaces = get_namespace_dict(xml_doc)
     if namespaces is not None:
         urlset_elts = xml_doc.xpath("/ns:urlset", namespaces=namespaces)
     else:
         urlset_elts = xml_doc.xpath("/urlset")
-    #document type is naively detected by detecting the presence of urlset
     return len(urlset_elts) == 1
 
 
 def get_namespace_dict(xml_doc):
     """Helper function to build a dict to be used
-    as namespaces parameter of xpath() method"""
+    as namespaces parameter of xpath() method
+    :param xml_doc: the parsed xml document
+    :type xml_doc: lxml.etree._ElementTree
+    :returns: dict - None if there is no specified namespace
+    """
     if None in xml_doc.getroot().nsmap:
         return {'ns': xml_doc.getroot().nsmap[None]}
     else:
