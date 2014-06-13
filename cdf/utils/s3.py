@@ -54,11 +54,12 @@ def list_files(s3_uri, regexp=None):
 
     for key_obj in bucket.list(prefix=location):
         key = key_obj.name
-        key_without_location = key[len(location) + 1:]
+        key_basename = os.path.basename(key)
 
-        if not regexp \
-            or (isinstance(regexp, str) and re.match(regexp, key_without_location))\
-                or (isinstance(regexp, (list, tuple)) and any(re.match(r, key_without_location) for r in regexp)):
+        if (not regexp
+            or (isinstance(regexp, str) and re.match(regexp, key_basename))
+            or (isinstance(regexp, (list, tuple))
+                and any(re.match(r, key_basename) for r in regexp))):
             files.append(key_obj)
     return files
 
@@ -76,8 +77,9 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True, lock=True):
 
     for key_obj in list_files(s3_uri, regexp):
         key = key_obj.name
+        key_basename = os.path.basename(key)
 
-        path = os.path.join(dest_dir, key[len(location) + 1:])
+        path = os.path.join(dest_dir, key_basename)
 
         if lock:
             lock_obj = FileLock(path)
@@ -109,10 +111,9 @@ def fetch_file(s3_uri, dest_dir, force_fetch, lock=True):
     if not force_fetch and os.path.exists(dest_dir):
         return (dest_dir, False)
     key_obj = get_key_from_s3_uri(s3_uri)
-    """
-    If the file does not exist, a `boto.exception.S3ResponseError`
-    will be raised when calling `get_contents_to_filename`
-    """
+
+    # If the file does not exist, a `boto.exception.S3ResponseError`
+    # will be raised when calling `get_contents_to_filename`
     makedirs(os.path.dirname(dest_dir), exist_ok=True)
     logger.info('Fetch %s to %s' % (s3_uri, dest_dir))
     if lock:
