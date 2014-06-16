@@ -42,7 +42,8 @@ setup(
         'enum34',
         'lxml',
         'requests',
-        'retrying'
+        'retrying',
+        'moto'
     ],
 
 
