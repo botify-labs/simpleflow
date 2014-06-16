@@ -2,10 +2,9 @@ import unittest
 import tempfile
 import shutil
 from moto import mock_s3
-import boto
-from threading import Lock
 
 from cdf.utils.s3 import *
+from cdf.utils.path import partition_aware_sort
 
 
 class TestS3Module(unittest.TestCase):
@@ -22,8 +21,8 @@ class TestS3Module(unittest.TestCase):
         self.partition_files = [
             'file.type.9.gz',
             'file.type.11.gz',
-            'file.type.123456789.gz',
             'file.type.23456.gz',
+            'file.type.123456789.gz',
         ]
 
     def setup_s3(self):
@@ -62,12 +61,22 @@ class TestS3Module(unittest.TestCase):
 
         # list bucket with a list of regexp string
         result = list_files(bucket_uri,
-                            regexp=['files.type.[0-9]+.gz', 'file.type.*'])
+                            regexp=['abcd', 'file.type.*'])
         expected = self.partition_files + ['file.type.gz']
         self.assertItemsEqual(expected, map(lambda i: i.name, result))
 
+    @mock_s3
     def test_list_bucket_partition_order(self):
-        pass
+        self.setup_s3()
+        file_list = list_files('s3://test_bucket',
+                               regexp='file.type.[0-9]+.gz')
+
+        sorted_list = partition_aware_sort(
+            file_list,
+            basename_func=lambda k: os.path.basename(k.name)
+        )
+        expected = self.partition_files
+        self.assertItemsEqual(expected, map(lambda i: i.name, sorted_list))
 
     @mock_s3
     def test_fetch_files(self):
