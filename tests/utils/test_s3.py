@@ -1,6 +1,7 @@
 import unittest
 import tempfile
 import shutil
+import gzip
 from moto import mock_s3
 
 from cdf.utils.s3 import *
@@ -116,4 +117,26 @@ class TestS3Module(unittest.TestCase):
         data = f.read()
         self.assertEqual(data, content)
         f.close()
+        shutil.rmtree(tmp_dir)
+
+    @unittest.skip
+    @mock_s3
+    # TODO fix this test, maybe a bug in `moto`
+    def test_stream_s3_files(self):
+        # mock a bucket with some gzipped files
+        s3 = boto.connect_s3()
+        test_bucket = s3.create_bucket(self.bucket)
+        tmp_dir = tempfile.mkdtemp()
+        contents = ['line1', 'line2', 'line3']
+        f = gzip.open(os.path.join(tmp_dir, 't.txt.1.gz'), 'w')
+        f.writelines(contents)
+        f.close()
+
+        key = Key(test_bucket, name='t.txt.1.gz')
+        key.content_encoding = 'gzip'
+        key.set_contents_from_filename(f.filename)
+
+        # check stream results
+        result = list(stream_files('s3://test_bucket'))
+        self.assertListEqual(result, contents)
         shutil.rmtree(tmp_dir)
