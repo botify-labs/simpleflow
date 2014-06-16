@@ -77,12 +77,15 @@ if JENKINS_TEST != 0
   $jenkins_provisioning_script = <<SCRIPT
 apt-get update
 apt-get -y install libboost-python-dev
+apt-get -y install libxml2-dev
+apt-get -y install libxslt1-dev
 apt-get -y install libhdf5-serial-dev
 apt-get -y install python-setuptools
 apt-get -y install python-pip
 apt-get -y install build-essential python-dev
 apt-get -y install python-virtualenv
 apt-get -y install sloccount
+
 
 #install elasticsearch
 apt-get install openjdk-7-jre-headless -y
