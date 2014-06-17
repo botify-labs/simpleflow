@@ -8,7 +8,8 @@ from cdf.features.sitemap.exceptions import (UnhandledFileType,
                                              DownloadError)
 from cdf.features.sitemap.utils import download_url
 from cdf.features.sitemap.constant import DOWNLOAD_DELAY
-from cdf.features.sitemap.document import parse_sitemap_file, SiteMapType
+from cdf.features.sitemap.document import (SiteMapType,
+                                           SitemapDocument)
 
 
 def download_sitemaps(input_url, output_directory):
@@ -25,17 +26,13 @@ def download_sitemaps(input_url, output_directory):
     #download input url
     output_file_path = get_output_file_path(input_url, output_directory)
     download_url(input_url, output_file_path)
-    try:
-        sitemap_document = parse_sitemap_file(output_file_path)
-    except ParsingError as e:
-        logger.error("Error while parsing {}: {}".format(input_url, e.message))
-        return {}
-
+    sitemap_document = SitemapDocument(output_file_path)
+    sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
-    if sitemap_document.type == SiteMapType.SITEMAP:
+    if sitemap_type == SiteMapType.SITEMAP:
         result = {input_url: output_file_path}
     #if it is a sitemap index
-    elif sitemap_document.type == SiteMapType.SITEMAP_INDEX:
+    elif sitemap_type == SiteMapType.SITEMAP_INDEX:
         #download referenced sitemaps
         result = download_sitemaps_from_urls(sitemap_document.get_urls(),
                                              output_directory)
@@ -49,8 +46,8 @@ def download_sitemaps(input_url, output_directory):
 def download_sitemaps_from_urls(urls, output_directory):
     """Download sitemap files from a list of urls.
     If the input url is a sitemap, the file will simply be downloaded,
-    :param urls: the list of input urls
-    :type urls: str
+    :param urls: a generator of input urls
+    :type urls: generator
     :param output_directory: the path to the directory where to save the files
     :type output_directory: str
     :returns: dict - a dict url -> output file path
@@ -61,14 +58,15 @@ def download_sitemaps_from_urls(urls, output_directory):
         time.sleep(DOWNLOAD_DELAY)
         try:
             download_url(url, file_path)
-            crt_document = parse_sitemap_file(file_path)
+            sitemap_document = SitemapDocument(file_path)
+            sitemap_type = sitemap_document.get_sitemap_type()
         except (DownloadError, ParsingError) as e:
             logger.error("Skipping {}: {}".format(url, e.message))
             if os.path.isfile(file_path):
                 os.remove(file_path)
             continue
         #  check if it is actually a sitemap
-        if crt_document.type == SiteMapType.SITEMAP:
+        if sitemap_type == SiteMapType.SITEMAP:
             result[url] = file_path
         else:
             #  if not, remove file
