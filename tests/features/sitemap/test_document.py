@@ -82,7 +82,7 @@ class TestSitemapDocument(unittest.TestCase):
         self.file.write('<urlset><url></url>')
         self.file.close()
         sitemap_document = SitemapDocument(self.file.name)
-        self.assertEqual(SiteMapType.UNKNOWN, sitemap_document.get_sitemap_type())
+        self.assertEqual(SiteMapType.SITEMAP, sitemap_document.get_sitemap_type())
         self.assertRaises(
             ParsingError,
             list,

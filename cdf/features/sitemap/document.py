@@ -1,6 +1,5 @@
 from enum import Enum
 from lxml import etree
-from collections import Counter
 import gzip
 
 from cdf.log import logger
@@ -63,45 +62,21 @@ def open_sitemap_file(file_path):
 
 
 def guess_sitemap_type(file_object):
-    """Guess the  sitemap type (sitemap or sitemap index) from an input file
+    """Guess the  sitemap type (sitemap or sitemap index) from an input file.
+    The method simply stops on the first "urlset" or "sitemapindex" tag.
     :param file_object: a file like object
     :type file_object: file
     :return: SiteMapType
     """
-    tag_counter = Counter()
     try:
-        for _, element in etree.iterparse(file_object):
+        for _, element in etree.iterparse(file_object, events=("start",)):
             localname = etree.QName(element.tag).localname
-            tag_counter.update([localname])
             element.clear()
+            if localname == "urlset":
+                return SiteMapType.SITEMAP
+            elif localname == "sitemapindex":
+                return SiteMapType.SITEMAP_INDEX
     except etree.XMLSyntaxError:
         return SiteMapType.UNKNOWN
 
-    if is_sitemap_index(tag_counter):
-        return SiteMapType.SITEMAP_INDEX
-    elif is_sitemap(tag_counter):
-        return SiteMapType.SITEMAP
-    else:
-        return SiteMapType.UNKNOWN
-
-
-def is_sitemap_index(counter):
-    """Determine whether a xml document is a sitemap index or not.
-    Document type is naively detected by detecting the presence of
-    sitemapindex tag.
-    :param xml_doc: the parsed xml document
-    :type xml_doc: lxml.etree._ElementTree
-    :returns: bool
-    """
-    return counter["sitemapindex"] == 1
-
-
-def is_sitemap(counter):
-    """Determine whether a xml document is a sitemap index or not.
-    Document type is naively detected by detecting the presence of
-    urlset tag.
-    :param xml_doc: the parsed xml document
-    :type xml_doc: lxml.etree._ElementTree
-    :returns: bool
-    """
-    return counter["urlset"] == 1
+    return SiteMapType.UNKNOWN
