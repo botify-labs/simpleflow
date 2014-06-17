@@ -13,6 +13,38 @@ class SiteMapType(Enum):
     SITEMAP_INDEX = 2
 
 
+class SitemapDocument(object):
+    """A class to represent a sitemap document.
+    It can represent a sitemap or a sitemap index.
+    """
+    def __init__(self, file_path):
+        """Constructor
+        :param file_path: the path to the input file
+        :type file_path: str
+        """
+        self.file_path = file_path
+
+    def get_sitemap_type(self):
+        with open_sitemap_file(self.file_path) as f:
+            result = guess_sitemap_type(f)
+        return result
+
+    def get_urls(self):
+        """Returns the urls listed in the sitemap document
+        :param file_object: a file like object
+        :type file_object: file
+        """
+        with open_sitemap_file(self.file_path) as file_object:
+            try:
+                for _, element in etree.iterparse(file_object):
+                    localname = etree.QName(element.tag).localname
+                    if localname == "loc":
+                        yield element.text
+                    element.clear()
+            except etree.XMLSyntaxError as e:
+                raise ParsingError(e.message)
+
+
 def open_sitemap_file(file_path):
     """Create a file-like object from a path.
     The function handles gzip and plain text files
@@ -28,21 +60,6 @@ def open_sitemap_file(file_path):
     except:
         f = open(file_path)
     return f
-
-
-def get_urls(file_object):
-    """Returns the urls listed in the sitemap document
-    :param file_object: a file like object
-    :type file_object: file
-    """
-    try:
-        for _, element in etree.iterparse(file_object):
-            localname = etree.QName(element.tag).localname
-            if localname == "loc":
-                yield element.text
-            element.clear()
-    except etree.XMLSyntaxError as e:
-        raise ParsingError(e.message)
 
 
 def guess_sitemap_type(file_object):

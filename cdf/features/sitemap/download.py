@@ -9,9 +9,7 @@ from cdf.features.sitemap.exceptions import (UnhandledFileType,
 from cdf.features.sitemap.utils import download_url
 from cdf.features.sitemap.constant import DOWNLOAD_DELAY
 from cdf.features.sitemap.document import (SiteMapType,
-                                           guess_sitemap_type,
-                                           get_urls,
-                                           open_sitemap_file)
+                                           SitemapDocument)
 
 
 def download_sitemaps(input_url, output_directory):
@@ -28,18 +26,16 @@ def download_sitemaps(input_url, output_directory):
     #download input url
     output_file_path = get_output_file_path(input_url, output_directory)
     download_url(input_url, output_file_path)
-    with open_sitemap_file(output_file_path) as f:
-        sitemap_type = guess_sitemap_type(f)
-
+    sitemap_stream = SitemapDocument(output_file_path)
+    sitemap_type = sitemap_stream.get_sitemap_type()
     #if it is a sitemap
     if sitemap_type == SiteMapType.SITEMAP:
         result = {input_url: output_file_path}
     #if it is a sitemap index
     elif sitemap_type == SiteMapType.SITEMAP_INDEX:
-        with open_sitemap_file(output_file_path) as f:
-            #download referenced sitemaps
-            result = download_sitemaps_from_urls(get_urls(f),
-                                                 output_directory)
+        #download referenced sitemaps
+        result = download_sitemaps_from_urls(sitemap_stream.get_urls(),
+                                             output_directory)
         #remove sitemap index file
         os.remove(output_file_path)
     else:
@@ -62,8 +58,8 @@ def download_sitemaps_from_urls(urls, output_directory):
         time.sleep(DOWNLOAD_DELAY)
         try:
             download_url(url, file_path)
-            with open_sitemap_file(file_path) as f:
-                sitemap_type = guess_sitemap_type(f)
+            sitemap_stream = SitemapDocument(file_path)
+            sitemap_type = sitemap_stream.get_sitemap_type()
         except (DownloadError, ParsingError) as e:
             logger.error("Skipping {}: {}".format(url, e.message))
             if os.path.isfile(file_path):

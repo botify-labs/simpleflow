@@ -1,43 +1,58 @@
 import unittest
-import StringIO
 import tempfile
 import gzip
 import os
 
 from cdf.features.sitemap.document import (open_sitemap_file,
-                                           guess_sitemap_type,
-                                           get_urls,
-                                           SiteMapType)
+                                           SiteMapType,
+                                           SitemapDocument)
 from cdf.features.sitemap.exceptions import ParsingError
 
 
-class TestGuessSiteMapType(unittest.TestCase):
+class TestSitemapDocument(unittest.TestCase):
+    def setUp(self):
+        self.file = tempfile.NamedTemporaryFile(delete=False)
+
+    def tearDown(self):
+        os.remove(self.file.name)
+
     def test_sitemap_0_9(self):
-        file_content = ('<?xml version="1.0" encoding="UTF-8"?>'
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
                         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
                         '<url><loc>http://foo/bar</loc></url>'
                         '</urlset>')
-        actual_result = guess_sitemap_type(StringIO.StringIO(file_content))
-        self.assertEqual(SiteMapType.SITEMAP, actual_result)
+        self.file.close()
+        sitemap_document = SitemapDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP,
+                         sitemap_document.get_sitemap_type())
+        self.assertEqual(["http://foo/bar"], list(sitemap_document.get_urls()))
 
     def test_sitemap_index_0_9(self):
-        file_content = ('<?xml version="1.0" encoding="UTF-8"?>'
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
                         '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
                         '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
                         '</sitemapindex>')
-        actual_result = guess_sitemap_type(StringIO.StringIO(file_content))
-        self.assertEqual(SiteMapType.SITEMAP_INDEX, actual_result)
+        self.file.close()
+        sitemap_document = SitemapDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP_INDEX,
+                         sitemap_document.get_sitemap_type())
+        self.assertEqual(["http://foo/sitemap.xml.gz"],
+                         list(sitemap_document.get_urls()))
 
     def test_sitemap_different_namespace(self):
-        file_content = ('<?xml version="1.0" encoding="UTF-8"?>'
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
                         '<urlset xmlns="http://www.google.com/schemas/sitemap/0.84">'
                         '<url><loc>http://foo/bar</loc></url>'
                         '</urlset>')
-        actual_result = guess_sitemap_type(StringIO.StringIO(file_content))
-        self.assertEqual(SiteMapType.SITEMAP, actual_result)
+        self.file.close()
+        sitemap_document = SitemapDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP,
+                         sitemap_document.get_sitemap_type())
+        self.assertEqual(["http://foo/bar"],
+                         list(sitemap_document.get_urls()))
 
     def test_sitemap_multiple_namespaces(self):
-        file_content = ('<?xml version="1.0" encoding="UTF-8"?>'
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
                         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
                         'xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" '
                         'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'
@@ -45,83 +60,40 @@ class TestGuessSiteMapType(unittest.TestCase):
                         '<loc>http://foo/bar/baz</loc>'
                         '  </url>'
                         '</urlset>')
-        actual_result = guess_sitemap_type(StringIO.StringIO(file_content))
-        self.assertEqual(SiteMapType.SITEMAP, actual_result)
+        self.file.close()
+        sitemap_document = SitemapDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP,
+                         sitemap_document.get_sitemap_type())
+        self.assertEqual(["http://foo/bar/baz"],
+                         list(sitemap_document.get_urls()))
 
     def test_sitemap_no_namespace(self):
-        file_content = ('<sitemapindex>'
+        self.file.write('<sitemapindex>'
                         '<sitemap><loc>http://foo.com/bar</loc></sitemap>'
                         '</sitemapindex>')
-        actual_result = guess_sitemap_type(StringIO.StringIO(file_content))
-        self.assertEqual(SiteMapType.SITEMAP_INDEX, actual_result)
+        self.file.close()
+        sitemap_document = SitemapDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP_INDEX,
+                         sitemap_document.get_sitemap_type())
+        self.assertEqual(["http://foo.com/bar"],
+                         list(sitemap_document.get_urls()))
 
     def test_xml_parsing_error(self):
-        file_content = '<urlset><url></url>'
-        actual_result = guess_sitemap_type(StringIO.StringIO(file_content))
-        self.assertEqual(SiteMapType.UNKNOWN, actual_result)
+        self.file.write('<urlset><url></url>')
+        self.file.close()
+        sitemap_document = SitemapDocument(self.file.name)
+        self.assertEqual(SiteMapType.UNKNOWN, sitemap_document.get_sitemap_type())
+        self.assertRaises(
+            ParsingError,
+            list,
+            sitemap_document.get_urls())
 
     def test_not_sitemap(self):
-        file_content = '<foo></foo>'  # valid xml but not a sitemap
-        actual_result = guess_sitemap_type(StringIO.StringIO(file_content))
-        self.assertEqual(SiteMapType.UNKNOWN, actual_result)
-
-
-class TestGetUrls(unittest.TestCase):
-    def test_sitemap_0_9(self):
-        file_content = ('<?xml version="1.0" encoding="UTF-8"?>'
-                        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-                        '<url><loc>http://foo/bar</loc></url>'
-                        '</urlset>')
-        actual_result = get_urls(StringIO.StringIO(file_content))
-        self.assertEqual(["http://foo/bar"], list(actual_result))
-
-    def test_sitemap_index_0_9(self):
-        file_content = ('<?xml version="1.0" encoding="UTF-8"?>'
-                        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-                        '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
-                        '</sitemapindex>')
-        actual_result = get_urls(StringIO.StringIO(file_content))
-        self.assertEqual(["http://foo/sitemap.xml.gz"], list(actual_result))
-
-
-    def test_sitemap_different_namespace(self):
-        file_content = ('<?xml version="1.0" encoding="UTF-8"?>'
-                        '<urlset xmlns="http://www.google.com/schemas/sitemap/0.84">'
-                        '<url><loc>http://foo/bar</loc></url>'
-                        '</urlset>')
-        actual_result = get_urls(StringIO.StringIO(file_content))
-        self.assertEqual(["http://foo/bar"], list(actual_result))
-
-
-    def test_sitemap_multiple_namespaces(self):
-        file_content = ('<?xml version="1.0" encoding="UTF-8"?>'
-                        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'
-                        '  <url>'
-                        '<loc>http://foo/bar/baz</loc>'
-                        '  </url>'
-                        '</urlset>')
-        actual_result = get_urls(StringIO.StringIO(file_content))
-        self.assertEqual(["http://foo/bar/baz"], list(actual_result))
-
-    def test_sitemap_no_namespace(self):
-        file_content = ('<sitemapindex>'
-                        '<sitemap><loc>http://foo.com/bar</loc></sitemap>'
-                        '</sitemapindex>')
-        actual_result = get_urls(StringIO.StringIO(file_content))
-        self.assertEqual(["http://foo.com/bar"], list(actual_result))
-
-    def test_xml_parsing_error(self):
-        file_content = '<urlset><url></url>'
-        generator = get_urls(StringIO.StringIO(file_content))
-
-        self.assertRaises(ParsingError,
-                          list,
-                          generator)
-
-    def test_not_sitemap(self):
-        file_content = '<foo></foo>'  # valid xml but not a sitemap
-        actual_result = get_urls(StringIO.StringIO(file_content))
-        self.assertEquals(0, len(list(actual_result)))
+        self.file.write('<foo></foo>')  # valid xml but not a sitemap
+        self.file.close()
+        sitemap_document = SitemapDocument(self.file.name)
+        self.assertEqual(SiteMapType.UNKNOWN, sitemap_document.get_sitemap_type())
+        self.assertEqual([], list(sitemap_document.get_urls()))
 
 
 class TestOpenSitemapFile(unittest.TestCase):
