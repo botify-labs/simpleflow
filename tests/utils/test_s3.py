@@ -119,15 +119,13 @@ class TestS3Module(unittest.TestCase):
         f.close()
         shutil.rmtree(tmp_dir)
 
-    @unittest.skip
     @mock_s3
-    # TODO fix this test, maybe a bug in `moto`
     def test_stream_s3_files(self):
         # mock a bucket with some gzipped files
         s3 = boto.connect_s3()
         test_bucket = s3.create_bucket(self.bucket)
         tmp_dir = tempfile.mkdtemp()
-        contents = ['line1', 'line2', 'line3']
+        contents = ['line1\n', 'line2\n', 'line3\n']
         f = gzip.open(os.path.join(tmp_dir, 't.txt.1.gz'), 'w')
         f.writelines(contents)
         f.close()

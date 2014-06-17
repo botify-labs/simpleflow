@@ -43,6 +43,7 @@ setup(
         'lxml',
         'requests',
         'retrying',
+        'httpretty==0.7.0',
         'moto'
     ],
 
