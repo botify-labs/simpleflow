@@ -11,8 +11,8 @@ from cdf.features.sitemap.download import download_sitemaps
 @with_temporary_dir
 @feature_enabled('sitemap')
 def download_sitemap_files(input_urls, s3_uri, tmp_dir=None, force_fetch=False):
-    """Download all sitemap files related to an input url and upload them to s3.
-    If the input url is a sitemap, the file will simply be downloaded,
+    """Download all sitemap files related to a list of input url and upload them to s3.
+    For each input url, If it is a sitemap, the file will simply be downloaded,
     if it is a sitemap index, it will download the listed sitemaps
     :param input_urls: a list of sitemap/sitemap index urls
     :type input_urls: list
