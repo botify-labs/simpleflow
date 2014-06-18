@@ -9,6 +9,7 @@ from cdf.features.sitemap.download import (DownloadStatus,
 
 from cdf.features.sitemap.document import SiteMapType, SitemapDocument
 from cdf.features.sitemap.exceptions import (DownloadError,
+                                             ParsingError,
                                              UnhandledFileType)
 
 class TestDownloadStatus(unittest.TestCase):
@@ -35,7 +36,6 @@ class TestDownloadStatus(unittest.TestCase):
         #compare the objects instead of the json representation
         #to be insensitive to item ordering
         self.assertEqual(expected_result, json.loads(actual_result))
-
 
     def test_update(self):
         download_status = DownloadStatus(
@@ -228,6 +228,31 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         expected_result.add_sitemap(
             Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml")
         )
+
+        self.assertEqual(expected_result, actual_result)
+        self.assertEqual(self.expected_download_calls,
+                         download_url_mock.mock_calls)
+        remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
+
+    @mock.patch("os.remove")
+    @mock.patch("os.path.isfile")
+    @mock.patch("cdf.features.sitemap.download.download_url")
+    @mock.patch.object(SitemapDocument, "get_sitemap_type")
+    def test_parsing_error(self,
+                           sitemap_type_mock,
+                           download_url_mock,
+                           is_file_mock,
+                           remove_mock):
+        download_url_mock.side_effect = ["/tmp/foo/bar.xml", "/tmp/foo/baz.xml"]
+
+        sitemap_type_mock.side_effect = [ParsingError, SiteMapType.SITEMAP]
+
+        is_file_mock.return_value = True
+
+        actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
+        expected_result = DownloadStatus()
+        expected_result.add_sitemap(Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml"))
+        expected_result.add_error("http://foo/bar.xml")
 
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,

@@ -127,7 +127,6 @@ def download_sitemaps_from_urls(urls, output_directory):
             logger.error("Skipping {}: {}".format(url, e.message))
             if os.path.isfile(file_path):
                 os.remove(file_path)
-            if isinstance(e, DownloadError):
                 result.add_error(url)
             continue
         #  check if it is actually a sitemap
