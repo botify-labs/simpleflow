@@ -52,7 +52,9 @@ def download_sitemaps(input_url, output_directory):
 
 def download_sitemaps_from_urls(urls, output_directory):
     """Download sitemap files from a list of urls.
-    If the input url is a sitemap, the file will simply be downloaded,
+    If the input url is a sitemap, the file will simply be downloaded.
+    The function returns a dict url -> output file path
+    If one can file could not be downloaded, the output file path is None.
     :param urls: a generator of input urls
     :type urls: generator
     :param output_directory: the path to the directory where to save the files
@@ -71,6 +73,8 @@ def download_sitemaps_from_urls(urls, output_directory):
             logger.error("Skipping {}: {}".format(url, e.message))
             if os.path.isfile(file_path):
                 os.remove(file_path)
+            if isinstance(e, DownloadError):
+                result[url] = None
             continue
         #  check if it is actually a sitemap
         if sitemap_type == SiteMapType.SITEMAP:

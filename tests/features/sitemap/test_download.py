@@ -160,11 +160,11 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
     @mock.patch("os.path.isfile")
     @mock.patch("cdf.features.sitemap.download.download_url")
     @mock.patch.object(SitemapDocument, "get_sitemap_type")
-    def test_inv_file(self,
-                      sitemap_type_mock,
-                      download_url_mock,
-                      is_file_mock,
-                      remove_mock):
+    def test_download_error(self,
+                            sitemap_type_mock,
+                            download_url_mock,
+                            is_file_mock,
+                            remove_mock):
         download_url_mock.side_effect = [DownloadError, "/tmp/foo/baz.xml"]
 
         sitemap_type_mock.return_value = SiteMapType.SITEMAP
@@ -174,6 +174,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
 
         expected_result = {
+            "http://foo/bar.xml": None,
             "http://foo/baz.xml": "/tmp/foo/baz.xml"
         }
         self.assertEqual(expected_result, actual_result)
