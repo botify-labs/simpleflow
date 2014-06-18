@@ -447,9 +447,13 @@ def make_suggest_summary_file(crawl_id, s3_uri, es_location, es_index, es_doc_ty
     # internal/external outlinks
     for status in ('internal', 'external'):
         for sort in ('asc', 'desc'):
+
+            field_aggs = ["total", "follow", "nofollow"]
+            #follow_unique is only available for outlinks_internal
             if status == "internal":
-                fields_mapping['follow_unique'] = 'follow.unique'
-            for field_agg in ["total", "follow", "nofollow"]:
+                field_aggs.append("follow_unique")
+
+            for field_agg in field_aggs:
                 field_url = fields_mapping[field_agg]
                 full_field = "outlinks_{}_nb.{}".format(status, field_agg)
                 query = {
