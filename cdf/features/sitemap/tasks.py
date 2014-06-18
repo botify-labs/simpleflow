@@ -1,11 +1,12 @@
 import os.path
-import json
 
 from cdf.utils import s3
 from cdf.core.decorators import feature_enabled
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 
-from cdf.features.sitemap.download import download_sitemaps
+from cdf.features.sitemap.download import (DownloadStatus,
+                                           Sitemap,
+                                           download_sitemaps)
 
 
 @with_temporary_dir
@@ -21,17 +22,17 @@ def download_sitemap_files(input_urls, s3_uri, tmp_dir=None, force_fetch=False):
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
     """
-    s3_file_index = {}
+    s3_download_status = DownloadStatus()
     for url in input_urls:
         crt_file_index = download_sitemap_file(url, s3_uri, tmp_dir, force_fetch)
-        s3_file_index.update(crt_file_index)
+        s3_download_status.update(crt_file_index)
 
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
 
     #push the file that list the sitemap files
     s3.push_content(
         os.path.join(s3_subdir_uri, "download_status.json"),
-        json.dumps(s3_file_index)
+        s3_download_status.to_json()
     )
 
 
@@ -46,19 +47,20 @@ def download_sitemap_file(input_url, s3_uri, tmp_dir=None, force_fetch=False):
     :type s3_uri: str
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
-    :returns: dict
+    :returns: DownloadStatus
     """
-    file_index = download_sitemaps(input_url, tmp_dir)
+    download_status = download_sitemaps(input_url, tmp_dir)
 
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
-    #a dict similar to file_locations but that stores s3 uris
-    s3_file_index = {}
-    for url, file_path in file_index.iteritems():
+    #an object similar to download_status but that stores s3 uris
+    s3_download_status = DownloadStatus(errors=download_status.errors)
+    for sitemap in download_status.sitemaps:
+        url, file_path = sitemap
         destination_uri = os.path.join(s3_subdir_uri, os.path.basename(file_path))
         s3.push_file(
             os.path.join(destination_uri),
             file_path
         )
-        s3_file_index[url] = destination_uri
+        s3_download_status.add_sitemap(Sitemap(url, destination_uri))
 
-    return s3_file_index
+    return s3_download_status
