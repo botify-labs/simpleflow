@@ -1,12 +1,19 @@
 import os.path
+import json
+import itertools
 
 from cdf.utils import s3
 from cdf.core.decorators import feature_enabled
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
+from cdf.features.main.utils import get_url_to_id_dict_from_stream
 
-from cdf.features.sitemap.download import (DownloadStatus,
+from cdf.features.main.streams import IdStreamDef
+from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
+from cdf.features.sitemap.download import (download_sitemaps,
                                            Sitemap,
-                                           download_sitemaps)
+                                           DownloadStatus)
+from cdf.features.sitemap.streams import SitemapStreamDef
+from cdf.features.sitemap.document import SitemapDocument
 
 
 @with_temporary_dir
@@ -64,3 +71,61 @@ def download_sitemap_file(input_url, s3_uri, tmp_dir=None, force_fetch=False):
         s3_download_status.add_success_sitemap(Sitemap(url, destination_uri, sitemap_index))
 
     return s3_download_status
+
+@with_temporary_dir
+@feature_enabled('sitemap')
+def match_sitemap_urls(s3_uri,
+                       first_part_id_size=FIRST_PART_ID_SIZE,
+                       part_id_size=PART_ID_SIZE,
+                       tmp_dir=None,
+                       force_fetch=False):
+    #load crawl information
+    id_stream = IdStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
+    url_to_id = get_url_to_id_dict_from_stream(id_stream)
+    #download sitemaps
+
+    s3.fetch_file(
+        os.path.join(s3_uri, 'sitemaps', 'download_status.json'),
+        os.path.join(tmp_dir, 'download_status.json'),
+        force_fetch
+    )
+
+    #for each url in the sitemaps
+    not_in_crawl = []
+    dataset = SitemapStreamDef.create_temporary_dataset()
+    for url in get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
+        urlid = url_to_id.get(url, None)
+        if urlid is None:
+            not_in_crawl.append(url)
+        else:
+            dataset.append(urlid)
+    dataset.persist_to_s3(s3_uri,
+                          first_part_id_size=first_part_id_size,
+                          part_id_size=part_id_size)
+
+
+def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
+    s3.fetch_file(
+        os.path.join(s3_uri, 'sitemaps', 'download_status.json'),
+        os.path.join(tmp_dir, 'download_status.json'),
+        force_fetch
+    )
+
+    download_status = json.load(open(os.path.join(tmp_dir, "download_status.json")))
+    sitemap_files = []
+    for sitemap in download_status["sitemaps"]:
+        sitemap_s3_uri = sitemap["s3_uri"]
+        _, filename = s3.uri_parse(sitemap_s3_uri)
+        destination = os.path.join(tmp_dir, filename)
+        s3.fetch_file(
+            os.path.join(sitemap_s3_uri),
+            destination,
+            force_fetch
+        )
+        sitemap_files.append(destination)
+
+    sitemap_streams = []
+    for sitemap_file in sitemap_files:
+        sitemap_document = SitemapDocument(sitemap_file)
+        sitemap_streams.append(sitemap_document.get_urls())
+    return itertools.chain(*sitemap_streams)
