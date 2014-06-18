@@ -25,7 +25,12 @@ def download_sitemaps(input_url, output_directory):
     """
     #download input url
     output_file_path = get_output_file_path(input_url, output_directory)
-    download_url(input_url, output_file_path)
+    try:
+        download_url(input_url, output_file_path)
+    except DownloadError as e:
+        logger.error("Download error: %s", e.message)
+        return {}
+
     sitemap_document = SitemapDocument(output_file_path)
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
