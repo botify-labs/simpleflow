@@ -59,6 +59,10 @@ class DownloadStatus(object):
         return (set(self.sitemaps) == set(other.sitemaps) and
                 set(self.errors) == set(other.errors))
 
+    def update(self, other):
+        self.sitemaps.extend(other.sitemaps)
+        self.errors.extend(other.errors)
+
 
 def download_sitemaps(input_url, output_directory):
     """Download all sitemap files related to an input url in a directory.

@@ -13,15 +13,12 @@ from cdf.features.sitemap.exceptions import (DownloadError,
 
 class TestDownloadStatus(unittest.TestCase):
     def test_to_json(self):
-        file_index = DownloadStatus()
-
-        file_index.add_sitemap(
-            Sitemap("http://foo/sitemap_1.xml", "s3://foo/sitemap_1.xml")
+        download_status = DownloadStatus(
+            [Sitemap("http://foo/sitemap_1.xml", "s3://foo/sitemap_1.xml")],
+            ["http://error1", "http://error2"]
         )
-        file_index.add_error("http://error1")
-        file_index.add_error("http://error2")
 
-        actual_result = file_index.to_json()
+        actual_result = download_status.to_json()
 
         expected_result = {
             "sitemaps": [
@@ -38,6 +35,28 @@ class TestDownloadStatus(unittest.TestCase):
         #compare the objects instead of the json representation
         #to be insensitive to item ordering
         self.assertEqual(expected_result, json.loads(actual_result))
+
+
+    def test_update(self):
+        download_status = DownloadStatus(
+            [Sitemap("http://foo/sitemap_1.xml", "s3://foo/sitemap_1.xml")],
+            ["http://error1", "http://error2"]
+        )
+
+        download_status_aux = DownloadStatus(
+            [Sitemap("http://foo/sitemap_2.xml", "s3://foo/sitemap_2.xml")],
+            ["http://error3"]
+        )
+
+        download_status.update(download_status_aux)
+        expected_result = DownloadStatus(
+            [
+                Sitemap("http://foo/sitemap_1.xml", "s3://foo/sitemap_1.xml"),
+                Sitemap("http://foo/sitemap_2.xml", "s3://foo/sitemap_2.xml")
+            ],
+            ["http://error1", "http://error2", "http://error3"]
+        )
+        self.assertEqual(expected_result, download_status)
 
 
 class TestGetOutputFilePath(unittest.TestCase):
