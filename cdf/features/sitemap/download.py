@@ -18,7 +18,10 @@ from cdf.features.sitemap.document import (SiteMapType,
 Sitemap = namedtuple('Sitemap', ['url', 's3_uri'])
 
 
-class FileIndex(object):
+class DownloadStatus(object):
+    """A class information about the downloaded sitemaps:
+        where they come from, where they are stored
+        errors that occured"""
     def __init__(self):
         self.sitemaps = []
         self.errors = []
@@ -61,10 +64,10 @@ def download_sitemaps(input_url, output_directory):
     :type input_url: str
     :param output_directory: the path to the directory where to save the files
     :type output_directory: str
-    :returns: FileIndex
+    :returns: DownloadStatus
     :raises: UnhandledFileType
     """
-    result = FileIndex()
+    result = DownloadStatus()
     #download input url
     output_file_path = get_output_file_path(input_url, output_directory)
     try:
@@ -102,7 +105,7 @@ def download_sitemaps_from_urls(urls, output_directory):
     :type output_directory: str
     :returns: dict - a dict url -> output file path
     """
-    result = FileIndex()
+    result = DownloadStatus()
     for url in urls:
         file_path = get_output_file_path(url, output_directory)
         time.sleep(DOWNLOAD_DELAY)

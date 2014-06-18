@@ -30,7 +30,7 @@ def download_sitemap_files(input_urls, s3_uri, tmp_dir=None, force_fetch=False):
 
     #push the file that list the sitemap files
     s3.push_content(
-        os.path.join(s3_subdir_uri, "file_index.json"),
+        os.path.join(s3_subdir_uri, "download_status.json"),
         json.dumps(s3_file_index)
     )
 
