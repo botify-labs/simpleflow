@@ -14,7 +14,7 @@ from cdf.features.sitemap.constant import DOWNLOAD_DELAY
 from cdf.features.sitemap.document import (SiteMapType,
                                            SitemapDocument)
 
-
+#FIXME add a source sitemap index if any(cf. https://github.com/sem-io/botify-cdf/issues/381)
 Sitemap = namedtuple('Sitemap', ['url', 's3_uri'])
 
 
