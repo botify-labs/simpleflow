@@ -1,13 +1,43 @@
 import unittest
 import mock
-
-from cdf.features.sitemap.download import (download_sitemaps,
+import json
+from cdf.features.sitemap.download import (FileIndex,
+                                           Sitemap,
+                                           download_sitemaps,
                                            download_sitemaps_from_urls,
                                            get_output_file_path)
 
 from cdf.features.sitemap.document import SiteMapType, SitemapDocument
 from cdf.features.sitemap.exceptions import (DownloadError,
                                              UnhandledFileType)
+
+class TestFeatureIndex(unittest.TestCase):
+    def test_to_json(self):
+        file_index = FileIndex()
+
+        file_index.add_sitemap(
+            Sitemap("http://foo/sitemap_1.xml", "s3://foo/sitemap_1.xml")
+        )
+        file_index.add_error("http://error1")
+        file_index.add_error("http://error2")
+
+        actual_result = file_index.to_json()
+
+        expected_result = {
+            "sitemaps": [
+                {
+                    "url": "http://foo/sitemap_1.xml",
+                    "s3_uri": "s3://foo/sitemap_1.xml"
+                }
+            ],
+            "errors": [
+                "http://error1",
+                "http://error2"
+            ]
+        }
+        #compare the objects instead of the json representation
+        #to be insensitive to item ordering
+        self.assertEqual(expected_result, json.loads(actual_result))
 
 
 class TestGetOutputFilePath(unittest.TestCase):
@@ -45,7 +75,8 @@ class TestDownloadSiteMaps(unittest.TestCase):
         get_sitemap_type_mock.return_value = SiteMapType.SITEMAP
 
         actual_result = download_sitemaps(self.sitemap_url, self.output_dir)
-        expected_result = {self.sitemap_url: "/tmp/foo/sitemap.xml"}
+        expected_result = FileIndex()
+        expected_result.add_sitemap(Sitemap(self.sitemap_url, "/tmp/foo/sitemap.xml"))
         self.assertEqual(expected_result, actual_result)
         download_url_mock.assert_called_once_with(self.sitemap_url,
                                                   "/tmp/foo/sitemap.xml")
@@ -96,7 +127,9 @@ class TestDownloadSiteMaps(unittest.TestCase):
         download_url_mock.side_effect = DownloadError("foo")
 
         actual_result = download_sitemaps(self.sitemap_url, self.output_dir)
-        self.assertEqual({self.sitemap_url: None}, actual_result)
+        expected_result = FileIndex()
+        expected_result.add_error(self.sitemap_url)
+        self.assertEqual(expected_result, actual_result)
 
 
 class TestDownloadSitemapsFromUrls(unittest.TestCase):
@@ -122,17 +155,17 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
 
-        expected_result = {
-            "http://foo/bar.xml": "/tmp/foo/bar.xml",
-            "http://foo/baz.xml": "/tmp/foo/baz.xml"
-        }
+        expected_result = FileIndex()
+        expected_result.add_sitemap(Sitemap("http://foo/bar.xml", "/tmp/foo/bar.xml"))
+        expected_result.add_sitemap(Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml"))
+
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
 
     def test_empty_list(self):
         actual_result = download_sitemaps_from_urls([], self.output_dir)
-        self.assertEqual({}, actual_result)
+        self.assertEqual(FileIndex(), actual_result)
 
     @mock.patch("os.remove")
     @mock.patch("cdf.features.sitemap.download.download_url")
@@ -148,9 +181,8 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
 
-        expected_result = {
-            "http://foo/baz.xml": "/tmp/foo/baz.xml"
-        }
+        expected_result = FileIndex()
+        expected_result.add_sitemap(Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml"))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
@@ -172,11 +204,12 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         is_file_mock.return_value = True
 
         actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
+        expected_result = FileIndex()
+        expected_result.add_error("http://foo/bar.xml")
+        expected_result.add_sitemap(
+            Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml")
+        )
 
-        expected_result = {
-            "http://foo/bar.xml": None,
-            "http://foo/baz.xml": "/tmp/foo/baz.xml"
-        }
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)

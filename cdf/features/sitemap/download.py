@@ -1,6 +1,9 @@
 import urlparse
 import os.path
 import time
+import json
+from collections import namedtuple
+
 from cdf.log import logger
 
 from cdf.features.sitemap.exceptions import (UnhandledFileType,
@@ -10,6 +13,42 @@ from cdf.features.sitemap.utils import download_url
 from cdf.features.sitemap.constant import DOWNLOAD_DELAY
 from cdf.features.sitemap.document import (SiteMapType,
                                            SitemapDocument)
+
+
+Sitemap = namedtuple('Sitemap', ['url', 's3_uri'])
+
+
+class FileIndex(object):
+    def __init__(self):
+        self.sitemaps = []
+        self.errors = []
+
+    def add_sitemap(self, sitemap):
+        """Add a sitemap
+        :param sitemap: the input sitemap
+        :type sitemap: Sitemap
+        """
+        self.sitemaps.append(sitemap)
+
+    def add_error(self, url):
+        """Add an error url
+        :param url: the error url
+        :type url: str
+        """
+        self.errors.append(url)
+
+    def to_json(self):
+        """Return a json representation of the object
+        :returns: str"""
+        d = {
+            "sitemaps": [sitemap.__dict__ for sitemap in self.sitemaps],
+            "errors": self.errors
+        }
+        return json.dumps(d)
+
+    def __eq__(self, other):
+        return (set(self.sitemaps) == set(other.sitemaps) and
+                set(self.errors) == set(other.errors))
 
 
 def download_sitemaps(input_url, output_directory):
@@ -22,22 +61,24 @@ def download_sitemaps(input_url, output_directory):
     :type input_url: str
     :param output_directory: the path to the directory where to save the files
     :type output_directory: str
-    :returns: dict - a dict url -> output file path
+    :returns: FileIndex
     :raises: UnhandledFileType
     """
+    result = FileIndex()
     #download input url
     output_file_path = get_output_file_path(input_url, output_directory)
     try:
         download_url(input_url, output_file_path)
     except DownloadError as e:
         logger.error("Download error: %s", e.message)
-        return {input_url: None}
+        result.add_error(input_url)
+        return result
 
     sitemap_document = SitemapDocument(output_file_path)
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
     if sitemap_type == SiteMapType.SITEMAP:
-        result = {input_url: output_file_path}
+        result.add_sitemap(Sitemap(input_url, output_file_path))
     #if it is a sitemap index
     elif sitemap_type == SiteMapType.SITEMAP_INDEX:
         #download referenced sitemaps
@@ -61,7 +102,7 @@ def download_sitemaps_from_urls(urls, output_directory):
     :type output_directory: str
     :returns: dict - a dict url -> output file path
     """
-    result = {}
+    result = FileIndex()
     for url in urls:
         file_path = get_output_file_path(url, output_directory)
         time.sleep(DOWNLOAD_DELAY)
@@ -74,11 +115,11 @@ def download_sitemaps_from_urls(urls, output_directory):
             if os.path.isfile(file_path):
                 os.remove(file_path)
             if isinstance(e, DownloadError):
-                result[url] = None
+                result.add_error(url)
             continue
         #  check if it is actually a sitemap
         if sitemap_type == SiteMapType.SITEMAP:
-            result[url] = file_path
+            result.add_sitemap(Sitemap(url, file_path))
         else:
             #  if not, remove file
             logger.warning("'%s' is not a sitemap file.", url)
