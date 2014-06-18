@@ -15,7 +15,9 @@ from cdf.features.sitemap.document import (SiteMapType,
 def download_sitemaps(input_url, output_directory):
     """Download all sitemap files related to an input url in a directory.
     If the input url is a sitemap, the file will simply be downloaded,
-    if it is a sitemap index, it will download the listed sitemaps
+    if it is a sitemap index, it will download the listed sitemaps.
+    The function returns a dict original url -> path.
+    If a file could not be downloaded, the path is None.
     :param input_url: the url to the sitemap or sitemap index file
     :type input_url: str
     :param output_directory: the path to the directory where to save the files
@@ -29,7 +31,7 @@ def download_sitemaps(input_url, output_directory):
         download_url(input_url, output_file_path)
     except DownloadError as e:
         logger.error("Download error: %s", e.message)
-        return {}
+        return {input_url: None}
 
     sitemap_document = SitemapDocument(output_file_path)
     sitemap_type = sitemap_document.get_sitemap_type()

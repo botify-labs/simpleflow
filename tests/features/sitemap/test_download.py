@@ -90,6 +90,14 @@ class TestDownloadSiteMaps(unittest.TestCase):
             input_url,
             self.output_dir)
 
+    @mock.patch("cdf.features.sitemap.download.download_url")
+    def test_download_error(self,
+                            download_url_mock):
+        download_url_mock.side_effect = DownloadError("foo")
+
+        actual_result = download_sitemaps(self.sitemap_url, self.output_dir)
+        self.assertEqual({self.sitemap_url: None}, actual_result)
+
 
 class TestDownloadSitemapsFromUrls(unittest.TestCase):
     def setUp(self):
