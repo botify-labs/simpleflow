@@ -21,10 +21,16 @@ Sitemap = namedtuple('Sitemap', ['url', 's3_uri'])
 class DownloadStatus(object):
     """A class information about the downloaded sitemaps:
         where they come from, where they are stored
-        errors that occured"""
-    def __init__(self):
-        self.sitemaps = []
-        self.errors = []
+        errors that occured
+        :param sitemaps: the list of downloaded sitemaps.
+                         each sitemap is an instance of Sitemap
+        :type sitemaps: list
+        :param errors: the list of sitemap errors. Each error is a string
+                       representing an url.
+        :type errors: list"""
+    def __init__(self, sitemaps=None, errors=None):
+        self.sitemaps = sitemaps or []
+        self.errors = errors or []
 
     def add_sitemap(self, sitemap):
         """Add a sitemap
