@@ -80,6 +80,13 @@ def match_sitemap_urls(s3_uri,
                        part_id_size=PART_ID_SIZE,
                        tmp_dir=None,
                        force_fetch=False):
+    """Match urls from the sitemaps to urls from the crawl.
+    When the url is present in the crawl, we save its urlid in a file
+    'sitemap.txt.XXX.gz', when it is not present, the full url is
+    saved in a file 'sitemap_only.gz'.
+    The generated files are then pushed to s3.
+    """
+
     #load crawl information
     id_stream = IdStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
     url_to_id = get_url_to_id_dict_from_stream(id_stream)
@@ -116,6 +123,19 @@ def match_sitemap_urls(s3_uri,
 
 
 def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
+    """Return a stream made of the urls that are in the sitemaps
+    :param s3_uri: the s3 uri where the crawl data is stored.
+    :type s3_uri: str
+    :param tmp_dir: the path to the directory where to save the files
+    :type tmp_dir: str
+    :param force_fetch: if True, the files will be downloaded from s3
+                        even if they are in the tmp directory.
+                        if False, files that are present in the tmp_directory
+                        will not be downloaded from s3.
+    :type force_fetch: bool
+    :returns: iterator
+    """
+    download_status_filename = 'download_status.json'
     s3.fetch_file(
         os.path.join(s3_uri, 'sitemaps', 'download_status.json'),
         os.path.join(tmp_dir, 'download_status.json'),
