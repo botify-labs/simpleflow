@@ -151,6 +151,26 @@ class TestDownloadSiteMaps(unittest.TestCase):
         self.assertEqual(expected_result, actual_result)
 
 
+    @mock.patch("os.remove")
+    @mock.patch("cdf.features.sitemap.download.download_url", new=mock.MagicMock())
+    @mock.patch.object(SitemapDocument, "get_urls")
+    @mock.patch.object(SitemapDocument, "get_sitemap_type")
+    def test_parsing_error(self,
+                           get_sitemap_type_mock,
+                           get_urls_mock,
+                           remove_mock):
+        get_sitemap_type_mock.return_value = SiteMapType.SITEMAP_INDEX
+        def url_generator():
+            raise ParsingError()
+            yield "http://foo.com"
+        get_urls_mock.return_value = url_generator()
+        actual_result = download_sitemaps(self.sitemap_index_url, self.output_dir)
+        expected_result = DownloadStatus()
+        expected_result.add_error(self.sitemap_index_url)
+        self.assertEqual(expected_result, actual_result)
+        remove_mock.assert_called_once_with("/tmp/foo/sitemap_index.xml")
+
+
 class TestDownloadSitemapsFromUrls(unittest.TestCase):
     def setUp(self):
         self.urls = [
