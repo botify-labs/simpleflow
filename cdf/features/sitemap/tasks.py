@@ -1,6 +1,7 @@
 import os.path
 import json
 import itertools
+import gzip
 
 from cdf.utils import s3
 from cdf.core.decorators import feature_enabled
@@ -90,18 +91,28 @@ def match_sitemap_urls(s3_uri,
         force_fetch
     )
 
+    sitemap_only_filename = 'sitemap_only.gz'
+    sitemap_only_filepath = os.path.join(tmp_dir,
+                                         sitemap_only_filename)
+
     #for each url in the sitemaps
-    not_in_crawl = []
     dataset = SitemapStreamDef.create_temporary_dataset()
-    for url in get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
-        urlid = url_to_id.get(url, None)
-        if urlid is None:
-            not_in_crawl.append(url)
-        else:
-            dataset.append(urlid)
+    with gzip.open(sitemap_only_filepath, 'wb') as sitemap_only_file:
+        for url in get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
+            urlid = url_to_id.get(url, None)
+            if urlid is None:
+                line = "{}\n".format(url)
+                line = unicode(line)
+                sitemap_only_file.write(line)
+            else:
+                dataset.append(urlid)
     dataset.persist_to_s3(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)
+    s3.push_file(
+        os.path.join(s3_uri, sitemap_only_filename),
+        sitemap_only_filepath
+    )
 
 
 def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
