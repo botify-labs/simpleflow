@@ -758,7 +758,7 @@ class BadLinksStreamDef(StreamDefBase):
         ('dst_url_id', int),
         ('http_code', int)
     )
-    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name,
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
     URL_DOCUMENT_MAPPING = {
         # erroneous outgoing internal links
         "outlinks_errors.3xx.nb": {
