@@ -32,8 +32,8 @@ class DownloadStatus(object):
         self.sitemaps = sitemaps or []
         self.errors = errors or []
 
-    def add_sitemap(self, sitemap):
-        """Add a sitemap
+    def add_success_sitemap(self, sitemap):
+        """Add a sitemap that has been successfuly downloaded.
         :param sitemap: the input sitemap
         :type sitemap: Sitemap
         """
@@ -91,7 +91,7 @@ def download_sitemaps(input_url, output_directory):
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
     if sitemap_type == SiteMapType.SITEMAP:
-        result.add_sitemap(Sitemap(input_url, output_file_path))
+        result.add_success_sitemap(Sitemap(input_url, output_file_path))
     #if it is a sitemap index
     elif sitemap_type == SiteMapType.SITEMAP_INDEX:
         #download referenced sitemaps
@@ -135,7 +135,7 @@ def download_sitemaps_from_urls(urls, output_directory):
             continue
         #  check if it is actually a sitemap
         if sitemap_type == SiteMapType.SITEMAP:
-            result.add_sitemap(Sitemap(url, file_path))
+            result.add_success_sitemap(Sitemap(url, file_path))
         else:
             #  if not, remove file
             logger.warning("'%s' is not a sitemap file.", url)

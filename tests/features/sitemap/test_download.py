@@ -95,7 +95,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
 
         actual_result = download_sitemaps(self.sitemap_url, self.output_dir)
         expected_result = DownloadStatus()
-        expected_result.add_sitemap(Sitemap(self.sitemap_url, "/tmp/foo/sitemap.xml"))
+        expected_result.add_success_sitemap(Sitemap(self.sitemap_url, "/tmp/foo/sitemap.xml"))
         self.assertEqual(expected_result, actual_result)
         download_url_mock.assert_called_once_with(self.sitemap_url,
                                                   "/tmp/foo/sitemap.xml")
@@ -195,8 +195,8 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
 
         expected_result = DownloadStatus()
-        expected_result.add_sitemap(Sitemap("http://foo/bar.xml", "/tmp/foo/bar.xml"))
-        expected_result.add_sitemap(Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml"))
+        expected_result.add_success_sitemap(Sitemap("http://foo/bar.xml", "/tmp/foo/bar.xml"))
+        expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml"))
 
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
@@ -221,7 +221,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
 
         expected_result = DownloadStatus()
-        expected_result.add_sitemap(Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml"))
+        expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml"))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
@@ -245,7 +245,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
         expected_result = DownloadStatus()
         expected_result.add_error("http://foo/bar.xml")
-        expected_result.add_sitemap(
+        expected_result.add_success_sitemap(
             Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml")
         )
 

@@ -61,6 +61,6 @@ def download_sitemap_file(input_url, s3_uri, tmp_dir=None, force_fetch=False):
             os.path.join(destination_uri),
             file_path
         )
-        s3_download_status.add_sitemap(Sitemap(url, destination_uri))
+        s3_download_status.add_success_sitemap(Sitemap(url, destination_uri))
 
     return s3_download_status
