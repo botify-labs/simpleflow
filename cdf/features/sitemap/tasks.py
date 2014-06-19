@@ -92,9 +92,10 @@ def match_sitemap_urls(s3_uri,
     url_to_id = get_url_to_id_dict_from_stream(id_stream)
     #download sitemaps
 
+    download_status_filename = 'download_status.json'
     s3.fetch_file(
-        os.path.join(s3_uri, 'sitemaps', 'download_status.json'),
-        os.path.join(tmp_dir, 'download_status.json'),
+        os.path.join(s3_uri, 'sitemaps', download_status_filename),
+        os.path.join(tmp_dir, download_status_filename),
         force_fetch
     )
 
@@ -137,12 +138,13 @@ def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
     """
     download_status_filename = 'download_status.json'
     s3.fetch_file(
-        os.path.join(s3_uri, 'sitemaps', 'download_status.json'),
+        os.path.join(s3_uri, 'sitemaps', download_status_filename),
         os.path.join(tmp_dir, 'download_status.json'),
         force_fetch
     )
 
-    download_status = json.load(open(os.path.join(tmp_dir, "download_status.json")))
+    with open(os.path.join(tmp_dir, download_status_filename)) as f:
+        download_status = json.load(f)
     sitemap_files = []
     for sitemap in download_status["sitemaps"]:
         sitemap_s3_uri = sitemap["s3_uri"]
