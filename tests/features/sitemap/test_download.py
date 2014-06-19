@@ -234,28 +234,13 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                          download_url_mock.mock_calls)
         remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
 
-    @mock.patch("os.remove")
-    @mock.patch("os.path.isfile")
-    @mock.patch("cdf.features.sitemap.download.download_url")
-    @mock.patch.object(SitemapDocument, "get_sitemap_type")
-    def test_parsing_error(self,
-                           sitemap_type_mock,
-                           download_url_mock,
-                           is_file_mock,
-                           remove_mock):
-        download_url_mock.side_effect = ["/tmp/foo/bar.xml", "/tmp/foo/baz.xml"]
+    def test_xml_parsing_error_url_generator(self):
+        def url_generator():
+            raise ParsingError()
+            yield "http://foo.com"
 
-        sitemap_type_mock.side_effect = [ParsingError, SiteMapType.SITEMAP]
-
-        is_file_mock.return_value = True
-
-        actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
-        expected_result = DownloadStatus()
-        expected_result.add_sitemap(Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml"))
-        expected_result.add_error("http://foo/bar.xml")
-
-        self.assertEqual(expected_result, actual_result)
-        self.assertEqual(self.expected_download_calls,
-                         download_url_mock.mock_calls)
-        remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
-
+        self.assertRaises(
+            ParsingError,
+            download_sitemaps_from_urls,
+            url_generator(),
+            self.output_dir)
