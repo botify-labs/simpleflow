@@ -47,6 +47,7 @@ class ContentsExtendedStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = {
         "main_image": {
             "type": STRING_TYPE,
+            "group": "main",
             "settings": {
                 ES_NO_INDEX,
                 RENDERING.IMAGE_URL

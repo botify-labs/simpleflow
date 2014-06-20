@@ -127,7 +127,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         ('is_first_url', _raw_to_bool),
         ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
     )
-    URL_DOCUMENT_DEFAULT_GROUP = "metadata"
+    URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
     URL_DOCUMENT_MAPPING = {
         "metadata.title.duplicates.nb": {
             "verbose_name": "Number of Duplicate Title",

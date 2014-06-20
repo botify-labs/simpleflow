@@ -7,7 +7,7 @@ from cdf.core.streams.exceptions import GroupWithSkipException
 from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
-from cdf.query.constants import FIELD_RIGHTS
+from cdf.query.constants import FIELD_RIGHTS, RENDERING
 
 __all__ = ["IdStreamDef", "InfosStreamDef", "SuggestStreamDef"]
 
@@ -28,7 +28,10 @@ class IdStreamDef(StreamDefBase):
             "verbose_name": "Url",
             "type": STRING_TYPE,
             "order": 0,
-            "settings": {ES_NOT_ANALYZED}
+            "settings": {
+                ES_NOT_ANALYZED,
+                RENDERING.URL
+            }
         },
         "url_hash": {
             "verbose_name": "Url Hash",
