@@ -148,7 +148,21 @@ def match_sitemap_urls_from_stream(url_generator,
             dataset.append(urlid)
 
 
-def download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch):
+def get_download_status_from_s3(s3_uri, tmp_dir, force_fetch):
+    """Get the sitemap download status corresponding to a crawl.
+    The function downloads the corresponding file and builds a DownloadStatus
+    object from it.
+    :param s3_uri: the s3 uri where the crawl data is stored.
+    :type s3_uri: str
+    :param tmp_dir: the path to the directory where to save the files
+    :type tmp_dir: str
+    :param force_fetch: if True, the files will be downloaded from s3
+                        even if they are in the tmp directory.
+                        if False, files that are present in the tmp_directory
+                        will not be downloaded from s3.
+    :type force_fetch: bool
+    :returns: DownloadStatus
+    """
     download_status_filename = 'download_status.json'
     s3.fetch_file(
         os.path.join(s3_uri, 'sitemaps', download_status_filename),
@@ -158,13 +172,32 @@ def download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch):
 
     with open(os.path.join(tmp_dir, download_status_filename)) as f:
         download_status = json.load(f)
+    sitemaps = [Sitemap(sitemap["url"], sitemap["s3_uri"]) for sitemap
+                in download_status["sitemaps"]]
+    errors = download_status["errors"]
+    result = DownloadStatus(sitemaps, errors)
+    return result
+
+
+def download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch):
+    """Download the sitemap files stored on s3.
+    :param s3_uri: the s3 uri where the crawl data is stored.
+    :type s3_uri: str
+    :param tmp_dir: the path to the directory where to save the files
+    :type tmp_dir: str
+    :param force_fetch: if True, the files will be downloaded from s3
+                        even if they are in the tmp directory.
+                        if False, files that are present in the tmp_directory
+                        will not be downloaded from s3.
+    :type force_fetch: bool
+    """
+    download_status = get_download_status_from_s3(s3_uri, tmp_dir, force_fetch)
     sitemap_files = []
-    for sitemap in download_status["sitemaps"]:
-        sitemap_s3_uri = sitemap["s3_uri"]
-        _, filename = s3.uri_parse(sitemap_s3_uri)
+    for sitemap in download_status.sitemaps:
+        _, filename = s3.uri_parse(sitemap.s3_uri)
         destination = os.path.join(tmp_dir, filename)
         s3.fetch_file(
-            os.path.join(sitemap_s3_uri),
+            os.path.join(sitemap.s3_uri),
             destination,
             force_fetch
         )
