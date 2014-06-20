@@ -103,17 +103,14 @@ def match_sitemap_urls(s3_uri,
     sitemap_only_filepath = os.path.join(tmp_dir,
                                          sitemap_only_filename)
 
-    #for each url in the sitemaps
     dataset = SitemapStreamDef.create_temporary_dataset()
     with gzip.open(sitemap_only_filepath, 'wb') as sitemap_only_file:
-        for url in get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
-            urlid = url_to_id.get(url, None)
-            if urlid is None:
-                line = "{}\n".format(url)
-                line = unicode(line)
-                sitemap_only_file.write(line)
-            else:
-                dataset.append(urlid)
+        url_generator = get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch)
+        match_sitemap_urls_from_stream(
+            url_generator,
+            url_to_id,
+            dataset,
+            sitemap_only_file)
     dataset.persist_to_s3(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)
@@ -121,6 +118,20 @@ def match_sitemap_urls(s3_uri,
         os.path.join(s3_uri, sitemap_only_filename),
         sitemap_only_filepath
     )
+
+
+def match_sitemap_urls_from_stream(url_generator,
+                                   url_to_id,
+                                   dataset,
+                                   sitemap_only_file):
+    for url in url_generator:
+        urlid = url_to_id.get(url, None)
+        if urlid is None:
+            line = "{}\n".format(url)
+            line = unicode(line)
+            sitemap_only_file.write(line)
+        else:
+            dataset.append(urlid)
 
 
 def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
