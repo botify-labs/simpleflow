@@ -148,19 +148,7 @@ def match_sitemap_urls_from_stream(url_generator,
             dataset.append(urlid)
 
 
-def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
-    """Return a stream made of the urls that are in the sitemaps
-    :param s3_uri: the s3 uri where the crawl data is stored.
-    :type s3_uri: str
-    :param tmp_dir: the path to the directory where to save the files
-    :type tmp_dir: str
-    :param force_fetch: if True, the files will be downloaded from s3
-                        even if they are in the tmp directory.
-                        if False, files that are present in the tmp_directory
-                        will not be downloaded from s3.
-    :type force_fetch: bool
-    :returns: iterator
-    """
+def download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch):
     download_status_filename = 'download_status.json'
     s3.fetch_file(
         os.path.join(s3_uri, 'sitemaps', download_status_filename),
@@ -181,7 +169,23 @@ def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
             force_fetch
         )
         sitemap_files.append(destination)
+    return sitemap_files
 
+
+def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
+    """Return a stream made of the urls that are in the sitemaps
+    :param s3_uri: the s3 uri where the crawl data is stored.
+    :type s3_uri: str
+    :param tmp_dir: the path to the directory where to save the files
+    :type tmp_dir: str
+    :param force_fetch: if True, the files will be downloaded from s3
+                        even if they are in the tmp directory.
+                        if False, files that are present in the tmp_directory
+                        will not be downloaded from s3.
+    :type force_fetch: bool
+    :returns: iterator
+    """
+    sitemap_files = download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch)
     sitemap_streams = []
     for sitemap_file in sitemap_files:
         sitemap_document = SitemapDocument(sitemap_file)
