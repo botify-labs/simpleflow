@@ -124,6 +124,20 @@ def match_sitemap_urls_from_stream(url_generator,
                                    url_to_id,
                                    dataset,
                                    sitemap_only_file):
+    """The method matches sitemap urls from a stream
+    to the urls in the sitemap.
+    If the url is in the crawl, we add its url id in an output stream.
+    If not we write the url itself in an output file.
+    :param url_generator: an iterator over the urls in the sitemap
+    :type url_generator: iterator
+    :param url_to_id: a dict for the urls in the crawl url->urlid
+    :type url_to_id: dict
+    :param dataset: the dataset where to store urlids for urls that are both in
+                    sitemap and in crawl
+    :type dataset: TemporaryDataset
+    :param sitemap_only_file: a file object where to store urls that are only
+                              in the sitemap
+    """
     for url in url_generator:
         urlid = url_to_id.get(url, None)
         if urlid is None:
