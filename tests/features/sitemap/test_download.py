@@ -1,13 +1,62 @@
 import unittest
 import mock
-
-from cdf.features.sitemap.download import (download_sitemaps,
+import json
+from cdf.features.sitemap.download import (DownloadStatus,
+                                           Sitemap,
+                                           download_sitemaps,
                                            download_sitemaps_from_urls,
                                            get_output_file_path)
 
 from cdf.features.sitemap.document import SiteMapType, SitemapDocument
 from cdf.features.sitemap.exceptions import (DownloadError,
+                                             ParsingError,
                                              UnhandledFileType)
+
+class TestDownloadStatus(unittest.TestCase):
+    def test_to_json(self):
+        download_status = DownloadStatus(
+            [Sitemap("http://foo/sitemap_1.xml", "s3://foo/sitemap_1.xml")],
+            ["http://error1", "http://error2"]
+        )
+
+        actual_result = download_status.to_json()
+
+        expected_result = {
+            "sitemaps": [
+                {
+                    "url": "http://foo/sitemap_1.xml",
+                    "s3_uri": "s3://foo/sitemap_1.xml"
+                }
+            ],
+            "errors": [
+                "http://error1",
+                "http://error2"
+            ]
+        }
+        #compare the objects instead of the json representation
+        #to be insensitive to item ordering
+        self.assertEqual(expected_result, json.loads(actual_result))
+
+    def test_update(self):
+        download_status = DownloadStatus(
+            [Sitemap("http://foo/sitemap_1.xml", "s3://foo/sitemap_1.xml")],
+            ["http://error1", "http://error2"]
+        )
+
+        download_status_aux = DownloadStatus(
+            [Sitemap("http://foo/sitemap_2.xml", "s3://foo/sitemap_2.xml")],
+            ["http://error3"]
+        )
+
+        download_status.update(download_status_aux)
+        expected_result = DownloadStatus(
+            [
+                Sitemap("http://foo/sitemap_1.xml", "s3://foo/sitemap_1.xml"),
+                Sitemap("http://foo/sitemap_2.xml", "s3://foo/sitemap_2.xml")
+            ],
+            ["http://error1", "http://error2", "http://error3"]
+        )
+        self.assertEqual(expected_result, download_status)
 
 
 class TestGetOutputFilePath(unittest.TestCase):
@@ -45,7 +94,8 @@ class TestDownloadSiteMaps(unittest.TestCase):
         get_sitemap_type_mock.return_value = SiteMapType.SITEMAP
 
         actual_result = download_sitemaps(self.sitemap_url, self.output_dir)
-        expected_result = {self.sitemap_url: "/tmp/foo/sitemap.xml"}
+        expected_result = DownloadStatus()
+        expected_result.add_success_sitemap(Sitemap(self.sitemap_url, "/tmp/foo/sitemap.xml"))
         self.assertEqual(expected_result, actual_result)
         download_url_mock.assert_called_once_with(self.sitemap_url,
                                                   "/tmp/foo/sitemap.xml")
@@ -90,6 +140,36 @@ class TestDownloadSiteMaps(unittest.TestCase):
             input_url,
             self.output_dir)
 
+    @mock.patch("cdf.features.sitemap.download.download_url")
+    def test_download_error(self,
+                            download_url_mock):
+        download_url_mock.side_effect = DownloadError("foo")
+
+        actual_result = download_sitemaps(self.sitemap_url, self.output_dir)
+        expected_result = DownloadStatus()
+        expected_result.add_error(self.sitemap_url)
+        self.assertEqual(expected_result, actual_result)
+
+
+    @mock.patch("os.remove")
+    @mock.patch("cdf.features.sitemap.download.download_url", new=mock.MagicMock())
+    @mock.patch.object(SitemapDocument, "get_urls")
+    @mock.patch.object(SitemapDocument, "get_sitemap_type")
+    def test_parsing_error(self,
+                           get_sitemap_type_mock,
+                           get_urls_mock,
+                           remove_mock):
+        get_sitemap_type_mock.return_value = SiteMapType.SITEMAP_INDEX
+        def url_generator():
+            raise ParsingError()
+            yield "http://foo.com"
+        get_urls_mock.return_value = url_generator()
+        actual_result = download_sitemaps(self.sitemap_index_url, self.output_dir)
+        expected_result = DownloadStatus()
+        expected_result.add_error(self.sitemap_index_url)
+        self.assertEqual(expected_result, actual_result)
+        remove_mock.assert_called_once_with("/tmp/foo/sitemap_index.xml")
+
 
 class TestDownloadSitemapsFromUrls(unittest.TestCase):
     def setUp(self):
@@ -114,17 +194,17 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
 
-        expected_result = {
-            "http://foo/bar.xml": "/tmp/foo/bar.xml",
-            "http://foo/baz.xml": "/tmp/foo/baz.xml"
-        }
+        expected_result = DownloadStatus()
+        expected_result.add_success_sitemap(Sitemap("http://foo/bar.xml", "/tmp/foo/bar.xml"))
+        expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml"))
+
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
 
     def test_empty_list(self):
         actual_result = download_sitemaps_from_urls([], self.output_dir)
-        self.assertEqual({}, actual_result)
+        self.assertEqual(DownloadStatus(), actual_result)
 
     @mock.patch("os.remove")
     @mock.patch("cdf.features.sitemap.download.download_url")
@@ -140,9 +220,8 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
 
-        expected_result = {
-            "http://foo/baz.xml": "/tmp/foo/baz.xml"
-        }
+        expected_result = DownloadStatus()
+        expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml"))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
@@ -152,11 +231,11 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
     @mock.patch("os.path.isfile")
     @mock.patch("cdf.features.sitemap.download.download_url")
     @mock.patch.object(SitemapDocument, "get_sitemap_type")
-    def test_inv_file(self,
-                      sitemap_type_mock,
-                      download_url_mock,
-                      is_file_mock,
-                      remove_mock):
+    def test_download_error(self,
+                            sitemap_type_mock,
+                            download_url_mock,
+                            is_file_mock,
+                            remove_mock):
         download_url_mock.side_effect = [DownloadError, "/tmp/foo/baz.xml"]
 
         sitemap_type_mock.return_value = SiteMapType.SITEMAP
@@ -164,12 +243,24 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         is_file_mock.return_value = True
 
         actual_result = download_sitemaps_from_urls(self.urls, self.output_dir)
+        expected_result = DownloadStatus()
+        expected_result.add_error("http://foo/bar.xml")
+        expected_result.add_success_sitemap(
+            Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml")
+        )
 
-        expected_result = {
-            "http://foo/baz.xml": "/tmp/foo/baz.xml"
-        }
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
         remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
 
+    def test_xml_parsing_error_url_generator(self):
+        def url_generator():
+            raise ParsingError()
+            yield "http://foo.com"
+
+        self.assertRaises(
+            ParsingError,
+            download_sitemaps_from_urls,
+            url_generator(),
+            self.output_dir)

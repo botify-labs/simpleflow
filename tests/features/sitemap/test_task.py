@@ -1,7 +1,7 @@
 import unittest
 import mock
-import json
 
+from cdf.features.sitemap.download import Sitemap, DownloadStatus
 from cdf.features.sitemap.tasks import (download_sitemap_files,
                                         download_sitemap_file)
 
@@ -14,8 +14,8 @@ class TestDownloadSitemapFiles(unittest.TestCase):
                           push_content_mock):
         #mocking
         download_sitemap_file_mock.side_effect = [
-            {"http://foo.com/sitemap.xml": "s3://foo/sitemaps/sitemap.xml"},
-            {"http://bar.com/sitemap.xml": "s3://foo/sitemaps/sitemap.xml_2"},
+            DownloadStatus([Sitemap("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml")]),
+            DownloadStatus([Sitemap("http://bar.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml_2")])
         ]
 
         #actual call
@@ -27,13 +27,14 @@ class TestDownloadSitemapFiles(unittest.TestCase):
         download_sitemap_files(input_urls, s3_uri)
 
         #verifications
-        expected_file_index = {
-            "http://foo.com/sitemap.xml": "s3://foo/sitemaps/sitemap.xml",
-            "http://bar.com/sitemap.xml": "s3://foo/sitemaps/sitemap.xml_2",
-        }
+        expected_download_status = DownloadStatus([
+            Sitemap("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml"),
+            Sitemap("http://bar.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml_2")
+        ])
+
         push_content_mock.assert_called_once_with(
-            "s3://foo/sitemaps/file_index.json",
-            json.dumps(expected_file_index)
+            "s3://foo/sitemaps/download_status.json",
+            expected_download_status.to_json()
         )
 
 
@@ -44,9 +45,9 @@ class TestDownloadSitemapFile(unittest.TestCase):
                           download_sitemaps_mock,
                           push_file_mock):
         #mocking
-        download_sitemaps_mock.return_value = {
-            "http://foo.com/sitemap.xml": "/tmp/foo/sitemap.xml"
-        }
+        download_sitemaps_mock.return_value = DownloadStatus(
+            [Sitemap("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml")]
+        )
 
         #actual call
         input_url = "http://foo.com/sitemap.xml"
@@ -54,9 +55,9 @@ class TestDownloadSitemapFile(unittest.TestCase):
         actual_result = download_sitemap_file(input_url, s3_uri)
 
         #verifications
-        expected_result = {
-            "http://foo.com/sitemap.xml": "s3://foo/sitemaps/sitemap.xml",
-        }
+        expected_result = DownloadStatus([
+            Sitemap("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml")
+        ])
         self.assertEqual(expected_result, actual_result)
 
         push_file_mock.assert_called_once_with(
