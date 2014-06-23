@@ -2,12 +2,13 @@ import unittest
 import mock
 
 import os
-
+from cdf.core.streams.base import TemporaryDataset
 from cdf.features.sitemap.document import SitemapDocument
 from cdf.features.sitemap.download import Sitemap, DownloadStatus
 from cdf.features.sitemap.matching import (get_sitemap_urls_stream,
                                            get_download_status_from_s3,
-                                           download_sitemaps_from_s3)
+                                           download_sitemaps_from_s3,
+                                           match_sitemap_urls_from_stream)
 
 
 class GetSitemapUrlsStream(unittest.TestCase):
@@ -114,3 +115,29 @@ class TestDownloadSitemapsFromS3(unittest.TestCase):
             mock.call("s3://foo/sitemap_2.xml", os.path.join(tmp_dir, 'sitemap_2.xml'), force_fetch)
         ]
         self.assertEqual(expected_fetch_calls, fetch_file_mock.mock_calls)
+
+
+class MatchSitemapUrlsFromStream(unittest.TestCase):
+    def test_nominal_case(self):
+
+        url_to_id = {
+            "foo": 0,
+            "bar": 2,
+            "qux": 5
+        }
+
+        url_generator = iter(["foo", "bar", "baz", "qux"])
+
+        dataset = mock.create_autospec(TemporaryDataset)
+        dataset = mock.MagicMock()
+        sitemap_only_file = mock.create_autospec(file)
+        match_sitemap_urls_from_stream(url_generator,
+                                       url_to_id,
+                                       dataset,
+                                       sitemap_only_file)
+
+        expected_dataset_calls = [mock.call(0),
+                                  mock.call(2),
+                                  mock.call(5)]
+        self.assertEquals(expected_dataset_calls, dataset.append.mock_calls)
+        sitemap_only_file.write.assert_called_once_with("baz\n")
