@@ -1,11 +1,9 @@
 import os
-import json
 import itertools
 
 from cdf.utils import s3
 from cdf.features.sitemap.document import SitemapDocument
-from cdf.features.sitemap.download import (Sitemap,
-                                           DownloadStatus)
+from cdf.features.sitemap.download import parse_download_status_from_json
 
 
 def match_sitemap_urls_from_stream(url_generator,
@@ -58,12 +56,9 @@ def get_download_status_from_s3(s3_uri, tmp_dir, force_fetch):
         force_fetch
     )
 
-    with open(os.path.join(tmp_dir, download_status_filename)) as f:
-        download_status = json.load(f)
-    sitemaps = [Sitemap(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index", None)) for sitemap
-                in download_status["sitemaps"]]
-    errors = download_status["errors"]
-    result = DownloadStatus(sitemaps, errors)
+    result = parse_download_status_from_json(
+        os.path.join(tmp_dir, download_status_filename)
+    )
     return result
 
 

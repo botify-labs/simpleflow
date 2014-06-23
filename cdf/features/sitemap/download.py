@@ -63,6 +63,20 @@ class DownloadStatus(object):
         self.sitemaps.extend(other.sitemaps)
         self.errors.extend(other.errors)
 
+def parse_download_status_from_json(file_path):
+    """Build a DownloadStatus object from a json file
+    :param file_path: the input file path
+    :type file_path: str
+    :returns: DownloadStatus
+    """
+    with open(file_path) as f:
+        download_status = json.load(f)
+    sitemaps = [Sitemap(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index", None)) for sitemap
+                in download_status["sitemaps"]]
+    errors = download_status["errors"]
+    result = DownloadStatus(sitemaps, errors)
+    return result
+
 
 def download_sitemaps(input_url, output_directory):
     """Download all sitemap files related to an input url in a directory.
