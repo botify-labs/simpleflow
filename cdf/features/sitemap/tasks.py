@@ -92,13 +92,6 @@ def match_sitemap_urls(s3_uri,
     url_to_id = get_url_to_id_dict_from_stream(id_stream)
     #download sitemaps
 
-    download_status_filename = 'download_status.json'
-    s3.fetch_file(
-        os.path.join(s3_uri, 'sitemaps', download_status_filename),
-        os.path.join(tmp_dir, download_status_filename),
-        force_fetch
-    )
-
     sitemap_only_filename = 'sitemap_only.gz'
     sitemap_only_filepath = os.path.join(tmp_dir,
                                          sitemap_only_filename)
