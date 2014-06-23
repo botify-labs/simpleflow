@@ -151,7 +151,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
             "settings": {
                 ES_NO_INDEX,
                 LIST,
-                RENDERING.URL,
+                RENDERING.URL_STATUS,
                 FIELD_RIGHTS.SELECT
             }
         },
@@ -166,7 +166,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
             "settings": {
                 ES_NO_INDEX,
                 LIST,
-                RENDERING.URL,
+                RENDERING.URL_STATUS,
                 FIELD_RIGHTS.SELECT
             }
         },
@@ -207,7 +207,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
             "settings": {
                 ES_NO_INDEX,
                 LIST,
-                RENDERING.URL,
+                RENDERING.URL_STATUS,
                 FIELD_RIGHTS.SELECT,
                 FIELD_RIGHTS.FILTERS_EXIST
             }

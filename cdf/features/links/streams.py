@@ -177,7 +177,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_NO_INDEX,
                 LIST,
-                RENDERING.URL,
+                RENDERING.URL_LINK_STATUS,
                 FIELD_RIGHTS.SELECT
             },
         },
@@ -261,7 +261,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             },
             "settings": {
                 ES_NO_INDEX,
-                RENDERING.URL,
+                RENDERING.URL_STATUS,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT
             }
@@ -298,7 +298,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_NO_INDEX,
                 LIST,
-                RENDERING.URL,
+                RENDERING.URL_STATUS,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT
             }
@@ -351,7 +351,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_NO_INDEX,
                 LIST,
-                RENDERING.URL,
+                RENDERING.URL_STATUS,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT
             }
@@ -561,7 +561,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "group": GROUPS.inlinks.name,
             "order": 9,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL, FIELD_RIGHTS.SELECT}
+            "settings": {ES_NO_INDEX, LIST, RENDERING.URL_LINK_STATUS, FIELD_RIGHTS.SELECT}
         },
         "inlinks_internal.urls_exists": {
             "type": "boolean",
@@ -774,7 +774,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 3xx",
             "order": 101,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL_STATUS}
         },
         "outlinks_errors.3xx.urls_exists": {
             "type": "boolean",
@@ -794,7 +794,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 4xx",
             "order": 103,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL_STATUS}
         },
         "outlinks_errors.4xx.urls_exists": {
             "type": "boolean",
@@ -814,7 +814,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 5xx",
             "order": 105,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL_STATUS}
         },
         "outlinks_errors.5xx.urls_exists": {
             "type": "boolean",

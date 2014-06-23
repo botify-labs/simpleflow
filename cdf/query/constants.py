@@ -32,6 +32,10 @@ RENDERING = Enum(
         ('IMAGE_URL', 'image_url'),
         # Returns a 2-tuple list of (url, http_code)
         ('URL_HTTP_CODE', 'url_http_code'),
+        # Return a dict {"url": {"url": url, "crawled": bool_crawled}, "status": ["follow"]}
+        ('URL_LINK_STATUS', 'url_link_status'),
+        # Return a dict {"url": url, "crawled": bool_crawled}
+        ('URL_STATUS', 'url_status'),
         # Returns a map dict:
         # {'text': ["My text", "My other text", ..], 'nb': [20, 10..]}
         ('STRING_NB_MAP', 'string_nb_map'),
