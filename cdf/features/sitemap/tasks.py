@@ -49,8 +49,8 @@ def download_sitemap_file(input_url, s3_uri, tmp_dir=None, force_fetch=False):
     If the input url is a sitemap, the file will simply be downloaded,
     if it is a sitemap index, it will download the listed sitemaps
     The function returns a dict original url -> s3 uri.
-    :param input_urls: a list of sitemap/sitemap index urls
-    :type input_urls: list
+    :param input_url: a sitemap/sitemap index url
+    :type input_url: str
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
     :param tmp_dir: the path to the directory where to save the files
@@ -165,7 +165,7 @@ def get_download_status_from_s3(s3_uri, tmp_dir, force_fetch):
 
     with open(os.path.join(tmp_dir, download_status_filename)) as f:
         download_status = json.load(f)
-    sitemaps = [Sitemap(sitemap["url"], sitemap["s3_uri"]) for sitemap
+    sitemaps = [Sitemap(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index", None)) for sitemap
                 in download_status["sitemaps"]]
     errors = download_status["errors"]
     result = DownloadStatus(sitemaps, errors)

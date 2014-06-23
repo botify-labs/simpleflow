@@ -14,21 +14,21 @@ from cdf.features.sitemap.tasks import (download_sitemap_files,
 
 
 class TestDownloadSitemapFiles(unittest.TestCase):
-    @mock.patch('cdf.utils.s3.push_content',)
-    @mock.patch('cdf.features.sitemap.tasks.download_sitemap_file')
+    @mock.patch('cdf.utils.s3.push_content', autospec=True)
+    @mock.patch('cdf.features.sitemap.tasks.download_sitemap_file', autospec=True)
     def test_nominal_case(self,
                           download_sitemap_file_mock,
                           push_content_mock):
         sitemap_index = "http://foo.com/sitemap_index.xml"
         #mocking
-        download_sitemap_file_mock.side_effect = [
+        download_sitemap_file_mock.side_effect = iter([
             DownloadStatus([Sitemap("http://foo.com/sitemap.xml",
                                     "s3://foo/sitemaps/sitemap.xml",
                                     sitemap_index)]),
             DownloadStatus([Sitemap("http://bar.com/sitemap.xml",
                                     "s3://foo/sitemaps/sitemap.xml_2",
                                     sitemap_index)])
-        ]
+        ])
 
         #actual call
         input_urls = [
@@ -55,8 +55,8 @@ class TestDownloadSitemapFiles(unittest.TestCase):
 
 
 class TestDownloadSitemapFile(unittest.TestCase):
-    @mock.patch('cdf.utils.s3.push_file')
-    @mock.patch('cdf.features.sitemap.tasks.download_sitemaps')
+    @mock.patch('cdf.utils.s3.push_file', autospec=True)
+    @mock.patch('cdf.features.sitemap.tasks.download_sitemaps', autospec=True)
     def test_nominal_case(self,
                           download_sitemaps_mock,
                           push_file_mock):
@@ -110,15 +110,15 @@ class MatchSitemapUrlsFromStream(unittest.TestCase):
 
 
 class GetSitemapUrlsStream(unittest.TestCase):
-    @mock.patch.object(SitemapDocument, 'get_urls')
+    @mock.patch.object(SitemapDocument, 'get_urls', autospec=True)
     @mock.patch("cdf.features.sitemap.tasks.download_sitemaps_from_s3", autospec=True)
     def test_nominal_case(self,
                           download_sitemaps_from_s3_mock,
                           get_urls_mock):
-        get_urls_mock.side_effect = [
+        get_urls_mock.side_effect = iter([
             iter(["foo", "bar"]),
             iter(["baz", "qux"])
-        ]
+        ])
 
         download_sitemaps_from_s3_mock.return_value = ["/tmp/foo", "/tmp/bar"]
         s3_uri = "s3://foo"
@@ -141,11 +141,13 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
                         '"sitemaps": ['
                         '    {'
                         '       "url": "http://foo/sitemap_1.xml",'
-                        '       "s3_uri": "s3://foo/sitemap_1.xml"'
+                        '       "s3_uri": "s3://foo/sitemap_1.xml",'
+                        '       "sitemap_index": "http://foo/sitemap_index.xml"'
                         '   },'
                         '   {'
                         '       "url": "http://foo/sitemap_2.xml",'
-                        '       "s3_uri": "s3://foo/sitemap_2.xml"'
+                        '       "s3_uri": "s3://foo/sitemap_2.xml",'
+                        '       "sitemap_index": "http://foo/sitemap_index.xml"'
                         '   }'
                         '],'
                         '"errors": ['
@@ -161,8 +163,12 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
 
         #check result
         expected_sitemaps = [
-            Sitemap("http://foo/sitemap_1.xml", "s3://foo/sitemap_1.xml"),
-            Sitemap("http://foo/sitemap_2.xml", "s3://foo/sitemap_2.xml"),
+            Sitemap("http://foo/sitemap_1.xml",
+                    "s3://foo/sitemap_1.xml",
+                    "http://foo/sitemap_index.xml"),
+            Sitemap("http://foo/sitemap_2.xml",
+                    "s3://foo/sitemap_2.xml",
+                    "http://foo/sitemap_index.xml"),
         ]
         expected_errors = ["http://error"]
         expected_result = DownloadStatus(expected_sitemaps, expected_errors)
@@ -183,8 +189,8 @@ class TestDownloadSitemapsFromS3(unittest.TestCase):
                           get_download_status_from_s3_mock):
         #mock
         sitemaps = [
-            Sitemap("http://foo.com/sitemap_1.xml", "s3://foo/sitemap_1.xml"),
-            Sitemap("http://foo.com/sitemap_2.xml", "s3://foo/sitemap_2.xml")
+            Sitemap("http://foo.com/sitemap_1.xml", "s3://foo/sitemap_1.xml", None),
+            Sitemap("http://foo.com/sitemap_2.xml", "s3://foo/sitemap_2.xml", None)
         ]
         get_download_status_from_s3_mock.return_value = DownloadStatus(sitemaps)
 
