@@ -1,5 +1,6 @@
 import unittest
 import mock
+import os
 
 from cdf.features.sitemap.download import Sitemap, DownloadStatus
 from cdf.core.streams.base import TemporaryDataset
@@ -8,7 +9,8 @@ from cdf.features.sitemap.tasks import (download_sitemap_files,
                                         download_sitemap_file,
                                         match_sitemap_urls_from_stream,
                                         get_sitemap_urls_stream,
-                                        get_download_status_from_s3)
+                                        get_download_status_from_s3,
+                                        download_sitemaps_from_s3)
 
 
 class TestDownloadSitemapFiles(unittest.TestCase):
@@ -171,3 +173,37 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
         fetch_file_mock.assert_called_once_with("s3://foo/sitemaps/download_status.json",
                                                 "/tmp/foo/download_status.json",
                                                 force_fetch)
+
+
+class TestDownloadSitemapsFromS3(unittest.TestCase):
+    @mock.patch('cdf.features.sitemap.tasks.get_download_status_from_s3', autospec=True)
+    @mock.patch('cdf.utils.s3.fetch_file', autospec=True)
+    def test_nominal_case(self,
+                          fetch_file_mock,
+                          get_download_status_from_s3_mock):
+        #mock
+        sitemaps = [
+            Sitemap("http://foo.com/sitemap_1.xml", "s3://foo/sitemap_1.xml"),
+            Sitemap("http://foo.com/sitemap_2.xml", "s3://foo/sitemap_2.xml")
+        ]
+        get_download_status_from_s3_mock.return_value = DownloadStatus(sitemaps)
+
+        #actual call
+        s3_uri = "s3://foo"
+        tmp_dir = "/tmp/foo"
+        force_fetch = False
+        actual_result = download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch)
+
+        #check result
+        expected_result = [
+            os.path.join(tmp_dir, "sitemap_1.xml"),
+            os.path.join(tmp_dir, "sitemap_2.xml"),
+        ]
+        self.assertEqual(expected_result, actual_result)
+
+        #check calls
+        expected_fetch_calls = [
+            mock.call("s3://foo/sitemap_1.xml", os.path.join(tmp_dir, 'sitemap_1.xml'), force_fetch),
+            mock.call("s3://foo/sitemap_2.xml", os.path.join(tmp_dir, 'sitemap_2.xml'), force_fetch)
+        ]
+        self.assertEqual(expected_fetch_calls, fetch_file_mock.mock_calls)
