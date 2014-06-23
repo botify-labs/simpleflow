@@ -15,7 +15,7 @@ from cdf.features.sitemap.document import (SiteMapType,
                                            SitemapDocument)
 
 #FIXME add a source sitemap index if any(cf. https://github.com/sem-io/botify-cdf/issues/381)
-Sitemap = namedtuple('Sitemap', ['url', 's3_uri'])
+Sitemap = namedtuple('Sitemap', ['url', 's3_uri', 'sitemap_index'])
 
 
 class DownloadStatus(object):
@@ -91,13 +91,14 @@ def download_sitemaps(input_url, output_directory):
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
     if sitemap_type == SiteMapType.SITEMAP:
-        result.add_success_sitemap(Sitemap(input_url, output_file_path))
+        result.add_success_sitemap(Sitemap(input_url, output_file_path, None))
     #if it is a sitemap index
     elif sitemap_type == SiteMapType.SITEMAP_INDEX:
         #download referenced sitemaps
         try:
             result = download_sitemaps_from_urls(sitemap_document.get_urls(),
-                                                 output_directory)
+                                                 output_directory,
+                                                 input_url)
         except ParsingError:
             result.add_error(input_url)
         #remove sitemap index file
@@ -107,7 +108,7 @@ def download_sitemaps(input_url, output_directory):
     return result
 
 
-def download_sitemaps_from_urls(urls, output_directory):
+def download_sitemaps_from_urls(urls, output_directory, sitemap_index=None):
     """Download sitemap files from a list of urls.
     If the input url is a sitemap, the file will simply be downloaded.
     The function returns a dict url -> output file path
@@ -116,6 +117,9 @@ def download_sitemaps_from_urls(urls, output_directory):
     :type urls: generator
     :param output_directory: the path to the directory where to save the files
     :type output_directory: str
+    :param sitemap_index: the url of the sitemap index
+                          that lists all the input urls
+    :type sitemap_index: str
     :returns: dict - a dict url -> output file path
     :raises: ParsingError - in case url generator raises
     """
@@ -135,7 +139,7 @@ def download_sitemaps_from_urls(urls, output_directory):
             continue
         #  check if it is actually a sitemap
         if sitemap_type == SiteMapType.SITEMAP:
-            result.add_success_sitemap(Sitemap(url, file_path))
+            result.add_success_sitemap(Sitemap(url, file_path, sitemap_index))
         else:
             #  if not, remove file
             logger.warning("'%s' is not a sitemap file.", url)
