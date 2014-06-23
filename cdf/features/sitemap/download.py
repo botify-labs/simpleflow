@@ -78,7 +78,7 @@ def parse_download_status_from_json(file_path):
     return result
 
 
-def download_sitemaps(input_url, output_directory):
+def download_sitemaps(input_url, output_directory, user_agent):
     """Download all sitemap files related to an input url in a directory.
     If the input url is a sitemap, the file will simply be downloaded,
     if it is a sitemap index, it will download the listed sitemaps.
@@ -88,6 +88,8 @@ def download_sitemaps(input_url, output_directory):
     :type input_url: str
     :param output_directory: the path to the directory where to save the files
     :type output_directory: str
+    :param user_agent: the user agent to use for the query.
+    :type user_agent: str
     :returns: DownloadStatus
     :raises: UnhandledFileType
     """
@@ -95,7 +97,7 @@ def download_sitemaps(input_url, output_directory):
     #download input url
     output_file_path = get_output_file_path(input_url, output_directory)
     try:
-        download_url(input_url, output_file_path)
+        download_url(input_url, output_file_path, user_agent)
     except DownloadError as e:
         logger.error("Download error: %s", e.message)
         result.add_error(input_url)
@@ -112,6 +114,7 @@ def download_sitemaps(input_url, output_directory):
         try:
             result = download_sitemaps_from_urls(sitemap_document.get_urls(),
                                                  output_directory,
+                                                 user_agent,
                                                  input_url)
         except ParsingError:
             result.add_error(input_url)
@@ -122,7 +125,7 @@ def download_sitemaps(input_url, output_directory):
     return result
 
 
-def download_sitemaps_from_urls(urls, output_directory, sitemap_index=None):
+def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_index=None):
     """Download sitemap files from a list of urls.
     If the input url is a sitemap, the file will simply be downloaded.
     The function returns a dict url -> output file path
@@ -131,6 +134,8 @@ def download_sitemaps_from_urls(urls, output_directory, sitemap_index=None):
     :type urls: generator
     :param output_directory: the path to the directory where to save the files
     :type output_directory: str
+    :param user_agent: the user agent to use for the query.
+    :type user_agent: str
     :param sitemap_index: the url of the sitemap index
                           that lists all the input urls
     :type sitemap_index: str
@@ -142,7 +147,7 @@ def download_sitemaps_from_urls(urls, output_directory, sitemap_index=None):
         file_path = get_output_file_path(url, output_directory)
         time.sleep(DOWNLOAD_DELAY)
         try:
-            download_url(url, file_path)
+            download_url(url, file_path, user_agent)
             sitemap_document = SitemapDocument(file_path)
             sitemap_type = sitemap_document.get_sitemap_type()
         except (DownloadError, ParsingError) as e:
