@@ -64,6 +64,23 @@ class TestSitemapXmlDocument(unittest.TestCase):
                          list(sitemap_document.get_urls()))
 
 
+    def test_image_sitemap(self):
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
+                        '<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
+                        ' xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'
+                        '<url>'
+                        '    <loc>http://foo/bar</loc>'
+                        '    <image:image>'
+                        '        <image:loc>http://foo/image.jpg</image:loc>'
+                        '    </image:image>'
+                        '</url>'
+                        '</urlset>')
+        self.file.close()
+        sitemap_document = SitemapXmlDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP_XML,
+                         sitemap_document.get_sitemap_type())
+        self.assertEqual(["http://foo/bar"], list(sitemap_document.get_urls()))
+
     def test_xml_parsing_error(self):
         self.file.write('<urlset><url></url>')
         self.file.close()
