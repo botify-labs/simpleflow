@@ -20,7 +20,7 @@ from cdf.features.links.helpers.masks import list_to_mask
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.links.streams import OutlinksStreamDef, InlinksStreamDef, BadLinksStreamDef
 from cdf.features.semantic_metadata.streams import ContentsStreamDef, ContentsDuplicateStreamDef
-
+from cdf.features.sitemap.streams import SitemapStreamDef
 
 logger.setLevel(logging.DEBUG)
 
@@ -759,6 +759,28 @@ class TestCanonicalGeneration(unittest.TestCase):
         canonical_from = _next_doc(gen)['canonical']['from']
         self.assertEqual(canonical_from, {'nb': 0})
         self.assertFalse('urls_exists' in canonical_from)
+
+
+class TestSitemapGeneration(unittest.TestCase):
+    def test_sitemap_generation(self):
+        ids = [
+            [0, "http", "www.site.com", "/path/index.html", ""],
+            [1, "http", "www.site.com", "/path/name.html", ""],
+            [2, "http", "wwww.site.com", "/path/name.html", "?page=2"],
+        ]
+
+        sitemap_ids = [(0,), (2,), (3,)]
+
+        id_stream = IdStreamDef.get_stream_from_iterator(iter(ids))
+        sitemap_stream = SitemapStreamDef.get_stream_from_iterator(
+            iter(sitemap_ids)
+        )
+
+        document_generator = UrlDocumentGenerator([id_stream, sitemap_stream])
+        documents = list(document_generator)
+        sitemap_status = [(i, d["sitemaps"]["present"]) for i, d in documents]
+        expected_sitemaps_status = [(0, True), (1, False), (2, True)]
+        self.assertEqual(expected_sitemaps_status, sitemap_status)
 
 
 class TestGlobalDocumentGeneration(unittest.TestCase):

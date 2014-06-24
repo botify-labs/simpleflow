@@ -1,4 +1,5 @@
 from cdf.core.features import StreamDefBase
+from cdf.metadata.url.url_metadata import BOOLEAN_TYPE
 
 
 class SitemapStreamDef(StreamDefBase):
@@ -10,3 +11,19 @@ class SitemapStreamDef(StreamDefBase):
         ('id', int),
     )
 
+    URL_DOCUMENT_MAPPING = {
+        # url property data
+        "sitemaps.present": {
+            "verbose_name": "Present in sitemap",
+            "type": BOOLEAN_TYPE
+        }
+    }
+
+    URL_DOCUMENT_DEFAULT_GROUP = "sitemaps"
+
+    def pre_process_document(self, document):
+        document["sitemaps"] = {"present": False}
+
+    def process_document(self, document, stream):
+        #the method is called only for urls that are referenced in the stream
+        document["sitemaps"]["present"] = True
