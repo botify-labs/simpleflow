@@ -25,6 +25,10 @@ class TestS3Module(unittest.TestCase):
             'file.type.23456.gz',
             'file.type.123456789.gz',
         ]
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
 
     def setup_s3(self):
         s3 = boto.connect_s3()
@@ -77,58 +81,50 @@ class TestS3Module(unittest.TestCase):
             basename_func=lambda k: os.path.basename(k.name)
         )
         expected = self.partition_files
-        self.assertItemsEqual(expected, map(lambda i: i.name, sorted_list))
+        self.assertListEqual(expected, map(lambda i: i.name, sorted_list))
 
     @mock_s3
     def test_fetch_files(self):
         self.setup_s3()
-        tmp_dir = tempfile.mkdtemp()
-        files = fetch_files('s3://test_bucket', tmp_dir,
+        files = fetch_files('s3://test_bucket', self.tmp_dir,
                             regexp='file.type.[0-9]+.gz')
         # assert that the return file list is usable
         for f, _ in files:
             self.assertTrue(os.path.exists(f))
 
-        results = [os.path.basename(f) for f in os.listdir(tmp_dir)]
+        results = [os.path.basename(f) for f in os.listdir(self.tmp_dir)]
         expected = self.partition_files
         self.assertItemsEqual(expected, results)
-        shutil.rmtree(tmp_dir)
 
     @mock_s3
     def test_fetch_files_non_force(self):
         self.setup_s3()
         file_name = 'file.type.gz'
         content = 'botify'
-        tmp_dir = tempfile.mkdtemp()
         # create a local file with different content
-        f = open(os.path.join(tmp_dir, file_name), 'w')
-        f.write(content)
-        f.close()
+        with open(os.path.join(self.tmp_dir, file_name), 'w') as f:
+            f.write(content)
 
         # check that when `force_fetch` is false, file will not be fetched
         # if the file is locally present
-        files = fetch_files('s3://test_bucket', tmp_dir,
+        files = fetch_files('s3://test_bucket', self.tmp_dir,
                             regexp=file_name, force_fetch=False)
         file, fetched = files[0]
         self.assertEqual(fetched, False)
 
         # check the content is not that from mocked s3
-        f = open(file)
-        data = f.read()
-        self.assertEqual(data, content)
-        f.close()
-        shutil.rmtree(tmp_dir)
+        with open(file) as f:
+            data = f.read()
+            self.assertEqual(data, content)
 
     @mock_s3
     def test_stream_s3_files(self):
         # mock a bucket with some gzipped files
         s3 = boto.connect_s3()
         test_bucket = s3.create_bucket(self.bucket)
-        tmp_dir = tempfile.mkdtemp()
         contents = ['line1\n', 'line2\n', 'line3\n']
-        f = gzip.open(os.path.join(tmp_dir, 't.txt.1.gz'), 'w')
-        f.writelines(contents)
-        f.close()
+        with gzip.open(os.path.join(self.tmp_dir, 't.txt.1.gz'), 'w') as f:
+            f.writelines(contents)
 
         key = Key(test_bucket, name='t.txt.1.gz')
         key.content_encoding = 'gzip'
@@ -137,7 +133,6 @@ class TestS3Module(unittest.TestCase):
         # check stream results
         result = list(stream_files('s3://test_bucket'))
         self.assertListEqual(result, contents)
-        shutil.rmtree(tmp_dir)
 
     def test_split_lines(self):
         from cdf.utils.s3 import _split_by_lines
