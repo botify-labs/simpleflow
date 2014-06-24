@@ -27,6 +27,12 @@ class LevelDB(KVStore):
         self.path = path
         self.db = None
 
+    def _check(self):
+        """Check that the DB wrapper object is operational
+        """
+        if self.db is None:
+            raise KVStoreException('DB not initiated ...')
+
     def open(self, **configs):
         """Open the DB
         """
@@ -38,8 +44,7 @@ class LevelDB(KVStore):
     def close(self):
         """Close the DB
         """
-        if self.db is None:
-            raise KVStoreException('DB not inited ...')
+        self._check()
         self.db.close()
         self.db = None
 
@@ -52,11 +57,9 @@ class LevelDB(KVStore):
     def reopen(self, **configs):
         """Close and then open the DB, potentially with other configurations
         """
-        if self.db is None:
-            raise KVStoreException('DB not inited ...')
-        else:
-            self.close()
-            self.open(**configs)
+        self._check()
+        self.close()
+        self.open(**configs)
 
     def batch_write(self, kv_stream, batch_size=_DEFAULT_BATCH_SIZE):
         """Batch write a key-value stream into the DB
@@ -67,8 +70,7 @@ class LevelDB(KVStore):
         :param kv_stream: a key-value pair stream
         :param batch_size: size of each write batch
         """
-        if self.db is None:
-            raise KVStoreException('DB not inited ...')
+        self._check()
         count = 0
         wb = self.db.write_batch()
         for k, v in kv_stream:
@@ -82,8 +84,7 @@ class LevelDB(KVStore):
     def iterator(self):
         """Returns an iterator for key-ordered iteration
         """
-        if self.db is None:
-            raise KVStoreException('DB not inited ...')
+        self._check()
         # iteration means we do a full pass on the data
         # but no random lookup, cache is not relevant in
         # this case
@@ -92,11 +93,13 @@ class LevelDB(KVStore):
     def put(self, key, value):
         """Put a key-value pair
         """
+        self._check()
         self.db.put(key, value)
 
     def get(self, key):
         """Get a value from a key
         """
+        self._check()
         return self.db.get(key)
 
 
