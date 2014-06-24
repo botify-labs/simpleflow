@@ -13,7 +13,7 @@ class SitemapStreamDef(StreamDefBase):
 
     URL_DOCUMENT_MAPPING = {
         # url property data
-        "sitemap.present": {
+        "sitemaps.present": {
             "verbose_name": "Present in sitemap",
             "type": BOOLEAN_TYPE,
             "order": 54,  # FIXME
@@ -21,8 +21,8 @@ class SitemapStreamDef(StreamDefBase):
     }
 
     def pre_process_document(self, document):
-        document["sitemap"] = {"present": False}
+        document["sitemaps"] = {"present": False}
 
     def process_document(self, document, stream):
         #the method is called only for urls that are referenced in the stream
-        document["sitemap"]["present"] = True
+        document["sitemaps"]["present"] = True

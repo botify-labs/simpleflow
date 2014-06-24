@@ -778,7 +778,7 @@ class TestSitemapGeneration(unittest.TestCase):
 
         document_generator = UrlDocumentGenerator([id_stream, sitemap_stream])
         documents = list(document_generator)
-        sitemap_status = [(i, d["sitemap"]["present"]) for i, d in documents]
+        sitemap_status = [(i, d["sitemaps"]["present"]) for i, d in documents]
         expected_sitemaps_status = [(0, True), (1, False), (2, True)]
         self.assertEqual(expected_sitemaps_status, sitemap_status)
 
