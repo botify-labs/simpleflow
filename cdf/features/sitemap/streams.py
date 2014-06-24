@@ -15,10 +15,11 @@ class SitemapStreamDef(StreamDefBase):
         # url property data
         "sitemaps.present": {
             "verbose_name": "Present in sitemap",
-            "type": BOOLEAN_TYPE,
-            "order": 54,  # FIXME
+            "type": BOOLEAN_TYPE
         }
     }
+
+    URL_DOCUMENT_DEFAULT_GROUP = "sitemaps"
 
     def pre_process_document(self, document):
         document["sitemaps"] = {"present": False}
