@@ -138,3 +138,29 @@ class TestS3Module(unittest.TestCase):
         result = list(stream_files('s3://test_bucket'))
         self.assertListEqual(result, contents)
         shutil.rmtree(tmp_dir)
+
+    def test_split_lines(self):
+        from cdf.utils.s3 import _split_by_lines
+
+        # empty stream
+        empty = iter('')
+        result = list(_split_by_lines(empty))
+        self.assertEqual(result, [])
+
+        # regular non-empty stream
+        non_empty = iter('abc\ndef\nghi\n')
+        result = list(_split_by_lines(non_empty))
+        expected = ['abc\n', 'def\n', 'ghi\n']
+        self.assertEqual(result, expected)
+
+        # remaining stream
+        remaining = iter('abc\ndef')
+        result = list(_split_by_lines(remaining))
+        expected = ['abc\n', 'def\n']
+        self.assertEqual(result, expected)
+
+        # empty line
+        empty_line = iter('abc\n\ndef')
+        result = list(_split_by_lines(empty_line))
+        expected = ['abc\n', '\n', 'def\n']
+        self.assertEqual(result, expected)
