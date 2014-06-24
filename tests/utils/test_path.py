@@ -108,17 +108,17 @@ class TestPath(unittest.TestCase):
 
     def test_partition_aware_sort(self):
         file_list = [
-            'files09.a.12.gz',
-            'files09.a.1234567.gz',
-            'files09.a.3019.gz',
-            'files09.a.9.gz'
+            'files.09.a.12.gz',
+            'files.09.a.1234567.gz',
+            'files.09.a.3019.gz',
+            'files.09.a.9.gz'
         ]
         sorted_list = partition_aware_sort(file_list)
         expected = [
-            'files09.a.9.gz',
-            'files09.a.12.gz',
-            'files09.a.3019.gz',
-            'files09.a.1234567.gz'
+            'files.09.a.9.gz',
+            'files.09.a.12.gz',
+            'files.09.a.3019.gz',
+            'files.09.a.1234567.gz'
         ]
         self.assertListEqual(expected, sorted_list)
 
