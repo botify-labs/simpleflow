@@ -21,8 +21,7 @@ class SitemapStreamDef(StreamDefBase):
     }
 
     def pre_process_document(self, document):
-        document["sitemap"] = {}
-        document["sitemap"]["present"] = False
+        document["sitemap"] = {"present": False}
 
     def process_document(self, document, stream):
         #the method is called only for urls that are referenced in the stream
