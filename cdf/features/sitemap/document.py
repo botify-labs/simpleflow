@@ -90,12 +90,19 @@ class AbstractSitemapXml(SitemapDocument):
         :param file_object: a file like object
         :type file_object: file
         """
+        #the valid tag for <loc> parents
+        valid_loc_parent_tag = frozenset(["url", "sitemap"])
         with open_sitemap_file(self.file_path) as file_object:
             try:
-                for _, element in etree.iterparse(file_object, events=("start",)):
+                for _, element in etree.iterparse(file_object):
                     localname = etree.QName(element.tag).localname
                     if localname == "loc":
-                        yield element.text
+                        #check the parent tag, to avoid returning
+                        #image urls found in image sitemaps
+                        parent_node = element.getparent()
+                        parent_localname = etree.QName(parent_node.tag).localname
+                        if parent_localname in valid_loc_parent_tag:
+                            yield element.text
                     element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
