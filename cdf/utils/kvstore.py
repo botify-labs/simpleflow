@@ -46,11 +46,7 @@ class LevelDB(KVStore):
     def destroy(self):
         """Close and remove the whole DB (all data is lost)
         """
-        if self.db is None:
-            raise KVStoreException('DB not inited ...')
-
-        if not self.db.closed:
-            self.db.close()
+        self.db.close()
         plyvel.destroy_db(self.path)
 
     def reopen(self, **configs):
