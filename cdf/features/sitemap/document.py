@@ -44,6 +44,36 @@ class SitemapDocument(object):
                 raise ParsingError(e.message)
 
 
+class SitemapRssDocument(object):
+    """A class to represent a sitemap rss document.
+    """
+    def __init__(self, file_path):
+        """Constructor
+        :param file_path: the path to the input file
+        :type file_path: str
+        """
+        self.file_path = file_path
+
+    def get_sitemap_type(self):
+        #rss document cannot be sitemap_index
+        return SiteMapType.SITEMAP
+
+    def get_urls(self):
+        """Returns the urls listed in the sitemap document
+        :param file_object: a file like object
+        :type file_object: file
+        """
+        with open_sitemap_file(self.file_path) as file_object:
+            try:
+                for _, element in etree.iterparse(file_object):
+                    localname = etree.QName(element.tag).localname
+                    if localname == "link":
+                        yield element.text
+                        element.clear()
+            except etree.XMLSyntaxError as e:
+                raise ParsingError(e.message)
+
+
 def open_sitemap_file(file_path):
     """Create a file-like object from a path.
     The function handles gzip and plain text files

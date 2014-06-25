@@ -5,7 +5,8 @@ import os
 
 from cdf.features.sitemap.document import (open_sitemap_file,
                                            SiteMapType,
-                                           SitemapDocument)
+                                           SitemapDocument,
+                                           SitemapRssDocument)
 from cdf.features.sitemap.exceptions import ParsingError
 
 
@@ -94,6 +95,40 @@ class TestSitemapDocument(unittest.TestCase):
         sitemap_document = SitemapDocument(self.file.name)
         self.assertEqual(SiteMapType.UNKNOWN, sitemap_document.get_sitemap_type())
         self.assertEqual([], list(sitemap_document.get_urls()))
+
+
+class TestSitemapRssDocument(unittest.TestCase):
+    def setUp(self):
+        self.file = tempfile.NamedTemporaryFile(delete=False)
+
+    def tearDown(self):
+        os.remove(self.file.name)
+
+
+    def test_nominal_case(self):
+        self.file.write('<?xml version="1.0" encoding="UTF-8" ?>'
+                         '<rss version="2.0">'
+                         '<channel>'
+                         ' <title>RSS Title</title>'
+                         ' <description>This is an example of an RSS feed</description>'
+                         ' <link>http://www.example.com/main.html</link>'
+                         ' <item>'
+                         '  <title>Example entry</title>'
+                         '  <description>Here is some text containing an interesting description.</description>'
+                         '  <link>http://www.example.com/blog/post/1</link>'
+                         ' </item>'
+                         '</channel>'
+                         '</rss>')
+        self.file.close()
+        sitemap_document = SitemapRssDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP,
+                         sitemap_document.get_sitemap_type())
+        expected_urls = [
+            "http://www.example.com/main.html",
+            "http://www.example.com/blog/post/1"
+        ]
+
+        self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
 
 
 class TestOpenSitemapFile(unittest.TestCase):
