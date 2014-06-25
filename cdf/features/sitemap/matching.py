@@ -4,7 +4,7 @@ import re
 from urlparse import urlparse
 
 from cdf.utils import s3
-from cdf.features.sitemap.document import SitemapDocument
+from cdf.features.sitemap.document import SitemapXmlDocument
 from cdf.features.sitemap.download import parse_download_status_from_json
 
 
@@ -127,7 +127,7 @@ def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
     sitemap_files = download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch)
     sitemap_streams = []
     for sitemap_file in sitemap_files:
-        sitemap_document = SitemapDocument(sitemap_file)
+        sitemap_document = SitemapXmlDocument(sitemap_file)
         sitemap_streams.append(sitemap_document.get_urls())
     return itertools.chain(*sitemap_streams)
 

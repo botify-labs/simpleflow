@@ -8,7 +8,7 @@ from cdf.features.sitemap.download import (DownloadStatus,
                                            download_sitemaps_from_urls,
                                            get_output_file_path)
 
-from cdf.features.sitemap.document import SiteMapType, SitemapDocument
+from cdf.features.sitemap.document import SiteMapType, SitemapXmlDocument
 from cdf.features.sitemap.exceptions import (DownloadError,
                                              ParsingError,
                                              UnhandledFileType)
@@ -127,7 +127,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
         pass
 
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
-    @mock.patch.object(SitemapDocument, "get_sitemap_type", autospec=True)
+    @mock.patch.object(SitemapXmlDocument, "get_sitemap_type", autospec=True)
     def test_sitemap_case(self,
                           get_sitemap_type_mock,
                           download_url_mock):
@@ -147,8 +147,8 @@ class TestDownloadSiteMaps(unittest.TestCase):
     @mock.patch("os.remove", autospec=True)
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
     @mock.patch("cdf.features.sitemap.download.download_sitemaps_from_urls", autospec=True)
-    @mock.patch.object(SitemapDocument, "get_urls", autospec=True)
-    @mock.patch.object(SitemapDocument, "get_sitemap_type", autospec=True)
+    @mock.patch.object(SitemapXmlDocument, "get_urls", autospec=True)
+    @mock.patch.object(SitemapXmlDocument, "get_sitemap_type", autospec=True)
     def test_sitemap_index_case(self,
                                 get_sitemap_type_mock,
                                 get_urls_mock,
@@ -175,7 +175,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
         remove_mock.assert_called_once_with("/tmp/foo/sitemap_index.xml")
 
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
-    @mock.patch.object(SitemapDocument, "get_sitemap_type", autospec=True)
+    @mock.patch.object(SitemapXmlDocument, "get_sitemap_type", autospec=True)
     def test_not_sitemap_file(self,
                               get_sitemap_type_mock,
                               download_url_mock):
@@ -206,8 +206,8 @@ class TestDownloadSiteMaps(unittest.TestCase):
 
     @mock.patch("os.remove", autospec=True)
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
-    @mock.patch.object(SitemapDocument, "get_urls", autospec=True)
-    @mock.patch.object(SitemapDocument, "get_sitemap_type", autospec=True)
+    @mock.patch.object(SitemapXmlDocument, "get_urls", autospec=True)
+    @mock.patch.object(SitemapXmlDocument, "get_sitemap_type", autospec=True)
     def test_parsing_error(self,
                            get_sitemap_type_mock,
                            get_urls_mock,
@@ -249,7 +249,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         self.user_agent = "custom user-agent"
 
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
-    @mock.patch.object(SitemapDocument, "get_sitemap_type", autospec=True)
+    @mock.patch.object(SitemapXmlDocument, "get_sitemap_type", autospec=True)
     def test_nominal_case(self,
                           sitemap_type_mock,
                           download_url_mock):
@@ -279,7 +279,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
     @mock.patch("os.remove", autospec=True)
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
-    @mock.patch.object(SitemapDocument, "get_sitemap_type")
+    @mock.patch.object(SitemapXmlDocument, "get_sitemap_type")
     def test_invalid_file(self,
                           get_sitemap_type_mock,
                           download_url_mock,
@@ -306,7 +306,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
     @mock.patch("os.remove", autospec=True)
     @mock.patch("os.path.isfile", autospec=True)
     @mock.patch("cdf.features.sitemap.download.download_url")
-    @mock.patch.object(SitemapDocument, "get_sitemap_type", autospec=True)
+    @mock.patch.object(SitemapXmlDocument, "get_sitemap_type", autospec=True)
     def test_download_error(self,
                             sitemap_type_mock,
                             download_url_mock,

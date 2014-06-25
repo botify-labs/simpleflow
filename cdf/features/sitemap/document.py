@@ -12,8 +12,8 @@ class SiteMapType(Enum):
     SITEMAP_INDEX = 2
 
 
-class SitemapDocument(object):
-    """A class to represent a sitemap document.
+class SitemapXmlDocument(object):
+    """A class to represent a sitemap xml document.
     It can represent a sitemap or a sitemap index.
     """
     def __init__(self, file_path):

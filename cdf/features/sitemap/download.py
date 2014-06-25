@@ -12,7 +12,7 @@ from cdf.features.sitemap.exceptions import (UnhandledFileType,
 from cdf.features.sitemap.utils import download_url
 from cdf.features.sitemap.constant import DOWNLOAD_DELAY
 from cdf.features.sitemap.document import (SiteMapType,
-                                           SitemapDocument)
+                                           SitemapXmlDocument)
 
 #FIXME add a source sitemap index if any(cf. https://github.com/sem-io/botify-cdf/issues/381)
 Sitemap = namedtuple('Sitemap', ['url', 's3_uri', 'sitemap_index'])
@@ -103,7 +103,7 @@ def download_sitemaps(input_url, output_directory, user_agent):
         result.add_error(input_url)
         return result
 
-    sitemap_document = SitemapDocument(output_file_path)
+    sitemap_document = SitemapXmlDocument(output_file_path)
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
     if sitemap_type == SiteMapType.SITEMAP:
@@ -148,7 +148,7 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
         time.sleep(DOWNLOAD_DELAY)
         try:
             download_url(url, file_path, user_agent)
-            sitemap_document = SitemapDocument(file_path)
+            sitemap_document = SitemapXmlDocument(file_path)
             sitemap_type = sitemap_document.get_sitemap_type()
         except (DownloadError, ParsingError) as e:
             logger.error("Skipping {}: {}".format(url, e.message))

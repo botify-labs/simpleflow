@@ -5,12 +5,12 @@ import os
 
 from cdf.features.sitemap.document import (open_sitemap_file,
                                            SiteMapType,
-                                           SitemapDocument,
+                                           SitemapXmlDocument,
                                            SitemapRssDocument)
 from cdf.features.sitemap.exceptions import ParsingError
 
 
-class TestSitemapDocument(unittest.TestCase):
+class TestSitemapXmlDocument(unittest.TestCase):
     def setUp(self):
         self.file = tempfile.NamedTemporaryFile(delete=False)
 
@@ -23,7 +23,7 @@ class TestSitemapDocument(unittest.TestCase):
                         '<url><loc>http://foo/bar</loc></url>'
                         '</urlset>')
         self.file.close()
-        sitemap_document = SitemapDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name)
         self.assertEqual(SiteMapType.SITEMAP,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/bar"], list(sitemap_document.get_urls()))
@@ -34,7 +34,7 @@ class TestSitemapDocument(unittest.TestCase):
                         '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
                         '</sitemapindex>')
         self.file.close()
-        sitemap_document = SitemapDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name)
         self.assertEqual(SiteMapType.SITEMAP_INDEX,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/sitemap.xml.gz"],
@@ -46,7 +46,7 @@ class TestSitemapDocument(unittest.TestCase):
                         '<url><loc>http://foo/bar</loc></url>'
                         '</urlset>')
         self.file.close()
-        sitemap_document = SitemapDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name)
         self.assertEqual(SiteMapType.SITEMAP,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/bar"],
@@ -62,7 +62,7 @@ class TestSitemapDocument(unittest.TestCase):
                         '  </url>'
                         '</urlset>')
         self.file.close()
-        sitemap_document = SitemapDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name)
         self.assertEqual(SiteMapType.SITEMAP,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/bar/baz"],
@@ -73,7 +73,7 @@ class TestSitemapDocument(unittest.TestCase):
                         '<sitemap><loc>http://foo.com/bar</loc></sitemap>'
                         '</sitemapindex>')
         self.file.close()
-        sitemap_document = SitemapDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name)
         self.assertEqual(SiteMapType.SITEMAP_INDEX,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo.com/bar"],
@@ -82,7 +82,7 @@ class TestSitemapDocument(unittest.TestCase):
     def test_xml_parsing_error(self):
         self.file.write('<urlset><url></url>')
         self.file.close()
-        sitemap_document = SitemapDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name)
         self.assertEqual(SiteMapType.SITEMAP, sitemap_document.get_sitemap_type())
         self.assertRaises(
             ParsingError,
@@ -92,7 +92,7 @@ class TestSitemapDocument(unittest.TestCase):
     def test_not_sitemap(self):
         self.file.write('<foo></foo>')  # valid xml but not a sitemap
         self.file.close()
-        sitemap_document = SitemapDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name)
         self.assertEqual(SiteMapType.UNKNOWN, sitemap_document.get_sitemap_type())
         self.assertEqual([], list(sitemap_document.get_urls()))
 

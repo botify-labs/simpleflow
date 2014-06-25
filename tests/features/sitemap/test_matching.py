@@ -3,7 +3,7 @@ import mock
 
 import os
 from cdf.core.streams.base import TemporaryDataset
-from cdf.features.sitemap.document import SitemapDocument
+from cdf.features.sitemap.document import SitemapXmlDocument
 from cdf.features.sitemap.download import Sitemap, DownloadStatus
 from cdf.features.sitemap.matching import (get_sitemap_urls_stream,
                                            get_download_status_from_s3,
@@ -13,7 +13,7 @@ from cdf.features.sitemap.matching import (get_sitemap_urls_stream,
 
 
 class GetSitemapUrlsStream(unittest.TestCase):
-    @mock.patch.object(SitemapDocument, 'get_urls', autospec=True)
+    @mock.patch.object(SitemapXmlDocument, 'get_urls', autospec=True)
     @mock.patch("cdf.features.sitemap.matching.download_sitemaps_from_s3", autospec=True)
     def test_nominal_case(self,
                           download_sitemaps_from_s3_mock,
