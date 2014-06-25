@@ -1,6 +1,7 @@
 from enum import Enum
 from lxml import etree
 import gzip
+from abc import ABCMeta, abstractmethod
 
 from cdf.log import logger
 from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
@@ -14,6 +15,10 @@ class SiteMapType(Enum):
 
 
 def instanciate_sitemap_document(file_path):
+    """a factory method that creates a sitemap document from a file
+    :param file_path: the input file path
+    :type file_path: str
+    """
     sitemap_type = guess_sitemap_type(file_path)
     if sitemap_type == SiteMapType.SITEMAP:
         return SitemapXmlDocument(file_path)
@@ -27,7 +32,29 @@ def instanciate_sitemap_document(file_path):
     raise UnhandledFileType()
 
 
-class SitemapXmlDocument(object):
+class SitemapDocument(object):
+    """An abstract class to represent a sitemap document.
+    It can represent a sitemap or a sitemap index.
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def get_sitemap_type(self):
+        """Return the type of the sitemap document
+        :returns: SiteMapType
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_urls(self):
+        """Returns the urls listed in the sitemap document
+        :param file_object: a file like object
+        :type file_object: file
+        """
+        raise NotImplementedError()
+
+
+class SitemapXmlDocument(SitemapDocument):
     """A class to represent a sitemap xml document.
     It can represent a sitemap or a sitemap index.
     """
@@ -59,7 +86,7 @@ class SitemapXmlDocument(object):
                 raise ParsingError(e.message)
 
 
-class SitemapRssDocument(object):
+class SitemapRssDocument(SitemapDocument):
     """A class to represent a sitemap rss document.
     """
     def __init__(self, file_path):
