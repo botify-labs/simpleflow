@@ -6,9 +6,9 @@ from cdf.features.sitemap.exceptions import DownloadError
 
 
 class TestDownloadUrl(unittest.TestCase):
-    @mock.patch("time.sleep", new=mock.MagicMock())
-    @mock.patch("cdf.features.sitemap.utils.requests")
-    def test_repeated_download_error(self, request_mock):
+    @mock.patch("time.sleep", autospec=True)
+    @mock.patch("cdf.features.sitemap.utils.requests", autospec=True)
+    def test_repeated_download_error(self, request_mock, sleep_mock):
         response_mock = mock.MagicMock
         response_mock.status_code = 404
         request_mock.get.return_value = response_mock
@@ -17,6 +17,7 @@ class TestDownloadUrl(unittest.TestCase):
             download_url,
             "foo",
             "/tmp/foo")
+        self.assertEqual(7, request_mock.get.call_count)
 
     @mock.patch("__builtin__.open", new=mock.mock_open())
     @mock.patch("cdf.features.sitemap.utils.requests", autospec=True)
