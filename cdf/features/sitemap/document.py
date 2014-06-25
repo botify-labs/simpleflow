@@ -9,17 +9,20 @@ from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
 class SiteMapType(Enum):
     UNKNOWN = 0
     SITEMAP = 1
-    SITEMAP_INDEX = 2
+    SITEMAP_RSS = 2
+    SITEMAP_INDEX = 3
 
 
 def instanciate_sitemap_document(file_path):
-    xml_document = SitemapXmlDocument(file_path)
-    if xml_document.get_sitemap_type() != SiteMapType.UNKNOWN:
-        return xml_document
+    sitemap_type = guess_sitemap_type(file_path)
+    if sitemap_type == SiteMapType.SITEMAP:
+        return SitemapXmlDocument(file_path)
 
-    rss_document = SitemapRssDocument(file_path)
-    if rss_document.get_sitemap_type() != SiteMapType.UNKNOWN:
-        return rss_document
+    if sitemap_type == SiteMapType.SITEMAP_INDEX:
+        return SitemapXmlDocument(file_path)
+
+    if sitemap_type == SiteMapType.SITEMAP_RSS:
+        return SitemapRssDocument(file_path)
 
     raise UnhandledFileType()
 
@@ -118,6 +121,8 @@ def guess_sitemap_type(file_object):
                 return SiteMapType.SITEMAP
             elif localname == "sitemapindex":
                 return SiteMapType.SITEMAP_INDEX
+            elif localname == "rss":
+                return SiteMapType.SITEMAP_RSS
     except etree.XMLSyntaxError:
         return SiteMapType.UNKNOWN
 
