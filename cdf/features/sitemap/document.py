@@ -3,13 +3,25 @@ from lxml import etree
 import gzip
 
 from cdf.log import logger
-from cdf.features.sitemap.exceptions import ParsingError
+from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
 
 
 class SiteMapType(Enum):
     UNKNOWN = 0
     SITEMAP = 1
     SITEMAP_INDEX = 2
+
+
+def instanciate_sitemap_document(file_path):
+    xml_document = SitemapXmlDocument(file_path)
+    if xml_document.get_sitemap_type() != SiteMapType.UNKNOWN:
+        return xml_document
+
+    rss_document = SitemapRssDocument(file_path)
+    if rss_document.get_sitemap_type() != SiteMapType.UNKNOWN:
+        return rss_document
+
+    raise UnhandledFileType()
 
 
 class SitemapXmlDocument(object):

@@ -8,7 +8,9 @@ from cdf.features.sitemap.download import (DownloadStatus,
                                            download_sitemaps_from_urls,
                                            get_output_file_path)
 
-from cdf.features.sitemap.document import SiteMapType, SitemapXmlDocument
+from cdf.features.sitemap.document import (SiteMapType,
+                                           SitemapXmlDocument,
+                                           SitemapRssDocument)
 from cdf.features.sitemap.exceptions import (DownloadError,
                                              ParsingError,
                                              UnhandledFileType)
@@ -176,10 +178,13 @@ class TestDownloadSiteMaps(unittest.TestCase):
 
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
     @mock.patch.object(SitemapXmlDocument, "get_sitemap_type", autospec=True)
+    @mock.patch.object(SitemapRssDocument, "get_sitemap_type", autospec=True)
     def test_not_sitemap_file(self,
-                              get_sitemap_type_mock,
+                              get_sitemap_type_xml_mock,
+                              get_sitemap_type_rss_mock,
                               download_url_mock):
-        get_sitemap_type_mock.return_value = SiteMapType.UNKNOWN
+        get_sitemap_type_xml_mock.return_value = SiteMapType.UNKNOWN
+        get_sitemap_type_rss_mock.return_value = SiteMapType.UNKNOWN
         input_url = "http://foo/bar.xml"
         self.assertRaises(
             UnhandledFileType,
@@ -284,10 +289,12 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                           get_sitemap_type_mock,
                           download_url_mock,
                           remove_mock):
-        get_sitemap_type_mock.side_effect = [
+        get_sitemap_type_mock.side_effect = iter([
             SiteMapType.SITEMAP_INDEX,  # invalid doc
+            SiteMapType.SITEMAP_INDEX,
+            SiteMapType.SITEMAP,
             SiteMapType.SITEMAP
-        ]
+        ])
 
         actual_result = download_sitemaps_from_urls(self.urls,
                                                     self.output_dir,
