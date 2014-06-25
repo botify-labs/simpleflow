@@ -106,7 +106,7 @@ def download_sitemaps(input_url, output_directory, user_agent):
     sitemap_document = instanciate_sitemap_document(output_file_path)
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
-    if sitemap_type == SiteMapType.SITEMAP_XML:
+    if sitemap_type == SiteMapType.SITEMAP_XML or sitemap_type == SiteMapType.SITEMAP_RSS:
         result.add_success_sitemap(Sitemap(input_url, output_file_path, None))
     #if it is a sitemap index
     elif sitemap_type == SiteMapType.SITEMAP_INDEX:
@@ -157,7 +157,7 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
                 result.add_error(url)
             continue
         #  check if it is actually a sitemap
-        if sitemap_type == SiteMapType.SITEMAP_XML:
+        if sitemap_type == SiteMapType.SITEMAP_XML or sitemap_type == SiteMapType.SITEMAP_RSS:
             result.add_success_sitemap(Sitemap(url, file_path, sitemap_index))
         else:
             #  if not, remove file
