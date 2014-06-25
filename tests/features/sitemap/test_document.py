@@ -134,7 +134,7 @@ class TestSitemapRssDocument(unittest.TestCase):
                          '</rss>')
         self.file.close()
         sitemap_document = SitemapRssDocument(self.file.name)
-        self.assertEqual(SiteMapType.SITEMAP,
+        self.assertEqual(SiteMapType.SITEMAP_RSS,
                          sitemap_document.get_sitemap_type())
         expected_urls = [
             "http://www.example.com/main.html",

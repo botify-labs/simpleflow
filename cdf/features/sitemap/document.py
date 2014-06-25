@@ -110,7 +110,7 @@ class SitemapRssDocument(SitemapDocument):
 
     def get_sitemap_type(self):
         #rss document cannot be sitemap_index
-        return SiteMapType.SITEMAP
+        return SiteMapType.SITEMAP_RSS
 
     def get_urls(self):
         """Returns the urls listed in the sitemap document
