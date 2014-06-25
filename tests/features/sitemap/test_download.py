@@ -126,7 +126,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
         self.user_agent = "custom user-agent"
 
         self.sitemap_mock = mock.create_autospec(SitemapXmlDocument)
-        self.sitemap_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP
+        self.sitemap_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_XML
 
         self.sitemap_index_mock = mock.create_autospec(SitemapXmlDocument)
         self.sitemap_index_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_INDEX
@@ -254,7 +254,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         self.user_agent = "custom user-agent"
 
         self.sitemap_mock = mock.create_autospec(SitemapXmlDocument)
-        self.sitemap_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP
+        self.sitemap_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_XML
 
         self.sitemap_index_mock = mock.create_autospec(SitemapXmlDocument)
         self.sitemap_index_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_INDEX

@@ -9,7 +9,7 @@ from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
 
 class SiteMapType(Enum):
     UNKNOWN = 0
-    SITEMAP = 1
+    SITEMAP_XML = 1
     SITEMAP_RSS = 2
     SITEMAP_INDEX = 3
 
@@ -20,7 +20,7 @@ def instanciate_sitemap_document(file_path):
     :type file_path: str
     """
     sitemap_type = guess_sitemap_type(file_path)
-    if sitemap_type == SiteMapType.SITEMAP:
+    if sitemap_type == SiteMapType.SITEMAP_XML:
         return SitemapXmlDocument(file_path)
 
     if sitemap_type == SiteMapType.SITEMAP_INDEX:
@@ -88,7 +88,7 @@ class SitemapXmlDocument(AbstractSitemapXml):
     It can represent a sitemap or a sitemap index.
     """
     def get_sitemap_type(self):
-        return SiteMapType.SITEMAP
+        return SiteMapType.SITEMAP_XML
 
 
 class SitemapIndexXmlDocument(AbstractSitemapXml):
@@ -157,7 +157,7 @@ def guess_sitemap_type(file_object):
             localname = etree.QName(element.tag).localname
             element.clear()
             if localname == "urlset":
-                return SiteMapType.SITEMAP
+                return SiteMapType.SITEMAP_XML
             elif localname == "sitemapindex":
                 return SiteMapType.SITEMAP_INDEX
             elif localname == "rss":
