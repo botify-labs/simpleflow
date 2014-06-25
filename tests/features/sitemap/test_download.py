@@ -125,6 +125,12 @@ class TestDownloadSiteMaps(unittest.TestCase):
         self.output_dir = "/tmp/foo"
         self.user_agent = "custom user-agent"
 
+        self.sitemap_mock = mock.create_autospec(SitemapXmlDocument)
+        self.sitemap_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP
+
+        self.sitemap_index_mock = mock.create_autospec(SitemapXmlDocument)
+        self.sitemap_index_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_INDEX
+
     def tearDown(self):
         pass
 
@@ -133,9 +139,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
     def test_sitemap_case(self,
                           instanciate_sitemap_document_mock,
                           download_url_mock):
-        sitemap_mock = mock.create_autospec(SitemapXmlDocument)
-        sitemap_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP
-        instanciate_sitemap_document_mock.return_value = sitemap_mock
+        instanciate_sitemap_document_mock.return_value = self.sitemap_mock
 
         actual_result = download_sitemaps(self.sitemap_url,
                                           self.output_dir,
@@ -157,10 +161,8 @@ class TestDownloadSiteMaps(unittest.TestCase):
                                 download_sitemaps_from_urls_mock,
                                 download_url_mock,
                                 remove_mock):
-        sitemap_index_mock = mock.create_autospec(SitemapXmlDocument)
-        sitemap_index_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_INDEX
-        sitemap_index_mock.get_urls.return_value = iter(self.sitemap_url)
-        instanciate_sitemap_document_mock.return_value = sitemap_index_mock
+        self.sitemap_index_mock.get_urls.return_value = iter(self.sitemap_url)
+        instanciate_sitemap_document_mock.return_value = self.sitemap_index_mock
 
         download_sitemaps_from_urls_mock.return_value = {
             self.sitemap_url: "/tmp/foo/sitemap.xml"
@@ -215,13 +217,11 @@ class TestDownloadSiteMaps(unittest.TestCase):
                            instanciate_sitemap_document_mock,
                            download_url_mock,
                            remove_mock):
-        sitemap_index_mock = mock.create_autospec(SitemapXmlDocument)
-        sitemap_index_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_INDEX
         def url_generator():
             raise ParsingError()
             yield "http://foo.com"
-        sitemap_index_mock.get_urls.return_value = url_generator()
-        instanciate_sitemap_document_mock.return_value = sitemap_index_mock
+        self.sitemap_index_mock.get_urls.return_value = url_generator()
+        instanciate_sitemap_document_mock.return_value = self.sitemap_index_mock
 
         actual_result = download_sitemaps(self.sitemap_index_url,
                                           self.output_dir,
@@ -253,14 +253,18 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         self.user_agent = "custom user-agent"
 
+        self.sitemap_mock = mock.create_autospec(SitemapXmlDocument)
+        self.sitemap_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP
+
+        self.sitemap_index_mock = mock.create_autospec(SitemapXmlDocument)
+        self.sitemap_index_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_INDEX
+
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
     @mock.patch("cdf.features.sitemap.download.instanciate_sitemap_document", autospec=True)
     def test_nominal_case(self,
                           instanciate_sitemap_document_mock,
                           download_url_mock):
-        sitemap_xml_document = mock.create_autospec(SitemapXmlDocument)
-        sitemap_xml_document.get_sitemap_type.return_value = SiteMapType.SITEMAP
-        instanciate_sitemap_document_mock.return_value = sitemap_xml_document
+        instanciate_sitemap_document_mock.return_value = self.sitemap_mock
 
         actual_result = download_sitemaps_from_urls(self.urls,
                                                     self.output_dir,
@@ -291,14 +295,9 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                           instanciate_sitemap_document_mock,
                           download_url_mock,
                           remove_mock):
-        sitemap_index_mock = mock.create_autospec(SitemapXmlDocument)
-        sitemap_index_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_INDEX
-
-        sitemap_mock = mock.create_autospec(SitemapXmlDocument)
-        sitemap_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP
         instanciate_sitemap_document_mock.side_effect = iter([
-            sitemap_index_mock,
-            sitemap_mock
+            self.sitemap_index_mock,
+            self.sitemap_mock
         ])
 
         actual_result = download_sitemaps_from_urls(self.urls,
@@ -328,9 +327,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                             remove_mock):
         download_url_mock.side_effect = [DownloadError, "/tmp/foo/baz.xml"]
 
-        sitemap_document_mock = mock.create_autospec(SitemapXmlDocument)
-        sitemap_document_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP
-        instanciate_sitemap_document_mock.return_value = sitemap_document_mock
+        instanciate_sitemap_document_mock.return_value = self.sitemap_mock
 
         is_file_mock.return_value = True
 
