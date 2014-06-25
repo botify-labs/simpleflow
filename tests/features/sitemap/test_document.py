@@ -9,6 +9,7 @@ from cdf.features.sitemap.document import (open_sitemap_file,
                                            SitemapXmlDocument,
                                            SitemapIndexXmlDocument,
                                            SitemapRssDocument,
+                                           SitemapTextDocument,
                                            guess_sitemap_type)
 from cdf.features.sitemap.exceptions import ParsingError
 
@@ -117,7 +118,6 @@ class TestSitemapRssDocument(unittest.TestCase):
     def tearDown(self):
         os.remove(self.file.name)
 
-
     def test_nominal_case(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8" ?>'
                          '<rss version="2.0">'
@@ -139,6 +139,30 @@ class TestSitemapRssDocument(unittest.TestCase):
         expected_urls = [
             "http://www.example.com/main.html",
             "http://www.example.com/blog/post/1"
+        ]
+
+        self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+
+
+class TestSitemapTextDocument(unittest.TestCase):
+    def setUp(self):
+        self.file = tempfile.NamedTemporaryFile(delete=False)
+
+    def tearDown(self):
+        os.remove(self.file.name)
+
+    def test_nominal_case(self):
+        self.file.write('http://foo.com/bar\n'
+                        'http://foo.com/baz\n'
+                        'http://foo.com/qux\n')
+        self.file.close()
+        sitemap_document = SitemapTextDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP_TEXT,
+                         sitemap_document.get_sitemap_type())
+        expected_urls = [
+            "http://foo.com/bar",
+            "http://foo.com/baz",
+            "http://foo.com/qux"
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))

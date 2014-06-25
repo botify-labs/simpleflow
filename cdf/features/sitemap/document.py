@@ -2,6 +2,7 @@ from enum import Enum
 from lxml import etree
 import gzip
 from abc import ABCMeta, abstractmethod
+import csv
 
 from cdf.log import logger
 from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
@@ -11,7 +12,8 @@ class SiteMapType(Enum):
     UNKNOWN = 0
     SITEMAP_XML = 1
     SITEMAP_RSS = 2
-    SITEMAP_INDEX = 3
+    SITEMAP_TEXT = 2
+    SITEMAP_INDEX = 4
 
 
 def instanciate_sitemap_document(file_path):
@@ -126,6 +128,35 @@ class SitemapRssDocument(SitemapDocument):
                         element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
+
+
+class SitemapTextDocument(SitemapDocument):
+    """A class to represent a sitemap rss document.
+    """
+    def __init__(self, file_path):
+        """Constructor
+        :param file_path: the path to the input file
+        :type file_path: str
+        """
+        self.file_path = file_path
+
+    def get_sitemap_type(self):
+        #rss document cannot be sitemap_index
+        return SiteMapType.SITEMAP_TEXT
+
+    def get_urls(self):
+        """Returns the urls listed in the sitemap document
+        :param file_object: a file like object
+        :type file_object: file
+        """
+        with open_sitemap_file(self.file_path) as file_object:
+            csv_reader = csv.reader(file_object)
+            for row in csv_reader:
+                if len(row) != 1:
+                    logger.warning("'%s' should have only one field.", row)
+                #we do not check if the string looks like an url
+                #(we don't do it on xml and rss sitemaps)
+                yield row[0]
 
 
 def open_sitemap_file(file_path):
