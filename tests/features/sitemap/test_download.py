@@ -120,6 +120,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
         self.sitemap_url = "http://bar/sitemap.xml"
         self.sitemap_index_url = "http://bar/sitemap_index.xml"
         self.output_dir = "/tmp/foo"
+        self.user_agent = "custom user-agent"
 
     def tearDown(self):
         pass
@@ -131,12 +132,15 @@ class TestDownloadSiteMaps(unittest.TestCase):
                           download_url_mock):
         get_sitemap_type_mock.return_value = SiteMapType.SITEMAP
 
-        actual_result = download_sitemaps(self.sitemap_url, self.output_dir)
+        actual_result = download_sitemaps(self.sitemap_url,
+                                          self.output_dir,
+                                          self.user_agent)
         expected_result = DownloadStatus()
         expected_result.add_success_sitemap(Sitemap(self.sitemap_url, "/tmp/foo/sitemap.xml", None))
         self.assertEqual(expected_result, actual_result)
         download_url_mock.assert_called_once_with(self.sitemap_url,
-                                                  "/tmp/foo/sitemap.xml")
+                                                  "/tmp/foo/sitemap.xml",
+                                                  self.user_agent)
 
 
     @mock.patch("os.remove")
@@ -158,11 +162,14 @@ class TestDownloadSiteMaps(unittest.TestCase):
         }
 
         input_url = self.sitemap_index_url
-        actual_result = download_sitemaps(input_url, self.output_dir)
+        actual_result = download_sitemaps(input_url,
+                                          self.output_dir,
+                                          self.user_agent)
         expected_result = {self.sitemap_url: "/tmp/foo/sitemap.xml"}
         self.assertEqual(expected_result, actual_result)
         download_url_mock.assert_called_once_with(self.sitemap_index_url,
-                                                  "/tmp/foo/sitemap_index.xml")
+                                                  "/tmp/foo/sitemap_index.xml",
+                                                  self.user_agent)
         download_sitemaps_from_urls_mock.assert_called_once()
         remove_mock.assert_called_once_with("/tmp/foo/sitemap_index.xml")
 
@@ -176,14 +183,17 @@ class TestDownloadSiteMaps(unittest.TestCase):
             UnhandledFileType,
             download_sitemaps,
             input_url,
-            self.output_dir)
+            self.output_dir,
+            self.user_agent)
 
     @mock.patch("cdf.features.sitemap.download.download_url")
     def test_download_error(self,
                             download_url_mock):
         download_url_mock.side_effect = DownloadError("foo")
 
-        actual_result = download_sitemaps(self.sitemap_url, self.output_dir)
+        actual_result = download_sitemaps(self.sitemap_url,
+                                          self.output_dir,
+                                          self.user_agent)
         expected_result = DownloadStatus()
         expected_result.add_error(self.sitemap_url)
         self.assertEqual(expected_result, actual_result)
@@ -202,7 +212,9 @@ class TestDownloadSiteMaps(unittest.TestCase):
             raise ParsingError()
             yield "http://foo.com"
         get_urls_mock.return_value = url_generator()
-        actual_result = download_sitemaps(self.sitemap_index_url, self.output_dir)
+        actual_result = download_sitemaps(self.sitemap_index_url,
+                                          self.output_dir,
+                                          self.user_agent)
         expected_result = DownloadStatus()
         expected_result.add_error(self.sitemap_index_url)
         self.assertEqual(expected_result, actual_result)
@@ -217,13 +229,15 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         ]
 
         self.output_dir = "/tmp/foo"
-
+        self.user_agent = 'custom user-agent'
         self.expected_download_calls = [
-            mock.call("http://foo/bar.xml", "/tmp/foo/bar.xml"),
-            mock.call("http://foo/baz.xml", "/tmp/foo/baz.xml")
+            mock.call("http://foo/bar.xml", "/tmp/foo/bar.xml", self.user_agent),
+            mock.call("http://foo/baz.xml", "/tmp/foo/baz.xml", self.user_agent)
         ]
 
         self.sitemap_index = "http://foo/sitemap_index.xml"
+
+        self.user_agent = "custom user-agent"
 
     @mock.patch("cdf.features.sitemap.download.download_url")
     @mock.patch.object(SitemapDocument, "get_sitemap_type")
@@ -234,8 +248,8 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         actual_result = download_sitemaps_from_urls(self.urls,
                                                     self.output_dir,
+                                                    self.user_agent,
                                                     self.sitemap_index)
-
         expected_result = DownloadStatus()
         expected_result.add_success_sitemap(Sitemap("http://foo/bar.xml",
                                                     "/tmp/foo/bar.xml",
@@ -249,7 +263,9 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                          download_url_mock.mock_calls)
 
     def test_empty_list(self):
-        actual_result = download_sitemaps_from_urls([], self.output_dir)
+        actual_result = download_sitemaps_from_urls([],
+                                                    self.output_dir,
+                                                    self.user_agent)
         self.assertEqual(DownloadStatus(), actual_result)
 
     @mock.patch("os.remove")
@@ -266,6 +282,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         actual_result = download_sitemaps_from_urls(self.urls,
                                                     self.output_dir,
+                                                    self.user_agent,
                                                     self.sitemap_index)
 
         expected_result = DownloadStatus()
@@ -294,7 +311,9 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         actual_result = download_sitemaps_from_urls(self.urls,
                                                     self.output_dir,
+                                                    self.user_agent,
                                                     self.sitemap_index)
+
         expected_result = DownloadStatus()
         expected_result.add_error("http://foo/bar.xml")
         expected_result.add_success_sitemap(
@@ -315,4 +334,5 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
             ParsingError,
             download_sitemaps_from_urls,
             url_generator(),
-            self.output_dir)
+            self.output_dir,
+            self.user_agent)

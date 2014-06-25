@@ -18,7 +18,11 @@ from cdf.features.sitemap.matching import (match_sitemap_urls_from_stream,
 
 @with_temporary_dir
 @feature_enabled('sitemap')
-def download_sitemap_files(input_urls, s3_uri, tmp_dir=None, force_fetch=False):
+def download_sitemap_files(input_urls,
+                           s3_uri,
+                           user_agent=None,
+                           tmp_dir=None,
+                           force_fetch=False):
     """Download all sitemap files related to a list of input url and upload them to s3.
     For each input url, If it is a sitemap, the file will simply be downloaded,
     if it is a sitemap index, it will download the listed sitemaps
@@ -26,12 +30,19 @@ def download_sitemap_files(input_urls, s3_uri, tmp_dir=None, force_fetch=False):
     :type input_urls: list
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
+    :param user_agent: the user agent to use for the query.
+                       If None, uses 'requests' default user agent
+    :type user_agent: str
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
     """
     s3_download_status = DownloadStatus()
     for url in input_urls:
-        crt_file_index = download_sitemap_file(url, s3_uri, tmp_dir, force_fetch)
+        crt_file_index = download_sitemap_file(url,
+                                               s3_uri,
+                                               user_agent,
+                                               tmp_dir,
+                                               force_fetch)
         s3_download_status.update(crt_file_index)
 
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
@@ -43,7 +54,11 @@ def download_sitemap_files(input_urls, s3_uri, tmp_dir=None, force_fetch=False):
     )
 
 
-def download_sitemap_file(input_url, s3_uri, tmp_dir=None, force_fetch=False):
+def download_sitemap_file(input_url,
+                          s3_uri,
+                          user_agent=None,
+                          tmp_dir=None,
+                          force_fetch=False):
     """Download all sitemap files related to an input url and upload them to s3.
     If the input url is a sitemap, the file will simply be downloaded,
     if it is a sitemap index, it will download the listed sitemaps
@@ -52,11 +67,14 @@ def download_sitemap_file(input_url, s3_uri, tmp_dir=None, force_fetch=False):
     :type input_url: str
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
+    :param user_agent: the user agent to use for the query.
+                       If None, uses 'requests' default user agent
+    :type user_agent: str
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
     :returns: DownloadStatus
     """
-    download_status = download_sitemaps(input_url, tmp_dir)
+    download_status = download_sitemaps(input_url, tmp_dir, user_agent)
 
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
     #an object similar to download_status but that stores s3 uris
