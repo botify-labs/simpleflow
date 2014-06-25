@@ -2,11 +2,13 @@ import unittest
 import tempfile
 import gzip
 import os
+import StringIO
 
 from cdf.features.sitemap.document import (open_sitemap_file,
                                            SiteMapType,
                                            SitemapXmlDocument,
-                                           SitemapRssDocument)
+                                           SitemapRssDocument,
+                                           guess_sitemap_type)
 from cdf.features.sitemap.exceptions import ParsingError
 
 
@@ -153,3 +155,46 @@ class TestOpenSitemapFile(unittest.TestCase):
 
         with open_sitemap_file(self.file_path) as f:
             self.assertEqual("foo bar", f.read())
+
+
+class TestGuessSitemapDocumentType(unittest.TestCase):
+
+    def test_xml_sitemap(self):
+        file_mock = StringIO.StringIO('<?xml version="1.0" encoding="UTF-8"?>'
+                                      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                                      '<url><loc>http://foo/bar</loc></url>'
+                                      '</urlset>')
+        self.assertEqual(SiteMapType.SITEMAP, guess_sitemap_type(file_mock))
+
+    def test_xml_sitemapindex(self):
+        file_mock = StringIO.StringIO('<?xml version="1.0" encoding="UTF-8"?>'
+                                      '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                                      '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
+                                      '</sitemapindex>')
+        self.assertEqual(SiteMapType.SITEMAP_INDEX,
+                         guess_sitemap_type(file_mock))
+
+    def test_rss_sitemap(self):
+        file_mock = StringIO.StringIO('<?xml version="1.0" encoding="UTF-8" ?>'
+                                      '<rss version="2.0">'
+                                      '<channel>'
+                                      ' <title>RSS Title</title>'
+                                      ' <description>This is an example of an RSS feed</description>'
+                                      ' <link>http://www.example.com/main.html</link>'
+                                      ' <item>'
+                                      '  <title>Example entry</title>'
+                                      '  <description>Here is some text containing an interesting description.</description>'
+                                      '  <link>http://www.example.com/blog/post/1</link>'
+                                      ' </item>'
+                                      '</channel>'
+                                      '</rss>')
+        self.assertEqual(SiteMapType.SITEMAP_RSS,
+                         guess_sitemap_type(file_mock))
+
+    def test_xml_syntax_error(self):
+        file_mock = StringIO.StringIO('<foo></bar>')
+        self.assertEqual(SiteMapType.UNKNOWN, guess_sitemap_type(file_mock))
+
+    def test_simple_xml(self):
+        file_mock = StringIO.StringIO('<foo></foo>')
+        self.assertEqual(SiteMapType.UNKNOWN, guess_sitemap_type(file_mock))
