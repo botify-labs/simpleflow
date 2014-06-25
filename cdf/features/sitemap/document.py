@@ -24,7 +24,7 @@ def instanciate_sitemap_document(file_path):
         return SitemapXmlDocument(file_path)
 
     if sitemap_type == SiteMapType.SITEMAP_INDEX:
-        return SitemapXmlDocument(file_path)
+        return SitemapIndexXmlDocument(file_path)
 
     if sitemap_type == SiteMapType.SITEMAP_RSS:
         return SitemapRssDocument(file_path)
@@ -54,21 +54,18 @@ class SitemapDocument(object):
         raise NotImplementedError()
 
 
-class SitemapXmlDocument(SitemapDocument):
-    """A class to represent a sitemap xml document.
+class AbstractSitemapXml(SitemapDocument):
+    """An abstract class to represent a xml sitemap
     It can represent a sitemap or a sitemap index.
     """
+    __metaclass__ = ABCMeta
+
     def __init__(self, file_path):
         """Constructor
         :param file_path: the path to the input file
         :type file_path: str
         """
         self.file_path = file_path
-
-    def get_sitemap_type(self):
-        with open_sitemap_file(self.file_path) as f:
-            result = guess_sitemap_type(f)
-        return result
 
     def get_urls(self):
         """Returns the urls listed in the sitemap document
@@ -84,6 +81,21 @@ class SitemapXmlDocument(SitemapDocument):
                     element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
+
+
+class SitemapXmlDocument(AbstractSitemapXml):
+    """A class to represent a sitemap xml document.
+    It can represent a sitemap or a sitemap index.
+    """
+    def get_sitemap_type(self):
+        return SiteMapType.SITEMAP
+
+
+class SitemapIndexXmlDocument(AbstractSitemapXml):
+    """A class to represent a sitemap index xml document.
+    """
+    def get_sitemap_type(self):
+        return SiteMapType.SITEMAP_INDEX
 
 
 class SitemapRssDocument(SitemapDocument):

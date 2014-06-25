@@ -7,6 +7,7 @@ import StringIO
 from cdf.features.sitemap.document import (open_sitemap_file,
                                            SiteMapType,
                                            SitemapXmlDocument,
+                                           SitemapIndexXmlDocument,
                                            SitemapRssDocument,
                                            guess_sitemap_type)
 from cdf.features.sitemap.exceptions import ParsingError
@@ -29,18 +30,6 @@ class TestSitemapXmlDocument(unittest.TestCase):
         self.assertEqual(SiteMapType.SITEMAP,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/bar"], list(sitemap_document.get_urls()))
-
-    def test_sitemap_index_0_9(self):
-        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
-                        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-                        '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
-                        '</sitemapindex>')
-        self.file.close()
-        sitemap_document = SitemapXmlDocument(self.file.name)
-        self.assertEqual(SiteMapType.SITEMAP_INDEX,
-                         sitemap_document.get_sitemap_type())
-        self.assertEqual(["http://foo/sitemap.xml.gz"],
-                         list(sitemap_document.get_urls()))
 
     def test_sitemap_different_namespace(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
@@ -70,16 +59,6 @@ class TestSitemapXmlDocument(unittest.TestCase):
         self.assertEqual(["http://foo/bar/baz"],
                          list(sitemap_document.get_urls()))
 
-    def test_sitemap_no_namespace(self):
-        self.file.write('<sitemapindex>'
-                        '<sitemap><loc>http://foo.com/bar</loc></sitemap>'
-                        '</sitemapindex>')
-        self.file.close()
-        sitemap_document = SitemapXmlDocument(self.file.name)
-        self.assertEqual(SiteMapType.SITEMAP_INDEX,
-                         sitemap_document.get_sitemap_type())
-        self.assertEqual(["http://foo.com/bar"],
-                         list(sitemap_document.get_urls()))
 
     def test_xml_parsing_error(self):
         self.file.write('<urlset><url></url>')
@@ -95,8 +74,40 @@ class TestSitemapXmlDocument(unittest.TestCase):
         self.file.write('<foo></foo>')  # valid xml but not a sitemap
         self.file.close()
         sitemap_document = SitemapXmlDocument(self.file.name)
-        self.assertEqual(SiteMapType.UNKNOWN, sitemap_document.get_sitemap_type())
+        self.assertEqual(SiteMapType.SITEMAP, sitemap_document.get_sitemap_type())
         self.assertEqual([], list(sitemap_document.get_urls()))
+
+
+class TestSitemapIndexXmlDocument(unittest.TestCase):
+    def setUp(self):
+        self.file = tempfile.NamedTemporaryFile(delete=False)
+
+    def tearDown(self):
+        os.remove(self.file.name)
+
+    def test_nominal_case(self):
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
+                        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                        '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
+                        '</sitemapindex>')
+        self.file.close()
+        sitemap_document = SitemapIndexXmlDocument(self.file.name)
+
+        self.assertEqual(SiteMapType.SITEMAP_INDEX,
+                         sitemap_document.get_sitemap_type())
+        self.assertEqual(["http://foo/sitemap.xml.gz"],
+                         list(sitemap_document.get_urls()))
+
+    def test_no_namespace(self):
+        self.file.write('<sitemapindex>'
+                        '<sitemap><loc>http://foo.com/bar</loc></sitemap>'
+                        '</sitemapindex>')
+        self.file.close()
+        sitemap_document = SitemapIndexXmlDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP_INDEX,
+                         sitemap_document.get_sitemap_type())
+        self.assertEqual(["http://foo.com/bar"],
+                         list(sitemap_document.get_urls()))
 
 
 class TestSitemapRssDocument(unittest.TestCase):
