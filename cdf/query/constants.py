@@ -40,6 +40,7 @@ RENDERING = Enum(
         # {'text': ["My text", "My other text", ..], 'nb': [20, 10..]}
         ('STRING_NB_MAP', 'string_nb_map'),
         ('TIME_SEC', 'time_sec'),
+        ('TIME_MILLISEC', 'time_millisec'),
         ('TIME_MIN', 'time_min'),
         ('PERCENT', 'percent')
     ]

@@ -573,20 +573,8 @@ class TestQueryES(unittest.TestCase):
                     'from': {
                         'nb': 2,
                         'urls': [
-                            {
-                                'url': {
-                                    'url': self.urls[1],
-                                    'crawled': True
-                                },
-                                'http_code': 301
-                            },
-                            {
-                                'url': {
-                                    'url': self.urls[2],
-                                    'crawled': True
-                                },
-                                'http_code': 301
-                            }
+                            [self.urls[1], 301],
+                            [self.urls[2], 301],
                         ]
                     }
                 }
@@ -597,20 +585,8 @@ class TestQueryES(unittest.TestCase):
                     'from': {
                         'nb': 2,
                         'urls': [
-                            {
-                                'url': {
-                                    'url': self.urls[1],
-                                    'crawled': True
-                                },
-                                'http_code': 301
-                            },
-                            {
-                                'url': {
-                                    'url': self.urls[2],
-                                    'crawled': True
-                                },
-                                'http_code': 301
-                            }
+                            [self.urls[1], 301],
+                            [self.urls[2], 301],
                         ]
                     }
                 }
