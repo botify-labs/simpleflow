@@ -156,7 +156,8 @@ class InfosStreamDef(StreamDefBase):
             "order": 3,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                RENDERING.TIME_MILLISEC
             }
         },
         "delay_last_byte": {
@@ -165,7 +166,8 @@ class InfosStreamDef(StreamDefBase):
             "order": 4,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                RENDERING.TIME_MILLISEC
             }
         },
         "depth": {

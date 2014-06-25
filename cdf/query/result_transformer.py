@@ -168,13 +168,7 @@ def _transform_redirects_from(es_result, id_to_url):
                     logger.warning(
                         "Urlid %d could not be found in elasticsearch.", uid)
                     continue
-                urls.append({
-                    'http_code': http_code,
-                    'url': {
-                        'url': id_to_url.get(uid)[0],
-                        'crawled': True
-                    }
-                })
+                urls.append([id_to_url.get(uid)[0], http_code])
             target['urls'] = urls
 
 

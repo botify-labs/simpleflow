@@ -351,7 +351,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_NO_INDEX,
                 LIST,
-                RENDERING.URL_STATUS,
+                RENDERING.URL_HTTP_CODE,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT
             }
@@ -774,7 +774,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 3xx",
             "order": 101,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL_STATUS}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL}
         },
         "outlinks_errors.3xx.urls_exists": {
             "type": "boolean",
@@ -794,7 +794,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 4xx",
             "order": 103,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL_STATUS}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL}
         },
         "outlinks_errors.4xx.urls_exists": {
             "type": "boolean",
@@ -814,7 +814,7 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 5xx",
             "order": 105,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL_STATUS}
+            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL}
         },
         "outlinks_errors.5xx.urls_exists": {
             "type": "boolean",

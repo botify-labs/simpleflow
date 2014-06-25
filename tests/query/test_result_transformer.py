@@ -203,7 +203,7 @@ class TestIdToUrlTransformer(unittest.TestCase):
                         # crawled is always true for redirect from
                         # here http code comes from `redirect.from.urls`, in production
                         # this should be the same code as in resolved pair (url, http_code)
-                        {'http_code': 200, 'url': {'url': 'url1', 'crawled': True}},
+                        ['url1', 200]
                     ]
                 }
             }
