@@ -92,6 +92,17 @@ def set_version(version):
         raise ValueError("Error line defining version not found in {}".format(filename))
 
 
+def get_changelog(tag):
+    """Generate a changelog from a given tag to HEAD
+    :param tag: the reference tag
+    :type tag: str
+    :returns: str
+    """
+    command = ["git", "log", "{}..HEAD".format(tag), "--first-parent", '--pretty=format:- %s [%cn] %n  %b %n']
+    changelog = subprocess.check_output(command)
+    return changelog
+
+
 def upload_package(dry_run):
     """Create the python package
     and upload it to pypi
@@ -114,11 +125,14 @@ def release_official_version(dry_run):
     version = get_release_version()
     tag = ".".join([str(i) for i in version])
     print "Creating cdf {}".format(tag)
+
+    last_tag = ".".join([str(i) for i in get_last_release_version()])
+    changelog = get_changelog(last_tag)
     #in case of dry run, we do not want to modify the files
     if not dry_run:
         set_version(version)
     init_filepath = get_init_filepath()
-    commit_message = "bump version to {}".format(tag)
+    commit_message = "bump version to {}\n\n{}".format(tag, changelog)
 
     commands = [
         #commit version bump
