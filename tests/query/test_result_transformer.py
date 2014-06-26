@@ -249,7 +249,7 @@ class TestIdToUrlTransformer(unittest.TestCase):
         expected = {
             'redirect': {
                 'to': {
-                    'url': {'url': 'url4', 'crawled': False, 'http_code': 300}
+                    'url': {'url': 'url4', 'crawled': False}
                 },
             }
         }

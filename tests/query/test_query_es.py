@@ -600,8 +600,7 @@ class TestQueryES(unittest.TestCase):
         result = _get_query_result(botify_query)
         expected = {
             'redirect': {'to': {'url': {'url': self.urls[5],
-                                        'crawled': False,
-                                        'http_code': 301}}}
+                                        'crawled': False}}}
         }
         self.assertEqual(result, [expected])
 

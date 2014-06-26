@@ -139,7 +139,23 @@ def _transform_canonical_to(es_result, id_to_url):
 
 
 def _transform_redirects_to(es_result, id_to_url):
-    _transform_single_link_to(es_result, id_to_url, 'redirect.to.url')
+    if path_in_dict('redirect.to.url', es_result):
+        target = get_subdict_from_path('redirect.to.url', es_result)
+        if target.get('url_id', 0) > 0:
+            # to an internal url
+            url_id = target['url_id']
+            if url_id not in id_to_url:
+                logger.warning(
+                    "Urlid %d could not be found in elasticsearch.", url_id)
+                return
+
+            url, http_code = id_to_url.get(url_id)
+            target['url'] = url
+            target['crawled'] = True if http_code > 0 else False
+            del target['http_code']
+
+        # delete unused field
+        target.pop('url_id', None)
 
 
 def _transform_canonical_from(es_result, id_to_url):
