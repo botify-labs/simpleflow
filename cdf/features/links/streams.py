@@ -321,7 +321,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             },
             "settings": {
                 ES_NO_INDEX,
-                RENDERING.URL_HTTP_CODE,
+                RENDERING.URL_STATUS,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT
             }
@@ -351,7 +351,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_NO_INDEX,
                 LIST,
-                RENDERING.URL_STATUS,
+                RENDERING.URL_HTTP_CODE,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT
             }
