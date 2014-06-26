@@ -101,7 +101,20 @@ def get_changelog(tag):
     :type tag: str
     :returns: str
     """
-    command = ["git", "log", "{}..HEAD".format(tag), "--first-parent", '--pretty=format:- %s [%cn] %n  %b %n']
+    #each commit is formatted this way
+    #-  Merge pull request #392 from sem-io/feature/foo [John Doe]
+    #
+    #  Very useful commit message because:
+    #  - it lists what the commit does
+    #
+    #cf man git log for further explanations on the syntax
+    #the trickiest part is the %w(...)
+    #that configures the commit message indentation
+    width = 80
+    indent = 4
+    log_format = "- %s [%cn]%n%n%w({},{},{})%b".format(width, indent, indent)
+    command = ["git", "log", "{}..HEAD".format(tag),
+               "--first-parent", '--pretty=format:{}'.format(log_format)]
     changelog = subprocess.check_output(command)
     return changelog
 
