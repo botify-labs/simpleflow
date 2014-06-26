@@ -12,7 +12,7 @@ class SiteMapType(Enum):
     UNKNOWN = 0
     SITEMAP_XML = 1
     SITEMAP_RSS = 2
-    SITEMAP_TEXT = 2
+    SITEMAP_TEXT = 3
     SITEMAP_INDEX = 4
 
 
@@ -184,7 +184,9 @@ def guess_sitemap_type(file_object):
     :return: SiteMapType
     """
     try:
+        xml_like = False
         for _, element in etree.iterparse(file_object, events=("start",)):
+            xml_like = True  # we were able to parse at least one element
             localname = etree.QName(element.tag).localname
             element.clear()
             if localname == "urlset":
@@ -194,6 +196,17 @@ def guess_sitemap_type(file_object):
             elif localname == "rss":
                 return SiteMapType.SITEMAP_RSS
     except etree.XMLSyntaxError:
+        pass
+
+    if xml_like:
+        #it looked like an xml but was not a valid sitemap
         return SiteMapType.UNKNOWN
+    file_object.seek(0)
+    #from http://stackoverflow.com/questions/898669/how-can-i-detect-if-a-file-is-binary-non-text-in-python
+    textchars = ''.join(map(chr, [7, 8, 9, 10, 12, 13, 27] + range(0x20, 0x100)))
+    is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
+
+    if not is_binary_string(file_object.read(1024)):
+        return SiteMapType.SITEMAP_TEXT
 
     return SiteMapType.UNKNOWN

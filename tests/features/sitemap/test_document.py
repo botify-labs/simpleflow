@@ -233,3 +233,8 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
     def test_simple_xml(self):
         file_mock = StringIO.StringIO('<foo></foo>')
         self.assertEqual(SiteMapType.UNKNOWN, guess_sitemap_type(file_mock))
+
+    def test_simple_text_file(self):
+        file_mock = StringIO.StringIO('foo\nbar')
+        self.assertEqual(SiteMapType.SITEMAP_TEXT,
+                         guess_sitemap_type(file_mock))
