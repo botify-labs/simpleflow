@@ -186,7 +186,9 @@ def release_official_version(dry_run):
     if not dry_run:
         set_version(version)
     init_filepath = get_init_filepath()
-    commit_message = "bump version to {}\n\n{}".format(tag, changelog)
+    commit_message = ("bump version to {}\n\n"
+                      "Changelog:\n"
+                      "{}").format(tag, changelog)
 
     commands = [
         #commit version bump
