@@ -2,11 +2,11 @@ import time
 import os
 import re
 from urlparse import urlparse
-
+import zlib
 import boto
 from boto.s3.key import Key
 from cdf.log import logger
-from cdf.utils.path import makedirs
+from cdf.utils.path import makedirs, partition_aware_sort
 
 from lockfile import FileLock
 from threading import Lock
@@ -54,11 +54,12 @@ def list_files(s3_uri, regexp=None):
 
     for key_obj in bucket.list(prefix=location):
         key = key_obj.name
-        key_without_location = key[len(location) + 1:]
+        key_basename = os.path.basename(key)
 
-        if not regexp \
-            or (isinstance(regexp, str) and re.match(regexp, key_without_location))\
-                or (isinstance(regexp, (list, tuple)) and any(re.match(r, key_without_location) for r in regexp)):
+        if (not regexp
+            or (isinstance(regexp, str) and re.match(regexp, key_basename))
+            or (isinstance(regexp, (list, tuple))
+                and any(re.match(r, key_basename) for r in regexp))):
             files.append(key_obj)
     return files
 
@@ -76,8 +77,9 @@ def fetch_files(s3_uri, dest_dir, regexp=None, force_fetch=True, lock=True):
 
     for key_obj in list_files(s3_uri, regexp):
         key = key_obj.name
+        key_basename = os.path.basename(key)
 
-        path = os.path.join(dest_dir, key[len(location) + 1:])
+        path = os.path.join(dest_dir, key_basename)
 
         if lock:
             lock_obj = FileLock(path)
@@ -109,10 +111,9 @@ def fetch_file(s3_uri, dest_dir, force_fetch, lock=True):
     if not force_fetch and os.path.exists(dest_dir):
         return (dest_dir, False)
     key_obj = get_key_from_s3_uri(s3_uri)
-    """
-    If the file does not exist, a `boto.exception.S3ResponseError`
-    will be raised when calling `get_contents_to_filename`
-    """
+
+    # If the file does not exist, a `boto.exception.S3ResponseError`
+    # will be raised when calling `get_contents_to_filename`
     makedirs(os.path.dirname(dest_dir), exist_ok=True)
     logger.info('Fetch %s to %s' % (s3_uri, dest_dir))
     if lock:
@@ -122,6 +123,61 @@ def fetch_file(s3_uri, dest_dir, force_fetch, lock=True):
     else:
         key_obj.get_contents_to_filename(dest_dir)
     return (dest_dir, True)
+
+
+def _split_by_lines(text_stream):
+    """Split text stream into lines
+
+    :param text_stream: text stream
+    :return: a generator function of lines
+    """
+    last_line = ''
+    try:
+        while True:
+            chunk = last_line + next(text_stream)
+            chunk_by_line = chunk.split('\n')
+            last_line = chunk_by_line.pop()
+            for line in chunk_by_line:
+                yield line + '\n'
+    except StopIteration:  # the other end of the pipe is empty
+        if len(last_line) > 0:
+            yield last_line + '\n'
+        raise StopIteration
+
+
+def _stream_decompress(stream):
+    """Decompress a gzipped stream
+
+    Credit: http://stackoverflow.com/questions/12571913
+    """
+    dec = zlib.decompressobj(16+zlib.MAX_WBITS)  # same as gzip module
+    for chunk in stream:
+        rv = dec.decompress(chunk)
+        if rv:
+            yield rv
+
+
+def stream_files(s3_uri, regexp=None,
+                 stream_func=_stream_decompress):
+    """Stream S3 files
+
+    Partition files' order is respected.
+    A byte stream manipulation function can be specified
+    (eg. zlib decompression function to decompress gzip stream)
+
+    :param s3_uri: s3 uri to files
+    :param regexp: optional regexp to filter files
+    :param stream_func: a generator function that manipulates the
+        byte stream, defaults to zlib stream decompression function
+    :return: a generator of text line streams
+    """
+    keys = list_files(s3_uri, regexp=regexp)
+    basename_func = lambda i: os.path.basename(i.name)
+    # iterate sorted keys
+    for key in partition_aware_sort(keys, basename_func=basename_func):
+        # stream each key
+        for line in _split_by_lines(stream_func(key)):
+            yield line
 
 
 def get_key_from_s3_uri(s3_uri):

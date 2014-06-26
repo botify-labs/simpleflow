@@ -42,7 +42,9 @@ setup(
         'enum34',
         'lxml',
         'requests',
-        'retrying'
+        'retrying',
+        'httpretty==0.7.0',
+        'moto'
     ],
 
 

@@ -6,7 +6,9 @@ import shutil
 import gzip
 from StringIO import StringIO
 
-from cdf.utils.path import group_by_part, write_by_part, utf8_writer, utf8_reader
+from cdf.utils.path import (group_by_part, write_by_part,
+                            utf8_writer, utf8_reader,
+                            partition_aware_sort)
 
 
 def _simple_to_string(row):
@@ -103,3 +105,25 @@ class TestPath(unittest.TestCase):
         self.assertEqual(chinese, line2)
         self.assertFalse(french is line1)
         self.assertFalse(chinese is line2)
+
+    def test_partition_aware_sort(self):
+        file_list = [
+            'files.09.a.12.gz',
+            'files.09.a.1234567.gz',
+            'files.09.a.3019.gz',
+            'files.09.a.9.gz'
+        ]
+        sorted_list = partition_aware_sort(file_list)
+        expected = [
+            'files.09.a.9.gz',
+            'files.09.a.12.gz',
+            'files.09.a.3019.gz',
+            'files.09.a.1234567.gz'
+        ]
+        self.assertListEqual(expected, sorted_list)
+
+    def test_partition_aware_sort_fallback(self):
+        file_list = ['a11', '12b', 'c14232.txt']
+        sorted_list = partition_aware_sort(file_list)
+        # check that it just fallbacks to lexical sort
+        self.assertEqual(sorted_list, sorted(file_list))

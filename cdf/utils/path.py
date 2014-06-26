@@ -86,3 +86,34 @@ def get_files_ordered_by_part_id(directory, file_identifier):
         if m:
             file_by_part_id[int(m.groups()[0])] = f
     return [file_by_part_id[k] for k in sorted(file_by_part_id)]
+
+
+# TODO should replace above `get_files_ordered_by_part_id`
+def partition_aware_sort(file_list, basename_func=os.path.basename):
+    """Sort the file list in a partition aware fashion
+
+    Assume that partition number locates at the last but one:
+        filename.type.{partition_number}.file_extension
+
+    User can also provide a basename extraction function to work with
+    list of file objects, eg. Amazon S3 key objects
+
+    :param file_list: list of files (or other file representing objects)
+        to sort
+    :param basename_func: function to extract the file basename out of
+        the `file_list` item
+    :return: sorted file_list
+    """
+    partition_regexp = re.compile(r'.*\.([0-9]+)\.[^\.]+')
+    # if not all files are Botify's partitioned file, use lexical sort
+    if not all(map(lambda i: partition_regexp.match(basename_func(i)),
+                   file_list)):
+        logger.warn("Apply partition-aware sort on non-partitioned files, "
+                    "fall back to lexical sort")
+        return sorted(file_list, key=basename_func)
+
+    def key_func(f):
+        basename = basename_func(f)
+        return int(partition_regexp.findall(basename)[0])
+
+    return sorted(file_list, key=key_func)
