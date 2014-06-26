@@ -25,6 +25,9 @@ import subprocess
 import os.path
 import fileinput
 import re
+import json
+import requests
+import getpass
 
 #get the path to the local cdf directory
 regex = ".*/botify-cdf"
@@ -103,6 +106,44 @@ def get_changelog(tag):
     return changelog
 
 
+def create_github_release(tag, changelog, dry_run):
+    """Create a github release
+    :param tag: the tag corresponding to the release
+    :type tag: str
+    :param changelog: the release changelog
+    :type changelog: str
+    :param dry_run: if True, nothing is actually done.
+                    the function just prints what it would do
+    :type dry_run: bool
+    """
+
+    release_parameters = {
+        "tag_name": tag,
+        "name": tag,
+        "body": changelog,
+        "draft": False,
+        "prerelease": False
+    }
+    print "\n{} Github authentication {}".format("*" * 20, "*" * 20)
+
+    if not dry_run:
+        username = raw_input("username: ")
+        password = getpass.getpass()
+    else:
+        username = "user"
+        password = "password"
+
+    url = "https://api.github.com/repos/sem-io/botify-cdf/releases"
+    if not dry_run:
+        auth = requests.auth.HTTPBasicAuth(username, password)
+        response = requests.post(url, json.dumps(release_parameters), auth=auth)
+        if not response.ok:
+            print "Could not create github version [{}]: {}".format(response.status_code,
+                                                                    response.text)
+    else:
+        print "POST {} ({}, {})".format(url, username, password)
+
+
 def upload_package(dry_run):
     """Create the python package
     and upload it to pypi
@@ -155,6 +196,7 @@ def release_official_version(dry_run):
     #upload package
     upload_package(dry_run)
 
+    create_github_release(tag, changelog, dry_run)
 
 if __name__ == "__main__":
 
