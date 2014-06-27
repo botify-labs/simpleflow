@@ -187,16 +187,17 @@ def release_official_version(dry_run):
     if not dry_run:
         set_version(version)
     init_filepath = get_init_filepath()
-    commit_message = ("bump version to {}\n\n"
-                      "Changelog:\n"
-                      "{}").format(tag, changelog)
+    commit_message = "bump version to {}".format(tag)
+    tag_message = ("{}\n\n"
+                   "Changelog:\n"
+                   "{}").format(tag, changelog)
 
     commands = [
         #commit version bump
         ["git", "add", init_filepath],
         ["git", "commit", "-m", commit_message],
         #tag current commit
-        ["git", "tag", "-a", tag, "-m", tag],
+        ["git", "tag", "-a", tag, "-m", tag_message],
         #push commits
         ["git", "push", "origin", "devel"],
         #upload package
