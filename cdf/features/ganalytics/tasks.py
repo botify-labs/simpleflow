@@ -243,15 +243,7 @@ def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
                                          dataset, ambiguous_urls_file):
     #init data structures to save the top ghost pages
     #and the number of sessions for ghost pages
-    top_ghost_pages = {}
-    ghost_pages_session_count = Counter()
-    ghost_pages_url_count = Counter()
-    for medium, source in _iterate_sources():
-        medium_source = "{}.{}".format(medium, source)
-        top_ghost_pages[medium_source] = []
-        ghost_pages_session_count[medium_source] = 0
-        ghost_pages_url_count[medium_source] = 0
-
+    ghost_pages_aggregator = PagesAggregator(TOP_GHOST_PAGES_NB)
     #precompute field indexes as it would be too long to compute them
     #inside the loop
     fields_list = ["url", "medium", "source", "social_network", "nb"]
@@ -282,21 +274,41 @@ def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
             #url, you can not decide to throw it away, as its number of
             #sessions may be increased by a new entry and
             #it then may become a top ghost page.
-            indexes = (medium_idx, source_idx, social_network_idx, sessions_idx)
-            aggregated_session_count = aggregate_entries(url_without_protocol,
-                                                         entries,
-                                                         indexes)
-            #update the top ghost pages for this url
-            update_top_ghost_pages(top_ghost_pages,
-                                   TOP_GHOST_PAGES_NB,
-                                   url_without_protocol,
-                                   aggregated_session_count)
+            ghost_pages_aggregator.update(url_without_protocol, entries)
 
-            update_counters(aggregated_session_count,
-                            ghost_pages_session_count,
-                            ghost_pages_url_count)
+    return (ghost_pages_aggregator.top_pages,
+            ghost_pages_aggregator.session_count,
+            ghost_pages_aggregator.url_count)
 
-    return (top_ghost_pages, ghost_pages_session_count, ghost_pages_url_count)
+
+class PagesAggregator(object):
+    def __init__(self, top_pages_nb):
+        self.top_pages_nb = top_pages_nb
+        fields_list = ["medium", "source", "social_network", "nb"]
+        self.indexes = RawVisitsStreamDef.fields_idx(fields_list)
+
+        self.top_pages = {}
+        self.session_count = Counter()
+        self.url_count = Counter()
+        for medium, source in _iterate_sources():
+            medium_source = "{}.{}".format(medium, source)
+            self.top_pages[medium_source] = []
+            self.session_count[medium_source] = 0
+            self.url_count[medium_source] = 0
+
+    def update(self, url_without_protocol, entries):
+        aggregated_session_count = aggregate_entries(url_without_protocol,
+                                                     entries,
+                                                     self.indexes)
+        #update the top ghost pages for this url
+        update_top_ghost_pages(self.top_pages,
+                               self.top_pages_nb,
+                               url_without_protocol,
+                               aggregated_session_count)
+
+        update_counters(aggregated_session_count,
+                        self.session_count,
+                        self.url_count)
 
 
 def aggregate_entries(url_without_protocol,
