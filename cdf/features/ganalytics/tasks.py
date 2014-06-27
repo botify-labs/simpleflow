@@ -184,9 +184,6 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
         top_ghost_pages = counts[0]
         ghost_pages_session_count = counts[1]
         ghost_pages_url_count = counts[2]
-        top_forbidden_pages = counts[3]
-        forbidden_pages_session_count = counts[4]
-        forbidden_pages_url_count = counts[5]
 
     #save top ghost pages in dedicated files
     ghost_file_paths = []
@@ -255,15 +252,6 @@ def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
         ghost_pages_session_count[medium_source] = 0
         ghost_pages_url_count[medium_source] = 0
 
-    top_forbidden_pages = {}
-    forbidden_pages_session_count = Counter()
-    forbidden_pages_url_count = Counter()
-    for medium, source in _iterate_sources():
-        medium_source = "{}.{}".format(medium, source)
-        top_forbidden_pages[medium_source] = []
-        forbidden_pages_session_count[medium_source] = 0
-        forbidden_pages_url_count[medium_source] = 0
-
     #precompute field indexes as it would be too long to compute them
     #inside the loop
     fields_list = ["url", "medium", "source", "social_network", "nb"]
@@ -298,30 +286,18 @@ def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
             aggregated_session_count = aggregate_entries(url_without_protocol,
                                                          entries,
                                                          indexes)
-            in_crawl_domain = True
-            if True:
-                #update the top ghost pages for this url
-                update_top_ghost_pages(top_ghost_pages,
-                                       TOP_GHOST_PAGES_NB,
-                                       url_without_protocol,
-                                       aggregated_session_count)
+            #update the top ghost pages for this url
+            update_top_ghost_pages(top_ghost_pages,
+                                   TOP_GHOST_PAGES_NB,
+                                   url_without_protocol,
+                                   aggregated_session_count)
 
-                update_counters(aggregated_session_count,
-                                ghost_pages_session_count,
-                                ghost_pages_url_count)
-            else:
-                #update the top ghost pages for this url
-                update_top_ghost_pages(top_forbidden_pages,
-                                       TOP_GHOST_PAGES_NB,
-                                       url_without_protocol,
-                                       aggregated_session_count)
+            update_counters(aggregated_session_count,
+                            ghost_pages_session_count,
+                            ghost_pages_url_count)
 
-                update_counters(aggregated_session_count,
-                                forbidden_pages_session_count,
-                                forbidden_pages_url_count)
+    return (top_ghost_pages, ghost_pages_session_count, ghost_pages_url_count)
 
-    return (top_ghost_pages, ghost_pages_session_count, ghost_pages_url_count,
-            top_forbidden_pages, forbidden_pages_session_count, forbidden_pages_url_count)
 
 def aggregate_entries(url_without_protocol,
                       entries,
