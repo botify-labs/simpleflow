@@ -5,6 +5,7 @@ It :
 - push the bump commit to github
 - push the tag to github
 - upload the pip package to pypo
+- create a github release
 
 Concerning the version numbers, the script reads the previous release version
 from cdf/__init__.py. It increments its micro version and modify
