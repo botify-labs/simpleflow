@@ -176,74 +176,17 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
             force_fetch=force_fetch
         )
 
-        #init data structures to save the top ghost pages
-        #and the number of sessions for ghost pages
-        top_ghost_pages = {}
-        ghost_pages_session_count = Counter()
-        ghost_pages_url_count = Counter()
-        for medium, source in _iterate_sources():
-            medium_source = "{}.{}".format(medium, source)
-            top_ghost_pages[medium_source] = []
-            ghost_pages_session_count[medium_source] = 0
-            ghost_pages_url_count[medium_source] = 0
-
-        #precompute field indexes as it would be too long to compute them
-        #inside the loop
-        fields_list = ["url", "medium", "source", "social_network", "nb"]
-        url_idx, medium_idx, source_idx, social_network_idx, sessions_idx = RawVisitsStreamDef.fields_idx(fields_list)
-        #get all the entries corresponding the the same url
-        for url_without_protocol, entries in itertools.groupby(stream, lambda x: x[url_idx]):
-            url_id, matching_status = get_urlid(url_without_protocol,
-                                                url_to_id,
-                                                urlid_to_http_code)
-            if url_id:
-                #if url is in the crawl, add its data to the dataset
-                for entry in entries:
-                    dataset_entry = list(entry)
-                    dataset_entry[0] = url_id
-                    dataset.append(*dataset_entry)
-                    #store ambiguous url ids
-                    if matching_status == MATCHING_STATUS.AMBIGUOUS:
-                        line = "\t".join([str(i) for i in entry])
-                        line = "{}\n".format(line)
-                        line = unicode(line)
-                        ambiguous_urls_file.write(line)
-            elif matching_status == MATCHING_STATUS.NOT_FOUND:
-                #if it is not in the crawl, aggregate the sessions
-                #so that you can decide whether or not the url belongs to
-                #the top ghost pages and thus either keep the entry
-                #or delete to save memory.
-                #If you are not sure that you got all the entries for a given
-                #url, you can not decide to throw it away, as its number of
-                #sessions may be increased by a new entry and
-                #it then may become a top ghost page.
-                aggregated_session_count = Counter()
-                for entry in entries:
-                    medium = entry[medium_idx]
-                    source = entry[source_idx]
-                    social_network = entry[social_network_idx]
-                    nb_sessions = entry[sessions_idx]
-
-                    update_session_count(aggregated_session_count,
-                                         medium,
-                                         source,
-                                         social_network,
-                                         nb_sessions)
-
-                #update the top ghost pages for this url
-                update_top_ghost_pages(top_ghost_pages,
-                                       TOP_GHOST_PAGES_NB,
-                                       url_without_protocol,
-                                       aggregated_session_count)
-
-                #update the session count
-                ghost_pages_session_count.update(aggregated_session_count)
-
-                #the number of urls for each medium/source is at most 1
-                #since we are processing all entries of the same url
-                ghost_pages_url_count.update(
-                    Counter(aggregated_session_count.keys())
-                )
+        counts = match_analytics_to_crawl_urls_stream(stream,
+                                                      url_to_id,
+                                                      urlid_to_http_code,
+                                                      dataset,
+                                                      ambiguous_urls_file)
+        top_ghost_pages = counts[0]
+        ghost_pages_session_count = counts[1]
+        ghost_pages_url_count = counts[2]
+        top_forbidden_pages = counts[3]
+        forbidden_pages_session_count = counts[4]
+        forbidden_pages_url_count = counts[5]
 
     #save top ghost pages in dedicated files
     ghost_file_paths = []
@@ -297,3 +240,118 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
     # Advise the workflow that we need to send data to the remote db
     # through the api by calling a feature endpoint (prefixed by its revision)
     return api_requests
+
+
+def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
+                                         dataset, ambiguous_urls_file):
+    #init data structures to save the top ghost pages
+    #and the number of sessions for ghost pages
+    top_ghost_pages = {}
+    ghost_pages_session_count = Counter()
+    ghost_pages_url_count = Counter()
+    for medium, source in _iterate_sources():
+        medium_source = "{}.{}".format(medium, source)
+        top_ghost_pages[medium_source] = []
+        ghost_pages_session_count[medium_source] = 0
+        ghost_pages_url_count[medium_source] = 0
+
+    top_forbidden_pages = {}
+    forbidden_pages_session_count = Counter()
+    forbidden_pages_url_count = Counter()
+    for medium, source in _iterate_sources():
+        medium_source = "{}.{}".format(medium, source)
+        top_forbidden_pages[medium_source] = []
+        forbidden_pages_session_count[medium_source] = 0
+        forbidden_pages_url_count[medium_source] = 0
+
+    #precompute field indexes as it would be too long to compute them
+    #inside the loop
+    fields_list = ["url", "medium", "source", "social_network", "nb"]
+    url_idx, medium_idx, source_idx, social_network_idx, sessions_idx = RawVisitsStreamDef.fields_idx(fields_list)
+    #get all the entries corresponding the the same url
+    for url_without_protocol, entries in itertools.groupby(stream, lambda x: x[url_idx]):
+        url_id, matching_status = get_urlid(url_without_protocol,
+                                            url_to_id,
+                                            urlid_to_http_code)
+        if url_id:
+            #if url is in the crawl, add its data to the dataset
+            for entry in entries:
+                dataset_entry = list(entry)
+                dataset_entry[0] = url_id
+                dataset.append(*dataset_entry)
+                #store ambiguous url ids
+                if matching_status == MATCHING_STATUS.AMBIGUOUS:
+                    line = "\t".join([str(i) for i in entry])
+                    line = "{}\n".format(line)
+                    line = unicode(line)
+                    ambiguous_urls_file.write(line)
+        elif matching_status == MATCHING_STATUS.NOT_FOUND:
+            #if it is not in the crawl, aggregate the sessions
+            #so that you can decide whether or not the url belongs to
+            #the top ghost pages and thus either keep the entry
+            #or delete to save memory.
+            #If you are not sure that you got all the entries for a given
+            #url, you can not decide to throw it away, as its number of
+            #sessions may be increased by a new entry and
+            #it then may become a top ghost page.
+            indexes = (medium_idx, source_idx, social_network_idx, sessions_idx)
+            aggregated_session_count = aggregate_entries(url_without_protocol,
+                                                         entries,
+                                                         indexes)
+            in_crawl_domain = True
+            if True:
+                #update the top ghost pages for this url
+                update_top_ghost_pages(top_ghost_pages,
+                                       TOP_GHOST_PAGES_NB,
+                                       url_without_protocol,
+                                       aggregated_session_count)
+
+                update_counters(aggregated_session_count,
+                                ghost_pages_session_count,
+                                ghost_pages_url_count)
+            else:
+                #update the top ghost pages for this url
+                update_top_ghost_pages(top_forbidden_pages,
+                                       TOP_GHOST_PAGES_NB,
+                                       url_without_protocol,
+                                       aggregated_session_count)
+
+                update_counters(aggregated_session_count,
+                                forbidden_pages_session_count,
+                                forbidden_pages_url_count)
+
+    return (top_ghost_pages, ghost_pages_session_count, ghost_pages_url_count,
+            top_forbidden_pages, forbidden_pages_session_count, forbidden_pages_url_count)
+
+def aggregate_entries(url_without_protocol,
+                      entries,
+                      indexes):
+    medium_idx, source_idx, social_network_idx, sessions_idx = indexes
+    aggregated_session_count = Counter()
+    for entry in entries:
+        medium = entry[medium_idx]
+        source = entry[source_idx]
+        social_network = entry[social_network_idx]
+        nb_sessions = entry[sessions_idx]
+
+        update_session_count(aggregated_session_count,
+                             medium,
+                             source,
+                             social_network,
+                             nb_sessions)
+
+    return aggregated_session_count
+
+
+def update_counters(aggregated_session_count,
+                    ghost_pages_session_count,
+                    ghost_pages_url_count):
+
+    #update the session count
+    ghost_pages_session_count.update(aggregated_session_count)
+
+    #the number of urls for each medium/source is at most 1
+    #since we are processing all entries of the same url
+    ghost_pages_url_count.update(
+        Counter(aggregated_session_count.keys())
+    )
