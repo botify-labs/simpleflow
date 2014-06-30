@@ -3,7 +3,6 @@ import itertools
 import gzip
 import datetime
 import json
-from collections import Counter
 
 from cdf.utils.dict import deep_dict
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
@@ -20,12 +19,10 @@ from analytics.import_analytics import import_data
 from cdf.utils.auth import get_credentials
 from cdf.features.ganalytics.constants import TOP_GHOST_PAGES_NB
 from cdf.features.ganalytics.matching import MATCHING_STATUS, get_urlid
-from cdf.features.ganalytics.streams import _iterate_sources
-from cdf.features.ganalytics.ghost import (update_session_count,
-                                           update_top_ghost_pages,
-                                           build_ghost_counts_dict,
+from cdf.features.ganalytics.ghost import (build_ghost_counts_dict,
                                            save_ghost_pages,
-                                           save_ghost_pages_count)
+                                           save_ghost_pages_count,
+                                           PagesAggregator)
 
 @with_temporary_dir
 @feature_enabled('ganalytics')
@@ -276,106 +273,4 @@ def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
             ghost_pages_aggregator.url_count)
 
 
-class PagesAggregator(object):
-    """A page that manages aggregation of google analytics entries.
-    It is able to for each consideredsource/medium
-    - the number of sessions
-    - the number of urls
-    - the pages with the most visits
-    To do so, it is required to call the update() method several times.
-    Each call should include the entries for a specific url.
-    Without this constraint, top pages computation would be harder,
-    as you would never be sure that you can drop the entries corresponding
-    to an url.
-    """
-    def __init__(self, top_pages_nb):
-        """Constructor
-        :param top_pages_nb: the number of top pages to keep
-        :type top_pages_nb: int
-        """
-        self.top_pages_nb = top_pages_nb
 
-        self.medium_idx = RawVisitsStreamDef.field_idx("medium")
-        self.source_idx = RawVisitsStreamDef.field_idx("source")
-        self.social_network_idx = RawVisitsStreamDef.field_idx("social_network")
-        self.sessions_idx = RawVisitsStreamDef.field_idx("nb")
-
-        #store the pages with the most visits for each source/medium
-        self.top_pages = {}
-        #store the number of sessions for each source/medium
-        self.session_count = Counter()
-        #store the number of urls for each source/medium
-        self.url_count = Counter()
-        for medium, source in _iterate_sources():
-            medium_source = "{}.{}".format(medium, source)
-            self.top_pages[medium_source] = []
-            self.session_count[medium_source] = 0
-            self.url_count[medium_source] = 0
-
-    def update(self, url_without_protocol, entries):
-        """Update the aggregations with a list of entries corresponding to
-        the same url.
-        :param url_without_protocol: the url (without http or https)
-        :type url_without_protocol: str
-        :param entries: the list of google analytics entries
-                        corresponding to the input url.
-                        Each entry is RawVisitsStreamDef row
-        :type entries: list
-        """
-        aggregated_session_count = self.aggregate_entries(entries)
-        #update the top ghost pages for this url
-        update_top_ghost_pages(self.top_pages,
-                               self.top_pages_nb,
-                               url_without_protocol,
-                               aggregated_session_count)
-
-        self.update_counters(aggregated_session_count,
-                             self.session_count,
-                             self.url_count)
-
-    def aggregate_entries(self, entries):
-        """Aggregate entries corresponding to the same url.
-        Each entry is a tuple (url, medium, source, social_network, nb_sessions)
-        The aggregation is made on the different search engines and social networks.
-        It is also done on all organic sources and all social networks.
-        :param entries: the input entries (should correspond to the same url)
-        :type entries: list
-        :returns: Counter - a counter that contains the number of sesssions
-                            for each considered source/medium
-        """
-        aggregated_session_count = Counter()
-        for entry in entries:
-            medium = entry[self.medium_idx]
-            source = entry[self.source_idx]
-            social_network = entry[self.social_network_idx]
-            nb_sessions = entry[self.sessions_idx]
-
-            update_session_count(aggregated_session_count,
-                                 medium,
-                                 source,
-                                 social_network,
-                                 nb_sessions)
-
-        return aggregated_session_count
-
-    def update_counters(self,
-                        aggregated_session_count,
-                        session_count,
-                        url_count):
-        """Update the session count and the url count
-        :param aggregated_session_count: a Counter representing the visits
-                                         for a given url for each source/medium
-        :type aggregated_session_count: Counter
-        :param pages_session_count: a Counter that stores the number of sessions
-                                    for each considered source/medium
-        :type pages_url_count: a Counter that stores the number of urls
-                               for each considered source/medium
-        """
-        #update the session count
-        session_count.update(aggregated_session_count)
-
-        #the number of urls for each medium/source is at most 1
-        #since we are processing all entries of the same url
-        url_count.update(
-            Counter(aggregated_session_count.keys())
-        )
