@@ -1,5 +1,7 @@
 import os
 import itertools
+import re
+from urlparse import urlparse
 
 from cdf.utils import s3
 from cdf.features.sitemap.document import SitemapDocument
@@ -107,3 +109,49 @@ def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
         sitemap_document = SitemapDocument(sitemap_file)
         sitemap_streams.append(sitemap_document.get_urls())
     return itertools.chain(*sitemap_streams)
+
+
+class DomainValidator(object):
+    """A class to check if a domain should be crawled or not
+    The decision is made on the url domain.
+    The user specifies a list of allowed domains.
+    Allowed domains can contain a '*' wildcard
+    that can be replaced by anything.
+    The user can also specifies a list of blacklisted domains.
+    Black listed domains can not contain any wildcard."""
+    def __init__(self, allowed_domains, blacklisted_domains=None):
+        """Constructor
+        :param allowed_domains: the list of allowed domains
+        :type allowed_domains: list
+        :param blacklisted_domains: the list of black listed domains
+        :type blacklisted_domains: list
+        """
+        self.allowed_domains = allowed_domains
+        self.allowed_patterns = [self.get_compiled_pattern(domain) for
+                                 domain in allowed_domains]
+        self.blacklisted_domains = blacklisted_domains or []
+        self.blacklisted_domains = frozenset(self.blacklisted_domains)
+
+    def get_compiled_pattern(self, allowed_domain):
+        """Return a compiled regex corresponding to one allowed_domain.
+        :param allowed_domain: the input domain
+        :type allowed_domain: str
+        :returns: _sre.SRE_Pattern
+        """
+        regex_pattern = re.escape(allowed_domain)
+        regex_pattern = regex_pattern.replace("\\*", ".*")
+        return re.compile(regex_pattern)
+
+    def is_valid(self, url):
+        """Decide whether or not an url is valid
+        given the allowed domains
+        :param url: the input url
+        :type url: str
+        :returns: bool"""
+        domain = urlparse(url).netloc
+        #TODO depending on regex performance,
+        #we could create a set of allowed domains for domains without wildcard
+        #and use regex only for domains with wildcard
+        result = any(itertools.imap(lambda p: p.match(domain), self.allowed_patterns))
+        result &= not domain in self.blacklisted_domains
+        return result

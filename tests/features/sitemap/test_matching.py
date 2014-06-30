@@ -8,7 +8,8 @@ from cdf.features.sitemap.download import Sitemap, DownloadStatus
 from cdf.features.sitemap.matching import (get_sitemap_urls_stream,
                                            get_download_status_from_s3,
                                            download_sitemaps_from_s3,
-                                           match_sitemap_urls_from_stream)
+                                           match_sitemap_urls_from_stream,
+                                           DomainValidator)
 
 
 class GetSitemapUrlsStream(unittest.TestCase):
@@ -141,3 +142,53 @@ class MatchSitemapUrlsFromStream(unittest.TestCase):
                                   mock.call(5)]
         self.assertEquals(expected_dataset_calls, dataset.append.mock_calls)
         sitemap_only_file.write.assert_called_once_with("baz\n")
+
+
+class TestDomainValidator(unittest.TestCase):
+    def test_empty_allowed_domains(self):
+        validator = DomainValidator([])
+        self.assertFalse(validator.is_valid("http://wired.com"))
+
+    def test_single_domain(self):
+        validator = DomainValidator(["wired.com"])
+        self.assertTrue(validator.is_valid("http://wired.com"))
+        self.assertTrue(validator.is_valid("https://wired.com"))
+        self.assertTrue(validator.is_valid("http://wired.com/gadgets"))
+
+        self.assertFalse(validator.is_valid("http://news.wired.com/googleio"))
+        self.assertFalse(validator.is_valid("http://theverge.com/googleio"))
+
+    def test_wildcard(self):
+        validator = DomainValidator(["*.wired.com"])
+        self.assertTrue(validator.is_valid("http://news.wired.com"))
+        self.assertTrue(validator.is_valid("http://.wired.com"))
+
+        self.assertFalse(validator.is_valid("http://wired.com"))
+        self.assertFalse(validator.is_valid("http://newswired.com"))
+
+    def test_wildcard_special_characters(self):
+        #we want only * as special character
+        self.assertFalse(DomainValidator(["wired.?"]).is_valid("http://wired.a"))
+
+        self.assertFalse(DomainValidator(["[a-z].com"]).is_valid("http://a.com"))
+        #tested as litteral
+        self.assertTrue(DomainValidator(["[a-z].com"]).is_valid("http://[a-z].com"))
+
+    def test_multiple_domains(self):
+        validator = DomainValidator(["wired.com", "news.wired.com"])
+        self.assertTrue(validator.is_valid("http://wired.com/startups"))
+        self.assertTrue(validator.is_valid("http://news.wired.com/googleio"))
+
+        self.assertFalse(validator.is_valid("http://blog.wired.com/googleio"))
+
+    def test_blacklisted_domain(self):
+        validator = DomainValidator(["*.wired.com"], ["news.wired.com"])
+        self.assertTrue(validator.is_valid("http://blog.wired.com/post"))
+        self.assertFalse(validator.is_valid("http://news.wired.com/science"))
+
+    def test_blacklisted_domain_wildcard(self):
+        #wildcard are not allowed in blacklisted domains
+        validator = DomainValidator(["*.wired.com"], ["*.wired.com"])
+        self.assertTrue(validator.is_valid("http://blog.wired.com/post"))
+        #check that * is interpreted as a literal
+        self.assertFalse(validator.is_valid("http://*.wired.com/post"))
