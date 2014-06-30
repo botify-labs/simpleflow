@@ -266,14 +266,9 @@ def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
                     line = unicode(line)
                     ambiguous_urls_file.write(line)
         elif matching_status == MATCHING_STATUS.NOT_FOUND:
-            #if it is not in the crawl, aggregate the sessions
-            #so that you can decide whether or not the url belongs to
-            #the top ghost pages and thus either keep the entry
-            #or delete to save memory.
-            #If you are not sure that you got all the entries for a given
-            #url, you can not decide to throw it away, as its number of
-            #sessions may be increased by a new entry and
-            #it then may become a top ghost page.
+            #if the url is not in the crawl
+            #update the ghost pages aggregator with ALL the corresponding
+            #entries.
             ghost_pages_aggregator.update(url_without_protocol, entries)
 
     return (ghost_pages_aggregator.top_pages,
@@ -282,7 +277,22 @@ def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
 
 
 class PagesAggregator(object):
+    """A page that manages aggregation of google analytics entries.
+    It is able to for each consideredsource/medium
+    - the number of sessions
+    - the number of urls
+    - the pages with the most visits
+    To do so, it is required to call the update() method several times.
+    Each call should include the entries for a specific url.
+    Without this constraint, top pages computation would be harder,
+    as you would never be sure that you can drop the entries corresponding
+    to an url.
+    """
     def __init__(self, top_pages_nb):
+        """Constructor
+        :param top_pages_nb: the number of top pages to keep
+        :type top_pages_nb: int
+        """
         self.top_pages_nb = top_pages_nb
 
         self.medium_idx = RawVisitsStreamDef.field_idx("medium")
@@ -290,8 +300,11 @@ class PagesAggregator(object):
         self.social_network_idx = RawVisitsStreamDef.field_idx("social_network")
         self.sessions_idx = RawVisitsStreamDef.field_idx("nb")
 
+        #store the pages with the most visits for each source/medium
         self.top_pages = {}
+        #store the number of sessions for each source/medium
         self.session_count = Counter()
+        #store the number of urls for each source/medium
         self.url_count = Counter()
         for medium, source in _iterate_sources():
             medium_source = "{}.{}".format(medium, source)
@@ -300,6 +313,15 @@ class PagesAggregator(object):
             self.url_count[medium_source] = 0
 
     def update(self, url_without_protocol, entries):
+        """Update the aggregations with a list of entries corresponding to
+        the same url.
+        :param url_without_protocol: the url (without http or https)
+        :type url_without_protocol: str
+        :param entries: the list of google analytics entries
+                        corresponding to the input url.
+                        Each entry is RawVisitsStreamDef row
+        :type entries: list
+        """
         aggregated_session_count = self.aggregate_entries(entries)
         #update the top ghost pages for this url
         update_top_ghost_pages(self.top_pages,
