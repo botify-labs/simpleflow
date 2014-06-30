@@ -370,3 +370,16 @@ class TestPageAggregator(unittest.TestCase):
             'social.all': []
         }
         self.assertEqual(expected_top_pages, pages_aggregator.top_pages)
+
+    def test_aggregate_entries(self):
+        pages_aggregator = PagesAggregator(10)
+        actual_result = pages_aggregator.aggregate_entries(self.entries[0])
+        expected_result = {
+            'organic.google': 10,
+            'social.facebook': 3,
+            'organic.bing': 8,
+            'organic.all': 18,
+            'social.all': 3,
+        }
+        self.assertEqual(expected_result, actual_result)
+

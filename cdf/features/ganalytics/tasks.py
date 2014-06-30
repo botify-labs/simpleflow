@@ -284,8 +284,11 @@ def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
 class PagesAggregator(object):
     def __init__(self, top_pages_nb):
         self.top_pages_nb = top_pages_nb
-        fields_list = ["medium", "source", "social_network", "nb"]
-        self.indexes = RawVisitsStreamDef.fields_idx(fields_list)
+
+        self.medium_idx = RawVisitsStreamDef.field_idx("medium")
+        self.source_idx = RawVisitsStreamDef.field_idx("source")
+        self.social_network_idx = RawVisitsStreamDef.field_idx("social_network")
+        self.sessions_idx = RawVisitsStreamDef.field_idx("nb")
 
         self.top_pages = {}
         self.session_count = Counter()
@@ -297,9 +300,7 @@ class PagesAggregator(object):
             self.url_count[medium_source] = 0
 
     def update(self, url_without_protocol, entries):
-        aggregated_session_count = aggregate_entries(url_without_protocol,
-                                                     entries,
-                                                     self.indexes)
+        aggregated_session_count = self.aggregate_entries(entries)
         #update the top ghost pages for this url
         update_top_ghost_pages(self.top_pages,
                                self.top_pages_nb,
@@ -310,25 +311,30 @@ class PagesAggregator(object):
                         self.session_count,
                         self.url_count)
 
+    def aggregate_entries(self, entries):
+        """Aggregate entries corresponding to the same url.
+        Each entry is a tuple (url, medium, source, social_network, nb_sessions)
+        The aggregation is made on the different search engines and social networks.
+        It is also done on all organic sources and all social networks.
+        :param entries: the input entries
+        :type entries: list
+        :returns: Counter - a counter that contains the number of sesssions
+                            for each considered source/medium
+        """
+        aggregated_session_count = Counter()
+        for entry in entries:
+            medium = entry[self.medium_idx]
+            source = entry[self.source_idx]
+            social_network = entry[self.social_network_idx]
+            nb_sessions = entry[self.sessions_idx]
 
-def aggregate_entries(url_without_protocol,
-                      entries,
-                      indexes):
-    medium_idx, source_idx, social_network_idx, sessions_idx = indexes
-    aggregated_session_count = Counter()
-    for entry in entries:
-        medium = entry[medium_idx]
-        source = entry[source_idx]
-        social_network = entry[social_network_idx]
-        nb_sessions = entry[sessions_idx]
+            update_session_count(aggregated_session_count,
+                                 medium,
+                                 source,
+                                 social_network,
+                                 nb_sessions)
 
-        update_session_count(aggregated_session_count,
-                             medium,
-                             source,
-                             social_network,
-                             nb_sessions)
-
-    return aggregated_session_count
+        return aggregated_session_count
 
 
 def update_counters(aggregated_session_count,
