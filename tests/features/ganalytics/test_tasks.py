@@ -17,7 +17,8 @@ from cdf.features.ganalytics.tasks import (import_data_from_ganalytics,
                                            get_api_requests,
                                            match_analytics_to_crawl_urls,
                                            get_urlid,
-                                           match_analytics_to_crawl_urls_stream)
+                                           match_analytics_to_crawl_urls_stream,
+                                           PagesAggregator)
 from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
 
 
@@ -312,3 +313,60 @@ class TestMatchAnalyticsToCrawlUrlsStream(unittest.TestCase):
         ]
         self.assertEqual(expected_dataset_append_calls,
                          dataset.append.mock_calls)
+
+@patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES", ["google", "bing"])
+@patch("cdf.features.ganalytics.streams.SOCIAL_SOURCES", ["facebook"])
+class TestPageAggregator(unittest.TestCase):
+    def setUp(self):
+        self.entries = []
+        self.entries.append([
+            ("foo.com/bar", "organic", "google", None, 10),
+            ("foo.com/bar", "organic", "bing", None, 8),
+            ("foo.com/bar", "referral", "facebook.com", "facebook", 3)
+        ])
+        self.entries.append([("foo.com/baz", "organic", "google", None, 2)])
+
+    def test_session_count(self):
+        pages_aggregator = PagesAggregator(10)
+        pages_aggregator.update("foo/bar", self.entries[0])
+        pages_aggregator.update("foo/bar", self.entries[1])
+
+        expected_session_count = {
+            'organic.google': 12,
+            'social.facebook': 3,
+            'organic.bing': 8,
+            'organic.all': 20,
+            'social.all': 3,
+        }
+        self.assertEqual(expected_session_count, pages_aggregator.session_count)
+
+    def test_url_count(self):
+        pages_aggregator = PagesAggregator(10)
+        pages_aggregator.update("foo/bar", self.entries[0])
+        pages_aggregator.update("foo/bar", self.entries[1])
+
+        expected_url_count = {
+            'organic.google': 2,
+            'social.facebook': 1,
+            'organic.bing': 1,
+            'organic.all': 2,
+            'social.all': 1,
+        }
+        self.assertEqual(expected_url_count, pages_aggregator.url_count)
+
+    def test_top_pages(self):
+        pages_aggregator = PagesAggregator(2)
+
+        pages_aggregator.update("foo.com/bar", [("foo.com/bar", "organic", "google", None, 20),
+                                                ("foo.com/bar", "organic", "bing", None, 5)])
+        pages_aggregator.update("foo.com/baz", [("foo.com/baz", "organic", "google", None, 10)])
+        pages_aggregator.update("foo.com/qux", [("foo.com/qux", "organic", "google", None, 30)])
+
+        expected_top_pages = {
+            'organic.google': [(20, "foo.com/bar"), (30, "foo.com/qux")],
+            'social.facebook': [],
+            'organic.bing': [(5, "foo.com/bar")],
+            'organic.all': [(25, "foo.com/bar"), (30, "foo.com/qux")],
+            'social.all': []
+        }
+        self.assertEqual(expected_top_pages, pages_aggregator.top_pages)
