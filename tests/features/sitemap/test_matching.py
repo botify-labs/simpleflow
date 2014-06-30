@@ -127,21 +127,29 @@ class MatchSitemapUrlsFromStream(unittest.TestCase):
             "qux": 5
         }
 
-        url_generator = iter(["foo", "bar", "baz", "qux"])
+        url_generator = iter(["foo", "bar", "baz", "qux", "glop"])
 
         dataset = mock.create_autospec(TemporaryDataset)
         dataset = mock.MagicMock()
         sitemap_only_file = mock.create_autospec(file)
+        out_of_crawl_domain_file = mock.create_autospec(file)
+
+        domain_validator = mock.create_autospec(DomainValidator)
+        domain_validator.is_valid.side_effect = [True, False]
+
         match_sitemap_urls_from_stream(url_generator,
                                        url_to_id,
                                        dataset,
-                                       sitemap_only_file)
+                                       domain_validator,
+                                       sitemap_only_file,
+                                       out_of_crawl_domain_file)
 
         expected_dataset_calls = [mock.call(0),
                                   mock.call(2),
                                   mock.call(5)]
         self.assertEquals(expected_dataset_calls, dataset.append.mock_calls)
         sitemap_only_file.write.assert_called_once_with("baz\n")
+        out_of_crawl_domain_file.write.assert_called_once_with("glop\n")
 
 
 class TestDomainValidator(unittest.TestCase):

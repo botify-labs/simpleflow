@@ -11,7 +11,9 @@ from cdf.features.sitemap.download import parse_download_status_from_json
 def match_sitemap_urls_from_stream(url_generator,
                                    url_to_id,
                                    dataset,
-                                   sitemap_only_file):
+                                   domain_validator,
+                                   sitemap_only_file,
+                                   out_of_crawl_domain):
     """The method matches sitemap urls from a stream
     to the urls in the sitemap.
     If the url is in the crawl, we add its url id in an output stream.
@@ -24,14 +26,19 @@ def match_sitemap_urls_from_stream(url_generator,
                     sitemap and in crawl
     :type dataset: TemporaryDataset
     :param sitemap_only_file: a file object where to store urls that are only
-                              in the sitemap
+                              in the sitemap and in the crawl domain
+    :param out_of_crawl_domain: a file object where to store urls that are only
+                              in the sitemap and not in the crawl domain
     """
     for url in url_generator:
         urlid = url_to_id.get(url, None)
         if urlid is None:
             line = "{}\n".format(url)
             line = unicode(line)
-            sitemap_only_file.write(line)
+            if domain_validator.is_valid(url):
+                sitemap_only_file.write(line)
+            else:
+                out_of_crawl_domain.write(line)
         else:
             dataset.append(urlid)
 

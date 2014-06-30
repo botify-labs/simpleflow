@@ -98,21 +98,30 @@ class TestMatchSitemapUrls(unittest.TestCase):
         get_sitemap_urls_stream_mock.return_value = [
             "http://foo.com/qux",
             "http://foo.com/bar",
-            "http://foo.com/index.html"  # not in crawl
+            "http://foo.com/index.html",  # not in crawl
+            "http://bar.com"  # not in crawl domain
         ]
 
         #call
         s3_uri = "s3://" + tempfile.mkdtemp()
+        allowed_domains = ["foo.com"]
+        blacklisted_domains = []
         first_part_id_size = 10
         part_id_size = 100
 
         match_sitemap_urls(s3_uri,
+                           allowed_domains,
+                           blacklisted_domains,
                            first_part_id_size,
                            part_id_size)
 
         #check output files
         with gzip.open(os.path.join(s3_uri[5:], 'sitemap_only.gz')) as f:
             expected_result = ['http://foo.com/index.html\n']
+            self.assertEquals(expected_result, f.readlines())
+
+        with gzip.open(os.path.join(s3_uri[5:], 'in_sitemap_out_of_crawl_domain.gz')) as f:
+            expected_result = ['http://bar.com\n']
             self.assertEquals(expected_result, f.readlines())
 
         with gzip.open(os.path.join(s3_uri[5:], 'sitemap.txt.0.gz')) as f:
