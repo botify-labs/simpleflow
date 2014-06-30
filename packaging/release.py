@@ -5,6 +5,7 @@ It :
 - push the bump commit to github
 - push the tag to github
 - upload the pip package to pypo
+- create a github release
 
 Concerning the version numbers, the script reads the previous release version
 from cdf/__init__.py. It increments its micro version and modify
@@ -25,6 +26,9 @@ import subprocess
 import os.path
 import fileinput
 import re
+import json
+import requests
+import getpass
 
 #get the path to the local cdf directory
 regex = ".*/botify-cdf"
@@ -92,6 +96,68 @@ def set_version(version):
         raise ValueError("Error line defining version not found in {}".format(filename))
 
 
+def get_changelog(tag):
+    """Generate a changelog from a given tag to HEAD
+    :param tag: the reference tag
+    :type tag: str
+    :returns: str
+    """
+    #each commit is formatted this way
+    #-  Merge pull request #392 from sem-io/feature/foo [John Doe]
+    #
+    #  Very useful commit message because:
+    #  - it lists what the commit does
+    #
+    #cf man git log for further explanations on the syntax
+    #the trickiest part is the %w(...)
+    #that configures the commit message indentation
+    width = 80
+    indent = 4
+    log_format = "- %s [%cn]%n%n%w({},{},{})%b".format(width, indent, indent)
+    command = ["git", "log", "{}..HEAD".format(tag),
+               "--first-parent", '--pretty=format:{}'.format(log_format)]
+    changelog = subprocess.check_output(command)
+    return changelog
+
+
+def create_github_release(tag, changelog, dry_run):
+    """Create a github release
+    :param tag: the tag corresponding to the release
+    :type tag: str
+    :param changelog: the release changelog
+    :type changelog: str
+    :param dry_run: if True, nothing is actually done.
+                    the function just prints what it would do
+    :type dry_run: bool
+    """
+
+    release_parameters = {
+        "tag_name": tag,
+        "name": tag,
+        "body": changelog,
+        "draft": False,
+        "prerelease": False
+    }
+    print "\n{} Github authentication {}".format("*" * 20, "*" * 20)
+
+    if not dry_run:
+        username = raw_input("username: ")
+        password = getpass.getpass()
+    else:
+        username = "user"
+        password = "password"
+
+    url = "https://api.github.com/repos/sem-io/botify-cdf/releases"
+    if not dry_run:
+        auth = requests.auth.HTTPBasicAuth(username, password)
+        response = requests.post(url, json.dumps(release_parameters), auth=auth)
+        if not response.ok:
+            print "Could not create github version [{}]: {}".format(response.status_code,
+                                                                    response.text)
+    else:
+        print "POST {} ({}, {})".format(url, username, password)
+
+
 def upload_package(dry_run):
     """Create the python package
     and upload it to pypi
@@ -114,18 +180,24 @@ def release_official_version(dry_run):
     version = get_release_version()
     tag = ".".join([str(i) for i in version])
     print "Creating cdf {}".format(tag)
+
+    last_tag = ".".join([str(i) for i in get_last_release_version()])
+    changelog = get_changelog(last_tag)
     #in case of dry run, we do not want to modify the files
     if not dry_run:
         set_version(version)
     init_filepath = get_init_filepath()
     commit_message = "bump version to {}".format(tag)
+    tag_message = ("{}\n\n"
+                   "Changelog:\n"
+                   "{}").format(tag, changelog)
 
     commands = [
         #commit version bump
         ["git", "add", init_filepath],
         ["git", "commit", "-m", commit_message],
         #tag current commit
-        ["git", "tag", "-a", tag, "-m", tag],
+        ["git", "tag", "-a", tag, "-m", tag_message],
         #push commits
         ["git", "push", "origin", "devel"],
         #upload package
@@ -141,6 +213,7 @@ def release_official_version(dry_run):
     #upload package
     upload_package(dry_run)
 
+    create_github_release(tag, changelog, dry_run)
 
 if __name__ == "__main__":
 
