@@ -19,6 +19,23 @@ MATCHING_STATUS = collections.namedtuple('MATCHING_STATUS', [
 
 def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
                                          dataset, ambiguous_urls_file):
+    """Try to match google analytics data to craw data.
+    :param stream: an iterator containing all the google analytics data
+    :type stream: RawVisitsStreamDef
+    :param url_to_id: a dict url -> id
+    :type url_to_id: dict
+    :param urlid_to_http_code: a dict urlid -> protocol
+    :type urlid_to_http_code: dict
+    :param dataset: the dataset where to save the google analytics data
+                    for urls that were crawled
+    :type dataset: TemporaryDataset
+    :param ambiguous_urls_file: a file object that is used to store the url for
+                                which we could not guess the protocol
+                                (http or https)
+    :type ambiguous_urls_file: file
+    :returns: GoogleAnalyticsAggregator - an object that store
+                                          the data about the ghost pages
+    """
     #init data structures to save the top ghost pages
     #and the number of sessions for ghost pages
     ghost_pages_aggregator = GoogleAnalyticsAggregator(TOP_GHOST_PAGES_NB)
