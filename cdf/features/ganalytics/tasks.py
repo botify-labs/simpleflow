@@ -21,7 +21,7 @@ from cdf.features.ganalytics.matching import match_analytics_to_crawl_urls_strea
 from cdf.features.ganalytics.ghost import (build_ghost_counts_dict,
                                            save_ghost_pages,
                                            save_ghost_pages_count,
-                                           PagesAggregator)
+                                           GoogleAnalyticsAggregator)
 
 @with_temporary_dir
 @feature_enabled('ganalytics')

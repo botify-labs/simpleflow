@@ -10,7 +10,7 @@ from cdf.features.ganalytics.ghost import (get_medium_sources,
                                            build_ghost_counts_dict,
                                            save_ghost_pages,
                                            save_ghost_pages_count,
-                                           PagesAggregator)
+                                           GoogleAnalyticsAggregator)
 
 
 class TestGetMediumSources(unittest.TestCase):
@@ -213,7 +213,7 @@ class TestPageAggregator(unittest.TestCase):
         self.entries.append([("foo.com/baz", "organic", "google", None, 2)])
 
     def test_session_count(self):
-        pages_aggregator = PagesAggregator(10)
+        pages_aggregator = GoogleAnalyticsAggregator(10)
         pages_aggregator.update("foo/bar", self.entries[0])
         pages_aggregator.update("foo/bar", self.entries[1])
 
@@ -227,7 +227,7 @@ class TestPageAggregator(unittest.TestCase):
         self.assertEqual(expected_session_count, pages_aggregator.session_count)
 
     def test_url_count(self):
-        pages_aggregator = PagesAggregator(10)
+        pages_aggregator = GoogleAnalyticsAggregator(10)
         pages_aggregator.update("foo/bar", self.entries[0])
         pages_aggregator.update("foo/bar", self.entries[1])
 
@@ -241,7 +241,7 @@ class TestPageAggregator(unittest.TestCase):
         self.assertEqual(expected_url_count, pages_aggregator.url_count)
 
     def test_top_pages(self):
-        pages_aggregator = PagesAggregator(2)
+        pages_aggregator = GoogleAnalyticsAggregator(2)
 
         pages_aggregator.update("foo.com/bar", [("foo.com/bar", "organic", "google", None, 20),
                                                 ("foo.com/bar", "organic", "bing", None, 5)])
@@ -258,7 +258,7 @@ class TestPageAggregator(unittest.TestCase):
         self.assertEqual(expected_top_pages, pages_aggregator.top_pages)
 
     def test_aggregate_entries(self):
-        pages_aggregator = PagesAggregator(10)
+        pages_aggregator = GoogleAnalyticsAggregator(10)
         actual_result = pages_aggregator.aggregate_entries(self.entries[0])
         expected_result = {
             'organic.google': 10,
@@ -270,7 +270,7 @@ class TestPageAggregator(unittest.TestCase):
         self.assertEqual(expected_result, actual_result)
 
     def test_update_counters(self):
-        pages_aggregator = PagesAggregator(10)
+        pages_aggregator = GoogleAnalyticsAggregator(10)
         aggregated_session_count = Counter({
             'organic.google': 10,
             'organic.bing': 8,

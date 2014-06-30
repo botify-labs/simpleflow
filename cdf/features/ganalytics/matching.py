@@ -4,7 +4,7 @@ import collections
 import itertools
 from cdf.features.ganalytics.constants import TOP_GHOST_PAGES_NB
 from cdf.features.ganalytics.streams import RawVisitsStreamDef
-from cdf.features.ganalytics.ghost import PagesAggregator
+from cdf.features.ganalytics.ghost import GoogleAnalyticsAggregator
 
 MATCHING_STATUS = collections.namedtuple('MATCHING_STATUS', [
     'OK',  # one corresponding url id has been found
@@ -21,7 +21,7 @@ def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
                                          dataset, ambiguous_urls_file):
     #init data structures to save the top ghost pages
     #and the number of sessions for ghost pages
-    ghost_pages_aggregator = PagesAggregator(TOP_GHOST_PAGES_NB)
+    ghost_pages_aggregator = GoogleAnalyticsAggregator(TOP_GHOST_PAGES_NB)
     #precompute field indexes as it would be too long to compute them
     #inside the loop
     fields_list = ["url", "medium", "source", "social_network", "nb"]
