@@ -307,16 +307,16 @@ class PagesAggregator(object):
                                url_without_protocol,
                                aggregated_session_count)
 
-        update_counters(aggregated_session_count,
-                        self.session_count,
-                        self.url_count)
+        self.update_counters(aggregated_session_count,
+                             self.session_count,
+                             self.url_count)
 
     def aggregate_entries(self, entries):
         """Aggregate entries corresponding to the same url.
         Each entry is a tuple (url, medium, source, social_network, nb_sessions)
         The aggregation is made on the different search engines and social networks.
         It is also done on all organic sources and all social networks.
-        :param entries: the input entries
+        :param entries: the input entries (should correspond to the same url)
         :type entries: list
         :returns: Counter - a counter that contains the number of sesssions
                             for each considered source/medium
@@ -336,16 +336,24 @@ class PagesAggregator(object):
 
         return aggregated_session_count
 
+    def update_counters(self,
+                        aggregated_session_count,
+                        session_count,
+                        url_count):
+        """Update the session count and the url count
+        :param aggregated_session_count: a Counter representing the visits
+                                         for a given url for each source/medium
+        :type aggregated_session_count: Counter
+        :param pages_session_count: a Counter that stores the number of sessions
+                                    for each considered source/medium
+        :type pages_url_count: a Counter that stores the number of urls
+                               for each considered source/medium
+        """
+        #update the session count
+        session_count.update(aggregated_session_count)
 
-def update_counters(aggregated_session_count,
-                    ghost_pages_session_count,
-                    ghost_pages_url_count):
-
-    #update the session count
-    ghost_pages_session_count.update(aggregated_session_count)
-
-    #the number of urls for each medium/source is at most 1
-    #since we are processing all entries of the same url
-    ghost_pages_url_count.update(
-        Counter(aggregated_session_count.keys())
-    )
+        #the number of urls for each medium/source is at most 1
+        #since we are processing all entries of the same url
+        url_count.update(
+            Counter(aggregated_session_count.keys())
+        )

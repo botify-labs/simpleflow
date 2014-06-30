@@ -376,10 +376,56 @@ class TestPageAggregator(unittest.TestCase):
         actual_result = pages_aggregator.aggregate_entries(self.entries[0])
         expected_result = {
             'organic.google': 10,
-            'social.facebook': 3,
             'organic.bing': 8,
             'organic.all': 18,
+            'social.facebook': 3,
             'social.all': 3,
         }
         self.assertEqual(expected_result, actual_result)
 
+    def test_update_counters(self):
+        pages_aggregator = PagesAggregator(10)
+        aggregated_session_count = Counter({
+            'organic.google': 10,
+            'organic.bing': 8,
+            'organic.all': 18,
+            'social.facebook': 3,
+            'social.all': 3,
+        })
+
+        session_count = Counter({
+            'organic.google': 1,
+            'organic.bing': 2,
+            'organic.all': 3,
+            'social.facebook': 4,
+            'social.all': 4,
+        })
+
+        url_count = Counter({
+            'organic.google': 1,
+            'organic.bing': 2,
+            'organic.all': 3,
+            'social.facebook': 4,
+            'social.all': 4,
+        })
+        pages_aggregator.update_counters(aggregated_session_count,
+                                         session_count,
+                                         url_count)
+
+        expected_session_count = {
+            'organic.google': 11,
+            'organic.bing': 10,
+            'organic.all': 21,
+            'social.facebook': 7,
+            'social.all': 7,
+        }
+        self.assertEqual(expected_session_count, session_count)
+
+        expected_url_count = Counter({
+            'organic.google': 2,
+            'organic.bing': 3,
+            'organic.all': 4,
+            'social.facebook': 5,
+            'social.all': 5,
+        })
+        self.assertEqual(expected_url_count, url_count)
