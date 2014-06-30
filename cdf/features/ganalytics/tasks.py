@@ -182,22 +182,7 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
         ghost_pages_url_count = ghost_pages_aggregator.url_count
 
     #save top ghost pages in dedicated files
-    ghost_file_paths = []
-    for key, values in top_ghost_pages.iteritems():
-        #convert the heap into a sorted list
-        values = sorted(values, reverse=True)
-        #protocol is missing, we arbitrarly prefix all the urls with http
-        values = [(count, "http://{}".format(url)) for count, url in values]
-        #create a dedicated file
-        crt_ghost_file_path = save_ghost_pages(key, values, tmp_dir)
-        ghost_file_paths.append(crt_ghost_file_path)
-
-    #push top ghost files to s3
-    for ghost_file_path in ghost_file_paths:
-        s3.push_file(
-            os.path.join(s3_uri, os.path.basename(ghost_file_path)),
-            ghost_file_path
-        )
+    save_top_pages(top_ghost_pages, s3_uri, "top_ghost_pages", tmp_dir)
 
     #mix url counts and session counts dictionaries
     ghost_pages_count = build_ghost_counts_dict(
@@ -235,4 +220,30 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
     return api_requests
 
 
+def save_top_pages(top_pages, s3_uri, prefix, tmp_dir):
+    """Save top pages on s3
+    :param top_pages: a dict source/medium -> top_pages with top_pages
+                      a list of tuples (count, url)
+    :type top_pages: dict
+    :param s3_uri: the uri where to save the data
+    :type s3_uri: str
+    :param tmp_dir: a tmp dir for storing files
+    :type tmp_dir: str
+    """
+    #save top ghost pages in dedicated files
+    file_paths = []
+    for key, values in top_pages.iteritems():
+        #convert the heap into a sorted list
+        values = sorted(values, reverse=True)
+        #protocol is missing, we arbitrarly prefix all the urls with http
+        values = [(count, "http://{}".format(url)) for count, url in values]
+        #create a dedicated file
+        crt_ghost_file_path = save_ghost_pages(key, values, prefix, tmp_dir)
+        file_paths.append(crt_ghost_file_path)
 
+    #push top ghost files to s3
+    for ghost_file_path in file_paths:
+        s3.push_file(
+            os.path.join(s3_uri, os.path.basename(ghost_file_path)),
+            ghost_file_path
+        )

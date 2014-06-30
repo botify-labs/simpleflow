@@ -167,7 +167,8 @@ class TestSaveGhostPages(unittest.TestCase):
         source = "organic"
         ghost_pages = [(9, "foo"), (2, "bar")]
         output_dir = "/tmp/tests"
-        save_ghost_pages(source, ghost_pages, output_dir)
+        prefix = "top_ghost_pages"
+        save_ghost_pages(source, ghost_pages, prefix, output_dir)
 
         #test that the correct file was open
         mock_open.assert_call_with("/tmp/tests/top_ghost_pages_organic.tsv")

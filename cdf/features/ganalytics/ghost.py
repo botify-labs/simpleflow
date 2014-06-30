@@ -118,18 +118,20 @@ def build_ghost_counts_dict(ghost_pages_session_count, ghost_pages_url_count):
     return result
 
 
-def save_ghost_pages(source, ghost_pages, output_dir):
+def save_ghost_pages(source, ghost_pages, prefix, output_dir):
     """Save ghost pages as a tsv file
     :param source: the traffic source
     :type source: str
     :param ghost_pages: a list dict of tuples (nb_sessions, url)
                         that stores the ghost pages for the input source
     :type ghost_pages: list
+    :param prefix: the prefix to use for the generated files
+    :type prefix: str
     :param output_dir: the directory where to save the file
     :type output_dir: str
     :returns: str - the path to the generated file."""
     ghost_file_path = os.path.join(output_dir,
-                                   "top_ghost_pages_{}.tsv".format(source))
+                                   "{}_{}.tsv".format(prefix, source))
     #save the entry in it
     with open(ghost_file_path, "w") as ghost_file:
         for nb_sessions, url in ghost_pages:
