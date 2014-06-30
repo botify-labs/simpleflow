@@ -4,21 +4,14 @@ import gzip
 import unittest
 import shutil
 import datetime
-import StringIO
-from collections import Counter
 
 from mock import patch
-import mock
 
-from cdf.core.streams.base import TemporaryDataset
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.ganalytics.streams import VisitsStreamDef
 from cdf.features.ganalytics.tasks import (import_data_from_ganalytics,
                                            get_api_requests,
-                                           match_analytics_to_crawl_urls,
-                                           get_urlid,
-                                           match_analytics_to_crawl_urls_stream,
-                                           PagesAggregator)
+                                           match_analytics_to_crawl_urls)
 from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
 
 
@@ -240,76 +233,5 @@ class TestTasks(unittest.TestCase):
             ]
         }
         self.assertEqual(expected_result, actual_result)
-
-class TestMatchAnalyticsToCrawlUrlsStream(unittest.TestCase):
-    @patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES", ["google", "bing"])
-    @patch("cdf.features.ganalytics.streams.SOCIAL_SOURCES", ["facebook"])
-    def test_nominal_case(self):
-        stream = iter([
-            ("www.foo.com/bar", "organic", "google", None, 10),
-            ("www.foo.com/bar", "organic", "bing", None, 8),
-            ("www.foo.com/bar", "referral", "facebook.com", "facebook", 3),
-            ("www.foo.com/baz", "organic", "google", None, 2),
-            ("www.foo.com/qux", "organic", "google", None, 3),
-            ("www.foo.com/qux", "organic", "bing", None, 1)
-        ])
-
-        url_to_id = {
-            "http://www.foo.com/bar": 1,
-            "http://www.foo.com/baz": 3
-        }
-
-        urlid_to_http_code = {
-            1: "http",
-            3: "http"
-        }
-
-        dataset = mock.create_autospec(TemporaryDataset)
-        ambiguous_urls_file = StringIO.StringIO()
-
-        actual_result = match_analytics_to_crawl_urls_stream(stream, url_to_id,
-                                                             urlid_to_http_code,
-                                                             dataset,
-                                                             ambiguous_urls_file)
-
-        #checking result
-        expected_top_ghost_pages = {
-            'organic.google': [(3, 'www.foo.com/qux')],
-            'social.facebook': [],
-            'organic.bing': [(1, 'www.foo.com/qux')],
-            'organic.all': [(4, 'www.foo.com/qux')],
-            'social.all': [],
-        }
-        self.assertEqual(expected_top_ghost_pages,
-                         actual_result.top_pages)
-
-        expected_ghost_pages_session_count = {
-            'organic.google': 3,
-            'social.facebook': 0,
-            'organic.bing': 1,
-            'organic.all': 4,
-            'social.all': 0,
-        }
-        self.assertEqual(expected_ghost_pages_session_count,
-                         actual_result.session_count)
-
-        expected_ghost_pages_url_count = {
-            'organic.google': 1,
-            'social.facebook': 0,
-            'organic.bing': 1,
-            'organic.all': 1,
-            'social.all': 0,
-        }
-        self.assertEqual(expected_ghost_pages_url_count,
-                         actual_result.url_count)
-
-        expected_dataset_append_calls = [
-            mock.call(1, "organic", "google", None, 10),
-            mock.call(1, "organic", "bing", None, 8),
-            mock.call(1, "referral", "facebook.com", "facebook", 3),
-            mock.call(3, "organic", "google", None, 2)
-        ]
-        self.assertEqual(expected_dataset_append_calls,
-                         dataset.append.mock_calls)
 
 

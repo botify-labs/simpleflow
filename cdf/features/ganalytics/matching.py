@@ -1,6 +1,10 @@
 from cdf.log import logger
 
 import collections
+import itertools
+from cdf.features.ganalytics.constants import TOP_GHOST_PAGES_NB
+from cdf.features.ganalytics.streams import RawVisitsStreamDef
+from cdf.features.ganalytics.ghost import PagesAggregator
 
 MATCHING_STATUS = collections.namedtuple('MATCHING_STATUS', [
     'OK',  # one corresponding url id has been found
@@ -11,6 +15,41 @@ MATCHING_STATUS = collections.namedtuple('MATCHING_STATUS', [
     AMBIGUOUS='ambiguous',
     NOT_FOUND='not found'
 )
+
+
+def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
+                                         dataset, ambiguous_urls_file):
+    #init data structures to save the top ghost pages
+    #and the number of sessions for ghost pages
+    ghost_pages_aggregator = PagesAggregator(TOP_GHOST_PAGES_NB)
+    #precompute field indexes as it would be too long to compute them
+    #inside the loop
+    fields_list = ["url", "medium", "source", "social_network", "nb"]
+    url_idx, medium_idx, source_idx, social_network_idx, sessions_idx = RawVisitsStreamDef.fields_idx(fields_list)
+    #get all the entries corresponding the the same url
+    for url_without_protocol, entries in itertools.groupby(stream, lambda x: x[url_idx]):
+        url_id, matching_status = get_urlid(url_without_protocol,
+                                            url_to_id,
+                                            urlid_to_http_code)
+        if url_id:
+            #if url is in the crawl, add its data to the dataset
+            for entry in entries:
+                dataset_entry = list(entry)
+                dataset_entry[0] = url_id
+                dataset.append(*dataset_entry)
+                #store ambiguous url ids
+                if matching_status == MATCHING_STATUS.AMBIGUOUS:
+                    line = "\t".join([str(i) for i in entry])
+                    line = "{}\n".format(line)
+                    line = unicode(line)
+                    ambiguous_urls_file.write(line)
+        elif matching_status == MATCHING_STATUS.NOT_FOUND:
+            #if the url is not in the crawl
+            #update the ghost pages aggregator with ALL the corresponding
+            #entries.
+            ghost_pages_aggregator.update(url_without_protocol, entries)
+
+    return ghost_pages_aggregator
 
 
 def get_urlid(url,
