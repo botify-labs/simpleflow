@@ -273,7 +273,6 @@ class TestMatchAnalyticsToCrawlUrlsStream(unittest.TestCase):
                                                              ambiguous_urls_file)
 
         #checking result
-        top_ghost_pages = actual_result[0]
         expected_top_ghost_pages = {
             'organic.google': [(3, 'www.foo.com/qux')],
             'social.facebook': [],
@@ -281,9 +280,9 @@ class TestMatchAnalyticsToCrawlUrlsStream(unittest.TestCase):
             'organic.all': [(4, 'www.foo.com/qux')],
             'social.all': [],
         }
-        self.assertEqual(expected_top_ghost_pages, top_ghost_pages)
+        self.assertEqual(expected_top_ghost_pages,
+                         actual_result.top_pages)
 
-        ghost_pages_session_count = actual_result[1]
         expected_ghost_pages_session_count = {
             'organic.google': 3,
             'social.facebook': 0,
@@ -292,9 +291,8 @@ class TestMatchAnalyticsToCrawlUrlsStream(unittest.TestCase):
             'social.all': 0,
         }
         self.assertEqual(expected_ghost_pages_session_count,
-                         ghost_pages_session_count)
+                         actual_result.session_count)
 
-        ghost_pages_url_count = actual_result[2]
         expected_ghost_pages_url_count = {
             'organic.google': 1,
             'social.facebook': 0,
@@ -303,7 +301,7 @@ class TestMatchAnalyticsToCrawlUrlsStream(unittest.TestCase):
             'social.all': 0,
         }
         self.assertEqual(expected_ghost_pages_url_count,
-                         ghost_pages_url_count)
+                         actual_result.url_count)
 
         expected_dataset_append_calls = [
             mock.call(1, "organic", "google", None, 10),

@@ -173,14 +173,14 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
             force_fetch=force_fetch
         )
 
-        counts = match_analytics_to_crawl_urls_stream(stream,
-                                                      url_to_id,
-                                                      urlid_to_http_code,
-                                                      dataset,
-                                                      ambiguous_urls_file)
-        top_ghost_pages = counts[0]
-        ghost_pages_session_count = counts[1]
-        ghost_pages_url_count = counts[2]
+        ghost_pages_aggregator = match_analytics_to_crawl_urls_stream(stream,
+                                                                      url_to_id,
+                                                                      urlid_to_http_code,
+                                                                      dataset,
+                                                                      ambiguous_urls_file)
+        top_ghost_pages = ghost_pages_aggregator.top_pages
+        ghost_pages_session_count = ghost_pages_aggregator.session_count
+        ghost_pages_url_count = ghost_pages_aggregator.url_count
 
     #save top ghost pages in dedicated files
     ghost_file_paths = []
@@ -268,9 +268,4 @@ def match_analytics_to_crawl_urls_stream(stream, url_to_id, urlid_to_http_code,
             #entries.
             ghost_pages_aggregator.update(url_without_protocol, entries)
 
-    return (ghost_pages_aggregator.top_pages,
-            ghost_pages_aggregator.session_count,
-            ghost_pages_aggregator.url_count)
-
-
-
+    return ghost_pages_aggregator
