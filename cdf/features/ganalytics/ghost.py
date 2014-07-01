@@ -161,7 +161,7 @@ def save_ghost_pages_count(ghost_pages_count, output_dir):
 
 class GoogleAnalyticsAggregator(object):
     """A page that manages aggregation of google analytics entries.
-    It is able to for each consideredsource/medium
+    It is able to for each considered source/medium:
     - the number of sessions
     - the number of urls
     - the pages with the most visits
