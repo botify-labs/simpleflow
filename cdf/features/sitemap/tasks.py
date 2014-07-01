@@ -139,8 +139,8 @@ def match_sitemap_urls(s3_uri,
 
     domain_validator = DomainValidator(allowed_domains, blacklisted_domains)
     dataset = SitemapStreamDef.create_temporary_dataset()
-    with gzip.open(sitemap_only_filepath, 'wb') as sitemap_only_file:
-        with gzip.open(out_of_crawl_domain_filepath, 'wb') as out_of_crawl_domain:
+    with gzip.open(sitemap_only_filepath, 'wb') as f_sitemap_only:
+        with gzip.open(out_of_crawl_domain_filepath, 'wb') as f_out_of_crawl_domain:
             url_generator = get_sitemap_urls_stream(s3_uri,
                                                     tmp_dir,
                                                     force_fetch)
@@ -149,8 +149,8 @@ def match_sitemap_urls(s3_uri,
                 url_to_id,
                 dataset,
                 domain_validator,
-                sitemap_only_file,
-                out_of_crawl_domain)
+                f_sitemap_only,
+                f_out_of_crawl_domain)
     dataset.persist_to_s3(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)

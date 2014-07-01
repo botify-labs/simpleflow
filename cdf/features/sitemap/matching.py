@@ -12,8 +12,8 @@ def match_sitemap_urls_from_stream(url_generator,
                                    url_to_id,
                                    dataset,
                                    domain_validator,
-                                   sitemap_only_file,
-                                   out_of_crawl_domain):
+                                   f_sitemap_only,
+                                   f_out_of_crawl_domain):
     """The method matches sitemap urls from a stream
     to the urls in the sitemap.
     If the url is in the crawl, we add its url id in an output stream.
@@ -25,9 +25,9 @@ def match_sitemap_urls_from_stream(url_generator,
     :param dataset: the dataset where to store urlids for urls that are both in
                     sitemap and in crawl
     :type dataset: TemporaryDataset
-    :param sitemap_only_file: a file object where to store urls that are only
+    :param f_sitemap_only: a file object where to store urls that are only
                               in the sitemap and in the crawl domain
-    :param out_of_crawl_domain: a file object where to store urls that are only
+    :param f_out_of_crawl_domain: a file object where to store urls that are only
                               in the sitemap and not in the crawl domain
     """
     for url in url_generator:
@@ -36,9 +36,9 @@ def match_sitemap_urls_from_stream(url_generator,
             line = "{}\n".format(url)
             line = unicode(line)
             if domain_validator.is_valid(url):
-                sitemap_only_file.write(line)
+                f_sitemap_only.write(line)
             else:
-                out_of_crawl_domain.write(line)
+                f_out_of_crawl_domain.write(line)
         else:
             dataset.append(urlid)
 
