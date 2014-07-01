@@ -26,8 +26,8 @@ def match_sitemap_urls_from_stream(url_generator,
     :param dataset: the dataset where to store urlids for urls that are both in
                     sitemap and in crawl
     :type dataset: TemporaryDataset
-    :param nb_samples_to_keep: the maximum number of urls to keep
-                                    for urls that are only in the sitemaps.
+    :param nb_samples_to_keep: the maximum number of distinct urls to keep
+                               for urls that are only in the sitemaps.
     :type nb_samples_to_keep: int
     :param sitemap_only_url: a list where to add samples urls that are
                              in the sitemaps but not in the crawl.
@@ -36,15 +36,23 @@ def match_sitemap_urls_from_stream(url_generator,
                                      in the sitemaps but out of crawl domain.
     :type out_of_crawl_domain_urls: list
     """
+    #build a set to be able to test quickly if a sitemap only url
+    #has already been seen
+    sitemap_only_urls_set = set(sitemap_only_urls)
+    out_of_crawl_domain_urls_set = set(out_of_crawl_domain_urls)
     for url in url_generator:
         urlid = url_to_id.get(url, None)
         if urlid is None:
             if domain_validator.is_valid(url):
                 list_to_update = sitemap_only_urls
+                set_to_update = sitemap_only_urls_set
             else:
                 list_to_update = out_of_crawl_domain_urls
-            if len(list_to_update) < nb_samples_to_keep:
+                set_to_update = out_of_crawl_domain_urls_set
+
+            if (len(list_to_update) < nb_samples_to_keep and url not in set_to_update):
                 list_to_update.append(url)
+                set_to_update.add(url)
         else:
             dataset.append(urlid)
 
