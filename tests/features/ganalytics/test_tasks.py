@@ -11,8 +11,7 @@ from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.ganalytics.streams import VisitsStreamDef
 from cdf.features.ganalytics.tasks import (import_data_from_ganalytics,
                                            get_api_requests,
-                                           match_analytics_to_crawl_urls,
-                                           get_urlid)
+                                           match_analytics_to_crawl_urls)
 from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
 
 
@@ -234,3 +233,5 @@ class TestTasks(unittest.TestCase):
             ]
         }
         self.assertEqual(expected_result, actual_result)
+
+
