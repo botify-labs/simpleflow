@@ -97,7 +97,7 @@ class FieldsTestCase(unittest.TestCase):
 
     def test_enabled(self):
         fields = get_fields({"main": {"lang": True}})
-        self.assertTrue('lang' in [k["name"] for k in fields])
+        self.assertTrue('Lang' in [k["name"] for k in fields])
 
         fields = get_fields({"main": {"lang": False}})
         self.assertFalse('lang' in [k["name"] for k in fields])
