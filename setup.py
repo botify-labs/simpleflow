@@ -37,16 +37,17 @@ setup(
         'Cython==0.19.1',
         'tables==3.0.0',
         'lockfile==0.9.1',
-        'mock',
-        'nose',
         'enum34',
         'lxml',
         'requests',
         'retrying',
+    ],
+    test_requires=[
+        'mock',
+        'nose',
         'httpretty==0.7.0',
         'moto'
     ],
-
 
     package_dir={'': '.'},
     include_package_data=False,
