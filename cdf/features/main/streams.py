@@ -210,7 +210,7 @@ class InfosStreamDef(StreamDefBase):
             "settings": {AGG_CATEGORICAL}
         },
         "lang": {
-            "verbose_name": "lang",
+            "verbose_name": "Lang",
             "type": STRING_TYPE,
             "order": 6,
             "settings": {
