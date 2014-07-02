@@ -3,7 +3,7 @@ import mock
 
 import os
 from cdf.core.streams.base import TemporaryDataset
-from cdf.features.sitemap.document import SitemapXmlDocument
+from cdf.features.sitemap.document import SitemapXmlDocument, SiteMapType
 from cdf.features.sitemap.download import Sitemap, DownloadStatus
 from cdf.features.sitemap.matching import (get_sitemap_urls_stream,
                                            get_download_status_from_s3,
@@ -14,10 +14,14 @@ from cdf.features.sitemap.matching import (get_sitemap_urls_stream,
 
 class GetSitemapUrlsStream(unittest.TestCase):
     @mock.patch.object(SitemapXmlDocument, 'get_urls', autospec=True)
+    @mock.patch("cdf.features.sitemap.document.guess_sitemap_type", autospec=True)
     @mock.patch("cdf.features.sitemap.matching.download_sitemaps_from_s3", autospec=True)
     def test_nominal_case(self,
                           download_sitemaps_from_s3_mock,
+                          guess_sitemap_type_mock,
                           get_urls_mock):
+        guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_XML
+
         get_urls_mock.side_effect = iter([
             iter(["foo", "bar"]),
             iter(["baz", "qux"])
