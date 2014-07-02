@@ -3,7 +3,7 @@ from lxml import etree
 import gzip
 from abc import ABCMeta, abstractmethod
 import csv
-
+import re
 from cdf.log import logger
 from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
 
@@ -172,6 +172,11 @@ class SitemapTextDocument(SitemapDocument):
 
 
 class UrlValidator(object):
+    MAXIMUM_LENGTH = 4096
+    #an url is considered valid if it starts with
+    #http:// or https:// whatever the case.
+    validation_regex = re.compile(r'https?://', re.IGNORECASE)
+
     @classmethod
     def is_valid(cls, url):
         """Check if a string is a valid url (in a sitemap context)
@@ -179,8 +184,9 @@ class UrlValidator(object):
         :type url: str
         :returns: bool
         """
-        maximum_url_length = 4096
-        if len(url) > maximum_url_length:
+        if len(url) > cls.MAXIMUM_LENGTH:
+            return False
+        if cls.validation_regex.match(url) is None:
             return False
         return True
 

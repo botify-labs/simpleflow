@@ -12,6 +12,7 @@ from cdf.features.sitemap.document import (open_sitemap_file,
                                            SitemapIndexXmlDocument,
                                            SitemapRssDocument,
                                            SitemapTextDocument,
+                                           UrlValidator,
                                            guess_sitemap_type)
 from cdf.features.sitemap.exceptions import ParsingError
 
@@ -202,6 +203,44 @@ class TestSitemapTextDocument(unittest.TestCase):
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
 
+    def test_invalid_urls(self):
+        self.file.write('http://foo.com/bar\n'
+                        'foo.com/baz\n'
+                        'http://foo.com/qux\n')
+        self.file.close()
+        sitemap_document = SitemapTextDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP_TEXT,
+                         sitemap_document.get_sitemap_type())
+        expected_urls = [
+            "http://foo.com/bar",
+            "http://foo.com/qux"
+        ]
+
+        self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+
+
+class TestUrlValidator(unittest.TestCase):
+    def test_nominal_case(self):
+        self.assertTrue(UrlValidator.is_valid("http://foo.com"))
+        self.assertTrue(UrlValidator.is_valid("https://foo.com"))
+
+    def test_case_insensitivity(self):
+        self.assertTrue(UrlValidator.is_valid("HTTP://foo.com"))
+        self.assertTrue(UrlValidator.is_valid("HtTpS://foo.com"))
+
+    def test_only_protocol(self):
+        self.assertTrue(UrlValidator.is_valid("http://"))
+
+    def test_no_protocol(self):
+        self.assertFalse(UrlValidator.is_valid("://foo.com"))
+
+    def test_invalid_protocol(self):
+        self.assertFalse(UrlValidator.is_valid("ftp://foo.com"))
+
+    def test_long_lines(self):
+        url = "http://{}".format('a' * UrlValidator.MAXIMUM_LENGTH)
+        self.assertTrue(UrlValidator.is_valid(url[:UrlValidator.MAXIMUM_LENGTH]))
+        self.assertFalse(UrlValidator.is_valid(url[:UrlValidator.MAXIMUM_LENGTH + 1]))
 
 
 class TestOpenSitemapFile(unittest.TestCase):
