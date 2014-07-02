@@ -4,7 +4,7 @@ from cdf.metadata.url.url_metadata import (
     STRING_TYPE, ES_NO_INDEX
 )
 from cdf.core.streams.base import StreamDefBase
-from cdf.query.constants import RENDERING
+from cdf.query.constants import RENDERING, FIELD_RIGHTS
 from .settings import IMAGE_FIELDS
 
 
@@ -47,11 +47,13 @@ class ContentsExtendedStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = {
         "main_image": {
             "type": STRING_TYPE,
-            "verbose_name": "Main image",
+            "verbose_name": "Main image url",
             "group": "main",
             "settings": {
                 ES_NO_INDEX,
-                RENDERING.IMAGE_URL
+                RENDERING.IMAGE_URL,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.SELECT
             }
         }
     }
