@@ -76,7 +76,7 @@ class AbstractSitemapXml(SitemapDocument):
         """
         with open_sitemap_file(self.file_path) as file_object:
             try:
-                for _, element in etree.iterparse(file_object):
+                for _, element in etree.iterparse(file_object, events=("start",)):
                     localname = etree.QName(element.tag).localname
                     if localname == "loc":
                         yield element.text
@@ -121,11 +121,11 @@ class SitemapRssDocument(SitemapDocument):
         """
         with open_sitemap_file(self.file_path) as file_object:
             try:
-                for _, element in etree.iterparse(file_object):
+                for _, element in etree.iterparse(file_object, events=("start",)):
                     localname = etree.QName(element.tag).localname
                     if localname == "link":
                         yield element.text
-                        element.clear()
+                    element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
 
