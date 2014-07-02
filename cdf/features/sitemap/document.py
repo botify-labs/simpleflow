@@ -151,12 +151,38 @@ class SitemapTextDocument(SitemapDocument):
         """
         with open_sitemap_file(self.file_path) as file_object:
             csv_reader = csv.reader(file_object)
-            for row in csv_reader:
+            #do not use a simple "for" loop to be able to catch csv.Error
+            #and simply skip the corresponding lines
+            while True:
+                try:
+                    row = csv_reader.next()
+                except csv.Error:
+                    #simply skip the line
+                    continue
+                except StopIteration:
+                    break
+
                 if len(row) != 1:
                     logger.warning("'%s' should have only one field.", row)
-                #we do not check if the string looks like an url
-                #(we don't do it on xml and rss sitemaps)
-                yield row[0]
+                url = row[0]
+                if UrlValidator.is_valid(url):
+                    #we do not check if the string looks like an url
+                    #(we don't do it on xml and rss sitemaps)
+                    yield row[0]
+
+
+class UrlValidator(object):
+    @classmethod
+    def is_valid(cls, url):
+        """Check if a string is a valid url (in a sitemap context)
+        :param url: the input string
+        :type url: str
+        :returns: bool
+        """
+        maximum_url_length = 4096
+        if len(url) > maximum_url_length:
+            return False
+        return True
 
 
 def open_sitemap_file(file_path):

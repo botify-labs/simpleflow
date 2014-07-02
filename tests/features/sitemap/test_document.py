@@ -3,6 +3,7 @@ import mock
 import tempfile
 import gzip
 import os
+import csv
 import StringIO
 
 from cdf.features.sitemap.document import (open_sitemap_file,
@@ -167,6 +168,40 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+
+    def test_long_line(self):
+        self.file.write('http://foo.com/bar\n')
+        #long line
+        self.file.write('{}\n'.format('-' * 8192))
+        self.file.write('http://foo.com/baz\n')
+        self.file.close()
+        sitemap_document = SitemapTextDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP_TEXT,
+                         sitemap_document.get_sitemap_type())
+        expected_urls = [
+            "http://foo.com/bar",
+            "http://foo.com/baz"
+        ]
+
+        self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+
+    def test_very_long_line(self):
+        self.file.write('http://foo.com/bar\n')
+        #very long line
+        line_length = 2 * csv.field_size_limit()
+        self.file.write('{}\n'.format('-' * line_length))
+        self.file.write('http://foo.com/baz\n')
+        self.file.close()
+        sitemap_document = SitemapTextDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP_TEXT,
+                         sitemap_document.get_sitemap_type())
+        expected_urls = [
+            "http://foo.com/bar",
+            "http://foo.com/baz"
+        ]
+
+        self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+
 
 
 class TestOpenSitemapFile(unittest.TestCase):
