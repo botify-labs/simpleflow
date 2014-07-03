@@ -61,7 +61,10 @@ from cdf.features.ganalytics.tasks import (
     match_analytics_to_crawl_urls
 )
 
-from cdf.utils import remote_files
+from cdf.utils.remote_files import (
+    nb_parts_from_crawl_location as enumerate_partitions
+)
+enumerate_partitions.name = 'enumerate_partitions'
 
 
 UPDATE_STATUS_TIMEOUTS = {
@@ -246,11 +249,7 @@ class AnalysisWorkflow(Workflow):
             first_part_id_size,
             part_id_size)
 
-        # Synchronous call to S3 to retrieve the number of partitions. We could
-        # do it in an asynchronous task though but it would involve more calls
-        # to AWS APIs than the single (or two) call to S3 made by
-        # `cdf.utils.s3.list_files()`.
-        partitions = xrange(remote_files.nb_parts_from_crawl_location(s3_uri))
+        partitions = self.submit(as_activity(enumerate_partitions), s3_uri)
 
         # ``make_bad_link_counter_file`` depends on ``make_bad_link_file`` but
         # does not take its result (that is None) as an argument. Further below
@@ -265,15 +264,18 @@ class AnalysisWorkflow(Workflow):
         if bad_link_result.finished:
             bad_link_counter_results = self.starmap(
                 as_activity(make_bad_link_counter_file),
-                [(crawl_id, s3_uri, part_id) for part_id in partitions])
+                [(crawl_id, s3_uri, part_id) for part_id in
+                 partitions.result['part_id']])
 
         inlinks_results = self.starmap(
             as_activity(make_links_counter_file),
-            [(crawl_id, s3_uri, part_id, 'in') for part_id in partitions])
+            [(crawl_id, s3_uri, part_id, 'in') for part_id in
+             partitions.result['part_id']])
 
         outlinks_results = self.starmap(
             as_activity(make_links_counter_file),
-            [(crawl_id, s3_uri, part_id, 'out') for part_id in partitions])
+            [(crawl_id, s3_uri, part_id, 'out') for part_id in
+             partitions.result['part_id']])
 
         # Group all the futures that need to terminate before computing the
         # aggregations and generating documents.
@@ -292,7 +294,8 @@ class AnalysisWorkflow(Workflow):
 
         aggregators_results = self.starmap(
             as_activity(compute_aggregators_from_part_id),
-            [(crawl_id, s3_uri, part_id) for part_id in partitions])
+            [(crawl_id, s3_uri, part_id) for part_id in
+             partitions.result['part_id']])
 
         futures.wait(*aggregators_results)
         consolidate_result = self.submit(
@@ -302,18 +305,26 @@ class AnalysisWorkflow(Workflow):
 
         documents_results = self.starmap(
             as_activity(generate_documents),
-            [(crawl_id, s3_uri, part_id) for part_id in partitions])
+            [(crawl_id, s3_uri, part_id) for part_id in
+             partitions.result['part_id']])
 
         elastic_search_results = [futures.Future()]
         if all(result.finished for result in documents_results):
             elastic_search_results = self.starmap(
                 as_activity(push_documents_to_elastic_search),
-                [(crawl_id, s3_uri, es_location, es_index, es_doc_type, part_id) for part_id in partitions])
+                [(crawl_id, s3_uri, es_location, es_index, es_doc_type,
+                  part_id) for part_id in partitions.result['part_id']])
 
         futures.wait(*(elastic_search_results + [consolidate_result]))
+
         suggest_summary_result = self.submit(
             as_activity(make_suggest_summary_file),
-            crawl_id, s3_uri, es_location, es_index, es_doc_type, revision_number)
+            crawl_id,
+            s3_uri,
+            es_location,
+            es_index,
+            es_doc_type,
+            revision_number)
         suggest_summary_result.result
 
         crawl_status_result = self.submit(
