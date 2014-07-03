@@ -42,7 +42,7 @@ setup(
         'requests',
         'retrying',
     ],
-    test_requires=[
+    tests_require=[
         'mock',
         'nose',
         'httpretty==0.7.0',
