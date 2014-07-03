@@ -24,6 +24,9 @@ pip install BQL
 pip install python-google-analytics
 
 pip install coverage
+pip install mock
+pip install httpretty==0.7.0
+pip install moto
 
 python setup.py install
 #ignore integration tests
