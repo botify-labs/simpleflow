@@ -84,10 +84,11 @@ def as_activity(func):
         name='analysis.{}'.format(func.name),
         version='2.7',
         task_list='analysis',
-        schedule_to_start_timeout=30,
-        start_to_close_timeout=60,
-        schedule_to_close_timeout=90,
-        heartbeat_timeout=100
+        schedule_to_start_timeout=1800,
+        start_to_close_timeout=7200,
+        schedule_to_close_timeout=9000,
+        heartbeat_timeout=300,
+        raises_on_failure=True,
     )(func)
 
 
