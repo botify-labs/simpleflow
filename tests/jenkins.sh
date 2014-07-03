@@ -14,19 +14,21 @@ virtualenv $VIRTUALENV_DIR
 source $VIRTUALENV_DIR/bin/activate
 
 #install dependencies
-pip install Cython==0.19.1
-pip install numpy
-pip install numexpr==2.1
-pip install elasticsearch==0.4.1
-pip install nose
-pip install BQL
+pip install pip-accel
 
-pip install python-google-analytics
+pip-accel install Cython==0.19.1
+pip-accel install numpy
+pip-accel install numexpr==2.1
+pip-accel install elasticsearch==0.4.1
+pip-accel install nose
+pip-accel install BQL
 
-pip install coverage
-pip install mock
-pip install httpretty==0.7.0
-pip install moto
+pip-accel install python-google-analytics
+
+pip-accel install coverage
+pip-accel install mock
+pip-accel install httpretty==0.7.0
+pip-accel install moto
 
 python setup.py install
 #ignore integration tests
