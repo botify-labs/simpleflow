@@ -52,7 +52,6 @@ class ContentsExtendedStreamDef(StreamDefBase):
             "settings": {
                 ES_NO_INDEX,
                 RENDERING.IMAGE_URL,
-                FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT
             }
         }
