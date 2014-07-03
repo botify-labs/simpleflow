@@ -25,11 +25,7 @@ class Executor(executor.Executor):
 
         return future
 
-    def replay(self, history):
-        workflow_started_event = history[0]
-        args = ()
-        kwargs = {}
-        input = workflow_started_event.input
+    def replay(self, input=None):
         if input is None:
             input = {}
         args = input.get('args', ())

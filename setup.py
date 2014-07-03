@@ -99,6 +99,10 @@ setup(
     ],
     test_suite='tests',
     tests_require=['pytest'],
-    cmdclass={'test': PyTest}
-
+    cmdclass={'test': PyTest},
+    entry_points={
+        'console_scripts': [
+            'simpleflow = simpleflow.command:main',
+        ]
+    }
 )
