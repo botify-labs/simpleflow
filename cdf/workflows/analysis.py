@@ -221,13 +221,6 @@ class AnalysisWorkflow(Workflow):
 
         features_flags = context['features_flags']
 
-        # We may want to make this task optional. For this purpose we could
-        # check if ``clusters_result.finished`` and the value of
-        # ``clusters_result.exception``.  If the task has completed
-        # successfully, it is set to ``None``. Then we would add it to
-        # ``intermediary_files``. Otherwise, if the task failed, it is set with
-        # an exception that we can log. We would not add ``custers_result`` to
-        # ``intermediary_files``.
         clusters_result = self.submit(
             as_activity(compute_mixed_clusters),
             crawl_id,
@@ -265,17 +258,17 @@ class AnalysisWorkflow(Workflow):
             bad_link_counter_results = self.starmap(
                 as_activity(make_bad_link_counter_file),
                 [(crawl_id, s3_uri, part_id) for part_id in
-                 partitions.result['part_id']])
+                 xrange(partitions.result)])
 
         inlinks_results = self.starmap(
             as_activity(make_links_counter_file),
             [(crawl_id, s3_uri, part_id, 'in') for part_id in
-             partitions.result['part_id']])
+             xrange(partitions.result)])
 
         outlinks_results = self.starmap(
             as_activity(make_links_counter_file),
             [(crawl_id, s3_uri, part_id, 'out') for part_id in
-             partitions.result['part_id']])
+             xrange(partitions.result)])
 
         # Group all the futures that need to terminate before computing the
         # aggregations and generating documents.
@@ -295,7 +288,7 @@ class AnalysisWorkflow(Workflow):
         aggregators_results = self.starmap(
             as_activity(compute_aggregators_from_part_id),
             [(crawl_id, s3_uri, part_id) for part_id in
-             partitions.result['part_id']])
+             xrange(partitions.result)])
 
         futures.wait(*aggregators_results)
         consolidate_result = self.submit(
@@ -306,14 +299,15 @@ class AnalysisWorkflow(Workflow):
         documents_results = self.starmap(
             as_activity(generate_documents),
             [(crawl_id, s3_uri, part_id) for part_id in
-             partitions.result['part_id']])
+             xrange(partitions.result)])
 
         elastic_search_results = [futures.Future()]
         if all(result.finished for result in documents_results):
             elastic_search_results = self.starmap(
                 as_activity(push_documents_to_elastic_search),
                 [(crawl_id, s3_uri, es_location, es_index, es_doc_type,
-                  part_id) for part_id in partitions.result['part_id']])
+                  part_id) for part_id in
+                 xrange(partitions.result)])
 
         futures.wait(*(elastic_search_results + [consolidate_result]))
 
