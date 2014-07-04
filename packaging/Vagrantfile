@@ -149,6 +149,8 @@ Vagrant.configure("2") do |config|
   #If we are testing the module in jenkins we need the source
   if JENKINS_TEST != 0
       config.vm.synced_folder "..", "/home/vagrant/botify-cdf"
+      config.vm.synced_folder "../download-cache", "/root/.pip/download-cache"
+      config.vm.synced_folder "../.pip-accel", "/var/cache/pip-accel"
   end
 
   # Configuration to be applied whenever
