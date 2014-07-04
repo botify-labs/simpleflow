@@ -1,7 +1,12 @@
+import logging
+
 from simpleflow import (
     executor,
     futures,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class Executor(executor.Executor):
@@ -10,6 +15,8 @@ class Executor(executor.Executor):
 
     """
     def submit(self, func, *args, **kwargs):
+        logger.info('executing task {}(args={}, kwargs={})'.format(
+            func, args, kwargs))
         args = [executor.get_actual_value(arg) for arg in args]
         kwargs = {key: executor.get_actual_value(val) for
                   key, val in kwargs.iteritems()}
