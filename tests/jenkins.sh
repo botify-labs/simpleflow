@@ -30,6 +30,8 @@ pip-accel install mock
 pip-accel install httpretty==0.7.0
 pip-accel install moto
 
+pip-accel install -r pip_requirements.txt
+
 python setup.py install
 #ignore integration tests
 nosetests --with-xunit --with-coverage --cover-package=cdf --cover-xml -e=*integration*

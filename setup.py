@@ -12,6 +12,10 @@ version = __import__('cdf').__version__
 with open(os.path.join(root, 'README.rst')) as f:
     README = f.read()
 
+with open(os.path.join(root, 'pip_requirements.txt')) as f:
+    pip_requirements = f.readlines()
+    pip_requirements = [s.strip() for s in pip_requirements]
+
 setup(
     name='botify-cdf',
     version=version,
@@ -25,23 +29,7 @@ setup(
     url='http://github.com/sem-io/botify-cdf',
     keywords='botify data extractor crawl',
     zip_safe=True,
-    install_requires=[
-        'boto',
-        'ujson==1.33',
-        'pyhash==0.5.0',
-        'elasticsearch==0.4.3',
-        'lz4==0.6.0',
-        'numpy',
-        'pandas==0.11.0',
-        'numexpr==2.1',
-        'Cython==0.19.1',
-        'tables==3.0.0',
-        'lockfile==0.9.1',
-        'enum34',
-        'lxml',
-        'requests',
-        'retrying',
-    ],
+    install_requires=pip_requirements,
     tests_require=[
         'mock',
         'nose',
