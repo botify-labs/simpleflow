@@ -120,6 +120,32 @@ def get_changelog(tag):
     return changelog
 
 
+def authenticate(url, auth_msg=None, retry=True):
+    """Interactive authenticate for a webservice
+
+    :param url: url of the webservice endpoint
+    :param auth_msg: message to show the user
+    :param retry: if retry is needed
+    :return: (success, auth)
+    :rtype: (bool, `requests.auth.HTTPBasicAuth`)
+    """
+    def _auth():
+        if auth_msg:
+            print auth_msg
+        username = raw_input("username: ")
+        password = getpass.getpass()
+        auth = requests.auth.HTTPBasicAuth(username, password)
+        ok = requests.get(url, auth=auth).ok
+        return ok, auth
+
+    ok, auth = _auth()
+
+    while retry and not ok:
+        ok, auth = _auth()
+
+    return ok, auth
+
+
 def create_github_release(tag, changelog, dry_run):
     """Create a github release
     :param tag: the tag corresponding to the release
@@ -138,23 +164,18 @@ def create_github_release(tag, changelog, dry_run):
         "draft": False,
         "prerelease": False
     }
-    print "\n{} Github authentication {}".format("*" * 20, "*" * 20)
-
-    if not dry_run:
-        username = raw_input("username: ")
-        password = getpass.getpass()
-    else:
-        username = "user"
-        password = "password"
-
+    auth_msg = "\n{} Github authentication {}".format("*" * 20, "*" * 20)
     url = "https://api.github.com/repos/sem-io/botify-cdf/releases"
+
     if not dry_run:
-        auth = requests.auth.HTTPBasicAuth(username, password)
+        _, auth = authenticate(url, auth_msg, retry=True)
         response = requests.post(url, json.dumps(release_parameters), auth=auth)
         if not response.ok:
             print "Could not create github version [{}]: {}".format(response.status_code,
                                                                     response.text)
     else:
+        username = "user"
+        password = "password"
         print "POST {} ({}, {})".format(url, username, password)
 
 
