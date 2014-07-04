@@ -70,6 +70,12 @@ class TestS3Module(unittest.TestCase):
         expected = self.partition_files + ['file.type.gz']
         self.assertItemsEqual(expected, map(lambda i: i.name, result))
 
+        # regexp should only be used to filter file/key's `basename`
+        # it means the `bucket_uri` should be the direct parent of the files
+        result = list_files('s3://', regexp=['test_bucket/file.*'])
+        expected = []
+        self.assertEqual(result, expected)
+
     @mock_s3
     def test_list_bucket_partition_order(self):
         self.setup_s3()

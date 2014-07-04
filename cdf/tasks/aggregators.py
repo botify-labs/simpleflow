@@ -60,6 +60,10 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir=None, fo
     )
 
 
+def _get_partial_aggregations_path(crawl_path):
+    return os.path.join(crawl_path, 'suggest')
+
+
 @with_temporary_dir
 def consolidate_aggregators(crawl_id, s3_uri, tmp_dir=None, force_fetch=False):
     """
@@ -115,9 +119,9 @@ def consolidate_aggregators(crawl_id, s3_uri, tmp_dir=None, force_fetch=False):
         #ValueError: Shape of passed values is (2, 0), indices imply (2, 1)
         store['children'] = child_frame
 
-    files_fetched = fetch_files(s3_uri,
-                                tmp_dir,
-                                regexp=['suggest/counters.([0-9]+).json'],
+    files_fetched = fetch_files(_get_partial_aggregations_path(s3_uri),
+                                _get_partial_aggregations_path(tmp_dir),
+                                regexp=['counters.([0-9]+).json'],
                                 force_fetch=force_fetch)
 
     counters = [json.load(open(path_local)) for path_local, fetched in files_fetched]

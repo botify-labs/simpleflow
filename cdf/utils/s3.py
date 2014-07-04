@@ -45,8 +45,12 @@ def uri_parse(s3_uri):
 
 
 def list_files(s3_uri, regexp=None):
-    """
-    Return list of boto.s3.Key objects
+    """Return list of `boto.s3.Key` objects
+
+    It does not support recursive listing.
+
+    :param s3_uri: s3 path that contains the keys
+    :param regexp: regexp used to filter the basename of s3 keys
     """
     bucket, location = uri_parse(s3_uri)
     bucket = Connection.get().get_bucket(bucket)
