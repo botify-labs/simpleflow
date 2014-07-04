@@ -73,7 +73,7 @@ setup(
     version=__version__,
     description='Python library for dataflow programming with Amazon SWF',
     long_description=(read("README.rst") + '\n\n' +
-                        read("HISTORY.rst")),
+                      read("HISTORY.rst")),
     author='Greg Leclercq',
     author_email='greg@botify.com',
     url='https://github.com/botify-labs/simpleflow',
@@ -81,7 +81,7 @@ setup(
     package_dir={'simpleflow': 'simpleflow'},
     include_package_data=True,
     install_requires=[
-
+        'simple-workflow>=0.1.39',
     ],
     license=read("LICENSE"),
     zip_safe=False,
