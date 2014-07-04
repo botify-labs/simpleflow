@@ -25,7 +25,6 @@ do
     $PIP install --timeout 180 $REQUIREMENT
 done
 
-$PIP install BQL
 $PIP install python-google-analytics
 
 $PIP install nose
@@ -33,7 +32,6 @@ $PIP install coverage
 $PIP install mock
 $PIP install httpretty==0.7.0
 $PIP install moto
-
 
 python setup.py install
 #ignore integration tests
