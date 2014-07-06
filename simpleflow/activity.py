@@ -58,13 +58,16 @@ class Activity(object):
             return self._name
 
         callable = self._callable
+        prefix = self._callable.__module__
+
         if hasattr(callable, 'name'):
-            return callable.name
+            name = callable.name
+        elif isinstance(callable, types.FunctionType):
+            name = callable.func_name
+        else:
+            name = callable.__class__.__name__
 
-        if isinstance(callable, types.FunctionType):
-            return callable.func_name
-
-        return callable.__class__.__name__
+        return '.'.join([prefix, name])
 
     def __repr__(self):
         return 'Activity(name={}, version={}, task_list={})'.format(

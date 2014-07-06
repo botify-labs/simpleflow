@@ -81,7 +81,7 @@ def test_workflow_with_input():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-increment-1',
+                           activity_id='activity-tests.test_dataflow.increment-1',
                            input={'args': 1},
                            result=result)
         .add_decision_task_scheduled()
@@ -127,7 +127,7 @@ def test_workflow_with_two_tasks():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-increment-1',
+                           activity_id='activity-tests.test_dataflow.increment-1',
                            input={'args': 1},
                            result=2)
         .add_decision_task_scheduled()
@@ -145,7 +145,7 @@ def test_workflow_with_two_tasks():
         .add_activity_task(double,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-double-1',
+                           activity_id='activity-tests.test_dataflow.double-1',
                            input={'args': 2},
                            result=4)
         .add_decision_task_scheduled()
@@ -184,7 +184,7 @@ def test_workflow_with_two_tasks_not_completed():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='started',
-                           activity_id='activity-increment-1',
+                           activity_id='activity-tests.test_dataflow.increment-1',
                            input={'args': 1},
                            result=5)
         .add_decision_task_scheduled()
@@ -247,7 +247,7 @@ def test_workflow_with_same_task_called_two_times():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-increment-1',
+                           activity_id='activity-tests.test_dataflow.increment-1',
                            input={'args': 1},
                            result=2)
         .add_decision_task_scheduled()
@@ -264,7 +264,7 @@ def test_workflow_with_same_task_called_two_times():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-increment-2',
+                           activity_id='activity-tests.test_dataflow.increment-2',
                            input={'args': 2},
                            result=3)
         .add_decision_task_scheduled()
@@ -309,7 +309,7 @@ def test_workflow_reuse_same_future():
                            decision_id=decision_id,
                            last_state='completed',
                            input={'args': 1},
-                           activity_id='activity-increment-1',
+                           activity_id='activity-tests.test_dataflow.increment-1',
                            result=2)
         .add_decision_task_scheduled()
         .add_decision_task_started())
@@ -324,7 +324,7 @@ def test_workflow_reuse_same_future():
         .add_activity_task(double,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-double-1',
+                           activity_id='activity-tests.test_dataflow.double-1',
                            input={'args': 2},
                            result=4)
         .add_decision_task_scheduled()
@@ -370,7 +370,7 @@ def test_workflow_with_two_tasks_same_future():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-increment-1',
+                           activity_id='activity-tests.test_dataflow.increment-1',
                            input={'args': 1},
                            result=2)
         .add_decision_task_scheduled()
@@ -388,13 +388,13 @@ def test_workflow_with_two_tasks_same_future():
         .add_activity_task(double,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-double-1',
+                           activity_id='activity-tests.test_dataflow.double-1',
                            input={'args': 2},
                            result=4)
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-increment-2',
+                           activity_id='activity-tests.test_dataflow.increment-2',
                            input={'args': 2},
                            result=3)
         .add_decision_task_scheduled()
@@ -444,7 +444,7 @@ def test_workflow_map():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id='activity-increment-{}'.format(
+            activity_id='activity-tests.test_dataflow.increment-{}'.format(
                 i + 1),
             last_state='completed',
             input={'args': i},
@@ -494,7 +494,7 @@ def test_workflow_retry_activity():
         .add_activity_task(increment_retry,
                            decision_id=decision_id,
                            last_state='failed',
-                           activity_id='activity-increment_retry-1')
+                           activity_id='activity-tests.test_dataflow.increment_retry-1')
         .add_decision_task_scheduled()
         .add_decision_task_started())
 
@@ -509,7 +509,7 @@ def test_workflow_retry_activity():
         .add_activity_task(increment_retry,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-increment_retry-1',
+                           activity_id='activity-tests.test_dataflow.increment_retry-1',
                            input={'args': 7},
                            result=8)
         .add_decision_task_scheduled()
@@ -606,7 +606,7 @@ def test_workflow_with_more_than_max_decisions():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id='activity-increment-{}'.format(
+            activity_id='activity-tests.test_dataflow.increment-{}'.format(
                 i + 1),
             last_state='completed',
             result=i + 1)
@@ -623,7 +623,7 @@ def test_workflow_with_more_than_max_decisions():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id='activity-increment-{}'.format(
+            activity_id='activity-tests.test_dataflow.increment-{}'.format(
                 i + 1),
             last_state='completed',
             result=i + 1)
@@ -668,7 +668,7 @@ def test_workflow_failed_from_definition():
     history.add_activity_task(
         raise_error,
         decision_id=history.last_id,
-        activity_id='activity-raise_error-1',
+        activity_id='activity-tests.test_dataflow.raise_error-1',
         last_state='failed',
         result=json.dumps(None))
 
@@ -709,7 +709,7 @@ def test_workflow_activity_raises_on_failure():
     history.add_activity_task(
         raise_on_failure,
         decision_id=history.last_id,
-        activity_id='activity-raise_on_failure-1',
+        activity_id='activity-tests.test_dataflow.raise_on_failure-1',
         last_state='failed',
         reason='error')
 
