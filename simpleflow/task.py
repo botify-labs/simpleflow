@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import json
 import abc
+import collections
 
 
 class Task(object):
@@ -49,3 +50,17 @@ class WorkflowTask(Task):
     @property
     def name(self):
         return 'workflow-{}'.format(self.workflow.name)
+
+
+class Registry(object):
+    def __init__(self):
+        self._tasks = collections.defaultdict(list)
+
+    def __getitem__(self, label):
+        return self._tasks[label]
+
+    def register(self, task, label=None):
+        self._tasks[label].append(task)
+
+
+registry = Registry()
