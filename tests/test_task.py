@@ -21,4 +21,13 @@ print increment.name
 def test_task_register():
     from simpleflow import task
 
-    assert task.registry['test'] == [increment, double, square]
+    assert sorted(task.registry['test'].keys()) == sorted([
+        'tests.test_task.increment',
+        'tests.test_task.double',
+        'tests.test_task.square',
+    ])
+    assert sorted(task.registry['test'].values()) == sorted([
+        increment,
+        double,
+        square,
+    ])
