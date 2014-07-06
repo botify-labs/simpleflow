@@ -1,3 +1,6 @@
+from . import task
+
+
 __all__ = ['with_attributes', 'Activity']
 
 
@@ -49,6 +52,11 @@ class Activity(object):
         self.task_schedule_to_close_timeout = schedule_to_close_timeout
         self.task_schedule_to_start_timeout = schedule_to_start_timeout
         self.task_heartbeat_timeout = heartbeat_timeout
+
+        self.register()
+
+    def register(self):
+        task.registry.register(self, self.task_list)
 
     @property
     def name(self):
