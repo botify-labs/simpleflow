@@ -20,21 +20,17 @@ if [ $PIP = "pip-accel" ]; then
 fi
 
 #install dependencies
-$PIP install Cython==0.19.1
-$PIP install numpy
-$PIP install numexpr==2.1
-$PIP install elasticsearch==0.4.1
-$PIP install nose
-$PIP install BQL
+$PIP install --timeout 180 -r pip_requirements.txt
 
+$PIP install BQL
 $PIP install python-google-analytics
 
+$PIP install nose
 $PIP install coverage
 $PIP install mock
 $PIP install httpretty==0.7.0
 $PIP install moto
 
-$PIP install --timeout 180 -r pip_requirements.txt
 
 python setup.py install
 #ignore integration tests
