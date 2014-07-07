@@ -30,7 +30,7 @@ pip-accel install mock
 pip-accel install httpretty==0.7.0
 pip-accel install moto
 
-pip-accel install -r pip_requirements.txt
+pip-accel install --timeout 180 -r pip_requirements.txt
 
 python setup.py install
 #ignore integration tests
