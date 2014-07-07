@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from BQL.parser.tagging import query_to_python
-from BQL.parser.metadata import query_to_python as metadata_query_to_python
 from pandas import DataFrame
 
 from cdf.core.streams.utils import group_left
@@ -9,7 +7,7 @@ from cdf.features.main.streams import InfosStreamDef
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 
 
-def transform_queries(queries_lst, func=query_to_python):
+def transform_queries(queries_lst):
     return [{'hash': hash, 'string': query, 'verbose_string': verbose_string}
             for query, verbose_string, hash in queries_lst]
 
@@ -21,12 +19,12 @@ class MetadataClusterMixin(object):
         self.metadata_clusters = dict()
 
     def add_pattern_cluster(self, pattern_name, cluster_list):
-        self.patterns_clusters[pattern_name] = transform_queries(cluster_list, query_to_python)
+        self.patterns_clusters[pattern_name] = transform_queries(cluster_list)
 
     def add_metadata_cluster(self, metadata_type, cluster_list):
         if metadata_type not in CONTENT_TYPE_INDEX.values():
             raise Exception('{} is not a valid metadata type'.format(metadata_type))
-        self.metadata_clusters[CONTENT_TYPE_NAME_TO_ID[metadata_type]] = transform_queries(cluster_list, metadata_query_to_python)
+        self.metadata_clusters[CONTENT_TYPE_NAME_TO_ID[metadata_type]] = transform_queries(cluster_list)
 
     def make_clusters_dataframe(self):
         """
