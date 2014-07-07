@@ -37,43 +37,6 @@ from simpleflow import (
     activity,
 )
 
-from cdf.tasks.suggest.clusters import compute_mixed_clusters
-from cdf.tasks.intermediary_files import (
-    make_metadata_duplicates_file,
-    make_links_counter_file,
-    make_bad_link_file,
-    make_bad_link_counter_file,
-)
-
-from cdf.tasks.url_data import (
-    generate_documents,
-    push_documents_to_elastic_search
-)
-
-from cdf.tasks.aggregators import (
-    compute_aggregators_from_part_id,
-    make_suggest_summary_file,
-    consolidate_aggregators,
-)
-
-from cdf.features.ganalytics.tasks import (
-    import_data_from_ganalytics,
-    match_analytics_to_crawl_urls
-)
-
-from cdf.utils.remote_files import (
-    nb_parts_from_crawl_location as enumerate_partitions
-)
-enumerate_partitions.name = 'enumerate_partitions'
-
-
-UPDATE_STATUS_TIMEOUTS = {
-    'schedule_to_start_timeout': 30,
-    'start_to_close_timeout': 30,
-    'schedule_to_close_timeout': 60,
-    'heartbeat_timeout': 100,
-}
-
 
 def as_activity(func):
     """
@@ -84,7 +47,6 @@ def as_activity(func):
 
     """
     return activity.with_attributes(
-        name='analysis.{}'.format(func.name),
         version='2.7',
         task_list='analysis',
         schedule_to_start_timeout=1800,
@@ -93,6 +55,60 @@ def as_activity(func):
         heartbeat_timeout=300,
         raises_on_failure=True,
     )(func)
+
+
+from cdf.tasks.suggest.clusters import compute_mixed_clusters
+compute_mixed_clusters = as_activity(compute_mixed_clusters)
+
+from cdf.tasks.intermediary_files import (
+    make_metadata_duplicates_file,
+    make_links_counter_file,
+    make_bad_link_file,
+    make_bad_link_counter_file,
+)
+make_metadata_duplicates_file = as_activity(make_metadata_duplicates_file)
+make_links_counter_file = as_activity(make_links_counter_file)
+make_bad_link_file = as_activity(make_bad_link_file)
+make_bad_link_counter_file = as_activity(make_bad_link_counter_file)
+
+from cdf.tasks.url_data import (
+    generate_documents,
+    push_documents_to_elastic_search
+)
+generate_documents = as_activity(generate_documents)
+push_documents_to_elastic_search = as_activity(
+    push_documents_to_elastic_search)
+
+from cdf.tasks.aggregators import (
+    compute_aggregators_from_part_id,
+    make_suggest_summary_file,
+    consolidate_aggregators,
+)
+compute_aggregators_from_part_id = as_activity(
+    compute_aggregators_from_part_id)
+make_suggest_summary_file = as_activity(make_suggest_summary_file)
+consolidate_aggregators = as_activity(consolidate_aggregators)
+
+from cdf.features.ganalytics.tasks import (
+    import_data_from_ganalytics,
+    match_analytics_to_crawl_urls
+)
+import_data_from_ganalytics = as_activity(import_data_from_ganalytics)
+match_analytics_to_crawl_urls = as_activity(match_analytics_to_crawl_urls)
+
+from cdf.utils.remote_files import (
+    nb_parts_from_crawl_location as enumerate_partitions
+)
+enumerate_partitions.name = 'enumerate_partitions'
+enumerate_partitions = as_activity(enumerate_partitions)
+
+
+UPDATE_STATUS_TIMEOUTS = {
+    'schedule_to_start_timeout': 30,
+    'start_to_close_timeout': 30,
+    'schedule_to_close_timeout': 60,
+    'heartbeat_timeout': 100,
+}
 
 
 @activity.with_attributes(
@@ -182,7 +198,7 @@ class AnalysisWorkflow(Workflow):
         s3_uri = context['s3_uri']
         features_flags = context['features_flags']
         ganalytics_result = self.submit(
-            as_activity(import_data_from_ganalytics),
+            import_data_from_ganalytics,
             config['access_token'],
             config['refresh_token'],
             config['ganalytics_site_id'],
@@ -191,7 +207,7 @@ class AnalysisWorkflow(Workflow):
 
         if ganalytics_result.finished:
             ganalytics_result = self.submit(
-                as_activity(match_analytics_to_crawl_urls),
+                match_analytics_to_crawl_urls,
                 s3_uri,
                 context['first_part_id_size'],
                 context['part_id_size'],
@@ -200,7 +216,7 @@ class AnalysisWorkflow(Workflow):
             if ganalytics_result.finished:
                 api_requests = ganalytics_result.result
                 ganalytics_result = self.submit(
-                    as_activity(request_api),
+                    request_api,
                     context['crawl_endpoint'],
                     context['revision_endpoint'],
                     api_requests)
@@ -222,27 +238,27 @@ class AnalysisWorkflow(Workflow):
         features_flags = context['features_flags']
 
         clusters_result = self.submit(
-            as_activity(compute_mixed_clusters),
+            compute_mixed_clusters,
             crawl_id,
             s3_uri,
             first_part_id_size,
             part_id_size)
 
         metadata_dup_result = self.submit(
-            as_activity(make_metadata_duplicates_file),
+            make_metadata_duplicates_file,
             crawl_id,
             s3_uri,
             first_part_id_size,
             part_id_size)
 
         bad_link_result = self.submit(
-            as_activity(make_bad_link_file),
+            make_bad_link_file,
             crawl_id,
             s3_uri,
             first_part_id_size,
             part_id_size)
 
-        partitions = self.submit(as_activity(enumerate_partitions), s3_uri)
+        partitions = self.submit(enumerate_partitions, s3_uri)
 
         # ``make_bad_link_counter_file`` depends on ``make_bad_link_file`` but
         # does not take its result (that is None) as an argument. Further below
@@ -256,17 +272,17 @@ class AnalysisWorkflow(Workflow):
         bad_link_counter_results = [futures.Future()]
         if bad_link_result.finished:
             bad_link_counter_results = self.starmap(
-                as_activity(make_bad_link_counter_file),
+                make_bad_link_counter_file,
                 [(crawl_id, s3_uri, part_id) for part_id in
                  xrange(partitions.result)])
 
         inlinks_results = self.starmap(
-            as_activity(make_links_counter_file),
+            make_links_counter_file,
             [(crawl_id, s3_uri, part_id, 'in') for part_id in
              xrange(partitions.result)])
 
         outlinks_results = self.starmap(
-            as_activity(make_links_counter_file),
+            make_links_counter_file,
             [(crawl_id, s3_uri, part_id, 'out') for part_id in
              xrange(partitions.result)])
 
@@ -286,25 +302,25 @@ class AnalysisWorkflow(Workflow):
         futures.wait(*intermediary_files)
 
         aggregators_results = self.starmap(
-            as_activity(compute_aggregators_from_part_id),
+            compute_aggregators_from_part_id,
             [(crawl_id, s3_uri, part_id) for part_id in
              xrange(partitions.result)])
 
         futures.wait(*aggregators_results)
         consolidate_result = self.submit(
-            as_activity(consolidate_aggregators),
+            consolidate_aggregators,
             crawl_id,
             s3_uri)
 
         documents_results = self.starmap(
-            as_activity(generate_documents),
+            generate_documents,
             [(crawl_id, s3_uri, part_id) for part_id in
              xrange(partitions.result)])
 
         elastic_search_results = [futures.Future()]
         if all(result.finished for result in documents_results):
             elastic_search_results = self.starmap(
-                as_activity(push_documents_to_elastic_search),
+                push_documents_to_elastic_search,
                 [(crawl_id, s3_uri, es_location, es_index, es_doc_type,
                   part_id) for part_id in
                  xrange(partitions.result)])
@@ -312,7 +328,7 @@ class AnalysisWorkflow(Workflow):
         futures.wait(*(elastic_search_results + [consolidate_result]))
 
         suggest_summary_result = self.submit(
-            as_activity(make_suggest_summary_file),
+            make_suggest_summary_file,
             crawl_id,
             s3_uri,
             es_location,
