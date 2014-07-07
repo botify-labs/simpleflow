@@ -13,20 +13,27 @@ virtualenv $VIRTUALENV_DIR
 [ $? -ne 0 ] && exit 1
 source $VIRTUALENV_DIR/bin/activate
 
+#pip management
+PIP="pip-accel"
+if [ $PIP = "pip-accel" ]; then
+    pip install pip-accel
+fi
+
 #install dependencies
-pip install Cython==0.19.1
-pip install numpy
-pip install numexpr==2.1
-pip install elasticsearch==0.4.1
-pip install nose
-pip install BQL
+for REQUIREMENT in $(cat pip_requirements.txt)
+do
+    $PIP install --timeout 180 $REQUIREMENT
+done
 
-pip install python-google-analytics
+$PIP install BQL
+$PIP install python-google-analytics
 
-pip install coverage
-pip install mock
-pip install httpretty==0.7.0
-pip install moto
+$PIP install nose
+$PIP install coverage
+$PIP install mock
+$PIP install httpretty==0.7.0
+$PIP install moto
+
 
 python setup.py install
 #ignore integration tests
