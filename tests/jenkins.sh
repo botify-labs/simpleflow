@@ -20,7 +20,10 @@ if [ $PIP = "pip-accel" ]; then
 fi
 
 #install dependencies
-$PIP install --timeout 180 -r pip_requirements.txt
+for REQUIREMENT in $(cat pip_requirements.txt)
+do
+    $PIP install --timeout 180 $REQUIREMENT
+done
 
 $PIP install BQL
 $PIP install python-google-analytics
