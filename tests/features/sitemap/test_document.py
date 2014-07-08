@@ -1,4 +1,5 @@
 import unittest
+import mock
 import tempfile
 import gzip
 import os
@@ -194,47 +195,63 @@ class TestOpenSitemapFile(unittest.TestCase):
 
 class TestGuessSitemapDocumentType(unittest.TestCase):
 
+    def setUp(self):
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        self.tmp_file_path = tmp_file.name
+
+    def tearDown(self):
+        os.remove(self.tmp_file_path)
+
     def test_xml_sitemap(self):
-        file_mock = StringIO.StringIO('<?xml version="1.0" encoding="UTF-8"?>'
-                                      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-                                      '<url><loc>http://foo/bar</loc></url>'
-                                      '</urlset>')
-        self.assertEqual(SiteMapType.SITEMAP_XML, guess_sitemap_type(file_mock))
+        with open(self.tmp_file_path, "w") as f:
+            f.write('<?xml version="1.0" encoding="UTF-8"?>'
+                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                    '<url><loc>http://foo/bar</loc></url>'
+                    '</urlset>')
+        self.assertEqual(SiteMapType.SITEMAP_XML,
+                         guess_sitemap_type(self.tmp_file_path))
 
     def test_xml_sitemapindex(self):
-        file_mock = StringIO.StringIO('<?xml version="1.0" encoding="UTF-8"?>'
-                                      '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-                                      '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
-                                      '</sitemapindex>')
+        with open(self.tmp_file_path, "w") as f:
+            f.write('<?xml version="1.0" encoding="UTF-8"?>'
+                    '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                    '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
+                    '</sitemapindex>')
         self.assertEqual(SiteMapType.SITEMAP_INDEX,
-                         guess_sitemap_type(file_mock))
+                         guess_sitemap_type(self.tmp_file_path))
 
     def test_rss_sitemap(self):
-        file_mock = StringIO.StringIO('<?xml version="1.0" encoding="UTF-8" ?>'
-                                      '<rss version="2.0">'
-                                      '<channel>'
-                                      ' <title>RSS Title</title>'
-                                      ' <description>This is an example of an RSS feed</description>'
-                                      ' <link>http://www.example.com/main.html</link>'
-                                      ' <item>'
-                                      '  <title>Example entry</title>'
-                                      '  <description>Here is some text containing an interesting description.</description>'
-                                      '  <link>http://www.example.com/blog/post/1</link>'
-                                      ' </item>'
-                                      '</channel>'
-                                      '</rss>')
+        with open(self.tmp_file_path, "w") as f:
+            f.write('<?xml version="1.0" encoding="UTF-8" ?>'
+                    '<rss version="2.0">'
+                    '<channel>'
+                    ' <title>RSS Title</title>'
+                    ' <description>This is an example of an RSS feed</description>'
+                    ' <link>http://www.example.com/main.html</link>'
+                    ' <item>'
+                    '  <title>Example entry</title>'
+                    '  <description>Here is some text containing an interesting description.</description>'
+                    '  <link>http://www.example.com/blog/post/1</link>'
+                    ' </item>'
+                    '</channel>'
+                    '</rss>')
         self.assertEqual(SiteMapType.SITEMAP_RSS,
-                         guess_sitemap_type(file_mock))
+                         guess_sitemap_type(self.tmp_file_path))
 
     def test_xml_syntax_error(self):
-        file_mock = StringIO.StringIO('<foo></bar>')
-        self.assertEqual(SiteMapType.UNKNOWN, guess_sitemap_type(file_mock))
+        with open(self.tmp_file_path, "w") as f:
+            f.write('<foo></bar>')
+        self.assertEqual(SiteMapType.UNKNOWN,
+                         guess_sitemap_type(self.tmp_file_path))
 
     def test_simple_xml(self):
-        file_mock = StringIO.StringIO('<foo></foo>')
-        self.assertEqual(SiteMapType.UNKNOWN, guess_sitemap_type(file_mock))
+        with open(self.tmp_file_path, "w") as f:
+            f.write('<foo></foo>')
+        self.assertEqual(SiteMapType.UNKNOWN,
+                         guess_sitemap_type(self.tmp_file_path))
 
     def test_simple_text_file(self):
-        file_mock = StringIO.StringIO('foo\nbar')
+        with open(self.tmp_file_path, "w") as f:
+            f.write('http://foo\nhttps://bar')
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
-                         guess_sitemap_type(file_mock))
+                         guess_sitemap_type(self.tmp_file_path))

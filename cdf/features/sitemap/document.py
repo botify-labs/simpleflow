@@ -176,37 +176,39 @@ def open_sitemap_file(file_path):
     return f
 
 
-def guess_sitemap_type(file_object):
+def guess_sitemap_type(file_path):
     """Guess the  sitemap type (sitemap or sitemap index) from an input file.
     The method simply stops on the first "urlset" or "sitemapindex" tag.
-    :param file_object: a file like object
-    :type file_object: file
+    :param file_path: the path to the input file
+    :type file_path: str
     :return: SiteMapType
     """
-    try:
-        xml_like = False
-        for _, element in etree.iterparse(file_object, events=("start",)):
-            xml_like = True  # we were able to parse at least one element
-            localname = etree.QName(element.tag).localname
-            element.clear()
-            if localname == "urlset":
-                return SiteMapType.SITEMAP_XML
-            elif localname == "sitemapindex":
-                return SiteMapType.SITEMAP_INDEX
-            elif localname == "rss":
-                return SiteMapType.SITEMAP_RSS
-    except etree.XMLSyntaxError:
-        pass
+    with open(file_path) as file_object:
+        try:
+            xml_like = False
+            for _, element in etree.iterparse(file_object, events=("start",)):
+                xml_like = True  # we were able to parse at least one element
+                localname = etree.QName(element.tag).localname
+                element.clear()
+                if localname == "urlset":
+                    return SiteMapType.SITEMAP_XML
+                elif localname == "sitemapindex":
+                    return SiteMapType.SITEMAP_INDEX
+                elif localname == "rss":
+                    return SiteMapType.SITEMAP_RSS
+        except etree.XMLSyntaxError:
+            pass
 
     if xml_like:
         #it looked like an xml but was not a valid sitemap
         return SiteMapType.UNKNOWN
-    file_object.seek(0)
+
     #from http://stackoverflow.com/questions/898669/how-can-i-detect-if-a-file-is-binary-non-text-in-python
     textchars = ''.join(map(chr, [7, 8, 9, 10, 12, 13, 27] + range(0x20, 0x100)))
     is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
 
-    if not is_binary_string(file_object.read(1024)):
-        return SiteMapType.SITEMAP_TEXT
+    with open(file_path) as file_object:
+        if not is_binary_string(file_object.read(1024)):
+            return SiteMapType.SITEMAP_TEXT
 
     return SiteMapType.UNKNOWN
