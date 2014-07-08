@@ -1,5 +1,6 @@
 include README.rst
 include MANIFEST.in
+include pip_requirements.txt
 include setup.py
 include tests/*
 
