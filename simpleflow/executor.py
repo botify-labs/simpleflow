@@ -40,9 +40,12 @@ class TaskRegistry(dict):
 
 class Executor(object):
     def __init__(self, workflow):
-        self.run_workflow = workflow(self).run
+        self._workflow = workflow(self)
 
         self._tasks = TaskRegistry()
+
+    def run_workflow(self, *args, **kwargs):
+        return self._workflow.run(*args, **kwargs)
 
     def reset(self):
         self._decisions = []
