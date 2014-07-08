@@ -147,15 +147,22 @@ class Executor(executor.Executor):
             reason = 'Workflow execution error: "{}"'.format(
                 err.exception.reason)
             logger.exception(reason)
+
+            details = err.exception.details
+            self.on_failure(reason, details)
+
             decision = swf.models.decision.WorkflowExecutionDecision()
             decision.fail(
                 reason=reason,
-                details=err.exception.details)
+                details=details)
             return [decision], {}
 
         except Exception, err:
             reason = 'Cannot replay the workflow "{}"'.format(err)
             logger.exception(reason)
+
+            self.on_failure(reason)
+
             decision = swf.models.decision.WorkflowExecutionDecision()
             decision.fail(reason=reason)
 
@@ -166,9 +173,19 @@ class Executor(executor.Executor):
 
         return [decision], {}
 
+    def on_failure(self, reason, details=None):
+        try:
+            self._workflow.on_failure(self._history, reason, details)
+        except NotImplementedError:
+            pass
+
     def fail(self, reason, details=None):
+        self.on_failure(reason, details)
+
         decision = swf.models.decision.WorkflowExecutionDecision()
-        decision.fail(reason=reason, details=details)
+        decision.fail(
+            reason='Workflow execution failed: {}'.format(reason),
+            details=details)
 
         self._decisions.append(decision)
         raise exceptions.ExecutionBlocked('workflow execution failed')
