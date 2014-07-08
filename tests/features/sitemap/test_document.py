@@ -218,6 +218,22 @@ class TestSitemapTextDocument(unittest.TestCase):
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
 
+    def test_empty_line(self):
+        self.file.write('http://foo.com/bar\n'
+                        '\n'
+                        'http://foo.com/qux\n')
+        self.file.close()
+        sitemap_document = SitemapTextDocument(self.file.name)
+        self.assertEqual(SiteMapType.SITEMAP_TEXT,
+                         sitemap_document.get_sitemap_type())
+        expected_urls = [
+            "http://foo.com/bar",
+            "http://foo.com/qux"
+        ]
+
+        self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+
+
 
 class TestUrlValidator(unittest.TestCase):
     def test_nominal_case(self):

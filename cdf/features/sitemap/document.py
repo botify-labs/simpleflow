@@ -155,7 +155,7 @@ class SitemapTextDocument(SitemapDocument):
         :type file_object: file
         """
         with open_sitemap_file(self.file_path) as file_object:
-            csv_reader = csv.reader(file_object)
+            csv_reader = csv.reader(file_object, delimiter='\n')
             #do not use a simple "for" loop to be able to catch csv.Error
             #and simply skip the corresponding lines
             while True:
@@ -167,7 +167,8 @@ class SitemapTextDocument(SitemapDocument):
                 except StopIteration:
                     break
                 if len(row) != 1:
-                    logger.warning("'%s' should have only one field.", row)
+                    logger.warning("'%s' should have exactly one field.", row)
+                    continue
                 url = row[0]
                 if UrlValidator.is_valid(url):
                     #we do not check if the string looks like an url
