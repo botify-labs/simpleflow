@@ -50,7 +50,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
     URL_DOCUMENT_MAPPING = {
         # internal outgoing links (destination is a internal url)
         "outlinks_internal.nb.total": {
-            "verbose_name": "Number of Internal Incoming Links",
+            "verbose_name": "Number of Internal Outlinks",
             "group": GROUPS.outlinks_internal.name,
             "order": 1,
             "type": INT_TYPE,
@@ -60,7 +60,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.unique": {
-            "verbose_name": "Unique Number of Internal Incoming Links",
+            "verbose_name": "Unique Number of Internal Outlinks",
             "group": GROUPS.outlinks_internal.name,
             "order": 2,
             "type": INT_TYPE,
@@ -70,7 +70,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.nb.follow.unique": {
-            "verbose_name": "Unique Number of Follow Internal Incoming Links",
+            "verbose_name": "Unique Number of Follow Internal Outlinks",
             "group": GROUPS.outlinks_internal.name,
             "order": 4,
             "type": INT_TYPE,
@@ -170,7 +170,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_internal.urls": {
-            "verbose_name": "Sample of Internal outlinks",
+            "verbose_name": "Sample of Internal Outlinks",
             "group": GROUPS.outlinks_internal.name,
             "order": 13,
             "type": INT_TYPE,
