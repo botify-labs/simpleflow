@@ -146,6 +146,13 @@ class TestSitemapRssDocument(unittest.TestCase):
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
 
+    def test_invalid_xml(self):
+        self.file.write('<foo><bar>')
+        self.file.close()
+        sitemap_document = SitemapRssDocument(self.file.name)
+        self.assertRaises(ParsingError,
+                          list,
+                          sitemap_document.get_urls())
 
 class TestSitemapTextDocument(unittest.TestCase):
     def setUp(self):
