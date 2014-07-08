@@ -161,7 +161,6 @@ class SitemapTextDocument(SitemapDocument):
                     continue
                 except StopIteration:
                     break
-
                 if len(row) != 1:
                     logger.warning("'%s' should have only one field.", row)
                 url = row[0]
@@ -215,7 +214,7 @@ def guess_sitemap_type(file_path):
     :type file_path: str
     :return: SiteMapType
     """
-    with open(file_path) as file_object:
+    with open_sitemap_file(file_path) as file_object:
         try:
             xml_like = False
             for _, element in etree.iterparse(file_object, events=("start",)):
@@ -235,12 +234,8 @@ def guess_sitemap_type(file_path):
         #it looked like an xml but was not a valid sitemap
         return SiteMapType.UNKNOWN
 
-    #from http://stackoverflow.com/questions/898669/how-can-i-detect-if-a-file-is-binary-non-text-in-python
-    textchars = ''.join(map(chr, [7, 8, 9, 10, 12, 13, 27] + range(0x20, 0x100)))
-    is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
-
-    with open(file_path) as file_object:
-        if not is_binary_string(file_object.read(1024)):
-            return SiteMapType.SITEMAP_TEXT
-
+    text_sitemap = SitemapTextDocument(file_path)
+    nb_urls = sum(1 for _ in text_sitemap.get_urls())
+    if nb_urls > 0:
+        return SiteMapType.SITEMAP_TEXT
     return SiteMapType.UNKNOWN

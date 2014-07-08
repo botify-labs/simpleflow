@@ -329,3 +329,15 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
             f.write('http://foo\nhttps://bar')
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
                          guess_sitemap_type(self.tmp_file_path))
+
+    def test_text_file_one_url(self):
+        with open(self.tmp_file_path, "w") as f:
+            f.write('foo\r\nbar\r\nhttp://baz')
+        self.assertEqual(SiteMapType.SITEMAP_TEXT,
+                         guess_sitemap_type(self.tmp_file_path))
+
+    def test_text_file_no_urls(self):
+        with open(self.tmp_file_path, "w") as f:
+            f.write('foo\nbar')
+        self.assertEqual(SiteMapType.UNKNOWN,
+                         guess_sitemap_type(self.tmp_file_path))
