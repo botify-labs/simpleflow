@@ -1,10 +1,8 @@
 import unittest
-import mock
 import tempfile
 import gzip
 import os
 import csv
-import StringIO
 
 from cdf.features.sitemap.document import (open_sitemap_file,
                                            SiteMapType,
