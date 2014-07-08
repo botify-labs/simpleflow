@@ -129,3 +129,9 @@ class Executor(object):
 
     def replay(self, history):
         raise NotImplementedError()
+
+    def on_failure(self, reason, details=None):
+        raise NotImplementedError
+
+    def fail(self, reason, details=None):
+        raise NotImplementedError
