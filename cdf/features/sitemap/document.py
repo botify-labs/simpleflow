@@ -20,6 +20,8 @@ def instanciate_sitemap_document(file_path):
     """a factory method that creates a sitemap document from a file
     :param file_path: the input file path
     :type file_path: str
+    :returns: SitemapDocument
+    :raises: UnhandledFileType
     """
     sitemap_type = guess_sitemap_type(file_path)
     if sitemap_type == SiteMapType.SITEMAP_XML:
@@ -30,6 +32,9 @@ def instanciate_sitemap_document(file_path):
 
     if sitemap_type == SiteMapType.SITEMAP_RSS:
         return SitemapRssDocument(file_path)
+
+    if sitemap_type == SiteMapType.SITEMAP_TEXT:
+        return SitemapTextDocument(file_path)
 
     raise UnhandledFileType()
 
