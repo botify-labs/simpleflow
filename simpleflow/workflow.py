@@ -62,3 +62,10 @@ class Workflow(object):
 
     def run(self, *args, **kwargs):
         raise NotImplementedError
+
+    def on_failure(self, history, reason, details=None):
+        """
+        The executor calls this method when the workflow fails.
+
+        """
+        raise NotImplementedError
