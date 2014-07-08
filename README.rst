@@ -64,7 +64,7 @@ And then define the workflow itself in a ``example.py`` file:
     from simpleflow import Workflow
 
     class SimpleComputation(Workflow):
-        def __call__(self, x):
+        def run(self, x):
             y = self.submit(increment, x)
             z = self.submit(double, y)
             return z.result

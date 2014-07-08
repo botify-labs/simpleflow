@@ -40,7 +40,7 @@ class TaskRegistry(dict):
 
 class Executor(object):
     def __init__(self, workflow):
-        self.run_workflow = workflow(self)
+        self.run_workflow = workflow(self).run
 
         self._tasks = TaskRegistry()
 

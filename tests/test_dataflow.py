@@ -58,7 +58,7 @@ class TestDefinitionWithInput(TestWorkflow):
     Execute a single task with an argument passed as the workflow's input.
 
     """
-    def __call__(self, a):
+    def run(self, a):
         b = self.submit(increment, a)
         return b.result
 
@@ -101,7 +101,7 @@ class TestDefinition(TestWorkflow):
     Executes two tasks. The second depends on the first.
 
     """
-    def __call__(self):
+    def run(self):
         a = self.submit(increment, 1)
         assert isinstance(a, futures.Future)
 
@@ -218,7 +218,7 @@ class TestDefinitionSameTask(TestWorkflow):
     This workflow executes the same task with a different argument.
 
     """
-    def __call__(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
         a = self.submit(increment, 1)
         b = self.submit(increment, a)
 
@@ -284,7 +284,7 @@ class TestDefinitionSameFuture(TestWorkflow):
     tasks.
 
     """
-    def __call__(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
         a = self.submit(increment, 1)
         a = self.submit(double, a)
 
@@ -344,7 +344,7 @@ class TestDefinitionTwoTasksSameFuture(TestWorkflow):
     same task.
 
     """
-    def __call__(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
         a = self.submit(increment, 1)
         b = self.submit(double, a)
         c = self.submit(increment, a)
@@ -416,7 +416,7 @@ class TestDefinitionMap(TestWorkflow):
     """
     nb_parts = 3
 
-    def __call__(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
         xs = self.map(increment, xrange(self.nb_parts))
         values = futures.wait(*xs)
 
@@ -472,7 +472,7 @@ class TestDefinitionRetryActivity(TestWorkflow):
     This workflow executes a task that is retried on failure.
 
     """
-    def __call__(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
         a = self.submit(increment_retry, 7)
 
         return a.result
@@ -528,7 +528,7 @@ class TestDefinitionChildWorkflow(TestWorkflow):
     This workflow executes a child workflow.
 
     """
-    def __call__(self, x):
+    def run(self, x):
         y = self.submit(TestDefinition, x)
         return y.result
 
@@ -585,7 +585,7 @@ class TestDefinitionMoreThanMaxDecisions(TestWorkflow):
     decider can take once.
 
     """
-    def __call__(self):
+    def run(self):
         results = self.map(increment, xrange(constants.MAX_DECISIONS + 20))
         futures.wait(*results)
 
@@ -650,7 +650,7 @@ class TestDefinitionFailWorkflow(TestWorkflow):
     the whole workflow.
 
     """
-    def __call__(self):
+    def run(self):
         result = self.submit(raise_error)
         if result.exception:
             self.fail('error')
@@ -697,7 +697,7 @@ class TestDefinitionActivityRaisesOnFailure(TestWorkflow):
     filling the ``Future.exception``'s attribute.
 
     """
-    def __call__(self):
+    def run(self):
         return self.submit(raise_on_failure).result
 
 

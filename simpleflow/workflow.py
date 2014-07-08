@@ -67,3 +67,6 @@ class Workflow(object):
 
         self._executor._decisions.append(decision)
         raise exceptions.ExecutionBlocked('workflow execution failed')
+
+    def run(self, *args, **kwargs):
+        raise NotImplementedError
