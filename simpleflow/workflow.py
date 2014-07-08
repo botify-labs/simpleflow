@@ -1,9 +1,5 @@
 from __future__ import absolute_import
 
-import swf.models.decision
-
-from simpleflow import exceptions
-
 
 class Workflow(object):
     """
@@ -61,12 +57,8 @@ class Workflow(object):
         """
         return self._executor.starmap(func, iterable)
 
-    def fail(self, reason, details=''):
-        decision = swf.models.decision.WorkflowExecutionDecision()
-        decision.fail(reason=reason, details=details)
-
-        self._executor._decisions.append(decision)
-        raise exceptions.ExecutionBlocked('workflow execution failed')
+    def fail(self, reason, details=None):
+        self._executor.fail(reason, details)
 
     def run(self, *args, **kwargs):
         raise NotImplementedError
