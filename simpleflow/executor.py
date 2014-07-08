@@ -96,11 +96,14 @@ class Executor(object):
         except exceptions.ExecutionBlocked:
             return futures.Future()
 
-        if isinstance(func, Activity):
-            task = self.make_activity_task(func, *args, **kwargs)
-        elif issubclass(func, Workflow):
-            task = self.make_workflow_task(func, *args, **kwargs)
-        else:
+        try:
+            if isinstance(func, Activity):
+                task = self.make_activity_task(func, *args, **kwargs)
+            elif issubclass(func, Workflow):
+                task = self.make_workflow_task(func, *args, **kwargs)
+            else:
+                raise TypeError
+        except TypeError:
             raise TypeError('invalid type {} for {}'.format(
                 type(func), func))
 
