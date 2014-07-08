@@ -1,10 +1,12 @@
 import unittest
+import mock
 import tempfile
 import gzip
 import os
 import csv
 
-from cdf.features.sitemap.document import (open_sitemap_file,
+from cdf.features.sitemap.document import (instanciate_sitemap_document,
+                                           open_sitemap_file,
                                            SiteMapType,
                                            SitemapXmlDocument,
                                            SitemapIndexXmlDocument,
@@ -12,7 +14,7 @@ from cdf.features.sitemap.document import (open_sitemap_file,
                                            SitemapTextDocument,
                                            UrlValidator,
                                            guess_sitemap_type)
-from cdf.features.sitemap.exceptions import ParsingError
+from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
 
 
 class TestSitemapXmlDocument(unittest.TestCase):
@@ -339,3 +341,36 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
             f.write('foo\nbar')
         self.assertEqual(SiteMapType.UNKNOWN,
                          guess_sitemap_type(self.tmp_file_path))
+
+@mock.patch("cdf.features.sitemap.document.guess_sitemap_type", autospec=True)
+class TestInstanciateSitemapDocument(unittest.TestCase):
+    def setUp(self):
+        self.file_path = "/tmp/foo"
+
+    def test_xml_sitemap(self, guess_sitemap_type_mock):
+        guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_XML
+        actual_result = instanciate_sitemap_document(self.file_path)
+        self.assertIsInstance(actual_result, SitemapXmlDocument)
+
+    def test_sitemap_index(self, guess_sitemap_type_mock):
+        guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_INDEX
+        actual_result = instanciate_sitemap_document(self.file_path)
+        self.assertIsInstance(actual_result, SitemapIndexXmlDocument)
+
+    def test_rss_sitemap(self, guess_sitemap_type_mock):
+        guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_RSS
+        actual_result = instanciate_sitemap_document(self.file_path)
+        self.assertIsInstance(actual_result, SitemapRssDocument)
+
+    def test_text_sitemap(self, guess_sitemap_type_mock):
+        guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_TEXT
+        actual_result = instanciate_sitemap_document(self.file_path)
+        self.assertIsInstance(actual_result, SitemapTextDocument)
+
+    def test_unknown_format(self, guess_sitemap_type_mock):
+        guess_sitemap_type_mock.return_value = SiteMapType.UNKNOWN
+        self.assertRaises(UnhandledFileType,
+                          instanciate_sitemap_document,
+                          "foo")
+
+
