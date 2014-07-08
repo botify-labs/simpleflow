@@ -4,6 +4,7 @@ import json
 import logging
 
 import swf.models
+import swf.models.decision
 
 from simpleflow import (
     executor,
@@ -164,3 +165,10 @@ class Executor(executor.Executor):
         decision.complete(result=json.dumps(result))
 
         return [decision], {}
+
+    def fail(self, reason, details=None):
+        decision = swf.models.decision.WorkflowExecutionDecision()
+        decision.fail(reason=reason, details=details)
+
+        self._decisions.append(decision)
+        raise exceptions.ExecutionBlocked('workflow execution failed')
