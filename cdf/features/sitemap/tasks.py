@@ -13,7 +13,8 @@ from cdf.features.sitemap.download import (download_sitemaps,
                                            DownloadStatus)
 from cdf.features.sitemap.streams import SitemapStreamDef
 from cdf.features.sitemap.matching import (match_sitemap_urls_from_stream,
-                                           get_sitemap_urls_stream)
+                                           get_sitemap_urls_stream,
+                                           DomainValidator)
 
 
 @with_temporary_dir
@@ -94,6 +95,8 @@ def download_sitemap_file(input_url,
 @with_temporary_dir
 @feature_enabled('sitemap')
 def match_sitemap_urls(s3_uri,
+                       allowed_domains,
+                       blacklisted_domains,
                        first_part_id_size=FIRST_PART_ID_SIZE,
                        part_id_size=PART_ID_SIZE,
                        tmp_dir=None,
@@ -103,6 +106,22 @@ def match_sitemap_urls(s3_uri,
     'sitemap.txt.XXX.gz', when it is not present, the full url is
     saved in a file 'sitemap_only.gz'.
     The generated files are then pushed to s3.
+    :param s3_uri: the s3 uri where the crawl data is stored.
+    :type s3_uri: str
+    :param allowed_domains: the list domains that we are allowed to crawl.
+                            Each element of the list is either an literal string
+                            for an allowed domain or a string with some "*"
+                            wildcards that can be replaced by anything
+    :type allowed_domains: list
+    :param blacklisted_domains: a list of domains that we are
+                                not allowed to crawl.
+                                Wildcards are not allowed for blacklisted domains.
+    :type blacklisted_domains: list
+    :param first_part_id_size: the size of the first part
+    :type first_part_id_size: int
+    :param part_id_size: the size of all other parts
+    :type part_id_size: int
+    :param tmp_dir: the directory where to save temporary data
     """
 
     #load crawl information
@@ -114,18 +133,32 @@ def match_sitemap_urls(s3_uri,
     sitemap_only_filepath = os.path.join(tmp_dir,
                                          sitemap_only_filename)
 
+    out_of_crawl_domain_filename = 'in_sitemap_out_of_crawl_domain.gz'
+    out_of_crawl_domain_filepath = os.path.join(tmp_dir,
+                                                out_of_crawl_domain_filename)
+
+    domain_validator = DomainValidator(allowed_domains, blacklisted_domains)
     dataset = SitemapStreamDef.create_temporary_dataset()
-    with gzip.open(sitemap_only_filepath, 'wb') as sitemap_only_file:
-        url_generator = get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch)
-        match_sitemap_urls_from_stream(
-            url_generator,
-            url_to_id,
-            dataset,
-            sitemap_only_file)
+    with gzip.open(sitemap_only_filepath, 'wb') as f_sitemap_only:
+        with gzip.open(out_of_crawl_domain_filepath, 'wb') as f_out_of_crawl_domain:
+            url_generator = get_sitemap_urls_stream(s3_uri,
+                                                    tmp_dir,
+                                                    force_fetch)
+            match_sitemap_urls_from_stream(
+                url_generator,
+                url_to_id,
+                dataset,
+                domain_validator,
+                f_sitemap_only,
+                f_out_of_crawl_domain)
     dataset.persist_to_s3(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)
     s3.push_file(
         os.path.join(s3_uri, sitemap_only_filename),
         sitemap_only_filepath
+    )
+    s3.push_file(
+        os.path.join(s3_uri, out_of_crawl_domain_filename),
+        out_of_crawl_domain_filepath
     )

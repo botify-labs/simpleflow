@@ -1,5 +1,7 @@
 import os
 import itertools
+import re
+from urlparse import urlparse
 
 from cdf.utils import s3
 from cdf.features.sitemap.document import SitemapDocument
@@ -9,7 +11,9 @@ from cdf.features.sitemap.download import parse_download_status_from_json
 def match_sitemap_urls_from_stream(url_generator,
                                    url_to_id,
                                    dataset,
-                                   sitemap_only_file):
+                                   domain_validator,
+                                   f_sitemap_only,
+                                   f_out_of_crawl_domain):
     """The method matches sitemap urls from a stream
     to the urls in the sitemap.
     If the url is in the crawl, we add its url id in an output stream.
@@ -21,15 +25,20 @@ def match_sitemap_urls_from_stream(url_generator,
     :param dataset: the dataset where to store urlids for urls that are both in
                     sitemap and in crawl
     :type dataset: TemporaryDataset
-    :param sitemap_only_file: a file object where to store urls that are only
-                              in the sitemap
+    :param f_sitemap_only: a file object where to store urls that are only
+                              in the sitemap and in the crawl domain
+    :param f_out_of_crawl_domain: a file object where to store urls that are only
+                              in the sitemap and not in the crawl domain
     """
     for url in url_generator:
         urlid = url_to_id.get(url, None)
         if urlid is None:
             line = "{}\n".format(url)
             line = unicode(line)
-            sitemap_only_file.write(line)
+            if domain_validator.is_valid(url):
+                f_sitemap_only.write(line)
+            else:
+                f_out_of_crawl_domain.write(line)
         else:
             dataset.append(urlid)
 
@@ -107,3 +116,49 @@ def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
         sitemap_document = SitemapDocument(sitemap_file)
         sitemap_streams.append(sitemap_document.get_urls())
     return itertools.chain(*sitemap_streams)
+
+
+class DomainValidator(object):
+    """A class to check if a domain should be crawled or not
+    The decision is made on the url domain.
+    The user specifies a list of allowed domains.
+    Allowed domains can contain a '*' wildcard
+    that can be replaced by anything.
+    The user can also specifies a list of blacklisted domains.
+    Black listed domains can not contain any wildcard."""
+    def __init__(self, allowed_domains, blacklisted_domains=None):
+        """Constructor
+        :param allowed_domains: the list of allowed domains
+        :type allowed_domains: list
+        :param blacklisted_domains: the list of black listed domains
+        :type blacklisted_domains: list
+        """
+        self.allowed_domains = allowed_domains
+        self.allowed_patterns = [self.get_compiled_pattern(domain) for
+                                 domain in allowed_domains]
+        self.blacklisted_domains = blacklisted_domains or []
+        self.blacklisted_domains = frozenset(self.blacklisted_domains)
+
+    def get_compiled_pattern(self, allowed_domain):
+        """Return a compiled regex corresponding to one allowed_domain.
+        :param allowed_domain: the input domain
+        :type allowed_domain: str
+        :returns: _sre.SRE_Pattern
+        """
+        regex_pattern = re.escape(allowed_domain)
+        regex_pattern = regex_pattern.replace("\\*", ".*")
+        return re.compile(regex_pattern)
+
+    def is_valid(self, url):
+        """Decide whether or not an url is valid
+        given the allowed domains
+        :param url: the input url
+        :type url: str
+        :returns: bool"""
+        domain = urlparse(url).netloc
+        #TODO depending on regex performance,
+        #we could create a set of allowed domains for domains without wildcard
+        #and use regex only for domains with wildcard
+        result = any(itertools.imap(lambda p: p.match(domain), self.allowed_patterns))
+        result &= not domain in self.blacklisted_domains
+        return result
