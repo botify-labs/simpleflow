@@ -15,6 +15,17 @@ class SiteMapType(Enum):
     SITEMAP_TEXT = 3
     SITEMAP_INDEX = 4
 
+def is_xml_sitemap(sitemap_type):
+    return sitemap_type == SiteMapType.SITEMAP_XML
+
+def is_sitemap_index(sitemap_type):
+    return sitemap_type == SiteMapType.SITEMAP_INDEX
+
+def is_rss_sitemap(sitemap_type):
+    return sitemap_type == SiteMapType.SITEMAP_RSS
+
+def is_text_sitemap(sitemap_type):
+    return sitemap_type == SiteMapType.SITEMAP_TEXT
 
 def instanciate_sitemap_document(file_path):
     """a factory method that creates a sitemap document from a file
@@ -24,16 +35,16 @@ def instanciate_sitemap_document(file_path):
     :raises: UnhandledFileType
     """
     sitemap_type = guess_sitemap_type(file_path)
-    if sitemap_type == SiteMapType.SITEMAP_XML:
+    if is_xml_sitemap(sitemap_type):
         return SitemapXmlDocument(file_path)
 
-    if sitemap_type == SiteMapType.SITEMAP_INDEX:
+    if is_sitemap_index(sitemap_type):
         return SitemapIndexXmlDocument(file_path)
 
-    if sitemap_type == SiteMapType.SITEMAP_RSS:
+    if is_rss_sitemap(sitemap_type):
         return SitemapRssDocument(file_path)
 
-    if sitemap_type == SiteMapType.SITEMAP_TEXT:
+    if is_text_sitemap(sitemap_type):
         return SitemapTextDocument(file_path)
 
     raise UnhandledFileType()
