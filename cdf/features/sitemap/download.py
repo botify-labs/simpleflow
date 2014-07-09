@@ -11,8 +11,11 @@ from cdf.features.sitemap.exceptions import (UnhandledFileType,
                                              DownloadError)
 from cdf.features.sitemap.utils import download_url
 from cdf.features.sitemap.constant import DOWNLOAD_DELAY
-from cdf.features.sitemap.document import (SiteMapType,
-                                           SitemapDocument)
+from cdf.features.sitemap.document import (is_xml_sitemap,
+                                           is_sitemap_index,
+                                           is_rss_sitemap,
+                                           is_text_sitemap,
+                                           instanciate_sitemap_document)
 
 #FIXME add a source sitemap index if any(cf. https://github.com/sem-io/botify-cdf/issues/381)
 Sitemap = namedtuple('Sitemap', ['url', 's3_uri', 'sitemap_index'])
@@ -103,13 +106,13 @@ def download_sitemaps(input_url, output_directory, user_agent):
         result.add_error(input_url)
         return result
 
-    sitemap_document = SitemapDocument(output_file_path)
+    sitemap_document = instanciate_sitemap_document(output_file_path)
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
-    if sitemap_type == SiteMapType.SITEMAP:
+    if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
         result.add_success_sitemap(Sitemap(input_url, output_file_path, None))
     #if it is a sitemap index
-    elif sitemap_type == SiteMapType.SITEMAP_INDEX:
+    elif is_sitemap_index(sitemap_type):
         #download referenced sitemaps
         try:
             result = download_sitemaps_from_urls(sitemap_document.get_urls(),
@@ -148,7 +151,7 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
         time.sleep(DOWNLOAD_DELAY)
         try:
             download_url(url, file_path, user_agent)
-            sitemap_document = SitemapDocument(file_path)
+            sitemap_document = instanciate_sitemap_document(file_path)
             sitemap_type = sitemap_document.get_sitemap_type()
         except (DownloadError, ParsingError) as e:
             logger.error("Skipping {}: {}".format(url, e.message))
@@ -157,7 +160,7 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
                 result.add_error(url)
             continue
         #  check if it is actually a sitemap
-        if sitemap_type == SiteMapType.SITEMAP:
+        if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
             result.add_success_sitemap(Sitemap(url, file_path, sitemap_index))
         else:
             #  if not, remove file
