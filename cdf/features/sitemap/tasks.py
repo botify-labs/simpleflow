@@ -8,6 +8,7 @@ from cdf.features.main.utils import get_url_to_id_dict_from_stream
 
 from cdf.features.main.streams import IdStreamDef
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
+from cdf.features.sitemap.constant import NB_SAMPLES_TO_KEEP
 from cdf.features.sitemap.download import (download_sitemaps,
                                            Sitemap,
                                            DownloadStatus)
@@ -139,25 +140,38 @@ def match_sitemap_urls(s3_uri,
 
     domain_validator = DomainValidator(allowed_domains, blacklisted_domains)
     dataset = SitemapStreamDef.create_temporary_dataset()
-    with gzip.open(sitemap_only_filepath, 'wb') as f_sitemap_only:
-        with gzip.open(out_of_crawl_domain_filepath, 'wb') as f_out_of_crawl_domain:
-            url_generator = get_sitemap_urls_stream(s3_uri,
-                                                    tmp_dir,
-                                                    force_fetch)
-            match_sitemap_urls_from_stream(
-                url_generator,
-                url_to_id,
-                dataset,
-                domain_validator,
-                f_sitemap_only,
-                f_out_of_crawl_domain)
+    url_generator = get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch)
+    sitemap_only_urls = []
+    out_of_crawl_domain_urls = []
+    match_sitemap_urls_from_stream(
+        url_generator,
+        url_to_id,
+        dataset,
+        domain_validator,
+        NB_SAMPLES_TO_KEEP,
+        sitemap_only_urls,
+        out_of_crawl_domain_urls)
     dataset.persist_to_s3(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)
+
+    with gzip.open(sitemap_only_filepath, 'wb') as sitemap_only_file:
+        for url in sitemap_only_urls:
+            line = "{}\n".format(url)
+            line = unicode(line)
+            sitemap_only_file.write(line)
+
     s3.push_file(
         os.path.join(s3_uri, sitemap_only_filename),
         sitemap_only_filepath
     )
+
+    with gzip.open(out_of_crawl_domain_filepath, 'wb') as out_of_crawl_domain_file:
+        for url in out_of_crawl_domain_urls:
+            line = "{}\n".format(url)
+            line = unicode(line)
+            out_of_crawl_domain_file.write(line)
+
     s3.push_file(
         os.path.join(s3_uri, out_of_crawl_domain_filename),
         out_of_crawl_domain_filepath

@@ -127,29 +127,57 @@ class MatchSitemapUrlsFromStream(unittest.TestCase):
             "qux": 5
         }
 
-        url_generator = iter(["foo", "bar", "baz", "qux", "glop"])
+        url_generator = iter(["foo", "bar", "baz", "qux", "donald", "mickey"])
 
         dataset = mock.create_autospec(TemporaryDataset)
         dataset = mock.MagicMock()
-        sitemap_only_file = mock.create_autospec(file)
-        out_of_crawl_domain_file = mock.create_autospec(file)
 
         domain_validator = mock.create_autospec(DomainValidator)
-        domain_validator.is_valid.side_effect = [True, False]
+        domain_validator.is_valid.side_effect = [True, False, False]
 
+        sitemap_only_nb_samples = 2  # one url will be skipped
+        sitemap_only_urls = []
+        out_of_crawl_domain_urls = []
         match_sitemap_urls_from_stream(url_generator,
                                        url_to_id,
                                        dataset,
                                        domain_validator,
-                                       sitemap_only_file,
-                                       out_of_crawl_domain_file)
-
+                                       sitemap_only_nb_samples,
+                                       sitemap_only_urls,
+                                       out_of_crawl_domain_urls)
         expected_dataset_calls = [mock.call(0),
                                   mock.call(2),
                                   mock.call(5)]
         self.assertEquals(expected_dataset_calls, dataset.append.mock_calls)
-        sitemap_only_file.write.assert_called_once_with("baz\n")
-        out_of_crawl_domain_file.write.assert_called_once_with("glop\n")
+
+        self.assertEqual(["baz"], sitemap_only_urls)
+        self.assertEqual(["donald", "mickey"], out_of_crawl_domain_urls)
+
+    def test_duplicated_sitemap_only_urls(self):
+
+        url_to_id = {}
+
+        url_generator = iter(["foo", "bar", "foo", "baz", "qux"])
+
+        dataset = mock.create_autospec(TemporaryDataset)
+        dataset = mock.MagicMock()
+
+        domain_validator = mock.create_autospec(DomainValidator)
+        domain_validator.is_valid.return_value = True
+
+        sitemap_only_nb_samples = 3  # one url will be skipped
+        sitemap_only_urls = []
+        out_of_crawl_domain_urls = []
+        match_sitemap_urls_from_stream(url_generator,
+                                       url_to_id,
+                                       dataset,
+                                       domain_validator,
+                                       sitemap_only_nb_samples,
+                                       sitemap_only_urls,
+                                       out_of_crawl_domain_urls)
+
+        self.assertEqual(["foo", "bar", "baz"], sitemap_only_urls)
+        self.assertEqual([], out_of_crawl_domain_urls)
 
 
 class TestDomainValidator(unittest.TestCase):

@@ -12,8 +12,9 @@ def match_sitemap_urls_from_stream(url_generator,
                                    url_to_id,
                                    dataset,
                                    domain_validator,
-                                   f_sitemap_only,
-                                   f_out_of_crawl_domain):
+                                   nb_samples_to_keep,
+                                   sitemap_only_urls,
+                                   out_of_crawl_domain_urls):
     """The method matches sitemap urls from a stream
     to the urls in the sitemap.
     If the url is in the crawl, we add its url id in an output stream.
@@ -25,20 +26,33 @@ def match_sitemap_urls_from_stream(url_generator,
     :param dataset: the dataset where to store urlids for urls that are both in
                     sitemap and in crawl
     :type dataset: TemporaryDataset
-    :param f_sitemap_only: a file object where to store urls that are only
-                              in the sitemap and in the crawl domain
-    :param f_out_of_crawl_domain: a file object where to store urls that are only
-                              in the sitemap and not in the crawl domain
+    :param nb_samples_to_keep: the maximum number of distinct urls to keep
+                               for urls that are only in the sitemaps.
+    :type nb_samples_to_keep: int
+    :param sitemap_only_url: a list where to add samples urls that are
+                             in the sitemaps but not in the crawl.
+    :type sitemap_only_url: list
+    :param out_of_crawl_domain_urls: a list where to add samples urls that are
+                                     in the sitemaps but out of crawl domain.
+    :type out_of_crawl_domain_urls: list
     """
+    #build a set to be able to test quickly if a sitemap only url
+    #has already been seen
+    sitemap_only_urls_set = set(sitemap_only_urls)
+    out_of_crawl_domain_urls_set = set(out_of_crawl_domain_urls)
     for url in url_generator:
         urlid = url_to_id.get(url, None)
         if urlid is None:
-            line = "{}\n".format(url)
-            line = unicode(line)
             if domain_validator.is_valid(url):
-                f_sitemap_only.write(line)
+                list_to_update = sitemap_only_urls
+                set_to_update = sitemap_only_urls_set
             else:
-                f_out_of_crawl_domain.write(line)
+                list_to_update = out_of_crawl_domain_urls
+                set_to_update = out_of_crawl_domain_urls_set
+
+            if (len(list_to_update) < nb_samples_to_keep and url not in set_to_update):
+                list_to_update.append(url)
+                set_to_update.add(url)
         else:
             dataset.append(urlid)
 
