@@ -22,7 +22,7 @@ exception. The ``Future.exception`` attribute allows to handle errors.
 
 The execution model relies of the replay of the *whole* workflow on each event.
 In other words, the code that defines the workflow (here in
-``AnalysisWorkflow.__call__``) is executed from the start when any event (a
+``AnalysisWorkflow.run``) is executed from the start when any event (a
 task finished or failed for example) occurred.
 
 This requires the workflow's code to be idempotent i.e. it always returns the
@@ -224,7 +224,7 @@ class AnalysisWorkflow(Workflow):
         if ganalytics_result.exception is None:
             return [ganalytics_result]
 
-    def __call__(self, **context):
+    def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
         s3_uri = context['s3_uri']
