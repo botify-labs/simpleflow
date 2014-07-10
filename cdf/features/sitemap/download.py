@@ -106,7 +106,7 @@ def download_sitemaps(input_url, output_directory, user_agent):
         result.add_error(input_url)
         return result
 
-    sitemap_document = instanciate_sitemap_document(output_file_path)
+    sitemap_document = instanciate_sitemap_document(output_file_path, input_url)
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
     if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
@@ -151,7 +151,7 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
         time.sleep(DOWNLOAD_DELAY)
         try:
             download_url(url, file_path, user_agent)
-            sitemap_document = instanciate_sitemap_document(file_path)
+            sitemap_document = instanciate_sitemap_document(file_path, url)
             sitemap_type = sitemap_document.get_sitemap_type()
         except (DownloadError, ParsingError) as e:
             logger.error("Skipping {}: {}".format(url, e.message))

@@ -152,7 +152,7 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
                         '</sitemap>'
                         '</sitemapindex>')
         self.file.close()
-        sitemap_document = SitemapIndexXmlDocument(self.file.name)
+        sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
         self.assertEqual(["http://foo/sitemap.1.xml.gz", "http://foo/sitemap.2.xml.gz"],
                          list(sitemap_document.get_urls()))
 
@@ -436,32 +436,35 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
 class TestInstanciateSitemapDocument(unittest.TestCase):
     def setUp(self):
         self.file_path = "/tmp/foo"
+        self.url = "http://foo.xml"
 
     def test_xml_sitemap(self, guess_sitemap_type_mock):
         guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_XML
-        actual_result = instanciate_sitemap_document(self.file_path)
+        actual_result = instanciate_sitemap_document(self.file_path, self.url)
         self.assertIsInstance(actual_result, SitemapXmlDocument)
 
     def test_sitemap_index(self, guess_sitemap_type_mock):
         guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_INDEX
-        actual_result = instanciate_sitemap_document(self.file_path)
+        actual_result = instanciate_sitemap_document(self.file_path, self.url)
         self.assertIsInstance(actual_result, SitemapIndexXmlDocument)
+        self.assertEqual(self.url, actual_result.url)
 
     def test_rss_sitemap(self, guess_sitemap_type_mock):
         guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_RSS
-        actual_result = instanciate_sitemap_document(self.file_path)
+        actual_result = instanciate_sitemap_document(self.file_path, self.url)
         self.assertIsInstance(actual_result, SitemapRssDocument)
 
     def test_text_sitemap(self, guess_sitemap_type_mock):
         guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_TEXT
-        actual_result = instanciate_sitemap_document(self.file_path)
+        actual_result = instanciate_sitemap_document(self.file_path, self.url)
         self.assertIsInstance(actual_result, SitemapTextDocument)
 
     def test_unknown_format(self, guess_sitemap_type_mock):
         guess_sitemap_type_mock.return_value = SiteMapType.UNKNOWN
         self.assertRaises(UnhandledFileType,
                           instanciate_sitemap_document,
-                          "foo")
+                          "foo",
+                          self.url)
 
 class TestCanSitemapIndexReference(unittest.TestCase):
     def test_same_domain(self):

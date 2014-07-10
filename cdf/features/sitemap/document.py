@@ -29,10 +29,12 @@ def is_rss_sitemap(sitemap_type):
 def is_text_sitemap(sitemap_type):
     return sitemap_type == SiteMapType.SITEMAP_TEXT
 
-def instanciate_sitemap_document(file_path):
+def instanciate_sitemap_document(file_path, url):
     """a factory method that creates a sitemap document from a file
     :param file_path: the input file path
     :type file_path: str
+    :param url: the url where the file has been downloaded from
+    :type url: str
     :returns: SitemapDocument
     :raises: UnhandledFileType
     """
@@ -41,7 +43,6 @@ def instanciate_sitemap_document(file_path):
         return SitemapXmlDocument(file_path)
 
     if is_sitemap_index(sitemap_type):
-        url = None
         return SitemapIndexXmlDocument(file_path, url)
 
     if is_rss_sitemap(sitemap_type):
