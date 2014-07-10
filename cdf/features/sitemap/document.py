@@ -292,7 +292,7 @@ def guess_sitemap_type(file_path):
     return SiteMapType.UNKNOWN
 
 
-def is_subdomain(subdomain, domain):
+def _is_subdomain(subdomain, domain):
     return subdomain.endswith(".{}".format(domain))
 
 
@@ -328,7 +328,7 @@ def can_sitemap_index_reference(sitemap_index_url, sitemap_url):
         return True
 
     #if the sitemap is on a subdomain, it's ok
-    if is_subdomain(sitemap_host, sitemap_index_host):
+    if _is_subdomain(sitemap_host, sitemap_index_host):
         return True
 
     return False
