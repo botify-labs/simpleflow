@@ -113,6 +113,7 @@ class TestSitemapXmlDocument(unittest.TestCase):
 class TestSitemapIndexXmlDocument(unittest.TestCase):
     def setUp(self):
         self.file = tempfile.NamedTemporaryFile(delete=False)
+        self.url = "http://foo/sitemap_index.xml"
 
     def tearDown(self):
         os.remove(self.file.name)
@@ -123,7 +124,7 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
                         '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
                         '</sitemapindex>')
         self.file.close()
-        sitemap_document = SitemapIndexXmlDocument(self.file.name)
+        sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
 
         self.assertEqual(SiteMapType.SITEMAP_INDEX,
                          sitemap_document.get_sitemap_type())
@@ -135,7 +136,7 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
                         '<sitemap><loc>http://foo.com/bar</loc></sitemap>'
                         '</sitemapindex>')
         self.file.close()
-        sitemap_document = SitemapIndexXmlDocument(self.file.name)
+        sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_INDEX,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo.com/bar"],

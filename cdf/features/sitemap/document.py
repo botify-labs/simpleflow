@@ -41,7 +41,8 @@ def instanciate_sitemap_document(file_path):
         return SitemapXmlDocument(file_path)
 
     if is_sitemap_index(sitemap_type):
-        return SitemapIndexXmlDocument(file_path)
+        url = None
+        return SitemapIndexXmlDocument(file_path, url)
 
     if is_rss_sitemap(sitemap_type):
         return SitemapRssDocument(file_path)
@@ -133,6 +134,10 @@ class SitemapXmlDocument(AbstractSitemapXml):
 class SitemapIndexXmlDocument(AbstractSitemapXml):
     """A class to represent a sitemap index xml document.
     """
+    def __init__(self, file_path, url):
+        super(self.__class__, self).__init__(file_path)
+        self.url = url
+
     def get_sitemap_type(self):
         return SiteMapType.SITEMAP_INDEX
 
