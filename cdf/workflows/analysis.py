@@ -206,20 +206,18 @@ class AnalysisWorkflow(Workflow):
             features_flags=features_flags)
 
         if ganalytics_result.finished:
-            ganalytics_result = self.submit(
+            api_requests = self.submit(
                 match_analytics_to_crawl_urls,
                 s3_uri,
                 context['first_part_id_size'],
                 context['part_id_size'],
                 features_flags)
 
-            if ganalytics_result.finished:
-                api_requests = ganalytics_result.result
-                ganalytics_result = self.submit(
-                    request_api,
-                    context['crawl_endpoint'],
-                    context['revision_endpoint'],
-                    api_requests)
+            ganalytics_result = self.submit(
+                request_api,
+                context['crawl_endpoint'],
+                context['revision_endpoint'],
+                api_requests)
 
         return [ganalytics_result]
 
