@@ -13,7 +13,8 @@ from cdf.features.sitemap.document import (instanciate_sitemap_document,
                                            SitemapRssDocument,
                                            SitemapTextDocument,
                                            UrlValidator,
-                                           guess_sitemap_type)
+                                           guess_sitemap_type,
+                                           can_sitemap_index_reference)
 from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
 
 
@@ -460,5 +461,31 @@ class TestInstanciateSitemapDocument(unittest.TestCase):
         self.assertRaises(UnhandledFileType,
                           instanciate_sitemap_document,
                           "foo")
+
+class TestCanSitemapIndexReference(unittest.TestCase):
+    def test_same_domain(self):
+        self.assertTrue(can_sitemap_index_reference("http://foo.com/sitemap_index.xml", "http://foo.com/sitemap.xml"))
+        #the sitemap is in a subdirectory
+        self.assertTrue(can_sitemap_index_reference("http://foo.com/sitemap_index.xml", "http://foo.com/bar/sitemap.xml"))
+        #the sitemap index is in a subdirectory (not supported by the standard)
+        self.assertTrue(can_sitemap_index_reference("http://foo.com/bar/sitemap_index.xml", "http://foo.com/sitemap.xml"))
+        #the protocols are different
+        self.assertTrue(can_sitemap_index_reference("https://foo.com/sitemap_index.xml", "http://foo.com/sitemap.xml"))
+
+    def test_sitemap_different_domains(self):
+        self.assertFalse(can_sitemap_index_reference("http://foo.com/sitemap_index.xml", "http://bar.com/sitemap.xml"))
+
+    def test_sitemap_in_subdomain(self):
+        self.assertTrue(can_sitemap_index_reference("http://foo.com/sitemap_index.xml", "http://foo.foo.com/sitemap.xml"))
+
+    def test_sitemap_index_in_subdomain(self):
+        self.assertFalse(can_sitemap_index_reference("http://foo.foo.com/sitemap_index.xml", "http://foo.com/sitemap.xml"))
+
+    def test_sitemap_index_in_www(self):
+        #if the sitemap index is on the "www", it can reference all the subdomains
+        self.assertTrue(can_sitemap_index_reference("http://www.foo.com/sitemap_index.xml", "http://foo.foo.com/sitemap.xml"))
+        self.assertTrue(can_sitemap_index_reference("http://www.foo.com/sitemap_index.xml", "http://foo.www.foo.com/sitemap.xml"))
+
+        self.assertFalse(can_sitemap_index_reference("http://www.foo.com/sitemap_index.xml", "http://bar.com/sitemap.xml"))
 
 
