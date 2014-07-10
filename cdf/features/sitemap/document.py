@@ -101,8 +101,9 @@ class AbstractSitemapXml(SitemapDocument):
                         #image urls found in image sitemaps
                         parent_node = element.getparent()
                         parent_localname = etree.QName(parent_node.tag).localname
-                        if parent_localname in valid_loc_parent_tag:
-                            yield element.text
+                        url = element.text
+                        if parent_localname in valid_loc_parent_tag and UrlValidator.is_valid(url):
+                            yield url
                     element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
@@ -147,7 +148,9 @@ class SitemapRssDocument(SitemapDocument):
                 for _, element in etree.iterparse(file_object, events=("start",)):
                     localname = etree.QName(element.tag).localname
                     if localname == "link":
-                        yield element.text
+                        url = element.text
+                        if UrlValidator.is_valid(url):
+                            yield url
                     element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
@@ -189,8 +192,6 @@ class SitemapTextDocument(SitemapDocument):
                     continue
                 url = row[0]
                 if UrlValidator.is_valid(url):
-                    #we do not check if the string looks like an url
-                    #(we don't do it on xml and rss sitemaps)
                     yield row[0]
 
 
