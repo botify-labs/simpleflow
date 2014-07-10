@@ -133,13 +133,13 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
 
     def test_no_namespace(self):
         self.file.write('<sitemapindex>'
-                        '<sitemap><loc>http://foo.com/bar</loc></sitemap>'
+                        '<sitemap><loc>http://foo/bar</loc></sitemap>'
                         '</sitemapindex>')
         self.file.close()
         sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_INDEX,
                          sitemap_document.get_sitemap_type())
-        self.assertEqual(["http://foo.com/bar"],
+        self.assertEqual(["http://foo/bar"],
                          list(sitemap_document.get_urls()))
 
     def test_invalid_url(self):
@@ -148,6 +148,20 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
                         '<sitemap>'
                         '<loc>http://foo/sitemap.1.xml.gz</loc>'
                         '<loc>foo</loc>'
+                        '<loc>http://foo/sitemap.2.xml.gz</loc>'
+                        '</sitemap>'
+                        '</sitemapindex>')
+        self.file.close()
+        sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
+        self.assertEqual(["http://foo/sitemap.1.xml.gz", "http://foo/sitemap.2.xml.gz"],
+                         list(sitemap_document.get_urls()))
+
+    def test_forbidden_url(self):
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
+                        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                        '<sitemap>'
+                        '<loc>http://foo/sitemap.1.xml.gz</loc>'
+                        '<loc>http://bar/sitemap.xml</loc>'  # this url is on a different domain
                         '<loc>http://foo/sitemap.2.xml.gz</loc>'
                         '</sitemap>'
                         '</sitemapindex>')

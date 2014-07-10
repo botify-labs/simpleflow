@@ -146,7 +146,7 @@ class SitemapIndexXmlDocument(AbstractSitemapXml):
         """Implementation of the template method for sitemap indexes"""
         localname = etree.QName(element.tag).localname
         url = element.text
-        if localname == "loc" and UrlValidator.is_valid(url):
+        if localname == "loc" and UrlValidator.is_valid(url) and can_sitemap_index_reference(self.url, url):
             return True
 
 
