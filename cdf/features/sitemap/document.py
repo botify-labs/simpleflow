@@ -146,7 +146,7 @@ class SitemapIndexXmlDocument(AbstractSitemapXml):
         """Implementation of the template method for sitemap indexes"""
         localname = etree.QName(element.tag).localname
         url = element.text
-        if localname == "loc" and UrlValidator.is_valid(url) and can_sitemap_index_reference(self.url, url):
+        if localname == "loc" and UrlValidator.is_valid(url) and SitemapUrlValidator.is_valid(self.url, url):
             return True
 
 
@@ -292,43 +292,46 @@ def guess_sitemap_type(file_path):
     return SiteMapType.UNKNOWN
 
 
-def _is_subdomain(subdomain, domain):
-    return subdomain.endswith(".{}".format(domain))
+class SitemapUrlValidator(object):
 
+    @classmethod
+    def _is_subdomain(cls, subdomain, domain):
+        return subdomain.endswith(".{}".format(domain))
 
-def can_sitemap_index_reference(sitemap_index_url, sitemap_url):
-    """A function that tells if a sitemap_index can reference a given url.
-    The rules differ from the standard (they are more flexible):
-    - http://www.sitemaps.org/protocol.html#index
+    @classmethod
+    def is_valid(cls, sitemap_index_url, sitemap_url):
+        """A function that tells if a sitemap_index can reference a given url.
+        The rules differ from the standard (they are more flexible):
+        - http://www.sitemaps.org/protocol.html#index
 
-    A sitemap index can only reference urls in its domain or its subdomains.
-    There is a special case, when the sitemap domain is the "www",
-    In this case, the sitemap index can reference all the domains of the site.
-    foo.com -> *.foo.com, foo.com
-    www.foo.com -> *.www.foo.com, *.foo.com, www.foo.com
+        A sitemap index can only reference urls in its domain or its subdomains.
+        There is a special case, when the sitemap domain is the "www",
+        In this case, the sitemap index can reference all the domains of the site.
+        foo.com -> *.foo.com, foo.com
+        www.foo.com -> *.www.foo.com, *.foo.com, www.foo.com
 
-    :param sitemap_index_url: the sitemap index url
-    :type sitemap_index_url: str
-    :param sitemap_url: the sitemap url to test
-    :type sitemap_url: str
-    """
-    parsed_sitemap_index_url = urlparse(sitemap_index_url)
-    sitemap_index_host = parsed_sitemap_index_url.netloc
+        :param sitemap_index_url: the sitemap index url
+        :type sitemap_index_url: str
+        :param sitemap_url: the sitemap url to test
+        :type sitemap_url: str
+        """
+        parsed_sitemap_index_url = urlparse(sitemap_index_url)
+        sitemap_index_host = parsed_sitemap_index_url.netloc
 
-    parsed_sitemap_url = urlparse(sitemap_url)
-    sitemap_host = parsed_sitemap_url.netloc
+        parsed_sitemap_url = urlparse(sitemap_url)
+        sitemap_host = parsed_sitemap_url.netloc
 
-    #handles the www case
-    if sitemap_index_host.startswith("www."):
-        #we simply remove the www. and apply the standard rules.
-        sitemap_index_host = sitemap_index_host[4:]
+        #handles the www case
+        if sitemap_index_host.startswith("www."):
+            #we simply remove the www. and apply the standard rules.
+            sitemap_index_host = sitemap_index_host[4:]
 
-    #if the domain is the same, it's ok.
-    if sitemap_index_host == sitemap_host:
-        return True
+        #if the domain is the same, it's ok.
+        if sitemap_index_host == sitemap_host:
+            return True
 
-    #if the sitemap is on a subdomain, it's ok
-    if _is_subdomain(sitemap_host, sitemap_index_host):
-        return True
+        #if the sitemap is on a subdomain, it's ok
+        if cls._is_subdomain(sitemap_host, sitemap_index_host):
+            return True
 
-    return False
+        return False
