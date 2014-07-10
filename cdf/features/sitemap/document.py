@@ -92,23 +92,22 @@ class AbstractSitemapXml(SitemapDocument):
         :param file_object: a file like object
         :type file_object: file
         """
-        #the valid tag for <loc> parents
-        valid_loc_parent_tag = frozenset(["url", "sitemap"])
         with open_sitemap_file(self.file_path) as file_object:
             try:
                 for _, element in etree.iterparse(file_object):
-                    localname = etree.QName(element.tag).localname
-                    if localname == "loc":
-                        #check the parent tag, to avoid returning
-                        #image urls found in image sitemaps
-                        parent_node = element.getparent()
-                        parent_localname = etree.QName(parent_node.tag).localname
-                        url = element.text
-                        if parent_localname in valid_loc_parent_tag and UrlValidator.is_valid(url):
-                            yield url
+                    if self._is_valid_element(element):
+                        yield element.text
                     element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
+
+    @abstractmethod
+    def _is_valid_element(self, element):
+        """A template method that decides whether or not an xml tree element
+        is a valid url element.
+        :param element: the element to test.
+        :type element: lxml.etree._Element"""
+        raise NotImplementedError()
 
 
 class SitemapXmlDocument(AbstractSitemapXml):
@@ -118,12 +117,31 @@ class SitemapXmlDocument(AbstractSitemapXml):
     def get_sitemap_type(self):
         return SiteMapType.SITEMAP_XML
 
+    def _is_valid_element(self, element):
+        """Implementation of the template method for XML sitemaps"""
+        localname = etree.QName(element.tag).localname
+        if localname == "loc":
+            #check the parent tag, to avoid returning
+            #image urls found in image sitemaps
+            parent_node = element.getparent()
+            parent_localname = etree.QName(parent_node.tag).localname
+            url = element.text
+            if parent_localname == "url" and UrlValidator.is_valid(url):
+                return True
+
 
 class SitemapIndexXmlDocument(AbstractSitemapXml):
     """A class to represent a sitemap index xml document.
     """
     def get_sitemap_type(self):
         return SiteMapType.SITEMAP_INDEX
+
+    def _is_valid_element(self, element):
+        """Implementation of the template method for sitemap indexes"""
+        localname = etree.QName(element.tag).localname
+        url = element.text
+        if localname == "loc" and UrlValidator.is_valid(url):
+            return True
 
 
 class SitemapRssDocument(SitemapDocument):
