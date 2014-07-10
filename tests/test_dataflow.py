@@ -639,12 +639,19 @@ def test_workflow_with_more_than_max_decisions():
     assert decisions[0] == workflow_completed
 
 
+class OnFailureMixin(object):
+    failed = False
+
+    def on_failure(self, history, reason, details=None):
+        self.failed = True
+
+
 @activity.with_attributes(version=DEFAULT_VERSION)
 def raise_error():
     raise Exception('error')
 
 
-class TestDefinitionFailWorkflow(TestWorkflow):
+class TestDefinitionFailWorkflow(OnFailureMixin, TestWorkflow):
     """
     This workflow executes a single task that fails, then it explicitly fails
     the whole workflow.
@@ -679,6 +686,9 @@ def test_workflow_failed_from_definition():
     # Now the workflow definition calls ``Workflow.fail('error')`` that should
     # fail the whole workflow.
     decisions, _ = executor.replay(history)
+
+    assert executor._workflow.failed is True
+
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(reason='Workflow execution failed: error')
 
@@ -690,7 +700,7 @@ def raise_on_failure():
     raise Exception('error')
 
 
-class TestDefinitionActivityRaisesOnFailure(TestWorkflow):
+class TestDefinitionActivityRaisesOnFailure(OnFailureMixin, TestWorkflow):
     """
     This workflow executes a task that fails and has the ``raises_on_failure``
     flag set to ``True``. It means it will raise an exception in addition to
@@ -720,6 +730,9 @@ def test_workflow_activity_raises_on_failure():
     # The executor should fail the workflow and extract the reason from the
     # exception raised in the workflow definition.
     decisions, _ = executor.replay(history)
+
+    assert executor._workflow.failed is True
+
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
         reason='Workflow execution error: "error"')
@@ -727,12 +740,7 @@ def test_workflow_activity_raises_on_failure():
     assert decisions[0] == workflow_failed
 
 
-class TestOnFailureDefinition(TestWorkflow):
-    failed = False
-
-    def on_failure(self, history, reason, details=None):
-        self.failed = True
-
+class TestOnFailureDefinition(OnFailureMixin, TestWorkflow):
     def run(self):
         if self.submit(raise_error).exception:
             self.fail('FAIL')
@@ -757,6 +765,7 @@ def test_on_failure_callback():
     # The executor should fail the workflow and extract the reason from the
     # exception raised in the workflow definition.
     decisions, _ = executor.replay(history)
+
     assert executor._workflow.failed is True
 
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
