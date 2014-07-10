@@ -63,6 +63,16 @@ class TestSitemapXmlDocument(unittest.TestCase):
         self.assertEqual(["http://foo/bar/baz"],
                          list(sitemap_document.get_urls()))
 
+    def test_invalid_url(self):
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
+                        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                        '<url><loc>http://foo/bar</loc></url>'
+                        '<url><loc>foo</loc></url>'
+                        '<url><loc>http://foo/baz</loc></url>'
+                        '</urlset>')
+        self.file.close()
+        sitemap_document = SitemapXmlDocument(self.file.name)
+        self.assertEqual(["http://foo/bar", "http://foo/baz"], list(sitemap_document.get_urls()))
 
     def test_image_sitemap(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
@@ -130,6 +140,19 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
         self.assertEqual(["http://foo.com/bar"],
                          list(sitemap_document.get_urls()))
 
+    def test_invalid_url(self):
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
+                        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                        '<sitemap>'
+                        '<loc>http://foo/sitemap.1.xml.gz</loc>'
+                        '<loc>foo</loc>'
+                        '<loc>http://foo/sitemap.2.xml.gz</loc>'
+                        '</sitemap>'
+                        '</sitemapindex>')
+        self.file.close()
+        sitemap_document = SitemapIndexXmlDocument(self.file.name)
+        self.assertEqual(["http://foo/sitemap.1.xml.gz", "http://foo/sitemap.2.xml.gz"],
+                         list(sitemap_document.get_urls()))
 
 class TestSitemapRssDocument(unittest.TestCase):
     def setUp(self):
@@ -170,6 +193,31 @@ class TestSitemapRssDocument(unittest.TestCase):
         self.assertRaises(ParsingError,
                           list,
                           sitemap_document.get_urls())
+
+    def test_invalid_url(self):
+        self.file.write('<?xml version="1.0" encoding="UTF-8" ?>'
+                         '<rss version="2.0">'
+                         '<channel>'
+                         ' <title>RSS Title</title>'
+                         ' <description>This is an example of an RSS feed</description>'
+                         ' <link>http://www.example.com/main.html</link>'
+                         ' <title>Invalid url</title>'
+                         ' <link>foo</link>'
+                         ' <item>'
+                         '  <title>Example entry</title>'
+                         '  <description>Here is some text containing an interesting description.</description>'
+                         '  <link>http://www.example.com/blog/post/1</link>'
+                         ' </item>'
+                         '</channel>'
+                         '</rss>')
+        self.file.close()
+        sitemap_document = SitemapRssDocument(self.file.name)
+        expected_urls = [
+            "http://www.example.com/main.html",
+            "http://www.example.com/blog/post/1"
+        ]
+
+        self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
 
 class TestSitemapTextDocument(unittest.TestCase):
     def setUp(self):
