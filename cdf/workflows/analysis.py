@@ -221,8 +221,7 @@ class AnalysisWorkflow(Workflow):
                     context['revision_endpoint'],
                     api_requests)
 
-        if ganalytics_result.exception is None:
-            return [ganalytics_result]
+        return [ganalytics_result]
 
     def run(self, **context):
         # Extract variables from the context.
