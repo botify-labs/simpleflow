@@ -138,6 +138,7 @@ class SitemapIndexXmlDocument(AbstractSitemapXml):
     def __init__(self, file_path, url):
         super(self.__class__, self).__init__(file_path)
         self.url = url
+        self.sitemap_url_validator = SitemapUrlValidator(self.url)
 
     def get_sitemap_type(self):
         return SiteMapType.SITEMAP_INDEX
@@ -146,7 +147,7 @@ class SitemapIndexXmlDocument(AbstractSitemapXml):
         """Implementation of the template method for sitemap indexes"""
         localname = etree.QName(element.tag).localname
         url = element.text
-        if localname == "loc" and UrlValidator.is_valid(url) and SitemapUrlValidator.is_valid(self.url, url):
+        if localname == "loc" and UrlValidator.is_valid(url) and self.sitemap_url_validator.is_valid(url):
             return True
 
 
@@ -293,30 +294,35 @@ def guess_sitemap_type(file_path):
 
 
 class SitemapUrlValidator(object):
+    """A class that tells if a sitemap_index can reference given urls.
+    The rules differ from the standard (they are more flexible):
+    - http://www.sitemaps.org/protocol.html#index
 
-    @classmethod
-    def _is_subdomain(cls, subdomain, domain):
-        return subdomain.endswith(".{}".format(domain))
-
-    @classmethod
-    def is_valid(cls, sitemap_index_url, sitemap_url):
-        """A function that tells if a sitemap_index can reference a given url.
-        The rules differ from the standard (they are more flexible):
-        - http://www.sitemaps.org/protocol.html#index
-
-        A sitemap index can only reference urls in its domain or its subdomains.
-        There is a special case, when the sitemap domain is the "www",
-        In this case, the sitemap index can reference all the domains of the site.
-        foo.com -> *.foo.com, foo.com
-        www.foo.com -> *.www.foo.com, *.foo.com, www.foo.com
-
+    A sitemap index can only reference urls in its domain or its subdomains.
+    There is a special case, when the sitemap domain is the "www",
+    In this case, the sitemap index can reference all the domains of the site.
+    foo.com -> *.foo.com, foo.com
+    www.foo.com -> *.www.foo.com, *.foo.com, www.foo.com
+    """
+    def __init__(self, sitemap_index_url):
+        """Constructor
         :param sitemap_index_url: the sitemap index url
         :type sitemap_index_url: str
+        """
+        self.sitemap_index_url = sitemap_index_url
+
+        parsed_sitemap_index_url = urlparse(self.sitemap_index_url)
+        self.sitemap_index_host = parsed_sitemap_index_url.netloc
+
+    def _is_subdomain(self, subdomain, domain):
+        return subdomain.endswith(".{}".format(domain))
+
+    def is_valid(self, sitemap_url):
+        """The actual validation function
         :param sitemap_url: the sitemap url to test
         :type sitemap_url: str
         """
-        parsed_sitemap_index_url = urlparse(sitemap_index_url)
-        sitemap_index_host = parsed_sitemap_index_url.netloc
+        sitemap_index_host = self.sitemap_index_host
 
         parsed_sitemap_url = urlparse(sitemap_url)
         sitemap_host = parsed_sitemap_url.netloc
@@ -331,7 +337,7 @@ class SitemapUrlValidator(object):
             return True
 
         #if the sitemap is on a subdomain, it's ok
-        if cls._is_subdomain(sitemap_host, sitemap_index_host):
+        if self._is_subdomain(sitemap_host, sitemap_index_host):
             return True
 
         return False
