@@ -32,7 +32,7 @@ class Executor(executor.Executor):
 
         return future
 
-    def replay(self, input=None):
+    def run(self, input=None):
         if input is None:
             input = {}
         args = input.get('args', ())

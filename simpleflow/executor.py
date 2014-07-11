@@ -1,15 +1,7 @@
+import abc
 import logging
 
-from . import (
-    futures,
-    exceptions,
-)
-from .activity import Activity
-from .workflow import Workflow
-from .task import (
-    ActivityTask,
-    WorkflowTask
-)
+from . import futures
 
 
 __all__ = ['Executor', 'get_actual_value']
@@ -27,90 +19,59 @@ def get_actual_value(value):
     return value
 
 
-class TaskRegistry(dict):
-    """This registry tracks tasks and assign them an integer identifier.
+class Executor(object):
+    """
+    Abstract class that describes the interface to manage the execution of
+    a workflow.
+
+    The main interface used to define a workflow is :py:meth:`Executor.submit`
+    that submits a task for execution. :py:meth:`Executor.map` and
+    :py:meth:`Executor.starmap` are only helpers that call
+    :py:meth:`Executor.submit`.
+
+
+    :py:meth:`Executor.run` performs the workflow. Please consider the
+    semantics of the execution i.e.:
+
+    - synchronous
+    - asynchronous
+    - asynchronous with full replay
 
     """
-    def add(self, task):
-        name = task.name
-        self[name] = self.setdefault(name, 0) + 1
+    __metaclass__ = abc.ABCMeta
 
-        return self[name]
-
-
-class Executor(object):
     def __init__(self, workflow):
+        """
+        Binds the workflow's definition.
+
+        The executor deals with the concrete execution and allows different
+        backends. The workflow describes a computation. This could be also seen
+        as a program, the workflow, and an interpreter, the executor.
+
+        """
         self._workflow = workflow(self)
 
-        self._tasks = TaskRegistry()
-
     def run_workflow(self, *args, **kwargs):
+        """
+        Runs the workflow definition.
+
+        """
         return self._workflow.run(*args, **kwargs)
 
-    def reset(self):
-        self._decisions = []
-        self._tasks = TaskRegistry()
-
-    def find_activity_event(self, task, history):
-        activity = history._activities.get(task.id)
-        return activity
-
-    def find_child_workflow_event(self, task, history):
-        return history._child_workflows.get(task.id)
-
-    def make_task_id(self, task):
+    @abc.abstractmethod
+    def submit(self, task, *args, **kwargs):
         """
+        Submit a task for execution.
+
+        :param task: activity or workflow.
+        :type  task: :py:class:`simpleflow.Activity`
+                   | :py:class:`simpleflow.Workflow`.
+
         :returns:
-            String with at most 256 characters.
+            :rtype: :py:class:`simpleflow.futures.Future`
 
         """
-        index = self._tasks.add(task)
-        task_id = '{name}-{idx}'.format(name=task.name, idx=index)
-
-        return task_id
-
-    def find_event(self, task, history):
-        if isinstance(task, ActivityTask):
-            return self.find_activity_event(task, history)
-        elif isinstance(task, WorkflowTask):
-            return self.find_child_workflow_event(task, history)
-        else:
-            return TypeError('invalid type {} for task {}'.format(
-                type(task), task))
-
-        return None
-
-    def make_activity_task(self, func, *args, **kwargs):
-        return ActivityTask(self, func, *args, **kwargs)
-
-    def make_workflow_task(func, *args, **kwargs):
-        return WorkflowTask(func, *args, **kwargs)
-
-    def submit(self, func, *args, **kwargs):
-        """Register a function and its arguments for asynchronous execution.
-
-        ``*args`` and ``**kwargs`` must be serializable in JSON.
-
-        """
-        try:
-            args = [get_actual_value(arg) for arg in args]
-            kwargs = {key: get_actual_value(val) for
-                      key, val in kwargs.iteritems()}
-        except exceptions.ExecutionBlocked:
-            return futures.Future()
-
-        try:
-            if isinstance(func, Activity):
-                task = self.make_activity_task(func, *args, **kwargs)
-            elif issubclass(func, Workflow):
-                task = self.make_workflow_task(func, *args, **kwargs)
-            else:
-                raise TypeError
-        except TypeError:
-            raise TypeError('invalid type {} for {}'.format(
-                type(func), func))
-
-        return self.resume(task, *args, **kwargs)
+        raise NotImplementedError
 
     def map(self, callable, iterable):
         """Submit *callable* with each of the items in ``*iterables``.
@@ -118,20 +79,41 @@ class Executor(object):
         All items in ``*iterables`` must be serializable in JSON.
 
         """
-        iterable = get_actual_value(iterable)
         return [self.submit(callable, argument) for
                 argument in iterable]
 
     def starmap(self, callable, iterable):
-        iterable = get_actual_value(iterable)
         return [self.submit(callable, *arguments) for
                 arguments in iterable]
 
-    def replay(self, history):
+    @abc.abstractmethod
+    def run(self, *args, **kwargs):
+        """
+        Reads (i.e.execute) the workflow's definition to execute it.
+
+        """
         raise NotImplementedError()
 
     def on_failure(self, reason, details=None):
-        raise NotImplementedError
+        """
+        Method called when the workflow fails.
+
+        :param reason: concise error description.
+        :type  reason: str.
+        :param details: optional longer error description.
+        :type  details: str.
+
+        """
+        pass
 
     def fail(self, reason, details=None):
-        raise NotImplementedError
+        """
+        Explicitly fails the workflow.
+
+        :param reason: concise error description.
+        :type  reason: str.
+        :param details: optional longer error description.
+        :type  details: str.
+
+        """
+        pass

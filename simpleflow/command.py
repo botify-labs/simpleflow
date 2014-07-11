@@ -50,4 +50,4 @@ def main():
     if arguments.local:
         from . import local
 
-        local.Executor(workflow).replay(input)
+        local.Executor(workflow).run(input)

@@ -12,6 +12,8 @@ from simpleflow import (
     exceptions,
     constants,
 )
+from simpleflow.activity import Activity
+from simpleflow.workflow import Workflow
 from simpleflow.history import History
 from simpleflow.swf.task import ActivityTask, WorkflowTask
 
@@ -21,10 +23,65 @@ logger = logging.getLogger(__name__)
 __all__ = ['Executor']
 
 
+class TaskRegistry(dict):
+    """This registry tracks tasks and assign them an integer identifier.
+
+    """
+    def add(self, task):
+        """
+        ID's are assigned sequentially by incrementing an integer. They start
+        from 0.
+
+        :returns:
+            :rtype: int.
+
+        """
+        name = task.name
+        self[name] = self.setdefault(name, 0) + 1
+
+        return self[name]
+
+
 class Executor(executor.Executor):
+    """
+    Manage a workflow's execution with Amazon SWF. It replays the workflow's
+    definition from the start until it blocks (i.e. raises
+    :py:class:`exceptions.ExecutionBlocked`).
+
+    SWF stores the history of all events that occurred in the workflow and
+    passes it to the executor. Only one executor handles a workflow at a time.
+    It means the history is consistent and there is no concurrent modifications
+    on the execution of the workflow.
+
+    """
     def __init__(self, domain, workflow):
         super(Executor, self).__init__(workflow)
+        self._tasks = TaskRegistry()
         self.domain = domain
+
+    def reset(self):
+        """
+        Clears the state of the execution.
+
+        It is required to ensure the id of the tasks are assigned the same way
+        on each replay.
+
+        """
+        self._decisions = []
+        self._tasks = TaskRegistry()
+
+    def _make_task_id(self, task):
+        """
+        Assign a new ID to *task*.
+
+        :returns:
+            String with at most 256 characters.
+
+        """
+        index = self._tasks.add(task)
+        task_id = '{name}-{idx}'.format(name=task.name, idx=index)
+
+        return task_id
 
     def _get_future_from_activity_event(self, event):
         """Maps an activity event to a Future with the corresponding state.
@@ -76,6 +133,30 @@ class Executor(executor.Executor):
 
         return future
 
+    def find_activity_event(self, task, history):
+        activity = history._activities.get(task.id)
+        return activity
+
+    def find_child_workflow_event(self, task, history):
+        return history._child_workflows.get(task.id)
+
+    def find_event(self, task, history):
+        if isinstance(task, ActivityTask):
+            return self.find_activity_event(task, history)
+        elif isinstance(task, WorkflowTask):
+            return self.find_child_workflow_event(task, history)
+        else:
+            return TypeError('invalid type {} for task {}'.format(
+                type(task), task))
+
+        return None
+
+    def make_activity_task(self, func, *args, **kwargs):
+        return ActivityTask(func, *args, **kwargs)
+
+    def make_workflow_task(self, func, *args, **kwargs):
+        return WorkflowTask(func, *args, **kwargs)
+
     def resume(self, task, *args, **kwargs):
         """Resume the execution of a task.
 
@@ -83,7 +164,7 @@ class Executor(executor.Executor):
         otherwise schedules it.
 
         """
-        task.id = self.make_task_id(task)
+        task.id = self._make_task_id(task)
         event = self.find_event(task, self._history)
 
         if event:
@@ -115,11 +196,44 @@ class Executor(executor.Executor):
 
         return futures.Future()  # return a pending future.
 
-    def make_activity_task(self, func, *args, **kwargs):
-        return ActivityTask(func, *args, **kwargs)
+    def submit(self, func, *args, **kwargs):
+        """Register a function and its arguments for asynchronous execution.
 
-    def make_workflow_task(self, func, *args, **kwargs):
-        return WorkflowTask(func, *args, **kwargs)
+        ``*args`` and ``**kwargs`` must be serializable in JSON.
+
+        """
+        try:
+            args = [executor.get_actual_value(arg) for arg in args]
+            kwargs = {key: executor.get_actual_value(val) for
+                      key, val in kwargs.iteritems()}
+        except exceptions.ExecutionBlocked:
+            return futures.Future()
+
+        try:
+            if isinstance(func, Activity):
+                task = self.make_activity_task(func, *args, **kwargs)
+            elif issubclass(func, Workflow):
+                task = self.make_workflow_task(func, *args, **kwargs)
+            else:
+                raise TypeError
+        except TypeError:
+            raise TypeError('invalid type {} for {}'.format(
+                type(func), func))
+
+        return self.resume(task, *args, **kwargs)
+
+    def map(self, callable, iterable):
+        """Submit *callable* with each of the items in ``*iterables``.
+
+        All items in ``*iterables`` must be serializable in JSON.
+
+        """
+        iterable = executor.get_actual_value(iterable)
+        return super(Executor, self).map(callable, iterable)
+
+    def starmap(self, callable, iterable):
+        iterable = executor.get_actual_value(iterable)
+        return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, history):
         """Executes the workflow from the start until it blocks.
@@ -189,3 +303,6 @@ class Executor(executor.Executor):
 
         self._decisions.append(decision)
         raise exceptions.ExecutionBlocked('workflow execution failed')
+
+    def run(self, history):
+        return self.replay(history)
