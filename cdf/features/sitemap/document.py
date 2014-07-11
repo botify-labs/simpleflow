@@ -122,14 +122,14 @@ class SitemapXmlDocument(AbstractSitemapXml):
     def _is_valid_element(self, element):
         """Implementation of the template method for XML sitemaps"""
         localname = etree.QName(element.tag).localname
-        if localname == "loc":
-            #check the parent tag, to avoid returning
-            #image urls found in image sitemaps
-            parent_node = element.getparent()
-            parent_localname = etree.QName(parent_node.tag).localname
-            url = element.text
-            if parent_localname == "url" and UrlValidator.is_valid(url):
-                return True
+        if localname != "loc":
+            return False
+        #check the parent tag, to avoid returning
+        #image urls found in image sitemaps
+        parent_node = element.getparent()
+        parent_localname = etree.QName(parent_node.tag).localname
+        url = element.text
+        return parent_localname == "url" and UrlValidator.is_valid(url)
 
 
 class SitemapIndexXmlDocument(AbstractSitemapXml):
@@ -147,8 +147,7 @@ class SitemapIndexXmlDocument(AbstractSitemapXml):
         """Implementation of the template method for sitemap indexes"""
         localname = etree.QName(element.tag).localname
         url = element.text
-        if localname == "loc" and UrlValidator.is_valid(url) and self.sitemap_url_validator.is_valid(url):
-            return True
+        return localname == "loc" and UrlValidator.is_valid(url) and self.sitemap_url_validator.is_valid(url)
 
 
 class SitemapRssDocument(SitemapDocument):
