@@ -482,36 +482,33 @@ class TestInstanciateSitemapDocument(unittest.TestCase):
 
 class TestSitemapUrlValidator(unittest.TestCase):
     def setUp(self):
-        self.sitemap_index_url = "http://foo.com/bar/sitemap_index.xml"
+        self.validator = SitemapUrlValidator("http://foo.com/bar/sitemap_index.xml")
 
     def test_same_domain(self):
-        sitemap_url_validator = SitemapUrlValidator(self.sitemap_index_url)
-        self.assertTrue(sitemap_url_validator.is_valid("http://foo.com/bar/sitemap.xml"))
+        self.assertTrue(self.validator.is_valid("http://foo.com/bar/sitemap.xml"))
         #the sitemap is in a subdirectory
-        self.assertTrue(sitemap_url_validator.is_valid("http://foo.com/bar/baz/sitemap.xml"))
+        self.assertTrue(self.validator.is_valid("http://foo.com/bar/baz/sitemap.xml"))
         #the sitemap index is in a subdirectory (not supported by the standard)
-        self.assertTrue(sitemap_url_validator.is_valid("http://foo.com/sitemap.xml"))
+        self.assertTrue(self.validator.is_valid("http://foo.com/sitemap.xml"))
         #the protocols are different
-        self.assertTrue(sitemap_url_validator.is_valid("https://foo.com/bar/sitemap.xml"))
+        self.assertTrue(self.validator.is_valid("https://foo.com/bar/sitemap.xml"))
 
     def test_sitemap_different_domains(self):
-        sitemap_url_validator = SitemapUrlValidator(self.sitemap_index_url)
-        self.assertFalse(sitemap_url_validator.is_valid("http://bar.com/sitemap.xml"))
+        self.assertFalse(self.validator.is_valid("http://bar.com/sitemap.xml"))
 
     def test_sitemap_in_subdomain(self):
-        sitemap_url_validator = SitemapUrlValidator(self.sitemap_index_url)
-        self.assertTrue(sitemap_url_validator.is_valid("http://foo.foo.com/sitemap.xml"))
+        self.assertTrue(self.validator.is_valid("http://foo.foo.com/sitemap.xml"))
 
     def test_sitemap_index_in_subdomain(self):
         sitemap_url_validator = SitemapUrlValidator("http://foo.foo.com/sitemap_index.xml")
         self.assertFalse(sitemap_url_validator.is_valid("http://foo.com/sitemap.xml"))
 
     def test_sitemap_index_in_www(self):
-        sitemap_url_validator = SitemapUrlValidator("http://www.foo.com/sitemap_index.xml")
+        validator = SitemapUrlValidator("http://www.foo.com/sitemap_index.xml")
         #if the sitemap index is on the "www", it can reference all the subdomains
-        self.assertTrue(sitemap_url_validator.is_valid("http://foo.foo.com/sitemap.xml"))
-        self.assertTrue(sitemap_url_validator.is_valid("http://foo.www.foo.com/sitemap.xml"))
+        self.assertTrue(validator.is_valid("http://foo.foo.com/sitemap.xml"))
+        self.assertTrue(validator.is_valid("http://foo.www.foo.com/sitemap.xml"))
 
-        self.assertFalse(sitemap_url_validator.is_valid("http://bar.com/sitemap.xml"))
+        self.assertFalse(validator.is_valid("http://bar.com/sitemap.xml"))
 
 
