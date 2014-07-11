@@ -309,9 +309,9 @@ class SitemapUrlValidator(object):
         :param sitemap_index_url: the sitemap index url
         :type sitemap_index_url: str
         """
-        self.sitemap_index_url = sitemap_index_url
-
-        parsed_sitemap_index_url = urlparse(self.sitemap_index_url)
+        parsed_sitemap_index_url = urlparse(sitemap_index_url)
+        #the validation rules are only based on the host
+        #so we only keep it.
         self.sitemap_index_host = parsed_sitemap_index_url.netloc
 
     def _is_subdomain(self, subdomain, domain):
