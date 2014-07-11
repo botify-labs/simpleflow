@@ -315,12 +315,19 @@ class SitemapUrlValidator(object):
         self.sitemap_index_host = parsed_sitemap_index_url.netloc
 
     def _is_subdomain(self, subdomain, domain):
+        """Helper function that tells if a domain is the subdomain of an other domain
+        :param subdomain: the potential subdomain
+        :type subdomain: str
+        :param domain: the potential domain
+        :type domain: str
+        :returns: bool"""
         return subdomain.endswith(".{}".format(domain))
 
     def is_valid(self, sitemap_url):
         """The actual validation function
         :param sitemap_url: the sitemap url to test
         :type sitemap_url: str
+        :returns: bool
         """
         sitemap_index_host = self.sitemap_index_host
 
