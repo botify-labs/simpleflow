@@ -288,6 +288,8 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(3, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
     def test_long_line(self):
         self.file.write('http://foo.com/bar\n')
@@ -304,6 +306,8 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
 
     def test_very_long_line(self):
         self.file.write('http://foo.com/bar\n')
@@ -321,6 +325,9 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
+
 
     def test_invalid_urls(self):
         self.file.write('http://foo.com/bar\n'
@@ -336,6 +343,8 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
 
     def test_empty_line(self):
         self.file.write('http://foo.com/bar\n'
@@ -351,7 +360,9 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
-
+        self.assertEqual(2, sitemap_document.valid_urls)
+        #empty lines are considered as invalid lines
+        self.assertEqual(1, sitemap_document.invalid_urls)
 
 
 class TestUrlValidator(unittest.TestCase):

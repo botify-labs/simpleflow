@@ -203,6 +203,8 @@ class SitemapTextDocument(SitemapDocument):
         :type file_path: str
         """
         self.file_path = file_path
+        self.valid_urls = 0
+        self.invalid_urls = 0
 
     def get_sitemap_type(self):
         #rss document cannot be sitemap_index
@@ -221,16 +223,21 @@ class SitemapTextDocument(SitemapDocument):
                 try:
                     row = csv_reader.next()
                 except csv.Error:
+                    self.invalid_urls += 1
                     #simply skip the line
                     continue
                 except StopIteration:
                     break
                 if len(row) != 1:
                     logger.warning("'%s' should have exactly one field.", row)
+                    self.invalid_urls += 1
                     continue
                 url = row[0]
                 if UrlValidator.is_valid(url):
+                    self.valid_urls += 1
                     yield row[0]
+                else:
+                    self.invalid_urls += 1
 
 
 class UrlValidator(object):
