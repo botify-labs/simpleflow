@@ -41,16 +41,16 @@ def instanciate_sitemap_document(file_path, url):
     """
     sitemap_type = guess_sitemap_type(file_path)
     if is_xml_sitemap(sitemap_type):
-        return SitemapXmlDocument(file_path)
+        return SitemapXmlDocument(file_path, url)
 
     if is_sitemap_index(sitemap_type):
         return SitemapIndexXmlDocument(file_path, url)
 
     if is_rss_sitemap(sitemap_type):
-        return SitemapRssDocument(file_path)
+        return SitemapRssDocument(file_path, url)
 
     if is_text_sitemap(sitemap_type):
-        return SitemapTextDocument(file_path)
+        return SitemapTextDocument(file_path, url)
 
     raise UnhandledFileType()
 
@@ -95,13 +95,16 @@ class AbstractSitemapXml(SitemapDocument):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, url):
         """Constructor
         :param file_path: the path to the input file
         :type file_path: str
+        :param url: the original url for the file
+        :type url: str
         """
         super(AbstractSitemapXml, self).__init__()
         self.file_path = file_path
+        self.url = url
 
     def get_urls(self):
         """Returns the urls listed in the sitemap document
@@ -142,12 +145,14 @@ class SitemapXmlDocument(AbstractSitemapXml):
     """A class to represent a sitemap xml document.
     It can represent a sitemap or a sitemap index.
     """
-    def __init__(self, file_path):
+    def __init__(self, file_path, url):
         """Constructor
         :param file_path: the path to the input file
         :type file_path: str
+        :param url: the original url for the file
+        :type url: str
         """
-        super(SitemapXmlDocument, self).__init__(file_path)
+        super(SitemapXmlDocument, self).__init__(file_path, url)
 
     def get_sitemap_type(self):
         return SiteMapType.SITEMAP_XML
@@ -172,7 +177,7 @@ class SitemapIndexXmlDocument(AbstractSitemapXml):
     """A class to represent a sitemap index xml document.
     """
     def __init__(self, file_path, url):
-        super(SitemapIndexXmlDocument, self).__init__(file_path)
+        super(SitemapIndexXmlDocument, self).__init__(file_path, url)
         self.url = url
         self.sitemap_url_validator = SitemapUrlValidator(self.url)
 
@@ -192,12 +197,14 @@ class SitemapIndexXmlDocument(AbstractSitemapXml):
 class SitemapRssDocument(AbstractSitemapXml):
     """A class to represent a sitemap rss document.
     """
-    def __init__(self, file_path):
+    def __init__(self, file_path, url):
         """Constructor
         :param file_path: the path to the input file
         :type file_path: str
+        :param url: the original url for the file
+        :type url: str
         """
-        super(self.__class__, self).__init__(file_path)
+        super(self.__class__, self).__init__(file_path, url)
 
     def get_sitemap_type(self):
         #rss document cannot be sitemap_index
@@ -216,13 +223,16 @@ class SitemapRssDocument(AbstractSitemapXml):
 class SitemapTextDocument(SitemapDocument):
     """A class to represent a sitemap rss document.
     """
-    def __init__(self, file_path):
+    def __init__(self, file_path, url):
         """Constructor
         :param file_path: the path to the input file
         :type file_path: str
+        :param url: the original url for the file
+        :type url: str
         """
         super(self.__class__, self).__init__()
         self.file_path = file_path
+        self.url = url
 
     def get_sitemap_type(self):
         #rss document cannot be sitemap_index
@@ -322,7 +332,7 @@ def guess_sitemap_type(file_path):
         #it looked like an xml but was not a valid sitemap
         return SiteMapType.UNKNOWN
 
-    text_sitemap = SitemapTextDocument(file_path)
+    text_sitemap = SitemapTextDocument(file_path, None)  # FIXME use real url
     nb_urls = sum(1 for _ in text_sitemap.get_urls())
     if nb_urls > 0:
         return SiteMapType.SITEMAP_TEXT
