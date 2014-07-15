@@ -39,7 +39,7 @@ def instanciate_sitemap_document(file_path, url):
     :returns: SitemapDocument
     :raises: UnhandledFileType
     """
-    sitemap_type = guess_sitemap_type(file_path)
+    sitemap_type = guess_sitemap_type(file_path, url)
     if is_xml_sitemap(sitemap_type):
         return SitemapXmlDocument(file_path, url)
 
@@ -306,11 +306,13 @@ def open_sitemap_file(file_path):
     return f
 
 
-def guess_sitemap_type(file_path):
+def guess_sitemap_type(file_path, url):
     """Guess the  sitemap type (sitemap or sitemap index) from an input file.
     The method simply stops on the first "urlset" or "sitemapindex" tag.
     :param file_path: the path to the input file
     :type file_path: str
+    :param url: the original file url
+    :type url: str
     :return: SiteMapType
     """
     with open_sitemap_file(file_path) as file_object:
@@ -333,7 +335,7 @@ def guess_sitemap_type(file_path):
         #it looked like an xml but was not a valid sitemap
         return SiteMapType.UNKNOWN
 
-    text_sitemap = SitemapTextDocument(file_path, None)  # FIXME use real url
+    text_sitemap = SitemapTextDocument(file_path, url)
     nb_urls = sum(1 for _ in text_sitemap.get_urls())
     if nb_urls > 0:
         return SiteMapType.SITEMAP_TEXT

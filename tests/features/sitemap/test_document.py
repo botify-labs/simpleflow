@@ -421,6 +421,7 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
     def setUp(self):
         tmp_file = tempfile.NamedTemporaryFile(delete=False)
         self.tmp_file_path = tmp_file.name
+        self.url = "http://foo.com/bar"
 
     def tearDown(self):
         os.remove(self.tmp_file_path)
@@ -432,7 +433,7 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
                     '<url><loc>http://foo/bar</loc></url>'
                     '</urlset>')
         self.assertEqual(SiteMapType.SITEMAP_XML,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_xml_sitemapindex(self):
         with open(self.tmp_file_path, "w") as f:
@@ -441,7 +442,7 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
                     '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
                     '</sitemapindex>')
         self.assertEqual(SiteMapType.SITEMAP_INDEX,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_rss_sitemap(self):
         with open(self.tmp_file_path, "w") as f:
@@ -459,37 +460,37 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
                     '</channel>'
                     '</rss>')
         self.assertEqual(SiteMapType.SITEMAP_RSS,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_xml_syntax_error(self):
         with open(self.tmp_file_path, "w") as f:
             f.write('<foo></bar>')
         self.assertEqual(SiteMapType.UNKNOWN,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_simple_xml(self):
         with open(self.tmp_file_path, "w") as f:
             f.write('<foo></foo>')
         self.assertEqual(SiteMapType.UNKNOWN,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_simple_text_file(self):
         with open(self.tmp_file_path, "w") as f:
             f.write('http://foo\nhttps://bar')
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_text_file_one_url(self):
         with open(self.tmp_file_path, "w") as f:
             f.write('foo\r\nbar\r\nhttp://baz')
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_text_file_no_urls(self):
         with open(self.tmp_file_path, "w") as f:
             f.write('foo\nbar')
         self.assertEqual(SiteMapType.UNKNOWN,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
 @mock.patch("cdf.features.sitemap.document.guess_sitemap_type", autospec=True)
 class TestInstanciateSitemapDocument(unittest.TestCase):
