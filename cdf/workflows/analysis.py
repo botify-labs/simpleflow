@@ -37,6 +37,8 @@ from simpleflow import (
     activity,
 )
 
+from . import constants
+
 
 def as_activity(func):
     """
@@ -224,15 +226,21 @@ class AnalysisWorkflow(Workflow):
     def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
-        s3_uri = context['s3_uri']
-        first_part_id_size = context['first_part_id_size']
-        part_id_size = context['part_id_size']
+        s3_uri = context.get('s3_uri') or context['crawl_location']
+
+        first_part_id_size = context.get(
+            'first_part_id_size',
+            constants.FIRST_PART_ID_SIZE)
+        part_id_size = context.get(
+            'part_id_size',
+            constants.PART_ID_SIZE)
+
         revision_number = context['revision_number']
         es_location = context['es_location']
         es_index = context['es_index']
         es_doc_type = context['es_doc_type']
 
-        features_flags = context['features_flags']
+        features_flags = context.get('features_flags', [])
 
         clusters_result = self.submit(
             compute_mixed_clusters,
