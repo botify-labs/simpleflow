@@ -161,11 +161,11 @@ class SitemapIndexXmlDocument(AbstractSitemapXml):
         return localname == "loc"
 
     def _is_valid_url(self, url):
-        """Implementation of the template method for XML sitemaps"""
+        """Implementation of the template method for itemap indexes"""
         return UrlValidator.is_valid(url) and self.sitemap_url_validator.is_valid(url)
 
 
-class SitemapRssDocument(SitemapDocument):
+class SitemapRssDocument(AbstractSitemapXml):
     """A class to represent a sitemap rss document.
     """
     def __init__(self, file_path):
@@ -173,28 +173,20 @@ class SitemapRssDocument(SitemapDocument):
         :param file_path: the path to the input file
         :type file_path: str
         """
-        self.file_path = file_path
+        super(self.__class__, self).__init__(file_path)
 
     def get_sitemap_type(self):
         #rss document cannot be sitemap_index
         return SiteMapType.SITEMAP_RSS
 
-    def get_urls(self):
-        """Returns the urls listed in the sitemap document
-        :param file_object: a file like object
-        :type file_object: file
-        """
-        with open_sitemap_file(self.file_path) as file_object:
-            try:
-                for _, element in etree.iterparse(file_object, events=("start",)):
-                    localname = etree.QName(element.tag).localname
-                    if localname == "link":
-                        url = element.text
-                        if UrlValidator.is_valid(url):
-                            yield url
-                    element.clear()
-            except etree.XMLSyntaxError as e:
-                raise ParsingError(e.message)
+    def _is_valid_element(self, element):
+        """Implementation of the template method for RSS sitemaps"""
+        localname = etree.QName(element.tag).localname
+        return localname == "link"
+
+    def _is_valid_url(self, url):
+        """Implementation of the template method for RSS sitemaps"""
+        return UrlValidator.is_valid(url)
 
 
 class SitemapTextDocument(SitemapDocument):
