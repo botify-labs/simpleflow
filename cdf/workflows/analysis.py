@@ -31,6 +31,8 @@ executed.
 
 """
 
+import logging
+
 from simpleflow import (
     Workflow,
     futures,
@@ -38,6 +40,9 @@ from simpleflow import (
 )
 
 from . import constants
+
+
+logger = logging.getLogger(__name__)
 
 
 def as_activity(func):
@@ -357,3 +362,18 @@ class AnalysisWorkflow(Workflow):
         result.update(crawl_status_result.result)
         result.update(revision_status_result.result)
         return result
+
+    def on_failure(self, history, reason, details=None):
+        input = getattr(history.events[0], 'input', {})
+        context = input.get('kwargs')
+        if not context:
+            logger.warning('No context for failure: {}'.format(reason))
+            return
+
+        try:
+            logger.error(
+                'Workflow for crawl #{} failed: {}'.format(
+                    context['crawl_id'],
+                    reason))
+        except:
+            pass
