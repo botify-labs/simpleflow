@@ -9,12 +9,12 @@ SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd $SCRIPT_DIR/.. #back to root directory
 
 VIRTUALENV_DIR="/tmp/venv"
-virtualenv $VIRTUALENV_DIR
+virtualenv $VIRTUALENV_DIR --system-site-packages
 [ $? -ne 0 ] && exit 1
 source $VIRTUALENV_DIR/bin/activate
 
 #pip management
-PIP="pip-accel"
+PIP="pip"
 if [ $PIP = "pip-accel" ]; then
     pip install pip-accel
 fi
