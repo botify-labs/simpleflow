@@ -27,7 +27,10 @@ class GetSitemapUrlsStream(unittest.TestCase):
             iter(["baz", "qux"])
         ])
 
-        download_sitemaps_from_s3_mock.return_value = ["/tmp/foo", "/tmp/bar"]
+        download_sitemaps_from_s3_mock.return_value = [
+            ("/tmp/foo", "http://foo"),
+            ("/tmp/bar", "http://bar")
+        ]
         s3_uri = "s3://foo"
         tmp_dir = "/tmp/foo"
         force_fetch = True
@@ -109,8 +112,8 @@ class TestDownloadSitemapsFromS3(unittest.TestCase):
 
         #check result
         expected_result = [
-            os.path.join(tmp_dir, "sitemap_1.xml"),
-            os.path.join(tmp_dir, "sitemap_2.xml"),
+            (os.path.join(tmp_dir, "sitemap_1.xml"), "http://foo.com/sitemap_1.xml"),
+            (os.path.join(tmp_dir, "sitemap_2.xml"), "http://foo.com/sitemap_2.xml"),
         ]
         self.assertEqual(expected_result, actual_result)
 

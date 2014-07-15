@@ -96,6 +96,7 @@ def download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch):
                         if False, files that are present in the tmp_directory
                         will not be downloaded from s3.
     :type force_fetch: bool
+    :returns: list - a list of tuples (file_path, original url)
     """
     download_status = get_download_status_from_s3(s3_uri, tmp_dir, force_fetch)
     sitemap_files = []
@@ -107,7 +108,7 @@ def download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch):
             destination,
             force_fetch
         )
-        sitemap_files.append(destination)
+        sitemap_files.append((destination, sitemap.url))
     return sitemap_files
 
 
@@ -125,9 +126,10 @@ def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
     :returns: iterator
     """
     sitemap_files = download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch)
+    print sitemap_files
     sitemap_streams = []
-    for sitemap_file in sitemap_files:
-        sitemap_document = instanciate_sitemap_document(sitemap_file)
+    for sitemap_file, url in sitemap_files:
+        sitemap_document = instanciate_sitemap_document(sitemap_file, url)
         sitemap_streams.append(sitemap_document.get_urls())
     return itertools.chain(*sitemap_streams)
 

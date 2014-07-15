@@ -13,7 +13,8 @@ from cdf.features.sitemap.document import (instanciate_sitemap_document,
                                            SitemapRssDocument,
                                            SitemapTextDocument,
                                            UrlValidator,
-                                           guess_sitemap_type)
+                                           guess_sitemap_type,
+                                           SitemapUrlValidator)
 from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
 
 
@@ -112,6 +113,7 @@ class TestSitemapXmlDocument(unittest.TestCase):
 class TestSitemapIndexXmlDocument(unittest.TestCase):
     def setUp(self):
         self.file = tempfile.NamedTemporaryFile(delete=False)
+        self.url = "http://foo/sitemap_index.xml"
 
     def tearDown(self):
         os.remove(self.file.name)
@@ -122,7 +124,7 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
                         '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
                         '</sitemapindex>')
         self.file.close()
-        sitemap_document = SitemapIndexXmlDocument(self.file.name)
+        sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
 
         self.assertEqual(SiteMapType.SITEMAP_INDEX,
                          sitemap_document.get_sitemap_type())
@@ -131,13 +133,13 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
 
     def test_no_namespace(self):
         self.file.write('<sitemapindex>'
-                        '<sitemap><loc>http://foo.com/bar</loc></sitemap>'
+                        '<sitemap><loc>http://foo/bar</loc></sitemap>'
                         '</sitemapindex>')
         self.file.close()
-        sitemap_document = SitemapIndexXmlDocument(self.file.name)
+        sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_INDEX,
                          sitemap_document.get_sitemap_type())
-        self.assertEqual(["http://foo.com/bar"],
+        self.assertEqual(["http://foo/bar"],
                          list(sitemap_document.get_urls()))
 
     def test_invalid_url(self):
@@ -150,7 +152,21 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
                         '</sitemap>'
                         '</sitemapindex>')
         self.file.close()
-        sitemap_document = SitemapIndexXmlDocument(self.file.name)
+        sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
+        self.assertEqual(["http://foo/sitemap.1.xml.gz", "http://foo/sitemap.2.xml.gz"],
+                         list(sitemap_document.get_urls()))
+
+    def test_forbidden_url(self):
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
+                        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                        '<sitemap>'
+                        '<loc>http://foo/sitemap.1.xml.gz</loc>'
+                        '<loc>http://bar/sitemap.xml</loc>'  # this url is on a different domain
+                        '<loc>http://foo/sitemap.2.xml.gz</loc>'
+                        '</sitemap>'
+                        '</sitemapindex>')
+        self.file.close()
+        sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
         self.assertEqual(["http://foo/sitemap.1.xml.gz", "http://foo/sitemap.2.xml.gz"],
                          list(sitemap_document.get_urls()))
 
@@ -434,31 +450,65 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
 class TestInstanciateSitemapDocument(unittest.TestCase):
     def setUp(self):
         self.file_path = "/tmp/foo"
+        self.url = "http://foo.xml"
 
     def test_xml_sitemap(self, guess_sitemap_type_mock):
         guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_XML
-        actual_result = instanciate_sitemap_document(self.file_path)
+        actual_result = instanciate_sitemap_document(self.file_path, self.url)
         self.assertIsInstance(actual_result, SitemapXmlDocument)
 
     def test_sitemap_index(self, guess_sitemap_type_mock):
         guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_INDEX
-        actual_result = instanciate_sitemap_document(self.file_path)
+        actual_result = instanciate_sitemap_document(self.file_path, self.url)
         self.assertIsInstance(actual_result, SitemapIndexXmlDocument)
+        self.assertEqual(self.url, actual_result.url)
 
     def test_rss_sitemap(self, guess_sitemap_type_mock):
         guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_RSS
-        actual_result = instanciate_sitemap_document(self.file_path)
+        actual_result = instanciate_sitemap_document(self.file_path, self.url)
         self.assertIsInstance(actual_result, SitemapRssDocument)
 
     def test_text_sitemap(self, guess_sitemap_type_mock):
         guess_sitemap_type_mock.return_value = SiteMapType.SITEMAP_TEXT
-        actual_result = instanciate_sitemap_document(self.file_path)
+        actual_result = instanciate_sitemap_document(self.file_path, self.url)
         self.assertIsInstance(actual_result, SitemapTextDocument)
 
     def test_unknown_format(self, guess_sitemap_type_mock):
         guess_sitemap_type_mock.return_value = SiteMapType.UNKNOWN
         self.assertRaises(UnhandledFileType,
                           instanciate_sitemap_document,
-                          "foo")
+                          "foo",
+                          self.url)
+
+class TestSitemapUrlValidator(unittest.TestCase):
+    def setUp(self):
+        self.validator = SitemapUrlValidator("http://foo.com/bar/sitemap_index.xml")
+
+    def test_same_domain(self):
+        self.assertTrue(self.validator.is_valid("http://foo.com/bar/sitemap.xml"))
+        #the sitemap is in a subdirectory
+        self.assertTrue(self.validator.is_valid("http://foo.com/bar/baz/sitemap.xml"))
+        #the sitemap index is in a subdirectory (not supported by the standard)
+        self.assertTrue(self.validator.is_valid("http://foo.com/sitemap.xml"))
+        #the protocols are different
+        self.assertTrue(self.validator.is_valid("https://foo.com/bar/sitemap.xml"))
+
+    def test_sitemap_different_domains(self):
+        self.assertFalse(self.validator.is_valid("http://bar.com/sitemap.xml"))
+
+    def test_sitemap_in_subdomain(self):
+        self.assertTrue(self.validator.is_valid("http://foo.foo.com/sitemap.xml"))
+
+    def test_sitemap_index_in_subdomain(self):
+        sitemap_url_validator = SitemapUrlValidator("http://foo.foo.com/sitemap_index.xml")
+        self.assertFalse(sitemap_url_validator.is_valid("http://foo.com/sitemap.xml"))
+
+    def test_sitemap_index_in_www(self):
+        validator = SitemapUrlValidator("http://www.foo.com/sitemap_index.xml")
+        #if the sitemap index is on the "www", it can reference all the subdomains
+        self.assertTrue(validator.is_valid("http://foo.foo.com/sitemap.xml"))
+        self.assertTrue(validator.is_valid("http://foo.www.foo.com/sitemap.xml"))
+
+        self.assertFalse(validator.is_valid("http://bar.com/sitemap.xml"))
 
 

@@ -4,6 +4,8 @@ import gzip
 from abc import ABCMeta, abstractmethod
 import csv
 import re
+from urlparse import urlparse
+
 from cdf.log import logger
 from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
 
@@ -27,10 +29,12 @@ def is_rss_sitemap(sitemap_type):
 def is_text_sitemap(sitemap_type):
     return sitemap_type == SiteMapType.SITEMAP_TEXT
 
-def instanciate_sitemap_document(file_path):
+def instanciate_sitemap_document(file_path, url):
     """a factory method that creates a sitemap document from a file
     :param file_path: the input file path
     :type file_path: str
+    :param url: the url where the file has been downloaded from
+    :type url: str
     :returns: SitemapDocument
     :raises: UnhandledFileType
     """
@@ -39,7 +43,7 @@ def instanciate_sitemap_document(file_path):
         return SitemapXmlDocument(file_path)
 
     if is_sitemap_index(sitemap_type):
-        return SitemapIndexXmlDocument(file_path)
+        return SitemapIndexXmlDocument(file_path, url)
 
     if is_rss_sitemap(sitemap_type):
         return SitemapRssDocument(file_path)
@@ -90,23 +94,22 @@ class AbstractSitemapXml(SitemapDocument):
         :param file_object: a file like object
         :type file_object: file
         """
-        #the valid tag for <loc> parents
-        valid_loc_parent_tag = frozenset(["url", "sitemap"])
         with open_sitemap_file(self.file_path) as file_object:
             try:
                 for _, element in etree.iterparse(file_object):
-                    localname = etree.QName(element.tag).localname
-                    if localname == "loc":
-                        #check the parent tag, to avoid returning
-                        #image urls found in image sitemaps
-                        parent_node = element.getparent()
-                        parent_localname = etree.QName(parent_node.tag).localname
-                        url = element.text
-                        if parent_localname in valid_loc_parent_tag and UrlValidator.is_valid(url):
-                            yield url
+                    if self._is_valid_element(element):
+                        yield element.text
                     element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
+
+    @abstractmethod
+    def _is_valid_element(self, element):
+        """A template method that decides whether or not an xml tree element
+        is a valid url element.
+        :param element: the element to test.
+        :type element: lxml.etree._Element"""
+        raise NotImplementedError()
 
 
 class SitemapXmlDocument(AbstractSitemapXml):
@@ -116,12 +119,35 @@ class SitemapXmlDocument(AbstractSitemapXml):
     def get_sitemap_type(self):
         return SiteMapType.SITEMAP_XML
 
+    def _is_valid_element(self, element):
+        """Implementation of the template method for XML sitemaps"""
+        localname = etree.QName(element.tag).localname
+        if localname != "loc":
+            return False
+        #check the parent tag, to avoid returning
+        #image urls found in image sitemaps
+        parent_node = element.getparent()
+        parent_localname = etree.QName(parent_node.tag).localname
+        url = element.text
+        return parent_localname == "url" and UrlValidator.is_valid(url)
+
 
 class SitemapIndexXmlDocument(AbstractSitemapXml):
     """A class to represent a sitemap index xml document.
     """
+    def __init__(self, file_path, url):
+        super(self.__class__, self).__init__(file_path)
+        self.url = url
+        self.sitemap_url_validator = SitemapUrlValidator(self.url)
+
     def get_sitemap_type(self):
         return SiteMapType.SITEMAP_INDEX
+
+    def _is_valid_element(self, element):
+        """Implementation of the template method for sitemap indexes"""
+        localname = etree.QName(element.tag).localname
+        url = element.text
+        return localname == "loc" and UrlValidator.is_valid(url) and self.sitemap_url_validator.is_valid(url)
 
 
 class SitemapRssDocument(SitemapDocument):
@@ -264,3 +290,60 @@ def guess_sitemap_type(file_path):
     if nb_urls > 0:
         return SiteMapType.SITEMAP_TEXT
     return SiteMapType.UNKNOWN
+
+
+class SitemapUrlValidator(object):
+    """A class that tells if a sitemap_index can reference given urls.
+    The rules differ from the standard (they are more flexible):
+    - http://www.sitemaps.org/protocol.html#index
+
+    A sitemap index can only reference urls in its domain or its subdomains.
+    There is a special case, when the sitemap domain is the "www",
+    In this case, the sitemap index can reference all the domains of the site.
+    foo.com -> *.foo.com, foo.com
+    www.foo.com -> *.www.foo.com, *.foo.com, www.foo.com
+    """
+    def __init__(self, sitemap_index_url):
+        """Constructor
+        :param sitemap_index_url: the sitemap index url
+        :type sitemap_index_url: str
+        """
+        parsed_sitemap_index_url = urlparse(sitemap_index_url)
+        #the validation rules are only based on the host
+        #so we only keep it.
+        self.sitemap_index_host = parsed_sitemap_index_url.netloc
+
+    def _is_subdomain(self, subdomain, domain):
+        """Helper function that tells if a domain is the subdomain of an other domain
+        :param subdomain: the potential subdomain
+        :type subdomain: str
+        :param domain: the potential domain
+        :type domain: str
+        :returns: bool"""
+        return subdomain.endswith(".{}".format(domain))
+
+    def is_valid(self, sitemap_url):
+        """The actual validation function
+        :param sitemap_url: the sitemap url to test
+        :type sitemap_url: str
+        :returns: bool
+        """
+        sitemap_index_host = self.sitemap_index_host
+
+        parsed_sitemap_url = urlparse(sitemap_url)
+        sitemap_host = parsed_sitemap_url.netloc
+
+        #handles the www case
+        if sitemap_index_host.startswith("www."):
+            #we simply remove the www. and apply the standard rules.
+            sitemap_index_host = sitemap_index_host[4:]
+
+        #if the domain is the same, it's ok.
+        if sitemap_index_host == sitemap_host:
+            return True
+
+        #if the sitemap is on a subdomain, it's ok
+        if self._is_subdomain(sitemap_host, sitemap_index_host):
+            return True
+
+        return False
