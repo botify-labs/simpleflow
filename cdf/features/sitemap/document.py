@@ -4,6 +4,7 @@ import gzip
 from abc import ABCMeta, abstractmethod
 import csv
 import re
+import json
 from urlparse import urlparse
 
 from cdf.log import logger
@@ -78,6 +79,14 @@ class SitemapDocument(object):
         :type file_object: file
         """
         raise NotImplementedError()
+
+    def to_json(self):
+        d = {
+            "type": self.get_sitemap_type(),
+            "valid": self.valid_urls,
+            "invalid": self.invalid_urls
+        }
+        return json.dump(d)
 
 
 class AbstractSitemapXml(SitemapDocument):
