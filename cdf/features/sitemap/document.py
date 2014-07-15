@@ -80,13 +80,14 @@ class SitemapDocument(object):
         """
         raise NotImplementedError()
 
-    def to_json(self):
-        d = {
-            "type": self.get_sitemap_type(),
+    def to_dict(self):
+        sitemap_type = str(self.get_sitemap_type())
+        result = {
+            "type": sitemap_type,
             "valid": self.valid_urls,
             "invalid": self.invalid_urls
         }
-        return json.dump(d)
+        return result
 
 
 class AbstractSitemapXml(SitemapDocument):

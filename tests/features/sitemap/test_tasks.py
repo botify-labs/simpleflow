@@ -3,9 +3,10 @@ import mock
 import tempfile
 import gzip
 import os
+import json
 
 from cdf.features.sitemap.download import Sitemap, DownloadStatus
-from cdf.features.sitemap.document import SitemapXmlDocument
+from cdf.features.sitemap.document import SiteMapType, SitemapTextDocument
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.sitemap.tasks import (download_sitemap_files,
                                         download_sitemap_file,
@@ -95,17 +96,18 @@ class TestMatchSitemapUrls(unittest.TestCase):
             (2, "http", "foo.com", "/baz", ""),
             (3, "http", "foo.com", "/qux", ""),
         ]
+        file1 = tempfile.NamedTemporaryFile(delete=False)
+        file1.write(("http://foo.com/qux\n"
+                     "http://foo.com/bar"))
+        file1.close()
+        document_mock_1 = SitemapTextDocument(file1.name, "http://foo.com/sitemap_1.txt")
 
-        document_mock_1 = mock.create_autospec(SitemapXmlDocument)
-        document_mock_1.get_urls.return_value = [
-            "http://foo.com/qux",
-            "http://foo.com/bar"
-        ]
-        document_mock_2 = mock.create_autospec(SitemapXmlDocument)
-        document_mock_2.get_urls.return_value = [
-            "http://foo.com/index.html",  # not in crawl
-            "http://bar.com"  # not in crawl domain
-        ]
+        file2 = tempfile.NamedTemporaryFile(delete=False)
+        file2.write(("http://foo.com/index.html\n"  # not in crawl
+                     "http://bar.com"))  # not in crawl domain
+        file2.close()
+        document_mock_2 = SitemapTextDocument(file2.name, "http://foo.com/sitemap_2.txt")
+
         get_sitemap_documents_mock.return_value = [document_mock_1, document_mock_2]
         #call
         s3_uri = "s3://" + tempfile.mkdtemp()
@@ -120,7 +122,7 @@ class TestMatchSitemapUrls(unittest.TestCase):
                            first_part_id_size,
                            part_id_size)
 
-        #check output files
+       #check output files
         with gzip.open(os.path.join(s3_uri[5:], 'sitemap_only.gz')) as f:
             expected_result = ['http://foo.com/index.html\n']
             self.assertEquals(expected_result, f.readlines())
@@ -132,3 +134,22 @@ class TestMatchSitemapUrls(unittest.TestCase):
         with gzip.open(os.path.join(s3_uri[5:], 'sitemap.txt.0.gz')) as f:
             expected_result = ['1\n', '3\n']  # urlids are now sorted
             self.assertEquals(expected_result, f.readlines())
+
+        with open(os.path.join(s3_uri[5:], "sitemap_info.json")) as f:
+            expected_sitemap_info = {
+                "http://foo.com/sitemap_1.txt": {
+                    "type": "SiteMapType.SITEMAP_TEXT",
+                    "valid": 2,
+                    "invalid": 0
+                },
+                "http://foo.com/sitemap_2.txt": {
+                    "type": "SiteMapType.SITEMAP_TEXT",
+                    "valid": 2,
+                    "invalid": 0
+                }
+            }
+            self.assertEqual(expected_sitemap_info, json.load(f))
+
+        os.remove(file1.name)
+        os.remove(file2.name)
+
