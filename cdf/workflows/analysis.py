@@ -332,7 +332,7 @@ class AnalysisWorkflow(Workflow):
             es_index,
             es_doc_type,
             revision_number)
-        suggest_summary_result.result
+        futures.wait(suggest_summary_result)
 
         crawl_status_result = self.submit(
             update_crawl_status,
