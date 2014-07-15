@@ -98,7 +98,9 @@ class AbstractSitemapXml(SitemapDocument):
             try:
                 for _, element in etree.iterparse(file_object):
                     if self._is_valid_element(element):
-                        yield element.text
+                        url = element.text
+                        if self._is_valid_url(url):
+                            yield element.text
                     element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
@@ -107,6 +109,13 @@ class AbstractSitemapXml(SitemapDocument):
     def _is_valid_element(self, element):
         """A template method that decides whether or not an xml tree element
         is a valid url element.
+        :param element: the element to test.
+        :type element: lxml.etree._Element"""
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _is_valid_url(self, element):
+        """A template method that decides whether or not a url is valid.
         :param element: the element to test.
         :type element: lxml.etree._Element"""
         raise NotImplementedError()
@@ -128,8 +137,11 @@ class SitemapXmlDocument(AbstractSitemapXml):
         #image urls found in image sitemaps
         parent_node = element.getparent()
         parent_localname = etree.QName(parent_node.tag).localname
-        url = element.text
-        return parent_localname == "url" and UrlValidator.is_valid(url)
+        return parent_localname == "url"
+
+    def _is_valid_url(self, url):
+        """Implementation of the template method for XML sitemaps"""
+        return UrlValidator.is_valid(url)
 
 
 class SitemapIndexXmlDocument(AbstractSitemapXml):
@@ -146,8 +158,11 @@ class SitemapIndexXmlDocument(AbstractSitemapXml):
     def _is_valid_element(self, element):
         """Implementation of the template method for sitemap indexes"""
         localname = etree.QName(element.tag).localname
-        url = element.text
-        return localname == "loc" and UrlValidator.is_valid(url) and self.sitemap_url_validator.is_valid(url)
+        return localname == "loc"
+
+    def _is_valid_url(self, url):
+        """Implementation of the template method for XML sitemaps"""
+        return UrlValidator.is_valid(url) and self.sitemap_url_validator.is_valid(url)
 
 
 class SitemapRssDocument(SitemapDocument):
