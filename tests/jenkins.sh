@@ -14,7 +14,7 @@ virtualenv $VIRTUALENV_DIR --system-site-packages
 source $VIRTUALENV_DIR/bin/activate
 
 #pip management
-PIP="pip-accel"
+PIP="pip"
 if [ $PIP = "pip-accel" ]; then
     pip install pip-accel
 fi
