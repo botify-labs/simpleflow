@@ -88,6 +88,8 @@ class AbstractSitemapXml(SitemapDocument):
         :type file_path: str
         """
         self.file_path = file_path
+        self.valid_urls = 0
+        self.invalid_urls = 0
 
     def get_urls(self):
         """Returns the urls listed in the sitemap document
@@ -100,7 +102,10 @@ class AbstractSitemapXml(SitemapDocument):
                     if self._is_valid_element(element):
                         url = element.text
                         if self._is_valid_url(url):
+                            self.valid_urls += 1
                             yield element.text
+                        else:
+                            self.invalid_urls += 1
                     element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
