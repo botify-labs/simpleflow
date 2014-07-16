@@ -24,7 +24,16 @@ Sitemap = namedtuple('Sitemap', ['url', 's3_uri', 'sitemap_index'])
 
 class Error(object):
     def __init__(self, url, file_type, error_type, message):
-        """Constructor"""
+        """Constructor
+        :param url: the file url
+        :type url: str
+        :param file_type: the type of the file
+        :type file_type: SiteMapType
+        :param error_type: the type of error that occured
+        :type error_type: str
+        :param message: error message (additional information about the error)
+        :type message: str
+        """
         self.url = url
         self.file_type = file_type
         self.error_type = error_type
