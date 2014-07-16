@@ -5,6 +5,7 @@ import json
 from cdf.features.sitemap.download import (DownloadStatus,
                                            Error,
                                            Sitemap,
+                                           SitemapIndex,
                                            download_sitemaps,
                                            download_sitemaps_from_urls,
                                            get_output_file_path)
@@ -25,6 +26,7 @@ class TestDownloadStatus(unittest.TestCase):
             [Sitemap("http://foo/sitemap_1.xml",
                      "s3://foo/sitemap_1.xml",
                      self.sitemap_index)],
+            [SitemapIndex("http://foo/sitemap_index.xml", 2, 1)],
             [Error("http://error1", SiteMapType.UNKNOWN, "foo", "bar"),
              Error("http://error2", SiteMapType.UNKNOWN, "foo", "bar")]
         )
@@ -37,6 +39,13 @@ class TestDownloadStatus(unittest.TestCase):
                     "url": "http://foo/sitemap_1.xml",
                     "s3_uri": "s3://foo/sitemap_1.xml",
                     "sitemap_index": "http://foo/sitemap_index.xml"
+                }
+            ],
+            "sitemap_indexes": [
+                {
+                    "url": "http://foo/sitemap_index.xml",
+                    "valid_urls": 2,
+                    "invalid_urls": 1
                 }
             ],
             "errors": [
@@ -56,6 +65,7 @@ class TestDownloadStatus(unittest.TestCase):
         }
         #compare the objects instead of the json representation
         #to be insensitive to item ordering
+        self.assertEqual(expected_result["sitemap_indexes"], json.loads(actual_result)["sitemap_indexes"])
         self.assertEqual(expected_result, json.loads(actual_result))
 
     def test_to_json_no_sitemap(self):
@@ -75,6 +85,7 @@ class TestDownloadStatus(unittest.TestCase):
                     "sitemap_index": None
                 },
             ],
+            "sitemap_indexes": [],
             "errors": []
         }
         #compare the objects instead of the json representation
@@ -82,11 +93,11 @@ class TestDownloadStatus(unittest.TestCase):
         self.assertEqual(expected_result, json.loads(actual_result))
 
     def test_update(self):
-
         download_status = DownloadStatus(
             [Sitemap("http://foo/sitemap_1.xml",
                      "s3://foo/sitemap_1.xml",
                      self.sitemap_index)],
+            [SitemapIndex("http://foo/sitemap_index_1.xml", 10, 0)],
             ["http://error1", "http://error2"]
         )
 
@@ -94,6 +105,7 @@ class TestDownloadStatus(unittest.TestCase):
             [Sitemap("http://foo/sitemap_2.xml",
                      "s3://foo/sitemap_2.xml",
                      self.sitemap_index)],
+            [SitemapIndex("http://foo/sitemap_index_2.xml", 2, 1)],
             ["http://error3"]
         )
 
@@ -106,6 +118,10 @@ class TestDownloadStatus(unittest.TestCase):
                 Sitemap("http://foo/sitemap_2.xml",
                         "s3://foo/sitemap_2.xml",
                         self.sitemap_index)
+            ],
+            [
+                SitemapIndex("http://foo/sitemap_index_1.xml", 10, 0),
+                SitemapIndex("http://foo/sitemap_index_2.xml", 2, 1),
             ],
             ["http://error1", "http://error2", "http://error3"]
         )

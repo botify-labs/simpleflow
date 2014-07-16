@@ -4,7 +4,7 @@ import mock
 import os
 from cdf.core.streams.base import TemporaryDataset
 from cdf.features.sitemap.document import SitemapXmlDocument, SiteMapType
-from cdf.features.sitemap.download import Sitemap, Error, DownloadStatus
+from cdf.features.sitemap.download import Sitemap, SitemapIndex, Error, DownloadStatus
 from cdf.features.sitemap.matching import (get_download_status_from_s3,
                                            download_sitemaps_from_s3,
                                            match_sitemap_urls_from_stream,
@@ -29,6 +29,13 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
                         '       "s3_uri": "s3://foo/sitemap_2.xml",'
                         '       "sitemap_index": "http://foo/sitemap_index.html"'
                         '   }'
+                        '],'
+                        '"sitemap_indexes": ['
+                        '    {'
+                        '        "url": "http://foo/sitemap_index.xml",'
+                        '        "valid_urls": 2,'
+                        '        "invalid_urls": 0'
+                        '    }'
                         '],'
                         '"errors": ['
                         '    {'
@@ -55,8 +62,11 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
                     "s3://foo/sitemap_2.xml",
                     "http://foo/sitemap_index.html"),
         ]
+        expected_sitemap_indexes = [SitemapIndex("http://foo/sitemap_index.xml", 2, 0)]
         expected_errors = [Error(u"http://error", SiteMapType.UNKNOWN, u"DownloadError", u"foo")]
-        expected_result = DownloadStatus(expected_sitemaps, expected_errors)
+        expected_result = DownloadStatus(expected_sitemaps,
+                                         expected_sitemap_indexes,
+                                         expected_errors)
         self.assertEqual(expected_result, actual_result)
 
         #check calls
