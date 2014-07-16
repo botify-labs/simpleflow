@@ -81,6 +81,12 @@ class SitemapDocument(object):
         raise NotImplementedError()
 
     def to_dict(self):
+        """Returns a dict containing data about the object:
+        - its type
+        - the number of valid urls it contains
+        - the number of invalid urls it constains
+        :returns: dict
+        """
         sitemap_type = str(self.get_sitemap_type())
         result = {
             "type": sitemap_type,
