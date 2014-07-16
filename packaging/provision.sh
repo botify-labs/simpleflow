@@ -12,6 +12,13 @@ sudo service elasticsearch start;
 rm elasticsearch-*.deb
 
 
+# FIXME this is a hack to workaround some non-signed package in botify repo
+# install `python-google-analytics`
+sudo apt-get -y --force-yes install python-google-analytics
+# install hdf5 libs
+sudo apt-get -y --force-yes install libhdf5-serial-dev
+
+
 # install xml libs
 # FIXME this should be done by puppet module `saas_cdf`
 sudo apt-get -y install libboost-python-dev;
