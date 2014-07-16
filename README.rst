@@ -27,7 +27,66 @@ It tries to mimics the interface of the Python `concurrent.futures
 Features
 --------
 
-* TODO
+- Provides a ``Future`` abstraction to define dependencies between tasks.
+- Define asynchronous tasks from callables.
+- Handle workflows with Amazon SWF.
+- Implement replay behavior like the Amazon Flow framework.
+- Handle retry of tasks that failed.
+- Automatically register decorated tasks.
+- Handle the completion of a decision with more than 100 tasks.
+- Provides a local executor to check a workflow without Amazon SWF (see
+  ``simpleflow --local`` command).
+
+Quickstart
+----------
+
+Let's take a simple example that computes the result of ``(x + 1) * 2``.
+
+We need to declare the functions as activities to make them available:
+
+.. code::
+
+    from simpleflow import activity
+
+    @activity.with_attributes(task_list='quickstart')
+    def increment(x):
+        return x + 1
+
+    @activity.with_attributes(task_list='quickstart')
+    def double(x):
+        return x * 2
+
+
+And then define the workflow itself in a ``example.py`` file:
+
+.. code::
+
+    from simpleflow import Workflow
+
+    class SimpleComputation(Workflow):
+        def run(self, x):
+            y = self.submit(increment, x)
+            z = self.submit(double, y)
+            return z.result
+
+Now check that the workflow works locally: ::
+
+    $ simpleflow --local -w example.SimpleComputation -i example/input.json
+
+The file ``example/input.json`` contains the input passed to the workflow. It
+should have the format:
+
+.. code::
+
+    {"args": [1],
+     "kwargs": {}
+    }
+
+which is equivalent to:
+
+.. code::
+
+    {"kwargs": {"x": 1}}
 
 Documentation
 -------------
