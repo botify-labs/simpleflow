@@ -11,7 +11,8 @@ from cdf.features.sitemap.exceptions import (UnhandledFileType,
                                              DownloadError)
 from cdf.features.sitemap.utils import download_url
 from cdf.features.sitemap.constant import DOWNLOAD_DELAY
-from cdf.features.sitemap.document import (is_xml_sitemap,
+from cdf.features.sitemap.document import (SiteMapType,
+                                           is_xml_sitemap,
                                            is_sitemap_index,
                                            is_rss_sitemap,
                                            is_text_sitemap,
@@ -22,15 +23,17 @@ Sitemap = namedtuple('Sitemap', ['url', 's3_uri', 'sitemap_index'])
 
 
 class Error(object):
-    def __init__(self, url, error_type, message):
+    def __init__(self, url, file_type, error_type, message):
         """Constructor"""
         self.url = url
+        self.file_type = file_type
         self.error_type = error_type
         self.message = message
 
     def to_dict(self):
         return {
             "url": self.url,
+            "type": str(self.file_type),
             "error": self.error_type,
             "message": self.message
         }
@@ -66,12 +69,12 @@ class DownloadStatus(object):
         """
         self.sitemaps.append(sitemap)
 
-    def add_error(self, url, error_type, message):
+    def add_error(self, url, file_type, error_type, message):
         """Add an error url
         :param url: the error url
         :type url: str
         """
-        error = Error(url, error_type, message)
+        error = Error(url, file_type, error_type, message)
         self.errors.append(error)
 
     def to_json(self):
@@ -107,7 +110,7 @@ def parse_download_status_from_json(file_path):
                 in download_status["sitemaps"]]
     errors = []
     for error in download_status["errors"]:
-        errors.append(Error(error["url"], error["error"], error["message"]))
+        errors.append(Error(error["url"], error["type"], error["error"], error["message"]))
     result = DownloadStatus(sitemaps, errors)
     return result
 
@@ -133,13 +136,13 @@ def download_sitemaps(input_url, output_directory, user_agent):
         download_url(input_url, output_file_path, user_agent)
     except DownloadError as e:
         logger.error("Download error: %s", e.message)
-        result.add_error(input_url, e.__class__.__name__, e.message)
+        result.add_error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
         return result
 
     try:
         sitemap_document = instanciate_sitemap_document(output_file_path, input_url)
     except UnhandledFileType as e:
-        result.add_error(input_url, e.__class__.__name__, e.message)
+        result.add_error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
         return result
 
     sitemap_type = sitemap_document.get_sitemap_type()
@@ -155,12 +158,12 @@ def download_sitemaps(input_url, output_directory, user_agent):
                                                  user_agent,
                                                  input_url)
         except ParsingError as e:
-            result.add_error(input_url, e.__class__.__name__, e.message)
+            result.add_error(input_url, sitemap_type, e.__class__.__name__, e.message)
         #remove sitemap index file
         os.remove(output_file_path)
     else:
         error_message = "'{}' is not a valid file".format(input_url)
-        result.add_error(input_url, "UnhandledFileType", error_message)
+        result.add_error(input_url, sitemap_type, "UnhandledFileType", error_message)
     return result
 
 
@@ -188,27 +191,28 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
         try:
             download_url(url, file_path, user_agent)
             sitemap_document = instanciate_sitemap_document(file_path, url)
-            sitemap_type = sitemap_document.get_sitemap_type()
         except (DownloadError, UnhandledFileType) as e:
             logger.error("Skipping {}: {}".format(url, e.message))
             if os.path.isfile(file_path):
                 os.remove(file_path)
                 error = e.__class__.__name__
-                result.add_error(url, error, e.message)
+                result.add_error(url, SiteMapType.UNKNOWN, error, e.message)
             continue
+
+        sitemap_type = sitemap_document.get_sitemap_type()
         #  check if it is actually a sitemap
         if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
             result.add_success_sitemap(Sitemap(url, file_path, sitemap_index))
         elif is_sitemap_index(sitemap_type):
             error_message = "'{}' is a sitemap index. It cannot be referenced in a sitemap index.".format(url)
             logger.warning(error_message)
-            result.add_error(url, "NotASitemapFile", error_message)
+            result.add_error(url, sitemap_type, "NotASitemapFile", error_message)
             os.remove(file_path)
         else:
             #  if not, remove file
             error_message = "'{}' is not a sitemap file.".format(url)
             logger.warning(error_message)
-            result.add_error(url, "UnhandledFileType", error_message)
+            result.add_error(url, sitemap_type, "UnhandledFileType", error_message)
             os.remove(file_path)
     return result
 

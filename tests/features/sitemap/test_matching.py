@@ -33,6 +33,7 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
                         '"errors": ['
                         '    {'
                         '        "url": "http://error",'
+                        '        "type": "SiteMapType.UNKNOWN",'
                         '        "error": "DownloadError",'
                         '        "message": "foo"'
                         '    }'
@@ -54,7 +55,7 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
                     "s3://foo/sitemap_2.xml",
                     "http://foo/sitemap_index.html"),
         ]
-        expected_errors = [Error(u"http://error", u"DownloadError", u"foo")]
+        expected_errors = [Error(u"http://error", SiteMapType.UNKNOWN, u"DownloadError", u"foo")]
         expected_result = DownloadStatus(expected_sitemaps, expected_errors)
         self.assertEqual(expected_result, actual_result)
 
