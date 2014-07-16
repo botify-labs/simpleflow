@@ -4,7 +4,6 @@ import gzip
 from abc import ABCMeta, abstractmethod
 import csv
 import re
-import json
 from urlparse import urlparse
 
 from cdf.log import logger
