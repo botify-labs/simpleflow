@@ -188,7 +188,8 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
             logger.error("Skipping {}: {}".format(url, e.message))
             if os.path.isfile(file_path):
                 os.remove(file_path)
-                result.add_error(url, "error", e.message)
+                error = e.__class__.__name__
+                result.add_error(url, error, e.message)
             continue
         #  check if it is actually a sitemap
         if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):

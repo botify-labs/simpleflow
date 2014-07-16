@@ -346,7 +346,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                                                     self.sitemap_index)
 
         expected_result = DownloadStatus()
-        expected_result.add_error("http://foo/bar.xml", "error", "error message")
+        expected_result.add_error("http://foo/bar.xml", "DownloadError", "error message")
         expected_result.add_success_sitemap(
             Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml", self.sitemap_index)
         )
