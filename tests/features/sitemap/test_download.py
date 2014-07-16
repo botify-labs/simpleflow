@@ -194,14 +194,14 @@ class TestDownloadSiteMaps(unittest.TestCase):
     def test_not_sitemap_file(self,
                               instanciate_sitemap_document_mock,
                               download_url_mock):
-        instanciate_sitemap_document_mock.side_effect = UnhandledFileType()
+        instanciate_sitemap_document_mock.side_effect = UnhandledFileType("foo")
         input_url = "http://foo/bar.xml"
-        self.assertRaises(
-            UnhandledFileType,
-            download_sitemaps,
-            input_url,
-            self.output_dir,
-            self.user_agent)
+        actual_result = download_sitemaps(input_url, self.output_dir, self.user_agent)
+
+        expected_result = DownloadStatus()
+        expected_result.add_error(input_url, "UnhandledFileType", "foo")
+        self.assertEqual(expected_result, actual_result)
+
         download_url_mock.assert_called_once_with("http://foo/bar.xml",
                                                   "/tmp/foo/bar.xml",
                                                   self.user_agent)

@@ -125,7 +125,6 @@ def download_sitemaps(input_url, output_directory, user_agent):
     :param user_agent: the user agent to use for the query.
     :type user_agent: str
     :returns: DownloadStatus
-    :raises: UnhandledFileType
     """
     result = DownloadStatus()
     #download input url
@@ -137,7 +136,12 @@ def download_sitemaps(input_url, output_directory, user_agent):
         result.add_error(input_url, e.__class__.__name__, e.message)
         return result
 
-    sitemap_document = instanciate_sitemap_document(output_file_path, input_url)
+    try:
+        sitemap_document = instanciate_sitemap_document(output_file_path, input_url)
+    except UnhandledFileType as e:
+        result.add_error(input_url, e.__class__.__name__, e.message)
+        return result
+
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
     if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
@@ -155,7 +159,8 @@ def download_sitemaps(input_url, output_directory, user_agent):
         #remove sitemap index file
         os.remove(output_file_path)
     else:
-        raise UnhandledFileType("{} was not recognized as sitemap file.".format(input_url))
+        error_message = "'{}' is not a valid file".format(input_url)
+        result.add_error(input_url, "UnhandledFileType", error_message)
     return result
 
 
