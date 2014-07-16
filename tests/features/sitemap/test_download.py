@@ -3,6 +3,7 @@ import mock
 import os
 import json
 from cdf.features.sitemap.download import (DownloadStatus,
+                                           Error,
                                            Sitemap,
                                            download_sitemaps,
                                            download_sitemaps_from_urls,
@@ -24,7 +25,7 @@ class TestDownloadStatus(unittest.TestCase):
             [Sitemap("http://foo/sitemap_1.xml",
                      "s3://foo/sitemap_1.xml",
                      self.sitemap_index)],
-            ["http://error1", "http://error2"]
+            [Error("http://error1", "foo", "bar"), Error("http://error2", "foo", "bar")]
         )
 
         actual_result = download_status.to_json()
@@ -38,8 +39,16 @@ class TestDownloadStatus(unittest.TestCase):
                 }
             ],
             "errors": [
-                "http://error1",
-                "http://error2"
+                {
+                    "url": "http://error1",
+                    "error": "foo",
+                    "message": "bar"
+                },
+                {
+                    "url": "http://error2",
+                    "error": "foo",
+                    "message": "bar"
+                }
             ]
         }
         #compare the objects instead of the json representation
@@ -206,7 +215,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
                                           self.output_dir,
                                           self.user_agent)
         expected_result = DownloadStatus()
-        expected_result.add_error(self.sitemap_url)
+        expected_result.add_error(self.sitemap_url, "DownloadError", "foo")
         self.assertEqual(expected_result, actual_result)
 
 
@@ -218,7 +227,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
                            download_url_mock,
                            remove_mock):
         def url_generator():
-            raise ParsingError()
+            raise ParsingError("error message")
             yield "http://foo.com"
         self.sitemap_index_mock.get_urls.return_value = url_generator()
         instanciate_sitemap_document_mock.return_value = self.sitemap_index_mock
@@ -227,7 +236,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
                                           self.output_dir,
                                           self.user_agent)
         expected_result = DownloadStatus()
-        expected_result.add_error(self.sitemap_index_url)
+        expected_result.add_error(self.sitemap_index_url, "ParsingError", "error message")
         self.assertEqual(expected_result, actual_result)
         remove_mock.assert_called_once_with("/tmp/foo/sitemap_index.xml")
         download_url_mock.assert_called_once_with(self.sitemap_index_url,
@@ -325,7 +334,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                             download_url_mock,
                             is_file_mock,
                             remove_mock):
-        download_url_mock.side_effect = [DownloadError, "/tmp/foo/baz.xml"]
+        download_url_mock.side_effect = [DownloadError("error message"), "/tmp/foo/baz.xml"]
 
         instanciate_sitemap_document_mock.return_value = self.sitemap_mock
 
@@ -337,11 +346,10 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                                                     self.sitemap_index)
 
         expected_result = DownloadStatus()
-        expected_result.add_error("http://foo/bar.xml")
+        expected_result.add_error("http://foo/bar.xml", "error", "error message")
         expected_result.add_success_sitemap(
             Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml", self.sitemap_index)
         )
-
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)

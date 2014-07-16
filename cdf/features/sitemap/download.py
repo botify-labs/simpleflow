@@ -21,6 +21,30 @@ from cdf.features.sitemap.document import (is_xml_sitemap,
 Sitemap = namedtuple('Sitemap', ['url', 's3_uri', 'sitemap_index'])
 
 
+class Error(object):
+    def __init__(self, url, error_type, message):
+        """Constructor"""
+        self.url = url
+        self.error_type = error_type
+        self.message = message
+
+    def to_dict(self):
+        return {
+            "url": self.url,
+            "error": self.error_type,
+            "message": self.message
+        }
+
+    def __eq__(self, other):
+        return self.to_dict() == other.to_dict()
+
+    def __hash__(self):
+        return hash(str(self.to_dict()))
+
+    def __repr__(self):
+        return str(self.to_dict())
+
+
 class DownloadStatus(object):
     """A class information about the downloaded sitemaps:
         where they come from, where they are stored
@@ -42,19 +66,20 @@ class DownloadStatus(object):
         """
         self.sitemaps.append(sitemap)
 
-    def add_error(self, url):
+    def add_error(self, url, error_type, message):
         """Add an error url
         :param url: the error url
         :type url: str
         """
-        self.errors.append(url)
+        error = Error(url, error_type, message)
+        self.errors.append(error)
 
     def to_json(self):
         """Return a json representation of the object
         :returns: str"""
         d = {
             "sitemaps": [sitemap.__dict__ for sitemap in self.sitemaps],
-            "errors": self.errors
+            "errors": [e.to_dict() for e in self.errors]
         }
         return json.dumps(d)
 
@@ -62,9 +87,13 @@ class DownloadStatus(object):
         return (set(self.sitemaps) == set(other.sitemaps) and
                 set(self.errors) == set(other.errors))
 
+    def __repr__(self):
+        return self.to_json()
+
     def update(self, other):
         self.sitemaps.extend(other.sitemaps)
         self.errors.extend(other.errors)
+
 
 def parse_download_status_from_json(file_path):
     """Build a DownloadStatus object from a json file
@@ -76,7 +105,9 @@ def parse_download_status_from_json(file_path):
         download_status = json.load(f)
     sitemaps = [Sitemap(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index", None)) for sitemap
                 in download_status["sitemaps"]]
-    errors = download_status["errors"]
+    errors = []
+    for error in download_status["errors"]:
+        errors.append(Error(error["url"], error["error"], error["message"]))
     result = DownloadStatus(sitemaps, errors)
     return result
 
@@ -103,7 +134,7 @@ def download_sitemaps(input_url, output_directory, user_agent):
         download_url(input_url, output_file_path, user_agent)
     except DownloadError as e:
         logger.error("Download error: %s", e.message)
-        result.add_error(input_url)
+        result.add_error(input_url, "DownloadError", e.message)
         return result
 
     sitemap_document = instanciate_sitemap_document(output_file_path, input_url)
@@ -119,8 +150,8 @@ def download_sitemaps(input_url, output_directory, user_agent):
                                                  output_directory,
                                                  user_agent,
                                                  input_url)
-        except ParsingError:
-            result.add_error(input_url)
+        except ParsingError as e:
+            result.add_error(input_url, "ParsingError", e.message)
         #remove sitemap index file
         os.remove(output_file_path)
     else:
@@ -157,7 +188,7 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
             logger.error("Skipping {}: {}".format(url, e.message))
             if os.path.isfile(file_path):
                 os.remove(file_path)
-                result.add_error(url)
+                result.add_error(url, "error", e.message)
             continue
         #  check if it is actually a sitemap
         if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
