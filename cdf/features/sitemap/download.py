@@ -134,7 +134,7 @@ def download_sitemaps(input_url, output_directory, user_agent):
         download_url(input_url, output_file_path, user_agent)
     except DownloadError as e:
         logger.error("Download error: %s", e.message)
-        result.add_error(input_url, "DownloadError", e.message)
+        result.add_error(input_url, e.__class__.__name__, e.message)
         return result
 
     sitemap_document = instanciate_sitemap_document(output_file_path, input_url)
@@ -151,7 +151,7 @@ def download_sitemaps(input_url, output_directory, user_agent):
                                                  user_agent,
                                                  input_url)
         except ParsingError as e:
-            result.add_error(input_url, "ParsingError", e.message)
+            result.add_error(input_url, e.__class__.__name__, e.message)
         #remove sitemap index file
         os.remove(output_file_path)
     else:
