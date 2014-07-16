@@ -268,6 +268,9 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         self.sitemap_index_mock = mock.create_autospec(SitemapXmlDocument)
         self.sitemap_index_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_INDEX
 
+        self.unknown_sitemap_mock = mock.create_autospec(SitemapXmlDocument)
+        self.unknown_sitemap_mock.get_sitemap_type.return_value = SiteMapType.UNKNOWN
+
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
     @mock.patch("cdf.features.sitemap.download.instanciate_sitemap_document", autospec=True)
     def test_nominal_case(self,
@@ -300,10 +303,10 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
     @mock.patch("os.remove", autospec=True)
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
     @mock.patch("cdf.features.sitemap.download.instanciate_sitemap_document", autospec=True)
-    def test_invalid_file(self,
-                          instanciate_sitemap_document_mock,
-                          download_url_mock,
-                          remove_mock):
+    def test_sitemap_index_file(self,
+                                instanciate_sitemap_document_mock,
+                                download_url_mock,
+                                remove_mock):
         instanciate_sitemap_document_mock.side_effect = iter([
             self.sitemap_index_mock,
             self.sitemap_mock
@@ -318,10 +321,42 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml",
                                                     "/tmp/foo/baz.xml",
                                                     self.sitemap_index))
+        error_message = "'http://foo/bar.xml' is a sitemap index. It cannot be referenced in a sitemap index."
+        expected_result.add_error("http://foo/bar.xml", "NotASitemapFile", error_message)
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
         remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
+
+
+    @mock.patch("os.remove", autospec=True)
+    @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
+    @mock.patch("cdf.features.sitemap.download.instanciate_sitemap_document", autospec=True)
+    def test_invalid_file(self,
+                          instanciate_sitemap_document_mock,
+                          download_url_mock,
+                          remove_mock):
+        instanciate_sitemap_document_mock.side_effect = iter([
+            self.unknown_sitemap_mock,
+            self.sitemap_mock
+        ])
+
+        actual_result = download_sitemaps_from_urls(self.urls,
+                                                    self.output_dir,
+                                                    self.user_agent,
+                                                    self.sitemap_index)
+
+        expected_result = DownloadStatus()
+        expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml",
+                                                    "/tmp/foo/baz.xml",
+                                                    self.sitemap_index))
+        error_message = "'http://foo/bar.xml' is not a sitemap file."
+        expected_result.add_error("http://foo/bar.xml", "UnhandledFileType", error_message)
+        self.assertEqual(expected_result, actual_result)
+        self.assertEqual(self.expected_download_calls,
+                         download_url_mock.mock_calls)
+        remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
+
 
     @mock.patch("os.remove", autospec=True)
     @mock.patch("os.path.isfile", autospec=True)

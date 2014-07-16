@@ -194,9 +194,16 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
         #  check if it is actually a sitemap
         if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
             result.add_success_sitemap(Sitemap(url, file_path, sitemap_index))
+        elif is_sitemap_index(sitemap_type):
+            error_message = "'{}' is a sitemap index. It cannot be referenced in a sitemap index.".format(url)
+            logger.warning(error_message)
+            result.add_error(url, "NotASitemapFile", error_message)
+            os.remove(file_path)
         else:
             #  if not, remove file
-            logger.warning("'%s' is not a sitemap file.", url)
+            error_message = "'{}' is not a sitemap file.".format(url)
+            logger.warning(error_message)
+            result.add_error(url, "UnhandledFileType", error_message)
             os.remove(file_path)
     return result
 
