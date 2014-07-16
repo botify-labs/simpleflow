@@ -184,7 +184,7 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
             download_url(url, file_path, user_agent)
             sitemap_document = instanciate_sitemap_document(file_path, url)
             sitemap_type = sitemap_document.get_sitemap_type()
-        except (DownloadError, ParsingError) as e:
+        except (DownloadError, UnhandledFileType) as e:
             logger.error("Skipping {}: {}".format(url, e.message))
             if os.path.isfile(file_path):
                 os.remove(file_path)
