@@ -38,18 +38,18 @@ def instanciate_sitemap_document(file_path, url):
     :returns: SitemapDocument
     :raises: UnhandledFileType
     """
-    sitemap_type = guess_sitemap_type(file_path)
+    sitemap_type = guess_sitemap_type(file_path, url)
     if is_xml_sitemap(sitemap_type):
-        return SitemapXmlDocument(file_path)
+        return SitemapXmlDocument(file_path, url)
 
     if is_sitemap_index(sitemap_type):
         return SitemapIndexXmlDocument(file_path, url)
 
     if is_rss_sitemap(sitemap_type):
-        return SitemapRssDocument(file_path)
+        return SitemapRssDocument(file_path, url)
 
     if is_text_sitemap(sitemap_type):
-        return SitemapTextDocument(file_path)
+        return SitemapTextDocument(file_path, url)
 
     raise UnhandledFileType()
 
@@ -59,6 +59,10 @@ class SitemapDocument(object):
     It can represent a sitemap or a sitemap index.
     """
     __metaclass__ = ABCMeta
+
+    def __init__(self):
+        self.valid_urls = 0
+        self.invalid_urls = 0
 
     @abstractmethod
     def get_sitemap_type(self):
@@ -75,6 +79,21 @@ class SitemapDocument(object):
         """
         raise NotImplementedError()
 
+    def to_dict(self):
+        """Returns a dict containing data about the object:
+        - its type
+        - the number of valid urls it contains
+        - the number of invalid urls it constains
+        :returns: dict
+        """
+        sitemap_type = str(self.get_sitemap_type())
+        result = {
+            "type": sitemap_type,
+            "valid": self.valid_urls,
+            "invalid": self.invalid_urls
+        }
+        return result
+
 
 class AbstractSitemapXml(SitemapDocument):
     """An abstract class to represent a xml sitemap
@@ -82,12 +101,16 @@ class AbstractSitemapXml(SitemapDocument):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, url):
         """Constructor
         :param file_path: the path to the input file
         :type file_path: str
+        :param url: the original url for the file
+        :type url: str
         """
+        super(AbstractSitemapXml, self).__init__()
         self.file_path = file_path
+        self.url = url
 
     def get_urls(self):
         """Returns the urls listed in the sitemap document
@@ -98,7 +121,12 @@ class AbstractSitemapXml(SitemapDocument):
             try:
                 for _, element in etree.iterparse(file_object):
                     if self._is_valid_element(element):
-                        yield element.text
+                        url = element.text
+                        if self._is_valid_url(url):
+                            self.valid_urls += 1
+                            yield element.text
+                        else:
+                            self.invalid_urls += 1
                     element.clear()
             except etree.XMLSyntaxError as e:
                 raise ParsingError(e.message)
@@ -111,11 +139,27 @@ class AbstractSitemapXml(SitemapDocument):
         :type element: lxml.etree._Element"""
         raise NotImplementedError()
 
+    @abstractmethod
+    def _is_valid_url(self, element):
+        """A template method that decides whether or not a url is valid.
+        :param element: the element to test.
+        :type element: lxml.etree._Element"""
+        raise NotImplementedError()
+
 
 class SitemapXmlDocument(AbstractSitemapXml):
     """A class to represent a sitemap xml document.
     It can represent a sitemap or a sitemap index.
     """
+    def __init__(self, file_path, url):
+        """Constructor
+        :param file_path: the path to the input file
+        :type file_path: str
+        :param url: the original url for the file
+        :type url: str
+        """
+        super(SitemapXmlDocument, self).__init__(file_path, url)
+
     def get_sitemap_type(self):
         return SiteMapType.SITEMAP_XML
 
@@ -128,15 +172,18 @@ class SitemapXmlDocument(AbstractSitemapXml):
         #image urls found in image sitemaps
         parent_node = element.getparent()
         parent_localname = etree.QName(parent_node.tag).localname
-        url = element.text
-        return parent_localname == "url" and UrlValidator.is_valid(url)
+        return parent_localname == "url"
+
+    def _is_valid_url(self, url):
+        """Implementation of the template method for XML sitemaps"""
+        return UrlValidator.is_valid(url)
 
 
 class SitemapIndexXmlDocument(AbstractSitemapXml):
     """A class to represent a sitemap index xml document.
     """
     def __init__(self, file_path, url):
-        super(self.__class__, self).__init__(file_path)
+        super(SitemapIndexXmlDocument, self).__init__(file_path, url)
         self.url = url
         self.sitemap_url_validator = SitemapUrlValidator(self.url)
 
@@ -146,51 +193,52 @@ class SitemapIndexXmlDocument(AbstractSitemapXml):
     def _is_valid_element(self, element):
         """Implementation of the template method for sitemap indexes"""
         localname = etree.QName(element.tag).localname
-        url = element.text
-        return localname == "loc" and UrlValidator.is_valid(url) and self.sitemap_url_validator.is_valid(url)
+        return localname == "loc"
+
+    def _is_valid_url(self, url):
+        """Implementation of the template method for itemap indexes"""
+        return UrlValidator.is_valid(url) and self.sitemap_url_validator.is_valid(url)
 
 
-class SitemapRssDocument(SitemapDocument):
+class SitemapRssDocument(AbstractSitemapXml):
     """A class to represent a sitemap rss document.
     """
-    def __init__(self, file_path):
+    def __init__(self, file_path, url):
         """Constructor
         :param file_path: the path to the input file
         :type file_path: str
+        :param url: the original url for the file
+        :type url: str
         """
-        self.file_path = file_path
+        super(self.__class__, self).__init__(file_path, url)
 
     def get_sitemap_type(self):
         #rss document cannot be sitemap_index
         return SiteMapType.SITEMAP_RSS
 
-    def get_urls(self):
-        """Returns the urls listed in the sitemap document
-        :param file_object: a file like object
-        :type file_object: file
-        """
-        with open_sitemap_file(self.file_path) as file_object:
-            try:
-                for _, element in etree.iterparse(file_object, events=("start",)):
-                    localname = etree.QName(element.tag).localname
-                    if localname == "link":
-                        url = element.text
-                        if UrlValidator.is_valid(url):
-                            yield url
-                    element.clear()
-            except etree.XMLSyntaxError as e:
-                raise ParsingError(e.message)
+    def _is_valid_element(self, element):
+        """Implementation of the template method for RSS sitemaps"""
+        localname = etree.QName(element.tag).localname
+        return localname == "link"
+
+    def _is_valid_url(self, url):
+        """Implementation of the template method for RSS sitemaps"""
+        return UrlValidator.is_valid(url)
 
 
 class SitemapTextDocument(SitemapDocument):
     """A class to represent a sitemap rss document.
     """
-    def __init__(self, file_path):
+    def __init__(self, file_path, url):
         """Constructor
         :param file_path: the path to the input file
         :type file_path: str
+        :param url: the original url for the file
+        :type url: str
         """
+        super(self.__class__, self).__init__()
         self.file_path = file_path
+        self.url = url
 
     def get_sitemap_type(self):
         #rss document cannot be sitemap_index
@@ -209,16 +257,21 @@ class SitemapTextDocument(SitemapDocument):
                 try:
                     row = csv_reader.next()
                 except csv.Error:
+                    self.invalid_urls += 1
                     #simply skip the line
                     continue
                 except StopIteration:
                     break
                 if len(row) != 1:
                     logger.warning("'%s' should have exactly one field.", row)
+                    self.invalid_urls += 1
                     continue
                 url = row[0]
                 if UrlValidator.is_valid(url):
+                    self.valid_urls += 1
                     yield row[0]
+                else:
+                    self.invalid_urls += 1
 
 
 class UrlValidator(object):
@@ -258,11 +311,13 @@ def open_sitemap_file(file_path):
     return f
 
 
-def guess_sitemap_type(file_path):
+def guess_sitemap_type(file_path, url):
     """Guess the  sitemap type (sitemap or sitemap index) from an input file.
     The method simply stops on the first "urlset" or "sitemapindex" tag.
     :param file_path: the path to the input file
     :type file_path: str
+    :param url: the original file url
+    :type url: str
     :return: SiteMapType
     """
     with open_sitemap_file(file_path) as file_object:
@@ -285,7 +340,7 @@ def guess_sitemap_type(file_path):
         #it looked like an xml but was not a valid sitemap
         return SiteMapType.UNKNOWN
 
-    text_sitemap = SitemapTextDocument(file_path)
+    text_sitemap = SitemapTextDocument(file_path, url)
     nb_urls = sum(1 for _ in text_sitemap.get_urls())
     if nb_urls > 0:
         return SiteMapType.SITEMAP_TEXT

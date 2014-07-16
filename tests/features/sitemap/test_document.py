@@ -21,6 +21,7 @@ from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
 class TestSitemapXmlDocument(unittest.TestCase):
     def setUp(self):
         self.file = tempfile.NamedTemporaryFile(delete=False)
+        self.url = "http://foo/sitemap.xml"
 
     def tearDown(self):
         os.remove(self.file.name)
@@ -31,10 +32,13 @@ class TestSitemapXmlDocument(unittest.TestCase):
                         '<url><loc>http://foo/bar</loc></url>'
                         '</urlset>')
         self.file.close()
-        sitemap_document = SitemapXmlDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_XML,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/bar"], list(sitemap_document.get_urls()))
+        self.assertEqual(1, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
+
 
     def test_sitemap_different_namespace(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
@@ -42,11 +46,14 @@ class TestSitemapXmlDocument(unittest.TestCase):
                         '<url><loc>http://foo/bar</loc></url>'
                         '</urlset>')
         self.file.close()
-        sitemap_document = SitemapXmlDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_XML,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/bar"],
                          list(sitemap_document.get_urls()))
+        self.assertEqual(1, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
+
 
     def test_sitemap_multiple_namespaces(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
@@ -58,11 +65,13 @@ class TestSitemapXmlDocument(unittest.TestCase):
                         '  </url>'
                         '</urlset>')
         self.file.close()
-        sitemap_document = SitemapXmlDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_XML,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/bar/baz"],
                          list(sitemap_document.get_urls()))
+        self.assertEqual(1, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
     def test_invalid_url(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
@@ -72,8 +81,10 @@ class TestSitemapXmlDocument(unittest.TestCase):
                         '<url><loc>http://foo/baz</loc></url>'
                         '</urlset>')
         self.file.close()
-        sitemap_document = SitemapXmlDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name, self.url)
         self.assertEqual(["http://foo/bar", "http://foo/baz"], list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
 
     def test_image_sitemap(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
@@ -87,27 +98,33 @@ class TestSitemapXmlDocument(unittest.TestCase):
                         '</url>'
                         '</urlset>')
         self.file.close()
-        sitemap_document = SitemapXmlDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_XML,
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/bar"], list(sitemap_document.get_urls()))
+        self.assertEqual(1, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
     def test_xml_parsing_error(self):
         self.file.write('<urlset><url></url>')
         self.file.close()
-        sitemap_document = SitemapXmlDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_XML, sitemap_document.get_sitemap_type())
         self.assertRaises(
             ParsingError,
             list,
             sitemap_document.get_urls())
+        self.assertEqual(0, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
     def test_not_sitemap(self):
         self.file.write('<foo></foo>')  # valid xml but not a sitemap
         self.file.close()
-        sitemap_document = SitemapXmlDocument(self.file.name)
+        sitemap_document = SitemapXmlDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_XML, sitemap_document.get_sitemap_type())
         self.assertEqual([], list(sitemap_document.get_urls()))
+        self.assertEqual(0, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
 
 class TestSitemapIndexXmlDocument(unittest.TestCase):
@@ -130,6 +147,8 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/sitemap.xml.gz"],
                          list(sitemap_document.get_urls()))
+        self.assertEqual(1, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
     def test_no_namespace(self):
         self.file.write('<sitemapindex>'
@@ -141,6 +160,8 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
                          sitemap_document.get_sitemap_type())
         self.assertEqual(["http://foo/bar"],
                          list(sitemap_document.get_urls()))
+        self.assertEqual(1, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
     def test_invalid_url(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
@@ -155,6 +176,8 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
         sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
         self.assertEqual(["http://foo/sitemap.1.xml.gz", "http://foo/sitemap.2.xml.gz"],
                          list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
 
     def test_forbidden_url(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
@@ -169,10 +192,13 @@ class TestSitemapIndexXmlDocument(unittest.TestCase):
         sitemap_document = SitemapIndexXmlDocument(self.file.name, self.url)
         self.assertEqual(["http://foo/sitemap.1.xml.gz", "http://foo/sitemap.2.xml.gz"],
                          list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
 
 class TestSitemapRssDocument(unittest.TestCase):
     def setUp(self):
         self.file = tempfile.NamedTemporaryFile(delete=False)
+        self.url = "http://foo/sitemap.xml"
 
     def tearDown(self):
         os.remove(self.file.name)
@@ -192,7 +218,7 @@ class TestSitemapRssDocument(unittest.TestCase):
                          '</channel>'
                          '</rss>')
         self.file.close()
-        sitemap_document = SitemapRssDocument(self.file.name)
+        sitemap_document = SitemapRssDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_RSS,
                          sitemap_document.get_sitemap_type())
         expected_urls = [
@@ -201,14 +227,18 @@ class TestSitemapRssDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
     def test_invalid_xml(self):
         self.file.write('<foo><bar>')
         self.file.close()
-        sitemap_document = SitemapRssDocument(self.file.name)
+        sitemap_document = SitemapRssDocument(self.file.name, self.url)
         self.assertRaises(ParsingError,
                           list,
                           sitemap_document.get_urls())
+        self.assertEqual(0, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
     def test_invalid_url(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8" ?>'
@@ -227,17 +257,21 @@ class TestSitemapRssDocument(unittest.TestCase):
                          '</channel>'
                          '</rss>')
         self.file.close()
-        sitemap_document = SitemapRssDocument(self.file.name)
+        sitemap_document = SitemapRssDocument(self.file.name, self.url)
         expected_urls = [
             "http://www.example.com/main.html",
             "http://www.example.com/blog/post/1"
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
+
 
 class TestSitemapTextDocument(unittest.TestCase):
     def setUp(self):
         self.file = tempfile.NamedTemporaryFile(delete=False)
+        self.url = "http://foo/sitemap.txt"
 
     def tearDown(self):
         os.remove(self.file.name)
@@ -247,7 +281,7 @@ class TestSitemapTextDocument(unittest.TestCase):
                         'http://foo.com/baz\n'
                         'http://foo.com/qux\n')
         self.file.close()
-        sitemap_document = SitemapTextDocument(self.file.name)
+        sitemap_document = SitemapTextDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
                          sitemap_document.get_sitemap_type())
         expected_urls = [
@@ -257,6 +291,8 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(3, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
     def test_long_line(self):
         self.file.write('http://foo.com/bar\n')
@@ -264,7 +300,7 @@ class TestSitemapTextDocument(unittest.TestCase):
         self.file.write('{}\n'.format('-' * 8192))
         self.file.write('http://foo.com/baz\n')
         self.file.close()
-        sitemap_document = SitemapTextDocument(self.file.name)
+        sitemap_document = SitemapTextDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
                          sitemap_document.get_sitemap_type())
         expected_urls = [
@@ -273,6 +309,8 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
 
     def test_very_long_line(self):
         self.file.write('http://foo.com/bar\n')
@@ -281,7 +319,7 @@ class TestSitemapTextDocument(unittest.TestCase):
         self.file.write('{}\n'.format('-' * line_length))
         self.file.write('http://foo.com/baz\n')
         self.file.close()
-        sitemap_document = SitemapTextDocument(self.file.name)
+        sitemap_document = SitemapTextDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
                          sitemap_document.get_sitemap_type())
         expected_urls = [
@@ -290,13 +328,16 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
+
 
     def test_invalid_urls(self):
         self.file.write('http://foo.com/bar\n'
                         'foo.com/baz\n'
                         'http://foo.com/qux\n')
         self.file.close()
-        sitemap_document = SitemapTextDocument(self.file.name)
+        sitemap_document = SitemapTextDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
                          sitemap_document.get_sitemap_type())
         expected_urls = [
@@ -305,13 +346,15 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
 
     def test_empty_line(self):
         self.file.write('http://foo.com/bar\n'
                         '\n'
                         'http://foo.com/qux\n')
         self.file.close()
-        sitemap_document = SitemapTextDocument(self.file.name)
+        sitemap_document = SitemapTextDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
                          sitemap_document.get_sitemap_type())
         expected_urls = [
@@ -320,7 +363,9 @@ class TestSitemapTextDocument(unittest.TestCase):
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
-
+        self.assertEqual(2, sitemap_document.valid_urls)
+        #empty lines are considered as invalid lines
+        self.assertEqual(1, sitemap_document.invalid_urls)
 
 
 class TestUrlValidator(unittest.TestCase):
@@ -376,6 +421,7 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
     def setUp(self):
         tmp_file = tempfile.NamedTemporaryFile(delete=False)
         self.tmp_file_path = tmp_file.name
+        self.url = "http://foo.com/bar"
 
     def tearDown(self):
         os.remove(self.tmp_file_path)
@@ -387,7 +433,7 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
                     '<url><loc>http://foo/bar</loc></url>'
                     '</urlset>')
         self.assertEqual(SiteMapType.SITEMAP_XML,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_xml_sitemapindex(self):
         with open(self.tmp_file_path, "w") as f:
@@ -396,7 +442,7 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
                     '<sitemap><loc>http://foo/sitemap.xml.gz</loc></sitemap>'
                     '</sitemapindex>')
         self.assertEqual(SiteMapType.SITEMAP_INDEX,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_rss_sitemap(self):
         with open(self.tmp_file_path, "w") as f:
@@ -414,37 +460,37 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
                     '</channel>'
                     '</rss>')
         self.assertEqual(SiteMapType.SITEMAP_RSS,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_xml_syntax_error(self):
         with open(self.tmp_file_path, "w") as f:
             f.write('<foo></bar>')
         self.assertEqual(SiteMapType.UNKNOWN,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_simple_xml(self):
         with open(self.tmp_file_path, "w") as f:
             f.write('<foo></foo>')
         self.assertEqual(SiteMapType.UNKNOWN,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_simple_text_file(self):
         with open(self.tmp_file_path, "w") as f:
             f.write('http://foo\nhttps://bar')
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_text_file_one_url(self):
         with open(self.tmp_file_path, "w") as f:
             f.write('foo\r\nbar\r\nhttp://baz')
         self.assertEqual(SiteMapType.SITEMAP_TEXT,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
     def test_text_file_no_urls(self):
         with open(self.tmp_file_path, "w") as f:
             f.write('foo\nbar')
         self.assertEqual(SiteMapType.UNKNOWN,
-                         guess_sitemap_type(self.tmp_file_path))
+                         guess_sitemap_type(self.tmp_file_path, self.url))
 
 @mock.patch("cdf.features.sitemap.document.guess_sitemap_type", autospec=True)
 class TestInstanciateSitemapDocument(unittest.TestCase):

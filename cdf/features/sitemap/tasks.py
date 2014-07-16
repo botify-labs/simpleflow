@@ -1,5 +1,7 @@
 import os.path
 import gzip
+import itertools
+import json
 
 from cdf.utils import s3
 from cdf.core.decorators import feature_enabled
@@ -14,7 +16,7 @@ from cdf.features.sitemap.download import (download_sitemaps,
                                            DownloadStatus)
 from cdf.features.sitemap.streams import SitemapStreamDef
 from cdf.features.sitemap.matching import (match_sitemap_urls_from_stream,
-                                           get_sitemap_urls_stream,
+                                           get_sitemap_documents,
                                            DomainValidator)
 
 
@@ -140,7 +142,9 @@ def match_sitemap_urls(s3_uri,
 
     domain_validator = DomainValidator(allowed_domains, blacklisted_domains)
     dataset = SitemapStreamDef.create_temporary_dataset()
-    url_generator = get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch)
+
+    sitemap_documents = get_sitemap_documents(s3_uri, tmp_dir, force_fetch)
+    url_generator = itertools.chain(*[document.get_urls() for document in sitemap_documents])
     sitemap_only_urls = []
     out_of_crawl_domain_urls = []
     match_sitemap_urls_from_stream(
@@ -154,6 +158,18 @@ def match_sitemap_urls(s3_uri,
     dataset.persist_to_s3(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)
+
+    sitemap_info_filename = "sitemap_info.json"
+    sitemap_info_filepath = os.path.join(tmp_dir, sitemap_info_filename)
+    document_info = {}
+    for document in sitemap_documents:
+        document_info[document.url] = document.to_dict()
+    with open(sitemap_info_filepath, 'wb') as sitemap_info_file:
+        json.dump(document_info, sitemap_info_file)
+    s3.push_file(
+        os.path.join(s3_uri, sitemap_info_filename),
+        sitemap_info_filepath
+    )
 
     with gzip.open(sitemap_only_filepath, 'wb') as sitemap_only_file:
         for url in sitemap_only_urls:

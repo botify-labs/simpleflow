@@ -112,8 +112,8 @@ def download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch):
     return sitemap_files
 
 
-def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
-    """Return a stream made of the urls that are in the sitemaps
+def get_sitemap_documents(s3_uri, tmp_dir, force_fetch):
+    """Return a list of the downloaded sitemap documents.
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
     :param tmp_dir: the path to the directory where to save the files
@@ -123,15 +123,14 @@ def get_sitemap_urls_stream(s3_uri, tmp_dir, force_fetch):
                         if False, files that are present in the tmp_directory
                         will not be downloaded from s3.
     :type force_fetch: bool
-    :returns: iterator
+    :returns: list
     """
     sitemap_files = download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch)
-    print sitemap_files
-    sitemap_streams = []
+    result = []
     for sitemap_file, url in sitemap_files:
         sitemap_document = instanciate_sitemap_document(sitemap_file, url)
-        sitemap_streams.append(sitemap_document.get_urls())
-    return itertools.chain(*sitemap_streams)
+        result.append(sitemap_document)
+    return result
 
 
 class DomainValidator(object):
