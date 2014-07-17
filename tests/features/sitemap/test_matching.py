@@ -7,6 +7,7 @@ from cdf.features.sitemap.document import SitemapXmlDocument, SiteMapType
 from cdf.features.sitemap.download import Sitemap, SitemapIndex, Error, DownloadStatus
 from cdf.features.sitemap.matching import (get_download_status_from_s3,
                                            download_sitemaps_from_s3,
+                                           match_sitemap_urls_from_document,
                                            match_sitemap_urls_from_stream,
                                            DomainValidator)
 
@@ -108,6 +109,69 @@ class TestDownloadSitemapsFromS3(unittest.TestCase):
             mock.call("s3://foo/sitemap_2.xml", os.path.join(tmp_dir, 'sitemap_2.xml'), force_fetch)
         ]
         self.assertEqual(expected_fetch_calls, fetch_file_mock.mock_calls)
+
+
+class MatchSitemapUrlsFromDocument(unittest.TestCase):
+    def test_nominal_case(self):
+
+        url_to_id = {
+            "foo": 0,
+            "bar": 2,
+            "qux": 5
+        }
+        document_mock = mock.create_autospec(SitemapXmlDocument)
+        document_mock.get_urls.return_value = iter(["foo", "bar", "baz", "qux", "donald", "mickey"])
+
+        dataset = mock.create_autospec(TemporaryDataset)
+        dataset = mock.MagicMock()
+
+        domain_validator = mock.create_autospec(DomainValidator)
+        domain_validator.is_valid.side_effect = [True, False, False]
+
+        sitemap_only_nb_samples = 2  # one url will be skipped
+        sitemap_only_urls = []
+        out_of_crawl_domain_urls = []
+        match_sitemap_urls_from_document(document_mock,
+                                         url_to_id,
+                                         dataset,
+                                         domain_validator,
+                                         sitemap_only_nb_samples,
+                                         sitemap_only_urls,
+                                         out_of_crawl_domain_urls)
+        expected_dataset_calls = [mock.call(0),
+                                  mock.call(2),
+                                  mock.call(5)]
+        self.assertEquals(expected_dataset_calls, dataset.append.mock_calls)
+
+        self.assertEqual(["baz"], sitemap_only_urls)
+        self.assertEqual(["donald", "mickey"], out_of_crawl_domain_urls)
+
+    def test_duplicated_sitemap_only_urls(self):
+
+        url_to_id = {}
+
+        document_mock = mock.create_autospec(SitemapXmlDocument)
+        document_mock.get_urls.return_value = iter(["foo", "bar", "foo", "baz", "qux"])
+
+        dataset = mock.create_autospec(TemporaryDataset)
+        dataset = mock.MagicMock()
+
+        domain_validator = mock.create_autospec(DomainValidator)
+        domain_validator.is_valid.return_value = True
+
+        sitemap_only_nb_samples = 3  # one url will be skipped
+        sitemap_only_urls = []
+        out_of_crawl_domain_urls = []
+        match_sitemap_urls_from_document(document_mock,
+                                         url_to_id,
+                                         dataset,
+                                         domain_validator,
+                                         sitemap_only_nb_samples,
+                                         sitemap_only_urls,
+                                         out_of_crawl_domain_urls)
+
+        self.assertEqual(["foo", "bar", "baz"], sitemap_only_urls)
+        self.assertEqual([], out_of_crawl_domain_urls)
 
 
 class MatchSitemapUrlsFromStream(unittest.TestCase):
