@@ -132,14 +132,6 @@ def match_sitemap_urls(s3_uri,
     url_to_id = get_url_to_id_dict_from_stream(id_stream)
     #download sitemaps
 
-    sitemap_only_filename = 'sitemap_only.gz'
-    sitemap_only_filepath = os.path.join(tmp_dir,
-                                         sitemap_only_filename)
-
-    out_of_crawl_domain_filename = 'in_sitemap_out_of_crawl_domain.gz'
-    out_of_crawl_domain_filepath = os.path.join(tmp_dir,
-                                                out_of_crawl_domain_filename)
-
     domain_validator = DomainValidator(allowed_domains, blacklisted_domains)
     dataset = SitemapStreamDef.create_temporary_dataset()
 
@@ -171,6 +163,9 @@ def match_sitemap_urls(s3_uri,
         sitemap_info_filepath
     )
 
+    sitemap_only_filename = 'sitemap_only.gz'
+    sitemap_only_filepath = os.path.join(tmp_dir,
+                                         sitemap_only_filename)
     with gzip.open(sitemap_only_filepath, 'wb') as sitemap_only_file:
         for url in sitemap_only_urls:
             line = "{}\n".format(url)
@@ -182,6 +177,9 @@ def match_sitemap_urls(s3_uri,
         sitemap_only_filepath
     )
 
+    out_of_crawl_domain_filename = 'in_sitemap_out_of_crawl_domain.gz'
+    out_of_crawl_domain_filepath = os.path.join(tmp_dir,
+                                                out_of_crawl_domain_filename)
     with gzip.open(out_of_crawl_domain_filepath, 'wb') as out_of_crawl_domain_file:
         for url in out_of_crawl_domain_urls:
             line = "{}\n".format(url)
