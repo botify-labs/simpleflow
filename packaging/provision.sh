@@ -12,6 +12,12 @@ sudo service elasticsearch start;
 rm elasticsearch-*.deb
 
 
+# install levelDB related system packages
+sudo apt-get install libsnappy1
+sudo apt-get install libleveldb1
+sudo apt-get install libleveldb-dev
+
+
 # install xml libs
 # FIXME this should be done by puppet module `saas_cdf`
 sudo apt-get -y install libboost-python-dev;
