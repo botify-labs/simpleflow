@@ -104,20 +104,41 @@ class Executor(executor.Executor):
 
 if __name__ == '__main__':
     from simpleflow import activity, Workflow
+    import time
+
+    @activity.with_attributes(task_list='quickstart')
+    def side_affect():
+        time.sleep(10)
+        print 'hey!'
 
     @activity.with_attributes(task_list='quickstart')
     def increment(x):
+        time.sleep(5)
         return x + 1
 
     @activity.with_attributes(task_list='quickstart')
     def double(x):
+        time.sleep(5)
         return x * 2
 
     class SimpleComputation(Workflow):
         def run(self, x):
+            self.submit(side_affect)
             y = self.submit(increment, x)
             z = self.submit(double, y)
             return z.result
 
+    before = time.time()
     result = Executor(SimpleComputation).run({"args": [5], "kwargs": {}})
+    after = time.time()
+
+    # Output with:
+    # >>> 12
+    # >>> used 10.0062558651 seconds ...
+    # >>> hey!
+
+    # => async execution
+
     print result
+    print 'used {} seconds ...'.format(after - before)
+
