@@ -1,6 +1,5 @@
 import os.path
 import gzip
-import itertools
 import json
 
 from cdf.utils import s3
@@ -16,7 +15,6 @@ from cdf.features.sitemap.download import (download_sitemaps,
                                            DownloadStatus)
 from cdf.features.sitemap.streams import SitemapStreamDef
 from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
-                                           match_sitemap_urls_from_stream,
                                            get_sitemap_documents,
                                            DomainValidator)
 
