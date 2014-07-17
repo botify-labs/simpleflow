@@ -6,7 +6,9 @@ import os
 import json
 
 from cdf.features.sitemap.download import Sitemap, DownloadStatus
-from cdf.features.sitemap.document import SiteMapType, SitemapTextDocument
+from cdf.features.sitemap.document import (SiteMapType,
+                                           SitemapTextDocument,
+                                           SitemapXmlDocument)
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.sitemap.tasks import (download_sitemap_files,
                                         download_sitemap_file,
@@ -154,6 +156,52 @@ class TestMatchSitemapUrls(unittest.TestCase):
         os.remove(file1.name)
         os.remove(file2.name)
 
+    @mock.patch('cdf.utils.s3.push_file', _mock_push_file)
+    @mock.patch("cdf.features.sitemap.tasks.get_sitemap_documents", autospec=True)
+    @mock.patch.object(IdStreamDef, 'get_stream_from_s3')
+    def test_parsing_error_case(self,
+                                get_stream_from_s3_mock,
+                                get_sitemap_documents_mock):
+        #mock definition
+        get_stream_from_s3_mock.return_value = [
+        ]
+        file = tempfile.NamedTemporaryFile(delete=False)
+        file.write('<?xml version="1.0" encoding="UTF-8"?>'
+                   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                   '<url><loc>http://foo/bar</loc></url>'
+                   '><'  # syntax error
+                   '<url><loc>http://foo/baz</loc></url>'
+                   '</urlset>')
+        file.close()
+        document_mock = SitemapXmlDocument(file.name, "http://foo.com/sitemap_1.txt")
+
+        get_sitemap_documents_mock.return_value = [document_mock]
+        #call
+        s3_uri = "s3://" + tempfile.mkdtemp()
+        allowed_domains = ["foo.com"]
+        blacklisted_domains = []
+        first_part_id_size = 10
+        part_id_size = 100
+
+        match_sitemap_urls(s3_uri,
+                           allowed_domains,
+                           blacklisted_domains,
+                           first_part_id_size,
+                           part_id_size)
+
+        #check output files
+        with open(os.path.join(s3_uri[5:], "sitemap_info.json")) as f:
+            expected_sitemap_info = {
+                "http://foo.com/sitemap_1.txt": {
+                    "type": "SiteMapType.SITEMAP_XML",
+                    "valid": 1,
+                    "invalid": 0
+                },
+            }
+            self.assertEqual(expected_sitemap_info, json.load(f))
+
+        os.remove(file.name)
+
 
 class TestSaveUrlListAsGzip(unittest.TestCase):
     def test_nominal_case(self):
@@ -165,3 +213,4 @@ class TestSaveUrlListAsGzip(unittest.TestCase):
         self.assertEqual(actual_result, "/tmp/azerty/output_file.gz")
         expected_calls = [mock.call("foo\n"), mock.call("bar\n")]
         self.assertEqual(expected_calls, m().write.mock_calls)
+
