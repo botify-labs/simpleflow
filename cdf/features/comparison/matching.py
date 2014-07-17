@@ -20,6 +20,7 @@ _LEVELDB_WRITE_BUFFER = 256 * 1024 * 1024  # 256M
 _LEVELDB_BLOCK_SIZE = 256 * 1024  # 256K
 
 _BUFFER_SIZE = 10000
+_COMPACTION_WAIT = 10  # wait 10s after bulk loading
 
 
 def _get_db_path(path, name=_LEVELDB_DIR_NAME):
@@ -86,5 +87,5 @@ def load_documents_db(document_stream, tmp_dirpath,
     db.batch_write(document_stream, batch_size=buffer_size)
 
     # let levelDB do compaction
-    time.sleep(10)
+    time.sleep(_COMPACTION_WAIT)
     return db
