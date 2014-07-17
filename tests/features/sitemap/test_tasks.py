@@ -165,17 +165,24 @@ class TestMatchSitemapUrls(unittest.TestCase):
         #mock definition
         get_stream_from_s3_mock.return_value = [
         ]
-        file = tempfile.NamedTemporaryFile(delete=False)
-        file.write('<?xml version="1.0" encoding="UTF-8"?>'
-                   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-                   '<url><loc>http://foo/bar</loc></url>'
-                   '><'  # syntax error
-                   '<url><loc>http://foo/baz</loc></url>'
-                   '</urlset>')
-        file.close()
-        document_mock = SitemapXmlDocument(file.name, "http://foo.com/sitemap_1.txt")
+        file1 = tempfile.NamedTemporaryFile(delete=False)
+        file1.write('<?xml version="1.0" encoding="UTF-8"?>'
+                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                    '<url><loc>http://foo/bar</loc></url>'
+                    '><'  # syntax error
+                    '<url><loc>http://foo/baz</loc></url>'
+                    '</urlset>')
+        file1.close()
+        document_mock_1 = SitemapXmlDocument(file1.name, "http://foo.com/sitemap_1.txt")
 
-        get_sitemap_documents_mock.return_value = [document_mock]
+        file2 = tempfile.NamedTemporaryFile(delete=False)
+        file2.write(("http://foo.com/index.html\n"  # not in crawl
+                     "http://bar.com"))  # not in crawl domain
+        file2.close()
+        document_mock_2 = SitemapTextDocument(file2.name, "http://foo.com/sitemap_2.txt")
+
+        get_sitemap_documents_mock.return_value = [document_mock_1, document_mock_2]
+
         #call
         s3_uri = "s3://" + tempfile.mkdtemp()
         allowed_domains = ["foo.com"]
@@ -194,13 +201,18 @@ class TestMatchSitemapUrls(unittest.TestCase):
             expected_sitemap_info = {
                 "http://foo.com/sitemap_1.txt": {
                     "type": "SiteMapType.SITEMAP_XML",
-                    "valid": 1,
+                    "valid": 1,  # only the first url was extracted
                     "invalid": 0
                 },
-            }
+                "http://foo.com/sitemap_2.txt": {
+                    "type": "SiteMapType.SITEMAP_TEXT",
+                    "valid": 2,
+                    "invalid": 0
+                    }
+                }
             self.assertEqual(expected_sitemap_info, json.load(f))
-
-        os.remove(file.name)
+        os.remove(file1.name)
+        os.remove(file2.name)
 
 
 class TestSaveUrlListAsGzip(unittest.TestCase):
@@ -213,4 +225,3 @@ class TestSaveUrlListAsGzip(unittest.TestCase):
         self.assertEqual(actual_result, "/tmp/azerty/output_file.gz")
         expected_calls = [mock.call("foo\n"), mock.call("bar\n")]
         self.assertEqual(expected_calls, m().write.mock_calls)
-
