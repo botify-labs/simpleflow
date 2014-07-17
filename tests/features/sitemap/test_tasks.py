@@ -10,7 +10,8 @@ from cdf.features.sitemap.document import SiteMapType, SitemapTextDocument
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.sitemap.tasks import (download_sitemap_files,
                                         download_sitemap_file,
-                                        match_sitemap_urls)
+                                        match_sitemap_urls,
+                                        save_url_list_as_gzip)
 from cdf.core.mocks import _mock_push_file
 
 
@@ -153,3 +154,14 @@ class TestMatchSitemapUrls(unittest.TestCase):
         os.remove(file1.name)
         os.remove(file2.name)
 
+
+class TestSaveUrlListAsGzip(unittest.TestCase):
+    def test_nominal_case(self):
+        url_list = ["foo", "bar"]
+        filename = "output_file.gz"
+        tmp_dir = "/tmp/azerty"
+        with mock.patch("cdf.features.sitemap.tasks.gzip.open", mock.mock_open()) as m:
+            actual_result = save_url_list_as_gzip(url_list, filename, tmp_dir)
+        self.assertEqual(actual_result, "/tmp/azerty/output_file.gz")
+        expected_calls = [mock.call("foo\n"), mock.call("bar\n")]
+        self.assertEqual(expected_calls, m().write.mock_calls)
