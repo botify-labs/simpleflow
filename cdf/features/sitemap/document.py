@@ -51,7 +51,7 @@ def instanciate_sitemap_document(file_path, url):
     if is_text_sitemap(sitemap_type):
         return SitemapTextDocument(file_path, url)
 
-    raise UnhandledFileType()
+    raise UnhandledFileType("Could not process {} as a sitemap".format(url))
 
 
 class SitemapDocument(object):
