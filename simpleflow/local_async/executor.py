@@ -27,10 +27,8 @@ class AdaptorFuture(futures.Future):
 
     @property
     def result(self):
-        if not self.py_future.running():
-            return self.wait()
-
-        return self._result
+        # will block if the task is not completed yet
+        return self.py_future.result()
 
     def cancel(self):
         raise NotImplementedError()
@@ -46,17 +44,6 @@ class AdaptorFuture(futures.Future):
 
     @property
     def exception(self):
-        """
-        Returns `None` if no exception occurred, otherwise, returns the
-        exception object that what raised by the task.
-
-        Raise a cls::`exceptions.ExecutionBlocked` when the result is not
-        available.
-
-        """
-        if not self.py_future.done():
-            return self.wait()
-
         return self.py_future.exception()
 
     @property
@@ -78,21 +65,30 @@ class AdaptorFuture(futures.Future):
         return self.py_future.done()
 
 
+def _get_actual_value(value):
+    if isinstance(value, AdaptorFuture):
+        return value.result
+    return value
+
+
 class Executor(executor.Executor):
     def __init__(self, workflow):
         super(Executor, self).__init__(workflow)
         # the real executor that does all the stuff
+        # FIXME cannot use ProcessPoolExecutor, error like:
+        #   PicklingError: Can't pickle <type 'function'>:
+        #     attribute lookup __builtin__.function failed
         self._executor = py_futures.ThreadPoolExecutor(
             multiprocessing.cpu_count())
 
     def submit(self, func, *args, **kwargs):
         logger.info('executing task {}(args={}, kwargs={})'.format(
             func, args, kwargs))
-        args = [executor.get_actual_value(arg) for arg in args]
-        kwargs = {key: executor.get_actual_value(val) for
+        args = [_get_actual_value(arg) for arg in args]
+        kwargs = {key: _get_actual_value(val) for
                   key, val in kwargs.iteritems()}
 
-        py_future = self._executor.submit(func, args, kwargs)
+        py_future = self._executor.submit(func._callable, *args, **kwargs)
 
         # use the adaptor to wrap `concurrent.futures.Future`
         return AdaptorFuture(py_future)
