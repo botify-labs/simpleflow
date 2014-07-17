@@ -42,7 +42,7 @@ class Error(object):
     def to_dict(self):
         return {
             "url": self.url,
-            "type": str(self.file_type),
+            "type": self.file_type.name,
             "error": self.error_type,
             "message": self.message
         }
@@ -119,7 +119,7 @@ def parse_download_status_from_json(file_path):
                 in download_status["sitemaps"]]
     errors = []
     for error in download_status["errors"]:
-        errors.append(Error(error["url"], error["type"], error["error"], error["message"]))
+        errors.append(Error(error["url"], SiteMapType[error["type"]], error["error"], error["message"]))
     result = DownloadStatus(sitemaps, errors)
     return result
 

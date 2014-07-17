@@ -42,13 +42,13 @@ class TestDownloadStatus(unittest.TestCase):
             "errors": [
                 {
                     "url": "http://error1",
-                    "type": "SiteMapType.UNKNOWN",
+                    "type": "UNKNOWN",
                     "error": "foo",
                     "message": "bar"
                 },
                 {
                     "url": "http://error2",
-                    "type": "SiteMapType.UNKNOWN",
+                    "type": "UNKNOWN",
                     "error": "foo",
                     "message": "bar"
                 }

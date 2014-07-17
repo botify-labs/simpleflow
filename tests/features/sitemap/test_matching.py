@@ -33,7 +33,7 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
                         '"errors": ['
                         '    {'
                         '        "url": "http://error",'
-                        '        "type": "SiteMapType.UNKNOWN",'
+                        '        "type": "UNKNOWN",'
                         '        "error": "DownloadError",'
                         '        "message": "foo"'
                         '    }'
