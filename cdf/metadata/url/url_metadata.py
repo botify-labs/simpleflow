@@ -47,6 +47,7 @@ ES_NOT_ANALYZED = 'es:not_analyzed'
 ES_DOC_VALUE = 'es:doc_values'
 LIST = 'list'
 MULTI_FIELD = 'es:multi_field'
+URL_ID = 'url_id'
 
 # Aggregation related
 # categorical fields have a finite cardinality of distinct values
