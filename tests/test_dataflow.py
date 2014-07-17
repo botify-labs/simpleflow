@@ -773,3 +773,51 @@ def test_on_failure_callback():
         reason='Workflow execution failed: FAIL')
 
     assert decisions[0] == workflow_failed
+
+
+class TestMultipleScheduledActivitiesDefinition(TestWorkflow):
+    def run(self):
+        a = self.submit(increment, 1)
+        b = self.submit(increment, 2)
+        c = self.submit(double, b)
+
+        return [a.result, b.result, c.result]
+
+
+def test_multiple_scheduled_activities():
+    """
+    When ``Future.exception`` was made blocking if the future is not finished,
+    :py:meth:`swf.executor.Executor.resume` did not check ``future.finished``
+    before ``future.exception is None``. It mades the call to ``.resume()`` to
+    block for the first scheduled task it encountered instead of returning it.
+
+    This issue was fixed in commit 6398aa8.
+
+    With the wrong behaviour, the call to ``executor.replay()`` would not
+    schedule the ``double`` task even after the task represented by *b*
+    (``self.submit(increment, 2)``) has completed.
+
+    """
+    workflow = TestMultipleScheduledActivitiesDefinition
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow)
+
+    decision_id = history.last_id
+    (history
+        .add_activity_task_scheduled(
+            increment,
+            decision_id=decision_id,
+            activity_id='activity-tests.test_dataflow.increment-1',
+            input={'args': 1})
+        # The right behaviour is to schedule the ``double`` task when *b* is in
+        # state finished.
+        .add_activity_task(
+            increment,
+            decision_id=decision_id,
+            activity_id='activity-tests.test_dataflow.increment-2',
+            last_state='completed',
+            input={'args': 2},
+            result='3'))
+
+    decisions, _ = executor.replay(history)
+    check_task_scheduled_decision(decisions[0], double)
