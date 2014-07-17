@@ -15,6 +15,7 @@ rm elasticsearch-*.deb
 # install levelDB related system packages
 sudo apt-get install libsnappy1
 sudo apt-get install libleveldb1
+sudo apt-get install libleveldb-dev
 
 
 # install xml libs
