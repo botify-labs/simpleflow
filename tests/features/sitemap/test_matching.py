@@ -2,12 +2,19 @@ import unittest
 import mock
 
 import os
+import tempfile
 from cdf.core.streams.base import TemporaryDataset
-from cdf.features.sitemap.document import SitemapXmlDocument, SiteMapType
-from cdf.features.sitemap.download import Sitemap, SitemapIndex, Error, DownloadStatus
+from cdf.features.sitemap.document import (SitemapXmlDocument,
+                                           SitemapTextDocument,
+                                           SiteMapType)
+from cdf.features.sitemap.download import (Sitemap,
+                                           SitemapIndex,
+                                           Error,
+                                           DownloadStatus)
 from cdf.features.sitemap.matching import (get_download_status_from_s3,
                                            download_sitemaps_from_s3,
                                            match_sitemap_urls_from_document,
+                                           match_sitemap_urls_from_documents,
                                            DomainValidator)
 
 
@@ -171,6 +178,64 @@ class MatchSitemapUrlsFromDocument(unittest.TestCase):
 
         self.assertEqual(["foo", "bar", "baz"], sitemap_only_urls)
         self.assertEqual([], out_of_crawl_domain_urls)
+
+
+class TestMatchSitemapUrlsFromDocuments(unittest.TestCase):
+
+    def test_parsing_error_case(self):
+        file1 = tempfile.NamedTemporaryFile(delete=False)
+        file1.write('<?xml version="1.0" encoding="UTF-8"?>\n'
+                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+                    '<url><loc>http://foo/bar</loc></url>\n'
+                    '><\n'  # syntax error
+                    '<url><loc>http://foo/baz</loc></url>\n'
+                    '</urlset>\n')
+        file1.close()
+        document_1 = SitemapXmlDocument(file1.name, "http://foo.com/sitemap_1.xml")
+
+        file2 = tempfile.NamedTemporaryFile(delete=False)
+        file2.write(("http://foo.com/index.html\n"
+                     "http://bar.com"))
+        file2.close()
+        document_2 = SitemapTextDocument(file2.name, "http://foo.com/sitemap_2.txt")
+
+        documents = [document_1, document_2]
+
+        url_to_id = {}
+
+        dataset = mock.create_autospec(TemporaryDataset)
+        dataset = mock.MagicMock()
+
+        domain_validator = mock.create_autospec(DomainValidator)
+        domain_validator.is_valid.return_value = True
+
+        sitemap_only_nb_samples = 10
+        sitemap_only_urls = []
+        out_of_crawl_domain_urls = []
+
+        #call
+        match_sitemap_urls_from_documents(documents,
+                                          url_to_id,
+                                          dataset,
+                                          domain_validator,
+                                          sitemap_only_nb_samples,
+                                          sitemap_only_urls,
+                                          out_of_crawl_domain_urls)
+
+        #check documents
+        self.assertEqual(1, document_1.valid_urls)
+        self.assertEqual(0, document_1.invalid_urls)
+        self.assertEqual("ParsingError", document_1.error)
+        self.assertEqual("StartTag: invalid element name, line 4, column 3",
+                         document_1.error_message)
+
+        self.assertEqual(2, document_2.valid_urls)
+        self.assertEqual(0, document_2.invalid_urls)
+        self.assertIsNone(document_2.error)
+        self.assertIsNone(document_2.error_message)
+
+        os.remove(file1.name)
+        os.remove(file2.name)
 
 
 class TestDomainValidator(unittest.TestCase):

@@ -63,6 +63,8 @@ class SitemapDocument(object):
     def __init__(self):
         self.valid_urls = 0
         self.invalid_urls = 0
+        self.error = None
+        self.error_message = None
 
     @abstractmethod
     def get_sitemap_type(self):
@@ -92,7 +94,23 @@ class SitemapDocument(object):
             "valid": self.valid_urls,
             "invalid": self.invalid_urls
         }
+        #if there is no error, do not add the corresponding fields
+        if self.error:
+            result["error"] = self.error
+        if self.error_message:
+            result["message"] = self.error_message
         return result
+
+    def set_error(self, error, message):
+        """Set the error and the error message (if any)
+        :param error: the error that occured during document processing.
+                      (typically the exception class)
+        :type error: str
+        :param message: the error message
+        :type message: str
+        """
+        self.error = error
+        self.error_message = message
 
 
 class AbstractSitemapXml(SitemapDocument):

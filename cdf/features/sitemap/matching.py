@@ -38,13 +38,16 @@ def match_sitemap_urls_from_documents(documents,
     :type out_of_crawl_domain_urls: list
     """
     for document in documents:
-        match_sitemap_urls_from_document(document,
-                                         url_to_id,
-                                         dataset,
-                                         domain_validator,
-                                         nb_samples_to_keep,
-                                         sitemap_only_urls,
-                                         out_of_crawl_domain_urls)
+        try:
+            match_sitemap_urls_from_document(document,
+                                             url_to_id,
+                                             dataset,
+                                             domain_validator,
+                                             nb_samples_to_keep,
+                                             sitemap_only_urls,
+                                             out_of_crawl_domain_urls)
+        except ParsingError as e:
+            document.set_error(e.__class__.__name__, e.message)
 
 
 def match_sitemap_urls_from_document(document,
@@ -74,19 +77,13 @@ def match_sitemap_urls_from_document(document,
     :param out_of_crawl_domain_urls: a list where to add samples urls that are
                                      in the sitemaps but out of crawl domain.
     :type out_of_crawl_domain_urls: list
+    :raises: ParsingError
     """
     #build a set to be able to test quickly if a sitemap only url
     #has already been seen
     sitemap_only_urls_set = set(sitemap_only_urls)
     out_of_crawl_domain_urls_set = set(out_of_crawl_domain_urls)
-    url_generator = document.get_urls()
-    while True:
-        try:
-            url = url_generator.next()
-        except ParsingError:
-            continue
-        except StopIteration:
-            break
+    for url in document.get_urls():
         urlid = url_to_id.get(url, None)
         if urlid is None:
             if domain_validator.is_valid(url):

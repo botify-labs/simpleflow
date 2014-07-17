@@ -156,64 +156,6 @@ class TestMatchSitemapUrls(unittest.TestCase):
         os.remove(file1.name)
         os.remove(file2.name)
 
-    @mock.patch('cdf.utils.s3.push_file', _mock_push_file)
-    @mock.patch("cdf.features.sitemap.tasks.get_sitemap_documents", autospec=True)
-    @mock.patch.object(IdStreamDef, 'get_stream_from_s3')
-    def test_parsing_error_case(self,
-                                get_stream_from_s3_mock,
-                                get_sitemap_documents_mock):
-        #mock definition
-        get_stream_from_s3_mock.return_value = [
-        ]
-        file1 = tempfile.NamedTemporaryFile(delete=False)
-        file1.write('<?xml version="1.0" encoding="UTF-8"?>'
-                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-                    '<url><loc>http://foo/bar</loc></url>'
-                    '><'  # syntax error
-                    '<url><loc>http://foo/baz</loc></url>'
-                    '</urlset>')
-        file1.close()
-        document_mock_1 = SitemapXmlDocument(file1.name, "http://foo.com/sitemap_1.txt")
-
-        file2 = tempfile.NamedTemporaryFile(delete=False)
-        file2.write(("http://foo.com/index.html\n"  # not in crawl
-                     "http://bar.com"))  # not in crawl domain
-        file2.close()
-        document_mock_2 = SitemapTextDocument(file2.name, "http://foo.com/sitemap_2.txt")
-
-        get_sitemap_documents_mock.return_value = [document_mock_1, document_mock_2]
-
-        #call
-        s3_uri = "s3://" + tempfile.mkdtemp()
-        allowed_domains = ["foo.com"]
-        blacklisted_domains = []
-        first_part_id_size = 10
-        part_id_size = 100
-
-        match_sitemap_urls(s3_uri,
-                           allowed_domains,
-                           blacklisted_domains,
-                           first_part_id_size,
-                           part_id_size)
-
-        #check output files
-        with open(os.path.join(s3_uri[5:], "sitemap_info.json")) as f:
-            expected_sitemap_info = {
-                "http://foo.com/sitemap_1.txt": {
-                    "type": "SiteMapType.SITEMAP_XML",
-                    "valid": 1,  # only the first url was extracted
-                    "invalid": 0
-                },
-                "http://foo.com/sitemap_2.txt": {
-                    "type": "SiteMapType.SITEMAP_TEXT",
-                    "valid": 2,
-                    "invalid": 0
-                    }
-                }
-            self.assertEqual(expected_sitemap_info, json.load(f))
-        os.remove(file1.name)
-        os.remove(file2.name)
-
 
 class TestSaveUrlListAsGzip(unittest.TestCase):
     def test_nominal_case(self):
