@@ -26,7 +26,7 @@ class TestSitemapDocument(unittest.TestCase):
         actual_result = document.to_dict()
 
         expected_result = {
-            "type": "SiteMapType.SITEMAP_XML",
+            "type": "SITEMAP_XML",
             "valid": 2,
             "invalid": 1
         }
@@ -40,7 +40,7 @@ class TestSitemapDocument(unittest.TestCase):
         actual_result = document.to_dict()
 
         expected_result = {
-            "type": "SiteMapType.SITEMAP_XML",
+            "type": "SITEMAP_XML",
             "error": "error",
             "message": "error_message",
             "valid": 2,

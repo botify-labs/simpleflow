@@ -88,7 +88,7 @@ class SitemapDocument(object):
         - the number of invalid urls it constains
         :returns: dict
         """
-        sitemap_type = str(self.get_sitemap_type())
+        sitemap_type = self.get_sitemap_type().name
         result = {
             "type": sitemap_type,
             "valid": self.valid_urls,

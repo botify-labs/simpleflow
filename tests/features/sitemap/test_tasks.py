@@ -141,12 +141,12 @@ class TestMatchSitemapUrls(unittest.TestCase):
         with open(os.path.join(s3_uri[5:], "sitemap_info.json")) as f:
             expected_sitemap_info = {
                 "http://foo.com/sitemap_1.txt": {
-                    "type": "SiteMapType.SITEMAP_TEXT",
+                    "type": "SITEMAP_TEXT",
                     "valid": 2,
                     "invalid": 0
                 },
                 "http://foo.com/sitemap_2.txt": {
-                    "type": "SiteMapType.SITEMAP_TEXT",
+                    "type": "SITEMAP_TEXT",
                     "valid": 2,
                     "invalid": 0
                 }
