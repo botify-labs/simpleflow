@@ -170,6 +170,9 @@ class Executor(executor.Executor):
         if event:
             if event['type'] == 'activity':
                 future = self._get_future_from_activity_event(event)
+                if not future.finished:
+                    return future
+
                 if future.exception is None:
                     return future
                 elif event.get('retry', 0) == task.activity.retry:
