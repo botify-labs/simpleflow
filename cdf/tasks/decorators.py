@@ -40,6 +40,7 @@ class TemporaryDirTask(object):
 
     def __init__(self, func):
         self.func = func
+        self.name = func.func_name
         self.tmp_dir = None
 
     def setup(self):

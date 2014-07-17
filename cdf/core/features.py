@@ -1,7 +1,7 @@
-import os
 import inspect
 from importlib import import_module
 
+import cdf.features
 from cdf.core.streams.base import StreamDefBase
 
 
@@ -13,18 +13,21 @@ class Feature(object):
             return cls.FEATURES
 
         cls.FEATURES = []
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../features')
-        for n in os.listdir(path):
-            if os.path.isdir(os.path.join(path, n)):
-                mod = import_module('cdf.features.{}.settings'.format(n))
-                feature = Feature(
-                    identifier=n,
-                    name=getattr(mod, "NAME", None),
-                    description=getattr(mod, "DESCRIPTION", None),
-                    groups=getattr(mod, "GROUPS", []),
-                    order=getattr(mod, "ORDER", None)
-                )
-                cls.FEATURES.append(feature)
+
+        for name, module in (
+                (name, module) for name, module in
+                inspect.getmembers(cdf.features, inspect.ismodule)):
+            settings = __import__(
+                '.'.join([cdf.features.__name__, name, 'settings']),
+                fromlist=['*'])
+            feature = Feature(
+                identifier=name,
+                name=getattr(settings, "NAME", None),
+                description=getattr(settings, "DESCRIPTION", None),
+                groups=getattr(settings, "GROUPS", []),
+                order=getattr(settings, "ORDER", None)
+            )
+            cls.FEATURES.append(feature)
         # Sort features by order
         cls.FEATURES = sorted(cls.FEATURES, key=lambda f: f.order)
         return cls.FEATURES

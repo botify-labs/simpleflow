@@ -1,8 +1,12 @@
+import functools
+
+
 def feature_enabled(flag):
     """
     Temporary decorator to check if a task must be launched depending on features_enabled
     """
     def wrapper(func):
+        @functools.wraps(func)
         def wrapped(*args, **kwargs):
             if 'features_flags' in kwargs:
                 flags = kwargs.pop('features_flags')
