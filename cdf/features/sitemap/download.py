@@ -180,6 +180,9 @@ def download_sitemaps(input_url, output_directory, user_agent):
                                                  output_directory,
                                                  user_agent,
                                                  input_url)
+            result.add_success_sitemap_index(SitemapIndex(sitemap_document.url,
+                                                          sitemap_document.valid_urls,
+                                                          sitemap_document.invalid_urls))
         except ParsingError as e:
             result.add_error(input_url, sitemap_type, e.__class__.__name__, e.message)
         #remove sitemap index file
