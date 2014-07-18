@@ -18,9 +18,8 @@ from cdf.features.sitemap.document import (SiteMapType,
                                            is_text_sitemap,
                                            instanciate_sitemap_document)
 
-#FIXME add a source sitemap index if any(cf. https://github.com/sem-io/botify-cdf/issues/381)
 Sitemap = namedtuple('Sitemap', ['url', 's3_uri', 'sitemap_index'])
-
+SitemapIndex = namedtuple('SitemapIndex', ['url', 'valid_urls', 'invalid_urls'])
 
 class Error(object):
     def __init__(self, url, file_type, error_type, message):
@@ -59,16 +58,19 @@ class Error(object):
 
 class DownloadStatus(object):
     """A class information about the downloaded sitemaps:
-        where they come from, where they are stored
+        where they come from, where they are stored,
         errors that occured
         :param sitemaps: the list of downloaded sitemaps.
                          each sitemap is an instance of Sitemap
         :type sitemaps: list
+        :param sitemap_indexes: the list of downloaded sitemap indexes.
+        :type sitemap_indexes: list
         :param errors: the list of sitemap errors. Each error is a string
                        representing an url.
         :type errors: list"""
-    def __init__(self, sitemaps=None, errors=None):
+    def __init__(self, sitemaps=None, sitemap_indexes=None, errors=None):
         self.sitemaps = sitemaps or []
+        self.sitemap_indexes = sitemap_indexes or []
         self.errors = errors or []
 
     def add_success_sitemap(self, sitemap):
@@ -77,6 +79,13 @@ class DownloadStatus(object):
         :type sitemap: Sitemap
         """
         self.sitemaps.append(sitemap)
+
+    def add_success_sitemap_index(self, sitemap_index):
+        """Add a sitemap index that has been successfuly downloaded.
+        :param sitemap_index: the input sitemap_index
+        :type sitemap_index: SitemapIndex
+        """
+        self.sitemap_indexes.append(sitemap_index)
 
     def add_error(self, url, file_type, error_type, message):
         """Add an error url
@@ -91,12 +100,14 @@ class DownloadStatus(object):
         :returns: str"""
         d = {
             "sitemaps": [sitemap.__dict__ for sitemap in self.sitemaps],
+            "sitemap_indexes": [sitemap_index.__dict__ for sitemap_index in self.sitemap_indexes],
             "errors": [e.to_dict() for e in self.errors]
         }
         return json.dumps(d)
 
     def __eq__(self, other):
         return (set(self.sitemaps) == set(other.sitemaps) and
+                set(self.sitemap_indexes) == set(other.sitemap_indexes) and
                 set(self.errors) == set(other.errors))
 
     def __repr__(self):
@@ -104,6 +115,7 @@ class DownloadStatus(object):
 
     def update(self, other):
         self.sitemaps.extend(other.sitemaps)
+        self.sitemap_indexes.extend(other.sitemap_indexes)
         self.errors.extend(other.errors)
 
 
@@ -117,10 +129,12 @@ def parse_download_status_from_json(file_path):
         download_status = json.load(f)
     sitemaps = [Sitemap(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index", None)) for sitemap
                 in download_status["sitemaps"]]
+    sitemap_indexes = [SitemapIndex(s["url"], s["valid_urls"], s["invalid_urls"]) for s
+                       in download_status["sitemap_indexes"]]
     errors = []
     for error in download_status["errors"]:
         errors.append(Error(error["url"], SiteMapType[error["type"]], error["error"], error["message"]))
-    result = DownloadStatus(sitemaps, errors)
+    result = DownloadStatus(sitemaps, sitemap_indexes, errors)
     return result
 
 
