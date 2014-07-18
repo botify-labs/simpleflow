@@ -6,7 +6,7 @@ from cdf.metadata.url.url_metadata import (
     ES_NO_INDEX, ES_DOC_VALUE,
     LIST, AGG_CATEGORICAL, AGG_NUMERICAL,
     STRING_TYPE, ES_NOT_ANALYZED, STRING_NB_MAP_MAPPING,
-    FAKE_FIELD
+    FAKE_FIELD, URL_ID
 )
 from cdf.core.streams.base import StreamDefBase
 from cdf.analysis.urls.utils import is_link_internal
@@ -263,7 +263,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 ES_NO_INDEX,
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.FILTERS_EXIST,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                URL_ID
             }
         },
         "canonical.to.equal": {
@@ -300,7 +301,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 LIST,
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.FILTERS_EXIST,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                URL_ID
             }
         },
         "canonical.from.urls_exists": {
@@ -323,7 +325,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 ES_NO_INDEX,
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.FILTERS_EXIST,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                URL_ID
             }
         },
         "redirect.to.url_exists": {
@@ -353,7 +356,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 LIST,
                 RENDERING.URL_HTTP_CODE,
                 FIELD_RIGHTS.FILTERS_EXIST,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                URL_ID
             }
         },
         "redirect.from.urls_exists": {
@@ -561,7 +565,13 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "group": GROUPS.inlinks.name,
             "order": 9,
             "type": INT_TYPE,
-            "settings": {ES_NO_INDEX, LIST, RENDERING.URL_LINK_STATUS, FIELD_RIGHTS.SELECT}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL_LINK_STATUS,
+                FIELD_RIGHTS.SELECT,
+                URL_ID
+            }
         },
         "inlinks_internal.urls_exists": {
             "type": "boolean",
@@ -774,7 +784,13 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 3xx",
             "order": 101,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                FIELD_RIGHTS.SELECT,
+                RENDERING.URL,
+                URL_ID
+            }
         },
         "outlinks_errors.3xx.urls_exists": {
             "type": "boolean",
@@ -794,7 +810,13 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 4xx",
             "order": 103,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                FIELD_RIGHTS.SELECT,
+                RENDERING.URL,
+                URL_ID
+            }
         },
         "outlinks_errors.4xx.urls_exists": {
             "type": "boolean",
@@ -814,7 +836,13 @@ class BadLinksStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 5xx",
             "order": 105,
-            "settings": {ES_NO_INDEX, LIST, FIELD_RIGHTS.SELECT, RENDERING.URL}
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                FIELD_RIGHTS.SELECT,
+                RENDERING.URL,
+                URL_ID
+            }
         },
         "outlinks_errors.5xx.urls_exists": {
             "type": "boolean",

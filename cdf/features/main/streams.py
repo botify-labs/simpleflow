@@ -1,7 +1,7 @@
 from cdf.metadata.url.url_metadata import (
     LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     DATE_TYPE, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID
 )
 from cdf.core.streams.exceptions import GroupWithSkipException
 from cdf.core.streams.base import StreamDefBase
@@ -55,11 +55,21 @@ class IdStreamDef(StreamDefBase):
         "id": {
             "verbose_name": "Id",
             "type": INT_TYPE,
-            "settings": {ES_DOC_VALUE, FIELD_RIGHTS.PRIVATE, FIELD_RIGHTS.SELECT, FIELD_RIGHTS.FILTERS}
+            "settings": {
+                ES_DOC_VALUE,
+                FIELD_RIGHTS.PRIVATE,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS,
+                URL_ID
+            }
         },
         "crawl_id": {
             "type": INT_TYPE,
-            "settings": {FIELD_RIGHTS.PRIVATE, FIELD_RIGHTS.SELECT, FIELD_RIGHTS.FILTERS}
+            "settings": {
+                FIELD_RIGHTS.PRIVATE,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS
+            }
         },
         "path": {
             "verbose_name": "Path",

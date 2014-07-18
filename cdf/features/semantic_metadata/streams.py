@@ -1,7 +1,7 @@
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID
 )
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
@@ -152,7 +152,8 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 ES_NO_INDEX,
                 LIST,
                 RENDERING.URL_STATUS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                URL_ID
             }
         },
         "metadata.title.duplicates.urls_exists": {
@@ -167,7 +168,8 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 ES_NO_INDEX,
                 LIST,
                 RENDERING.URL_STATUS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                URL_ID
             }
         },
         "metadata.h1.duplicates.urls_exists": {
@@ -209,7 +211,8 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 LIST,
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.SELECT,
-                FIELD_RIGHTS.FILTERS_EXIST
+                FIELD_RIGHTS.FILTERS_EXIST,
+                URL_ID
             }
         },
         "metadata.description.duplicates.urls_exists": {

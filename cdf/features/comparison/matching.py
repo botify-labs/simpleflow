@@ -2,9 +2,20 @@ import os
 import ujson as json
 import time
 
+from enum import Enum
+from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
+
 from cdf.utils.kvstore import LevelDB
+from cdf.features.comparison import logger
 from cdf.features.comparison.constants import SEPARATOR
-from cdf.features.comparison.exceptions import UrlKeyDecodingError
+from cdf.features.comparison.exceptions import UrlKeyDecodingError, UrlIdFieldFormatError
+from cdf.metadata.url.url_metadata import URL_ID
+from cdf.utils.dict import (
+    delete_path_in_dict,
+    path_in_dict,
+    get_subdict_from_path,
+    update_path_in_dict
+)
 
 
 _HASH_KEY = 'url_hash'
@@ -89,3 +100,212 @@ def load_documents_db(document_stream, tmp_dirpath,
     # let levelDB do compaction
     time.sleep(_COMPACTION_WAIT)
     return db
+
+
+def generate_conversion_table(ref_key_stream, new_key_stream):
+    """Generate a conversion table out of two crawls' url key stream
+
+    Url keys encode url and their url_id together, this avoids decoding
+    document json structure
+
+    :param ref_key_stream: url key stream of the reference crawl
+    :param new_key_stream: url key stream of the new crawl
+    :return: a conversion table between old url_id and new url_id
+    :rtype: dict
+    """
+    ref_url, ref_uid = decode_url_key(next(ref_key_stream))
+    new_url, new_uid = decode_url_key(next(new_key_stream))
+
+    count = 0
+    conversion_table = dict()
+
+    # Merge-sort style merge
+    while True:
+        # match
+        if new_url == ref_url:
+            count += 1
+            if count % 1000 == 0 and count > 0:
+                logger.info('Process {} document pairs '
+                            'for conversion table ...'.format(count))
+
+            # ref_url_id -> new_url_id
+            conversion_table[ref_uid] = new_uid
+
+            # advances both cursor
+            try:
+                ref_url, ref_uid = decode_url_key(next(ref_key_stream))
+            except StopIteration:
+                break
+            try:
+                new_url, new_uid = decode_url_key(next(new_key_stream))
+            except StopIteration:
+                break
+
+        elif new_url > ref_url:
+            # no match
+            # advances ref dataset cursor
+            try:
+                ref_url, ref_uid = decode_url_key(next(ref_key_stream))
+            except StopIteration:
+                break
+        else:
+            # no match
+            # advances new dataset cursor
+            try:
+                new_url, new_uid = decode_url_key(next(new_key_stream))
+            except StopIteration:
+                break
+
+    return conversion_table
+
+
+class _FieldFormat(Enum):
+    SEQ = 1
+    SEQ_SEQ = 2
+    NUMBER = 3
+    DICT = 4
+    UNKNOWN = 5
+
+
+def _sniff_url_id_format(field_path, field_value):
+    if isinstance(field_value, (list, tuple)):
+        if len(field_value) > 0:
+            # peek the first value
+            first = field_value[0]
+            if isinstance(first, (int, long)):
+                return _FieldFormat.SEQ
+            elif isinstance(field_value, (list, tuple)):
+                return _FieldFormat.SEQ_SEQ
+            else:
+                raise UrlIdFieldFormatError(field_path, field_value)
+        else:
+            # can't decide on empty sequence
+            # wait for another document to decide
+            return _FieldFormat.UNKNOWN
+    elif isinstance(field_value, (int, long)):
+        return _FieldFormat.NUMBER
+    elif isinstance(field_value, dict):
+        return _FieldFormat.DICT
+    else:
+        raise UrlIdFieldFormatError(field_path, field_value)
+
+
+def _collect_url_id(field_format, field_value):
+    """Collects the `url_id` according to its format into a set
+
+    :param field_format: `field_value`'s format
+    :param field_value: the url_id related field's value
+    :return: collected `url_id`s, de-duplicated
+    :rtype: set
+    """
+    if field_format is _FieldFormat.NUMBER:
+        return {field_value}
+    elif field_format is _FieldFormat.SEQ:
+        return set(field_value)
+    elif field_format is _FieldFormat.SEQ_SEQ:
+        return set(map(lambda i: i[0], field_value))
+    elif field_format is _FieldFormat.DICT:
+        if _URL_ID_KEY in field_value:
+            return {field_value[_URL_ID_KEY]}
+        else:
+            return set()
+    else:
+        return set()
+
+
+def _correct_url_id(field_format, lookup, field_value,
+                    field_path, document):
+    if field_format is _FieldFormat.NUMBER:
+        update = lookup[field_value]
+    elif field_format is _FieldFormat.SEQ:
+        update = map(lambda i: lookup[i], field_value)
+    elif field_format is _FieldFormat.SEQ_SEQ:
+        update = map(lambda i: [lookup[i[0]]] + i[1:], field_value)
+    elif field_format is _FieldFormat.DICT:
+        if _URL_ID_KEY in field_value:
+            new_url_id = lookup[field_value[_URL_ID_KEY]]
+            update = {_URL_ID_KEY: new_url_id}
+        else:
+            return
+    else:
+        return
+
+    update_path_in_dict(field_path, update, document)
+
+
+def _get_url_id_fields(data_backend):
+    fields = []
+    for field, value in data_backend.iteritems():
+        if 'settings' in value and URL_ID in value['settings']:
+            fields.append(field)
+
+    return fields
+
+
+# Fields that are actually stored as `url_id`
+# so they need correction
+_CORRECTION_FIELDS = _get_url_id_fields(ELASTICSEARCH_BACKEND.data_format)
+
+
+def document_url_id_correction(document_stream,
+                               conversion_table,
+                               correction_fields=_CORRECTION_FIELDS):
+    """Correct all url_id fields in the document_stream by using the
+    conversion_table
+
+    :param document_stream: stream of decoded url documents (dict)
+    :param conversion_table: old url_id to new url_id lookup table
+    :param correction_fields: url_list fields
+    :return: generator of corrected url documents
+    :rtype: stream of dict
+    """
+    # sniff and memorize a `url_id` related field's format
+    #   eg. it's a list of tuple or simply an integer
+    url_id_format = dict()
+
+    for ref_doc in document_stream:
+        # memorize document url_id related fields' accesses
+        field_access = dict()
+        # local lookup
+        #   1. conversion table's conversion
+        #   2. inverse `url_id` for no-match urls
+        lookup = dict()
+        old_ids = set()
+
+        # collect (and sniff format if not done yet)
+        for field_path in correction_fields:
+            if path_in_dict(field_path, ref_doc):
+                field_value = get_subdict_from_path(field_path, ref_doc)
+
+                # sniff, if necessary
+                if field_path not in url_id_format:
+                    field_format = _sniff_url_id_format(
+                        field_access, field_value)
+                    if field_format is not _FieldFormat.UNKNOWN:
+                        url_id_format[field_path] = field_format
+
+                field_access[field_path] = field_value
+
+                # collect
+                if field_path in url_id_format:
+                    old_ids.update(_collect_url_id(
+                        url_id_format[field_path], field_value))
+
+        # lookup
+        for _id in old_ids:
+            if _id in conversion_table:
+                # matched url
+                new_id = conversion_table[_id]
+            else:
+                # no-match (disappeared) url
+                new_id = -_id
+            lookup[_id] = new_id
+
+        # correction
+        for field_path, field_value in field_access.iteritems():
+            if field_path in url_id_format:
+                _correct_url_id(url_id_format[field_path], lookup,
+                                field_value, field_path, ref_doc)
+
+        yield ref_doc
+

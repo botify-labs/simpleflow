@@ -1,6 +1,6 @@
 import unittest
 
-from cdf.utils.dict import update_path_in_dict, flatten_dict, deep_dict, update_dict
+from cdf.utils.dict import update_path_in_dict, flatten_dict, deep_dict, update_dict, delete_path_in_dict
 
 
 class TestDictUtils(unittest.TestCase):
@@ -84,4 +84,27 @@ class TestDictUtils(unittest.TestCase):
         expected = {'a': {'e': 2, 'b': {'c': 1}}, 'k': 5}
 
         update_dict(_dict, update)
+        self.assertDictEqual(_dict, expected)
+
+    def test_delete_path(self):
+        # normal case
+        _dict = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
+        path = 'a.b.c'
+        expected = {'a': {'b': {'d': [1, 2]}}}
+        delete_path_in_dict(path, _dict)
+        self.assertEqual(_dict, expected)
+
+        # length 1 path
+        _dict = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
+        path = 'a'
+        expected = {}
+        delete_path_in_dict(path, _dict)
+        self.assertEqual(_dict, expected)
+
+
+        # `path` does not exist
+        _dict = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
+        path = 'd.k'
+        expected = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
+        delete_path_in_dict(path, _dict)
         self.assertDictEqual(_dict, expected)

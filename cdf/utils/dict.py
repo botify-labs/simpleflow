@@ -95,3 +95,35 @@ def update_dict(dict_to_update, update):
     for item in flatten_dict(update).iteritems():
         path, value = item
         update_path_in_dict(path, value, dict_to_update)
+
+
+# TODO extract dict path traversal part
+def delete_path_in_dict(path, _dict):
+    """Delete an element in the dict by its complete path
+
+    Note that this function does nothing if the path does not exists
+
+    :param path: the complete path to the element to delete
+        eg. `top.sub.element`
+    :param _dict: the dictionary to operate on
+    """
+    keys = path.split('.')
+    _len = len(keys)
+    current = _dict
+    for i in xrange(0, _len):
+        key = keys[i]
+        if i is _len - 1:
+            # override existing value
+            # create non-existing value
+            if key in current:
+                current.pop(key)
+        else:
+            if key in current:
+                _next = current[key]
+                if isinstance(_next, dict):
+                    current = _next
+                else:
+                    _next = {}
+                    current = _next
+            else:
+                return
