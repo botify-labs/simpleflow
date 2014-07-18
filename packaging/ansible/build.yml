@@ -1,7 +1,0 @@
-- hosts: all
-  gather_facts: False
-
-  roles:
-    - base
-    - ruby
-    - buildpkg
