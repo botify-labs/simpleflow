@@ -1,5 +1,0 @@
-- name: install FPM
-  tags: bootstrap
-  sudo: yes
-  command: "/opt/vagrant_ruby/bin/gem install fpm"
-
