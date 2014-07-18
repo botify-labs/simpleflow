@@ -2,6 +2,7 @@ import unittest
 import mock
 
 from cdf.features.comparison import matching
+from cdf.features.comparison.constants import MatchingState
 from cdf.features.comparison.exceptions import UrlKeyDecodingError
 
 
@@ -111,4 +112,150 @@ class TestUrlIdCorrection(unittest.TestCase):
             iter(documents), conversion_table=conversion,
             correction_fields=fields))
 
+        self.assertEqual(result, expected)
+
+
+class TestDocumentMatching(unittest.TestCase):
+    def setUp(self):
+        self.document1 = {'id': 1, 'url': 'a', 'url_hash': 'a'}
+        self.document2 = {'id': 2, 'url': 'b', 'url_hash': 'b'}
+        self.document3 = {'id': 3, 'url': 'c'}  # not crawled
+        self.document4 = {'id': 4, 'url': 'd', 'url_hash': 'd'}
+        self.document5 = {'id': 5, 'url': 'e', 'url_hash': 'e'}
+        self.document6 = {'id': 6, 'url': 'f'}  # not crawled
+        self.document7 = {'id': 7, 'url': 'g'}  # not crawled
+
+    def test_matching_state_ref_longer(self):
+        ref_stream = iter([
+            self.document1,
+            self.document3,
+            self.document4,
+            self.document6,
+            self.document7
+        ])
+
+        new_stream = iter([
+            self.document2,
+            self.document3,
+            self.document4,
+            self.document5,
+        ])
+
+        # inspect only the matching state
+        result = [state for state, _ in
+                  matching.document_match(ref_stream, new_stream)]
+
+        expected = [
+            MatchingState.DISAPPEAR,
+            MatchingState.DISCOVER,
+            MatchingState.MATCH,
+            MatchingState.MATCH,
+            MatchingState.DISCOVER,
+            MatchingState.DISAPPEAR,
+            MatchingState.DISAPPEAR
+        ]
+
+        self.assertEqual(expected, result)
+
+    def test_matching_state_new_longer(self):
+        ref_stream = iter([
+            self.document1,
+            self.document3,
+            self.document4,
+        ])
+
+        new_stream = iter([
+            self.document2,
+            self.document3,
+            self.document4,
+            self.document5,
+        ])
+
+        # inspect only the matching state
+        result = [state for state, _ in
+                  matching.document_match(ref_stream, new_stream)]
+
+        expected = [
+            MatchingState.DISAPPEAR,
+            MatchingState.DISCOVER,
+            MatchingState.MATCH,
+            MatchingState.MATCH,
+            MatchingState.DISCOVER,
+        ]
+
+        self.assertEqual(expected, result)
+
+    def test_matching_state_equal_length(self):
+        ref_stream = iter([
+            self.document1,
+            self.document3,
+            self.document4,
+        ])
+
+        new_stream = iter([
+            self.document2,
+            self.document3,
+            self.document4,
+        ])
+
+        # inspect only the matching state
+        result = [state for state, _ in
+                  matching.document_match(ref_stream, new_stream)]
+
+        expected = [
+            MatchingState.DISAPPEAR,
+            MatchingState.DISCOVER,
+            MatchingState.MATCH,
+            MatchingState.MATCH,
+        ]
+
+        self.assertEqual(expected, result)
+
+    def test_matching_output(self):
+        ref_stream = iter([
+            self.document1,
+            self.document3,
+        ])
+
+        new_stream = iter([
+            self.document2,
+            self.document3,
+        ])
+
+        # inspect only the matching state
+        result = [(state, docs) for state, docs in
+                  matching.document_match(ref_stream, new_stream)]
+        expected = [
+            (MatchingState.DISAPPEAR, (self.document1, None)),
+            (MatchingState.DISCOVER, (None, self.document2)),
+            (MatchingState.MATCH, (self.document3, self.document3)),
+        ]
+
+        self.assertEqual(expected, result)
+
+    def test_document_merge(self):
+        match_stream = iter([
+            (MatchingState.MATCH, (self.document1, self.document2)),
+            (MatchingState.DISAPPEAR, (self.document3, None)),
+            (MatchingState.DISCOVER, (None, self.document4)),
+        ])
+        mock_crawl_id = 1234
+
+        # inspect only the returned document
+        result = [doc for doc in
+                  matching.document_merge(match_stream, mock_crawl_id)]
+
+        expected = [
+            # merged
+            {"url": "b", 'url_hash': 'b', "id": 2,
+             "previous": {"url": "a", "id": 1, 'url_hash': 'a'},
+             "previous_exists": True},
+
+            # disappeared
+            # `crawl_id` and `_id` need to be corrected in this case
+            {'id': 3, 'url': 'c', 'crawl_id': 1234, '_id': '1234:3'},
+
+            # new discovered
+            {'id': 4, 'url': 'd', 'url_hash': 'd'}
+        ]
         self.assertEqual(result, expected)
