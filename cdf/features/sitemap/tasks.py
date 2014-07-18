@@ -132,14 +132,6 @@ def match_sitemap_urls(s3_uri,
     url_to_id = get_url_to_id_dict_from_stream(id_stream)
     #download sitemaps
 
-    sitemap_only_filename = 'sitemap_only.gz'
-    sitemap_only_filepath = os.path.join(tmp_dir,
-                                         sitemap_only_filename)
-
-    out_of_crawl_domain_filename = 'in_sitemap_out_of_crawl_domain.gz'
-    out_of_crawl_domain_filepath = os.path.join(tmp_dir,
-                                                out_of_crawl_domain_filename)
-
     domain_validator = DomainValidator(allowed_domains, blacklisted_domains)
     dataset = SitemapStreamDef.create_temporary_dataset()
 
@@ -171,24 +163,42 @@ def match_sitemap_urls(s3_uri,
         sitemap_info_filepath
     )
 
-    with gzip.open(sitemap_only_filepath, 'wb') as sitemap_only_file:
-        for url in sitemap_only_urls:
-            line = "{}\n".format(url)
-            line = unicode(line)
-            sitemap_only_file.write(line)
-
+    sitemap_only_filename = 'sitemap_only.gz'
+    sitemap_only_filepath = save_url_list_as_gzip(sitemap_only_urls,
+                                                  sitemap_only_filename,
+                                                  tmp_dir)
     s3.push_file(
         os.path.join(s3_uri, sitemap_only_filename),
         sitemap_only_filepath
     )
 
-    with gzip.open(out_of_crawl_domain_filepath, 'wb') as out_of_crawl_domain_file:
-        for url in out_of_crawl_domain_urls:
-            line = "{}\n".format(url)
-            line = unicode(line)
-            out_of_crawl_domain_file.write(line)
-
+    out_of_crawl_domain_filename = 'in_sitemap_out_of_crawl_domain.gz'
+    out_of_crawl_domain_filepath = save_url_list_as_gzip(out_of_crawl_domain_urls,
+                                                         out_of_crawl_domain_filename,
+                                                         tmp_dir)
     s3.push_file(
         os.path.join(s3_uri, out_of_crawl_domain_filename),
         out_of_crawl_domain_filepath
     )
+
+
+def save_url_list_as_gzip(url_list, filename, tmp_dir):
+    """Save a list of urls in a gzip file.
+    Each line contains one url.
+    :param url_list: the url list
+    :type url_list: list
+    :param filename: the name of the file to create
+    :type filename: str
+    :param tmp_dir: the dir where to create the file
+    :type tmp_dir: str
+    :returns: str - the path to the created file
+    """
+    local_filepath = os.path.join(tmp_dir, filename)
+    with gzip.open(local_filepath, 'wb') as local_file:
+        for url in url_list:
+            #use "+" instead of "format" since
+            #ampelmann has benchmarked both methods
+            #and found the "+" is almost twice faster.
+            local_file.write(unicode(url + "\n"))
+    return local_filepath
+
