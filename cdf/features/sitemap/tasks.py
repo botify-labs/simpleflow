@@ -196,8 +196,9 @@ def save_url_list_as_gzip(url_list, filename, tmp_dir):
     local_filepath = os.path.join(tmp_dir, filename)
     with gzip.open(local_filepath, 'wb') as local_file:
         for url in url_list:
-            line = "{}\n".format(url)
-            line = unicode(line)
-            local_file.write(line)
+            #use "+" instead of "format" since
+            #ampelmann has benchmarked both methods
+            #and found the "+" is almost twice faster.
+            local_file.write(unicode(url + "\n"))
     return local_filepath
 
