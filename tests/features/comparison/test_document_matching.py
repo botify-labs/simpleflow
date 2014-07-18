@@ -1,9 +1,19 @@
+import gzip
+import os
+import shutil
+import tempfile
 import unittest
 import mock
+import ujson as json
+from moto import mock_s3
+import boto
+from boto.s3.key import Key
 
 from cdf.features.comparison import matching
 from cdf.features.comparison.constants import MatchingState
 from cdf.features.comparison.exceptions import UrlKeyDecodingError
+from cdf.features.comparison.tasks import match_documents
+from cdf.utils.s3 import list_files
 
 
 class TestUrlKeyCoding(unittest.TestCase):
@@ -259,3 +269,43 @@ class TestDocumentMatching(unittest.TestCase):
             {'id': 4, 'url': 'd', 'url_hash': 'd'}
         ]
         self.assertEqual(result, expected)
+
+    # TODO also need to mock DB
+    # TODO mock stream_s3, load_db functions maybe a better idea
+    @mock_s3
+    def test_document_matching_task(self):
+        # prepare mocked s3
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        s3_uri = 's3://test_bucket'
+        doc_path = 'documents'
+        doc_pattern = 'url_documents.json.{}.gz'
+        files_json = '{"max_uid_we_crawled": 5}'
+        tmp_dir = tempfile.mkdtemp()
+        docs = [self.document1, self.document2, self.document3,
+                self.document4, self.document5]
+        gzip_files = []
+
+        for i, doc in enumerate(docs):
+            f = gzip.open(
+                os.path.join(tmp_dir, doc_pattern.format(i)), 'w')
+            f.write(json.dumps(doc))
+            f.close()
+            gzip_files.append(f.filename)
+
+        # fake document datasets
+        key = Key(bucket, name='files.json')
+        key.set_contents_from_string(files_json)
+        for i, doc in enumerate(docs):
+            key = Key(bucket, name=os.path.join(
+                doc_path, doc_pattern.format(i)))
+            key.set_contents_from_filename(gzip_files[i])
+
+        # test
+        match_documents(s3_uri, s3_uri, new_crawl_id=1234,
+                        tmp_dir=tmp_dir, part_size=2)
+        matched = list_files('s3://test_bucket/documents/comparison')
+
+        self.assertEqual(len(matched), 3)
+
+        shutil.rmtree(tmp_dir)
