@@ -6,11 +6,16 @@
 # FIXME puppet module `saas_elasticsearch` is broken for the moment
 sudo apt-get update
 sudo apt-get install openjdk-7-jre-headless -y;
-wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.0.1.deb;
-sudo dpkg -i elasticsearch-1.0.1.deb;
+#install elasticsearch only if required
+if ! sudo service elasticsearch status > /dev/null
+then
+	wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.0.1.deb;
+	sudo dpkg -i elasticsearch-1.0.1.deb;
+	rm elasticsearch-*.deb
+else
+	echo "Elastic search already installed"
+fi
 sudo service elasticsearch start;
-rm elasticsearch-*.deb
-
 
 # install levelDB related system packages
 sudo apt-get install libsnappy1
