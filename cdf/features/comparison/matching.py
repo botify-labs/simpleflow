@@ -7,8 +7,11 @@ from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 
 from cdf.utils.kvstore import LevelDB
 from cdf.features.comparison import logger
-from cdf.features.comparison.constants import SEPARATOR
-from cdf.features.comparison.exceptions import UrlKeyDecodingError, UrlIdFieldFormatError
+from cdf.features.comparison.constants import SEPARATOR, MatchingState
+from cdf.features.comparison.exceptions import (
+    UrlKeyDecodingError,
+    UrlIdFieldFormatError
+)
 from cdf.metadata.url.url_metadata import URL_ID
 from cdf.utils.dict import (
     delete_path_in_dict,
@@ -309,3 +312,134 @@ def document_url_id_correction(document_stream,
 
         yield ref_doc
 
+
+def document_match(ref_doc_stream, new_doc_stream):
+    """Match url documents between the reference crawl and the new crawl,
+    returns the matched documents and their matching status
+
+    The input and output document is python dictionary.
+
+    :param ref_doc_stream: the reference crawl's document stream, the stream
+        should be sorted on the `url` string of each document
+    :param new_doc_stream: the new crawl's document stream, the stream should
+        be sorted sorted on the `url` string of each document
+
+    :return: the merged document, in 3 cases:
+        1. matched url returns
+            MATCH, (ref document, new document)
+        2. newly discovered url
+            DISCOVER, (None, new document)
+        3. disappeared url
+            DISAPPEAR, (ref document, None)
+    """
+    # Iterator ended markers
+    ref_ended = False
+    new_ended = False
+
+    new_doc = next(new_doc_stream)
+    new_url = new_doc['url']
+    ref_doc = next(ref_doc_stream)
+    ref_url = ref_doc['url']
+
+    count = 0
+    # Merge-sort style merge
+    while True:
+        # 3 cases
+        if new_url == ref_url:
+            count += 1
+            if count % 1000 == 0 and count > 0:
+                logger.info('Matched {} document pairs ...'.format(count))
+            yield MatchingState.MATCH, (ref_doc, new_doc)
+
+            # advances both cursor
+            try:
+                ref_doc = next(ref_doc_stream)
+                ref_url = ref_doc['url']
+            except StopIteration:
+                logger.info('Reference dataset ended ...')
+                ref_doc = None
+                new_doc = None
+                ref_ended = True
+                break
+            try:
+                new_doc = next(new_doc_stream)
+                new_url = new_doc['url']
+            except StopIteration:
+                logger.info('New dataset ended ...')
+                ref_doc = None
+                new_doc = None
+                new_ended = True
+                break
+
+        elif new_url > ref_url:
+            # `disappeared` url
+            yield MatchingState.DISAPPEAR, (ref_doc, None)
+
+            # advances ref dataset cursor
+            try:
+                ref_doc = next(ref_doc_stream)
+                ref_url = ref_doc['url']
+            except StopIteration:
+                logger.info('Reference dataset ended ...')
+                ref_ended = True
+                break
+        else:
+            # new crawled url
+            yield MatchingState.DISCOVER, (None, new_doc)
+            # advances new dataset cursor
+            try:
+                new_doc = next(new_doc_stream)
+                new_url = new_doc['url']
+            except StopIteration:
+                logger.info('New dataset ended ...')
+                new_ended = True
+                break
+
+    logger.info("Matched {} documents in total ...".format(count))
+
+    if ref_ended:
+        # write remaining new dataset document
+        if new_doc:
+            yield MatchingState.DISCOVER, (None, new_doc)
+        for new_doc in new_doc_stream:
+            yield MatchingState.DISCOVER, (None, new_doc)
+    elif new_ended:
+        # write remaining reference dataset document
+        if ref_doc:
+            yield MatchingState.DISAPPEAR, (ref_doc, None)
+        for ref_doc in ref_doc_stream:
+            yield MatchingState.DISAPPEAR, (ref_doc, None)
+
+
+def document_merge(matching_stream, new_crawl_id):
+    """Merge matched url documents together
+
+    :param matching_stream: matched documents stream
+    :type matching_stream: MatchingStatus, (dict, dict)
+    :return: generator of merged document
+    :rtype: dict
+    """
+    result_doc = None
+    for state, (ref_doc, new_doc) in matching_stream:
+        if state is MatchingState.MATCH:
+            # merged the reference document
+            result_doc = new_doc
+            result_doc[_PREV_KEY] = ref_doc
+            result_doc[_PREV_EXISTS_KEY] = True
+        elif state is MatchingState.DISAPPEAR:
+            # correct the `crawl_id`
+            result_doc = ref_doc
+            result_doc[_CRAWL_ID_KEY] = new_crawl_id
+            # correct the `_id`
+            result_doc['_id'] = '{}:{}'.format(
+                new_crawl_id, result_doc['id'])
+        elif state is MatchingState.DISCOVER:
+            # no special processing for now
+            result_doc = new_doc
+        else:
+            # should not happen
+            logger.warn("Wrong matching status ignored: "
+                        "{}".format(state))
+            continue
+
+        yield result_doc
