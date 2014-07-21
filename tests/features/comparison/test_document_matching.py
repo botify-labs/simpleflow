@@ -263,7 +263,8 @@ class TestDocumentMatching(unittest.TestCase):
 
             # disappeared
             # `crawl_id` and `_id` need to be corrected in this case
-            {'id': 3, 'url': 'c', 'crawl_id': 1234, '_id': '1234:3'},
+            {'id': 3, 'url': 'c', 'crawl_id': 1234, '_id': '1234:3',
+             'disappeared': True},
 
             # new discovered
             {'id': 4, 'url': 'd', 'url_hash': 'd'}

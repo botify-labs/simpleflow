@@ -433,6 +433,8 @@ def document_merge(matching_stream, new_crawl_id):
             # correct the `_id`
             result_doc['_id'] = '{}:{}'.format(
                 new_crawl_id, result_doc['id'])
+            # add disappeared marker/flag
+            result_doc['disappeared'] = True
         elif state is MatchingState.DISCOVER:
             # no special processing for now
             result_doc = new_doc
