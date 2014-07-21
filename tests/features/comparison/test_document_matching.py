@@ -1,8 +1,19 @@
+import gzip
+import os
+import shutil
+import tempfile
 import unittest
 import mock
+import ujson as json
+from moto import mock_s3
+import boto
+from boto.s3.key import Key
 
 from cdf.features.comparison import matching
+from cdf.features.comparison.constants import MatchingState
 from cdf.features.comparison.exceptions import UrlKeyDecodingError
+from cdf.features.comparison.tasks import match_documents
+from cdf.utils.s3 import list_files
 
 
 class TestUrlKeyCoding(unittest.TestCase):
@@ -112,3 +123,190 @@ class TestUrlIdCorrection(unittest.TestCase):
             correction_fields=fields))
 
         self.assertEqual(result, expected)
+
+
+class TestDocumentMatching(unittest.TestCase):
+    def setUp(self):
+        self.document1 = {'id': 1, 'url': 'a', 'url_hash': 'a'}
+        self.document2 = {'id': 2, 'url': 'b', 'url_hash': 'b'}
+        self.document3 = {'id': 3, 'url': 'c'}  # not crawled
+        self.document4 = {'id': 4, 'url': 'd', 'url_hash': 'd'}
+        self.document5 = {'id': 5, 'url': 'e', 'url_hash': 'e'}
+        self.document6 = {'id': 6, 'url': 'f'}  # not crawled
+        self.document7 = {'id': 7, 'url': 'g'}  # not crawled
+
+    def test_matching_state_ref_longer(self):
+        ref_stream = iter([
+            self.document1,
+            self.document3,
+            self.document4,
+            self.document6,
+            self.document7
+        ])
+
+        new_stream = iter([
+            self.document2,
+            self.document3,
+            self.document4,
+            self.document5,
+        ])
+
+        # inspect only the matching state
+        result = [state for state, _ in
+                  matching.document_match(ref_stream, new_stream)]
+
+        expected = [
+            MatchingState.DISAPPEAR,
+            MatchingState.DISCOVER,
+            MatchingState.MATCH,
+            MatchingState.MATCH,
+            MatchingState.DISCOVER,
+            MatchingState.DISAPPEAR,
+            MatchingState.DISAPPEAR
+        ]
+
+        self.assertEqual(expected, result)
+
+    def test_matching_state_new_longer(self):
+        ref_stream = iter([
+            self.document1,
+            self.document3,
+            self.document4,
+        ])
+
+        new_stream = iter([
+            self.document2,
+            self.document3,
+            self.document4,
+            self.document5,
+        ])
+
+        # inspect only the matching state
+        result = [state for state, _ in
+                  matching.document_match(ref_stream, new_stream)]
+
+        expected = [
+            MatchingState.DISAPPEAR,
+            MatchingState.DISCOVER,
+            MatchingState.MATCH,
+            MatchingState.MATCH,
+            MatchingState.DISCOVER,
+        ]
+
+        self.assertEqual(expected, result)
+
+    def test_matching_state_equal_length(self):
+        ref_stream = iter([
+            self.document1,
+            self.document3,
+            self.document4,
+        ])
+
+        new_stream = iter([
+            self.document2,
+            self.document3,
+            self.document4,
+        ])
+
+        # inspect only the matching state
+        result = [state for state, _ in
+                  matching.document_match(ref_stream, new_stream)]
+
+        expected = [
+            MatchingState.DISAPPEAR,
+            MatchingState.DISCOVER,
+            MatchingState.MATCH,
+            MatchingState.MATCH,
+        ]
+
+        self.assertEqual(expected, result)
+
+    def test_matching_output(self):
+        ref_stream = iter([
+            self.document1,
+            self.document3,
+        ])
+
+        new_stream = iter([
+            self.document2,
+            self.document3,
+        ])
+
+        # inspect only the matching state
+        result = [(state, docs) for state, docs in
+                  matching.document_match(ref_stream, new_stream)]
+        expected = [
+            (MatchingState.DISAPPEAR, (self.document1, None)),
+            (MatchingState.DISCOVER, (None, self.document2)),
+            (MatchingState.MATCH, (self.document3, self.document3)),
+        ]
+
+        self.assertEqual(expected, result)
+
+    def test_document_merge(self):
+        match_stream = iter([
+            (MatchingState.MATCH, (self.document1, self.document2)),
+            (MatchingState.DISAPPEAR, (self.document3, None)),
+            (MatchingState.DISCOVER, (None, self.document4)),
+        ])
+        mock_crawl_id = 1234
+
+        # inspect only the returned document
+        result = [doc for doc in
+                  matching.document_merge(match_stream, mock_crawl_id)]
+
+        expected = [
+            # merged
+            {"url": "b", 'url_hash': 'b', "id": 2,
+             "previous": {"url": "a", "id": 1, 'url_hash': 'a'},
+             "previous_exists": True},
+
+            # disappeared
+            # `crawl_id` and `_id` need to be corrected in this case
+            {'id': 3, 'url': 'c', 'crawl_id': 1234, '_id': '1234:3',
+             'disappeared': True},
+
+            # new discovered
+            {'id': 4, 'url': 'd', 'url_hash': 'd'}
+        ]
+        self.assertEqual(result, expected)
+
+    # TODO also need to mock DB
+    # TODO mock stream_s3, load_db functions maybe a better idea
+    @mock_s3
+    def test_document_matching_task(self):
+        # prepare mocked s3
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        s3_uri = 's3://test_bucket'
+        doc_path = 'documents'
+        doc_pattern = 'url_documents.json.{}.gz'
+        files_json = '{"max_uid_we_crawled": 5}'
+        tmp_dir = tempfile.mkdtemp()
+        docs = [self.document1, self.document2, self.document3,
+                self.document4, self.document5]
+        gzip_files = []
+
+        for i, doc in enumerate(docs):
+            f = gzip.open(
+                os.path.join(tmp_dir, doc_pattern.format(i)), 'w')
+            f.write(json.dumps(doc))
+            f.close()
+            gzip_files.append(f.filename)
+
+        # fake document datasets
+        key = Key(bucket, name='files.json')
+        key.set_contents_from_string(files_json)
+        for i, doc in enumerate(docs):
+            key = Key(bucket, name=os.path.join(
+                doc_path, doc_pattern.format(i)))
+            key.set_contents_from_filename(gzip_files[i])
+
+        # test
+        match_documents(s3_uri, s3_uri, new_crawl_id=1234,
+                        tmp_dir=tmp_dir, part_size=2)
+        matched = list_files('s3://test_bucket/documents/comparison')
+
+        self.assertEqual(len(matched), 3)
+
+        shutil.rmtree(tmp_dir)
