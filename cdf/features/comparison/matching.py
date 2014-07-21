@@ -14,7 +14,6 @@ from cdf.features.comparison.exceptions import (
 )
 from cdf.metadata.url.url_metadata import URL_ID
 from cdf.utils.dict import (
-    delete_path_in_dict,
     path_in_dict,
     get_subdict_from_path,
     update_path_in_dict
@@ -87,7 +86,7 @@ def load_documents_db(document_stream, tmp_dirpath,
     """Bulk load documents to local KVStore
 
     :param document_stream: input key, value document stream
-    :param tmp_dirpath: temp dir for KVStore
+    :param tmp_dirpath: temp parent directory for KVStore
     :param buffer_size: the write buffer size
     :return: the KVStore handler
     """
@@ -416,6 +415,8 @@ def document_merge(matching_stream, new_crawl_id):
 
     :param matching_stream: matched documents stream
     :type matching_stream: MatchingStatus, (dict, dict)
+    :param new_crawl_id: crawl_id of the new crawl
+    :type new_crawl_id: int
     :return: generator of merged document
     :rtype: dict
     """
