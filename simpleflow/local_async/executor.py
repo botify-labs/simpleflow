@@ -58,7 +58,7 @@ class AdaptorFuture(futures.Future):
     @property
     def finished(self):
         # without cancellation `finish` has the same semantic as `done`
-        return self.done()
+        return self.done
 
     @property
     def done(self):
