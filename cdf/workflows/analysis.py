@@ -243,8 +243,7 @@ class AnalysisWorkflow(Workflow):
             config['access_token'],
             config['refresh_token'],
             config['ganalytics_site_id'],
-            s3_uri,
-            features_flags=['ganalytics'])
+            s3_uri)
 
         # Explicit dependency because we cannot use an argument to express the
         # dependency between ``import_data_from_ganalytics`` and
@@ -256,8 +255,7 @@ class AnalysisWorkflow(Workflow):
                 match_analytics_to_crawl_urls,
                 s3_uri,
                 context['first_part_id_size'],
-                context['part_id_size'],
-                features_flags=['ganalytics'])
+                context['part_id_size'])
 
             # Check if the future is finished to avoid blocking on
             # ganalytics_result.result below.
