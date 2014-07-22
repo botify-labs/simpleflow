@@ -130,7 +130,7 @@ def update_crawl_status(crawl_id, instance_id, crawl_endpoint, crawl_status):
     input.
 
     """
-    pass
+    return {}
 
 
 @activity.with_attributes(
@@ -145,7 +145,7 @@ def update_crawler_status(crawl_id, instance_id, crawler_endpoint, crawler_statu
     input.
 
     """
-    pass
+    return {}
 
 
 @activity.with_attributes(
@@ -160,7 +160,7 @@ def update_revision_status(revision_endpoint, revision_status):
     input.
 
     """
-    pass
+    return {}
 
 
 @activity.with_attributes(
@@ -192,7 +192,7 @@ def request_api(crawl_endpoint, revision_endpoint, api_requests):
     }
 
     """
-    pass
+    return {}
 
 
 class AnalysisWorkflow(Workflow):
