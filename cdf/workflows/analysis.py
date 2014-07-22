@@ -103,6 +103,13 @@ from cdf.features.ganalytics.tasks import (
 import_data_from_ganalytics = as_activity(import_data_from_ganalytics)
 match_analytics_to_crawl_urls = as_activity(match_analytics_to_crawl_urls)
 
+from cdf.features.sitemap.tasks import (
+    download_sitemap_files,
+    match_sitemap_urls,
+)
+download_sitemap_files = as_activity(download_sitemap_files)
+match_sitemap_urls = as_activity(match_sitemap_urls)
+
 from cdf.utils.remote_files import (
     nb_parts_from_crawl_location as enumerate_partitions
 )
@@ -228,6 +235,34 @@ class AnalysisWorkflow(Workflow):
 
         return [ganalytics_result]
 
+    def compute_sitemaps(self, context):
+        config = context['features_options']['sitemaps']
+        s3_uri = context['s3_uri']
+        features_flags = context['features_flags']
+        #FIXME get this from context
+        user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:24.0) Gecko/20100101 Firefox/24.0"
+        sitemaps_result = self.submit(
+            download_sitemap_files,
+            config['urls'],
+            s3_uri,
+            user_agent,
+            features_flags=features_flags)
+        if sitemaps_result.finished:
+            #FIXME get this from context
+            allowed_domains = ["popculture-papertoys.com"]
+            blacklisted_domains = []
+
+            sitemaps_result = self.submit(
+                match_sitemap_urls,
+                s3_uri,
+                allowed_domains,
+                blacklisted_domains,
+                context['first_part_id_size'],
+                context['part_id_size'],
+                features_flags=features_flags)
+
+        return [sitemaps_result]
+
     def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
@@ -334,6 +369,9 @@ class AnalysisWorkflow(Workflow):
 
         if 'ganalytics' in features_flags:
             intermediary_files.extend(self.compute_ganalytics(context))
+
+        if 'sitemap' in features_flags:
+            intermediary_files.extend(self.compute_sitemaps(context))
 
         futures.wait(*intermediary_files)
 
