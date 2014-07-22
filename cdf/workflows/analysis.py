@@ -232,7 +232,7 @@ class AnalysisWorkflow(Workflow):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
         s3_uri = context.get('s3_uri') or context['crawl_location']
-
+        tmp_dir = context.get('tmp_dir', None)
         first_part_id_size = context.get(
             'first_part_id_size',
             constants.FIRST_PART_ID_SIZE)
@@ -240,11 +240,14 @@ class AnalysisWorkflow(Workflow):
             'part_id_size',
             constants.PART_ID_SIZE)
 
-        revision_number = context['revision_number']
-        es_location = context['es_location']
-        es_index = context['es_index']
-        es_doc_type = context['es_doc_type']
+        # ES params
+        es_params = {
+            'es_location': context['es_location'],
+            'es_index': context['es_index'],
+            'es_doc_type': context['es_doc_type']
+        }
 
+        revision_number = context['revision_number']
         features_flags = context.get('features_flags', [])
 
         clusters_result = self.submit(
@@ -252,21 +255,24 @@ class AnalysisWorkflow(Workflow):
             crawl_id,
             s3_uri,
             first_part_id_size,
-            part_id_size)
+            part_id_size,
+            tmp_dir=tmp_dir)
 
         metadata_dup_result = self.submit(
             make_metadata_duplicates_file,
             crawl_id,
             s3_uri,
             first_part_id_size,
-            part_id_size)
+            part_id_size,
+            tmp_dir=tmp_dir)
 
         bad_link_result = self.submit(
             make_bad_link_file,
             crawl_id,
             s3_uri,
             first_part_id_size,
-            part_id_size)
+            part_id_size,
+            tmp_dir=tmp_dir)
 
         partitions = self.submit(enumerate_partitions, s3_uri)
 
@@ -281,20 +287,40 @@ class AnalysisWorkflow(Workflow):
         # list of futures returned by the call to ``self.startmap()``.
         bad_link_counter_results = [futures.Future()]
         if bad_link_result.finished:
-            bad_link_counter_results = self.starmap(
-                make_bad_link_counter_file,
-                [(crawl_id, s3_uri, part_id) for part_id in
-                 xrange(partitions.result)])
+            bad_link_counter_results = [
+                self.submit(
+                    make_bad_link_counter_file,
+                    crawl_id=crawl_id,
+                    s3_uri=s3_uri,
+                    tmp_dir=tmp_dir,
+                    part_id=part_id,
+                )
+                for part_id in xrange(partitions.result)
+            ]
 
-        inlinks_results = self.starmap(
-            make_links_counter_file,
-            [(crawl_id, s3_uri, part_id, 'in') for part_id in
-             xrange(partitions.result)])
+        inlinks_results = [
+            self.submit(
+                make_links_counter_file,
+                crawl_id=crawl_id,
+                s3_uri=s3_uri,
+                tmp_dir=tmp_dir,
+                link_direction='in',
+                part_id=part_id,
+            )
+            for part_id in xrange(partitions.result)
+        ]
 
-        outlinks_results = self.starmap(
-            make_links_counter_file,
-            [(crawl_id, s3_uri, part_id, 'out') for part_id in
-             xrange(partitions.result)])
+        outlinks_results = [
+            self.submit(
+                make_links_counter_file,
+                crawl_id=crawl_id,
+                s3_uri=s3_uri,
+                tmp_dir=tmp_dir,
+                link_direction='out',
+                part_id=part_id,
+            )
+            for part_id in xrange(partitions.result)
+        ]
 
         # Group all the futures that need to terminate before computing the
         # aggregations and generating documents.
@@ -311,40 +337,59 @@ class AnalysisWorkflow(Workflow):
 
         futures.wait(*intermediary_files)
 
-        aggregators_results = self.starmap(
-            compute_aggregators_from_part_id,
-            [(crawl_id, s3_uri, part_id) for part_id in
-             xrange(partitions.result)])
+        aggregators_results = [
+            self.submit(
+                compute_aggregators_from_part_id,
+                crawl_id=crawl_id,
+                s3_uri=s3_uri,
+                tmp_dir=tmp_dir,
+                part_id=part_id,
+            )
+            for part_id in xrange(partitions.result)
+        ]
 
         futures.wait(*aggregators_results)
         consolidate_result = self.submit(
             consolidate_aggregators,
             crawl_id,
-            s3_uri)
+            s3_uri,
+            tmp_dir=tmp_dir)
 
-        documents_results = self.starmap(
-            generate_documents,
-            [(crawl_id, s3_uri, part_id) for part_id in
-             xrange(partitions.result)])
+        documents_results = [
+            self.submit(
+                generate_documents,
+                crawl_id=crawl_id,
+                s3_uri=s3_uri,
+                tmp_dir=tmp_dir,
+                part_id=part_id,
+            )
+            for part_id in xrange(partitions.result)
+        ]
 
         elastic_search_results = [futures.Future()]
         if all(result.finished for result in documents_results):
-            elastic_search_results = self.starmap(
-                push_documents_to_elastic_search,
-                [(crawl_id, s3_uri, es_location, es_index, es_doc_type,
-                  part_id) for part_id in
-                 xrange(partitions.result)])
+            elastic_search_results = [
+                self.submit(
+                    push_documents_to_elastic_search,
+                    crawl_id=crawl_id,
+                    s3_uri=s3_uri,
+                    tmp_dir=tmp_dir,
+                    part_id=part_id,
+                    **es_params
+                )
+                for part_id in xrange(partitions.result)
+            ]
 
         futures.wait(*(elastic_search_results + [consolidate_result]))
 
         suggest_summary_result = self.submit(
             make_suggest_summary_file,
-            crawl_id,
-            s3_uri,
-            es_location,
-            es_index,
-            es_doc_type,
-            revision_number)
+            crawl_id=crawl_id,
+            s3_uri=s3_uri,
+            tmp_dir=tmp_dir,
+            revision_number=revision_number,
+            **es_params
+        )
         futures.wait(suggest_summary_result)
 
         crawl_status_result = self.submit(
