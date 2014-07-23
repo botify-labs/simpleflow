@@ -3,7 +3,7 @@ import os
 import tempfile
 import shutil
 
-from cdf.tasks.decorators import TemporaryDirTask as with_temp_dir
+from cdf.tasks.decorators import with_temporary_dir as with_temp_dir
 
 
 @with_temp_dir
