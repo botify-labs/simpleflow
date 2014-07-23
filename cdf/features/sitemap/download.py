@@ -19,7 +19,28 @@ from cdf.features.sitemap.document import (SiteMapType,
                                            instanciate_sitemap_document)
 
 Sitemap = namedtuple('Sitemap', ['url', 's3_uri', 'sitemap_index'])
-SitemapIndex = namedtuple('SitemapIndex', ['url', 'valid_urls', 'invalid_urls'])
+
+
+class SitemapIndex(object):
+    """A class to represent a sitemap index in a DownloadStatus
+    The class does not contain the document itself
+    only basic reporting information about it"""
+    def __init__(self, url, valid_urls, invalid_urls):
+        self.url = url
+        self.valid_urls = valid_urls
+        self.invalid_urls = invalid_urls
+
+    def __eq__(self, other):
+        return (self.url == other.url and
+                self.valid_urls == other.valid_urls and
+                self.invalid_urls == other.invalid_urls)
+
+    def __repr__(self):
+        return "({}, {}, {})".format(self.url, self.valid_urls, self.invalid_urls)
+
+    def __hash__(self):
+        return hash(repr(self))
+
 
 class Error(object):
     def __init__(self, url, file_type, error_type, message):
