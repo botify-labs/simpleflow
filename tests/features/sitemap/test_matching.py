@@ -222,6 +222,58 @@ class TestMatchSitemapUrlsFromDocuments(unittest.TestCase):
                                           sitemap_only_urls,
                                           out_of_crawl_domain_urls)
 
+        #check that error message is present
+        #do not check document valid_urls, invalid_urls count
+        #this is the role of test_parsing_error_case_count_urls
+        #(currently skipped because of libxml2 version issue)
+        self.assertEqual("ParsingError", document_1.error)
+        self.assertEqual("StartTag: invalid element name, line 4, column 3",
+                         document_1.error_message)
+
+        os.remove(file1.name)
+        os.remove(file2.name)
+
+    @unittest.skip("Requires libxml2 2.9.1 (available in Ubuntu 14.04)")
+    def test_parsing_error_case_count_urls(self):
+        file1 = tempfile.NamedTemporaryFile(delete=False)
+        file1.write('<?xml version="1.0" encoding="UTF-8"?>\n'
+                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+                    '<url><loc>http://foo/bar</loc></url>\n'
+                    '><\n'  # syntax error
+                    '<url><loc>http://foo/baz</loc></url>\n'
+                    '</urlset>\n')
+        file1.close()
+        document_1 = SitemapXmlDocument(file1.name, "http://foo.com/sitemap_1.xml")
+
+        file2 = tempfile.NamedTemporaryFile(delete=False)
+        file2.write(("http://foo.com/index.html\n"
+                     "http://bar.com"))
+        file2.close()
+        document_2 = SitemapTextDocument(file2.name, "http://foo.com/sitemap_2.txt")
+
+        documents = [document_1, document_2]
+
+        url_to_id = {}
+
+        dataset = mock.create_autospec(TemporaryDataset)
+        dataset = mock.MagicMock()
+
+        domain_validator = mock.create_autospec(DomainValidator)
+        domain_validator.is_valid.return_value = True
+
+        sitemap_only_nb_samples = 10
+        sitemap_only_urls = []
+        out_of_crawl_domain_urls = []
+
+        #call
+        match_sitemap_urls_from_documents(documents,
+                                          url_to_id,
+                                          dataset,
+                                          domain_validator,
+                                          sitemap_only_nb_samples,
+                                          sitemap_only_urls,
+                                          out_of_crawl_domain_urls)
+
         #check documents
         self.assertEqual(1, document_1.valid_urls)
         self.assertEqual(0, document_1.invalid_urls)
