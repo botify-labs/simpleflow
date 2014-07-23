@@ -99,7 +99,8 @@ class TestDownloadStatus(unittest.TestCase):
                      "s3://foo/sitemap_1.xml",
                      self.sitemap_index)],
             [SitemapIndex("http://foo/sitemap_index_1.xml", 10, 0)],
-            ["http://error1", "http://error2"]
+            [Error("http://error1", SiteMapType.UNKNOWN, "DownloadError", ""),
+             Error("http://error2", SiteMapType.UNKNOWN, "DownloadError", "")]
         )
 
         download_status_aux = DownloadStatus(
@@ -107,7 +108,7 @@ class TestDownloadStatus(unittest.TestCase):
                      "s3://foo/sitemap_2.xml",
                      self.sitemap_index)],
             [SitemapIndex("http://foo/sitemap_index_2.xml", 2, 1)],
-            ["http://error3"]
+            [Error("http://error3", SiteMapType.UNKNOWN, "DownloadError", "")]
         )
 
         download_status.update(download_status_aux)
@@ -124,7 +125,10 @@ class TestDownloadStatus(unittest.TestCase):
                 SitemapIndex("http://foo/sitemap_index_1.xml", 10, 0),
                 SitemapIndex("http://foo/sitemap_index_2.xml", 2, 1),
             ],
-            ["http://error1", "http://error2", "http://error3"]
+            [Error("http://error1", SiteMapType.UNKNOWN, "DownloadError", ""),
+             Error("http://error2", SiteMapType.UNKNOWN, "DownloadError", ""),
+             Error("http://error3", SiteMapType.UNKNOWN, "DownloadError", "")
+            ]
         )
         self.assertEqual(expected_result, download_status)
 
