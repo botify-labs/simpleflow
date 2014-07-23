@@ -25,10 +25,26 @@ class SitemapIndex(object):
     """A class to represent a sitemap index in a DownloadStatus
     The class does not contain the document itself
     only basic reporting information about it"""
-    def __init__(self, url, valid_urls, invalid_urls):
+    def __init__(self, url, valid_urls, invalid_urls, error_type=None, error_message=None):
+        """Constructor
+        """
         self.url = url
         self.valid_urls = valid_urls
         self.invalid_urls = invalid_urls
+        self.error_type = error_type
+        self.error_message = error_message
+
+    def to_dict(self):
+        result = {
+            "url": self.url,
+            "valid_urls": self.valid_urls,
+            "invalid_urls": self.invalid_urls
+        }
+        if self.error_type:
+            result["error"] = self.error_type
+        if self.error_message:
+            result["message"] = self.error_message
+        return result
 
     def __eq__(self, other):
         return (self.url == other.url and
@@ -121,7 +137,7 @@ class DownloadStatus(object):
         :returns: str"""
         d = {
             "sitemaps": [sitemap.__dict__ for sitemap in self.sitemaps],
-            "sitemap_indexes": [sitemap_index.__dict__ for sitemap_index in self.sitemap_indexes],
+            "sitemap_indexes": [sitemap_index.to_dict() for sitemap_index in self.sitemap_indexes],
             "errors": [e.to_dict() for e in self.errors]
         }
         return json.dumps(d)
