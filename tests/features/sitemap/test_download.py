@@ -283,7 +283,7 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
 
         self.user_agent = "custom user-agent"
 
-        self.sitemap_mock = SitemapXmlDocument("/tmp/foo", "http://foo")
+        self.sitemap_mock = SitemapXmlDocument("/tmp/bar.xml", "http://foo/bar.xml")
 
         self.unknown_sitemap_mock = mock.create_autospec(SitemapXmlDocument)
         self.unknown_sitemap_mock.get_sitemap_type.return_value = SiteMapType.UNKNOWN
@@ -425,12 +425,29 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
                          download_url_mock.mock_calls)
         remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
 
-    def test_xml_parsing_error_url_generator(self):
-        self.sitemap_index_mock.get_urls.side_effect = [ParsingError(), "http://foo.com"]
+    @mock.patch("cdf.features.sitemap.download.instanciate_sitemap_document", autospec=True)
+    @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
+    def test_xml_parsing_error_url_generator(self,
+                                             download_url_mock,
+                                             instanciate_sitemap_document_mock):
+        download_url_mock.return_value = "/tmp/foo/bar.xml"
+        instanciate_sitemap_document_mock.return_value = self.sitemap_mock
 
-        self.assertRaises(
-            ParsingError,
-            download_sitemaps_from_sitemap_index,
+        def url_generator():
+            self.sitemap_index_mock.valid_urls += 1
+            yield "http://foo/bar.xml"
+            raise ParsingError()
+        self.sitemap_index_mock.get_urls = mock.MagicMock()
+        self.sitemap_index_mock.get_urls = url_generator
+
+        actual_result = download_sitemaps_from_sitemap_index(
             self.sitemap_index_mock,
             self.output_dir,
             self.user_agent)
+        expected_result = DownloadStatus()
+        expected_result.add_success_sitemap(
+            Sitemap("http://foo/bar.xml", "/tmp/foo/bar.xml", self.sitemap_index_mock.url)
+        )
+        expected_result.add_success_sitemap_index(SitemapIndex(self.sitemap_index_mock.url, 1, 0))
+        self.assertEqual(expected_result, actual_result)
+
