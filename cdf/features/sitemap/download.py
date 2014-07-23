@@ -213,9 +213,8 @@ def download_sitemaps(input_url, output_directory, user_agent):
     elif is_sitemap_index(sitemap_type):
         #download referenced sitemaps
         result = download_sitemaps_from_sitemap_index(sitemap_document,
-                                             output_directory,
-                                             user_agent,
-                                             input_url)
+                                                      output_directory,
+                                                      user_agent)
         #remove sitemap index file
         os.remove(output_file_path)
     else:
@@ -224,7 +223,7 @@ def download_sitemaps(input_url, output_directory, user_agent):
     return result
 
 
-def download_sitemaps_from_sitemap_index(sitemap_index_document, output_directory, user_agent, sitemap_index=None):
+def download_sitemaps_from_sitemap_index(sitemap_index_document, output_directory, user_agent):
     """Download sitemap files from a sitemap index.
     :param sitemap_index_document: the input sitemap index
     :type sitemap_index_document: SitemapIndexXmlDocument
@@ -232,11 +231,7 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
     :type output_directory: str
     :param user_agent: the user agent to use for the query.
     :type user_agent: str
-    :param sitemap_index: the url of the sitemap index
-                          that lists all the input urls
-    :type sitemap_index: str
-    :returns: dict - a dict url -> output file path
-    :raises: ParsingError - in case url generator raises
+    :returns: DownloadStatus
     """
     result = DownloadStatus()
     url_generator = sitemap_index_document.get_urls()
@@ -277,7 +272,7 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
         sitemap_type = sitemap_document.get_sitemap_type()
         #  check if it is actually a sitemap
         if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
-            result.add_success_sitemap(Sitemap(url, file_path, sitemap_index))
+            result.add_success_sitemap(Sitemap(url, file_path, sitemap_index_document.url))
         elif is_sitemap_index(sitemap_type):
             error_message = "'{}' is a sitemap index. It cannot be referenced in a sitemap index.".format(url)
             logger.warning(error_message)
