@@ -8,6 +8,12 @@ from enum import Enum
 SEPARATOR = '\0'
 
 
+# File and directory constants
+MATCHED_FILE_PATTERN = 'matched.json.{}.gz'
+MATCHED_FILE_REGEXP = MATCHED_FILE_PATTERN.format('[0-9]+')
+COMPARISON_PATH = 'comparison'
+
+
 class MatchingState(Enum):
     MATCH = 1
     DISCOVER = 2
