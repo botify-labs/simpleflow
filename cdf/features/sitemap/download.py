@@ -212,7 +212,7 @@ def download_sitemaps(input_url, output_directory, user_agent):
     #if it is a sitemap index
     elif is_sitemap_index(sitemap_type):
         #download referenced sitemaps
-        result = download_sitemaps_from_urls(sitemap_document,
+        result = download_sitemaps_from_sitemap_index(sitemap_document,
                                              output_directory,
                                              user_agent,
                                              input_url)
@@ -224,13 +224,10 @@ def download_sitemaps(input_url, output_directory, user_agent):
     return result
 
 
-def download_sitemaps_from_urls(sitemap_index_document, output_directory, user_agent, sitemap_index=None):
-    """Download sitemap files from a list of urls.
-    If the input url is a sitemap, the file will simply be downloaded.
-    The function returns a dict url -> output file path
-    If one can file could not be downloaded, the output file path is None.
-    :param urls: a generator of input urls
-    :type urls: generator
+def download_sitemaps_from_sitemap_index(sitemap_index_document, output_directory, user_agent, sitemap_index=None):
+    """Download sitemap files from a sitemap index.
+    :param sitemap_index_document: the input sitemap index
+    :type sitemap_index_document: SitemapIndexXmlDocument
     :param output_directory: the path to the directory where to save the files
     :type output_directory: str
     :param user_agent: the user agent to use for the query.

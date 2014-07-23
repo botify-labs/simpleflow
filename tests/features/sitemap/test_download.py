@@ -7,7 +7,7 @@ from cdf.features.sitemap.download import (DownloadStatus,
                                            Sitemap,
                                            SitemapIndex,
                                            download_sitemaps,
-                                           download_sitemaps_from_urls,
+                                           download_sitemaps_from_sitemap_index,
                                            get_output_file_path)
 
 from cdf.features.sitemap.document import (SiteMapType,
@@ -188,11 +188,11 @@ class TestDownloadSiteMaps(unittest.TestCase):
 
     @mock.patch("os.remove", autospec=True)
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
-    @mock.patch("cdf.features.sitemap.download.download_sitemaps_from_urls", autospec=True)
+    @mock.patch("cdf.features.sitemap.download.download_sitemaps_from_sitemap_index", autospec=True)
     @mock.patch("cdf.features.sitemap.download.instanciate_sitemap_document", autospec=True)
     def test_sitemap_index_case(self,
                                 instanciate_sitemap_document_mock,
-                                download_sitemaps_from_urls_mock,
+                                download_sitemaps_from_sitemap_index_mock,
                                 download_url_mock,
                                 remove_mock):
         self.sitemap_index_mock.get_urls = mock.MagicMock()
@@ -202,7 +202,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
         download_status = DownloadStatus()
         download_status.add_success_sitemap(Sitemap("http://foo", "s3://foo", self.sitemap_url))
         download_status.add_success_sitemap_index(SitemapIndex(self.sitemap_index_url, 0, 0))
-        download_sitemaps_from_urls_mock.return_value = download_status
+        download_sitemaps_from_sitemap_index_mock.return_value = download_status
         input_url = self.sitemap_index_url
         actual_result = download_sitemaps(input_url,
                                           self.output_dir,
@@ -215,7 +215,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
         download_url_mock.assert_called_once_with(self.sitemap_index_url,
                                                   "/tmp/foo/sitemap_index.xml",
                                                   self.user_agent)
-        self.assertEqual(1, download_sitemaps_from_urls_mock.call_count)
+        self.assertEqual(1, download_sitemaps_from_sitemap_index_mock.call_count)
         remove_mock.assert_called_once_with("/tmp/foo/sitemap_index.xml")
 
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
@@ -318,7 +318,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                           download_url_mock):
         instanciate_sitemap_document_mock.return_value = self.sitemap_mock
 
-        actual_result = download_sitemaps_from_urls(self.document,
+        actual_result = download_sitemaps_from_sitemap_index(self.document,
                                                     self.output_dir,
                                                     self.user_agent,
                                                     self.sitemap_index)
@@ -338,7 +338,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         document = SitemapIndexXmlDocument("/tmp/foo", "http://foo")
         document.get_urls = mock.MagicMock()
         document.get_urls.return_value = iter([])
-        actual_result = download_sitemaps_from_urls(document,
+        actual_result = download_sitemaps_from_sitemap_index(document,
                                                     self.output_dir,
                                                     self.user_agent)
         expected_result = DownloadStatus()
@@ -357,7 +357,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
             self.sitemap_mock
         ])
 
-        actual_result = download_sitemaps_from_urls(self.document,
+        actual_result = download_sitemaps_from_sitemap_index(self.document,
                                                     self.output_dir,
                                                     self.user_agent,
                                                     self.sitemap_index)
@@ -390,7 +390,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
             self.sitemap_mock
         ])
 
-        actual_result = download_sitemaps_from_urls(self.document,
+        actual_result = download_sitemaps_from_sitemap_index(self.document,
                                                     self.output_dir,
                                                     self.user_agent,
                                                     self.sitemap_index)
@@ -432,7 +432,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         is_file_mock.return_value = True
 
-        actual_result = download_sitemaps_from_urls(document,
+        actual_result = download_sitemaps_from_sitemap_index(document,
                                                     self.output_dir,
                                                     self.user_agent,
                                                     self.sitemap_index)
@@ -458,7 +458,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         self.assertRaises(
             ParsingError,
-            download_sitemaps_from_urls,
+            download_sitemaps_from_sitemap_index,
             self.document,
             self.output_dir,
             self.user_agent)
