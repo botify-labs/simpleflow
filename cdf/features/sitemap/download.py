@@ -212,16 +212,10 @@ def download_sitemaps(input_url, output_directory, user_agent):
     #if it is a sitemap index
     elif is_sitemap_index(sitemap_type):
         #download referenced sitemaps
-        try:
-            result = download_sitemaps_from_urls(sitemap_document.get_urls(),
-                                                 output_directory,
-                                                 user_agent,
-                                                 input_url)
-            result.add_success_sitemap_index(SitemapIndex(sitemap_document.url,
-                                                          sitemap_document.valid_urls,
-                                                          sitemap_document.invalid_urls))
-        except ParsingError as e:
-            result.add_error(input_url, sitemap_type, e.__class__.__name__, e.message)
+        result = download_sitemaps_from_urls(sitemap_document,
+                                             output_directory,
+                                             user_agent,
+                                             input_url)
         #remove sitemap index file
         os.remove(output_file_path)
     else:
@@ -230,7 +224,7 @@ def download_sitemaps(input_url, output_directory, user_agent):
     return result
 
 
-def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_index=None):
+def download_sitemaps_from_urls(sitemap_index_document, output_directory, user_agent, sitemap_index=None):
     """Download sitemap files from a list of urls.
     If the input url is a sitemap, the file will simply be downloaded.
     The function returns a dict url -> output file path
@@ -248,7 +242,28 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
     :raises: ParsingError - in case url generator raises
     """
     result = DownloadStatus()
-    for url in urls:
+    url_generator = sitemap_index_document.get_urls()
+    while True:
+        try:
+            url = url_generator.next()
+        except ParsingError as e:
+            if sitemap_index_document.valid_urls > 0 or sitemap_index_document.invalid_urls > 0:
+                #if we were able to process at least one url
+                #report the sitemap index as success
+                result.add_success_sitemap_index(SitemapIndex(sitemap_index_document.url,
+                                                              sitemap_index_document.valid_urls,
+                                                              sitemap_index_document.invalid_urls,
+                                                              e.__class__.__name__,
+                                                              e.message))
+            else:
+                #otherwise report it as error
+                result.add_error(sitemap_index_document.url,
+                                 SiteMapType.SITEMAP_INDEX,
+                                 e.__class__.__name__, e.message)
+            return result
+        except StopIteration:
+            break
+
         file_path = get_output_file_path(url, output_directory)
         time.sleep(DOWNLOAD_DELAY)
         try:
@@ -277,6 +292,10 @@ def download_sitemaps_from_urls(urls, output_directory, user_agent, sitemap_inde
             logger.warning(error_message)
             result.add_error(url, sitemap_type, "UnhandledFileType", error_message)
             os.remove(file_path)
+
+    result.add_success_sitemap_index(SitemapIndex(sitemap_index_document.url,
+                                                  sitemap_index_document.valid_urls,
+                                                  sitemap_index_document.invalid_urls))
     return result
 
 

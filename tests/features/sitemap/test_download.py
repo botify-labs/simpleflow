@@ -201,6 +201,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
 
         download_status = DownloadStatus()
         download_status.add_success_sitemap(Sitemap("http://foo", "s3://foo", self.sitemap_url))
+        download_status.add_success_sitemap_index(SitemapIndex(self.sitemap_index_url, 0, 0))
         download_sitemaps_from_urls_mock.return_value = download_status
         input_url = self.sitemap_index_url
         actual_result = download_sitemaps(input_url,
@@ -292,12 +293,23 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
 
         self.sitemap_mock = mock.create_autospec(SitemapXmlDocument)
         self.sitemap_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_XML
+        self.sitemap_mock.url = "http://foo"
+        self.sitemap_mock.valid_urls = 0
+        self.sitemap_mock.invalid_urls = 0
 
         self.sitemap_index_mock = mock.create_autospec(SitemapXmlDocument)
         self.sitemap_index_mock.get_sitemap_type.return_value = SiteMapType.SITEMAP_INDEX
+        self.sitemap_index_mock.valid_urls = 0
+        self.sitemap_index_mock.invalid_urls = 0
 
         self.unknown_sitemap_mock = mock.create_autospec(SitemapXmlDocument)
         self.unknown_sitemap_mock.get_sitemap_type.return_value = SiteMapType.UNKNOWN
+        self.unknown_sitemap_mock.valid_urls = 0
+        self.unknown_sitemap_mock.invalid_urls = 0
+
+        self.document = SitemapIndexXmlDocument("/tmp/foo", "http://foo")
+        self.document.get_urls = mock.MagicMock()
+        self.document.get_urls.return_value = iter(self.urls)
 
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
     @mock.patch("cdf.features.sitemap.download.instanciate_sitemap_document", autospec=True)
@@ -306,7 +318,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                           download_url_mock):
         instanciate_sitemap_document_mock.return_value = self.sitemap_mock
 
-        actual_result = download_sitemaps_from_urls(self.urls,
+        actual_result = download_sitemaps_from_urls(self.document,
                                                     self.output_dir,
                                                     self.user_agent,
                                                     self.sitemap_index)
@@ -317,16 +329,21 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml",
                                                     "/tmp/foo/baz.xml",
                                                     self.sitemap_index))
-
+        expected_result.add_success_sitemap_index(SitemapIndex("http://foo", 0, 0))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
 
     def test_empty_list(self):
-        actual_result = download_sitemaps_from_urls([],
+        document = SitemapIndexXmlDocument("/tmp/foo", "http://foo")
+        document.get_urls = mock.MagicMock()
+        document.get_urls.return_value = iter([])
+        actual_result = download_sitemaps_from_urls(document,
                                                     self.output_dir,
                                                     self.user_agent)
-        self.assertEqual(DownloadStatus(), actual_result)
+        expected_result = DownloadStatus()
+        expected_result.add_success_sitemap_index(SitemapIndex("http://foo", 0, 0))
+        self.assertEqual(expected_result, actual_result)
 
     @mock.patch("os.remove", autospec=True)
     @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
@@ -340,7 +357,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
             self.sitemap_mock
         ])
 
-        actual_result = download_sitemaps_from_urls(self.urls,
+        actual_result = download_sitemaps_from_urls(self.document,
                                                     self.output_dir,
                                                     self.user_agent,
                                                     self.sitemap_index)
@@ -354,6 +371,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                                   SiteMapType.SITEMAP_INDEX,
                                   "NotASitemapFile",
                                   error_message)
+        expected_result.add_success_sitemap_index(SitemapIndex("http://foo", 0, 0))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
@@ -372,7 +390,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
             self.sitemap_mock
         ])
 
-        actual_result = download_sitemaps_from_urls(self.urls,
+        actual_result = download_sitemaps_from_urls(self.document,
                                                     self.output_dir,
                                                     self.user_agent,
                                                     self.sitemap_index)
@@ -386,6 +404,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                                   SiteMapType.UNKNOWN,
                                   "UnhandledFileType",
                                   error_message)
+        expected_result.add_success_sitemap_index(SitemapIndex("http://foo", 0, 0))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
@@ -403,13 +422,17 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                             download_url_mock,
                             is_file_mock,
                             remove_mock):
+        document = SitemapIndexXmlDocument("/tmp/foo", "http://foo")
+        document.get_urls = mock.MagicMock()
+        document.get_urls.return_value = iter(self.urls)
+
         download_url_mock.side_effect = [DownloadError("error message"), "/tmp/foo/baz.xml"]
 
         instanciate_sitemap_document_mock.return_value = self.sitemap_mock
 
         is_file_mock.return_value = True
 
-        actual_result = download_sitemaps_from_urls(self.urls,
+        actual_result = download_sitemaps_from_urls(document,
                                                     self.output_dir,
                                                     self.user_agent,
                                                     self.sitemap_index)
@@ -422,19 +445,20 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         expected_result.add_success_sitemap(
             Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml", self.sitemap_index)
         )
+        #0 valid urls because we're mocking get_urls() which is supposed to
+        #increment the valid url count
+        expected_result.add_success_sitemap_index(SitemapIndex("http://foo", 0, 0))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
         remove_mock.assert_called_once_with("/tmp/foo/bar.xml")
 
     def test_xml_parsing_error_url_generator(self):
-        def url_generator():
-            raise ParsingError()
-            yield "http://foo.com"
+        self.document.get_urls.side_effect = [ParsingError(), "http://foo.com"]
 
         self.assertRaises(
             ParsingError,
             download_sitemaps_from_urls,
-            url_generator(),
+            self.document,
             self.output_dir,
             self.user_agent)
