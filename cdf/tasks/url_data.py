@@ -14,15 +14,27 @@ from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.utils import get_data_streams_from_storage
 from cdf.core.features import Feature
 from .decorators import TemporaryDirTask as with_temporary_dir
-from .constants import DEFAULT_FORCE_FETCH, DOCS_NAME_PATTERN, DOCS_DIRPATH
+from .constants import (
+    DEFAULT_FORCE_FETCH,
+    DOCS_NAME_PATTERN,
+    DOCS_DIRPATH,
+    COMPARISON_DOCS_DIRPATH,
+    COMPARISON_DOCS_NAME_PATTERN
+)
 
 
-def _get_docs_filename(part_id):
-    return DOCS_NAME_PATTERN.format(part_id)
+def _get_docs_filename(part_id, comparison=False):
+    if comparison:
+        return COMPARISON_DOCS_NAME_PATTERN.format(part_id)
+    else:
+        return DOCS_NAME_PATTERN.format(part_id)
 
 
-def _get_docs_dirpath(s3_path):
-    return os.path.join(s3_path, DOCS_DIRPATH)
+def _get_docs_dirpath(s3_path, comparison=False):
+    return os.path.join(
+        s3_path,
+        COMPARISON_DOCS_DIRPATH if comparison else DOCS_DIRPATH
+    )
 
 
 def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
@@ -59,6 +71,7 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
 def push_documents_to_elastic_search(crawl_id, s3_uri,
                                      es_location, es_index, es_doc_type,
                                      part_id=None,
+                                     comparison=False,
                                      tmp_dir=None,
                                      force_fetch=DEFAULT_FORCE_FETCH):
     """Push pre-generated url documents to ElasticSearch
@@ -67,6 +80,8 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
     :param part_id: part_id of the crawl
         - if `None`, will push for all possible part_id
         - if is a list or an int, will push the specified parts
+    :param comparison: if the comparison feature is activated
+        this changes the generated document location
     :param es_location: ES location, eg. `http://location_url:9200`
     :param es_index: index name
     :param es_doc_type: doc type in the index
@@ -74,7 +89,7 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
     """
     host, port = es_location[7:].split(':')
     es = Elasticsearch([{'host': host, 'port': int(port)}])
-    docs_uri = _get_docs_dirpath(s3_uri)
+    docs_uri = _get_docs_dirpath(s3_uri, comparison=comparison)
 
     # support for different `part_id` param
     if part_id is None:
@@ -83,7 +98,7 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
     else:
         part_ids = part_id if isinstance(part_id, list) else [part_id]
 
-    fetch_regexp = [_get_docs_filename(i) for i in part_ids]
+    fetch_regexp = [_get_docs_filename(i, comparison) for i in part_ids]
     files_fetched = fetch_files(docs_uri, tmp_dir,
                                 regexp=fetch_regexp,
                                 force_fetch=force_fetch)

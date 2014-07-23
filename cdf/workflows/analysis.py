@@ -109,6 +109,10 @@ from cdf.utils.remote_files import (
 enumerate_partitions.name = 'enumerate_partitions'
 enumerate_partitions = as_activity(enumerate_partitions)
 
+from cdf.features.comparison.tasks import match_documents
+match_documents = as_activity(match_documents)
+
+
 
 UPDATE_STATUS_TIMEOUTS = {
     'schedule_to_start_timeout': 30,
@@ -366,6 +370,19 @@ class AnalysisWorkflow(Workflow):
             for part_id in xrange(partitions.result)
         ]
 
+        # document merging for comparison
+        # need to wait for documents generation
+        futures.wait(*documents_results)
+        has_comparison = 'comparison' in features_flags
+        if has_comparison:
+            ref_s3_uri = context['features_options']['comparison']['s3_uri']
+            self.submit(
+                match_documents,
+                new_s3_uri=s3_uri,
+                ref_s3_uri=ref_s3_uri,
+                new_crawl_id=crawl_id
+            )
+
         elastic_search_results = [futures.Future()]
         if all(result.finished for result in documents_results):
             elastic_search_results = [
@@ -375,6 +392,7 @@ class AnalysisWorkflow(Workflow):
                     s3_uri=s3_uri,
                     tmp_dir=tmp_dir,
                     part_id=part_id,
+                    comparison=has_comparison,
                     **es_params
                 )
                 for part_id in xrange(partitions.result)
