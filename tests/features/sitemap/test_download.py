@@ -307,7 +307,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         self.unknown_sitemap_mock.valid_urls = 0
         self.unknown_sitemap_mock.invalid_urls = 0
 
-        self.document = SitemapIndexXmlDocument("/tmp/foo", "http://foo")
+        self.document = SitemapIndexXmlDocument("/tmp/sitemap_index.xml", self.sitemap_index)
         self.document.get_urls = mock.MagicMock()
         self.document.get_urls.return_value = iter(self.urls)
 
@@ -329,7 +329,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
         expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml",
                                                     "/tmp/foo/baz.xml",
                                                     self.sitemap_index))
-        expected_result.add_success_sitemap_index(SitemapIndex("http://foo", 0, 0))
+        expected_result.add_success_sitemap_index(SitemapIndex(self.sitemap_index, 0, 0))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
@@ -371,7 +371,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                                   SiteMapType.SITEMAP_INDEX,
                                   "NotASitemapFile",
                                   error_message)
-        expected_result.add_success_sitemap_index(SitemapIndex("http://foo", 0, 0))
+        expected_result.add_success_sitemap_index(SitemapIndex(self.sitemap_index, 0, 0))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
@@ -404,7 +404,7 @@ class TestDownloadSitemapsFromUrls(unittest.TestCase):
                                   SiteMapType.UNKNOWN,
                                   "UnhandledFileType",
                                   error_message)
-        expected_result.add_success_sitemap_index(SitemapIndex("http://foo", 0, 0))
+        expected_result.add_success_sitemap_index(SitemapIndex(self.sitemap_index, 0, 0))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
                          download_url_mock.mock_calls)
