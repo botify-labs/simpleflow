@@ -4,23 +4,24 @@ import re
 from urlparse import urlparse
 
 from cdf.utils import s3
+from cdf.features.sitemap.exceptions import ParsingError
 from cdf.features.sitemap.document import instanciate_sitemap_document
 from cdf.features.sitemap.download import parse_download_status_from_json
 
 
-def match_sitemap_urls_from_stream(url_generator,
-                                   url_to_id,
-                                   dataset,
-                                   domain_validator,
-                                   nb_samples_to_keep,
-                                   sitemap_only_urls,
-                                   out_of_crawl_domain_urls):
-    """The method matches sitemap urls from a stream
+def match_sitemap_urls_from_documents(documents,
+                                      url_to_id,
+                                      dataset,
+                                      domain_validator,
+                                      nb_samples_to_keep,
+                                      sitemap_only_urls,
+                                      out_of_crawl_domain_urls):
+    """The method matches sitemap urls from a list of documents
     to the urls in the sitemap.
     If the url is in the crawl, we add its url id in an output stream.
     If not we write the url itself in an output file.
-    :param url_generator: an iterator over the urls in the sitemap
-    :type url_generator: iterator
+    :param sitemap_documents: the list of input sitemap documents
+    :type sitemap_documents: list
     :param url_to_id: a dict for the urls in the crawl url->urlid
     :type url_to_id: dict
     :param dataset: the dataset where to store urlids for urls that are both in
@@ -36,11 +37,53 @@ def match_sitemap_urls_from_stream(url_generator,
                                      in the sitemaps but out of crawl domain.
     :type out_of_crawl_domain_urls: list
     """
+    for document in documents:
+        try:
+            match_sitemap_urls_from_document(document,
+                                             url_to_id,
+                                             dataset,
+                                             domain_validator,
+                                             nb_samples_to_keep,
+                                             sitemap_only_urls,
+                                             out_of_crawl_domain_urls)
+        except ParsingError as e:
+            document.set_error(e.__class__.__name__, e.message)
+
+
+def match_sitemap_urls_from_document(document,
+                                     url_to_id,
+                                     dataset,
+                                     domain_validator,
+                                     nb_samples_to_keep,
+                                     sitemap_only_urls,
+                                     out_of_crawl_domain_urls):
+    """The method matches sitemap urls from a document
+    to the urls in the sitemap.
+    If the url is in the crawl, we add its url id in an output stream.
+    If not we write the url itself in an output file.
+    :param document: the input sitemap document
+    :type document: SitemapDocument
+    :param url_to_id: a dict for the urls in the crawl url->urlid
+    :type url_to_id: dict
+    :param dataset: the dataset where to store urlids for urls that are both in
+                    sitemap and in crawl
+    :type dataset: TemporaryDataset
+    :param nb_samples_to_keep: the maximum number of distinct urls to keep
+                               for urls that are only in the sitemaps.
+    :type nb_samples_to_keep: int
+    :param sitemap_only_url: a list where to add samples urls that are
+                             in the sitemaps but not in the crawl.
+    :type sitemap_only_url: list
+    :param out_of_crawl_domain_urls: a list where to add samples urls that are
+                                     in the sitemaps but out of crawl domain.
+    :type out_of_crawl_domain_urls: list
+    :raises: ParsingError
+    """
     #build a set to be able to test quickly if a sitemap only url
     #has already been seen
     sitemap_only_urls_set = set(sitemap_only_urls)
     out_of_crawl_domain_urls_set = set(out_of_crawl_domain_urls)
-    for url in url_generator:
+    for url in document.get_urls():
         urlid = url_to_id.get(url, None)
         if urlid is None:
             if domain_validator.is_valid(url):

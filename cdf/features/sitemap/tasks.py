@@ -1,6 +1,5 @@
 import os.path
 import gzip
-import itertools
 import json
 
 from cdf.utils import s3
@@ -15,7 +14,7 @@ from cdf.features.sitemap.download import (download_sitemaps,
                                            Sitemap,
                                            DownloadStatus)
 from cdf.features.sitemap.streams import SitemapStreamDef
-from cdf.features.sitemap.matching import (match_sitemap_urls_from_stream,
+from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
                                            get_sitemap_documents,
                                            DomainValidator)
 
@@ -136,17 +135,17 @@ def match_sitemap_urls(s3_uri,
     dataset = SitemapStreamDef.create_temporary_dataset()
 
     sitemap_documents = get_sitemap_documents(s3_uri, tmp_dir, force_fetch)
-    url_generator = itertools.chain(*[document.get_urls() for document in sitemap_documents])
     sitemap_only_urls = []
     out_of_crawl_domain_urls = []
-    match_sitemap_urls_from_stream(
-        url_generator,
+    match_sitemap_urls_from_documents(
+        sitemap_documents,
         url_to_id,
         dataset,
         domain_validator,
         NB_SAMPLES_TO_KEEP,
         sitemap_only_urls,
         out_of_crawl_domain_urls)
+
     dataset.persist_to_s3(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)

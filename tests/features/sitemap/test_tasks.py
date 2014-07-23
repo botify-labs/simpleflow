@@ -6,7 +6,9 @@ import os
 import json
 
 from cdf.features.sitemap.download import Sitemap, DownloadStatus
-from cdf.features.sitemap.document import SiteMapType, SitemapTextDocument
+from cdf.features.sitemap.document import (SiteMapType,
+                                           SitemapTextDocument,
+                                           SitemapXmlDocument)
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.sitemap.tasks import (download_sitemap_files,
                                         download_sitemap_file,
@@ -139,12 +141,12 @@ class TestMatchSitemapUrls(unittest.TestCase):
         with open(os.path.join(s3_uri[5:], "sitemap_info.json")) as f:
             expected_sitemap_info = {
                 "http://foo.com/sitemap_1.txt": {
-                    "type": "SiteMapType.SITEMAP_TEXT",
+                    "type": "SITEMAP_TEXT",
                     "valid": 2,
                     "invalid": 0
                 },
                 "http://foo.com/sitemap_2.txt": {
-                    "type": "SiteMapType.SITEMAP_TEXT",
+                    "type": "SITEMAP_TEXT",
                     "valid": 2,
                     "invalid": 0
                 }
