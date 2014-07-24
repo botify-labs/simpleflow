@@ -1,4 +1,5 @@
 from enum import Enum
+from cdf.metadata.url.url_metadata import BOOLEAN_TYPE
 
 # Separator for encoding the url_id with the url string
 # 2 conditions:
@@ -18,3 +19,18 @@ class MatchingState(Enum):
     MATCH = 1
     DISCOVER = 2
     DISAPPEAR = 3
+
+
+# The document merge hack needs some extra flag fields
+# Plus to this, we'll need to have a `previous` field
+# which is a hard copy of the actual mapping
+EXTRA_FIELDS_FORMAT = {
+    'disappeared': {
+        'type': BOOLEAN_TYPE,
+        'default_value': None
+    },
+    'previous_exists': {
+        'type': BOOLEAN_TYPE,
+        'default_value': None
+    }
+}
