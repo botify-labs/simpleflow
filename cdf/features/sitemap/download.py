@@ -36,6 +36,8 @@ class SitemapMetadata(object):
         self.sitemap_index = sitemap_index
         self.error_type = None
         self.error_message = None
+        self.valid_urls = None
+        self.invalid_urls = None
 
     def to_dict(self):
         result = {
@@ -45,6 +47,10 @@ class SitemapMetadata(object):
 
         if self.sitemap_index:
             result["sitemap_index"] = self.sitemap_index
+        if self.valid_urls:
+            result["valid_urls"] = self.valid_urls
+        if self.invalid_urls:
+            result["invalid_urls"] = self.invalid_urls
         if self.error_type:
             result["error"] = self.error_type
         if self.error_message:
