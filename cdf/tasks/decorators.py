@@ -1,10 +1,26 @@
 import tempfile
+import functools
 import shutil
+import contextlib
+
 from cdf.utils.path import makedirs
 
 
 TMP_KEY = 'tmp_dir'
 CLEAN_KEY = 'cleanup'
+
+
+@contextlib.contextmanager
+def temporary_directory(tmp_dir=None, remove_on_exit=True):
+    if tmp_dir is None:
+        tmp_dir = tempfile.mkdtemp('_task')
+    else:
+        makedirs(tmp_dir, exist_ok=True)
+    try:
+        yield tmp_dir
+    finally:
+        if remove_on_exit:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 def with_temporary_dir(func):
@@ -39,37 +55,22 @@ def with_temporary_dir(func):
     The call `my_task(1000)` will be executed in a temp directory which
     is removed after the task execution.
     """
+    @functools.wraps(func)
     def wrap(*args, **kwargs):
         # execute in a temp directory ?
-        is_tmp = TMP_KEY not in kwargs or kwargs[TMP_KEY] is None
+        tmp_dir = kwargs.get(TMP_KEY)
+        is_tmp = tmp_dir is None
 
         # pops the `cleanup` kwargs
-        is_clean = kwargs.pop(CLEAN_KEY, False)
+        should_clean = kwargs.pop(CLEAN_KEY, False)
         # if execute in a temp directory, always cleanup
-        is_clean = is_tmp or is_clean
+        should_clean = is_tmp or should_clean
 
-        tmp_dir = None
-        try:
-            if is_tmp:
-                # execute in temp dir
-                tmp_dir = tempfile.mkdtemp('_task')
-                kwargs[TMP_KEY] = tmp_dir
-            else:
-                # set the dirpath for cleanup
-                tmp_dir = kwargs[TMP_KEY]
-                makedirs(tmp_dir, exist_ok=True)
-
-            # execution
+        with temporary_directory(tmp_dir, should_clean) as tmp:
+            kwargs[TMP_KEY] = tmp
             result = func(*args, **kwargs)
 
-            return result
-
-        except Exception:
-            raise
-
-        finally:
-            if is_clean:
-                shutil.rmtree(tmp_dir, ignore_errors=True)
+        return result
 
     return wrap
 

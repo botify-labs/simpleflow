@@ -14,6 +14,8 @@ def task_func(some_param, tmp_dir=None):
     return tmp_dir
 
 
+
+
 class TestTempDirDecorator(unittest.TestCase):
     def test_temp_dir_with_clean(self):
         temp_dir = task_func("param")
@@ -85,3 +87,14 @@ class TestTempDirDecorator(unittest.TestCase):
         # after the call the temp dir should be removed
         self.assertFalse(os.path.isdir(temp_dir))
         self.assertFalse(os.path.exists(temp_dir))
+
+    def test_exeption(self):
+        class TestException(Exception):
+            def __init__(self):
+                pass
+
+        @with_temp_dir
+        def task_exception(tmp_dir=None):
+            raise TestException()
+
+        self.assertRaises(TestException, task_exception)
