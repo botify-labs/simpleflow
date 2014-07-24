@@ -91,8 +91,8 @@ class TestDownloadSitemapsFromS3(unittest.TestCase):
                           get_download_status_from_s3_mock):
         #mock
         sitemaps = [
-            SitemapMetadata("http://foo.com/sitemap_1.xml", "s3://foo/sitemap_1.xml", None),
-            SitemapMetadata("http://foo.com/sitemap_2.xml", "s3://foo/sitemap_2.xml", None)
+            SitemapMetadata("http://foo.com/sitemap_1.xml", "s3://foo/sitemap_1.xml"),
+            SitemapMetadata("http://foo.com/sitemap_2.xml", "s3://foo/sitemap_2.xml")
         ]
         get_download_status_from_s3_mock.return_value = DownloadStatus(sitemaps)
 

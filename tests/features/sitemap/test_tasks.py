@@ -66,7 +66,7 @@ class TestDownloadSitemapFile(unittest.TestCase):
                           push_file_mock):
         #mocking
         download_sitemaps_mock.return_value = DownloadStatus(
-            [SitemapMetadata("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml", None)]
+            [SitemapMetadata("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml")]
         )
 
         #actual call
@@ -76,7 +76,7 @@ class TestDownloadSitemapFile(unittest.TestCase):
 
         #verifications
         expected_result = DownloadStatus([
-            SitemapMetadata("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml", None)
+            SitemapMetadata("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml")
         ])
         self.assertEqual(expected_result, actual_result)
 

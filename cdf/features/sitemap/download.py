@@ -21,7 +21,7 @@ class SitemapMetadata(object):
     """A class to represent sitemap in DownloadStatus
     The class does not contain the document itself
     only basic reporting information about it"""
-    def __init__(self, url, s3_uri, sitemap_index):
+    def __init__(self, url, s3_uri, sitemap_index=None):
         """Constructor
         :param url: the sitemap url
         :type url: str
@@ -41,8 +41,10 @@ class SitemapMetadata(object):
         result = {
             "url": self.url,
             "s3_uri": self.s3_uri,
-            "sitemap_index": self.sitemap_index
         }
+
+        if self.sitemap_index:
+            result["sitemap_index"] = self.sitemap_index
         if self.error_type:
             result["error"] = self.error_type
         if self.error_message:
@@ -204,7 +206,7 @@ def parse_download_status_from_json(file_path):
     """
     with open(file_path) as f:
         download_status = json.load(f)
-    sitemaps = [SitemapMetadata(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index", None)) for sitemap
+    sitemaps = [SitemapMetadata(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index")) for sitemap
                 in download_status["sitemaps"]]
     sitemap_indexes = [SitemapIndexMetadata(s["url"], s["valid_urls"], s["invalid_urls"]) for s
                        in download_status["sitemap_indexes"]]
@@ -249,7 +251,7 @@ def download_sitemaps(input_url, output_directory, user_agent):
     #if it is a sitemap
     if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
         result.add_success_sitemap(
-            SitemapMetadata(input_url, output_file_path, None)
+            SitemapMetadata(input_url, output_file_path)
         )
     #if it is a sitemap index
     elif is_sitemap_index(sitemap_type):

@@ -87,7 +87,6 @@ class TestDownloadStatus(unittest.TestCase):
                 {
                     "url": u"http://foo/sitemap_1.xml",
                     "s3_uri": u"s3://foo/sitemap_1.xml",
-                    "sitemap_index": None
                 },
             ],
             "sitemap_indexes": [],
@@ -179,7 +178,7 @@ class TestDownloadSiteMaps(unittest.TestCase):
                                           self.user_agent)
         expected_result = DownloadStatus()
         expected_result.add_success_sitemap(
-            SitemapMetadata(self.sitemap_url, "/tmp/foo/sitemap.xml", None)
+            SitemapMetadata(self.sitemap_url, "/tmp/foo/sitemap.xml")
         )
         self.assertEqual(expected_result, actual_result)
         download_url_mock.assert_called_once_with(self.sitemap_url,
