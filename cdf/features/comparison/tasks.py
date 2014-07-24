@@ -3,6 +3,8 @@ import tempfile
 import shutil
 import gzip
 import ujson as json
+import copy
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.core.decorators import feature_enabled
@@ -14,8 +16,7 @@ from cdf.features.comparison.matching import (
     document_url_id_correction)
 from cdf.features.comparison.constants import (
     MATCHED_FILE_PATTERN,
-    COMPARISON_PATH
-)
+    COMPARISON_PATH, EXTRA_FIELDS_FORMAT)
 from cdf.utils.s3 import fetch_file, push_file, stream_files
 from cdf.utils.path import makedirs
 
@@ -175,3 +176,20 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
     # Destroy the temporary DB
     ref_db.destroy()
     new_db.destroy()
+
+
+def get_comparison_mapping(data_format, extras=EXTRA_FIELDS_FORMAT):
+    """Prepare ElasticSearch mapping for comparison feature
+
+    :param data_format: original internal data format
+    :param extras: extra fields to be added
+    :return: ElasticSearch mapping for comparison feature
+    """
+    previous_format = {
+        'previous.' + k: v for k, v in data_format.iteritems()
+    }
+    format = copy.deepcopy(data_format)
+    format.update(previous_format)
+    format.update(extras)
+
+    return ElasticSearchBackend(format).mapping()
