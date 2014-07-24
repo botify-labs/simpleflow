@@ -66,6 +66,11 @@ class TestDownloadStatus(unittest.TestCase):
         #compare the objects instead of the json representation
         #to be insensitive to item ordering
         self.assertEqual(expected_result["sitemap_indexes"], json.loads(actual_result)["sitemap_indexes"])
+        print "=" * 50
+        print expected_result
+        print "=" * 50
+        print actual_result
+        print "=" * 50
         self.assertEqual(expected_result, json.loads(actual_result))
 
     def test_to_json_no_sitemap(self):

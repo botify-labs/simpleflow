@@ -81,7 +81,7 @@ def download_sitemap_file(input_url,
     #an object similar to download_status but that stores s3 uris
     s3_download_status = DownloadStatus(errors=download_status.errors)
     for sitemap in download_status.sitemaps:
-        url, file_path, sitemap_index = sitemap
+        url, file_path, sitemap_index = sitemap.url, sitemap.s3_uri, sitemap.sitemap_index
         destination_uri = os.path.join(s3_subdir_uri, os.path.basename(file_path))
         s3.push_file(
             os.path.join(destination_uri),

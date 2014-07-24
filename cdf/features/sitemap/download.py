@@ -2,7 +2,6 @@ import urlparse
 import os.path
 import time
 import json
-from collections import namedtuple
 
 from cdf.log import logger
 
@@ -18,7 +17,48 @@ from cdf.features.sitemap.document import (SiteMapType,
                                            is_text_sitemap,
                                            instanciate_sitemap_document)
 
-SitemapMetadata = namedtuple('SitemapMetadata', ['url', 's3_uri', 'sitemap_index'])
+class SitemapMetadata(object):
+    """A class to represent sitemap in DownloadStatus
+    The class does not contain the document itself
+    only basic reporting information about it"""
+    def __init__(self, url, s3_uri, sitemap_index):
+        """Constructor
+        :param url: the sitemap url
+        :type url: str
+        :param s3_uri: the s3_uri where the sitemap is stored
+        :type s3_uri: str
+        :param sitemap_index: the url of the sitemap index that references the
+                              sitemap (if any)
+        :type sitemap_index: str
+        """
+        self.url = url
+        self.s3_uri = s3_uri
+        self.sitemap_index = sitemap_index
+        self.error_type = None
+        self.error_message = None
+
+    def to_dict(self):
+        result = {
+            "url": self.url,
+            "s3_uri": self.s3_uri,
+            "sitemap_index": self.sitemap_index
+        }
+        if self.error_type:
+            result["error"] = self.error_type
+        if self.error_message:
+            result["message"] = self.error_message
+        return result
+
+    def __eq__(self, other):
+        return (self.url == other.url and
+                self.s3_uri == other.s3_uri and
+                self.sitemap_index == other.sitemap_index)
+
+    def __repr__(self):
+        return "({}, {}, {})".format(self.url, self.s3_uri, self.sitemap_index)
+
+    def __hash__(self):
+        return hash(repr(self))
 
 
 class SitemapIndexMetadata(object):
@@ -136,7 +176,7 @@ class DownloadStatus(object):
         """Return a json representation of the object
         :returns: str"""
         d = {
-            "sitemaps": [sitemap.__dict__ for sitemap in self.sitemaps],
+            "sitemaps": [sitemap.to_dict() for sitemap in self.sitemaps],
             "sitemap_indexes": [sitemap_index.to_dict() for sitemap_index in self.sitemap_indexes],
             "errors": [e.to_dict() for e in self.errors]
         }
