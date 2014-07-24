@@ -150,31 +150,17 @@ def match_sitemap_urls(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)
 
-    sitemap_info_filename = "sitemap_info.json"
-    sitemap_info_filepath = os.path.join(tmp_dir, sitemap_info_filename)
-    document_info = {}
-    for document in sitemap_documents:
-        document_info[document.url] = document.to_dict()
-    with open(sitemap_info_filepath, 'wb') as sitemap_info_file:
-        json.dump(document_info, sitemap_info_file)
-    s3.push_file(
-        os.path.join(s3_uri, sitemap_info_filename),
-        sitemap_info_filepath
-    )
-
     download_status = get_download_status_from_s3(s3_uri, tmp_dir, force_fetch)
     update_download_status(download_status, sitemap_documents)
 
     sitemap_metadata_filename = "sitemap_metadata.json"
     sitemap_metadata_filepath = os.path.join(tmp_dir, sitemap_metadata_filename)
-    document_info = {}
     with open(sitemap_metadata_filepath, 'wb') as sitemap_metadata_file:
         sitemap_metadata_file.write(download_status.to_json())
     s3.push_file(
         os.path.join(s3_uri, sitemap_metadata_filename),
         sitemap_metadata_filepath
     )
-
     sitemap_only_filename = 'sitemap_only.gz'
     sitemap_only_filepath = save_url_list_as_gzip(sitemap_only_urls,
                                                   sitemap_only_filename,

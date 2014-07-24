@@ -47,9 +47,9 @@ class SitemapMetadata(object):
 
         if self.sitemap_index:
             result["sitemap_index"] = self.sitemap_index
-        if self.valid_urls:
+        if self.valid_urls is not None:
             result["valid_urls"] = self.valid_urls
-        if self.invalid_urls:
+        if self.invalid_urls is not None:
             result["invalid_urls"] = self.invalid_urls
         if self.error_type:
             result["error"] = self.error_type
