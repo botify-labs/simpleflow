@@ -241,19 +241,7 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
         try:
             url = url_generator.next()
         except ParsingError as e:
-            if sitemap_index_document.valid_urls > 0 or sitemap_index_document.invalid_urls > 0:
-                #if we were able to process at least one url
-                #report the sitemap index as success
-                result.add_success_sitemap_index(SitemapIndexMetadata(sitemap_index_document.url,
-                                                                      sitemap_index_document.valid_urls,
-                                                                      sitemap_index_document.invalid_urls,
-                                                                      e.__class__.__name__,
-                                                                      e.message))
-            else:
-                #otherwise report it as error
-                result.add_error(sitemap_index_document.url,
-                                 SiteMapType.SITEMAP_INDEX,
-                                 e.__class__.__name__, e.message)
+            update_download_status_on_parsing_error(result, sitemap_index_document, e)
             return result
         except StopIteration:
             break
@@ -293,6 +281,37 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
                                                           sitemap_index_document.valid_urls,
                                                           sitemap_index_document.invalid_urls))
     return result
+
+def update_download_status_on_parsing_error(download_status,
+                                            sitemap_index_document,
+                                            parsing_error):
+    """Update the download status when a parsing error has been raised
+    by a sitemap index document.
+    If at least one url was found in the sitemap index, we consider it as a
+    valid sitemap index document, otherwise we consider it as an error.
+    :param download_status: the download status to update
+    :type download_status: DownloadStatus
+    :param sitemap_index_document: the sitemap index that raised the parsing error
+    :type sitemap_index_document: SitemapIndexXmlDocument
+    :param parsing_error: the parsing error exception raised by sitemap_index_document
+    :type parsing_error: ParsingError
+    """
+    if sitemap_index_document.valid_urls > 0 or sitemap_index_document.invalid_urls > 0:
+        #if we were able to process at least one url
+        #report the sitemap index as success
+        sitemap_index_metadata = SitemapIndexMetadata(
+            sitemap_index_document.url,
+            sitemap_index_document.valid_urls,
+            sitemap_index_document.invalid_urls,
+            parsing_error.__class__.__name__,
+            parsing_error.message)
+        download_status.add_success_sitemap_index(sitemap_index_metadata)
+    else:
+        #otherwise report it as error
+        download_status.add_error(sitemap_index_document.url,
+                                  SiteMapType.SITEMAP_INDEX,
+                                  parsing_error.__class__.__name__,
+                                  parsing_error.message)
 
 
 def get_output_file_path(url, output_directory):
