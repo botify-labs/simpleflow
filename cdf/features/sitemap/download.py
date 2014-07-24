@@ -21,7 +21,7 @@ from cdf.features.sitemap.document import (SiteMapType,
 Sitemap = namedtuple('Sitemap', ['url', 's3_uri', 'sitemap_index'])
 
 
-class SitemapIndex(object):
+class SitemapIndexMetadata(object):
     """A class to represent a sitemap index in a DownloadStatus
     The class does not contain the document itself
     only basic reporting information about it"""
@@ -120,7 +120,7 @@ class DownloadStatus(object):
     def add_success_sitemap_index(self, sitemap_index):
         """Add a sitemap index that has been successfuly downloaded.
         :param sitemap_index: the input sitemap_index
-        :type sitemap_index: SitemapIndex
+        :type sitemap_index: SitemapIndexMetada
         """
         self.sitemap_indexes.append(sitemap_index)
 
@@ -166,7 +166,7 @@ def parse_download_status_from_json(file_path):
         download_status = json.load(f)
     sitemaps = [Sitemap(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index", None)) for sitemap
                 in download_status["sitemaps"]]
-    sitemap_indexes = [SitemapIndex(s["url"], s["valid_urls"], s["invalid_urls"]) for s
+    sitemap_indexes = [SitemapIndexMetadata(s["url"], s["valid_urls"], s["invalid_urls"]) for s
                        in download_status["sitemap_indexes"]]
     errors = []
     for error in download_status["errors"]:
@@ -242,11 +242,11 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
             if sitemap_index_document.valid_urls > 0 or sitemap_index_document.invalid_urls > 0:
                 #if we were able to process at least one url
                 #report the sitemap index as success
-                result.add_success_sitemap_index(SitemapIndex(sitemap_index_document.url,
-                                                              sitemap_index_document.valid_urls,
-                                                              sitemap_index_document.invalid_urls,
-                                                              e.__class__.__name__,
-                                                              e.message))
+                result.add_success_sitemap_index(SitemapIndexMetadata(sitemap_index_document.url,
+                                                                      sitemap_index_document.valid_urls,
+                                                                      sitemap_index_document.invalid_urls,
+                                                                      e.__class__.__name__,
+                                                                      e.message))
             else:
                 #otherwise report it as error
                 result.add_error(sitemap_index_document.url,
@@ -285,9 +285,9 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
             result.add_error(url, sitemap_type, "UnhandledFileType", error_message)
             os.remove(file_path)
 
-    result.add_success_sitemap_index(SitemapIndex(sitemap_index_document.url,
-                                                  sitemap_index_document.valid_urls,
-                                                  sitemap_index_document.invalid_urls))
+    result.add_success_sitemap_index(SitemapIndexMetadata(sitemap_index_document.url,
+                                                          sitemap_index_document.valid_urls,
+                                                          sitemap_index_document.invalid_urls))
     return result
 
 

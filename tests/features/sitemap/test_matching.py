@@ -8,7 +8,7 @@ from cdf.features.sitemap.document import (SitemapXmlDocument,
                                            SitemapTextDocument,
                                            SiteMapType)
 from cdf.features.sitemap.download import (Sitemap,
-                                           SitemapIndex,
+                                           SitemapIndexMetadata,
                                            Error,
                                            DownloadStatus)
 from cdf.features.sitemap.matching import (get_download_status_from_s3,
@@ -69,7 +69,7 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
                     "s3://foo/sitemap_2.xml",
                     "http://foo/sitemap_index.html"),
         ]
-        expected_sitemap_indexes = [SitemapIndex("http://foo/sitemap_index.xml", 2, 0)]
+        expected_sitemap_indexes = [SitemapIndexMetadata("http://foo/sitemap_index.xml", 2, 0)]
         expected_errors = [Error(u"http://error", SiteMapType.UNKNOWN, u"DownloadError", u"foo")]
         expected_result = DownloadStatus(expected_sitemaps,
                                          expected_sitemap_indexes,
