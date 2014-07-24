@@ -204,6 +204,45 @@ class DownloadStatus(object):
         self.errors.extend(other.errors)
 
 
+def parse_sitemap_metadata(input_dict):
+    result = SitemapMetadata(input_dict["url"], input_dict["s3_uri"])
+    if "sitemap_index" in input_dict:
+        result.sitemap_index = input_dict["sitemap_index"]
+    if "valid_urls" in input_dict:
+        result.valid_urls = input_dict["valid_urls"]
+    if "invalid_urls" in input_dict:
+        result.invalid_urls = input_dict["invalid_urls"]
+    if "error" in input_dict:
+        result.error_type = input_dict["error"]
+    if "message" in input_dict:
+        result.error_message = input_dict["message"]
+    return result
+
+
+def parse_sitemap_index_metadata(input_dict):
+    result = SitemapIndexMetadata(input_dict["url"],
+                                  input_dict["valid_urls"],
+                                  input_dict["invalid_urls"])
+
+    if "valid_urls" in input_dict:
+        result.valid_urls = input_dict["valid_urls"]
+    if "invalid_urls" in input_dict:
+        result.invalid_urls = input_dict["invalid_urls"]
+    if "error" in input_dict:
+        result.error_type = input_dict["error"]
+    if "message" in input_dict:
+        result.error_message = input_dict["message"]
+    return result
+
+
+def parse_error(input_dict):
+    url = input_dict["url"]
+    file_type = SiteMapType[input_dict["type"]]
+    error_type = input_dict["error"]
+    error_message = input_dict["message"]
+    return Error(url, file_type, error_type, error_message)
+
+
 def parse_download_status_from_json(file_path):
     """Build a DownloadStatus object from a json file
     :param file_path: the input file path
@@ -212,15 +251,10 @@ def parse_download_status_from_json(file_path):
     """
     with open(file_path) as f:
         download_status = json.load(f)
-    sitemaps = [SitemapMetadata(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index")) for sitemap
-                in download_status["sitemaps"]]
-    sitemap_indexes = [SitemapIndexMetadata(s["url"], s["valid_urls"], s["invalid_urls"]) for s
-                       in download_status["sitemap_indexes"]]
-    errors = []
-    for error in download_status["errors"]:
-        errors.append(Error(error["url"], SiteMapType[error["type"]], error["error"], error["message"]))
-    result = DownloadStatus(sitemaps, sitemap_indexes, errors)
-    return result
+    sitemaps = [parse_sitemap_metadata(sitemap_dict) for sitemap_dict in download_status["sitemaps"]]
+    sitemap_indexes = [parse_sitemap_index_metadata(s) for s in download_status["sitemap_indexes"]]
+    errors = [parse_error(error) for error in download_status["errors"]]
+    return DownloadStatus(sitemaps, sitemap_indexes, errors)
 
 
 def download_sitemaps(input_url, output_directory, user_agent):
