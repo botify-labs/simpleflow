@@ -451,3 +451,31 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
         expected_result.add_success_sitemap_index(SitemapIndex(self.sitemap_index_mock.url, 1, 0))
         self.assertEqual(expected_result, actual_result)
 
+
+    @mock.patch("cdf.features.sitemap.download.instanciate_sitemap_document", autospec=True)
+    @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
+    def test_xml_parsing_error_url_generator_nothing_valid(self,
+                                                           download_url_mock,
+                                                           instanciate_sitemap_document_mock):
+        download_url_mock.return_value = "/tmp/foo/bar.xml"
+        instanciate_sitemap_document_mock.return_value = self.sitemap_mock
+
+        def url_generator():
+            raise ParsingError("Fake error")
+            yield "http://foo"
+        self.sitemap_index_mock.get_urls = mock.MagicMock()
+        self.sitemap_index_mock.get_urls = url_generator
+
+        actual_result = download_sitemaps_from_sitemap_index(
+            self.sitemap_index_mock,
+            self.output_dir,
+            self.user_agent)
+        expected_result = DownloadStatus()
+        expected_result.add_error(
+            self.sitemap_index_mock.url,
+            SiteMapType.SITEMAP_INDEX,
+            "ParsingError",
+            "Fake error"
+        )
+        self.assertEqual(expected_result, actual_result)
+
