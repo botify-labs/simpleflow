@@ -79,9 +79,11 @@ class SitemapDocument(object):
 
     @abstractmethod
     def get_urls(self):
-        """Returns the urls listed in the sitemap document
-        :param file_object: a file like object
-        :type file_object: file
+        """Generates the urls listed in the sitemap document.
+        To generate the urls, the object parses the sitemap document
+        incrementally.
+        :raises: ParsingError - if at some point of the document, the parsing
+                                fails, the object raises a ParsingError.
         """
         raise NotImplementedError()
 
