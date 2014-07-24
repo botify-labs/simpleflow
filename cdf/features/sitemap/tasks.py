@@ -14,6 +14,7 @@ from cdf.features.sitemap.download import (download_sitemaps,
                                            DownloadStatus)
 from cdf.features.sitemap.streams import SitemapStreamDef
 from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
+                                           get_download_status_from_s3,
                                            get_sitemap_documents,
                                            DomainValidator)
 
@@ -76,7 +77,6 @@ def download_sitemap_file(input_url,
     :returns: DownloadStatus
     """
     download_status = download_sitemaps(input_url, tmp_dir, user_agent)
-
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
     #an object similar to download_status but that stores s3 uris
     s3_download_status = DownloadStatus(
@@ -93,7 +93,6 @@ def download_sitemap_file(input_url,
         s3_download_status.add_success_sitemap(
             SitemapMetadata(url, destination_uri, sitemap_index)
         )
-
     return s3_download_status
 
 
@@ -162,6 +161,20 @@ def match_sitemap_urls(s3_uri,
         os.path.join(s3_uri, sitemap_info_filename),
         sitemap_info_filepath
     )
+
+    download_status = get_download_status_from_s3(s3_uri, tmp_dir, force_fetch)
+    update_download_status(download_status, sitemap_documents)
+
+    sitemap_metadata_filename = "sitemap_metadata.json"
+    sitemap_metadata_filepath = os.path.join(tmp_dir, sitemap_metadata_filename)
+    document_info = {}
+    with open(sitemap_metadata_filepath, 'wb') as sitemap_metadata_file:
+        sitemap_metadata_file.write(download_status.to_json())
+    s3.push_file(
+        os.path.join(s3_uri, sitemap_metadata_filename),
+        sitemap_metadata_filepath
+    )
+
     sitemap_only_filename = 'sitemap_only.gz'
     sitemap_only_filepath = save_url_list_as_gzip(sitemap_only_urls,
                                                   sitemap_only_filename,
@@ -179,6 +192,16 @@ def match_sitemap_urls(s3_uri,
         os.path.join(s3_uri, out_of_crawl_domain_filename),
         out_of_crawl_domain_filepath
     )
+
+def update_download_status(download_status, sitemap_documents):
+    url_to_metadata = {
+        sitemap_metadata.url: sitemap_metadata for sitemap_metadata in download_status.sitemaps
+    }
+    for document in sitemap_documents:
+        document_metadata = url_to_metadata[document.url]
+        document_metadata.valid_urls = document.valid_urls
+        document_metadata.invalid_urls = document.invalid_urls
+
 
 
 def save_url_list_as_gzip(url_list, filename, tmp_dir):
