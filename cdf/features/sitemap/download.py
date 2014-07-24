@@ -282,6 +282,7 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
                                                           sitemap_index_document.invalid_urls))
     return result
 
+
 def update_download_status_on_parsing_error(download_status,
                                             sitemap_index_document,
                                             parsing_error):
@@ -296,7 +297,7 @@ def update_download_status_on_parsing_error(download_status,
     :param parsing_error: the parsing error exception raised by sitemap_index_document
     :type parsing_error: ParsingError
     """
-    if sitemap_index_document.valid_urls > 0 or sitemap_index_document.invalid_urls > 0:
+    if sitemap_index_document.total_urls > 0:
         #if we were able to process at least one url
         #report the sitemap index as success
         sitemap_index_metadata = SitemapIndexMetadata(

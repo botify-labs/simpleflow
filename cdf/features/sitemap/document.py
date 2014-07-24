@@ -66,6 +66,10 @@ class SitemapDocument(object):
         self.error = None
         self.error_message = None
 
+    @property
+    def total_urls(self):
+        return self.valid_urls + self.invalid_urls
+
     @abstractmethod
     def get_sitemap_type(self):
         """Return the type of the sitemap document
