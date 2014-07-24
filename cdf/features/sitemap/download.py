@@ -241,7 +241,10 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
         try:
             url = url_generator.next()
         except ParsingError as e:
+            #we can not recover parsing errors
+            #so we update the download status
             update_download_status_on_parsing_error(result, sitemap_index_document, e)
+            #and return it based on a partially processed sitemap index.
             return result
         except StopIteration:
             break
