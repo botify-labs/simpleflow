@@ -18,7 +18,7 @@ from cdf.features.sitemap.document import (SiteMapType,
                                            is_text_sitemap,
                                            instanciate_sitemap_document)
 
-Sitemap = namedtuple('Sitemap', ['url', 's3_uri', 'sitemap_index'])
+SitemapMetadata = namedtuple('SitemapMetadata', ['url', 's3_uri', 'sitemap_index'])
 
 
 class SitemapIndexMetadata(object):
@@ -110,12 +110,12 @@ class DownloadStatus(object):
         self.sitemap_indexes = sitemap_indexes or []
         self.errors = errors or []
 
-    def add_success_sitemap(self, sitemap):
-        """Add a sitemap that has been successfuly downloaded.
-        :param sitemap: the input sitemap
-        :type sitemap: Sitemap
+    def add_success_sitemap(self, sitemap_metadata):
+        """Add metadata a about sitemap that has been successfuly downloaded.
+        :param sitemap_metadata: the input sitemap
+        :type sitemap_metadata: SitemapMetadata
         """
-        self.sitemaps.append(sitemap)
+        self.sitemaps.append(sitemap_metadata)
 
     def add_success_sitemap_index(self, sitemap_index):
         """Add a sitemap index that has been successfuly downloaded.
@@ -164,7 +164,7 @@ def parse_download_status_from_json(file_path):
     """
     with open(file_path) as f:
         download_status = json.load(f)
-    sitemaps = [Sitemap(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index", None)) for sitemap
+    sitemaps = [SitemapMetadata(sitemap["url"], sitemap["s3_uri"], sitemap.get("sitemap_index", None)) for sitemap
                 in download_status["sitemaps"]]
     sitemap_indexes = [SitemapIndexMetadata(s["url"], s["valid_urls"], s["invalid_urls"]) for s
                        in download_status["sitemap_indexes"]]
@@ -208,7 +208,9 @@ def download_sitemaps(input_url, output_directory, user_agent):
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
     if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
-        result.add_success_sitemap(Sitemap(input_url, output_file_path, None))
+        result.add_success_sitemap(
+            SitemapMetadata(input_url, output_file_path, None)
+        )
     #if it is a sitemap index
     elif is_sitemap_index(sitemap_type):
         #download referenced sitemaps
@@ -272,7 +274,9 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
         sitemap_type = sitemap_document.get_sitemap_type()
         #  check if it is actually a sitemap
         if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
-            result.add_success_sitemap(Sitemap(url, file_path, sitemap_index_document.url))
+            result.add_success_sitemap(
+                SitemapMetadata(url, file_path, sitemap_index_document.url)
+            )
         elif is_sitemap_index(sitemap_type):
             error_message = "'{}' is a sitemap index. It cannot be referenced in a sitemap index.".format(url)
             logger.warning(error_message)

@@ -4,7 +4,7 @@ import os
 import json
 from cdf.features.sitemap.download import (DownloadStatus,
                                            Error,
-                                           Sitemap,
+                                           SitemapMetadata,
                                            SitemapIndexMetadata,
                                            download_sitemaps,
                                            download_sitemaps_from_sitemap_index,
@@ -23,9 +23,9 @@ class TestDownloadStatus(unittest.TestCase):
 
     def test_to_json(self):
         download_status = DownloadStatus(
-            [Sitemap("http://foo/sitemap_1.xml",
-                     "s3://foo/sitemap_1.xml",
-                     self.sitemap_index)],
+            [SitemapMetadata("http://foo/sitemap_1.xml",
+                             "s3://foo/sitemap_1.xml",
+                             self.sitemap_index)],
             [SitemapIndexMetadata("http://foo/sitemap_index.xml", 2, 1)],
             [Error("http://error1", SiteMapType.UNKNOWN, "foo", "bar"),
              Error("http://error2", SiteMapType.UNKNOWN, "foo", "bar")]
@@ -70,9 +70,9 @@ class TestDownloadStatus(unittest.TestCase):
 
     def test_to_json_no_sitemap(self):
         download_status = DownloadStatus(
-            [Sitemap("http://foo/sitemap_1.xml",
-                     "s3://foo/sitemap_1.xml",
-                     None)]
+            [SitemapMetadata("http://foo/sitemap_1.xml",
+                             "s3://foo/sitemap_1.xml",
+                             None)]
         )
 
         actual_result = download_status.to_json()
@@ -94,18 +94,18 @@ class TestDownloadStatus(unittest.TestCase):
 
     def test_update(self):
         download_status = DownloadStatus(
-            [Sitemap("http://foo/sitemap_1.xml",
-                     "s3://foo/sitemap_1.xml",
-                     self.sitemap_index)],
+            [SitemapMetadata("http://foo/sitemap_1.xml",
+                             "s3://foo/sitemap_1.xml",
+                             self.sitemap_index)],
             [SitemapIndexMetadata("http://foo/sitemap_index_1.xml", 10, 0)],
             [Error("http://error1", SiteMapType.UNKNOWN, "DownloadError", ""),
              Error("http://error2", SiteMapType.UNKNOWN, "DownloadError", "")]
         )
 
         download_status_aux = DownloadStatus(
-            [Sitemap("http://foo/sitemap_2.xml",
-                     "s3://foo/sitemap_2.xml",
-                     self.sitemap_index)],
+            [SitemapMetadata("http://foo/sitemap_2.xml",
+                             "s3://foo/sitemap_2.xml",
+                             self.sitemap_index)],
             [SitemapIndexMetadata("http://foo/sitemap_index_2.xml", 2, 1)],
             [Error("http://error3", SiteMapType.UNKNOWN, "DownloadError", "")]
         )
@@ -113,12 +113,12 @@ class TestDownloadStatus(unittest.TestCase):
         download_status.update(download_status_aux)
         expected_result = DownloadStatus(
             [
-                Sitemap("http://foo/sitemap_1.xml",
-                        "s3://foo/sitemap_1.xml",
-                        self.sitemap_index),
-                Sitemap("http://foo/sitemap_2.xml",
-                        "s3://foo/sitemap_2.xml",
-                        self.sitemap_index)
+                SitemapMetadata("http://foo/sitemap_1.xml",
+                                "s3://foo/sitemap_1.xml",
+                                self.sitemap_index),
+                SitemapMetadata("http://foo/sitemap_2.xml",
+                                "s3://foo/sitemap_2.xml",
+                                self.sitemap_index)
             ],
             [
                 SitemapIndexMetadata("http://foo/sitemap_index_1.xml", 10, 0),
@@ -173,7 +173,9 @@ class TestDownloadSiteMaps(unittest.TestCase):
                                           self.output_dir,
                                           self.user_agent)
         expected_result = DownloadStatus()
-        expected_result.add_success_sitemap(Sitemap(self.sitemap_url, "/tmp/foo/sitemap.xml", None))
+        expected_result.add_success_sitemap(
+            SitemapMetadata(self.sitemap_url, "/tmp/foo/sitemap.xml", None)
+        )
         self.assertEqual(expected_result, actual_result)
         download_url_mock.assert_called_once_with(self.sitemap_url,
                                                   "/tmp/foo/sitemap.xml",
@@ -194,7 +196,9 @@ class TestDownloadSiteMaps(unittest.TestCase):
         instanciate_sitemap_document_mock.return_value = self.sitemap_index_mock
 
         download_status = DownloadStatus()
-        download_status.add_success_sitemap(Sitemap("http://foo", "s3://foo", self.sitemap_url))
+        download_status.add_success_sitemap(
+            SitemapMetadata("http://foo", "s3://foo", self.sitemap_url)
+        )
         download_status.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index_url, 0, 0))
         download_sitemaps_from_sitemap_index_mock.return_value = download_status
         input_url = self.sitemap_index_url
@@ -202,7 +206,9 @@ class TestDownloadSiteMaps(unittest.TestCase):
                                           self.output_dir,
                                           self.user_agent)
         expected_result = DownloadStatus()
-        expected_result.add_success_sitemap(Sitemap("http://foo", "s3://foo", self.sitemap_url))
+        expected_result.add_success_sitemap(
+            SitemapMetadata("http://foo", "s3://foo", self.sitemap_url)
+        )
         expected_result.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index_url, 0, 0))
 
         self.assertEqual(expected_result, actual_result)
@@ -304,12 +310,16 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
                                                              self.output_dir,
                                                              self.user_agent)
         expected_result = DownloadStatus()
-        expected_result.add_success_sitemap(Sitemap("http://foo/bar.xml",
-                                                    "/tmp/foo/bar.xml",
-                                                    self.sitemap_index_mock.url))
-        expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml",
-                                                    "/tmp/foo/baz.xml",
-                                                    self.sitemap_index_mock.url))
+        expected_result.add_success_sitemap(
+            SitemapMetadata("http://foo/bar.xml",
+                            "/tmp/foo/bar.xml",
+                            self.sitemap_index_mock.url)
+        )
+        expected_result.add_success_sitemap(
+            SitemapMetadata("http://foo/baz.xml",
+                            "/tmp/foo/baz.xml",
+                            self.sitemap_index_mock.url)
+        )
         expected_result.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index_mock.url, 0, 0))
         self.assertEqual(expected_result, actual_result)
         self.assertEqual(self.expected_download_calls,
@@ -343,9 +353,11 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
                                                              self.user_agent)
 
         expected_result = DownloadStatus()
-        expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml",
-                                                    "/tmp/foo/baz.xml",
-                                                    self.sitemap_index_mock.url))
+        expected_result.add_success_sitemap(
+            SitemapMetadata("http://foo/baz.xml",
+                            "/tmp/foo/baz.xml",
+                            self.sitemap_index_mock.url)
+        )
         error_message = "'http://foo/bar.xml' is a sitemap index. It cannot be referenced in a sitemap index."
         expected_result.add_error("http://foo/bar.xml",
                                   SiteMapType.SITEMAP_INDEX,
@@ -377,9 +389,11 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
                                                              self.user_agent)
 
         expected_result = DownloadStatus()
-        expected_result.add_success_sitemap(Sitemap("http://foo/baz.xml",
-                                                    "/tmp/foo/baz.xml",
-                                                    self.sitemap_index_mock.url))
+        expected_result.add_success_sitemap(
+            SitemapMetadata("http://foo/baz.xml",
+                            "/tmp/foo/baz.xml",
+                            self.sitemap_index_mock.url)
+        )
         error_message = "'http://foo/bar.xml' is not a sitemap file."
         expected_result.add_error("http://foo/bar.xml",
                                   SiteMapType.UNKNOWN,
@@ -419,7 +433,7 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
                                   "DownloadError",
                                   "error message")
         expected_result.add_success_sitemap(
-            Sitemap("http://foo/baz.xml", "/tmp/foo/baz.xml", self.sitemap_index_mock.url)
+            SitemapMetadata("http://foo/baz.xml", "/tmp/foo/baz.xml", self.sitemap_index_mock.url)
         )
         #0 valid urls because we're mocking get_urls() which is supposed to
         #increment the valid url count
@@ -450,7 +464,7 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
             self.user_agent)
         expected_result = DownloadStatus()
         expected_result.add_success_sitemap(
-            Sitemap("http://foo/bar.xml", "/tmp/foo/bar.xml", self.sitemap_index_mock.url)
+            SitemapMetadata("http://foo/bar.xml", "/tmp/foo/bar.xml", self.sitemap_index_mock.url)
         )
         expected_result.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index_mock.url, 1, 0))
         self.assertEqual(expected_result, actual_result)

@@ -7,7 +7,7 @@ from cdf.core.streams.base import TemporaryDataset
 from cdf.features.sitemap.document import (SitemapXmlDocument,
                                            SitemapTextDocument,
                                            SiteMapType)
-from cdf.features.sitemap.download import (Sitemap,
+from cdf.features.sitemap.download import (SitemapMetadata,
                                            SitemapIndexMetadata,
                                            Error,
                                            DownloadStatus)
@@ -62,12 +62,12 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
 
         #check result
         expected_sitemaps = [
-            Sitemap("http://foo/sitemap_1.xml",
-                    "s3://foo/sitemap_1.xml",
-                    "http://foo/sitemap_index.html"),
-            Sitemap("http://foo/sitemap_2.xml",
-                    "s3://foo/sitemap_2.xml",
-                    "http://foo/sitemap_index.html"),
+            SitemapMetadata("http://foo/sitemap_1.xml",
+                            "s3://foo/sitemap_1.xml",
+                            "http://foo/sitemap_index.html"),
+            SitemapMetadata("http://foo/sitemap_2.xml",
+                            "s3://foo/sitemap_2.xml",
+                            "http://foo/sitemap_index.html"),
         ]
         expected_sitemap_indexes = [SitemapIndexMetadata("http://foo/sitemap_index.xml", 2, 0)]
         expected_errors = [Error(u"http://error", SiteMapType.UNKNOWN, u"DownloadError", u"foo")]
@@ -91,8 +91,8 @@ class TestDownloadSitemapsFromS3(unittest.TestCase):
                           get_download_status_from_s3_mock):
         #mock
         sitemaps = [
-            Sitemap("http://foo.com/sitemap_1.xml", "s3://foo/sitemap_1.xml", None),
-            Sitemap("http://foo.com/sitemap_2.xml", "s3://foo/sitemap_2.xml", None)
+            SitemapMetadata("http://foo.com/sitemap_1.xml", "s3://foo/sitemap_1.xml", None),
+            SitemapMetadata("http://foo.com/sitemap_2.xml", "s3://foo/sitemap_2.xml", None)
         ]
         get_download_status_from_s3_mock.return_value = DownloadStatus(sitemaps)
 

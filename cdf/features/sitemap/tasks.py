@@ -11,7 +11,7 @@ from cdf.features.main.streams import IdStreamDef
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.features.sitemap.constant import NB_SAMPLES_TO_KEEP
 from cdf.features.sitemap.download import (download_sitemaps,
-                                           Sitemap,
+                                           SitemapMetadata,
                                            DownloadStatus)
 from cdf.features.sitemap.streams import SitemapStreamDef
 from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
@@ -89,7 +89,9 @@ def download_sitemap_file(input_url,
             os.path.join(destination_uri),
             file_path
         )
-        s3_download_status.add_success_sitemap(Sitemap(url, destination_uri, sitemap_index))
+        s3_download_status.add_success_sitemap(
+            SitemapMetadata(url, destination_uri, sitemap_index)
+        )
 
     return s3_download_status
 

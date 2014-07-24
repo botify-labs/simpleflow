@@ -5,7 +5,7 @@ import gzip
 import os
 import json
 
-from cdf.features.sitemap.download import Sitemap, DownloadStatus
+from cdf.features.sitemap.download import SitemapMetadata, DownloadStatus
 from cdf.features.sitemap.document import (SiteMapType,
                                            SitemapTextDocument,
                                            SitemapXmlDocument)
@@ -26,12 +26,12 @@ class TestDownloadSitemapFiles(unittest.TestCase):
         sitemap_index = "http://foo.com/sitemap_index.xml"
         #mocking
         download_sitemap_file_mock.side_effect = iter([
-            DownloadStatus([Sitemap("http://foo.com/sitemap.xml",
-                                    "s3://foo/sitemaps/sitemap.xml",
-                                    sitemap_index)]),
-            DownloadStatus([Sitemap("http://bar.com/sitemap.xml",
-                                    "s3://foo/sitemaps/sitemap.xml_2",
-                                    sitemap_index)])
+            DownloadStatus([SitemapMetadata("http://foo.com/sitemap.xml",
+                                            "s3://foo/sitemaps/sitemap.xml",
+                                            sitemap_index)]),
+            DownloadStatus([SitemapMetadata("http://bar.com/sitemap.xml",
+                                            "s3://foo/sitemaps/sitemap.xml_2",
+                                            sitemap_index)])
         ])
 
         #actual call
@@ -44,12 +44,12 @@ class TestDownloadSitemapFiles(unittest.TestCase):
 
         #verifications
         expected_download_status = DownloadStatus([
-            Sitemap("http://foo.com/sitemap.xml",
-                    "s3://foo/sitemaps/sitemap.xml",
-                    sitemap_index),
-            Sitemap("http://bar.com/sitemap.xml",
-                    "s3://foo/sitemaps/sitemap.xml_2",
-                    sitemap_index)
+            SitemapMetadata("http://foo.com/sitemap.xml",
+                            "s3://foo/sitemaps/sitemap.xml",
+                            sitemap_index),
+            SitemapMetadata("http://bar.com/sitemap.xml",
+                            "s3://foo/sitemaps/sitemap.xml_2",
+                            sitemap_index)
         ])
 
         push_content_mock.assert_called_once_with(
@@ -66,7 +66,7 @@ class TestDownloadSitemapFile(unittest.TestCase):
                           push_file_mock):
         #mocking
         download_sitemaps_mock.return_value = DownloadStatus(
-            [Sitemap("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml", None)]
+            [SitemapMetadata("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml", None)]
         )
 
         #actual call
@@ -76,7 +76,7 @@ class TestDownloadSitemapFile(unittest.TestCase):
 
         #verifications
         expected_result = DownloadStatus([
-            Sitemap("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml", None)
+            SitemapMetadata("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml", None)
         ])
         self.assertEqual(expected_result, actual_result)
 
