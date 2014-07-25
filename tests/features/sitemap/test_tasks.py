@@ -2,23 +2,17 @@ import unittest
 import mock
 from moto import mock_s3
 import boto
-import tempfile
-import gzip
-import os
 import json
 from cdf.utils.s3 import stream_files
 
 from cdf.features.sitemap.download import SitemapMetadata, DownloadStatus
-from cdf.features.sitemap.document import (SiteMapType,
-                                           SitemapTextDocument,
-                                           SitemapXmlDocument)
+from cdf.features.sitemap.document import SitemapXmlDocument
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.sitemap.tasks import (download_sitemap_files,
                                         download_sitemap_file,
                                         match_sitemap_urls,
                                         update_download_status,
                                         save_url_list_as_gzip)
-from cdf.core.mocks import _mock_push_file
 
 
 class TestDownloadSitemapFiles(unittest.TestCase):
@@ -195,6 +189,7 @@ class TestMatchSitemapUrls(unittest.TestCase):
         actual_sitemap_metada = json.loads(key.get_contents_as_string())
         self.assertEqual(expected_sitemap_metadata, actual_sitemap_metada)
 
+
 class TestUpdateDownloadStatus(unittest.TestCase):
     def setUp(self):
         self.download_status = DownloadStatus()
@@ -234,6 +229,7 @@ class TestUpdateDownloadStatus(unittest.TestCase):
         self.assertEqual(1, modified_sitemap.invalid_urls)
         self.assertEqual("ParsingError", modified_sitemap.error_type)
         self.assertEqual("foo", modified_sitemap.error_message)
+
 
 class TestSaveUrlListAsGzip(unittest.TestCase):
     def test_nominal_case(self):

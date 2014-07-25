@@ -1,6 +1,5 @@
 import os.path
 import gzip
-import json
 
 from cdf.utils import s3
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
@@ -203,6 +202,7 @@ def update_download_status(download_status, sitemap_documents):
             document_metadata.error_type = document.error
         if document.error_message is not None:
             document_metadata.error_message = document.error_message
+
 
 def save_url_list_as_gzip(url_list, filename, tmp_dir):
     """Save a list of urls in a gzip file.
