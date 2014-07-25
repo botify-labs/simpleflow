@@ -10,7 +10,7 @@ from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.features.sitemap.constant import NB_SAMPLES_TO_KEEP
 from cdf.features.sitemap.download import (download_sitemaps,
                                            SitemapMetadata,
-                                           DownloadStatus)
+                                           Metadata)
 from cdf.features.sitemap.streams import SitemapStreamDef
 from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
                                            get_download_metadata_from_s3,
@@ -37,7 +37,7 @@ def download_sitemap_files(input_urls,
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
     """
-    s3_download_metadata = DownloadStatus()
+    s3_download_metadata = Metadata()
     for url in input_urls:
         crt_file_index = download_sitemap_file(url,
                                                s3_uri,
@@ -73,12 +73,12 @@ def download_sitemap_file(input_url,
     :type user_agent: str
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
-    :returns: DownloadStatus
+    :returns: Metadata
     """
     download_metadata = download_sitemaps(input_url, tmp_dir, user_agent)
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
     #an object similar to download_metadata but that stores s3 uris
-    s3_download_metadata = DownloadStatus(
+    s3_download_metadata = Metadata(
         sitemap_indexes=download_metadata.sitemap_indexes,
         errors=download_metadata.errors
     )
@@ -180,12 +180,12 @@ def match_sitemap_urls(s3_uri,
 
 
 def update_download_status(download_status, sitemap_documents):
-    """Update a DownloadStatus object with data obtained when extracting
+    """Update a Metadata object with data obtained when extracting
     the urls from the sitemaps.
     This function basically fills the "valid_url", "invalid_urls" fields
     for the sitemaps. It also fills the error related fields if necessary.
     :param download_status: the download status object to update
-    :type download_status: DownloadStatus
+    :type download_status: Metadata
     :param sitemap_documents: a list of sitemap documents.
                               They contain the information to update
                               the download status

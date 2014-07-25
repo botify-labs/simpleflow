@@ -18,7 +18,7 @@ from cdf.features.sitemap.document import (SiteMapType,
                                            instanciate_sitemap_document)
 
 class SitemapMetadata(object):
-    """A class to represent sitemap in DownloadStatus
+    """A class to represent sitemap in Metadata
     The class does not contain the document itself
     only basic reporting information about it"""
     def __init__(self, url, s3_uri, sitemap_index=None):
@@ -70,7 +70,7 @@ class SitemapMetadata(object):
 
 
 class SitemapIndexMetadata(object):
-    """A class to represent a sitemap index in a DownloadStatus
+    """A class to represent a sitemap index in a Metadata
     The class does not contain the document itself
     only basic reporting information about it"""
     def __init__(self, url, valid_urls, invalid_urls, error_type=None, error_message=None):
@@ -141,7 +141,7 @@ class Error(object):
         return str(self.to_dict())
 
 
-class DownloadStatus(object):
+class Metadata(object):
     """A class information about the downloaded sitemaps:
         where they come from, where they are stored,
         errors that occured
@@ -244,17 +244,17 @@ def parse_error(input_dict):
 
 
 def parse_download_status_from_json(file_path):
-    """Build a DownloadStatus object from a json file
+    """Build a Metadata object from a json file
     :param file_path: the input file path
     :type file_path: str
-    :returns: DownloadStatus
+    :returns: Metadata
     """
     with open(file_path) as f:
         download_status = json.load(f)
     sitemaps = [parse_sitemap_metadata(sitemap_dict) for sitemap_dict in download_status["sitemaps"]]
     sitemap_indexes = [parse_sitemap_index_metadata(s) for s in download_status["sitemap_indexes"]]
     errors = [parse_error(error) for error in download_status["errors"]]
-    return DownloadStatus(sitemaps, sitemap_indexes, errors)
+    return Metadata(sitemaps, sitemap_indexes, errors)
 
 
 def download_sitemaps(input_url, output_directory, user_agent):
@@ -269,9 +269,9 @@ def download_sitemaps(input_url, output_directory, user_agent):
     :type output_directory: str
     :param user_agent: the user agent to use for the query.
     :type user_agent: str
-    :returns: DownloadStatus
+    :returns: Metadata
     """
-    result = DownloadStatus()
+    result = Metadata()
     #download input url
     output_file_path = get_output_file_path(input_url, output_directory)
     try:
@@ -315,9 +315,9 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
     :type output_directory: str
     :param user_agent: the user agent to use for the query.
     :type user_agent: str
-    :returns: DownloadStatus
+    :returns: Metadata
     """
-    result = DownloadStatus()
+    result = Metadata()
     url_generator = sitemap_index_document.get_urls()
     while True:
         try:
@@ -376,7 +376,7 @@ def update_download_status_on_parsing_error(download_status,
     If at least one url was found in the sitemap index, we consider it as a
     valid sitemap index document, otherwise we consider it as an error.
     :param download_status: the download status to update
-    :type download_status: DownloadStatus
+    :type download_status: Metadata
     :param sitemap_index_document: the sitemap index that raised the parsing error
     :type sitemap_index_document: SitemapIndexXmlDocument
     :param parsing_error: the parsing error exception raised by sitemap_index_document
