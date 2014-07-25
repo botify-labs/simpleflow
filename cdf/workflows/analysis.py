@@ -239,22 +239,18 @@ class AnalysisWorkflow(Workflow):
         config = context['features_options']['sitemaps']
         s3_uri = context['s3_uri']
         features_flags = context['features_flags']
-        user_agent = context["settings"]["http"]["user_agent"]
         sitemaps_result = self.submit(
             download_sitemap_files,
             config['urls'],
             s3_uri,
-            user_agent,
+            context["settings"]["http"]["user_agent"],
             features_flags=features_flags)
         if sitemaps_result.finished:
-            allowed_domains = context["settings"]["valid"]
-            blacklisted_domains = context["settings"]["blacklist"]
-
             sitemaps_result = self.submit(
                 match_sitemap_urls,
                 s3_uri,
-                allowed_domains,
-                blacklisted_domains,
+                context["settings"]["valid"],
+                context["settings"]["blacklist"],
                 context['first_part_id_size'],
                 context['part_id_size'],
                 features_flags=features_flags)
