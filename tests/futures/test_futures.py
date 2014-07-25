@@ -21,21 +21,21 @@ def test_future_init_repr():
 
 
 def test_future_init_cancelled():
-    assert Future().cancelled is False
+    assert Future().cancelled() is False
 
 
 def test_future_init_running():
-    assert Future().running is False
+    assert Future().running() is False
 
 
 def test_future_init_done():
-    assert Future().done is False
+    assert Future().done() is False
 
 
 def test_future_cancel():
     future = Future()
     assert future.cancel()
     assert future._state == futures.CANCELLED
-    assert future.running is False
-    assert future.cancelled
-    assert future.done
+    assert future.running() is False
+    assert future.cancelled()
+    assert future.done()
