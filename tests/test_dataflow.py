@@ -75,7 +75,7 @@ class TestDefinitionWithInput(TestWorkflow):
     """
     def run(self, a):
         b = self.submit(increment, a)
-        return b.result
+        return b.result()
 
 
 def test_workflow_with_input():
@@ -122,7 +122,7 @@ class TestDefinition(TestWorkflow):
 
         b = self.submit(double, a)
 
-        return b.result
+        return b.result()
 
 
 def test_workflow_with_two_tasks():
@@ -237,7 +237,7 @@ class TestDefinitionSameTask(TestWorkflow):
         a = self.submit(increment, 1)
         b = self.submit(increment, a)
 
-        return b.result
+        return b.result()
 
 
 def test_workflow_with_same_task_called_two_times():
@@ -303,7 +303,7 @@ class TestDefinitionSameFuture(TestWorkflow):
         a = self.submit(increment, 1)
         a = self.submit(double, a)
 
-        return a.result
+        return a.result()
 
 
 def test_workflow_reuse_same_future():
@@ -364,7 +364,7 @@ class TestDefinitionTwoTasksSameFuture(TestWorkflow):
         b = self.submit(double, a)
         c = self.submit(increment, a)
 
-        return (b.result, c.result)
+        return b.result(), c.result()
 
 
 def test_workflow_with_two_tasks_same_future():
@@ -490,7 +490,7 @@ class TestDefinitionRetryActivity(TestWorkflow):
     def run(self, *args, **kwargs):
         a = self.submit(increment_retry, 7)
 
-        return a.result
+        return a.result()
 
 
 def test_workflow_retry_activity():
@@ -593,7 +593,7 @@ class TestDefinitionChildWorkflow(TestWorkflow):
     """
     def run(self, x):
         y = self.submit(TestDefinition, x)
-        return y.result
+        return y.result()
 
 
 def test_workflow_with_child_workflow():
@@ -725,7 +725,7 @@ class TestDefinitionFailWorkflow(OnFailureMixin, TestWorkflow):
         if result.exception:
             self.fail('error')
 
-        return result.result
+        return result.result()
 
 
 def test_workflow_failed_from_definition():
@@ -771,7 +771,7 @@ class TestDefinitionActivityRaisesOnFailure(OnFailureMixin, TestWorkflow):
 
     """
     def run(self):
-        return self.submit(raise_on_failure).result
+        return self.submit(raise_on_failure).result()
 
 
 def test_workflow_activity_raises_on_failure():
@@ -807,7 +807,7 @@ def test_workflow_activity_raises_on_failure():
 
 class TestOnFailureDefinition(OnFailureMixin, TestWorkflow):
     def run(self):
-        if self.submit(raise_error).exception:
+        if self.submit(raise_error).exception():
             self.fail('FAIL')
 
 
@@ -846,7 +846,7 @@ class TestMultipleScheduledActivitiesDefinition(TestWorkflow):
         b = self.submit(increment, 2)
         c = self.submit(double, b)
 
-        return [a.result, b.result, c.result]
+        return [a.result(), b.result(), c.result()]
 
 
 def test_multiple_scheduled_activities():

@@ -10,7 +10,6 @@ import swf.exceptions
 
 from simpleflow import (
     executor,
-    futures,
     exceptions,
     constants,
 )
@@ -18,6 +17,7 @@ from simpleflow.activity import Activity
 from simpleflow.workflow import Workflow
 from simpleflow.history import History
 from simpleflow.swf.task import ActivityTask, WorkflowTask
+from . import futures
 
 logger = logging.getLogger(__name__)
 
@@ -181,15 +181,15 @@ class Executor(executor.Executor):
         if not future:  # Task in history does not count.
             return None
 
-        if not future.finished:  # Still pending or running...
+        if not future.finished():  # Still pending or running...
             return future
 
-        if future.exception is None:  # Result available!
+        if future.exception() is None:  # Result available!
             return future
 
         if event.get('retry', 0) == task.activity.retry:  # No more retry!
             if task.activity.raises_on_failure:
-                raise exceptions.TaskException(task, future.exception)
+                raise exceptions.TaskException(task, future.exception())
             return future  # with future.exception set.
 
         # Otherwise retry the task by scheduling it again.

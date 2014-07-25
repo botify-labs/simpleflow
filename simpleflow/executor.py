@@ -15,7 +15,7 @@ def get_actual_value(value):
 
     """
     if isinstance(value, futures.Future):
-        return futures.get_result_or_raise(value)
+        return value.result()
     return value
 
 
