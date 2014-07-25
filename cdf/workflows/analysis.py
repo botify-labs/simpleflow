@@ -239,8 +239,7 @@ class AnalysisWorkflow(Workflow):
         config = context['features_options']['sitemaps']
         s3_uri = context['s3_uri']
         features_flags = context['features_flags']
-        #FIXME get this from context
-        user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:24.0) Gecko/20100101 Firefox/24.0"
+        user_agent = context["settings"]["http"]["user_agent"]
         sitemaps_result = self.submit(
             download_sitemap_files,
             config['urls'],
@@ -248,9 +247,8 @@ class AnalysisWorkflow(Workflow):
             user_agent,
             features_flags=features_flags)
         if sitemaps_result.finished:
-            #FIXME get this from context
-            allowed_domains = ["popculture-papertoys.com"]
-            blacklisted_domains = []
+            allowed_domains = context["settings"]["valid"]
+            blacklisted_domains = context["settings"]["blacklist"]
 
             sitemaps_result = self.submit(
                 match_sitemap_urls,
