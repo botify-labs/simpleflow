@@ -37,21 +37,21 @@ def download_sitemap_files(input_urls,
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
     """
-    s3_download_status = DownloadStatus()
+    s3_download_metadata = DownloadStatus()
     for url in input_urls:
         crt_file_index = download_sitemap_file(url,
                                                s3_uri,
                                                user_agent,
                                                tmp_dir,
                                                force_fetch)
-        s3_download_status.update(crt_file_index)
+        s3_download_metadata.update(crt_file_index)
 
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
 
     #push the file that list the sitemap files
     s3.push_content(
-        os.path.join(s3_subdir_uri, "download_status.json"),
-        s3_download_status.to_json()
+        os.path.join(s3_subdir_uri, "sitemap_download_metadata.json"),
+        s3_download_metadata.to_json()
     )
 
 
@@ -75,24 +75,24 @@ def download_sitemap_file(input_url,
     :type tmp_dir: str
     :returns: DownloadStatus
     """
-    download_status = download_sitemaps(input_url, tmp_dir, user_agent)
+    download_metadata = download_sitemaps(input_url, tmp_dir, user_agent)
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
-    #an object similar to download_status but that stores s3 uris
-    s3_download_status = DownloadStatus(
-        sitemap_indexes=download_status.sitemap_indexes,
-        errors=download_status.errors
+    #an object similar to download_metadata but that stores s3 uris
+    s3_download_metadata = DownloadStatus(
+        sitemap_indexes=download_metadata.sitemap_indexes,
+        errors=download_metadata.errors
     )
-    for sitemap in download_status.sitemaps:
+    for sitemap in download_metadata.sitemaps:
         url, file_path, sitemap_index = sitemap.url, sitemap.s3_uri, sitemap.sitemap_index
         destination_uri = os.path.join(s3_subdir_uri, os.path.basename(file_path))
         s3.push_file(
             os.path.join(destination_uri),
             file_path
         )
-        s3_download_status.add_success_sitemap(
+        s3_download_metadata.add_success_sitemap(
             SitemapMetadata(url, destination_uri, sitemap_index)
         )
-    return s3_download_status
+    return s3_download_metadata
 
 
 @with_temporary_dir
@@ -149,13 +149,13 @@ def match_sitemap_urls(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)
 
-    download_status = get_download_status_from_s3(s3_uri, tmp_dir, force_fetch)
-    update_download_status(download_status, sitemap_documents)
+    download_metadata = get_download_status_from_s3(s3_uri, tmp_dir, force_fetch)
+    update_download_status(download_metadata, sitemap_documents)
 
     sitemap_metadata_filename = "sitemap_metadata.json"
     sitemap_metadata_filepath = os.path.join(tmp_dir, sitemap_metadata_filename)
     with open(sitemap_metadata_filepath, 'wb') as sitemap_metadata_file:
-        sitemap_metadata_file.write(download_status.to_json())
+        sitemap_metadata_file.write(download_metadata.to_json())
     s3.push_file(
         os.path.join(s3_uri, sitemap_metadata_filename),
         sitemap_metadata_filepath

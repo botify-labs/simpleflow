@@ -51,7 +51,7 @@ class TestDownloadSitemapFiles(unittest.TestCase):
         ])
 
         push_content_mock.assert_called_once_with(
-            "s3://foo/sitemaps/download_status.json",
+            "s3://foo/sitemaps/sitemap_download_metadata.json",
             expected_download_status.to_json()
         )
 
@@ -105,7 +105,7 @@ class TestMatchSitemapUrls(unittest.TestCase):
                                      "http://bar.com"))
 
         k3 = boto.s3.key.Key(bucket)
-        k3.key = "crawl_result/sitemaps/download_status.json"
+        k3.key = "crawl_result/sitemaps/sitemap_download_metadata.json"
         k3.set_contents_from_string((
             '{'
             '    "sitemaps": ['

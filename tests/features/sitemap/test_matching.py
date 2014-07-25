@@ -77,9 +77,9 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
         self.assertEqual(expected_result, actual_result)
 
         #check calls
-        m.assert_called_once_with("/tmp/foo/download_status.json")
-        fetch_file_mock.assert_called_once_with("s3://foo/sitemaps/download_status.json",
-                                                "/tmp/foo/download_status.json",
+        m.assert_called_once_with("/tmp/foo/sitemap_download_metadata.json")
+        fetch_file_mock.assert_called_once_with("s3://foo/sitemaps/sitemap_download_metadata.json",
+                                                "/tmp/foo/sitemap_download_metadata.json",
                                                 force_fetch)
 
 
