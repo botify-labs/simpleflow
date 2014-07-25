@@ -16,6 +16,7 @@ from cdf.features.main.streams import IdStreamDef
 from cdf.features.sitemap.tasks import (download_sitemap_files,
                                         download_sitemap_file,
                                         match_sitemap_urls,
+                                        update_download_status,
                                         save_url_list_as_gzip)
 from cdf.core.mocks import _mock_push_file
 
@@ -194,6 +195,45 @@ class TestMatchSitemapUrls(unittest.TestCase):
         actual_sitemap_metada = json.loads(key.get_contents_as_string())
         self.assertEqual(expected_sitemap_metadata, actual_sitemap_metada)
 
+class TestUpdateDownloadStatus(unittest.TestCase):
+    def setUp(self):
+        self.download_status = DownloadStatus()
+        self.download_status.add_success_sitemap(
+            SitemapMetadata("http://foo.com/sitemap_1.txt",
+                            "s3://foo.com/sitemap_1.txt")
+            )
+        self.download_status.add_success_sitemap(
+            SitemapMetadata("http://foo.com/sitemap_2.txt",
+                            "s3://foo.com/sitemap_2.txt")
+            )
+
+    def test_nominal_case(self):
+        document = SitemapXmlDocument("/tmp/sitemap_2.txt", "http://foo.com/sitemap_2.txt")
+        document.valid_urls = 2
+        document.invalid_urls = 1
+        update_download_status(self.download_status, [document])
+
+        modified_sitemap = self.download_status.sitemaps[1]
+        self.assertEqual("http://foo.com/sitemap_2.txt", modified_sitemap.url)
+        self.assertEqual(2, modified_sitemap.valid_urls)
+        self.assertEqual(1, modified_sitemap.invalid_urls)
+        self.assertIsNone(modified_sitemap.error_type)
+        self.assertIsNone(modified_sitemap.error_message)
+
+    def test_error_case(self):
+        document = SitemapXmlDocument("/tmp/sitemap_2.txt", "http://foo.com/sitemap_2.txt")
+        document.valid_urls = 2
+        document.invalid_urls = 1
+        document.error = "ParsingError"
+        document.error_message = "foo"
+        update_download_status(self.download_status, [document])
+
+        modified_sitemap = self.download_status.sitemaps[1]
+        self.assertEqual("http://foo.com/sitemap_2.txt", modified_sitemap.url)
+        self.assertEqual(2, modified_sitemap.valid_urls)
+        self.assertEqual(1, modified_sitemap.invalid_urls)
+        self.assertEqual("ParsingError", modified_sitemap.error_type)
+        self.assertEqual("foo", modified_sitemap.error_message)
 
 class TestSaveUrlListAsGzip(unittest.TestCase):
     def test_nominal_case(self):

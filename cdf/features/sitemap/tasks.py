@@ -179,6 +179,7 @@ def match_sitemap_urls(s3_uri,
         out_of_crawl_domain_filepath
     )
 
+
 def update_download_status(download_status, sitemap_documents):
     """Update a DownloadStatus object with data obtained when extracting
     the urls from the sitemaps.
