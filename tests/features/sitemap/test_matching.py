@@ -11,7 +11,7 @@ from cdf.features.sitemap.download import (SitemapMetadata,
                                            SitemapIndexMetadata,
                                            Error,
                                            DownloadStatus)
-from cdf.features.sitemap.matching import (get_download_status_from_s3,
+from cdf.features.sitemap.matching import (get_download_metadata_from_s3,
                                            download_sitemaps_from_s3,
                                            match_sitemap_urls_from_document,
                                            match_sitemap_urls_from_documents,
@@ -56,7 +56,7 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
 
         #mock open()
         with mock.patch("__builtin__.open", mock.mock_open(read_data=file_content)) as m:
-            actual_result = get_download_status_from_s3(s3_uri,
+            actual_result = get_download_metadata_from_s3(s3_uri,
                                                         tmp_dir,
                                                         force_fetch)
 
@@ -84,17 +84,17 @@ class TestGetDownloadStatusFromS3(unittest.TestCase):
 
 
 class TestDownloadSitemapsFromS3(unittest.TestCase):
-    @mock.patch('cdf.features.sitemap.matching.get_download_status_from_s3', autospec=True)
+    @mock.patch('cdf.features.sitemap.matching.get_download_metadata_from_s3', autospec=True)
     @mock.patch('cdf.utils.s3.fetch_file', autospec=True)
     def test_nominal_case(self,
                           fetch_file_mock,
-                          get_download_status_from_s3_mock):
+                          get_download_metadata_from_s3_mock):
         #mock
         sitemaps = [
             SitemapMetadata("http://foo.com/sitemap_1.xml", "s3://foo/sitemap_1.xml"),
             SitemapMetadata("http://foo.com/sitemap_2.xml", "s3://foo/sitemap_2.xml")
         ]
-        get_download_status_from_s3_mock.return_value = DownloadStatus(sitemaps)
+        get_download_metadata_from_s3_mock.return_value = DownloadStatus(sitemaps)
 
         #actual call
         s3_uri = "s3://foo"

@@ -13,7 +13,7 @@ from cdf.features.sitemap.download import (download_sitemaps,
                                            DownloadStatus)
 from cdf.features.sitemap.streams import SitemapStreamDef
 from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
-                                           get_download_status_from_s3,
+                                           get_download_metadata_from_s3,
                                            get_sitemap_documents,
                                            DomainValidator)
 
@@ -149,7 +149,7 @@ def match_sitemap_urls(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)
 
-    download_metadata = get_download_status_from_s3(s3_uri, tmp_dir, force_fetch)
+    download_metadata = get_download_metadata_from_s3(s3_uri, tmp_dir, force_fetch)
     update_download_status(download_metadata, sitemap_documents)
 
     sitemap_metadata_filename = "sitemap_metadata.json"
