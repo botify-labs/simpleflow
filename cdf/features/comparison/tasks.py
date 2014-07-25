@@ -3,6 +3,8 @@ import tempfile
 import shutil
 import gzip
 import ujson as json
+import copy
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.core.decorators import feature_enabled
@@ -12,16 +14,17 @@ from cdf.features.comparison.matching import (
     load_raw_documents, _LEVELDB_BLOCK_SIZE,
     document_merge, generate_conversion_table,
     document_url_id_correction)
+from cdf.features.comparison.constants import (
+    MATCHED_FILE_PATTERN,
+    COMPARISON_PATH, EXTRA_FIELDS_FORMAT)
 from cdf.utils.s3 import fetch_file, push_file, stream_files
 from cdf.utils.path import makedirs
 
 _FEATURE_ID = 'comparison'
 _REF_PATH = 'compare_ref'
 _NEW_PATH = 'compare_new'
-_MATCHED_FILE_PATTERN = 'matched.json.{}.gz'
-_MATCHED_FILE_REGEXP = _MATCHED_FILE_PATTERN.format('[0-9]+')
 _DOC_FILE_REGEXP = 'url_documents.json.*.gz'
-_COMPARISON_PATH = 'comparison'
+
 
 
 def _get_max_crawled_id(s3_uri):
@@ -64,7 +67,7 @@ def _create_partition_file(path, file_pattern, partition_nb):
 
 
 def _get_comparison_document_uri(documents_uri):
-    return os.path.join(documents_uri, _COMPARISON_PATH)
+    return os.path.join(documents_uri, COMPARISON_PATH)
 
 
 @with_temporary_dir
@@ -115,7 +118,7 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
     # Output to partition files
     matched_file_list = []
     matched_file = _create_partition_file(
-        new_path, _MATCHED_FILE_PATTERN, 0)
+        new_path, MATCHED_FILE_PATTERN, 0)
     matched_file_list.append(matched_file.filename)
 
     # reopen the DBs with read options
@@ -149,7 +152,7 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
             # if a new partition fitle is needed
             matched_file.close()
             matched_file = _create_partition_file(
-                new_path, _MATCHED_FILE_PATTERN,
+                new_path, MATCHED_FILE_PATTERN,
                 matched_count / part_size)
             matched_file_list.append(matched_file.filename)
 
@@ -162,7 +165,7 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
     # Pushing results
     # Pushing `matched` dataset
     comparison_uri = os.path.join(_get_document_path(new_s3_uri),
-                                  _COMPARISON_PATH)
+                                  COMPARISON_PATH)
     for matched_file in matched_file_list:
         base_name = os.path.basename(matched_file)
         push_file(
@@ -173,3 +176,20 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
     # Destroy the temporary DB
     ref_db.destroy()
     new_db.destroy()
+
+
+def get_comparison_mapping(data_format, extras=EXTRA_FIELDS_FORMAT):
+    """Prepare ElasticSearch mapping for comparison feature
+
+    :param data_format: original internal data format
+    :param extras: extra fields to be added
+    :return: ElasticSearch mapping for comparison feature
+    """
+    previous_format = {
+        'previous.' + k: v for k, v in data_format.iteritems()
+    }
+    format = copy.deepcopy(data_format)
+    format.update(previous_format)
+    format.update(extras)
+
+    return ElasticSearchBackend(format).mapping()
