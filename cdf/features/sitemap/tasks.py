@@ -180,6 +180,17 @@ def match_sitemap_urls(s3_uri,
     )
 
 def update_download_status(download_status, sitemap_documents):
+    """Update a DownloadStatus object with data obtained when extracting
+    the urls from the sitemaps.
+    This function basically fills the "valid_url", "invalid_urls" fields
+    for the sitemaps. It also fills the error related fields if necessary.
+    :param download_status: the download status object to update
+    :type download_status: DownloadStatus
+    :param sitemap_documents: a list of sitemap documents.
+                              They contain the information to update
+                              the download status
+    :type sitemap_documents: list
+    """
     url_to_metadata = {
         sitemap_metadata.url: sitemap_metadata for sitemap_metadata in download_status.sitemaps
     }
@@ -187,7 +198,6 @@ def update_download_status(download_status, sitemap_documents):
         document_metadata = url_to_metadata[document.url]
         document_metadata.valid_urls = document.valid_urls
         document_metadata.invalid_urls = document.invalid_urls
-
 
 
 def save_url_list_as_gzip(url_list, filename, tmp_dir):
