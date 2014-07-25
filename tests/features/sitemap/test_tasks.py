@@ -5,7 +5,7 @@ import boto
 import json
 from cdf.utils.s3 import stream_files
 
-from cdf.features.sitemap.download import SitemapMetadata, Metadata
+from cdf.features.sitemap.metadata import SitemapMetadata, Metadata
 from cdf.features.sitemap.document import SitemapXmlDocument
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.sitemap.tasks import (download_sitemap_files,

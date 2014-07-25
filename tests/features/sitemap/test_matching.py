@@ -7,7 +7,7 @@ from cdf.core.streams.base import TemporaryDataset
 from cdf.features.sitemap.document import (SitemapXmlDocument,
                                            SitemapTextDocument,
                                            SiteMapType)
-from cdf.features.sitemap.download import (SitemapMetadata,
+from cdf.features.sitemap.metadata import (SitemapMetadata,
                                            SitemapIndexMetadata,
                                            Error,
                                            Metadata)
