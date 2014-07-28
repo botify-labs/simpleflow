@@ -3,7 +3,7 @@ import os
 import tempfile
 import shutil
 
-from cdf.tasks.decorators import TemporaryDirTask as with_temp_dir
+from cdf.tasks.decorators import with_temporary_dir as with_temp_dir
 
 
 @with_temp_dir
@@ -12,6 +12,8 @@ def task_func(some_param, tmp_dir=None):
     if tmp_dir is None:
         raise Exception()
     return tmp_dir
+
+
 
 
 class TestTempDirDecorator(unittest.TestCase):
@@ -85,3 +87,14 @@ class TestTempDirDecorator(unittest.TestCase):
         # after the call the temp dir should be removed
         self.assertFalse(os.path.isdir(temp_dir))
         self.assertFalse(os.path.exists(temp_dir))
+
+    def test_exeption(self):
+        class TestException(Exception):
+            def __init__(self):
+                pass
+
+        @with_temp_dir
+        def task_exception(tmp_dir=None):
+            raise TestException()
+
+        self.assertRaises(TestException, task_exception)
