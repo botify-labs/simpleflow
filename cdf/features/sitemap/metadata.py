@@ -85,12 +85,10 @@ class SitemapIndexMetadata(object):
         return result
 
     def __eq__(self, other):
-        return (self.url == other.url and
-                self.valid_urls == other.valid_urls and
-                self.invalid_urls == other.invalid_urls)
+        return self.to_dict() == other.to_dict()
 
     def __repr__(self):
-        return "({}, {}, {})".format(self.url, self.valid_urls, self.invalid_urls)
+        return repr(self.to_dict())
 
     def __hash__(self):
         return hash(repr(self))

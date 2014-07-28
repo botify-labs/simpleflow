@@ -69,11 +69,11 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
                             "s3://foo/sitemap_2.xml",
                             "http://foo/sitemap_index.html"),
         ]
-        expected_sitemap_indexes = [SitemapIndexMetadata("http://foo/sitemap_index.xml", 2, 0)]
+        expected_sitemap_indexes = [SitemapIndexMetadata(u"http://foo/sitemap_index.xml", 2, 0)]
         expected_errors = [Error(u"http://error", SiteMapType.UNKNOWN, u"DownloadError", u"foo")]
         expected_result = Metadata(expected_sitemaps,
-                                         expected_sitemap_indexes,
-                                         expected_errors)
+                                   expected_sitemap_indexes,
+                                   expected_errors)
         self.assertEqual(expected_result, actual_result)
 
         #check calls

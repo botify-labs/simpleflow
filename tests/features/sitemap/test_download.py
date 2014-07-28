@@ -337,7 +337,7 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
         def url_generator():
             self.sitemap_index_mock.valid_urls += 1
             yield "http://foo/bar.xml"
-            raise ParsingError()
+            raise ParsingError("error message")
         self.sitemap_index_mock.get_urls = mock.MagicMock()
         self.sitemap_index_mock.get_urls = url_generator
 
@@ -349,7 +349,10 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
         expected_result.add_success_sitemap(
             SitemapMetadata("http://foo/bar.xml", "/tmp/foo/bar.xml", self.sitemap_index_mock.url)
         )
-        expected_result.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index_mock.url, 1, 0))
+        sitemap_index_metadata = SitemapIndexMetadata(self.sitemap_index_mock.url, 1, 0)
+        sitemap_index_metadata.error_type = "ParsingError"
+        sitemap_index_metadata.error_message = "error message"
+        expected_result.add_success_sitemap_index(sitemap_index_metadata)
         self.assertEqual(expected_result, actual_result)
 
 
