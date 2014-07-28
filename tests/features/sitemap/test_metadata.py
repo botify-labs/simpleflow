@@ -73,6 +73,41 @@ class TestSitemapMetadata(unittest.TestCase):
         self.assertEqual(expected_result, sitemap_metadata.to_dict())
 
 
+class TestSitemapIndexMetadata(unittest.TestCase):
+    def setUp(self):
+        self.url = "http://foo.com/sitemap_index.xml"
+        self.valid_urls = 10
+        self.invalid_urls = 5
+        self.error_type = "ParsingError"
+        self.error_message = "error message"
+
+    def test_to_dict_nominal_case(self):
+        sitemap_index_metadata = SitemapIndexMetadata(self.url,
+                                                      self.valid_urls,
+                                                      self.invalid_urls)
+        expected_result = {
+            "url": self.url,
+            "valid_urls": self.valid_urls,
+            "invalid_urls": self.invalid_urls
+        }
+        self.assertEqual(expected_result, sitemap_index_metadata.to_dict())
+
+    def test_to_dict_error_case(self):
+        sitemap_index_metadata = SitemapIndexMetadata(self.url,
+                                                      self.valid_urls,
+                                                      self.invalid_urls,
+                                                      self.error_type,
+                                                      self.error_message)
+        expected_result = {
+            "url": self.url,
+            "valid_urls": self.valid_urls,
+            "invalid_urls": self.invalid_urls,
+            "error": self.error_type,
+            "message": self.error_message
+        }
+        self.assertEqual(expected_result, sitemap_index_metadata.to_dict())
+
+
 class TestMetadata(unittest.TestCase):
     def setUp(self):
         self.sitemap_index = "http://foo/sitemap_index.xml"
