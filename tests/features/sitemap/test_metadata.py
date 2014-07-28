@@ -4,7 +4,8 @@ from cdf.features.sitemap.metadata import (Metadata,
                                            SitemapMetadata,
                                            SitemapIndexMetadata,
                                            Error,
-                                           parse_sitemap_metadata)
+                                           parse_sitemap_metadata,
+                                           parse_sitemap_index_metadata)
 from cdf.features.sitemap.document import SiteMapType
 
 
@@ -275,4 +276,43 @@ class TestParseSitemapMetadata(unittest.TestCase):
         expected_result.error_type = self.error_type
         expected_result.error_message = self.error_message
         self.assertEqual(expected_result, parse_sitemap_metadata(input_dict))
+
+    #TODO add test with unknown fields
+
+
+class TestParseSitemapIndexMetadata(unittest.TestCase):
+    def setUp(self):
+        self.url = "http://foo.com/sitemap_index.xml"
+        self.valid_urls = 10
+        self.invalid_urls = 5
+        self.error_type = "ParsingError"
+        self.error_message = "error message"
+
+    def test_nominal_case(self):
+        input_dict = {
+            "url": self.url,
+            "valid_urls": self.valid_urls,
+            "invalid_urls": self.invalid_urls
+        }
+        expected_result = SitemapIndexMetadata(self.url,
+                                               self.valid_urls,
+                                               self.invalid_urls)
+        self.assertEqual(expected_result,
+                         parse_sitemap_index_metadata(input_dict))
+
+    def test_error_case(self):
+        input_dict = {
+            "url": self.url,
+            "valid_urls": self.valid_urls,
+            "invalid_urls": self.invalid_urls,
+            "error": self.error_type,
+            "message": self.error_message
+        }
+        expected_result = SitemapIndexMetadata(self.url,
+                                               self.valid_urls,
+                                               self.invalid_urls)
+        expected_result.error_type = self.error_type
+        expected_result.error_message = self.error_message
+        self.assertEqual(expected_result,
+                         parse_sitemap_index_metadata(input_dict))
 
