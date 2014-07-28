@@ -485,6 +485,18 @@ class AnalysisWorkflow(Workflow):
             context['revision_endpoint'],
             'FINISHED')
 
+        futures.wait(crawl_status_result, revision_status_result)
+        update_status_errors = []
+        if crawl_status_result.exception:
+            update_status_errors.append('crawl status: {}'.format(
+                crawl_status_result.exception))
+        if revision_status_result.exception:
+            update_status_errors.append('revision status: {}'.format(
+                revision_status_result.exception))
+        if update_status_errors:
+            self.fail('Cannot update {}'.format(
+                ' and '.join(update_status_errors)))
+
         result = {}
         result.update(crawl_status_result.result)
         result.update(revision_status_result.result)
