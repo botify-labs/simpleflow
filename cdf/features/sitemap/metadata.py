@@ -48,12 +48,10 @@ class SitemapMetadata(object):
         return result
 
     def __eq__(self, other):
-        return (self.url == other.url and
-                self.s3_uri == other.s3_uri and
-                self.sitemap_index == other.sitemap_index)
+        return self.to_dict() == other.to_dict()
 
     def __repr__(self):
-        return "({}, {}, {})".format(self.url, self.s3_uri, self.sitemap_index)
+        return repr(self.to_dict())
 
     def __hash__(self):
         return hash(repr(self))

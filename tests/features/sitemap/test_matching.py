@@ -62,12 +62,12 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
 
         #check result
         expected_sitemaps = [
-            SitemapMetadata("http://foo/sitemap_1.xml",
-                            "s3://foo/sitemap_1.xml",
-                            "http://foo/sitemap_index.html"),
-            SitemapMetadata("http://foo/sitemap_2.xml",
-                            "s3://foo/sitemap_2.xml",
-                            "http://foo/sitemap_index.html"),
+            SitemapMetadata(u"http://foo/sitemap_1.xml",
+                            u"s3://foo/sitemap_1.xml",
+                            u"http://foo/sitemap_index.html"),
+            SitemapMetadata(u"http://foo/sitemap_2.xml",
+                            u"s3://foo/sitemap_2.xml",
+                            u"http://foo/sitemap_index.html"),
         ]
         expected_sitemap_indexes = [SitemapIndexMetadata(u"http://foo/sitemap_index.xml", 2, 0)]
         expected_errors = [Error(u"http://error", SiteMapType.UNKNOWN, u"DownloadError", u"foo")]
