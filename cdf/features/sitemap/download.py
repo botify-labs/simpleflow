@@ -103,8 +103,8 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
             logger.error("Skipping {}: {}".format(url, e.message))
             if os.path.isfile(file_path):
                 os.remove(file_path)
-                error = e.__class__.__name__
-                result.add_error(url, SiteMapType.UNKNOWN, error, e.message)
+            error = e.__class__.__name__
+            result.add_error(url, SiteMapType.UNKNOWN, error, e.message)
             continue
 
         sitemap_type = sitemap_document.get_sitemap_type()
