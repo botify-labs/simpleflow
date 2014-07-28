@@ -239,13 +239,11 @@ class AnalysisWorkflow(Workflow):
         sitemaps_result = futures.Future()
         config = context['features_options']['sitemaps']
         s3_uri = context['s3_uri']
-        features_flags = context['features_flags']
         download_result = self.submit(
             download_sitemap_files,
             config['urls'],
             s3_uri,
-            context["settings"]["http"]["user_agent"],
-            features_flags=features_flags)
+            context["settings"]["http"]["user_agent"])
         if download_result.finished:
             sitemaps_result = self.submit(
                 match_sitemap_urls,
@@ -253,8 +251,7 @@ class AnalysisWorkflow(Workflow):
                 context["settings"]["valid"],
                 context["settings"]["blacklist"],
                 context['first_part_id_size'],
-                context['part_id_size'],
-                features_flags=features_flags)
+                context['part_id_size'])
 
         return [sitemaps_result]
 

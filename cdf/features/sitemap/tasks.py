@@ -3,7 +3,6 @@ import gzip
 import json
 
 from cdf.utils import s3
-from cdf.core.decorators import feature_enabled
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.features.main.utils import get_url_to_id_dict_from_stream
 
@@ -20,7 +19,6 @@ from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
 
 
 @with_temporary_dir
-@feature_enabled('sitemap')
 def download_sitemap_files(input_urls,
                            s3_uri,
                            user_agent=None,
@@ -97,7 +95,6 @@ def download_sitemap_file(input_url,
 
 
 @with_temporary_dir
-@feature_enabled('sitemap')
 def match_sitemap_urls(s3_uri,
                        allowed_domains,
                        blacklisted_domains,
@@ -127,7 +124,6 @@ def match_sitemap_urls(s3_uri,
     :type part_id_size: int
     :param tmp_dir: the directory where to save temporary data
     """
-
     #load crawl information
     id_stream = IdStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
     url_to_id = get_url_to_id_dict_from_stream(id_stream)
@@ -163,7 +159,6 @@ def match_sitemap_urls(s3_uri,
         os.path.join(s3_uri, sitemap_info_filename),
         sitemap_info_filepath
     )
-
     sitemap_only_filename = 'sitemap_only.gz'
     sitemap_only_filepath = save_url_list_as_gzip(sitemap_only_urls,
                                                   sitemap_only_filename,
