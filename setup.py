@@ -82,6 +82,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'simple-workflow>=0.1.42',
+        'futures'
     ],
     license=read("LICENSE"),
     zip_safe=False,
