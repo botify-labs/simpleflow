@@ -82,14 +82,14 @@ def download_sitemap_file(input_url,
         errors=download_metadata.errors
     )
     for sitemap in download_metadata.sitemaps:
-        url, file_path, sitemap_index = sitemap.url, sitemap.s3_uri, sitemap.sitemap_index
+        url, file_path, sitemap_indexes = sitemap.url, sitemap.s3_uri, sitemap.sitemap_indexes
         destination_uri = os.path.join(s3_subdir_uri, os.path.basename(file_path))
         s3.push_file(
             os.path.join(destination_uri),
             file_path
         )
         s3_download_metadata.add_success_sitemap(
-            SitemapMetadata(url, destination_uri, sitemap_index)
+            SitemapMetadata(url, destination_uri, sitemap_indexes)
         )
     return s3_download_metadata
 

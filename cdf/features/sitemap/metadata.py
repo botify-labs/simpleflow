@@ -11,7 +11,7 @@ class SitemapMetadata(object):
     """A class to represent sitemap in Metadata
     The class does not contain the document itself
     only basic reporting information about it"""
-    def __init__(self, url, s3_uri, sitemap_index=None):
+    def __init__(self, url, s3_uri, sitemap_indexes=None):
         """Constructor
         :param url: the sitemap url
         :type url: str
@@ -23,7 +23,7 @@ class SitemapMetadata(object):
         """
         self.url = url
         self.s3_uri = s3_uri
-        self.sitemap_index = sitemap_index
+        self.sitemap_indexes = sitemap_indexes or []
         self.error_type = None
         self.error_message = None
         self.valid_urls = None
@@ -35,8 +35,8 @@ class SitemapMetadata(object):
             "s3_uri": self.s3_uri,
         }
 
-        if self.sitemap_index:
-            result["sitemap_index"] = self.sitemap_index
+        if self.sitemap_indexes is not None and len(self.sitemap_indexes) > 0:
+            result["sitemap_indexes"] = self.sitemap_indexes
         if self.valid_urls is not None:
             result["valid_urls"] = self.valid_urls
         if self.invalid_urls is not None:
@@ -192,8 +192,8 @@ class Metadata(object):
 
 def parse_sitemap_metadata(input_dict):
     result = SitemapMetadata(input_dict["url"], input_dict["s3_uri"])
-    if "sitemap_index" in input_dict:
-        result.sitemap_index = input_dict["sitemap_index"]
+    if "sitemap_indexes" in input_dict:
+        result.sitemap_indexes = input_dict["sitemap_indexes"]
     if "valid_urls" in input_dict:
         result.valid_urls = input_dict["valid_urls"]
     if "invalid_urls" in input_dict:

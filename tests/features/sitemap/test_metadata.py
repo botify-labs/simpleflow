@@ -24,12 +24,12 @@ class TestSitemapMetadata(unittest.TestCase):
     def test_to_dict_nominal_case(self):
         sitemap_metadata = SitemapMetadata(self.url,
                                            self.s3_uri,
-                                           self.sitemap_index)
+                                           [self.sitemap_index])
 
         expected_result = {
             "url": self.url,
             "s3_uri": self.s3_uri,
-            "sitemap_index": self.sitemap_index
+            "sitemap_indexes": [self.sitemap_index]
         }
 
         self.assertEqual(expected_result, sitemap_metadata.to_dict())
@@ -118,7 +118,7 @@ class TestMetadata(unittest.TestCase):
         download_status = Metadata(
             [SitemapMetadata("http://foo/sitemap_1.xml",
                              "s3://foo/sitemap_1.xml",
-                             self.sitemap_index)],
+                             [self.sitemap_index])],
             [SitemapIndexMetadata("http://foo/sitemap_index.xml", 2, 1)],
             [Error("http://error1", SiteMapType.UNKNOWN, "foo", "bar"),
              Error("http://error2", SiteMapType.UNKNOWN, "foo", "bar")]
@@ -131,7 +131,7 @@ class TestMetadata(unittest.TestCase):
                 {
                     "url": "http://foo/sitemap_1.xml",
                     "s3_uri": "s3://foo/sitemap_1.xml",
-                    "sitemap_index": "http://foo/sitemap_index.xml"
+                    "sitemap_indexes": ["http://foo/sitemap_index.xml"]
                 }
             ],
             "sitemap_indexes": [

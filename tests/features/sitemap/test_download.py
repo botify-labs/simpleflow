@@ -196,12 +196,12 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
         expected_result.add_success_sitemap(
             SitemapMetadata("http://foo/bar.xml",
                             "/tmp/foo/bar.xml",
-                            self.sitemap_index_mock.url)
+                            [self.sitemap_index_mock.url])
         )
         expected_result.add_success_sitemap(
             SitemapMetadata("http://foo/baz.xml",
                             "/tmp/foo/baz.xml",
-                            self.sitemap_index_mock.url)
+                            [self.sitemap_index_mock.url])
         )
         expected_result.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index_mock.url, 0, 0))
         self.assertEqual(expected_result, actual_result)
@@ -239,7 +239,7 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
         expected_result.add_success_sitemap(
             SitemapMetadata("http://foo/baz.xml",
                             "/tmp/foo/baz.xml",
-                            self.sitemap_index_mock.url)
+                            [self.sitemap_index_mock.url])
         )
         error_message = "'http://foo/bar.xml' is a sitemap index. It cannot be referenced in a sitemap index."
         expected_result.add_error("http://foo/bar.xml",
@@ -275,7 +275,7 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
         expected_result.add_success_sitemap(
             SitemapMetadata("http://foo/baz.xml",
                             "/tmp/foo/baz.xml",
-                            self.sitemap_index_mock.url)
+                            [self.sitemap_index_mock.url])
         )
         error_message = "'http://foo/bar.xml' is not a sitemap file."
         expected_result.add_error("http://foo/bar.xml",
@@ -316,7 +316,7 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
                                   "DownloadError",
                                   "error message")
         expected_result.add_success_sitemap(
-            SitemapMetadata("http://foo/baz.xml", "/tmp/foo/baz.xml", self.sitemap_index_mock.url)
+            SitemapMetadata("http://foo/baz.xml", "/tmp/foo/baz.xml", [self.sitemap_index_mock.url])
         )
         #0 valid urls because we're mocking get_urls() which is supposed to
         #increment the valid url count
@@ -347,7 +347,7 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
             self.user_agent)
         expected_result = Metadata()
         expected_result.add_success_sitemap(
-            SitemapMetadata("http://foo/bar.xml", "/tmp/foo/bar.xml", self.sitemap_index_mock.url)
+            SitemapMetadata("http://foo/bar.xml", "/tmp/foo/bar.xml", [self.sitemap_index_mock.url])
         )
         sitemap_index_metadata = SitemapIndexMetadata(self.sitemap_index_mock.url, 1, 0)
         sitemap_index_metadata.error_type = "ParsingError"

@@ -111,7 +111,7 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
         #  check if it is actually a sitemap
         if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
             result.add_success_sitemap(
-                SitemapMetadata(url, file_path, sitemap_index_document.url)
+                SitemapMetadata(url, file_path, [sitemap_index_document.url])
             )
         elif is_sitemap_index(sitemap_type):
             error_message = "'{}' is a sitemap index. It cannot be referenced in a sitemap index.".format(url)

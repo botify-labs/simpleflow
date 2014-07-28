@@ -26,10 +26,10 @@ class TestDownloadSitemapFiles(unittest.TestCase):
         download_sitemap_file_mock.side_effect = iter([
             Metadata([SitemapMetadata("http://foo.com/sitemap.xml",
                                       "s3://foo/sitemaps/sitemap.xml",
-                                      sitemap_index)]),
+                                      [sitemap_index])]),
             Metadata([SitemapMetadata("http://bar.com/sitemap.xml",
                                       "s3://foo/sitemaps/sitemap.xml_2",
-                                      sitemap_index)])
+                                      [sitemap_index])])
         ])
 
         #actual call
@@ -44,10 +44,10 @@ class TestDownloadSitemapFiles(unittest.TestCase):
         expected_download_status = Metadata([
             SitemapMetadata("http://foo.com/sitemap.xml",
                             "s3://foo/sitemaps/sitemap.xml",
-                            sitemap_index),
+                            [sitemap_index]),
             SitemapMetadata("http://bar.com/sitemap.xml",
                             "s3://foo/sitemaps/sitemap.xml_2",
-                            sitemap_index)
+                            [sitemap_index])
         ])
 
         push_content_mock.assert_called_once_with(
@@ -70,7 +70,7 @@ class TestDownloadSitemapFile(unittest.TestCase):
         #actual call
         input_url = "http://foo.com/sitemap.xml"
         s3_uri = "s3://foo"
-        actual_result = download_sitemap_file(input_url, s3_uri, None)
+        actual_result = download_sitemap_file(input_url, s3_uri)
 
         #verifications
         expected_result = Metadata([
@@ -111,12 +111,12 @@ class TestMatchSitemapUrls(unittest.TestCase):
             '    "sitemaps": ['
             '        {'
             '            "url": "http://foo.com/sitemap_1.txt", '
-            '            "sitemap_index": "http://foo.com/sitemap_index.xml", '
+            '            "sitemap_indexes": ["http://foo.com/sitemap_index.xml"], '
             '            "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_1.txt"'
             '        },'
             '        {'
             '            "url": "http://foo.com/sitemap_2.txt", '
-            '            "sitemap_index": "http://foo.com/sitemap_index.xml", '
+            '            "sitemap_indexes": ["http://foo.com/sitemap_index.xml"], '
             '            "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_2.txt"'
             '        }'
             '    ], '
@@ -163,14 +163,14 @@ class TestMatchSitemapUrls(unittest.TestCase):
             "sitemaps": [
                 {
                     "url": "http://foo.com/sitemap_1.txt",
-                    "sitemap_index": "http://foo.com/sitemap_index.xml",
+                    "sitemap_indexes": ["http://foo.com/sitemap_index.xml"],
                     "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_1.txt",
                     "valid_urls": 2,
                     "invalid_urls": 0
                 },
                 {
                     "url": "http://foo.com/sitemap_2.txt",
-                    "sitemap_index": "http://foo.com/sitemap_index.xml",
+                    "sitemap_indexes": ["http://foo.com/sitemap_index.xml"],
                     "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_2.txt",
                     "valid_urls": 2,
                     "invalid_urls": 0
