@@ -112,7 +112,7 @@ class Error(object):
     def to_dict(self):
         return {
             "url": self.url,
-            "type": self.file_type.name,
+            "file_type": self.file_type.name,
             "error": self.error_type,
             "message": self.message
         }

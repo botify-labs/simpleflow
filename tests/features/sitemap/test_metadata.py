@@ -144,13 +144,13 @@ class TestMetadata(unittest.TestCase):
             "errors": [
                 {
                     "url": "http://error1",
-                    "type": "UNKNOWN",
+                    "file_type": "UNKNOWN",
                     "error": "foo",
                     "message": "bar"
                 },
                 {
                     "url": "http://error2",
-                    "type": "UNKNOWN",
+                    "file_type": "UNKNOWN",
                     "error": "foo",
                     "message": "bar"
                 }
