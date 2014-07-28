@@ -41,9 +41,9 @@ class SitemapMetadata(object):
             result["valid_urls"] = self.valid_urls
         if self.invalid_urls is not None:
             result["invalid_urls"] = self.invalid_urls
-        if self.error_type:
+        if self.error_type is not None:
             result["error"] = self.error_type
-        if self.error_message:
+        if self.error_message is not None:
             result["message"] = self.error_message
         return result
 
@@ -76,9 +76,9 @@ class SitemapIndexMetadata(object):
             "valid_urls": self.valid_urls,
             "invalid_urls": self.invalid_urls
         }
-        if self.error_type:
+        if self.error_type is not None:
             result["error"] = self.error_type
-        if self.error_message:
+        if self.error_message is not None:
             result["message"] = self.error_message
         return result
 
