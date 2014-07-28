@@ -212,30 +212,64 @@ class AnalysisWorkflow(Workflow):
     task_list = 'analysis'
 
     def compute_ganalytics(self, context):
+        """
+        Import and compute data from Google Analytics.
+
+        :param context: passed to the workflow.
+        :type  context: dict | collections.Mapping.
+
+        *context* must contain:
+
+        - features_options
+        - s3_uri
+        - first_part_id_size
+        - part_id_size
+        - crawl_endpoint
+        - revision_endpoint
+        - access_token
+        - refresh_token
+        - ganalytics_site_id
+
+        :returns:
+            :rtype: [Future]
+
+
+        """
         config = context['features_options']['ganalytics']
         s3_uri = context['s3_uri']
-        features_flags = context['features_flags']
-        ganalytics_result = self.submit(
+
+        import_result = self.submit(
             import_data_from_ganalytics,
             config['access_token'],
             config['refresh_token'],
             config['ganalytics_site_id'],
-            s3_uri,
-            features_flags=features_flags)
+            s3_uri)
 
-        if ganalytics_result.finished:
-            api_requests = self.submit(
+        # Explicit dependency because we cannot use an argument to express the
+        # dependency between ``import_data_from_ganalytics`` and
+        # ``match_analytics_to_crawl_urls``. Empty future, by default with
+        # state ``PENDING``, to return until the previous task is finished.
+        ganalytics_result = futures.Future()
+        if import_result.finished:
+            ganalytics_result = self.submit(
                 match_analytics_to_crawl_urls,
                 s3_uri,
                 context['first_part_id_size'],
-                context['part_id_size'],
-                features_flags)
+                context['part_id_size'])
 
-            ganalytics_result = self.submit(
-                request_api,
-                context['crawl_endpoint'],
-                context['revision_endpoint'],
-                api_requests)
+            # Check if the future is finished to avoid blocking on
+            # ganalytics_result.result below.
+            if ganalytics_result.finished:
+                # We don't return the future returned by the call below because
+                # we don't want to break the workflow if there is an error when
+                # calling the API. As the result of this task will be stored in
+                # the workfow's history, we can extract it and fix the values
+                # manually (which should occur only exceptionally).
+                self.submit(
+                    request_api,
+                    context['crawl_endpoint'],
+                    context['revision_endpoint'],
+                    ganalytics_result.result['api_requests'])
 
         return [ganalytics_result]
 
