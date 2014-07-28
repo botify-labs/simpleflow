@@ -365,7 +365,7 @@ class AnalysisWorkflow(Workflow):
         if 'ganalytics' in features_flags:
             intermediary_files.extend(self.compute_ganalytics(context))
 
-        if 'sitemap' in features_flags:
+        if 'sitemaps' in features_flags:
             intermediary_files.extend(self.compute_sitemaps(context))
 
         futures.wait(*intermediary_files)
