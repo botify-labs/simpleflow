@@ -12,8 +12,11 @@ version = __import__('cdf').__version__
 with open(os.path.join(root, 'README.rst')) as f:
     README = f.read()
 
-with open(os.path.join(root, 'packaging/python.deps')) as f:
-    install_requirements = [s.strip() for s in f]
+
+def load_deps(path, root_path=root):
+    with open(os.path.join(root_path, path)) as f:
+        return [s.strip() for s in f]
+
 
 setup(
     name='botify-cdf',
@@ -28,7 +31,7 @@ setup(
     url='http://github.com/sem-io/botify-cdf',
     keywords='botify data extractor crawl',
     zip_safe=True,
-    install_requires=install_requirements,
+    install_requires=load_deps('packaging/python.deps'),
     tests_require=[
         'mock',
         'nose',
