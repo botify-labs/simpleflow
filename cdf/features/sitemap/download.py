@@ -20,7 +20,7 @@ from cdf.features.sitemap.document import (SiteMapType,
                                            instanciate_sitemap_document)
 
 
-def download_sitemaps(input_url, output_directory, user_agent):
+def download_sitemaps(input_url, output_directory, user_agent, metadata):
     """Download all sitemap files related to an input url in a directory.
     If the input url is a sitemap, the file will simply be downloaded,
     if it is a sitemap index, it will download the listed sitemaps.
@@ -32,6 +32,9 @@ def download_sitemaps(input_url, output_directory, user_agent):
     :type output_directory: str
     :param user_agent: the user agent to use for the query.
     :type user_agent: str
+    :param metadata: an object that stores information about what has been
+                     downloaded so far. It will be updated by the function.
+    :type metadata: Metadata
     :returns: Metadata
     """
     result = Metadata()

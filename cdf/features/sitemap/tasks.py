@@ -73,7 +73,7 @@ def download_sitemap_file(input_url,
     :type tmp_dir: str
     :returns: Metadata
     """
-    download_metadata = download_sitemaps(input_url, tmp_dir, user_agent)
+    download_metadata = download_sitemaps(input_url, tmp_dir, user_agent, metadata)
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
     #an object similar to download_metadata but that stores s3 uris
     metadata.sitemap_indexes.extend(download_metadata.sitemap_indexes)
