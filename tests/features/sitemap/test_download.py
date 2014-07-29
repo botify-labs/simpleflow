@@ -83,18 +83,16 @@ class TestDownloadSiteMaps(unittest.TestCase):
             SitemapMetadata("http://foo", "s3://foo", self.sitemap_url)
         )
         download_status.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index_url, 0, 0))
-        download_sitemaps_from_sitemap_index_mock.return_value = download_status
         input_url = self.sitemap_index_url
-        actual_result = download_sitemaps(input_url,
-                                          self.output_dir,
-                                          self.user_agent)
+        download_sitemaps(input_url,
+                          self.output_dir,
+                          self.user_agent)
         expected_result = Metadata()
         expected_result.add_success_sitemap(
             SitemapMetadata("http://foo", "s3://foo", self.sitemap_url)
         )
         expected_result.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index_url, 0, 0))
 
-        self.assertEqual(expected_result, actual_result)
         download_url_mock.assert_called_once_with(self.sitemap_index_url,
                                                   "/tmp/foo/sitemap_index.xml",
                                                   self.user_agent)
@@ -189,9 +187,11 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
                           download_url_mock):
         instanciate_sitemap_document_mock.return_value = self.sitemap_mock
 
-        actual_result = download_sitemaps_from_sitemap_index(self.sitemap_index_mock,
-                                                             self.output_dir,
-                                                             self.user_agent)
+        actual_result = Metadata()
+        download_sitemaps_from_sitemap_index(self.sitemap_index_mock,
+                                             self.output_dir,
+                                             self.user_agent,
+                                             actual_result)
         expected_result = Metadata()
         expected_result.add_success_sitemap(
             SitemapMetadata("http://foo/bar.xml",
@@ -212,9 +212,11 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
         document = SitemapIndexXmlDocument("/tmp/foo", "http://foo")
         document.get_urls = mock.MagicMock()
         document.get_urls.return_value = iter([])
-        actual_result = download_sitemaps_from_sitemap_index(document,
-                                                             self.output_dir,
-                                                             self.user_agent)
+        actual_result = Metadata()
+        download_sitemaps_from_sitemap_index(document,
+                                             self.output_dir,
+                                             self.user_agent,
+                                             actual_result)
         expected_result = Metadata()
         expected_result.add_success_sitemap_index(SitemapIndexMetadata("http://foo", 0, 0))
         self.assertEqual(expected_result, actual_result)
@@ -231,9 +233,11 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
             self.sitemap_mock
         ])
 
-        actual_result = download_sitemaps_from_sitemap_index(self.sitemap_index_mock,
-                                                             self.output_dir,
-                                                             self.user_agent)
+        actual_result = Metadata()
+        download_sitemaps_from_sitemap_index(self.sitemap_index_mock,
+                                             self.output_dir,
+                                             self.user_agent,
+                                             actual_result)
 
         expected_result = Metadata()
         expected_result.add_success_sitemap(
@@ -267,9 +271,11 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
             self.sitemap_mock
         ])
 
-        actual_result = download_sitemaps_from_sitemap_index(self.sitemap_index_mock,
-                                                             self.output_dir,
-                                                             self.user_agent)
+        actual_result = Metadata()
+        download_sitemaps_from_sitemap_index(self.sitemap_index_mock,
+                                             self.output_dir,
+                                             self.user_agent,
+                                             actual_result)
 
         expected_result = Metadata()
         expected_result.add_success_sitemap(
@@ -306,9 +312,11 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
 
         is_file_mock.return_value = True
 
-        actual_result = download_sitemaps_from_sitemap_index(self.sitemap_index_mock,
-                                                             self.output_dir,
-                                                             self.user_agent)
+        actual_result = Metadata()
+        download_sitemaps_from_sitemap_index(self.sitemap_index_mock,
+                                             self.output_dir,
+                                             self.user_agent,
+                                             actual_result)
 
         expected_result = Metadata()
         expected_result.add_error("http://foo/bar.xml",
@@ -341,10 +349,12 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
         self.sitemap_index_mock.get_urls = mock.MagicMock()
         self.sitemap_index_mock.get_urls = url_generator
 
-        actual_result = download_sitemaps_from_sitemap_index(
+        actual_result = Metadata()
+        download_sitemaps_from_sitemap_index(
             self.sitemap_index_mock,
             self.output_dir,
-            self.user_agent)
+            self.user_agent,
+            actual_result)
         expected_result = Metadata()
         expected_result.add_success_sitemap(
             SitemapMetadata("http://foo/bar.xml", "/tmp/foo/bar.xml", [self.sitemap_index_mock.url])
@@ -370,10 +380,12 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
         self.sitemap_index_mock.get_urls = mock.MagicMock()
         self.sitemap_index_mock.get_urls = url_generator
 
-        actual_result = download_sitemaps_from_sitemap_index(
+        actual_result = Metadata()
+        download_sitemaps_from_sitemap_index(
             self.sitemap_index_mock,
             self.output_dir,
-            self.user_agent)
+            self.user_agent,
+            actual_result)
         expected_result = Metadata()
         expected_result.add_error(
             self.sitemap_index_mock.url,

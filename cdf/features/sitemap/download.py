@@ -59,9 +59,10 @@ def download_sitemaps(input_url, output_directory, user_agent):
     #if it is a sitemap index
     elif is_sitemap_index(sitemap_type):
         #download referenced sitemaps
-        result = download_sitemaps_from_sitemap_index(sitemap_document,
-                                                      output_directory,
-                                                      user_agent)
+        download_sitemaps_from_sitemap_index(sitemap_document,
+                                             output_directory,
+                                             user_agent,
+                                             result)
         #remove sitemap index file
         os.remove(output_file_path)
     else:
@@ -70,7 +71,10 @@ def download_sitemaps(input_url, output_directory, user_agent):
     return result
 
 
-def download_sitemaps_from_sitemap_index(sitemap_index_document, output_directory, user_agent):
+def download_sitemaps_from_sitemap_index(sitemap_index_document,
+                                         output_directory,
+                                         user_agent,
+                                         metadata):
     """Download sitemap files from a sitemap index.
     :param sitemap_index_document: the input sitemap index
     :type sitemap_index_document: SitemapIndexXmlDocument
@@ -78,9 +82,10 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
     :type output_directory: str
     :param user_agent: the user agent to use for the query.
     :type user_agent: str
-    :returns: Metadata
+    :param metadata: an object that stores metadata about the download process
+                     it will be modified by the function
+    :type metadata: Metadata
     """
-    result = Metadata()
     url_generator = sitemap_index_document.get_urls()
     while True:
         try:
@@ -88,9 +93,9 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
         except ParsingError as e:
             #we can not recover parsing errors
             #so we update the download status
-            update_download_status_on_parsing_error(result, sitemap_index_document, e)
+            update_download_status_on_parsing_error(metadata, sitemap_index_document, e)
             #and return it based on a partially processed sitemap index.
-            return result
+            return
         except StopIteration:
             break
 
@@ -104,31 +109,31 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
             if os.path.isfile(file_path):
                 os.remove(file_path)
             error = e.__class__.__name__
-            result.add_error(url, SiteMapType.UNKNOWN, error, e.message)
+            metadata.add_error(url, SiteMapType.UNKNOWN, error, e.message)
             continue
 
         sitemap_type = sitemap_document.get_sitemap_type()
         #  check if it is actually a sitemap
         if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
-            result.add_success_sitemap(
+            metadata.add_success_sitemap(
                 SitemapMetadata(url, file_path, [sitemap_index_document.url])
             )
         elif is_sitemap_index(sitemap_type):
             error_message = "'{}' is a sitemap index. It cannot be referenced in a sitemap index.".format(url)
             logger.warning(error_message)
-            result.add_error(url, sitemap_type, "NotASitemapFile", error_message)
+            metadata.add_error(url, sitemap_type, "NotASitemapFile", error_message)
             os.remove(file_path)
         else:
             #  if not, remove file
             error_message = "'{}' is not a sitemap file.".format(url)
             logger.warning(error_message)
-            result.add_error(url, sitemap_type, "UnhandledFileType", error_message)
+            metadata.add_error(url, sitemap_type, "UnhandledFileType", error_message)
             os.remove(file_path)
 
-    result.add_success_sitemap_index(SitemapIndexMetadata(sitemap_index_document.url,
-                                                          sitemap_index_document.valid_urls,
-                                                          sitemap_index_document.invalid_urls))
-    return result
+    metadata.add_success_sitemap_index(SitemapIndexMetadata(sitemap_index_document.url,
+                                                            sitemap_index_document.valid_urls,
+                                                            sitemap_index_document.invalid_urls))
+    return
 
 
 def update_download_status_on_parsing_error(download_status,
