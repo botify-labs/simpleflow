@@ -21,38 +21,24 @@ class TestDownloadSitemapFiles(unittest.TestCase):
     def test_nominal_case(self,
                           download_sitemap_file_mock,
                           push_content_mock):
-        sitemap_index = "http://foo.com/sitemap_index.xml"
-        #mocking
-        download_sitemap_file_mock.side_effect = iter([
-            Metadata([SitemapMetadata("http://foo.com/sitemap.xml",
-                                      "s3://foo/sitemaps/sitemap.xml",
-                                      [sitemap_index])]),
-            Metadata([SitemapMetadata("http://bar.com/sitemap.xml",
-                                      "s3://foo/sitemaps/sitemap.xml_2",
-                                      [sitemap_index])])
-        ])
-
         #actual call
         input_urls = [
             "http://foo.com/sitemap.xml",
             "http://bar.com/sitemap.xml"
         ]
         s3_uri = "s3://foo"
-        download_sitemap_files(input_urls, s3_uri)
+        download_sitemap_files(input_urls, s3_uri, "user_agent")
 
         #verifications
-        expected_download_status = Metadata([
-            SitemapMetadata("http://foo.com/sitemap.xml",
-                            "s3://foo/sitemaps/sitemap.xml",
-                            [sitemap_index]),
-            SitemapMetadata("http://bar.com/sitemap.xml",
-                            "s3://foo/sitemaps/sitemap.xml_2",
-                            [sitemap_index])
-        ])
-
+        metadata = Metadata()
+        expected_download_calls = [
+            mock.call('http://foo.com/sitemap.xml', 's3://foo', 'user_agent', metadata, mock.ANY, False),
+            mock.call('http://bar.com/sitemap.xml', 's3://foo', 'user_agent', metadata, mock.ANY, False)
+        ]
+        self.assertEqual(expected_download_calls, download_sitemap_file_mock.mock_calls)
         push_content_mock.assert_called_once_with(
             "s3://foo/sitemaps/sitemap_download_metadata.json",
-            expected_download_status.to_json()
+            mock.ANY
         )
 
 
@@ -70,7 +56,8 @@ class TestDownloadSitemapFile(unittest.TestCase):
         #actual call
         input_url = "http://foo.com/sitemap.xml"
         s3_uri = "s3://foo"
-        actual_result = download_sitemap_file(input_url, s3_uri)
+        actual_result = Metadata()
+        download_sitemap_file(input_url, s3_uri, "user_agent", actual_result)
 
         #verifications
         expected_result = Metadata([
