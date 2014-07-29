@@ -32,12 +32,7 @@ setup(
     keywords='botify data extractor crawl',
     zip_safe=True,
     install_requires=load_deps('packaging/python.deps'),
-    tests_require=[
-        'mock',
-        'nose',
-        'httpretty==0.7.0',
-        'moto'
-    ],
+    tests_require=load_deps('packaging/python_test.deps'),
 
     package_dir={'': '.'},
     include_package_data=False,
