@@ -3,7 +3,8 @@ from cdf.metadata.url.url_metadata import (
     INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
     LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
-    DIFF_QUALITATIVE)
+    DIFF_QUALITATIVE, DIFF_QUANTITATIVE
+)
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
@@ -25,6 +26,17 @@ class ContentsStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
     URL_DOCUMENT_MAPPING = {
         # title tag
+        "metadata.title.nb": {
+            "verbose_name": "Number of Page Titles",
+            "type": INT_TYPE,
+            "order": 10,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                AGG_CATEGORICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
         "metadata.title.contents": {
             "verbose_name": "Title",
             "order": 1,
@@ -36,6 +48,17 @@ class ContentsStreamDef(StreamDefBase):
             }
         },
         # h1 tag
+        "metadata.h1.nb": {
+            "verbose_name": "Number of H1",
+            "type": INT_TYPE,
+            "order": 12,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
         "metadata.h1.contents": {
             "verbose_name": "H1",
             "order": 3,
@@ -47,6 +70,17 @@ class ContentsStreamDef(StreamDefBase):
             }
         },
         # description tag
+        "metadata.description.nb": {
+            "verbose_name": "Number of Page Description",
+            "type": INT_TYPE,
+            "order": 11,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
         "metadata.description.contents": {
             "verbose_name": "Page description",
             "type": STRING_TYPE,
@@ -58,6 +92,17 @@ class ContentsStreamDef(StreamDefBase):
             }
         },
         # h2 tag
+        "metadata.h2.nb": {
+            "verbose_name": "Number of H2",
+            "type": INT_TYPE,
+            "order": 13,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
         "metadata.h2.contents": {
             "verbose_name": "H2",
             "order": 4,
@@ -70,6 +115,17 @@ class ContentsStreamDef(StreamDefBase):
         },
 
         # h3 tag
+        "metadata.h3.nb": {
+            "verbose_name": "Number of H3",
+            "type": INT_TYPE,
+            "order": 14,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
         "metadata.h3.contents": {
             "verbose_name": "H3",
             "type": STRING_TYPE,
@@ -126,7 +182,8 @@ def _get_duplicate_document_mapping(metadata_list,
                 AGG_CATEGORICAL,
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
             }
         }
         result["{}.is_first".format(prefix)] = {
@@ -270,7 +327,8 @@ class ContentsCountStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         # description tag
@@ -281,7 +339,8 @@ class ContentsCountStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         # h2 tag

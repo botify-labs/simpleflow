@@ -8,7 +8,7 @@ from cdf.metadata.url.url_metadata import (
     LIST, AGG_CATEGORICAL, AGG_NUMERICAL,
     STRING_TYPE, ES_NOT_ANALYZED, STRING_NB_MAP_MAPPING,
     FAKE_FIELD, URL_ID,
-    DIFF_QUALITATIVE
+    DIFF_QUALITATIVE, DIFF_QUANTITATIVE
 )
 from cdf.core.streams.base import StreamDefBase
 from cdf.log import logger
@@ -58,7 +58,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.unique": {
@@ -68,7 +69,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.follow.unique": {
@@ -78,7 +80,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.follow.total": {
@@ -88,7 +91,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.nofollow.unique": {
@@ -111,7 +115,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.nofollow.combinations.link": {
@@ -121,7 +126,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.nofollow.combinations.meta": {
@@ -131,7 +137,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.nofollow.combinations.robots": {
@@ -141,7 +148,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.nofollow.combinations.link_meta": {
@@ -151,7 +159,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.nofollow.combinations.link_robots": {
@@ -161,7 +170,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.nofollow.combinations.meta_robots": {
@@ -171,7 +181,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "order": 12,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.nofollow.combinations.link_meta_robots": {
@@ -181,7 +192,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "order": 13,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.urls": {
@@ -209,7 +221,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_external.nb.unique": {
@@ -232,7 +245,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_external.nb.follow.unique": {
@@ -255,7 +269,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_external.nb.nofollow.unique": {
@@ -278,7 +293,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_external.nb.nofollow.combinations.meta": {
@@ -288,7 +304,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_external.nb.nofollow.combinations.link_meta": {
@@ -298,7 +315,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
 
@@ -346,7 +364,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "canonical.from.urls": {
@@ -402,7 +421,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "redirect.from.urls": {
@@ -581,7 +601,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "order": 1,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "inlinks_internal.nb.unique": {
@@ -590,7 +611,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "order": 2,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "inlinks_internal.nb.follow.unique": {
@@ -599,7 +621,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "order": 4,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "inlinks_internal.nb.follow.total": {
@@ -608,7 +631,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "order": 3,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "inlinks_internal.nb.nofollow.unique": {
@@ -630,7 +654,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "inlinks_internal.nb.nofollow.combinations.link": {
@@ -640,7 +665,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "inlinks_internal.nb.nofollow.combinations.meta": {
@@ -650,7 +676,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "inlinks_internal.nb.nofollow.combinations.link_meta": {
@@ -660,7 +687,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "inlinks_internal.urls": {
@@ -686,7 +714,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "group": GROUPS.inlinks.name,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             },
             "enabled": check_enabled("top_anchors")
         },
@@ -897,7 +926,8 @@ class BadLinksStreamDef(StreamDefBase):
             "order": 100,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_errors.3xx.urls": {
@@ -924,7 +954,8 @@ class BadLinksStreamDef(StreamDefBase):
             "order": 102,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_errors.4xx.urls": {
@@ -950,7 +981,8 @@ class BadLinksStreamDef(StreamDefBase):
             "order": 104,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_errors.5xx.urls": {
@@ -978,7 +1010,8 @@ class BadLinksStreamDef(StreamDefBase):
             "order": 99,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         # total error_links number corresponding to bad http codes.

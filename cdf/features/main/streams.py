@@ -6,7 +6,7 @@ from cdf.metadata.url.url_metadata import (
     LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     DATE_TYPE, ES_NOT_ANALYZED, ES_DOC_VALUE,
     LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
-    DIFF_QUALITATIVE
+    DIFF_QUALITATIVE, DIFF_QUANTITATIVE
 )
 from cdf.core.streams.exceptions import GroupWithSkipException
 from cdf.core.streams.base import StreamDefBase
@@ -146,7 +146,8 @@ class InfosStreamDef(StreamDefBase):
             "order": 0,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "http_code": {
@@ -174,7 +175,8 @@ class InfosStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                RENDERING.TIME_MILLISEC
+                RENDERING.TIME_MILLISEC,
+                DIFF_QUANTITATIVE
             }
         },
         "delay_last_byte": {
@@ -184,7 +186,8 @@ class InfosStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                RENDERING.TIME_MILLISEC
+                RENDERING.TIME_MILLISEC,
+                DIFF_QUANTITATIVE
             }
         },
         "depth": {
@@ -195,7 +198,8 @@ class InfosStreamDef(StreamDefBase):
                 ES_DOC_VALUE,
                 # assume possible depth is finite
                 AGG_CATEGORICAL,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "gzipped": {
