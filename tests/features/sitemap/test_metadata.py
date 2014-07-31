@@ -192,24 +192,24 @@ class TestSitemapMetadataHasBeenProcessed(unittest.TestCase):
         self.metadata = Metadata()
 
     def test_empty_object(self):
-        self.assertFalse(self.metadata.has_been_processed(self.url1))
+        self.assertFalse(self.metadata.has_been_successfully_processed(self.url1))
 
     def test_sitemap(self):
         self.metadata.add_success_sitemap(SitemapMetadata(self.url1, None))
-        self.assertTrue(self.metadata.has_been_processed(self.url1))
-        self.assertFalse(self.metadata.has_been_processed(self.url2))
+        self.assertTrue(self.metadata.has_been_successfully_processed(self.url1))
+        self.assertFalse(self.metadata.has_been_successfully_processed(self.url2))
 
     def test_sitemap_index(self):
         self.metadata.add_success_sitemap_index(
             SitemapIndexMetadata(self.url1, 0, 0)
         )
-        self.assertTrue(self.metadata.has_been_processed(self.url1))
-        self.assertFalse(self.metadata.has_been_processed(self.url2))
+        self.assertTrue(self.metadata.has_been_successfully_processed(self.url1))
+        self.assertFalse(self.metadata.has_been_successfully_processed(self.url2))
 
     def test_error(self):
         self.metadata.add_error(self.url1, SiteMapType.UNKNOWN, "Error", "")
-        self.assertTrue(self.metadata.has_been_processed(self.url1))
-        self.assertFalse(self.metadata.has_been_processed(self.url2))
+        #we do not check errors
+        self.assertFalse(self.metadata.has_been_successfully_processed(self.url1))
 
 
 class TestParseSitemapMetadata(unittest.TestCase):

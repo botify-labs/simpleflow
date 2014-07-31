@@ -162,6 +162,19 @@ class TestDownloadSiteMaps(unittest.TestCase):
                                                   os.path.join(self.output_dir, "sitemap_index.xml"),
                                                   self.user_agent)
 
+    @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
+    def test_already_processed_url(self, download_url_mock):
+        metadata = Metadata()
+        metadata.add_success_sitemap(
+            SitemapMetadata(self.sitemap_url, "s3://foo.com/sitemap.xml")
+        )
+        download_sitemaps(self.sitemap_url,
+                          self.output_dir,
+                          self.user_agent,
+                          metadata)
+        #check that we returned directly
+        self.assertFalse(download_url_mock.called)
+
 
 class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
     def setUp(self):
@@ -403,4 +416,49 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
             "Fake error"
         )
         self.assertEqual(expected_result, actual_result)
+
+    @mock.patch("cdf.features.sitemap.download.instanciate_sitemap_document", autospec=True)
+    @mock.patch("cdf.features.sitemap.download.download_url", autospec=True)
+    def test_already_processed_url(self,
+                                   download_url_mock,
+                                   instanciate_sitemap_document_mock):
+        sitemap_1_mock = SitemapXmlDocument("/tmp/foo/bar.xml", "http://foo/bar.xml")
+        sitemap_2_mock = SitemapXmlDocument("/tmp/foo/baz.xml", "http://foo/baz.xml")
+        instanciate_sitemap_document_mock.side_effect = iter([
+            sitemap_1_mock,
+            sitemap_2_mock
+        ])
+
+        actual_result = Metadata()
+        #http://foo/bar.xml has already been downloaded
+        a_sitemap_index_url = "http://foo.com/a_sitemap_index.xml"
+        actual_result.add_success_sitemap(
+            SitemapMetadata("http://foo/bar.xml", "/tmp/foo/bar.xml", [a_sitemap_index_url])
+        )
+
+
+        download_sitemaps_from_sitemap_index(self.sitemap_index_mock,
+                                             self.output_dir,
+                                             self.user_agent,
+                                             actual_result)
+
+        expected_result = Metadata()
+        expected_result.add_success_sitemap(
+            SitemapMetadata("http://foo/bar.xml",
+                            "/tmp/foo/bar.xml",
+                            #now we have two reference sitemap indexes.
+                            [a_sitemap_index_url, self.sitemap_index_mock.url])
+        )
+        expected_result.add_success_sitemap(
+            SitemapMetadata("http://foo/baz.xml",
+                            "/tmp/foo/baz.xml",
+                            [self.sitemap_index_mock.url])
+        )
+        expected_result.add_success_sitemap_index(
+            SitemapIndexMetadata(self.sitemap_index_mock.url, 0, 0)
+        )
+        self.assertEqual(expected_result, actual_result)
+        download_url_mock.assert_called_once_with("http://foo/baz.xml",
+                                                  "/tmp/foo/baz.xml",
+                                                  self.user_agent)
 
