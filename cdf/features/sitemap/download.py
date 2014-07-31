@@ -36,7 +36,7 @@ def download_sitemaps(input_url, output_directory, user_agent, metadata):
                      downloaded so far. It will be updated by the function.
     :type metadata: Metadata
     """
-    if metadata.has_been_successfully_processed(input_url):
+    if metadata.is_success_sitemap(input_url):
         #do not reprocess it
         return
 
@@ -106,16 +106,15 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document,
         except StopIteration:
             break
 
-        if metadata.has_been_successfully_processed(url):
+        if metadata.is_success_sitemap(url):
                 d_sitemaps = {
                     sitemap.url: sitemap for sitemap in metadata.sitemaps
                 }
-                if url in d_sitemaps:
-                    sitemap_indexes = d_sitemaps[url].sitemap_indexes
-                    if not sitemap_index_document.url in sitemap_indexes:
-                        #update its sitemap indexes
-                        sitemap_indexes.append(sitemap_index_document.url)
-                #do not reprocess the file anyway
+                sitemap_indexes = d_sitemaps[url].sitemap_indexes
+                if not sitemap_index_document.url in sitemap_indexes:
+                    #update its sitemap indexes
+                    sitemap_indexes.append(sitemap_index_document.url)
+                #do not reprocess the file
                 continue
 
         file_path = get_output_file_path(url, output_directory)

@@ -153,10 +153,12 @@ class Metadata(object):
 
     def add_success_sitemap_index(self, sitemap_index):
         """Add a sitemap index that has been successfuly downloaded.
+        If sitemap index is already known, do nothing.
         :param sitemap_index: the input sitemap_index
         :type sitemap_index: SitemapIndexMetada
         """
-        self.sitemap_indexes.append(sitemap_index)
+        if not sitemap_index.url in [s.url for s in self.sitemap_indexes]:
+            self.sitemap_indexes.append(sitemap_index)
 
     def add_error(self, url, file_type, error_type, message):
         """Add an error url
@@ -184,16 +186,15 @@ class Metadata(object):
     def __repr__(self):
         return self.to_json()
 
-    def has_been_successfully_processed(self, url):
-        """Determines whether or not a given url has already been successfully
-        processed.
+    def is_success_sitemap(self, url):
+        """Determines whether or not a given url correspond to a successfully
+        processed sitemap.
         :param url: the input url
         :type url: str
         :returns: bool
         """
-        result = (url in [sitemap.url for sitemap in self.sitemaps] or
-                  url in [sitemap_index.url for sitemap_index in self.sitemap_indexes])
-        return result
+        return url in [sitemap.url for sitemap in self.sitemaps]
+
 
 def parse_sitemap_metadata(input_dict):
     result = SitemapMetadata(input_dict["url"], input_dict["s3_uri"])

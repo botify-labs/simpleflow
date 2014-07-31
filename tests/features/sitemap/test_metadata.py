@@ -113,6 +113,23 @@ class TestSitemapIndexMetadata(unittest.TestCase):
 class TestMetadata(unittest.TestCase):
     def setUp(self):
         self.sitemap_index = "http://foo/sitemap_index.xml"
+        self.sitemap_index_2 = "http://foo/sitemap_index_2.xml"
+
+    def test_add_success_sitemap_index(self):
+        metadata = Metadata()
+        metadata.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index, 0, 0))
+        metadata.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index_2, 0, 0))
+
+        expected_result = [
+            SitemapIndexMetadata(self.sitemap_index, 0, 0),
+            SitemapIndexMetadata(self.sitemap_index_2, 0, 0)
+        ]
+        self.assertEqual(expected_result, metadata.sitemap_indexes)
+
+        #readd a sitemap index
+        metadata.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index, 10, 0))
+        self.assertEqual(expected_result, metadata.sitemap_indexes)
+
 
     def test_to_json(self):
         download_status = Metadata(
@@ -192,24 +209,23 @@ class TestSitemapMetadataHasBeenProcessed(unittest.TestCase):
         self.metadata = Metadata()
 
     def test_empty_object(self):
-        self.assertFalse(self.metadata.has_been_successfully_processed(self.url1))
+        self.assertFalse(self.metadata.is_success_sitemap(self.url1))
 
     def test_sitemap(self):
         self.metadata.add_success_sitemap(SitemapMetadata(self.url1, None))
-        self.assertTrue(self.metadata.has_been_successfully_processed(self.url1))
-        self.assertFalse(self.metadata.has_been_successfully_processed(self.url2))
+        self.assertTrue(self.metadata.is_success_sitemap(self.url1))
+        self.assertFalse(self.metadata.is_success_sitemap(self.url2))
 
     def test_sitemap_index(self):
         self.metadata.add_success_sitemap_index(
             SitemapIndexMetadata(self.url1, 0, 0)
         )
-        self.assertTrue(self.metadata.has_been_successfully_processed(self.url1))
-        self.assertFalse(self.metadata.has_been_successfully_processed(self.url2))
+        self.assertFalse(self.metadata.is_success_sitemap(self.url1))
 
     def test_error(self):
         self.metadata.add_error(self.url1, SiteMapType.UNKNOWN, "Error", "")
         #we do not check errors
-        self.assertFalse(self.metadata.has_been_successfully_processed(self.url1))
+        self.assertFalse(self.metadata.is_success_sitemap(self.url1))
 
 
 class TestParseSitemapMetadata(unittest.TestCase):
