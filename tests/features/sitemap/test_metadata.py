@@ -185,6 +185,33 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(expected_result, json.loads(actual_result))
 
 
+class TestSitemapMetadataHasBeenProcessed(unittest.TestCase):
+    def setUp(self):
+        self.url1 = "http://foo.com/bar"
+        self.url2 = "http://foo.com/qux"
+        self.metadata = Metadata()
+
+    def test_empty_object(self):
+        self.assertFalse(self.metadata.has_been_processed(self.url1))
+
+    def test_sitemap(self):
+        self.metadata.add_success_sitemap(SitemapMetadata(self.url1, None))
+        self.assertTrue(self.metadata.has_been_processed(self.url1))
+        self.assertFalse(self.metadata.has_been_processed(self.url2))
+
+    def test_sitemap_index(self):
+        self.metadata.add_success_sitemap_index(
+            SitemapIndexMetadata(self.url1, 0, 0)
+        )
+        self.assertTrue(self.metadata.has_been_processed(self.url1))
+        self.assertFalse(self.metadata.has_been_processed(self.url2))
+
+    def test_error(self):
+        self.metadata.add_error(self.url1, SiteMapType.UNKNOWN, "Error", "")
+        self.assertTrue(self.metadata.has_been_processed(self.url1))
+        self.assertFalse(self.metadata.has_been_processed(self.url2))
+
+
 class TestParseSitemapMetadata(unittest.TestCase):
     def setUp(self):
         self.url = "http://foo.com/sitemap.xml"

@@ -184,6 +184,16 @@ class Metadata(object):
     def __repr__(self):
         return self.to_json()
 
+    def has_been_processed(self, url):
+        """Determines whether or not a given url has already been processed
+        :param url: the input url
+        :type url: str
+        :returns: bool
+        """
+        result = (url in [sitemap.url for sitemap in self.sitemaps] or
+                  url in [sitemap_index.url for sitemap_index in self.sitemap_indexes] or
+                  url in [error.url for error in self.errors])
+        return result
 
 def parse_sitemap_metadata(input_dict):
     result = SitemapMetadata(input_dict["url"], input_dict["s3_uri"])
