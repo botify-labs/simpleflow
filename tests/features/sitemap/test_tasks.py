@@ -48,10 +48,13 @@ class TestDownloadSitemapFile(unittest.TestCase):
     def test_nominal_case(self,
                           download_sitemaps_mock,
                           push_file_mock):
+
         #mocking
-        download_sitemaps_mock.return_value = Metadata(
-            [SitemapMetadata("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml")]
-        )
+        def f(input_url, output_directory, user_agent, metadata):
+            metadata.add_success_sitemap(
+                SitemapMetadata("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml")
+            )
+        download_sitemaps_mock.side_effect = f
 
         #actual call
         input_url = "http://foo.com/sitemap.xml"

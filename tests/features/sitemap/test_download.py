@@ -53,15 +53,15 @@ class TestDownloadSiteMaps(unittest.TestCase):
         instanciate_sitemap_document_mock.return_value = self.sitemap_mock
 
         metadata = Metadata()
-        actual_result = download_sitemaps(self.sitemap_url,
-                                          self.output_dir,
-                                          self.user_agent,
-                                          metadata)
-        expected_result = Metadata()
-        expected_result.add_success_sitemap(
+        download_sitemaps(self.sitemap_url,
+                          self.output_dir,
+                          self.user_agent,
+                          metadata)
+        expected_metadata = Metadata()
+        expected_metadata.add_success_sitemap(
             SitemapMetadata(self.sitemap_url, "/tmp/foo/sitemap.xml")
         )
-        self.assertEqual(expected_result, actual_result)
+        self.assertEqual(expected_metadata, metadata)
         download_url_mock.assert_called_once_with(self.sitemap_url,
                                                   "/tmp/foo/sitemap.xml",
                                                   self.user_agent)
@@ -111,11 +111,11 @@ class TestDownloadSiteMaps(unittest.TestCase):
         instanciate_sitemap_document_mock.side_effect = UnhandledFileType("foo")
         input_url = "http://foo/bar.xml"
         metadata = Metadata()
-        actual_result = download_sitemaps(input_url, self.output_dir, self.user_agent, metadata)
+        download_sitemaps(input_url, self.output_dir, self.user_agent, metadata)
 
-        expected_result = Metadata()
-        expected_result.add_error(input_url, SiteMapType.UNKNOWN, "UnhandledFileType", "foo")
-        self.assertEqual(expected_result, actual_result)
+        expected_metadata = Metadata()
+        expected_metadata.add_error(input_url, SiteMapType.UNKNOWN, "UnhandledFileType", "foo")
+        self.assertEqual(expected_metadata, metadata)
 
         download_url_mock.assert_called_once_with("http://foo/bar.xml",
                                                   "/tmp/foo/bar.xml",
@@ -127,13 +127,13 @@ class TestDownloadSiteMaps(unittest.TestCase):
         download_url_mock.side_effect = DownloadError("foo")
 
         metadata = Metadata()
-        actual_result = download_sitemaps(self.sitemap_url,
-                                          self.output_dir,
-                                          self.user_agent,
-                                          metadata)
-        expected_result = Metadata()
-        expected_result.add_error(self.sitemap_url, SiteMapType.UNKNOWN, "DownloadError", "foo")
-        self.assertEqual(expected_result, actual_result)
+        download_sitemaps(self.sitemap_url,
+                          self.output_dir,
+                          self.user_agent,
+                          metadata)
+        expected_metadata = Metadata()
+        expected_metadata.add_error(self.sitemap_url, SiteMapType.UNKNOWN, "DownloadError", "foo")
+        self.assertEqual(expected_metadata, metadata)
 
 
     @mock.patch("os.remove", autospec=True)
@@ -150,13 +150,13 @@ class TestDownloadSiteMaps(unittest.TestCase):
         instanciate_sitemap_document_mock.return_value = self.sitemap_index_mock
 
         metadata = Metadata()
-        actual_result = download_sitemaps(self.sitemap_index_url,
-                                          self.output_dir,
-                                          self.user_agent,
-                                          metadata)
-        expected_result = Metadata()
-        expected_result.add_error(self.sitemap_index_url, SiteMapType.SITEMAP_INDEX, "ParsingError", "error message")
-        self.assertEqual(expected_result, actual_result)
+        download_sitemaps(self.sitemap_index_url,
+                          self.output_dir,
+                          self.user_agent,
+                          metadata)
+        expected_metadata = Metadata()
+        expected_metadata.add_error(self.sitemap_index_url, SiteMapType.SITEMAP_INDEX, "ParsingError", "error message")
+        self.assertEqual(expected_metadata, metadata)
         remove_mock.assert_called_once_with("/tmp/foo/sitemap_index.xml")
         download_url_mock.assert_called_once_with(self.sitemap_index_url,
                                                   os.path.join(self.output_dir, "sitemap_index.xml"),

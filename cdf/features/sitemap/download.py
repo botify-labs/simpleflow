@@ -35,28 +35,28 @@ def download_sitemaps(input_url, output_directory, user_agent, metadata):
     :param metadata: an object that stores information about what has been
                      downloaded so far. It will be updated by the function.
     :type metadata: Metadata
-    :returns: Metadata
     """
-    result = Metadata()
     #download input url
     output_file_path = get_output_file_path(input_url, output_directory)
     try:
         download_url(input_url, output_file_path, user_agent)
     except DownloadError as e:
         logger.error("Download error: %s", e.message)
-        result.add_error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
-        return result
+        metadata.add_error(input_url, SiteMapType.UNKNOWN,
+                           e.__class__.__name__, e.message)
+        return
 
     try:
         sitemap_document = instanciate_sitemap_document(output_file_path, input_url)
     except UnhandledFileType as e:
-        result.add_error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
-        return result
+        metadata.add_error(input_url, SiteMapType.UNKNOWN,
+                           e.__class__.__name__, e.message)
+        return
 
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
     if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
-        result.add_success_sitemap(
+        metadata.add_success_sitemap(
             SitemapMetadata(input_url, output_file_path)
         )
     #if it is a sitemap index
@@ -65,13 +65,13 @@ def download_sitemaps(input_url, output_directory, user_agent, metadata):
         download_sitemaps_from_sitemap_index(sitemap_document,
                                              output_directory,
                                              user_agent,
-                                             result)
+                                             metadata)
         #remove sitemap index file
         os.remove(output_file_path)
     else:
         error_message = "'{}' is not a valid file".format(input_url)
-        result.add_error(input_url, sitemap_type, "UnhandledFileType", error_message)
-    return result
+        metadata.add_error(input_url, sitemap_type,
+                           "UnhandledFileType", error_message)
 
 
 def download_sitemaps_from_sitemap_index(sitemap_index_document,

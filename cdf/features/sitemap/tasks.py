@@ -71,23 +71,20 @@ def download_sitemap_file(input_url,
     :type user_agent: str
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
-    :returns: Metadata
     """
-    download_metadata = download_sitemaps(input_url, tmp_dir, user_agent, metadata)
+    download_sitemaps(input_url, tmp_dir, user_agent, metadata)
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
     #an object similar to download_metadata but that stores s3 uris
-    metadata.sitemap_indexes.extend(download_metadata.sitemap_indexes)
-    metadata.errors.extend(download_metadata.errors)
-    for sitemap in download_metadata.sitemaps:
+    for sitemap in metadata.sitemaps:
         url, file_path, sitemap_indexes = sitemap.url, sitemap.s3_uri, sitemap.sitemap_indexes
-        destination_uri = os.path.join(s3_subdir_uri, os.path.basename(file_path))
-        s3.push_file(
-            os.path.join(destination_uri),
-            file_path
-        )
-        metadata.add_success_sitemap(
-            SitemapMetadata(url, destination_uri, sitemap_indexes)
-        )
+        if not sitemap.s3_uri.startswith("s3://"):
+            #The file has not been pushed to s3 yet
+            destination_uri = os.path.join(s3_subdir_uri, os.path.basename(file_path))
+            s3.push_file(
+                os.path.join(destination_uri),
+                file_path
+            )
+            sitemap.s3_uri = destination_uri
 
 
 @with_temporary_dir
