@@ -60,6 +60,7 @@ def as_activity(func):
         start_to_close_timeout=7200,
         schedule_to_close_timeout=9000,
         heartbeat_timeout=300,
+        retry=1,
         raises_on_failure=True,
     )(func)
 
