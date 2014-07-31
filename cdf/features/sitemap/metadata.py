@@ -146,10 +146,12 @@ class Metadata(object):
 
     def add_success_sitemap(self, sitemap_metadata):
         """Add metadata a about sitemap that has been successfuly downloaded.
+        If sitemap is already known, do nothing.
         :param sitemap_metadata: the input sitemap
         :type sitemap_metadata: SitemapMetadata
         """
-        self.sitemaps.append(sitemap_metadata)
+        if not sitemap_metadata.url in [s.url for s in self.sitemaps]:
+            self.sitemaps.append(sitemap_metadata)
 
     def add_success_sitemap_index(self, sitemap_index):
         """Add a sitemap index that has been successfuly downloaded.

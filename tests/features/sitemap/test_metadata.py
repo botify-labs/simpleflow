@@ -112,8 +112,26 @@ class TestSitemapIndexMetadata(unittest.TestCase):
 
 class TestMetadata(unittest.TestCase):
     def setUp(self):
+        self.sitemap = "http://foo/sitemap.xml"
+        self.sitemap_2 = "http://foo/sitemap_2.xml"
+
         self.sitemap_index = "http://foo/sitemap_index.xml"
         self.sitemap_index_2 = "http://foo/sitemap_index_2.xml"
+
+    def test_add_success_sitemap(self):
+        metadata = Metadata()
+        metadata.add_success_sitemap(SitemapMetadata(self.sitemap, "/tmp/sitemap.xml"))
+        metadata.add_success_sitemap(SitemapMetadata(self.sitemap_2, "/tmp/sitemap_2.xml"))
+
+        expected_result = [
+            SitemapMetadata(self.sitemap, "/tmp/sitemap.xml"),
+            SitemapMetadata(self.sitemap_2, "/tmp/sitemap_2.xml")
+        ]
+        self.assertEqual(expected_result, metadata.sitemaps)
+
+        #readd a sitemap index
+        metadata.add_success_sitemap(SitemapMetadata(self.sitemap, "/tmp/sitemap.xml_2"))
+        self.assertEqual(expected_result, metadata.sitemaps)
 
     def test_add_success_sitemap_index(self):
         metadata = Metadata()
