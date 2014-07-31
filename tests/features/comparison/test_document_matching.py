@@ -245,9 +245,9 @@ class TestDocumentMatching(unittest.TestCase):
 
     def test_document_merge(self):
         match_stream = iter([
-            (MatchingState.MATCH, (self.document1, self.document2)),
-            (MatchingState.DISAPPEAR, (self.document3, None)),
-            (MatchingState.DISCOVER, (None, self.document4)),
+            (MatchingState.MATCH, (self.document1, self.document2, None)),
+            (MatchingState.DISAPPEAR, (self.document3, None, None)),
+            (MatchingState.DISCOVER, (None, self.document4, None)),
         ])
         mock_crawl_id = 1234
 
@@ -268,6 +268,24 @@ class TestDocumentMatching(unittest.TestCase):
 
             # new discovered
             {'id': 4, 'url': 'd', 'url_hash': 'd'}
+        ]
+        self.assertEqual(result, expected)
+
+    def test_document_merge_with_diff(self):
+        diff_doc = {'a': {'b': 'changed'}}
+        match_stream = iter([
+            (MatchingState.MATCH, (self.document1, self.document2, diff_doc)),
+        ])
+        mock_crawl_id = 1234
+        # inspect only the returned document
+        result = [doc for doc in
+                  matching.document_merge(match_stream, mock_crawl_id)]
+
+        expected = [
+            {"url": "b", 'url_hash': 'b', "id": 2,
+             "diff": diff_doc,
+             "previous": {"url": "a", "id": 1, 'url_hash': 'a'},
+             "previous_exists": True}
         ]
         self.assertEqual(result, expected)
 

@@ -68,6 +68,20 @@ class TestDocumentDiff(unittest.TestCase):
         expected = {'a': {'quantitative': -2}}
         self.assertEqual(diff_result, expected)
 
+    def test_quantitative_field_missing(self):
+        ref_doc = {}
+        new_doc = {'a': {'quantitative': 125}}
+
+        diff_result = document_diff(
+            ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
+
+        self.assertEqual(diff_result, None)
+
+    def test_qualitative_field_both_missing(self):
+        diff_result = document_diff(
+            {}, {}, diff_strategy=self.TEST_DIFF_STRATEGY)
+        self.assertEqual(diff_result, None)
+
     def test_diff_document_stream(self):
         doc_a = {'a': {'quantitative': 123}}
         doc_b_ref = {'b': {'qualitative': 'abc'}}

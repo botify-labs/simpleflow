@@ -25,6 +25,7 @@ _PREV_KEY = 'previous'
 _PREV_EXISTS_KEY = 'previous_exists'
 _CRAWL_ID_KEY = 'crawl_id'
 _URL_ID_KEY = 'url_id'
+_DIFF_KEY = 'diff'
 
 _DISAPPEARED_URL_ID = -1
 
@@ -421,7 +422,7 @@ def document_merge(matching_stream, new_crawl_id):
     :rtype: dict
     """
     result_doc = None
-    for state, (ref_doc, new_doc) in matching_stream:
+    for state, (ref_doc, new_doc, diff_doc) in matching_stream:
         if state is MatchingState.MATCH:
             # remove `_id` field in ref doc if it's present
             if '_id' in ref_doc:
@@ -430,6 +431,8 @@ def document_merge(matching_stream, new_crawl_id):
             result_doc = new_doc
             result_doc[_PREV_KEY] = ref_doc
             result_doc[_PREV_EXISTS_KEY] = True
+            if diff_doc is not None:
+                result_doc[_DIFF_KEY] = diff_doc
         elif state is MatchingState.DISAPPEAR:
             # correct the `crawl_id`
             result_doc = ref_doc
