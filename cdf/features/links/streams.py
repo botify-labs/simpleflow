@@ -7,7 +7,8 @@ from cdf.metadata.url.url_metadata import (
     ES_NO_INDEX, ES_DOC_VALUE,
     LIST, AGG_CATEGORICAL, AGG_NUMERICAL,
     STRING_TYPE, ES_NOT_ANALYZED, STRING_NB_MAP_MAPPING,
-    FAKE_FIELD, URL_ID
+    FAKE_FIELD, URL_ID,
+    DIFF_QUALITATIVE
 )
 from cdf.core.streams.base import StreamDefBase
 from cdf.log import logger
@@ -317,7 +318,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT,
-                URL_ID
+                URL_ID,
+                DIFF_QUALITATIVE
             }
         },
         "canonical.to.equal": {
@@ -325,7 +327,10 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "group": GROUPS.canonical.name,
             "order": 2,
             "type": BOOLEAN_TYPE,
-            "settings": {AGG_CATEGORICAL}
+            "settings": {
+                AGG_CATEGORICAL,
+                DIFF_QUALITATIVE
+            }
         },
         "canonical.to.url_exists": {
             "type": "boolean",
@@ -379,7 +384,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT,
-                URL_ID
+                URL_ID,
+                DIFF_QUALITATIVE
             }
         },
         "redirect.to.url_exists": {
@@ -903,7 +909,8 @@ class BadLinksStreamDef(StreamDefBase):
                 LIST,
                 FIELD_RIGHTS.SELECT,
                 RENDERING.URL,
-                URL_ID
+                URL_ID,
+                DIFF_QUALITATIVE
             }
         },
         "outlinks_errors.3xx.urls_exists": {

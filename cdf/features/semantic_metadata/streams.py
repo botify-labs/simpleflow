@@ -2,8 +2,8 @@ from cdf.utils.dict import get_subdict_from_path
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID
-)
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
+    DIFF_QUALITATIVE)
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
@@ -29,28 +29,44 @@ class ContentsStreamDef(StreamDefBase):
             "verbose_name": "Title",
             "order": 1,
             "type": STRING_TYPE,
-            "settings": {ES_NOT_ANALYZED, LIST}
+            "settings": {
+                ES_NOT_ANALYZED,
+                LIST,
+                DIFF_QUALITATIVE
+            }
         },
         # h1 tag
         "metadata.h1.contents": {
             "verbose_name": "H1",
             "order": 3,
             "type": STRING_TYPE,
-            "settings": {ES_NOT_ANALYZED, LIST}
+            "settings": {
+                ES_NOT_ANALYZED,
+                LIST,
+                DIFF_QUALITATIVE
+            }
         },
         # description tag
         "metadata.description.contents": {
             "verbose_name": "Page description",
             "type": STRING_TYPE,
             "order": 2,
-            "settings": {ES_NOT_ANALYZED, LIST}
+            "settings": {
+                ES_NOT_ANALYZED,
+                LIST,
+                DIFF_QUALITATIVE
+            }
         },
         # h2 tag
         "metadata.h2.contents": {
             "verbose_name": "H2",
             "order": 4,
             "type": STRING_TYPE,
-            "settings": {ES_NOT_ANALYZED, LIST}
+            "settings": {
+                ES_NOT_ANALYZED,
+                LIST,
+                DIFF_QUALITATIVE
+            }
         },
 
         # h3 tag
@@ -58,7 +74,11 @@ class ContentsStreamDef(StreamDefBase):
             "verbose_name": "H3",
             "type": STRING_TYPE,
             "order": 5,
-            "settings": {ES_NOT_ANALYZED, LIST}
+            "settings": {
+                ES_NOT_ANALYZED,
+                LIST,
+                DIFF_QUALITATIVE
+            }
         },
     }
 

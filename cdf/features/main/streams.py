@@ -5,7 +5,8 @@ from cdf.features.main.reasons import (
 from cdf.metadata.url.url_metadata import (
     LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     DATE_TYPE, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
+    DIFF_QUALITATIVE
 )
 from cdf.core.streams.exceptions import GroupWithSkipException
 from cdf.core.streams.base import StreamDefBase
@@ -156,7 +157,8 @@ class InfosStreamDef(StreamDefBase):
                 ES_DOC_VALUE,
                 # `http_code` have 2 roles
                 AGG_CATEGORICAL,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUALITATIVE,
             }
         },
         "date_crawled": {
@@ -201,7 +203,8 @@ class InfosStreamDef(StreamDefBase):
             "type": BOOLEAN_TYPE,
             "order": 7,
             "settings": {
-                AGG_CATEGORICAL
+                AGG_CATEGORICAL,
+                DIFF_QUALITATIVE
             }
         },
         "content_type": {
@@ -211,7 +214,8 @@ class InfosStreamDef(StreamDefBase):
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
-                AGG_CATEGORICAL
+                AGG_CATEGORICAL,
+                DIFF_QUALITATIVE
             }
         },
         # meta tag related
@@ -219,13 +223,19 @@ class InfosStreamDef(StreamDefBase):
             "verbose_name": "Has robots anchors as `nofollow`",
             "type": BOOLEAN_TYPE,
             "order": 9,
-            "settings": {AGG_CATEGORICAL}
+            "settings": {
+                AGG_CATEGORICAL,
+                DIFF_QUALITATIVE
+            }
         },
         "metadata.robots.noindex": {
             "verbose_name": "Has robots anchors as `noindex`",
             "type": BOOLEAN_TYPE,
             "order": 10,
-            "settings": {AGG_CATEGORICAL}
+            "settings": {
+                AGG_CATEGORICAL,
+                DIFF_QUALITATIVE
+            }
         },
         "lang": {
             "verbose_name": "Lang",
@@ -234,7 +244,8 @@ class InfosStreamDef(StreamDefBase):
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
-                AGG_CATEGORICAL
+                AGG_CATEGORICAL,
+                DIFF_QUALITATIVE
             },
             "enabled": check_enabled('lang')
         }
