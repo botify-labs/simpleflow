@@ -286,8 +286,8 @@ class AnalysisWorkflow(Workflow):
             sitemaps_result = self.submit(
                 match_sitemap_urls,
                 s3_uri,
-                context["settings"]["valid"],
-                context["settings"]["blacklist"],
+                context["settings"]["hostnames"]["valid"],
+                context["settings"]["hostnames"]["blacklist"],
                 context['first_part_id_size'],
                 context['part_id_size'])
 
