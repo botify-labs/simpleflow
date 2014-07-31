@@ -2,7 +2,8 @@ from cdf.features.comparison.constants import (
     CHANGED,
     EQUAL,
     DISAPPEARED,
-    APPEARED
+    APPEARED,
+    MatchingState
 )
 from cdf.utils.dict import (
     path_in_dict,
@@ -30,7 +31,7 @@ def qualitative_diff(ref_value, new_value):
         if new_value is None:
             # both None
             # impossible
-            raise Exception('Impossible diff case: both None')
+            return None
         else:
             # reference is None,  new is not None
             # appeared
@@ -59,6 +60,8 @@ def quantitative_diff(ref_value, new_value):
     :param new_value: the current value
     :return: the numerical difference
     """
+    if ref_value is None or new_value is None:
+        return None
     return ref_value - new_value
 
 
@@ -91,25 +94,32 @@ def document_diff(ref_doc, new_doc, diff_strategy=DIFF_STRATEGY):
     :type diff_strategy: dict
     :return: a diff document
     """
-    diff = {}
+    diff = None
     for field, diff_func in diff_strategy.iteritems():
         ref_value = (get_subdict_from_path(field, ref_doc)
                      if path_in_dict(field, ref_doc) else None)
         new_value = (get_subdict_from_path(field, new_doc)
                      if path_in_dict(field, new_doc) else None)
-        if not ref_value is None or not new_value is None:
-            update_path_in_dict(
-                field, diff_func(ref_value, new_value), diff)
+        diff_result = diff_func(ref_value, new_value)
+        if diff_result is not None:
+            if diff is None:
+                # lazily create diff document
+                diff = {}
+            update_path_in_dict(field, diff_result, diff)
     return diff
 
 
-def diff(ref_doc_stream, new_doc_stream):
-    """Diff two streams of documents
+def diff(matched_doc_stream, diff_strategy=DIFF_STRATEGY):
+    """Diff matched document stream
 
-    :param ref_doc_stream: the reference crawl's document stream, the stream
-        should be sorted on the `url` string of each document
-    :param new_doc_stream: the new crawl's document stream, the stream should
-        be sorted sorted on the `url` string of each document
-    :return:
+    :param matched_doc_stream: matched documents stream
+    :type matched_doc_stream: stream of (MatchingState, (dict, dict))
+    :return: matched_doc_stream along with a diff dict
+    :rtype: (MatchingState, (dict, dict, dict))
     """
-    pass
+    for state, (ref_doc, new_doc) in matched_doc_stream:
+        if state is MatchingState.MATCH:
+            diff_doc = document_diff(ref_doc, new_doc, diff_strategy)
+            yield state, (ref_doc, new_doc, diff_doc)
+        else:
+            yield state, (ref_doc, new_doc, None)

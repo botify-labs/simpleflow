@@ -2,14 +2,14 @@ import unittest
 from cdf.features.comparison.diff import (
     qualitative_diff,
     quantitative_diff,
-    document_diff
-)
+    document_diff,
+    diff)
 from cdf.features.comparison.constants import (
     CHANGED,
     EQUAL,
     APPEARED,
-    DISAPPEARED
-)
+    DISAPPEARED,
+    MatchingState)
 
 
 class TestDocumentDiff(unittest.TestCase):
@@ -67,3 +67,28 @@ class TestDocumentDiff(unittest.TestCase):
 
         expected = {'a': {'quantitative': -2}}
         self.assertEqual(diff_result, expected)
+
+    def test_diff_document_stream(self):
+        doc_a = {'a': {'quantitative': 123}}
+        doc_b_ref = {'b': {'qualitative': 'abc'}}
+        doc_b_new = {'b': {'qualitative': 'def'}}
+        # elem 2 and 3 are diff-able
+        # first and last are not diff-able, should be ignored
+        matched_stream = iter([
+            (MatchingState.DISCOVER, (None, {})),
+            (MatchingState.MATCH, ({}, doc_a)),
+            (MatchingState.MATCH, (doc_b_ref, doc_b_new)),
+            (MatchingState.DISAPPEAR, ({}, None)),
+        ])
+
+        results = list(diff(matched_stream,
+                            diff_strategy=self.TEST_DIFF_STRATEGY))
+        expected = [
+            (MatchingState.DISCOVER, (None, {}, None)),
+            (MatchingState.MATCH, ({}, doc_a, None)),
+            (MatchingState.MATCH, (doc_b_ref, doc_b_new,
+                                   {'b': {'qualitative': CHANGED}})),
+            (MatchingState.DISAPPEAR, ({}, None, None)),
+        ]
+        self.assertEqual(results, expected)
+
