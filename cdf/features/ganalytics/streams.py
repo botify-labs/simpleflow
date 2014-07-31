@@ -110,7 +110,7 @@ def _update_document_mapping(mapping, medium, sources, metrics):
                 },
                 "verbose_name": verbose_name.format(source=source_target),
                 "group": key_prefix,
-                "priority": i + 1
+                "order": i + 1
             }
             if flag:
                 mapping[key]["settings"].add(flag)
