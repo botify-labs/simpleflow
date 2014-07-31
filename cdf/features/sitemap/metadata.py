@@ -184,11 +184,6 @@ class Metadata(object):
     def __repr__(self):
         return self.to_json()
 
-    def update(self, other):
-        self.sitemaps.extend(other.sitemaps)
-        self.sitemap_indexes.extend(other.sitemap_indexes)
-        self.errors.extend(other.errors)
-
 
 def parse_sitemap_metadata(input_dict):
     result = SitemapMetadata(input_dict["url"], input_dict["s3_uri"])
