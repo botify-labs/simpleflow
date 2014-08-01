@@ -1,7 +1,8 @@
 import unittest
 import mock
 from cdf.metadata.url.url_metadata import (
-    INT_TYPE, FLOAT_TYPE, ES_DOC_VALUE, AGG_NUMERICAL
+    INT_TYPE, FLOAT_TYPE, ES_DOC_VALUE, AGG_NUMERICAL,
+    DIFF_QUANTITATIVE
 )
 from cdf.features.ganalytics.settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 from cdf.features.ganalytics.streams import (VisitsStreamDef,
@@ -39,21 +40,24 @@ class TestUpdateDocumentMapping(unittest.TestCase):
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
-                    AGG_NUMERICAL
+                    AGG_NUMERICAL,
+                    DIFF_QUANTITATIVE
                 }
             },
             "visits.organic.google.nb": {
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
-                    AGG_NUMERICAL
+                    AGG_NUMERICAL,
+                    DIFF_QUANTITATIVE
                 }
             },
             "visits.organic.yahoo.nb": {
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
-                    AGG_NUMERICAL
+                    AGG_NUMERICAL,
+                    DIFF_QUANTITATIVE
                 }
             },
         }
@@ -76,7 +80,8 @@ class TestUpdateDocumentMapping(unittest.TestCase):
                 "type": INT_TYPE,
                 "settings": {
                     ES_DOC_VALUE,
-                    AGG_NUMERICAL
+                    AGG_NUMERICAL,
+                    DIFF_QUANTITATIVE
                 },
                 "verbose_name": "Number of visits on organic",
                 "order": 0
@@ -101,7 +106,8 @@ class TestUpdateDocumentMapping(unittest.TestCase):
                 "group": "visits.organic.all",
                 "settings": {
                     ES_DOC_VALUE,
-                    AGG_NUMERICAL
+                    AGG_NUMERICAL,
+                    DIFF_QUANTITATIVE
                 }
             },
             "visits.organic.all.bounce_rate": {
@@ -111,7 +117,8 @@ class TestUpdateDocumentMapping(unittest.TestCase):
                 "group": "visits.organic.all",
                 "settings": {
                     ES_DOC_VALUE,
-                    AGG_NUMERICAL
+                    AGG_NUMERICAL,
+                    DIFF_QUANTITATIVE
                 }
             },
             "visits.organic.all.pages_per_session": {
@@ -121,7 +128,8 @@ class TestUpdateDocumentMapping(unittest.TestCase):
                 "group": "visits.organic.all",
                 "settings": {
                     ES_DOC_VALUE,
-                    AGG_NUMERICAL
+                    AGG_NUMERICAL,
+                    DIFF_QUANTITATIVE
                 }
             }
         }

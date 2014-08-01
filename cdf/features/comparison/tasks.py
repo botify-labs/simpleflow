@@ -174,3 +174,27 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
     # Destroy the temporary DB
     ref_db.destroy()
     new_db.destroy()
+
+
+def get_comparison_data_format(data_format,
+                               diff_data_format,
+                               extras=EXTRA_FIELDS_FORMAT):
+    """Prepare ElasticSearch mapping for comparison feature
+
+    :param data_format: original internal data format
+    :param diff_data_format: diff sub-document data format
+    :param extras: extra fields to be added
+    :return: mutated data_format for comparison
+    """
+    previous_format = {
+        'previous.' + k: v for k, v in data_format.iteritems()
+    }
+    diff_format = {
+        'diff.' + k: v for k, v in diff_data_format.iteritems()
+    }
+    format = copy.deepcopy(data_format)
+    format.update(previous_format)
+    format.update(diff_format)
+    format.update(extras)
+
+    return format
