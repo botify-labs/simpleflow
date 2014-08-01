@@ -34,9 +34,7 @@ def compute_suggested_patterns(crawl_id,
                                first_part_id_size,
                                part_id_size,
                                tmp_dir=None,
-                               force_fetch=False,
-                               *args,
-                               **kwargs):
+                               force_fetch=False):
     minimal_frequency = 0.03
 
     # Fetch locally the files from S3

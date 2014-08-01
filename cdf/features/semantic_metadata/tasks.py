@@ -14,7 +14,7 @@ from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 @with_temporary_dir
 def make_metadata_duplicates_file(crawl_id, s3_uri,
                                   first_part_id_size, part_id_size,
-                                  tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH, *args, **kwargs):
+                                  tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     def to_string(row):
         url_id, metadata_type, filled_nb, duplicates_nb, is_first, target_urls_ids = row
         return '\t'.join((

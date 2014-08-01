@@ -21,7 +21,7 @@ from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 @with_temporary_dir
 def make_links_counter_file(crawl_id, s3_uri,
                             part_id, link_direction,
-                            tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH, *args, **kwargs):
+                            tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     if link_direction == "out":
         transducer = OutlinksTransducer
         stream_name = OutlinksRawStreamDef
@@ -65,7 +65,7 @@ def make_links_counter_file(crawl_id, s3_uri,
 def make_bad_link_file(crawl_id, s3_uri,
                        first_part_id_size=500000,
                        part_id_size=500000,
-                       tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH, *args, **kwargs):
+                       tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     """
     Generate a tsv file that list all urls outlink to an error url:
       url_src_id  url_dest_id error_http_code
@@ -113,7 +113,7 @@ def make_bad_link_file(crawl_id, s3_uri,
 def make_bad_link_counter_file(crawl_id, s3_uri,
                                part_id,
                                tmp_dir=None,
-                               force_fetch=DEFAULT_FORCE_FETCH, *args, **kwargs):
+                               force_fetch=DEFAULT_FORCE_FETCH):
     """
     Generate a counter file that list bad link counts by source url and http code
       url_src_id  http_code  count
