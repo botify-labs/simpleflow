@@ -18,6 +18,7 @@ from cdf.metadata.url.url_metadata import (
     ES_DOC_VALUE
 )
 from cdf.utils.features import get_urls_data_format_definition
+from cdf.features.comparison import logger
 
 
 def get_diff_strategy(data_format):
@@ -169,7 +170,14 @@ def document_diff(ref_doc, new_doc, diff_strategy=DIFF_STRATEGY):
                      if path_in_dict(field, ref_doc) else None)
         new_value = (get_subdict_from_path(field, new_doc)
                      if path_in_dict(field, new_doc) else None)
-        diff_result = diff_func(ref_value, new_value)
+        try:
+            diff_result = diff_func(ref_value, new_value)
+        except Exception:
+            logger.error(
+                "Exception during diff for field {}, values: {}, {}",
+                field, ref_value, new_value
+            )
+            raise
         if diff_result is not None:
             if diff is None:
                 # lazily create diff document
