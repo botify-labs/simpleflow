@@ -6,7 +6,7 @@ from urlparse import urlparse
 from cdf.utils import s3
 from cdf.features.sitemap.exceptions import ParsingError
 from cdf.features.sitemap.document import instanciate_sitemap_document
-from cdf.features.sitemap.download import parse_download_status_from_json
+from cdf.features.sitemap.metadata import parse_download_status_from_json
 
 
 def match_sitemap_urls_from_documents(documents,
@@ -100,8 +100,8 @@ def match_sitemap_urls_from_document(document,
             dataset.append(urlid)
 
 
-def get_download_status_from_s3(s3_uri, tmp_dir, force_fetch):
-    """Get the sitemap download status corresponding to a crawl.
+def get_download_metadata_from_s3(s3_uri, tmp_dir, force_fetch):
+    """Get the sitemap download metadata corresponding to a crawl.
     The function downloads the corresponding file and builds a DownloadStatus
     object from it.
     :param s3_uri: the s3 uri where the crawl data is stored.
@@ -115,15 +115,15 @@ def get_download_status_from_s3(s3_uri, tmp_dir, force_fetch):
     :type force_fetch: bool
     :returns: DownloadStatus
     """
-    download_status_filename = 'download_status.json'
+    download_metadata_filename = 'sitemap_download_metadata.json'
     s3.fetch_file(
-        os.path.join(s3_uri, 'sitemaps', download_status_filename),
-        os.path.join(tmp_dir, 'download_status.json'),
+        os.path.join(s3_uri, 'sitemaps', download_metadata_filename),
+        os.path.join(tmp_dir, 'sitemap_download_metadata.json'),
         force_fetch
     )
 
     result = parse_download_status_from_json(
-        os.path.join(tmp_dir, download_status_filename)
+        os.path.join(tmp_dir, download_metadata_filename)
     )
     return result
 
@@ -141,9 +141,10 @@ def download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch):
     :type force_fetch: bool
     :returns: list - a list of tuples (file_path, original url)
     """
-    download_status = get_download_status_from_s3(s3_uri, tmp_dir, force_fetch)
+    download_metadata = get_download_metadata_from_s3(s3_uri, tmp_dir, force_fetch)
     sitemap_files = []
-    for sitemap in download_status.sitemaps:
+    for sitemap in download_metadata.sitemaps:
+        print sitemap.s3_uri
         _, filename = s3.uri_parse(sitemap.s3_uri)
         destination = os.path.join(tmp_dir, filename)
         s3.fetch_file(

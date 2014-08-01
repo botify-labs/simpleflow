@@ -1,20 +1,18 @@
 import unittest
 import mock
-import tempfile
-import gzip
-import os
+from moto import mock_s3
+import boto
 import json
+from cdf.utils.s3 import stream_files
 
-from cdf.features.sitemap.download import SitemapMetadata, DownloadStatus
-from cdf.features.sitemap.document import (SiteMapType,
-                                           SitemapTextDocument,
-                                           SitemapXmlDocument)
+from cdf.features.sitemap.metadata import SitemapMetadata, Metadata
+from cdf.features.sitemap.document import SitemapXmlDocument
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.sitemap.tasks import (download_sitemap_files,
                                         download_sitemap_file,
                                         match_sitemap_urls,
+                                        update_download_status,
                                         save_url_list_as_gzip)
-from cdf.core.mocks import _mock_push_file
 
 
 class TestDownloadSitemapFiles(unittest.TestCase):
@@ -26,12 +24,12 @@ class TestDownloadSitemapFiles(unittest.TestCase):
         sitemap_index = "http://foo.com/sitemap_index.xml"
         #mocking
         download_sitemap_file_mock.side_effect = iter([
-            DownloadStatus([SitemapMetadata("http://foo.com/sitemap.xml",
-                                            "s3://foo/sitemaps/sitemap.xml",
-                                            sitemap_index)]),
-            DownloadStatus([SitemapMetadata("http://bar.com/sitemap.xml",
-                                            "s3://foo/sitemaps/sitemap.xml_2",
-                                            sitemap_index)])
+            Metadata([SitemapMetadata("http://foo.com/sitemap.xml",
+                                      "s3://foo/sitemaps/sitemap.xml",
+                                      sitemap_index)]),
+            Metadata([SitemapMetadata("http://bar.com/sitemap.xml",
+                                      "s3://foo/sitemaps/sitemap.xml_2",
+                                      sitemap_index)])
         ])
 
         #actual call
@@ -43,7 +41,7 @@ class TestDownloadSitemapFiles(unittest.TestCase):
         download_sitemap_files(input_urls, s3_uri)
 
         #verifications
-        expected_download_status = DownloadStatus([
+        expected_download_status = Metadata([
             SitemapMetadata("http://foo.com/sitemap.xml",
                             "s3://foo/sitemaps/sitemap.xml",
                             sitemap_index),
@@ -53,7 +51,7 @@ class TestDownloadSitemapFiles(unittest.TestCase):
         ])
 
         push_content_mock.assert_called_once_with(
-            "s3://foo/sitemaps/download_status.json",
+            "s3://foo/sitemaps/sitemap_download_metadata.json",
             expected_download_status.to_json()
         )
 
@@ -65,8 +63,8 @@ class TestDownloadSitemapFile(unittest.TestCase):
                           download_sitemaps_mock,
                           push_file_mock):
         #mocking
-        download_sitemaps_mock.return_value = DownloadStatus(
-            [SitemapMetadata("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml", None)]
+        download_sitemaps_mock.return_value = Metadata(
+            [SitemapMetadata("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml")]
         )
 
         #actual call
@@ -75,8 +73,8 @@ class TestDownloadSitemapFile(unittest.TestCase):
         actual_result = download_sitemap_file(input_url, s3_uri, None)
 
         #verifications
-        expected_result = DownloadStatus([
-            SitemapMetadata("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml", None)
+        expected_result = Metadata([
+            SitemapMetadata("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml")
         ])
         self.assertEqual(expected_result, actual_result)
 
@@ -85,35 +83,61 @@ class TestDownloadSitemapFile(unittest.TestCase):
             "/tmp/foo/sitemap.xml"
         )
 
-
 class TestMatchSitemapUrls(unittest.TestCase):
-    @mock.patch('cdf.utils.s3.push_file', _mock_push_file)
-    @mock.patch("cdf.features.sitemap.tasks.get_sitemap_documents", autospec=True)
+
+    @mock_s3
     @mock.patch.object(IdStreamDef, 'get_stream_from_s3')
     def test_nominal_case(self,
-                          get_stream_from_s3_mock,
-                          get_sitemap_documents_mock):
+                          get_stream_from_s3_mock):
+
+        bucket = "app.foo.com"
+        s3_uri = "s3://{}/crawl_result".format(bucket)
+        conn = boto.connect_s3()
+        bucket = conn.create_bucket(bucket)
+        k1 = boto.s3.key.Key(bucket)
+        k1.key = "crawl_result/sitemaps/sitemap_1.txt"
+        k1.set_contents_from_string(("http://foo.com/qux\n"
+                                     "http://foo.com/bar"))
+
+        k2 = boto.s3.key.Key(bucket)
+        k2.key = "crawl_result/sitemaps/sitemap_2.txt"
+        k2.set_contents_from_string(("http://foo.com/index.html\n"  # not in crawl
+                                     "http://bar.com"))
+
+        k3 = boto.s3.key.Key(bucket)
+        k3.key = "crawl_result/sitemaps/sitemap_download_metadata.json"
+        k3.set_contents_from_string((
+            '{'
+            '    "sitemaps": ['
+            '        {'
+            '            "url": "http://foo.com/sitemap_1.txt", '
+            '            "sitemap_index": "http://foo.com/sitemap_index.xml", '
+            '            "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_1.txt"'
+            '        },'
+            '        {'
+            '            "url": "http://foo.com/sitemap_2.txt", '
+            '            "sitemap_index": "http://foo.com/sitemap_index.xml", '
+            '            "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_2.txt"'
+            '        }'
+            '    ], '
+            '    "sitemap_indexes": ['
+            '        {'
+            '            "url": "http://foo.com/sitemap_index.xml", '
+            '            "valid_urls": 2, '
+            '            "invalid_urls": 0'
+            '        }'
+            '    ], '
+            '    "errors": []'
+            '}'
+        ))
         #mock definition
         get_stream_from_s3_mock.return_value = [
             (1, "http", "foo.com", "/bar", ""),
             (2, "http", "foo.com", "/baz", ""),
             (3, "http", "foo.com", "/qux", ""),
         ]
-        file1 = tempfile.NamedTemporaryFile(delete=False)
-        file1.write(("http://foo.com/qux\n"
-                     "http://foo.com/bar"))
-        file1.close()
-        document_mock_1 = SitemapTextDocument(file1.name, "http://foo.com/sitemap_1.txt")
 
-        file2 = tempfile.NamedTemporaryFile(delete=False)
-        file2.write(("http://foo.com/index.html\n"  # not in crawl
-                     "http://bar.com"))  # not in crawl domain
-        file2.close()
-        document_mock_2 = SitemapTextDocument(file2.name, "http://foo.com/sitemap_2.txt")
-
-        get_sitemap_documents_mock.return_value = [document_mock_1, document_mock_2]
         #call
-        s3_uri = "s3://" + tempfile.mkdtemp()
         allowed_domains = ["foo.com"]
         blacklisted_domains = []
         first_part_id_size = 10
@@ -125,36 +149,86 @@ class TestMatchSitemapUrls(unittest.TestCase):
                            first_part_id_size,
                            part_id_size)
 
-       #check output files
-        with gzip.open(os.path.join(s3_uri[5:], 'sitemap_only.gz')) as f:
-            expected_result = ['http://foo.com/index.html\n']
-            self.assertEquals(expected_result, f.readlines())
+        #check output files
+        self.assertEqual(['http://foo.com/index.html\n'],
+                         list(stream_files("s3://app.foo.com/crawl_result/sitemap_only.gz")))
 
-        with gzip.open(os.path.join(s3_uri[5:], 'in_sitemap_out_of_crawl_domain.gz')) as f:
-            expected_result = ['http://bar.com\n']
-            self.assertEquals(expected_result, f.readlines())
+        self.assertEqual(['http://bar.com\n'],
+                         list(stream_files("s3://app.foo.com/crawl_result/in_sitemap_out_of_crawl_domain.gz")))
 
-        with gzip.open(os.path.join(s3_uri[5:], 'sitemap.txt.0.gz')) as f:
-            expected_result = ['1\n', '3\n']  # urlids are now sorted
-            self.assertEquals(expected_result, f.readlines())
+        self.assertEqual(['1\n', '3\n'],
+                         list(stream_files("s3://app.foo.com/crawl_result/sitemap.txt.0.gz")))
 
-        with open(os.path.join(s3_uri[5:], "sitemap_info.json")) as f:
-            expected_sitemap_info = {
-                "http://foo.com/sitemap_1.txt": {
-                    "type": "SITEMAP_TEXT",
-                    "valid": 2,
-                    "invalid": 0
+        expected_sitemap_metadata = {
+            "sitemaps": [
+                {
+                    "url": "http://foo.com/sitemap_1.txt",
+                    "sitemap_index": "http://foo.com/sitemap_index.xml",
+                    "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_1.txt",
+                    "valid_urls": 2,
+                    "invalid_urls": 0
                 },
-                "http://foo.com/sitemap_2.txt": {
-                    "type": "SITEMAP_TEXT",
-                    "valid": 2,
-                    "invalid": 0
+                {
+                    "url": "http://foo.com/sitemap_2.txt",
+                    "sitemap_index": "http://foo.com/sitemap_index.xml",
+                    "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_2.txt",
+                    "valid_urls": 2,
+                    "invalid_urls": 0
                 }
-            }
-            self.assertEqual(expected_sitemap_info, json.load(f))
+            ],
+            "sitemap_indexes": [
+                {
+                    "url": "http://foo.com/sitemap_index.xml",
+                    "valid_urls": 2,
+                    "invalid_urls": 0
+                }
+            ],
+            "errors": []
+        }
+        key = bucket.get_key("crawl_result/sitemap_metadata.json")
+        actual_sitemap_metada = json.loads(key.get_contents_as_string())
+        self.assertEqual(expected_sitemap_metadata, actual_sitemap_metada)
 
-        os.remove(file1.name)
-        os.remove(file2.name)
+
+class TestUpdateMetadata(unittest.TestCase):
+    def setUp(self):
+        self.download_status = Metadata()
+        self.download_status.add_success_sitemap(
+            SitemapMetadata("http://foo.com/sitemap_1.txt",
+                            "s3://foo.com/sitemap_1.txt")
+            )
+        self.download_status.add_success_sitemap(
+            SitemapMetadata("http://foo.com/sitemap_2.txt",
+                            "s3://foo.com/sitemap_2.txt")
+            )
+
+    def test_nominal_case(self):
+        document = SitemapXmlDocument("/tmp/sitemap_2.txt", "http://foo.com/sitemap_2.txt")
+        document.valid_urls = 2
+        document.invalid_urls = 1
+        update_download_status(self.download_status, [document])
+
+        modified_sitemap = self.download_status.sitemaps[1]
+        self.assertEqual("http://foo.com/sitemap_2.txt", modified_sitemap.url)
+        self.assertEqual(2, modified_sitemap.valid_urls)
+        self.assertEqual(1, modified_sitemap.invalid_urls)
+        self.assertIsNone(modified_sitemap.error_type)
+        self.assertIsNone(modified_sitemap.error_message)
+
+    def test_error_case(self):
+        document = SitemapXmlDocument("/tmp/sitemap_2.txt", "http://foo.com/sitemap_2.txt")
+        document.valid_urls = 2
+        document.invalid_urls = 1
+        document.error = "ParsingError"
+        document.error_message = "foo"
+        update_download_status(self.download_status, [document])
+
+        modified_sitemap = self.download_status.sitemaps[1]
+        self.assertEqual("http://foo.com/sitemap_2.txt", modified_sitemap.url)
+        self.assertEqual(2, modified_sitemap.valid_urls)
+        self.assertEqual(1, modified_sitemap.invalid_urls)
+        self.assertEqual("ParsingError", modified_sitemap.error_type)
+        self.assertEqual("foo", modified_sitemap.error_message)
 
 
 class TestSaveUrlListAsGzip(unittest.TestCase):

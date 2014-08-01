@@ -1,6 +1,5 @@
 import os.path
 import gzip
-import json
 
 from cdf.utils import s3
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
@@ -9,11 +8,11 @@ from cdf.features.main.utils import get_url_to_id_dict_from_stream
 from cdf.features.main.streams import IdStreamDef
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.features.sitemap.constant import NB_SAMPLES_TO_KEEP
-from cdf.features.sitemap.download import (download_sitemaps,
-                                           SitemapMetadata,
-                                           DownloadStatus)
+from cdf.features.sitemap.download import download_sitemaps
+from cdf.features.sitemap.metadata import Metadata, SitemapMetadata
 from cdf.features.sitemap.streams import SitemapStreamDef
 from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
+                                           get_download_metadata_from_s3,
                                            get_sitemap_documents,
                                            DomainValidator)
 
@@ -37,21 +36,21 @@ def download_sitemap_files(input_urls,
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
     """
-    s3_download_status = DownloadStatus()
+    s3_download_metadata = Metadata()
     for url in input_urls:
         crt_file_index = download_sitemap_file(url,
                                                s3_uri,
                                                user_agent,
                                                tmp_dir,
                                                force_fetch)
-        s3_download_status.update(crt_file_index)
+        s3_download_metadata.update(crt_file_index)
 
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
 
     #push the file that list the sitemap files
     s3.push_content(
-        os.path.join(s3_subdir_uri, "download_status.json"),
-        s3_download_status.to_json()
+        os.path.join(s3_subdir_uri, "sitemap_download_metadata.json"),
+        s3_download_metadata.to_json()
     )
 
 
@@ -73,25 +72,26 @@ def download_sitemap_file(input_url,
     :type user_agent: str
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
-    :returns: DownloadStatus
+    :returns: Metadata
     """
-    download_status = download_sitemaps(input_url, tmp_dir, user_agent)
-
+    download_metadata = download_sitemaps(input_url, tmp_dir, user_agent)
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
-    #an object similar to download_status but that stores s3 uris
-    s3_download_status = DownloadStatus(errors=download_status.errors)
-    for sitemap in download_status.sitemaps:
-        url, file_path, sitemap_index = sitemap
+    #an object similar to download_metadata but that stores s3 uris
+    s3_download_metadata = Metadata(
+        sitemap_indexes=download_metadata.sitemap_indexes,
+        errors=download_metadata.errors
+    )
+    for sitemap in download_metadata.sitemaps:
+        url, file_path, sitemap_index = sitemap.url, sitemap.s3_uri, sitemap.sitemap_index
         destination_uri = os.path.join(s3_subdir_uri, os.path.basename(file_path))
         s3.push_file(
             os.path.join(destination_uri),
             file_path
         )
-        s3_download_status.add_success_sitemap(
+        s3_download_metadata.add_success_sitemap(
             SitemapMetadata(url, destination_uri, sitemap_index)
         )
-
-    return s3_download_status
+    return s3_download_metadata
 
 
 @with_temporary_dir
@@ -148,16 +148,16 @@ def match_sitemap_urls(s3_uri,
                           first_part_id_size=first_part_id_size,
                           part_id_size=part_id_size)
 
-    sitemap_info_filename = "sitemap_info.json"
-    sitemap_info_filepath = os.path.join(tmp_dir, sitemap_info_filename)
-    document_info = {}
-    for document in sitemap_documents:
-        document_info[document.url] = document.to_dict()
-    with open(sitemap_info_filepath, 'wb') as sitemap_info_file:
-        json.dump(document_info, sitemap_info_file)
+    download_metadata = get_download_metadata_from_s3(s3_uri, tmp_dir, force_fetch)
+    update_download_status(download_metadata, sitemap_documents)
+
+    sitemap_metadata_filename = "sitemap_metadata.json"
+    sitemap_metadata_filepath = os.path.join(tmp_dir, sitemap_metadata_filename)
+    with open(sitemap_metadata_filepath, 'wb') as sitemap_metadata_file:
+        sitemap_metadata_file.write(download_metadata.to_json())
     s3.push_file(
-        os.path.join(s3_uri, sitemap_info_filename),
-        sitemap_info_filepath
+        os.path.join(s3_uri, sitemap_metadata_filename),
+        sitemap_metadata_filepath
     )
     sitemap_only_filename = 'sitemap_only.gz'
     sitemap_only_filepath = save_url_list_as_gzip(sitemap_only_urls,
@@ -176,6 +176,31 @@ def match_sitemap_urls(s3_uri,
         os.path.join(s3_uri, out_of_crawl_domain_filename),
         out_of_crawl_domain_filepath
     )
+
+
+def update_download_status(download_status, sitemap_documents):
+    """Update a Metadata object with data obtained when extracting
+    the urls from the sitemaps.
+    This function basically fills the "valid_url", "invalid_urls" fields
+    for the sitemaps. It also fills the error related fields if necessary.
+    :param download_status: the download status object to update
+    :type download_status: Metadata
+    :param sitemap_documents: a list of sitemap documents.
+                              They contain the information to update
+                              the download status
+    :type sitemap_documents: list
+    """
+    url_to_metadata = {
+        sitemap_metadata.url: sitemap_metadata for sitemap_metadata in download_status.sitemaps
+    }
+    for document in sitemap_documents:
+        document_metadata = url_to_metadata[document.url]
+        document_metadata.valid_urls = document.valid_urls
+        document_metadata.invalid_urls = document.invalid_urls
+        if document.error is not None:
+            document_metadata.error_type = document.error
+        if document.error_message is not None:
+            document_metadata.error_message = document.error_message
 
 
 def save_url_list_as_gzip(url_list, filename, tmp_dir):
