@@ -21,38 +21,24 @@ class TestDownloadSitemapFiles(unittest.TestCase):
     def test_nominal_case(self,
                           download_sitemap_file_mock,
                           push_content_mock):
-        sitemap_index = "http://foo.com/sitemap_index.xml"
-        #mocking
-        download_sitemap_file_mock.side_effect = iter([
-            Metadata([SitemapMetadata("http://foo.com/sitemap.xml",
-                                      "s3://foo/sitemaps/sitemap.xml",
-                                      sitemap_index)]),
-            Metadata([SitemapMetadata("http://bar.com/sitemap.xml",
-                                      "s3://foo/sitemaps/sitemap.xml_2",
-                                      sitemap_index)])
-        ])
-
         #actual call
         input_urls = [
             "http://foo.com/sitemap.xml",
             "http://bar.com/sitemap.xml"
         ]
         s3_uri = "s3://foo"
-        download_sitemap_files(input_urls, s3_uri)
+        download_sitemap_files(input_urls, s3_uri, "user_agent")
 
         #verifications
-        expected_download_status = Metadata([
-            SitemapMetadata("http://foo.com/sitemap.xml",
-                            "s3://foo/sitemaps/sitemap.xml",
-                            sitemap_index),
-            SitemapMetadata("http://bar.com/sitemap.xml",
-                            "s3://foo/sitemaps/sitemap.xml_2",
-                            sitemap_index)
-        ])
-
+        metadata = Metadata()
+        expected_download_calls = [
+            mock.call('http://foo.com/sitemap.xml', 's3://foo', 'user_agent', metadata, mock.ANY, False),
+            mock.call('http://bar.com/sitemap.xml', 's3://foo', 'user_agent', metadata, mock.ANY, False)
+        ]
+        self.assertEqual(expected_download_calls, download_sitemap_file_mock.mock_calls)
         push_content_mock.assert_called_once_with(
             "s3://foo/sitemaps/sitemap_download_metadata.json",
-            expected_download_status.to_json()
+            mock.ANY
         )
 
 
@@ -62,21 +48,25 @@ class TestDownloadSitemapFile(unittest.TestCase):
     def test_nominal_case(self,
                           download_sitemaps_mock,
                           push_file_mock):
+
         #mocking
-        download_sitemaps_mock.return_value = Metadata(
-            [SitemapMetadata("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml")]
-        )
+        def f(input_url, output_directory, user_agent, metadata):
+            metadata.add_success_sitemap(
+                SitemapMetadata("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml")
+            )
+        download_sitemaps_mock.side_effect = f
 
         #actual call
         input_url = "http://foo.com/sitemap.xml"
         s3_uri = "s3://foo"
-        actual_result = download_sitemap_file(input_url, s3_uri, None)
+        metadata = Metadata()
+        download_sitemap_file(input_url, s3_uri, "user_agent", metadata)
 
         #verifications
-        expected_result = Metadata([
+        expected_metadata = Metadata([
             SitemapMetadata("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml")
         ])
-        self.assertEqual(expected_result, actual_result)
+        self.assertEqual(expected_metadata, metadata)
 
         push_file_mock.assert_called_once_with(
             "s3://foo/sitemaps/sitemap.xml",
@@ -111,12 +101,12 @@ class TestMatchSitemapUrls(unittest.TestCase):
             '    "sitemaps": ['
             '        {'
             '            "url": "http://foo.com/sitemap_1.txt", '
-            '            "sitemap_index": "http://foo.com/sitemap_index.xml", '
+            '            "sitemap_indexes": ["http://foo.com/sitemap_index.xml"], '
             '            "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_1.txt"'
             '        },'
             '        {'
             '            "url": "http://foo.com/sitemap_2.txt", '
-            '            "sitemap_index": "http://foo.com/sitemap_index.xml", '
+            '            "sitemap_indexes": ["http://foo.com/sitemap_index.xml"], '
             '            "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_2.txt"'
             '        }'
             '    ], '
@@ -163,14 +153,14 @@ class TestMatchSitemapUrls(unittest.TestCase):
             "sitemaps": [
                 {
                     "url": "http://foo.com/sitemap_1.txt",
-                    "sitemap_index": "http://foo.com/sitemap_index.xml",
+                    "sitemap_indexes": ["http://foo.com/sitemap_index.xml"],
                     "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_1.txt",
                     "valid_urls": 2,
                     "invalid_urls": 0
                 },
                 {
                     "url": "http://foo.com/sitemap_2.txt",
-                    "sitemap_index": "http://foo.com/sitemap_index.xml",
+                    "sitemap_indexes": ["http://foo.com/sitemap_index.xml"],
                     "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_2.txt",
                     "valid_urls": 2,
                     "invalid_urls": 0

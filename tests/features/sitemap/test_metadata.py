@@ -24,12 +24,12 @@ class TestSitemapMetadata(unittest.TestCase):
     def test_to_dict_nominal_case(self):
         sitemap_metadata = SitemapMetadata(self.url,
                                            self.s3_uri,
-                                           self.sitemap_index)
+                                           [self.sitemap_index])
 
         expected_result = {
             "url": self.url,
             "s3_uri": self.s3_uri,
-            "sitemap_index": self.sitemap_index
+            "sitemap_indexes": [self.sitemap_index]
         }
 
         self.assertEqual(expected_result, sitemap_metadata.to_dict())
@@ -112,13 +112,78 @@ class TestSitemapIndexMetadata(unittest.TestCase):
 
 class TestMetadata(unittest.TestCase):
     def setUp(self):
+        self.sitemap = "http://foo/sitemap.xml"
+        self.sitemap_2 = "http://foo/sitemap_2.xml"
+
         self.sitemap_index = "http://foo/sitemap_index.xml"
+        self.sitemap_index_2 = "http://foo/sitemap_index_2.xml"
+
+    def test_add_success_sitemap(self):
+        metadata = Metadata()
+        metadata.add_success_sitemap(SitemapMetadata(self.sitemap, "/tmp/sitemap.xml"))
+        metadata.add_success_sitemap(SitemapMetadata(self.sitemap_2, "/tmp/sitemap_2.xml"))
+
+        expected_result = [
+            SitemapMetadata(self.sitemap, "/tmp/sitemap.xml"),
+            SitemapMetadata(self.sitemap_2, "/tmp/sitemap_2.xml")
+        ]
+        self.assertEqual(expected_result, metadata.sitemaps)
+
+        #readd a sitemap index
+        metadata.add_success_sitemap(SitemapMetadata(self.sitemap, "/tmp/sitemap.xml_2"))
+        self.assertEqual(expected_result, metadata.sitemaps)
+
+    def test_add_success_sitemap_index(self):
+        metadata = Metadata()
+        metadata.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index, 0, 0))
+        metadata.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index_2, 0, 0))
+
+        expected_result = [
+            SitemapIndexMetadata(self.sitemap_index, 0, 0),
+            SitemapIndexMetadata(self.sitemap_index_2, 0, 0)
+        ]
+        self.assertEqual(expected_result, metadata.sitemap_indexes)
+
+        #readd a sitemap index
+        metadata.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index, 10, 0))
+        self.assertEqual(expected_result, metadata.sitemap_indexes)
+
+    def test_add_error(self):
+        metadata = Metadata()
+        metadata.add_error(
+            Error("http://foo.com/bar.xml",
+                  SiteMapType.SITEMAP_XML,
+                  "ParsingError",
+                  "Error message")
+        )
+        metadata.add_error(
+            Error("http://foo.com/baz.xml",
+                  SiteMapType.UNKNOWN,
+                  "DownloadError",
+                  "Error message")
+        )
+
+        expected_result = [
+            Error("http://foo.com/bar.xml", SiteMapType.SITEMAP_XML, "ParsingError", "Error message"),
+            Error("http://foo.com/baz.xml", SiteMapType.UNKNOWN, "DownloadError", "Error message")
+        ]
+        self.assertEqual(expected_result, metadata.errors)
+
+        #readd a sitemap index
+        metadata.add_error(
+            Error("http://foo.com/bar.xml",
+                  SiteMapType.SITEMAP_XML,
+                  "DownloadError",
+                  "Error message")
+        )
+        self.assertEqual(expected_result, metadata.errors)
+
 
     def test_to_json(self):
         download_status = Metadata(
             [SitemapMetadata("http://foo/sitemap_1.xml",
                              "s3://foo/sitemap_1.xml",
-                             self.sitemap_index)],
+                             [self.sitemap_index])],
             [SitemapIndexMetadata("http://foo/sitemap_index.xml", 2, 1)],
             [Error("http://error1", SiteMapType.UNKNOWN, "foo", "bar"),
              Error("http://error2", SiteMapType.UNKNOWN, "foo", "bar")]
@@ -131,7 +196,7 @@ class TestMetadata(unittest.TestCase):
                 {
                     "url": "http://foo/sitemap_1.xml",
                     "s3_uri": "s3://foo/sitemap_1.xml",
-                    "sitemap_index": "http://foo/sitemap_index.xml"
+                    "sitemap_indexes": ["http://foo/sitemap_index.xml"]
                 }
             ],
             "sitemap_indexes": [
@@ -184,44 +249,33 @@ class TestMetadata(unittest.TestCase):
         #to be insensitive to item ordering
         self.assertEqual(expected_result, json.loads(actual_result))
 
-    def test_update(self):
-        download_status = Metadata(
-            [SitemapMetadata("http://foo/sitemap_1.xml",
-                             "s3://foo/sitemap_1.xml",
-                             self.sitemap_index)],
-            [SitemapIndexMetadata("http://foo/sitemap_index_1.xml", 10, 0)],
-            [Error("http://error1", SiteMapType.UNKNOWN, "DownloadError", ""),
-             Error("http://error2", SiteMapType.UNKNOWN, "DownloadError", "")]
-        )
 
-        download_status_aux = Metadata(
-            [SitemapMetadata("http://foo/sitemap_2.xml",
-                             "s3://foo/sitemap_2.xml",
-                             self.sitemap_index)],
-            [SitemapIndexMetadata("http://foo/sitemap_index_2.xml", 2, 1)],
-            [Error("http://error3", SiteMapType.UNKNOWN, "DownloadError", "")]
-        )
+class TestSitemapMetadataHasBeenProcessed(unittest.TestCase):
+    def setUp(self):
+        self.url1 = "http://foo.com/bar"
+        self.url2 = "http://foo.com/qux"
+        self.metadata = Metadata()
 
-        download_status.update(download_status_aux)
-        expected_result = Metadata(
-            [
-                SitemapMetadata("http://foo/sitemap_1.xml",
-                                "s3://foo/sitemap_1.xml",
-                                self.sitemap_index),
-                SitemapMetadata("http://foo/sitemap_2.xml",
-                                "s3://foo/sitemap_2.xml",
-                                self.sitemap_index)
-            ],
-            [
-                SitemapIndexMetadata("http://foo/sitemap_index_1.xml", 10, 0),
-                SitemapIndexMetadata("http://foo/sitemap_index_2.xml", 2, 1),
-            ],
-            [Error("http://error1", SiteMapType.UNKNOWN, "DownloadError", ""),
-             Error("http://error2", SiteMapType.UNKNOWN, "DownloadError", ""),
-             Error("http://error3", SiteMapType.UNKNOWN, "DownloadError", "")
-            ]
+    def test_empty_object(self):
+        self.assertFalse(self.metadata.is_success_sitemap(self.url1))
+
+    def test_sitemap(self):
+        self.metadata.add_success_sitemap(SitemapMetadata(self.url1, None))
+        self.assertTrue(self.metadata.is_success_sitemap(self.url1))
+        self.assertFalse(self.metadata.is_success_sitemap(self.url2))
+
+    def test_sitemap_index(self):
+        self.metadata.add_success_sitemap_index(
+            SitemapIndexMetadata(self.url1, 0, 0)
         )
-        self.assertEqual(expected_result, download_status)
+        self.assertFalse(self.metadata.is_success_sitemap(self.url1))
+
+    def test_error(self):
+        self.metadata.add_error(
+            Error(self.url1, SiteMapType.UNKNOWN, "Error", "")
+        )
+        #we do not check errors
+        self.assertFalse(self.metadata.is_success_sitemap(self.url1))
 
 
 class TestParseSitemapMetadata(unittest.TestCase):

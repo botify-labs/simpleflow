@@ -29,12 +29,12 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
                         '    {'
                         '       "url": "http://foo/sitemap_1.xml",'
                         '       "s3_uri": "s3://foo/sitemap_1.xml",'
-                        '       "sitemap_index": "http://foo/sitemap_index.html"'
+                        '       "sitemap_indexes": ["http://foo/sitemap_index.html"]'
                         '   },'
                         '   {'
                         '       "url": "http://foo/sitemap_2.xml",'
                         '       "s3_uri": "s3://foo/sitemap_2.xml",'
-                        '       "sitemap_index": "http://foo/sitemap_index.html"'
+                        '       "sitemap_indexes": ["http://foo/sitemap_index.html"]'
                         '   }'
                         '],'
                         '"sitemap_indexes": ['
@@ -57,17 +57,17 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
         #mock open()
         with mock.patch("__builtin__.open", mock.mock_open(read_data=file_content)) as m:
             actual_result = get_download_metadata_from_s3(s3_uri,
-                                                        tmp_dir,
-                                                        force_fetch)
+                                                          tmp_dir,
+                                                          force_fetch)
 
         #check result
         expected_sitemaps = [
             SitemapMetadata(u"http://foo/sitemap_1.xml",
                             u"s3://foo/sitemap_1.xml",
-                            u"http://foo/sitemap_index.html"),
+                            [u"http://foo/sitemap_index.html"]),
             SitemapMetadata(u"http://foo/sitemap_2.xml",
                             u"s3://foo/sitemap_2.xml",
-                            u"http://foo/sitemap_index.html"),
+                            [u"http://foo/sitemap_index.html"]),
         ]
         expected_sitemap_indexes = [SitemapIndexMetadata(u"http://foo/sitemap_index.xml", 2, 0)]
         expected_errors = [Error(u"http://error", SiteMapType.UNKNOWN, u"DownloadError", u"foo")]
