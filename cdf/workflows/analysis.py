@@ -60,6 +60,7 @@ def as_activity(func):
         start_to_close_timeout=7200,
         schedule_to_close_timeout=9000,
         heartbeat_timeout=300,
+        retry=1,
         raises_on_failure=True,
     )(func)
 
@@ -133,6 +134,7 @@ UPDATE_STATUS_TIMEOUTS = {
     name='crawl.update_status',
     version='1.1',
     task_list='crawl.status',
+    retry=1,
     **UPDATE_STATUS_TIMEOUTS)
 def update_crawl_status(crawl_id, instance_id, crawl_endpoint, crawl_status):
     """
@@ -148,6 +150,7 @@ def update_crawl_status(crawl_id, instance_id, crawl_endpoint, crawl_status):
     name='crawler.update_status',
     version='1.1',
     task_list='crawler.status',
+    retry=1,
     **UPDATE_STATUS_TIMEOUTS)
 def update_crawler_status(crawl_id, instance_id, crawler_endpoint, crawler_status):
     """
@@ -163,6 +166,7 @@ def update_crawler_status(crawl_id, instance_id, crawler_endpoint, crawler_statu
     name='revision.update_status',
     version='1.1',
     task_list='revision.status',
+    retry=1,
     **UPDATE_STATUS_TIMEOUTS)
 def update_revision_status(revision_endpoint, revision_status):
     """
@@ -178,6 +182,7 @@ def update_revision_status(revision_endpoint, revision_status):
     name='crawl.request_api',
     version='1.1',
     task_list='crawl.status',
+    retry=1,
     **UPDATE_STATUS_TIMEOUTS)
 def request_api(crawl_endpoint, revision_endpoint, api_requests):
     """Make a request to an API.
