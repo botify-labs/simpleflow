@@ -10,10 +10,32 @@ from cdf.utils.dict import (
     get_subdict_from_path,
     update_path_in_dict
 )
+from cdf.metadata.url.url_metadata import (
+    LIST,
+    DIFF_QUALITATIVE,
+    DIFF_QUANTITATIVE
+)
+from cdf.utils.features import get_urls_data_format_definition
 
 
-def get_diff_fields():
-    pass
+def get_diff_strategy(data_format):
+    """Generate diff strategy from url data format
+
+    :param data_format: url data format
+    :return: diff strategy dict (field -> diff_func)
+    """
+    diff_strategy = {}
+    for field, value in data_format.iteritems():
+        if 'settings' in value:
+            settings = value['settings']
+            if DIFF_QUANTITATIVE in settings:
+                diff_strategy[field] = quantitative_diff
+            elif DIFF_QUALITATIVE in settings:
+                if LIST in settings:
+                    diff_strategy[field] = qualitative_diff_list
+                else:
+                    diff_strategy[field] = qualitative_diff
+    return diff_strategy
 
 
 def get_diff_mapping():
@@ -90,11 +112,8 @@ def quantitative_diff(ref_value, new_value):
     return ref_value - new_value
 
 
-DIFF_STRATEGY = {
-    'canonical.in.url': qualitative_diff,
-    'metadata.title.contents': qualitative_diff,
-    'depth': quantitative_diff
-}
+# Generated from url data format
+DIFF_STRATEGY = get_diff_strategy(get_urls_data_format_definition())
 
 
 # TODO should use an object-oriented style
