@@ -1,6 +1,6 @@
 include README.rst
 include MANIFEST.in
-include pip_requirements.txt
+include packaging/*.deps
 include setup.py
 include tests/*
 
