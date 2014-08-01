@@ -10,9 +10,12 @@ from boto.exception import S3ResponseError
 from cdf.log import logger
 import cdf.tasks.url_data as ud
 import cdf.tasks.suggest.clusters as clusters
-import cdf.tasks.intermediary_files as im
 import cdf.tasks.aggregators as agg
 from test_utils import split_partition, list_result_files, generate_inlink_file
+
+from cdf.features.main import tasks as main_tasks
+from cdf.features.links import tasks as links_tasks
+from cdf.features.semantic_metadata import tasks as metadata_tasks
 
 from cdf.features.links.streams import (
     BadLinksStreamDef,
@@ -125,7 +128,9 @@ class MockIntegrationTest(unittest.TestCase):
             split_partition(os.path.join(MOCK_CRAWL_DIR, file), crawl_dir)
 
         # reload modules, mocks need this to take effect
-        reload(im)
+        reload(main_tasks)
+        reload(links_tasks)
+        reload(metadata_tasks)
         reload(agg)
         reload(clusters)
         reload(ud)
@@ -138,27 +143,27 @@ class MockIntegrationTest(unittest.TestCase):
         parts = nb_parts_from_crawl_location(S3_URI, crawl_dir)
 
         # bad link
-        im.make_bad_link_file(CRAWL_ID, TEST_DIR, 4, 2, tmp_dir=RESULT_DIR)
+        links_tasks.make_bad_link_file(CRAWL_ID, TEST_DIR, 4, 2, tmp_dir=RESULT_DIR)
 
         # aggregate bad links on (url, http_code)
         for part_id in xrange(0, parts):
-            im.make_bad_link_counter_file(CRAWL_ID, TEST_DIR, part_id, tmp_dir=RESULT_DIR)
+            links_tasks.make_bad_link_counter_file(CRAWL_ID, TEST_DIR, part_id, tmp_dir=RESULT_DIR)
 
         # metadata duplication detection
-        im.make_metadata_duplicates_file(CRAWL_ID, TEST_DIR, 4, 2,
-                                         tmp_dir=RESULT_DIR)
+        metadata_tasks.make_metadata_duplicates_file(CRAWL_ID, TEST_DIR, 4, 2,
+                                                     tmp_dir=RESULT_DIR)
 
         # clustering
-        clusters.compute_mixed_clusters(CRAWL_ID, TEST_DIR, 4, 2,
-                                        tmp_dir=RESULT_DIR, force_fetch=force_fetch)
+        main_tasks.compute_suggested_patterns(CRAWL_ID, TEST_DIR, 4, 2,
+                                              tmp_dir=RESULT_DIR, force_fetch=force_fetch)
 
         # aggregation for each partition
         for part_id in xrange(0, parts):
             logger.info("Compute inlinks counter file")
-            im.make_links_counter_file(CRAWL_ID, TEST_DIR, part_id, "in",
-                                       tmp_dir=RESULT_DIR, force_fetch=force_fetch)
+            links_tasks.make_links_counter_file(CRAWL_ID, TEST_DIR, part_id, "in",
+                                                tmp_dir=RESULT_DIR, force_fetch=force_fetch)
             logger.info("Compute outlinks counter file")
-            im.make_links_counter_file(CRAWL_ID, TEST_DIR, part_id, "out",
+            links_tasks.make_links_counter_file(CRAWL_ID, TEST_DIR, part_id, "out",
                                        tmp_dir=RESULT_DIR, force_fetch=force_fetch)
             agg.compute_aggregators_from_part_id(CRAWL_ID, TEST_DIR, part_id,
                                                  tmp_dir=RESULT_DIR, force_fetch=force_fetch)
