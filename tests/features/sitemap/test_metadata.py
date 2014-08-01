@@ -150,8 +150,18 @@ class TestMetadata(unittest.TestCase):
 
     def test_add_error(self):
         metadata = Metadata()
-        metadata.add_error("http://foo.com/bar.xml", SiteMapType.SITEMAP_XML, "ParsingError", "Error message")
-        metadata.add_error("http://foo.com/baz.xml", SiteMapType.UNKNOWN, "DownloadError", "Error message")
+        metadata.add_error(
+            Error("http://foo.com/bar.xml",
+                  SiteMapType.SITEMAP_XML,
+                  "ParsingError",
+                  "Error message")
+        )
+        metadata.add_error(
+            Error("http://foo.com/baz.xml",
+                  SiteMapType.UNKNOWN,
+                  "DownloadError",
+                  "Error message")
+        )
 
         expected_result = [
             Error("http://foo.com/bar.xml", SiteMapType.SITEMAP_XML, "ParsingError", "Error message"),
@@ -160,7 +170,12 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(expected_result, metadata.errors)
 
         #readd a sitemap index
-        metadata.add_error("http://foo.com/bar.xml", SiteMapType.SITEMAP_XML, "DownloadError", "Error message")
+        metadata.add_error(
+            Error("http://foo.com/bar.xml",
+                  SiteMapType.SITEMAP_XML,
+                  "DownloadError",
+                  "Error message")
+        )
         self.assertEqual(expected_result, metadata.errors)
 
 
@@ -256,7 +271,9 @@ class TestSitemapMetadataHasBeenProcessed(unittest.TestCase):
         self.assertFalse(self.metadata.is_success_sitemap(self.url1))
 
     def test_error(self):
-        self.metadata.add_error(self.url1, SiteMapType.UNKNOWN, "Error", "")
+        self.metadata.add_error(
+            Error(self.url1, SiteMapType.UNKNOWN, "Error", "")
+        )
         #we do not check errors
         self.assertFalse(self.metadata.is_success_sitemap(self.url1))
 

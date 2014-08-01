@@ -162,14 +162,13 @@ class Metadata(object):
         if not sitemap_index.url in [s.url for s in self.sitemap_indexes]:
             self.sitemap_indexes.append(sitemap_index)
 
-    def add_error(self, url, file_type, error_type, message):
+    def add_error(self, error):
         """Add an error url
         If url is already known, do nothing.
-        :param url: the error url
-        :type url: str
+        :param error: the error
+        :type error: Error
         """
-        if not url in [e.url for e in self.errors]:
-            error = Error(url, file_type, error_type, message)
+        if not error.url in [e.url for e in self.errors]:
             self.errors.append(error)
 
     def to_json(self):

@@ -2,6 +2,7 @@ import unittest
 import mock
 import os
 from cdf.features.sitemap.metadata import (Metadata,
+                                           Error,
                                            SitemapMetadata,
                                            SitemapIndexMetadata)
 
@@ -114,7 +115,9 @@ class TestDownloadSiteMaps(unittest.TestCase):
         download_sitemaps(input_url, self.output_dir, self.user_agent, metadata)
 
         expected_metadata = Metadata()
-        expected_metadata.add_error(input_url, SiteMapType.UNKNOWN, "UnhandledFileType", "foo")
+        expected_metadata.add_error(
+            Error(input_url, SiteMapType.UNKNOWN, "UnhandledFileType", "foo")
+        )
         self.assertEqual(expected_metadata, metadata)
 
         download_url_mock.assert_called_once_with("http://foo/bar.xml",
@@ -132,7 +135,9 @@ class TestDownloadSiteMaps(unittest.TestCase):
                           self.user_agent,
                           metadata)
         expected_metadata = Metadata()
-        expected_metadata.add_error(self.sitemap_url, SiteMapType.UNKNOWN, "DownloadError", "foo")
+        expected_metadata.add_error(
+            Error(self.sitemap_url, SiteMapType.UNKNOWN, "DownloadError", "foo")
+        )
         self.assertEqual(expected_metadata, metadata)
 
 
@@ -155,7 +160,9 @@ class TestDownloadSiteMaps(unittest.TestCase):
                           self.user_agent,
                           metadata)
         expected_metadata = Metadata()
-        expected_metadata.add_error(self.sitemap_index_url, SiteMapType.SITEMAP_INDEX, "ParsingError", "error message")
+        expected_metadata.add_error(
+            Error(self.sitemap_index_url, SiteMapType.SITEMAP_INDEX, "ParsingError", "error message")
+        )
         self.assertEqual(expected_metadata, metadata)
         remove_mock.assert_called_once_with("/tmp/foo/sitemap_index.xml")
         download_url_mock.assert_called_once_with(self.sitemap_index_url,
@@ -268,10 +275,12 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
                             [self.sitemap_index_mock.url])
         )
         error_message = "'http://foo/bar.xml' is a sitemap index. It cannot be referenced in a sitemap index."
-        expected_result.add_error("http://foo/bar.xml",
-                                  SiteMapType.SITEMAP_INDEX,
-                                  "NotASitemapFile",
-                                  error_message)
+        expected_result.add_error(
+            Error("http://foo/bar.xml",
+                  SiteMapType.SITEMAP_INDEX,
+                  "NotASitemapFile",
+                  error_message)
+        )
         expected_result.add_success_sitemap_index(
             SitemapIndexMetadata(self.sitemap_index_mock.url, 0, 0)
         )
@@ -306,10 +315,12 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
                             [self.sitemap_index_mock.url])
         )
         error_message = "'http://foo/bar.xml' is not a sitemap file."
-        expected_result.add_error("http://foo/bar.xml",
-                                  SiteMapType.UNKNOWN,
-                                  "UnhandledFileType",
-                                  error_message)
+        expected_result.add_error(
+            Error("http://foo/bar.xml",
+                  SiteMapType.UNKNOWN,
+                  "UnhandledFileType",
+                  error_message)
+        )
         expected_result.add_success_sitemap_index(
             SitemapIndexMetadata(self.sitemap_index_mock.url, 0, 0)
         )
@@ -341,10 +352,12 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
                                              actual_result)
 
         expected_result = Metadata()
-        expected_result.add_error("http://foo/bar.xml",
-                                  SiteMapType.UNKNOWN,
-                                  "DownloadError",
-                                  "error message")
+        expected_result.add_error(
+            Error("http://foo/bar.xml",
+                  SiteMapType.UNKNOWN,
+                  "DownloadError",
+                  "error message")
+        )
         expected_result.add_success_sitemap(
             SitemapMetadata("http://foo/baz.xml", "/tmp/foo/baz.xml", [self.sitemap_index_mock.url])
         )
@@ -410,10 +423,10 @@ class TestDownloadSitemapsFromSitemapIndex(unittest.TestCase):
             actual_result)
         expected_result = Metadata()
         expected_result.add_error(
-            self.sitemap_index_mock.url,
-            SiteMapType.SITEMAP_INDEX,
-            "ParsingError",
-            "Fake error"
+            Error(self.sitemap_index_mock.url,
+                  SiteMapType.SITEMAP_INDEX,
+                  "ParsingError",
+                  "Fake error")
         )
         self.assertEqual(expected_result, actual_result)
 
