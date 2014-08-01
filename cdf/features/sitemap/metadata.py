@@ -164,11 +164,13 @@ class Metadata(object):
 
     def add_error(self, url, file_type, error_type, message):
         """Add an error url
+        If url is already known, do nothing.
         :param url: the error url
         :type url: str
         """
-        error = Error(url, file_type, error_type, message)
-        self.errors.append(error)
+        if not url in [e.url for e in self.errors]:
+            error = Error(url, file_type, error_type, message)
+            self.errors.append(error)
 
     def to_json(self):
         """Return a json representation of the object

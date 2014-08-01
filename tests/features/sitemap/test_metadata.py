@@ -148,6 +148,21 @@ class TestMetadata(unittest.TestCase):
         metadata.add_success_sitemap_index(SitemapIndexMetadata(self.sitemap_index, 10, 0))
         self.assertEqual(expected_result, metadata.sitemap_indexes)
 
+    def test_add_error(self):
+        metadata = Metadata()
+        metadata.add_error("http://foo.com/bar.xml", SiteMapType.SITEMAP_XML, "ParsingError", "Error message")
+        metadata.add_error("http://foo.com/baz.xml", SiteMapType.UNKNOWN, "DownloadError", "Error message")
+
+        expected_result = [
+            Error("http://foo.com/bar.xml", SiteMapType.SITEMAP_XML, "ParsingError", "Error message"),
+            Error("http://foo.com/baz.xml", SiteMapType.UNKNOWN, "DownloadError", "Error message")
+        ]
+        self.assertEqual(expected_result, metadata.errors)
+
+        #readd a sitemap index
+        metadata.add_error("http://foo.com/bar.xml", SiteMapType.SITEMAP_XML, "DownloadError", "Error message")
+        self.assertEqual(expected_result, metadata.errors)
+
 
     def test_to_json(self):
         download_status = Metadata(
