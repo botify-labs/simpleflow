@@ -13,7 +13,9 @@ from cdf.utils.dict import (
 from cdf.metadata.url.url_metadata import (
     LIST,
     DIFF_QUALITATIVE,
-    DIFF_QUANTITATIVE
+    DIFF_QUANTITATIVE,
+    STRING_TYPE,
+    ES_DOC_VALUE
 )
 from cdf.utils.features import get_urls_data_format_definition
 
@@ -38,8 +40,31 @@ def get_diff_strategy(data_format):
     return diff_strategy
 
 
-def get_diff_mapping():
-    pass
+def get_diff_data_format(data_format):
+    """Generate the diff sub-document's data format
+
+    The result should be used in the final mapping generation.
+    Fields are not prefixed, should be prefixed if needed in
+    mapping generation.
+
+    :param data_format: url data format
+    :return: diff sub-document's data format
+    """
+    diff_mapping = {}
+    for field, value in data_format.iteritems():
+        if 'settings' in value:
+            settings = value['settings']
+            if DIFF_QUALITATIVE in settings:
+                diff_mapping[field] = {'type': STRING_TYPE}
+            elif DIFF_QUANTITATIVE in settings:
+                field_type = value['type']
+                mapping = {'type': field_type}
+                # also add doc_value flag, if it's present for
+                # the original field
+                if ES_DOC_VALUE in settings:
+                    mapping['settings'] = {ES_DOC_VALUE}
+                diff_mapping[field] = mapping
+    return diff_mapping
 
 
 def qualitative_diff(ref_value, new_value):
