@@ -12,6 +12,7 @@ from cdf.features.sitemap.document import SiteMapType
 class TestSitemapMetadata(unittest.TestCase):
     def setUp(self):
         self.url = "http://foo.com/sitemap.xml"
+        self.sitemap_type = SiteMapType.SITEMAP_XML
         self.s3_uri = "s3://foo.com/sitemap.xml"
         self.sitemap_index = "http://foo.com/sitemap_index.xml"
 
@@ -23,11 +24,13 @@ class TestSitemapMetadata(unittest.TestCase):
 
     def test_to_dict_nominal_case(self):
         sitemap_metadata = SitemapMetadata(self.url,
+                                           self.sitemap_type,
                                            self.s3_uri,
                                            [self.sitemap_index])
 
         expected_result = {
             "url": self.url,
+            "file_type": "SITEMAP_XML",
             "s3_uri": self.s3_uri,
             "sitemap_indexes": [self.sitemap_index]
         }
@@ -36,10 +39,12 @@ class TestSitemapMetadata(unittest.TestCase):
 
     def test_to_dict_no_sitemap_index(self):
         sitemap_metadata = SitemapMetadata(self.url,
+                                           self.sitemap_type,
                                            self.s3_uri)
 
         expected_result = {
             "url": self.url,
+            "file_type": "SITEMAP_XML",
             "s3_uri": self.s3_uri,
         }
 
@@ -47,11 +52,13 @@ class TestSitemapMetadata(unittest.TestCase):
 
     def test_to_dict_error_case(self):
         sitemap_metadata = SitemapMetadata(self.url,
+                                           self.sitemap_type,
                                            self.s3_uri)
         sitemap_metadata.error_type = self.error_type
         sitemap_metadata.error_message = self.error_message
         expected_result = {
             "url": self.url,
+            "file_type": "SITEMAP_XML",
             "s3_uri": self.s3_uri,
             "error": self.error_type,
             "message": self.error_message
@@ -61,12 +68,14 @@ class TestSitemapMetadata(unittest.TestCase):
 
     def test_to_dict_valid_invalid_urls(self):
         sitemap_metadata = SitemapMetadata(self.url,
+                                           self.sitemap_type,
                                            self.s3_uri)
         sitemap_metadata.valid_urls = self.valid_urls
         sitemap_metadata.invalid_urls = self.invalid_urls
 
         expected_result = {
             "url": self.url,
+            "file_type": "SITEMAP_XML",
             "s3_uri": self.s3_uri,
             "valid_urls": self.valid_urls,
             "invalid_urls": self.invalid_urls
@@ -115,22 +124,30 @@ class TestMetadata(unittest.TestCase):
         self.sitemap = "http://foo/sitemap.xml"
         self.sitemap_2 = "http://foo/sitemap_2.xml"
 
+        self.sitemap_type = SiteMapType.SITEMAP_XML
+
         self.sitemap_index = "http://foo/sitemap_index.xml"
         self.sitemap_index_2 = "http://foo/sitemap_index_2.xml"
 
     def test_add_success_sitemap(self):
         metadata = Metadata()
-        metadata.add_success_sitemap(SitemapMetadata(self.sitemap, "/tmp/sitemap.xml"))
-        metadata.add_success_sitemap(SitemapMetadata(self.sitemap_2, "/tmp/sitemap_2.xml"))
+        metadata.add_success_sitemap(
+            SitemapMetadata(self.sitemap, self.sitemap_type, "/tmp/sitemap.xml")
+        )
+        metadata.add_success_sitemap(
+            SitemapMetadata(self.sitemap_2, self.sitemap_type, "/tmp/sitemap_2.xml")
+        )
 
         expected_result = [
-            SitemapMetadata(self.sitemap, "/tmp/sitemap.xml"),
-            SitemapMetadata(self.sitemap_2, "/tmp/sitemap_2.xml")
+            SitemapMetadata(self.sitemap, self.sitemap_type, "/tmp/sitemap.xml"),
+            SitemapMetadata(self.sitemap_2, self.sitemap_type, "/tmp/sitemap_2.xml")
         ]
         self.assertEqual(expected_result, metadata.sitemaps)
 
         #readd a sitemap index
-        metadata.add_success_sitemap(SitemapMetadata(self.sitemap, "/tmp/sitemap.xml_2"))
+        metadata.add_success_sitemap(
+            SitemapMetadata(self.sitemap, self.sitemap_type, "/tmp/sitemap.xml_2")
+        )
         self.assertEqual(expected_result, metadata.sitemaps)
 
     def test_add_success_sitemap_index(self):
@@ -182,6 +199,7 @@ class TestMetadata(unittest.TestCase):
     def test_to_json(self):
         download_status = Metadata(
             [SitemapMetadata("http://foo/sitemap_1.xml",
+                             self.sitemap_type,
                              "s3://foo/sitemap_1.xml",
                              [self.sitemap_index])],
             [SitemapIndexMetadata("http://foo/sitemap_index.xml", 2, 1)],
@@ -195,6 +213,7 @@ class TestMetadata(unittest.TestCase):
             "sitemaps": [
                 {
                     "url": "http://foo/sitemap_1.xml",
+                    "file_type": "SITEMAP_XML",
                     "s3_uri": "s3://foo/sitemap_1.xml",
                     "sitemap_indexes": ["http://foo/sitemap_index.xml"]
                 }
@@ -229,6 +248,7 @@ class TestMetadata(unittest.TestCase):
     def test_to_json_no_sitemap(self):
         download_status = Metadata(
             [SitemapMetadata("http://foo/sitemap_1.xml",
+                             SiteMapType.SITEMAP_XML,
                              "s3://foo/sitemap_1.xml",
                              None)]
         )
@@ -239,6 +259,7 @@ class TestMetadata(unittest.TestCase):
             "sitemaps": [
                 {
                     "url": u"http://foo/sitemap_1.xml",
+                    "file_type": u"SITEMAP_XML",
                     "s3_uri": u"s3://foo/sitemap_1.xml",
                 },
             ],
@@ -260,7 +281,7 @@ class TestSitemapMetadataHasBeenProcessed(unittest.TestCase):
         self.assertFalse(self.metadata.is_success_sitemap(self.url1))
 
     def test_sitemap(self):
-        self.metadata.add_success_sitemap(SitemapMetadata(self.url1, None))
+        self.metadata.add_success_sitemap(SitemapMetadata(self.url1, None, None))
         self.assertTrue(self.metadata.is_success_sitemap(self.url1))
         self.assertFalse(self.metadata.is_success_sitemap(self.url2))
 
@@ -281,6 +302,8 @@ class TestSitemapMetadataHasBeenProcessed(unittest.TestCase):
 class TestParseSitemapMetadata(unittest.TestCase):
     def setUp(self):
         self.url = "http://foo.com/sitemap.xml"
+        self.sitemap_type = SiteMapType.SITEMAP_XML
+        self.sitemap_type_string = "SITEMAP_XML"
         self.s3_uri = "s3://foo.com/sitemap.xml"
         self.sitemap_index = "http://foo.com/sitemap_index.xml"
         self.valid_urls = 10
@@ -291,20 +314,22 @@ class TestParseSitemapMetadata(unittest.TestCase):
     def test_nominal_case(self):
         input_dict = {
             "url": self.url,
+            "file_type": self.sitemap_type_string,
             "s3_uri": self.s3_uri
         }
-        expected_result = SitemapMetadata(self.url, self.s3_uri)
+        expected_result = SitemapMetadata(self.url, self.sitemap_type, self.s3_uri)
         self.assertEqual(expected_result, parse_sitemap_metadata(input_dict))
 
     def test_to_dict_valid_invalid_urls(self):
         input_dict = {
             "url": self.url,
+            "file_type": self.sitemap_type_string,
             "s3_uri": self.s3_uri,
             "valid_urls": self.valid_urls,
             "invalid_urls": self.invalid_urls
         }
 
-        expected_result = SitemapMetadata(self.url, self.s3_uri)
+        expected_result = SitemapMetadata(self.url, self.sitemap_type, self.s3_uri)
         expected_result.valid_urls = self.valid_urls
         expected_result.invalid_urls = self.invalid_urls
         self.assertEqual(expected_result, parse_sitemap_metadata(input_dict))
@@ -312,21 +337,23 @@ class TestParseSitemapMetadata(unittest.TestCase):
     def test_to_dict_sitemap_index(self):
         input_dict = {
             "url": self.url,
+            "file_type": self.sitemap_type_string,
             "s3_uri": self.s3_uri,
             "sitemap_index": self.sitemap_index
         }
-        expected_result = SitemapMetadata(self.url, self.s3_uri)
+        expected_result = SitemapMetadata(self.url, self.sitemap_type, self.s3_uri)
         expected_result.sitemap_index = self.sitemap_index
         self.assertEqual(expected_result, parse_sitemap_metadata(input_dict))
 
     def test_to_dict_error_case(self):
         input_dict = {
             "url": self.url,
+            "file_type": self.sitemap_type_string,
             "s3_uri": self.s3_uri,
             "error": self.error_type,
             "message": self.error_message
         }
-        expected_result = SitemapMetadata(self.url, self.s3_uri)
+        expected_result = SitemapMetadata(self.url, self.sitemap_type, self.s3_uri)
         expected_result.error_type = self.error_type
         expected_result.error_message = self.error_message
         self.assertEqual(expected_result, parse_sitemap_metadata(input_dict))

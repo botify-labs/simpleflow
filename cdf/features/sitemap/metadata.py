@@ -11,10 +11,12 @@ class SitemapMetadata(object):
     """A class to represent sitemap in Metadata
     The class does not contain the document itself
     only basic reporting information about it"""
-    def __init__(self, url, s3_uri, sitemap_indexes=None):
+    def __init__(self, url, sitemap_type, s3_uri, sitemap_indexes=None):
         """Constructor
         :param url: the sitemap url
         :type url: str
+        :param sitemap_type: the type of the sitemap: xml, rss, txt
+        :type sitemap_type: SiteMapType
         :param s3_uri: the s3_uri where the sitemap is stored
         :type s3_uri: str
         :param sitemap_index: the url of the sitemap index that references the
@@ -22,6 +24,7 @@ class SitemapMetadata(object):
         :type sitemap_index: str
         """
         self.url = url
+        self.sitemap_type = sitemap_type
         self.s3_uri = s3_uri
         self.sitemap_indexes = sitemap_indexes or []
         self.error_type = None
@@ -32,6 +35,7 @@ class SitemapMetadata(object):
     def to_dict(self):
         result = {
             "url": self.url,
+            "file_type": self.sitemap_type.name,
             "s3_uri": self.s3_uri,
         }
 
@@ -200,7 +204,9 @@ class Metadata(object):
 
 
 def parse_sitemap_metadata(input_dict):
-    result = SitemapMetadata(input_dict["url"], input_dict["s3_uri"])
+    result = SitemapMetadata(input_dict["url"],
+                             SiteMapType[input_dict["file_type"]],
+                             input_dict["s3_uri"])
     if "sitemap_indexes" in input_dict:
         result.sitemap_indexes = input_dict["sitemap_indexes"]
     if "valid_urls" in input_dict:

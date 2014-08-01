@@ -28,11 +28,13 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
                         '"sitemaps": ['
                         '    {'
                         '       "url": "http://foo/sitemap_1.xml",'
+                        '       "file_type": "SITEMAP_XML",'
                         '       "s3_uri": "s3://foo/sitemap_1.xml",'
                         '       "sitemap_indexes": ["http://foo/sitemap_index.html"]'
                         '   },'
                         '   {'
                         '       "url": "http://foo/sitemap_2.xml",'
+                        '       "file_type": "SITEMAP_XML",'
                         '       "s3_uri": "s3://foo/sitemap_2.xml",'
                         '       "sitemap_indexes": ["http://foo/sitemap_index.html"]'
                         '   }'
@@ -63,9 +65,11 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
         #check result
         expected_sitemaps = [
             SitemapMetadata(u"http://foo/sitemap_1.xml",
+                            SiteMapType.SITEMAP_XML,
                             u"s3://foo/sitemap_1.xml",
                             [u"http://foo/sitemap_index.html"]),
             SitemapMetadata(u"http://foo/sitemap_2.xml",
+                            SiteMapType.SITEMAP_XML,
                             u"s3://foo/sitemap_2.xml",
                             [u"http://foo/sitemap_index.html"]),
         ]
@@ -91,8 +95,12 @@ class TestDownloadSitemapsFromS3(unittest.TestCase):
                           get_download_metadata_from_s3_mock):
         #mock
         sitemaps = [
-            SitemapMetadata("http://foo.com/sitemap_1.xml", "s3://foo/sitemap_1.xml"),
-            SitemapMetadata("http://foo.com/sitemap_2.xml", "s3://foo/sitemap_2.xml")
+            SitemapMetadata("http://foo.com/sitemap_1.xml",
+                            SiteMapType.SITEMAP_XML,
+                            "s3://foo/sitemap_1.xml"),
+            SitemapMetadata("http://foo.com/sitemap_2.xml",
+                            SiteMapType.SITEMAP_XML,
+                            "s3://foo/sitemap_2.xml")
         ]
         get_download_metadata_from_s3_mock.return_value = Metadata(sitemaps)
 
