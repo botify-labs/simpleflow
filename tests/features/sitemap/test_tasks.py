@@ -59,14 +59,14 @@ class TestDownloadSitemapFile(unittest.TestCase):
         #actual call
         input_url = "http://foo.com/sitemap.xml"
         s3_uri = "s3://foo"
-        actual_result = Metadata()
-        download_sitemap_file(input_url, s3_uri, "user_agent", actual_result)
+        metadata = Metadata()
+        download_sitemap_file(input_url, s3_uri, "user_agent", metadata)
 
         #verifications
-        expected_result = Metadata([
+        expected_metadata = Metadata([
             SitemapMetadata("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml")
         ])
-        self.assertEqual(expected_result, actual_result)
+        self.assertEqual(expected_metadata, metadata)
 
         push_file_mock.assert_called_once_with(
             "s3://foo/sitemaps/sitemap.xml",
