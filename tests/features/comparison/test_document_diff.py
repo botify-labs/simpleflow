@@ -3,7 +3,7 @@ from cdf.features.comparison.diff import (
     qualitative_diff,
     quantitative_diff,
     document_diff,
-    diff)
+    diff, qualitative_diff_list)
 from cdf.features.comparison.constants import (
     CHANGED,
     EQUAL,
@@ -15,7 +15,8 @@ from cdf.features.comparison.constants import (
 class TestDocumentDiff(unittest.TestCase):
     TEST_DIFF_STRATEGY = {
         'a.quantitative': quantitative_diff,
-        'b.qualitative': qualitative_diff
+        'b.qualitative': qualitative_diff,
+        'c.list': qualitative_diff_list
     }
 
     def test_qualitative_field_changed(self):
@@ -81,6 +82,45 @@ class TestDocumentDiff(unittest.TestCase):
         diff_result = document_diff(
             {}, {}, diff_strategy=self.TEST_DIFF_STRATEGY)
         self.assertEqual(diff_result, None)
+
+    def test_list_field_both_empty(self):
+        ref_doc = {'c': {'list': []}}
+        new_doc = {'c': {'list': []}}
+
+        diff_result = document_diff(
+            ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
+        self.assertEqual(diff_result, {'c': {'list': EQUAL}})
+
+    def test_list_field_one_empty(self):
+        ref_doc = {'c': {'list': ['a']}}
+        new_doc = {'c': {'list': []}}
+
+        diff_result = document_diff(
+            ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
+        self.assertEqual(diff_result, {'c': {'list': DISAPPEARED}})
+
+        ref_doc = {'c': {'list': []}}
+        new_doc = {'c': {'list': ['b']}}
+
+        diff_result = document_diff(
+            ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
+        self.assertEqual(diff_result, {'c': {'list': APPEARED}})
+
+    def test_list_field_compare(self):
+        # only first element of the list is taken into account
+        ref_doc = {'c': {'list': ['a']}}
+        new_doc = {'c': {'list': ['b']}}
+
+        diff_result = document_diff(
+            ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
+        self.assertEqual(diff_result, {'c': {'list': CHANGED}})
+
+        ref_doc = {'c': {'list': ['a', 'b']}}
+        new_doc = {'c': {'list': ['a']}}
+
+        diff_result = document_diff(
+            ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
+        self.assertEqual(diff_result, {'c': {'list': EQUAL}})
 
     def test_diff_document_stream(self):
         doc_a = {'a': {'quantitative': 123}}

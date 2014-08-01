@@ -25,7 +25,7 @@ def qualitative_diff(ref_value, new_value):
 
     :param ref_value: the previous(reference) value
     :param new_value: the current value
-    :return: a diff status enum
+    :return: a diff status string
     """
     if ref_value is None:
         if new_value is None:
@@ -48,6 +48,31 @@ def qualitative_diff(ref_value, new_value):
                 return EQUAL
             else:
                 return CHANGED
+
+
+def qualitative_diff_list(ref_value, new_value):
+    if ref_value is None and new_value is None:
+        return None
+
+    len_ref = len(ref_value) if ref_value is not None else 0
+    len_new = len(new_value) if new_value is not None else 0
+
+    # empty -> non-empty => appear
+    # non-empty -> empty =< disappear
+    if len_new == 0 and len_ref > 0:
+        return DISAPPEARED
+    if len_new > 0 and len_ref == 0:
+        return APPEARED
+
+    # both empty list => equal
+    if len_new == len_ref == 0:
+        return EQUAL
+
+    # both non-empty
+    ref_value = ref_value[0]
+    new_value = new_value[0]
+
+    return qualitative_diff(ref_value, new_value)
 
 
 def quantitative_diff(ref_value, new_value):
