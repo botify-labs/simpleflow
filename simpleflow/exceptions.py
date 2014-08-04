@@ -37,7 +37,7 @@ class TaskFailed(Exception):
         self.details = None
 
     def __repr__(self):
-        return '{}(reason="{}", details="{}")'.format(
+        return '{}(reason="{}")'.format(
             self.__class__.__name__,
             self.reason,
             self.details)
