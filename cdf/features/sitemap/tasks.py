@@ -213,6 +213,6 @@ def save_url_list_as_gzip(url_list, filename, tmp_dir):
             #use "+" instead of "format" since
             #ampelmann has benchmarked both methods
             #and found the "+" is almost twice faster.
-            local_file.write(unicode(url + "\n"))
+            local_file.write(unicode(url + "\n").encode("utf-8"))
     return local_filepath
 
