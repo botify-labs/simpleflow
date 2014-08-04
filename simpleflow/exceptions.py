@@ -7,17 +7,19 @@ class TaskException(Exception):
     Wrap an exception raised by a task.
 
     """
-    def __init__(self, exception):
+    def __init__(self, task, exception):
         """
         :param exception: raised by a task.
         :type  exception: TaskFailed.
 
         """
+        self.task = task
         self.exception = exception
 
     def __repr__(self):
-        return '{}(exception={})'.format(
+        return '{}(task={} exception={})'.format(
             self.__class__.__name__,
+            self.task,
             self.exception)
 
 
