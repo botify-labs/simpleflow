@@ -3,7 +3,7 @@
 
 
 from simpleflow import futures
-from simpleflow.futures import Future
+from simpleflow.swf.futures import Future
 
 
 def test_future_init_state():

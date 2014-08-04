@@ -118,7 +118,7 @@ class TestDefinition(TestWorkflow):
     """
     def run(self):
         a = self.submit(increment, 1)
-        assert isinstance(a, futures.Future)
+        assert isinstance(a, futures.AbstractFuture)
 
         b = self.submit(double, a)
 
