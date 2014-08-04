@@ -64,7 +64,7 @@ def download_sitemaps(input_url, output_directory, user_agent, metadata):
     #if it is a sitemap
     if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
         metadata.add_success_sitemap(
-            SitemapMetadata(input_url, output_file_path)
+            SitemapMetadata(input_url, sitemap_type, output_file_path)
         )
     #if it is a sitemap index
     elif is_sitemap_index(sitemap_type):
@@ -109,7 +109,6 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document,
             return
         except StopIteration:
             break
-
         if metadata.is_success_sitemap(url):
                 d_sitemaps = {
                     sitemap.url: sitemap for sitemap in metadata.sitemaps
@@ -139,7 +138,7 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document,
         #  check if it is actually a sitemap
         if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
             metadata.add_success_sitemap(
-                SitemapMetadata(url, file_path, [sitemap_index_document.url])
+                SitemapMetadata(url, sitemap_type, file_path, [sitemap_index_document.url])
             )
         elif is_sitemap_index(sitemap_type):
             error_message = "'{}' is a sitemap index. It cannot be referenced in a sitemap index.".format(url)

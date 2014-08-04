@@ -5,7 +5,9 @@ import boto
 import json
 from cdf.utils.s3 import stream_files
 
-from cdf.features.sitemap.metadata import SitemapMetadata, Metadata
+from cdf.features.sitemap.metadata import (SitemapMetadata,
+                                           Metadata,
+                                           SiteMapType)
 from cdf.features.sitemap.document import SitemapXmlDocument
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.sitemap.tasks import (download_sitemap_files,
@@ -52,7 +54,9 @@ class TestDownloadSitemapFile(unittest.TestCase):
         #mocking
         def f(input_url, output_directory, user_agent, metadata):
             metadata.add_success_sitemap(
-                SitemapMetadata("http://foo.com/sitemap.xml", "/tmp/foo/sitemap.xml")
+                SitemapMetadata("http://foo.com/sitemap.xml",
+                                SiteMapType.SITEMAP_XML,
+                                "/tmp/foo/sitemap.xml")
             )
         download_sitemaps_mock.side_effect = f
 
@@ -64,7 +68,9 @@ class TestDownloadSitemapFile(unittest.TestCase):
 
         #verifications
         expected_metadata = Metadata([
-            SitemapMetadata("http://foo.com/sitemap.xml", "s3://foo/sitemaps/sitemap.xml")
+            SitemapMetadata("http://foo.com/sitemap.xml",
+                            SiteMapType.SITEMAP_XML,
+                            "s3://foo/sitemaps/sitemap.xml")
         ])
         self.assertEqual(expected_metadata, metadata)
 
@@ -100,20 +106,22 @@ class TestMatchSitemapUrls(unittest.TestCase):
             '{'
             '    "sitemaps": ['
             '        {'
-            '            "url": "http://foo.com/sitemap_1.txt", '
-            '            "sitemap_indexes": ["http://foo.com/sitemap_index.xml"], '
+            '            "url": "http://foo.com/sitemap_1.txt",'
+            '            "file_type": "SITEMAP_TEXT",'
+            '            "sitemap_indexes": ["http://foo.com/sitemap_index.xml"],'
             '            "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_1.txt"'
             '        },'
             '        {'
-            '            "url": "http://foo.com/sitemap_2.txt", '
-            '            "sitemap_indexes": ["http://foo.com/sitemap_index.xml"], '
+            '            "url": "http://foo.com/sitemap_2.txt",'
+            '            "file_type": "SITEMAP_TEXT",'
+            '            "sitemap_indexes": ["http://foo.com/sitemap_index.xml"],'
             '            "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_2.txt"'
             '        }'
             '    ], '
             '    "sitemap_indexes": ['
             '        {'
-            '            "url": "http://foo.com/sitemap_index.xml", '
-            '            "valid_urls": 2, '
+            '            "url": "http://foo.com/sitemap_index.xml",'
+            '            "valid_urls": 2,'
             '            "invalid_urls": 0'
             '        }'
             '    ], '
@@ -153,6 +161,7 @@ class TestMatchSitemapUrls(unittest.TestCase):
             "sitemaps": [
                 {
                     "url": "http://foo.com/sitemap_1.txt",
+                    "file_type": "SITEMAP_TEXT",
                     "sitemap_indexes": ["http://foo.com/sitemap_index.xml"],
                     "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_1.txt",
                     "valid_urls": 2,
@@ -160,6 +169,7 @@ class TestMatchSitemapUrls(unittest.TestCase):
                 },
                 {
                     "url": "http://foo.com/sitemap_2.txt",
+                    "file_type": "SITEMAP_TEXT",
                     "sitemap_indexes": ["http://foo.com/sitemap_index.xml"],
                     "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_2.txt",
                     "valid_urls": 2,
@@ -185,10 +195,12 @@ class TestUpdateMetadata(unittest.TestCase):
         self.download_status = Metadata()
         self.download_status.add_success_sitemap(
             SitemapMetadata("http://foo.com/sitemap_1.txt",
+                            SiteMapType.SITEMAP_XML,
                             "s3://foo.com/sitemap_1.txt")
             )
         self.download_status.add_success_sitemap(
             SitemapMetadata("http://foo.com/sitemap_2.txt",
+                            SiteMapType.SITEMAP_XML,
                             "s3://foo.com/sitemap_2.txt")
             )
 
