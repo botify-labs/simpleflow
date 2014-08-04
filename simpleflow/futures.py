@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from concurrent import futures as py_futures
+import abc
 from concurrent.futures._base import (
     PENDING,
     RUNNING,
@@ -10,7 +10,7 @@ from concurrent.futures._base import (
 )
 
 
-__all__ = ['Future', 'wait']
+__all__ = ['AbstractFuture', 'wait']
 
 
 FIRST_COMPLETED = 'FIRST_COMPLETED'
@@ -27,14 +27,6 @@ _FUTURE_STATES = [
     FINISHED
 ]
 
-_STATE_TO_DESCRIPTION_MAP = {
-    PENDING: "pending",
-    RUNNING: "running",
-    CANCELLED: "cancelled",
-    CANCELLED_AND_NOTIFIED: "cancelled",
-    FINISHED: "finished"
-}
-
 
 def wait(*fs):
     """Returns a list of the results of futures if there are available.
@@ -42,11 +34,43 @@ def wait(*fs):
     return [future.result() for future in fs]
 
 
-class Future(py_futures.Future):
-    """Patched version of ``concurrent.futures.Future``
+class AbstractFuture(object):
+    """Base future class that defines an interface for concrete impls
     """
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def result(self):
+        """Return the result of the underlying computation
+
+        The actual behavior (blocking etc.) depends on impl
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def exception(self):
+        """Return the exception raised (if any) by the underlying computation
+
+        The actual behavior (blocking etc.) depends on impl
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def running(self):
+        """Return True if the underlying computation is currently executing
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def finished(self):
-        with self._condition:
-            if self._state == FINISHED:
-                return True
-            return False
+        """Return True if the underlying computation has finished
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def done(self):
+        """Return True if the underlying compuation is cancelled or
+        has finished
+        """
+        raise NotImplementedError

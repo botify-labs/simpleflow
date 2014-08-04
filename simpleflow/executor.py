@@ -14,7 +14,7 @@ def get_actual_value(value):
     """Unwrap the result of a Future or return the value.
 
     """
-    if isinstance(value, futures.Future):
+    if isinstance(value, futures.AbstractFuture):
         return value.result()
     return value
 
