@@ -20,7 +20,7 @@ from cdf.features.links.helpers.masks import list_to_mask
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.links.streams import OutlinksStreamDef, InlinksStreamDef, BadLinksStreamDef
 from cdf.features.semantic_metadata.streams import ContentsStreamDef, ContentsDuplicateStreamDef
-from cdf.features.sitemap.streams import SitemapStreamDef
+from cdf.features.sitemaps.streams import SitemapStreamDef
 
 logger.setLevel(logging.DEBUG)
 

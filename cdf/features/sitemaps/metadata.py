@@ -1,6 +1,6 @@
 import json
 
-from cdf.features.sitemap.document import (SiteMapType,
+from cdf.features.sitemaps.document import (SiteMapType,
                                            is_xml_sitemap,
                                            is_sitemap_index,
                                            is_rss_sitemap,

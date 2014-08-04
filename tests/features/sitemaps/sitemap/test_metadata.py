@@ -1,12 +1,12 @@
 import unittest
 import json
-from cdf.features.sitemap.metadata import (Metadata,
+from cdf.features.sitemaps.metadata import (Metadata,
                                            SitemapMetadata,
                                            SitemapIndexMetadata,
                                            Error,
                                            parse_sitemap_metadata,
                                            parse_sitemap_index_metadata)
-from cdf.features.sitemap.document import SiteMapType
+from cdf.features.sitemaps.document import SiteMapType
 
 
 class TestSitemapMetadata(unittest.TestCase):

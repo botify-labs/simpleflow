@@ -5,7 +5,7 @@ import gzip
 import os
 import csv
 
-from cdf.features.sitemap.document import (instanciate_sitemap_document,
+from cdf.features.sitemaps.document import (instanciate_sitemap_document,
                                            open_sitemap_file,
                                            SiteMapType,
                                            SitemapXmlDocument,
@@ -15,7 +15,7 @@ from cdf.features.sitemap.document import (instanciate_sitemap_document,
                                            UrlValidator,
                                            guess_sitemap_type,
                                            SitemapUrlValidator)
-from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
+from cdf.features.sitemaps.exceptions import ParsingError, UnhandledFileType
 
 class TestSitemapDocument(unittest.TestCase):
     def test_to_dict_nominal_case(self):
@@ -524,7 +524,7 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
         self.assertEqual(SiteMapType.UNKNOWN,
                          guess_sitemap_type(self.tmp_file_path, self.url))
 
-@mock.patch("cdf.features.sitemap.document.guess_sitemap_type", autospec=True)
+@mock.patch("cdf.features.sitemaps.document.guess_sitemap_type", autospec=True)
 class TestInstanciateSitemapDocument(unittest.TestCase):
     def setUp(self):
         self.file_path = "/tmp/foo"

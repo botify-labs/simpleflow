@@ -104,7 +104,7 @@ from cdf.features.ganalytics.tasks import (
 import_data_from_ganalytics = as_activity(import_data_from_ganalytics)
 match_analytics_to_crawl_urls = as_activity(match_analytics_to_crawl_urls)
 
-from cdf.features.sitemap.tasks import (
+from cdf.features.sitemaps.tasks import (
     download_sitemap_files,
     match_sitemap_urls,
 )

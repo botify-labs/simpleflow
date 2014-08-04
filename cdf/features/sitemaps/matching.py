@@ -4,9 +4,9 @@ import re
 from urlparse import urlparse
 
 from cdf.utils import s3
-from cdf.features.sitemap.exceptions import ParsingError
-from cdf.features.sitemap.document import instanciate_sitemap_document
-from cdf.features.sitemap.metadata import parse_download_status_from_json
+from cdf.features.sitemaps.exceptions import ParsingError
+from cdf.features.sitemaps.document import instanciate_sitemap_document
+from cdf.features.sitemaps.metadata import parse_download_status_from_json
 
 
 def match_sitemap_urls_from_documents(documents,
