@@ -49,4 +49,6 @@ class TimeoutError(Exception):
         self.timeout_value = timeout_value
 
     def __repr__(self):
-        return 'TimeoutError({})'.format(self.timeout_type)
+        return '{}({})'.format(
+            self.__class__.__name__,
+            self.timeout_type)
