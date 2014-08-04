@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*
 import unittest
 import mock
 from moto import mock_s3
@@ -242,4 +243,15 @@ class TestSaveUrlListAsGzip(unittest.TestCase):
             actual_result = save_url_list_as_gzip(url_list, filename, tmp_dir)
         self.assertEqual(actual_result, "/tmp/azerty/output_file.gz")
         expected_calls = [mock.call("foo\n"), mock.call("bar\n")]
+        self.assertEqual(expected_calls, m().write.mock_calls)
+
+
+    def test_unicode_case(self):
+        url_list = [u"föö"]
+        filename = "output_file.gz"
+        tmp_dir = "/tmp/azerty"
+        with mock.patch("cdf.features.sitemap.tasks.gzip.open", mock.mock_open()) as m:
+            actual_result = save_url_list_as_gzip(url_list, filename, tmp_dir)
+        self.assertEqual(actual_result, "/tmp/azerty/output_file.gz")
+        expected_calls = [mock.call(u"föö\n".encode("utf-8"))]
         self.assertEqual(expected_calls, m().write.mock_calls)
