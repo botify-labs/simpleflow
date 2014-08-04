@@ -261,11 +261,12 @@ class Executor(executor.Executor):
         except exceptions.ExecutionBlocked:
             return self._decisions, {}
         except exceptions.TaskException, err:
-            reason = 'Workflow execution error: "{}"'.format(
-                err.exception.reason)
+            reason = 'Workflow execution error in task {}: "{}"'.format(
+                err.task.name,
+                getattr(err.exception, 'reason', repr(err.exception)))
             logger.exception(reason)
 
-            details = err.exception.details
+            details = getattr(err.exception, 'details', None)
             self.on_failure(reason, details)
 
             decision = swf.models.decision.WorkflowExecutionDecision()
