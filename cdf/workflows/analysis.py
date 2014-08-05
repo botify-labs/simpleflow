@@ -121,12 +121,11 @@ from cdf.features.comparison.tasks import match_documents
 match_documents = as_activity(match_documents)
 
 
-
 UPDATE_STATUS_TIMEOUTS = {
-    'schedule_to_start_timeout': 30,
-    'start_to_close_timeout': 30,
-    'schedule_to_close_timeout': 60,
-    'heartbeat_timeout': 100,
+    'schedule_to_start_timeout': 14400,  # 4h
+    'start_to_close_timeout': 60,
+    'schedule_to_close_timeout': 14460,  # 4h01
+    'heartbeat_timeout': 180,
 }
 
 
