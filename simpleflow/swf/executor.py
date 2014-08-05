@@ -95,6 +95,23 @@ class Executor(executor.Executor):
 
         if state == 'scheduled':
             future._state = futures.PENDING
+        elif state == 'schedule_failed':
+            if event['cause'] == 'ACTIVITY_TYPE_DOES_NOT_EXIST':
+                activity_type = swf.models.ActivityType(
+                    self.domain,
+                    name=event['activity_type']['name'],
+                    version=event['activity_type']['version'])
+                logger.info('Creating activity type {} in domain {}'.format(
+                    activity_type.name,
+                    self.domain.name))
+                try:
+                    activity_type.save()
+                except swf.exceptions.AlreadyExistsError:
+                    logger.info(
+                        'Activity type {} in domain {} already exists'.format(
+                            activity_type.name,
+                            self.domain.name))
+                return None
         elif state == 'started':
             future._state = futures.RUNNING
         elif state == 'completed':
