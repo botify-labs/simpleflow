@@ -56,9 +56,9 @@ def as_activity(func):
     return activity.with_attributes(
         version='2.7',
         task_list='analysis',
-        schedule_to_start_timeout=1800,
-        start_to_close_timeout=7200,
-        schedule_to_close_timeout=9000,
+        schedule_to_start_timeout=14400,  # 4h
+        start_to_close_timeout=10800,     # 3h
+        schedule_to_close_timeout=25200,  # 7h
         heartbeat_timeout=300,
         retry=1,
         raises_on_failure=True,
