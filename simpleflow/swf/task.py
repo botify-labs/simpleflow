@@ -1,4 +1,4 @@
-import swf.querysets
+import swf.models
 
 from simpleflow import task
 
@@ -6,10 +6,10 @@ from simpleflow import task
 class ActivityTask(task.ActivityTask):
     def schedule(self, domain):
         activity = self.activity
-        queryset = swf.querysets.ActivityTypeQuerySet(domain)
         # Always involve a GET call to the SWF API which introduces useless
         # latency if the ActivityType already exists.
-        model = queryset.get_or_create(
+        model = swf.models.ActivityType(
+            domain,
             activity.name,
             version=activity.version,
         )
@@ -37,10 +37,10 @@ class ActivityTask(task.ActivityTask):
 class WorkflowTask(task.WorkflowTask):
     def schedule(self, domain):
         workflow = self.workflow
-        queryset = swf.querysets.WorkflowTypeQuerySet(domain)
         # Always involve a GET call to the SWF API which introduces useless
         # latency if the WorkflowType already exists.
-        model = queryset.get_or_create(
+        model = swf.models.WorkflowType(
+            domain,
             workflow.name,
             version=workflow.version,
         )
