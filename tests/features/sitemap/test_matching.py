@@ -49,7 +49,7 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
                         '"errors": ['
                         '    {'
                         '        "url": "http://error",'
-                        '        "type": "UNKNOWN",'
+                        '        "file_type": "UNKNOWN",'
                         '        "error": "DownloadError",'
                         '        "message": "foo"'
                         '    }'
