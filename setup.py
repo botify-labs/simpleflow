@@ -81,7 +81,7 @@ setup(
     package_dir={'simpleflow': 'simpleflow'},
     include_package_data=True,
     install_requires=[
-        'simple-workflow>=0.1.40',
+        'simple-workflow>=0.1.42',
     ],
     license=read("LICENSE"),
     zip_safe=False,
