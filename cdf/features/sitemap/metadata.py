@@ -238,7 +238,7 @@ def parse_sitemap_index_metadata(input_dict):
 
 def parse_error(input_dict):
     url = input_dict["url"]
-    file_type = SiteMapType[input_dict["type"]]
+    file_type = SiteMapType[input_dict["file_type"]]
     error_type = input_dict["error"]
     error_message = input_dict["message"]
     return Error(url, file_type, error_type, error_message)
