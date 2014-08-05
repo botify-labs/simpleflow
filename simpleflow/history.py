@@ -25,7 +25,15 @@ class History(object):
                 'state': event.state,
                 'scheduled_id': event.id,
             }
-            self._activities[event.activity_id] = activity
+            if event.activity_id not in self._activities:
+                self._activities[event.activity_id] = activity
+            else:
+                # When the executor retries a task, it schedules it again.
+                # We have to take care of not overriding some values set by the
+                # previous execution of the task such as the number of retries
+                # in ``retry``.  As the state of the event mutates, it
+                # corresponds to the last execution.
+                self._activities[event.activity_id].update(activity)
         elif event.state == 'started':
             activity = get_activity(event)
             activity['state'] = event.state

@@ -523,6 +523,54 @@ def test_workflow_retry_activity():
     assert decisions[0] == workflow_completed
 
 
+def test_workflow_retry_activity_failed_again():
+    workflow = TestDefinitionRetryActivity
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow)
+
+    # There is a single task, hence the executor should schedule it first.
+    decisions, _ = executor.replay(history)
+    check_task_scheduled_decision(decisions[0], increment_retry)
+
+    # Let's add the task in ``failed`` state.
+    decision_id = history.last_id
+    (history
+        .add_activity_task(
+            increment_retry,
+            decision_id=decision_id,
+            last_state='failed',
+            activity_id='activity-tests.test_dataflow.increment_retry-1')
+        .add_decision_task_scheduled()
+        .add_decision_task_started())
+
+    # As the retry value is one, the executor should retry i.e. schedule the
+    # task again.
+    decisions, _ = executor.replay(history)
+    check_task_scheduled_decision(decisions[0], increment_retry)
+
+    # Let's add the task in ``failed`` state again.
+    decision_id = history.last_id
+    (history
+        .add_activity_task(
+            increment_retry,
+            decision_id=decision_id,
+            last_state='failed',
+            activity_id='activity-tests.test_dataflow.increment_retry-1')
+        .add_decision_task_scheduled()
+        .add_decision_task_started())
+
+    # There is no more retry. The executor should set `Future.exception` and
+    # complete the workflow as there is no further task.
+    decisions, _ = executor.replay(history)
+
+    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    # ``a.result`` is ``None`` because it was not set.
+    workflow_completed.complete(result=json.dumps(None))
+
+    assert decisions[0] == workflow_completed
+
+
 class TestDefinitionChildWorkflow(TestWorkflow):
     """
     This workflow executes a child workflow.
