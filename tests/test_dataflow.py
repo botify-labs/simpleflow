@@ -735,7 +735,9 @@ def test_workflow_activity_raises_on_failure():
 
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
-        reason='Workflow execution error: "error"')
+        reason='Workflow execution error in task '
+               'activity-tests.test_dataflow.raise_on_failure: '
+               '"error"')
 
     assert decisions[0] == workflow_failed
 
@@ -821,3 +823,66 @@ def test_multiple_scheduled_activities():
 
     decisions, _ = executor.replay(history)
     check_task_scheduled_decision(decisions[0], double)
+
+
+def test_activity_task_timeout():
+    workflow = TestDefinition
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow)
+    decision_id = history.last_id
+    (history
+        .add_activity_task(
+            increment,
+            activity_id='activity-tests.test_dataflow.increment-1',
+            decision_id=decision_id,
+            last_state='timed_out',
+            timeout_type='START_TO_CLOSE'))
+
+    decisions, _ = executor.replay(history)
+    # The task timed out and there is no retry.
+    assert len(decisions) == 1
+    check_task_scheduled_decision(decisions[0], double)
+
+
+def test_activity_task_timeout_retry():
+    workflow = TestDefinitionRetryActivity
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow)
+    decision_id = history.last_id
+    (history
+        .add_activity_task(
+            increment_retry,
+            activity_id='activity-tests.test_dataflow.increment_retry-1',
+            decision_id=decision_id,
+            last_state='timed_out',
+            timeout_type='START_TO_CLOSE'))
+
+    decisions, _ = executor.replay(history)
+    assert len(decisions) == 1
+    check_task_scheduled_decision(decisions[0], increment_retry)
+
+
+def test_activity_task_timeout_raises():
+    workflow = TestDefinitionActivityRaisesOnFailure
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow)
+    decision_id = history.last_id
+    (history
+        .add_activity_task(
+            raise_on_failure,
+            activity_id='activity-tests.test_dataflow.raise_on_failure-1',
+            decision_id=decision_id,
+            last_state='timed_out',
+            timeout_type='START_TO_CLOSE'))
+
+    decisions, _ = executor.replay(history)
+    workflow_failed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_failed.fail(
+        reason='Workflow execution error in task '
+               'activity-tests.test_dataflow.raise_on_failure: '
+               '"TimeoutError(START_TO_CLOSE)"')
+
+    assert decisions[0] == workflow_failed

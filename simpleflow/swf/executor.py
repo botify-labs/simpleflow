@@ -177,7 +177,7 @@ class Executor(executor.Executor):
                     return future
                 elif event.get('retry', 0) == task.activity.retry:
                     if task.activity.raises_on_failure:
-                        raise exceptions.TaskException(future.exception)
+                        raise exceptions.TaskException(task, future.exception)
                     return future
                 # Otherwise retry the task by scheduling it again.
             elif event['type'] == 'child_workflow':
@@ -261,11 +261,12 @@ class Executor(executor.Executor):
         except exceptions.ExecutionBlocked:
             return self._decisions, {}
         except exceptions.TaskException, err:
-            reason = 'Workflow execution error: "{}"'.format(
-                err.exception.reason)
+            reason = 'Workflow execution error in task {}: "{}"'.format(
+                err.task.name,
+                getattr(err.exception, 'reason', repr(err.exception)))
             logger.exception(reason)
 
-            details = err.exception.details
+            details = getattr(err.exception, 'details', None)
             self.on_failure(reason, details)
 
             decision = swf.models.decision.WorkflowExecutionDecision()

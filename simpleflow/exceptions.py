@@ -7,17 +7,19 @@ class TaskException(Exception):
     Wrap an exception raised by a task.
 
     """
-    def __init__(self, exception):
+    def __init__(self, task, exception):
         """
         :param exception: raised by a task.
         :type  exception: TaskFailed.
 
         """
+        self.task = task
         self.exception = exception
 
     def __repr__(self):
-        return '{}(exception={})'.format(
+        return '{}(task={} exception={})'.format(
             self.__class__.__name__,
+            self.task,
             self.exception)
 
 
@@ -37,7 +39,7 @@ class TaskFailed(Exception):
         self.details = None
 
     def __repr__(self):
-        return '{}(reason="{}", details="{}")'.format(
+        return '{}(reason="{}")'.format(
             self.__class__.__name__,
             self.reason,
             self.details)
@@ -49,4 +51,6 @@ class TimeoutError(Exception):
         self.timeout_value = timeout_value
 
     def __repr__(self):
-        return 'TimeoutError({})'.format(self.timeout_type)
+        return '{}({})'.format(
+            self.__class__.__name__,
+            self.timeout_type)

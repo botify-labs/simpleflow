@@ -39,6 +39,14 @@ class ActivityTask(Task):
     def name(self):
         return 'activity-{}'.format(self.activity.name)
 
+    def __repr__(self):
+        return '{}(activity={}, args={}, kwargs={}, id={})'.format(
+            self.__class__.__name__,
+            self.activity,
+            self.args,
+            self.kwargs,
+            self.id)
+
 
 class WorkflowTask(Task):
     def __init__(self, workflow, *args, **kwargs):
@@ -50,6 +58,14 @@ class WorkflowTask(Task):
     @property
     def name(self):
         return 'workflow-{}'.format(self.workflow.name)
+
+    def __repr__(self):
+        return '{}(workflow={}, args={}, kwargs={}, id={})'.format(
+            self.__class__.__name__,
+            self.activity,
+            self.args,
+            self.kwargs,
+            self.id)
 
 
 class Registry(object):
