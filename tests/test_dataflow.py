@@ -1,6 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import boto.swf
+
+
+class FakeSWFConnection(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def register_activity_type(self, *args, **kwargs):
+        pass
+
+boto.swf.connect_to_region = FakeSWFConnection
+
 import json
 
 import swf.models
