@@ -111,3 +111,18 @@ class FieldsTestCase(unittest.TestCase):
             [g['id'] for g in groups],
             ['scheme', 'main']
         )
+
+
+class ComparisonTestCase(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_previous(self):
+        # current crawl : feature main, links and comparison are enabled
+        # previous crawl : only main is enabled
+        fields = get_fields({"main": None, "links": None, "comparison": {"options": {"main": None}}})
+        fields = [f['value'] for f in fields]
+        self.assertTrue('url' in fields)
+        self.assertTrue('previous.url' in fields)
+        # links not enabled on the previous crawl
+        self.assertTrue('previous.outlinks_internal.nb.total' not in fields)
