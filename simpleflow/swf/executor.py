@@ -95,6 +95,23 @@ class Executor(executor.Executor):
 
         if state == 'scheduled':
             future._state = futures.PENDING
+        elif state == 'schedule_failed':
+            if event['cause'] == 'ACTIVITY_TYPE_DOES_NOT_EXIST':
+                activity_type = swf.models.ActivityType(
+                    self.domain,
+                    name=event['activity_type']['name'],
+                    version=event['activity_type']['version'])
+                logger.info('Creating activity type {} in domain {}'.format(
+                    activity_type.name,
+                    self.domain.name))
+                try:
+                    activity_type.save()
+                except swf.exceptions.AlreadyExistsError:
+                    logger.info(
+                        'Activity type {} in domain {} already exists'.format(
+                            activity_type.name,
+                            self.domain.name))
+                return None
         elif state == 'started':
             future._state = futures.RUNNING
         elif state == 'completed':
@@ -157,33 +174,29 @@ class Executor(executor.Executor):
     def make_workflow_task(self, func, *args, **kwargs):
         return WorkflowTask(func, *args, **kwargs)
 
-    def resume(self, task, *args, **kwargs):
-        """Resume the execution of a task.
+    def resume_activity(self, task, event):
+        future = self._get_future_from_activity_event(event)
+        if not future:  # Task in history does not count.
+            return None
 
-        If the task was scheduled, returns a future that wraps its state,
-        otherwise schedules it.
+        if not future.finished:  # Still pending or running...
+            return future
 
-        """
-        task.id = self._make_task_id(task)
-        event = self.find_event(task, self._history)
+        if future.exception is None:  # Result available!
+            return future
 
-        if event:
-            if event['type'] == 'activity':
-                future = self._get_future_from_activity_event(event)
-                if not future.finished:
-                    return future
+        if event.get('retry', 0) == task.activity.retry:  # No more retry!
+            if task.activity.raises_on_failure:
+                raise exceptions.TaskException(task, future.exception)
+            return future  # with future.exception set.
 
-                if future.exception is None:
-                    return future
-                elif event.get('retry', 0) == task.activity.retry:
-                    if task.activity.raises_on_failure:
-                        raise exceptions.TaskException(task, future.exception)
-                    return future
-                # Otherwise retry the task by scheduling it again.
-            elif event['type'] == 'child_workflow':
-                future = self._get_future_from_child_workflow_event(event)
-                return future
+        # Otherwise retry the task by scheduling it again.
+        return None  # means the is not in SWF.
 
+    def resume_child_workflow(self, task, event):
+        return self._get_future_from_child_workflow_event(event)
+
+    def schedule_task(self, task):
         decisions = task.schedule(self.domain)
         # ``decisions`` contains a single decision.
         self._decisions.extend(decisions)
@@ -197,7 +210,28 @@ class Executor(executor.Executor):
             self._decisions.append(timer)
             raise exceptions.ExecutionBlocked()
 
-        return futures.Future()  # return a pending future.
+    def resume(self, task, *args, **kwargs):
+        """Resume the execution of a task.
+
+        If the task was scheduled, returns a future that wraps its state,
+        otherwise schedules it.
+
+        """
+        task.id = self._make_task_id(task)
+        event = self.find_event(task, self._history)
+
+        future = None
+        if event:
+            if event['type'] == 'activity':
+                future = self.resume_activity(task, event)
+            elif event['type'] == 'child_workflow':
+                future = self.resume_child_workflow(task, event)
+
+        if not future:
+            self.schedule_task(task)
+            future = futures.Future()  # return a pending future.
+
+        return future
 
     def submit(self, func, *args, **kwargs):
         """Register a function and its arguments for asynchronous execution.

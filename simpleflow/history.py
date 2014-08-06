@@ -34,6 +34,11 @@ class History(object):
                 # in ``retry``.  As the state of the event mutates, it
                 # corresponds to the last execution.
                 self._activities[event.activity_id].update(activity)
+        elif event.state == 'schedule_failed':
+            activity = self._activities[event.activity_id]
+            activity['state'] = event.state
+            activity['cause'] = event.cause
+            activity['activity_type'] = event.activity_type.copy()
         elif event.state == 'started':
             activity = get_activity(event)
             activity['state'] = event.state

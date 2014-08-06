@@ -16,8 +16,6 @@ def square(x):
     return x * x
 
 
-print increment.name
-
 def test_task_register():
     from simpleflow import task
 
