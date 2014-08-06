@@ -444,12 +444,17 @@ class AnalysisWorkflow(Workflow):
         has_comparison = 'comparison' in features_flags
         if has_comparison:
             ref_s3_uri = context['features_options']['comparison']['s3_uri']
-            self.submit(
+            comparison = self.submit(
                 match_documents,
                 new_s3_uri=s3_uri,
                 ref_s3_uri=ref_s3_uri,
                 new_crawl_id=crawl_id
             )
+
+        # wait document matching
+        # if `comparison` feature is activated
+        if has_comparison:
+            futures.wait(comparison)
 
         elastic_search_results = [futures.Future()]
         if all(result.finished for result in documents_results):
