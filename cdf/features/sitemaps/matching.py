@@ -144,7 +144,6 @@ def download_sitemaps_from_s3(s3_uri, tmp_dir, force_fetch):
     download_metadata = get_download_metadata_from_s3(s3_uri, tmp_dir, force_fetch)
     sitemap_files = []
     for sitemap in download_metadata.sitemaps:
-        print sitemap.s3_uri
         _, filename = s3.uri_parse(sitemap.s3_uri)
         destination = os.path.join(tmp_dir, filename)
         s3.fetch_file(
