@@ -87,26 +87,6 @@ class SitemapDocument(object):
         """
         raise NotImplementedError()
 
-    def to_dict(self):
-        """Returns a dict containing data about the object:
-        - its type
-        - the number of valid urls it contains
-        - the number of invalid urls it constains
-        :returns: dict
-        """
-        sitemap_type = self.get_sitemap_type().name
-        result = {
-            "type": sitemap_type,
-            "valid": self.valid_urls,
-            "invalid": self.invalid_urls
-        }
-        #if there is no error, do not add the corresponding fields
-        if self.error:
-            result["error"] = self.error
-        if self.error_message:
-            result["message"] = self.error_message
-        return result
-
     def set_error(self, error, message):
         """Set the error and the error message (if any)
         :param error: the error that occured during document processing.
