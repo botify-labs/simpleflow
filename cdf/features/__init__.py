@@ -4,5 +4,5 @@ from . import (
     main,
     main_image,
     semantic_metadata,
-    sitemap,
+    sitemaps
 )

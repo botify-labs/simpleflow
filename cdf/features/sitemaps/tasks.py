@@ -7,11 +7,11 @@ from cdf.features.main.utils import get_url_to_id_dict_from_stream
 
 from cdf.features.main.streams import IdStreamDef
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
-from cdf.features.sitemap.constant import NB_SAMPLES_TO_KEEP
-from cdf.features.sitemap.download import download_sitemaps
-from cdf.features.sitemap.metadata import Metadata, SitemapMetadata
-from cdf.features.sitemap.streams import SitemapStreamDef
-from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
+from cdf.features.sitemaps.constant import NB_SAMPLES_TO_KEEP
+from cdf.features.sitemaps.download import download_sitemaps
+from cdf.features.sitemaps.metadata import Metadata, SitemapMetadata
+from cdf.features.sitemaps.streams import SitemapStreamDef
+from cdf.features.sitemaps.matching import (match_sitemap_urls_from_documents,
                                            get_download_metadata_from_s3,
                                            get_sitemap_documents,
                                            DomainValidator)

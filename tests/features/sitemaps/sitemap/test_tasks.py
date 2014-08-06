@@ -6,12 +6,12 @@ import boto
 import json
 from cdf.utils.s3 import stream_files
 
-from cdf.features.sitemap.metadata import (SitemapMetadata,
+from cdf.features.sitemaps.metadata import (SitemapMetadata,
                                            Metadata,
                                            SiteMapType)
-from cdf.features.sitemap.document import SitemapXmlDocument
+from cdf.features.sitemaps.document import SitemapXmlDocument
 from cdf.features.main.streams import IdStreamDef
-from cdf.features.sitemap.tasks import (download_sitemap_files,
+from cdf.features.sitemaps.tasks import (download_sitemap_files,
                                         download_sitemap_file,
                                         match_sitemap_urls,
                                         update_download_status,
@@ -20,7 +20,7 @@ from cdf.features.sitemap.tasks import (download_sitemap_files,
 
 class TestDownloadSitemapFiles(unittest.TestCase):
     @mock.patch('cdf.utils.s3.push_content', autospec=True)
-    @mock.patch('cdf.features.sitemap.tasks.download_sitemap_file', autospec=True)
+    @mock.patch('cdf.features.sitemaps.tasks.download_sitemap_file', autospec=True)
     def test_nominal_case(self,
                           download_sitemap_file_mock,
                           push_content_mock):
@@ -47,7 +47,7 @@ class TestDownloadSitemapFiles(unittest.TestCase):
 
 class TestDownloadSitemapFile(unittest.TestCase):
     @mock.patch('cdf.utils.s3.push_file', autospec=True)
-    @mock.patch('cdf.features.sitemap.tasks.download_sitemaps', autospec=True)
+    @mock.patch('cdf.features.sitemaps.tasks.download_sitemaps', autospec=True)
     def test_nominal_case(self,
                           download_sitemaps_mock,
                           push_file_mock):
@@ -242,7 +242,7 @@ class TestSaveUrlListAsGzip(unittest.TestCase):
 
     def test_nominal_case(self):
         url_list = ["foo", "bar"]
-        with mock.patch("cdf.features.sitemap.tasks.gzip.open", mock.mock_open()) as m:
+        with mock.patch("cdf.features.sitemaps.tasks.gzip.open", mock.mock_open()) as m:
             actual_result = save_url_list_as_gzip(url_list,
                                                   self.filename,
                                                   self.tmp_dir)
@@ -252,7 +252,7 @@ class TestSaveUrlListAsGzip(unittest.TestCase):
 
     def test_unicode_case(self):
         url_list = [u"föö"]
-        with mock.patch("cdf.features.sitemap.tasks.gzip.open", mock.mock_open()) as m:
+        with mock.patch("cdf.features.sitemaps.tasks.gzip.open", mock.mock_open()) as m:
             actual_result = save_url_list_as_gzip(url_list,
                                                   self.filename,
                                                   self.tmp_dir)

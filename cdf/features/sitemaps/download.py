@@ -4,16 +4,16 @@ import time
 
 from cdf.log import logger
 
-from cdf.features.sitemap.exceptions import (UnhandledFileType,
+from cdf.features.sitemaps.exceptions import (UnhandledFileType,
                                              ParsingError,
                                              DownloadError)
-from cdf.features.sitemap.utils import download_url
-from cdf.features.sitemap.constant import DOWNLOAD_DELAY
-from cdf.features.sitemap.metadata import (SitemapMetadata,
+from cdf.features.sitemaps.utils import download_url
+from cdf.features.sitemaps.constant import DOWNLOAD_DELAY
+from cdf.features.sitemaps.metadata import (SitemapMetadata,
                                            SitemapIndexMetadata,
                                            Error,
                                            Metadata)
-from cdf.features.sitemap.document import (SiteMapType,
+from cdf.features.sitemaps.document import (SiteMapType,
                                            is_xml_sitemap,
                                            is_sitemap_index,
                                            is_rss_sitemap,

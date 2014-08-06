@@ -4,14 +4,14 @@ import mock
 import os
 import tempfile
 from cdf.core.streams.base import TemporaryDataset
-from cdf.features.sitemap.document import (SitemapXmlDocument,
+from cdf.features.sitemaps.document import (SitemapXmlDocument,
                                            SitemapTextDocument,
                                            SiteMapType)
-from cdf.features.sitemap.metadata import (SitemapMetadata,
+from cdf.features.sitemaps.metadata import (SitemapMetadata,
                                            SitemapIndexMetadata,
                                            Error,
                                            Metadata)
-from cdf.features.sitemap.matching import (get_download_metadata_from_s3,
+from cdf.features.sitemaps.matching import (get_download_metadata_from_s3,
                                            download_sitemaps_from_s3,
                                            match_sitemap_urls_from_document,
                                            match_sitemap_urls_from_documents,
@@ -88,7 +88,7 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
 
 
 class TestDownloadSitemapsFromS3(unittest.TestCase):
-    @mock.patch('cdf.features.sitemap.matching.get_download_metadata_from_s3', autospec=True)
+    @mock.patch('cdf.features.sitemaps.matching.get_download_metadata_from_s3', autospec=True)
     @mock.patch('cdf.utils.s3.fetch_file', autospec=True)
     def test_nominal_case(self,
                           fetch_file_mock,

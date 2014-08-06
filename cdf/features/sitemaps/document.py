@@ -7,7 +7,7 @@ import re
 from urlparse import urlparse
 
 from cdf.log import logger
-from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
+from cdf.features.sitemaps.exceptions import ParsingError, UnhandledFileType
 
 
 class SiteMapType(Enum):
