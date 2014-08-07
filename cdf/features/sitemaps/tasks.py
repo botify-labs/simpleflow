@@ -146,6 +146,9 @@ def match_sitemap_urls(s3_uri,
     download_metadata = get_download_metadata_from_s3(s3_uri, tmp_dir, force_fetch)
     update_download_status(download_metadata, sitemap_documents)
 
+    download_metadata.sitemap_only_in_configuration_count = sitemap_only_urls.count
+    download_metadata.sitemap_only_out_of_configuration_count = out_of_crawl_domain_urls.count
+
     sitemap_metadata_filename = "sitemap_metadata.json"
     sitemap_metadata_filepath = os.path.join(tmp_dir, sitemap_metadata_filename)
     with open(sitemap_metadata_filepath, 'wb') as sitemap_metadata_file:

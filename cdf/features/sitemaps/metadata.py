@@ -147,6 +147,12 @@ class Metadata(object):
         self.sitemaps = sitemaps or []
         self.sitemap_indexes = sitemap_indexes or []
         self.errors = errors or []
+        #the number of urls that are only in sitemaps but respect the configuration
+        #(allowed domains, blacklisted domains)
+        self.sitemap_only_in_configuration_count = 0
+        #the number of urls that are only in sitemaps but do not respect
+        #the configuration (allowed domains, blacklisted domains)
+        self.sitemap_only_out_of_configuration_count = 0
 
     def add_success_sitemap(self, sitemap_metadata):
         """Add metadata a about sitemap that has been successfuly downloaded.
@@ -181,14 +187,20 @@ class Metadata(object):
         d = {
             "sitemaps": [sitemap.to_dict() for sitemap in self.sitemaps],
             "sitemap_indexes": [sitemap_index.to_dict() for sitemap_index in self.sitemap_indexes],
-            "errors": [e.to_dict() for e in self.errors]
+            "errors": [e.to_dict() for e in self.errors],
+            "sitemap_only": {
+                "in_configuration": self.sitemap_only_in_configuration_count,
+                "out_of_configuration": self.sitemap_only_out_of_configuration_count
+            }
         }
         return json.dumps(d)
 
     def __eq__(self, other):
         return (set(self.sitemaps) == set(other.sitemaps) and
                 set(self.sitemap_indexes) == set(other.sitemap_indexes) and
-                set(self.errors) == set(other.errors))
+                set(self.errors) == set(other.errors) and
+                self.sitemap_only_in_configuration_count == other.sitemap_only_in_configuration_count and
+                self.sitemap_only_out_of_configuration_count == other.sitemap_only_out_of_configuration_count)
 
     def __repr__(self):
         return self.to_json()
