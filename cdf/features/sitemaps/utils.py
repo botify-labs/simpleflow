@@ -3,7 +3,7 @@ import logging
 from retrying import retry, RetryError
 
 from cdf.log import logger
-from cdf.features.sitemap.exceptions import DownloadError
+from cdf.features.sitemaps.exceptions import DownloadError
 
 #change request logger log level
 requests_log = logging.getLogger("requests")

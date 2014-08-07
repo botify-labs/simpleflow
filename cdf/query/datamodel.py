@@ -82,6 +82,13 @@ def get_fields(features_options, remove_private=True):
     for entry in _get_document_fields_mapping_from_features_options(features_options, remove_private=True):
         stream_def, field = entry
         fields.append(_render_field_to_end_user(stream_def, field))
+
+    if 'comparison' in features_options:
+        previous_fields = get_fields(features_options['comparison']['options'], remove_private=remove_private)
+        for i, field in enumerate(previous_fields):
+            previous_fields[i]['name'] = 'Previous {}'.format(previous_fields[i]['name'])
+            previous_fields[i]['value'] = 'previous.{}'.format(previous_fields[i]['value'])
+        fields += previous_fields
     return fields
 
 

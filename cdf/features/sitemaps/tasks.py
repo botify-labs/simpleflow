@@ -7,11 +7,11 @@ from cdf.features.main.utils import get_url_to_id_dict_from_stream
 
 from cdf.features.main.streams import IdStreamDef
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
-from cdf.features.sitemap.constant import NB_SAMPLES_TO_KEEP
-from cdf.features.sitemap.download import download_sitemaps
-from cdf.features.sitemap.metadata import Metadata, SitemapMetadata
-from cdf.features.sitemap.streams import SitemapStreamDef
-from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
+from cdf.features.sitemaps.constant import NB_SAMPLES_TO_KEEP
+from cdf.features.sitemaps.download import download_sitemaps
+from cdf.features.sitemaps.metadata import Metadata, SitemapMetadata
+from cdf.features.sitemaps.streams import SitemapStreamDef
+from cdf.features.sitemaps.matching import (match_sitemap_urls_from_documents,
                                            get_download_metadata_from_s3,
                                            get_sitemap_documents,
                                            DomainValidator)
@@ -20,7 +20,7 @@ from cdf.features.sitemap.matching import (match_sitemap_urls_from_documents,
 @with_temporary_dir
 def download_sitemap_files(input_urls,
                            s3_uri,
-                           user_agent=None,
+                           user_agent,
                            tmp_dir=None,
                            force_fetch=False):
     """Download all sitemap files related to a list of input url and upload them to s3.
@@ -31,19 +31,18 @@ def download_sitemap_files(input_urls,
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
     :param user_agent: the user agent to use for the query.
-                       If None, uses 'requests' default user agent
     :type user_agent: str
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
     """
     s3_download_metadata = Metadata()
     for url in input_urls:
-        crt_file_index = download_sitemap_file(url,
-                                               s3_uri,
-                                               user_agent,
-                                               tmp_dir,
-                                               force_fetch)
-        s3_download_metadata.update(crt_file_index)
+        download_sitemap_file(url,
+                              s3_uri,
+                              user_agent,
+                              s3_download_metadata,
+                              tmp_dir,
+                              force_fetch)
 
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
 
@@ -56,7 +55,8 @@ def download_sitemap_files(input_urls,
 
 def download_sitemap_file(input_url,
                           s3_uri,
-                          user_agent=None,
+                          user_agent,
+                          metadata,
                           tmp_dir=None,
                           force_fetch=False):
     """Download all sitemap files related to an input url and upload them to s3.
@@ -68,30 +68,23 @@ def download_sitemap_file(input_url,
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
     :param user_agent: the user agent to use for the query.
-                       If None, uses 'requests' default user agent
     :type user_agent: str
     :param tmp_dir: the path to the directory where to save the files
     :type tmp_dir: str
-    :returns: Metadata
     """
-    download_metadata = download_sitemaps(input_url, tmp_dir, user_agent)
+    download_sitemaps(input_url, tmp_dir, user_agent, metadata)
     s3_subdir_uri = os.path.join(s3_uri, "sitemaps")
     #an object similar to download_metadata but that stores s3 uris
-    s3_download_metadata = Metadata(
-        sitemap_indexes=download_metadata.sitemap_indexes,
-        errors=download_metadata.errors
-    )
-    for sitemap in download_metadata.sitemaps:
-        url, file_path, sitemap_index = sitemap.url, sitemap.s3_uri, sitemap.sitemap_index
-        destination_uri = os.path.join(s3_subdir_uri, os.path.basename(file_path))
-        s3.push_file(
-            os.path.join(destination_uri),
-            file_path
-        )
-        s3_download_metadata.add_success_sitemap(
-            SitemapMetadata(url, destination_uri, sitemap_index)
-        )
-    return s3_download_metadata
+    for sitemap in metadata.sitemaps:
+        url, file_path, sitemap_indexes = sitemap.url, sitemap.s3_uri, sitemap.sitemap_indexes
+        if not sitemap.s3_uri.startswith("s3://"):
+            #The file has not been pushed to s3 yet
+            destination_uri = os.path.join(s3_subdir_uri, os.path.basename(file_path))
+            s3.push_file(
+                os.path.join(destination_uri),
+                file_path
+            )
+            sitemap.s3_uri = destination_uri
 
 
 @with_temporary_dir
@@ -220,6 +213,6 @@ def save_url_list_as_gzip(url_list, filename, tmp_dir):
             #use "+" instead of "format" since
             #ampelmann has benchmarked both methods
             #and found the "+" is almost twice faster.
-            local_file.write(unicode(url + "\n"))
+            local_file.write(unicode(url + "\n").encode("utf-8"))
     return local_filepath
 

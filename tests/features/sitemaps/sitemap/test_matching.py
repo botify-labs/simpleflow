@@ -4,14 +4,14 @@ import mock
 import os
 import tempfile
 from cdf.core.streams.base import TemporaryDataset
-from cdf.features.sitemap.document import (SitemapXmlDocument,
+from cdf.features.sitemaps.document import (SitemapXmlDocument,
                                            SitemapTextDocument,
                                            SiteMapType)
-from cdf.features.sitemap.metadata import (SitemapMetadata,
+from cdf.features.sitemaps.metadata import (SitemapMetadata,
                                            SitemapIndexMetadata,
                                            Error,
                                            Metadata)
-from cdf.features.sitemap.matching import (get_download_metadata_from_s3,
+from cdf.features.sitemaps.matching import (get_download_metadata_from_s3,
                                            download_sitemaps_from_s3,
                                            match_sitemap_urls_from_document,
                                            match_sitemap_urls_from_documents,
@@ -28,13 +28,15 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
                         '"sitemaps": ['
                         '    {'
                         '       "url": "http://foo/sitemap_1.xml",'
+                        '       "file_type": "SITEMAP_XML",'
                         '       "s3_uri": "s3://foo/sitemap_1.xml",'
-                        '       "sitemap_index": "http://foo/sitemap_index.html"'
+                        '       "sitemap_indexes": ["http://foo/sitemap_index.html"]'
                         '   },'
                         '   {'
                         '       "url": "http://foo/sitemap_2.xml",'
+                        '       "file_type": "SITEMAP_XML",'
                         '       "s3_uri": "s3://foo/sitemap_2.xml",'
-                        '       "sitemap_index": "http://foo/sitemap_index.html"'
+                        '       "sitemap_indexes": ["http://foo/sitemap_index.html"]'
                         '   }'
                         '],'
                         '"sitemap_indexes": ['
@@ -47,7 +49,7 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
                         '"errors": ['
                         '    {'
                         '        "url": "http://error",'
-                        '        "type": "UNKNOWN",'
+                        '        "file_type": "UNKNOWN",'
                         '        "error": "DownloadError",'
                         '        "message": "foo"'
                         '    }'
@@ -57,17 +59,19 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
         #mock open()
         with mock.patch("__builtin__.open", mock.mock_open(read_data=file_content)) as m:
             actual_result = get_download_metadata_from_s3(s3_uri,
-                                                        tmp_dir,
-                                                        force_fetch)
+                                                          tmp_dir,
+                                                          force_fetch)
 
         #check result
         expected_sitemaps = [
             SitemapMetadata(u"http://foo/sitemap_1.xml",
+                            SiteMapType.SITEMAP_XML,
                             u"s3://foo/sitemap_1.xml",
-                            u"http://foo/sitemap_index.html"),
+                            [u"http://foo/sitemap_index.html"]),
             SitemapMetadata(u"http://foo/sitemap_2.xml",
+                            SiteMapType.SITEMAP_XML,
                             u"s3://foo/sitemap_2.xml",
-                            u"http://foo/sitemap_index.html"),
+                            [u"http://foo/sitemap_index.html"]),
         ]
         expected_sitemap_indexes = [SitemapIndexMetadata(u"http://foo/sitemap_index.xml", 2, 0)]
         expected_errors = [Error(u"http://error", SiteMapType.UNKNOWN, u"DownloadError", u"foo")]
@@ -84,15 +88,19 @@ class TestGetDownloadMetadataFromS3(unittest.TestCase):
 
 
 class TestDownloadSitemapsFromS3(unittest.TestCase):
-    @mock.patch('cdf.features.sitemap.matching.get_download_metadata_from_s3', autospec=True)
+    @mock.patch('cdf.features.sitemaps.matching.get_download_metadata_from_s3', autospec=True)
     @mock.patch('cdf.utils.s3.fetch_file', autospec=True)
     def test_nominal_case(self,
                           fetch_file_mock,
                           get_download_metadata_from_s3_mock):
         #mock
         sitemaps = [
-            SitemapMetadata("http://foo.com/sitemap_1.xml", "s3://foo/sitemap_1.xml"),
-            SitemapMetadata("http://foo.com/sitemap_2.xml", "s3://foo/sitemap_2.xml")
+            SitemapMetadata("http://foo.com/sitemap_1.xml",
+                            SiteMapType.SITEMAP_XML,
+                            "s3://foo/sitemap_1.xml"),
+            SitemapMetadata("http://foo.com/sitemap_2.xml",
+                            SiteMapType.SITEMAP_XML,
+                            "s3://foo/sitemap_2.xml")
         ]
         get_download_metadata_from_s3_mock.return_value = Metadata(sitemaps)
 

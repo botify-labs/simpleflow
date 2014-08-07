@@ -56,9 +56,9 @@ def as_activity(func):
     return activity.with_attributes(
         version='2.7',
         task_list='analysis',
-        schedule_to_start_timeout=1800,
-        start_to_close_timeout=7200,
-        schedule_to_close_timeout=9000,
+        schedule_to_start_timeout=14400,  # 4h
+        start_to_close_timeout=10800,     # 3h
+        schedule_to_close_timeout=25200,  # 7h
         heartbeat_timeout=300,
         retry=1,
         raises_on_failure=True,
@@ -107,7 +107,7 @@ from cdf.features.ganalytics.tasks import (
 import_data_from_ganalytics = as_activity(import_data_from_ganalytics)
 match_analytics_to_crawl_urls = as_activity(match_analytics_to_crawl_urls)
 
-from cdf.features.sitemap.tasks import (
+from cdf.features.sitemaps.tasks import (
     download_sitemap_files,
     match_sitemap_urls,
 )
@@ -124,12 +124,11 @@ from cdf.features.comparison.tasks import match_documents
 match_documents = as_activity(match_documents)
 
 
-
 UPDATE_STATUS_TIMEOUTS = {
-    'schedule_to_start_timeout': 30,
-    'start_to_close_timeout': 30,
-    'schedule_to_close_timeout': 60,
-    'heartbeat_timeout': 100,
+    'schedule_to_start_timeout': 14400,  # 4h
+    'start_to_close_timeout': 60,
+    'schedule_to_close_timeout': 14460,  # 4h01
+    'heartbeat_timeout': 180,
 }
 
 
@@ -448,12 +447,17 @@ class AnalysisWorkflow(Workflow):
         has_comparison = 'comparison' in features_flags
         if has_comparison:
             ref_s3_uri = context['features_options']['comparison']['s3_uri']
-            self.submit(
+            comparison = self.submit(
                 match_documents,
                 new_s3_uri=s3_uri,
                 ref_s3_uri=ref_s3_uri,
                 new_crawl_id=crawl_id
             )
+
+        # wait document matching
+        # if `comparison` feature is activated
+        if has_comparison:
+            futures.wait(comparison)
 
         elastic_search_results = [futures.Future()]
         if all(result.finished for result in documents_results):

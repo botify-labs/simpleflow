@@ -4,15 +4,16 @@ import time
 
 from cdf.log import logger
 
-from cdf.features.sitemap.exceptions import (UnhandledFileType,
+from cdf.features.sitemaps.exceptions import (UnhandledFileType,
                                              ParsingError,
                                              DownloadError)
-from cdf.features.sitemap.utils import download_url
-from cdf.features.sitemap.constant import DOWNLOAD_DELAY
-from cdf.features.sitemap.metadata import (SitemapMetadata,
+from cdf.features.sitemaps.utils import download_url
+from cdf.features.sitemaps.constant import DOWNLOAD_DELAY
+from cdf.features.sitemaps.metadata import (SitemapMetadata,
                                            SitemapIndexMetadata,
+                                           Error,
                                            Metadata)
-from cdf.features.sitemap.document import (SiteMapType,
+from cdf.features.sitemaps.document import (SiteMapType,
                                            is_xml_sitemap,
                                            is_sitemap_index,
                                            is_rss_sitemap,
@@ -20,7 +21,7 @@ from cdf.features.sitemap.document import (SiteMapType,
                                            instanciate_sitemap_document)
 
 
-def download_sitemaps(input_url, output_directory, user_agent):
+def download_sitemaps(input_url, output_directory, user_agent, metadata):
     """Download all sitemap files related to an input url in a directory.
     If the input url is a sitemap, the file will simply be downloaded,
     if it is a sitemap index, it will download the listed sitemaps.
@@ -32,45 +33,59 @@ def download_sitemaps(input_url, output_directory, user_agent):
     :type output_directory: str
     :param user_agent: the user agent to use for the query.
     :type user_agent: str
-    :returns: Metadata
+    :param metadata: an object that stores information about what has been
+                     downloaded so far. It will be updated by the function.
+    :type metadata: Metadata
     """
-    result = Metadata()
+    if metadata.is_success_sitemap(input_url):
+        #do not reprocess it
+        return
+
     #download input url
     output_file_path = get_output_file_path(input_url, output_directory)
     try:
         download_url(input_url, output_file_path, user_agent)
     except DownloadError as e:
         logger.error("Download error: %s", e.message)
-        result.add_error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
-        return result
+        metadata.add_error(
+            Error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
+        )
+        return
 
     try:
         sitemap_document = instanciate_sitemap_document(output_file_path, input_url)
     except UnhandledFileType as e:
-        result.add_error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
-        return result
+        metadata.add_error(
+            Error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
+        )
+        return
 
     sitemap_type = sitemap_document.get_sitemap_type()
     #if it is a sitemap
     if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
-        result.add_success_sitemap(
-            SitemapMetadata(input_url, output_file_path)
+        metadata.add_success_sitemap(
+            SitemapMetadata(input_url, sitemap_type, output_file_path)
         )
     #if it is a sitemap index
     elif is_sitemap_index(sitemap_type):
         #download referenced sitemaps
-        result = download_sitemaps_from_sitemap_index(sitemap_document,
-                                                      output_directory,
-                                                      user_agent)
+        download_sitemaps_from_sitemap_index(sitemap_document,
+                                             output_directory,
+                                             user_agent,
+                                             metadata)
         #remove sitemap index file
         os.remove(output_file_path)
     else:
         error_message = "'{}' is not a valid file".format(input_url)
-        result.add_error(input_url, sitemap_type, "UnhandledFileType", error_message)
-    return result
+        metadata.add_error(
+            Error(input_url, sitemap_type, "UnhandledFileType", error_message)
+        )
 
 
-def download_sitemaps_from_sitemap_index(sitemap_index_document, output_directory, user_agent):
+def download_sitemaps_from_sitemap_index(sitemap_index_document,
+                                         output_directory,
+                                         user_agent,
+                                         metadata):
     """Download sitemap files from a sitemap index.
     :param sitemap_index_document: the input sitemap index
     :type sitemap_index_document: SitemapIndexXmlDocument
@@ -78,9 +93,10 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
     :type output_directory: str
     :param user_agent: the user agent to use for the query.
     :type user_agent: str
-    :returns: Metadata
+    :param metadata: an object that stores metadata about the download process
+                     it will be modified by the function
+    :type metadata: Metadata
     """
-    result = Metadata()
     url_generator = sitemap_index_document.get_urls()
     while True:
         try:
@@ -88,11 +104,21 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
         except ParsingError as e:
             #we can not recover parsing errors
             #so we update the download status
-            update_download_status_on_parsing_error(result, sitemap_index_document, e)
+            update_download_status_on_parsing_error(metadata, sitemap_index_document, e)
             #and return it based on a partially processed sitemap index.
-            return result
+            return
         except StopIteration:
             break
+        if metadata.is_success_sitemap(url):
+                d_sitemaps = {
+                    sitemap.url: sitemap for sitemap in metadata.sitemaps
+                }
+                sitemap_indexes = d_sitemaps[url].sitemap_indexes
+                if not sitemap_index_document.url in sitemap_indexes:
+                    #update its sitemap indexes
+                    sitemap_indexes.append(sitemap_index_document.url)
+                #do not reprocess the file
+                continue
 
         file_path = get_output_file_path(url, output_directory)
         time.sleep(DOWNLOAD_DELAY)
@@ -103,32 +129,37 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document, output_director
             logger.error("Skipping {}: {}".format(url, e.message))
             if os.path.isfile(file_path):
                 os.remove(file_path)
-            error = e.__class__.__name__
-            result.add_error(url, SiteMapType.UNKNOWN, error, e.message)
+            metadata.add_error(
+                Error(url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
+            )
             continue
 
         sitemap_type = sitemap_document.get_sitemap_type()
         #  check if it is actually a sitemap
         if is_xml_sitemap(sitemap_type) or is_rss_sitemap(sitemap_type) or is_text_sitemap(sitemap_type):
-            result.add_success_sitemap(
-                SitemapMetadata(url, file_path, sitemap_index_document.url)
+            metadata.add_success_sitemap(
+                SitemapMetadata(url, sitemap_type, file_path, [sitemap_index_document.url])
             )
         elif is_sitemap_index(sitemap_type):
             error_message = "'{}' is a sitemap index. It cannot be referenced in a sitemap index.".format(url)
             logger.warning(error_message)
-            result.add_error(url, sitemap_type, "NotASitemapFile", error_message)
+            metadata.add_error(
+                Error(url, sitemap_type, "NotASitemapFile", error_message)
+            )
             os.remove(file_path)
         else:
             #  if not, remove file
             error_message = "'{}' is not a sitemap file.".format(url)
             logger.warning(error_message)
-            result.add_error(url, sitemap_type, "UnhandledFileType", error_message)
+            metadata.add_error(
+                Error(url, sitemap_type, "UnhandledFileType", error_message)
+            )
             os.remove(file_path)
 
-    result.add_success_sitemap_index(SitemapIndexMetadata(sitemap_index_document.url,
-                                                          sitemap_index_document.valid_urls,
-                                                          sitemap_index_document.invalid_urls))
-    return result
+    metadata.add_success_sitemap_index(SitemapIndexMetadata(sitemap_index_document.url,
+                                                            sitemap_index_document.valid_urls,
+                                                            sitemap_index_document.invalid_urls))
+    return
 
 
 def update_download_status_on_parsing_error(download_status,
@@ -157,10 +188,12 @@ def update_download_status_on_parsing_error(download_status,
         download_status.add_success_sitemap_index(sitemap_index_metadata)
     else:
         #otherwise report it as error
-        download_status.add_error(sitemap_index_document.url,
-                                  SiteMapType.SITEMAP_INDEX,
-                                  parsing_error.__class__.__name__,
-                                  parsing_error.message)
+        download_status.add_error(
+            Error(sitemap_index_document.url,
+                  SiteMapType.SITEMAP_INDEX,
+                  parsing_error.__class__.__name__,
+                  parsing_error.message)
+        )
 
 
 def get_output_file_path(url, output_directory):

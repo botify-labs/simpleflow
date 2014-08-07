@@ -5,49 +5,17 @@ import gzip
 import os
 import csv
 
-from cdf.features.sitemap.document import (instanciate_sitemap_document,
-                                           open_sitemap_file,
-                                           SiteMapType,
-                                           SitemapXmlDocument,
-                                           SitemapIndexXmlDocument,
-                                           SitemapRssDocument,
-                                           SitemapTextDocument,
-                                           UrlValidator,
-                                           guess_sitemap_type,
-                                           SitemapUrlValidator)
-from cdf.features.sitemap.exceptions import ParsingError, UnhandledFileType
-
-class TestSitemapDocument(unittest.TestCase):
-    def test_to_dict_nominal_case(self):
-        document = SitemapXmlDocument("foo", "http://foo")
-        document.valid_urls = 2
-        document.invalid_urls = 1
-
-        actual_result = document.to_dict()
-
-        expected_result = {
-            "type": "SITEMAP_XML",
-            "valid": 2,
-            "invalid": 1
-        }
-        self.assertEqual(expected_result, actual_result)
-
-    def test_to_dict_error_case(self):
-        document = SitemapXmlDocument("foo", "http://foo")
-        document.valid_urls = 2
-        document.invalid_urls = 1
-        document.set_error("error", "error_message")
-        actual_result = document.to_dict()
-
-        expected_result = {
-            "type": "SITEMAP_XML",
-            "error": "error",
-            "message": "error_message",
-            "valid": 2,
-            "invalid": 1
-        }
-
-        self.assertEqual(expected_result, actual_result)
+from cdf.features.sitemaps.document import (instanciate_sitemap_document,
+                                            open_sitemap_file,
+                                            SiteMapType,
+                                            SitemapXmlDocument,
+                                            SitemapIndexXmlDocument,
+                                            SitemapRssDocument,
+                                            SitemapTextDocument,
+                                            UrlValidator,
+                                            guess_sitemap_type,
+                                            SitemapUrlValidator)
+from cdf.features.sitemaps.exceptions import ParsingError, UnhandledFileType
 
 
 class TestSitemapXmlDocument(unittest.TestCase):
@@ -524,7 +492,7 @@ class TestGuessSitemapDocumentType(unittest.TestCase):
         self.assertEqual(SiteMapType.UNKNOWN,
                          guess_sitemap_type(self.tmp_file_path, self.url))
 
-@mock.patch("cdf.features.sitemap.document.guess_sitemap_type", autospec=True)
+@mock.patch("cdf.features.sitemaps.document.guess_sitemap_type", autospec=True)
 class TestInstanciateSitemapDocument(unittest.TestCase):
     def setUp(self):
         self.file_path = "/tmp/foo"

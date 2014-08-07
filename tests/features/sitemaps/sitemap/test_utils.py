@@ -1,13 +1,13 @@
 import unittest
 import mock
 import requests
-from cdf.features.sitemap.utils import download_url
-from cdf.features.sitemap.exceptions import DownloadError
+from cdf.features.sitemaps.utils import download_url
+from cdf.features.sitemaps.exceptions import DownloadError
 
 
 class TestDownloadUrl(unittest.TestCase):
     @mock.patch("time.sleep", autospec=True)
-    @mock.patch("cdf.features.sitemap.utils.requests", autospec=True)
+    @mock.patch("cdf.features.sitemaps.utils.requests", autospec=True)
     def test_repeated_download_error(self, request_mock, sleep_mock):
         response_mock = mock.MagicMock
         response_mock.status_code = 404
@@ -20,7 +20,7 @@ class TestDownloadUrl(unittest.TestCase):
         self.assertEqual(7, request_mock.get.call_count)
 
     @mock.patch("__builtin__.open", new=mock.mock_open())
-    @mock.patch("cdf.features.sitemap.utils.requests", autospec=True)
+    @mock.patch("cdf.features.sitemaps.utils.requests", autospec=True)
     def test_user_agent(self, request_mock):
         #mock request answer
         response_mock = mock.create_autospec(requests.Response)

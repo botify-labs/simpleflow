@@ -1,6 +1,6 @@
 import json
 
-from cdf.features.sitemap.document import (SiteMapType,
+from cdf.features.sitemaps.document import (SiteMapType,
                                            is_xml_sitemap,
                                            is_sitemap_index,
                                            is_rss_sitemap,
@@ -11,10 +11,12 @@ class SitemapMetadata(object):
     """A class to represent sitemap in Metadata
     The class does not contain the document itself
     only basic reporting information about it"""
-    def __init__(self, url, s3_uri, sitemap_index=None):
+    def __init__(self, url, sitemap_type, s3_uri, sitemap_indexes=None):
         """Constructor
         :param url: the sitemap url
         :type url: str
+        :param sitemap_type: the type of the sitemap: xml, rss, txt
+        :type sitemap_type: SiteMapType
         :param s3_uri: the s3_uri where the sitemap is stored
         :type s3_uri: str
         :param sitemap_index: the url of the sitemap index that references the
@@ -22,8 +24,9 @@ class SitemapMetadata(object):
         :type sitemap_index: str
         """
         self.url = url
+        self.sitemap_type = sitemap_type
         self.s3_uri = s3_uri
-        self.sitemap_index = sitemap_index
+        self.sitemap_indexes = sitemap_indexes or []
         self.error_type = None
         self.error_message = None
         self.valid_urls = None
@@ -32,11 +35,12 @@ class SitemapMetadata(object):
     def to_dict(self):
         result = {
             "url": self.url,
+            "file_type": self.sitemap_type.name,
             "s3_uri": self.s3_uri,
         }
 
-        if self.sitemap_index:
-            result["sitemap_index"] = self.sitemap_index
+        if self.sitemap_indexes is not None and len(self.sitemap_indexes) > 0:
+            result["sitemap_indexes"] = self.sitemap_indexes
         if self.valid_urls is not None:
             result["valid_urls"] = self.valid_urls
         if self.invalid_urls is not None:
@@ -146,25 +150,30 @@ class Metadata(object):
 
     def add_success_sitemap(self, sitemap_metadata):
         """Add metadata a about sitemap that has been successfuly downloaded.
+        If sitemap is already known, do nothing.
         :param sitemap_metadata: the input sitemap
         :type sitemap_metadata: SitemapMetadata
         """
-        self.sitemaps.append(sitemap_metadata)
+        if not sitemap_metadata.url in [s.url for s in self.sitemaps]:
+            self.sitemaps.append(sitemap_metadata)
 
     def add_success_sitemap_index(self, sitemap_index):
         """Add a sitemap index that has been successfuly downloaded.
+        If sitemap index is already known, do nothing.
         :param sitemap_index: the input sitemap_index
         :type sitemap_index: SitemapIndexMetada
         """
-        self.sitemap_indexes.append(sitemap_index)
+        if not sitemap_index.url in [s.url for s in self.sitemap_indexes]:
+            self.sitemap_indexes.append(sitemap_index)
 
-    def add_error(self, url, file_type, error_type, message):
+    def add_error(self, error):
         """Add an error url
-        :param url: the error url
-        :type url: str
+        If url is already known, do nothing.
+        :param error: the error
+        :type error: Error
         """
-        error = Error(url, file_type, error_type, message)
-        self.errors.append(error)
+        if not error.url in [e.url for e in self.errors]:
+            self.errors.append(error)
 
     def to_json(self):
         """Return a json representation of the object
@@ -184,16 +193,22 @@ class Metadata(object):
     def __repr__(self):
         return self.to_json()
 
-    def update(self, other):
-        self.sitemaps.extend(other.sitemaps)
-        self.sitemap_indexes.extend(other.sitemap_indexes)
-        self.errors.extend(other.errors)
+    def is_success_sitemap(self, url):
+        """Determines whether or not a given url correspond to a successfully
+        processed sitemap.
+        :param url: the input url
+        :type url: str
+        :returns: bool
+        """
+        return url in [sitemap.url for sitemap in self.sitemaps]
 
 
 def parse_sitemap_metadata(input_dict):
-    result = SitemapMetadata(input_dict["url"], input_dict["s3_uri"])
-    if "sitemap_index" in input_dict:
-        result.sitemap_index = input_dict["sitemap_index"]
+    result = SitemapMetadata(input_dict["url"],
+                             SiteMapType[input_dict["file_type"]],
+                             input_dict["s3_uri"])
+    if "sitemap_indexes" in input_dict:
+        result.sitemap_indexes = input_dict["sitemap_indexes"]
     if "valid_urls" in input_dict:
         result.valid_urls = input_dict["valid_urls"]
     if "invalid_urls" in input_dict:
@@ -223,7 +238,7 @@ def parse_sitemap_index_metadata(input_dict):
 
 def parse_error(input_dict):
     url = input_dict["url"]
-    file_type = SiteMapType[input_dict["type"]]
+    file_type = SiteMapType[input_dict["file_type"]]
     error_type = input_dict["error"]
     error_message = input_dict["message"]
     return Error(url, file_type, error_type, error_message)
