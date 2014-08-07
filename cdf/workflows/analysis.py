@@ -65,11 +65,14 @@ def as_activity(func):
     )(func)
 
 
-from cdf.tasks.suggest.clusters import compute_mixed_clusters
-compute_mixed_clusters = as_activity(compute_mixed_clusters)
+from cdf.features.main.tasks import compute_suggested_patterns
+compute_suggested_patterns = as_activity(compute_suggested_patterns)
 
-from cdf.tasks.intermediary_files import (
+from cdf.features.semantic_metadata.tasks import (
     make_metadata_duplicates_file,
+)
+
+from cdf.features.links.tasks import (
     make_links_counter_file,
     make_bad_link_file,
     make_bad_link_counter_file,
@@ -320,7 +323,7 @@ class AnalysisWorkflow(Workflow):
         features_flags = context.get('features_flags', [])
 
         clusters_result = self.submit(
-            compute_mixed_clusters,
+            compute_suggested_patterns,
             crawl_id,
             s3_uri,
             first_part_id_size,
