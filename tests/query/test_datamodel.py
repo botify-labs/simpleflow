@@ -117,8 +117,11 @@ class ComparisonTestCase(unittest.TestCase):
         # current crawl : feature main, links and comparison are enabled
         # previous crawl : only main is enabled
         fields = get_fields({"main": None, "links": None, "comparison": {"options": {"main": None}}})
-        fields = [f['value'] for f in fields]
-        self.assertTrue('url' in fields)
-        self.assertTrue('previous.url' in fields)
+        fields_names = [f['value'] for f in fields]
+        self.assertIn('url', fields_names)
+        self.assertIn('previous.url', fields_names)
         # links not enabled on the previous crawl
-        self.assertTrue('previous.outlinks_internal.nb.total' not in fields)
+        self.assertNotIn('previous.outlinks_internal.nb.total', fields_names)
+
+        fields_verbose = [f['name'] for f in fields]
+        self.assertIn('Previous Http Code', fields_verbose)
