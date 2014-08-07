@@ -55,8 +55,6 @@ class CustomStreamDef(StreamDefBase):
 
 
 class FieldsTestCase(unittest.TestCase):
-    def setUp(self):
-        pass
 
     def test_end_user_field(self):
         self.assertEquals(
@@ -114,8 +112,6 @@ class FieldsTestCase(unittest.TestCase):
 
 
 class ComparisonTestCase(unittest.TestCase):
-    def setUp(self):
-        pass
 
     def test_previous(self):
         # current crawl : feature main, links and comparison are enabled
