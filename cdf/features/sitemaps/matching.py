@@ -9,11 +9,40 @@ from cdf.features.sitemaps.document import instanciate_sitemap_document
 from cdf.features.sitemaps.metadata import parse_download_status_from_json
 
 
+class SitemapOnlyUrls(object):
+    """A class to store data about urls that are only in sitemaps
+    It stores the number of different urls as well as a predefined number
+    of sample urls
+    """
+    def __init__(self, nb_samples_to_keep):
+        """Constructor
+        :param nb_samples_to_keep: the maximum number of sample urls to keep
+        :type nb_samples_to_keep: int
+        """
+        self.count = 0
+        self.nb_samples_to_keep = nb_samples_to_keep
+        self.samples = []
+        #a set to be able to test quickly if a sitemap only url
+        #has already been seen
+        self.samples_set = set()
+
+    def add(self, url):
+        """Add an url to the object.
+        :param url: the input url
+        :type url: str
+        """
+        if url in self.samples_set:
+            return
+        self.count += 1
+        if len(self.samples) < self.nb_samples_to_keep:
+            self.samples.append(url)
+            self.samples_set.add(url)
+
+
 def match_sitemap_urls_from_documents(documents,
                                       url_to_id,
                                       dataset,
                                       domain_validator,
-                                      nb_samples_to_keep,
                                       sitemap_only_urls,
                                       out_of_crawl_domain_urls):
     """The method matches sitemap urls from a list of documents
@@ -27,15 +56,13 @@ def match_sitemap_urls_from_documents(documents,
     :param dataset: the dataset where to store urlids for urls that are both in
                     sitemap and in crawl
     :type dataset: TemporaryDataset
-    :param nb_samples_to_keep: the maximum number of distinct urls to keep
-                               for urls that are only in the sitemaps.
-    :type nb_samples_to_keep: int
-    :param sitemap_only_url: a list where to add samples urls that are
-                             in the sitemaps but not in the crawl.
-    :type sitemap_only_url: list
-    :param out_of_crawl_domain_urls: a list where to add samples urls that are
+    :param sitemap_only_url: a SitemapOnlyUrls object to store data about
+                             urls that are in the sitemaps but not in the crawl.
+    :type sitemap_only_url: SitemapOnlyUrls
+    :param out_of_crawl_domain_urls: a SitemapOnlyUrls object to store data
+                                     urls that are
                                      in the sitemaps but out of crawl domain.
-    :type out_of_crawl_domain_urls: list
+    :type out_of_crawl_domain_urls: SitemapOnlyUrls
     """
     for document in documents:
         try:
@@ -43,7 +70,6 @@ def match_sitemap_urls_from_documents(documents,
                                              url_to_id,
                                              dataset,
                                              domain_validator,
-                                             nb_samples_to_keep,
                                              sitemap_only_urls,
                                              out_of_crawl_domain_urls)
         except ParsingError as e:
@@ -54,7 +80,6 @@ def match_sitemap_urls_from_document(document,
                                      url_to_id,
                                      dataset,
                                      domain_validator,
-                                     nb_samples_to_keep,
                                      sitemap_only_urls,
                                      out_of_crawl_domain_urls):
     """The method matches sitemap urls from a document
@@ -68,34 +93,22 @@ def match_sitemap_urls_from_document(document,
     :param dataset: the dataset where to store urlids for urls that are both in
                     sitemap and in crawl
     :type dataset: TemporaryDataset
-    :param nb_samples_to_keep: the maximum number of distinct urls to keep
-                               for urls that are only in the sitemaps.
-    :type nb_samples_to_keep: int
-    :param sitemap_only_url: a list where to add samples urls that are
-                             in the sitemaps but not in the crawl.
-    :type sitemap_only_url: list
-    :param out_of_crawl_domain_urls: a list where to add samples urls that are
+    :param sitemap_only_url: a SitemapOnlyUrls object to store data about
+                             urls that are in the sitemaps but not in the crawl.
+    :type sitemap_only_url: SitemapOnlyUrls
+    :param out_of_crawl_domain_urls: a SitemapOnlyUrls object to store data
+                                     urls that are
                                      in the sitemaps but out of crawl domain.
-    :type out_of_crawl_domain_urls: list
+    :type out_of_crawl_domain_urls: SitemapOnlyUrls
     :raises: ParsingError
     """
-    #build a set to be able to test quickly if a sitemap only url
-    #has already been seen
-    sitemap_only_urls_set = set(sitemap_only_urls)
-    out_of_crawl_domain_urls_set = set(out_of_crawl_domain_urls)
     for url in document.get_urls():
         urlid = url_to_id.get(url, None)
         if urlid is None:
             if domain_validator.is_valid(url):
-                list_to_update = sitemap_only_urls
-                set_to_update = sitemap_only_urls_set
+                sitemap_only_urls.add(url)
             else:
-                list_to_update = out_of_crawl_domain_urls
-                set_to_update = out_of_crawl_domain_urls_set
-
-            if (len(list_to_update) < nb_samples_to_keep and url not in set_to_update):
-                list_to_update.append(url)
-                set_to_update.add(url)
+                out_of_crawl_domain_urls.add(url)
         else:
             dataset.append(urlid)
 

@@ -238,7 +238,12 @@ class TestMetadata(unittest.TestCase):
                     "error": "foo",
                     "message": "bar"
                 }
-            ]
+            ],
+            "sitemap_only":
+            {
+                "in_configuration": 0,
+                "out_of_configuration": 0
+            }
         }
         #compare the objects instead of the json representation
         #to be insensitive to item ordering
@@ -264,7 +269,12 @@ class TestMetadata(unittest.TestCase):
                 },
             ],
             "sitemap_indexes": [],
-            "errors": []
+            "errors": [],
+            "sitemap_only":
+            {
+                "in_configuration": 0,
+                "out_of_configuration": 0
+            }
         }
         #compare the objects instead of the json representation
         #to be insensitive to item ordering

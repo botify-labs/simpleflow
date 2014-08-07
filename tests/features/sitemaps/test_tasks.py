@@ -184,7 +184,12 @@ class TestMatchSitemapUrls(unittest.TestCase):
                     "invalid_urls": 0
                 }
             ],
-            "errors": []
+            "errors": [],
+            "sitemap_only":
+            {
+                "in_configuration": 1,
+                "out_of_configuration": 1
+            }
         }
         key = bucket.get_key("crawl_result/sitemap_metadata.json")
         actual_sitemap_metada = json.loads(key.get_contents_as_string())
