@@ -11,10 +11,11 @@ from cdf.features.sitemaps.constant import NB_SAMPLES_TO_KEEP
 from cdf.features.sitemaps.download import download_sitemaps
 from cdf.features.sitemaps.metadata import Metadata, SitemapMetadata
 from cdf.features.sitemaps.streams import SitemapStreamDef
-from cdf.features.sitemaps.matching import (match_sitemap_urls_from_documents,
-                                           get_download_metadata_from_s3,
-                                           get_sitemap_documents,
-                                           DomainValidator)
+from cdf.features.sitemaps.matching import (SitemapOnlyUrls,
+                                            match_sitemap_urls_from_documents,
+                                            get_download_metadata_from_s3,
+                                            get_sitemap_documents,
+                                            DomainValidator)
 
 
 @with_temporary_dir
@@ -128,12 +129,13 @@ def match_sitemap_urls(s3_uri,
     sitemap_documents = get_sitemap_documents(s3_uri, tmp_dir, force_fetch)
     sitemap_only_urls = []
     out_of_crawl_domain_urls = []
+    sitemap_only_urls = SitemapOnlyUrls(NB_SAMPLES_TO_KEEP)
+    out_of_crawl_domain_urls = SitemapOnlyUrls(NB_SAMPLES_TO_KEEP)
     match_sitemap_urls_from_documents(
         sitemap_documents,
         url_to_id,
         dataset,
         domain_validator,
-        NB_SAMPLES_TO_KEEP,
         sitemap_only_urls,
         out_of_crawl_domain_urls)
 
@@ -153,7 +155,7 @@ def match_sitemap_urls(s3_uri,
         sitemap_metadata_filepath
     )
     sitemap_only_filename = 'sitemap_only.gz'
-    sitemap_only_filepath = save_url_list_as_gzip(sitemap_only_urls,
+    sitemap_only_filepath = save_url_list_as_gzip(sitemap_only_urls.samples,
                                                   sitemap_only_filename,
                                                   tmp_dir)
     s3.push_file(
@@ -162,7 +164,7 @@ def match_sitemap_urls(s3_uri,
     )
 
     out_of_crawl_domain_filename = 'in_sitemap_out_of_crawl_domain.gz'
-    out_of_crawl_domain_filepath = save_url_list_as_gzip(out_of_crawl_domain_urls,
+    out_of_crawl_domain_filepath = save_url_list_as_gzip(out_of_crawl_domain_urls.samples,
                                                          out_of_crawl_domain_filename,
                                                          tmp_dir)
     s3.push_file(

@@ -5,17 +5,18 @@ import os
 import tempfile
 from cdf.core.streams.base import TemporaryDataset
 from cdf.features.sitemaps.document import (SitemapXmlDocument,
-                                           SitemapTextDocument,
-                                           SiteMapType)
+                                            SitemapTextDocument,
+                                            SiteMapType)
 from cdf.features.sitemaps.metadata import (SitemapMetadata,
-                                           SitemapIndexMetadata,
-                                           Error,
-                                           Metadata)
-from cdf.features.sitemaps.matching import (get_download_metadata_from_s3,
-                                           download_sitemaps_from_s3,
-                                           match_sitemap_urls_from_document,
-                                           match_sitemap_urls_from_documents,
-                                           DomainValidator)
+                                            SitemapIndexMetadata,
+                                            Error,
+                                            Metadata)
+from cdf.features.sitemaps.matching import (SitemapOnlyUrls,
+                                            get_download_metadata_from_s3,
+                                            download_sitemaps_from_s3,
+                                            match_sitemap_urls_from_document,
+                                            match_sitemap_urls_from_documents,
+                                            DomainValidator)
 
 
 class TestGetDownloadMetadataFromS3(unittest.TestCase):
@@ -125,6 +126,36 @@ class TestDownloadSitemapsFromS3(unittest.TestCase):
         self.assertEqual(expected_fetch_calls, fetch_file_mock.mock_calls)
 
 
+class SitemapOnlyUrlsTestCase(unittest.TestCase):
+    def test_nominal_case(self):
+        sitemap_only_urls = SitemapOnlyUrls(10)
+        sitemap_only_urls.add("foo")
+        sitemap_only_urls.add("bar")
+
+        self.assertEqual(["foo", "bar"], sitemap_only_urls.samples)
+        self.assertEqual(2, sitemap_only_urls.count)
+
+    def test_nb_samples(self):
+        sitemap_only_urls = SitemapOnlyUrls(2)
+        sitemap_only_urls.add("foo")
+        sitemap_only_urls.add("bar")
+        sitemap_only_urls.add("baz")
+
+        self.assertEqual(["foo", "bar"], sitemap_only_urls.samples)
+        self.assertEqual(3, sitemap_only_urls.count)
+
+    def test_duplicated_urls(self):
+        sitemap_only_urls = SitemapOnlyUrls(3)
+        sitemap_only_urls.add("foo")
+        sitemap_only_urls.add("bar")
+        sitemap_only_urls.add("foo")
+        sitemap_only_urls.add("baz")
+        sitemap_only_urls.add("qux")
+
+        self.assertEqual(["foo", "bar", "baz"], sitemap_only_urls.samples)
+        self.assertEqual(4, sitemap_only_urls.count)
+
+
 class MatchSitemapUrlsFromDocument(unittest.TestCase):
     def test_nominal_case(self):
 
@@ -143,13 +174,12 @@ class MatchSitemapUrlsFromDocument(unittest.TestCase):
         domain_validator.is_valid.side_effect = [True, False, False]
 
         sitemap_only_nb_samples = 2  # one url will be skipped
-        sitemap_only_urls = []
-        out_of_crawl_domain_urls = []
+        sitemap_only_urls = SitemapOnlyUrls(sitemap_only_nb_samples)
+        out_of_crawl_domain_urls = SitemapOnlyUrls(sitemap_only_nb_samples)
         match_sitemap_urls_from_document(document_mock,
                                          url_to_id,
                                          dataset,
                                          domain_validator,
-                                         sitemap_only_nb_samples,
                                          sitemap_only_urls,
                                          out_of_crawl_domain_urls)
         expected_dataset_calls = [mock.call(0),
@@ -157,35 +187,10 @@ class MatchSitemapUrlsFromDocument(unittest.TestCase):
                                   mock.call(5)]
         self.assertEquals(expected_dataset_calls, dataset.append.mock_calls)
 
-        self.assertEqual(["baz"], sitemap_only_urls)
-        self.assertEqual(["donald", "mickey"], out_of_crawl_domain_urls)
-
-    def test_duplicated_sitemap_only_urls(self):
-
-        url_to_id = {}
-
-        document_mock = mock.create_autospec(SitemapXmlDocument)
-        document_mock.get_urls.return_value = iter(["foo", "bar", "foo", "baz", "qux"])
-
-        dataset = mock.create_autospec(TemporaryDataset)
-        dataset = mock.MagicMock()
-
-        domain_validator = mock.create_autospec(DomainValidator)
-        domain_validator.is_valid.return_value = True
-
-        sitemap_only_nb_samples = 3  # one url will be skipped
-        sitemap_only_urls = []
-        out_of_crawl_domain_urls = []
-        match_sitemap_urls_from_document(document_mock,
-                                         url_to_id,
-                                         dataset,
-                                         domain_validator,
-                                         sitemap_only_nb_samples,
-                                         sitemap_only_urls,
-                                         out_of_crawl_domain_urls)
-
-        self.assertEqual(["foo", "bar", "baz"], sitemap_only_urls)
-        self.assertEqual([], out_of_crawl_domain_urls)
+        self.assertEqual(["baz"], sitemap_only_urls.samples)
+        self.assertEqual(1, sitemap_only_urls.count)
+        self.assertEqual(["donald", "mickey"], out_of_crawl_domain_urls.samples)
+        self.assertEqual(2, out_of_crawl_domain_urls.count)
 
 
 class TestMatchSitemapUrlsFromDocuments(unittest.TestCase):
@@ -218,15 +223,14 @@ class TestMatchSitemapUrlsFromDocuments(unittest.TestCase):
         domain_validator.is_valid.return_value = True
 
         sitemap_only_nb_samples = 10
-        sitemap_only_urls = []
-        out_of_crawl_domain_urls = []
+        sitemap_only_urls = SitemapOnlyUrls(sitemap_only_nb_samples)
+        out_of_crawl_domain_urls = SitemapOnlyUrls(sitemap_only_nb_samples)
 
         #call
         match_sitemap_urls_from_documents(documents,
                                           url_to_id,
                                           dataset,
                                           domain_validator,
-                                          sitemap_only_nb_samples,
                                           sitemap_only_urls,
                                           out_of_crawl_domain_urls)
 
@@ -345,4 +349,3 @@ class TestDomainValidator(unittest.TestCase):
         validator = DomainValidator(["*.wired.com"], ["*.wired.com"])
         self.assertTrue(validator.is_valid("http://blog.wired.com/post"))
         #check that * is interpreted as a literal
-        self.assertFalse(validator.is_valid("http://*.wired.com/post"))
