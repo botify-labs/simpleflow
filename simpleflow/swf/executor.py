@@ -310,7 +310,9 @@ class Executor(executor.Executor):
             return [decision], {}
 
         except Exception, err:
-            reason = 'Cannot replay the workflow "{}"'.format(err)
+            reason = 'Cannot replay the workflow {}({})'.format(
+                err.__class__.__name__,
+                err)
             logger.exception(reason)
 
             self.on_failure(reason)
