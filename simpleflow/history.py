@@ -1,8 +1,13 @@
+import collections
+
+
 class History(object):
     def __init__(self, history):
         self._history = history
-        self._activities = {}
-        self._child_workflows = {}
+        self._activities = collections.defaultdict(
+            lambda: {'type': 'activity'})
+        self._child_workflows = collections.defaultdict(
+            lambda: {'type': 'child_workflow'})
 
     @property
     def events(self):
