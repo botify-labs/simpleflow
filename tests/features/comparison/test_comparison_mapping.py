@@ -1,5 +1,6 @@
 import unittest
-from cdf.features.comparison.tasks import get_comparison_mapping
+from cdf.features.comparison.tasks import get_comparison_data_format
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 
 
 class TestComparisonMapping(unittest.TestCase):
@@ -14,7 +15,8 @@ class TestComparisonMapping(unittest.TestCase):
     }
 
     def test_comparison_mapping(self):
-        result = get_comparison_mapping(self.mapping, self.extras)
+        format = get_comparison_data_format(self.mapping, self.extras)
+        result = ElasticSearchBackend(format).mapping()
         expected = {
             'outer': {
                 'properties': {

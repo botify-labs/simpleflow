@@ -1,10 +1,17 @@
 import copy
 
 from elasticsearch import Elasticsearch
-from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
 from cdf.query.result_transformer import transform_result, transform_aggregation_result
 from cdf.utils.dict import deep_dict
+from cdf.features.comparison.tasks import get_comparison_data_format
+from cdf.utils.features import get_urls_data_format_definition
+
+
+_CLEAN_FORMAT = get_urls_data_format_definition()
+_COMPARISON_FORMAT = get_comparison_data_format(_CLEAN_FORMAT)
+_COMPARISON_ES_BACKEND = ElasticSearchBackend(_COMPARISON_FORMAT)
 
 
 class Query(object):
@@ -18,7 +25,7 @@ class Query(object):
 
     def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number,
                  botify_query, start=0, limit=100, sort=['id'],
-                 backend=ELASTICSEARCH_BACKEND, search_backend=None):
+                 backend=_COMPARISON_ES_BACKEND, search_backend=None):
 
         """Constructor
         search_backend : the search backend to use. If None, use ElasticSearch.
