@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import functools
+import mock
+
 import boto.swf
 
 
@@ -955,11 +958,9 @@ def test_activity_not_found_schedule_failed():
     history = builder.History(workflow)
     decision_id = history.last_id
     (history
-        .add_activity_task(
-            raise_on_failure,
+        .add_activity_task_schedule_failed(
             activity_id='activity-tests.test_dataflow.increment-1',
             decision_id=decision_id,
-            last_state='schedule_failed',
             activity_type={
                 'name': increment.name,
                 'version': increment.version
@@ -967,4 +968,41 @@ def test_activity_not_found_schedule_failed():
             cause='ACTIVITY_TYPE_DOES_NOT_EXIST'))
 
     decisions, _ = executor.replay(history)
+    check_task_scheduled_decision(decisions[0], increment)
+
+
+def raise_already_exists(activity):
+    @functools.wraps(raise_already_exists)
+    def wrapped(*args):
+        raise swf.exceptions.AlreadyExistsError(
+            '<ActivityType domain={} name={} version={} status=REGISTERED> '
+            'already exists'.format(
+                DOMAIN.name,
+                activity.name,
+                activity.version))
+
+    return wrapped
+
+
+def test_activity_not_found_schedule_failed_already_exists():
+    workflow = TestDefinition
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow)
+    decision_id = history.last_id
+    (history
+        .add_activity_task_schedule_failed(
+            activity_id='activity-tests.test_dataflow.increment-1',
+            decision_id=decision_id,
+            activity_type={
+                'name': increment.name,
+                'version': increment.version
+            },
+            cause='ACTIVITY_TYPE_DOES_NOT_EXIST'))
+
+    with mock.patch(
+            'swf.models.ActivityType.save',
+            raise_already_exists(increment)):
+        decisions, _ = executor.replay(history)
+
     check_task_scheduled_decision(decisions[0], increment)
