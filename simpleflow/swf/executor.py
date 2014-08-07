@@ -5,6 +5,7 @@ import logging
 
 import swf.models
 import swf.models.decision
+import swf.exceptions
 
 from simpleflow import (
     executor,
