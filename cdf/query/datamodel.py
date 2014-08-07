@@ -86,7 +86,7 @@ def get_fields(features_options, remove_private=True):
     if 'comparison' in features_options:
         previous_fields = get_fields(features_options['comparison']['options'], remove_private=remove_private)
         for i, field in enumerate(previous_fields):
-            previous_fields[i]['name'] = 'Previous '.format(previous_fields[i]['name'])
+            previous_fields[i]['name'] = 'Previous {}'.format(previous_fields[i]['name'])
             previous_fields[i]['value'] = 'previous.{}'.format(previous_fields[i]['value'])
         fields += previous_fields
     return fields
