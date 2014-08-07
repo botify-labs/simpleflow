@@ -32,12 +32,20 @@ class SitemapMetadata(object):
         self.valid_urls = None
         self.invalid_urls = None
 
-    def to_dict(self):
+    def to_dict(self, remove_technical_fields=False):
+        """Create a dict representation of the object
+        :param remove_technical_fields: a flag to decide whether technical
+                                        fields (such as the s3 location) will
+                                        figure in the json representation.
+        :type remove_technical_fields: bool
+        :returns: dict
+        """
         result = {
             "url": self.url,
-            "file_type": self.sitemap_type.name,
-            "s3_uri": self.s3_uri,
+            "file_type": self.sitemap_type.name
         }
+        if not remove_technical_fields:
+            result["s3_uri"] = self.s3_uri
 
         if self.sitemap_indexes is not None and len(self.sitemap_indexes) > 0:
             result["sitemap_indexes"] = self.sitemap_indexes
@@ -181,11 +189,15 @@ class Metadata(object):
         if not error.url in [e.url for e in self.errors]:
             self.errors.append(error)
 
-    def to_json(self):
+    def to_json(self, remove_technical_fields=False):
         """Return a json representation of the object
+        :param remove_technical_fields: a flag to decide whether technical
+                                        fields (such as the s3 location) will
+                                        figure in the json representation.
+        :type remove_technical_fields: bool
         :returns: str"""
         d = {
-            "sitemaps": [sitemap.to_dict() for sitemap in self.sitemaps],
+            "sitemaps": [sitemap.to_dict(remove_technical_fields) for sitemap in self.sitemaps],
             "sitemap_indexes": [sitemap_index.to_dict() for sitemap_index in self.sitemap_indexes],
             "errors": [e.to_dict() for e in self.errors],
             "sitemap_only": {

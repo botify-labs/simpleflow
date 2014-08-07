@@ -158,13 +158,14 @@ class TestMatchSitemapUrls(unittest.TestCase):
         self.assertEqual(['1\n', '3\n'],
                          list(stream_files("s3://app.foo.com/crawl_result/sitemap.txt.0.gz")))
 
+        #s3 uris are not there because the file will be exposed publicly
+        #so we remove the technical/internal fields.
         expected_sitemap_metadata = {
             "sitemaps": [
                 {
                     "url": "http://foo.com/sitemap_1.txt",
                     "file_type": "SITEMAP_TEXT",
                     "sitemap_indexes": ["http://foo.com/sitemap_index.xml"],
-                    "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_1.txt",
                     "valid_urls": 2,
                     "invalid_urls": 0
                 },
@@ -172,7 +173,6 @@ class TestMatchSitemapUrls(unittest.TestCase):
                     "url": "http://foo.com/sitemap_2.txt",
                     "file_type": "SITEMAP_TEXT",
                     "sitemap_indexes": ["http://foo.com/sitemap_index.xml"],
-                    "s3_uri": "s3://app.foo.com/crawl_result/sitemaps/sitemap_2.txt",
                     "valid_urls": 2,
                     "invalid_urls": 0
                 }
