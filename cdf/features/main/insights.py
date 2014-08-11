@@ -1,4 +1,5 @@
 from cdf.core.insights import Insight
+from cdf.query.predicate import Predicate
 
 
 def get_http_code_ranges_insights():
@@ -10,11 +11,11 @@ def get_http_code_ranges_insights():
             "code:{}".format(range_name),
             "{} Urls".format(range_name),
             {
-                "filters": {
-                    "field": "http_code",
-                    "predicate": "between",
-                    "value": [range_start, range_start + 99]
-                }
+                "filters": Predicate(
+                    "http_code",
+                    "between",
+                    [range_start, range_start + 99]
+                ).to_dict()
             }
         )
         result.append(insight)
@@ -25,11 +26,7 @@ def get_http_code_ranges_insights():
             "code:network_errors",
             "Network Errors",
             {
-                "filters": {
-                    "field": "http_code",
-                    "predicate": "lt",
-                    "value": 0
-                }
+                "filters": Predicate("http_code", "lt", 0).to_dict()
             }
         )
     )
@@ -45,11 +42,7 @@ def get_http_code_insights():
             "code:{}".format(code),
             "{} Urls".format(code),
             {
-                "filters": {
-                    "field": "http_code",
-                    "predicate": "eq",
-                    "value": code
-                }
+                "filters": Predicate("http_code", "eq", code).to_dict()
             }
         )
         result.append(insight)
@@ -64,22 +57,14 @@ def get_strategic_urls_insights():
 #            "strategic:1",
 #            "Strategic Urls",
 #            {
-#                "filters": {
-#                    "field": "strategic",
-#                    "predicate": "eq",
-#                    "value": True
-#                }
+#                "filters": Predicate("strategic", "eq", True).to_dict()
 #            }
 #        ),
 #        Insight(
 #            "strategic:0",
 #            "Non Strategic Urls",
 #            {
-#                "filters": {
-#                    "field": "strategic",
-#                    "predicate": "eq",
-#                    "value": False
-#                }
+#                "filters": Predicate("strategic", "eq", False).to_dict()
 #            }
 #        )
 #    ]
@@ -93,11 +78,7 @@ def get_content_type_insights():
             "content:{}".format(content_type),
             "{} Urls".format(content_type[len("text/"):].upper()),
             {
-                "filters": {
-                    "field": "content_type",
-                    "predicate": "eq",
-                    "value": content_type
-                }
+                "filters": Predicate("content_type", "eq", content_type).to_dict()
             }
         )
         result.append(insight)
@@ -111,10 +92,7 @@ def get_protocol_insights():
             "protocol:{}".format(protocol),
             "{} Urls".format(protocol.upper()),
             {
-                "filters": {
-                    "field": "protocol",
-                    "predicate": "eq",
-                    "value": protocol}
+                "filters": Predicate("protocol", "eq", protocol).to_dict()
             }
         )
         result.append(insight)
@@ -123,45 +101,34 @@ def get_protocol_insights():
 
 #speed insights
 def get_speed_insights():
+    field = "delay_last_byte"
     return [
         Insight(
             "speed:fast",
             "Fast Urls",
             {
-                "filters": {
-                    "field": "delay_last_byte",
-                    "value": 500,
-                    "predicate": "lt"}
+                "filters": Predicate(field, "lt", 500).to_dict()
             }
         ),
         Insight(
             "speed:medium",
             "Medium Urls",
             {
-                "filters": {
-                    "field": "delay_last_byte",
-                    "value": [500, 999],
-                    "predicate": "between"}
+                "filters": Predicate(field, "between", [500, 999]).to_dict()
             }
         ),
         Insight(
             "speed:slow",
             "Slow Urls",
             {
-                "filters": {
-                    "field": "delay_last_byte",
-                    "value": [1000, 1999],
-                    "predicate": "between"}
+                "filters": Predicate(field, "between", [1000, 1999]).to_dict()
             }
         ),
         Insight(
             "speed:slowest",
             "Slowest Urls",
             {
-                "filters":  {
-                    "field": "delay_last_byte",
-                    "value": 2000,
-                    "predicate": "gte"}
+                "filters":  Predicate(field, "gte", 2000).to_dict()
             }
         ),
     ]
@@ -170,6 +137,8 @@ def get_speed_insights():
 def get_strategic_urls_speed_insights():
     return []
     #FIXME uncomment when strategic urls have been implemented
+#    field = "delay_last_byte"
+#    strategic_predicate = Predicate("strategic", "eq", True)
 #    return [
 #        Insight(
 #            "speed:fast_strategic",
@@ -177,16 +146,8 @@ def get_strategic_urls_speed_insights():
 #            {
 #                "filters": {
 #                    "and": [
-#                        {
-#                            "field": "strategic",
-#                            "predicate": "eq",
-#                            "value": True
-#                        },
-#                        {
-#                            "field": "delay_last_byte",
-#                            "value": 500,
-#                            "predicate": "lt"
-#                        }
+#                        strategic_predicate.to_dict(),
+#                        Predicate(field, "lt", 500).to_dict()
 #                    ]
 #                }
 #            }
@@ -197,16 +158,8 @@ def get_strategic_urls_speed_insights():
 #            {
 #                "filters": {
 #                    "and": [
-#                        {
-#                            "field": "strategic",
-#                            "predicate": "eq",
-#                            "value": True
-#                        },
-#                        {
-#                            "field": "delay_last_byte",
-#                            "value": [500, 999],
-#                            "predicate": "between"
-#                        }
+#                        strategic_predicate.to_dict(),
+#                        Predicate(field, "between", [500, 999]).to_dict()
 #                    ]
 #                }
 #            }
@@ -217,16 +170,8 @@ def get_strategic_urls_speed_insights():
 #            {
 #                "filters": {
 #                    "and": [
-#                        {
-#                            "field": "strategic",
-#                            "predicate": "eq",
-#                            "value": True
-#                        },
-#                        {
-#                            "field": "delay_last_byte",
-#                            "value": [1000, 1999],
-#                            "predicate": "between"
-#                        }
+#                        strategic_predicate.to_dict(),
+#                        Predicate(field, "between", [1000, 1999])
 #                    ]
 #                }
 #            }
@@ -237,16 +182,8 @@ def get_strategic_urls_speed_insights():
 #            {
 #                "filters": {
 #                    "and": [
-#                        {
-#                            "field": "strategic",
-#                            "predicate": "eq",
-#                            "value": True
-#                        },
-#                        {
-#                            "field": "delay_last_byte",
-#                            "value": 2000,
-#                            "predicate": "gte"
-#                        }
+#                        strategic_predicate.to_dict(),
+#                        Predicate(field, "gte", 2000)
 #                    ]
 #                }
 #            }
@@ -256,16 +193,17 @@ def get_strategic_urls_speed_insights():
 
 #insights for domain/subdomains
 def get_domain_insights():
+    www_predicate = Predicate("host", "eq", "www")
     return [
         Insight(
             "domain:www",
             "Urls from www",
-            {"filters": {"field": "host", "predicate": "eq", "value": "www"}}
+            {"filters": www_predicate.to_dict()}
         ),
         Insight(
             "not www",
             "Urls from subdomains",
-            {"filters": {"not": {"field": "host", "predicate": "eq", "value": "www"}}}
+            {"filters": {"not": www_predicate.to_dict()}}
         )
     ]
 
