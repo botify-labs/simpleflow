@@ -152,7 +152,10 @@ def match_sitemap_urls(s3_uri,
     sitemap_metadata_filename = "sitemap_metadata.json"
     sitemap_metadata_filepath = os.path.join(tmp_dir, sitemap_metadata_filename)
     with open(sitemap_metadata_filepath, 'wb') as sitemap_metadata_file:
-        sitemap_metadata_file.write(download_metadata.to_json())
+        #this file will be exposed publicly, so we remove the technical fields
+        #(such as the s3 uris)
+        remove_technical_fields = True
+        sitemap_metadata_file.write(download_metadata.to_json(remove_technical_fields))
     s3.push_file(
         os.path.join(s3_uri, sitemap_metadata_filename),
         sitemap_metadata_filepath

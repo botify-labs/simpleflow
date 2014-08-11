@@ -1,23 +1,24 @@
 import json
 
 from cdf.features.sitemaps.document import (SiteMapType,
-                                           is_xml_sitemap,
-                                           is_sitemap_index,
-                                           is_rss_sitemap,
-                                           is_text_sitemap)
+                                            is_xml_sitemap,
+                                            is_sitemap_index,
+                                            is_rss_sitemap,
+                                            is_text_sitemap)
 
 
 class SitemapMetadata(object):
     """A class to represent sitemap in Metadata
     The class does not contain the document itself
     only basic reporting information about it"""
-    def __init__(self, url, sitemap_type, s3_uri, sitemap_indexes=None):
+    def __init__(self, url, sitemap_type, s3_uri=None, sitemap_indexes=None):
         """Constructor
         :param url: the sitemap url
         :type url: str
         :param sitemap_type: the type of the sitemap: xml, rss, txt
         :type sitemap_type: SiteMapType
-        :param s3_uri: the s3_uri where the sitemap is stored
+        :param s3_uri: the s3_uri where the sitemap is stored.
+                       if s3_uri does not exist or is unknown, use None.
         :type s3_uri: str
         :param sitemap_index: the url of the sitemap index that references the
                               sitemap (if any)
@@ -32,12 +33,20 @@ class SitemapMetadata(object):
         self.valid_urls = None
         self.invalid_urls = None
 
-    def to_dict(self):
+    def to_dict(self, remove_technical_fields=False):
+        """Create a dict representation of the object
+        :param remove_technical_fields: a flag to decide whether technical
+                                        fields (such as the s3 location) will
+                                        figure in the json representation.
+        :type remove_technical_fields: bool
+        :returns: dict
+        """
         result = {
             "url": self.url,
-            "file_type": self.sitemap_type.name,
-            "s3_uri": self.s3_uri,
+            "file_type": self.sitemap_type.name
         }
+        if not remove_technical_fields:
+            result["s3_uri"] = self.s3_uri
 
         if self.sitemap_indexes is not None and len(self.sitemap_indexes) > 0:
             result["sitemap_indexes"] = self.sitemap_indexes
@@ -181,11 +190,15 @@ class Metadata(object):
         if not error.url in [e.url for e in self.errors]:
             self.errors.append(error)
 
-    def to_json(self):
+    def to_json(self, remove_technical_fields=False):
         """Return a json representation of the object
+        :param remove_technical_fields: a flag to decide whether technical
+                                        fields (such as the s3 location) will
+                                        figure in the json representation.
+        :type remove_technical_fields: bool
         :returns: str"""
         d = {
-            "sitemaps": [sitemap.to_dict() for sitemap in self.sitemaps],
+            "sitemaps": [sitemap.to_dict(remove_technical_fields) for sitemap in self.sitemaps],
             "sitemap_indexes": [sitemap_index.to_dict() for sitemap_index in self.sitemap_indexes],
             "errors": [e.to_dict() for e in self.errors],
             "sitemap_only": {
@@ -217,8 +230,9 @@ class Metadata(object):
 
 def parse_sitemap_metadata(input_dict):
     result = SitemapMetadata(input_dict["url"],
-                             SiteMapType[input_dict["file_type"]],
-                             input_dict["s3_uri"])
+                             SiteMapType[input_dict["file_type"]])
+    if "s3_uri" in input_dict:
+        result.s3_uri = input_dict["s3_uri"]
     if "sitemap_indexes" in input_dict:
         result.sitemap_indexes = input_dict["sitemap_indexes"]
     if "valid_urls" in input_dict:

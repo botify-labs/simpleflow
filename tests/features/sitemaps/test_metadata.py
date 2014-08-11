@@ -1,11 +1,11 @@
 import unittest
 import json
 from cdf.features.sitemaps.metadata import (Metadata,
-                                           SitemapMetadata,
-                                           SitemapIndexMetadata,
-                                           Error,
-                                           parse_sitemap_metadata,
-                                           parse_sitemap_index_metadata)
+                                            SitemapMetadata,
+                                            SitemapIndexMetadata,
+                                            Error,
+                                            parse_sitemap_metadata,
+                                            parse_sitemap_index_metadata)
 from cdf.features.sitemaps.document import SiteMapType
 
 
@@ -65,6 +65,21 @@ class TestSitemapMetadata(unittest.TestCase):
         }
 
         self.assertEqual(expected_result, sitemap_metadata.to_dict())
+
+    def test_to_dict_remove_technical_fields(self):
+        sitemap_metadata = SitemapMetadata(self.url,
+                                           self.sitemap_type,
+                                           self.s3_uri,
+                                           [self.sitemap_index])
+
+        expected_result = {
+            "url": self.url,
+            "file_type": "SITEMAP_XML",
+            "sitemap_indexes": [self.sitemap_index]
+        }
+
+        self.assertEqual(expected_result, sitemap_metadata.to_dict(True))
+
 
     def test_to_dict_valid_invalid_urls(self):
         sitemap_metadata = SitemapMetadata(self.url,
@@ -195,6 +210,36 @@ class TestMetadata(unittest.TestCase):
         )
         self.assertEqual(expected_result, metadata.errors)
 
+    def test_to_json_remove_technical_fields(self):
+        download_status = Metadata(
+            [SitemapMetadata("http://foo/sitemap_1.xml",
+                             self.sitemap_type,
+                             "s3://foo/sitemap_1.xml",
+                             [self.sitemap_index])]
+        )
+
+        actual_result = download_status.to_json(True)
+
+        expected_result = {
+            "sitemaps": [
+                {
+                    "url": "http://foo/sitemap_1.xml",
+                    "file_type": "SITEMAP_XML",
+                    "sitemap_indexes": ["http://foo/sitemap_index.xml"]
+                }
+            ],
+            "sitemap_indexes": [],
+            "errors": [],
+            "sitemap_only":
+            {
+                "in_configuration": 0,
+                "out_of_configuration": 0
+            }
+        }
+        #compare the objects instead of the json representation
+        #to be insensitive to item ordering
+        self.assertEqual(expected_result["sitemap_indexes"], json.loads(actual_result)["sitemap_indexes"])
+        self.assertEqual(expected_result, json.loads(actual_result))
 
     def test_to_json(self):
         download_status = Metadata(
@@ -249,7 +294,6 @@ class TestMetadata(unittest.TestCase):
         #to be insensitive to item ordering
         self.assertEqual(expected_result["sitemap_indexes"], json.loads(actual_result)["sitemap_indexes"])
         self.assertEqual(expected_result, json.loads(actual_result))
-
     def test_to_json_no_sitemap(self):
         download_status = Metadata(
             [SitemapMetadata("http://foo/sitemap_1.xml",
@@ -325,9 +369,19 @@ class TestParseSitemapMetadata(unittest.TestCase):
         input_dict = {
             "url": self.url,
             "file_type": self.sitemap_type_string,
+        }
+        expected_result = SitemapMetadata(self.url, self.sitemap_type)
+        self.assertEqual(expected_result, parse_sitemap_metadata(input_dict))
+
+    def test_s3_uri_case(self):
+        input_dict = {
+            "url": self.url,
+            "file_type": self.sitemap_type_string,
             "s3_uri": self.s3_uri
         }
-        expected_result = SitemapMetadata(self.url, self.sitemap_type, self.s3_uri)
+        expected_result = SitemapMetadata(self.url,
+                                          self.sitemap_type,
+                                          self.s3_uri)
         self.assertEqual(expected_result, parse_sitemap_metadata(input_dict))
 
     def test_to_dict_valid_invalid_urls(self):
