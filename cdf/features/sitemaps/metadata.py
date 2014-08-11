@@ -1,23 +1,24 @@
 import json
 
 from cdf.features.sitemaps.document import (SiteMapType,
-                                           is_xml_sitemap,
-                                           is_sitemap_index,
-                                           is_rss_sitemap,
-                                           is_text_sitemap)
+                                            is_xml_sitemap,
+                                            is_sitemap_index,
+                                            is_rss_sitemap,
+                                            is_text_sitemap)
 
 
 class SitemapMetadata(object):
     """A class to represent sitemap in Metadata
     The class does not contain the document itself
     only basic reporting information about it"""
-    def __init__(self, url, sitemap_type, s3_uri, sitemap_indexes=None):
+    def __init__(self, url, sitemap_type, s3_uri=None, sitemap_indexes=None):
         """Constructor
         :param url: the sitemap url
         :type url: str
         :param sitemap_type: the type of the sitemap: xml, rss, txt
         :type sitemap_type: SiteMapType
-        :param s3_uri: the s3_uri where the sitemap is stored
+        :param s3_uri: the s3_uri where the sitemap is stored.
+                       if s3_uri does not exist or is unknown, use None.
         :type s3_uri: str
         :param sitemap_index: the url of the sitemap index that references the
                               sitemap (if any)
@@ -229,8 +230,9 @@ class Metadata(object):
 
 def parse_sitemap_metadata(input_dict):
     result = SitemapMetadata(input_dict["url"],
-                             SiteMapType[input_dict["file_type"]],
-                             input_dict["s3_uri"])
+                             SiteMapType[input_dict["file_type"]])
+    if "s3_uri" in input_dict:
+        result.s3_uri = input_dict["s3_uri"]
     if "sitemap_indexes" in input_dict:
         result.sitemap_indexes = input_dict["sitemap_indexes"]
     if "valid_urls" in input_dict:

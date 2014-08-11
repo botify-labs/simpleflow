@@ -1,11 +1,11 @@
 import unittest
 import json
 from cdf.features.sitemaps.metadata import (Metadata,
-                                           SitemapMetadata,
-                                           SitemapIndexMetadata,
-                                           Error,
-                                           parse_sitemap_metadata,
-                                           parse_sitemap_index_metadata)
+                                            SitemapMetadata,
+                                            SitemapIndexMetadata,
+                                            Error,
+                                            parse_sitemap_metadata,
+                                            parse_sitemap_index_metadata)
 from cdf.features.sitemaps.document import SiteMapType
 
 
@@ -369,9 +369,19 @@ class TestParseSitemapMetadata(unittest.TestCase):
         input_dict = {
             "url": self.url,
             "file_type": self.sitemap_type_string,
+        }
+        expected_result = SitemapMetadata(self.url, self.sitemap_type)
+        self.assertEqual(expected_result, parse_sitemap_metadata(input_dict))
+
+    def test_s3_uri_case(self):
+        input_dict = {
+            "url": self.url,
+            "file_type": self.sitemap_type_string,
             "s3_uri": self.s3_uri
         }
-        expected_result = SitemapMetadata(self.url, self.sitemap_type, self.s3_uri)
+        expected_result = SitemapMetadata(self.url,
+                                          self.sitemap_type,
+                                          self.s3_uri)
         self.assertEqual(expected_result, parse_sitemap_metadata(input_dict))
 
     def test_to_dict_valid_invalid_urls(self):
