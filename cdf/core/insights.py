@@ -16,3 +16,6 @@ class Insight(object):
         self.identifier = identifier
         self.title = title
         self.es_query = es_query
+
+    def __repr__(self):
+        return "{}: {}".format(self.identifier, self.es_query)
