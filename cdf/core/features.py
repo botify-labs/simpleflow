@@ -1,6 +1,7 @@
 import inspect
 from importlib import import_module
 
+from cdf.log import logger
 import cdf.features
 from cdf.core.streams.base import StreamDefBase
 
@@ -72,3 +73,28 @@ class Feature(object):
             if hasattr(s, 'process_document'):
                 obj.append(s)
         return obj
+
+    def get_insights(self):
+        """Return the list of insights associated with the feature.
+        The insights of feature x are expected to be stored in
+        cdf.features.x.insights.insights
+        If such a list does not exist, the method returns an empty list.
+        :returns: list
+        """
+        insights_module_name = '.'.join(
+            [cdf.features.__name__, self.identifier, 'insights']
+        )
+        try:
+            insights_module = import_module(insights_module_name)
+        except ImportError:
+            logger.warning("Could not find insights for feature '%s'. Does '%s' exists?",
+                           self.identifier,
+                           insights_module_name)
+            return []
+
+        if hasattr(insights_module, "insights"):
+            return insights_module.insights
+        else:
+            logger.warning("Could not find an element named insights in '%s'.",
+                           insights_module_name)
+            return []
