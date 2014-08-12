@@ -44,6 +44,9 @@ class Filter(object):
             "value": self.value
         }
 
+    def __repr__(self):
+        return repr(self.to_dict())
+
 
 class EqFilter(Filter):
     """An filter for "eq" predicate"""
