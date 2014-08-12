@@ -1,5 +1,5 @@
 from cdf.core.insights import Insight
-from cdf.query.filter import Filter
+from cdf.query.filter import EqFilter, LtFilter, GteFilter, BetweenFilter
 
 
 def get_http_code_ranges_insights():
@@ -11,9 +11,8 @@ def get_http_code_ranges_insights():
             "code:{}".format(range_name),
             "{} Urls".format(range_name),
             {
-                "filters": Filter(
+                "filters": BetweenFilter(
                     "http_code",
-                    "between",
                     [range_start, range_start + 99]
                 ).to_dict()
             }
@@ -26,7 +25,7 @@ def get_http_code_ranges_insights():
             "code:network_errors",
             "Network Errors",
             {
-                "filters": Filter("http_code", "lt", 0).to_dict()
+                "filters": LtFilter("http_code", 0).to_dict()
             }
         )
     )
@@ -42,7 +41,7 @@ def get_http_code_insights():
             "code:{}".format(code),
             "{} Urls".format(code),
             {
-                "filters": Filter("http_code", "eq", code).to_dict()
+                "filters": EqFilter("http_code", code).to_dict()
             }
         )
         result.append(insight)
@@ -57,14 +56,14 @@ def get_strategic_urls_insights():
 #            "strategic:1",
 #            "Strategic Urls",
 #            {
-#                "filters": Filter("strategic", "eq", True).to_dict()
+#                "filters": EqFilter("strategic", True).to_dict()
 #            }
 #        ),
 #        Insight(
 #            "strategic:0",
 #            "Non Strategic Urls",
 #            {
-#                "filters": Filter("strategic", "eq", False).to_dict()
+#                "filters": EqFilter("strategic", False).to_dict()
 #            }
 #        )
 #    ]
@@ -78,7 +77,7 @@ def get_content_type_insights():
             "content:{}".format(content_type),
             "{} Urls".format(content_type[len("text/"):].upper()),
             {
-                "filters": Filter("content_type", "eq", content_type).to_dict()
+                "filters": EqFilter("content_type", content_type).to_dict()
             }
         )
         result.append(insight)
@@ -92,7 +91,7 @@ def get_protocol_insights():
             "protocol:{}".format(protocol),
             "{} Urls".format(protocol.upper()),
             {
-                "filters": Filter("protocol", "eq", protocol).to_dict()
+                "filters": EqFilter("protocol", protocol).to_dict()
             }
         )
         result.append(insight)
@@ -107,28 +106,28 @@ def get_speed_insights():
             "speed:fast",
             "Fast Urls",
             {
-                "filters": Filter(field, "lt", 500).to_dict()
+                "filters": LtFilter(field, 500).to_dict()
             }
         ),
         Insight(
             "speed:medium",
             "Medium Urls",
             {
-                "filters": Filter(field, "between", [500, 999]).to_dict()
+                "filters": BetweenFilter(field, [500, 999]).to_dict()
             }
         ),
         Insight(
             "speed:slow",
             "Slow Urls",
             {
-                "filters": Filter(field, "between", [1000, 1999]).to_dict()
+                "filters": BetweenFilter(field, [1000, 1999]).to_dict()
             }
         ),
         Insight(
             "speed:slowest",
             "Slowest Urls",
             {
-                "filters":  Filter(field, "gte", 2000).to_dict()
+                "filters":  GteFilter(field, 2000).to_dict()
             }
         ),
     ]
@@ -138,7 +137,7 @@ def get_strategic_urls_speed_insights():
     return []
     #FIXME uncomment when strategic urls have been implemented
 #    field = "delay_last_byte"
-#    strategic_predicate = Filter("strategic", "eq", True)
+#    strategic_predicate = EqFilter("strategic", True)
 #    return [
 #        Insight(
 #            "speed:fast_strategic",
@@ -147,7 +146,7 @@ def get_strategic_urls_speed_insights():
 #                "filters": {
 #                    "and": [
 #                        strategic_predicate.to_dict(),
-#                        Filter(field, "lt", 500).to_dict()
+#                        LtFilter(field, 500).to_dict()
 #                    ]
 #                }
 #            }
@@ -159,7 +158,7 @@ def get_strategic_urls_speed_insights():
 #                "filters": {
 #                    "and": [
 #                        strategic_predicate.to_dict(),
-#                        Filter(field, "between", [500, 999]).to_dict()
+#                        BetweenFilter(field, [500, 999]).to_dict()
 #                    ]
 #                }
 #            }
@@ -171,7 +170,7 @@ def get_strategic_urls_speed_insights():
 #                "filters": {
 #                    "and": [
 #                        strategic_predicate.to_dict(),
-#                        Filter(field, "between", [1000, 1999])
+#                        BetweenFilter(field, [1000, 1999])
 #                    ]
 #                }
 #            }
@@ -183,7 +182,7 @@ def get_strategic_urls_speed_insights():
 #                "filters": {
 #                    "and": [
 #                        strategic_predicate.to_dict(),
-#                        Filter(field, "gte", 2000)
+#                        GteFilter(field, 2000)
 #                    ]
 #                }
 #            }
@@ -193,7 +192,7 @@ def get_strategic_urls_speed_insights():
 
 #insights for domain/subdomains
 def get_domain_insights():
-    www_predicate = Filter("host", "eq", "www")
+    www_predicate = EqFilter("host", "www")
     return [
         Insight(
             "domain:www",

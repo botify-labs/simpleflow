@@ -43,3 +43,40 @@ class Filter(object):
             "predicate": self.predicate,
             "value": self.value
         }
+
+
+class EqFilter(Filter):
+    """An filter for "eq" predicate"""
+    def __init__(self, field, value):
+        super(self.__class__, self).__init__(field, "eq", value)
+
+
+class LtFilter(Filter):
+    """A filter for "less than" predicate"""
+    def __init__(self, field, value):
+        super(self.__class__, self).__init__(field, "lt", value)
+
+
+class LteFilter(Filter):
+    """A filter for "less than or equal" predicate"""
+    def __init__(self, field, value):
+        super(self.__class__, self).__init__(field, "lte", value)
+
+
+class GtFilter(Filter):
+    """A filter for "greater than" predicate"""
+    def __init__(self, field, value):
+        super(self.__class__, self).__init__(field, "gt", value)
+
+
+class GteFilter(Filter):
+    """A filter for "greater than or equal" predicate"""
+    def __init__(self, field, value):
+        super(self.__class__, self).__init__(field, "gte", value)
+
+
+class BetweenFilter(Filter):
+    """An filter for "between" predicate"""
+    def __init__(self, field, value):
+        super(self.__class__, self).__init__(field, "between", value)
+
