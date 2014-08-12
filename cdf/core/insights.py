@@ -5,28 +5,28 @@ class Insight(object):
     Each insight has a corresponding elasticsearch query that is used to
     compute its value
     """
-    def __init__(self, identifier, title, filters=None, aggs=None):
+    def __init__(self, identifier, title, input_filter=None, aggs=None):
         """Constructor
         :param identifier: the insight identifier (short)
         :type identifier: str
         :param title: the insight title (displayed on the report)
-        :param filters: the filters to apply for the elastic search query
-        :type filters: dict
+        :param input_filter: the filter to apply for the elastic search query
+        :type input_filter: Filter
         :param aggs: the aggregations to compute for the elastic search query.
                      If None, use a simple count
         :type aggs: dict
         """
         self.identifier = identifier
         self.title = title
-        self.filters = filters
+        self.filter = input_filter
         self.aggs = aggs or [{'metrics': ["count"]}]
 
     @property
     def es_query(self):
         """Return the elasticsearch query corresponding to the insight"""
         result = {}
-        if self.filters is not None:
-            result["filters"] = self.filters
+        if self.filter is not None:
+            result["filters"] = self.filter.to_dict()
         if self.aggs is not None:
             result["aggs"] = self.aggs
         return result

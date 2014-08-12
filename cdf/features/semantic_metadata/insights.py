@@ -18,7 +18,7 @@ def get_metadata_insights(metadata):
         Insight(
             identifier,
             name,
-            EqFilter(field, 0).to_dict()
+            EqFilter(field, 0)
         )
     )
 
@@ -30,7 +30,7 @@ def get_metadata_insights(metadata):
         Insight(
             identifier,
             name,
-            EqFilter(field, 0).to_dict()
+            EqFilter(field, 0)
         )
     )
 
@@ -42,7 +42,7 @@ def get_metadata_insights(metadata):
         Insight(
             identifier,
             name,
-            GtFilter(field, 0).to_dict()
+            GtFilter(field, 0)
         )
     )
 

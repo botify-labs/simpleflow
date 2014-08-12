@@ -14,7 +14,7 @@ def get_http_code_ranges_insights():
         insight = Insight(
             "code:{}".format(range_name),
             "{} Urls".format(range_name),
-            BetweenFilter("http_code", [range_start, range_start + 99]).to_dict()
+            BetweenFilter("http_code", [range_start, range_start + 99])
         )
         result.append(insight)
 
@@ -23,7 +23,7 @@ def get_http_code_ranges_insights():
         Insight(
             "code:network_errors",
             "Network Errors",
-            LtFilter("http_code", 0).to_dict()
+            LtFilter("http_code", 0)
         )
     )
 
@@ -37,7 +37,7 @@ def get_http_code_insights():
         insight = Insight(
             "code:{}".format(code),
             "{} Urls".format(code),
-            EqFilter("http_code", code).to_dict()
+            EqFilter("http_code", code)
         )
         result.append(insight)
     return result
@@ -50,12 +50,12 @@ def get_strategic_urls_insights():
 #        Insight(
 #            "strategic:1",
 #            "Strategic Urls",
-#            EqFilter("strategic", True).to_dict()
+#            EqFilter("strategic", True)
 #        ),
 #        Insight(
 #            "strategic:0",
 #            "Non Strategic Urls",
-#            EqFilter("strategic", False).to_dict()
+#            EqFilter("strategic", False)
 #        )
 #    ]
 
@@ -67,7 +67,7 @@ def get_content_type_insights():
         insight = Insight(
             "content:{}".format(content_type),
             "{} Urls".format(content_type[len("text/"):].upper()),
-            EqFilter("content_type", content_type).to_dict()
+            EqFilter("content_type", content_type)
         )
         result.append(insight)
     return result
@@ -79,7 +79,7 @@ def get_protocol_insights():
         insight = Insight(
             "protocol:{}".format(protocol),
             "{} Urls".format(protocol.upper()),
-            EqFilter("protocol", protocol).to_dict()
+            EqFilter("protocol", protocol)
         )
         result.append(insight)
     return result
@@ -92,22 +92,22 @@ def get_speed_insights():
         Insight(
             "speed:fast",
             "Fast Urls",
-            LtFilter(field, 500).to_dict()
+            LtFilter(field, 500)
         ),
         Insight(
             "speed:medium",
             "Medium Urls",
-            BetweenFilter(field, [500, 999]).to_dict()
+            BetweenFilter(field, [500, 999])
         ),
         Insight(
             "speed:slow",
             "Slow Urls",
-            BetweenFilter(field, [1000, 1999]).to_dict()
+            BetweenFilter(field, [1000, 1999])
         ),
         Insight(
             "speed:slowest",
             "Slowest Urls",
-            GteFilter(field, 2000).to_dict()
+            GteFilter(field, 2000)
         ),
     ]
 
@@ -126,37 +126,37 @@ def get_strategic_urls_speed_insights():
 #                    strategic_predicate,
 #                    LtFilter(field, 500)
 #                ]
-#            ).to_dict()
+#            )
 #        ),
 #        Insight(
 #            "speed:medium_strategic",
 #            "Medium Strategic Urls",
 #            AndFilter(
 #                [
-#                    strategic_predicate.to_dict(),
-#                    BetweenFilter(field, [500, 999]).to_dict()
+#                    strategic_predicate,
+#                    BetweenFilter(field, [500, 999])
 #                ]
-#            ).to_dict()
+#            )
 #        ),
 #        Insight(
 #            "speed:slow_strategic",
 #            "Slow Strategic Urls",
 #            AndFilter(
 #                [
-#                    strategic_predicate.to_dict(),
-#                    BetweenFilter(field, [1000, 1999]).to_dict()
+#                    strategic_predicate,
+#                    BetweenFilter(field, [1000, 1999])
 #                ]
-#            ).to_dict()
+#            )
 #        ),
 #        Insight(
 #            "speed:slowest_strategic",
 #            "Slowest Strategic Urls",
 #            AndFilter(
 #                [
-#                    strategic_predicate.to_dict(),
-#                    GteFilter(field, 2000).to_dict()
+#                    strategic_predicate,
+#                    GteFilter(field, 2000)
 #                ]
-#            ).to_dict()
+#            )
 #        ),
 #    ]
 
@@ -168,12 +168,12 @@ def get_domain_insights():
         Insight(
             "domain:www",
             "Urls from www",
-            www_predicate.to_dict()
+            www_predicate
         ),
         Insight(
             "not www",
             "Urls from subdomains",
-            NotFilter(www_predicate.to_dict())
+            NotFilter(www_predicate)
         )
     ]
 
