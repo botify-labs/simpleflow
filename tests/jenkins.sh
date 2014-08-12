@@ -19,19 +19,13 @@ if [ $PIP = "pip-accel" ]; then
     pip install pip-accel
 fi
 
-#install runtime dependencies
-for REQUIREMENT in $(cat packaging/python.deps)
+#install runtime and test dependencies
+for REQUIREMENT in $(cat packaging/python.deps packaging/python_test.deps)
 do
     $PIP install --timeout 180 $REQUIREMENT
 done
 
 $PIP install python-google-analytics
-
-$PIP install nose
-$PIP install coverage
-$PIP install mock
-$PIP install httpretty==0.7.0
-$PIP install moto
 
 python setup.py install
 #ignore integration tests
