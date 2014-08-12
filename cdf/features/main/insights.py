@@ -1,5 +1,5 @@
 from cdf.core.insights import Insight
-from cdf.query.predicate import Predicate
+from cdf.query.filter import Predicate
 
 
 def get_http_code_ranges_insights():
