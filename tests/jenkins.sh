@@ -19,8 +19,8 @@ if [ $PIP = "pip-accel" ]; then
     pip install pip-accel
 fi
 
-#install dependencies
-for REQUIREMENT in $(cat pip_requirements.txt)
+#install runtime dependencies
+for REQUIREMENT in $(cat packaging/python.deps)
 do
     $PIP install --timeout 180 $REQUIREMENT
 done
