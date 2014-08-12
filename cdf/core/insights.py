@@ -27,8 +27,8 @@ class Insight(object):
         result = {}
         if self.filter is not None:
             result["filters"] = self.filter.to_dict()
-        if self.aggs is not None:
-            result["aggs"] = self.aggs
+        #self.aggs is alway set (see constructor)
+        result["aggs"] = self.aggs
         return result
 
     def __repr__(self):
