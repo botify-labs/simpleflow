@@ -1,5 +1,9 @@
 from cdf.core.insights import Insight
-from cdf.query.filter import EqFilter, LtFilter, GteFilter, BetweenFilter
+from cdf.query.filter import (EqFilter,
+                              LtFilter,
+                              GteFilter,
+                              BetweenFilter,
+                              NotFilter)
 
 
 def get_http_code_ranges_insights():
@@ -117,42 +121,42 @@ def get_strategic_urls_speed_insights():
 #        Insight(
 #            "speed:fast_strategic",
 #            "Fast Strategic Urls",
-#            {
-#                "and": [
-#                    strategic_predicate.to_dict(),
-#                    LtFilter(field, 500).to_dict()
+#            AndFilter(
+#                [
+#                    strategic_predicate,
+#                    LtFilter(field, 500)
 #                ]
-#            }
+#            ).to_dict()
 #        ),
 #        Insight(
 #            "speed:medium_strategic",
 #            "Medium Strategic Urls",
-#            {
-#                "and": [
+#            AndFilter(
+#                [
 #                    strategic_predicate.to_dict(),
 #                    BetweenFilter(field, [500, 999]).to_dict()
 #                ]
-#            }
+#            ).to_dict()
 #        ),
 #        Insight(
 #            "speed:slow_strategic",
 #            "Slow Strategic Urls",
-#            {
-#                "and": [
+#            AndFilter(
+#                [
 #                    strategic_predicate.to_dict(),
 #                    BetweenFilter(field, [1000, 1999]).to_dict()
 #                ]
-#            }
+#            ).to_dict()
 #        ),
 #        Insight(
 #            "speed:slowest_strategic",
 #            "Slowest Strategic Urls",
-#            {
-#                "and": [
+#            AndFilter(
+#                [
 #                    strategic_predicate.to_dict(),
 #                    GteFilter(field, 2000).to_dict()
 #                ]
-#            }
+#            ).to_dict()
 #        ),
 #    ]
 
@@ -169,7 +173,7 @@ def get_domain_insights():
         Insight(
             "not www",
             "Urls from subdomains",
-            {"not": www_predicate.to_dict()}
+            NotFilter(www_predicate.to_dict())
         )
     ]
 
