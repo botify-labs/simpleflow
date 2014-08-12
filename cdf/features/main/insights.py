@@ -4,6 +4,7 @@ from cdf.query.filter import (EqFilter,
                               GteFilter,
                               BetweenFilter,
                               NotFilter)
+from cdf.query.aggregation import AvgAggregation
 
 
 def get_http_code_ranges_insights():
@@ -184,13 +185,7 @@ def get_average_speed_insights():
         Insight(
             "speed:avg",
             "Average Load time (in ms)",
-            aggs=[
-                    {
-                        'metrics': [
-                            {"avg": field}
-                        ]
-                    }
-                ]
+            metric_agg=AvgAggregation(field)
         )
     ]
     #TODO"speed:strategic_avg", "Average Load time on strategic urls (in ms)", {"field": "strategic", "value": true}),
@@ -202,13 +197,7 @@ def get_average_depth_insights():
         Insight(
             "depth:avg",
             "Average Depth",
-            aggs=[
-                    {
-                        'metrics': [
-                            {"avg": field}
-                        ]
-                    }
-                ]
+            metric_agg=AvgAggregation(field)
         )
     ]
     #TODO"depth:strategic_avg", "Average Depth on strategic urls", {"field": "strategic", "value": true}),

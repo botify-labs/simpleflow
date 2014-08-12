@@ -2,6 +2,7 @@ import unittest
 
 from cdf.core.insights import Insight
 from cdf.query.filter import EqFilter
+from cdf.query.aggregation import MaxAggregation
 
 
 class TestInsight(unittest.TestCase):
@@ -9,13 +10,13 @@ class TestInsight(unittest.TestCase):
         self.identifier = "foo"
         self.title = "Foo"
         self.eq_filter = EqFilter("bar", 5)
-        self.aggs = [{"metrics": [{"max": "depth"}]}]
+        self.max_agg = MaxAggregation("depth")
 
     def test_es_query_nominal_case(self):
         insight = Insight(self.identifier,
                           self.title,
                           self.eq_filter,
-                          self.aggs)
+                          self.max_agg)
         expected_es_query = {
             "filters": {
                 "field": "bar",
@@ -39,7 +40,7 @@ class TestInsight(unittest.TestCase):
                 "value": 5
             },
             "aggs": [
-                {"metrics": ["count"]}
+                {"metrics": [{"count": "url"}]}
             ]
         }
         self.assertEqual(expected_es_query, insight.es_query)
@@ -47,7 +48,7 @@ class TestInsight(unittest.TestCase):
     def test_es_query_no_filter(self):
         insight = Insight(self.identifier,
                           self.title,
-                          aggs=self.aggs)
+                          metric_agg=self.max_agg)
         expected_es_query = {
             "aggs": [
                 {"metrics": [{"max": "depth"}]}
@@ -58,6 +59,6 @@ class TestInsight(unittest.TestCase):
     def test_repr(self):
         insight = Insight(self.identifier, self.title)
         self.assertEqual(
-            "foo: {'aggs': [{'metrics': ['count']}]}",
+            "foo: {'aggs': [{'metrics': [{'count': 'url'}]}]}",
             repr(insight)
         )

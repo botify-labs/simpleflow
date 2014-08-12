@@ -1,3 +1,5 @@
+from cdf.query.aggregation import CountAggregation
+
 class Insight(object):
     """A class to represent an insight
     An insight is a number that will be displayed on the report.
@@ -5,21 +7,21 @@ class Insight(object):
     Each insight has a corresponding elasticsearch query that is used to
     compute its value
     """
-    def __init__(self, identifier, title, input_filter=None, aggs=None):
+    def __init__(self, identifier, title, input_filter=None, metric_agg=None):
         """Constructor
         :param identifier: the insight identifier (short)
         :type identifier: str
         :param title: the insight title (displayed on the report)
         :param input_filter: the filter to apply for the elastic search query
         :type input_filter: Filter
-        :param aggs: the aggregations to compute for the elastic search query.
-                     If None, use a simple count
-        :type aggs: dict
+        :param metric_agg: the aggregation to compute for the elastic search query.
+                           If None, use a simple count on the urls
+        :type metric_agg: MetricAggregation
         """
         self.identifier = identifier
         self.title = title
         self.filter = input_filter
-        self.aggs = aggs or [{'metrics': ["count"]}]
+        self.metric_agg = metric_agg or CountAggregation("url")
 
     @property
     def es_query(self):
@@ -28,7 +30,7 @@ class Insight(object):
         if self.filter is not None:
             result["filters"] = self.filter.to_dict()
         #self.aggs is alway set (see constructor)
-        result["aggs"] = self.aggs
+        result["aggs"] = [{'metrics': [self.metric_agg.to_dict()]}]
         return result
 
     def __repr__(self):
