@@ -1,4 +1,5 @@
 mock
 nose
+coverage
 httpretty==0.7.0
 moto
