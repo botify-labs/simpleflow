@@ -10,12 +10,7 @@ def get_http_code_ranges_insights():
         insight = Insight(
             "code:{}".format(range_name),
             "{} Urls".format(range_name),
-            {
-                "filters": BetweenFilter(
-                    "http_code",
-                    [range_start, range_start + 99]
-                ).to_dict()
-            }
+            BetweenFilter("http_code", [range_start, range_start + 99]).to_dict()
         )
         result.append(insight)
 
@@ -24,9 +19,7 @@ def get_http_code_ranges_insights():
         Insight(
             "code:network_errors",
             "Network Errors",
-            {
-                "filters": LtFilter("http_code", 0).to_dict()
-            }
+            LtFilter("http_code", 0).to_dict()
         )
     )
 
@@ -40,9 +33,7 @@ def get_http_code_insights():
         insight = Insight(
             "code:{}".format(code),
             "{} Urls".format(code),
-            {
-                "filters": EqFilter("http_code", code).to_dict()
-            }
+            EqFilter("http_code", code).to_dict()
         )
         result.append(insight)
     return result
@@ -55,16 +46,12 @@ def get_strategic_urls_insights():
 #        Insight(
 #            "strategic:1",
 #            "Strategic Urls",
-#            {
-#                "filters": EqFilter("strategic", True).to_dict()
-#            }
+#            EqFilter("strategic", True).to_dict()
 #        ),
 #        Insight(
 #            "strategic:0",
 #            "Non Strategic Urls",
-#            {
-#                "filters": EqFilter("strategic", False).to_dict()
-#            }
+#            EqFilter("strategic", False).to_dict()
 #        )
 #    ]
 
@@ -76,9 +63,7 @@ def get_content_type_insights():
         insight = Insight(
             "content:{}".format(content_type),
             "{} Urls".format(content_type[len("text/"):].upper()),
-            {
-                "filters": EqFilter("content_type", content_type).to_dict()
-            }
+            EqFilter("content_type", content_type).to_dict()
         )
         result.append(insight)
     return result
@@ -90,9 +75,7 @@ def get_protocol_insights():
         insight = Insight(
             "protocol:{}".format(protocol),
             "{} Urls".format(protocol.upper()),
-            {
-                "filters": EqFilter("protocol", protocol).to_dict()
-            }
+            EqFilter("protocol", protocol).to_dict()
         )
         result.append(insight)
     return result
@@ -105,30 +88,22 @@ def get_speed_insights():
         Insight(
             "speed:fast",
             "Fast Urls",
-            {
-                "filters": LtFilter(field, 500).to_dict()
-            }
+            LtFilter(field, 500).to_dict()
         ),
         Insight(
             "speed:medium",
             "Medium Urls",
-            {
-                "filters": BetweenFilter(field, [500, 999]).to_dict()
-            }
+            BetweenFilter(field, [500, 999]).to_dict()
         ),
         Insight(
             "speed:slow",
             "Slow Urls",
-            {
-                "filters": BetweenFilter(field, [1000, 1999]).to_dict()
-            }
+            BetweenFilter(field, [1000, 1999]).to_dict()
         ),
         Insight(
             "speed:slowest",
             "Slowest Urls",
-            {
-                "filters":  GteFilter(field, 2000).to_dict()
-            }
+            GteFilter(field, 2000).to_dict()
         ),
     ]
 
@@ -143,48 +118,40 @@ def get_strategic_urls_speed_insights():
 #            "speed:fast_strategic",
 #            "Fast Strategic Urls",
 #            {
-#                "filters": {
-#                    "and": [
-#                        strategic_predicate.to_dict(),
-#                        LtFilter(field, 500).to_dict()
-#                    ]
-#                }
+#                "and": [
+#                    strategic_predicate.to_dict(),
+#                    LtFilter(field, 500).to_dict()
+#                ]
 #            }
 #        ),
 #        Insight(
 #            "speed:medium_strategic",
 #            "Medium Strategic Urls",
 #            {
-#                "filters": {
-#                    "and": [
-#                        strategic_predicate.to_dict(),
-#                        BetweenFilter(field, [500, 999]).to_dict()
-#                    ]
-#                }
+#                "and": [
+#                    strategic_predicate.to_dict(),
+#                    BetweenFilter(field, [500, 999]).to_dict()
+#                ]
 #            }
 #        ),
 #        Insight(
 #            "speed:slow_strategic",
 #            "Slow Strategic Urls",
 #            {
-#                "filters": {
-#                    "and": [
-#                        strategic_predicate.to_dict(),
-#                        BetweenFilter(field, [1000, 1999])
-#                    ]
-#                }
+#                "and": [
+#                    strategic_predicate.to_dict(),
+#                    BetweenFilter(field, [1000, 1999]).to_dict()
+#                ]
 #            }
 #        ),
 #        Insight(
 #            "speed:slowest_strategic",
 #            "Slowest Strategic Urls",
 #            {
-#                "filters": {
-#                    "and": [
-#                        strategic_predicate.to_dict(),
-#                        GteFilter(field, 2000)
-#                    ]
-#                }
+#                "and": [
+#                    strategic_predicate.to_dict(),
+#                    GteFilter(field, 2000).to_dict()
+#                ]
 #            }
 #        ),
 #    ]
@@ -197,12 +164,12 @@ def get_domain_insights():
         Insight(
             "domain:www",
             "Urls from www",
-            {"filters": www_predicate.to_dict()}
+            www_predicate.to_dict()
         ),
         Insight(
             "not www",
             "Urls from subdomains",
-            {"filters": {"not": www_predicate.to_dict()}}
+            {"not": www_predicate.to_dict()}
         )
     ]
 
@@ -213,15 +180,13 @@ def get_average_speed_insights():
         Insight(
             "speed:avg",
             "Average Load time (in ms)",
-            {
-                'aggs': [
+            aggs=[
                     {
                         'metrics': [
                             {"avg": field}
                         ]
                     }
                 ]
-            }
         )
     ]
     #TODO"speed:strategic_avg", "Average Load time on strategic urls (in ms)", {"field": "strategic", "value": true}),
@@ -233,15 +198,13 @@ def get_average_depth_insights():
         Insight(
             "depth:avg",
             "Average Depth",
-            {
-                'aggs': [
+            aggs=[
                     {
                         'metrics': [
                             {"avg": field}
                         ]
                     }
                 ]
-            }
         )
     ]
     #TODO"depth:strategic_avg", "Average Depth on strategic urls", {"field": "strategic", "value": true}),
