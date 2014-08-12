@@ -12,9 +12,9 @@ class Insight(object):
         :param identifier: the insight identifier (short)
         :type identifier: str
         :param title: the insight title (displayed on the report)
-        :param input_filter: the filter to apply for the elastic search query
+        :param input_filter: the filter to apply for the botify query
         :type input_filter: Filter
-        :param metric_agg: the aggregation to compute for the elastic search query.
+        :param metric_agg: the aggregation to compute for the botify query.
                            If None, use a simple count on the urls
         :type metric_agg: MetricAggregation
         """
@@ -24,8 +24,8 @@ class Insight(object):
         self.metric_agg = metric_agg or CountAggregation("url")
 
     @property
-    def es_query(self):
-        """Return the elasticsearch query corresponding to the insight"""
+    def query(self):
+        """Return the query corresponding to the insight"""
         result = {}
         if self.filter is not None:
             result["filters"] = self.filter.to_dict()
@@ -34,4 +34,4 @@ class Insight(object):
         return result
 
     def __repr__(self):
-        return "{}: {}".format(self.identifier, self.es_query)
+        return "{}: {}".format(self.identifier, self.query)

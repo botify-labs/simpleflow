@@ -12,12 +12,12 @@ class TestInsight(unittest.TestCase):
         self.eq_filter = EqFilter("bar", 5)
         self.max_agg = MaxAggregation("depth")
 
-    def test_es_query_nominal_case(self):
+    def test_query_nominal_case(self):
         insight = Insight(self.identifier,
                           self.title,
                           self.eq_filter,
                           self.max_agg)
-        expected_es_query = {
+        expected_query = {
             "filters": {
                 "field": "bar",
                 "predicate": "eq",
@@ -27,13 +27,13 @@ class TestInsight(unittest.TestCase):
                 {"metrics": [{"max": "depth"}]}
             ]
         }
-        self.assertEqual(expected_es_query, insight.es_query)
+        self.assertEqual(expected_query, insight.query)
 
-    def test_es_query_default_aggregation(self):
+    def test_query_default_aggregation(self):
         insight = Insight(self.identifier,
                           self.title,
                           self.eq_filter)
-        expected_es_query = {
+        expected_query = {
             "filters": {
                 "field": "bar",
                 "predicate": "eq",
@@ -43,18 +43,18 @@ class TestInsight(unittest.TestCase):
                 {"metrics": [{"count": "url"}]}
             ]
         }
-        self.assertEqual(expected_es_query, insight.es_query)
+        self.assertEqual(expected_query, insight.query)
 
-    def test_es_query_no_filter(self):
+    def test_query_no_filter(self):
         insight = Insight(self.identifier,
                           self.title,
                           metric_agg=self.max_agg)
-        expected_es_query = {
+        expected_query = {
             "aggs": [
                 {"metrics": [{"max": "depth"}]}
             ]
         }
-        self.assertEqual(expected_es_query, insight.es_query)
+        self.assertEqual(expected_query, insight.query)
 
     def test_repr(self):
         insight = Insight(self.identifier, self.title)
