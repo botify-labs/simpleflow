@@ -13,7 +13,7 @@ class MetricAggregation(object):
 
     def to_dict(self):
         """Returns a dict representation of the object.
-        The dict is typically used to build an elasticsearch query
+        The dict is typically used to build a botify query
         :returns: dict"""
         return {self.predicate: self.field}
 
