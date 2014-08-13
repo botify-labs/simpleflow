@@ -67,6 +67,9 @@ class InsightValue(object):
     def __repr__(self):
         return repr(self.to_dict())
 
+    def __eq__(self, other):
+        return self.to_dict() == other.to_dict()
+
 
 class InsightTrendPoint(object):
     """The value of an insight for a given crawl id.
