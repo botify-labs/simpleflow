@@ -39,21 +39,21 @@ class TestComputeInsightValue(unittest.TestCase):
             EqFilter("foo_field", 1001)
         )
         feature_name = "feature"
-        crawl_ids = [1001, 2008]
+        crawls = [(1001, "13-08-2014"), (2008, "11-08-2014")]
         es_location = "http://elasticsearch.com"
         es_index = "es_index"
 
         #actual call
         actual_result = compute_insight_value(insight,
                                               feature_name,
-                                              crawl_ids,
+                                              crawls,
                                               es_location,
                                               es_index)
 
         #check values
         expected_trend = [
-            InsightTrendPoint(1001, 3.14),
-            InsightTrendPoint(2008, 3.14)
+            InsightTrendPoint(1001, 3.14, "13-08-2014"),
+            InsightTrendPoint(2008, 3.14, "11-08-2014")
         ]
         expected_result = InsightValue(insight, feature_name, expected_trend)
 
@@ -110,12 +110,12 @@ class TestComputeInsightValues(unittest.TestCase):
         feature2.name = "feature2"
         feature2.get_insights.return_value = [insight2, insight3]
 
-        crawl_ids = [1001]
+        crawls = [(1001, "13-08-2014")]
         features = [feature1, feature2]
         es_location = "http://elasticsearch.com"
         es_index = "botify"
 
-        actual_result = compute_insight_values(crawl_ids,
+        actual_result = compute_insight_values(crawls,
                                                features,
                                                es_location,
                                                es_index)
@@ -125,9 +125,9 @@ class TestComputeInsightValues(unittest.TestCase):
             all([isinstance(r, InsightValue) for r in actual_result])
         )
         expected_calls = [
-            mock.call(insight1, 'feature1', [1001], es_location, es_index),
-            mock.call(insight2, 'feature2', [1001], es_location, es_index),
-            mock.call(insight3, 'feature2', [1001], es_location, es_index),
+            mock.call(insight1, 'feature1', crawls, es_location, es_index),
+            mock.call(insight2, 'feature2', crawls, es_location, es_index),
+            mock.call(insight3, 'feature2', crawls, es_location, es_index),
         ]
 
         self.assertEqual(expected_calls, compute_insight_value_mock.mock_calls)

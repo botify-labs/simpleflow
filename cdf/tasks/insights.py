@@ -25,7 +25,7 @@ def get_query_agg_result(query):
 
 def compute_insight_value(insight,
                           feature_name,
-                          crawl_ids,
+                          crawls,
                           es_location,
                           es_index):
     """Compute the value of an insight
@@ -33,9 +33,12 @@ def compute_insight_value(insight,
     :type insight: Insight
     :param feature_name: the name of the feature associated with the insight
     :type feature_name: str
-    :param crawl_ids: the list of crawl_ids for which the insight value
-                      is to be computed. Each element is an integer.
-    :type crawl_ids: list
+    :param crawls: the list of crawls to use to compute the insights.
+                   Each crawl is a tuple (crawl_id, end_date)
+                   with
+                   - crawl_id: an integer
+                   - end_date: the date when the crawl ended.
+    :type crawls: list
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -48,14 +51,16 @@ def compute_insight_value(insight,
     #TODO check if using 0 is ok.
     revision_number = 0
     trend = []
-    for crawl_id in crawl_ids:
+    for crawl_id, end_date in crawls:
         query = Query(es_location,
                       es_index,
                       es_doc_type,
                       crawl_id,
                       revision_number,
                       insight.query)
-        trend_point = InsightTrendPoint(crawl_id, get_query_agg_result(query))
+        trend_point = InsightTrendPoint(crawl_id,
+                                        get_query_agg_result(query),
+                                        end_date)
         trend.append(trend_point)
     return InsightValue(insight, feature_name, trend)
 
@@ -80,10 +85,14 @@ def get_features(feature_names):
     return result
 
 
-def compute_insight_values(crawl_ids, features, es_location, es_index):
+def compute_insight_values(crawls, features, es_location, es_index):
     """Compute the insight values for a set of crawl ids and a set of features.
-    :param crawl_ids: the list of crawl ids to use to compute the insights.
-    :type crawl_ids: list
+    :param crawls: the list of crawls to use to compute the insights.
+                   Each crawl is a tuple (crawl_id, end_date)
+                   with
+                   - crawl_id: an integer
+                   - end_date: the date when the crawl ended.
+    :type crawls: list
     :param features: the list of Feature objects
                      for which to compute the insights.
     :type feature: list
@@ -100,7 +109,7 @@ def compute_insight_values(crawl_ids, features, es_location, es_index):
         for insight in feature.get_insights():
             insight_value = compute_insight_value(insight,
                                                   feature.name,
-                                                  crawl_ids,
+                                                  crawls,
                                                   es_location,
                                                   es_index)
             result.append(insight_value)
@@ -108,7 +117,7 @@ def compute_insight_values(crawl_ids, features, es_location, es_index):
 
 
 @with_temporary_dir
-def compute_insights(crawl_ids,
+def compute_insights(crawls,
                      feature_names,
                      es_location,
                      es_index,
@@ -117,8 +126,12 @@ def compute_insights(crawl_ids,
                      force_fetch=False):
     """A task to compute the insights and push their values to s3
     as a json file.
-    :param crawl_ids: the list of crawl ids to use to compute the insights.
-    :type crawl_ids: list
+    :param crawls: the list of crawls to use to compute the insights.
+                   Each crawl is a tuple (crawl_id, end_date)
+                   with
+                   - crawl_id: an integer
+                   - end_date: the date when the crawl ended.
+    :type crawls: list
     :param feature_names: the list of feature names
                           for which to compute the insights.
                           For instance : ["main", "semantic_metadata"]
@@ -139,7 +152,7 @@ def compute_insights(crawl_ids,
     :returns: str - the uri of the generated json document
     """
     features = get_features(feature_names)
-    result = compute_insight_values(crawl_ids, features, es_location, es_index)
+    result = compute_insight_values(crawls, features, es_location, es_index)
 
     destination_uri = "{}/insights.json".format(s3_uri),
     push_content(

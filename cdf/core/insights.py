@@ -75,17 +75,18 @@ class InsightTrendPoint(object):
     """The value of an insight for a given crawl id.
     This value defines a point on the trend curve, hence the class name.
     """
-    def __init__(self, crawl_id, value):
+    def __init__(self, crawl_id, value, crawl_end_date):
         """Constructor
         :param crawl_id: the crawl id which was used to compute the value
         :type crawl_id: int
         :param value: the actual insight value
         :type value: float
+        :param crawl_end_date: the date where the crawl ended as a string
+        :type crawl_end_date: str
         """
         self.crawl_id = crawl_id
         self.value = value
-        #FIXME find a way to get stats about a crawl given its id.
-        self.date_finished = "Unknown"
+        self.date_finished = crawl_end_date
 
     def to_dict(self):
         """Returns a dict representation of the object
