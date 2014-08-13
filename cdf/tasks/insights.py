@@ -136,11 +136,14 @@ def compute_insights(crawl_ids,
     :type tmp_dir: str
     :param force_fetch: if True, the files will be downloaded from s3
     :type force_fetch: bool
+    :returns: str - the uri of the generated json document
     """
     features = get_features(feature_names)
     result = compute_insight_values(crawl_ids, features, es_location, es_index)
 
+    destination_uri = "{}/insights.json".format(s3_uri),
     push_content(
-        "{}/insights.json".format(s3_uri),
+        destination_uri,
         json.dumps([insight.to_dict() for insight in result])
     )
+    return destination_uri
