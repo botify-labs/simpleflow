@@ -590,7 +590,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "verbose_name": "Top {nb} of incoming text anchors".format(nb=NB_TOP_ANCHORS),
             "type": STRUCT_TYPE,
             "values": STRING_NB_MAP_MAPPING,
-            "settings": {LIST, RENDERING.STRING_NB_MAP, FIELD_RIGHTS.SELECT},
+            "settings": {RENDERING.STRING_NB_MAP, FIELD_RIGHTS.SELECT},
             "group": GROUPS.inlinks.name,
         },
         # The following field is already created with the above one (as a STRUCT_TYPE)
