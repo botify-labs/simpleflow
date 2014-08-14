@@ -176,3 +176,17 @@ def compute_insights(crawls,
         json.dumps([insight.to_dict() for insight in result])
     )
     return destination_uri
+
+
+def get_crawl_end_dates(crawl_ids):
+    """Find the end dates corresponding to a list of crawl ids and
+    return them as a list of tuples (crawl_id, end_date) with
+    end_date a string
+    :param crawl_ids: the list of crawl ids.
+    :type crawl_ids: list
+    :returns: list
+    """
+    #Fake implementation
+    #Real implementation should use the API to retrieve the end date
+    return [(crawl_id, "Unknown") for crawl_id in crawl_ids]
+

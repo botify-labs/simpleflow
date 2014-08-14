@@ -123,6 +123,10 @@ enumerate_partitions = as_activity(enumerate_partitions)
 from cdf.features.comparison.tasks import match_documents
 match_documents = as_activity(match_documents)
 
+from cdf.tasks.insights import (compute_insights,
+                                get_crawl_end_dates)
+get_crawl_end_dates = as_activity(get_crawl_end_dates)
+compute_insights = as_activity(compute_insights)
 
 UPDATE_STATUS_TIMEOUTS = {
     'schedule_to_start_timeout': 14400,  # 4h
@@ -476,6 +480,20 @@ class AnalysisWorkflow(Workflow):
 
         futures.wait(*(elastic_search_results + [consolidate_result]))
 
+        crawl_ids_end_date = self.submit(
+            get_crawl_end_dates,
+            crawl_ids=[crawl_id]
+        )
+
+        insights_result = self.submit(
+            compute_insights,
+            crawl_ids_end_date,
+            features_flags,
+            context["es_location"],
+            context["es_index"],
+            context["s3_uri"]
+        )
+
         suggest_summary_result = self.submit(
             make_suggest_summary_file,
             crawl_id=crawl_id,
@@ -484,7 +502,7 @@ class AnalysisWorkflow(Workflow):
             revision_number=revision_number,
             **es_params
         )
-        futures.wait(suggest_summary_result)
+        futures.wait(suggest_summary_result, insights_result)
 
         crawl_status_result = self.submit(
             update_crawl_status,
