@@ -35,3 +35,70 @@ class Insight(object):
 
     def __repr__(self):
         return "{}: {}".format(self.identifier, self.query)
+
+
+class InsightValue(object):
+    """The value of an insight"""
+    def __init__(self, insight, feature_name, trend):
+        """Constructor
+        :param insight: the corresponding insight
+        :type insight: Insight
+        :param feature_name: the name of the feature associated with the insight
+        :type feature_name: str
+        :param trend: the actual list of values.
+                      Each element is a InsightTrendPoint and correspond to
+                      a crawl id.
+        """
+        self.insight = insight
+        self.feature_name = feature_name
+        self.trend = trend
+
+    def to_dict(self):
+        """Returns a dict representation of the object
+        :returns: dict
+        """
+        return {
+            "name": self.insight.title,
+            "feature": self.feature_name,
+            "query": self.insight.query,
+            "trend": [trend_point.to_dict() for trend_point in self.trend]
+        }
+
+    def __repr__(self):
+        return repr(self.to_dict())
+
+    def __eq__(self, other):
+        return self.to_dict() == other.to_dict()
+
+
+class InsightTrendPoint(object):
+    """The value of an insight for a given crawl id.
+    This value defines a point on the trend curve, hence the class name.
+    """
+    def __init__(self, crawl_id, value, crawl_end_date):
+        """Constructor
+        :param crawl_id: the crawl id which was used to compute the value
+        :type crawl_id: int
+        :param value: the actual insight value
+        :type value: float
+        :param crawl_end_date: the date where the crawl ended as a string
+        :type crawl_end_date: str
+        """
+        self.crawl_id = crawl_id
+        self.value = value
+        self.date_finished = crawl_end_date
+
+    def to_dict(self):
+        """Returns a dict representation of the object
+        :returns: dict
+        """
+        return {
+            "crawl_id": self.crawl_id,
+            "date_finished": self.date_finished,
+            "score": self.value
+        }
+
+    def __repr__(self):
+        return repr(self.to_dict())
+
+
