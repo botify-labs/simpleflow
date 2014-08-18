@@ -194,7 +194,11 @@ class InfosStreamDef(StreamDefBase):
         "gzipped": {
             "verbose_name": "Url compressed",
             "type": BOOLEAN_TYPE,
-            "order": 7
+            "order": 7,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            }
         },
         "content_type": {
             "verbose_name": "Content-type",
