@@ -170,10 +170,10 @@ def compute_insights(crawls,
     features = get_features(feature_names)
     result = compute_insight_values(crawls, features, es_location, es_index)
 
-    destination_uri = "{}/insights.json".format(s3_uri),
+    destination_uri = "{}/insights.json".format(s3_uri)
     push_content(
         destination_uri,
-        json.dumps([insight.to_dict() for insight in result])
+        json.dumps([insight_value.to_dict() for insight_value in result])
     )
     return destination_uri
 
