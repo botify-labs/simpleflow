@@ -170,9 +170,23 @@ def compute_insights(crawls,
     features = get_features(feature_names)
     result = compute_insight_values(crawls, features, es_location, es_index)
 
-    destination_uri = "{}/insights.json".format(s3_uri),
+    destination_uri = "{}/insights.json".format(s3_uri)
     push_content(
         destination_uri,
-        json.dumps([insight.to_dict() for insight in result])
+        json.dumps([insight_value.to_dict() for insight_value in result])
     )
     return destination_uri
+
+
+def get_crawl_end_dates(crawl_ids):
+    """Find the end dates corresponding to a list of crawl ids and
+    return them as a list of tuples (crawl_id, end_date) with
+    end_date a string
+    :param crawl_ids: the list of crawl ids.
+    :type crawl_ids: list
+    :returns: list
+    """
+    #Fake implementation
+    #Real implementation should use the API to retrieve the end date
+    return [(crawl_id, "Unknown") for crawl_id in crawl_ids]
+

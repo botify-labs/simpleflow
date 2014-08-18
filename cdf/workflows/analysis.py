@@ -24,7 +24,6 @@ The execution model relies of the replay of the *whole* workflow on each event.
 In other words, the code that defines the workflow (here in
 ``AnalysisWorkflow.run``) is executed from the start when any event (a
 task finished or failed for example) occurred.
-
 This requires the workflow's code to be idempotent i.e. it always returns the
 same result from the same input, independtly of the number of times it is
 executed.
@@ -123,6 +122,14 @@ enumerate_partitions = as_activity(enumerate_partitions)
 from cdf.features.comparison.tasks import match_documents
 match_documents = as_activity(match_documents)
 
+from cdf.tasks.insights import (
+    refresh_index,
+    get_crawl_end_dates,
+)
+from cdf.tasks.insights import compute_insights as compute_insights_task
+refresh_index = as_activity(refresh_index)
+get_crawl_end_dates = as_activity(get_crawl_end_dates)
+compute_insights_task = as_activity(compute_insights_task)
 
 UPDATE_STATUS_TIMEOUTS = {
     'schedule_to_start_timeout': 14400,  # 4h
@@ -300,6 +307,38 @@ class AnalysisWorkflow(Workflow):
 
         return [sitemaps_result]
 
+    def compute_insights(self, context):
+        """Compute insight values
+        :param context: the analysis context
+        :type context: dict
+        :returns: future
+        """
+        crawl_id = context['crawl_id']
+        features_flags = context.get('features_flags', [])
+
+        crawl_ids_end_date = self.submit(
+            get_crawl_end_dates,
+            crawl_ids=[crawl_id]
+        )
+
+        elastic_search_ready = self.submit(
+            refresh_index,
+            context["es_location"],
+            context["es_index"],
+        )
+
+        futures.wait(elastic_search_ready)
+
+        insights_result = self.submit(
+            compute_insights_task,
+            crawl_ids_end_date,
+            features_flags,
+            context["es_location"],
+            context["es_index"],
+            context["s3_uri"]
+        )
+        return insights_result
+
     def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
@@ -476,6 +515,8 @@ class AnalysisWorkflow(Workflow):
 
         futures.wait(*(elastic_search_results + [consolidate_result]))
 
+        insights_result = self.compute_insights(context)
+
         suggest_summary_result = self.submit(
             make_suggest_summary_file,
             crawl_id=crawl_id,
@@ -484,7 +525,7 @@ class AnalysisWorkflow(Workflow):
             revision_number=revision_number,
             **es_params
         )
-        futures.wait(suggest_summary_result)
+        futures.wait(suggest_summary_result, insights_result)
 
         crawl_status_result = self.submit(
             update_crawl_status,
