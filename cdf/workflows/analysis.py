@@ -123,8 +123,12 @@ enumerate_partitions = as_activity(enumerate_partitions)
 from cdf.features.comparison.tasks import match_documents
 match_documents = as_activity(match_documents)
 
-from cdf.tasks.insights import (compute_insights,
-                                get_crawl_end_dates)
+from cdf.tasks.insights import (
+    refresh_index,
+    get_crawl_end_dates,
+    compute_insights
+)
+refresh_index = as_activity(refresh_index)
 get_crawl_end_dates = as_activity(get_crawl_end_dates)
 compute_insights = as_activity(compute_insights)
 
@@ -484,6 +488,14 @@ class AnalysisWorkflow(Workflow):
             get_crawl_end_dates,
             crawl_ids=[crawl_id]
         )
+
+        elastic_search_ready = self.submit(
+            refresh_index,
+            context["es_location"],
+            context["es_index"],
+        )
+
+        futures.wait(elastic_search_ready)
 
         insights_result = self.submit(
             compute_insights,
