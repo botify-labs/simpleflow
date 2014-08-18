@@ -8,13 +8,13 @@ from cdf.query.aggregation import MaxAggregation
 class TestInsight(unittest.TestCase):
     def setUp(self):
         self.identifier = "foo"
-        self.title = "Foo"
+        self.name = "Foo"
         self.eq_filter = EqFilter("bar", 5)
         self.max_agg = MaxAggregation("depth")
 
     def test_query_nominal_case(self):
         insight = Insight(self.identifier,
-                          self.title,
+                          self.name,
                           self.eq_filter,
                           self.max_agg)
         expected_query = {
@@ -31,7 +31,7 @@ class TestInsight(unittest.TestCase):
 
     def test_query_default_aggregation(self):
         insight = Insight(self.identifier,
-                          self.title,
+                          self.name,
                           self.eq_filter)
         expected_query = {
             "filters": {
@@ -47,7 +47,7 @@ class TestInsight(unittest.TestCase):
 
     def test_query_no_filter(self):
         insight = Insight(self.identifier,
-                          self.title,
+                          self.name,
                           metric_agg=self.max_agg)
         expected_query = {
             "aggs": [
@@ -57,7 +57,7 @@ class TestInsight(unittest.TestCase):
         self.assertEqual(expected_query, insight.query)
 
     def test_repr(self):
-        insight = Insight(self.identifier, self.title)
+        insight = Insight(self.identifier, self.name)
         self.assertEqual(
             "foo: {'aggs': [{'metrics': [{'count': 'url'}]}]}",
             repr(insight)
