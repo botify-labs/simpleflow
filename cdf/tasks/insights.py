@@ -1,11 +1,27 @@
 import json
 
-from cdf.utils.s3 import push_content
+from elasticsearch import Elasticsearch
 
+from cdf.utils.s3 import push_content
 from cdf.query.query import Query
 from cdf.core.features import Feature
 from cdf.core.insights import InsightValue, InsightTrendPoint
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
+
+
+# TODO maybe put it in a util module
+def refresh_index(es_location, es_index):
+    """Issues a `refresh` request to ElasticSearch cluster
+
+    :param es_location: ElasticSearch cluster location
+    :type es_location: str
+    :param es_index: name of the index to refresh
+    :type es_index: str
+    :return: refresh result
+    :rtype: dict
+    """
+    es = Elasticsearch(es_location)
+    return es.indices.refresh(index=es_index)
 
 
 def get_query_agg_result(query):
