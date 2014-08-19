@@ -7,11 +7,11 @@ class Insight(object):
     Each insight has a corresponding elasticsearch query that is used to
     compute its value
     """
-    def __init__(self, identifier, title, input_filter=None, metric_agg=None):
+    def __init__(self, identifier, name, input_filter=None, metric_agg=None):
         """Constructor
         :param identifier: the insight identifier (short)
         :type identifier: str
-        :param title: the insight title (displayed on the report)
+        :param name: the insight name (displayed on the report)
         :param input_filter: the filter to apply for the botify query
         :type input_filter: Filter
         :param metric_agg: the aggregation to compute for the botify query.
@@ -19,7 +19,7 @@ class Insight(object):
         :type metric_agg: MetricAggregation
         """
         self.identifier = identifier
-        self.title = title
+        self.name = name
         self.filter = input_filter
         self.metric_agg = metric_agg or CountAggregation("url")
 
@@ -58,7 +58,7 @@ class InsightValue(object):
         :returns: dict
         """
         return {
-            "name": self.insight.title,
+            "name": self.insight.name,
             "feature": self.feature_name,
             "query": self.insight.query,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
