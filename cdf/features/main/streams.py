@@ -312,3 +312,26 @@ class SuggestStreamDef(StreamDefBase):
     def process_document(self, document, stream):
         url_id, pattern_hash = stream
         document['patterns'].append(pattern_hash)
+
+
+class ZoneStreamDef(StreamDefBase):
+    FILE = 'zones'
+    HEADERS = (
+        ('id', int),
+        ('zone', str)
+    )
+    URL_DOCUMENT_MAPPING = {
+        "zone": {
+            "verbose_name": "Zone",
+            "type": STRING_TYPE,
+            "settings": {
+                ES_NOT_ANALYZED
+            }
+        }
+    }
+
+    def process_document(self, document, stream):
+        url_id, zone = stream
+        if document["zone"] is None:
+            document["zone"] = []
+        document['zone'].append(zone)

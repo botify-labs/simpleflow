@@ -1,5 +1,7 @@
 import os
 
+import gzip
+
 from autotagging.exceptions import TooManyCombinationsError
 from autotagging.association_rules.algorithm import (discover_protocol_patterns,
                                                      discover_host_patterns,
@@ -18,6 +20,8 @@ from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
 from cdf.analysis.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
+from cdf.features.main.streams import IdStreamDef, InfosStreamDef, ZoneStreamDef
+from cdf.core.streams.utils import group_left
 from cdf.core.streams.stream_factory import (ProtocolStreamFactory,
                                              PathStreamFactory,
                                              HostStreamFactory,
@@ -53,6 +57,7 @@ def compute_suggested_patterns(crawl_id,
                     tmp_dir,
                     regexp=['url(ids|infos|contents).txt.%d.gz' % part_id],
                     force_fetch=force_fetch)
+
 
     logger.info("Compute patterns cluster")
 
@@ -166,3 +171,39 @@ def compute_suggested_patterns(crawl_id,
             os.path.join(s3_uri, os.path.basename(filepath)),
             os.path.join(filepath)
         )
+
+
+@with_temporary_dir
+def compute_zones(crawl_id,
+                  s3_uri,
+                  part_id,
+                  tmp_dir=None,
+                  force_fetch=False):
+    #get base streams
+    id_stream = IdStreamDef.get_stream_from_s3(s3_uri,
+                                               tmp_dir=tmp_dir,
+                                               part_id=part_id)
+    info_stream = InfosStreamDef.get_stream_from_s3(s3_uri,
+                                                    tmp_dir=tmp_dir,
+                                                    part_id=part_id)
+    #group streams
+    group_stream = group_left((id_stream, 0), info=(info_stream, 0))
+    protocol_idx = IdStreamDef.field_idx("protocol")
+    lang_idx = InfosStreamDef.field_idx("lang")
+
+    output_file_name = "{}.txt.{}.gz".format(ZoneStreamDef.FILE, part_id)
+    output_file_path = os.path.join(tmp_dir, output_file_name)
+    with gzip.open(output_file_path, "w") as f:
+        for urlid, id_entry, info_entry in group_stream:
+            protocol = id_entry[protocol_idx]
+            lang = info_entry["info"][0][lang_idx]
+            f.write("{}\t{}\n".format(urlid, "{},{}".format(lang, protocol)))
+
+    #push file to s3
+    s3_destination = "{}/{}".format(s3_uri, output_file_name)
+    push_file(
+        s3_destination,
+        output_file_path
+    )
+
+    return s3_destination
