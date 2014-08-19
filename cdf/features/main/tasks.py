@@ -173,6 +173,23 @@ def compute_suggested_patterns(crawl_id,
         )
 
 
+def get_lang(info_entry, lang_idx):
+    """Get the lang.
+    :param info_entry: the entry from the urlinfos stream
+    :type info_entry: list
+    :param lang_idx: the index of the lang value in the urlinfos stream
+    :type lang_idx: int
+    :returns: str
+    """
+    if lang_idx < len(info_entry):
+        result = info_entry[lang_idx]
+        if result == "?":
+            result = "undef"
+    else:
+        result = "undef"
+    return result
+
+
 @with_temporary_dir
 def compute_zones(crawl_id,
                   s3_uri,
@@ -196,7 +213,7 @@ def compute_zones(crawl_id,
     with gzip.open(output_file_path, "w") as f:
         for urlid, id_entry, info_entry in group_stream:
             protocol = id_entry[protocol_idx]
-            lang = info_entry["info"][0][lang_idx]
+            lang = get_lang(info_entry["info"][0], lang_idx)
             f.write("{}\t{}\n".format(urlid, "{},{}".format(lang, protocol)))
 
     #push file to s3
