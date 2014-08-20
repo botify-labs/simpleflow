@@ -21,10 +21,10 @@ class TestGetLang(unittest.TestCase):
         self.assertEqual("en-US", get_lang(self.info_entry, 2))
 
     def test_lang_not_set(self):
-        self.assertEqual("undef", get_lang(self.info_entry, 4))
+        self.assertEqual("notset", get_lang(self.info_entry, 4))
 
     def test_lang_unknown(self):
-        self.assertEqual("undef", get_lang(self.info_entry, 3))
+        self.assertEqual("notset", get_lang(self.info_entry, 3))
 
 
 class TestGenerateZoneStream(unittest.TestCase):

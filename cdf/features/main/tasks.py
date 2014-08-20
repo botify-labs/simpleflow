@@ -184,9 +184,9 @@ def get_lang(info_entry, lang_idx):
     if lang_idx < len(info_entry):
         result = info_entry[lang_idx]
         if result == "?":
-            result = "undef"
+            result = "notset"
     else:
-        result = "undef"
+        result = "notset"
     return result
 
 
