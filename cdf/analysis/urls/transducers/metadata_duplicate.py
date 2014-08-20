@@ -42,6 +42,9 @@ def get_duplicate_metadata(stream_contents):
     #ignore notset metadata, they don't count anything
     stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
                               stream_contents)
+
+    # only preserve 10 duplicating urls
+    nb_samples_to_return = 10
     for url_id, contents in groupby(stream_contents, lambda x: x[url_id_idx]):
 
         # Fetch --first-- hash from each content type and watch add it to hashes set
@@ -61,8 +64,9 @@ def get_duplicate_metadata(stream_contents):
                 ct_found.add(ct_id)
                 hashes_count[ct_id][_hash] += 1
                 hashes_lst = hashes[ct_id][_hash]
-                # only preserve 11 duplicating urls
-                if len(hashes_lst) < 11:
+                #+1 because we want to return nb_samples_to_return
+                #which are different from the current url_id
+                if len(hashes_lst) < nb_samples_to_return + 1:
                     hashes[ct_id][_hash].append(url_id)
                 url_to_hash[url_id][ct_id] = _hash
 
@@ -92,4 +96,4 @@ def get_duplicate_metadata(stream_contents):
             first_url_id = urls[0]
             yield (url_id, ct_id, filled_nb, nb_duplicates,
                    first_url_id == url_id,
-                   [i for i in urls if i != url_id][:10])
+                   [i for i in urls if i != url_id][:nb_samples_to_return])
