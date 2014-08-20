@@ -39,20 +39,12 @@ def get_duplicate_metadata(stream_contents):
     # Counter[(url, meta_type)] = count
     filled_counter = Counter()
 
-    min_url_id = -1
-    max_url_id = -1
-
     #ignore notset metadata, they don't count anything
     stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
                               stream_contents)
     for url_id, g in groupby(stream_contents, lambda x: x[url_id_idx]):
 
         contents = list(g)
-
-        # Take the first url_id
-        if min_url_id < 0:
-            min_url_id = url_id
-        max_url_id = url_id
 
         # Fetch --first-- hash from each content type and watch add it to hashes set
         ct_found = set()
@@ -76,6 +68,8 @@ def get_duplicate_metadata(stream_contents):
                     hashes[ct_id][_hash].append(url_id)
                 url_to_hash[url_id][ct_id] = _hash
 
+    min_url_id = min(url_to_hash.iterkeys())
+    max_url_id = max(url_to_hash.iterkeys())
     for url_id in xrange(min_url_id, max_url_id + 1):
         if url_id not in url_to_hash:
             continue
