@@ -9,7 +9,7 @@ from cdf.core.streams.caster import Caster
 from cdf.core.streams.utils import split_file
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils import s3
-from cdf.utils.path import get_files_ordered_by_part_id
+from cdf.utils.path import list_files, partition_aware_sort
 from cdf.analysis.urls.utils import get_part_id
 from cdf.query.constants import FIELD_RIGHTS
 
@@ -56,14 +56,14 @@ class StreamDefBase(object):
         """
         Return a Stream instance from a directory
         """
-        if part_id is not None:
-            return cls.get_stream_from_path(os.path.join(directory, "{}.txt.{}.gz".format(cls.FILE, part_id)))
+        pattern = r'{}\.txt\.{}\.gz'
+        # partition-aware sort the files
+        regexp = part_id if part_id is not None else '[0-9]+'
+        regexp = pattern.format(cls.FILE, regexp)
 
-        # We fetch all files and we sort them by part_id
-        # We don't only sort on os.listdir, because 'file.9.txt' > 'file.10.txt'
-        streams = []
-        for f in get_files_ordered_by_part_id(directory, cls.FILE):
-            streams.append(cls.get_stream_from_path(os.path.join(directory, f)))
+        files = list_files(directory, regexp=regexp)
+        streams = [cls.get_stream_from_path(f)
+                   for f in partition_aware_sort(files)]
 
         return Stream(
             cls(),

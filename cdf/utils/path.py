@@ -101,21 +101,6 @@ def utf8_reader(file_handler):
     return codecs.getreader("utf-8")(file_handler)
 
 
-def get_files_ordered_by_part_id(directory, file_identifier):
-    """
-    Return a list of files ordered by part_id
-    """
-    file_by_part_id = {}
-    pattern = "{}.txt.([0-9]+).gz".format(file_identifier)
-    file_regexp = re.compile(pattern)
-    for f in sorted(os.listdir(directory)):
-        m = file_regexp.match(f)
-        if m:
-            file_by_part_id[int(m.groups()[0])] = f
-    return [file_by_part_id[k] for k in sorted(file_by_part_id)]
-
-
-# TODO should replace above `get_files_ordered_by_part_id`
 def partition_aware_sort(file_list, basename_func=os.path.basename):
     """Sort the file list in a partition aware fashion
 
