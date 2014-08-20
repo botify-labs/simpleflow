@@ -76,26 +76,27 @@ def get_duplicate_metadata(stream_contents):
                 url_to_hash[url_id][ct_id] = _hash
 
     for url_id in xrange(min_url_id, max_url_id + 1):
-        if url_id in url_to_hash:
-            for ct_id in url_to_hash[url_id]:
-                _h = url_to_hash[url_id][ct_id]
-                filled_nb = filled_counter[(url_id, ct_id)]
+        if url_id not in url_to_hash:
+            continue
+        for ct_id in url_to_hash[url_id]:
+            _h = url_to_hash[url_id][ct_id]
+            filled_nb = filled_counter[(url_id, ct_id)]
 
-                if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
-                    yield (url_id, ct_id, filled_nb, 0, True, [])
+            if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
+                yield (url_id, ct_id, filled_nb, 0, True, [])
 
-                urls = hashes[ct_id][_h]
-                nb_duplicates = hashes_count[ct_id][_h]
-                # Unique (url, metatype)'s duplicates number should be 0, intuitively
-                # Simple hack here, we should not push no-duplicate records to ES and
-                # generates necessary information in document generator (like `filled_nb`)
-                if nb_duplicates == 1:
-                    nb_duplicates = 0
+            urls = hashes[ct_id][_h]
+            nb_duplicates = hashes_count[ct_id][_h]
+            # Unique (url, metatype)'s duplicates number should be 0, intuitively
+            # Simple hack here, we should not push no-duplicate records to ES and
+            # generates necessary information in document generator (like `filled_nb`)
+            if nb_duplicates == 1:
+                nb_duplicates = 0
 
-                # Since duplicating urls are appended to a list, order is preserved
-                # The first url is garanteed to be the min
-                # urls list has at least one elem. (url itself)
-                first_url_id = urls[0]
-                yield (url_id, ct_id, filled_nb, nb_duplicates,
-                       first_url_id == url_id,
-                       [i for i in urls if i != url_id][:10])
+            # Since duplicating urls are appended to a list, order is preserved
+            # The first url is garanteed to be the min
+            # urls list has at least one elem. (url itself)
+            first_url_id = urls[0]
+            yield (url_id, ct_id, filled_nb, nb_duplicates,
+                   first_url_id == url_id,
+                   [i for i in urls if i != url_id][:10])
