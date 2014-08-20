@@ -1,5 +1,5 @@
 from collections import defaultdict, Counter
-from itertools import groupby
+from itertools import groupby, ifilter
 
 from cdf.features.semantic_metadata.settings import MANDATORY_CONTENT_TYPES_IDS
 from cdf.features.semantic_metadata.streams import ContentsStreamDef
@@ -41,6 +41,10 @@ def get_duplicate_metadata(stream_contents):
 
     min_url_id = -1
     max_url_id = -1
+
+    #ignore notset metadata, they don't count anything
+    stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
+                              stream_contents)
     for url_id, g in groupby(stream_contents, lambda x: x[url_id_idx]):
 
         contents = list(g)
@@ -54,10 +58,6 @@ def get_duplicate_metadata(stream_contents):
         ct_found = set()
         # they should be ignored by duplication detection
         for content in contents:
-            # ignore notset metadata first, they don't count anything
-            _hash = content[content_hash_idx]
-            if _hash == notset_hash_value:
-                continue
 
             ct_id = content[content_meta_type_idx]
             filled_counter[(url_id, ct_id)] += 1
@@ -67,6 +67,7 @@ def get_duplicate_metadata(stream_contents):
 
             # If ct_i is already in ct_found, so it's the not the first content
             if ct_id not in ct_found:
+                _hash = content[content_hash_idx]
                 ct_found.add(ct_id)
                 hashes_count[ct_id][_hash] += 1
                 hashes_lst = hashes[ct_id][_hash]
