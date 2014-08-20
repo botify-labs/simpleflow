@@ -332,6 +332,4 @@ class ZoneStreamDef(StreamDefBase):
 
     def process_document(self, document, stream):
         url_id, zone = stream
-        if document["zone"] is None:
-            document["zone"] = []
-        document['zone'].append(zone)
+        document["zone"] = zone
