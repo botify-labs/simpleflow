@@ -8,7 +8,7 @@ from StringIO import StringIO
 
 from cdf.utils.path import (group_by_part, write_by_part,
                             utf8_writer, utf8_reader,
-                            partition_aware_sort)
+                            partition_aware_sort, list_files)
 
 
 def _simple_to_string(row):
@@ -127,3 +127,32 @@ class TestPath(unittest.TestCase):
         sorted_list = partition_aware_sort(file_list)
         # check that it just fallbacks to lexical sort
         self.assertEqual(sorted_list, sorted(file_list))
+
+    def test_list_files(self):
+        test_files = ['toto', 'titi', 'tata']
+        for f in test_files:
+            open(os.path.join(self.tmp_dir, f), 'w').close()
+
+        # no regexp
+        result = list_files(self.tmp_dir, full_path=False)
+        expected = ['toto', 'titi', 'tata']
+        self.assertItemsEqual(result, expected)
+
+        # single regexp
+        result = list_files(
+            self.tmp_dir, full_path=False, regexp='.*it.*')
+        expected = ['titi']
+        self.assertItemsEqual(result, expected)
+
+        # multiple regexp
+        result = list_files(
+            self.tmp_dir, full_path=False,
+            regexp=('.*it.*', 'toto')
+        )
+        expected = ['titi', 'toto']
+        self.assertItemsEqual(result, expected)
+
+        # full path
+        result = list_files(self.tmp_dir, regexp='tit*')
+        expected = [os.path.join(self.tmp_dir, 'titi')]
+        self.assertItemsEqual(result, expected)
