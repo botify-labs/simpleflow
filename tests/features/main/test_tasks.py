@@ -5,7 +5,11 @@ import tempfile
 import shutil
 import gzip
 
-from cdf.features.main.tasks import get_lang, compute_zones
+from cdf.features.main.tasks import (
+    get_lang,
+    compute_zones,
+    generate_zone_stream
+)
 from cdf.features.main.streams import ZoneStreamDef
 
 
@@ -21,6 +25,30 @@ class TestGetLang(unittest.TestCase):
 
     def test_lang_unknown(self):
         self.assertEqual("undef", get_lang(self.info_entry, 3))
+
+
+class TestGenerateZoneStream(unittest.TestCase):
+    def test_nominal_case(self):
+        id_stream = iter([
+            (1, "http", "foo.com", "/"),
+            (2, "https", "foo.com", "/bar"),
+            (9, "https", "foo.com", "/baz"),
+        ])
+
+        infos_stream = iter([
+            (1, None, None, None, None, None, None, None, None, "en-US"),
+            (2, None, None, None, None, None, None, None, None, "fr"),
+            (9, None, None, None, None, None, None, None, None, "fr"),
+        ])
+
+        zone_stream = generate_zone_stream(id_stream, infos_stream)
+
+        expected_stream = [
+            (1, 'en-US,http'),
+            (2, 'fr,https'),
+            (9, 'fr,https')
+        ]
+        self.assertEqual(expected_stream, list(zone_stream))
 
 
 class TestComputeZones(unittest.TestCase):
