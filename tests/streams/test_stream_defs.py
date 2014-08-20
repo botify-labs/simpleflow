@@ -82,15 +82,18 @@ class TestStreamsDef(unittest.TestCase):
         """
         Write files mapping to a `CustomStreamDef` schema
         with `first_part_id_size` = 2, `part_id_size` = 3
+
+        To make it trickier, partition 0, 9, 10 are written. This tests
+        if the functions are partition-aware
         """
         with gzip.open(os.path.join(self.tmp_dir, 'test.txt.0.gz'), 'w') as f:
             f.write('0\thttp://www.site.com/\n')
             f.write('1\thttp://www.site.com/1\n')
-        with gzip.open(os.path.join(self.tmp_dir, 'test.txt.1.gz'), 'w') as f:
+        with gzip.open(os.path.join(self.tmp_dir, 'test.txt.9.gz'), 'w') as f:
             f.write('2\thttp://www.site.com/2\n')
             f.write('3\thttp://www.site.com/3\n')
             f.write('4\thttp://www.site.com/4\n')
-        with gzip.open(os.path.join(self.tmp_dir, 'test.txt.2.gz'), 'w') as f:
+        with gzip.open(os.path.join(self.tmp_dir, 'test.txt.10.gz'), 'w') as f:
             f.write('5\thttp://www.site.com/5\n')
             f.write('6\thttp://www.site.com/6\n')
 
@@ -104,7 +107,7 @@ class TestStreamsDef(unittest.TestCase):
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=1)),
+            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=9)),
             [
                 [2, 'http://www.site.com/2'],
                 [3, 'http://www.site.com/3'],
@@ -112,7 +115,7 @@ class TestStreamsDef(unittest.TestCase):
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=2)),
+            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=10)),
             [
                 [5, 'http://www.site.com/5'],
                 [6, 'http://www.site.com/6']
@@ -146,7 +149,7 @@ class TestStreamsDef(unittest.TestCase):
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_s3(s3_dir, tmp_dir=self.tmp_dir, part_id=1)),
+            list(CustomStreamDef.get_stream_from_s3(s3_dir, tmp_dir=self.tmp_dir, part_id=9)),
             [
                 [2, 'http://www.site.com/2'],
                 [3, 'http://www.site.com/3'],
@@ -154,7 +157,7 @@ class TestStreamsDef(unittest.TestCase):
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_s3(s3_dir, tmp_dir=self.tmp_dir, part_id=2)),
+            list(CustomStreamDef.get_stream_from_s3(s3_dir, tmp_dir=self.tmp_dir, part_id=10)),
             [
                 [5, 'http://www.site.com/5'],
                 [6, 'http://www.site.com/6']
