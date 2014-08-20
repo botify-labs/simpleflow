@@ -52,6 +52,12 @@ class TestGenerateZoneStream(unittest.TestCase):
 
 
 class TestComputeZones(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
     @mock_s3
     def test_nominal_case(self):
 
@@ -94,9 +100,8 @@ class TestComputeZones(unittest.TestCase):
         expected_document_uri = "{}/zones.txt.{}.gz".format(s3_uri, part_id)
         self.assertEqual(expected_document_uri, document_uri)
 
-        tmp_dir = tempfile.mkdtemp()
         zone_stream = ZoneStreamDef.get_stream_from_s3(s3_uri,
-                                                       tmp_dir=tmp_dir,
+                                                       tmp_dir=self.tmp_dir,
                                                        part_id=part_id)
         expected_zone_stream = [
             [1, 'en-US,http'],
@@ -104,4 +109,25 @@ class TestComputeZones(unittest.TestCase):
             [9, 'fr,https']
         ]
         self.assertEqual(expected_zone_stream, list(zone_stream))
-        shutil.rmtree(tmp_dir)
+
+    @mock_s3
+    def test_unexisting_part(self):
+
+        bucket = "app.foo.com"
+        s3_uri = "s3://{}/crawl_result".format(bucket)
+        conn = boto.connect_s3()
+        bucket = conn.create_bucket(bucket)
+
+        #actual computation
+        part_id = 0
+        document_uri = compute_zones(s3_uri,
+                                     part_id)
+
+        #check output
+        expected_document_uri = "{}/zones.txt.{}.gz".format(s3_uri, part_id)
+        self.assertEqual(expected_document_uri, document_uri)
+
+        zone_stream = ZoneStreamDef.get_stream_from_s3(s3_uri,
+                                                       tmp_dir=self.tmp_dir,
+                                                       part_id=part_id)
+        self.assertEqual([], list(zone_stream))
