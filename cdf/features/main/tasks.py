@@ -191,8 +191,7 @@ def get_lang(info_entry, lang_idx):
 
 
 @with_temporary_dir
-def compute_zones(crawl_id,
-                  s3_uri,
+def compute_zones(s3_uri,
                   part_id,
                   tmp_dir=None,
                   force_fetch=False):

@@ -439,7 +439,6 @@ class AnalysisWorkflow(Workflow):
         zone_results = [
             self.submit(
                 compute_zones,
-                crawl_id=crawl_id,
                 s3_uri=s3_uri,
                 tmp_dir=tmp_dir,
                 part_id=part_id
