@@ -9,6 +9,33 @@ from cdf.analysis.urls.utils import get_part_id
 from cdf.log import logger
 
 
+def list_files(dirpath, full_path=True, regexp=None):
+    """List files in a local directory
+
+    :param dirpath: path to the directory
+    :type dirpath: str
+    :param full_path: should the listed files contains the full path
+    :type full_path: bool
+    :param regexp: regexp for filtering the listed files
+    :type regexp: list | tuple | str
+    :return: file_list
+    :rtype: list
+    """
+    files = []
+    for f in os.listdir(dirpath):
+        basename = os.path.basename(f)
+        if (not regexp
+            or (isinstance(regexp, str) and re.match(regexp, basename))
+            or (isinstance(regexp, (list, tuple))
+                and any(re.match(r, basename) for r in regexp))):
+            if full_path:
+                files.append(os.path.join(dirpath, f))
+            else:
+                files.append(f)
+
+    return files
+
+
 def makedirs(directory_path, exist_ok=False):
     """Create a directory recursively.
     directory_path : the path to the directory to create
@@ -74,21 +101,6 @@ def utf8_reader(file_handler):
     return codecs.getreader("utf-8")(file_handler)
 
 
-def get_files_ordered_by_part_id(directory, file_identifier):
-    """
-    Return a list of files ordered by part_id
-    """
-    file_by_part_id = {}
-    pattern = "{}.txt.([0-9]+).gz".format(file_identifier)
-    file_regexp = re.compile(pattern)
-    for f in sorted(os.listdir(directory)):
-        m = file_regexp.match(f)
-        if m:
-            file_by_part_id[int(m.groups()[0])] = f
-    return [file_by_part_id[k] for k in sorted(file_by_part_id)]
-
-
-# TODO should replace above `get_files_ordered_by_part_id`
 def partition_aware_sort(file_list, basename_func=os.path.basename):
     """Sort the file list in a partition aware fashion
 
