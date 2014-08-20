@@ -75,8 +75,7 @@ def get_duplicate_metadata(stream_contents):
     for url_id in xrange(min_url_id, max_url_id + 1):
         if url_id not in url_to_hash:
             continue
-        for ct_id in url_to_hash[url_id]:
-            _h = url_to_hash[url_id][ct_id]
+        for ct_id, _h in url_to_hash[url_id].iteritems():
             filled_nb = filled_counter[(url_id, ct_id)]
 
             if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
