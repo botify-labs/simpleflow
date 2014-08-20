@@ -42,9 +42,7 @@ def get_duplicate_metadata(stream_contents):
     #ignore notset metadata, they don't count anything
     stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
                               stream_contents)
-    for url_id, g in groupby(stream_contents, lambda x: x[url_id_idx]):
-
-        contents = list(g)
+    for url_id, contents in groupby(stream_contents, lambda x: x[url_id_idx]):
 
         # Fetch --first-- hash from each content type and watch add it to hashes set
         ct_found = set()
