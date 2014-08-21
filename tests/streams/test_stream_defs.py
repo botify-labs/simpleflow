@@ -8,7 +8,7 @@ from mock import patch
 from moto import mock_s3
 import boto
 
-from cdf.core.streams.base import StreamDefBase
+from cdf.core.streams.base import StreamDefBase, Stream, TemporaryDataset
 from cdf.core.mocks import _mock_fetch_file, _mock_fetch_files
 from cdf.utils.s3 import list_files
 
@@ -21,11 +21,39 @@ class CustomStreamDef(StreamDefBase):
     )
 
 
-class TestStreamsDef(unittest.TestCase):
+class TestStream(unittest.TestCase):
+    def setUp(self):
+        self.data = [
+            [1, 'http://www.site.com/'],
+            [2, 'http://www.site.com/2'],
+            [3, 'http://www.bad.com/2']
+        ]
 
+    def test_basics(self):
+        stream = Stream(CustomStreamDef, iter(self.data))
+        result = list(stream)
+        self.assertEqual(result, self.data)
+
+    def test_add_filters(self):
+        stream = Stream(CustomStreamDef, iter(self.data))
+        stream.add_filter('url', lambda i: 'site.com' in i)
+        stream.add_filter('url', lambda i: '/2' in i)
+        self.assertEquals(list(stream), [[2, 'http://www.site.com/2']])
+
+
+class TestStreamsDef(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
         self.s3_dir = tempfile.mkdtemp()
+        self.data = [
+            [0, 'http://www.site.com/'],
+            [1, 'http://www.site.com/1'],
+            [2, 'http://www.site.com/2'],
+            [3, 'http://www.site.com/3'],
+            [4, 'http://www.site.com/4'],
+            [5, 'http://www.site.com/5'],
+            [6, 'http://www.site.com/6']
+        ]
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
@@ -49,7 +77,6 @@ class TestStreamsDef(unittest.TestCase):
         f.seek(0)
 
         stream = CustomStreamDef.get_stream_from_file(f)
-        self.assertTrue(isinstance(stream.stream_def, CustomStreamDef))
         self.assertEquals(stream.next(), [1, 'http://www.site.com/'])
         self.assertEquals(stream.next(), [2, 'http://www.site.com/2'])
 
@@ -128,15 +155,7 @@ class TestStreamsDef(unittest.TestCase):
         # Test without part_id
         self.assertEquals(
             list(CustomStreamDef.get_stream_from_directory(self.tmp_dir)),
-            [
-                [0, 'http://www.site.com/'],
-                [1, 'http://www.site.com/1'],
-                [2, 'http://www.site.com/2'],
-                [3, 'http://www.site.com/3'],
-                [4, 'http://www.site.com/4'],
-                [5, 'http://www.site.com/5'],
-                [6, 'http://www.site.com/6']
-            ]
+            self.data
         )
 
     @patch('cdf.utils.s3.fetch_file', _mock_fetch_file)
@@ -170,27 +189,11 @@ class TestStreamsDef(unittest.TestCase):
         # Test without part_id
         self.assertEquals(
             list(CustomStreamDef.get_stream_from_s3(s3_dir, tmp_dir=self.tmp_dir)),
-            [
-                [0, 'http://www.site.com/'],
-                [1, 'http://www.site.com/1'],
-                [2, 'http://www.site.com/2'],
-                [3, 'http://www.site.com/3'],
-                [4, 'http://www.site.com/4'],
-                [5, 'http://www.site.com/5'],
-                [6, 'http://www.site.com/6']
-            ]
+            self.data
         )
 
     def test_persist(self):
-        iterator = iter([
-            [0, 'http://www.site.com/'],
-            [1, 'http://www.site.com/1'],
-            [2, 'http://www.site.com/2'],
-            [3, 'http://www.site.com/3'],
-            [4, 'http://www.site.com/4'],
-            [5, 'http://www.site.com/5'],
-            [6, 'http://www.site.com/6']
-        ])
+        iterator = iter(self.data)
         files = CustomStreamDef().persist(
             iterator,
             self.tmp_dir,
@@ -199,34 +202,18 @@ class TestStreamsDef(unittest.TestCase):
         )
         self.assertEquals(
             files,
-            [os.path.join(self.tmp_dir, '{}.txt.{}.gz'.format(CustomStreamDef().FILE, part_id)) for part_id in xrange(0, 3)]
+            [os.path.join(self.tmp_dir, '{}.txt.{}.gz'.format(CustomStreamDef().FILE, part_id)) for part_id in
+             xrange(0, 3)]
         )
 
         # Test without part_id
         self.assertEquals(
             list(CustomStreamDef.get_stream_from_directory(self.tmp_dir)),
-            [
-                [0, 'http://www.site.com/'],
-                [1, 'http://www.site.com/1'],
-                [2, 'http://www.site.com/2'],
-                [3, 'http://www.site.com/3'],
-                [4, 'http://www.site.com/4'],
-                [5, 'http://www.site.com/5'],
-                [6, 'http://www.site.com/6']
-            ]
+            self.data
         )
 
     def test_persist_part(self):
-        data = [
-            [0, 'http://www.site.com/'],
-            [1, 'http://www.site.com/1'],
-            [2, 'http://www.site.com/2'],
-            [3, 'http://www.site.com/3'],
-            [4, 'http://www.site.com/4'],
-            [5, 'http://www.site.com/5'],
-            [6, 'http://www.site.com/6']
-        ]
-        stream = iter(data)
+        stream = iter(self.data)
         part_id = 6
 
         CustomStreamDef.persist_part_id(
@@ -241,7 +228,7 @@ class TestStreamsDef(unittest.TestCase):
 
         # check partition file content
         result = list(CustomStreamDef.get_stream_from_directory(self.tmp_dir))
-        self.assertEqual(result, data)
+        self.assertEqual(result, self.data)
 
     @mock_s3
     def test_persist_s3(self):
@@ -249,16 +236,7 @@ class TestStreamsDef(unittest.TestCase):
         bucket = s3.create_bucket('test_bucket')
         s3_uri = 's3://test_bucket'
 
-        data = [
-            [0, 'http://www.site.com/'],
-            [1, 'http://www.site.com/1'],
-            [2, 'http://www.site.com/2'],
-            [3, 'http://www.site.com/3'],
-            [4, 'http://www.site.com/4'],
-            [5, 'http://www.site.com/5'],
-            [6, 'http://www.site.com/6']
-        ]
-        stream = iter(data)
+        stream = iter(self.data)
 
         CustomStreamDef.persist_to_s3(
             stream,
@@ -273,7 +251,7 @@ class TestStreamsDef(unittest.TestCase):
             self.tmp_dir,
         )
         result = list(result_stream)
-        self.assertEqual(result, data)
+        self.assertEqual(result, self.data)
 
     @mock_s3
     def test_persist_part_s3(self):
@@ -281,16 +259,7 @@ class TestStreamsDef(unittest.TestCase):
         bucket = s3.create_bucket('test_bucket')
         s3_uri = 's3://test_bucket'
 
-        data = [
-            [0, 'http://www.site.com/'],
-            [1, 'http://www.site.com/1'],
-            [2, 'http://www.site.com/2'],
-            [3, 'http://www.site.com/3'],
-            [4, 'http://www.site.com/4'],
-            [5, 'http://www.site.com/5'],
-            [6, 'http://www.site.com/6']
-        ]
-        stream = iter(data)
+        stream = iter(self.data)
         part_id = 15
 
         CustomStreamDef.persist_part_to_s3(
@@ -306,10 +275,22 @@ class TestStreamsDef(unittest.TestCase):
             part_id=part_id
         )
         result = list(result_stream)
-        self.assertEqual(result, data)
+        self.assertEqual(result, self.data)
+
+
+class TestTemporaryDataset(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    def test_temporary_dataset_creation(self):
+        dataset = CustomStreamDef.create_temporary_dataset()
+        self.assertTrue(isinstance(dataset, TemporaryDataset))
 
     def test_temporary_dataset(self):
-        dataset = CustomStreamDef.create_temporary_dataset()
+        dataset = TemporaryDataset(CustomStreamDef)
         # Write in reversed to ensure that the dataset will be sorted
         for i in xrange(6, -1, -1):
             dataset.append(i, 'http://www.site.com/{}'.format(i))
