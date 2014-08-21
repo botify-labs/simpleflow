@@ -20,7 +20,11 @@ from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 
 @with_temporary_dir
 def compute_metadata_filled_nb(s3_uri, part_id, tmp_dir=None):
-    contents_stream = ContentsStreamDef.get_stream_from_s3(s3_uri, part_id=part_id, tmp_dir=tmp_dir)
+    contents_stream = ContentsStreamDef.get_stream_from_s3(
+        s3_uri,
+        part_id=part_id,
+        tmp_dir=tmp_dir
+    )
     output_stream = count_filled_nb(contents_stream, part_id)
 
     output_file_name = "{}.txt.{}.gz".format(
