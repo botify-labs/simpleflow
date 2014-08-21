@@ -34,14 +34,14 @@ class TestMetadataDuplicateGenerator(unittest.TestCase):
         results = list(generator)
         logger.info(results)
         expected = [
-            (1, 1, 1, 2, True, [3]),
-            (1, 2, 2, 2, True, [2]),
-            (1, 4, 1, 3, True, [2, 3]),
-            (2, 2, 1, 2, False, [1]),
-            (2, 4, 1, 3, False, [1, 3]),
-            (3, 1, 1, 2, False, [1]),
-            (3, 2, 1, 0, True, []),
-            (3, 4, 1, 3, False, [1, 2])
+            (1, 1, 2, True, [3]),
+            (1, 2, 2, True, [2]),
+            (1, 4, 3, True, [2, 3]),
+            (2, 2, 2, False, [1]),
+            (2, 4, 3, False, [1, 3]),
+            (3, 1, 2, False, [1]),
+            (3, 2, 0, True, []),
+            (3, 4, 3, False, [1, 2])
         ]
         self.assertEquals(results, expected)
 
@@ -64,8 +64,8 @@ class TestMetadataDuplicateGenerator(unittest.TestCase):
         results = list(generator)
 
         expected = [
-            (1, 2, 1, 0, True, []),
-            (1, 4, 1, 2, True, [2]),
-            (2, 4, 2, 2, False, [1]),
+            (1, 2, 0, True, []),
+            (1, 4, 2, True, [2]),
+            (2, 4, 2, False, [1]),
         ]
         self.assertEquals(results, expected)

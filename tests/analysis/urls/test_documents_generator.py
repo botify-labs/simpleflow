@@ -208,9 +208,9 @@ class TestMetadataGeneration(unittest.TestCase):
 
     def test_metadata_duplicate(self):
         duplicates = [
-            [1, 1, 10, 3, True, "2;3;4"],
-            [2, 2, 1, 0, True, ""],
-            [3, 4, 10, 3, False, "2;3;4"],
+            [1, 1, 3, True, "2;3;4"],
+            [2, 2, 0, True, ""],
+            [3, 4, 3, False, "2;3;4"],
         ]
 
         gen = UrlDocumentGenerator([
@@ -222,7 +222,6 @@ class TestMetadataGeneration(unittest.TestCase):
         # check for url1
         document = _next_doc(gen)
         dup = document['metadata']
-        self.assertEqual(dup['title']['nb'], 10)
         self.assertEqual(dup['title']['duplicates']['nb'], 3)
         self.assertEqual(dup['title']['duplicates']['urls'], [2, 3, 4])
         self.assertEqual(dup['title']['duplicates']['urls_exists'], True)
@@ -230,7 +229,6 @@ class TestMetadataGeneration(unittest.TestCase):
         # check for url2
         document = _next_doc(gen)
         dup = document['metadata']
-        self.assertEqual(dup['h1']['nb'], 1)
         self.assertEqual(dup['h1']['duplicates']['nb'], 0)
         self.assertFalse('urls' in dup['h1']['duplicates'])
         self.assertFalse('urls_exists' in dup['h1']['duplicates'])
@@ -238,7 +236,6 @@ class TestMetadataGeneration(unittest.TestCase):
         # check for url3
         document = _next_doc(gen)
         dup = document['metadata']
-        self.assertEqual(dup['description']['nb'], 10)
         self.assertEqual(dup['description']['duplicates']['nb'], 3)
         self.assertEqual(dup['description']['duplicates']['urls'], [2, 3, 4])
         self.assertEqual(dup['description']['duplicates']['urls_exists'], True)
