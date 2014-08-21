@@ -5,7 +5,7 @@ import tempfile
 import shutil
 import gzip
 
-from cdf.features.main.tasks import (
+from cdf.features.main.zones import (
     get_lang,
     compute_zones,
     generate_zone_stream
