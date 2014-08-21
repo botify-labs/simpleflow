@@ -19,7 +19,11 @@ from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.features.links.helpers.masks import list_to_mask
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.links.streams import OutlinksStreamDef, InlinksStreamDef, BadLinksStreamDef
-from cdf.features.semantic_metadata.streams import ContentsStreamDef, ContentsDuplicateStreamDef
+from cdf.features.semantic_metadata.streams import (
+    ContentsStreamDef,
+    ContentsDuplicateStreamDef,
+    FilledContentCountStreamDef
+)
 from cdf.features.sitemaps.streams import SitemapStreamDef
 
 logger.setLevel(logging.DEBUG)
@@ -239,6 +243,50 @@ class TestMetadataGeneration(unittest.TestCase):
         self.assertEqual(dup['description']['duplicates']['nb'], 3)
         self.assertEqual(dup['description']['duplicates']['urls'], [2, 3, 4])
         self.assertEqual(dup['description']['duplicates']['urls_exists'], True)
+
+    def test_filled_content_count(self):
+        filled_content_count = [
+            [1, 1, 1],
+            [1, 2, 1],
+            [1, 4, 2],
+            [2, 1, 2],
+            [2, 2, 1],
+            [3, 1, 1],
+            [3, 3, 5],
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
+            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
+            FilledContentCountStreamDef.get_stream_from_iterator(iter(filled_content_count))
+        ])
+
+        # check for url1
+        document = _next_doc(gen)
+        metadata = document['metadata']
+        self.assertEqual(metadata['title']['nb'], 1)
+        self.assertEqual(metadata['h1']['nb'], 1)
+        self.assertEqual(metadata['h2']['nb'], 0)
+        self.assertEqual(metadata['description']['nb'], 2)
+        self.assertEqual(metadata['h3']['nb'], 0)
+
+        # check for url2
+        document = _next_doc(gen)
+        metadata = document['metadata']
+        self.assertEqual(metadata['title']['nb'], 2)
+        self.assertEqual(metadata['h1']['nb'], 1)
+        self.assertEqual(metadata['h2']['nb'], 0)
+        self.assertEqual(metadata['description']['nb'], 0)
+        self.assertEqual(metadata['h3']['nb'], 0)
+
+        # check for url3
+        document = _next_doc(gen)
+        metadata = document['metadata']
+        self.assertEqual(metadata['title']['nb'], 1)
+        self.assertEqual(metadata['h1']['nb'], 0)
+        self.assertEqual(metadata['h2']['nb'], 5)
+        self.assertEqual(metadata['description']['nb'], 0)
+        self.assertEqual(metadata['h3']['nb'], 0)
 
 
 class TestInlinksGeneration(unittest.TestCase):
