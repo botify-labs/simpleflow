@@ -333,3 +333,30 @@ class ZoneStreamDef(StreamDefBase):
     def process_document(self, document, stream):
         _, zone = stream
         document["zone"] = zone
+
+
+def cast_bool(str):
+    return str.lower() == 'true'
+
+
+# TODO add `strategic_reason` field
+class StrategicUrlStreamDef(StreamDefBase):
+    FILE = 'strategic_urls'
+    HEADERS = (
+        ('id', int),
+        ('strategic', cast_bool)
+    )
+    URL_DOCUMENT_MAPPING = {
+        "strategic": {
+            "verbose_name": "Strategic url",
+            "type": BOOLEAN_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            }
+        }
+    }
+
+    def process_document(self, document, stream):
+        _, strategic = stream
+        document['strategic'] = strategic
