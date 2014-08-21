@@ -191,11 +191,9 @@ class StreamDefBase(object):
                                   part_id_size=part_id_size)
         files = []
         for f in local_files:
-            s3.push_file(
-                os.path.join(s3_uri, os.path.basename(f)),
-                f
-            )
-            files.append(os.path.join(s3_uri, os.path.basename(f)))
+            s3_file_path = os.path.join(s3_uri, os.path.basename(f))
+            s3.push_file(s3_file_path, f)
+            files.append(s3_file_path)
         shutil.rmtree(tmp_dir)
         return files
 
@@ -212,12 +210,10 @@ class StreamDefBase(object):
         local_file = cls.persist_part_id(
             stream, directory=tmp_dir, part_id=part_id
         )
-        s3.push_file(
-            os.path.join(s3_uri, os.path.basename(local_file)),
-            local_file
-        )
+        s3_file_path = os.path.join(s3_uri, os.path.basename(local_file))
+        s3.push_file(s3_file_path, local_file)
         shutil.rmtree(tmp_dir)
-        return os.path.join(s3_uri, os.path.basename(local_file))
+        return s3_file_path
 
     @classmethod
     def to_dict(cls, entry):
