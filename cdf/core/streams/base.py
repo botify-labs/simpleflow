@@ -149,13 +149,11 @@ class StreamDefBase(object):
 
         files_generated = []
         for part_id, local_stream in groupby(stream, lambda k: get_part_id(k[0], first_part_id_size, part_id_size)):
-            files_generated.append(cls.persist_part_id(local_stream, directory, part_id, first_part_id_size, part_id_size))
+            files_generated.append(cls.persist_part_id(local_stream, directory, part_id))
         return files_generated
 
     @classmethod
-    def persist_part_id(cls, stream, directory, part_id,
-                        first_part_id_size=FIRST_PART_ID_SIZE,
-                        part_id_size=PART_ID_SIZE):
+    def persist_part_id(cls, stream, directory, part_id):
         """Persist the content of the stream into a partition file
 
         :return the file location where the stream has been stored
@@ -184,6 +182,19 @@ class StreamDefBase(object):
             files.append(os.path.join(s3_uri, os.path.basename(f)))
         shutil.rmtree(tmp_dir)
         return files
+
+    @classmethod
+    def persist_part_to_s3(cls, stream, s3_uri, part_id):
+        tmp_dir = tempfile.mkdtemp()
+        local_file = cls.persist_part_id(
+            stream, directory=tmp_dir, part_id=part_id
+        )
+        s3.push_file(
+            os.path.join(s3_uri, os.path.basename(local_file)),
+            local_file
+        )
+        shutil.rmtree(tmp_dir)
+        return os.path.join(s3_uri, os.path.basename(local_file))
 
     @classmethod
     def to_dict(cls, entry):
