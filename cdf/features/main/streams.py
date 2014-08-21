@@ -331,5 +331,5 @@ class ZoneStreamDef(StreamDefBase):
     }
 
     def process_document(self, document, stream):
-        url_id, zone = stream
+        _, zone = stream
         document["zone"] = zone
