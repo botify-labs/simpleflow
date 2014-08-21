@@ -10,12 +10,39 @@ from cdf.features.semantic_metadata.streams import ContentsStreamDef
 notset_hash_value = 14695981039346656037
 
 
+def count_filled_nb(stream_contents, part_id):
+    """Count the number of title, description, h1, h2, etc. for each urlid
+    of a part.
+    The function ignores the metadata which are not set.
+    :param stream_contents: the input stream (based on ContentsStreamDef)
+    :type stream_contents: iterator
+    :param part_id: the input part_id
+    :type part_id: int
+    :returns: iterator - a stream (url_id, content_type_id, count)
+    """
+    # Resolve indexes
+    url_id_idx = ContentsStreamDef.field_idx('id')
+    content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
+    content_hash_idx = ContentsStreamDef.field_idx('hash')
+
+    #ignore notset metadata, they don't count anything
+    stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
+                              stream_contents)
+    for url_id, contents in groupby(stream_contents, lambda x: x[url_id_idx]):
+        filled_counter = Counter()
+        for content in contents:
+            ct_id = content[content_meta_type_idx]
+            filled_counter[ct_id] += 1
+
+        for ct_id, filled_nb in sorted(filled_counter.iteritems()):
+            yield (url_id, ct_id, filled_nb)
+
+
 def get_duplicate_metadata(stream_contents):
     """
     Return a tuple of urls having a duplicate metadata (the first one found for each page)
     The 1st index is the url_id concerned
     The 2nd index is the content type (h1, title, description)
-    The 3rd index is the number of filled anchors
     The 4th is the number of occurrences found for the first anchor for the whole crawl
     The 5th is a boolean that check if it is the first occurrence found in the whole crawl
     The 6th index is a list of the ten first url_ids found containg the same content type)
@@ -35,10 +62,6 @@ def get_duplicate_metadata(stream_contents):
     # Resolve an url_id + ct_id to an hash : url_to_hash[url_id][ct_id] = hash_id
     url_to_hash = defaultdict(lambda: defaultdict(set))
 
-    # Number of filled metadata for (url, meta_type)
-    # Counter[(url, meta_type)] = count
-    filled_counter = Counter()
-
     #ignore notset metadata, they don't count anything
     stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
                               stream_contents)
@@ -53,8 +76,6 @@ def get_duplicate_metadata(stream_contents):
         for content in contents:
 
             ct_id = content[content_meta_type_idx]
-            filled_counter[(url_id, ct_id)] += 1
-
             if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
                 continue
 
@@ -76,10 +97,8 @@ def get_duplicate_metadata(stream_contents):
         if url_id not in url_to_hash:
             continue
         for ct_id, _h in url_to_hash[url_id].iteritems():
-            filled_nb = filled_counter[(url_id, ct_id)]
-
             if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
-                yield (url_id, ct_id, filled_nb, 0, True, [])
+                yield (url_id, ct_id, 0, True, [])
 
             urls = hashes[ct_id][_h]
             nb_duplicates = hashes_count[ct_id][_h]
@@ -93,6 +112,7 @@ def get_duplicate_metadata(stream_contents):
             # The first url is garanteed to be the min
             # urls list has at least one elem. (url itself)
             first_url_id = urls[0]
-            yield (url_id, ct_id, filled_nb, nb_duplicates,
+            yield (url_id, ct_id, nb_duplicates,
                    first_url_id == url_id,
                    [i for i in urls if i != url_id][:nb_samples_to_return])
+

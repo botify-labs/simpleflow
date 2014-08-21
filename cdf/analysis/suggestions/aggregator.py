@@ -226,7 +226,7 @@ class MetricsAggregator(object):
                 results[key]['metadata_nb']['not_enough'] += 1
 
             for entry in contents_duplicate:
-                url_id, ct_id, nb_filled, nb_duplicates, is_first_url, _ = entry
+                url_id, ct_id, nb_duplicates, is_first_url, _ = entry
                 # Meta filled
                 metadata_dict = results[key]['metadata_nb'][CONTENT_TYPE_INDEX[ct_id]]
                 metadata_dict['filled'] += 1

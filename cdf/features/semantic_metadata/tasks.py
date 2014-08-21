@@ -1,14 +1,45 @@
 import os
+import gzip
 import itertools
 
 from cdf.log import logger
 from cdf.utils.path import write_by_part
 from cdf.utils.s3 import push_file
-from cdf.analysis.urls.transducers.metadata_duplicate import get_duplicate_metadata
+from cdf.analysis.urls.transducers.metadata_duplicate import (
+    get_duplicate_metadata,
+    count_filled_nb
+)
 from cdf.utils.remote_files import nb_parts_from_crawl_location
-from cdf.features.semantic_metadata.streams import ContentsStreamDef
+from cdf.features.semantic_metadata.streams import (
+    ContentsStreamDef,
+    FilledContentCountStreamDef
+)
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
+
+
+@with_temporary_dir
+def compute_metadata_filled_nb(s3_uri, part_id, tmp_dir=None):
+    contents_stream = ContentsStreamDef.get_stream_from_s3(s3_uri, part_id=part_id, tmp_dir=tmp_dir)
+    output_stream = count_filled_nb(contents_stream, part_id)
+
+    output_file_name = "{}.txt.{}.gz".format(
+        FilledContentCountStreamDef.FILE,
+        part_id
+    )
+    output_file_path = os.path.join(tmp_dir, output_file_name)
+    with gzip.open(output_file_path, "w") as f:
+        for urlid, content_type, filled_nb in output_stream:
+            f.write("{}\t{}\t{}\n".format(urlid, content_type, filled_nb))
+
+    #push file to s3
+    s3_destination = "{}/{}".format(s3_uri, output_file_name)
+    push_file(
+        s3_destination,
+        output_file_path
+    )
+
+    return s3_destination
 
 
 @with_temporary_dir
@@ -16,11 +47,10 @@ def make_metadata_duplicates_file(crawl_id, s3_uri,
                                   first_part_id_size, part_id_size,
                                   tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     def to_string(row):
-        url_id, metadata_type, filled_nb, duplicates_nb, is_first, target_urls_ids = row
+        url_id, metadata_type, duplicates_nb, is_first, target_urls_ids = row
         return '\t'.join((
             str(url_id),
             str(metadata_type),
-            str(filled_nb),
             str(duplicates_nb),
             '1' if is_first else '0',
             ';'.join(str(u) for u in target_urls_ids)

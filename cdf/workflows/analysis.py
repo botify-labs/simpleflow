@@ -71,6 +71,7 @@ from cdf.features.main.zones import compute_zones
 compute_zones = as_activity(compute_zones)
 
 from cdf.features.semantic_metadata.tasks import (
+    compute_metadata_filled_nb,
     make_metadata_duplicates_file,
 )
 
@@ -79,6 +80,7 @@ from cdf.features.links.tasks import (
     make_bad_link_file,
     make_bad_link_counter_file,
 )
+compute_metadata_filled_nb = as_activity(compute_metadata_filled_nb)
 make_metadata_duplicates_file = as_activity(make_metadata_duplicates_file)
 make_links_counter_file = as_activity(make_links_counter_file)
 make_bad_link_file = as_activity(make_bad_link_file)
@@ -436,6 +438,17 @@ class AnalysisWorkflow(Workflow):
             for part_id in xrange(partitions.result)
         ]
 
+
+        filled_metadata_count_results = [
+            self.submit(
+                compute_metadata_filled_nb,
+                s3_uri=s3_uri,
+                tmp_dir=tmp_dir,
+                part_id=part_id
+            )
+            for part_id in xrange(partitions.result)
+        ]
+
         zone_results = [
             self.submit(
                 compute_zones,
@@ -455,7 +468,8 @@ class AnalysisWorkflow(Workflow):
             bad_link_counter_results +
             inlinks_results +
             outlinks_results +
-            zone_results)
+            zone_results +
+            filled_metadata_count_results)
 
         if 'ganalytics' in features_flags:
             intermediary_files.extend(self.compute_ganalytics(context))
