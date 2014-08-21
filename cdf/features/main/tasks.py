@@ -54,6 +54,7 @@ def compute_suggested_patterns(crawl_id,
                     regexp=['url(ids|infos|contents).txt.%d.gz' % part_id],
                     force_fetch=force_fetch)
 
+
     logger.info("Compute patterns cluster")
 
     crawler_metakeys = load_crawler_metakeys(tmp_dir)
@@ -166,3 +167,6 @@ def compute_suggested_patterns(crawl_id,
             os.path.join(s3_uri, os.path.basename(filepath)),
             os.path.join(filepath)
         )
+
+
+
