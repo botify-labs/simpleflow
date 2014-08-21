@@ -53,8 +53,16 @@ class StreamDefBase(object):
 
     @classmethod
     def get_stream_from_directory(cls, directory, part_id=None):
-        """
-        Return a Stream instance from a directory
+        """Return a Stream instance from a directory
+
+        It handles the case of partitions:
+            - if a partition id is given, only stream that partition
+            - if not, stream all partition in order
+
+        :param directory: local directory containing partition files
+        :type directory: str
+        :param part_id: partition id, `None` by default
+        :type part_id: int
         """
         pattern = r'{}\.txt\.{}\.gz'
         # partition-aware sort the files
@@ -169,6 +177,14 @@ class StreamDefBase(object):
     def persist_to_s3(cls, stream, s3_uri,
                       first_part_id_size=FIRST_PART_ID_SIZE,
                       part_id_size=PART_ID_SIZE):
+        """Persist the stream to s3 in partitions
+
+        :param stream: stream to persist
+        :param s3_uri: s3 uri
+        :param first_part_id_size: size of first partition
+        :param part_id_size: size of subsequent partitions
+        :return: a list of s3 uris of persisted files
+        """
         tmp_dir = tempfile.mkdtemp()
         local_files = cls.persist(stream, directory=tmp_dir,
                                   first_part_id_size=first_part_id_size,
@@ -185,6 +201,13 @@ class StreamDefBase(object):
 
     @classmethod
     def persist_part_to_s3(cls, stream, s3_uri, part_id):
+        """Persist the stream to s3 as a single partition
+
+        :param stream: stream to persist
+        :param s3_uri: s3 uri
+        :param part_id: partition id
+        :return: the s3 uri of the persisted file on s3
+        """
         tmp_dir = tempfile.mkdtemp()
         local_file = cls.persist_part_id(
             stream, directory=tmp_dir, part_id=part_id
