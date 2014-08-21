@@ -38,7 +38,7 @@ class TestGenerateZoneStream(unittest.TestCase):
         infos_stream = iter([
             (1, None, None, None, None, None, None, None, None, "en-US"),
             (2, None, None, None, None, None, None, None, None, "fr"),
-            (9, None, None, None, None, None, None, None, None, "fr"),
+            (9, None, None, None, None, None, None, None, None, "?"),
         ])
 
         zone_stream = generate_zone_stream(id_stream, infos_stream)
@@ -46,7 +46,7 @@ class TestGenerateZoneStream(unittest.TestCase):
         expected_stream = [
             (1, 'en-US,http'),
             (2, 'fr,https'),
-            (9, 'fr,https')
+            (9, 'notset,https')
         ]
         self.assertEqual(expected_stream, list(zone_stream))
 
