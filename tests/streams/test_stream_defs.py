@@ -5,9 +5,12 @@ import unittest
 import StringIO
 import shutil
 from mock import patch
+from moto import mock_s3
+import boto
 
 from cdf.core.streams.base import StreamDefBase
 from cdf.core.mocks import _mock_fetch_file, _mock_fetch_files
+from cdf.utils.s3 import list_files
 
 
 class CustomStreamDef(StreamDefBase):
@@ -212,6 +215,98 @@ class TestStreamsDef(unittest.TestCase):
                 [6, 'http://www.site.com/6']
             ]
         )
+
+    def test_persist_part(self):
+        data = [
+            [0, 'http://www.site.com/'],
+            [1, 'http://www.site.com/1'],
+            [2, 'http://www.site.com/2'],
+            [3, 'http://www.site.com/3'],
+            [4, 'http://www.site.com/4'],
+            [5, 'http://www.site.com/5'],
+            [6, 'http://www.site.com/6']
+        ]
+        stream = iter(data)
+        part_id = 6
+
+        CustomStreamDef.persist_part_id(
+            stream,
+            self.tmp_dir,
+            part_id=6,
+        )
+        # check partition file creation
+        files = os.listdir(self.tmp_dir)
+        expected = ['{}.txt.{}.gz'.format(CustomStreamDef.FILE, part_id)]
+        self.assertItemsEqual(files, expected)
+
+        # check partition file content
+        result = list(CustomStreamDef.get_stream_from_directory(self.tmp_dir))
+        self.assertEqual(result, data)
+
+    @mock_s3
+    def test_persist_s3(self):
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        s3_uri = 's3://test_bucket'
+
+        data = [
+            [0, 'http://www.site.com/'],
+            [1, 'http://www.site.com/1'],
+            [2, 'http://www.site.com/2'],
+            [3, 'http://www.site.com/3'],
+            [4, 'http://www.site.com/4'],
+            [5, 'http://www.site.com/5'],
+            [6, 'http://www.site.com/6']
+        ]
+        stream = iter(data)
+
+        CustomStreamDef.persist_to_s3(
+            stream,
+            s3_uri,
+            first_part_id_size=1,
+            part_id_size=3
+        )
+        self.assertEqual(len(list_files(s3_uri)), 3)
+
+        result_stream = CustomStreamDef.get_stream_from_s3(
+            s3_uri,
+            self.tmp_dir,
+        )
+        result = list(result_stream)
+        self.assertEqual(result, data)
+
+    @mock_s3
+    def test_persist_part_s3(self):
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        s3_uri = 's3://test_bucket'
+
+        data = [
+            [0, 'http://www.site.com/'],
+            [1, 'http://www.site.com/1'],
+            [2, 'http://www.site.com/2'],
+            [3, 'http://www.site.com/3'],
+            [4, 'http://www.site.com/4'],
+            [5, 'http://www.site.com/5'],
+            [6, 'http://www.site.com/6']
+        ]
+        stream = iter(data)
+        part_id = 15
+
+        CustomStreamDef.persist_part_to_s3(
+            stream,
+            s3_uri,
+            part_id
+        )
+        self.assertEqual(len(list_files(s3_uri)), 1)
+
+        result_stream = CustomStreamDef.get_stream_from_s3(
+            s3_uri,
+            self.tmp_dir,
+            part_id=part_id
+        )
+        result = list(result_stream)
+        self.assertEqual(result, data)
 
     def test_temporary_dataset(self):
         dataset = CustomStreamDef.create_temporary_dataset()
