@@ -8,6 +8,13 @@ STATUS=0
 SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd $SCRIPT_DIR/.. #back to root directory
 
+#configure pip if necessary
+export PIP_CONFIG_FILE=$PWD/pip.conf
+cat > $PIP_CONFIG_FILE << EOF
+[global]
+index-url = http://ff879dbbee9047288c13e31e9f8d45d3:dc076cf5483e4501a548225cbbf5b9b2@pypi.botify.com/simple
+EOF
+
 VIRTUALENV_DIR="/tmp/venv"
 virtualenv $VIRTUALENV_DIR --system-site-packages
 [ $? -ne 0 ] && exit 1
