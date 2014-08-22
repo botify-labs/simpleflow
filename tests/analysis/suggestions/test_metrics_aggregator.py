@@ -171,10 +171,10 @@ class TestMetricsAggregator(unittest.TestCase):
         (url_id, content_type, filled_nb, dup_nb, if_first, dup_urls)
         """
         stream_contents_duplicate = [
-            [1, 1, 2, 3, True, "10;11"],
-            [1, 2, 10, 1, True, "11"],
-            [1, 4, 1, 0, True, ""],
-            [2, 1, 1, 1, True, "15"],
+            [1, 1, 3, True, "10;11"],
+            [1, 2, 1, True, "11"],
+            [1, 4, 0, True, ""],
+            [2, 1, 1, True, "15"],
         ]
         self.register_stream(ContentsDuplicateStreamDef, stream_contents_duplicate)
         result = list(MetricsAggregator(self.get_streams()).get())

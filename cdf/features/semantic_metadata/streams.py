@@ -23,16 +23,6 @@ class ContentsStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
     URL_DOCUMENT_MAPPING = {
         # title tag
-        "metadata.title.nb": {
-            "verbose_name": "Number of Page Titles",
-            "type": INT_TYPE,
-            "order": 10,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL,
-                AGG_CATEGORICAL
-            }
-        },
         "metadata.title.contents": {
             "verbose_name": "Title",
             "order": 1,
@@ -40,16 +30,6 @@ class ContentsStreamDef(StreamDefBase):
             "settings": {ES_NOT_ANALYZED, LIST}
         },
         # h1 tag
-        "metadata.h1.nb": {
-            "verbose_name": "Number of H1",
-            "type": INT_TYPE,
-            "order": 12,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL,
-                AGG_NUMERICAL
-            }
-        },
         "metadata.h1.contents": {
             "verbose_name": "H1",
             "order": 3,
@@ -57,16 +37,6 @@ class ContentsStreamDef(StreamDefBase):
             "settings": {ES_NOT_ANALYZED, LIST}
         },
         # description tag
-        "metadata.description.nb": {
-            "verbose_name": "Number of Page Description",
-            "type": INT_TYPE,
-            "order": 11,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL,
-                AGG_NUMERICAL
-            }
-        },
         "metadata.description.contents": {
             "verbose_name": "Page description",
             "type": STRING_TYPE,
@@ -74,16 +44,6 @@ class ContentsStreamDef(StreamDefBase):
             "settings": {ES_NOT_ANALYZED, LIST}
         },
         # h2 tag
-        "metadata.h2.nb": {
-            "verbose_name": "Number of H2",
-            "type": INT_TYPE,
-            "order": 13,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL,
-                AGG_NUMERICAL
-            }
-        },
         "metadata.h2.contents": {
             "verbose_name": "H2",
             "order": 4,
@@ -92,16 +52,6 @@ class ContentsStreamDef(StreamDefBase):
         },
 
         # h3 tag
-        "metadata.h3.nb": {
-            "verbose_name": "Number of H3",
-            "type": INT_TYPE,
-            "order": 14,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL,
-                AGG_NUMERICAL
-            }
-        },
         "metadata.h3.contents": {
             "verbose_name": "H3",
             "type": STRING_TYPE,
@@ -122,7 +72,6 @@ class ContentsDuplicateStreamDef(StreamDefBase):
     HEADERS = (
         ('id', int),
         ('content_type', int),
-        ('filled_nb', int),
         ('duplicates_nb', int),
         ('is_first_url', _raw_to_bool),
         ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
@@ -228,12 +177,10 @@ class ContentsDuplicateStreamDef(StreamDefBase):
     }
 
     def process_document(self, document, stream):
-        _, metadata_idx, nb_filled, nb_duplicates, is_first, duplicate_urls = stream
+        _, metadata_idx, nb_duplicates, is_first, duplicate_urls = stream
         metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
 
         meta = document['metadata'][metadata_type]
-        # number of metadata of this kind
-        meta['nb'] = nb_filled
         # number of duplications of this piece of metadata
         dup = meta['duplicates']
         dup['nb'] = nb_duplicates
@@ -244,3 +191,75 @@ class ContentsDuplicateStreamDef(StreamDefBase):
 
         # is this the first one out of all duplicates
         dup['is_first'] = is_first
+
+
+class ContentsCountStreamDef(StreamDefBase):
+    FILE = 'urlcontents_count'
+    HEADERS = (
+        ('id', int),
+        ('content_type', int),
+        ('filled_nb', int),
+    )
+    URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
+    URL_DOCUMENT_MAPPING = {
+        # title tag
+        "metadata.title.nb": {
+            "verbose_name": "Number of Page Titles",
+            "type": INT_TYPE,
+            "order": 10,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                AGG_CATEGORICAL
+            }
+        },
+        # h1 tag
+        "metadata.h1.nb": {
+            "verbose_name": "Number of H1",
+            "type": INT_TYPE,
+            "order": 12,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL
+            }
+        },
+        # description tag
+        "metadata.description.nb": {
+            "verbose_name": "Number of Page Description",
+            "type": INT_TYPE,
+            "order": 11,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL
+            }
+        },
+        # h2 tag
+        "metadata.h2.nb": {
+            "verbose_name": "Number of H2",
+            "type": INT_TYPE,
+            "order": 13,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL
+            }
+        },
+        # h3 tag
+        "metadata.h3.nb": {
+            "verbose_name": "Number of H3",
+            "type": INT_TYPE,
+            "order": 14,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL
+            }
+        }
+    }
+
+    def process_document(self, document, stream):
+        _, metadata_idx, nb_filled = stream
+        metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
+        document['metadata'][metadata_type]['nb'] = nb_filled
