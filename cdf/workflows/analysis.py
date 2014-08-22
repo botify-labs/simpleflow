@@ -71,7 +71,7 @@ from cdf.features.main.zones import compute_zones
 compute_zones = as_activity(compute_zones)
 
 from cdf.features.semantic_metadata.tasks import (
-    compute_metadata_filled_nb,
+    compute_metadata_count,
     make_metadata_duplicates_file,
 )
 
@@ -80,7 +80,7 @@ from cdf.features.links.tasks import (
     make_bad_link_file,
     make_bad_link_counter_file,
 )
-compute_metadata_filled_nb = as_activity(compute_metadata_filled_nb)
+compute_metadata_count = as_activity(compute_metadata_count)
 make_metadata_duplicates_file = as_activity(make_metadata_duplicates_file)
 make_links_counter_file = as_activity(make_links_counter_file)
 make_bad_link_file = as_activity(make_bad_link_file)
@@ -441,7 +441,7 @@ class AnalysisWorkflow(Workflow):
 
         filled_metadata_count_results = [
             self.submit(
-                compute_metadata_filled_nb,
+                compute_metadata_count,
                 s3_uri=s3_uri,
                 tmp_dir=tmp_dir,
                 part_id=part_id

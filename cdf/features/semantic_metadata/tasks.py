@@ -19,7 +19,7 @@ from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 
 
 @with_temporary_dir
-def compute_metadata_filled_nb(s3_uri, part_id, tmp_dir=None):
+def compute_metadata_count(s3_uri, part_id, tmp_dir=None):
     contents_stream = ContentsStreamDef.get_stream_from_s3(
         s3_uri,
         part_id=part_id,

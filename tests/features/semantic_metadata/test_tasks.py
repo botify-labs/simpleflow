@@ -9,7 +9,7 @@ import shutil
 
 from cdf.analysis.urls.transducers.metadata_duplicate import notset_hash_value
 from cdf.features.semantic_metadata.streams import ContentsCountStreamDef
-from cdf.features.semantic_metadata.tasks import compute_metadata_filled_nb
+from cdf.features.semantic_metadata.tasks import compute_metadata_count
 
 
 class TestComputeMetadataFilledNb(unittest.TestCase):
@@ -45,7 +45,7 @@ class TestComputeMetadataFilledNb(unittest.TestCase):
         urlcontents.set_contents_from_filename(f.name)
 
         #actual call
-        file_uri = compute_metadata_filled_nb(self.s3_uri, part_id)
+        file_uri = compute_metadata_count(self.s3_uri, part_id)
 
 
         #check results
