@@ -36,6 +36,28 @@ def count_metadata(stream_contents, part_id):
             yield (url_id, ct_id, filled_nb)
 
 
+def keep_only_first_metadata(stream_contents):
+    """Given a contents stream, keep only the entries corresponding to the
+    first title, first h1, etc.
+    :param stream_contents: the input contents stream
+                            (based on ContentsStreamDef)
+    :type stream_contents: Stream
+    """
+    url_id_idx = ContentsStreamDef.field_idx('id')
+    content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
+    for url_id, contents in groupby(stream_contents, lambda x: x[url_id_idx]):
+        # Fetch --first-- hash from each content type and watch add it to hashes set
+        ct_found = set()
+        # they should be ignored by duplication detection
+        for content in contents:
+
+            ct_id = content[content_meta_type_idx]
+            # If ct_i is already in ct_found, so it's the not the first content
+            if ct_id not in ct_found:
+                ct_found.add(ct_id)
+                yield content
+
+
 def get_duplicate_metadata(stream_contents):
     """
     Return a tuple of urls having a duplicate metadata (the first one found for each page)
@@ -62,31 +84,24 @@ def get_duplicate_metadata(stream_contents):
 
     #ignore notset metadata, they don't count anything
     stream_contents.add_filter('hash', lambda x: x != notset_hash_value)
-
+    stream_contents = keep_only_first_metadata(stream_contents)
     # only preserve 10 duplicating urls
     nb_samples_to_return = 10
     for url_id, contents in groupby(stream_contents, lambda x: x[url_id_idx]):
-
-        # Fetch --first-- hash from each content type and watch add it to hashes set
-        ct_found = set()
         # they should be ignored by duplication detection
         for content in contents:
-
             ct_id = content[content_meta_type_idx]
             if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
                 continue
 
-            # If ct_i is already in ct_found, so it's the not the first content
-            if ct_id not in ct_found:
-                _hash = content[content_hash_idx]
-                ct_found.add(ct_id)
-                hashes_count[ct_id][_hash] += 1
-                hashes_lst = hashes[ct_id][_hash]
-                #+1 because we want to return nb_samples_to_return
-                #which are different from the current url_id
-                if len(hashes_lst) < nb_samples_to_return + 1:
-                    hashes[ct_id][_hash].append(url_id)
-                url_to_hash[url_id][ct_id] = _hash
+            _hash = content[content_hash_idx]
+            hashes_count[ct_id][_hash] += 1
+            hashes_lst = hashes[ct_id][_hash]
+            #+1 because we want to return nb_samples_to_return
+            #which are different from the current url_id
+            if len(hashes_lst) < nb_samples_to_return + 1:
+                hashes[ct_id][_hash].append(url_id)
+            url_to_hash[url_id][ct_id] = _hash
 
     min_url_id = min(url_to_hash.iterkeys())
     max_url_id = max(url_to_hash.iterkeys())
