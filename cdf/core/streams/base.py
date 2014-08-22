@@ -98,7 +98,7 @@ class StreamDefBase(object):
         """
         Return a Stream instance from a root storage uri.
         """
-        if part_id:
+        if part_id is not None:
             regexp = '{}.txt.{}.gz'.format(cls.FILE, part_id)
         else:
             regexp = '{}.txt.([0-9]+).gz'.format(cls.FILE)
