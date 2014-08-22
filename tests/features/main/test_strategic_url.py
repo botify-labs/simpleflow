@@ -9,6 +9,11 @@ from cdf.features.main.strategic_url import (
     is_strategic_url,
     compute_strategic_urls
 )
+from cdf.features.main.reasons import (
+    Reason,
+    decode_reason_mask,
+    encode_reason_mask
+)
 from cdf.features.main.streams import (
     StrategicUrlStreamDef, InfosStreamDef
 )
@@ -123,6 +128,50 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.strategic_outlinks
         )
         self.assertTrue(result)
+
+
+TEST_REASON_A = Reason('test_a', 4)
+TEST_REASON_B = Reason('test_b', 32)
+TEST_REASONS = [TEST_REASON_A, TEST_REASON_B]
+decode_func = lambda mask: decode_reason_mask(
+    mask, all_reasons=TEST_REASONS)
+
+
+class TestNonStrategyReason(unittest.TestCase):
+    def test_encoding_harness(self):
+        mask = encode_reason_mask(TEST_REASON_A)
+
+        # should encode this bit
+        result = (mask & TEST_REASON_A.code) == TEST_REASON_A.code
+        self.assertTrue(result)
+
+        # should encode ONLY this bit
+        result = mask ^ TEST_REASON_A.code
+        self.assertEqual(result, 0)
+
+    def test_encoding_multiple(self):
+        mask = encode_reason_mask(TEST_REASON_A, TEST_REASON_B)
+
+        # should encode both bit
+        result = (mask & TEST_REASON_A.code) == TEST_REASON_A.code
+        self.assertTrue(result)
+        result = (mask & TEST_REASON_B.code) == TEST_REASON_B.code
+        self.assertTrue(result)
+
+    def test_decoding(self):
+        nothing = 1
+        reasons = decode_func(nothing)
+        self.assertEqual(reasons, [])
+
+        # reason A
+        mask_a = 4
+        reasons = decode_func(mask_a)
+        self.assertItemsEqual(reasons, ['test_a'])
+
+        # reason A and reason B
+        mask_b = 37
+        reasons = decode_func(mask_b)
+        self.assertItemsEqual(reasons, ['test_b', 'test_a'])
 
 
 class TestStrategicUrlStream(unittest.TestCase):
