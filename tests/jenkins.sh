@@ -27,7 +27,7 @@ done
 
 $PIP install python-google-analytics
 
-python setup.py install
+pip install -e .
 #ignore integration tests
 nosetests --with-xunit --with-coverage --cover-package=cdf --cover-xml -e=*integration*
 [ $? -ne 0 ] && STATUS=1
