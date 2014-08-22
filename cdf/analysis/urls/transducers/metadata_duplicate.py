@@ -43,11 +43,11 @@ def get_duplicate_metadata(stream_contents):
     Return a tuple of urls having a duplicate metadata (the first one found for each page)
     The 1st index is the url_id concerned
     The 2nd index is the content type (h1, title, description)
-    The 4th is the number of occurrences found for the first anchor for the whole crawl
-    The 5th is a boolean that check if it is the first occurrence found in the whole crawl
-    The 6th index is a list of the ten first url_ids found containg the same content type)
+    The 3rd is the number of occurrences found for the first anchor for the whole crawl
+    The 4th is a boolean that check if it is the first occurrence found in the whole crawl
+    The 5th index is a list of the ten first url_ids found containg the same content type)
 
-    H2 and H3 metadata are not concerned by 5 and 6
+    H2 and H3 metadata are not concerned by 4 and 5
 
     (url_id, content_type, filled_nb, duplicates_nb, is_first_url_found, [url_id_1, url_id2 ...])
     """
