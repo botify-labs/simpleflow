@@ -10,7 +10,7 @@ from cdf.features.semantic_metadata.streams import ContentsStreamDef
 notset_hash_value = 14695981039346656037
 
 
-def count_filled_nb(stream_contents, part_id):
+def count_metadata(stream_contents, part_id):
     """Count the number of title, description, h1, h2, etc. for each urlid
     of a part.
     The function ignores the metadata which are not set.

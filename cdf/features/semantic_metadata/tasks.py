@@ -7,7 +7,7 @@ from cdf.utils.path import write_by_part
 from cdf.utils.s3 import push_file
 from cdf.analysis.urls.transducers.metadata_duplicate import (
     get_duplicate_metadata,
-    count_filled_nb
+    count_metadata
 )
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.features.semantic_metadata.streams import (
@@ -25,7 +25,7 @@ def compute_metadata_filled_nb(s3_uri, part_id, tmp_dir=None):
         part_id=part_id,
         tmp_dir=tmp_dir
     )
-    output_stream = count_filled_nb(contents_stream, part_id)
+    output_stream = count_metadata(contents_stream, part_id)
 
     output_file_name = "{}.txt.{}.gz".format(
         FilledContentCountStreamDef.FILE,

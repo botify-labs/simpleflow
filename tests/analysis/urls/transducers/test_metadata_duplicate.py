@@ -1,7 +1,7 @@
 import unittest
 
 from cdf.analysis.urls.transducers.metadata_duplicate import (
-    count_filled_nb,
+    count_metadata,
     notset_hash_value
 )
 
@@ -22,7 +22,7 @@ class TestCountFilledNb(unittest.TestCase):
             (2, 1, fake_hash, "foo title 2")
         ])
         part_id = 0
-        actual_stream = count_filled_nb(contents_stream, part_id)
+        actual_stream = count_metadata(contents_stream, part_id)
 
         expected_stream = [
             (1, 1, 2),
