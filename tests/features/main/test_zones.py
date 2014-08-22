@@ -3,14 +3,17 @@ from moto import mock_s3
 import boto
 import tempfile
 import shutil
-import gzip
 
 from cdf.features.main.zones import (
     get_lang,
     compute_zones,
     generate_zone_stream
 )
-from cdf.features.main.streams import ZoneStreamDef
+from cdf.features.main.streams import (
+    IdStreamDef,
+    ZoneStreamDef,
+    InfosStreamDef
+)
 
 
 class TestGetLang(unittest.TestCase):
@@ -70,25 +73,20 @@ class TestComputeZones(unittest.TestCase):
         #create urlids
         urlids = boto.s3.key.Key(bucket)
         urlids.key = "crawl_result/urlids.txt.0.gz"
-        f = tempfile.NamedTemporaryFile(delete=False, prefix=self.tmp_dir)
-        f.close()
-        with gzip.open(f.name, "w") as tmp_file:
-            tmp_file.write("1\thttp\tfoo.com\t/\n")
-            tmp_file.write("2\thttps\tfoo.com\t/bar\n")
-            tmp_file.write("9\thttps\tfoo.com\t/baz\n")
-        urlids.set_contents_from_filename(f.name)
+        ids = iter([
+            (1, "http", "foo.com", "/"),
+            (2, "https", "foo.com", "/bar"),
+            (9, "https", "foo.com", "/baz")
+        ])
+        IdStreamDef.persist_part_to_s3(ids, self.s3_uri, part_id=0)
 
         #create urlinfos
-        urlinfos = boto.s3.key.Key(bucket)
-        urlinfos.key = "crawl_result/urlinfos.txt.0.gz"
-        bulk_data = "48\ttext/html\t0\t7695895\t200\t51133\t203\t305"
-        f = tempfile.NamedTemporaryFile(delete=False, prefix=self.tmp_dir)
-        f.close()
-        with gzip.open(f.name, "w") as tmp_file:
-            tmp_file.write("1\t{}\ten-US\n".format(bulk_data))
-            tmp_file.write("2\t{}\tfr\n".format(bulk_data))
-            tmp_file.write("9\t{}\tfr\n".format(bulk_data))
-        urlinfos.set_contents_from_filename(f.name)
+        contents = iter([
+            (1, 0, "text/html", 0, 0, 0, 0, 0, 0, "en-US"),
+            (2, 0, "text/html", 0, 0, 0, 0, 0, 0, "fr"),
+            (9, 0, "text/html", 0, 0, 0, 0, 0, 0, "fr")
+        ])
+        InfosStreamDef.persist_part_to_s3(contents, self.s3_uri, part_id=0)
 
         #actual computation
         part_id = 0
