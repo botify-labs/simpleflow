@@ -15,7 +15,7 @@ def count_metadata(stream_contents, part_id):
     of a part.
     The function ignores the metadata which are not set.
     :param stream_contents: the input stream (based on ContentsStreamDef)
-    :type stream_contents: Stream
+    :type stream_contents: iterator
     :param part_id: the input part_id
     :type part_id: int
     :returns: iterator - a stream (url_id, content_type_id, count)
@@ -23,9 +23,11 @@ def count_metadata(stream_contents, part_id):
     # Resolve indexes
     url_id_idx = ContentsStreamDef.field_idx('id')
     content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
+    content_hash_idx = ContentsStreamDef.field_idx('hash')
 
     #ignore notset metadata, they don't count anything
-    stream_contents.add_filter('hash', lambda x: x != notset_hash_value)
+    stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
+                              stream_contents)
     for url_id, contents in groupby(stream_contents, lambda x: x[url_id_idx]):
         filled_counter = Counter()
         for content in contents:
@@ -82,11 +84,13 @@ def get_duplicate_metadata(stream_contents):
     # Resolve an url_id + ct_id to an hash : url_to_hash[url_id][ct_id] = hash_id
     url_to_hash = defaultdict(lambda: defaultdict(set))
 
-    #ignore notset metadata, they don't count anything
-    stream_contents.add_filter('hash', lambda x: x != notset_hash_value)
     #ignore not mandatory content types
-    stream_contents.add_filter('content_type', lambda x: x in MANDATORY_CONTENT_TYPES_IDS)
+    stream_contents = ifilter(lambda x: x[content_meta_type_idx] in MANDATORY_CONTENT_TYPES_IDS, stream_contents)
+    #ignore notset metadata, they don't count anything
+    stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
+                              stream_contents)
     stream_contents = keep_only_first_metadata(stream_contents)
+
     # only preserve 10 duplicating urls
     nb_samples_to_return = 10
     for url_id, contents in groupby(stream_contents, lambda x: x[url_id_idx]):
