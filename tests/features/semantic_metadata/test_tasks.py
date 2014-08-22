@@ -3,12 +3,14 @@ from moto import mock_s3
 import boto
 
 import os
-import gzip
 import tempfile
 import shutil
 
 from cdf.analysis.urls.transducers.metadata_duplicate import notset_hash_value
-from cdf.features.semantic_metadata.streams import ContentsCountStreamDef
+from cdf.features.semantic_metadata.streams import (
+    ContentsCountStreamDef,
+    ContentsStreamDef
+)
 from cdf.features.semantic_metadata.tasks import compute_metadata_count
 
 
@@ -31,18 +33,20 @@ class TestComputeMetadataCount(unittest.TestCase):
         #create urlcontents
         urlcontents = boto.s3.key.Key(bucket)
         urlcontents.key = "crawl_result/urlcontents.txt.{}.gz".format(part_id)
-        f = tempfile.NamedTemporaryFile(delete=False, prefix=self.tmp_dir)
-        f.close()
         fake_hash = 1597530492
-        with gzip.open(f.name, "w") as tmp_file:
-            tmp_file.write("1\t1\t{}\tfoo title\n".format(fake_hash))
-            tmp_file.write("1\t2\t{}\tfoo description\n".format(fake_hash))
-            tmp_file.write("1\t3\t{}\tfoo h1\n".format(fake_hash))
-            tmp_file.write("1\t1\t{}\tbar title\n".format(fake_hash))
-            tmp_file.write("1\t3\t{}\tbar h1\n".format(fake_hash))
-            tmp_file.write("1\t4\t{}\tnot set h2\n".format(notset_hash_value))
-            tmp_file.write("2\t1\t{}\tfoo title 2\n".format(fake_hash))
-        urlcontents.set_contents_from_filename(f.name)
+
+        contents = [
+            (1, 1, fake_hash, "foo title"),
+            (1, 2, fake_hash, "foo description"),
+            (1, 3, fake_hash, "foo h1"),
+            (1, 1, fake_hash, "bar title"),
+            (1, 3, fake_hash, "bar h1"),
+            (1, 4, notset_hash_value, "not set h2"),
+            (2, 1, fake_hash, "foo title 2")
+        ]
+        ContentsStreamDef.persist_part_to_s3(iter(contents),
+                                             self.s3_uri,
+                                             part_id=part_id)
 
         #actual call
         file_uri = compute_metadata_count(self.s3_uri, part_id)
