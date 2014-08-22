@@ -194,7 +194,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
 
 
 class ContentsCountStreamDef(StreamDefBase):
-    FILE = 'filled_content_count'
+    FILE = 'urlcontents_count'
     HEADERS = (
         ('id', int),
         ('content_type', int),
