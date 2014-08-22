@@ -36,7 +36,7 @@ def is_strategic_url(url_id, infos_mask, http_code,
         return False
 
     # check no-index
-    noindex = 4 & infos_mask == 4
+    noindex = ((4 & infos_mask) == 4)
     if noindex == True:
         return False
 
