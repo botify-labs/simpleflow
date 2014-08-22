@@ -36,7 +36,7 @@ $PIP install python-google-analytics
 
 pip install -e .
 #ignore integration tests
-nosetests --with-xunit --with-coverage --cover-package=cdf --cover-xml -e=*integration*
+nosetests --with-xunit --with-coverage --cover-package=cdf --cover-xml --cover-inclusive -e=*integration*
 [ $? -ne 0 ] && STATUS=1
 sloccount --duplicates --wide --details cdf > sloccount.out
 
