@@ -193,7 +193,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         dup['is_first'] = is_first
 
 
-class FilledContentCountStreamDef(StreamDefBase):
+class ContentsCountStreamDef(StreamDefBase):
     FILE = 'filled_content_count'
     HEADERS = (
         ('id', int),

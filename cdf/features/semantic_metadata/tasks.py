@@ -12,7 +12,7 @@ from cdf.analysis.urls.transducers.metadata_duplicate import (
 from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
-    FilledContentCountStreamDef
+    ContentsCountStreamDef
 )
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
@@ -28,7 +28,7 @@ def compute_metadata_filled_nb(s3_uri, part_id, tmp_dir=None):
     output_stream = count_metadata(contents_stream, part_id)
 
     output_file_name = "{}.txt.{}.gz".format(
-        FilledContentCountStreamDef.FILE,
+        ContentsCountStreamDef.FILE,
         part_id
     )
     output_file_path = os.path.join(tmp_dir, output_file_name)

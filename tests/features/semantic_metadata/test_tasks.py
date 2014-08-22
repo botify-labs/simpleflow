@@ -8,7 +8,7 @@ import tempfile
 import shutil
 
 from cdf.analysis.urls.transducers.metadata_duplicate import notset_hash_value
-from cdf.features.semantic_metadata.streams import FilledContentCountStreamDef
+from cdf.features.semantic_metadata.streams import ContentsCountStreamDef
 from cdf.features.semantic_metadata.tasks import compute_metadata_filled_nb
 
 
@@ -51,7 +51,7 @@ class TestComputeMetadataFilledNb(unittest.TestCase):
         #check results
         expected_file_uri = os.path.join(
             self.s3_uri,
-            "{}.txt.{}.gz".format(FilledContentCountStreamDef.FILE, part_id)
+            "{}.txt.{}.gz".format(ContentsCountStreamDef.FILE, part_id)
         )
         self.assertEqual(
             expected_file_uri,
@@ -63,7 +63,7 @@ class TestComputeMetadataFilledNb(unittest.TestCase):
             [1, 3, 2],
             [2, 1, 1]
         ]
-        actual_stream = FilledContentCountStreamDef.get_stream_from_s3(
+        actual_stream = ContentsCountStreamDef.get_stream_from_s3(
             self.s3_uri,
             tmp_dir=self.tmp_dir,
             part_id=part_id

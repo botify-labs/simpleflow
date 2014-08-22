@@ -22,7 +22,7 @@ from cdf.features.links.streams import OutlinksStreamDef, InlinksStreamDef, BadL
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
     ContentsDuplicateStreamDef,
-    FilledContentCountStreamDef
+    ContentsCountStreamDef
 )
 from cdf.features.sitemaps.streams import SitemapStreamDef
 
@@ -258,7 +258,7 @@ class TestMetadataGeneration(unittest.TestCase):
         gen = UrlDocumentGenerator([
             IdStreamDef.get_stream_from_iterator(iter(self.ids)),
             InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            FilledContentCountStreamDef.get_stream_from_iterator(iter(filled_content_count))
+            ContentsCountStreamDef.get_stream_from_iterator(iter(filled_content_count))
         ])
 
         # check for url1
