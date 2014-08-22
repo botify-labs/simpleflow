@@ -1,5 +1,7 @@
 import unittest
 
+from cdf.core.streams.base import Stream
+from cdf.features.semantic_metadata.streams import ContentsStreamDef
 from cdf.analysis.urls.transducers.metadata_duplicate import (
     count_metadata,
     notset_hash_value
@@ -21,6 +23,7 @@ class TestCountFilledNb(unittest.TestCase):
             (1, 4, notset_hash_value, "not set h2"),
             (2, 1, fake_hash, "foo title 2")
         ])
+        contents_stream = Stream(ContentsStreamDef, contents_stream)
         part_id = 0
         actual_stream = count_metadata(contents_stream, part_id)
 

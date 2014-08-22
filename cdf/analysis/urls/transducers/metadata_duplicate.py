@@ -15,7 +15,7 @@ def count_metadata(stream_contents, part_id):
     of a part.
     The function ignores the metadata which are not set.
     :param stream_contents: the input stream (based on ContentsStreamDef)
-    :type stream_contents: iterator
+    :type stream_contents: Stream
     :param part_id: the input part_id
     :type part_id: int
     :returns: iterator - a stream (url_id, content_type_id, count)
@@ -23,11 +23,9 @@ def count_metadata(stream_contents, part_id):
     # Resolve indexes
     url_id_idx = ContentsStreamDef.field_idx('id')
     content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
-    content_hash_idx = ContentsStreamDef.field_idx('hash')
 
     #ignore notset metadata, they don't count anything
-    stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
-                              stream_contents)
+    stream_contents.add_filter('hash', lambda x: x != notset_hash_value)
     for url_id, contents in groupby(stream_contents, lambda x: x[url_id_idx]):
         filled_counter = Counter()
         for content in contents:
@@ -63,8 +61,7 @@ def get_duplicate_metadata(stream_contents):
     url_to_hash = defaultdict(lambda: defaultdict(set))
 
     #ignore notset metadata, they don't count anything
-    stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
-                              stream_contents)
+    stream_contents.add_filter('hash', lambda x: x != notset_hash_value)
 
     # only preserve 10 duplicating urls
     nb_samples_to_return = 10
