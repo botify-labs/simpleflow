@@ -12,7 +12,7 @@ from cdf.features.semantic_metadata.streams import ContentsCountStreamDef
 from cdf.features.semantic_metadata.tasks import compute_metadata_count
 
 
-class TestComputeMetadataFilledNb(unittest.TestCase):
+class TestComputeMetadataCount(unittest.TestCase):
     def setUp(self):
         self.bucket_name = "app.foo.com"
         self.s3_uri = "s3://{}/crawl_result".format(self.bucket_name)
@@ -46,7 +46,6 @@ class TestComputeMetadataFilledNb(unittest.TestCase):
 
         #actual call
         file_uri = compute_metadata_count(self.s3_uri, part_id)
-
 
         #check results
         expected_file_uri = os.path.join(

@@ -244,8 +244,8 @@ class TestMetadataGeneration(unittest.TestCase):
         self.assertEqual(dup['description']['duplicates']['urls'], [2, 3, 4])
         self.assertEqual(dup['description']['duplicates']['urls_exists'], True)
 
-    def test_filled_content_count(self):
-        filled_content_count = [
+    def test_urlcontents_count(self):
+        urlcontents_count = [
             [1, 1, 1],
             [1, 2, 1],
             [1, 4, 2],
@@ -258,7 +258,7 @@ class TestMetadataGeneration(unittest.TestCase):
         gen = UrlDocumentGenerator([
             IdStreamDef.get_stream_from_iterator(iter(self.ids)),
             InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            ContentsCountStreamDef.get_stream_from_iterator(iter(filled_content_count))
+            ContentsCountStreamDef.get_stream_from_iterator(iter(urlcontents_count))
         ])
 
         # check for url1
