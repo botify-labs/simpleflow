@@ -84,15 +84,14 @@ def get_duplicate_metadata(stream_contents):
 
     #ignore notset metadata, they don't count anything
     stream_contents.add_filter('hash', lambda x: x != notset_hash_value)
+    #ignore not mandatory content types
+    stream_contents.add_filter('content_type', lambda x: x in MANDATORY_CONTENT_TYPES_IDS)
     stream_contents = keep_only_first_metadata(stream_contents)
     # only preserve 10 duplicating urls
     nb_samples_to_return = 10
     for url_id, contents in groupby(stream_contents, lambda x: x[url_id_idx]):
-        # they should be ignored by duplication detection
         for content in contents:
             ct_id = content[content_meta_type_idx]
-            if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
-                continue
 
             _hash = content[content_hash_idx]
             hashes_count[ct_id][_hash] += 1
@@ -109,9 +108,6 @@ def get_duplicate_metadata(stream_contents):
         if url_id not in url_to_hash:
             continue
         for ct_id, _h in url_to_hash[url_id].iteritems():
-            if ct_id not in MANDATORY_CONTENT_TYPES_IDS:
-                yield (url_id, ct_id, 0, True, [])
-
             urls = hashes[ct_id][_h]
             nb_duplicates = hashes_count[ct_id][_h]
             # Unique (url, metatype)'s duplicates number should be 0, intuitively
