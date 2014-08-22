@@ -27,22 +27,11 @@ def compute_metadata_count(s3_uri, part_id, tmp_dir=None):
     )
     output_stream = count_metadata(contents_stream, part_id)
 
-    output_file_name = "{}.txt.{}.gz".format(
-        ContentsCountStreamDef.FILE,
-        part_id
+    s3_destination = ContentsCountStreamDef.persist_part_to_s3(
+        output_stream,
+        s3_uri,
+        part_id=part_id
     )
-    output_file_path = os.path.join(tmp_dir, output_file_name)
-    with gzip.open(output_file_path, "w") as f:
-        for urlid, content_type, filled_nb in output_stream:
-            f.write("{}\t{}\t{}\n".format(urlid, content_type, filled_nb))
-
-    #push file to s3
-    s3_destination = "{}/{}".format(s3_uri, output_file_name)
-    push_file(
-        s3_destination,
-        output_file_path
-    )
-
     return s3_destination
 
 
