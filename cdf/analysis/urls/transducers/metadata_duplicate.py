@@ -52,12 +52,45 @@ def keep_only_first_metadata(stream_contents):
         ct_found = set()
         # they should be ignored by duplication detection
         for content in contents:
-
             ct_id = content[content_meta_type_idx]
             # If ct_i is already in ct_found, so it's the not the first content
             if ct_id not in ct_found:
                 ct_found.add(ct_id)
                 yield content
+
+
+def get_hash_and_content_type(x):
+    #TODO avoid recomputation of the indexes
+    content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
+    content_hash_idx = ContentsStreamDef.field_idx('hash')
+    return (x[content_hash_idx], x[content_meta_type_idx])
+
+
+def detect_duplicates(stream_contents, key):
+    url_id_idx = ContentsStreamDef.field_idx('id')
+    content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
+
+    # only preserve 10 duplicating urls
+    nb_samples_to_return = 10
+
+    stream_contents = sorted(stream_contents, key=get_hash_and_content_type)
+    for _, contents in groupby(stream_contents, key=get_hash_and_content_type):
+        #required to know the list lenght
+        contents = list(contents)
+        content_lenght = len(contents)
+        url_ids = [content[url_id_idx] for content in contents]
+        min_url_id = min(url_ids)
+        for content in contents:
+            url_id = content[url_id_idx]
+            ct_id = content[content_meta_type_idx]
+            nb_duplicates = content_lenght
+            # Unique (url, metatype)'s duplicates number should be 0, intuitively
+            # Simple hack here, we should not push no-duplicate records to ES and
+            # generates necessary information in document generator (like `filled_nb`)
+            if nb_duplicates == 1:
+                nb_duplicates = 0
+            yield (url_id, ct_id, nb_duplicates, url_id == min_url_id,
+                   [i for i in url_ids if i != url_id][:nb_samples_to_return])
 
 
 def get_duplicate_metadata(stream_contents):
@@ -78,12 +111,6 @@ def get_duplicate_metadata(stream_contents):
     content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
     content_hash_idx = ContentsStreamDef.field_idx('hash')
 
-    hashes = defaultdict(lambda: defaultdict(list))
-    hashes_count = defaultdict(Counter)
-
-    # Resolve an url_id + ct_id to an hash : url_to_hash[url_id][ct_id] = hash_id
-    url_to_hash = defaultdict(lambda: defaultdict(set))
-
     #ignore not mandatory content types
     stream_contents = ifilter(lambda x: x[content_meta_type_idx] in MANDATORY_CONTENT_TYPES_IDS, stream_contents)
     #ignore notset metadata, they don't count anything
@@ -91,40 +118,11 @@ def get_duplicate_metadata(stream_contents):
                               stream_contents)
     stream_contents = keep_only_first_metadata(stream_contents)
 
-    # only preserve 10 duplicating urls
-    nb_samples_to_return = 10
-    for content in stream_contents:
-        url_id = content[url_id_idx]
-        ct_id = content[content_meta_type_idx]
+    #TODO remove actual content (to save memory)
+    #actual duplicate computation
+    stream_duplicates = detect_duplicates(stream_contents,
+                                          key=get_hash_and_content_type)
+    stream_duplicates = sorted(stream_duplicates, key=lambda x: (x[url_id_idx], x[content_meta_type_idx]))
 
-        _hash = content[content_hash_idx]
-        hashes_count[ct_id][_hash] += 1
-        hashes_lst = hashes[ct_id][_hash]
-        #+1 because we want to return nb_samples_to_return
-        #which are different from the current url_id
-        if len(hashes_lst) < nb_samples_to_return + 1:
-            hashes[ct_id][_hash].append(url_id)
-        url_to_hash[url_id][ct_id] = _hash
-
-    min_url_id = min(url_to_hash.iterkeys())
-    max_url_id = max(url_to_hash.iterkeys())
-    for url_id in xrange(min_url_id, max_url_id + 1):
-        if url_id not in url_to_hash:
-            continue
-        for ct_id, _h in url_to_hash[url_id].iteritems():
-            urls = hashes[ct_id][_h]
-            nb_duplicates = hashes_count[ct_id][_h]
-            # Unique (url, metatype)'s duplicates number should be 0, intuitively
-            # Simple hack here, we should not push no-duplicate records to ES and
-            # generates necessary information in document generator (like `filled_nb`)
-            if nb_duplicates == 1:
-                nb_duplicates = 0
-
-            # Since duplicating urls are appended to a list, order is preserved
-            # The first url is garanteed to be the min
-            # urls list has at least one elem. (url itself)
-            first_url_id = urls[0]
-            yield (url_id, ct_id, nb_duplicates,
-                   first_url_id == url_id,
-                   [i for i in urls if i != url_id][:nb_samples_to_return])
+    return stream_duplicates
 
