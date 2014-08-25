@@ -62,6 +62,10 @@ def keep_only_first_metadata(stream_contents):
                 yield content
 
 
+def get_samples(url_ids, url_id, nb_samples_to_return):
+    return [i for i in url_ids if i != url_id][:nb_samples_to_return]
+
+
 def detect_duplicates(stream_contents, key):
     url_id_idx = ContentsStreamDef.field_idx('id')
     content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
@@ -75,6 +79,7 @@ def detect_duplicates(stream_contents, key):
         contents = list(contents)
         content_lenght = len(contents)
         url_ids = [content[url_id_idx] for content in contents]
+        samples = url_ids[:nb_samples_to_return + 1]
         min_url_id = min(url_ids)
         for content in contents:
             url_id = content[url_id_idx]
@@ -85,8 +90,9 @@ def detect_duplicates(stream_contents, key):
             # generates necessary information in document generator (like `filled_nb`)
             if nb_duplicates == 1:
                 nb_duplicates = 0
+
             yield (url_id, ct_id, nb_duplicates, url_id == min_url_id,
-                   [i for i in url_ids if i != url_id][:nb_samples_to_return])
+                   get_samples(samples, url_id, nb_samples_to_return))
 
 
 def get_duplicate_metadata(stream_contents):
