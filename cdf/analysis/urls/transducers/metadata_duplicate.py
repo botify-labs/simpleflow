@@ -93,18 +93,18 @@ def get_duplicate_metadata(stream_contents):
 
     # only preserve 10 duplicating urls
     nb_samples_to_return = 10
-    for url_id, contents in groupby(stream_contents, lambda x: x[url_id_idx]):
-        for content in contents:
-            ct_id = content[content_meta_type_idx]
+    for content in stream_contents:
+        url_id = content[url_id_idx]
+        ct_id = content[content_meta_type_idx]
 
-            _hash = content[content_hash_idx]
-            hashes_count[ct_id][_hash] += 1
-            hashes_lst = hashes[ct_id][_hash]
-            #+1 because we want to return nb_samples_to_return
-            #which are different from the current url_id
-            if len(hashes_lst) < nb_samples_to_return + 1:
-                hashes[ct_id][_hash].append(url_id)
-            url_to_hash[url_id][ct_id] = _hash
+        _hash = content[content_hash_idx]
+        hashes_count[ct_id][_hash] += 1
+        hashes_lst = hashes[ct_id][_hash]
+        #+1 because we want to return nb_samples_to_return
+        #which are different from the current url_id
+        if len(hashes_lst) < nb_samples_to_return + 1:
+            hashes[ct_id][_hash].append(url_id)
+        url_to_hash[url_id][ct_id] = _hash
 
     min_url_id = min(url_to_hash.iterkeys())
     max_url_id = max(url_to_hash.iterkeys())
