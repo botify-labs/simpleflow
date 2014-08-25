@@ -1,4 +1,4 @@
-from collections import defaultdict, Counter
+from collections import Counter
 from itertools import groupby, ifilter, imap
 from operator import itemgetter
 from cdf.features.semantic_metadata.settings import MANDATORY_CONTENT_TYPES_IDS
@@ -62,25 +62,31 @@ def keep_only_first_metadata(stream_contents):
                 yield content
 
 
-def get_samples(url_ids, url_id, nb_samples_to_return):
-    return [i for i in url_ids if i != url_id][:nb_samples_to_return]
-
-
-def detect_duplicates(stream_contents, key):
+def generate_duplicate_stream(stream_contents, key):
+    """Generate duplicate stream (based on ContentsDuplicateStreamDef)
+    from a contents stream.
+    :param stream_contents: the contents stream
+                            (as we usually work the content hashes,
+                            actual content may have been removed from the stream)
+    :type stream_contents: iterator
+    :param key: the key function to decide whether two entries are duplicates or not.
+    :type key: fun
+    :returns: iterator
+    """
     url_id_idx = ContentsStreamDef.field_idx('id')
     content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
 
     # only preserve 10 duplicating urls
     nb_samples_to_return = 10
-
+    #TODO use external sort to prevent swapping
     stream_contents = sorted(stream_contents, key=key)
     for _, contents in groupby(stream_contents, key=key):
         #required to know the list lenght
         contents = list(contents)
         content_lenght = len(contents)
         url_ids = [content[url_id_idx] for content in contents]
-        samples = url_ids[:nb_samples_to_return + 1]
-        min_url_id = min(url_ids)
+        min_url_id = min(url_ids)  # to detect if an url id is the first occurrence.
+        sample_candidates = url_ids[:nb_samples_to_return + 1]
         for content in contents:
             url_id = content[url_id_idx]
             ct_id = content[content_meta_type_idx]
@@ -90,9 +96,8 @@ def detect_duplicates(stream_contents, key):
             # generates necessary information in document generator (like `filled_nb`)
             if nb_duplicates == 1:
                 nb_duplicates = 0
-
-            yield (url_id, ct_id, nb_duplicates, url_id == min_url_id,
-                   get_samples(samples, url_id, nb_samples_to_return))
+            samples = [i for i in sample_candidates if i != url_id][:nb_samples_to_return]
+            yield (url_id, ct_id, nb_duplicates, url_id == min_url_id, samples)
 
 
 def get_duplicate_metadata(stream_contents):
@@ -123,8 +128,8 @@ def get_duplicate_metadata(stream_contents):
     stream_contents = imap(itemgetter(url_id_idx, content_meta_type_idx, content_hash_idx), stream_contents)
     #actual duplicate computation
     get_hash_and_content_type = itemgetter(2, 1)  # content hash, content type
-    stream_duplicates = detect_duplicates(stream_contents,
-                                          key=get_hash_and_content_type)
+    stream_duplicates = generate_duplicate_stream(stream_contents,
+                                                  key=get_hash_and_content_type)
 
     #the output stream is different from input stream
     #thus the index might be different
