@@ -6,7 +6,7 @@ from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
     ContentsDuplicateStreamDef
 )
-
+from cdf.utils.external_sort import external_sort
 
 # notset metadata is interpreted as an empty string
 # they should be ignored by duplication detection
@@ -78,8 +78,8 @@ def generate_duplicate_stream(stream_contents, key):
 
     # only preserve 10 duplicating urls
     nb_samples_to_return = 10
-    #TODO use external sort to prevent swapping
-    stream_contents = sorted(stream_contents, key=key)
+    #use external sort to prevent swapping
+    stream_contents = external_sort(stream_contents, key=key)
     for _, contents in groupby(stream_contents, key=key):
         #required to know the list lenght
         contents = list(contents)
@@ -135,7 +135,7 @@ def get_duplicate_metadata(stream_contents):
     #thus the index might be different
     url_id_idx = ContentsDuplicateStreamDef.field_idx('id')
     content_meta_type_idx = ContentsDuplicateStreamDef.field_idx('content_type')
-    stream_duplicates = sorted(stream_duplicates, key=lambda x: (x[url_id_idx], x[content_meta_type_idx]))
+    stream_duplicates = external_sort(stream_duplicates, key=lambda x: (x[url_id_idx], x[content_meta_type_idx]))
 
     return stream_duplicates
 
