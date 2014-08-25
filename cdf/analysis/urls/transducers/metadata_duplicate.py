@@ -1,6 +1,6 @@
 from collections import defaultdict, Counter
 from itertools import groupby, ifilter
-
+from operator import itemgetter
 from cdf.features.semantic_metadata.settings import MANDATORY_CONTENT_TYPES_IDS
 from cdf.features.semantic_metadata.streams import ContentsStreamDef
 
@@ -59,12 +59,6 @@ def keep_only_first_metadata(stream_contents):
                 yield content
 
 
-def get_hash_and_content_type(x):
-    #TODO avoid recomputation of the indexes
-    content_meta_type_idx = ContentsStreamDef.field_idx('content_type')
-    content_hash_idx = ContentsStreamDef.field_idx('hash')
-    return (x[content_hash_idx], x[content_meta_type_idx])
-
 
 def detect_duplicates(stream_contents, key):
     url_id_idx = ContentsStreamDef.field_idx('id')
@@ -73,8 +67,8 @@ def detect_duplicates(stream_contents, key):
     # only preserve 10 duplicating urls
     nb_samples_to_return = 10
 
-    stream_contents = sorted(stream_contents, key=get_hash_and_content_type)
-    for _, contents in groupby(stream_contents, key=get_hash_and_content_type):
+    stream_contents = sorted(stream_contents, key=key)
+    for _, contents in groupby(stream_contents, key=key):
         #required to know the list lenght
         contents = list(contents)
         content_lenght = len(contents)
@@ -120,6 +114,7 @@ def get_duplicate_metadata(stream_contents):
 
     #TODO remove actual content (to save memory)
     #actual duplicate computation
+    get_hash_and_content_type = itemgetter(content_hash_idx, content_meta_type_idx)
     stream_duplicates = detect_duplicates(stream_contents,
                                           key=get_hash_and_content_type)
     stream_duplicates = sorted(stream_duplicates, key=lambda x: (x[url_id_idx], x[content_meta_type_idx]))
