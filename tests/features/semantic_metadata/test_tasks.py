@@ -6,12 +6,17 @@ import os
 import tempfile
 import shutil
 
+from cdf.utils.hashing import string_to_int32
 from cdf.analysis.urls.transducers.metadata_duplicate import notset_hash_value
 from cdf.features.semantic_metadata.streams import (
     ContentsCountStreamDef,
+    ContentsDuplicateStreamDef,
     ContentsStreamDef
 )
-from cdf.features.semantic_metadata.tasks import compute_metadata_count
+from cdf.features.semantic_metadata.tasks import (
+    compute_metadata_count,
+    make_metadata_duplicates_file
+)
 
 
 class TestComputeMetadataCount(unittest.TestCase):
@@ -73,3 +78,64 @@ class TestComputeMetadataCount(unittest.TestCase):
         )
         self.assertEqual(expected_stream, list(actual_stream))
 
+
+class TestComputeMetadataDuplicateFile(unittest.TestCase):
+    def setUp(self):
+        self.bucket_name = "app.foo.com"
+        self.s3_uri = "s3://{}/crawl_result".format(self.bucket_name)
+        self.crawl_id = 10
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    @mock_s3
+    def test_nominal_case(self):
+        conn = boto.connect_s3()
+        bucket = conn.create_bucket(self.bucket_name)
+
+        first_part_size = 5
+        part_size = 10
+
+        contents = [
+            (1, 1, string_to_int32("title1"), "title1"),
+            (1, 4, string_to_int32("description1"), "description1"),
+            (2, 1, string_to_int32("title2"), "title2"),
+            (6, 1, string_to_int32("title1"), "title1"),
+            (6, 4, string_to_int32("description2"), "description2"),
+            (8, 4, string_to_int32("description1"), "description1"),
+            (9, 4, string_to_int32("description1"), "description1")
+        ]
+        ContentsStreamDef.persist_to_s3(iter(contents),
+                                        self.s3_uri,
+                                        first_part_id_size=first_part_size,
+                                        part_id_size=part_size)
+
+        output_files = make_metadata_duplicates_file(
+            self.crawl_id,
+            self.s3_uri,
+            first_part_size,
+            part_size
+        )
+
+        expected_output_files = [
+            os.path.join(self.s3_uri, "urlcontentsduplicate.txt.0.gz"),
+            os.path.join(self.s3_uri, "urlcontentsduplicate.txt.1.gz"),
+        ]
+        self.assertItemsEqual(expected_output_files, output_files)
+
+        duplicate_stream = ContentsDuplicateStreamDef.get_stream_from_s3(
+            self.s3_uri,
+            tmp_dir=self.tmp_dir
+        )
+
+        expected_stream = [
+            [1, 1, 2, True, [6]],
+            [1, 4, 3, True, [8, 9]],
+            [2, 1, 0, True, []],
+            [6, 1, 2, False, [1]],
+            [6, 4, 0, True, []],
+            [8, 4, 3, False, [1, 9]],
+            [9, 4, 3, False, [1, 8]]
+        ]
+        self.assertEqual(expected_stream, list(duplicate_stream))
