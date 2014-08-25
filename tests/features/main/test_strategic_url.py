@@ -3,6 +3,8 @@ import tempfile
 import unittest
 from moto import mock_s3
 import boto
+from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
+from cdf.core.streams.base import Stream
 from cdf.features.links.streams import OutlinksStreamDef
 from cdf.features.main.strategic_url import (
     generate_strategic_stream,
@@ -245,13 +247,56 @@ class TestStrategicUrlTask(unittest.TestCase):
                                part_id, tmp_dir=self.tmp_dir)
 
         expected = [
-            [1, True],
-            [2, False],
-            [3, False],
-            [4, False],
+            [1, True, 0],
+            [2, False, REASON_CONTENT_TYPE.code],
+            [3, False, REASON_NOINDEX.code],
+            [4, False, REASON_CANONICAL.code],
         ]
         result = list(StrategicUrlStreamDef.get_stream_from_s3(
             s3_uri, self.tmp_dir, part_id
         ))
 
         self.assertEqual(result, expected)
+
+
+# TODO(darkjh) make a `DocumentGenerationTestCase` that has
+#   - pre-defined streams
+#   - logic for extracting documents from result stream
+class TestDocumentGeneration(unittest.TestCase):
+    def setUp(self):
+        self.ids = [
+            [1, 'http', 'www.site.com', '/path/name.html', ''],
+            [2, 'http', 'www.site.com', '/path/name.html', ''],
+            [3, 'http', 'www.site.com', '/path/name.html', ''],
+        ]
+        self.strategy_url = [
+            [1, True, 0],  # ok
+            [2, False, 4],  # one reason
+            [3, False, 5],  # two reasons
+        ]
+
+    def test_harness(self):
+        ids_stream = Stream(IdStreamDef(), iter(self.ids))
+        strategy_url_stream = Stream(StrategicUrlStreamDef(), iter(self.strategy_url))
+
+        documents = list(UrlDocumentGenerator([
+            ids_stream,
+            strategy_url_stream
+        ]))
+
+        # check document 0
+        document = documents[0][1]
+        self.assertTrue(document['strategic']['is_strategic'])
+
+        # check document 1
+        document = documents[1][1]
+        self.assertFalse(document['strategic']['is_strategic'])
+        reason = document['strategic']['reason']
+        self.assertTrue(reason['content_type'])
+
+        # check document 2
+        document = documents[2][1]
+        self.assertFalse(document['strategic']['is_strategic'])
+        reason = document['strategic']['reason']
+        self.assertTrue(reason['content_type'])
+        self.assertTrue(reason['http_code'])

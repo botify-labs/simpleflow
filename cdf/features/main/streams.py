@@ -1,3 +1,7 @@
+from cdf.features.main.reasons import (
+    decode_reason_mask,
+    Reasons
+)
 from cdf.metadata.url.url_metadata import (
     LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     DATE_TYPE, ES_NOT_ANALYZED, ES_DOC_VALUE,
@@ -339,16 +343,48 @@ def cast_bool(str):
     return str.lower() == 'true'
 
 
-# TODO add `strategic_reason` field
 class StrategicUrlStreamDef(StreamDefBase):
     FILE = 'strategic_urls'
     HEADERS = (
         ('id', int),
-        ('strategic', cast_bool)
+        ('strategic', cast_bool),
+        ('reason', int)
     )
     URL_DOCUMENT_MAPPING = {
-        "strategic": {
+        "strategic.is_strategic": {
             "verbose_name": "Strategic url",
+            "type": BOOLEAN_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            }
+        },
+        "strategic.reason.http_code": {
+            "verbose_name": "Non strategic reason: bad http code",
+            "type": BOOLEAN_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            }
+        },
+        "strategic.reason.content_type": {
+            "verbose_name": "Non strategic reason: bad content type",
+            "type": BOOLEAN_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            }
+        },
+        "strategic.reason.noindex": {
+            "verbose_name": "Non strategic reason: url is of no-index",
+            "type": BOOLEAN_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL
+            }
+        },
+        "strategic.reason.canonical": {
+            "verbose_name": "Non strategic reason: url has non self-canonical",
             "type": BOOLEAN_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -358,5 +394,14 @@ class StrategicUrlStreamDef(StreamDefBase):
     }
 
     def process_document(self, document, stream):
-        _, strategic = stream
-        document['strategic'] = strategic
+        _, is_strategic, mask = stream
+        document['strategic']['is_strategic'] = is_strategic
+
+        if is_strategic is False:
+            document['strategic']['reason'] = {}
+            reason_field = document['strategic']['reason']
+
+            reasons = decode_reason_mask(mask)
+            for reason in Reasons:
+                if reason in reasons:
+                    reason_field[reason.name] = True
