@@ -1,8 +1,11 @@
 from collections import defaultdict, Counter
-from itertools import groupby, ifilter
+from itertools import groupby, ifilter, imap
 from operator import itemgetter
 from cdf.features.semantic_metadata.settings import MANDATORY_CONTENT_TYPES_IDS
-from cdf.features.semantic_metadata.streams import ContentsStreamDef
+from cdf.features.semantic_metadata.streams import (
+    ContentsStreamDef,
+    ContentsDuplicateStreamDef
+)
 
 
 # notset metadata is interpreted as an empty string
@@ -57,7 +60,6 @@ def keep_only_first_metadata(stream_contents):
             if ct_id not in ct_found:
                 ct_found.add(ct_id)
                 yield content
-
 
 
 def detect_duplicates(stream_contents, key):
@@ -117,6 +119,11 @@ def get_duplicate_metadata(stream_contents):
     get_hash_and_content_type = itemgetter(2, 1)  # content hash, content type
     stream_duplicates = detect_duplicates(stream_contents,
                                           key=get_hash_and_content_type)
+
+    #the output stream is different from input stream
+    #thus the index might be different
+    url_id_idx = ContentsDuplicateStreamDef.field_idx('id')
+    content_meta_type_idx = ContentsDuplicateStreamDef.field_idx('content_type')
     stream_duplicates = sorted(stream_duplicates, key=lambda x: (x[url_id_idx], x[content_meta_type_idx]))
 
     return stream_duplicates
