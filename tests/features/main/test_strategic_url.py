@@ -9,14 +9,11 @@ from cdf.features.main.strategic_url import (
     is_strategic_url,
     compute_strategic_urls
 )
-from cdf.features.main.reasons import (
-    Reason,
-    decode_reason_mask,
-    encode_reason_mask
-)
 from cdf.features.main.streams import (
-    StrategicUrlStreamDef, InfosStreamDef
-)
+    StrategicUrlStreamDef,
+    InfosStreamDef,
+    IdStreamDef)
+from cdf.features.main.reasons import *
 
 
 class TestStrategicUrlDetection(unittest.TestCase):
@@ -36,7 +33,8 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.strategic_content_type,
             self.strategic_outlinks
         )
-        self.assertFalse(result)
+        expected = (False, REASON_NOINDEX.code)
+        self.assertEqual(result, expected)
 
     def test_http_code(self):
         bad_http_code = 301
@@ -47,7 +45,8 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.strategic_content_type,
             self.strategic_outlinks
         )
-        self.assertFalse(result)
+        expected = (False, REASON_HTTP_CODE.code)
+        self.assertEqual(result, expected)
 
     def test_content_type(self):
         bad_content_type = 'hey/yo'
@@ -58,7 +57,8 @@ class TestStrategicUrlDetection(unittest.TestCase):
             bad_content_type,
             self.strategic_outlinks
         )
-        self.assertFalse(result)
+        expected = (False, REASON_CONTENT_TYPE.code)
+        self.assertEqual(result, expected)
 
     def test_no_canonical(self):
         # no canonical -> strategic
@@ -72,7 +72,8 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.strategic_content_type,
             outlinks
         )
-        self.assertTrue(result)
+        expected = (True, 0)
+        self.assertEqual(result, expected)
 
     def test_self_canonical(self):
         # self canonical -> strategic
@@ -86,7 +87,8 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.strategic_content_type,
             outlinks
         )
-        self.assertTrue(result)
+        expected = (True, 0)
+        self.assertEqual(result, expected)
 
     def test_canonical(self):
         # has canonical to other page -> non-strategic
@@ -100,7 +102,8 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.strategic_content_type,
             outlinks
         )
-        self.assertFalse(result)
+        expected = (False, REASON_CANONICAL.code)
+        self.assertEqual(result, expected)
 
     def test_first_canonical(self):
         # only take the first canonical into account
@@ -117,7 +120,8 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.strategic_content_type,
             outlinks
         )
-        self.assertFalse(result)
+        expected = (False, REASON_CANONICAL.code)
+        self.assertEqual(result, expected)
 
     def test_harness(self):
         result = is_strategic_url(
@@ -127,7 +131,8 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.strategic_content_type,
             self.strategic_outlinks
         )
-        self.assertTrue(result)
+        expected = (True, 0)
+        self.assertEqual(result, expected)
 
 
 TEST_REASON_A = Reason('test_a', 4)
@@ -166,12 +171,12 @@ class TestNonStrategyReason(unittest.TestCase):
         # reason A
         mask_a = 4
         reasons = decode_func(mask_a)
-        self.assertItemsEqual(reasons, ['test_a'])
+        self.assertItemsEqual(reasons, [TEST_REASON_A])
 
         # reason A and reason B
         mask_b = 37
         reasons = decode_func(mask_b)
-        self.assertItemsEqual(reasons, ['test_b', 'test_a'])
+        self.assertItemsEqual(reasons, [TEST_REASON_B, TEST_REASON_A])
 
 
 class TestStrategicUrlStream(unittest.TestCase):
@@ -195,10 +200,10 @@ class TestStrategicUrlStream(unittest.TestCase):
             iter(self.outlinks_stream))
         )
         expected = [
-            (1, True),
-            (2, False),
-            (3, False),
-            (4, False),
+            (1, True, 0),
+            (2, False, REASON_CONTENT_TYPE.code),
+            (3, False, REASON_NOINDEX.code),
+            (4, False, REASON_CANONICAL.code),
         ]
         self.assertEqual(result, expected)
 
