@@ -111,10 +111,10 @@ def get_duplicate_metadata(stream_contents):
     stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
                               stream_contents)
     stream_contents = keep_only_first_metadata(stream_contents)
-
-    #TODO remove actual content (to save memory)
+    #remove actual content (to save memory)
+    stream_contents = imap(itemgetter(url_id_idx, content_meta_type_idx, content_hash_idx), stream_contents)
     #actual duplicate computation
-    get_hash_and_content_type = itemgetter(content_hash_idx, content_meta_type_idx)
+    get_hash_and_content_type = itemgetter(2, 1)  # content hash, content type
     stream_duplicates = detect_duplicates(stream_contents,
                                           key=get_hash_and_content_type)
     stream_duplicates = sorted(stream_duplicates, key=lambda x: (x[url_id_idx], x[content_meta_type_idx]))
