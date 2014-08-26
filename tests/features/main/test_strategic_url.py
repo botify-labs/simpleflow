@@ -125,6 +125,23 @@ class TestStrategicUrlDetection(unittest.TestCase):
         expected = (False, REASON_CANONICAL.code)
         self.assertEqual(result, expected)
 
+    def test_multiple_reasons(self):
+        outlinks = [
+            [1, 'canonical', None, 4, '']
+        ]
+        noindex_mask = 4
+        result = is_strategic_url(
+            self.url_id,
+            noindex_mask,
+            self.strategic_http_code,
+            self.strategic_content_type,
+            outlinks
+        )
+        expected_mask = encode_reason_mask(REASON_CANONICAL, REASON_NOINDEX)
+        expected = (False, expected_mask)
+
+        self.assertEqual(result, expected)
+
     def test_harness(self):
         result = is_strategic_url(
             self.url_id,
