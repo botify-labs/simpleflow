@@ -87,7 +87,8 @@ class MergeExternalSort(ExternalSort):
         :type block_size: int
         """
         self.block_size = block_size
-        self.max_nb_files = 100
+        #the maximum number of open files this instance will use.
+        self.max_open_files_nb = 100
 
     def external_sort(self, stream, key):
         logger.debug("Splitting stream into chunks of size %d.", self.block_size)
@@ -102,10 +103,18 @@ class MergeExternalSort(ExternalSort):
             chunk_file.close()
             chunk_file_paths.append(chunk_file.name)
 
-        while len(chunk_file_paths) > self.max_nb_files:
-            chunk_file_paths = self.reduce_number_files(chunk_file_paths, key)
+        #merge files until there are no more than max_nb_files
+        while len(chunk_file_paths) > self.max_open_files_nb:
+            #-1 because the creation of the merged file will use a file handle
+            files_to_merge = chunk_file_paths[:self.max_open_files_nb - 1]
+            merged_file_path = self.merge_files(files_to_merge, key)
 
-        #create one iterable from each chunk file
+            chunk_file_paths = chunk_file_paths[self.max_open_files_nb - 1:]
+            chunk_file_paths.append(merged_file_path)
+            #remove merged files
+            for path in files_to_merge:
+                os.remove(path)
+
         logger.debug("Merging sorted stream chunks")
         for element in self.get_stream_from_file_paths(chunk_file_paths, key):
             yield element
@@ -115,6 +124,13 @@ class MergeExternalSort(ExternalSort):
             os.remove(chunk_file_path)
 
     def get_stream_from_file_paths(self, file_paths, key):
+        """Generates a sorted stream from a list of sorted files.
+        :param file_paths: the path to the input files
+        :type file_paths: list
+        :param key: the sort key
+        :type key: function
+        :returns: iterator
+        """
         streams = []
         for file_path in file_paths:
             streams.append(
@@ -124,20 +140,19 @@ class MergeExternalSort(ExternalSort):
         for element in merge_sorted_streams(streams, key):
             yield element
 
-    def reduce_number_files(self, file_paths, key):
-        file_paths_to_process = file_paths[:self.max_nb_files - 1]
+    def merge_files(self, file_paths, key):
+        """Create a sorted file from a list of sorted files.
+        :param file_paths: the path to the input files
+        :type file_paths: list
+        :param key: the sort key
+        :type key: function
+        :returns: str - the path to the generated file
+        """
         new_file = tempfile.NamedTemporaryFile("wb", delete=False)
-        for element in self.get_stream_from_file_paths(file_paths_to_process, key):
+        for element in self.get_stream_from_file_paths(file_paths, key):
             self.dump(element, new_file)
         new_file.close()
-
-        result = file_paths[self.max_nb_files - 1:]
-        result.append(new_file.name)
-
-        #remove processed files
-        for path in file_paths_to_process:
-            os.remove(path)
-        return result
+        return new_file.name
 
     @abstractmethod
     def dump(self, element, f):
