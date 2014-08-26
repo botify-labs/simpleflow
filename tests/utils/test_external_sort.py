@@ -89,6 +89,16 @@ class TestJsonExternalSort(unittest.TestCase):
         actual_result = external_sort.external_sort(stream, lambda x: -x)
         self.assertEqual(range(9, -1, -1), list(actual_result))
 
+    def test_many_files(self):
+        #test the case where the external sort has to generate many files
+        #checks that we do not reach the limit for the number of opened files.
+        nb_files = 1018
+        stream = xrange(nb_files)
+        external_sort = JsonExternalSort(1)
+        actual_result = external_sort.external_sort(stream, lambda x: x)
+        self.assertEqual(range(nb_files), list(actual_result))
+
+
 class TestPickleExternalSort(unittest.TestCase):
     def setUp(self):
         self.block_size = 3
@@ -104,4 +114,13 @@ class TestPickleExternalSort(unittest.TestCase):
         external_sort = PickleExternalSort(self.block_size)
         actual_result = external_sort.external_sort(stream, lambda x: -x)
         self.assertEqual(range(9, -1, -1), list(actual_result))
+
+    def test_many_files(self):
+        #test the case where the external sort has to generate many files
+        #checks that we do not reach the limit for the number of opened files.
+        nb_files = 1018
+        stream = xrange(nb_files)
+        external_sort = PickleExternalSort(1)
+        actual_result = external_sort.external_sort(stream, lambda x: x)
+        self.assertEqual(range(nb_files), list(actual_result))
 

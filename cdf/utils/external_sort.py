@@ -87,6 +87,7 @@ class MergeExternalSort(ExternalSort):
         :type block_size: int
         """
         self.block_size = block_size
+        self.max_nb_files = 100
 
     def external_sort(self, stream, key):
         logger.debug("Splitting stream into chunks of size %d.", self.block_size)
@@ -101,20 +102,42 @@ class MergeExternalSort(ExternalSort):
             chunk_file.close()
             chunk_file_paths.append(chunk_file.name)
 
-        #create one iterable from each chunk file
-        chunk_streams = []
-        for chunk_file in chunk_file_paths:
-            chunk_streams.append(
-                self.get_stream_from_file(open(chunk_file, "rb"))
-            )
+        while len(chunk_file_paths) > self.max_nb_files:
+            chunk_file_paths = self.reduce_number_files(chunk_file_paths, key)
 
+        #create one iterable from each chunk file
         logger.debug("Merging sorted stream chunks")
-        for element in merge_sorted_streams(chunk_streams, key):
+        for element in self.get_stream_from_file_paths(chunk_file_paths, key):
             yield element
 
         #delete chunk files
         for chunk_file_path in chunk_file_paths:
             os.remove(chunk_file_path)
+
+    def get_stream_from_file_paths(self, file_paths, key):
+        streams = []
+        for file_path in file_paths:
+            streams.append(
+                self.get_stream_from_file(open(file_path, "rb"))
+            )
+
+        for element in merge_sorted_streams(streams, key):
+            yield element
+
+    def reduce_number_files(self, file_paths, key):
+        file_paths_to_process = file_paths[:self.max_nb_files - 1]
+        new_file = tempfile.NamedTemporaryFile("wb", delete=False)
+        for element in self.get_stream_from_file_paths(file_paths_to_process, key):
+            self.dump(element, new_file)
+        new_file.close()
+
+        result = file_paths[self.max_nb_files - 1:]
+        result.append(new_file.name)
+
+        #remove processed files
+        for path in file_paths_to_process:
+            os.remove(path)
+        return result
 
     @abstractmethod
     def dump(self, element, f):
