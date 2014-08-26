@@ -346,9 +346,9 @@ def cast_bool(str):
 class StrategicUrlStreamDef(StreamDefBase):
     FILE = 'strategic_urls'
     HEADERS = (
-        ('id', int),
-        ('strategic', cast_bool),
-        ('reason', int)
+        ('id', int),  # url_id
+        ('strategic', cast_bool),  # is this url SEO strategic
+        ('reason', int)  # why this url is NOT SEO strategic
     )
     URL_DOCUMENT_MAPPING = {
         "strategic.is_strategic": {
