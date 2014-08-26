@@ -160,6 +160,11 @@ class MergeExternalSort(ExternalSort):
 
     @abstractmethod
     def get_stream_from_file(self, f):
+        #for the external sort to be memory efficient
+        #it is required that this method can load the stream
+        #from a file element by element
+        #(by group of elements by group of elements if the group size is not
+        #too big)
         raise NotImplementedError()
 
 
