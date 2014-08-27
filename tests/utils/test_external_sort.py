@@ -1,12 +1,20 @@
 import unittest
 
 from cdf.utils.external_sort import (
-    split_iterable,
-    merge_sorted_streams,
+    external_sort,
     JsonExternalSort,
     MarshalExternalSort,
-    PickleExternalSort
+    PickleExternalSort,
+    split_iterable,
+    merge_sorted_streams
 )
+
+
+class TestExternalSort(unittest.TestCase):
+    def test_nominal_case(self):
+        stream = iter([2, 5, 6, 1, 4, 9, 3, 7, 8, 0])
+        actual_result = external_sort(stream, lambda x: x)
+        self.assertEqual(range(10), list(actual_result))
 
 
 class TestJsonExternalSort(unittest.TestCase):

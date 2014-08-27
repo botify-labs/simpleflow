@@ -10,6 +10,21 @@ from abc import ABCMeta, abstractmethod
 from cdf.log import logger
 
 
+def external_sort(stream, key):
+    """Sort a stream according to a key function.
+    This is a commodity function that avoids
+    the creation of an ExternalSort object.
+    Use it when you need external sort but do not have specific requirements.
+    The method will use a standard implementation of external sort
+    :param stream: the input stream
+    :param stream: iterator
+    :param key: the sort key
+    :type key: function
+    :returns: iterator
+    """
+    external_sort = MarshalExternalSort()
+    return external_sort.external_sort(stream, key)
+
 
 class ExternalSort(object):
     """An interface for external sort algorithm implementation"""
