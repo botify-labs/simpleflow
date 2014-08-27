@@ -41,7 +41,7 @@ def count_metadata(stream_contents, part_id):
             yield (url_id, ct_id, filled_nb)
 
 
-def keep_only_first_metadata(stream_contents):
+def filter_redundant_metadata(stream_contents):
     """Given a contents stream, keep only the entries corresponding to the
     first title, first h1, etc.
     :param stream_contents: the input contents stream
@@ -128,7 +128,7 @@ def get_duplicate_metadata(stream_contents):
         lambda x: x[content_hash_idx] != notset_hash_value,
         stream_contents
     )
-    stream_contents = keep_only_first_metadata(stream_contents)
+    stream_contents = filter_redundant_metadata(stream_contents)
     #remove actual content (to save memory)
     stream_contents = imap(
         itemgetter(url_id_idx, content_meta_type_idx, content_hash_idx),

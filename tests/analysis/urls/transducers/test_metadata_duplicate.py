@@ -3,7 +3,7 @@ from cdf.utils.hashing import string_to_int32
 from cdf.analysis.urls.transducers.metadata_duplicate import (
     count_metadata,
     notset_hash_value,
-    keep_only_first_metadata,
+    filter_redundant_metadata,
     generate_duplicate_stream
 )
 
@@ -47,7 +47,7 @@ class TestKeepOnlyFirstMetadata(unittest.TestCase):
             (2, 1, fake_hash, "foo title 2"),
             (2, 1, fake_hash, "bar title 2")
         ])
-        actual_stream = keep_only_first_metadata(contents_stream)
+        actual_stream = filter_redundant_metadata(contents_stream)
         expected_stream = [
             (1, 1, fake_hash, "foo title"),
             (1, 2, fake_hash, "foo description"),
