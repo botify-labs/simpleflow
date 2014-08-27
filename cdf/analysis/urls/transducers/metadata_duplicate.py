@@ -148,7 +148,7 @@ def get_duplicate_metadata(stream_contents):
     #sort by urlid
     stream_duplicates = external_sort(
         stream_duplicates,
-        key=lambda x: (x[url_id_idx], x[content_meta_type_idx])
+        key=itemgetter(url_id_idx, content_meta_type_idx)
     )
 
     return stream_duplicates
