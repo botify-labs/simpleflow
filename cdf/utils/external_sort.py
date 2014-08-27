@@ -183,7 +183,7 @@ class MarshalExternalSort(MergeExternalSort):
         while True:
             try:
                 yield marshal.load(f)
-            except (EOFError, ValueError, TypeError):
+            except EOFError:
                 break
 
 
