@@ -10,44 +10,6 @@ from abc import ABCMeta, abstractmethod
 from cdf.log import logger
 
 
-def split_iterable(iterable, block_size):
-    """
-    Splits an iterable into chunks of equal size.
-    :param stream: the input stream
-    :type stream: iterable
-    :param block_size: the maximum number of elements in each generated file
-    :type block_size: int
-    """
-    if block_size == 0:
-        raise ValueError("block_size should not be null.")
-    #add a prefix to be able to compute the chunk_id
-    for chunk_id, chunk_elements in itertools.groupby(enumerate(iterable),
-                                                      lambda x: x[0]/block_size):
-        #remove prefix
-        chunk_elements = itertools.imap(lambda x: x[1], chunk_elements)
-        yield chunk_elements
-
-
-def merge_sorted_streams(streams, custom_key):
-    """Merge a sequence of sorted streams
-    and generates a sorted stream out of them.
-    :param streams: the input sequence of sorted streams
-    :type streams: iterable
-    :param custom_key: the key function that was used to sorted the input streams
-                       if None, use the elements itself as a key
-    :type custom_key: func
-    :returns: generator
-    """
-    prefixed_streams = []
-    for stream in streams:
-        #create tuples (key, value) so that the heap uses the key to
-        #sort the elements
-        prefixed_stream = itertools.imap(lambda x: (custom_key(x), x), stream)
-        prefixed_streams.append(prefixed_stream)
-    for key, value in heapq.merge(*prefixed_streams):
-        #only yield the value not the key
-        yield value
-
 
 class ExternalSort(object):
     """An interface for external sort algorithm implementation"""
@@ -217,3 +179,44 @@ class PickleExternalSort(MergeExternalSort):
                 yield pickle.load(f)
         except EOFError:
             pass
+
+
+def split_iterable(iterable, block_size):
+    """
+    Splits an iterable into chunks of equal size.
+    :param stream: the input stream
+    :type stream: iterable
+    :param block_size: the maximum number of elements in each generated file
+    :type block_size: int
+    """
+    if block_size == 0:
+        raise ValueError("block_size should not be null.")
+    #add a prefix to be able to compute the chunk_id
+    for chunk_id, chunk_elements in itertools.groupby(enumerate(iterable),
+                                                      lambda x: x[0]/block_size):
+        #remove prefix
+        chunk_elements = itertools.imap(lambda x: x[1], chunk_elements)
+        yield chunk_elements
+
+
+def merge_sorted_streams(streams, custom_key):
+    """Merge a sequence of sorted streams
+    and generates a sorted stream out of them.
+    :param streams: the input sequence of sorted streams
+    :type streams: iterable
+    :param custom_key: the key function that was used to sorted the input streams
+                       if None, use the elements itself as a key
+    :type custom_key: func
+    :returns: generator
+    """
+    prefixed_streams = []
+    for stream in streams:
+        #create tuples (key, value) so that the heap uses the key to
+        #sort the elements
+        prefixed_stream = itertools.imap(lambda x: (custom_key(x), x), stream)
+        prefixed_streams.append(prefixed_stream)
+    for key, value in heapq.merge(*prefixed_streams):
+        #only yield the value not the key
+        yield value
+
+
