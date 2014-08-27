@@ -12,6 +12,8 @@ from autotagging.association_rules.algorithm import (discover_protocol_patterns,
 from autotagging.visualization.textual import (save_mixed_clusters,
                                                save_url_suggested_clusters,
                                                save_child_relationship)
+from cdf.features.links.streams import OutlinksStreamDef
+from cdf.features.main.strategic_url import generate_strategic_stream
 
 from cdf.utils.path import makedirs
 from cdf.utils.remote_files import nb_parts_from_crawl_location
@@ -30,7 +32,8 @@ from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.features.main.streams import (
     IdStreamDef,
     InfosStreamDef,
-    ZoneStreamDef
+    ZoneStreamDef,
+    StrategicUrlStreamDef
 )
 from cdf.features.main.zones import generate_zone_stream
 
@@ -208,3 +211,24 @@ def compute_zones(s3_uri,
         part_id
     )
     return s3_destination
+
+
+@with_temporary_dir
+def compute_strategic_urls(crawl_id, s3_uri, part_id,
+                           tmp_dir=None, force_fetch=False):
+    # prepare streams
+    infos_stream = InfosStreamDef.get_stream_from_s3(
+        s3_uri, tmp_dir, part_id=part_id,
+        force_fetch=force_fetch
+    )
+    outlinks_stream = OutlinksStreamDef.get_stream_from_s3(
+        s3_uri, tmp_dir, part_id=part_id,
+        force_fetch=force_fetch
+    )
+
+    stream = generate_strategic_stream(infos_stream, outlinks_stream)
+    StrategicUrlStreamDef.persist_part_to_s3(
+        stream=stream,
+        s3_uri=s3_uri,
+        part_id=part_id
+    )
