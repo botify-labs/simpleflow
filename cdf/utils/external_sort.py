@@ -17,7 +17,7 @@ def external_sort(stream, key):
     Use it when you need external sort but do not have specific requirements.
     The method will use a standard implementation of external sort
     :param stream: the input stream
-    :param stream: iterator
+    :type stream: iterator
     :param key: the sort key
     :type key: function
     :returns: iterator
@@ -37,7 +37,7 @@ class ExternalSort(object):
         The specificity of external sort is that it has low memory footprint
         (usually it dumps some of its data on temporary files)
         :param stream: the input stream
-        :param stream: iterator
+        :type stream: iterator
         :param key: the sort key
         :type key: function
         :returns: iterator
