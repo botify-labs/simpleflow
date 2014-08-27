@@ -1,3 +1,4 @@
+import logging
 import itertools
 import cPickle as pickle
 import tempfile
@@ -7,7 +8,7 @@ import ujson as json
 import marshal
 from abc import ABCMeta, abstractmethod
 
-from cdf.log import logger
+logger = logging.getLogger(__name__)
 
 
 def external_sort(stream, key):
