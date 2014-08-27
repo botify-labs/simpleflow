@@ -3,8 +3,6 @@ import unittest
 import logging
 
 from cdf.log import logger
-from cdf.core.streams.base import Stream
-from cdf.features.semantic_metadata.streams import ContentsStreamDef
 from cdf.analysis.urls.transducers.metadata_duplicate import get_duplicate_metadata, notset_hash_value
 
 logger.setLevel(logging.DEBUG)
@@ -31,7 +29,6 @@ class TestMetadataDuplicateGenerator(unittest.TestCase):
             [3, 1, 8999, 'My title'],
             [3, 4, 1111, 'My Desc'],
         ))
-        stream_contents = Stream(ContentsStreamDef, stream_contents)
 
         generator = get_duplicate_metadata(stream_contents)
         results = list(generator)
@@ -62,7 +59,7 @@ class TestMetadataDuplicateGenerator(unittest.TestCase):
             [2, 4, 1111, 'My Desc'],
             [3, 1, notset_hash_value, ''],
         ))
-        stream_contents = Stream(ContentsStreamDef, stream_contents)
+
         generator = get_duplicate_metadata(stream_contents)
         results = list(generator)
 
