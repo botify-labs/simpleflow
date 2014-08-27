@@ -73,17 +73,9 @@ class MergeExternalSort(ExternalSort):
         chunk_file_paths = []
         #split the stream into multiple chunks
         for chunk_elements in split_iterable(stream, self.block_size):
-            #store each chunk in a pickle file
-            chunk_file = tempfile.NamedTemporaryFile("wb", delete=False)
-            for element in sorted(chunk_elements, key=key):
-                #we use the .file attribute because of
-                #the Marshal implementation of MergeExternalSort.
-                #indeed marshal.dump() requires a true file object to work
-                #cf https://docs.python.org/2/library/marshal.html
-                self.dump(element, chunk_file.file)
-
-            chunk_file.close()
-            chunk_file_paths.append(chunk_file.name)
+            #dum each chunk in a file
+            chunk_file_path = self.dump_stream(sorted(chunk_elements, key=key))
+            chunk_file_paths.append(chunk_file_path)
 
         #merge files until there are no more than max_nb_files
         while len(chunk_file_paths) > self.max_open_files_nb:
@@ -104,6 +96,23 @@ class MergeExternalSort(ExternalSort):
         #delete chunk files
         for chunk_file_path in chunk_file_paths:
             os.remove(chunk_file_path)
+
+    def dump_stream(self, stream):
+        """Dumps a stream in a file.
+        :param stream: the input stream
+        :type stream: iterator
+        :returns: str - the path to the file where the stream was dumped
+        """
+        dump_file = tempfile.NamedTemporaryFile("wb", delete=False)
+        for element in stream:
+                #we use the .file attribute because of
+                #the Marshal implementation of MergeExternalSort.
+                #indeed marshal.dump() requires a true file object to work
+                #cf https://docs.python.org/2/library/marshal.html
+                self.dump(element, dump_file.file)
+
+        dump_file.close()
+        return dump_file.name
 
     def get_stream_from_file_paths(self, file_paths, key):
         """Generates a sorted stream from a list of sorted files.
@@ -129,13 +138,10 @@ class MergeExternalSort(ExternalSort):
         :type key: function
         :returns: str - the path to the generated file
         """
-        new_file = tempfile.NamedTemporaryFile("wb", delete=False)
-        for element in self.get_stream_from_file_paths(file_paths, key):
-            #use .file attribute because of MarshalExternalSort
-            #(see above)
-            self.dump(element, new_file.file)
-        new_file.close()
-        return new_file.name
+        result = self.dump_stream(
+            self.get_stream_from_file_paths(file_paths, key)
+        )
+        return result
 
     @abstractmethod
     def dump(self, element, f):
