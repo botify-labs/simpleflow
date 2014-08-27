@@ -1,4 +1,5 @@
 import os
+import gzip
 
 from autotagging.exceptions import TooManyCombinationsError
 from autotagging.association_rules.algorithm import (discover_protocol_patterns,
@@ -26,6 +27,12 @@ from cdf.core.streams.stream_factory import (ProtocolStreamFactory,
                                              load_crawler_metakeys,
                                              get_nb_crawled_urls)
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
+from cdf.features.main.streams import (
+    IdStreamDef,
+    InfosStreamDef,
+    ZoneStreamDef
+)
+from cdf.features.main.zones import generate_zone_stream
 
 
 @with_temporary_dir
@@ -169,4 +176,35 @@ def compute_suggested_patterns(crawl_id,
         )
 
 
-
+@with_temporary_dir
+def compute_zones(s3_uri,
+                  part_id,
+                  tmp_dir=None,
+                  force_fetch=False):
+    """A task to compute the zones for a given part
+    :param s3_uri: the uri where the crawl data is stored
+    :type s3_uri: str
+    :param part_id: the id of the part to process
+    :type part_id:int
+    :param tmp_dir: the path to the tmp directory to use.
+                    If None, a new tmp directory will be created.
+    :param tmp_dir: str
+    :param force_fetch: if True, the files will be downloaded from s3
+                        even if they are in the tmp directory.
+                        if False, files that are present in the tmp_directory
+                        will not be downloaded from s3.
+    :rtype: string - the s3_uri of the generated zone file
+    """
+    #get base streams
+    id_stream = IdStreamDef.get_stream_from_s3(s3_uri,
+                                               tmp_dir=tmp_dir,
+                                               part_id=part_id)
+    info_stream = InfosStreamDef.get_stream_from_s3(s3_uri,
+                                                    tmp_dir=tmp_dir,
+                                                    part_id=part_id)
+    s3_destination = ZoneStreamDef.persist_part_to_s3(
+        generate_zone_stream(id_stream, info_stream),
+        s3_uri,
+        part_id
+    )
+    return s3_destination
