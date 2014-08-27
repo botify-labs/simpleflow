@@ -194,7 +194,7 @@ class TestStreamsDef(unittest.TestCase):
 
     def test_persist(self):
         iterator = iter(self.data)
-        files = CustomStreamDef().persist(
+        files = CustomStreamDef().persist_all(
             iterator,
             self.tmp_dir,
             first_part_id_size=2,
