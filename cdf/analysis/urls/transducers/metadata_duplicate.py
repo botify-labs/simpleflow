@@ -119,23 +119,37 @@ def get_duplicate_metadata(stream_contents):
     content_hash_idx = ContentsStreamDef.field_idx('hash')
 
     #ignore not mandatory content types
-    stream_contents = ifilter(lambda x: x[content_meta_type_idx] in MANDATORY_CONTENT_TYPES_IDS, stream_contents)
+    stream_contents = ifilter(
+        lambda x: x[content_meta_type_idx] in MANDATORY_CONTENT_TYPES_IDS,
+        stream_contents
+    )
     #ignore notset metadata, they don't count anything
-    stream_contents = ifilter(lambda x: x[content_hash_idx] != notset_hash_value,
-                              stream_contents)
+    stream_contents = ifilter(
+        lambda x: x[content_hash_idx] != notset_hash_value,
+        stream_contents
+    )
     stream_contents = keep_only_first_metadata(stream_contents)
     #remove actual content (to save memory)
-    stream_contents = imap(itemgetter(url_id_idx, content_meta_type_idx, content_hash_idx), stream_contents)
+    stream_contents = imap(
+        itemgetter(url_id_idx, content_meta_type_idx, content_hash_idx),
+        stream_contents
+    )
     #actual duplicate computation
     get_hash_and_content_type = itemgetter(2, 1)  # content hash, content type
-    stream_duplicates = generate_duplicate_stream(stream_contents,
-                                                  key=get_hash_and_content_type)
+    stream_duplicates = generate_duplicate_stream(
+        stream_contents,
+        key=get_hash_and_content_type
+    )
 
     #the output stream is different from input stream
     #thus the index might be different
     url_id_idx = ContentsDuplicateStreamDef.field_idx('id')
     content_meta_type_idx = ContentsDuplicateStreamDef.field_idx('content_type')
-    stream_duplicates = external_sort(stream_duplicates, key=lambda x: (x[url_id_idx], x[content_meta_type_idx]))
+    #sort by urlid
+    stream_duplicates = external_sort(
+        stream_duplicates,
+        key=lambda x: (x[url_id_idx], x[content_meta_type_idx])
+    )
 
     return stream_duplicates
 
