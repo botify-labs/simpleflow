@@ -67,7 +67,7 @@ def as_activity(func):
 from cdf.features.main.tasks import compute_suggested_patterns
 compute_suggested_patterns = as_activity(compute_suggested_patterns)
 
-from cdf.features.main.zones import compute_zones
+from cdf.features.main.tasks import compute_zones
 compute_zones = as_activity(compute_zones)
 
 from cdf.features.semantic_metadata.tasks import (
