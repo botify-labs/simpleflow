@@ -1,8 +1,5 @@
 from cdf.core.streams.utils import group_left
-from cdf.features.links.streams import OutlinksStreamDef
-from cdf.features.main.streams import InfosStreamDef, StrategicUrlStreamDef
-
-from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
+from cdf.features.main.streams import InfosStreamDef
 from .reasons import *
 
 STRATEGIC_HTTP_CODE = 200
@@ -92,24 +89,3 @@ def generate_strategic_stream(infos_stream, outlinks_stream):
         )
 
         yield uid, is_strategic, reason_mask
-
-
-@with_temporary_dir
-def compute_strategic_urls(crawl_id, s3_uri, part_id,
-                           tmp_dir=None, force_fetch=False):
-    # prepare streams
-    infos_stream = InfosStreamDef.get_stream_from_s3(
-        s3_uri, tmp_dir, part_id=part_id,
-        force_fetch=force_fetch
-    )
-    outlinks_stream = OutlinksStreamDef.get_stream_from_s3(
-        s3_uri, tmp_dir, part_id=part_id,
-        force_fetch=force_fetch
-    )
-
-    stream = generate_strategic_stream(infos_stream, outlinks_stream)
-    StrategicUrlStreamDef.persist_part_to_s3(
-        stream=stream,
-        s3_uri=s3_uri,
-        part_id=part_id
-    )

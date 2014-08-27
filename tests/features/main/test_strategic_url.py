@@ -9,6 +9,8 @@ from cdf.features.links.streams import OutlinksStreamDef
 from cdf.features.main.strategic_url import (
     generate_strategic_stream,
     is_strategic_url,
+)
+from cdf.features.main.tasks import (
     compute_strategic_urls
 )
 from cdf.features.main.streams import (
