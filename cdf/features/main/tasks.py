@@ -202,17 +202,9 @@ def compute_zones(s3_uri,
     info_stream = InfosStreamDef.get_stream_from_s3(s3_uri,
                                                     tmp_dir=tmp_dir,
                                                     part_id=part_id)
-    output_file_name = "{}.txt.{}.gz".format(ZoneStreamDef.FILE, part_id)
-    output_file_path = os.path.join(tmp_dir, output_file_name)
-    with gzip.open(output_file_path, "w") as f:
-        for urlid, zone in generate_zone_stream(id_stream, info_stream):
-            f.write("{}\t{}\n".format(urlid, zone))
-
-    #push file to s3
-    s3_destination = "{}/{}".format(s3_uri, output_file_name)
-    push_file(
-        s3_destination,
-        output_file_path
+    s3_destination = ZoneStreamDef.persist_part_to_s3(
+        generate_zone_stream(id_stream, info_stream),
+        s3_uri,
+        part_id
     )
-
     return s3_destination
