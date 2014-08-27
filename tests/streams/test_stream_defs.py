@@ -130,14 +130,14 @@ class TestStreamsDef(unittest.TestCase):
     def test_load_from_directory(self):
         self._write_custom_parts()
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=0)),
+            list(CustomStreamDef.load(self.tmp_dir, part_id=0)),
             [
                 [0, 'http://www.site.com/'],
                 [1, 'http://www.site.com/1'],
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=9)),
+            list(CustomStreamDef.load(self.tmp_dir, part_id=9)),
             [
                 [2, 'http://www.site.com/2'],
                 [3, 'http://www.site.com/3'],
@@ -145,7 +145,7 @@ class TestStreamsDef(unittest.TestCase):
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir, part_id=10)),
+            list(CustomStreamDef.load(self.tmp_dir, part_id=10)),
             [
                 [5, 'http://www.site.com/5'],
                 [6, 'http://www.site.com/6']
@@ -154,7 +154,7 @@ class TestStreamsDef(unittest.TestCase):
 
         # Test without part_id
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir)),
+            list(CustomStreamDef.load(self.tmp_dir)),
             self.data
         )
 
@@ -164,14 +164,14 @@ class TestStreamsDef(unittest.TestCase):
         self._write_custom_parts()
         s3_dir = 's3://' + self.s3_dir
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_s3(s3_dir, tmp_dir=self.tmp_dir, part_id=0)),
+            list(CustomStreamDef.load(s3_dir, tmp_dir=self.tmp_dir, part_id=0)),
             [
                 [0, 'http://www.site.com/'],
                 [1, 'http://www.site.com/1'],
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_s3(s3_dir, tmp_dir=self.tmp_dir, part_id=9)),
+            list(CustomStreamDef.load(s3_dir, tmp_dir=self.tmp_dir, part_id=9)),
             [
                 [2, 'http://www.site.com/2'],
                 [3, 'http://www.site.com/3'],
@@ -179,7 +179,7 @@ class TestStreamsDef(unittest.TestCase):
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_s3(s3_dir, tmp_dir=self.tmp_dir, part_id=10)),
+            list(CustomStreamDef.load(s3_dir, tmp_dir=self.tmp_dir, part_id=10)),
             [
                 [5, 'http://www.site.com/5'],
                 [6, 'http://www.site.com/6']
@@ -188,27 +188,28 @@ class TestStreamsDef(unittest.TestCase):
 
         # Test without part_id
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_s3(s3_dir, tmp_dir=self.tmp_dir)),
+            list(CustomStreamDef.load(s3_dir, tmp_dir=self.tmp_dir)),
             self.data
         )
 
     def test_persist(self):
         iterator = iter(self.data)
-        files = CustomStreamDef().persist_all(
+        files = CustomStreamDef().persist(
             iterator,
             self.tmp_dir,
-            first_part_id_size=2,
-            part_id_size=3
+            first_part_size=2,
+            part_size=3
         )
+        pattern = os.path.join(self.tmp_dir, '{}.txt.{}.gz')
         self.assertEquals(
             files,
-            [os.path.join(self.tmp_dir, '{}.txt.{}.gz'.format(CustomStreamDef().FILE, part_id)) for part_id in
-             xrange(0, 3)]
+            [pattern.format(CustomStreamDef().FILE, part_id)
+             for part_id in xrange(0, 3)]
         )
 
         # Test without part_id
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir)),
+            list(CustomStreamDef.load(self.tmp_dir)),
             self.data
         )
 
@@ -216,7 +217,7 @@ class TestStreamsDef(unittest.TestCase):
         stream = iter(self.data)
         part_id = 6
 
-        CustomStreamDef.persist_part_id(
+        CustomStreamDef.persist(
             stream,
             self.tmp_dir,
             part_id=6,
@@ -227,7 +228,7 @@ class TestStreamsDef(unittest.TestCase):
         self.assertItemsEqual(files, expected)
 
         # check partition file content
-        result = list(CustomStreamDef.get_stream_from_directory(self.tmp_dir))
+        result = list(CustomStreamDef.load(self.tmp_dir))
         self.assertEqual(result, self.data)
 
     @mock_s3
@@ -238,15 +239,15 @@ class TestStreamsDef(unittest.TestCase):
 
         stream = iter(self.data)
 
-        CustomStreamDef.persist_to_s3(
+        CustomStreamDef.persist(
             stream,
             s3_uri,
-            first_part_id_size=1,
-            part_id_size=3
+            first_part_size=1,
+            part_size=3
         )
         self.assertEqual(len(list_files(s3_uri)), 3)
 
-        result_stream = CustomStreamDef.get_stream_from_s3(
+        result_stream = CustomStreamDef.load(
             s3_uri,
             self.tmp_dir,
         )
@@ -262,14 +263,14 @@ class TestStreamsDef(unittest.TestCase):
         stream = iter(self.data)
         part_id = 15
 
-        CustomStreamDef.persist_part_to_s3(
+        CustomStreamDef.persist(
             stream,
             s3_uri,
-            part_id
+            part_id=part_id
         )
         self.assertEqual(len(list_files(s3_uri)), 1)
 
-        result_stream = CustomStreamDef.get_stream_from_s3(
+        result_stream = CustomStreamDef.load(
             s3_uri,
             self.tmp_dir,
             part_id=part_id
@@ -297,7 +298,7 @@ class TestTemporaryDataset(unittest.TestCase):
         dataset.persist(self.tmp_dir, first_part_id_size=2, part_id_size=3)
 
         self.assertEquals(
-            list(CustomStreamDef.get_stream_from_directory(self.tmp_dir)),
+            list(CustomStreamDef.load(self.tmp_dir)),
             [
                 [0, 'http://www.site.com/0'],
                 [1, 'http://www.site.com/1'],
