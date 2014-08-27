@@ -22,6 +22,7 @@ def external_sort(stream, key):
     :type key: function
     :returns: iterator
     """
+    #use MarshalExternalSort as it is the fastest method so far.
     external_sort = MarshalExternalSort()
     return external_sort.external_sort(stream, key)
 
