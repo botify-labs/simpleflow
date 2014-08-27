@@ -4,6 +4,7 @@ import tempfile
 import heapq
 import os
 import ujson as json
+import marshal
 from abc import ABCMeta, abstractmethod
 
 from cdf.log import logger
@@ -98,7 +99,11 @@ class MergeExternalSort(ExternalSort):
             #store each chunk in a pickle file
             chunk_file = tempfile.NamedTemporaryFile("wb", delete=False)
             for element in sorted(chunk_elements, key=key):
-                self.dump(element, chunk_file)
+                #we use the .file attribute because of
+                #the Marshal implementation of MergeExternalSort.
+                #indeed marshal.dump() requires a true file object to work
+                #cf https://docs.python.org/2/library/marshal.html
+                self.dump(element, chunk_file.file)
 
             chunk_file.close()
             chunk_file_paths.append(chunk_file.name)
@@ -136,7 +141,6 @@ class MergeExternalSort(ExternalSort):
             streams.append(
                 self.get_stream_from_file(open(file_path, "rb"))
             )
-
         for element in merge_sorted_streams(streams, key):
             yield element
 
@@ -150,7 +154,9 @@ class MergeExternalSort(ExternalSort):
         """
         new_file = tempfile.NamedTemporaryFile("wb", delete=False)
         for element in self.get_stream_from_file_paths(file_paths, key):
-            self.dump(element, new_file)
+            #use .file attribute because of MarshalExternalSort
+            #(see above)
+            self.dump(element, new_file.file)
         new_file.close()
         return new_file.name
 
@@ -178,6 +184,23 @@ class JsonExternalSort(MergeExternalSort):
     def get_stream_from_file(self, f):
         for row in f:
             yield json.loads(row)
+
+
+class MarshalExternalSort(MergeExternalSort):
+    """Concrete implementation of MergeExternalSort.
+    It uses marshal to serialize the objects.
+    cf https://docs.python.org/2/library/marshal.html
+    for more infos on marshal.
+    """
+    def dump(self, element, f):
+        marshal.dump(element, f)
+
+    def get_stream_from_file(self, f):
+        while True:
+            try:
+                yield marshal.load(f)
+            except (EOFError, ValueError, TypeError):
+                break
 
 
 class PickleExternalSort(MergeExternalSort):
