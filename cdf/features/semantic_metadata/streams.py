@@ -67,6 +67,56 @@ class ContentsStreamDef(StreamDefBase):
         document['metadata'][content_type]['contents'].append(content)
 
 
+def _get_duplicate_document_mapping(duplicate_type, verbose_duplicate_type):
+    """Generate mapping for duplicate documents
+    :param duplicate_type: the kind of duplicate.
+                           this string will be used to generate the field types
+    :type verbose_duplicate_type: the description of the duplicate type.
+                                  this string will be used to generate the
+                                  verbose names.
+    :returns: dict
+    """
+    result = {}
+    for i, metadata_type in enumerate(["title", "h1", "description"]):
+        prefix = "metadata.{}.{}".format(metadata_type, duplicate_type)
+        result["{}.nb".format(prefix)] = {
+            "verbose_name": "Number of {} {}".format(
+                verbose_duplicate_type, metadata_type.capitalize()
+            ),
+            "type": INT_TYPE,
+            "order": 100 + i,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL
+            }
+        }
+        result["{}.is_first".format(prefix)] = {
+            "verbose_name": "First {} {} found".format(
+                verbose_duplicate_type, metadata_type.capitalize()
+            ),
+            "order": 120 + i,
+            "type": BOOLEAN_TYPE,
+        }
+        result["{}.urls".format(prefix)] = {
+            "verbose_name": "Pages with the same {}".format(metadata_type.capitalize()),
+            "type": INT_TYPE,
+            "order": 110 + 1,
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL_STATUS,
+                URL_ID
+            }
+        }
+
+        result["{}.urls_exists".format(prefix)] = {
+            "type": "boolean",
+            "default_value": None
+        }
+    return result
+
+
 class ContentsDuplicateStreamDef(StreamDefBase):
     FILE = 'urlcontentsduplicate'
     HEADERS = (
@@ -77,103 +127,11 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
     )
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
-    URL_DOCUMENT_MAPPING = {
-        "metadata.title.duplicates.nb": {
-            "verbose_name": "Number of Duplicate Title",
-            "type": INT_TYPE,
-            "order": 100,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL,
-                AGG_NUMERICAL
-            }
-        },
-        "metadata.title.duplicates.is_first": {
-            "verbose_name": "First duplicate Title found",
-            "order": 120,
-            "type": BOOLEAN_TYPE,
-        },
-        "metadata.title.duplicates.urls": {
-            "verbose_name": "Pages with the same Title",
-            "type": INT_TYPE,
-            "order": 110,
-            "settings": {
-                ES_NO_INDEX,
-                LIST,
-                RENDERING.URL_STATUS,
-                FIELD_RIGHTS.SELECT,
-                URL_ID
-            }
-        },
-        "metadata.title.duplicates.urls_exists": {
-            "type": "boolean",
-            "default_value": None
-        },
-        "metadata.h1.duplicates.urls": {
-            "verbose_name": "Pages with the same H1",
-            "type": INT_TYPE,
-            "order": 112,
-            "settings": {
-                ES_NO_INDEX,
-                LIST,
-                RENDERING.URL_STATUS,
-                FIELD_RIGHTS.SELECT,
-                URL_ID
-            }
-        },
-        "metadata.h1.duplicates.urls_exists": {
-            "type": "boolean",
-            "default_value": None
-        },
-        "metadata.h1.duplicates.nb": {
-            "verbose_name": "Number of pages with the same H1",
-            "type": INT_TYPE,
-            "order": 102,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL,
-                AGG_NUMERICAL
-            }
-        },
-        "metadata.h1.duplicates.is_first": {
-            "verbose_name": "First duplicate H1 found",
-            "order": 122,
-            "type": BOOLEAN_TYPE,
-        },
 
-        "metadata.description.duplicates.nb": {
-            "verbose_name": "Number of pages with the same Description",
-            "type": INT_TYPE,
-            "order": 101,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL,
-                AGG_NUMERICAL
-            }
-        },
-        "metadata.description.duplicates.urls": {
-            "verbose_name": "Pages with the same Description",
-            "type": INT_TYPE,
-            "order": 111,
-            "settings": {
-                ES_NO_INDEX,
-                LIST,
-                RENDERING.URL_STATUS,
-                FIELD_RIGHTS.SELECT,
-                URL_ID
-            }
-        },
-        "metadata.description.duplicates.urls_exists": {
-            "type": "boolean",
-            "default_value": None
-        },
-        "metadata.description.duplicates.is_first": {
-            "verbose_name": "First duplicate Description found",
-            "order": 121,
-            "type": BOOLEAN_TYPE,
-        },
-
-    }
+    URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
+        "duplicates",
+        "duplicate"
+    )
 
     def process_document(self, document, stream):
         _, metadata_idx, nb_duplicates, is_first, duplicate_urls = stream
