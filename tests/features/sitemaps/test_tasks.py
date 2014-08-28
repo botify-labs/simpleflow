@@ -83,9 +83,7 @@ class TestDownloadSitemapFile(unittest.TestCase):
 class TestMatchSitemapUrls(unittest.TestCase):
 
     @mock_s3
-    @mock.patch.object(IdStreamDef, 'get_stream_from_s3')
-    def test_nominal_case(self,
-                          get_stream_from_s3_mock):
+    def test_nominal_case(self):
 
         bucket = "app.foo.com"
         s3_uri = "s3://{}/crawl_result".format(bucket)
@@ -130,11 +128,15 @@ class TestMatchSitemapUrls(unittest.TestCase):
             '}'
         ))
         #mock definition
-        get_stream_from_s3_mock.return_value = [
+        ids = [
             (1, "http", "foo.com", "/bar", ""),
             (2, "http", "foo.com", "/baz", ""),
             (3, "http", "foo.com", "/qux", ""),
         ]
+        IdStreamDef.persist(
+            iter(ids),
+            s3_uri
+        )
 
         #call
         allowed_domains = ["foo.com"]

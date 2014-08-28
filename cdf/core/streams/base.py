@@ -77,7 +77,7 @@ class StreamDefBase(object):
         :rtype: stream
         """
         if is_s3_uri(uri):
-            return cls.get_stream_from_s3(
+            return cls._get_stream_from_s3(
                 uri,
                 tmp_dir=tmp_dir,
                 part_id=part_id,
@@ -85,7 +85,7 @@ class StreamDefBase(object):
             )
         else:
             if os.path.isdir(uri):
-                return cls.get_stream_from_directory(
+                return cls._get_stream_from_directory(
                     uri,
                     part_id=part_id
                 )
@@ -114,21 +114,21 @@ class StreamDefBase(object):
             # s3 uri
             if part_id is None:
                 # persist into partitions
-                return cls.persist_to_s3(stream, uri, first_part_size, part_size)
+                return cls._persist_to_s3(stream, uri, first_part_size, part_size)
             else:
                 # persist into a partition
-                return cls.persist_part_to_s3(stream, uri, part_id)
+                return cls._persist_part_to_s3(stream, uri, part_id)
         else:
             # local path
             if part_id is None:
                 # persist into partitions
-                return cls.persist_all(stream, uri, first_part_size, part_size)
+                return cls._persist_all(stream, uri, first_part_size, part_size)
             else:
                 # persist into a partition
-                return cls.persist_part_id(stream, uri, part_id)
+                return cls._persist_part_id(stream, uri, part_id)
 
     @classmethod
-    def get_stream_from_directory(cls, directory, part_id=None):
+    def _get_stream_from_directory(cls, directory, part_id=None):
         """Return a Stream instance from a directory
 
         It handles the case of partitions:
@@ -171,7 +171,7 @@ class StreamDefBase(object):
         )
 
     @classmethod
-    def get_stream_from_s3(cls, s3_uri, tmp_dir, part_id=None, force_fetch=False):
+    def _get_stream_from_s3(cls, s3_uri, tmp_dir, part_id=None, force_fetch=False):
         """
         Return a Stream instance from a root storage uri.
         """
@@ -185,7 +185,7 @@ class StreamDefBase(object):
             regexp=regexp,
             force_fetch=force_fetch
         )
-        return cls.get_stream_from_directory(tmp_dir, part_id)
+        return cls._get_stream_from_directory(tmp_dir, part_id)
 
     # TODO(darkjh) as we somehow need this, rename to `load_path`
     @classmethod
@@ -224,7 +224,7 @@ class StreamDefBase(object):
         return Stream(cls(), cast(i))
 
     @classmethod
-    def persist_all(cls, stream, directory,
+    def _persist_all(cls, stream, directory,
                     first_part_id_size=FIRST_PART_ID_SIZE,
                     part_id_size=PART_ID_SIZE):
         """
@@ -237,11 +237,11 @@ class StreamDefBase(object):
 
         files_generated = []
         for part_id, local_stream in groupby(stream, lambda k: get_part_id(k[0], first_part_id_size, part_id_size)):
-            files_generated.append(cls.persist_part_id(local_stream, directory, part_id))
+            files_generated.append(cls._persist_part_id(local_stream, directory, part_id))
         return files_generated
 
     @classmethod
-    def persist_part_id(cls, stream, directory, part_id):
+    def _persist_part_id(cls, stream, directory, part_id):
         """Persist the content of the stream into a partition file
 
         :return the file location where the stream has been stored
@@ -254,7 +254,7 @@ class StreamDefBase(object):
         return filename
 
     @classmethod
-    def persist_to_s3(cls, stream, s3_uri,
+    def _persist_to_s3(cls, stream, s3_uri,
                       first_part_id_size=FIRST_PART_ID_SIZE,
                       part_id_size=PART_ID_SIZE):
         """Persist the stream to s3 in partitions
@@ -266,7 +266,7 @@ class StreamDefBase(object):
         :return: a list of s3 uris of persisted files
         """
         tmp_dir = tempfile.mkdtemp()
-        local_files = cls.persist_all(stream, directory=tmp_dir,
+        local_files = cls._persist_all(stream, directory=tmp_dir,
                                       first_part_id_size=first_part_id_size,
                                       part_id_size=part_id_size)
         files = []
@@ -278,7 +278,7 @@ class StreamDefBase(object):
         return files
 
     @classmethod
-    def persist_part_to_s3(cls, stream, s3_uri, part_id):
+    def _persist_part_to_s3(cls, stream, s3_uri, part_id):
         """Persist the stream to s3 as a single partition
 
         :param stream: stream to persist
@@ -287,7 +287,7 @@ class StreamDefBase(object):
         :return: the s3 uri of the persisted file on s3
         """
         tmp_dir = tempfile.mkdtemp()
-        local_file = cls.persist_part_id(
+        local_file = cls._persist_part_id(
             stream, directory=tmp_dir, part_id=part_id
         )
         s3_file_path = os.path.join(s3_uri, os.path.basename(local_file))
