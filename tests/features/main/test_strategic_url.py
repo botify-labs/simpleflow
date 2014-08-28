@@ -256,9 +256,9 @@ class TestStrategicUrlTask(unittest.TestCase):
         s3_uri = 's3://test_bucket'
         part_id = 19
 
-        InfosStreamDef.persist_part_to_s3(
+        InfosStreamDef.persist(
             self.infos_stream, s3_uri, part_id)
-        OutlinksStreamDef.persist_part_to_s3(
+        OutlinksStreamDef.persist(
             self.outlinks_stream, s3_uri, part_id)
 
         # launch task

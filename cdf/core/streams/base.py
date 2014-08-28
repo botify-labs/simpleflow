@@ -187,6 +187,7 @@ class StreamDefBase(object):
         )
         return cls.get_stream_from_directory(tmp_dir, part_id)
 
+    # TODO(darkjh) as we somehow need this, rename to `load_path`
     @classmethod
     def get_stream_from_s3_path(cls, s3_uri_path, tmp_dir, force_fetch=False):
         """
@@ -199,6 +200,7 @@ class StreamDefBase(object):
         )
         return cls.get_stream_from_path(path)
 
+    # TODO(darkjh) extensively used in StreamFactory, replace it with StreamDef first
     @classmethod
     def get_stream_from_file(cls, f):
         """
@@ -210,6 +212,7 @@ class StreamDefBase(object):
             cast(split_file(f))
         )
 
+    # TODO(darkjh) used only in tests
     @classmethod
     def get_stream_from_iterator(cls, i):
         """

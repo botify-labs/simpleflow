@@ -28,7 +28,7 @@ def compute_metadata_count(s3_uri, part_id, tmp_dir=None):
     )
     output_stream = count_metadata(contents_stream, part_id)
 
-    s3_destination = ContentsCountStreamDef.persist_part_to_s3(
+    s3_destination = ContentsCountStreamDef.persist(
         output_stream,
         s3_uri,
         part_id=part_id
@@ -61,10 +61,12 @@ def make_metadata_duplicates_file(crawl_id, s3_uri,
     contents_stream = ContentsStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     generator = get_duplicate_metadata(contents_stream)
     generator = itertools.imap(to_string, generator)
-    files = ContentsDuplicateStreamDef.persist_to_s3(generator,
-                                                     s3_uri,
-                                                     first_part_id_size,
-                                                     part_id_size)
+    files = ContentsDuplicateStreamDef.persist(
+        generator,
+        s3_uri,
+        first_part_size=first_part_id_size,
+        part_size=part_id_size
+    )
     return files
 
 

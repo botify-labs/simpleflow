@@ -227,7 +227,7 @@ def compute_zones(s3_uri,
         tmp_dir=tmp_dir,
         part_id=part_id
     )
-    s3_destination = ZoneStreamDef.persist_part_to_s3(
+    s3_destination = ZoneStreamDef.persist(
         generate_zone_stream(id_stream, info_stream),
         s3_uri,
         part_id
@@ -249,8 +249,8 @@ def compute_strategic_urls(crawl_id, s3_uri, part_id,
     )
 
     stream = generate_strategic_stream(infos_stream, outlinks_stream)
-    StrategicUrlStreamDef.persist_part_to_s3(
+    StrategicUrlStreamDef.persist(
         stream=stream,
-        s3_uri=s3_uri,
+        uri=s3_uri,
         part_id=part_id
     )
