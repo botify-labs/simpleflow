@@ -102,6 +102,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 LIST,
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS_EXIST,
                 URL_ID
             }
         },
@@ -118,6 +119,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 LIST,
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS_EXIST,
                 URL_ID
             }
         },
