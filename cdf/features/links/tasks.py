@@ -1,13 +1,9 @@
 import os
 import gzip
-import itertools
-
 
 from cdf.log import logger
-from cdf.utils.path import write_by_part
 from cdf.utils.s3 import push_file
 from cdf.analysis.urls.transducers.links import OutlinksTransducer, InlinksTransducer
-from cdf.utils.remote_files import nb_parts_from_crawl_location
 from cdf.analysis.urls.generators.bad_links import get_bad_links, get_bad_link_counters
 from cdf.features.main.streams import InfosStreamDef
 from cdf.features.links.streams import (
@@ -61,8 +57,6 @@ def make_links_counter_file(crawl_id, s3_uri,
         )
 
 
-# TODO(darkjh) use StreamDef instead of manual chaining -> refactor integration test
-# TODO(darkjh) add a task-level test
 @with_temporary_dir
 def make_bad_link_file(crawl_id, s3_uri,
                        first_part_id_size=500000,
@@ -74,15 +68,6 @@ def make_bad_link_file(crawl_id, s3_uri,
 
     Ordered on url_src_id
     """
-    def to_string(row):
-        return '\t'.join(str(field) for field in row) + '\n'
-
-    streams_types = {'infos': [],
-                     'outlinks': []}
-    nb_parts = nb_parts_from_crawl_location(s3_uri)
-
-    logger.info('Fetching all partition info and links files from s3')
-
     stream_kwargs = {
         'uri': s3_uri,
         'tmp_dir': tmp_dir,
@@ -94,20 +79,11 @@ def make_bad_link_file(crawl_id, s3_uri,
         OutlinksStreamDef.load(**stream_kwargs)
     )
 
-    file_pattern = 'urlbadlinks.txt.{}.gz'
-    write_by_part(generator, first_part_id_size, part_id_size,
-                  tmp_dir, file_pattern, to_string)
-
-    # push all created files to s3
-    logger.info('Pushing badlink files to s3')
-    for i in xrange(0, nb_parts + 1):
-        file_to_push = file_pattern.format(i)
-        if os.path.exists(os.path.join(tmp_dir, file_to_push)):
-            logger.info('Pushing {}'.format(file_to_push))
-            push_file(
-                os.path.join(s3_uri, file_to_push),
-                os.path.join(tmp_dir, file_to_push),
-            )
+    BadLinksStreamDef.persist(
+        generator, s3_uri,
+        first_part_size=first_part_id_size,
+        part_size=part_id_size
+    )
 
 
 @with_temporary_dir
