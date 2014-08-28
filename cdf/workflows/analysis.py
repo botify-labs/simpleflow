@@ -67,8 +67,9 @@ def as_activity(func):
 from cdf.features.main.tasks import compute_suggested_patterns
 compute_suggested_patterns = as_activity(compute_suggested_patterns)
 
-from cdf.features.main.tasks import compute_zones
+from cdf.features.main.tasks import compute_zones, compute_strategic_urls
 compute_zones = as_activity(compute_zones)
+compute_strategic_urls = as_activity(compute_strategic_urls)
 
 from cdf.features.semantic_metadata.tasks import (
     compute_metadata_count,
@@ -459,6 +460,17 @@ class AnalysisWorkflow(Workflow):
             for part_id in xrange(partitions.result)
         ]
 
+        strategic_urls_results = [
+            self.submit(
+                compute_strategic_urls,
+                crawl_id=crawl_id,
+                s3_uri=s3_uri,
+                tmp_dir=tmp_dir,
+                part_id=part_id
+            )
+            for part_id in xrange(partitions.result)
+        ]
+
         # Group all the futures that need to terminate before computing the
         # aggregations and generating documents.
         intermediary_files = ([
@@ -469,6 +481,7 @@ class AnalysisWorkflow(Workflow):
             inlinks_results +
             outlinks_results +
             zone_results +
+            strategic_urls_results +
             filled_metadata_count_results)
 
         if 'ganalytics' in features_flags:
