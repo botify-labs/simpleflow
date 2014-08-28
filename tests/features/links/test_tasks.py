@@ -7,13 +7,15 @@ import boto
 from cdf.features.links.streams import (
     OutlinksStreamDef,
     BadLinksStreamDef,
+    BadLinksCountersStreamDef,
     OutlinksCountersStreamDef,
     OutcanonicalCountersStreamDef,
     OutredirectCountersStreamDef
 )
 from cdf.features.links.tasks import (
     make_bad_link_file as compute_bad_link,
-    make_links_counter_file as compute_link_counter
+    make_links_counter_file as compute_link_counter,
+    make_bad_link_counter_file as compute_bad_link_counter
 )
 from cdf.features.main.streams import InfosStreamDef
 from cdf.utils.s3 import list_files
@@ -124,3 +126,45 @@ class TestLinksCounterTask(unittest.TestCase):
         expected = [[4, True]]
         result = list(OutredirectCountersStreamDef.load(**stream_args))
         self.assertItemsEqual(expected, result)
+
+
+class TestBadLinkCounterTask(unittest.TestCase):
+    def setUp(self):
+        self.badlinks = [
+            [1, 2, 500],
+            [1, 9, 500],
+            [1, 2, 400],
+        ]
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    @mock_s3
+    def test_harness(self):
+        s3 = boto.connect_s3()
+        s3.create_bucket('test_bucket')
+        s3_uri = 's3://test_bucket'
+        part_id = 64
+
+        BadLinksStreamDef.persist(
+            iter(self.badlinks),
+            s3_uri,
+            part_id=part_id
+        )
+
+        compute_bad_link_counter(
+            1234, s3_uri,
+            part_id=part_id
+        )
+
+        result = list(BadLinksCountersStreamDef.load(
+            s3_uri,
+            tmp_dir=self.tmp_dir,
+            part_id=part_id
+        ))
+        expected = [
+            [1, 400, 1],  # 1 400 link
+            [1, 500, 2],  # 2 500 link
+        ]
+        self.assertEqual(result, expected)

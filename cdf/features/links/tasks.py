@@ -8,8 +8,8 @@ from cdf.analysis.urls.generators.bad_links import get_bad_links, get_bad_link_c
 from cdf.features.main.streams import InfosStreamDef
 from cdf.features.links.streams import (
     OutlinksRawStreamDef, OutlinksStreamDef,
-    InlinksRawStreamDef, BadLinksStreamDef
-)
+    InlinksRawStreamDef, BadLinksStreamDef,
+    BadLinksCountersStreamDef)
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 
@@ -105,19 +105,8 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
         force_fetch=force_fetch
     )
     generator = get_bad_link_counters(stream)
-
-    file_name = 'urlbadlinks_counters.txt.%d.gz' % part_id
-    f = gzip.open(os.path.join(tmp_dir, file_name), 'w')
-    for src, bad_code, count in generator:
-        f.write('\t'.join((
-            str(src),
-            str(bad_code),
-            str(count)
-        )) + '\n')
-    f.close()
-
-    logger.info('Pushing {}'.format(file_name))
-    push_file(
-        os.path.join(s3_uri, file_name),
-        os.path.join(tmp_dir, file_name),
+    BadLinksCountersStreamDef.persist(
+        generator,
+        s3_uri,
+        part_id=part_id
     )
