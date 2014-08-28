@@ -391,18 +391,15 @@ class TemporaryDataset(object):
         """
         self.dataset = sorted(self.dataset, key=itemgetter(0))
 
-    def persist(self, directory, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE, sort=True):
+    def persist(self, uri,
+                first_part_size=FIRST_PART_ID_SIZE,
+                part_size=PART_ID_SIZE,
+                sort=True):
         if sort:
             self.sort()
-        return self.stream_def.persist_all(stream=iter(self.dataset),
-                                       directory=directory,
-                                       first_part_id_size=first_part_id_size,
-                                       part_id_size=part_id_size)
-
-    def persist_to_s3(self, s3_uri, first_part_id_size=FIRST_PART_ID_SIZE, part_id_size=PART_ID_SIZE, sort=True):
-        if sort:
-            self.sort()
-        return self.stream_def.persist_to_s3(stream=iter(self.dataset),
-                                             s3_uri=s3_uri,
-                                             first_part_id_size=first_part_id_size,
-                                             part_id_size=part_id_size)
+        return self.stream_def.persist(
+            stream=iter(self.dataset),
+            uri=uri,
+            first_part_size=first_part_size,
+            part_size=part_size
+        )

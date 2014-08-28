@@ -295,7 +295,7 @@ class TestTemporaryDataset(unittest.TestCase):
         # Write in reversed to ensure that the dataset will be sorted
         for i in xrange(6, -1, -1):
             dataset.append(i, 'http://www.site.com/{}'.format(i))
-        dataset.persist(self.tmp_dir, first_part_id_size=2, part_id_size=3)
+        dataset.persist(self.tmp_dir, first_part_size=2, part_size=3)
 
         self.assertEquals(
             list(CustomStreamDef.load(self.tmp_dir)),
