@@ -6,10 +6,14 @@ import boto
 
 from cdf.features.links.streams import (
     OutlinksStreamDef,
-    BadLinksStreamDef
+    BadLinksStreamDef,
+    OutlinksCountersStreamDef,
+    OutcanonicalCountersStreamDef,
+    OutredirectCountersStreamDef
 )
 from cdf.features.links.tasks import (
-    make_bad_link_file as compute_bad_link
+    make_bad_link_file as compute_bad_link,
+    make_links_counter_file as compute_link_counter
 )
 from cdf.features.main.streams import InfosStreamDef
 from cdf.utils.s3 import list_files
@@ -70,3 +74,53 @@ class TestBadLinksTask(unittest.TestCase):
             [5, 3, 500]
         ]
         self.assertEqual(result, expected)
+
+
+class TestLinksCounterTask(unittest.TestCase):
+    def setUp(self):
+        self.outlinks = [
+            [1, 'a', 0, 2, ''],
+            [1, 'a', 1, 3, ''],
+            [1, 'a', 0, 4, ''],
+            [3, 'canonical', 5, 5, ''],
+            [4, 'r301', 5, 5, ''],
+        ]
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    @mock_s3
+    def test_outgoing_harness(self):
+        s3 = boto.connect_s3()
+        s3.create_bucket('test_bucket')
+        s3_uri = 's3://test_bucket'
+
+        stream_args = {
+            'uri': s3_uri,
+            'tmp_dir': self.tmp_dir,
+            'part_id': 0
+        }
+
+        OutlinksStreamDef.persist(
+            iter(self.outlinks), s3_uri
+        )
+
+        compute_link_counter(1234, s3_uri, part_id=0, link_direction='out')
+
+        # check links
+        expected = [
+            [1, ['follow'], True, 2, 2], [1, ['link'], True, 1, 1]
+        ]
+        result = list(OutlinksCountersStreamDef.load(**stream_args))
+        self.assertItemsEqual(expected, result)
+
+        # check canonical
+        expected = [[3, False]]
+        result = list(OutcanonicalCountersStreamDef.load(**stream_args))
+        self.assertItemsEqual(expected, result)
+
+        # check redirection
+        expected = [[4, True]]
+        result = list(OutredirectCountersStreamDef.load(**stream_args))
+        self.assertItemsEqual(expected, result)
