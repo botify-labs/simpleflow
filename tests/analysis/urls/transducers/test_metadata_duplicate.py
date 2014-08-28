@@ -6,6 +6,7 @@ from cdf.analysis.urls.transducers.metadata_duplicate import (
     filter_redundant_metadata,
     preprocess_for_duplicate_computation,
     filter_non_strategic_urls,
+    append_zone,
     generate_duplicate_stream
 )
 
@@ -129,6 +130,35 @@ class TestFilterNonStrategicUrls(unittest.TestCase):
             (1, 1, string_to_int32("title1")),
             (1, 4, string_to_int32("description1")),
             (9, 4, string_to_int32("description1"))
+        ]
+
+        self.assertEqual(expected_result, list(actual_result))
+
+
+class TestAppendZone(unittest.TestCase):
+    def test_nominal_case(self):
+        contents_stream = iter([
+            (1, 1, string_to_int32("title1")),
+            (1, 4, string_to_int32("description1")),
+            (6, 1, string_to_int32("title1")),
+            (6, 4, string_to_int32("description2")),
+            (9, 4, string_to_int32("description1"))
+        ])
+
+        zone_stream = iter([
+            (1, "en-US,http"),
+            (6, "en-US,https"),
+            (9, "fr,http"),
+        ])
+
+        actual_result = append_zone(contents_stream, zone_stream)
+
+        expected_result = [
+            (1, 1, string_to_int32("title1"), "en-US,http"),
+            (1, 4, string_to_int32("description1"), "en-US,http"),
+            (6, 1, string_to_int32("title1"), "en-US,https"),
+            (6, 4, string_to_int32("description2"), "en-US,https"),
+            (9, 4, string_to_int32("description1"), "fr,http")
         ]
 
         self.assertEqual(expected_result, list(actual_result))

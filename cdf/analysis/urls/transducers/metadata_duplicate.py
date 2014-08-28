@@ -180,6 +180,26 @@ def filter_non_strategic_urls(stream_contents,
             yield elt
 
 
+def append_zone(stream_contents, stream_zones):
+    """Append the zone to a contents stream
+    :param stream_contents: the input contents stream.
+                            (based on ContentsStreamDef)
+    :type stream_contents: iterator
+    :param stream_zone: the input zone stream
+                        (based on ZoneStreamDef)
+    :type stream_zone: iterator
+    :returns: iterator
+    """
+    grouped_stream = group_left(
+        (stream_zones, 0),
+        contents=(stream_contents, 0)
+    )
+    for _, zone_elt, contents in grouped_stream:
+        _, zone = zone_elt
+        for elt in contents["contents"]:
+            yield elt + (zone,)
+
+
     #actual duplicate computation
     get_hash_and_content_type = itemgetter(2, 1)  # content hash, content type
     stream_duplicates = generate_duplicate_stream(
