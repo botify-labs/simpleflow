@@ -153,6 +153,26 @@ def get_duplicate_metadata(stream_contents):
     #stream preprocessing
     stream_contents = preprocess_for_duplicate_computation(stream_contents)
 
+    #actual duplicate computation
+    get_hash_and_content_type = itemgetter(2, 1)  # content hash, content type
+    stream_duplicates = generate_duplicate_stream(
+        stream_contents,
+        key=get_hash_and_content_type
+    )
+
+    #the output stream is different from input stream
+    #thus the index might be different
+    url_id_idx = ContentsDuplicateStreamDef.field_idx('id')
+    content_meta_type_idx = ContentsDuplicateStreamDef.field_idx('content_type')
+    #sort by urlid
+    stream_duplicates = external_sort(
+        stream_duplicates,
+        key=itemgetter(url_id_idx, content_meta_type_idx)
+    )
+
+    return stream_duplicates
+
+
 def filter_non_strategic_urls(stream_contents,
                               stream_strategic_urls):
     """Remove non strategic urls from a contents stream.
@@ -200,8 +220,34 @@ def append_zone(stream_contents, stream_zones):
             yield elt + (zone,)
 
 
+def get_zone_aware_duplicate_metadata(stream_contents,
+                                      stream_zones,
+                                      stream_strategic_urls):
+    """
+    Return a tuple of urls having a duplicate metadata (the first one found for each page).
+    The difference with get_duplicate_metadata() is that:
+    - it consider only strategic urls
+    - two contents from different zones are always considered as different
+    The 1st index is the url_id concerned
+    The 2nd index is the content type (h1, title, description)
+    The 3rd is the number of occurrences found for the first anchor for the whole crawl
+    The 4th is a boolean that check if it is the first occurrence found in the whole crawl
+    The 5th index is a list of the ten first url_ids found containg the same content type)
+
+    H2 and H3 metadata are not concerned by 4 and 5
+
+    (url_id, content_type, filled_nb, duplicates_nb, is_first_url_found, [url_id_1, url_id2 ...])
+    """
+    #stream preprocessing
+    stream_contents = preprocess_for_duplicate_computation(stream_contents)
+
+    #remove non strategic urls
+    stream_contents = filter_non_strategic_urls(stream_contents,
+                                                stream_strategic_urls)
+
+    stream_contents = append_zone(stream_contents, stream_zones)
     #actual duplicate computation
-    get_hash_and_content_type = itemgetter(2, 1)  # content hash, content type
+    get_hash_and_content_type = itemgetter(2, 1, -1)  # content hash, content type, zone
     stream_duplicates = generate_duplicate_stream(
         stream_contents,
         key=get_hash_and_content_type
