@@ -54,9 +54,11 @@ class TestComputeZones(unittest.TestCase):
         expected_document_uri = "{}/zones.txt.{}.gz".format(self.s3_uri, part_id)
         self.assertEqual(expected_document_uri, document_uri)
 
-        zone_stream = ZoneStreamDef.get_stream_from_s3(self.s3_uri,
-                                                       tmp_dir=self.tmp_dir,
-                                                       part_id=part_id)
+        zone_stream = ZoneStreamDef.load(
+            self.s3_uri,
+            tmp_dir=self.tmp_dir,
+            part_id=part_id
+        )
         expected_zone_stream = [
             [1, 'en-US,http'],
             [2, 'fr,https'],
@@ -79,7 +81,9 @@ class TestComputeZones(unittest.TestCase):
         expected_document_uri = "{}/zones.txt.{}.gz".format(self.s3_uri, part_id)
         self.assertEqual(expected_document_uri, document_uri)
 
-        zone_stream = ZoneStreamDef.get_stream_from_s3(self.s3_uri,
-                                                       tmp_dir=self.tmp_dir,
-                                                       part_id=part_id)
+        zone_stream = ZoneStreamDef.load(
+            self.s3_uri,
+            tmp_dir=self.tmp_dir,
+            part_id=part_id
+        )
         self.assertEqual([], list(zone_stream))

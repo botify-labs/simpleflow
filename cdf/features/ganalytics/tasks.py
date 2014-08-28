@@ -144,8 +144,8 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
     576 organic google 12
     165 organic google 50
     """
-    id_stream = IdStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
-    info_stream = InfosStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
+    id_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    info_stream = InfosStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     id_idx = InfosStreamDef.field_idx("id")
     http_code_idx = InfosStreamDef.field_idx("http_code")
     urlid_to_http_code = {s[id_idx]: s[http_code_idx] for s in info_stream}

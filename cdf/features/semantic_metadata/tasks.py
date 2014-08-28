@@ -21,7 +21,7 @@ from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 
 @with_temporary_dir
 def compute_metadata_count(s3_uri, part_id, tmp_dir=None):
-    contents_stream = ContentsStreamDef.get_stream_from_s3(
+    contents_stream = ContentsStreamDef.load(
         s3_uri,
         part_id=part_id,
         tmp_dir=tmp_dir
@@ -58,8 +58,7 @@ def make_metadata_duplicates_file(crawl_id, s3_uri,
                                   tmp_dir=None,
                                   force_fetch=DEFAULT_FORCE_FETCH):
     logger.info('Fetching contents stream from S3')
-    contents_stream = ContentsStreamDef.get_stream_from_s3(s3_uri,
-                                                           tmp_dir=tmp_dir)
+    contents_stream = ContentsStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     generator = get_duplicate_metadata(contents_stream)
     generator = itertools.imap(to_string, generator)
     files = ContentsDuplicateStreamDef.persist_to_s3(generator,

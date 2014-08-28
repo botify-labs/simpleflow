@@ -217,12 +217,16 @@ def compute_zones(s3_uri,
     :rtype: string - the s3_uri of the generated zone file
     """
     #get base streams
-    id_stream = IdStreamDef.get_stream_from_s3(s3_uri,
-                                               tmp_dir=tmp_dir,
-                                               part_id=part_id)
-    info_stream = InfosStreamDef.get_stream_from_s3(s3_uri,
-                                                    tmp_dir=tmp_dir,
-                                                    part_id=part_id)
+    id_stream = IdStreamDef.load(
+        s3_uri,
+        tmp_dir=tmp_dir,
+        part_id=part_id
+    )
+    info_stream = InfosStreamDef.load(
+        s3_uri,
+        tmp_dir=tmp_dir,
+        part_id=part_id
+    )
     s3_destination = ZoneStreamDef.persist_part_to_s3(
         generate_zone_stream(id_stream, info_stream),
         s3_uri,
@@ -235,11 +239,11 @@ def compute_zones(s3_uri,
 def compute_strategic_urls(crawl_id, s3_uri, part_id,
                            tmp_dir=None, force_fetch=False):
     # prepare streams
-    infos_stream = InfosStreamDef.get_stream_from_s3(
+    infos_stream = InfosStreamDef.load(
         s3_uri, tmp_dir, part_id=part_id,
         force_fetch=force_fetch
     )
-    outlinks_stream = OutlinksStreamDef.get_stream_from_s3(
+    outlinks_stream = OutlinksStreamDef.load(
         s3_uri, tmp_dir, part_id=part_id,
         force_fetch=force_fetch
     )

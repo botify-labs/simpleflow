@@ -119,7 +119,7 @@ def match_sitemap_urls(s3_uri,
     :param tmp_dir: the directory where to save temporary data
     """
     #load crawl information
-    id_stream = IdStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
+    id_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     url_to_id = get_url_to_id_dict_from_stream(id_stream)
     #download sitemaps
 

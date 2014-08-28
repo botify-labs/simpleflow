@@ -271,7 +271,7 @@ class TestStrategicUrlTask(unittest.TestCase):
             [3, False, REASON_NOINDEX.code],
             [4, False, REASON_CANONICAL.code],
         ]
-        result = list(StrategicUrlStreamDef.get_stream_from_s3(
+        result = list(StrategicUrlStreamDef.load(
             s3_uri, self.tmp_dir, part_id
         ))
 

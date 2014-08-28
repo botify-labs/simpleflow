@@ -180,7 +180,7 @@ class TestTasks(unittest.TestCase):
 
         self.assertEquals(
             #
-            list(VisitsStreamDef.get_stream_from_s3(self.s3_dir, tmp_dir=self.tmp_dir)),
+            list(VisitsStreamDef.load(self.s3_dir, tmp_dir=self.tmp_dir)),
             [
                 [1, "organic", "google", 'None', 5, 3, 4, 26, 3, 1],
                 [2, "organic", "google", 'None', 3, 3, 2, 10, 1, 0],

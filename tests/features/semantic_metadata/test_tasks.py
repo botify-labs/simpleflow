@@ -71,7 +71,7 @@ class TestComputeMetadataCount(unittest.TestCase):
             [1, 3, 2],
             [2, 1, 1]
         ]
-        actual_stream = ContentsCountStreamDef.get_stream_from_s3(
+        actual_stream = ContentsCountStreamDef.load(
             self.s3_uri,
             tmp_dir=self.tmp_dir,
             part_id=part_id
@@ -124,7 +124,7 @@ class TestComputeMetadataDuplicateFile(unittest.TestCase):
         ]
         self.assertItemsEqual(expected_output_files, output_files)
 
-        duplicate_stream = ContentsDuplicateStreamDef.get_stream_from_s3(
+        duplicate_stream = ContentsDuplicateStreamDef.load(
             self.s3_uri,
             tmp_dir=self.tmp_dir
         )
