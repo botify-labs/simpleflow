@@ -164,18 +164,18 @@ def filter_non_strategic_urls(stream_contents,
     :type stream_strategic_urls: iterator
     :returns: iterator
     """
-    stream_contents = group_left(
+    grouped_stream = group_left(
         (stream_strategic_urls, 0),
         contents=(stream_contents, 0)
     )
     #actual filtering
     strategic_idx = StrategicUrlStreamDef.field_idx("strategic")
-    stream_contents = ifilter(
+    grouped_stream = ifilter(
         lambda x: x[1][strategic_idx],
-        stream_contents
+        grouped_stream
     )
-    stream_contents = imap(lambda x: x[2]["contents"], stream_contents)
-    for elts in stream_contents:
+    grouped_stream = imap(lambda x: x[2]["contents"], grouped_stream)
+    for elts in grouped_stream:
         for elt in elts:
             yield elt
 
