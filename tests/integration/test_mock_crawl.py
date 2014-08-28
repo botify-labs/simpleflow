@@ -218,7 +218,7 @@ class MockIntegrationTest(unittest.TestCase):
         :param file_pattern: should be of form 'some_name.txt.{}.gz'
         :param expedted_contents: order is NOT important
         """
-        stream = stream_def.get_stream_from_directory(RESULT_DIR)
+        stream = stream_def.load(RESULT_DIR)
         results = list(stream)
         self.assertItemsEqual(results, expected_contents)
 
