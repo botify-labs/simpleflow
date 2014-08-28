@@ -4,6 +4,7 @@ from cdf.analysis.urls.transducers.metadata_duplicate import (
     count_metadata,
     notset_hash_value,
     filter_redundant_metadata,
+    filter_non_strategic_urls,
     generate_duplicate_stream
 )
 
@@ -35,7 +36,7 @@ class TestCountFilledNb(unittest.TestCase):
         self.assertEqual(expected_stream, list(actual_stream))
 
 
-class TestKeepOnlyFirstMetadata(unittest.TestCase):
+class TestFilterRedundantMetatada(unittest.TestCase):
     def test_nominal_case(self):
         fake_hash = 1597530492
         contents_stream = iter([
@@ -55,6 +56,33 @@ class TestKeepOnlyFirstMetadata(unittest.TestCase):
             (2, 1, fake_hash, "foo title 2")
         ]
         self.assertEqual(expected_stream, list(actual_stream))
+
+
+class TestFilterNonStrategicUrls(unittest.TestCase):
+    def test_nominal_case(self):
+        contents_stream = iter([
+            (1, 1, string_to_int32("title1")),
+            (1, 4, string_to_int32("description1")),
+            (6, 1, string_to_int32("title1")),
+            (6, 4, string_to_int32("description2")),
+            (9, 4, string_to_int32("description1"))
+        ])
+
+        strategic_urls_stream = iter([
+            (1, True, None),
+            (6, False, None),
+            (9, True, None),
+        ])
+
+        actual_result = filter_non_strategic_urls(contents_stream,
+                                                  strategic_urls_stream)
+        expected_result = [
+            (1, 1, string_to_int32("title1")),
+            (1, 4, string_to_int32("description1")),
+            (9, 4, string_to_int32("description1"))
+        ]
+
+        self.assertEqual(expected_result, list(actual_result))
 
 
 class TestGenerateDuplicateStream(unittest.TestCase):

@@ -1,6 +1,8 @@
 from collections import Counter
 from itertools import groupby, ifilter, imap
 from operator import itemgetter
+from cdf.core.streams.utils import group_left
+from cdf.features.main.streams import StrategicUrlStreamDef
 from cdf.features.semantic_metadata.settings import MANDATORY_CONTENT_TYPES_IDS
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
@@ -150,6 +152,33 @@ def get_duplicate_metadata(stream_contents):
     """
     #stream preprocessing
     stream_contents = preprocess_for_duplicate_computation(stream_contents)
+
+def filter_non_strategic_urls(stream_contents,
+                              stream_strategic_urls):
+    """Remove non strategic urls from a contents stream.
+    :param stream_contents: the input contents stream.
+                            (based on ContentsStreamDef)
+    :type stream_contents: iterator
+    :param stream_strategic_urls: the input strategic_url stream
+                                  (based on StrategicUrlStreamDef)
+    :type stream_strategic_urls: iterator
+    :returns: iterator
+    """
+    stream_contents = group_left(
+        (stream_strategic_urls, 0),
+        contents=(stream_contents, 0)
+    )
+    #actual filtering
+    strategic_idx = StrategicUrlStreamDef.field_idx("strategic")
+    stream_contents = ifilter(
+        lambda x: x[1][strategic_idx],
+        stream_contents
+    )
+    stream_contents = imap(lambda x: x[2]["contents"], stream_contents)
+    for elts in stream_contents:
+        for elt in elts:
+            yield elt
+
 
     #actual duplicate computation
     get_hash_and_content_type = itemgetter(2, 1)  # content hash, content type
