@@ -200,18 +200,6 @@ class StreamDefBase(object):
         )
         return cls.get_stream_from_path(path)
 
-    # TODO(darkjh) extensively used in StreamFactory, replace it with StreamDef first
-    @classmethod
-    def get_stream_from_file(cls, f):
-        """
-        Return a stream from a `file` instance
-        """
-        cast = Caster(cls.HEADERS).cast
-        return Stream(
-            cls(),
-            cast(split_file(f))
-        )
-
     # TODO(darkjh) used only in tests
     @classmethod
     def get_stream_from_iterator(cls, i):

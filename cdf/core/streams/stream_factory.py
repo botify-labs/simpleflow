@@ -155,7 +155,7 @@ class FileStreamFactory(object):
                                with each field correctly casted.
 
         """
-        return self.stream_def.get_stream_from_file(input_file)
+        return self.stream_def.get_stream_from_iterator(split_file(input_file))
 
     def get_stream(self):
         """:returns: generator -- the desired generator"""

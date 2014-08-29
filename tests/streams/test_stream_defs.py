@@ -70,16 +70,6 @@ class TestStreamsDef(unittest.TestCase):
         #edge case, empty input field list
         self.assertEquals(CustomStreamDef.fields_idx([]), [])
 
-    def test_file(self):
-        f = StringIO.StringIO()
-        f.write('1\thttp://www.site.com/\n')
-        f.write('2\thttp://www.site.com/2\n')
-        f.seek(0)
-
-        stream = CustomStreamDef.get_stream_from_file(f)
-        self.assertEquals(stream.next(), [1, 'http://www.site.com/'])
-        self.assertEquals(stream.next(), [2, 'http://www.site.com/2'])
-
     def test_iterator(self):
         iterator = iter([
             [1, 'http://www.site.com/'],
