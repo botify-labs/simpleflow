@@ -163,7 +163,7 @@ def match_analytics_to_crawl_urls(s3_uri, first_part_id_size=FIRST_PART_ID_SIZE,
 
     with gzip.open(ambiguous_urls_filepath, 'wb') as ambiguous_urls_file:
 
-        stream = RawVisitsStreamDef.get_stream_from_s3_path(
+        stream = RawVisitsStreamDef.load_path(
             os.path.join(s3_uri, 'analytics.data.gz'),
             tmp_dir=tmp_dir,
             force_fetch=force_fetch

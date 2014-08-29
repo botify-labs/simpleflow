@@ -93,6 +93,29 @@ class StreamDefBase(object):
                 # TODO add a warning?
                 return cls.get_stream_from_path(uri)
 
+    @classmethod
+    def load_path(cls, path, tmp_dir=None, force_fetch=False):
+        """Load data stream from a specific path, regardless of resource
+        naming scheme
+
+        Use with care since it bypasses all our naming scheme.
+
+        :param: path: path to data file
+        :type path: str
+        :param tmp_dir: local tmp dir path, needed for loading stream from s3
+        :type tmp_dir: str
+        :return: stream
+        :rtype: stream
+        """
+        if is_s3_uri(path):
+            return cls.get_stream_from_s3_path(
+                path,
+                tmp_dir=tmp_dir,
+                force_fetch=force_fetch
+            )
+        else:
+            return cls.get_stream_from_path(path)
+
     #TODO(darkjh) use pure streaming persist (key.set_contents_from_stream)
     @classmethod
     def persist(cls, stream, uri, part_id=None,

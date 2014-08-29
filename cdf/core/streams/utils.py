@@ -121,7 +121,7 @@ def get_data_streams_from_storage(streams, storage_uri, tmp_dir, part_id=None, f
     for path_local, fetched in files_fetched:
         for s in streams:
             if path_local.startswith(os.path.join(tmp_dir, "{}.txt".format(s.FILE))):
-                data_streams.append(s.get_stream_from_path(path_local))
+                data_streams.append(s.load_path(path_local))
     return data_streams
 
 
