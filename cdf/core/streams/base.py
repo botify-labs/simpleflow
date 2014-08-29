@@ -91,7 +91,7 @@ class StreamDefBase(object):
                 )
             else:
                 # TODO add a warning?
-                return cls.get_stream_from_path(uri)
+                return cls._get_stream_from_path(uri)
 
     @classmethod
     def load_path(cls, path, tmp_dir=None, force_fetch=False):
@@ -108,13 +108,13 @@ class StreamDefBase(object):
         :rtype: stream
         """
         if is_s3_uri(path):
-            return cls.get_stream_from_s3_path(
+            return cls._get_stream_from_s3_path(
                 path,
                 tmp_dir=tmp_dir,
                 force_fetch=force_fetch
             )
         else:
-            return cls.get_stream_from_path(path)
+            return cls._get_stream_from_path(path)
 
     #TODO(darkjh) use pure streaming persist (key.set_contents_from_stream)
     @classmethod
@@ -169,7 +169,7 @@ class StreamDefBase(object):
         regexp = pattern.format(cls.FILE, regexp)
 
         files = list_files(directory, regexp=regexp)
-        streams = [cls.get_stream_from_path(f)
+        streams = [cls._get_stream_from_path(f)
                    for f in partition_aware_sort(files)]
 
         return Stream(
@@ -177,9 +177,8 @@ class StreamDefBase(object):
             chain(*streams)
         )
 
-    # TODO(darkjh) remove this -> remove `get_data_streams_from_storage` -> refactor feature filtering
     @classmethod
-    def get_stream_from_path(cls, path):
+    def _get_stream_from_path(cls, path):
         """
         Return a Stream instance from a file path (the file must be gzip encoded)
         """
@@ -210,9 +209,8 @@ class StreamDefBase(object):
         )
         return cls._get_stream_from_directory(tmp_dir, part_id)
 
-    # TODO(darkjh) as we somehow need this, rename to `load_path`
     @classmethod
-    def get_stream_from_s3_path(cls, s3_uri_path, tmp_dir, force_fetch=False):
+    def _get_stream_from_s3_path(cls, s3_uri_path, tmp_dir, force_fetch=False):
         """
         Return a Stream instance from a gzip file stored in S3
         """
@@ -221,7 +219,7 @@ class StreamDefBase(object):
             os.path.join(tmp_dir, os.path.basename(s3_uri_path)),
             force_fetch=force_fetch
         )
-        return cls.get_stream_from_path(path)
+        return cls._get_stream_from_path(path)
 
     # TODO(darkjh) used only in tests
     @classmethod
