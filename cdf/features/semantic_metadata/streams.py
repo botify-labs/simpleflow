@@ -5,7 +5,7 @@ from cdf.metadata.url.url_metadata import (
 )
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
-from cdf.query.constants import RENDERING, FIELD_RIGHTS
+from cdf.query.constants import RENDERING
 
 
 def _raw_to_bool(string):
