@@ -66,17 +66,22 @@ class ContentsStreamDef(StreamDefBase):
         content = stream[self.field_idx('txt')]
         document['metadata'][content_type]['contents'].append(content)
 
+
 def _get_duplicate_document_mapping(duplicate_type, verbose_duplicate_type, order_seed):
     """Generate mapping for duplicate documents
     :param duplicate_type: the kind of duplicate.
                            this string will be used to generate the field types
+    :type duplicate_type: str
     :type verbose_duplicate_type: the description of the duplicate type.
                                   this string will be used to generate the
                                   verbose names.
+    :type verbose_duplicate_type: str
+    :param order_seed: the base number to use to generate the "order" settings
+    :type order_seed: int
     :returns: dict
     """
     result = {}
-    for i, metadata_type in enumerate(["title", "h1", "description"]):
+    for i, metadata_type in enumerate(["title", "description", "h1"]):
         prefix = "metadata.{}.{}".format(metadata_type, duplicate_type)
         result["{}.nb".format(prefix)] = {
             "verbose_name": "Number of {} {}".format(
