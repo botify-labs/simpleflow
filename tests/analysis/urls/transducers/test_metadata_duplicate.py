@@ -4,7 +4,7 @@ from cdf.analysis.urls.transducers.metadata_duplicate import (
     count_metadata,
     notset_hash_value,
     filter_redundant_metadata,
-    preprocess_for_duplicate_computation,
+    preprocess_duplicate_computation,
     filter_non_strategic_urls,
     append_zone,
     generate_duplicate_stream
@@ -60,7 +60,7 @@ class TestFilterRedundantMetatada(unittest.TestCase):
         self.assertEqual(expected_stream, list(actual_stream))
 
 
-class TestPreprocessForDuplicateComputation(unittest.TestCase):
+class TestPreprocessDuplicateComputation(unittest.TestCase):
     def test_non_mandatory_types(self):
         stream_contents = iter((
             [1, 2, 1234, 'My first H1'],
@@ -69,7 +69,7 @@ class TestPreprocessForDuplicateComputation(unittest.TestCase):
             [2, 5, 1111, 'My H3'],
         ))
 
-        actual_result = preprocess_for_duplicate_computation(stream_contents)
+        actual_result = preprocess_duplicate_computation(stream_contents)
 
         expected_result = [
             (1, 2, 1234),
@@ -83,7 +83,7 @@ class TestPreprocessForDuplicateComputation(unittest.TestCase):
             [2, 2, 1001, 'My second H1'],
         ))
 
-        actual_result = preprocess_for_duplicate_computation(stream_contents)
+        actual_result = preprocess_duplicate_computation(stream_contents)
 
         expected_result = [
             (2, 2, 1001)
@@ -98,7 +98,7 @@ class TestPreprocessForDuplicateComputation(unittest.TestCase):
             [2, 2, 1001, 'My second H1'],
         ))
 
-        actual_result = preprocess_for_duplicate_computation(stream_contents)
+        actual_result = preprocess_duplicate_computation(stream_contents)
 
         expected_result = [
             (1, 2, 1234),

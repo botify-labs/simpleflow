@@ -102,7 +102,7 @@ def generate_duplicate_stream(stream_contents, key):
             yield (url_id, ct_id, nb_duplicates, url_id == min_url_id, samples)
 
 
-def preprocess_for_duplicate_computation(stream_contents):
+def preprocess_duplicate_computation(stream_contents):
     """Preprocess a contents stream so that it is ready for duplicate detection.
     Preprocessing includes steps like:
     - non mandatory content types removal
@@ -151,7 +151,7 @@ def get_duplicate_metadata(stream_contents):
     (url_id, content_type, filled_nb, duplicates_nb, is_first_url_found, [url_id_1, url_id2 ...])
     """
     #stream preprocessing
-    stream_contents = preprocess_for_duplicate_computation(stream_contents)
+    stream_contents = preprocess_duplicate_computation(stream_contents)
 
     #actual duplicate computation
     get_hash_and_content_type = itemgetter(2, 1)  # content hash, content type
@@ -239,7 +239,7 @@ def get_zone_aware_duplicate_metadata(stream_contents,
     (url_id, content_type, filled_nb, duplicates_nb, is_first_url_found, [url_id_1, url_id2 ...])
     """
     #stream preprocessing
-    stream_contents = preprocess_for_duplicate_computation(stream_contents)
+    stream_contents = preprocess_duplicate_computation(stream_contents)
 
     #remove non strategic urls
     stream_contents = filter_non_strategic_urls(stream_contents,
