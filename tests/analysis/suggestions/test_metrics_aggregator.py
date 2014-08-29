@@ -15,7 +15,7 @@ from cdf.features.semantic_metadata.streams import ContentsDuplicateStreamDef
 class TestMetricsAggregator(unittest.TestCase):
 
     def register_stream(self, stream_def, l):
-        self.streams_dict[stream_def] = stream_def.get_stream_from_iterator(iter(l))
+        self.streams_dict[stream_def] = stream_def.load_iterator(iter(l))
 
     def get_streams(self):
         return self.streams_dict.values()
@@ -31,7 +31,7 @@ class TestMetricsAggregator(unittest.TestCase):
 
         # By default all stream other than `patterns` and `infos` are empty
         for stream_def in self.streams_def:
-            self.streams_dict[stream_def] = stream_def.get_stream_from_iterator(iter([]))
+            self.streams_dict[stream_def] = stream_def.load_iterator(iter([]))
 
         # Canonical streams
         # These two streams are also MANDATORY
@@ -68,7 +68,7 @@ class TestMetricsAggregator(unittest.TestCase):
 
     def test_empty(self):
         result = list(
-            MetricsAggregator([stream_def.get_stream_from_iterator(iter([])) for stream_def in self.streams_def]).get()
+            MetricsAggregator([stream_def.load_iterator(iter([])) for stream_def in self.streams_def]).get()
         )
 
         # noting in, nothing out

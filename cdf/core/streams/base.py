@@ -116,6 +116,19 @@ class StreamDefBase(object):
         else:
             return cls._get_stream_from_path(path)
 
+    @classmethod
+    def load_iterator(cls, iterator):
+        """Load data stream from an iterator
+
+        It's client code's responsibility to ensure the iterator conforms
+        the stream's header
+
+        Warning: consider that the iterable object is already transformed
+        It won't add missing/default values when necessary
+        """
+        cast = Caster(cls.HEADERS).cast
+        return Stream(cls(), cast(iterator))
+
     #TODO(darkjh) use pure streaming persist (key.set_contents_from_stream)
     @classmethod
     def persist(cls, stream, uri, part_id=None,
@@ -221,21 +234,10 @@ class StreamDefBase(object):
         )
         return cls._get_stream_from_path(path)
 
-    # TODO(darkjh) used only in tests
-    @classmethod
-    def get_stream_from_iterator(cls, i):
-        """
-        Return a stream from an iterable object
-        Warning : consider that the iterable object is already transformed
-        It won't add missing/default values when necessary
-        """
-        cast = Caster(cls.HEADERS).cast
-        return Stream(cls(), cast(i))
-
     @classmethod
     def _persist_all(cls, stream, directory,
-                    first_part_id_size=FIRST_PART_ID_SIZE,
-                    part_id_size=PART_ID_SIZE):
+                     first_part_id_size=FIRST_PART_ID_SIZE,
+                     part_id_size=PART_ID_SIZE):
         """
         Persist a stream into a file located in a `directory`
         The filename will be automatically generated depending on the `StreamDef`'s stream and all `part_id`s found
@@ -276,8 +278,8 @@ class StreamDefBase(object):
         """
         tmp_dir = tempfile.mkdtemp()
         local_files = cls._persist_all(stream, directory=tmp_dir,
-                                      first_part_id_size=first_part_id_size,
-                                      part_id_size=part_id_size)
+                                       first_part_id_size=first_part_id_size,
+                                       part_id_size=part_id_size)
         files = []
         for f in local_files:
             s3_file_path = os.path.join(s3_uri, os.path.basename(f))

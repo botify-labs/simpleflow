@@ -24,9 +24,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            ContentsExtendedStreamDef.get_stream_from_iterator(iter(contents)),
+            IdStreamDef.load_iterator(iter(self.patterns)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            ContentsExtendedStreamDef.load_iterator(iter(contents)),
         ])
 
         document = gen.next()[1]
@@ -56,9 +56,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            ContentsExtendedStreamDef.get_stream_from_iterator(iter(contents)),
+            IdStreamDef.load_iterator(iter(self.patterns)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            ContentsExtendedStreamDef.load_iterator(iter(contents)),
         ])
 
         # We want image with position 2
@@ -76,9 +76,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            ContentsExtendedStreamDef.get_stream_from_iterator(iter(contents)),
+            IdStreamDef.load_iterator(iter(self.patterns)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            ContentsExtendedStreamDef.load_iterator(iter(contents)),
         ])
 
         # We want image with og:image (prior to twitter:image) despite a small position

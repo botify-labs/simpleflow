@@ -34,9 +34,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
                 ["facebook"])
     def test_url_infos(self):
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            VisitsStreamDef.get_stream_from_iterator(iter(self.visits)),
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            VisitsStreamDef.load_iterator(iter(self.visits)),
         ])
         null_entry = {
             "nb": 0,

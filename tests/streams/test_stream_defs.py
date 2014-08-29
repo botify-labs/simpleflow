@@ -75,7 +75,7 @@ class TestStreamsDef(unittest.TestCase):
             [1, 'http://www.site.com/'],
             [2, 'http://www.site.com/2']
         ])
-        stream = CustomStreamDef.get_stream_from_iterator(iterator)
+        stream = CustomStreamDef.load_iterator(iterator)
         self.assertTrue(isinstance(stream.stream_def, CustomStreamDef))
         self.assertEquals(stream.next(), [1, 'http://www.site.com/'])
         self.assertEquals(stream.next(), [2, 'http://www.site.com/2'])
@@ -93,7 +93,7 @@ class TestStreamsDef(unittest.TestCase):
             [2, 'http://www.site.com/2'],
             [3, 'http://www.bad.com/2']
         ])
-        stream = CustomStreamDef.get_stream_from_iterator(iterator)
+        stream = CustomStreamDef.load_iterator(iterator)
         stream.add_filter('url', lambda i: 'site.com' in i)
         stream.add_filter('url', lambda i: '/2' in i)
         self.assertEquals(list(stream), [[2, 'http://www.site.com/2']])
