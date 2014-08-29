@@ -121,15 +121,45 @@ def _get_duplicate_document_mapping(duplicate_type, verbose_duplicate_type, orde
     return result
 
 
+CONTENTSDUPLICATE_HEADERS = (
+    ('id', int),
+    ('content_type', int),
+    ('duplicates_nb', int),
+    ('is_first_url', _raw_to_bool),
+    ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
+)
+
+
+def _process_document_for_duplicates(duplicate_type, document, stream):
+    """Process a document with duplicate data.
+    This is a helper function which is intended to be used to define
+    process_document() functions in duplicate stream def.
+    :param duplicate_type: the type of duplicate that will be processed.
+    :type duplicate_type: str
+    :param document: the input document to update
+    :type document: dict
+    :param stream: a stream element
+    :type stream: tuple
+    """
+    _, metadata_idx, nb_duplicates, is_first, duplicate_urls = stream
+    metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
+
+    meta = document['metadata'][metadata_type]
+    # number of duplications of this piece of metadata
+    dup = meta[duplicate_type]
+    dup['nb'] = nb_duplicates
+    # urls that have duplicates
+    if nb_duplicates > 0:
+        dup['urls'] = duplicate_urls
+        dup['urls_exists'] = True
+
+    # is this the first one out of all duplicates
+    dup['is_first'] = is_first
+
+
 class ContentsDuplicateStreamDef(StreamDefBase):
     FILE = 'urlcontentsduplicate'
-    HEADERS = (
-        ('id', int),
-        ('content_type', int),
-        ('duplicates_nb', int),
-        ('is_first_url', _raw_to_bool),
-        ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
-    )
+    HEADERS = CONTENTSDUPLICATE_HEADERS
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
 
     URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
@@ -139,20 +169,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
     )
 
     def process_document(self, document, stream):
-        _, metadata_idx, nb_duplicates, is_first, duplicate_urls = stream
-        metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
-
-        meta = document['metadata'][metadata_type]
-        # number of duplications of this piece of metadata
-        dup = meta['duplicates']
-        dup['nb'] = nb_duplicates
-        # urls that have duplicates
-        if nb_duplicates > 0:
-            dup['urls'] = duplicate_urls
-            dup['urls_exists'] = True
-
-        # is this the first one out of all duplicates
-        dup['is_first'] = is_first
+        _process_document_for_duplicates("duplicates", document, stream)
 
 
 class ContentsCountStreamDef(StreamDefBase):
