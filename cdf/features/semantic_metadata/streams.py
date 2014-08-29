@@ -66,8 +66,7 @@ class ContentsStreamDef(StreamDefBase):
         content = stream[self.field_idx('txt')]
         document['metadata'][content_type]['contents'].append(content)
 
-
-def _get_duplicate_document_mapping(duplicate_type, verbose_duplicate_type):
+def _get_duplicate_document_mapping(duplicate_type, verbose_duplicate_type, order_seed):
     """Generate mapping for duplicate documents
     :param duplicate_type: the kind of duplicate.
                            this string will be used to generate the field types
@@ -84,7 +83,7 @@ def _get_duplicate_document_mapping(duplicate_type, verbose_duplicate_type):
                 verbose_duplicate_type, metadata_type.capitalize()
             ),
             "type": INT_TYPE,
-            "order": 100 + i,
+            "order": order_seed + i,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -95,13 +94,13 @@ def _get_duplicate_document_mapping(duplicate_type, verbose_duplicate_type):
             "verbose_name": "First {} {} found".format(
                 verbose_duplicate_type, metadata_type.capitalize()
             ),
-            "order": 120 + i,
+            "order": order_seed + 20 + i,
             "type": BOOLEAN_TYPE,
         }
         result["{}.urls".format(prefix)] = {
             "verbose_name": "Pages with the same {}".format(metadata_type.capitalize()),
             "type": INT_TYPE,
-            "order": 110 + 1,
+            "order": order_seed + 10 + i,
             "settings": {
                 ES_NO_INDEX,
                 LIST,
@@ -130,7 +129,8 @@ class ContentsDuplicateStreamDef(StreamDefBase):
 
     URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
         "duplicates",
-        "duplicate"
+        "duplicate",
+        100
     )
 
     def process_document(self, document, stream):
