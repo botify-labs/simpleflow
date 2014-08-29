@@ -2,12 +2,18 @@ import itertools
 from cdf.log import logger
 from cdf.analysis.urls.transducers.metadata_duplicate import (
     get_duplicate_metadata,
+    get_zone_aware_duplicate_metadata,
     count_metadata
 )
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
     ContentsDuplicateStreamDef,
+    ContentsZoneAwareDuplicateStreamDef,
     ContentsCountStreamDef
+)
+from cdf.features.main.streams import (
+    ZoneStreamDef,
+    StrategicUrlStreamDef
 )
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
@@ -60,4 +66,56 @@ def make_metadata_duplicates_file(crawl_id, s3_uri,
                                                      s3_uri,
                                                      first_part_id_size,
                                                      part_id_size)
+    return files
+
+
+@with_temporary_dir
+def make_zone_aware_metadata_duplicates_file(s3_uri,
+                                             zone_uris,
+                                             strategic_uris,
+                                             first_part_id_size, part_id_size,
+                                             tmp_dir=None,
+                                             force_fetch=DEFAULT_FORCE_FETCH):
+    """Compute zone aware duplicates.
+    :param s3_uri: the uri where the crawl data is stored.
+    :type s3_uri: str
+    :param zone_uris: the uris of the zone files.
+                      This parameter is actually unused.
+                      It is here to indicate the workflow that this task
+                      requires the zone files.
+    :type zone_uris: list
+    :param strategic_uris: the uris of the strategic urls files.
+                           This parameter is actually unused.
+                           It is here to indicate the workflow that this task
+                           requires the strategic urls files.
+    :type strategic_uris_uris: list
+    :param first_part_id_size: the size of the first partition
+    :type first_part_id_size: int
+    :param part_id_size: the size of all other partitions
+    :type part_id_size: int
+    :param tmp_dir: the directory where to save temporary data
+    :type tmp_dir: str
+    :param force_fetch: if True, the files will be downloaded from s3
+    """
+    logger.info('Fetching contents stream from S3')
+    contents_stream = ContentsStreamDef.get_stream_from_s3(
+        s3_uri,
+        tmp_dir=tmp_dir
+    )
+    zone_stream = ZoneStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
+    strategic_urls_stream = StrategicUrlStreamDef.get_stream_from_s3(
+        s3_uri,
+        tmp_dir=tmp_dir
+    )
+
+    generator = get_zone_aware_duplicate_metadata(
+        contents_stream,
+        zone_stream,
+        strategic_urls_stream
+    )
+    generator = itertools.imap(to_string, generator)
+    files = ContentsZoneAwareDuplicateStreamDef.persist_to_s3(generator,
+                                                              s3_uri,
+                                                              first_part_id_size,
+                                                              part_id_size)
     return files
