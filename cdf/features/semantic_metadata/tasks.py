@@ -71,24 +71,13 @@ def make_metadata_duplicates_file(crawl_id, s3_uri,
 
 @with_temporary_dir
 def make_zone_aware_metadata_duplicates_file(s3_uri,
-                                             zone_uris,
-                                             strategic_uris,
-                                             first_part_id_size, part_id_size,
+                                             first_part_id_size,
+                                             part_id_size,
                                              tmp_dir=None,
                                              force_fetch=DEFAULT_FORCE_FETCH):
     """Compute zone aware duplicates.
     :param s3_uri: the uri where the crawl data is stored.
     :type s3_uri: str
-    :param zone_uris: the uris of the zone files.
-                      This parameter is actually unused.
-                      It is here to indicate the workflow that this task
-                      requires the zone files.
-    :type zone_uris: list
-    :param strategic_uris: the uris of the strategic urls files.
-                           This parameter is actually unused.
-                           It is here to indicate the workflow that this task
-                           requires the strategic urls files.
-    :type strategic_uris_uris: list
     :param first_part_id_size: the size of the first partition
     :type first_part_id_size: int
     :param part_id_size: the size of all other partitions
