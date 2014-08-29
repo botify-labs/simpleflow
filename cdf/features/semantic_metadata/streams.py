@@ -142,7 +142,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         },
 
         "metadata.description.duplicates.nb": {
-            "verbose_name": "Number of pagers with the same Description",
+            "verbose_name": "Number of pages with the same Description",
             "type": INT_TYPE,
             "order": 101,
             "settings": {
