@@ -104,7 +104,7 @@ def generate_duplicate_stream(stream_contents, key):
 
 def preprocess_for_duplicate_computation(stream_contents):
     """Preprocess a contents stream so that it is ready for duplicate detection.
-    Preprocessing includes steps: like
+    Preprocessing includes steps like:
     - non mandatory content types removal
     - removal of the 2nd, 3rd titles
     - etc.
