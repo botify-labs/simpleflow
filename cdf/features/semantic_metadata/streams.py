@@ -102,7 +102,6 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 LIST,
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.SELECT,
-                FIELD_RIGHTS.FILTERS_EXIST,
                 URL_ID
             }
         },
@@ -119,7 +118,6 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 LIST,
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.SELECT,
-                FIELD_RIGHTS.FILTERS_EXIST,
                 URL_ID
             }
         },
@@ -144,7 +142,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         },
 
         "metadata.description.duplicates.nb": {
-            "verbose_name": "Number of pagers with the same Description",
+            "verbose_name": "Number of pages with the same Description",
             "type": INT_TYPE,
             "order": 101,
             "settings": {
@@ -162,7 +160,6 @@ class ContentsDuplicateStreamDef(StreamDefBase):
                 LIST,
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.SELECT,
-                FIELD_RIGHTS.FILTERS_EXIST,
                 URL_ID
             }
         },
