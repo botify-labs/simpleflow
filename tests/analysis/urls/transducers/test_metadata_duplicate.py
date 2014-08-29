@@ -4,6 +4,7 @@ from cdf.analysis.urls.transducers.metadata_duplicate import (
     count_metadata,
     notset_hash_value,
     filter_redundant_metadata,
+    preprocess_for_duplicate_computation,
     filter_non_strategic_urls,
     generate_duplicate_stream
 )
@@ -56,6 +57,54 @@ class TestFilterRedundantMetatada(unittest.TestCase):
             (2, 1, fake_hash, "foo title 2")
         ]
         self.assertEqual(expected_stream, list(actual_stream))
+
+
+class TestPreprocessForDuplicateComputation(unittest.TestCase):
+    def test_non_mandatory_types(self):
+        stream_contents = iter((
+            [1, 2, 1234, 'My first H1'],
+            [1, 3, 7867, 'My H2'],
+            [2, 2, 1001, 'My second H1'],
+            [2, 5, 1111, 'My H3'],
+        ))
+
+        actual_result = preprocess_for_duplicate_computation(stream_contents)
+
+        expected_result = [
+            (1, 2, 1234),
+            (2, 2, 1001),
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_notset_metadata(self):
+        stream_contents = iter((
+            [1, 2, notset_hash_value, ''],
+            [2, 2, 1001, 'My second H1'],
+        ))
+
+        actual_result = preprocess_for_duplicate_computation(stream_contents)
+
+        expected_result = [
+            (2, 2, 1001)
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_filter_redundant_metadata(self):
+        stream_contents = iter((
+            [1, 2, 1234, 'My first H1'],
+            [1, 4, 7867, 'My description'],
+            [1, 2, 2008, 'My second H1'],
+            [2, 2, 1001, 'My second H1'],
+        ))
+
+        actual_result = preprocess_for_duplicate_computation(stream_contents)
+
+        expected_result = [
+            (1, 2, 1234),
+            (1, 4, 7867),
+            (2, 2, 1001),
+        ]
+        self.assertEqual(expected_result, list(actual_result))
 
 
 class TestFilterNonStrategicUrls(unittest.TestCase):
