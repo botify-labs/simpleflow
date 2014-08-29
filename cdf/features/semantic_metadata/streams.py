@@ -67,7 +67,9 @@ class ContentsStreamDef(StreamDefBase):
         document['metadata'][content_type]['contents'].append(content)
 
 
-def _get_duplicate_document_mapping(duplicate_type, verbose_duplicate_type, order_seed):
+def _get_duplicate_document_mapping(duplicate_type,
+                                    verbose_duplicate_type,
+                                    order_seed):
     """Generate mapping for duplicate documents
     :param duplicate_type: the kind of duplicate.
                            this string will be used to generate the field types
@@ -121,6 +123,7 @@ def _get_duplicate_document_mapping(duplicate_type, verbose_duplicate_type, orde
     return result
 
 
+#the headers to use for duplicate stream defs
 CONTENTSDUPLICATE_HEADERS = (
     ('id', int),
     ('content_type', int),
@@ -169,7 +172,26 @@ class ContentsDuplicateStreamDef(StreamDefBase):
     )
 
     def process_document(self, document, stream):
-        _process_document_for_duplicates("duplicates", document, stream)
+        _process_document_for_duplicates(
+            "duplicates", document, stream
+        )
+
+
+class ContentsZoneAwareDuplicateStreamDef(StreamDefBase):
+    FILE = 'urlcontentsduplicate_zoneaware'
+    HEADERS = CONTENTSDUPLICATE_HEADERS
+    URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
+
+    URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
+        "zoneaware_duplicates",
+        "zone aware duplicate",
+        200
+    )
+
+    def process_document(self, document, stream):
+        _process_document_for_duplicates(
+            "zoneaware_duplicates", document, stream
+        )
 
 
 class ContentsCountStreamDef(StreamDefBase):
