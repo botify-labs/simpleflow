@@ -4,6 +4,9 @@ from cdf.analysis.urls.transducers.metadata_duplicate import (
     count_metadata,
     notset_hash_value,
     filter_redundant_metadata,
+    preprocess_duplicate_computation,
+    filter_non_strategic_urls,
+    append_zone,
     generate_duplicate_stream
 )
 
@@ -35,7 +38,7 @@ class TestCountFilledNb(unittest.TestCase):
         self.assertEqual(expected_stream, list(actual_stream))
 
 
-class TestKeepOnlyFirstMetadata(unittest.TestCase):
+class TestFilterRedundantMetatada(unittest.TestCase):
     def test_nominal_case(self):
         fake_hash = 1597530492
         contents_stream = iter([
@@ -55,6 +58,110 @@ class TestKeepOnlyFirstMetadata(unittest.TestCase):
             (2, 1, fake_hash, "foo title 2")
         ]
         self.assertEqual(expected_stream, list(actual_stream))
+
+
+class TestPreprocessDuplicateComputation(unittest.TestCase):
+    def test_non_mandatory_types(self):
+        stream_contents = iter((
+            [1, 2, 1234, 'My first H1'],
+            [1, 3, 7867, 'My H2'],
+            [2, 2, 1001, 'My second H1'],
+            [2, 5, 1111, 'My H3'],
+        ))
+
+        actual_result = preprocess_duplicate_computation(stream_contents)
+
+        expected_result = [
+            (1, 2, 1234),
+            (2, 2, 1001),
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_notset_metadata(self):
+        stream_contents = iter((
+            [1, 2, notset_hash_value, ''],
+            [2, 2, 1001, 'My second H1'],
+        ))
+
+        actual_result = preprocess_duplicate_computation(stream_contents)
+
+        expected_result = [
+            (2, 2, 1001)
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_filter_redundant_metadata(self):
+        stream_contents = iter((
+            [1, 2, 1234, 'My first H1'],
+            [1, 4, 7867, 'My description'],
+            [1, 2, 2008, 'My second H1'],
+            [2, 2, 1001, 'My second H1'],
+        ))
+
+        actual_result = preprocess_duplicate_computation(stream_contents)
+
+        expected_result = [
+            (1, 2, 1234),
+            (1, 4, 7867),
+            (2, 2, 1001),
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+
+class TestFilterNonStrategicUrls(unittest.TestCase):
+    def test_nominal_case(self):
+        contents_stream = iter([
+            (1, 1, string_to_int32("title1")),
+            (1, 4, string_to_int32("description1")),
+            (6, 1, string_to_int32("title1")),
+            (6, 4, string_to_int32("description2")),
+            (9, 4, string_to_int32("description1"))
+        ])
+
+        strategic_urls_stream = iter([
+            (1, True, None),
+            (6, False, None),
+            (9, True, None),
+        ])
+
+        actual_result = filter_non_strategic_urls(contents_stream,
+                                                  strategic_urls_stream)
+        expected_result = [
+            (1, 1, string_to_int32("title1")),
+            (1, 4, string_to_int32("description1")),
+            (9, 4, string_to_int32("description1"))
+        ]
+
+        self.assertEqual(expected_result, list(actual_result))
+
+
+class TestAppendZone(unittest.TestCase):
+    def test_nominal_case(self):
+        contents_stream = iter([
+            (1, 1, string_to_int32("title1")),
+            (1, 4, string_to_int32("description1")),
+            (6, 1, string_to_int32("title1")),
+            (6, 4, string_to_int32("description2")),
+            (9, 4, string_to_int32("description1"))
+        ])
+
+        zone_stream = iter([
+            (1, "en-US,http"),
+            (6, "en-US,https"),
+            (9, "fr,http"),
+        ])
+
+        actual_result = append_zone(contents_stream, zone_stream)
+
+        expected_result = [
+            (1, 1, string_to_int32("title1"), "en-US,http"),
+            (1, 4, string_to_int32("description1"), "en-US,http"),
+            (6, 1, string_to_int32("title1"), "en-US,https"),
+            (6, 4, string_to_int32("description2"), "en-US,https"),
+            (9, 4, string_to_int32("description1"), "fr,http")
+        ]
+
+        self.assertEqual(expected_result, list(actual_result))
 
 
 class TestGenerateDuplicateStream(unittest.TestCase):
