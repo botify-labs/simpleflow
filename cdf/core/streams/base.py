@@ -19,6 +19,16 @@ def is_s3_uri(uri):
     return uri.startswith('s3://')
 
 
+class AbstractAttribute(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __get__(self, instance, cls):
+        raise NotImplementedError(
+            'Attribute {} must be defined in class {}'.format(
+                self.name, cls.__name__))
+
+
 # TODO(darkjh) separate `data_format` from StreamDef
 # TODO(darkjh) separate document calculation from StreamDef
 class StreamDefBase(object):
@@ -39,6 +49,9 @@ class StreamDefBase(object):
         `URL_DOCUMENT_MAPPING`: the mapping of the final document generated for
             a given url
     """
+    FILE = AbstractAttribute('FILE')
+    HEADERS = AbstractAttribute('HEADERS')
+    URL_DOCUMENT_MAPPING = AbstractAttribute('URL_DOCUMENT_MAPPING')
 
     @classmethod
     def field_idx(cls, field):
@@ -414,3 +427,5 @@ class TemporaryDataset(object):
             first_part_size=first_part_size,
             part_size=part_size
         )
+
+StreamDefBase.FILE
