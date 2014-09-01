@@ -42,7 +42,7 @@ class Query(object):
         self.sort = sort
         self._count = 0
         self._results = []
-        self._aggs = {}
+        self._aggs = []
         self.executed = False
         self.backend = backend
 
