@@ -21,7 +21,8 @@ from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
 from cdf.analysis.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
-from cdf.core.streams.stream_factory import (ProtocolStreamFactory,
+from cdf.core.streams.stream_factory import (FileStreamFactory,
+                                             ProtocolStreamFactory,
                                              PathStreamFactory,
                                              HostStreamFactory,
                                              QueryStringStreamFactory,
@@ -71,10 +72,16 @@ def compute_suggested_patterns(crawl_id,
     nb_crawled_urls = get_nb_crawled_urls(tmp_dir)
 
     patterns = []
+    urlids_stream_factory = FileStreamFactory(tmp_dir,
+                                              "urlids",
+                                              crawler_metakeys)
 
+    urlcontents_stream_factory = FileStreamFactory(tmp_dir,
+                                                   "urlcontents",
+                                                   crawler_metakeys)
     ######################## protocol patterns ########################
     logger.info("Discovering patterns on protocol.")
-    protocol_stream_factory = ProtocolStreamFactory(tmp_dir, crawler_metakeys)
+    protocol_stream_factory = ProtocolStreamFactory(urlids_stream_factory, crawler_metakeys)
     try:
         protocol_patterns = discover_protocol_patterns(protocol_stream_factory,
                                                        nb_crawled_urls,
@@ -88,7 +95,7 @@ def compute_suggested_patterns(crawl_id,
 
     ######################## host patterns ########################
     logger.info("Discovering patterns on host.")
-    host_stream_factory = HostStreamFactory(tmp_dir, crawler_metakeys)
+    host_stream_factory = HostStreamFactory(urlids_stream_factory, crawler_metakeys)
     try:
         host_patterns = discover_host_patterns(host_stream_factory,
                                                nb_crawled_urls,
@@ -103,7 +110,7 @@ def compute_suggested_patterns(crawl_id,
 
     ######################## path patterns ###############################
     logger.info("Discovering patterns on path.")
-    path_stream_factory = PathStreamFactory(tmp_dir, crawler_metakeys)
+    path_stream_factory = PathStreamFactory(urlids_stream_factory, crawler_metakeys)
     try:
         path_patterns = discover_path_patterns(path_stream_factory,
                                                nb_crawled_urls,
@@ -116,7 +123,7 @@ def compute_suggested_patterns(crawl_id,
 
     ######################## query string patterns #######################
     logger.info("Discovering patterns on query string.")
-    query_string_stream_factory = QueryStringStreamFactory(tmp_dir,
+    query_string_stream_factory = QueryStringStreamFactory(urlids_stream_factory,
                                                            crawler_metakeys)
     try:
         query_string_patterns = discover_query_strings_patterns(query_string_stream_factory,
@@ -131,7 +138,7 @@ def compute_suggested_patterns(crawl_id,
     ######################## metadata patterns ###########################
     for metadata_type in ["title", "description", "h1"]:
         logger.info("Discovering patterns on %s.", metadata_type)
-        metadata_stream_factory = MetadataStreamFactory(tmp_dir,
+        metadata_stream_factory = MetadataStreamFactory(urlcontents_stream_factory,
                                                         metadata_type,
                                                         crawler_metakeys)
         try:
