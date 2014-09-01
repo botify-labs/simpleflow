@@ -30,10 +30,9 @@ def get_query_agg_result(query):
     :type query: Query
     :returns: float
     """
-    #if the result is empty query.aggs equals {}
+    #if the result is empty query.aggs equals []
     #in this case we return 0
-    #cf https://github.com/sem-io/botify-cdf/issues/521
-    if isinstance(query.aggs, dict):
+    if len(query.aggs) == 0:
         return 0
     else:
         return query.aggs[0]["metrics"][0]

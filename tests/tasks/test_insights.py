@@ -19,7 +19,7 @@ class TestGetQueryAggResult(unittest.TestCase):
 
     def test_no_result_case(self):
         query = mock.create_autospec(Query)
-        query.aggs = {}
+        query.aggs = []
         self.assertEqual(0, get_query_agg_result(query))
 
 
