@@ -21,7 +21,8 @@ from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
 from cdf.analysis.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
-from cdf.core.streams.stream_factory import (FileStreamFactory,
+from cdf.core.streams.stream_factory import (StreamFactoryCache,
+                                             FileStreamFactory,
                                              ProtocolStreamFactory,
                                              PathStreamFactory,
                                              HostStreamFactory,
@@ -75,10 +76,20 @@ def compute_suggested_patterns(crawl_id,
     urlids_stream_factory = FileStreamFactory(tmp_dir,
                                               "urlids",
                                               crawler_metakeys)
+    #use stream caching on file stream factory to improve performance
+    urlids_stream_factory = StreamFactoryCache(
+        urlids_stream_factory,
+        tmp_dir
+    )
 
     urlcontents_stream_factory = FileStreamFactory(tmp_dir,
                                                    "urlcontents",
                                                    crawler_metakeys)
+    #use stream caching on file stream factory to improve performance
+    urlcontents_stream_factory = StreamFactoryCache(
+        urlcontents_stream_factory,
+        tmp_dir
+    )
     ######################## protocol patterns ########################
     logger.info("Discovering patterns on protocol.")
     protocol_stream_factory = ProtocolStreamFactory(urlids_stream_factory, crawler_metakeys)

@@ -34,6 +34,50 @@ def get_part_id_from_filename(filename):
     return int(m.group(1))
 
 
+class StreamFactoryCache(object):
+    """A decorator for stream factories that speeds up multiple iterations.
+    To achieve this, the decorator reads the stream once from the decorated
+    stream factory and serialize it in binary form in a tmp file.
+    It makes every pass over the stream much faster.
+    """
+    def __init__(self, stream_factory, tmp_dir=None):
+        """Constructor
+        :param stream_factory: the stream factory to decorate
+        :param tmp_dir: the tmp directory to use
+        :type tmp_dir: str
+        """
+        if tmp_dir is None:
+            f = tempfile.NamedTemporaryFile(delete=False)
+        else:
+            f = tempfile.NamedTemporaryFile(delete=False, prefix=tmp_dir)
+        f.close()
+        self.tmp_filename = f.name
+        self._cache_stream(stream_factory.get_stream(), self.tmp_filename)
+
+    def __del__(self):
+        os.remove(self.tmp_filename)
+
+    def _cache_stream(self, stream, filepath):
+        """Cache the stream in a file
+        :param stream: the stream to cache
+        :type stream: iterator
+        :param filepath: the path to the file where to dump the stream
+        :type filepath: str"""
+        logger.info("Caching stream.")
+        with open(filepath, "wb") as f:
+            for element in stream:
+                marshal.dump(element, f)
+
+    def get_stream(self):
+        """Return the stream"""
+        with open(self.tmp_filename) as f:
+            try:
+                while True:
+                    yield marshal.load(f)
+            except EOFError:
+                pass
+
+
 class FileStreamFactory(object):
     """Factory that produces a stream out of files of the same type.
     To generate a stream, the class :
@@ -71,15 +115,6 @@ class FileStreamFactory(object):
             self.content = content
         else:
             raise Exception("{} is not a known raw file basename".format(content))
-
-        f = tempfile.NamedTemporaryFile(delete=False)
-        f.close()
-        self.tmp_filename = f.name
-
-        self._cache_stream()
-
-    def __del__(self):
-        os.remove(self.tmp_filename)
 
     def _get_file_regexp(self):
         """Return a string representing a regex for the filenames
@@ -122,7 +157,7 @@ class FileStreamFactory(object):
         """
         return self.stream_def.get_stream_from_file(input_file)
 
-    def _get_stream(self):
+    def get_stream(self):
         """:returns: generator -- the desired generator"""
         regexp = self._get_file_regexp()
         logger.info('Streaming files with regexp {}'.format(regexp.pattern))
@@ -138,19 +173,6 @@ class FileStreamFactory(object):
             f = gzip.open(filename)
             streams.append(self._get_stream_from_file(f))
         return itertools.chain(*streams)
-
-    def get_stream(self):
-        with open(self.tmp_filename) as f:
-            try:
-                while True:
-                    yield marshal.load(f)
-            except EOFError:
-                pass
-
-    def _cache_stream(self):
-        with open(self.tmp_filename, "wb") as f:
-            for element in self._get_stream():
-                marshal.dump(element, f)
 
 
 class DataStreamFactory(object):

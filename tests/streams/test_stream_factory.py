@@ -1,10 +1,12 @@
 import unittest
+import mock
 import StringIO
 
 from mock import MagicMock, patch
 
 from cdf.exceptions import MalformedFileNameError
 from cdf.core.streams.stream_factory import (get_part_id_from_filename,
+                                             StreamFactoryCache,
                                              FileStreamFactory,
                                              ProtocolStreamFactory,
                                              HostStreamFactory,
@@ -29,6 +31,24 @@ class TestGetPartIdFromFileName(unittest.TestCase):
         self.assertRaises(MalformedFileNameError,
                           get_part_id_from_filename,
                           "urlcontents.txt.-1.gz")
+
+
+class TestStreamFactoryCache(unittest.TestCase):
+    def test_nominal_case(self):
+        file_stream_factory_mock = mock.create_autospec(FileStreamFactory)
+        file_stream_factory_mock.get_stream.return_value = iter([
+            ("foo", 1),
+            ("bar", 2),
+            ("baz", 10)
+        ])
+        stream_factory_cache = StreamFactoryCache(file_stream_factory_mock)
+        actual_result = stream_factory_cache.get_stream()
+        expected_result = [
+            ("foo", 1),
+            ("bar", 2),
+            ("baz", 10)
+        ]
+        self.assertEqual(expected_result, list(actual_result))
 
 
 class TestStreamFactory(unittest.TestCase):
