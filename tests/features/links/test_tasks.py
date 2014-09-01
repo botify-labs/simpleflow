@@ -48,6 +48,7 @@ class TestBadLinksTask(unittest.TestCase):
         s3_uri = 's3://test_bucket'
         s3 = boto.connect_s3()
         s3.create_bucket('test_bucket')
+        fake_crawl_id = 1234
 
         InfosStreamDef.persist(
             iter(self.info),
@@ -64,7 +65,7 @@ class TestBadLinksTask(unittest.TestCase):
         )
 
         compute_bad_link(
-            1234, s3_uri,
+            fake_crawl_id, s3_uri,
             first_part_id_size=self.first_part_size,
             part_id_size=self.part_size
         )
@@ -97,6 +98,7 @@ class TestLinksCounterTask(unittest.TestCase):
         s3 = boto.connect_s3()
         s3.create_bucket('test_bucket')
         s3_uri = 's3://test_bucket'
+        fake_crawl_id = 1234
 
         stream_args = {
             'uri': s3_uri,
@@ -108,7 +110,10 @@ class TestLinksCounterTask(unittest.TestCase):
             iter(self.outlinks), s3_uri
         )
 
-        compute_link_counter(1234, s3_uri, part_id=0, link_direction='out')
+        compute_link_counter(
+            fake_crawl_id, s3_uri,
+            part_id=0, link_direction='out'
+        )
 
         # check links
         expected = [
@@ -146,6 +151,7 @@ class TestBadLinkCounterTask(unittest.TestCase):
         s3.create_bucket('test_bucket')
         s3_uri = 's3://test_bucket'
         part_id = 64
+        fake_crawl_id = 1234
 
         BadLinksStreamDef.persist(
             iter(self.badlinks),
@@ -154,7 +160,7 @@ class TestBadLinkCounterTask(unittest.TestCase):
         )
 
         compute_bad_link_counter(
-            1234, s3_uri,
+            fake_crawl_id, s3_uri,
             part_id=part_id
         )
 
