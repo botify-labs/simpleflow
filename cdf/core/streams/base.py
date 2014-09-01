@@ -58,9 +58,6 @@ class StreamDefBase(object):
         """
         return [cls.field_idx(field) for field in fields]
 
-    # TODO(darkjh) how to handle reading of a particular file (regardless of the naming scheme)?
-    #   - add a `load_from_file`
-    #   - just disallow this usage
     # TODO(darkjh) load stream from s3 still need the caller to prepare a tmp_dir,
     #              use streaming s3 to resolve problem
     @classmethod
@@ -90,8 +87,8 @@ class StreamDefBase(object):
                     part_id=part_id
                 )
             else:
-                # TODO add a warning?
-                return cls._get_stream_from_path(uri)
+                raise Exception('Local path is not a '
+                                'directory: {}'.format(uri))
 
     @classmethod
     def load_path(cls, path, tmp_dir=None, force_fetch=False):
