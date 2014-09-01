@@ -16,7 +16,7 @@ from cdf.query.constants import FIELD_RIGHTS
 
 def is_s3_uri(uri):
     """Test if a uri represents a s3 uri"""
-    return uri.startswith('s3')
+    return uri.startswith('s3://')
 
 
 # TODO(darkjh) separate `data_format` from StreamDef
