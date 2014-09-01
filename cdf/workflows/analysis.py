@@ -133,12 +133,10 @@ from cdf.features.comparison.tasks import match_documents
 match_documents = as_activity(match_documents)
 
 from cdf.tasks.insights import (
-    refresh_index,
-    get_crawl_end_dates,
+    refresh_index
 )
 from cdf.tasks.insights import compute_insights as compute_insights_task
 refresh_index = as_activity(refresh_index)
-get_crawl_end_dates = as_activity(get_crawl_end_dates)
 compute_insights_task = as_activity(compute_insights_task)
 
 UPDATE_STATUS_TIMEOUTS = {
@@ -326,11 +324,6 @@ class AnalysisWorkflow(Workflow):
         crawl_id = context['crawl_id']
         features_flags = context.get('features_flags', [])
 
-        crawl_ids_end_date = self.submit(
-            get_crawl_end_dates,
-            crawl_ids=[crawl_id]
-        )
-
         elastic_search_ready = self.submit(
             refresh_index,
             context["es_location"],
@@ -341,7 +334,7 @@ class AnalysisWorkflow(Workflow):
 
         insights_result = self.submit(
             compute_insights_task,
-            crawl_ids_end_date,
+            [crawl_id],
             features_flags,
             context["es_location"],
             context["es_index"],

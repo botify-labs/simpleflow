@@ -39,7 +39,7 @@ class TestComputeInsightValue(unittest.TestCase):
             EqFilter("foo_field", 1001)
         )
         feature_name = "feature"
-        crawls = [(1001, "13-08-2014"), (2008, "11-08-2014")]
+        crawls = [1001, 2008]
         es_location = "http://elasticsearch.com"
         es_index = "es_index"
 
@@ -52,8 +52,8 @@ class TestComputeInsightValue(unittest.TestCase):
 
         #check values
         expected_trend = [
-            InsightTrendPoint(1001, 3.14, "13-08-2014"),
-            InsightTrendPoint(2008, 3.14, "11-08-2014")
+            InsightTrendPoint(1001, 3.14),
+            InsightTrendPoint(2008, 3.14)
         ]
         expected_result = InsightValue(insight, feature_name, expected_trend)
 
