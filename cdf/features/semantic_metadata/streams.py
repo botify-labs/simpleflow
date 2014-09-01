@@ -5,7 +5,7 @@ from cdf.metadata.url.url_metadata import (
 )
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
-from cdf.query.constants import RENDERING, FIELD_RIGHTS
+from cdf.query.constants import RENDERING
 
 
 def _raw_to_bool(string):
@@ -67,129 +67,131 @@ class ContentsStreamDef(StreamDefBase):
         document['metadata'][content_type]['contents'].append(content)
 
 
+def _get_duplicate_document_mapping(duplicate_type,
+                                    verbose_duplicate_type,
+                                    order_seed):
+    """Generate mapping for duplicate documents
+    :param duplicate_type: the kind of duplicate.
+                           this string will be used to generate the field types
+    :type duplicate_type: str
+    :type verbose_duplicate_type: the description of the duplicate type.
+                                  this string will be used to generate the
+                                  verbose names.
+    :type verbose_duplicate_type: str
+    :param order_seed: the base number to use to generate the "order" settings
+    :type order_seed: int
+    :returns: dict
+    """
+    result = {}
+    for i, metadata_type in enumerate(["title", "description", "h1"]):
+        prefix = "metadata.{}.{}".format(metadata_type, duplicate_type)
+        result["{}.nb".format(prefix)] = {
+            "verbose_name": "Number of {} {}".format(
+                verbose_duplicate_type, metadata_type.capitalize()
+            ),
+            "type": INT_TYPE,
+            "order": order_seed + i,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL
+            }
+        }
+        result["{}.is_first".format(prefix)] = {
+            "verbose_name": "First {} {} found".format(
+                verbose_duplicate_type, metadata_type.capitalize()
+            ),
+            "order": order_seed + 20 + i,
+            "type": BOOLEAN_TYPE,
+        }
+        result["{}.urls".format(prefix)] = {
+            "verbose_name": "Pages with the same {}".format(metadata_type.capitalize()),
+            "type": INT_TYPE,
+            "order": order_seed + 10 + i,
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                RENDERING.URL_STATUS,
+                URL_ID
+            }
+        }
+
+        result["{}.urls_exists".format(prefix)] = {
+            "type": "boolean",
+            "default_value": None
+        }
+    return result
+
+
+#the headers to use for duplicate stream defs
+CONTENTSDUPLICATE_HEADERS = (
+    ('id', int),
+    ('content_type', int),
+    ('duplicates_nb', int),
+    ('is_first_url', _raw_to_bool),
+    ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
+)
+
+
+def _process_document_for_duplicates(duplicate_type, document, stream):
+    """Process a document with duplicate data.
+    This is a helper function which is intended to be used to define
+    process_document() functions in duplicate stream def.
+    :param duplicate_type: the type of duplicate that will be processed.
+    :type duplicate_type: str
+    :param document: the input document to update
+    :type document: dict
+    :param stream: a stream element
+    :type stream: tuple
+    """
+    _, metadata_idx, nb_duplicates, is_first, duplicate_urls = stream
+    metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
+
+    meta = document['metadata'][metadata_type]
+    # number of duplications of this piece of metadata
+    dup = meta[duplicate_type]
+    dup['nb'] = nb_duplicates
+    # urls that have duplicates
+    if nb_duplicates > 0:
+        dup['urls'] = duplicate_urls
+        dup['urls_exists'] = True
+
+    # is this the first one out of all duplicates
+    dup['is_first'] = is_first
+
+
 class ContentsDuplicateStreamDef(StreamDefBase):
     FILE = 'urlcontentsduplicate'
-    HEADERS = (
-        ('id', int),
-        ('content_type', int),
-        ('duplicates_nb', int),
-        ('is_first_url', _raw_to_bool),
-        ('duplicate_urls', lambda k: [int(i) for i in k.split(';')] if k else [])
-    )
+    HEADERS = CONTENTSDUPLICATE_HEADERS
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
-    URL_DOCUMENT_MAPPING = {
-        "metadata.title.duplicates.nb": {
-            "verbose_name": "Number of Duplicate Title",
-            "type": INT_TYPE,
-            "order": 100,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL,
-                AGG_NUMERICAL
-            }
-        },
-        "metadata.title.duplicates.is_first": {
-            "verbose_name": "First duplicate Title found",
-            "order": 120,
-            "type": BOOLEAN_TYPE,
-        },
-        "metadata.title.duplicates.urls": {
-            "verbose_name": "Pages with the same Title",
-            "type": INT_TYPE,
-            "order": 110,
-            "settings": {
-                ES_NO_INDEX,
-                LIST,
-                RENDERING.URL_STATUS,
-                FIELD_RIGHTS.SELECT,
-                URL_ID
-            }
-        },
-        "metadata.title.duplicates.urls_exists": {
-            "type": "boolean",
-            "default_value": None
-        },
-        "metadata.h1.duplicates.urls": {
-            "verbose_name": "Pages with the same H1",
-            "type": INT_TYPE,
-            "order": 112,
-            "settings": {
-                ES_NO_INDEX,
-                LIST,
-                RENDERING.URL_STATUS,
-                FIELD_RIGHTS.SELECT,
-                URL_ID
-            }
-        },
-        "metadata.h1.duplicates.urls_exists": {
-            "type": "boolean",
-            "default_value": None
-        },
-        "metadata.h1.duplicates.nb": {
-            "verbose_name": "Number of pages with the same H1",
-            "type": INT_TYPE,
-            "order": 102,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL,
-                AGG_NUMERICAL
-            }
-        },
-        "metadata.h1.duplicates.is_first": {
-            "verbose_name": "First duplicate H1 found",
-            "order": 122,
-            "type": BOOLEAN_TYPE,
-        },
 
-        "metadata.description.duplicates.nb": {
-            "verbose_name": "Number of pages with the same Description",
-            "type": INT_TYPE,
-            "order": 101,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL,
-                AGG_NUMERICAL
-            }
-        },
-        "metadata.description.duplicates.urls": {
-            "verbose_name": "Pages with the same Description",
-            "type": INT_TYPE,
-            "order": 111,
-            "settings": {
-                ES_NO_INDEX,
-                LIST,
-                RENDERING.URL_STATUS,
-                FIELD_RIGHTS.SELECT,
-                URL_ID
-            }
-        },
-        "metadata.description.duplicates.urls_exists": {
-            "type": "boolean",
-            "default_value": None
-        },
-        "metadata.description.duplicates.is_first": {
-            "verbose_name": "First duplicate Description found",
-            "order": 121,
-            "type": BOOLEAN_TYPE,
-        },
-
-    }
+    URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
+        "duplicates",
+        "duplicate",
+        100
+    )
 
     def process_document(self, document, stream):
-        _, metadata_idx, nb_duplicates, is_first, duplicate_urls = stream
-        metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
+        _process_document_for_duplicates(
+            "duplicates", document, stream
+        )
 
-        meta = document['metadata'][metadata_type]
-        # number of duplications of this piece of metadata
-        dup = meta['duplicates']
-        dup['nb'] = nb_duplicates
-        # urls that have duplicates
-        if nb_duplicates > 0:
-            dup['urls'] = duplicate_urls
-            dup['urls_exists'] = True
 
-        # is this the first one out of all duplicates
-        dup['is_first'] = is_first
+class ContentsZoneAwareDuplicateStreamDef(StreamDefBase):
+    FILE = 'urlcontentsduplicate_zoneaware'
+    HEADERS = CONTENTSDUPLICATE_HEADERS
+    URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
+
+    URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
+        "zoneaware_duplicates",
+        "zone aware duplicate",
+        200
+    )
+
+    def process_document(self, document, stream):
+        _process_document_for_duplicates(
+            "zoneaware_duplicates", document, stream
+        )
 
 
 class ContentsCountStreamDef(StreamDefBase):
