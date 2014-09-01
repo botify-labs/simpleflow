@@ -361,7 +361,11 @@ class AnalysisWorkflow(Workflow):
     def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
-        s3_uri = context.get('s3_uri') or context['crawl_location']
+
+        if 's3_uri' not in context:
+            context['s3_uri'] = context['crawl_location']
+        s3_uri = context['s3_uri']
+
         tmp_dir = context.get('tmp_dir', None)
         first_part_id_size = context.get(
             'first_part_id_size',
