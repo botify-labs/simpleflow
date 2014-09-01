@@ -14,6 +14,7 @@ from cdf.features.sitemaps.metadata import (SitemapMetadata,
 from cdf.features.sitemaps.matching import (SitemapOnlyUrls,
                                             get_download_metadata_from_s3,
                                             download_sitemaps_from_s3,
+                                            normalize_url_for_matching,
                                             match_sitemap_urls_from_document,
                                             match_sitemap_urls_from_documents,
                                             DomainValidator)
@@ -193,6 +194,16 @@ class MatchSitemapUrlsFromDocument(unittest.TestCase):
         self.assertEqual(2, out_of_crawl_domain_urls.count)
 
 
+class TestNormalizeUrlForMatching(unittest.TestCase):
+    def test_nominal_case(self):
+        url = "http://foo.com/bar?p=3"
+        self.assertEqual(url, normalize_url_for_matching(url))
+
+    def test_empty_path_case(self):
+        self.assertEqual("http://foo.com/",
+                         normalize_url_for_matching("http://foo.com"))
+
+
 class TestMatchSitemapUrlsFromDocuments(unittest.TestCase):
 
     def test_parsing_error_case(self):
@@ -300,6 +311,40 @@ class TestMatchSitemapUrlsFromDocuments(unittest.TestCase):
 
         os.remove(file1.name)
         os.remove(file2.name)
+
+    def test_domain_only_url(self):
+        #ensure that https://github.com/sem-io/botify-cdf/issues/537 is fixed.
+        document = mock.create_autospec(SitemapXmlDocument)
+        document.get_urls.return_value = iter([
+            "http://foo.com", "http://foo.com/bar"
+        ])
+
+        url_to_id = {
+            #urls are built from urlids file
+            #it requires the resources to be named
+            #so http://foo.com will be inserted as http://foo.com/
+            "http://foo.com/": 1,
+            "http://foo.com/bar": 10
+        }
+
+        dataset = mock.create_autospec(TemporaryDataset)
+        dataset = mock.MagicMock()
+
+        domain_validator = mock.create_autospec(DomainValidator)
+        domain_validator.is_valid.return_value = True
+
+        sitemap_only_nb_samples = 10
+        sitemap_only_urls = SitemapOnlyUrls(sitemap_only_nb_samples)
+        out_of_crawl_domain_urls = SitemapOnlyUrls(sitemap_only_nb_samples)
+
+        match_sitemap_urls_from_document(document,
+                                         url_to_id,
+                                         dataset,
+                                         domain_validator,
+                                         sitemap_only_urls,
+                                         out_of_crawl_domain_urls)
+        expected_calls = [mock.call(1), mock.call(10)]
+        self.assertEqual(expected_calls, dataset.append.mock_calls)
 
 
 class TestDomainValidator(unittest.TestCase):

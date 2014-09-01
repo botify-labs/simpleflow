@@ -1,7 +1,7 @@
 import os
 import itertools
 import re
-from urlparse import urlparse
+from urlparse import urlparse, urlunparse
 
 from cdf.utils import s3
 from cdf.features.sitemaps.exceptions import ParsingError
@@ -76,6 +76,27 @@ def match_sitemap_urls_from_documents(documents,
             document.set_error(e.__class__.__name__, e.message)
 
 
+def normalize_url_for_matching(url):
+    """Normalize an url that comes from a sitemap
+    so that it can be compared with urls from crawl
+    :param url: the input url
+    :type url: str
+    :returns: str
+    """
+    parsed_url = urlparse(url)
+    #handle the case where there is no path
+    #in such situations, the crawler adds a "/"
+    if len(parsed_url.path) == 0:
+        return urlunparse((parsed_url.scheme,
+                           parsed_url.netloc,
+                           "/",
+                           parsed_url.params,
+                           parsed_url.query,
+                           parsed_url.fragment))
+    else:
+        return url
+
+
 def match_sitemap_urls_from_document(document,
                                      url_to_id,
                                      dataset,
@@ -103,7 +124,8 @@ def match_sitemap_urls_from_document(document,
     :raises: ParsingError
     """
     for url in document.get_urls():
-        urlid = url_to_id.get(url, None)
+        normalized_url = normalize_url_for_matching(url)
+        urlid = url_to_id.get(normalized_url, None)
         if urlid is None:
             if domain_validator.is_valid(url):
                 sitemap_only_urls.add(url)
