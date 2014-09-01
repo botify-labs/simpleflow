@@ -301,6 +301,36 @@ class TestMatchSitemapUrlsFromDocuments(unittest.TestCase):
         os.remove(file1.name)
         os.remove(file2.name)
 
+    def test_domain_only_url(self):
+        document = mock.create_autospec(SitemapXmlDocument)
+        document.get_urls.return_value = iter([
+            "http://foo.com", "http://foo.com/bar"
+        ])
+
+        url_to_id = {
+            "http://foo.com/": 1,
+            "http://foo.com/bar": 10
+        }
+
+        dataset = mock.create_autospec(TemporaryDataset)
+        dataset = mock.MagicMock()
+
+        domain_validator = mock.create_autospec(DomainValidator)
+        domain_validator.is_valid.return_value = True
+
+        sitemap_only_nb_samples = 10
+        sitemap_only_urls = SitemapOnlyUrls(sitemap_only_nb_samples)
+        out_of_crawl_domain_urls = SitemapOnlyUrls(sitemap_only_nb_samples)
+
+        match_sitemap_urls_from_document(document,
+                                         url_to_id,
+                                         dataset,
+                                         domain_validator,
+                                         sitemap_only_urls,
+                                         out_of_crawl_domain_urls)
+        expected_calls = [mock.call(1), mock.call(10)]
+        self.assertEqual(expected_calls, dataset.append.mock_calls)
+
 
 class TestDomainValidator(unittest.TestCase):
     def test_empty_allowed_domains(self):
