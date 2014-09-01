@@ -4,7 +4,7 @@ import gzip
 import itertools
 import json
 import tempfile
-import cPickle as pickle
+import marshal
 
 from urlparse import urlsplit, parse_qs
 
@@ -143,14 +143,14 @@ class FileStreamFactory(object):
         with open(self.tmp_filename) as f:
             try:
                 while True:
-                    yield pickle.load(f)
+                    yield marshal.load(f)
             except EOFError:
                 pass
 
     def _cache_stream(self):
         with open(self.tmp_filename, "wb") as f:
             for element in self._get_stream():
-                pickle.dump(element, f, pickle.HIGHEST_PROTOCOL)
+                marshal.dump(element, f)
 
 
 class DataStreamFactory(object):
