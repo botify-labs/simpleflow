@@ -65,7 +65,7 @@ def compute_insight_value(insight,
     #TODO check if using 0 is ok.
     revision_number = 0
     trend = []
-    for crawl_id in crawls:
+    for crawl_id, feature_options in crawls:
         query = Query(es_location,
                       es_index,
                       es_doc_type,
@@ -100,7 +100,11 @@ def get_features(feature_names):
 
 def compute_insight_values(crawls, features, es_location, es_index):
     """Compute the insight values for a set of crawl ids and a set of features.
-    :param crawls: the list of crawl ids to use to compute the insights.
+    :param crawls: the list of crawls to use to compute the insights.
+                   Each crawl is a tuple (crawl_id, feature_options)
+                   with
+                   - crawl_id: an integer
+                   - feature_options: a dict containing the feature options.
     :type crawls: list
     :param features: the list of Feature objects
                      for which to compute the insights.
@@ -135,7 +139,11 @@ def compute_insights(crawls,
                      force_fetch=False):
     """A task to compute the insights and push their values to s3
     as a json file.
-    :param crawls: the list of crawl ids to use to compute the insights.
+    :param crawls: the list of crawls to use to compute the insights.
+                   Each crawl is a tuple (crawl_id, feature_options)
+                   with
+                   - crawl_id: an integer
+                   - feature_options: a dict containing the feature options.
     :type crawls: list
     :param feature_names: the list of feature names
                           for which to compute the insights.
