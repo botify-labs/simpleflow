@@ -51,8 +51,8 @@ def compute_insight_value(insight,
     :type insight: Insight
     :param feature_name: the name of the feature associated with the insight
     :type feature_name: str
-    :param crawls: the list of crawl ids to use to compute the insights.
-    :type crawls: list
+    :param crawls: a dict crawl_id -> feature options for the crawls to process.
+    :type crawls: dict
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -65,7 +65,7 @@ def compute_insight_value(insight,
     #TODO check if using 0 is ok.
     revision_number = 0
     trend = []
-    for crawl_id, feature_options in crawls:
+    for crawl_id, feature_options in sorted(crawls.items()):
         #TODO use feature_options in Query constructor
         query = Query(es_location,
                       es_index,
@@ -81,12 +81,8 @@ def compute_insight_value(insight,
 
 def compute_insight_values(crawls, es_location, es_index):
     """Compute the insight values for a set of crawl ids and a set of features.
-    :param crawls: the list of crawls to use to compute the insights.
-                   Each crawl is a tuple (crawl_id, feature_options)
-                   with
-                   - crawl_id: an integer
-                   - feature_options: a dict containing the feature options.
-    :type crawls: list
+    :param crawls: a dict crawl_id -> feature options for the crawls to process.
+    :type crawls: dict
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -116,12 +112,8 @@ def compute_insights(crawls,
                      force_fetch=False):
     """A task to compute the insights and push their values to s3
     as a json file.
-    :param crawls: the list of crawls to use to compute the insights.
-                   Each crawl is a tuple (crawl_id, feature_options)
-                   with
-                   - crawl_id: an integer
-                   - feature_options: a dict containing the feature options.
-    :type crawls: list
+    :param crawls: a dict crawl_id -> feature options
+    :type crawls: dict
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str

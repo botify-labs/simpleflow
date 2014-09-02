@@ -42,7 +42,7 @@ class TestComputeInsightValue(unittest.TestCase):
             EqFilter("foo_field", 1001)
         )
         feature_name = "feature"
-        crawls = [(1001, {}), (2008, {})]
+        crawls = {1001: {}, 2008: {}}
         es_location = "http://elasticsearch.com"
         es_index = "es_index"
 
@@ -60,9 +60,7 @@ class TestComputeInsightValue(unittest.TestCase):
         ]
         expected_result = InsightValue(insight, feature_name, expected_trend)
 
-        self.assertEqual(expected_result.to_dict().values(),
-                         actual_result.to_dict().values())
-        self.assertEqual(expected_result.to_dict(), actual_result.to_dict())
+        self.assertDictEqual(expected_result.to_dict(), actual_result.to_dict())
 
         #check the calls to Query.__init__()
         expected_query_calls = [
@@ -94,7 +92,7 @@ class TestComputeInsightValues(unittest.TestCase):
 
         get_features_mock.return_value = [feature1, feature2]
 
-        crawls = [(1001, {})]
+        crawls = {1001: {}}
         es_location = "http://elasticsearch.com"
         es_index = "botify"
 
