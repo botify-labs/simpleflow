@@ -8,7 +8,6 @@ from cdf.core.insights import Insight, InsightTrendPoint, InsightValue
 from cdf.query.filter import EqFilter
 from cdf.query.query import Query
 from cdf.tasks.insights import (get_query_agg_result,
-                                get_features,
                                 compute_insight_value,
                                 compute_insight_values,
                                 get_api_address,
@@ -73,31 +72,10 @@ class TestComputeInsightValue(unittest.TestCase):
         self.assertEqual(expected_query_calls, query_mock.mock_calls)
 
 
-@mock.patch("cdf.tasks.insights.Feature.get_features")
-class TestGetFeatures(unittest.TestCase):
-    def setUp(self):
-        self.features = [
-            Feature("foo", "Foo", "this is foo", None),
-            Feature("bar", "Bar", "this is bar", None),
-            Feature("baz", "Baz", "this is baz", None)
-        ]
-
-    def test_nominal_case(self, get_features_mock):
-        get_features_mock.return_value = self.features
-        actual_result = get_features(["foo", "baz"])
-        self.assertEqual(["foo", "baz"],
-                         [feature.identifier for feature in actual_result])
-
-    def test_unexisting_feature(self, get_features_mock):
-        get_features_mock.return_value = self.features
-        self.assertRaises(ValueError,
-                          get_features,
-                          ["qux"])
-
-
 class TestComputeInsightValues(unittest.TestCase):
+    @mock.patch.object(Feature, 'get_features')
     @mock.patch("cdf.tasks.insights.compute_insight_value", autospec=True)
-    def test_nominal_case(self, compute_insight_value_mock):
+    def test_nominal_case(self, compute_insight_value_mock, get_features_mock):
 
         #we don't really care about the result
         compute_insight_value_mock.return_value = InsightValue(None, "", [])
@@ -114,13 +92,13 @@ class TestComputeInsightValues(unittest.TestCase):
         feature2.name = "feature2"
         feature2.get_insights.return_value = [insight2, insight3]
 
-        crawls = [(1001, "13-08-2014")]
-        features = [feature1, feature2]
+        get_features_mock.return_value = [feature1, feature2]
+
+        crawls = [(1001, {})]
         es_location = "http://elasticsearch.com"
         es_index = "botify"
 
         actual_result = compute_insight_values(crawls,
-                                               features,
                                                es_location,
                                                es_index)
         #check results

@@ -133,23 +133,14 @@ from cdf.features.comparison.tasks import match_documents
 match_documents = as_activity(match_documents)
 
 from cdf.tasks.insights import (
-<<<<<<< HEAD
-    refresh_index
-)
-from cdf.tasks.insights import compute_insights as compute_insights_task
-refresh_index = as_activity(refresh_index)
-=======
     refresh_index,
-    get_crawl_end_dates,
     get_api_address,
     get_feature_options
 )
 from cdf.tasks.insights import compute_insights as compute_insights_task
 refresh_index = as_activity(refresh_index)
-get_crawl_end_dates = as_activity(get_crawl_end_dates)
 get_api_address = as_activity(get_api_address)
 get_feature_options = as_activity(get_feature_options)
->>>>>>> Retrieve the feature options in the workflow.
 compute_insights_task = as_activity(compute_insights_task)
 
 UPDATE_STATUS_TIMEOUTS = {
@@ -335,7 +326,6 @@ class AnalysisWorkflow(Workflow):
         :returns: future
         """
         crawl_id = context['crawl_id']
-        features_flags = context.get('features_flags', [])
 
         api_address = self.submit(
             get_api_address,
@@ -356,12 +346,9 @@ class AnalysisWorkflow(Workflow):
 
         futures.wait(elastic_search_ready, crawl_feature_options)
 
-        print
-
         insights_result = self.submit(
             compute_insights_task,
-            [crawl_id],
-            features_flags,
+            [(crawl_id, {})],
             context["es_location"],
             context["es_index"],
             context["s3_uri"]

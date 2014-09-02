@@ -66,6 +66,7 @@ def compute_insight_value(insight,
     revision_number = 0
     trend = []
     for crawl_id, feature_options in crawls:
+        #TODO use feature_options in Query constructor
         query = Query(es_location,
                       es_index,
                       es_doc_type,
@@ -78,27 +79,7 @@ def compute_insight_value(insight,
     return InsightValue(insight, feature_name, trend)
 
 
-def get_features(feature_names):
-    """Return the list of features given their names
-    :param feature_names: the feature names as a list of strings
-    :type feature_names: list
-    :returns: list - a list of Feature objects
-    :raises: ValueError - if a feature is missing
-    """
-    result = [feature for feature in Feature.get_features() if
-              feature.identifier in feature_names]
-    if len(result) != len(set(feature_names)):
-        missing_feature_names = set.difference(
-            set(feature_names),
-            [f.identifier for f in Feature.get_features()]
-        )
-        raise ValueError(
-            "Features: {} were not found".format(missing_feature_names)
-        )
-    return result
-
-
-def compute_insight_values(crawls, features, es_location, es_index):
+def compute_insight_values(crawls, es_location, es_index):
     """Compute the insight values for a set of crawl ids and a set of features.
     :param crawls: the list of crawls to use to compute the insights.
                    Each crawl is a tuple (crawl_id, feature_options)
@@ -106,9 +87,6 @@ def compute_insight_values(crawls, features, es_location, es_index):
                    - crawl_id: an integer
                    - feature_options: a dict containing the feature options.
     :type crawls: list
-    :param features: the list of Feature objects
-                     for which to compute the insights.
-    :type feature: list
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -118,7 +96,7 @@ def compute_insight_values(crawls, features, es_location, es_index):
     :returns: list - a list of InsightValue
     """
     result = []
-    for feature in features:
+    for feature in Feature.get_features():
         for insight in feature.get_insights():
             insight_value = compute_insight_value(insight,
                                                   feature.name,
@@ -131,7 +109,6 @@ def compute_insight_values(crawls, features, es_location, es_index):
 
 @with_temporary_dir
 def compute_insights(crawls,
-                     feature_names,
                      es_location,
                      es_index,
                      s3_uri,
@@ -145,10 +122,6 @@ def compute_insights(crawls,
                    - crawl_id: an integer
                    - feature_options: a dict containing the feature options.
     :type crawls: list
-    :param feature_names: the list of feature names
-                          for which to compute the insights.
-                          For instance : ["main", "semantic_metadata"]
-    :type feature_names: list
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -164,8 +137,7 @@ def compute_insights(crawls,
     :type force_fetch: bool
     :returns: str - the uri of the generated json document
     """
-    features = get_features(feature_names)
-    result = compute_insight_values(crawls, features, es_location, es_index)
+    result = compute_insight_values(crawls, es_location, es_index)
 
     destination_uri = "{}/precomputation/insights.json".format(s3_uri)
     push_content(
