@@ -139,7 +139,10 @@ class TestGetFeatureOptions(unittest.TestCase):
 
         crawl_ids = [1001, 2008]
         actual_result = get_feature_options(self.api_address, crawl_ids)
-        expected_result = [{"option1": True}, {"option1": False}]
+        expected_result = {
+            1001: {"option1": True},
+            2008: {"option1": False}
+        }
         self.assertEquals(expected_result, actual_result)
 
 

@@ -158,12 +158,11 @@ def get_feature_options(api_address, crawl_ids):
     :type api_address: str
     :param crawl_ids: the list of crawl ids to consider as a list of ints.
     :type crawl_ids: list
-    :returns: list - a list of dict, each dict corresponding to a set of
-                     feature_options
+    :returns: dict - a dict crawl_id -> feature_options
     :raises: ApiError - if one API call fails
     :raises: ApiFormatError - if one API answer does not have the expected format.
     """
-    result = []
+    result = {}
     for crawl_id in crawl_ids:
         endpoint = urljoin(api_address, "crawls/{}/".format(crawl_id))
         r = requests.get(endpoint)
@@ -174,5 +173,5 @@ def get_feature_options(api_address, crawl_ids):
                 "'features' entry is missing in '{}'".format(r.json())
             )
         feature_options = r.json()["features"]
-        result.append(feature_options)
+        result[crawl_id] = feature_options
     return result
