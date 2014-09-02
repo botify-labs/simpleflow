@@ -91,6 +91,7 @@ class TestInsightValue(unittest.TestCase):
             "name": "Foo insight",
             "expected_trend": "up",
             "feature": "foo_feature",
+            "type": "integer",
             "query":  {
                 'aggs': [{'metrics': [{'count': 'url'}]}],
                 'filters': {'field': 'foo_field', 'predicate': 'eq', 'value': 1001}

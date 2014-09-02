@@ -1,3 +1,5 @@
+from cdf.metadata.url.url_metadata import FLOAT_TYPE
+from cdf.query.constants import RENDERING
 from cdf.core.insights import Insight, ExpectedTrend
 from cdf.query.filter import (EqFilter,
                               LtFilter,
@@ -22,7 +24,6 @@ def get_http_code_ranges_insights():
         insight = Insight(
             "code_{}".format(range_name),
             "{} Urls".format(range_name),
-            expected_trend,
             BetweenFilter("http_code", [range_start, range_start + 99])
         )
         result.append(insight)
@@ -116,25 +117,32 @@ def get_speed_insights():
             "speed_fast",
             "Fast Urls",
             ExpectedTrend.UP,
-            LtFilter(field, 500)
+            LtFilter(field, 500),
+            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
         ),
         Insight(
             "speed_medium",
             "Medium Urls",
             ExpectedTrend.DOWN,
-            BetweenFilter(field, [500, 999])
+            BetweenFilter(field, [500, 999]),
+            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+
         ),
         Insight(
             "speed_slow",
             "Slow Urls",
             ExpectedTrend.DOWN,
-            BetweenFilter(field, [1000, 1999])
+            BetweenFilter(field, [1000, 1999]),
+            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+
         ),
         Insight(
             "speed_slowest",
             "Slowest Urls",
             ExpectedTrend.DOWN,
-            GteFilter(field, 2000)
+            GteFilter(field, 2000),
+            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+
         ),
     ]
 
@@ -152,7 +160,9 @@ def get_strategic_urls_speed_insights():
 #            AndFilter(
 #                [
 #                    strategic_predicate,
-#                    LtFilter(field, 500)
+#                    LtFilter(field, 500),
+#                    field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+
 #                ]
 #            )
 #        ),
@@ -163,7 +173,9 @@ def get_strategic_urls_speed_insights():
 #            AndFilter(
 #                [
 #                    strategic_predicate,
-#                    BetweenFilter(field, [500, 999])
+#                    BetweenFilter(field, [500, 999]),
+#                    field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+
 #                ]
 #            )
 #        ),
@@ -174,7 +186,9 @@ def get_strategic_urls_speed_insights():
 #            AndFilter(
 #                [
 #                    strategic_predicate,
-#                    BetweenFilter(field, [1000, 1999])
+#                    BetweenFilter(field, [1000, 1999]),
+#                    field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+
 #                ]
 #            )
 #        ),
@@ -185,7 +199,9 @@ def get_strategic_urls_speed_insights():
 #            AndFilter(
 #                [
 #                    strategic_predicate,
-#                    GteFilter(field, 2000)
+#                    GteFilter(field, 2000),
+#                    field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+
 #                ]
 #            )
 #        ),
@@ -218,7 +234,9 @@ def get_average_speed_insights():
             "speed_avg",
             "Average Load time (in ms)",
             ExpectedTrend.DOWN,
-            metric_agg=AvgAggregation(field)
+            metric_agg=AvgAggregation(field),
+            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+
         )
     ]
     #TODO"speed_strategic_avg", "Average Load time on strategic urls (in ms)", {"field": "strategic", "value": true}),
@@ -231,7 +249,8 @@ def get_average_depth_insights():
             "depth_avg",
             "Average Depth",
             ExpectedTrend.DOWN,
-            metric_agg=AvgAggregation(field)
+            metric_agg=AvgAggregation(field),
+            field_type=FLOAT_TYPE
         )
     ]
     #TODO"depth_strategic_avg", "Average Depth on strategic urls", {"field": "strategic", "value": true}),

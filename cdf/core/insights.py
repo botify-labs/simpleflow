@@ -1,4 +1,5 @@
 from enum import Enum
+from cdf.metadata.url.url_metadata import INT_TYPE
 from cdf.query.aggregation import CountAggregation
 
 
@@ -25,11 +26,13 @@ class Insight(object):
                  name,
                  expected_trend,
                  input_filter=None,
-                 metric_agg=None):
+                 metric_agg=None,
+                 field_type=INT_TYPE):
         """Constructor
         :param identifier: the insight identifier (short)
         :type identifier: str
         :param name: the insight name (displayed on the report)
+        :type name: str
         :param expected_trend: the expected trend for this insight
         :type expected_trend: ExpectedTrend
         :param input_filter: the filter to apply for the botify query
@@ -37,12 +40,21 @@ class Insight(object):
         :param metric_agg: the aggregation to compute for the botify query.
                            If None, use a simple count on the urls
         :type metric_agg: MetricAggregation
+        :param field_type: how the value computed by this insights should be displayed.
+                           This parameter should be an Enum.
+                           It is an integer since :
+                           - RENDERING misses the base datatypes
+                             (from cdf.metadata.url.url_metadata)
+                           - the base datatypes are not grouped in a enum.
+
+        :type field_type: str
         """
         self.identifier = identifier
         self.name = name
         self.expected_trend = expected_trend
         self.filter = input_filter
         self.metric_agg = metric_agg or CountAggregation("url")
+        self.field_type = field_type
 
     @property
     def query(self):
@@ -84,6 +96,7 @@ class InsightValue(object):
             "expected_trend": self.insight.expected_trend.value,
             "feature": self.feature_name,
             "query": self.insight.query,
+            "type": self.insight.field_type,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
         }
 
