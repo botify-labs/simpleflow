@@ -3,14 +3,14 @@ import unittest
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
 from cdf.exceptions import BotifyQueryException
-from cdf.utils.features import get_urls_data_format_definition
+from cdf.core.features import assemble_data_format
 
 CRAWL_ID = 1
 
 
 class QueryTransformationTestCase(unittest.TestCase):
     def setUp(self):
-        self.es_backend = ElasticSearchBackend(get_urls_data_format_definition())
+        self.es_backend = ElasticSearchBackend(assemble_data_format())
         self.parser = QueryParser(data_backend=self.es_backend)
         self.crawl_filter = {'term': {'crawl_id': CRAWL_ID}}
         self.not_crawled_filter = {'not': {'term': {'http_code': 0}}}
