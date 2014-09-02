@@ -1,6 +1,8 @@
 import unittest
 import mock
+import httpretty
 
+from cdf.exceptions import ApiError, ApiFormatError
 from cdf.core.features import Feature
 from cdf.core.insights import Insight, InsightTrendPoint, InsightValue
 from cdf.query.filter import EqFilter
@@ -8,7 +10,9 @@ from cdf.query.query import Query
 from cdf.tasks.insights import (get_query_agg_result,
                                 get_features,
                                 compute_insight_value,
-                                compute_insight_values)
+                                compute_insight_values,
+                                get_api_address,
+                                get_feature_options)
 
 
 class TestGetQueryAggResult(unittest.TestCase):
@@ -131,3 +135,62 @@ class TestComputeInsightValues(unittest.TestCase):
         ]
 
         self.assertEqual(expected_calls, compute_insight_value_mock.mock_calls)
+
+
+class TestGetApiAddress(unittest.TestCase):
+    def test_nominal_case(self):
+        crawl_endpoint = "http://api.staging.botify.com/crawls/1540/revisions/1568/"
+        self.assertEquals(
+            "http://api.staging.botify.com",
+            get_api_address(crawl_endpoint)
+        )
+
+class TestGetFeatureOptions(unittest.TestCase):
+    def setUp(self):
+        self.api_address = "http://api.foo.com"
+
+    @httpretty.activate
+    def test_nominal_case(self):
+        #mocking
+        httpretty.register_uri(httpretty.GET,
+                               "http://api.foo.com/crawls/1001/",
+                               body='{"features": {"option1": true}}',
+                               content_type="application/json")
+        httpretty.register_uri(httpretty.GET,
+                               "http://api.foo.com/crawls/2008/",
+                               body='{"features": {"option1": false}}',
+                               content_type="application/json")
+
+        crawl_ids = [1001, 2008]
+        actual_result = get_feature_options(self.api_address, crawl_ids)
+        expected_result = [{"option1": True}, {"option1": False}]
+        self.assertEquals(expected_result, actual_result)
+
+
+    @httpretty.activate
+    def test_api_error(self):
+        httpretty.register_uri(httpretty.GET,
+                               "http://api.foo.com/crawls/1001/",
+                               status=500)
+        crawl_ids = [1001]
+        self.assertRaises(
+            ApiError,
+            get_feature_options,
+            self.api_address,
+            crawl_ids
+        )
+
+    @httpretty.activate
+    def test_missing_features(self):
+        httpretty.register_uri(httpretty.GET,
+                               "http://api.foo.com/crawls/1001/",
+                               body='{}',
+                               content_type="application/json")
+        crawl_ids = [1001]
+        self.assertRaises(
+            ApiFormatError,
+            get_feature_options,
+            self.api_address,
+            crawl_ids
+        )
+

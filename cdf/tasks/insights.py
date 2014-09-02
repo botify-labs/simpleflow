@@ -1,7 +1,10 @@
 import json
 
+from urlparse import urlparse, urljoin
+import requests
 from elasticsearch import Elasticsearch
 
+from cdf.exceptions import ApiError, ApiFormatError
 from cdf.utils.s3 import push_content
 from cdf.query.query import Query
 from cdf.core.features import Feature
@@ -162,3 +165,42 @@ def compute_insights(crawls,
         json.dumps([insight_value.to_dict() for insight_value in result])
     )
     return destination_uri
+
+
+def get_api_address(crawl_endpoint):
+    """Return the API address given the API crawl endpoit.
+    This function is somehow a hack made necessary
+    by the fact that the analysis context does not contain the API address
+    :param crawl_endpoint: the crawl endpoint (ex: http://api.staging.botify.com/crawls/1540/revisions/1568/)
+    :type crawl_endpoint: str
+    :returns: str
+    """
+    parsed_url = urlparse(crawl_endpoint)
+    return "{}://{}".format(parsed_url.scheme, parsed_url.netloc)
+
+
+def get_feature_options(api_address, crawl_ids):
+    """Return the feature options corresponding to a list of crawl ids.
+    Feature options are retrieved through the API.
+    :param api_address: the API address (ex: http://api.botify.com"
+    :type api_address: str
+    :param crawl_ids: the list of crawl ids to consider as a list of ints.
+    :type crawl_ids: list
+    :returns: list - a list of dict, each dict corresponding to a set of
+                     feature_options
+    :raises: ApiError - if one API call fails
+    :raises: ApiFormatError - if one API answer does not have the expected format.
+    """
+    result = []
+    for crawl_id in crawl_ids:
+        endpoint = urljoin(api_address, "crawls/{}/".format(crawl_id))
+        r = requests.get(endpoint)
+        if not r.ok:
+            raise ApiError("{}: {}".format(r.status_code, r.reason))
+        if "features" not in r.json():
+            raise ApiFormatError(
+                "'features' entry is missing in '{}'".format(r.json())
+            )
+        feature_options = r.json()["features"]
+        result.append(feature_options)
+    return result
