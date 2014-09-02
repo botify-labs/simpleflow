@@ -348,7 +348,7 @@ class AnalysisWorkflow(Workflow):
 
         insights_result = self.submit(
             compute_insights_task,
-            [(crawl_id, {})],
+            crawl_feature_options,
             context["es_location"],
             context["es_index"],
             context["s3_uri"]
