@@ -172,6 +172,9 @@ def get_feature_options(api_address, crawl_ids):
             raise ApiFormatError(
                 "'features' entry is missing in '{}'".format(r.json())
             )
+        #NB this is not exactly the feature options
+        #as we get them in the context.
+        #but it should be ok.
         feature_options = r.json()["features"]
         result[crawl_id] = feature_options
     return result
