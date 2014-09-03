@@ -69,7 +69,8 @@ class ContentsStreamDef(StreamDefBase):
 
 def _get_duplicate_document_mapping(duplicate_type,
                                     verbose_duplicate_type,
-                                    order_seed):
+                                    order_seed,
+                                    private):
     """Generate mapping for duplicate documents
     :param duplicate_type: the kind of duplicate.
                            this string will be used to generate the field types
@@ -80,6 +81,8 @@ def _get_duplicate_document_mapping(duplicate_type,
     :type verbose_duplicate_type: str
     :param order_seed: the base number to use to generate the "order" settings
     :type order_seed: int
+    :param private: if True, all the generated fields will be private
+    :type private: bool
     :returns: dict
     """
     result = {}
@@ -121,6 +124,12 @@ def _get_duplicate_document_mapping(duplicate_type,
             "type": "boolean",
             "default_value": None
         }
+
+    if private is True:
+        for field in result.itervalues():
+            if "settings" not in field:
+                field["settings"] = set()
+            field["settings"].add(FIELD_RIGHTS.PRIVATE)
     return result
 
 
@@ -169,7 +178,8 @@ class ContentsDuplicateStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
         "duplicates",
         "duplicate",
-        100
+        100,
+        False
     )
 
     def process_document(self, document, stream):
@@ -186,7 +196,8 @@ class ContentsZoneAwareDuplicateStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
         "zoneaware_duplicates",
         "zone aware duplicate",
-        200
+        200,
+        True
     )
 
     def process_document(self, document, stream):
