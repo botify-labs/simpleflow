@@ -1,5 +1,7 @@
 import inspect
 from importlib import import_module
+from collections import defaultdict
+from cdf.core.data_format import DataFormat
 
 from cdf.log import logger
 import cdf.features
@@ -98,6 +100,55 @@ class Feature(object):
             logger.warning("Could not find an element named insights in '%s'.",
                            insights_module_name)
             return []
+
+
+def generate_data_format(feature_options,
+                         available_features=Feature.get_features()):
+    """Collect partial data formats from features, filter/transformed
+    according to `feature_options`
+
+    :return: dict of (feature name -> partial data formats)
+    :rtype: dict
+    """
+
+    def filter_field(field_value, feature_option):
+        """Implicit contract between data format and feature option
+            ex. for `lang` field
+                - in data format:
+                    'lang': {
+                        'enabled': lambda option: option is not None and option.get('lang', False)
+                        ...
+                    }
+                - in feature options
+                    {..., 'lang': True}
+        """
+        if 'enabled' in field_value:
+            return field_value['enabled'](feature_option)
+        else:
+            return True
+
+    result = {}
+    activated_features = filter(
+        lambda f: f.identifier in feature_options,
+        available_features
+    )
+
+    # collect scattered data formats
+    for f in activated_features:
+        option = feature_options[f.identifier]
+        # TODO(darkjh) decouple stream_def with data format
+        # it makes test very difficult
+        # need to (mock data_format -> stream def -> feature)
+        for stream_def in f.get_streams_def():
+            if hasattr(stream_def, 'URL_DOCUMENT_MAPPING'):
+                data_format = stream_def.URL_DOCUMENT_MAPPING
+                data_format = {
+                    k: v
+                    for k, v in data_format.iteritems()
+                    if filter_field(v, option)
+                }
+                result.update(data_format)
+    return result
 
 
 def assemble_data_format():
