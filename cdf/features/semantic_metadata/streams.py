@@ -67,7 +67,8 @@ class ContentsStreamDef(StreamDefBase):
         document['metadata'][content_type]['contents'].append(content)
 
 
-def _get_duplicate_document_mapping(duplicate_type,
+def _get_duplicate_document_mapping(metadata_list,
+                                    duplicate_type,
                                     verbose_duplicate_type,
                                     order_seed,
                                     private):
@@ -86,7 +87,7 @@ def _get_duplicate_document_mapping(duplicate_type,
     :returns: dict
     """
     result = {}
-    for i, metadata_type in enumerate(["title", "description", "h1"]):
+    for i, metadata_type in enumerate(metadata_list):
         prefix = "metadata.{}.{}".format(metadata_type, duplicate_type)
         result["{}.nb".format(prefix)] = {
             "verbose_name": "Number of {} {}".format(
@@ -176,6 +177,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
 
     URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
+        ["title", "description", "h1"],
         "duplicates",
         "duplicate",
         100,
@@ -194,6 +196,7 @@ class ContentsZoneAwareDuplicateStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
 
     URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
+        ["title", "description", "h1"],
         "zoneaware_duplicates",
         "zone aware duplicate",
         200,
