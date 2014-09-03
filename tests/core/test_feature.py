@@ -79,3 +79,38 @@ class TestDataFormatGeneration(unittest.TestCase):
         expected = TestOneStreamDef.URL_DOCUMENT_MAPPING
 
         self.assertEqual(expected, data_format)
+
+    def test_comparison_data_format(self):
+        comparison_key = 'comparison'
+        comparison_feature = Feature(
+            comparison_key, comparison_key, None, None)
+        options = {'feature1': None, comparison_key: None}
+        data_format = generate_data_format(
+            feature_options=options,
+            available_features=[
+                self.feature1,
+                self.feature2,
+                comparison_feature
+            ]
+        )
+        expected = {
+            'url': {
+                'something': 'url_configs'
+            },
+            'delay': {
+                'something': 'delay_configs'
+            },
+            'previous.url': {
+                'something': 'url_configs'
+            },
+            'previous.delay': {
+                'something': 'delay_configs'
+            },
+            'previous_exists': {
+                'default_value': None, 'type': 'boolean'
+            },
+            'disappeared': {
+                'default_value': None, 'type': 'boolean'
+            }
+        }
+        self.assertEqual(expected, data_format)

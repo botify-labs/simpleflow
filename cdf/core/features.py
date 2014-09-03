@@ -1,7 +1,5 @@
 import inspect
 from importlib import import_module
-from collections import defaultdict
-from cdf.core.data_format import DataFormat
 
 from cdf.log import logger
 import cdf.features
@@ -127,6 +125,9 @@ def generate_data_format(feature_options,
         else:
             return True
 
+    # import special data format manipulation from `comparision` feature
+    from cdf.features.comparison.tasks import get_comparison_data_format
+
     result = {}
     activated_features = filter(
         lambda f: f.identifier in feature_options,
@@ -148,6 +149,11 @@ def generate_data_format(feature_options,
                     if filter_field(v, option)
                 }
                 result.update(data_format)
+
+    # comparison's modification needs to be applied at the end
+    if 'comparison' in feature_options:
+        result = get_comparison_data_format(result)
+
     return result
 
 
