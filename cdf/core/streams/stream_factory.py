@@ -7,6 +7,7 @@ import tempfile
 import marshal
 
 from urlparse import urlsplit, parse_qs
+from cdf.core.streams.utils import split_file
 
 from cdf.log import logger
 
