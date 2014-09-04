@@ -12,7 +12,7 @@ lockfile==0.9.1
 enum34
 lxml
 requests
-retrying
+retrying>=1.2.2
 simpleflow
 plyvel
 botify-autotagging
