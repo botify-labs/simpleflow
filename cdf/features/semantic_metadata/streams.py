@@ -70,8 +70,7 @@ class ContentsStreamDef(StreamDefBase):
 def _get_duplicate_document_mapping(metadata_list,
                                     duplicate_type,
                                     verbose_duplicate_type,
-                                    order_seed,
-                                    private):
+                                    order_seed):
     """Generate mapping for duplicate documents
     :param duplicate_type: the kind of duplicate.
                            this string will be used to generate the field types
@@ -126,12 +125,20 @@ def _get_duplicate_document_mapping(metadata_list,
             "default_value": None
         }
 
-    if private is True:
-        for field in result.itervalues():
-            if "settings" not in field:
-                field["settings"] = set()
-            field["settings"].add(FIELD_RIGHTS.PRIVATE)
     return result
+
+
+def _make_fields_private(mapping):
+    """Make all the field of the mapping private
+    :param mapping: input mapping as a dict field_name -> parameter dict
+    :type mapping: dict
+    :returns: dict - the modified mapping
+    """
+    for field in mapping.itervalues():
+        if "settings" not in field:
+            field["settings"] = set()
+        field["settings"].add(FIELD_RIGHTS.PRIVATE)
+    return mapping
 
 
 #the headers to use for duplicate stream defs
@@ -180,8 +187,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
         ["title", "description", "h1"],
         "duplicates",
         "duplicate",
-        100,
-        False
+        100
     )
 
     def process_document(self, document, stream):
@@ -195,12 +201,13 @@ class ContentsZoneAwareDuplicateStreamDef(StreamDefBase):
     HEADERS = CONTENTSDUPLICATE_HEADERS
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
 
-    URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
-        ["title", "description", "h1"],
-        "zoneaware_duplicates",
-        "zone aware duplicate",
-        200,
-        True
+    URL_DOCUMENT_MAPPING = _make_fields_private(
+        _get_duplicate_document_mapping(
+            ["title", "description", "h1"],
+            "zoneaware_duplicates",
+            "zone aware duplicate",
+            200
+        )
     )
 
     def process_document(self, document, stream):
