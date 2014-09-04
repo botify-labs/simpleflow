@@ -5,7 +5,7 @@ from cdf.metadata.url.url_metadata import (
 )
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
-from cdf.query.constants import RENDERING
+from cdf.query.constants import RENDERING, FIELD_RIGHTS
 
 
 def _raw_to_bool(string):
@@ -112,7 +112,8 @@ def _get_duplicate_document_mapping(duplicate_type,
                 ES_NO_INDEX,
                 LIST,
                 RENDERING.URL_STATUS,
-                URL_ID
+                URL_ID,
+                FIELD_RIGHTS.SELECT
             }
         }
 
