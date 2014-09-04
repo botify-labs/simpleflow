@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 from pandas import DataFrame
 
-from cdf.core.streams.utils import group_left
-from cdf.analysis.urls.constants import CLUSTER_TYPE_TO_ID
-from cdf.features.main.streams import InfosStreamDef
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX, CONTENT_TYPE_NAME_TO_ID
 
 
@@ -45,47 +42,3 @@ class MetadataClusterMixin(object):
                 final_dataframe = final_dataframe.append(dataframe)
 
         return final_dataframe
-
-
-class UrlSuggestionsGenerator(MetadataClusterMixin):
-
-    def __init__(self, stream_patterns, stream_infos, stream_contents):
-        super(UrlSuggestionsGenerator, self).__init__()
-        self.stream_patterns = stream_patterns
-        self.stream_infos = stream_infos
-        self.stream_contents = stream_contents
-
-    def __iter__(self):
-        http_code_idx = InfosStreamDef.field_idx('http_code')
-        for i in group_left((self.stream_patterns, 0), infos=(self.stream_infos, 0), contents=(self.stream_contents, 0)):
-            url_id, left_line, streams = i
-            # If http_code in 0, 1, 2 > means than not crawled
-            # If http_code < 0, it means that there were a fetcher error but the url was correctly crawled
-            if streams['infos'][0][http_code_idx] in (0, 1, 2):
-                continue
-
-            url_id, protocol, host, path, query_string = left_line
-            # locator not yet in urlids.txt
-            locator = ''
-            url = "{}://{}{}{}".format(protocol, host, path, query_string)
-
-            for cluster, queries in self.patterns_clusters.iteritems():
-                cluster_id = CLUSTER_TYPE_TO_ID["pattern"][cluster]
-                for query in queries:
-                    if query['func'](url, protocol, host, path, query_string, locator):
-                        yield (url_id, str(cluster_id) + str(query["hash"]))
-
-            for entry in streams['contents']:
-                url_id, metadata_type, hash_id, value = entry
-                if metadata_type not in self.metadata_clusters:
-                    continue
-                for query in self.metadata_clusters[metadata_type]:
-                    cluster_id = CLUSTER_TYPE_TO_ID["metadata"][metadata_type]
-                    if query['func'](value):
-                        yield (url_id, str(cluster_id) + str(query["hash"]))
-
-    def save_to_file(self, location):
-        f = open(location, 'w')
-        for data in self:
-            f.write('\t'.join(data) + '\n')
-        f.close()
