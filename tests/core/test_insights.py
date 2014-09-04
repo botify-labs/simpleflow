@@ -74,8 +74,8 @@ class TestInsightValue(unittest.TestCase):
 
     def test_to_dict(self):
         trend = [
-            InsightTrendPoint(1001, 3.14, "12-08-2014"),
-            InsightTrendPoint(2008, 2.72, "11-08-2014")
+            InsightTrendPoint(1001, 3.14),
+            InsightTrendPoint(2008, 2.72)
         ]
 
         insight_value = InsightValue(self.insight,
@@ -89,8 +89,8 @@ class TestInsightValue(unittest.TestCase):
                 'filters': {'field': 'foo_field', 'predicate': 'eq', 'value': 1001}
             },
             "trend": [
-                {"crawl_id": 1001, "date_finished": "12-08-2014", "score": 3.14},
-                {"crawl_id": 2008, "date_finished": "11-08-2014", "score": 2.72}
+                {"crawl_id": 1001, "score": 3.14},
+                {"crawl_id": 2008, "score": 2.72}
             ]
         }
         self.assertEqual(
@@ -102,6 +102,6 @@ class TestInsightValue(unittest.TestCase):
 class TestInsightTrendPoint(unittest.TestCase):
     def test_to_dict(self):
         self.assertEqual(
-            {"crawl_id": 1001, "date_finished": "12-08-2014", "score": 3.14},
-            InsightTrendPoint(1001, 3.14, "12-08-2014").to_dict()
+            {"crawl_id": 1001, "score": 3.14},
+            InsightTrendPoint(1001, 3.14).to_dict()
         )
