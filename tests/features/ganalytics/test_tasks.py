@@ -145,16 +145,7 @@ class TestTasks(unittest.TestCase):
         f.append(5, "http", "www.site.com", "/5", "?sid=5")
         f.append(6, "http", "www.site.com", "/6", "")
         f.append(7, "https", "www.site.com", "/4", "")  # ambiguous url (http version exists)
-        f.persist_to_s3(self.s3_dir, first_part_id_size=self.first_part_id_size, part_id_size=self.part_id_size)
-        ('id', int),
-        ('infos_mask', int),
-        ('content_type', str),
-        ('depth', int),
-        ('date_crawled', int),
-        ('http_code', int),
-        ('byte_size', int),
-        ('delay_first_byte', int),
-        ('delay_last_byte', int),
+        f.persist(self.s3_dir, first_part_size=self.first_part_id_size, part_size=self.part_id_size)
 
         f = InfosStreamDef.create_temporary_dataset()
         f.append(1, 0, "", 0, 0, 200, 0, 0, 0)
@@ -164,7 +155,7 @@ class TestTasks(unittest.TestCase):
         f.append(5, 0, "", 0, 0, 200, 0, 0, 0)
         f.append(6, 0, "", 0, 0, 200, 0, 0, 0)
         f.append(7, 0, "", 0, 0, 200, 0, 0, 0)  # ambiguous url has code 200
-        f.persist_to_s3(self.s3_dir, first_part_id_size=self.first_part_id_size, part_id_size=self.part_id_size)
+        f.persist(self.s3_dir, first_part_size=self.first_part_id_size, part_size=self.part_id_size)
 
         #fake analytics metadata
         analytics_metadata_location = os.path.join(self.s3_dir[5:], 'analytics.meta.json')
@@ -180,7 +171,7 @@ class TestTasks(unittest.TestCase):
 
         self.assertEquals(
             #
-            list(VisitsStreamDef.get_stream_from_s3(self.s3_dir, tmp_dir=self.tmp_dir)),
+            list(VisitsStreamDef.load(self.s3_dir, tmp_dir=self.tmp_dir)),
             [
                 [1, "organic", "google", 'None', 5, 3, 4, 26, 3, 1],
                 [2, "organic", "google", 'None', 3, 3, 2, 10, 1, 0],

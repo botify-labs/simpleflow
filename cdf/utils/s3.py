@@ -32,6 +32,11 @@ class Connection(object):
         return Connection._conn
 
 
+def is_s3_uri(uri):
+    """Test if a uri represents a s3 uri"""
+    return uri.startswith('s3://')
+
+
 def uri_parse(s3_uri):
     """
     Return a tuple (bucket_name, location)

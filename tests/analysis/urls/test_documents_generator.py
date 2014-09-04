@@ -44,8 +44,8 @@ class TestBasicInfoGeneration(unittest.TestCase):
 
     def test_url_infos(self):
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos))
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos))
         ])
         document = list(gen)[0]
         document_expected = {
@@ -75,8 +75,8 @@ class TestBasicInfoGeneration(unittest.TestCase):
     def test_url_infos_with_lang(self):
         self.infos[0].append('fr')
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos))
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos))
         ])
         document = list(gen)[0][1]
         self.assertEquals(document['lang'], 'fr')
@@ -87,8 +87,8 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos))
+            IdStreamDef.load_iterator(iter(ids)),
+            InfosStreamDef.load_iterator(iter(self.infos))
         ])
 
         document = _next_doc(gen)
@@ -97,8 +97,8 @@ class TestBasicInfoGeneration(unittest.TestCase):
 
     def test_info_content_type(self):
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos))
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos))
         ])
         document = _next_doc(gen)
         self.assertEquals(document['content_type'], 'not-set')
@@ -108,8 +108,8 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos))
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(infos))
         ])
         document = _next_doc(gen)
         self.assertEquals(document['content_type'], 'text')
@@ -120,8 +120,8 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos))
+            IdStreamDef.load_iterator(iter(ids)),
+            InfosStreamDef.load_iterator(iter(self.infos))
         ])
         document = _next_doc(gen)
         self.assertEquals(document['query_string'], '?f1=v1&f2=v2')
@@ -149,8 +149,8 @@ class TestMetadataGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos))
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(infos))
         ])
         document = _next_doc(gen)
         self.assertEqual(document['gzipped'], True)
@@ -177,9 +177,9 @@ class TestMetadataGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos)),
-            ContentsStreamDef.get_stream_from_iterator(iter(contents)),
+            IdStreamDef.load_iterator(iter(ids)),
+            InfosStreamDef.load_iterator(iter(infos)),
+            ContentsStreamDef.load_iterator(iter(contents)),
         ])
 
         document = _next_doc(gen)
@@ -198,9 +198,9 @@ class TestMetadataGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            ContentsStreamDef.get_stream_from_iterator(iter(contents)),
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            ContentsStreamDef.load_iterator(iter(contents)),
         ])
 
         for url_id, document in gen:
@@ -218,9 +218,9 @@ class TestMetadataGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            ContentsDuplicateStreamDef.get_stream_from_iterator(iter(duplicates))
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            ContentsDuplicateStreamDef.load_iterator(iter(duplicates))
         ])
 
         # check for url1
@@ -256,9 +256,9 @@ class TestMetadataGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            ContentsCountStreamDef.get_stream_from_iterator(iter(urlcontents_count))
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            ContentsCountStreamDef.load_iterator(iter(urlcontents_count))
         ])
 
         # check for url1
@@ -309,9 +309,9 @@ class TestInlinksGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos)),
-            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+            IdStreamDef.load_iterator(iter(patterns)),
+            InfosStreamDef.load_iterator(iter(infos)),
+            InlinksStreamDef.load_iterator(iter(inlinks)),
         ])
 
         document = _next_doc(gen)
@@ -367,9 +367,9 @@ class TestOutlinksGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            OutlinksStreamDef.get_stream_from_iterator(iter(outlinks))
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            OutlinksStreamDef.load_iterator(iter(outlinks))
         ])
 
         # check for url1
@@ -466,9 +466,9 @@ class TestOutlinksGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(ids)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos)),
-            OutlinksStreamDef.get_stream_from_iterator(iter(outlinks))
+            IdStreamDef.load_iterator(iter(ids)),
+            InfosStreamDef.load_iterator(iter(infos)),
+            OutlinksStreamDef.load_iterator(iter(outlinks))
         ])
         document = _next_doc(gen)
 
@@ -529,9 +529,9 @@ class TestOutlinksGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos)),
-            BadLinksStreamDef.get_stream_from_iterator(iter(badlinks))
+            IdStreamDef.load_iterator(iter(patterns)),
+            InfosStreamDef.load_iterator(iter(infos)),
+            BadLinksStreamDef.load_iterator(iter(badlinks))
         ])
 
         expected_1 = {
@@ -613,10 +613,10 @@ class TestRedirectsGeneration(unittest.TestCase):
     ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(patterns)),
-            OutlinksStreamDef.get_stream_from_iterator(iter(outlinks)),
-            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos))
+            IdStreamDef.load_iterator(iter(patterns)),
+            OutlinksStreamDef.load_iterator(iter(outlinks)),
+            InlinksStreamDef.load_iterator(iter(inlinks)),
+            InfosStreamDef.load_iterator(iter(infos))
         ])
 
         document = _next_doc(gen)
@@ -662,9 +662,9 @@ class TestRedirectsGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(patterns)),
-            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos))
+            IdStreamDef.load_iterator(iter(patterns)),
+            InlinksStreamDef.load_iterator(iter(inlinks)),
+            InfosStreamDef.load_iterator(iter(infos))
         ])
 
         document = _next_doc(gen)
@@ -721,10 +721,10 @@ class TestCanonicalGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos)),
-            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
-            OutlinksStreamDef.get_stream_from_iterator(iter(outlinks))
+            IdStreamDef.load_iterator(iter(patterns)),
+            InfosStreamDef.load_iterator(iter(infos)),
+            InlinksStreamDef.load_iterator(iter(inlinks)),
+            OutlinksStreamDef.load_iterator(iter(outlinks))
         ])
 
         # Url 1
@@ -782,9 +782,9 @@ class TestCanonicalGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos)),
-            InlinksStreamDef.get_stream_from_iterator(iter(inlinks))
+            IdStreamDef.load_iterator(iter(patterns)),
+            InfosStreamDef.load_iterator(iter(infos)),
+            InlinksStreamDef.load_iterator(iter(inlinks))
         ])
 
         # Url 1
@@ -816,8 +816,8 @@ class TestSitemapGeneration(unittest.TestCase):
 
         sitemap_ids = [(0,), (2,), (3,)]
 
-        id_stream = IdStreamDef.get_stream_from_iterator(iter(ids))
-        sitemap_stream = SitemapStreamDef.get_stream_from_iterator(
+        id_stream = IdStreamDef.load_iterator(iter(ids))
+        sitemap_stream = SitemapStreamDef.load_iterator(
             iter(sitemap_ids)
         )
 
@@ -845,8 +845,8 @@ class TestGlobalDocumentGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos)),
+            IdStreamDef.load_iterator(iter(patterns)),
+            InfosStreamDef.load_iterator(iter(infos)),
         ])
         self.assertRaises(StopIteration, _next_doc, gen)
 
@@ -879,10 +879,10 @@ class TestGlobalDocumentGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(infos)),
-            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
-            OutlinksStreamDef.get_stream_from_iterator(iter(outlinks)),
+            IdStreamDef.load_iterator(iter(patterns)),
+            InfosStreamDef.load_iterator(iter(infos)),
+            InlinksStreamDef.load_iterator(iter(inlinks)),
+            OutlinksStreamDef.load_iterator(iter(outlinks)),
         ])
 
         document = _next_doc(gen)

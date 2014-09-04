@@ -119,7 +119,7 @@ def match_sitemap_urls(s3_uri,
     :param tmp_dir: the directory where to save temporary data
     """
     #load crawl information
-    id_stream = IdStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
+    id_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     url_to_id = get_url_to_id_dict_from_stream(id_stream)
     #download sitemaps
 
@@ -139,9 +139,11 @@ def match_sitemap_urls(s3_uri,
         sitemap_only_urls,
         out_of_crawl_domain_urls)
 
-    dataset.persist_to_s3(s3_uri,
-                          first_part_id_size=first_part_id_size,
-                          part_id_size=part_id_size)
+    dataset.persist(
+        s3_uri,
+        first_part_size=first_part_id_size,
+        part_size=part_id_size
+    )
 
     download_metadata = get_download_metadata_from_s3(s3_uri, tmp_dir, force_fetch)
     update_download_status(download_metadata, sitemap_documents)

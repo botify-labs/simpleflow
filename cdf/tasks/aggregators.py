@@ -47,7 +47,7 @@ def compute_aggregators_from_part_id(crawl_id, s3_uri, part_id, tmp_dir=None, fo
     ]
     streams = []
     for s in streams_def:
-        streams.append(s.get_stream_from_s3(s3_uri, part_id=part_id, tmp_dir=tmp_dir, force_fetch=force_fetch))
+        streams.append(s.load(s3_uri, part_id=part_id, tmp_dir=tmp_dir, force_fetch=force_fetch))
 
     aggregator = MetricsAggregator(streams)
     content = json.dumps(aggregator.get())

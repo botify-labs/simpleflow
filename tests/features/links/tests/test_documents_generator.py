@@ -51,9 +51,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+            IdStreamDef.load_iterator(iter(self.patterns)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            InlinksStreamDef.load_iterator(iter(inlinks)),
         ])
 
         document = _next_doc(gen)
@@ -76,9 +76,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+            IdStreamDef.load_iterator(iter(self.patterns)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            InlinksStreamDef.load_iterator(iter(inlinks)),
         ])
 
         document = _next_doc(gen)
@@ -102,9 +102,9 @@ class TestBasicInfoGeneration(unittest.TestCase):
         ]
 
         gen = UrlDocumentGenerator([
-            IdStreamDef.get_stream_from_iterator(iter(self.patterns)),
-            InfosStreamDef.get_stream_from_iterator(iter(self.infos)),
-            InlinksStreamDef.get_stream_from_iterator(iter(inlinks)),
+            IdStreamDef.load_iterator(iter(self.patterns)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            InlinksStreamDef.load_iterator(iter(inlinks)),
         ])
 
         document = _next_doc(gen)

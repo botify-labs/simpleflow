@@ -7,6 +7,7 @@ import tempfile
 import marshal
 
 from urlparse import urlsplit, parse_qs
+from cdf.core.streams.utils import split_file
 
 from cdf.log import logger
 
@@ -155,7 +156,7 @@ class FileStreamFactory(object):
                                with each field correctly casted.
 
         """
-        return self.stream_def.get_stream_from_file(input_file)
+        return self.stream_def.load_iterator(split_file(input_file))
 
     def get_stream(self):
         """:returns: generator -- the desired generator"""

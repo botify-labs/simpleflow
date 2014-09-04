@@ -49,9 +49,11 @@ class TestComputeMetadataCount(unittest.TestCase):
             (1, 4, notset_hash_value, "not set h2"),
             (2, 1, fake_hash, "foo title 2")
         ]
-        ContentsStreamDef.persist_part_to_s3(iter(contents),
-                                             self.s3_uri,
-                                             part_id=part_id)
+        ContentsStreamDef.persist(
+            iter(contents),
+            self.s3_uri,
+            part_id=part_id
+        )
 
         #actual call
         file_uri = compute_metadata_count(self.s3_uri, part_id)
@@ -71,7 +73,7 @@ class TestComputeMetadataCount(unittest.TestCase):
             [1, 3, 2],
             [2, 1, 1]
         ]
-        actual_stream = ContentsCountStreamDef.get_stream_from_s3(
+        actual_stream = ContentsCountStreamDef.load(
             self.s3_uri,
             tmp_dir=self.tmp_dir,
             part_id=part_id
@@ -106,10 +108,12 @@ class TestComputeMetadataDuplicateFile(unittest.TestCase):
             (8, 4, string_to_int32("description1"), "description1"),
             (9, 4, string_to_int32("description1"), "description1")
         ]
-        ContentsStreamDef.persist_to_s3(iter(contents),
-                                        self.s3_uri,
-                                        first_part_id_size=first_part_size,
-                                        part_id_size=part_size)
+        ContentsStreamDef.persist(
+            iter(contents),
+            self.s3_uri,
+            first_part_size=first_part_size,
+            part_size=part_size
+        )
 
         output_files = make_metadata_duplicates_file(
             self.crawl_id,
@@ -124,7 +128,7 @@ class TestComputeMetadataDuplicateFile(unittest.TestCase):
         ]
         self.assertItemsEqual(expected_output_files, output_files)
 
-        duplicate_stream = ContentsDuplicateStreamDef.get_stream_from_s3(
+        duplicate_stream = ContentsDuplicateStreamDef.load(
             self.s3_uri,
             tmp_dir=self.tmp_dir
         )

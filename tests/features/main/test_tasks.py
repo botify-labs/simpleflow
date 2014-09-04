@@ -35,7 +35,7 @@ class TestComputeZones(unittest.TestCase):
             (2, "https", "foo.com", "/bar"),
             (9, "https", "foo.com", "/baz")
         ])
-        IdStreamDef.persist_part_to_s3(ids, self.s3_uri, part_id=0)
+        IdStreamDef.persist(ids, self.s3_uri, part_id=0)
 
         #create urlinfos
         contents = iter([
@@ -43,7 +43,7 @@ class TestComputeZones(unittest.TestCase):
             (2, 0, "text/html", 0, 0, 0, 0, 0, 0, "fr"),
             (9, 0, "text/html", 0, 0, 0, 0, 0, 0, "fr")
         ])
-        InfosStreamDef.persist_part_to_s3(contents, self.s3_uri, part_id=0)
+        InfosStreamDef.persist(contents, self.s3_uri, part_id=0)
 
         #actual computation
         part_id = 0
@@ -54,9 +54,11 @@ class TestComputeZones(unittest.TestCase):
         expected_document_uri = "{}/zones.txt.{}.gz".format(self.s3_uri, part_id)
         self.assertEqual(expected_document_uri, document_uri)
 
-        zone_stream = ZoneStreamDef.get_stream_from_s3(self.s3_uri,
-                                                       tmp_dir=self.tmp_dir,
-                                                       part_id=part_id)
+        zone_stream = ZoneStreamDef.load(
+            self.s3_uri,
+            tmp_dir=self.tmp_dir,
+            part_id=part_id
+        )
         expected_zone_stream = [
             [1, 'en-US,http'],
             [2, 'fr,https'],
@@ -79,7 +81,9 @@ class TestComputeZones(unittest.TestCase):
         expected_document_uri = "{}/zones.txt.{}.gz".format(self.s3_uri, part_id)
         self.assertEqual(expected_document_uri, document_uri)
 
-        zone_stream = ZoneStreamDef.get_stream_from_s3(self.s3_uri,
-                                                       tmp_dir=self.tmp_dir,
-                                                       part_id=part_id)
+        zone_stream = ZoneStreamDef.load(
+            self.s3_uri,
+            tmp_dir=self.tmp_dir,
+            part_id=part_id
+        )
         self.assertEqual([], list(zone_stream))
