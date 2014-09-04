@@ -14,11 +14,6 @@ from cdf.analysis.urls.utils import get_part_id
 from cdf.query.constants import FIELD_RIGHTS
 
 
-def is_s3_uri(uri):
-    """Test if a uri represents a s3 uri"""
-    return uri.startswith('s3://')
-
-
 class AbstractAttribute(object):
     def __init__(self, name):
         self.name = name
@@ -86,7 +81,7 @@ class StreamDefBase(object):
         :return: stream
         :rtype: stream
         """
-        if is_s3_uri(uri):
+        if s3.is_s3_uri(uri):
             return cls._get_stream_from_s3(
                 uri,
                 tmp_dir=tmp_dir,
@@ -117,7 +112,7 @@ class StreamDefBase(object):
         :return: stream
         :rtype: stream
         """
-        if is_s3_uri(path):
+        if s3.is_s3_uri(path):
             return cls._get_stream_from_s3_path(
                 path,
                 tmp_dir=tmp_dir,
@@ -156,7 +151,7 @@ class StreamDefBase(object):
         :return: a list of persisted file paths
         :rtype: list
         """
-        if is_s3_uri(uri):
+        if s3.is_s3_uri(uri):
             # s3 uri
             if part_id is None:
                 # persist into partitions
@@ -427,5 +422,3 @@ class TemporaryDataset(object):
             first_part_size=first_part_size,
             part_size=part_size
         )
-
-StreamDefBase.FILE
