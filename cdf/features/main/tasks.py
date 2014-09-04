@@ -220,12 +220,14 @@ def compute_zones(s3_uri,
     id_stream = IdStreamDef.load(
         s3_uri,
         tmp_dir=tmp_dir,
-        part_id=part_id
+        part_id=part_id,
+        force_fetch=force_fetch
     )
     info_stream = InfosStreamDef.load(
         s3_uri,
         tmp_dir=tmp_dir,
-        part_id=part_id
+        part_id=part_id,
+        force_fetch=force_fetch
     )
     s3_destination = ZoneStreamDef.persist(
         generate_zone_stream(id_stream, info_stream),

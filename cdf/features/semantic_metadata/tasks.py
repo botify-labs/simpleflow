@@ -39,7 +39,7 @@ def compute_metadata_count(s3_uri, part_id, tmp_dir=None):
 
 def to_string(row):
     """Format a row from get_duplicate_metadata() so that
-    it can be processed by persist_to_s3()
+    it can be processed by persist()
     It transforms the booleans in integer
     and the lists in strings.
     """
@@ -58,7 +58,11 @@ def make_metadata_duplicates_file(crawl_id, s3_uri,
                                   tmp_dir=None,
                                   force_fetch=DEFAULT_FORCE_FETCH):
     logger.info('Fetching contents stream from S3')
-    contents_stream = ContentsStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    contents_stream = ContentsStreamDef.load(
+        s3_uri,
+        tmp_dir=tmp_dir,
+        force_fetch=force_fetch
+    )
     generator = get_duplicate_metadata(contents_stream)
     generator = itertools.imap(to_string, generator)
     files = ContentsDuplicateStreamDef.persist(
@@ -88,14 +92,20 @@ def make_zone_aware_metadata_duplicates_file(s3_uri,
     :param force_fetch: if True, the files will be downloaded from s3
     """
     logger.info('Fetching contents stream from S3')
-    contents_stream = ContentsStreamDef.get_stream_from_s3(
+    contents_stream = ContentsStreamDef.load(
         s3_uri,
-        tmp_dir=tmp_dir
+        tmp_dir=tmp_dir,
+        force_fetch=force_fetch
     )
-    zone_stream = ZoneStreamDef.get_stream_from_s3(s3_uri, tmp_dir=tmp_dir)
-    strategic_urls_stream = StrategicUrlStreamDef.get_stream_from_s3(
+    zone_stream = ZoneStreamDef.load(
         s3_uri,
-        tmp_dir=tmp_dir
+        tmp_dir=tmp_dir,
+        force_fetch=force_fetch
+    )
+    strategic_urls_stream = StrategicUrlStreamDef.load(
+        s3_uri,
+        tmp_dir=tmp_dir,
+        force_fetch=force_fetch
     )
 
     generator = get_zone_aware_duplicate_metadata(
@@ -104,8 +114,10 @@ def make_zone_aware_metadata_duplicates_file(s3_uri,
         strategic_urls_stream
     )
     generator = itertools.imap(to_string, generator)
-    files = ContentsZoneAwareDuplicateStreamDef.persist_to_s3(generator,
-                                                              s3_uri,
-                                                              first_part_id_size,
-                                                              part_id_size)
+    files = ContentsZoneAwareDuplicateStreamDef.persist(
+        generator,
+        s3_uri,
+        first_part_size=first_part_id_size,
+        part_size=part_id_size
+    )
     return files
