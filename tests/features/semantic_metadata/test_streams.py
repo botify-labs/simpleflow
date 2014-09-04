@@ -21,13 +21,32 @@ class TestGetDuplicateDocumentMapping(unittest.TestCase):
                                                         order_seed)
         expected_result = {
             'metadata.title.foo_duplicate.nb': {
-                'type': 'integer', 'verbose_name': 'Number of foo duplicate Title', 'order': 100, 'settings': set(['es:doc_values', 'agg:categorical', 'agg:numerical'])
+                'type': 'integer',
+                'verbose_name': 'Number of foo duplicate Title',
+                'order': 100,
+                'settings': set([
+                    'es:doc_values',
+                    'agg:categorical',
+                    'agg:numerical'
+                ])
             },
             'metadata.title.foo_duplicate.is_first': {
-                'type': 'boolean', 'verbose_name': 'First foo duplicate Title found', 'order': 120
+                'type': 'boolean',
+                'verbose_name':
+                'First foo duplicate Title found',
+                'order': 120
             },
             'metadata.title.foo_duplicate.urls': {
-                'type': 'integer', 'verbose_name': 'Pages with the same Title', 'order': 110, 'settings': set(['es:no_index', 'url_id', 'list', RENDERING.URL_STATUS, FIELD_RIGHTS.SELECT])
+                'type': 'integer',
+                'verbose_name': 'Pages with the same Title',
+                'order': 110,
+                'settings': set([
+                    'es:no_index',
+                    'url_id',
+                    'list',
+                    RENDERING.URL_STATUS,
+                    FIELD_RIGHTS.SELECT
+                ])
             },
             'metadata.title.foo_duplicate.urls_exists': {
                 'default_value': None, 'type': 'boolean'
