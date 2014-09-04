@@ -137,7 +137,17 @@ def _make_fields_private(mapping):
     for field in mapping.itervalues():
         if "settings" not in field:
             field["settings"] = set()
-        field["settings"].add(FIELD_RIGHTS.PRIVATE)
+
+        #remove existing field rights
+        settings = field["settings"]
+        existing_field_rights = [
+            elt for elt in settings if isinstance(elt, FIELD_RIGHTS)
+        ]
+        for field_right in existing_field_rights:
+            settings.remove(field_right)
+
+        #add private right
+        settings.add(FIELD_RIGHTS.PRIVATE)
     return mapping
 
 

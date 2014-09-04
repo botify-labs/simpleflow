@@ -50,7 +50,7 @@ class TestMakeFieldsPrivate(unittest.TestCase):
 
         actual_result = _make_fields_private(input_mapping)
         self.assertEquals(
-            set([ES_NO_INDEX, FIELD_RIGHTS.SELECT, FIELD_RIGHTS.PRIVATE]),
+            set([ES_NO_INDEX, FIELD_RIGHTS.PRIVATE]),
             actual_result["foo"]["settings"]
         )
         self.assertTrue(
