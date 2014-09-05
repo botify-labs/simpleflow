@@ -1,8 +1,22 @@
+import os
 import requests
 
 from oauth2client.client import AccessTokenCredentials
 
 from cdf.core.settings import GOOGLE_OAUTH2_KEY, GOOGLE_OAUTH2_SECRET
+from cdf.exceptions import ConfigurationError
+
+
+def get_botify_api_token():
+    """Returns the Botify API token.
+    This token should be inserted in the http request headers
+    for every request to the Botify API.
+    :returns: int
+    :raises: EnvironmentError
+    """
+    if "BOTIFY_API_TOKEN" not in os.environ:
+        raise ConfigurationError("Missing environment variable: 'BOTIFY_API_TOKEN'")
+    return os.environ["BOTIFY_API_TOKEN"]
 
 
 def get_credentials(access_token, refresh_token=None):

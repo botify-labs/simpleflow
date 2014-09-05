@@ -1,14 +1,17 @@
 import unittest
 import mock
+import httpretty
 
+from cdf.exceptions import ApiError, ApiFormatError
 from cdf.core.features import Feature
 from cdf.core.insights import Insight, InsightTrendPoint, InsightValue
 from cdf.query.filter import EqFilter
 from cdf.query.query import Query
 from cdf.tasks.insights import (get_query_agg_result,
-                                get_features,
                                 compute_insight_value,
-                                compute_insight_values)
+                                compute_insight_values,
+                                get_api_address,
+                                get_feature_options)
 
 
 class TestGetQueryAggResult(unittest.TestCase):
@@ -39,7 +42,7 @@ class TestComputeInsightValue(unittest.TestCase):
             EqFilter("foo_field", 1001)
         )
         feature_name = "feature"
-        crawls = [1001, 2008]
+        crawls = {1001: {}, 2008: {}}
         es_location = "http://elasticsearch.com"
         es_index = "es_index"
 
@@ -57,9 +60,7 @@ class TestComputeInsightValue(unittest.TestCase):
         ]
         expected_result = InsightValue(insight, feature_name, expected_trend)
 
-        self.assertEqual(expected_result.to_dict().values(),
-                         actual_result.to_dict().values())
-        self.assertEqual(expected_result.to_dict(), actual_result.to_dict())
+        self.assertDictEqual(expected_result.to_dict(), actual_result.to_dict())
 
         #check the calls to Query.__init__()
         expected_query_calls = [
@@ -69,31 +70,10 @@ class TestComputeInsightValue(unittest.TestCase):
         self.assertEqual(expected_query_calls, query_mock.mock_calls)
 
 
-@mock.patch("cdf.tasks.insights.Feature.get_features")
-class TestGetFeatures(unittest.TestCase):
-    def setUp(self):
-        self.features = [
-            Feature("foo", "Foo", "this is foo", None),
-            Feature("bar", "Bar", "this is bar", None),
-            Feature("baz", "Baz", "this is baz", None)
-        ]
-
-    def test_nominal_case(self, get_features_mock):
-        get_features_mock.return_value = self.features
-        actual_result = get_features(["foo", "baz"])
-        self.assertEqual(["foo", "baz"],
-                         [feature.identifier for feature in actual_result])
-
-    def test_unexisting_feature(self, get_features_mock):
-        get_features_mock.return_value = self.features
-        self.assertRaises(ValueError,
-                          get_features,
-                          ["qux"])
-
-
 class TestComputeInsightValues(unittest.TestCase):
+    @mock.patch.object(Feature, 'get_features')
     @mock.patch("cdf.tasks.insights.compute_insight_value", autospec=True)
-    def test_nominal_case(self, compute_insight_value_mock):
+    def test_nominal_case(self, compute_insight_value_mock, get_features_mock):
 
         #we don't really care about the result
         compute_insight_value_mock.return_value = InsightValue(None, "", [])
@@ -110,13 +90,13 @@ class TestComputeInsightValues(unittest.TestCase):
         feature2.name = "feature2"
         feature2.get_insights.return_value = [insight2, insight3]
 
-        crawls = [(1001, "13-08-2014")]
-        features = [feature1, feature2]
+        get_features_mock.return_value = [feature1, feature2]
+
+        crawls = {1001: {}}
         es_location = "http://elasticsearch.com"
         es_index = "botify"
 
         actual_result = compute_insight_values(crawls,
-                                               features,
                                                es_location,
                                                es_index)
         #check results
@@ -131,3 +111,70 @@ class TestComputeInsightValues(unittest.TestCase):
         ]
 
         self.assertEqual(expected_calls, compute_insight_value_mock.mock_calls)
+
+
+class TestGetApiAddress(unittest.TestCase):
+    def test_nominal_case(self):
+        crawl_endpoint = "http://api.staging.botify.com/crawls/1540/revisions/1568/"
+        self.assertEquals(
+            "http://api.staging.botify.com",
+            get_api_address(crawl_endpoint)
+        )
+
+
+@mock.patch("cdf.tasks.insights.get_botify_api_token", autospec=True)
+class TestGetFeatureOptions(unittest.TestCase):
+    def setUp(self):
+        self.api_address = "http://api.foo.com"
+
+    @httpretty.activate
+    def test_nominal_case(self, get_botify_api_token_mock):
+        #mocking
+        get_botify_api_token_mock.return_value = "foo"
+        httpretty.register_uri(httpretty.GET,
+                               "http://api.foo.com/crawls/1001/",
+                               body='{"features": {"option1": true}}',
+                               content_type="application/json")
+        httpretty.register_uri(httpretty.GET,
+                               "http://api.foo.com/crawls/2008/",
+                               body='{"features": {"option1": false}}',
+                               content_type="application/json")
+
+        crawl_ids = [1001, 2008]
+        actual_result = get_feature_options(self.api_address, crawl_ids)
+        expected_result = {
+            1001: {"option1": True},
+            2008: {"option1": False}
+        }
+        self.assertEquals(expected_result, actual_result)
+
+
+    @httpretty.activate
+    def test_api_error(self, get_botify_api_token_mock):
+        get_botify_api_token_mock.return_value = "foo"
+        httpretty.register_uri(httpretty.GET,
+                               "http://api.foo.com/crawls/1001/",
+                               status=500)
+        crawl_ids = [1001]
+        self.assertRaises(
+            ApiError,
+            get_feature_options,
+            self.api_address,
+            crawl_ids
+        )
+
+    @httpretty.activate
+    def test_missing_features(self, get_botify_api_token_mock):
+        get_botify_api_token_mock.return_value = "foo"
+        httpretty.register_uri(httpretty.GET,
+                               "http://api.foo.com/crawls/1001/",
+                               body='{}',
+                               content_type="application/json")
+        crawl_ids = [1001]
+        self.assertRaises(
+            ApiFormatError,
+            get_feature_options,
+            self.api_address,
+            crawl_ids
+        )
+

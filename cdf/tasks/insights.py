@@ -1,8 +1,11 @@
 import json
-
+from urlparse import urlparse, urljoin
+import requests
 from elasticsearch import Elasticsearch
 
+from cdf.exceptions import ApiError, ApiFormatError
 from cdf.utils.s3 import push_content
+from cdf.utils.auth import get_botify_api_token
 from cdf.query.query import Query
 from cdf.core.features import Feature
 from cdf.core.insights import InsightValue, InsightTrendPoint
@@ -48,8 +51,8 @@ def compute_insight_value(insight,
     :type insight: Insight
     :param feature_name: the name of the feature associated with the insight
     :type feature_name: str
-    :param crawls: the list of crawl ids to use to compute the insights.
-    :type crawls: list
+    :param crawls: a dict crawl_id -> feature options for the crawls to process.
+    :type crawls: dict
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -62,7 +65,8 @@ def compute_insight_value(insight,
     #TODO check if using 0 is ok.
     revision_number = 0
     trend = []
-    for crawl_id in crawls:
+    for crawl_id, feature_options in sorted(crawls.items()):
+        #TODO use feature_options in Query constructor
         query = Query(es_location,
                       es_index,
                       es_doc_type,
@@ -75,33 +79,10 @@ def compute_insight_value(insight,
     return InsightValue(insight, feature_name, trend)
 
 
-def get_features(feature_names):
-    """Return the list of features given their names
-    :param feature_names: the feature names as a list of strings
-    :type feature_names: list
-    :returns: list - a list of Feature objects
-    :raises: ValueError - if a feature is missing
-    """
-    result = [feature for feature in Feature.get_features() if
-              feature.identifier in feature_names]
-    if len(result) != len(set(feature_names)):
-        missing_feature_names = set.difference(
-            set(feature_names),
-            [f.identifier for f in Feature.get_features()]
-        )
-        raise ValueError(
-            "Features: {} were not found".format(missing_feature_names)
-        )
-    return result
-
-
-def compute_insight_values(crawls, features, es_location, es_index):
+def compute_insight_values(crawls, es_location, es_index):
     """Compute the insight values for a set of crawl ids and a set of features.
-    :param crawls: the list of crawl ids to use to compute the insights.
-    :type crawls: list
-    :param features: the list of Feature objects
-                     for which to compute the insights.
-    :type feature: list
+    :param crawls: a dict crawl_id -> feature options for the crawls to process.
+    :type crawls: dict
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -111,7 +92,7 @@ def compute_insight_values(crawls, features, es_location, es_index):
     :returns: list - a list of InsightValue
     """
     result = []
-    for feature in features:
+    for feature in Feature.get_features():
         for insight in feature.get_insights():
             insight_value = compute_insight_value(insight,
                                                   feature.name,
@@ -124,7 +105,6 @@ def compute_insight_values(crawls, features, es_location, es_index):
 
 @with_temporary_dir
 def compute_insights(crawls,
-                     feature_names,
                      es_location,
                      es_index,
                      s3_uri,
@@ -132,12 +112,8 @@ def compute_insights(crawls,
                      force_fetch=False):
     """A task to compute the insights and push their values to s3
     as a json file.
-    :param crawls: the list of crawl ids to use to compute the insights.
-    :type crawls: list
-    :param feature_names: the list of feature names
-                          for which to compute the insights.
-                          For instance : ["main", "semantic_metadata"]
-    :type feature_names: list
+    :param crawls: a dict crawl_id -> feature options
+    :type crawls: dict
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -153,8 +129,7 @@ def compute_insights(crawls,
     :type force_fetch: bool
     :returns: str - the uri of the generated json document
     """
-    features = get_features(feature_names)
-    result = compute_insight_values(crawls, features, es_location, es_index)
+    result = compute_insight_values(crawls, es_location, es_index)
 
     destination_uri = "{}/precomputation/insights.json".format(s3_uri)
     push_content(
@@ -162,3 +137,48 @@ def compute_insights(crawls,
         json.dumps([insight_value.to_dict() for insight_value in result])
     )
     return destination_uri
+
+
+def get_api_address(crawl_endpoint):
+    """Return the API address given the API crawl endpoit.
+    This function is somehow a hack made necessary
+    by the fact that the analysis context does not contain the API address
+    :param crawl_endpoint: the crawl endpoint (ex: http://api.staging.botify.com/crawls/1540/revisions/1568/)
+    :type crawl_endpoint: str
+    :returns: str
+    """
+    parsed_url = urlparse(crawl_endpoint)
+    return "{}://{}".format(parsed_url.scheme, parsed_url.netloc)
+
+
+def get_feature_options(api_address, crawl_ids):
+    """Return the feature options corresponding to a list of crawl ids.
+    Feature options are retrieved through the API.
+    :param api_address: the API address (ex: http://api.botify.com"
+    :type api_address: str
+    :param crawl_ids: the list of crawl ids to consider as a list of ints.
+    :type crawl_ids: list
+    :returns: dict - a dict crawl_id -> feature_options
+    :raises: ApiError - if one API call fails
+    :raises: ApiFormatError - if one API answer does not have the expected format.
+    :raises: ConfigurationError - if there was an error when getting authentication token.
+    """
+    result = {}
+    headers = {
+    "Authorization": "Token {}".format(get_botify_api_token())
+    }
+    for crawl_id in crawl_ids:
+        endpoint = urljoin(api_address, "crawls/{}/".format(crawl_id))
+        r = requests.get(endpoint, headers=headers)
+        if not r.ok:
+            raise ApiError("{}: {}".format(r.status_code, r.reason))
+        if "features" not in r.json():
+            raise ApiFormatError(
+                "'features' entry is missing in '{}'".format(r.json())
+            )
+        #NB this is not exactly the feature options
+        #as we get them in the context.
+        #but it should be ok.
+        feature_options = r.json()["features"]
+        result[crawl_id] = feature_options
+    return result
