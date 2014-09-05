@@ -18,6 +18,10 @@ class BotifyQueryException(Exception):
     pass
 
 
+class ConfigurationError(Exception):
+    pass
+
+
 class ApiError(Exception):
     pass
 

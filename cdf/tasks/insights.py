@@ -1,11 +1,11 @@
 import json
-
 from urlparse import urlparse, urljoin
 import requests
 from elasticsearch import Elasticsearch
 
 from cdf.exceptions import ApiError, ApiFormatError
 from cdf.utils.s3 import push_content
+from cdf.utils.auth import get_botify_api_token
 from cdf.query.query import Query
 from cdf.core.features import Feature
 from cdf.core.insights import InsightValue, InsightTrendPoint
@@ -161,11 +161,15 @@ def get_feature_options(api_address, crawl_ids):
     :returns: dict - a dict crawl_id -> feature_options
     :raises: ApiError - if one API call fails
     :raises: ApiFormatError - if one API answer does not have the expected format.
+    :raises: ConfigurationError - if there was an error when getting authentication token.
     """
     result = {}
+    headers = {
+    "Authorization": "Token {}".format(get_botify_api_token())
+    }
     for crawl_id in crawl_ids:
         endpoint = urljoin(api_address, "crawls/{}/".format(crawl_id))
-        r = requests.get(endpoint)
+        r = requests.get(endpoint, headers=headers)
         if not r.ok:
             raise ApiError("{}: {}".format(r.status_code, r.reason))
         if "features" not in r.json():

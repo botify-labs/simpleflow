@@ -121,13 +121,16 @@ class TestGetApiAddress(unittest.TestCase):
             get_api_address(crawl_endpoint)
         )
 
+
+@mock.patch("cdf.tasks.insights.get_botify_api_token", autospec=True)
 class TestGetFeatureOptions(unittest.TestCase):
     def setUp(self):
         self.api_address = "http://api.foo.com"
 
     @httpretty.activate
-    def test_nominal_case(self):
+    def test_nominal_case(self, get_botify_api_token_mock):
         #mocking
+        get_botify_api_token_mock.return_value = "foo"
         httpretty.register_uri(httpretty.GET,
                                "http://api.foo.com/crawls/1001/",
                                body='{"features": {"option1": true}}',
@@ -147,7 +150,8 @@ class TestGetFeatureOptions(unittest.TestCase):
 
 
     @httpretty.activate
-    def test_api_error(self):
+    def test_api_error(self, get_botify_api_token_mock):
+        get_botify_api_token_mock.return_value = "foo"
         httpretty.register_uri(httpretty.GET,
                                "http://api.foo.com/crawls/1001/",
                                status=500)
@@ -160,7 +164,8 @@ class TestGetFeatureOptions(unittest.TestCase):
         )
 
     @httpretty.activate
-    def test_missing_features(self):
+    def test_missing_features(self, get_botify_api_token_mock):
+        get_botify_api_token_mock.return_value = "foo"
         httpretty.register_uri(httpretty.GET,
                                "http://api.foo.com/crawls/1001/",
                                body='{}',
