@@ -6,6 +6,7 @@ from cdf.query.datamodel import (
     _render_field_to_end_user
 )
 from cdf.query.constants import RENDERING, FIELD_RIGHTS
+from cdf.query.datamodel import _make_fields_private
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 
 
@@ -125,3 +126,26 @@ class ComparisonTestCase(unittest.TestCase):
 
         fields_verbose = [f['name'] for f in fields]
         self.assertIn('Previous Http Code', fields_verbose)
+
+
+class TestMakeFieldsPrivate(unittest.TestCase):
+    def test_nominal_case(self):
+        input_mapping = {
+            "foo": {
+                "verbose_name": "I am foo",
+                "settings": set([ES_NO_INDEX, FIELD_RIGHTS.SELECT])
+            },
+            "bar": {
+                "verbose_name": "I am bar",
+            }
+        }
+
+        actual_result = _make_fields_private(input_mapping)
+        self.assertEquals(
+            set([ES_NO_INDEX, FIELD_RIGHTS.PRIVATE]),
+            actual_result["foo"]["settings"]
+        )
+        self.assertTrue(
+            set([FIELD_RIGHTS.PRIVATE]),
+            actual_result["bar"]["settings"]
+        )

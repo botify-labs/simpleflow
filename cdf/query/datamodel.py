@@ -108,3 +108,27 @@ def get_groups(features_options):
             if group.name in allowed_groups:
                 groups.append({'id': group.name, 'name': group.value})
     return groups
+
+
+def _make_fields_private(mapping):
+    """Make all the field of the mapping private
+    :param mapping: input mapping as a dict field_name -> parameter dict
+    :type mapping: dict
+    :returns: dict - the modified mapping
+    """
+    for field in mapping.itervalues():
+        if "settings" not in field:
+            field["settings"] = set()
+
+        #remove existing field rights
+        settings = field["settings"]
+        existing_field_rights = [
+            elt for elt in settings if isinstance(elt, FIELD_RIGHTS)
+        ]
+        for field_right in existing_field_rights:
+            settings.remove(field_right)
+
+        #add private right
+        settings.add(FIELD_RIGHTS.PRIVATE)
+    return mapping
+

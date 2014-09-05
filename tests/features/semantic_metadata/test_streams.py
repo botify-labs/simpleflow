@@ -2,9 +2,9 @@ import unittest
 
 from cdf.query.constants import RENDERING
 from cdf.features.semantic_metadata.streams import (
-    _get_duplicate_document_mapping,
-    _make_fields_private
+    _get_duplicate_document_mapping
 )
+from cdf.query.datamodel import _make_fields_private
 from cdf.metadata.url.url_metadata import ES_NO_INDEX
 from cdf.query.constants import FIELD_RIGHTS
 

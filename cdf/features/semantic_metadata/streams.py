@@ -6,6 +6,7 @@ from cdf.metadata.url.url_metadata import (
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
 from cdf.query.constants import RENDERING, FIELD_RIGHTS
+from cdf.query.datamodel import _make_fields_private
 
 
 def _raw_to_bool(string):
@@ -126,29 +127,6 @@ def _get_duplicate_document_mapping(metadata_list,
         }
 
     return result
-
-
-def _make_fields_private(mapping):
-    """Make all the field of the mapping private
-    :param mapping: input mapping as a dict field_name -> parameter dict
-    :type mapping: dict
-    :returns: dict - the modified mapping
-    """
-    for field in mapping.itervalues():
-        if "settings" not in field:
-            field["settings"] = set()
-
-        #remove existing field rights
-        settings = field["settings"]
-        existing_field_rights = [
-            elt for elt in settings if isinstance(elt, FIELD_RIGHTS)
-        ]
-        for field_right in existing_field_rights:
-            settings.remove(field_right)
-
-        #add private right
-        settings.add(FIELD_RIGHTS.PRIVATE)
-    return mapping
 
 
 #the headers to use for duplicate stream defs
