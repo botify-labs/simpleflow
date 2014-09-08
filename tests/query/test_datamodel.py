@@ -83,6 +83,7 @@ class FieldsTestCase(unittest.TestCase):
 
         self.assertEquals(
             data_model['delay'],
+
             {
                 "value": "delay",
                 "name": "Delay",
