@@ -24,22 +24,12 @@ class TestComparisonMapping(unittest.TestCase):
         result = format['previous.outer.inner'][group_key]
 
         self.assertEqual(result, expected_group)
-        self.assertEqual(format['outer.inner'][group_key], 'important')
+        self.assertNotIn('outer.inner', format)
 
     def test_comparison_mapping(self):
         format = get_comparison_data_format(self.mapping, self.extras)
         result = ElasticSearchBackend(format).mapping()
         expected = {
-            'outer': {
-                'properties': {
-                    'inner': {
-                        'type': 'boolean',
-                    }
-                }
-            },
-            'exists': {
-                'type': 'boolean'
-            },
             'previous_exists': {
                 'type': 'boolean'
             },

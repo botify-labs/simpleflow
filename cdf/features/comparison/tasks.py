@@ -199,14 +199,13 @@ def get_comparison_data_format(data_format, extras=EXTRA_FIELDS_FORMAT):
 
     :param data_format: original internal data format
     :param extras: extra fields to be added for comparison feature
-    :return: mutated data_format for comparison
+    :return: comparison's additional data format, to be merged with
+        original data format
     """
     previous_format = {
         _transform_comparison_field(k): _transform_comparison_config(v)
         for k, v in data_format.iteritems()
     }
-    format = copy.deepcopy(data_format)
-    format.update(previous_format)
-    format.update(extras)
+    previous_format.update(extras)
 
-    return format
+    return previous_format
