@@ -82,6 +82,7 @@ class TestInsightValue(unittest.TestCase):
                                      "foo_feature",
                                      trend)
         expected_dict = {
+            "identifier": "foo",
             "name": "Foo insight",
             "feature": "foo_feature",
             "query":  {

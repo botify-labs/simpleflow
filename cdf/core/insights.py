@@ -58,6 +58,7 @@ class InsightValue(object):
         :returns: dict
         """
         return {
+            "identifier": self.insight.identifier,
             "name": self.insight.name,
             "feature": self.feature_name,
             "query": self.insight.query,
