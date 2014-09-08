@@ -177,15 +177,33 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
     new_db.destroy()
 
 
+def _transform_comparison_field(field):
+    return 'previous.' + field
+
+
+def _transform_comparison_config(config):
+    config = copy.deepcopy(config)
+    group = config.get('group', '')
+    if group is not '':
+        group = 'previous.' + group
+        config['group'] = group
+    return config
+
+
 def get_comparison_data_format(data_format, extras=EXTRA_FIELDS_FORMAT):
-    """Prepare ElasticSearch mapping for comparison feature
+    """Prepare internal data format for comparison feature
+
+    Create `previous` fields.
+    Also need to create new groups
+        1. `Previous.xxx` group
 
     :param data_format: original internal data format
-    :param extras: extra fields to be added
+    :param extras: extra fields to be added for comparison feature
     :return: mutated data_format for comparison
     """
     previous_format = {
-        'previous.' + k: v for k, v in data_format.iteritems()
+        _transform_comparison_field(k): _transform_comparison_config(v)
+        for k, v in data_format.iteritems()
     }
     format = copy.deepcopy(data_format)
     format.update(previous_format)
