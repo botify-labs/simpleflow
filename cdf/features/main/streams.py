@@ -12,6 +12,7 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 from cdf.query.constants import FIELD_RIGHTS, RENDERING
+from cdf.core.metadata import make_fields_private
 
 __all__ = ["IdStreamDef", "InfosStreamDef", "SuggestStreamDef"]
 
@@ -324,15 +325,17 @@ class ZoneStreamDef(StreamDefBase):
         ('id', int),
         ('zone', str)
     )
-    URL_DOCUMENT_MAPPING = {
-        "zone": {
-            "verbose_name": "Zone",
-            "type": STRING_TYPE,
-            "settings": {
-                ES_NOT_ANALYZED
+    URL_DOCUMENT_MAPPING = make_fields_private(
+        {
+            "zone": {
+                "verbose_name": "Zone",
+                "type": STRING_TYPE,
+                "settings": {
+                    ES_NOT_ANALYZED
+                }
             }
         }
-    }
+    )
 
     def process_document(self, document, stream):
         _, zone = stream
@@ -350,48 +353,50 @@ class StrategicUrlStreamDef(StreamDefBase):
         ('strategic', cast_bool),  # is this url SEO strategic
         ('reason', int)  # why this url is NOT SEO strategic
     )
-    URL_DOCUMENT_MAPPING = {
-        "strategic.is_strategic": {
-            "verbose_name": "Strategic url",
-            "type": BOOLEAN_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL
-            }
-        },
-        "strategic.reason.http_code": {
-            "verbose_name": "Non strategic reason: bad http code",
-            "type": BOOLEAN_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL
-            }
-        },
-        "strategic.reason.content_type": {
-            "verbose_name": "Non strategic reason: bad content type",
-            "type": BOOLEAN_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL
-            }
-        },
-        "strategic.reason.noindex": {
-            "verbose_name": "Non strategic reason: url is of no-index",
-            "type": BOOLEAN_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL
-            }
-        },
-        "strategic.reason.canonical": {
-            "verbose_name": "Non strategic reason: url has non self-canonical",
-            "type": BOOLEAN_TYPE,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_CATEGORICAL
+    URL_DOCUMENT_MAPPING = make_fields_private(
+        {
+            "strategic.is_strategic": {
+                "verbose_name": "Strategic url",
+                "type": BOOLEAN_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_CATEGORICAL,
+                }
+            },
+            "strategic.reason.http_code": {
+                "verbose_name": "Non strategic reason: bad http code",
+                "type": BOOLEAN_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_CATEGORICAL
+                }
+            },
+            "strategic.reason.content_type": {
+                "verbose_name": "Non strategic reason: bad content type",
+                "type": BOOLEAN_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_CATEGORICAL
+                }
+            },
+            "strategic.reason.noindex": {
+                "verbose_name": "Non strategic reason: url is of no-index",
+                "type": BOOLEAN_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_CATEGORICAL
+                }
+            },
+            "strategic.reason.canonical": {
+                "verbose_name": "Non strategic reason: url has non self-canonical",
+                "type": BOOLEAN_TYPE,
+                "settings": {
+                    ES_DOC_VALUE,
+                    AGG_CATEGORICAL
+                }
             }
         }
-    }
+    )
 
     def process_document(self, document, stream):
         _, is_strategic, mask = stream
