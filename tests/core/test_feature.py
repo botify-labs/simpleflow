@@ -8,18 +8,19 @@ from cdf.core.features import Feature
 from cdf.core.streams.base import StreamDefBase
 
 
+enable_func = lambda option: option is not None and option.get('enable', False)
+
+
 class TestOneStreamDef(StreamDefBase):
     FILE = 'test_one'
     HEADERS = (
         ('id', int),
         ('url', str)
     )
+    URL_DOCUMENT_DEFAULT_GROUP = 'toto'
     URL_DOCUMENT_MAPPING = {
         'url': {
             'something': 'url_configs'
-        },
-        'delay': {
-            'something': 'delay_configs'
         }
     }
 
@@ -32,7 +33,7 @@ class TestTwoStreamDef(StreamDefBase):
     )
     URL_DOCUMENT_MAPPING = {
         'enable': {
-            'enabled': lambda option: option is not None and option.get('enable', False)
+            'enabled': enable_func
         },
     }
 
@@ -53,9 +54,19 @@ class TestDataFormatGeneration(unittest.TestCase):
             feature_options=options,
             available_features=[self.feature1, self.feature2]
         )
-        expected = TestOneStreamDef.URL_DOCUMENT_MAPPING.copy()
-        expected.update(TestTwoStreamDef.URL_DOCUMENT_MAPPING)
 
+        expected = {
+            'url': {
+                'something': 'url_configs',
+                'group': 'toto',
+                'feature': 'feature1'
+            },
+            'enable': {
+                'enabled': enable_func,
+                'group': '',
+                'feature': 'feature2'
+            },
+        }
         self.assertEqual(expected, data_format)
 
     def test_filter_feature(self):
@@ -64,7 +75,13 @@ class TestDataFormatGeneration(unittest.TestCase):
             feature_options=options,
             available_features=[self.feature1, self.feature2]
         )
-        expected = TestOneStreamDef.URL_DOCUMENT_MAPPING
+        expected = {
+            'url': {
+                'something': 'url_configs',
+                'group': 'toto',
+                'feature': 'feature1'
+            }
+        }
 
         self.assertEqual(expected, data_format)
 
@@ -76,7 +93,13 @@ class TestDataFormatGeneration(unittest.TestCase):
         )
         # feature2's `enable` field should be filter out
         # as it's not explicitly set to true in its feature option
-        expected = TestOneStreamDef.URL_DOCUMENT_MAPPING
+        expected = {
+            'url': {
+                'something': 'url_configs',
+                'group': 'toto',
+                'feature': 'feature1'
+            }
+        }
 
         self.assertEqual(expected, data_format)
 
@@ -84,7 +107,8 @@ class TestDataFormatGeneration(unittest.TestCase):
         comparison_key = 'comparison'
         comparison_feature = Feature(
             comparison_key, comparison_key, None, None)
-        options = {'feature1': None, comparison_key: None}
+        prevous_options = {'options': {'feature1': None}}
+        options = {'feature1': None, comparison_key: prevous_options}
         data_format = generate_data_format(
             feature_options=options,
             available_features=[
@@ -95,16 +119,14 @@ class TestDataFormatGeneration(unittest.TestCase):
         )
         expected = {
             'url': {
-                'something': 'url_configs'
-            },
-            'delay': {
-                'something': 'delay_configs'
+                'something': 'url_configs',
+                'group': 'toto',
+                'feature': 'feature1'
             },
             'previous.url': {
-                'something': 'url_configs'
-            },
-            'previous.delay': {
-                'something': 'delay_configs'
+                'something': 'url_configs',
+                'group': 'previous.toto',
+                'feature': 'feature1'
             },
             'previous_exists': {
                 'default_value': None, 'type': 'boolean'
