@@ -483,7 +483,7 @@ class AnalysisWorkflow(Workflow):
         #zone aware duplication computation needs zones and strategic urls
         futures.wait(*(zone_results + strategic_urls_results))
 
-        zoneaware_metadata_dup_result = self.submit(
+        context_aware_metadata_dup_result = self.submit(
             make_zone_aware_metadata_duplicates_file,
             s3_uri=s3_uri,
             first_part_id_size=first_part_id_size,
@@ -502,7 +502,7 @@ class AnalysisWorkflow(Workflow):
             outlinks_results +
             zone_results +
             strategic_urls_results +
-            [zoneaware_metadata_dup_result] +
+            [context_aware_metadata_dup_result] +
             filled_metadata_count_results)
 
         if 'ganalytics' in features_flags:
