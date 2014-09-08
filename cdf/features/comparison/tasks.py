@@ -183,10 +183,18 @@ def _transform_comparison_field(field):
 
 def _transform_comparison_config(config):
     config = copy.deepcopy(config)
-    group = config.get('group', '')
+    group_key = 'group'
+    verbose_key = 'verbose_name'
+
+    # make `Previous xxx` group
+    group = config.get(group_key, '')
     if group is not '':
         group = 'previous.' + group
-        config['group'] = group
+        config[group_key] = group
+
+    # rename verbose name
+    if verbose_key in config:
+        config[verbose_key] = 'Previous {}'.format(config[verbose_key])
     return config
 
 
