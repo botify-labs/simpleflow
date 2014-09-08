@@ -2,7 +2,7 @@ import itertools
 from cdf.log import logger
 from cdf.analysis.urls.transducers.metadata_duplicate import (
     get_duplicate_metadata,
-    get_zone_aware_duplicate_metadata,
+    get_context_aware_duplicate_metadata,
     count_metadata
 )
 from cdf.features.semantic_metadata.streams import (
@@ -75,7 +75,7 @@ def make_metadata_duplicates_file(crawl_id, s3_uri,
 
 
 @with_temporary_dir
-def make_zone_aware_metadata_duplicates_file(s3_uri,
+def make_context_aware_metadata_duplicates_file(s3_uri,
                                              first_part_id_size,
                                              part_id_size,
                                              tmp_dir=None,
@@ -108,7 +108,7 @@ def make_zone_aware_metadata_duplicates_file(s3_uri,
         force_fetch=force_fetch
     )
 
-    generator = get_zone_aware_duplicate_metadata(
+    generator = get_context_aware_duplicate_metadata(
         contents_stream,
         zone_stream,
         strategic_urls_stream

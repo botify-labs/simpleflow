@@ -18,7 +18,7 @@ from cdf.features.semantic_metadata.streams import (
 from cdf.features.semantic_metadata.tasks import (
     compute_metadata_count,
     make_metadata_duplicates_file,
-    make_zone_aware_metadata_duplicates_file
+    make_context_aware_metadata_duplicates_file
 )
 
 
@@ -207,7 +207,7 @@ class TestMakeContextAwareMetadataDuplicatesFile(unittest.TestCase):
             first_part_size=first_part_size,
             part_size=part_size
         )
-        output_files = make_zone_aware_metadata_duplicates_file(self.s3_uri,
+        output_files = make_context_aware_metadata_duplicates_file(self.s3_uri,
                                                                 first_part_size,
                                                                 part_size)
 
