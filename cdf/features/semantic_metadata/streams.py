@@ -184,7 +184,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
 
 
 class ContentsZoneAwareDuplicateStreamDef(StreamDefBase):
-    FILE = 'urlcontentsduplicate_zoneaware'
+    FILE = 'urlcontentsduplicate_contextaware'
     HEADERS = CONTENTSDUPLICATE_HEADERS
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
 

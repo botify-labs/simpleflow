@@ -212,8 +212,8 @@ class TestMakeZoneAwareMetadataDuplicatesFile(unittest.TestCase):
                                                                 part_size)
 
         expected_output_files = [
-            os.path.join(self.s3_uri, "urlcontentsduplicate_zoneaware.txt.0.gz"),
-            os.path.join(self.s3_uri, "urlcontentsduplicate_zoneaware.txt.1.gz"),
+            os.path.join(self.s3_uri, "urlcontentsduplicate_contextaware.txt.0.gz"),
+            os.path.join(self.s3_uri, "urlcontentsduplicate_contextaware.txt.1.gz"),
         ]
 
         self.assertEqual(expected_output_files, output_files)
