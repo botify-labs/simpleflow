@@ -192,7 +192,7 @@ class ContentsZoneAwareDuplicateStreamDef(StreamDefBase):
         _get_duplicate_document_mapping(
             ["title", "description", "h1"],
             "duplicates.context_aware",
-            "zone aware duplicate",
+            "context aware duplicate",
             200
         )
     )
