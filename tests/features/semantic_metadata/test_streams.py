@@ -4,7 +4,7 @@ from cdf.query.constants import RENDERING
 from cdf.features.semantic_metadata.streams import (
     _get_duplicate_document_mapping
 )
-from cdf.query.datamodel import _make_fields_private
+from cdf.query.datamodel import make_fields_private
 from cdf.metadata.url.url_metadata import ES_NO_INDEX
 from cdf.query.constants import FIELD_RIGHTS
 
@@ -67,7 +67,7 @@ class TestMakeFieldsPrivate(unittest.TestCase):
             }
         }
 
-        actual_result = _make_fields_private(input_mapping)
+        actual_result = make_fields_private(input_mapping)
         self.assertEquals(
             set([ES_NO_INDEX, FIELD_RIGHTS.PRIVATE]),
             actual_result["foo"]["settings"]

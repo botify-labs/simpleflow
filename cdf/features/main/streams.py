@@ -12,7 +12,7 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 from cdf.query.constants import FIELD_RIGHTS, RENDERING
-from cdf.query.datamodel import _make_fields_private
+from cdf.query.datamodel import make_fields_private
 
 __all__ = ["IdStreamDef", "InfosStreamDef", "SuggestStreamDef"]
 
@@ -325,7 +325,7 @@ class ZoneStreamDef(StreamDefBase):
         ('id', int),
         ('zone', str)
     )
-    URL_DOCUMENT_MAPPING = _make_fields_private(
+    URL_DOCUMENT_MAPPING = make_fields_private(
         {
             "zone": {
                 "verbose_name": "Zone",
@@ -353,7 +353,7 @@ class StrategicUrlStreamDef(StreamDefBase):
         ('strategic', cast_bool),  # is this url SEO strategic
         ('reason', int)  # why this url is NOT SEO strategic
     )
-    URL_DOCUMENT_MAPPING = _make_fields_private(
+    URL_DOCUMENT_MAPPING = make_fields_private(
         {
             "strategic.is_strategic": {
                 "verbose_name": "Strategic url",

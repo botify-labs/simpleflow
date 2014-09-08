@@ -110,7 +110,7 @@ def get_groups(features_options):
     return groups
 
 
-def _make_fields_private(mapping):
+def make_fields_private(mapping):
     """Make all the field of the mapping private
     :param mapping: input mapping as a dict field_name -> parameter dict
     :type mapping: dict

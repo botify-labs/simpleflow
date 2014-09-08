@@ -6,7 +6,7 @@ from cdf.query.datamodel import (
     _render_field_to_end_user
 )
 from cdf.query.constants import RENDERING, FIELD_RIGHTS
-from cdf.query.datamodel import _make_fields_private
+from cdf.query.datamodel import make_fields_private
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 
 
@@ -140,7 +140,7 @@ class TestMakeFieldsPrivate(unittest.TestCase):
             }
         }
 
-        actual_result = _make_fields_private(input_mapping)
+        actual_result = make_fields_private(input_mapping)
         self.assertEquals(
             set([ES_NO_INDEX, FIELD_RIGHTS.PRIVATE]),
             actual_result["foo"]["settings"]

@@ -6,7 +6,7 @@ from cdf.metadata.url.url_metadata import (
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
 from cdf.query.constants import RENDERING, FIELD_RIGHTS
-from cdf.query.datamodel import _make_fields_private
+from cdf.query.datamodel import make_fields_private
 
 
 def _raw_to_bool(string):
@@ -189,7 +189,7 @@ class ContentsZoneAwareDuplicateStreamDef(StreamDefBase):
     HEADERS = CONTENTSDUPLICATE_HEADERS
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
 
-    URL_DOCUMENT_MAPPING = _make_fields_private(
+    URL_DOCUMENT_MAPPING = make_fields_private(
         _get_duplicate_document_mapping(
             ["title", "description", "h1"],
             "zoneaware_duplicates",
