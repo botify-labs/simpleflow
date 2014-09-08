@@ -1,37 +1,30 @@
 from cdf.query.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
-from cdf.core.features import Feature
+from cdf.core.features import Feature, generate_data_format
 
 __all__ = ['get_fields', 'get_groups']
 
 
-def _render_field_to_end_user(stream_def, field):
-    """
-    Returns a user-friendly view of a field, that may be returned by the API
-    Ex :
-    >> {
-    >>   "name": "Verbose name of the field",
-    >>   "value": "field_name",
-    >>   "data_type": "string",
-    >>   "field_type": "url",
-    >>   "group": "my_group",
-    >>   "multiple": false,
-    >>   "searchable": true
-    >> }
-    """
-    field_conf = stream_def.URL_DOCUMENT_MAPPING[field]
-    settings = field_conf.get("settings", [])
-    group = field_conf.get("group", getattr(stream_def, 'URL_DOCUMENT_DEFAULT_GROUP', ''))
+def _render_field(field, field_config):
+    """Front-end friendly renders a field's configs
 
-    field_type = field_conf["type"]
-    data_type = field_conf["type"]
+    :param field_config: configs of a field in data format
+    :type field_config: dict
+    :return: front-end friendly data model element
+    :rtype: dict
+    """
+    settings = field_config.get('settings', set())
+    group = field_config.get('group', '')
+    field_type = field_config['type']
+    data_type = field_config['type']
+
     if RENDERING.URL in settings:
-        data_type = "string"
+        data_type = 'string'
+
     for flag in RENDERING:
         if flag in settings:
             field_type = flag.value
             break
-
     rights = []
     for field_right in FIELD_RIGHTS:
         if field_right in settings:
@@ -40,7 +33,7 @@ def _render_field_to_end_user(stream_def, field):
         rights = [FIELD_RIGHTS.FILTERS.value, FIELD_RIGHTS.SELECT.value]
 
     return {
-        "name": field_conf.get("verbose_name", ""),
+        "name": field_config.get("verbose_name", ""),
         "value": field,
         "data_type": data_type,
         "field_type": field_type,
@@ -51,44 +44,35 @@ def _render_field_to_end_user(stream_def, field):
     }
 
 
-def _get_document_fields_mapping_from_features_options(features_options, remove_private=True):
+def get_fields(feature_options, remove_private=True,
+               available_features=Feature.get_features()):
+    """Returns a front-end friendly data model according to feature_options
+
+    >>> get_fields({"main": None, "links": None})
+    [
+        {
+            'value': 'depth',
+            'data_type': 'integer',
+            'field_type': 'time_sec'
+            'name': 'Delay',
+            'is_sortable': True,
+            'group': 'metrics'
+        },
+        ...
+    ]
     """
-    Returns a list of tuples (StreamDef, field) from StreamDef.URL_DOCUMENT_MAPPING matching with `features_options`
-    """
+    # TODO(darkjh) create "Diff {}" groups for previous diff
     fields = []
-    for feature in Feature.get_features():
-        if not feature.identifier in features_options:
-            continue
-        for stream_def in feature.get_streams_def():
-            document_fields = stream_def.get_document_fields_from_options(features_options[feature.identifier], remove_private=True)
-            stream_fields = [(stream_def, field) for field in document_fields]
-            # Sort fields by order
-            stream_fields = sorted(stream_fields, key=lambda k: k[0].URL_DOCUMENT_MAPPING[k[1]].get('order', None))
-            fields += stream_fields
-    return fields
+    data_format = generate_data_format(
+        feature_options, available_features=available_features)
+    for field, config in data_format.iteritems():
+        fields.append(_render_field(field, config))
 
+    # now every elem of data model has a `group`
+    # the returned result should be sorted on it
+    # fields with empty group is guaranteed to be invisible (private)
+    fields.sort(key=lambda m: m['group'])
 
-def get_fields(features_options, remove_private=True):
-    """
-    Returns a list of allowed fields depending on enabled features and options
-    Ex :
-    >> get_fields({"main": None, "links": None})
-    >> [
-    >>     {'value': 'depth', 'data_type': 'integer', 'field_type': 'time_sec' 'name': 'Delay', 'is_sortable': True, 'group': 'metrics'}
-    >>     ..
-    >> ]
-    """
-    fields = []
-    for entry in _get_document_fields_mapping_from_features_options(features_options, remove_private=True):
-        stream_def, field = entry
-        fields.append(_render_field_to_end_user(stream_def, field))
-
-    if 'comparison' in features_options:
-        previous_fields = get_fields(features_options['comparison']['options'], remove_private=remove_private)
-        for i, field in enumerate(previous_fields):
-            previous_fields[i]['name'] = 'Previous {}'.format(previous_fields[i]['name'])
-            previous_fields[i]['value'] = 'previous.{}'.format(previous_fields[i]['value'])
-        fields += previous_fields
     return fields
 
 

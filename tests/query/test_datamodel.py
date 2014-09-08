@@ -1,9 +1,11 @@
 import unittest
+import mock
+from cdf.core.features import Feature
+
 from cdf.core.streams.base import StreamDefBase
 from cdf.query.datamodel import (
     get_fields,
     get_groups,
-    _render_field_to_end_user
 )
 from cdf.query.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
@@ -55,10 +57,18 @@ class CustomStreamDef(StreamDefBase):
 
 
 class FieldsTestCase(unittest.TestCase):
+    def setUp(self):
+        self.feature1 = Feature('feature1', 'feature1', None, None)
+        # mock stream_def in feature
+        self.feature1.get_streams_def = mock.Mock(return_value=[CustomStreamDef])
+        self.features = [self.feature1]
 
-    def test_end_user_field(self):
+    def test_harness(self):
+        data_model = get_fields({'feature1': None},
+                                available_features=self.features)
+        data_model = {k['value']: k for k in data_model}
         self.assertEquals(
-            _render_field_to_end_user(CustomStreamDef, "url"),
+            data_model['url'],
             {
                 "value": "url",
                 "name": "Url",
@@ -72,7 +82,7 @@ class FieldsTestCase(unittest.TestCase):
         )
 
         self.assertEquals(
-            _render_field_to_end_user(CustomStreamDef, "delay"),
+            data_model['delay'],
             {
                 "value": "delay",
                 "name": "Delay",
@@ -86,12 +96,16 @@ class FieldsTestCase(unittest.TestCase):
         )
 
         # `content` field is `multiple`
-        self.assertTrue(_render_field_to_end_user(CustomStreamDef, "content")["multiple"])
+        self.assertTrue(data_model['content']["multiple"])
         # `content` field can be filtered but no returned in the results
-        self.assertEquals(_render_field_to_end_user(CustomStreamDef, "content")["rights"], ["filters"])
+        self.assertEquals(data_model["content"]["rights"], ["filters"])
 
-        # `content_same_urls` field can be filtered but only with `exists` check and  returned in the results
-        self.assertEquals(_render_field_to_end_user(CustomStreamDef, "content_same_urls")["rights"], ["filters_exist", "select"])
+        # `content_same_urls` field can be filtered
+        # but only with `exists` check and  returned in the results
+        self.assertEquals(
+            data_model['content_same_urls']["rights"],
+            ["filters_exist", "select"]
+        )
 
     def test_enabled(self):
         fields = get_fields({"main": {"lang": True}})
@@ -110,18 +124,25 @@ class FieldsTestCase(unittest.TestCase):
             ['scheme', 'main']
         )
 
+    def test_ordering(self):
+        pass
+
 
 class ComparisonTestCase(unittest.TestCase):
-
     def test_previous(self):
         # current crawl : feature main, links and comparison are enabled
         # previous crawl : only main is enabled
-        fields = get_fields({"main": None, "links": None, "comparison": {"options": {"main": None}}})
-        fields_values = [f['value'] for f in fields]
-        self.assertIn('url', fields_values)
-        self.assertIn('previous.url', fields_values)
+        fields = get_fields(
+            {"main": None,
+             "links": None,
+             # TODO it's better to name it `feature_options` for consistency
+             "comparison": {"options": {"main": None}}}
+        )
+        fields_configs = [f['value'] for f in fields]
+        self.assertIn('url', fields_configs)
+        self.assertIn('previous.url', fields_configs)
         # links not enabled on the previous crawl
-        self.assertNotIn('previous.outlinks_internal.nb.total', fields_values)
+        self.assertNotIn('previous.outlinks_internal.nb.total', fields_configs)
 
         fields_verbose = [f['name'] for f in fields]
         self.assertIn('Previous Http Code', fields_verbose)
