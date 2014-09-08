@@ -5,13 +5,11 @@ from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
 from cdf.query.result_transformer import transform_result, transform_aggregation_result
 from cdf.utils.dict import deep_dict
-from cdf.features.comparison.tasks import get_comparison_data_format
 from cdf.core.metadata import assemble_data_format
 
 
 _CLEAN_FORMAT = assemble_data_format()
-_COMPARISON_FORMAT = get_comparison_data_format(_CLEAN_FORMAT)
-_COMPARISON_ES_BACKEND = ElasticSearchBackend(_COMPARISON_FORMAT)
+_COMPARISON_ES_BACKEND = ElasticSearchBackend(_CLEAN_FORMAT)
 
 
 class Query(object):

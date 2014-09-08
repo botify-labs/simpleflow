@@ -3,7 +3,6 @@ import tempfile
 import shutil
 import gzip
 import ujson as json
-import copy
 
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.core.decorators import feature_enabled
@@ -23,7 +22,6 @@ _FEATURE_ID = 'comparison'
 _REF_PATH = 'compare_ref'
 _NEW_PATH = 'compare_new'
 _DOC_FILE_REGEXP = 'url_documents.json.*.gz'
-
 
 
 def _get_max_crawled_id(s3_uri):
@@ -175,45 +173,3 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
     # Destroy the temporary DB
     ref_db.destroy()
     new_db.destroy()
-
-
-def _transform_comparison_field(field):
-    return 'previous.' + field
-
-
-def _transform_comparison_config(config):
-    config = copy.deepcopy(config)
-    group_key = 'group'
-    verbose_key = 'verbose_name'
-
-    # make `Previous xxx` group
-    group = config.get(group_key, '')
-    if group is not '':
-        group = 'previous.' + group
-        config[group_key] = group
-
-    # rename verbose name
-    if verbose_key in config:
-        config[verbose_key] = 'Previous {}'.format(config[verbose_key])
-    return config
-
-
-def get_comparison_data_format(data_format, extras=EXTRA_FIELDS_FORMAT):
-    """Prepare internal data format for comparison feature
-
-    Create `previous` fields.
-    Also need to create new groups
-        1. `Previous.xxx` group
-
-    :param data_format: original internal data format
-    :param extras: extra fields to be added for comparison feature
-    :return: comparison's additional data format, to be merged with
-        original data format
-    """
-    previous_format = {
-        _transform_comparison_field(k): _transform_comparison_config(v)
-        for k, v in data_format.iteritems()
-    }
-    previous_format.update(extras)
-
-    return previous_format

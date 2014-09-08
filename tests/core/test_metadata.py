@@ -5,10 +5,12 @@ from cdf.query.constants import FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import ES_NO_INDEX
 from cdf.core.metadata import (
     make_fields_private,
-    generate_data_format
+    generate_data_format,
+    get_comparison_data_format
 )
 from cdf.core.features import Feature
 from cdf.core.streams.base import StreamDefBase
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 
 
 class TestMakeFieldsPrivate(unittest.TestCase):
@@ -162,3 +164,55 @@ class TestDataFormatGeneration(unittest.TestCase):
             }
         }
         self.assertEqual(expected, data_format)
+
+
+class TestComparisonMapping(unittest.TestCase):
+    mapping = {
+        'outer.inner': {
+            'type': 'boolean',
+            'group': 'important'
+        },
+        'exists': {'type': 'boolean'}
+    }
+
+    extras = {
+        'previous_exists': {'type': 'boolean'},
+        'disappeared': {'type': 'boolean'}
+    }
+
+    def test_group(self):
+        format = get_comparison_data_format(self.mapping, {})
+        group_key = 'group'
+        expected_group = 'previous.important'
+        result = format['previous.outer.inner'][group_key]
+
+        self.assertEqual(result, expected_group)
+        self.assertNotIn('outer.inner', format)
+
+    def test_comparison_mapping(self):
+        format = get_comparison_data_format(self.mapping, self.extras)
+        result = ElasticSearchBackend(format).mapping()
+        expected = {
+            'previous_exists': {
+                'type': 'boolean'
+            },
+            'disappeared': {
+                'type': 'boolean'
+            },
+            'previous': {
+                'properties': {
+                    'outer': {
+                        'properties': {
+                            'inner': {
+                                'type': 'boolean',
+                            }
+                        }
+                    },
+                    'exists': {
+                        'type': 'boolean'
+                    },
+                }
+            }
+        }
+
+        self.assertEqual(result['urls']['properties'], expected)
