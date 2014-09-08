@@ -191,7 +191,7 @@ class ContentsZoneAwareDuplicateStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = make_fields_private(
         _get_duplicate_document_mapping(
             ["title", "description", "h1"],
-            "zoneaware_duplicates",
+            "duplicates.context_aware",
             "zone aware duplicate",
             200
         )
@@ -199,7 +199,7 @@ class ContentsZoneAwareDuplicateStreamDef(StreamDefBase):
 
     def process_document(self, document, stream):
         _process_document_for_duplicates(
-            "zoneaware_duplicates", document, stream
+            "duplicates.context_aware", document, stream
         )
 
 
