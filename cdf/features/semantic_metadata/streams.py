@@ -1,3 +1,4 @@
+from cdf.utils.dict import get_subdict_from_path
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
@@ -152,9 +153,11 @@ def _process_document_for_duplicates(duplicate_type, document, stream):
     _, metadata_idx, nb_duplicates, is_first, duplicate_urls = stream
     metadata_type = CONTENT_TYPE_INDEX[metadata_idx]
 
-    meta = document['metadata'][metadata_type]
+    dup = get_subdict_from_path(
+        "metadata.{}.{}".format(metadata_type, duplicate_type),
+        document
+    )
     # number of duplications of this piece of metadata
-    dup = meta[duplicate_type]
     dup['nb'] = nb_duplicates
     # urls that have duplicates
     if nb_duplicates > 0:
