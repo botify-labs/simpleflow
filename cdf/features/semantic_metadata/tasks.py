@@ -8,7 +8,7 @@ from cdf.analysis.urls.transducers.metadata_duplicate import (
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
     ContentsDuplicateStreamDef,
-    ContentsZoneAwareDuplicateStreamDef,
+    ContentsContextAwareDuplicateStreamDef,
     ContentsCountStreamDef
 )
 from cdf.features.main.streams import (
@@ -114,7 +114,7 @@ def make_zone_aware_metadata_duplicates_file(s3_uri,
         strategic_urls_stream
     )
     generator = itertools.imap(to_string, generator)
-    files = ContentsZoneAwareDuplicateStreamDef.persist(
+    files = ContentsContextAwareDuplicateStreamDef.persist(
         generator,
         s3_uri,
         first_part_size=first_part_id_size,

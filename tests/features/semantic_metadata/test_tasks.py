@@ -12,7 +12,7 @@ from cdf.features.main.streams import ZoneStreamDef, StrategicUrlStreamDef
 from cdf.features.semantic_metadata.streams import (
     ContentsCountStreamDef,
     ContentsDuplicateStreamDef,
-    ContentsZoneAwareDuplicateStreamDef,
+    ContentsContextAwareDuplicateStreamDef,
     ContentsStreamDef
 )
 from cdf.features.semantic_metadata.tasks import (
@@ -148,7 +148,7 @@ class TestComputeMetadataDuplicateFile(unittest.TestCase):
         self.assertEqual(expected_stream, list(duplicate_stream))
 
 
-class TestMakeZoneAwareMetadataDuplicatesFile(unittest.TestCase):
+class TestMakeContextAwareMetadataDuplicatesFile(unittest.TestCase):
     def setUp(self):
         self.bucket_name = "app.foo.com"
         self.s3_uri = "s3://{}/crawl_result".format(self.bucket_name)
@@ -218,7 +218,7 @@ class TestMakeZoneAwareMetadataDuplicatesFile(unittest.TestCase):
 
         self.assertEqual(expected_output_files, output_files)
 
-        actual_stream = ContentsZoneAwareDuplicateStreamDef.load(
+        actual_stream = ContentsContextAwareDuplicateStreamDef.load(
             self.s3_uri,
             tmp_dir=self.tmp_dir
         )
