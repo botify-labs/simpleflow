@@ -11,7 +11,7 @@ def get_metadata_insights(metadata):
     result = []
 
     #unique
-    identifier = "meta:{}:unique".format(metadata)
+    identifier = "meta_{}_unique".format(metadata)
     name = "Unique {}".format(metadata.title())
     field = "metadata.{}.duplicates.nb".format(metadata)
     result.append(
@@ -23,7 +23,7 @@ def get_metadata_insights(metadata):
     )
 
     #not set
-    identifier = "meta:{}:not_set".format(metadata)
+    identifier = "meta_{}_not_set".format(metadata)
     name = "Not Set {}".format(metadata.title())
     field = "metadata.{}.nb".format(metadata)
     result.append(
@@ -35,7 +35,7 @@ def get_metadata_insights(metadata):
     )
 
     #duplicate
-    identifier = "meta:{}:duplicate".format(metadata)
+    identifier = "meta_{}_duplicate".format(metadata)
     name = "Duplicate {}".format(metadata.title())
     field = "metadata.{}.duplicates.nb".format(metadata)
     result.append(
