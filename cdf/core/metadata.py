@@ -52,7 +52,7 @@ def _inject_group(stream_def, data_format):
             config[group_key] = default_group
 
 
-def _filter_field(field_value, feature_option):
+def _is_field_enable(field_value, feature_option):
     """Implicit contract between data format and feature option
         ex. for `lang` field
             - in data format:
@@ -92,7 +92,7 @@ def _generate_data_format(feature_options, available_features):
                 data_format = {
                     k: v.copy()
                     for k, v in data_format.iteritems()
-                    if _filter_field(v, option)
+                    if _is_field_enable(v, option)
                 }
 
                 # inject information
