@@ -172,7 +172,7 @@ def get_domain_insights():
             www_predicate
         ),
         Insight(
-            "not_www",
+            "domain_not_www",
             "Urls from subdomains",
             NotFilter(www_predicate)
         )
