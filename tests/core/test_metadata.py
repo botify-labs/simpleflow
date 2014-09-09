@@ -36,6 +36,7 @@ class TestMakeFieldsPrivate(unittest.TestCase):
         )
 
 
+# Have to set a lambda here since we need to check equality
 enable_func = lambda option: option is not None and option.get('enable', False)
 
 
