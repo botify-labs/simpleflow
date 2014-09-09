@@ -13,7 +13,7 @@ def get_http_code_ranges_insights():
     for range_start in [200, 300, 400, 500]:
         range_name = "{}xx".format(range_start / 100)
         insight = Insight(
-            "code:{}".format(range_name),
+            "code_{}".format(range_name),
             "{} Urls".format(range_name),
             BetweenFilter("http_code", [range_start, range_start + 99])
         )
@@ -22,7 +22,7 @@ def get_http_code_ranges_insights():
     #special range for codes lower than 0
     result.append(
         Insight(
-            "code:network_errors",
+            "code_network_errors",
             "Network Errors",
             LtFilter("http_code", 0)
         )
@@ -36,7 +36,7 @@ def get_http_code_insights():
     result = []
     for code in [200, 301, 302, 304, 403, 404, 410]:
         insight = Insight(
-            "code:{}".format(code),
+            "code_{}".format(code),
             "{} Urls".format(code),
             EqFilter("http_code", code)
         )
@@ -49,12 +49,12 @@ def get_strategic_urls_insights():
     #FIXME uncomment this when strategic urls have been implemented
 #    return [
 #        Insight(
-#            "strategic:1",
+#            "strategic_1",
 #            "Strategic Urls",
 #            EqFilter("strategic", True)
 #        ),
 #        Insight(
-#            "strategic:0",
+#            "strategic_0",
 #            "Non Strategic Urls",
 #            EqFilter("strategic", False)
 #        )
@@ -66,7 +66,7 @@ def get_content_type_insights():
     result = []
     for content_type in ["text/html", "text/css"]:
         insight = Insight(
-            "content:{}".format(content_type),
+            "content_{}".format(content_type),
             "{} Urls".format(content_type[len("text/"):].upper()),
             EqFilter("content_type", content_type)
         )
@@ -78,7 +78,7 @@ def get_protocol_insights():
     result = []
     for protocol in ["http", "https"]:
         insight = Insight(
-            "protocol:{}".format(protocol),
+            "protocol_{}".format(protocol),
             "{} Urls".format(protocol.upper()),
             EqFilter("protocol", protocol)
         )
@@ -91,22 +91,22 @@ def get_speed_insights():
     field = "delay_last_byte"
     return [
         Insight(
-            "speed:fast",
+            "speed_fast",
             "Fast Urls",
             LtFilter(field, 500)
         ),
         Insight(
-            "speed:medium",
+            "speed_medium",
             "Medium Urls",
             BetweenFilter(field, [500, 999])
         ),
         Insight(
-            "speed:slow",
+            "speed_slow",
             "Slow Urls",
             BetweenFilter(field, [1000, 1999])
         ),
         Insight(
-            "speed:slowest",
+            "speed_slowest",
             "Slowest Urls",
             GteFilter(field, 2000)
         ),
@@ -120,7 +120,7 @@ def get_strategic_urls_speed_insights():
 #    strategic_predicate = EqFilter("strategic", True)
 #    return [
 #        Insight(
-#            "speed:fast_strategic",
+#            "speed_fast_strategic",
 #            "Fast Strategic Urls",
 #            AndFilter(
 #                [
@@ -130,7 +130,7 @@ def get_strategic_urls_speed_insights():
 #            )
 #        ),
 #        Insight(
-#            "speed:medium_strategic",
+#            "speed_medium_strategic",
 #            "Medium Strategic Urls",
 #            AndFilter(
 #                [
@@ -140,7 +140,7 @@ def get_strategic_urls_speed_insights():
 #            )
 #        ),
 #        Insight(
-#            "speed:slow_strategic",
+#            "speed_slow_strategic",
 #            "Slow Strategic Urls",
 #            AndFilter(
 #                [
@@ -150,7 +150,7 @@ def get_strategic_urls_speed_insights():
 #            )
 #        ),
 #        Insight(
-#            "speed:slowest_strategic",
+#            "speed_slowest_strategic",
 #            "Slowest Strategic Urls",
 #            AndFilter(
 #                [
@@ -167,12 +167,12 @@ def get_domain_insights():
     www_predicate = EqFilter("host", "www")
     return [
         Insight(
-            "domain:www",
+            "domain_www",
             "Urls from www",
             www_predicate
         ),
         Insight(
-            "not www",
+            "domain_not_www",
             "Urls from subdomains",
             NotFilter(www_predicate)
         )
@@ -183,24 +183,24 @@ def get_average_speed_insights():
     field = "delay_last_byte"
     return [
         Insight(
-            "speed:avg",
+            "speed_avg",
             "Average Load time (in ms)",
             metric_agg=AvgAggregation(field)
         )
     ]
-    #TODO"speed:strategic_avg", "Average Load time on strategic urls (in ms)", {"field": "strategic", "value": true}),
+    #TODO"speed_strategic_avg", "Average Load time on strategic urls (in ms)", {"field": "strategic", "value": true}),
 
 
 def get_average_depth_insights():
     field = "depth"
     return [
         Insight(
-            "depth:avg",
+            "depth_avg",
             "Average Depth",
             metric_agg=AvgAggregation(field)
         )
     ]
-    #TODO"depth:strategic_avg", "Average Depth on strategic urls", {"field": "strategic", "value": true}),
+    #TODO"depth_strategic_avg", "Average Depth on strategic urls", {"field": "strategic", "value": true}),
 
 
 def get_insights():
