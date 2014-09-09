@@ -4,7 +4,12 @@ import httpretty
 
 from cdf.exceptions import ApiError, ApiFormatError
 from cdf.core.features import Feature
-from cdf.core.insights import Insight, InsightTrendPoint, InsightValue
+from cdf.core.insights import (
+    ExpectedTrend,
+    Insight,
+    InsightTrendPoint,
+    InsightValue
+)
 from cdf.query.filter import EqFilter
 from cdf.query.query import Query
 from cdf.tasks.insights import (get_query_agg_result,
@@ -78,9 +83,9 @@ class TestComputeInsightValues(unittest.TestCase):
         #we don't really care about the result
         compute_insight_value_mock.return_value = InsightValue(None, "", [])
 
-        insight1 = Insight("1", "Insight 1", EqFilter("field", 1))
-        insight2 = Insight("2", "Insight 2", EqFilter("field", 2))
-        insight3 = Insight("3", "Insight 3", EqFilter("field", 3))
+        insight1 = Insight("1", "Insight 1", ExpectedTrend.UP, EqFilter("field", 1))
+        insight2 = Insight("2", "Insight 2", ExpectedTrend.DOWN, EqFilter("field", 2))
+        insight3 = Insight("3", "Insight 3", ExpectedTrend.UNKNOWN, EqFilter("field", 3))
 
         feature1 = mock.create_autospec(Feature)
         feature1.name = "feature1"

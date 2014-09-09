@@ -1,4 +1,17 @@
+from enum import Enum
 from cdf.query.aggregation import CountAggregation
+
+
+class ExpectedTrend(Enum):
+    '''Indicate whether the expected progression of an insight value
+    is up, down or neutral.
+    For instance the expected trend for the number of visits is up,
+    the expected trend for the average load time is down.
+    '''
+    UP = 'up'
+    DOWN = 'down'
+    UNKNOWN = 'unknown'
+
 
 class Insight(object):
     """A class to represent an insight
@@ -7,11 +20,18 @@ class Insight(object):
     Each insight has a corresponding elasticsearch query that is used to
     compute its value
     """
-    def __init__(self, identifier, name, input_filter=None, metric_agg=None):
+    def __init__(self,
+                 identifier,
+                 name,
+                 expected_trend,
+                 input_filter=None,
+                 metric_agg=None):
         """Constructor
         :param identifier: the insight identifier (short)
         :type identifier: str
         :param name: the insight name (displayed on the report)
+        :param expected_trend: the expected trend for this insight
+        :type expected_trend: ExpectedTrend
         :param input_filter: the filter to apply for the botify query
         :type input_filter: Filter
         :param metric_agg: the aggregation to compute for the botify query.
@@ -20,6 +40,7 @@ class Insight(object):
         """
         self.identifier = identifier
         self.name = name
+        self.expected_trend = expected_trend
         self.filter = input_filter
         self.metric_agg = metric_agg or CountAggregation("url")
 
@@ -60,6 +81,7 @@ class InsightValue(object):
         return {
             "identifier": self.insight.identifier,
             "name": self.insight.name,
+            "expected_trend": self.insight.expected_trend.value,
             "feature": self.feature_name,
             "query": self.insight.query,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
