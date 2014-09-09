@@ -5,7 +5,7 @@ import logging
 from cdf.log import logger
 from cdf.analysis.urls.transducers.metadata_duplicate import (
     get_duplicate_metadata,
-    get_zone_aware_duplicate_metadata,
+    get_context_aware_duplicate_metadata,
     notset_hash_value,
 )
 
@@ -103,7 +103,7 @@ class TestZoneAwareMetadataDuplicateGenerator(unittest.TestCase):
             (3, True, 0)
         ])
 
-        generator = get_zone_aware_duplicate_metadata(self.stream_contents,
+        generator = get_context_aware_duplicate_metadata(self.stream_contents,
                                                       stream_zones,
                                                       stream_strategic_urls)
         results = list(generator)
@@ -130,7 +130,7 @@ class TestZoneAwareMetadataDuplicateGenerator(unittest.TestCase):
             (3, True, 0)
         ])
 
-        generator = get_zone_aware_duplicate_metadata(self.stream_contents,
+        generator = get_context_aware_duplicate_metadata(self.stream_contents,
                                                       stream_zones,
                                                       stream_strategic_urls)
         results = list(generator)

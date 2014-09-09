@@ -220,7 +220,7 @@ def append_zone(stream_contents, stream_zones):
             yield elt + (zone,)
 
 
-def get_zone_aware_duplicate_metadata(stream_contents,
+def get_context_aware_duplicate_metadata(stream_contents,
                                       stream_zones,
                                       stream_strategic_urls):
     """

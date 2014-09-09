@@ -74,7 +74,7 @@ compute_strategic_urls = as_activity(compute_strategic_urls)
 from cdf.features.semantic_metadata.tasks import (
     compute_metadata_count,
     make_metadata_duplicates_file,
-    make_zone_aware_metadata_duplicates_file,
+    make_context_aware_metadata_duplicates_file,
 )
 
 from cdf.features.links.tasks import (
@@ -84,8 +84,8 @@ from cdf.features.links.tasks import (
 )
 compute_metadata_count = as_activity(compute_metadata_count)
 make_metadata_duplicates_file = as_activity(make_metadata_duplicates_file)
-make_zone_aware_metadata_duplicates_file = as_activity(
-    make_zone_aware_metadata_duplicates_file
+make_context_aware_metadata_duplicates_file = as_activity(
+    make_context_aware_metadata_duplicates_file
 )
 make_links_counter_file = as_activity(make_links_counter_file)
 make_bad_link_file = as_activity(make_bad_link_file)
@@ -483,8 +483,8 @@ class AnalysisWorkflow(Workflow):
         #zone aware duplication computation needs zones and strategic urls
         futures.wait(*(zone_results + strategic_urls_results))
 
-        zoneaware_metadata_dup_result = self.submit(
-            make_zone_aware_metadata_duplicates_file,
+        context_aware_metadata_dup_result = self.submit(
+            make_context_aware_metadata_duplicates_file,
             s3_uri=s3_uri,
             first_part_id_size=first_part_id_size,
             part_id_size=part_id_size,
@@ -502,7 +502,7 @@ class AnalysisWorkflow(Workflow):
             outlinks_results +
             zone_results +
             strategic_urls_results +
-            [zoneaware_metadata_dup_result] +
+            [context_aware_metadata_dup_result] +
             filled_metadata_count_results)
 
         if 'ganalytics' in features_flags:
