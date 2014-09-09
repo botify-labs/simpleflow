@@ -331,7 +331,8 @@ class ZoneStreamDef(StreamDefBase):
                 "verbose_name": "Zone",
                 "type": STRING_TYPE,
                 "settings": {
-                    ES_NOT_ANALYZED
+                    ES_NOT_ANALYZED,
+                    AGG_CATEGORICAL
                 }
             }
         }
