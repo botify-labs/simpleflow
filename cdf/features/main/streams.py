@@ -12,7 +12,7 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 from cdf.query.constants import FIELD_RIGHTS, RENDERING
-from cdf.core.metadata import make_fields_private
+from cdf.core.metadata import make_fields_private, check_enabled
 
 __all__ = ["IdStreamDef", "InfosStreamDef", "SuggestStreamDef"]
 
@@ -237,7 +237,7 @@ class InfosStreamDef(StreamDefBase):
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL
             },
-            "enabled": lambda options: options and options.get("lang", False)
+            "enabled": check_enabled('lang')
         }
     }
 

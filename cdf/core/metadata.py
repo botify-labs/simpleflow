@@ -52,12 +52,28 @@ def _inject_group(stream_def, data_format):
             config[group_key] = default_group
 
 
+def check_enabled(field_name):
+    """Check if a field is enabled according to feature options
+
+    It's expressed in field configuration and evaluated when generating
+    feature option specific data format from feature options
+
+    :param field_name: field name
+    :type field_name: str
+    :return: if the field is enabled
+    :rtype: bool
+    """
+    def _check(opt):
+        return opt is not None and opt.get(field_name, False)
+    return _check
+
+
 def _is_field_enable(field_value, feature_option):
     """Implicit contract between data format and feature option
         ex. for `lang` field
             - in data format:
                 'lang': {
-                    'enabled': lambda option: option is not None and option.get('lang', False)
+                    'enabled': check_enabled('lang')
                     ...
                 }
             - in feature options
