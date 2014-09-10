@@ -8,6 +8,7 @@ from cdf.core.metadata import (
     generate_data_format,
     get_comparison_data_format
 )
+from cdf.features.comparison.constants import EXTRA_FIELDS_FORMAT
 from cdf.core.features import Feature
 from cdf.core.streams.base import StreamDefBase
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
@@ -157,13 +158,8 @@ class TestDataFormatGeneration(unittest.TestCase):
                 'group': 'previous.toto',
                 'feature': 'feature1'
             },
-            'previous_exists': {
-                'default_value': None, 'type': 'boolean'
-            },
-            'disappeared': {
-                'default_value': None, 'type': 'boolean'
-            }
         }
+        expected.update(EXTRA_FIELDS_FORMAT)
         self.assertEqual(expected, data_format)
 
 
