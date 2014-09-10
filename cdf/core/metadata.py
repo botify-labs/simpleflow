@@ -52,19 +52,19 @@ def _inject_group(stream_def, data_format):
             config[group_key] = default_group
 
 
-def check_enabled(field_name):
+def check_enabled(enable_key):
     """Check if a field is enabled according to feature options
 
     It's expressed in field configuration and evaluated when generating
     feature option specific data format from feature options
 
-    :param field_name: field name
-    :type field_name: str
+    :param enable_key: field name
+    :type enable_key: str
     :return: if the field is enabled
     :rtype: bool
     """
     def _check(opt):
-        return opt is not None and opt.get(field_name, False)
+        return opt is not None and opt.get(enable_key, False)
     return _check
 
 
