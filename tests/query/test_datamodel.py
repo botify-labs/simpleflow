@@ -22,6 +22,7 @@ class CustomStreamDef(StreamDefBase):
         "url": {
             "verbose_name": "Url",
             "type": "string",
+            "order": 1,  # rank 1
             "settings": {
                 RENDERING.URL
             }
@@ -38,6 +39,7 @@ class CustomStreamDef(StreamDefBase):
         "content": {
             "verbose_name": "Contents",
             "type": "string",
+            "order": 1000,  # rank 3
             "settings": {
                 LIST,
                 FIELD_RIGHTS.FILTERS
@@ -46,6 +48,7 @@ class CustomStreamDef(StreamDefBase):
         "content_same_urls": {
             "verbose_name": "Contents with the same url",
             "type": "string",
+            "order": 5,  # rank 2
             "settings": {
                 LIST,
                 ES_NO_INDEX,
@@ -126,7 +129,17 @@ class FieldsTestCase(unittest.TestCase):
         )
 
     def test_ordering(self):
-        pass
+        data_model = get_fields({'feature1': None},
+                                available_features=self.features)
+        data_model = [k['value'] for k in data_model]
+        # datamodel should be sorted within each field
+        expected = [
+            'url',
+            'content_same_urls',
+            'content',
+            'delay'
+        ]
+        self.assertEqual(expected, data_model)
 
 
 class ComparisonTestCase(unittest.TestCase):
