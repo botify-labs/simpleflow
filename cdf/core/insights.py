@@ -3,11 +3,11 @@ from cdf.metadata.url.url_metadata import INT_TYPE
 from cdf.query.aggregation import CountAggregation
 
 
-class ExpectedTrend(Enum):
-    '''Indicate whether the expected progression of an insight value
+class PositiveTrend(Enum):
+    '''Indicate whether the positive progression of an insight value
     is up, down or neutral.
-    For instance the expected trend for the number of visits is up,
-    the expected trend for the average load time is down.
+    For instance the positive trend for the number of visits is up,
+    the positive trend for the average load time is down.
     '''
     UP = 'up'
     DOWN = 'down'
@@ -24,7 +24,7 @@ class Insight(object):
     def __init__(self,
                  identifier,
                  name,
-                 expected_trend,
+                 positive_trend,
                  input_filter=None,
                  metric_agg=None,
                  field_type=INT_TYPE):
@@ -33,8 +33,8 @@ class Insight(object):
         :type identifier: str
         :param name: the insight name (displayed on the report)
         :type name: str
-        :param expected_trend: the expected trend for this insight
-        :type expected_trend: ExpectedTrend
+        :param positive_trend: the positive trend for this insight
+        :type positive_trend: PositiveTrend
         :param input_filter: the filter to apply for the botify query
         :type input_filter: Filter
         :param metric_agg: the aggregation to compute for the botify query.
@@ -51,7 +51,7 @@ class Insight(object):
         """
         self.identifier = identifier
         self.name = name
-        self.expected_trend = expected_trend
+        self.positive_trend = positive_trend
         self.filter = input_filter
         self.metric_agg = metric_agg or CountAggregation("url")
         self.field_type = field_type
@@ -93,7 +93,7 @@ class InsightValue(object):
         return {
             "identifier": self.insight.identifier,
             "name": self.insight.name,
-            "expected_trend": self.insight.expected_trend.value,
+            "positive_trend": self.insight.positive_trend.value,
             "feature": self.feature_name,
             "query": self.insight.query,
             "type": self.insight.field_type,
