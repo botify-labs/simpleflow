@@ -5,7 +5,7 @@ import httpretty
 from cdf.exceptions import ApiError, ApiFormatError
 from cdf.core.features import Feature
 from cdf.core.insights import (
-    ExpectedTrend,
+    PositiveTrend,
     Insight,
     InsightTrendPoint,
     InsightValue
@@ -59,11 +59,11 @@ class TestComputeInsightValue(unittest.TestCase):
                                               es_index)
 
         #check values
-        expected_trend = [
+        positive_trend = [
             InsightTrendPoint(1001, 3.14),
             InsightTrendPoint(2008, 3.14)
         ]
-        expected_result = InsightValue(insight, feature_name, expected_trend)
+        expected_result = InsightValue(insight, feature_name, positive_trend)
 
         self.assertDictEqual(expected_result.to_dict(), actual_result.to_dict())
 
@@ -83,9 +83,9 @@ class TestComputeInsightValues(unittest.TestCase):
         #we don't really care about the result
         compute_insight_value_mock.return_value = InsightValue(None, "", [])
 
-        insight1 = Insight("1", "Insight 1", ExpectedTrend.UP, EqFilter("field", 1))
-        insight2 = Insight("2", "Insight 2", ExpectedTrend.DOWN, EqFilter("field", 2))
-        insight3 = Insight("3", "Insight 3", ExpectedTrend.UNKNOWN, EqFilter("field", 3))
+        insight1 = Insight("1", "Insight 1", PositiveTrend.UP, EqFilter("field", 1))
+        insight2 = Insight("2", "Insight 2", PositiveTrend.DOWN, EqFilter("field", 2))
+        insight3 = Insight("3", "Insight 3", PositiveTrend.UNKNOWN, EqFilter("field", 3))
 
         feature1 = mock.create_autospec(Feature)
         feature1.name = "feature1"
