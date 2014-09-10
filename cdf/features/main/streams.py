@@ -361,6 +361,7 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    FIELD_RIGHTS.PRIVATE
                 }
             },
             "strategic.reason.http_code": {
