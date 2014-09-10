@@ -130,6 +130,8 @@ def generate_data_format(feature_options,
     :return: feature option specific data format
     :rtype: dict
     """
+    # work with a copy is safer
+    feature_options = copy.deepcopy(feature_options)
     comparison_key = 'comparison'
     if comparison_key in feature_options:
         # comparison's manipulation

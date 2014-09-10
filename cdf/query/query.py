@@ -16,7 +16,6 @@ from cdf.core.metadata import generate_data_format
 _ALL_FIELDS = {
     'main': {'lang': True},
     'main_image': None,
-    # TODO(darkjh) top_anchors need to be enabled/disabled ??
     'links': {'top_anchors': True},
     'semantic_metadata': None,
     'sitemaps': None,  # not sure
@@ -24,7 +23,7 @@ _ALL_FIELDS = {
     'comparison': {}
 }
 _FEATURE_OPTION = copy.deepcopy(_ALL_FIELDS)
-_FEATURE_OPTION['comparison']['options'] = _ALL_FIELDS
+_FEATURE_OPTION['comparison']['options'] = copy.deepcopy(_ALL_FIELDS)
 _DATA_FORMAT = generate_data_format(_FEATURE_OPTION)
 _COMPARISON_ES_BACKEND = ElasticSearchBackend(_DATA_FORMAT)
 
