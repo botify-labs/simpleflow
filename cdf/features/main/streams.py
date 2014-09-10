@@ -201,7 +201,6 @@ class InfosStreamDef(StreamDefBase):
             "type": BOOLEAN_TYPE,
             "order": 7,
             "settings": {
-                ES_DOC_VALUE,
                 AGG_CATEGORICAL
             }
         },
@@ -360,7 +359,6 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "verbose_name": "Strategic url",
                 "type": BOOLEAN_TYPE,
                 "settings": {
-                    ES_DOC_VALUE,
                     AGG_CATEGORICAL,
                 }
             },
@@ -368,7 +366,6 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "verbose_name": "Non strategic reason: bad http code",
                 "type": BOOLEAN_TYPE,
                 "settings": {
-                    ES_DOC_VALUE,
                     AGG_CATEGORICAL
                 }
             },
@@ -376,7 +373,6 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "verbose_name": "Non strategic reason: bad content type",
                 "type": BOOLEAN_TYPE,
                 "settings": {
-                    ES_DOC_VALUE,
                     AGG_CATEGORICAL
                 }
             },
@@ -384,7 +380,6 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "verbose_name": "Non strategic reason: url is of no-index",
                 "type": BOOLEAN_TYPE,
                 "settings": {
-                    ES_DOC_VALUE,
                     AGG_CATEGORICAL
                 }
             },
@@ -392,7 +387,6 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "verbose_name": "Non strategic reason: url has non self-canonical",
                 "type": BOOLEAN_TYPE,
                 "settings": {
-                    ES_DOC_VALUE,
                     AGG_CATEGORICAL
                 }
             }
