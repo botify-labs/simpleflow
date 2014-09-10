@@ -1,4 +1,4 @@
-from cdf.core.insights import Insight
+from cdf.core.insights import Insight, ExpectedTrend
 from cdf.query.filter import (EqFilter,
                               LtFilter,
                               GteFilter,
@@ -10,11 +10,19 @@ from cdf.query.aggregation import AvgAggregation
 def get_http_code_ranges_insights():
     #insights by http ranges
     result = []
-    for range_start in [200, 300, 400, 500]:
+    ranges = [
+        (200, ExpectedTrend.UP),
+        (300, ExpectedTrend.DOWN),
+        (400, ExpectedTrend.DOWN),
+        (500, ExpectedTrend.DOWN)
+    ]
+
+    for range_start, expected_trend in ranges:
         range_name = "{}xx".format(range_start / 100)
         insight = Insight(
             "code_{}".format(range_name),
             "{} Urls".format(range_name),
+            expected_trend,
             BetweenFilter("http_code", [range_start, range_start + 99])
         )
         result.append(insight)
@@ -34,10 +42,20 @@ def get_http_code_ranges_insights():
 def get_http_code_insights():
     #insights by http code
     result = []
-    for code in [200, 301, 302, 304, 403, 404, 410]:
+    http_codes = [
+        (200, ExpectedTrend.UP),
+        (301, ExpectedTrend.DOWN),
+        (302, ExpectedTrend.DOWN),
+        (304, ExpectedTrend.DOWN),
+        (403, ExpectedTrend.DOWN),
+        (404, ExpectedTrend.DOWN),
+        (410, ExpectedTrend.DOWN),
+    ]
+    for code, expected_trend in http_codes:
         insight = Insight(
             "code_{}".format(code),
             "{} Urls".format(code),
+            expected_trend,
             EqFilter("http_code", code)
         )
         result.append(insight)
@@ -51,11 +69,13 @@ def get_strategic_urls_insights():
 #        Insight(
 #            "strategic_1",
 #            "Strategic Urls",
+#            ExpectedTrend.UP,
 #            EqFilter("strategic", True)
 #        ),
 #        Insight(
 #            "strategic_0",
 #            "Non Strategic Urls",
+#            ExpectedTrend.DOWN,
 #            EqFilter("strategic", False)
 #        )
 #    ]
@@ -68,6 +88,7 @@ def get_content_type_insights():
         insight = Insight(
             "content_{}".format(content_type),
             "{} Urls".format(content_type[len("text/"):].upper()),
+            ExpectedTrend.UNKNOWN,
             EqFilter("content_type", content_type)
         )
         result.append(insight)
@@ -80,6 +101,7 @@ def get_protocol_insights():
         insight = Insight(
             "protocol_{}".format(protocol),
             "{} Urls".format(protocol.upper()),
+            ExpectedTrend.UNKNOWN,
             EqFilter("protocol", protocol)
         )
         result.append(insight)
@@ -93,21 +115,25 @@ def get_speed_insights():
         Insight(
             "speed_fast",
             "Fast Urls",
+            ExpectedTrend.UP,
             LtFilter(field, 500)
         ),
         Insight(
             "speed_medium",
             "Medium Urls",
+            ExpectedTrend.DOWN,
             BetweenFilter(field, [500, 999])
         ),
         Insight(
             "speed_slow",
             "Slow Urls",
+            ExpectedTrend.DOWN,
             BetweenFilter(field, [1000, 1999])
         ),
         Insight(
             "speed_slowest",
             "Slowest Urls",
+            ExpectedTrend.DOWN,
             GteFilter(field, 2000)
         ),
     ]
@@ -122,6 +148,7 @@ def get_strategic_urls_speed_insights():
 #        Insight(
 #            "speed_fast_strategic",
 #            "Fast Strategic Urls",
+#            ExpectedTrend.UP,
 #            AndFilter(
 #                [
 #                    strategic_predicate,
@@ -132,6 +159,7 @@ def get_strategic_urls_speed_insights():
 #        Insight(
 #            "speed_medium_strategic",
 #            "Medium Strategic Urls",
+#            ExpectedTrend.DOWN,
 #            AndFilter(
 #                [
 #                    strategic_predicate,
@@ -142,6 +170,7 @@ def get_strategic_urls_speed_insights():
 #        Insight(
 #            "speed_slow_strategic",
 #            "Slow Strategic Urls",
+#            ExpectedTrend.DOWN,
 #            AndFilter(
 #                [
 #                    strategic_predicate,
@@ -152,6 +181,7 @@ def get_strategic_urls_speed_insights():
 #        Insight(
 #            "speed_slowest_strategic",
 #            "Slowest Strategic Urls",
+#            ExpectedTrend.DOWN,
 #            AndFilter(
 #                [
 #                    strategic_predicate,
@@ -169,11 +199,13 @@ def get_domain_insights():
         Insight(
             "domain_www",
             "Urls from www",
+            ExpectedTrend.UNKNOWN,
             www_predicate
         ),
         Insight(
             "domain_not_www",
             "Urls from subdomains",
+            ExpectedTrend.UNKNOWN,
             NotFilter(www_predicate)
         )
     ]
@@ -185,6 +217,7 @@ def get_average_speed_insights():
         Insight(
             "speed_avg",
             "Average Load time (in ms)",
+            ExpectedTrend.DOWN,
             metric_agg=AvgAggregation(field)
         )
     ]
@@ -197,6 +230,7 @@ def get_average_depth_insights():
         Insight(
             "depth_avg",
             "Average Depth",
+            ExpectedTrend.DOWN,
             metric_agg=AvgAggregation(field)
         )
     ]

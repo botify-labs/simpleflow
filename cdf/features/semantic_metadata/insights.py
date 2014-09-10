@@ -1,4 +1,4 @@
-from cdf.core.insights import Insight
+from cdf.core.insights import Insight, ExpectedTrend
 from cdf.query.filter import EqFilter, GtFilter
 
 
@@ -18,6 +18,7 @@ def get_metadata_insights(metadata):
         Insight(
             identifier,
             name,
+            ExpectedTrend.UP,
             EqFilter(field, 0)
         )
     )
@@ -30,6 +31,7 @@ def get_metadata_insights(metadata):
         Insight(
             identifier,
             name,
+            ExpectedTrend.DOWN,
             EqFilter(field, 0)
         )
     )
@@ -42,6 +44,7 @@ def get_metadata_insights(metadata):
         Insight(
             identifier,
             name,
+            ExpectedTrend.DOWN,
             GtFilter(field, 0)
         )
     )
