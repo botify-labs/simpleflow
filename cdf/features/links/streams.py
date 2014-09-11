@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import Counter
+from cdf.core.metadata import check_enabled
 
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, BOOLEAN_TYPE, STRUCT_TYPE,
@@ -584,24 +585,31 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
-            }
+            },
+            "enabled": check_enabled("top_anchors")
         },
         "inlinks_internal.anchors.top": {
             "verbose_name": "Top {nb} of incoming text anchors".format(nb=NB_TOP_ANCHORS),
             "type": STRUCT_TYPE,
             "values": STRING_NB_MAP_MAPPING,
-            "settings": {RENDERING.STRING_NB_MAP, FIELD_RIGHTS.SELECT},
             "group": GROUPS.inlinks.name,
+            "settings": {
+                RENDERING.STRING_NB_MAP,
+                FIELD_RIGHTS.SELECT
+            },
+            "enabled": check_enabled("top_anchors")
         },
         # The following field is already created with the above one (as a STRUCT_TYPE)
         # But we need to return it to request it
         "inlinks_internal.anchors.top.text": {
             "verbose_name": "Incoming text anchors (top {nb})".format(nb=NB_TOP_ANCHORS),
             "type": STRING_TYPE,
-            "settings": {
-                FAKE_FIELD, FIELD_RIGHTS.FILTERS
-            },
             "group": GROUPS.inlinks.name,
+            "settings": {
+                FAKE_FIELD,
+                FIELD_RIGHTS.FILTERS
+            },
+            "enabled": check_enabled("top_anchors")
         }
     }
 

@@ -1,5 +1,7 @@
 from enum import Enum
+
 from cdf.metadata.url.url_metadata import BOOLEAN_TYPE
+from cdf.query.constants import FIELD_RIGHTS
 
 # Separator for encoding the url_id with the url string
 # 2 conditions:
@@ -27,10 +29,13 @@ class MatchingState(Enum):
 EXTRA_FIELDS_FORMAT = {
     'disappeared': {
         'type': BOOLEAN_TYPE,
-        'default_value': None
+        'default_value': None,
+        'settings': {
+            FIELD_RIGHTS.PRIVATE
+        }
     },
     'previous_exists': {
         'type': BOOLEAN_TYPE,
-        'default_value': None
+        'default_value': None,
     }
 }

@@ -5,13 +5,27 @@ from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
 from cdf.query.result_transformer import transform_result, transform_aggregation_result
 from cdf.utils.dict import deep_dict
-from cdf.features.comparison.tasks import get_comparison_data_format
-from cdf.utils.features import get_urls_data_format_definition
+from cdf.core.metadata import generate_data_format
 
 
-_CLEAN_FORMAT = get_urls_data_format_definition()
-_COMPARISON_FORMAT = get_comparison_data_format(_CLEAN_FORMAT)
-_COMPARISON_ES_BACKEND = ElasticSearchBackend(_COMPARISON_FORMAT)
+# a hack for the moment
+# a fake, all complete feature option is created
+# and the complete data format is generated based on it
+# this will enable front-end to work as it is now
+# TODO should change this to use crawl specific data format
+_ALL_FIELDS = {
+    'main': {'lang': True},
+    'main_image': None,
+    'links': {'top_anchors': True},
+    'semantic_metadata': None,
+    'sitemaps': None,  # not sure
+    'ganalytics': None,
+    'comparison': {}
+}
+_FEATURE_OPTION = copy.deepcopy(_ALL_FIELDS)
+_FEATURE_OPTION['comparison']['options'] = copy.deepcopy(_ALL_FIELDS)
+_DATA_FORMAT = generate_data_format(_FEATURE_OPTION)
+_COMPARISON_ES_BACKEND = ElasticSearchBackend(_DATA_FORMAT)
 
 
 class Query(object):

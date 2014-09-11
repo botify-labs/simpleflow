@@ -3,7 +3,6 @@ import tempfile
 import shutil
 import gzip
 import ujson as json
-import copy
 
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.core.decorators import feature_enabled
@@ -23,7 +22,6 @@ _FEATURE_ID = 'comparison'
 _REF_PATH = 'compare_ref'
 _NEW_PATH = 'compare_new'
 _DOC_FILE_REGEXP = 'url_documents.json.*.gz'
-
 
 
 def _get_max_crawled_id(s3_uri):
@@ -175,20 +173,3 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
     # Destroy the temporary DB
     ref_db.destroy()
     new_db.destroy()
-
-
-def get_comparison_data_format(data_format, extras=EXTRA_FIELDS_FORMAT):
-    """Prepare ElasticSearch mapping for comparison feature
-
-    :param data_format: original internal data format
-    :param extras: extra fields to be added
-    :return: mutated data_format for comparison
-    """
-    previous_format = {
-        'previous.' + k: v for k, v in data_format.iteritems()
-    }
-    format = copy.deepcopy(data_format)
-    format.update(previous_format)
-    format.update(extras)
-
-    return format

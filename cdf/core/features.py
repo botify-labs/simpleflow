@@ -98,3 +98,5 @@ class Feature(object):
             logger.warning("Could not find an element named insights in '%s'.",
                            insights_module_name)
             return []
+
+
