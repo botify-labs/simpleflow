@@ -39,6 +39,7 @@ class TestComputeInsightValue(unittest.TestCase):
         self.feature_name = "feature"
         self.es_location = "http://elasticsearch.com:1234"
         self.es_index = "es_index"
+        self.es_doc_type = "urls"
 
     @mock.patch("cdf.tasks.insights.get_query_agg_result", autospec=True)
     @mock.patch("cdf.tasks.insights.Query", autospec=True)
@@ -63,7 +64,8 @@ class TestComputeInsightValue(unittest.TestCase):
             self.feature_name,
             crawls,
             self.es_location,
-            self.es_index
+            self.es_index,
+            self.es_doc_type
         )
 
         #check values
@@ -91,7 +93,8 @@ class TestComputeInsightValue(unittest.TestCase):
         crawl_backends = {1: ElasticSearchBackend({})}
         result = compute_insight_value(
             insight, "feature", crawl_backends,
-            self.es_location, self.es_index
+            self.es_location, self.es_index,
+            self.es_doc_type
         )
         self.assertListEqual(
             map(lambda t: t.to_dict(), result.trend),
@@ -125,19 +128,20 @@ class TestComputeInsightValues(unittest.TestCase):
         crawl_backends = {1001: ElasticSearchBackend({})}
         es_location = "http://elasticsearch.com"
         es_index = "botify"
-
+        es_doc_type = "urls"
         actual_result = compute_insight_values(crawls,
                                                es_location,
-                                               es_index)
+                                               es_index,
+                                               es_doc_type)
         #check results
         self.assertEqual(3, len(actual_result))
         self.assertTrue(
             all([isinstance(r, InsightValue) for r in actual_result])
         )
         expected_calls = [
-            mock.call(insight1, 'feature1', crawl_backends, es_location, es_index),
-            mock.call(insight2, 'feature2', crawl_backends, es_location, es_index),
-            mock.call(insight3, 'feature2', crawl_backends, es_location, es_index),
+            mock.call(insight1, 'feature1', crawl_backends, es_location, es_index, es_doc_type),
+            mock.call(insight2, 'feature2', crawl_backends, es_location, es_index, es_doc_type),
+            mock.call(insight3, 'feature2', crawl_backends, es_location, es_index, es_doc_type),
         ]
 
         self.assertEqual(expected_calls, compute_insight_value_mock.mock_calls)
