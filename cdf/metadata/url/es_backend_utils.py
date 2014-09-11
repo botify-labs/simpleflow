@@ -176,6 +176,11 @@ class ElasticSearchBackend(DataBackend):
         self._numerical_agg_fields = None
         self._mapping = None
 
+    def __eq__(self, other):
+        if not isinstance(other, ElasticSearchBackend):
+            return False
+        return self.data_format == other.data_format
+
     @classmethod
     def _routing(cls, routing_field):
         """Generate the routing setting"""
