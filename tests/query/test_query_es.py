@@ -146,7 +146,7 @@ URLS_FIXTURE = [
                 }
             }
         },
-        'canonical': {'to': {'url': {'url_id': 5}}, 'url_exists': True}
+        'canonical': {'to': {'url': {'url_id': 5}, 'url_exists': True}}
     },
     {
         'id': 3,
