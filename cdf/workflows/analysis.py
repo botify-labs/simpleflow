@@ -351,6 +351,7 @@ class AnalysisWorkflow(Workflow):
             crawl_feature_options,
             context["es_location"],
             context["es_index"],
+            context["es_doc_type"],
             context["s3_uri"]
         )
         return insights_result

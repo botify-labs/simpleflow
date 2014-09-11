@@ -57,7 +57,8 @@ def compute_insight_value(insight,
                           feature_name,
                           crawl_backends,
                           es_location,
-                          es_index):
+                          es_index,
+                          es_doc_type):
     """Compute the value of an insight
     :param insight: the insight to compute
     :type insight: Insight
@@ -71,9 +72,10 @@ def compute_insight_value(insight,
     :param es_index: the name of the elasticsearch index to use.
                      Usually "botify".
     :type es_index: str
+    :param es_doc_type: the doc_type to query
+    :type es_doc_type: str
     :returns: InsightValue
     """
-    es_doc_type = "urls"
     #TODO check if using 0 is ok.
     revision_number = 0
     trend = []
@@ -91,7 +93,7 @@ def compute_insight_value(insight,
     return InsightValue(insight, feature_name, trend)
 
 
-def compute_insight_values(crawls, es_location, es_index):
+def compute_insight_values(crawls, es_location, es_index, es_doc_type):
     """Compute the insight values for a set of crawl ids and a set of features.
     :param crawls: a dict crawl_id -> feature options for the crawls to process.
     :type crawls: dict
@@ -101,6 +103,8 @@ def compute_insight_values(crawls, es_location, es_index):
     :param es_index: the name of the elasticsearch index to use.
                      Usually "botify".
     :type es_index: str
+    :param es_doc_type: the doc_type to query
+    :type es_doc_type: str
     :returns: list - a list of InsightValue
     """
     # generate crawl specific data format for querying
@@ -109,7 +113,6 @@ def compute_insight_values(crawls, es_location, es_index):
         for crawl_id, options
         in crawls.iteritems()
     }
-
     result = []
     for feature in Feature.get_features():
         for insight in feature.get_insights():
@@ -118,7 +121,8 @@ def compute_insight_values(crawls, es_location, es_index):
                 feature.name,
                 crawl_backends,
                 es_location,
-                es_index
+                es_index,
+                es_doc_type
             )
             result.append(insight_value)
     return result
@@ -128,6 +132,7 @@ def compute_insight_values(crawls, es_location, es_index):
 def compute_insights(crawls,
                      es_location,
                      es_index,
+                     es_doc_type,
                      s3_uri,
                      tmp_dir=None,
                      force_fetch=False):
@@ -140,6 +145,8 @@ def compute_insights(crawls,
     :type es_location: str
     :param es_index: the name of the elasticsearch index to use.
                      Usually "botify".
+    :param es_doc_type: the doc_type to query
+    :type es_doc_type: str
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
     :param user_agent: the user agent to use for the query.
@@ -150,7 +157,7 @@ def compute_insights(crawls,
     :type force_fetch: bool
     :returns: str - the uri of the generated json document
     """
-    result = compute_insight_values(crawls, es_location, es_index)
+    result = compute_insight_values(crawls, es_location, es_index, es_doc_type)
 
     destination_uri = "{}/precomputation/insights.json".format(s3_uri)
     push_content(
