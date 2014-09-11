@@ -10,13 +10,16 @@ from cdf.core.insights import (
     InsightTrendPoint,
     InsightValue
 )
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.filter import EqFilter
 from cdf.query.query import Query
-from cdf.tasks.insights import (get_query_agg_result,
-                                compute_insight_value,
-                                compute_insight_values,
-                                get_api_address,
-                                get_feature_options)
+from cdf.tasks.insights import (
+    get_query_agg_result,
+    compute_insight_value,
+    compute_insight_values,
+    get_api_address,
+    get_feature_options
+)
 
 
 class TestGetQueryAggResult(unittest.TestCase):
@@ -44,10 +47,11 @@ class TestComputeInsightValue(unittest.TestCase):
         insight = Insight(
             "foo",
             "Foo insight",
+            PositiveTrend.UP,
             EqFilter("foo_field", 1001)
         )
         feature_name = "feature"
-        crawls = {1001: {}, 2008: {}}
+        crawls = {1001: "foo", 2008: "bar"}
         es_location = "http://elasticsearch.com"
         es_index = "es_index"
 
@@ -69,8 +73,8 @@ class TestComputeInsightValue(unittest.TestCase):
 
         #check the calls to Query.__init__()
         expected_query_calls = [
-            mock.call(es_location, es_index, "urls", 1001, 0, insight.query),
-            mock.call(es_location, es_index, "urls", 2008, 0, insight.query),
+            mock.call(es_location, es_index, "urls", 1001, 0, insight.query, backend="foo"),
+            mock.call(es_location, es_index, "urls", 2008, 0, insight.query, backend="bar"),
         ]
         self.assertEqual(expected_query_calls, query_mock.mock_calls)
 
@@ -98,21 +102,22 @@ class TestComputeInsightValues(unittest.TestCase):
         get_features_mock.return_value = [feature1, feature2]
 
         crawls = {1001: {}}
+        crawl_backends = {1001: ElasticSearchBackend({})}
         es_location = "http://elasticsearch.com"
         es_index = "botify"
 
         actual_result = compute_insight_values(crawls,
                                                es_location,
                                                es_index)
-        #check results
+        #check results                             z
         self.assertEqual(3, len(actual_result))
         self.assertTrue(
             all([isinstance(r, InsightValue) for r in actual_result])
         )
         expected_calls = [
-            mock.call(insight1, 'feature1', crawls, es_location, es_index),
-            mock.call(insight2, 'feature2', crawls, es_location, es_index),
-            mock.call(insight3, 'feature2', crawls, es_location, es_index),
+            mock.call(insight1, 'feature1', crawl_backends, es_location, es_index),
+            mock.call(insight2, 'feature2', crawl_backends, es_location, es_index),
+            mock.call(insight3, 'feature2', crawl_backends, es_location, es_index),
         ]
 
         self.assertEqual(expected_calls, compute_insight_value_mock.mock_calls)

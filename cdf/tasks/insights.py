@@ -2,8 +2,10 @@ import json
 from urlparse import urlparse, urljoin
 import requests
 from elasticsearch import Elasticsearch
+from cdf.core.metadata import generate_data_format
 
 from cdf.exceptions import ApiError, ApiFormatError
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.utils.s3 import push_content
 from cdf.utils.auth import get_botify_api_token
 from cdf.query.query import Query
@@ -43,7 +45,7 @@ def get_query_agg_result(query):
 
 def compute_insight_value(insight,
                           feature_name,
-                          crawls,
+                          crawl_backends,
                           es_location,
                           es_index):
     """Compute the value of an insight
@@ -51,8 +53,8 @@ def compute_insight_value(insight,
     :type insight: Insight
     :param feature_name: the name of the feature associated with the insight
     :type feature_name: str
-    :param crawls: a dict crawl_id -> feature options for the crawls to process.
-    :type crawls: dict
+    :param crawl_backends: a dict crawl_id -> query_backend for the crawls to process.
+    :type crawl_backends: dict
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -65,14 +67,14 @@ def compute_insight_value(insight,
     #TODO check if using 0 is ok.
     revision_number = 0
     trend = []
-    for crawl_id, feature_options in sorted(crawls.items()):
-        #TODO use feature_options in Query constructor
+    for crawl_id, query_backend in sorted(crawl_backends.items()):
         query = Query(es_location,
                       es_index,
                       es_doc_type,
                       crawl_id,
                       revision_number,
-                      insight.query)
+                      insight.query,
+                      backend=query_backend)
         trend_point = InsightTrendPoint(crawl_id,
                                         get_query_agg_result(query))
         trend.append(trend_point)
@@ -91,14 +93,23 @@ def compute_insight_values(crawls, es_location, es_index):
     :type es_index: str
     :returns: list - a list of InsightValue
     """
+    # generate crawl specific data format for querying
+    crawl_backends = {
+        crawl_id: ElasticSearchBackend(generate_data_format(options))
+        for crawl_id, options
+        in crawls.iteritems()
+    }
+
     result = []
     for feature in Feature.get_features():
         for insight in feature.get_insights():
-            insight_value = compute_insight_value(insight,
-                                                  feature.name,
-                                                  crawls,
-                                                  es_location,
-                                                  es_index)
+            insight_value = compute_insight_value(
+                insight,
+                feature.name,
+                crawl_backends,
+                es_location,
+                es_index
+            )
             result.append(insight_value)
     return result
 
