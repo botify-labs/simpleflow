@@ -35,6 +35,11 @@ class TestGetQueryAggResult(unittest.TestCase):
 
 
 class TestComputeInsightValue(unittest.TestCase):
+    def setUp(self):
+        self.feature_name = "feature"
+        self.es_location = "http://elasticsearch.com:1234"
+        self.es_index = "es_index"
+
     @mock.patch("cdf.tasks.insights.get_query_agg_result", autospec=True)
     @mock.patch("cdf.tasks.insights.Query", autospec=True)
     def test_nominal_case(self,
@@ -50,33 +55,48 @@ class TestComputeInsightValue(unittest.TestCase):
             PositiveTrend.UP,
             EqFilter("foo_field", 1001)
         )
-        feature_name = "feature"
         crawls = {1001: "foo", 2008: "bar"}
-        es_location = "http://elasticsearch.com"
-        es_index = "es_index"
 
         #actual call
-        actual_result = compute_insight_value(insight,
-                                              feature_name,
-                                              crawls,
-                                              es_location,
-                                              es_index)
+        actual_result = compute_insight_value(
+            insight,
+            self.feature_name,
+            crawls,
+            self.es_location,
+            self.es_index
+        )
 
         #check values
         positive_trend = [
             InsightTrendPoint(1001, 3.14),
             InsightTrendPoint(2008, 3.14)
         ]
-        expected_result = InsightValue(insight, feature_name, positive_trend)
+        expected_result = InsightValue(
+            insight, self.feature_name, positive_trend)
 
         self.assertDictEqual(expected_result.to_dict(), actual_result.to_dict())
 
         #check the calls to Query.__init__()
         expected_query_calls = [
-            mock.call(es_location, es_index, "urls", 1001, 0, insight.query, backend="foo"),
-            mock.call(es_location, es_index, "urls", 2008, 0, insight.query, backend="bar"),
+            mock.call(self.es_location, self.es_index, "urls", 1001, 0, insight.query, backend="foo"),
+            mock.call(self.es_location, self.es_index, "urls", 2008, 0, insight.query, backend="bar"),
         ]
         self.assertEqual(expected_query_calls, query_mock.mock_calls)
+
+    def test_error_query(self):
+        insight = Insight(
+            "1", "Insight 1",
+            PositiveTrend.UP, EqFilter("field", 1)
+        )
+        crawl_backends = {1: ElasticSearchBackend({})}
+        result = compute_insight_value(
+            insight, "feature", crawl_backends,
+            self.es_location, self.es_index
+        )
+        self.assertListEqual(
+            map(lambda t: t.to_dict(), result.trend),
+            [{'crawl_id': 1, 'score': None}]
+        )
 
 
 class TestComputeInsightValues(unittest.TestCase):
@@ -109,7 +129,7 @@ class TestComputeInsightValues(unittest.TestCase):
         actual_result = compute_insight_values(crawls,
                                                es_location,
                                                es_index)
-        #check results                             z
+        #check results
         self.assertEqual(3, len(actual_result))
         self.assertTrue(
             all([isinstance(r, InsightValue) for r in actual_result])

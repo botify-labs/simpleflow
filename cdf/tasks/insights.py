@@ -1,10 +1,11 @@
 import json
 from urlparse import urlparse, urljoin
 import requests
+import logging
 from elasticsearch import Elasticsearch
 from cdf.core.metadata import generate_data_format
 
-from cdf.exceptions import ApiError, ApiFormatError
+from cdf.exceptions import ApiError, ApiFormatError, BotifyQueryException
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.utils.s3 import push_content
 from cdf.utils.auth import get_botify_api_token
@@ -12,6 +13,9 @@ from cdf.query.query import Query
 from cdf.core.features import Feature
 from cdf.core.insights import InsightValue, InsightTrendPoint
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
+
+
+logger = logging.getLogger(__name__)
 
 
 # TODO maybe put it in a util module
@@ -33,14 +37,20 @@ def get_query_agg_result(query):
     """Return the aggregation part of of a query result
     :param query: the input query
     :type query: Query
-    :returns: float
+    :returns: float or None when there's any error
     """
     #if the result is empty query.aggs equals []
     #in this case we return 0
-    if len(query.aggs) == 0:
-        return 0
-    else:
-        return query.aggs[0]["metrics"][0]
+    try:
+        if len(query.aggs) == 0:
+            return 0
+        else:
+            return query.aggs[0]["metrics"][0]
+    except BotifyQueryException as e:
+        logger.warning(
+            "Insight query exception: {}".format(e.message))
+        # if any error occurs, returns `None`
+        return None
 
 
 def compute_insight_value(insight,
