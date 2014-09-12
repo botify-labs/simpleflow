@@ -1,13 +1,13 @@
 import unittest
-from moto import mock_s3
-import boto
-
 import os
 import tempfile
 import shutil
 
+from moto import mock_s3
+import boto
+
 from cdf.utils.hashing import string_to_int32
-from cdf.analysis.urls.transducers.metadata_duplicate import notset_hash_value
+from cdf.features.semantic_metadata.metadata_duplicate import notset_hash_value
 from cdf.features.main.streams import ZoneStreamDef, StrategicUrlStreamDef
 from cdf.features.semantic_metadata.streams import (
     ContentsCountStreamDef,

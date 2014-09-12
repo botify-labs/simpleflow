@@ -3,7 +3,7 @@ import unittest
 import logging
 
 from cdf.log import logger
-from cdf.analysis.urls.transducers.metadata_duplicate import (
+from cdf.features.semantic_metadata.metadata_duplicate import (
     get_duplicate_metadata,
     get_context_aware_duplicate_metadata,
     notset_hash_value,
