@@ -201,6 +201,24 @@ class ElasticSearchBackend(DataBackend):
         }
 
     @classmethod
+    def _dynamic(cls, level):
+        """Control dynamic mapping level
+
+          - true (default):
+                when an unknown field comes, the document is accepted and
+                a default mapping will be created to index the field
+          - false:
+                when an unknown field comes, the document is accepted but
+                will not create a default mapping, so the field remains only
+                in `_source` and not indexed
+          - strict:
+                strict when an unknown field comes, the document is refused
+        """
+        return {
+            "dynamic": level
+        }
+
+    @classmethod
     def index_settings(cls, nb_shards, nb_replicas, refresh):
         """Generate index level settings"""
         return {
@@ -353,6 +371,9 @@ class ElasticSearchBackend(DataBackend):
 
             # excludes exists flags from `_source`
             es_mapping[doc_type].update(self._source(['*_exists']))
+
+            # disallow dynamic mapping
+            es_mapping[doc_type].update(self._dynamic('strict'))
 
             self._mapping = es_mapping
 
