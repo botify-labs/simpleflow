@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 import unittest
-from cdf.analysis.urls.generators.bad_links import get_bad_links, get_bad_link_counters
+from cdf.features.links.bad_links import get_bad_links, get_bad_link_counters
 
 class TestBadLink(unittest.TestCase):
 

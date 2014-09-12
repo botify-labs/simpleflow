@@ -4,7 +4,7 @@ import gzip
 from cdf.log import logger
 from cdf.utils.s3 import push_file
 from cdf.features.links.links import OutlinksTransducer, InlinksTransducer
-from cdf.analysis.urls.generators.bad_links import get_bad_links, get_bad_link_counters
+from cdf.features.links.bad_links import get_bad_links, get_bad_link_counters
 from cdf.features.main.streams import InfosStreamDef
 from cdf.features.links.streams import (
     OutlinksRawStreamDef, OutlinksStreamDef,
