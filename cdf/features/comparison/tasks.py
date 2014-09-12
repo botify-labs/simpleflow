@@ -116,7 +116,7 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
     matched_file_list = []
     matched_file = _create_partition_file(
         new_path, MATCHED_FILE_PATTERN, 0)
-    matched_file_list.append(matched_file.filename)
+    matched_file_list.append(matched_file.name)
 
     # reopen the DBs with read options
     ref_db.reopen(block_size=_LEVELDB_BLOCK_SIZE)
@@ -151,7 +151,7 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
             matched_file = _create_partition_file(
                 new_path, MATCHED_FILE_PATTERN,
                 matched_count / part_size)
-            matched_file_list.append(matched_file.filename)
+            matched_file_list.append(matched_file.name)
 
         matched_file.write(json.dumps(doc) + '\n')
 
