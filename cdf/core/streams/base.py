@@ -11,7 +11,6 @@ from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils import s3
 from cdf.utils.path import list_files, partition_aware_sort
 from cdf.analysis.urls.utils import get_part_id
-from cdf.query.constants import FIELD_RIGHTS
 
 
 class AbstractAttribute(object):
@@ -325,24 +324,6 @@ class StreamDefBase(object):
         return TemporaryDataset(
             stream_def=cls
         )
-
-    @classmethod
-    def get_document_fields_from_options(self, options, remove_private=False):
-        """
-        Return the document fields enabled depending on options defined
-        for the given feature
-        :param options : a dictionnary with key as feature's identifier and sub-dict as value (k/v settings)
-        :param remove_private : if PRIVATE flag is in field's `settings`, the field will be skipped
-        """
-        if not hasattr(self, 'URL_DOCUMENT_MAPPING'):
-            return []
-        fields = []
-        for field, settings in self.URL_DOCUMENT_MAPPING.iteritems():
-            if field.endswith('_exists') or FIELD_RIGHTS.PRIVATE in settings.get("settings", set()):
-                continue
-            if settings.get("enabled", lambda options: True)(options):
-                fields.append(field)
-        return fields
 
 
 class Stream(object):
