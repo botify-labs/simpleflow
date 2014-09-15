@@ -1,6 +1,6 @@
 import unittest
 from cdf.utils.hashing import string_to_int32
-from cdf.analysis.urls.transducers.metadata_duplicate import (
+from cdf.features.semantic_metadata.metadata_duplicate import (
     count_metadata,
     notset_hash_value,
     filter_redundant_metadata,

@@ -6,13 +6,14 @@ import shutil
 import datetime
 
 from mock import patch
+from moto import mock_s3
+import boto
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.ganalytics.streams import VisitsStreamDef
 from cdf.features.ganalytics.tasks import (import_data_from_ganalytics,
                                            get_api_requests,
                                            match_analytics_to_crawl_urls)
-from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
 
 
 class TestImportDataFromGanalytics(unittest.TestCase):
@@ -113,21 +114,24 @@ class TestTasks(unittest.TestCase):
     def setUp(self):
         self.first_part_id_size = 3
         self.part_id_size = 2
+        # tests uses `tmp_dir`
         self.tmp_dir = tempfile.mkdtemp()
-        self.s3_dir = "s3://" + tempfile.mkdtemp()
+        # files are prepared in `s3_dir`
+        self.s3_dir = tempfile.mkdtemp()
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
-        shutil.rmtree(self.s3_dir[5:])
+        shutil.rmtree(self.s3_dir)
 
     @patch("cdf.features.ganalytics.streams.ORGANIC_SOURCES", ["google"])
     @patch("cdf.features.ganalytics.streams.SOCIAL_SOURCES", ["facebook"])
-    @patch('cdf.utils.s3.push_file', _mock_push_file)
-    @patch('cdf.utils.s3.push_content', _mock_push_content)
-    @patch('cdf.utils.s3.fetch_file', _mock_fetch_file)
-    @patch('cdf.utils.s3.fetch_files', _mock_fetch_files)
+    @mock_s3
     def test_match_analytics_to_crawl_urls(self):
-        raw_visits_location = os.path.join(self.s3_dir[5:], 'analytics.data.gz')
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        s3_uri = 's3://test_bucket'
+
+        raw_visits_location = os.path.join(self.s3_dir, 'analytics.data.gz')
         f = gzip.open(raw_visits_location, 'w')
         f.write('www.site.com/5?sid=5\torganic\tgoogle\t(not set)\t30\t25\t32\t100\t16\t25\n')
         f.write('www.site.com/1\torganic\tgoogle\t(not set)\t5\t3\t4\t26\t3\t1\n')
@@ -136,6 +140,8 @@ class TestTasks(unittest.TestCase):
         f.write('www.site.com/4\torganic\tgoogle\t(not set)\t11\t4\t15\t54\t8\t8\n')
         f.write('www.site.com/5\torganic\tgoogle\t(not set)\t7\t3\t1\t23\t7\t9\n')  # ghost page
         f.close()
+        k = bucket.new_key(os.path.basename(raw_visits_location))
+        k.set_contents_from_filename(raw_visits_location)
 
         f = IdStreamDef.create_temporary_dataset()
         f.append(1, "http", "www.site.com", "/1", "")
@@ -145,7 +151,7 @@ class TestTasks(unittest.TestCase):
         f.append(5, "http", "www.site.com", "/5", "?sid=5")
         f.append(6, "http", "www.site.com", "/6", "")
         f.append(7, "https", "www.site.com", "/4", "")  # ambiguous url (http version exists)
-        f.persist(self.s3_dir, first_part_size=self.first_part_id_size, part_size=self.part_id_size)
+        f.persist(s3_uri, first_part_size=self.first_part_id_size, part_size=self.part_id_size)
 
         f = InfosStreamDef.create_temporary_dataset()
         f.append(1, 0, "", 0, 0, 200, 0, 0, 0)
@@ -155,23 +161,25 @@ class TestTasks(unittest.TestCase):
         f.append(5, 0, "", 0, 0, 200, 0, 0, 0)
         f.append(6, 0, "", 0, 0, 200, 0, 0, 0)
         f.append(7, 0, "", 0, 0, 200, 0, 0, 0)  # ambiguous url has code 200
-        f.persist(self.s3_dir, first_part_size=self.first_part_id_size, part_size=self.part_id_size)
+        f.persist(s3_uri, first_part_size=self.first_part_id_size, part_size=self.part_id_size)
 
         #fake analytics metadata
-        analytics_metadata_location = os.path.join(self.s3_dir[5:], 'analytics.meta.json')
+        analytics_metadata_location = os.path.join(self.s3_dir, 'analytics.meta.json')
         f = open(analytics_metadata_location, "w")
         f.write('{"sample_rate": 1.0, "sample_size": 100, "sampled": false, "queries_count": 10}')
         f.close()
+        k = bucket.new_key(os.path.basename(analytics_metadata_location))
+        k.set_contents_from_filename(analytics_metadata_location)
+
 
         actual_result = match_analytics_to_crawl_urls(
-            self.s3_dir,
+            s3_uri,
             first_part_id_size=self.first_part_id_size,
             part_id_size=self.part_id_size,
             tmp_dir=self.tmp_dir)
 
         self.assertEquals(
-            #
-            list(VisitsStreamDef.load(self.s3_dir, tmp_dir=self.tmp_dir)),
+            list(VisitsStreamDef.load(s3_uri, tmp_dir=self.tmp_dir)),
             [
                 [1, "organic", "google", 'None', 5, 3, 4, 26, 3, 1],
                 [2, "organic", "google", 'None', 3, 3, 2, 10, 1, 0],
@@ -182,7 +190,10 @@ class TestTasks(unittest.TestCase):
         )
 
         #check ambiguous visits
-        with gzip.open(os.path.join(self.s3_dir[5:], 'ambiguous_urls_dataset.gz')) as f:
+        result_path = os.path.join(self.s3_dir, 'ambiguous_urls_dataset.gz')
+        k = bucket.get_key(os.path.basename(result_path))
+        k.get_contents_to_filename(result_path)
+        with gzip.open(result_path) as f:
             expected_result = ['www.site.com/4\torganic\tgoogle\tNone\t11\t4\t15\t54.0\t8\t8\n']
             self.assertEquals(expected_result, f.readlines())
 

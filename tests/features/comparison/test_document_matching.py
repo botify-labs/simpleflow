@@ -292,7 +292,7 @@ class TestDocumentMatching(unittest.TestCase):
                 os.path.join(tmp_dir, doc_pattern.format(i)), 'w')
             f.write(json.dumps(doc))
             f.close()
-            gzip_files.append(f.filename)
+            gzip_files.append(f.name)
 
         # fake document datasets
         key = Key(bucket, name='files.json')
