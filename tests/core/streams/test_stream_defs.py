@@ -2,14 +2,13 @@ import gzip
 import os
 import tempfile
 import unittest
-import StringIO
 import shutil
 from mock import patch
 from moto import mock_s3
 import boto
 
 from cdf.core.streams.base import StreamDefBase, Stream, TemporaryDataset
-from cdf.core.mocks import _mock_fetch_file, _mock_fetch_files
+from tests.mocks import _mock_fetch_file, _mock_fetch_files
 from cdf.utils.s3 import list_files
 
 

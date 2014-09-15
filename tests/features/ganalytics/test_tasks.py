@@ -12,7 +12,7 @@ from cdf.features.ganalytics.streams import VisitsStreamDef
 from cdf.features.ganalytics.tasks import (import_data_from_ganalytics,
                                            get_api_requests,
                                            match_analytics_to_crawl_urls)
-from cdf.core.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
+from tests.mocks import _mock_push_file, _mock_push_content, _mock_fetch_file, _mock_fetch_files
 
 
 class TestImportDataFromGanalytics(unittest.TestCase):
