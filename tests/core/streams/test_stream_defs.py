@@ -237,8 +237,8 @@ class TestStreamsDef(unittest.TestCase):
 
     @mock_s3
     def test_persist_s3(self):
-        s3 = boto.connect_s3()
-        bucket = s3.create_bucket('test_bucket')
+        s3_conn = boto.connect_s3()
+        bucket = s3_conn.create_bucket('test_bucket')
         s3_uri = 's3://test_bucket'
 
         stream = iter(self.data)
@@ -260,8 +260,8 @@ class TestStreamsDef(unittest.TestCase):
 
     @mock_s3
     def test_persist_part_s3(self):
-        s3 = boto.connect_s3()
-        bucket = s3.create_bucket('test_bucket')
+        s3_conn = boto.connect_s3()
+        bucket = s3_conn.create_bucket('test_bucket')
         s3_uri = 's3://test_bucket'
 
         stream = iter(self.data)
