@@ -133,7 +133,7 @@ class AbstractSitemapXml(SitemapDocument):
                             self.invalid_urls += 1
                     element.clear()
             except etree.XMLSyntaxError as e:
-                raise ParsingError(e.message)
+                raise ParsingError(str(e))
 
     @abstractmethod
     def _is_valid_element(self, element):

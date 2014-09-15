@@ -73,7 +73,7 @@ def match_sitemap_urls_from_documents(documents,
                                              sitemap_only_urls,
                                              out_of_crawl_domain_urls)
         except ParsingError as e:
-            document.set_error(e.__class__.__name__, e.message)
+            document.set_error(e.__class__.__name__, str(e))
 
 
 def normalize_url_for_matching(url):
