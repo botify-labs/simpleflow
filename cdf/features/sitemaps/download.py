@@ -46,9 +46,9 @@ def download_sitemaps(input_url, output_directory, user_agent, metadata):
     try:
         download_url(input_url, output_file_path, user_agent)
     except DownloadError as e:
-        logger.error("Download error: %s", e.message)
+        logger.error("Download error: %s", str(e))
         metadata.add_error(
-            Error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
+            Error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, str(e))
         )
         return
 
@@ -56,7 +56,7 @@ def download_sitemaps(input_url, output_directory, user_agent, metadata):
         sitemap_document = instanciate_sitemap_document(output_file_path, input_url)
     except UnhandledFileType as e:
         metadata.add_error(
-            Error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
+            Error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, str(e))
         )
         return
 
@@ -126,11 +126,11 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document,
             download_url(url, file_path, user_agent)
             sitemap_document = instanciate_sitemap_document(file_path, url)
         except (DownloadError, UnhandledFileType) as e:
-            logger.error("Skipping {}: {}".format(url, e.message))
+            logger.error("Skipping {}: {}".format(url, str(e)))
             if os.path.isfile(file_path):
                 os.remove(file_path)
             metadata.add_error(
-                Error(url, SiteMapType.UNKNOWN, e.__class__.__name__, e.message)
+                Error(url, SiteMapType.UNKNOWN, e.__class__.__name__, str(e))
             )
             continue
 

@@ -48,7 +48,7 @@ def get_query_agg_result(query):
             return query.aggs[0]["metrics"][0]
     except BotifyQueryException as e:
         logger.warning(
-            "Insight query exception: {}".format(e.message))
+            "Insight query exception: {}".format(str(e)))
         # if any error occurs, returns `None`
         return None
 
