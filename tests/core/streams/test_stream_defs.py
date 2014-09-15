@@ -8,8 +8,8 @@ from moto import mock_s3
 import boto
 
 from cdf.core.streams.base import StreamDefBase, Stream, TemporaryDataset
-from tests.mocks import _mock_fetch_file, _mock_fetch_files
-from cdf.utils.s3 import list_files
+from cdf.utils import s3
+from cdf.utils import path
 
 
 class CustomStreamDef(StreamDefBase):
@@ -42,7 +42,9 @@ class TestStream(unittest.TestCase):
 
 class TestStreamsDef(unittest.TestCase):
     def setUp(self):
+        # tests use `tmp_dir`
         self.tmp_dir = tempfile.mkdtemp()
+        # file is prepared in `s3_dir`
         self.s3_dir = tempfile.mkdtemp()
         self.data = [
             [0, 'http://www.site.com/'],
@@ -105,28 +107,28 @@ class TestStreamsDef(unittest.TestCase):
         To make it trickier, partition 0, 9, 10 are written. This tests
         if the functions are partition-aware
         """
-        with gzip.open(os.path.join(self.tmp_dir, 'test.txt.0.gz'), 'w') as f:
+        with gzip.open(os.path.join(self.s3_dir, 'test.txt.0.gz'), 'w') as f:
             f.write('0\thttp://www.site.com/\n')
             f.write('1\thttp://www.site.com/1\n')
-        with gzip.open(os.path.join(self.tmp_dir, 'test.txt.9.gz'), 'w') as f:
+        with gzip.open(os.path.join(self.s3_dir, 'test.txt.9.gz'), 'w') as f:
             f.write('2\thttp://www.site.com/2\n')
             f.write('3\thttp://www.site.com/3\n')
             f.write('4\thttp://www.site.com/4\n')
-        with gzip.open(os.path.join(self.tmp_dir, 'test.txt.10.gz'), 'w') as f:
+        with gzip.open(os.path.join(self.s3_dir, 'test.txt.10.gz'), 'w') as f:
             f.write('5\thttp://www.site.com/5\n')
             f.write('6\thttp://www.site.com/6\n')
 
     def test_load_from_directory(self):
         self._write_custom_parts()
         self.assertEquals(
-            list(CustomStreamDef.load(self.tmp_dir, part_id=0)),
+            list(CustomStreamDef.load(self.s3_dir, part_id=0)),
             [
                 [0, 'http://www.site.com/'],
                 [1, 'http://www.site.com/1'],
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.load(self.tmp_dir, part_id=9)),
+            list(CustomStreamDef.load(self.s3_dir, part_id=9)),
             [
                 [2, 'http://www.site.com/2'],
                 [3, 'http://www.site.com/3'],
@@ -134,7 +136,7 @@ class TestStreamsDef(unittest.TestCase):
             ]
         )
         self.assertEquals(
-            list(CustomStreamDef.load(self.tmp_dir, part_id=10)),
+            list(CustomStreamDef.load(self.s3_dir, part_id=10)),
             [
                 [5, 'http://www.site.com/5'],
                 [6, 'http://www.site.com/6']
@@ -143,43 +145,56 @@ class TestStreamsDef(unittest.TestCase):
 
         # Test without part_id
         self.assertEquals(
-            list(CustomStreamDef.load(self.tmp_dir)),
+            list(CustomStreamDef.load(self.s3_dir)),
             self.data
         )
 
-    @patch('cdf.utils.s3.fetch_file', _mock_fetch_file)
-    @patch('cdf.utils.s3.fetch_files', _mock_fetch_files)
+    @mock_s3
     def test_load_from_s3(self):
         self._write_custom_parts()
-        s3_dir = 's3://' + self.s3_dir
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        s3_uri = 's3://test_bucket'
+        for file_path in path.list_files(self.s3_dir):
+            k = bucket.new_key(os.path.basename(file_path))
+            k.set_contents_from_filename(file_path)
+
+        load_params = {
+            'uri': s3_uri,
+            'force_fetch': True,
+            'tmp_dir': self.tmp_dir
+        }
+
+        stream = CustomStreamDef.load(
+            part_id=0,
+            **load_params
+        )
         self.assertEquals(
-            list(CustomStreamDef.load(s3_dir, tmp_dir=self.tmp_dir, part_id=0)),
+            list(stream),
             [
                 [0, 'http://www.site.com/'],
                 [1, 'http://www.site.com/1'],
             ]
         )
+
+        stream = CustomStreamDef.load(
+            part_id=9,
+            **load_params
+        )
         self.assertEquals(
-            list(CustomStreamDef.load(s3_dir, tmp_dir=self.tmp_dir, part_id=9)),
+            list(stream),
             [
                 [2, 'http://www.site.com/2'],
                 [3, 'http://www.site.com/3'],
                 [4, 'http://www.site.com/4'],
             ]
         )
-        self.assertEquals(
-            list(CustomStreamDef.load(s3_dir, tmp_dir=self.tmp_dir, part_id=10)),
-            [
-                [5, 'http://www.site.com/5'],
-                [6, 'http://www.site.com/6']
-            ]
-        )
 
         # Test without part_id
-        self.assertEquals(
-            list(CustomStreamDef.load(s3_dir, tmp_dir=self.tmp_dir)),
-            self.data
+        stream = CustomStreamDef.load(
+            **load_params
         )
+        self.assertEquals(list(stream), self.data)
 
     def test_persist(self):
         iterator = iter(self.data)
@@ -234,7 +249,7 @@ class TestStreamsDef(unittest.TestCase):
             first_part_size=1,
             part_size=3
         )
-        self.assertEqual(len(list_files(s3_uri)), 3)
+        self.assertEqual(len(s3.list_files(s3_uri)), 3)
 
         result_stream = CustomStreamDef.load(
             s3_uri,
@@ -257,7 +272,7 @@ class TestStreamsDef(unittest.TestCase):
             s3_uri,
             part_id=part_id
         )
-        self.assertEqual(len(list_files(s3_uri)), 1)
+        self.assertEqual(len(s3.list_files(s3_uri)), 1)
 
         result_stream = CustomStreamDef.load(
             s3_uri,
