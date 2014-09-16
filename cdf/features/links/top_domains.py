@@ -89,6 +89,13 @@ def group_links_by_second_level_domain(external_outlinks):
 
 
 def count_unique_links(external_outlinks):
+    """Count the number of unique links in a set of external outlinks.
+    i.e. if a link to B occurs twice in page A, it is counted only once.
+    :param external_outlinks: the input stream of external outlinks
+                              (based on OutlinksRawStreamDef)
+    :type external_outlinks: iterable
+    :rtype: int
+    """
     #remove duplicate links
     id_index = OutlinksRawStreamDef.field_idx("id")
     external_url_index = OutlinksRawStreamDef.field_idx("external_url")
@@ -101,6 +108,21 @@ def count_unique_links(external_outlinks):
 
 
 def _compute_top_n_domains(external_outlinks, n, key):
+    """A helper function to compute the top n domains given a custom criterion.
+    For each destination domain the function counts the number of unique follow
+    links that points to it and use this number to select the top n domains.
+    The method returns a list of tuple (nb unique follow links, domain)
+    Elements are sorted by decreasing number of unique follow links
+    :param external_outlinks: the input stream of external outlinks
+                              (based on OutlinksRawStreamDef)
+    :type external_outlinks: iterable
+    :param n: the maximum number of domains we want to return
+    :type n: int
+    :param key: the function that extracts the domain from an entry from
+                external_outlinks.
+    :type key: func
+    :rtype: list
+    """
     heap = []
     bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
     for domain, link_group in _group_links(external_outlinks, key):
@@ -128,12 +150,41 @@ def _compute_top_n_domains(external_outlinks, n, key):
 
 
 def compute_top_n_domains(external_outlinks, n):
+    """A helper function to compute the top n domains.
+    For each destination domain the function counts the number of unique follow
+    links that points to it and use this number to select the top n domains.
+    The method returns a list of tuple (nb unique follow links, domain)
+    Elements are sorted by decreasing number of unique follow links
+    :param external_outlinks: the input stream of external outlinks
+                              (based on OutlinksRawStreamDef)
+    :type external_outlinks: iterable
+    :param n: the maximum number of domains we want to return
+    :type n: int
+    :param key: the function that extracts the domain from an entry from
+                external_outlinks.
+    :type key: func
+    :rtype: list
+    """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_domain(x[external_url_idx])
     return _compute_top_n_domains(external_outlinks, n, key)
 
 
 def compute_top_n_second_level_domains(external_outlinks, n):
+    """A helper function to compute the top n second level domains.
+    The method is very similar to "compute_top_n_domains()" but it consider
+    "doctissimo.fr" and "forum.doctissimo.fr" as the same domain
+    while "compute_top_n_domains()" consider them as different.
+    :param external_outlinks: the input stream of external outlinks
+                              (based on OutlinksRawStreamDef)
+    :type external_outlinks: iterable
+    :param n: the maximum number of domains we want to return
+    :type n: int
+    :param key: the function that extracts the domain from an entry from
+                external_outlinks.
+    :type key: func
+    :rtype: list
+    """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_second_level_domain(x[external_url_idx])
     return _compute_top_n_domains(external_outlinks, n, key)
