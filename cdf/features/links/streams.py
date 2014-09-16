@@ -10,13 +10,13 @@ from cdf.metadata.url.url_metadata import (
     FAKE_FIELD, URL_ID
 )
 from cdf.core.streams.base import StreamDefBase
-from cdf.analysis.urls.utils import is_link_internal
 from cdf.log import logger
 from cdf.features.links.helpers.masks import list_to_mask
 from cdf.utils.convert import _raw_to_bool
 from cdf.query.constants import RENDERING, FIELD_RIGHTS
-from .helpers.masks import follow_mask
-from .settings import GROUPS, NB_TOP_ANCHORS
+from cdf.features.links.helpers.predicates import  is_link_internal
+from cdf.features.links.helpers.masks import follow_mask
+from cdf.features.links.settings import GROUPS, NB_TOP_ANCHORS
 
 
 __all__ = ["OutlinksRawStreamDef", "OutlinksStreamDef"]
