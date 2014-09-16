@@ -5,7 +5,7 @@ import os.path
 from cdf.features.links.top_domains import (
     _group_links,
     group_links_by_domain,
-    group_links_by_top_level_domain
+    group_links_by_second_level_domain
 )
 
 
@@ -57,7 +57,7 @@ class TestGroupLinksByDomain(unittest.TestCase):
         self.assertEqual(expected_result, list(actual_result))
 
 
-class TestGroupLinksByTopLevelDomain(unittest.TestCase):
+class TestGroupLinksBySecondLevelDomain(unittest.TestCase):
     def test_nominal_case(self):
         link_stream = iter([
             (0, "a", 0, -1, "http://foo.com/bar.html"),
@@ -66,7 +66,7 @@ class TestGroupLinksByTopLevelDomain(unittest.TestCase):
             (4, "a", 0, -1, "http://bar.foo.com/baz.html"),
         ])
 
-        actual_result = group_links_by_top_level_domain(link_stream)
+        actual_result = group_links_by_second_level_domain(link_stream)
 
         expected_result = [
             ("bar.com", [(0, "a", 0, -1, "http://bar.com/image.jpg")]),

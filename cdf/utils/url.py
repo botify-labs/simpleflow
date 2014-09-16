@@ -12,8 +12,8 @@ def get_domain(url):
     return parsed_url.netloc
 
 
-def get_top_level_domain(url):
-    """Extract the top level domain from an url.
+def get_second_level_domain(url):
+    """Extract the second level domain from an url.
     For instance :
         - analytics.twitter.com -> twitter.com
         - international.blog.bbc.co.ul -> bbc.co.uk
@@ -22,4 +22,5 @@ def get_top_level_domain(url):
     :rtype: str
     """
     #tld gets the job done
+    #(even if the function name is misleading)
     return get_tld(url)

@@ -1,5 +1,5 @@
 from itertools import groupby
-from cdf.utils.url import get_domain, get_top_level_domain
+from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
 from cdf.features.links.streams import OutlinksStreamDef
 
@@ -35,8 +35,8 @@ def group_links_by_domain(link_stream):
         yield key_value, link_group
 
 
-def group_links_by_top_level_domain(link_stream):
-    """Given a stream of outlinks, groups them by top level out domain
+def group_links_by_second_level_domain(link_stream):
+    """Given a stream of outlinks, groups them by second level out domain
     and generates pairs (domain, link_list)
     :param link_stream: the input outlink stream from OutlinksStreamDef
                         (should contains only outlinks,
@@ -44,6 +44,6 @@ def group_links_by_top_level_domain(link_stream):
     :param link_stream: iterable
     """
     external_url_idx = OutlinksStreamDef.field_idx("external_url")
-    key = lambda x: get_top_level_domain(x[external_url_idx])
+    key = lambda x: get_second_level_domain(x[external_url_idx])
     for key_value, link_group in _group_links(link_stream, key):
         yield key_value, link_group
