@@ -17,3 +17,9 @@ def is_link_internal(link_mask, dest, is_bitmask=False):
     """
     is_robots = link_mask & 4 == 4 if is_bitmask else 'robots' in link_mask
     return dest > 0 or (dest == -1 and is_robots)
+
+
+def is_link(link_type):
+    """Determine if a link is a normal <a> link
+    """
+    return link_type == 'a'
