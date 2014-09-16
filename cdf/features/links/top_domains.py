@@ -21,7 +21,7 @@ def _group_links(link_stream, key):
 
 
 def group_links_by_domain(link_stream):
-    """Given a stream of outlinks, groups them by out domain
+    """Given a stream of *external* outlinks, groups them by out domain
     and generates pairs (domain, link_list)
     :param link_stream: the input outlink stream from OutlinksStreamDef
                         (should contains only outlinks,
@@ -36,7 +36,8 @@ def group_links_by_domain(link_stream):
 
 
 def group_links_by_second_level_domain(link_stream):
-    """Given a stream of outlinks, groups them by second level out domain
+    """Given a stream of *external* outlinks,
+    groups them by second level out domain
     and generates pairs (domain, link_list)
     :param link_stream: the input outlink stream from OutlinksStreamDef
                         (should contains only outlinks,
