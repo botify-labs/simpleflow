@@ -134,7 +134,7 @@ class TestS3Module(unittest.TestCase):
 
         key = Key(test_bucket, name='t.txt.1.gz')
         key.content_encoding = 'gzip'
-        key.set_contents_from_filename(f.filename)
+        key.set_contents_from_filename(f.name)
 
         # check stream results
         result = list(stream_files('s3://test_bucket'))
