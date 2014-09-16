@@ -353,14 +353,22 @@ class Stream(Iterator):
             return self.iterator.next()
         return self._filtered.next()
 
-    def add_filter(self, field, func):
+    def add_filter(self, fields, func):
         """Apply a filter function to the stream
 
-        Ex: self.add_filter('http_code', lambda i: i == '200')
+        >>> stream.add_filter(['http_code'], lambda i: i == '200')
+
+        :param fields: field names to extract and pass to the filter predicate,
+            the parameter order is defined by the list
+        :type fields: list
+        :param func: filter predicate function
+        :type func: function
         """
-        self._filters.append((self.stream_def.field_idx(field), func))
+        indices = [self.stream_def.field_idx(f) for f in fields]
+        self._filters.append((indices, func))
         self._filtered = ifilter(
-            lambda v: all(func(v[idx]) for idx, func in self._filters),
+            lambda v: all(func(*[v[i] for i in indices])
+                          for indices, func in self._filters),
             self.iterator
         )
 

@@ -24,7 +24,7 @@ class TestStream(unittest.TestCase):
         self.data = [
             [1, 'http://www.site.com/'],
             [2, 'http://www.site.com/2'],
-            [3, 'http://www.bad.com/2']
+            [3, 'http://www.bad.com/3']
         ]
 
     def test_basics(self):
@@ -32,11 +32,16 @@ class TestStream(unittest.TestCase):
         result = list(stream)
         self.assertEqual(result, self.data)
 
-    def test_add_filters(self):
+    def test_simple_filters(self):
         stream = Stream(CustomStreamDef, iter(self.data))
-        stream.add_filter('url', lambda i: 'site.com' in i)
-        stream.add_filter('url', lambda i: '/2' in i)
-        self.assertEquals(list(stream), [[2, 'http://www.site.com/2']])
+        stream.add_filter(['url'], lambda i: 'site.com' in i)
+        stream.add_filter(['url'], lambda i: '/2' in i)
+        self.assertEquals(list(stream), [self.data[1]])
+
+    def test_multi_field_filters(self):
+        stream = Stream(CustomStreamDef, iter(self.data))
+        stream.add_filter(['id', 'url'], lambda i, u: i > 1 and '/2' in u)
+        self.assertEquals(list(stream), [self.data[1]])
 
 
 class TestStreamsDef(unittest.TestCase):
@@ -86,17 +91,6 @@ class TestStreamsDef(unittest.TestCase):
             CustomStreamDef().to_dict(entry),
             {'id': 1, 'url': 'http://www.site.com/'}
         )
-
-    def test_stream_filters(self):
-        iterator = iter([
-            [1, 'http://www.site.com/'],
-            [2, 'http://www.site.com/2'],
-            [3, 'http://www.bad.com/2']
-        ])
-        stream = CustomStreamDef.load_iterator(iterator)
-        stream.add_filter('url', lambda i: 'site.com' in i)
-        stream.add_filter('url', lambda i: '/2' in i)
-        self.assertEquals(list(stream), [[2, 'http://www.site.com/2']])
 
     def _write_custom_parts(self):
         """
