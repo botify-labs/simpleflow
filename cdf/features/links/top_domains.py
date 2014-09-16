@@ -1,7 +1,9 @@
-from itertools import groupby, ifilter
+from itertools import groupby, ifilter, imap
+import heapq
 from cdf.features.links.helpers.predicates import (
     is_link,
-    is_link_internal
+    is_link_internal,
+    is_follow_link
 )
 from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
@@ -84,3 +86,54 @@ def group_links_by_second_level_domain(external_outlinks):
     key = lambda x: get_second_level_domain(x[external_url_idx])
     for key_value, link_group in _group_links(external_outlinks, key):
         yield key_value, link_group
+
+
+def count_unique_links(external_outlinks):
+    #remove duplicate links
+    id_index = OutlinksRawStreamDef.field_idx("id")
+    external_url_index = OutlinksRawStreamDef.field_idx("external_url")
+    external_outlinks = imap(
+        lambda x: (x[id_index], x[external_url_index]),
+        external_outlinks
+    )
+    result = len(set(external_outlinks))
+    return result
+
+
+def _compute_top_n_domains(external_outlinks, n, key):
+    heap = []
+    bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
+    for domain, link_group in _group_links(external_outlinks, key):
+
+        #compute number of unique follow links
+        external_follow_outlinks = ifilter(
+            lambda x: is_follow_link(x[bitmask_index], is_bitmask=True),
+            link_group
+        )
+        nb_unique_follow_links = count_unique_links(external_follow_outlinks)
+
+        if nb_unique_follow_links == 0:
+            #we don't want to return domain with 0 occurrences.
+            continue
+        if len(heap) < n:
+            heapq.heappush(heap, (nb_unique_follow_links, domain))
+        else:
+            heapq.heappushpop(heap, (nb_unique_follow_links, domain))
+    #back to a list
+    result = []
+    while len(heap) != 0:
+        nb_unique_follow_links, domain = heap.pop()
+        result.append((nb_unique_follow_links, domain))
+    return result
+
+
+def compute_top_n_domains(external_outlinks, n):
+    external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
+    key = lambda x: get_domain(x[external_url_idx])
+    return _compute_top_n_domains(external_outlinks, n, key)
+
+
+def compute_top_n_second_level_domains(external_outlinks, n):
+    external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
+    key = lambda x: get_second_level_domain(x[external_url_idx])
+    return _compute_top_n_domains(external_outlinks, n, key)
