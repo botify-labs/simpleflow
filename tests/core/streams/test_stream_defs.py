@@ -3,7 +3,6 @@ import os
 import tempfile
 import unittest
 import shutil
-from mock import patch
 from moto import mock_s3
 import boto
 
