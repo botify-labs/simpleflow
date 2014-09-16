@@ -184,7 +184,7 @@ def update_download_status_on_parsing_error(download_status,
             sitemap_index_document.valid_urls,
             sitemap_index_document.invalid_urls,
             parsing_error.__class__.__name__,
-            parsing_error.message)
+            str(parsing_error))
         download_status.add_success_sitemap_index(sitemap_index_metadata)
     else:
         #otherwise report it as error
@@ -192,7 +192,7 @@ def update_download_status_on_parsing_error(download_status,
             Error(sitemap_index_document.url,
                   SiteMapType.SITEMAP_INDEX,
                   parsing_error.__class__.__name__,
-                  parsing_error.message)
+                  str(parsing_error))
         )
 
 
