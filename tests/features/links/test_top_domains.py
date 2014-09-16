@@ -9,9 +9,9 @@ from cdf.features.links.top_domains import (
     group_links_by_second_level_domain,
     filter_external_outlinks,
     count_unique_links,
-    _compute_top_n_domains,
-    compute_top_n_domains,
-    compute_top_n_second_level_domains
+    _compute_top_domains,
+    compute_top_domains,
+    compute_top_second_level_domains
 )
 
 
@@ -118,7 +118,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [4, "a", 0, -1, "foo.com"],
         ])
         n = 2
-        actual_result = _compute_top_n_domains(externals, n, self.key)
+        actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [(3, "foo.com"), (2, "bar.com")]
         self.assertEqual(expected_result, actual_result)
 
@@ -129,7 +129,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [4, "a", 0, -1, "foo.com"],
         ])
         n = 10
-        actual_result = _compute_top_n_domains(externals, n, self.key)
+        actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [(2, "foo.com"), (1, "bar.com")]
         self.assertEqual(expected_result, actual_result)
 
@@ -141,7 +141,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [4, "a", 0, -1, "bar.com"],
         ])
         n = 1
-        actual_result = _compute_top_n_domains(externals, n, self.key)
+        actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [(2, "bar.foo.com")]
         self.assertEqual(expected_result, actual_result)
 
@@ -152,7 +152,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [3, "a", 1, -1, "foo.com"]
         ])
         n = 2
-        actual_result = _compute_top_n_domains(externals, n, self.key)
+        actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = []
         self.assertEqual(expected_result, actual_result)
 
@@ -167,7 +167,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [0, "a", 0, -1, "foo.com"]  # duplicated link
         ])
         n = 2
-        actual_result = _compute_top_n_domains(externals, n, self.key)
+        actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [(3, "foo.com"), (2, "bar.com")]
         self.assertEqual(expected_result, actual_result)
 
@@ -183,7 +183,7 @@ class TestComputeTopNDomains(unittest.TestCase):
             [4, "a", 0, -1, "http://foo.com/"],
         ])
         n = 2
-        actual_result = compute_top_n_domains(externals, n)
+        actual_result = compute_top_domains(externals, n)
         expected_result = [(3, "foo.com"), (2, "bar.com")]
         self.assertEqual(expected_result, actual_result)
 
@@ -199,6 +199,6 @@ class TestComputeTopNSecondLevelDomain(unittest.TestCase):
             [4, "a", 0, -1, "http://foo.com/"],
         ])
         n = 2
-        actual_result = compute_top_n_second_level_domains(externals, n)
+        actual_result = compute_top_second_level_domains(externals, n)
         expected_result = [(4, "foo.com"), (2, "bar.com")]
         self.assertEqual(expected_result, actual_result)
