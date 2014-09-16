@@ -1,12 +1,31 @@
 import unittest
 
 import os.path
+from cdf.features.links.streams import OutlinksStreamDef
 
 from cdf.features.links.top_domains import (
     _group_links,
     group_links_by_domain,
-    group_links_by_second_level_domain
-)
+    group_links_by_second_level_domain,
+    filter_external_outlinks)
+
+
+class TestExternalLinksFiltering(unittest.TestCase):
+    def test_harness(self):
+        data = [
+            (0, "canonical", 0, -1, "abc.com"),
+            (0, "a", 0, -1, "http://foo.com/bar.html"),
+            (0, "redirection", 0, -1, "abc.com/abc"),
+            (0, "a", 5, -1, "domain.com")  # internal
+        ]
+        link_stream = OutlinksStreamDef.load_iterator(iter(data))
+
+        externals = filter_external_outlinks(link_stream)
+        result = list(externals)
+        expected = [
+            [0, "a", ['follow'], -1, "http://foo.com/bar.html"],
+        ]
+        self.assertEqual(result, expected)
 
 
 class TestGroupLinks(unittest.TestCase):

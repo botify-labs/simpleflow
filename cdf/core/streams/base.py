@@ -4,6 +4,7 @@ import os
 import gzip
 import tempfile
 import shutil
+from collections import Iterator
 
 from cdf.core.streams.caster import Caster
 from cdf.core.streams.utils import split_file
@@ -326,20 +327,20 @@ class StreamDefBase(object):
         )
 
 
-class Stream(object):
-    """
-    A Stream instance is the union of a StreamDefBase instance and an iterable
+class Stream(Iterator):
+    """Stream represents a concret data stream of a certain stream def
     """
 
     def __init__(self, stream_def, iterator):
-        """
-        :param stream_def : A StreamDefBase's subclass instance
-        :param iterator : an iterator
+        """Init a Stream
+
+        :param stream_def : StreamDefBase's subclass instance
+        :param iterator : real stream iterator
         """
         self.stream_def = stream_def
         self.iterator = iterator
-        self._has_filters = False
         self._filters = []
+        self._filtered = None
 
     def __iter__(self):
         return self
@@ -348,19 +349,26 @@ class Stream(object):
         return '<Stream of %s>' % self.stream_def.__class__.__name__
 
     def next(self):
-        if not self._has_filters:
+        if len(self._filters) == 0:
             return self.iterator.next()
-        return self._filtered_iterator.next()
+        return self._filtered.next()
 
-    def add_filter(self, field, func):
+    def add_filter(self, fields, func):
+        """Apply a filter function to the stream
+
+        >>> stream.add_filter(['http_code'], lambda i: i == '200')
+
+        :param fields: field names to extract and pass to the filter predicate,
+            the parameter order is defined by the list
+        :type fields: list
+        :param func: filter predicate function
+        :type func: function
         """
-        Apply a filter func to a field
-        Ex : self.add_filter('http_code', lambda i: i == '200')
-        """
-        self._has_filters = True
-        self._filters.append((self.stream_def.field_idx(field), func))
-        self._filtered_iterator = ifilter(
-            lambda v: all(func(v[field_idx]) for field_idx, func in self._filters),
+        indices = [self.stream_def.field_idx(f) for f in fields]
+        self._filters.append((indices, func))
+        self._filtered = ifilter(
+            lambda v: all(func(*[v[i] for i in indices])
+                          for indices, func in self._filters),
             self.iterator
         )
 

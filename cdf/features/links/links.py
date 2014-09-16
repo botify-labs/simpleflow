@@ -1,6 +1,6 @@
 from collections import defaultdict
 from itertools import groupby
-from cdf.analysis.urls.utils import is_link_internal
+from cdf.features.links.helpers.predicates import is_link_internal
 from cdf.features.links.helpers.masks import is_first_canonical
 from cdf.features.links.streams import InlinksRawStreamDef, OutlinksRawStreamDef
 
