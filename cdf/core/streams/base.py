@@ -4,6 +4,7 @@ import os
 import gzip
 import tempfile
 import shutil
+from collections import Iterator
 
 from cdf.core.streams.caster import Caster
 from cdf.core.streams.utils import split_file
@@ -326,7 +327,7 @@ class StreamDefBase(object):
         )
 
 
-class Stream(object):
+class Stream(Iterator):
     """
     A Stream instance is the union of a StreamDefBase instance and an iterable
     """
