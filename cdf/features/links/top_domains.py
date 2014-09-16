@@ -20,7 +20,7 @@ def _group_links(link_stream, key):
         yield key_value, list(link_group)
 
 
-def group_links_by_domain(link_stream):
+def group_links_by_domain(external_outlinks):
     """Given a stream of *external* outlinks, groups them by out domain
     and generates pairs (domain, link_list)
     :param link_stream: the input outlink stream from OutlinksStreamDef
@@ -31,11 +31,11 @@ def group_links_by_domain(link_stream):
     """
     external_url_idx = OutlinksStreamDef.field_idx("external_url")
     key = lambda x: get_domain(x[external_url_idx])
-    for key_value, link_group in _group_links(link_stream, key):
+    for key_value, link_group in _group_links(external_outlinks, key):
         yield key_value, link_group
 
 
-def group_links_by_second_level_domain(link_stream):
+def group_links_by_second_level_domain(external_outlinks):
     """Given a stream of *external* outlinks,
     groups them by second level out domain
     and generates pairs (domain, link_list)
@@ -46,5 +46,5 @@ def group_links_by_second_level_domain(link_stream):
     """
     external_url_idx = OutlinksStreamDef.field_idx("external_url")
     key = lambda x: get_second_level_domain(x[external_url_idx])
-    for key_value, link_group in _group_links(link_stream, key):
+    for key_value, link_group in _group_links(external_outlinks, key):
         yield key_value, link_group
