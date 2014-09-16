@@ -10,7 +10,8 @@ from cdf.features.links.top_domains import (
     count_unique_follow_links,
     _compute_top_domains,
     compute_top_domains,
-    compute_top_second_level_domains
+    compute_top_second_level_domains,
+    compute_domain_stats
 )
 
 
@@ -181,3 +182,37 @@ class TestComputeTopNSecondLevelDomain(unittest.TestCase):
         actual_result = compute_top_second_level_domains(externals, n)
         expected_result = [(4, "foo.com"), (2, "bar.com")]
         self.assertEqual(expected_result, actual_result)
+
+
+class TestDomainStats(unittest.TestCase):
+    def setUp(self):
+        self.groups = (
+            "foo.com",
+            [
+                [0, "a", 0, -1, "http://foo.com/bar.html"],
+                [3, "a", 0, -1, "http://foo.com/qux.css"],
+                [4, "a", 0, -1, "http://bar.foo.com/baz.html"],
+                [5, "a", 1, -1, "http://foo.com/bar.html"],
+                [6, "a", 0, -1, "http://foo.com/bar.html"],
+                [7, "a", 0, -1, "http://foo.com/bar.html"],
+                [8, "a", 2, -1, "http://foo.com/bar.html"],
+                [9, "a", 0, -1, "http://foo.com/bar.html"]
+            ]
+        )
+
+    def test_link_counts(self):
+        result = compute_domain_stats(self.groups)
+        expected_follow = 6
+        expected_nofollow = 2
+        self.assertEqual(result['follow_links'], expected_follow)
+        self.assertEqual(result['nofollow_links'], expected_nofollow)
+
+    def test_unique_link_counts(self):
+        result = compute_domain_stats(self.groups)
+        expected_uniq_follow = 3
+        self.assertEqual(result['unique_follow_links'], expected_uniq_follow)
+
+    def test_domain_name(self):
+        result = compute_domain_stats(self.groups)
+        expected_domain = 'foo.com'
+        self.assertEqual(result['domain'], expected_domain)

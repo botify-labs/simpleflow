@@ -162,3 +162,15 @@ def compute_top_second_level_domains(external_outlinks, n):
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_second_level_domain(x[external_url_idx])
     return _compute_top_domains(external_outlinks, n, key)
+
+
+def compute_domain_stats(grouped_outlinks):
+    """Compute full stats out of outlinks of a specific domain
+    #
+    :param grouped_outlinks: grouped qualified outlinks of a certain domain
+        eg: (domain_name, [link1, link2, ...])
+    :type grouped_outlinks: tuple
+    :return: stats of outlinks that target the domain
+    :rtype: dict
+    """
+    pass
