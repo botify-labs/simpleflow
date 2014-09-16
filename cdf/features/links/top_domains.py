@@ -38,7 +38,16 @@ def group_links_by_domain(external_outlinks):
 def group_links_by_second_level_domain(external_outlinks):
     """Given a stream of *external* outlinks,
     groups them by second level out domain
-    and generates pairs (domain, link_list)
+    and generates pairs (domain, link_list).
+    For instance if the external_outlinks are:
+      (0, "a", 0, -1, "http://foo.com/bar.html")
+      (0, "a", 0, -1, "http://bar.com/image.jpg")
+      (4, "a", 0, -1, "http://bar.foo.com/baz.html")
+    the result will be
+      ("bar.com", [(0, "a", 0, -1, "http://bar.com/image.jpg")])
+      ("foo.com", [(0, "a", 0, -1, "http://foo.com/bar.html"),
+                   (4, "a", 0, -1, "http://bar.foo.com/baz.html")])
+
     :param link_stream: the input outlink stream from OutlinksStreamDef
                         (should contains only outlinks,
                         no inlinks, no canonical)
