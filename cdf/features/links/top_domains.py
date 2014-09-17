@@ -66,6 +66,8 @@ def _group_links(link_stream, key):
         yield key_value, list(link_group)
 
 
+
+
 def count_unique_links(external_outlinks):
     """Count the number of unique links in a set of external outlinks.
     i.e. if a link to B occurs twice in page A, it is counted only once.
@@ -218,16 +220,54 @@ def compute_domain_stats(grouped_outlinks):
 
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
 
+class LinkSample(object):
+    def __init__(self, destination_url, unique_links, sample_sources):
+        self.url = destination_url
+        self.unique_links = unique_links
+        self.sample_sources = sample_sources
+
+    def __eq__(self, other):
+        return (self.url == other.url and
+                self.unique_links == other.unique_links and
+                self.sample_sources == other.sample_sources)
+
+    def __repr__(self):
+        return "{}: {}, {}".format(self.url, self.unique_links, self.sample_sources)
+
+    def to_dict(self):
+        return {
+            "url": self.url,
+            "unique_links": self.unique_links,
+            "sources": self.sample_sources
+        }
+
+def get_source_sample(external_outlinks, n):
+    result = []
+    id_idx = OutlinksRawStreamDef.field_idx("id")
+    external_outlinks = sorted(external_outlinks, key=lambda x: x[id_idx])
+    for link in external_outlinks:
+        source_id = link[id_idx]
+        if source_id not in result:
+            result.append(source_id)
+        if len(result) >= n:
+            break
+    return result
+
+
 def compute_sample_links(external_outlinks, n):
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     external_outlinks = sorted(external_outlinks, key=lambda x: x[external_url_idx])
     heap = []
     for external_url, links in groupby(external_outlinks, key=lambda x: x[external_url_idx]):
+        links = list(links)
         nb_unique_links = count_unique_links(links)
+        nb_source_samples = 3
+        sample_sources = get_source_sample(links, nb_source_samples)
+        link_sample = LinkSample(external_url, nb_unique_links, sample_sources)
         if len(heap) < n:
-            heapq.heappush(heap, (nb_unique_links, external_url))
+            heapq.heappush(heap, (nb_unique_links, link_sample))
         else:
-            heapq.heappushpop(heap, (nb_unique_links, external_url))
+            heapq.heappushpop(heap, (nb_unique_links, link_sample))
 
     #back to a list
     result = []

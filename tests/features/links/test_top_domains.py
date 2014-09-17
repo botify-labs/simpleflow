@@ -12,7 +12,9 @@ from cdf.features.links.top_domains import (
     compute_top_domains,
     compute_top_second_level_domains,
     compute_domain_stats,
-    compute_sample_links
+    LinkSample,
+    compute_sample_links,
+    get_source_sample
 )
 
 
@@ -236,8 +238,8 @@ class TestComputeSampleLinks(unittest.TestCase):
         n = 2
         actual_result = compute_sample_links(externals, n)
 
-        expected_result = [(3, "http://foo.com/bar.html"),
-                           (2, "http://foo.com/baz.html")]
+        expected_result = [(3, LinkSample("http://foo.com/bar.html", 3, [0, 3, 4])),
+                           (2, LinkSample("http://foo.com/baz.html", 2, [4, 5]))]
 
         self.assertEqual(expected_result, actual_result)
 
@@ -257,9 +259,8 @@ class TestComputeSampleLinks(unittest.TestCase):
         n = 2
         actual_result = compute_sample_links(externals, n)
 
-        expected_result = [(3, "http://foo.com/baz.html"),
-                           (2, "http://foo.com/qux.html")]
-
+        expected_result = [(3, LinkSample("http://foo.com/baz.html", 3, [4, 5, 6])),
+                           (2, LinkSample("http://foo.com/qux.html", 2, [3, 4]))]
         self.assertEqual(expected_result, actual_result)
 
     def test_nofollow(self):
@@ -274,8 +275,21 @@ class TestComputeSampleLinks(unittest.TestCase):
         n = 2
         actual_result = compute_sample_links(externals, n)
 
-        expected_result = [(3, "http://foo.com/bar.html"),
-                           (2, "http://foo.com/baz.html")]
+        expected_result = [(3, LinkSample("http://foo.com/bar.html", 3, [0, 3, 4])),
+                           (2, LinkSample("http://foo.com/baz.html", 2, [4, 5]))]
 
         self.assertEqual(expected_result, actual_result)
 
+
+class TestGetSourceSample(unittest.TestCase):
+    def test_nominal_case(self):
+        externals = iter([
+            [3, "a", 0, -1, "http://foo.com/"],
+            [3, "a", 0, -1, "http://foo.com/"],
+            [4, "a", 3, -1, "http://foo.com/"],
+            [0, "a", 1, -1, "http://foo.com/"],
+            [5, "a", 0, -1, "http://foo.com/"],
+            [4, "a", 5, -1, "http://foo.com/"]
+        ])
+        n = 2
+        self.assertEqual([0, 3], get_source_sample(externals, n))
