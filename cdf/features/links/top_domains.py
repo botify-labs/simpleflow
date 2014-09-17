@@ -295,6 +295,7 @@ def compute_sample_links(external_outlinks, n):
     external_outlinks = sorted(external_outlinks, key=lambda x: x[external_url_idx])
     heap = []
     for external_url, links in groupby(external_outlinks, key=lambda x: x[external_url_idx]):
+        #transform iterator in list because we will need it more than once.
         links = list(links)
         nb_unique_links = count_unique_links(links)
         nb_source_samples = 3
