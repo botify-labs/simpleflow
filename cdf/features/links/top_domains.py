@@ -129,6 +129,10 @@ def _compute_top_domains(external_outlinks, n, key):
         if len(heap) < n:
             heapq.heappush(heap, (nb_unique_follow_links, domain))
         else:
+            min_value = heap[0][0]
+            if nb_unique_follow_links < min_value:
+                #avoid useless pushpop()
+                continue
             heapq.heappushpop(heap, (nb_unique_follow_links, domain))
     #back to a list
     result = []
