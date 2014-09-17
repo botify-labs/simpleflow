@@ -201,18 +201,18 @@ class TestDomainStats(unittest.TestCase):
         )
 
     def test_link_counts(self):
-        result = compute_domain_stats(self.groups)
+        result = compute_domain_stats(self.groups).to_dict()
         expected_follow = 6
         expected_nofollow = 2
         self.assertEqual(result['follow_links'], expected_follow)
-        self.assertEqual(result['nofollow_links'], expected_nofollow)
+        self.assertEqual(result['no_follow_links'], expected_nofollow)
 
     def test_unique_link_counts(self):
-        result = compute_domain_stats(self.groups)
+        result = compute_domain_stats(self.groups).to_dict()
         expected_uniq_follow = 3
         self.assertEqual(result['unique_follow_links'], expected_uniq_follow)
 
     def test_domain_name(self):
-        result = compute_domain_stats(self.groups)
+        result = compute_domain_stats(self.groups).to_dict()
         expected_domain = 'foo.com'
         self.assertEqual(result['domain'], expected_domain)

@@ -183,11 +183,36 @@ def compute_top_second_level_domains(external_outlinks, n):
 
 def compute_domain_stats(grouped_outlinks):
     """Compute full stats out of outlinks of a specific domain
-    #
+
     :param grouped_outlinks: grouped qualified outlinks of a certain domain
         eg: (domain_name, [link1, link2, ...])
     :type grouped_outlinks: tuple
     :return: stats of outlinks that target the domain
     :rtype: dict
     """
-    pass
+    # counters
+    follow = 0
+    nofollow = 0
+    follow_uniq = 0
+
+    # indices
+    mask_idx = OutlinksRawStreamDef.field_idx('bitmask')
+    external_url_idx = OutlinksRawStreamDef.field_idx('external_url')
+
+    seen_urls = set()
+    domain_name, links = grouped_outlinks
+    for link in links:
+        is_follow = is_follow_link(link[mask_idx], is_bitmask=True)
+        url = link[external_url_idx]
+
+        if is_follow:
+            follow += 1
+            if url not in seen_urls:
+                follow_uniq += 1
+        else:
+            nofollow += 1
+
+        # add to seen set
+        seen_urls.add(url)
+
+    return DomainLinkStats(domain_name, follow, nofollow, follow_uniq)
