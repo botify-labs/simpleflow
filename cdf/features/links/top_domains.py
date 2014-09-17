@@ -66,8 +66,6 @@ def _group_links(link_stream, key):
         yield key_value, list(link_group)
 
 
-
-
 def count_unique_links(external_outlinks):
     """Count the number of unique links in a set of external outlinks.
     i.e. if a link to B occurs twice in page A, it is counted only once.
@@ -221,7 +219,22 @@ def compute_domain_stats(grouped_outlinks):
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
 
 class SampleLink(object):
+    """A class to represent a sample link.
+    The sample link is defined by :
+        - its destination urls
+        - the number of unique links that point to it
+        - a sample of source urlids.
+    """
     def __init__(self, destination_url, unique_links, sample_sources):
+        """Constructor
+        :param destination_url: the destination url
+        :type: str
+        :param unique_links: the number of unique links that point to
+                             the destination url
+        :type unique_links: int
+        :param sample_sources: a list of sample source urlids.
+        :type sample_source: list
+        """
         self.url = destination_url
         self.unique_links = unique_links
         self.sample_sources = sample_sources
@@ -232,16 +245,32 @@ class SampleLink(object):
                 self.sample_sources == other.sample_sources)
 
     def __repr__(self):
-        return "{}: {}, {}".format(self.url, self.unique_links, self.sample_sources)
+        return "{}: {}, {}".format(self.url,
+                                   self.unique_links,
+                                   self.sample_sources)
 
     def to_dict(self):
+        """Return a dict representation of the object
+        :rtype: dict
+        """
         return {
             "url": self.url,
             "unique_links": self.unique_links,
             "sources": self.sample_sources
         }
 
+
 def get_source_sample(external_outlinks, n):
+    """Compute a list of n different sample source urlids
+    from a set of external outlinks that point to the same url.
+    :param external_outlinks: the input stream of external outlinks
+                              (based on OutlinksRawStreamDef).
+                              They all point to the same domain.
+    :type external_outlinks: iterable
+    :param n: the maximum number of sample links to return
+    :type n: int
+    :rtype: list
+    """
     result = []
     id_idx = OutlinksRawStreamDef.field_idx("id")
     external_outlinks = sorted(external_outlinks, key=lambda x: x[id_idx])
@@ -255,6 +284,20 @@ def get_source_sample(external_outlinks, n):
 
 
 def compute_sample_links(external_outlinks, n):
+    """Compute sample links from a set of external outlinks that point
+    to the same domain.
+    The method select the n most linked urls (via the number of unique links)
+    For each of the most linked urls, it reports: the url, the number of unique
+    links, 3 source urlids.
+    The function returns a list of SampleLink.
+    :param external_outlinks: the input stream of external outlinks
+                              (based on OutlinksRawStreamDef).
+                              They all point to the same domain.
+    :type external_outlinks: iterable
+    :param n: the maximum number of sample links to return
+    :type n: int
+    :rtype: list
+    """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     external_outlinks = sorted(external_outlinks, key=lambda x: x[external_url_idx])
     heap = []
