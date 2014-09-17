@@ -198,21 +198,22 @@ def compute_domain_stats(grouped_outlinks):
     # indices
     mask_idx = OutlinksRawStreamDef.field_idx('bitmask')
     external_url_idx = OutlinksRawStreamDef.field_idx('external_url')
+    src_id_idx = OutlinksRawStreamDef.field_idx('id')
 
     seen_urls = set()
     domain_name, links = grouped_outlinks
     for link in links:
         is_follow = is_follow_link(link[mask_idx], is_bitmask=True)
-        url = link[external_url_idx]
+        dest_url = link[external_url_idx]
+        src_id = link[src_id_idx]
 
         if is_follow:
             follow += 1
-            if url not in seen_urls:
+            if (src_id, dest_url) not in seen_urls:
                 follow_unique += 1
+            # add to seen set
+            seen_urls.add((src_id, dest_url))
         else:
             nofollow += 1
-
-        # add to seen set
-        seen_urls.add(url)
 
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)

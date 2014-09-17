@@ -189,28 +189,32 @@ class TestDomainStats(unittest.TestCase):
         self.groups = (
             "foo.com",
             [
-                [0, "a", 0, -1, "http://foo.com/bar.html"],
-                [3, "a", 0, -1, "http://foo.com/qux.css"],
-                [4, "a", 0, -1, "http://bar.foo.com/baz.html"],
-                [5, "a", 1, -1, "http://foo.com/bar.html"],
-                [6, "a", 0, -1, "http://foo.com/bar.html"],
-                [7, "a", 0, -1, "http://foo.com/bar.html"],
-                [8, "a", 2, -1, "http://foo.com/bar.html"],
-                [9, "a", 0, -1, "http://foo.com/bar.html"]
+                [0, "a", 0, -1, "A"],
+                [3, "a", 0, -1, "B"],
+                [4, "a", 0, -1, "C"],
+                [5, "a", 1, -1, "A"],
+                [6, "a", 0, -1, "A"],
+                [7, "a", 0, -1, "A"],
+                # url 8 has 2 follow to A
+                # and a nofollow to A
+                [8, "a", 2, -1, "A"],
+                [8, "a", 0, -1, "A"],
+                [8, "a", 0, -1, "A"],
+                [9, "a", 0, -1, "A"]
             ]
         )
 
     def test_link_counts(self):
         result = compute_domain_stats(self.groups).to_dict()
-        expected_follow = 6
+        expected_follow = 8
         expected_nofollow = 2
         self.assertEqual(result['follow_links'], expected_follow)
         self.assertEqual(result['no_follow_links'], expected_nofollow)
 
     def test_unique_link_counts(self):
         result = compute_domain_stats(self.groups).to_dict()
-        expected_uniq_follow = 3
-        self.assertEqual(result['unique_follow_links'], expected_uniq_follow)
+        expected_unique_follow = 7
+        self.assertEqual(result['unique_follow_links'], expected_unique_follow)
 
     def test_domain_name(self):
         result = compute_domain_stats(self.groups).to_dict()
