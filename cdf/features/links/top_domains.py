@@ -271,16 +271,9 @@ def get_source_sample(external_outlinks, n):
     :type n: int
     :rtype: list
     """
-    result = []
     id_idx = OutlinksRawStreamDef.field_idx("id")
-    external_outlinks = sorted(external_outlinks, key=lambda x: x[id_idx])
-    for link in external_outlinks:
-        source_id = link[id_idx]
-        if source_id not in result:
-            result.append(source_id)
-        if len(result) >= n:
-            break
-    return result
+    source_urlids = set([x[id_idx] for x in external_outlinks])
+    return heapq.nsmallest(n, source_urlids)
 
 
 def compute_sample_links(external_outlinks, n):
