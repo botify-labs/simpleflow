@@ -23,3 +23,17 @@ def is_link(link_type):
     """Determine if a link is a normal <a> link
     """
     return link_type == 'a'
+
+
+def is_follow_link(link_mask, is_bitmask=False):
+    """Determine if a link is a follow link or not
+    :param link_mast: the bitmask of the link
+    :type link_mask: int, list
+    :param is_bitmask: flag indicates the type of `link_mask`
+    :type is_bitmask: bool
+    """
+    if is_bitmask:
+        link_mask = link_mask & 31
+        return link_mask in (0, 8)
+    else:
+        return "follow" in link_mask
