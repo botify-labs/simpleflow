@@ -9,6 +9,7 @@ from cdf.features.links.top_domains import (
     group_links_by_second_level_domain,
     filter_external_outlinks,
     count_unique_links,
+    count_unique_follow_links,
     _compute_top_domains,
     compute_top_domains,
     compute_top_second_level_domains
@@ -101,6 +102,19 @@ class TestCountUniqueLinks(unittest.TestCase):
             [3, "a", 0, -1, "http://foo.com/baz.css"]
         ])
         self.assertEqual(4, count_unique_links(external_outlinks))
+
+
+class TestCountUniqueFollowLinks(unittest.TestCase):
+    def test_nominal_case(self):
+        external_outlinks = iter([
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://foo.com/baz.html"],
+            [3, "a", 0, -1, "http://foo.com/qux.css"],
+            [0, "a", 0, -1, "http://foo.com/baz.html"],  # duplicate link
+            [3, "a", 0, -1, "http://foo.com/baz.css"],
+            [3, "a", 1, -1, "http://foo.com"]  # no follow
+        ])
+        self.assertEqual(4, count_unique_follow_links(external_outlinks))
 
 
 class Test_ComputeTopNDomains(unittest.TestCase):

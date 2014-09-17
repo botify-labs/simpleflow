@@ -107,6 +107,23 @@ def count_unique_links(external_outlinks):
     return result
 
 
+def count_unique_follow_links(external_outlinks):
+    """Count the number of unique follow links in a set of external outlinks.
+    i.e. if a link to B occurs twice in page A, it is counted only once.
+    :param external_outlinks: the input stream of external outlinks
+                              (based on OutlinksRawStreamDef)
+    :type external_outlinks: iterable
+    :rtype: int
+    """
+    bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
+    #compute number of unique follow links
+    external_follow_outlinks = ifilter(
+        lambda x: is_follow_link(x[bitmask_index], is_bitmask=True),
+        external_outlinks
+    )
+    return count_unique_links(external_follow_outlinks)
+
+
 def _compute_top_domains(external_outlinks, n, key):
     """A helper function to compute the top n domains given a custom criterion.
     For each destination domain the function counts the number of unique follow
@@ -124,15 +141,9 @@ def _compute_top_domains(external_outlinks, n, key):
     :rtype: list
     """
     heap = []
-    bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
     for domain, link_group in _group_links(external_outlinks, key):
 
-        #compute number of unique follow links
-        external_follow_outlinks = ifilter(
-            lambda x: is_follow_link(x[bitmask_index], is_bitmask=True),
-            link_group
-        )
-        nb_unique_follow_links = count_unique_links(external_follow_outlinks)
+        nb_unique_follow_links = count_unique_follow_links(link_group)
 
         if nb_unique_follow_links == 0:
             #we don't want to return domain with 0 occurrences.
