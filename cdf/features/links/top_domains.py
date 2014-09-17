@@ -10,6 +10,23 @@ from cdf.utils.external_sort import external_sort
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 
+class DomainLinkStats(object):
+    """Stats of external outgoing links to a certain domain"""
+    def __init__(self, name, follow, nofollow, follow_unique):
+        self.name = name
+        self.follow = follow
+        self.nofollow = nofollow
+        self.follow_unique = follow_unique
+
+    def to_dict(self):
+        return {
+            'domain': self.name,
+            'unique_follow_links': self.follow_unique,
+            'follow_links': self.follow,
+            'no_follow_links': self.nofollow
+        }
+
+
 def filter_external_outlinks(outlinks):
     """Filter outlinks stream for external, <a> links
 
@@ -162,3 +179,41 @@ def compute_top_second_level_domains(external_outlinks, n):
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_second_level_domain(x[external_url_idx])
     return _compute_top_domains(external_outlinks, n, key)
+
+
+def compute_domain_stats(grouped_outlinks):
+    """Compute full stats out of outlinks of a specific domain
+
+    :param grouped_outlinks: grouped qualified outlinks of a certain domain
+        eg: (domain_name, [link1, link2, ...])
+    :type grouped_outlinks: tuple
+    :return: stats of outlinks that target the domain
+    :rtype: dict
+    """
+    # counters
+    follow = 0
+    nofollow = 0
+    follow_unique = 0
+
+    # indices
+    mask_idx = OutlinksRawStreamDef.field_idx('bitmask')
+    external_url_idx = OutlinksRawStreamDef.field_idx('external_url')
+    src_id_idx = OutlinksRawStreamDef.field_idx('id')
+
+    seen_urls = set()
+    domain_name, links = grouped_outlinks
+    for link in links:
+        is_follow = is_follow_link(link[mask_idx], is_bitmask=True)
+        dest_url = link[external_url_idx]
+        src_id = link[src_id_idx]
+
+        if is_follow:
+            follow += 1
+            if (src_id, dest_url) not in seen_urls:
+                follow_unique += 1
+            # add to seen set
+            seen_urls.add((src_id, dest_url))
+        else:
+            nofollow += 1
+
+    return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
