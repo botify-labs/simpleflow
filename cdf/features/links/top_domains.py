@@ -217,3 +217,102 @@ def compute_domain_stats(grouped_outlinks):
             nofollow += 1
 
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
+
+class LinkDestination(object):
+    """A class to represent a link destination.
+    The link destination is defined by :
+        - its destination urls
+        - the number of unique links that point to it
+        - a sample of source urlids.
+    """
+    def __init__(self, destination_url, unique_links, sample_sources):
+        """Constructor
+        :param destination_url: the destination url
+        :type: str
+        :param unique_links: the number of unique links that point to
+                             the destination url
+        :type unique_links: int
+        :param sample_sources: a list of sample source urlids.
+        :type sample_source: list
+        """
+        self.url = destination_url
+        self.unique_links = unique_links
+        self.sample_sources = sample_sources
+
+    def __eq__(self, other):
+        return (
+            self.url == other.url and
+            self.unique_links == other.unique_links and
+            self.sample_sources == other.sample_sources
+        )
+
+    def __repr__(self):
+        return "{}: {}, {}".format(self.url,
+                                   self.unique_links,
+                                   self.sample_sources)
+
+    def to_dict(self):
+        """Return a dict representation of the object
+        :rtype: dict
+        """
+        return {
+            "url": self.url,
+            "unique_links": self.unique_links,
+            "sources": self.sample_sources
+        }
+
+
+def get_source_sample(external_outlinks, n):
+    """Compute a list of n different sample source urlids
+    from a set of external outlinks that point to the same url.
+    :param external_outlinks: the input stream of external outlinks
+                              (based on OutlinksRawStreamDef).
+                              They all point to the same domain.
+    :type external_outlinks: iterable
+    :param n: the maximum number of sample links to return
+    :type n: int
+    :rtype: list
+    """
+    id_idx = OutlinksRawStreamDef.field_idx("id")
+    source_urlids = set([x[id_idx] for x in external_outlinks])
+    return heapq.nsmallest(n, source_urlids)
+
+
+def compute_sample_links(external_outlinks, n):
+    """Compute sample links from a set of external outlinks that point
+    to the same domain.
+    The method select the n most linked urls (via the number of unique links)
+    For each of the most linked urls, it reports: the url, the number of unique
+    links, 3 source urlids.
+    The function returns a list of LinkDestination.
+    :param external_outlinks: the input stream of external outlinks
+                              (based on OutlinksRawStreamDef).
+                              They all point to the same domain.
+    :type external_outlinks: iterable
+    :param n: the maximum number of sample links to return
+    :type n: int
+    :rtype: list
+    """
+    external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
+    external_outlinks = sorted(external_outlinks, key=lambda x: x[external_url_idx])
+    heap = []
+    for external_url, links in groupby(external_outlinks, key=lambda x: x[external_url_idx]):
+        #transform iterator in list because we will need it more than once.
+        links = list(links)
+        nb_unique_links = count_unique_links(links)
+        nb_source_samples = 3
+        sample_sources = get_source_sample(links, nb_source_samples)
+        link_sample = LinkDestination(external_url, nb_unique_links, sample_sources)
+        if len(heap) < n:
+            heapq.heappush(heap, (nb_unique_links, link_sample))
+        else:
+            heapq.heappushpop(heap, (nb_unique_links, link_sample))
+
+    #back to a list
+    result = []
+    while len(heap) != 0:
+        nb_unique_links, external_url = heapq.heappop(heap)
+        result.append((nb_unique_links, external_url))
+    #sort by decreasing number of links
+    result.reverse()
+    return result

@@ -11,7 +11,10 @@ from cdf.features.links.top_domains import (
     _compute_top_domains,
     compute_top_domains,
     compute_top_second_level_domains,
-    compute_domain_stats
+    compute_domain_stats,
+    LinkDestination,
+    compute_sample_links,
+    get_source_sample
 )
 
 
@@ -220,3 +223,73 @@ class TestDomainStats(unittest.TestCase):
         result = compute_domain_stats(self.groups).to_dict()
         expected_domain = 'foo.com'
         self.assertEqual(result['domain'], expected_domain)
+
+
+class TestComputeSampleLinks(unittest.TestCase):
+    def test_nominal_case(self):
+        externals = iter([
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [3, "a", 0, -1, "http://foo.com/qux.css"],
+            [3, "a", 0, -1, "http://foo.com/bar.html"],
+            [4, "a", 0, -1, "http://foo.com/baz.html"],
+            [5, "a", 0, -1, "http://foo.com/baz.html"],
+            [4, "a", 0, -1, "http://foo.com/bar.html"],
+        ])
+        n = 2
+        actual_result = compute_sample_links(externals, n)
+
+        expected_result = [(3, LinkDestination("http://foo.com/bar.html", 3, [0, 3, 4])),
+                           (2, LinkDestination("http://foo.com/baz.html", 2, [4, 5]))]
+
+        self.assertEqual(expected_result, actual_result)
+
+    def test_unique_links(self):
+        externals = iter([
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://foo.com/bar.html"],  # many duplicates
+            [3, "a", 0, -1, "http://foo.com/qux.html"],
+            [4, "a", 0, -1, "http://foo.com/baz.html"],
+            [4, "a", 0, -1, "http://foo.com/qux.html"],
+            [5, "a", 0, -1, "http://foo.com/baz.html"],
+            [6, "a", 0, -1, "http://foo.com/baz.html"]
+        ])
+        n = 2
+        actual_result = compute_sample_links(externals, n)
+
+        expected_result = [(3, LinkDestination("http://foo.com/baz.html", 3, [4, 5, 6])),
+                           (2, LinkDestination("http://foo.com/qux.html", 2, [3, 4]))]
+        self.assertEqual(expected_result, actual_result)
+
+    def test_nofollow(self):
+        externals = iter([
+            [0, "a", 1, -1, "http://foo.com/bar.html"],
+            [3, "a", 0, -1, "http://foo.com/qux.css"],
+            [3, "a", 0, -1, "http://foo.com/bar.html"],
+            [4, "a", 3, -1, "http://foo.com/baz.html"],
+            [5, "a", 0, -1, "http://foo.com/baz.html"],
+            [4, "a", 5, -1, "http://foo.com/bar.html"],
+        ])
+        n = 2
+        actual_result = compute_sample_links(externals, n)
+
+        expected_result = [(3, LinkDestination("http://foo.com/bar.html", 3, [0, 3, 4])),
+                           (2, LinkDestination("http://foo.com/baz.html", 2, [4, 5]))]
+
+        self.assertEqual(expected_result, actual_result)
+
+
+class TestGetSourceSample(unittest.TestCase):
+    def test_nominal_case(self):
+        externals = iter([
+            [3, "a", 0, -1, "http://foo.com/"],
+            [3, "a", 0, -1, "http://foo.com/"],
+            [4, "a", 3, -1, "http://foo.com/"],
+            [0, "a", 1, -1, "http://foo.com/"],
+            [5, "a", 0, -1, "http://foo.com/"],
+            [4, "a", 5, -1, "http://foo.com/"]
+        ])
+        n = 2
+        self.assertEqual([0, 3], get_source_sample(externals, n))
