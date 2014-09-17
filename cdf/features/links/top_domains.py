@@ -12,16 +12,16 @@ from cdf.features.links.streams import OutlinksRawStreamDef
 
 class DomainLinkStats(object):
     """Stats of external outgoing links to a certain domain"""
-    def __init__(self, name, follow, nofollow, follow_uniq):
+    def __init__(self, name, follow, nofollow, follow_unique):
         self.name = name
         self.follow = follow
         self.nofollow = nofollow
-        self.follow_uniq = follow_uniq
+        self.follow_unique = follow_unique
 
     def to_dict(self):
         return {
             'domain': self.name,
-            'unique_follow_links': self.follow_uniq,
+            'unique_follow_links': self.follow_unique,
             'follow_links': self.follow,
             'no_follow_links': self.nofollow
         }
@@ -193,7 +193,7 @@ def compute_domain_stats(grouped_outlinks):
     # counters
     follow = 0
     nofollow = 0
-    follow_uniq = 0
+    follow_unique = 0
 
     # indices
     mask_idx = OutlinksRawStreamDef.field_idx('bitmask')
@@ -208,11 +208,11 @@ def compute_domain_stats(grouped_outlinks):
         if is_follow:
             follow += 1
             if url not in seen_urls:
-                follow_uniq += 1
+                follow_unique += 1
         else:
             nofollow += 1
 
         # add to seen set
         seen_urls.add(url)
 
-    return DomainLinkStats(domain_name, follow, nofollow, follow_uniq)
+    return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
