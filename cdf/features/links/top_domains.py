@@ -223,9 +223,7 @@ def compute_sample_links(external_outlinks, n):
     external_outlinks = sorted(external_outlinks, key=lambda x: x[external_url_idx])
     heap = []
     for external_url, links in groupby(external_outlinks, key=lambda x: x[external_url_idx]):
-        links = list(links)
-        #TODO consider only unique links (follow or nofollow does not matter)
-        nb_unique_links = len(links)
+        nb_unique_links = count_unique_links(links)
         if len(heap) < n:
             heapq.heappush(heap, (nb_unique_links, external_url))
         else:

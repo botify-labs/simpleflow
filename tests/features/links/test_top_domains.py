@@ -230,7 +230,7 @@ class TestComputeSampleLinks(unittest.TestCase):
             [3, "a", 0, -1, "http://foo.com/qux.css"],
             [3, "a", 0, -1, "http://foo.com/bar.html"],
             [4, "a", 0, -1, "http://foo.com/baz.html"],
-            [4, "a", 0, -1, "http://foo.com/baz.html"],
+            [5, "a", 0, -1, "http://foo.com/baz.html"],
             [4, "a", 0, -1, "http://foo.com/bar.html"],
         ])
         n = 2
@@ -240,3 +240,42 @@ class TestComputeSampleLinks(unittest.TestCase):
                            (2, "http://foo.com/baz.html")]
 
         self.assertEqual(expected_result, actual_result)
+
+    def test_unique_links(self):
+        externals = iter([
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://foo.com/bar.html"],  # many duplicates
+            [3, "a", 0, -1, "http://foo.com/qux.html"],
+            [4, "a", 0, -1, "http://foo.com/baz.html"],
+            [4, "a", 0, -1, "http://foo.com/qux.html"],
+            [5, "a", 0, -1, "http://foo.com/baz.html"],
+            [6, "a", 0, -1, "http://foo.com/baz.html"]
+        ])
+        n = 2
+        actual_result = compute_sample_links(externals, n)
+
+        expected_result = [(3, "http://foo.com/baz.html"),
+                           (2, "http://foo.com/qux.html")]
+
+        self.assertEqual(expected_result, actual_result)
+
+    def test_nofollow(self):
+        externals = iter([
+            [0, "a", 1, -1, "http://foo.com/bar.html"],
+            [3, "a", 0, -1, "http://foo.com/qux.css"],
+            [3, "a", 0, -1, "http://foo.com/bar.html"],
+            [4, "a", 3, -1, "http://foo.com/baz.html"],
+            [5, "a", 0, -1, "http://foo.com/baz.html"],
+            [4, "a", 5, -1, "http://foo.com/bar.html"],
+        ])
+        n = 2
+        actual_result = compute_sample_links(externals, n)
+
+        expected_result = [(3, "http://foo.com/bar.html"),
+                           (2, "http://foo.com/baz.html")]
+
+        self.assertEqual(expected_result, actual_result)
+
