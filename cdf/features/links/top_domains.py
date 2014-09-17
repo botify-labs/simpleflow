@@ -155,8 +155,10 @@ def _compute_top_domains(external_outlinks, n, key):
     #back to a list
     result = []
     while len(heap) != 0:
-        nb_unique_follow_links, domain = heap.pop()
+        nb_unique_follow_links, domain = heapq.heappop(heap)
         result.append((nb_unique_follow_links, domain))
+    #sort by decreasing number of links
+    result.reverse()
     return result
 
 
