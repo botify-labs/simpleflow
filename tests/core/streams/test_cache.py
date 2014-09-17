@@ -1,5 +1,6 @@
 import unittest
 import os
+import gc
 
 from cdf.core.streams.cache import MarshalStreamCache
 
@@ -31,4 +32,5 @@ class TestStreamCache(unittest.TestCase):
             cache.cache(iter(self.data))
 
         test_cache()
+        gc.collect(2)  # force global GC
         self.assertFalse(os.path.exists(path))
