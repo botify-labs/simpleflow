@@ -240,9 +240,11 @@ class LinkDestination(object):
         self.sample_sources = sample_sources
 
     def __eq__(self, other):
-        return (self.url == other.url and
-                self.unique_links == other.unique_links and
-                self.sample_sources == other.sample_sources)
+        return (
+            self.url == other.url and
+            self.unique_links == other.unique_links and
+            self.sample_sources == other.sample_sources
+        )
 
     def __repr__(self):
         return "{}: {}, {}".format(self.url,
