@@ -5,8 +5,6 @@ from cdf.features.links.streams import OutlinksRawStreamDef
 
 from cdf.features.links.top_domains import (
     _group_links,
-    group_links_by_domain,
-    group_links_by_second_level_domain,
     filter_external_outlinks,
     count_unique_links,
     count_unique_follow_links,
@@ -54,39 +52,6 @@ class TestGroupLinks(TopDomainTestCase):
                 [4, "a", 0, -1, "http://bar.foo.com/baz.html"]
             ]),
             (".jpg", [[0, "a", 0, -1, "http://bar.com/image.jpg"]])
-        ]
-
-        self.assertEqual(expected_result, list(actual_result))
-
-
-class TestGroupLinksByDomain(TopDomainTestCase):
-    def test_nominal_case(self):
-        actual_result = group_links_by_domain(iter(self.externals))
-
-        expected_result = [
-            ("bar.com", [[0, "a", 0, -1, "http://bar.com/image.jpg"]]),
-            ("bar.foo.com", [[4, "a", 0, -1, "http://bar.foo.com/baz.html"]]),
-            ("foo.com", [
-                [0, "a", 0, -1, "http://foo.com/bar.html"],
-                [3, "a", 0, -1, "http://foo.com/qux.css"]
-            ]),
-        ]
-
-        self.assertEqual(expected_result, list(actual_result))
-
-
-class TestGroupLinksBySecondLevelDomain(TopDomainTestCase):
-    def test_nominal_case(self):
-        actual_result = group_links_by_second_level_domain(
-            iter(self.externals))
-
-        expected_result = [
-            ("bar.com", [[0, "a", 0, -1, "http://bar.com/image.jpg"]]),
-            ("foo.com", [
-                [0, "a", 0, -1, "http://foo.com/bar.html"],
-                [3, "a", 0, -1, "http://foo.com/qux.css"],
-                [4, "a", 0, -1, "http://bar.foo.com/baz.html"]
-            ]),
         ]
 
         self.assertEqual(expected_result, list(actual_result))
