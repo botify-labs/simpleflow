@@ -218,9 +218,9 @@ def compute_domain_stats(grouped_outlinks):
 
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
 
-class SampleLink(object):
-    """A class to represent a sample link.
-    The sample link is defined by :
+class LinkDestination(object):
+    """A class to represent a link destination.
+    The link destination is defined by :
         - its destination urls
         - the number of unique links that point to it
         - a sample of source urlids.
@@ -289,7 +289,7 @@ def compute_sample_links(external_outlinks, n):
     The method select the n most linked urls (via the number of unique links)
     For each of the most linked urls, it reports: the url, the number of unique
     links, 3 source urlids.
-    The function returns a list of SampleLink.
+    The function returns a list of LinkDestination.
     :param external_outlinks: the input stream of external outlinks
                               (based on OutlinksRawStreamDef).
                               They all point to the same domain.
@@ -306,7 +306,7 @@ def compute_sample_links(external_outlinks, n):
         nb_unique_links = count_unique_links(links)
         nb_source_samples = 3
         sample_sources = get_source_sample(links, nb_source_samples)
-        link_sample = SampleLink(external_url, nb_unique_links, sample_sources)
+        link_sample = LinkDestination(external_url, nb_unique_links, sample_sources)
         if len(heap) < n:
             heapq.heappush(heap, (nb_unique_links, link_sample))
         else:
