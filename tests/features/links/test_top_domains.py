@@ -11,7 +11,8 @@ from cdf.features.links.top_domains import (
     _compute_top_domains,
     compute_top_domains,
     compute_top_second_level_domains,
-    compute_domain_stats
+    compute_domain_stats,
+    compute_sample_links
 )
 
 
@@ -220,3 +221,22 @@ class TestDomainStats(unittest.TestCase):
         result = compute_domain_stats(self.groups).to_dict()
         expected_domain = 'foo.com'
         self.assertEqual(result['domain'], expected_domain)
+
+
+class TestComputeSampleLinks(unittest.TestCase):
+    def test_nominal_case(self):
+        externals = iter([
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [3, "a", 0, -1, "http://foo.com/qux.css"],
+            [3, "a", 0, -1, "http://foo.com/bar.html"],
+            [4, "a", 0, -1, "http://foo.com/baz.html"],
+            [4, "a", 0, -1, "http://foo.com/baz.html"],
+            [4, "a", 0, -1, "http://foo.com/bar.html"],
+        ])
+        n = 2
+        actual_result = compute_sample_links(externals, n)
+
+        expected_result = [(3, "http://foo.com/bar.html"),
+                           (2, "http://foo.com/baz.html")]
+
+        self.assertEqual(expected_result, actual_result)

@@ -217,3 +217,25 @@ def compute_domain_stats(grouped_outlinks):
             nofollow += 1
 
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
+
+def compute_sample_links(external_outlinks, n):
+    external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
+    external_outlinks = sorted(external_outlinks, key=lambda x: x[external_url_idx])
+    heap = []
+    for external_url, links in groupby(external_outlinks, key=lambda x: x[external_url_idx]):
+        links = list(links)
+        #TODO consider only unique links (follow or nofollow does not matter)
+        nb_unique_links = len(links)
+        if len(heap) < n:
+            heapq.heappush(heap, (nb_unique_links, external_url))
+        else:
+            heapq.heappushpop(heap, (nb_unique_links, external_url))
+
+    #back to a list
+    result = []
+    while len(heap) != 0:
+        nb_unique_links, external_url = heapq.heappop(heap)
+        result.append((nb_unique_links, external_url))
+    #sort by decreasing number of links
+    result.reverse()
+    return result
