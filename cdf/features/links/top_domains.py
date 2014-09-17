@@ -10,6 +10,23 @@ from cdf.utils.external_sort import external_sort
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 
+class DomainLinkStats(object):
+    """Stats of external outgoing links to a certain domain"""
+    def __init__(self, name, follow, nofollow, follow_uniq):
+        self.name = name
+        self.follow = follow
+        self.nofollow = nofollow
+        self.follow_uniq = follow_uniq
+
+    def to_dict(self):
+        return {
+            'domain': self.name,
+            'unique_follow_links': self.follow_uniq,
+            'follow_links': self.follow,
+            'no_follow_links': self.nofollow
+        }
+
+
 def filter_external_outlinks(outlinks):
     """Filter outlinks stream for external, <a> links
 
