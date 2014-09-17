@@ -12,7 +12,7 @@ from cdf.features.links.top_domains import (
     compute_top_domains,
     compute_top_second_level_domains,
     compute_domain_stats,
-    LinkSample,
+    SampleLink,
     compute_sample_links,
     get_source_sample
 )
@@ -238,8 +238,8 @@ class TestComputeSampleLinks(unittest.TestCase):
         n = 2
         actual_result = compute_sample_links(externals, n)
 
-        expected_result = [(3, LinkSample("http://foo.com/bar.html", 3, [0, 3, 4])),
-                           (2, LinkSample("http://foo.com/baz.html", 2, [4, 5]))]
+        expected_result = [(3, SampleLink("http://foo.com/bar.html", 3, [0, 3, 4])),
+                           (2, SampleLink("http://foo.com/baz.html", 2, [4, 5]))]
 
         self.assertEqual(expected_result, actual_result)
 
@@ -259,8 +259,8 @@ class TestComputeSampleLinks(unittest.TestCase):
         n = 2
         actual_result = compute_sample_links(externals, n)
 
-        expected_result = [(3, LinkSample("http://foo.com/baz.html", 3, [4, 5, 6])),
-                           (2, LinkSample("http://foo.com/qux.html", 2, [3, 4]))]
+        expected_result = [(3, SampleLink("http://foo.com/baz.html", 3, [4, 5, 6])),
+                           (2, SampleLink("http://foo.com/qux.html", 2, [3, 4]))]
         self.assertEqual(expected_result, actual_result)
 
     def test_nofollow(self):
@@ -275,8 +275,8 @@ class TestComputeSampleLinks(unittest.TestCase):
         n = 2
         actual_result = compute_sample_links(externals, n)
 
-        expected_result = [(3, LinkSample("http://foo.com/bar.html", 3, [0, 3, 4])),
-                           (2, LinkSample("http://foo.com/baz.html", 2, [4, 5]))]
+        expected_result = [(3, SampleLink("http://foo.com/bar.html", 3, [0, 3, 4])),
+                           (2, SampleLink("http://foo.com/baz.html", 2, [4, 5]))]
 
         self.assertEqual(expected_result, actual_result)
 

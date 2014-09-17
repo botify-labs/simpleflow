@@ -220,7 +220,7 @@ def compute_domain_stats(grouped_outlinks):
 
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
 
-class LinkSample(object):
+class SampleLink(object):
     def __init__(self, destination_url, unique_links, sample_sources):
         self.url = destination_url
         self.unique_links = unique_links
@@ -263,7 +263,7 @@ def compute_sample_links(external_outlinks, n):
         nb_unique_links = count_unique_links(links)
         nb_source_samples = 3
         sample_sources = get_source_sample(links, nb_source_samples)
-        link_sample = LinkSample(external_url, nb_unique_links, sample_sources)
+        link_sample = SampleLink(external_url, nb_unique_links, sample_sources)
         if len(heap) < n:
             heapq.heappush(heap, (nb_unique_links, link_sample))
         else:
