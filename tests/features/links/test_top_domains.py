@@ -104,8 +104,8 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 2
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            (3, DomainLinkStats("foo.com", 3, 0, 3)),
-            (2, DomainLinkStats("bar.com", 2, 0, 2))
+            (3, DomainLinkStats("foo.com", 3, 0, 3, [LinkDestination("foo.com", 3, [0, 3, 4])])),
+            (2, DomainLinkStats("bar.com", 2, 0, 2, [LinkDestination("bar.com", 2, [0, 4])]))
         ]
         self.assertEqual(expected_result, actual_result)
 
@@ -118,8 +118,8 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 10
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            (2, DomainLinkStats("foo.com", 2, 0, 2)),
-            (1, DomainLinkStats("bar.com", 1, 0, 1))
+            (2, DomainLinkStats("foo.com", 2, 0, 2, [LinkDestination("foo.com", 2, [0, 4])])),
+            (1, DomainLinkStats("bar.com", 1, 0, 1, [LinkDestination("bar.com", 1, [0])]))
         ]
         self.assertEqual(expected_result, actual_result)
 
@@ -132,7 +132,9 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         ])
         n = 1
         actual_result = _compute_top_domains(externals, n, self.key)
-        expected_result = [(2, DomainLinkStats("bar.foo.com", 2, 0, 2))]
+        expected_result = [
+            (2, DomainLinkStats("bar.foo.com", 2, 0, 2, [LinkDestination("bar.foo.com", 2, [3, 4])]))
+        ]
         self.assertEqual(expected_result, actual_result)
 
     def test_all_nofollow_links(self):
@@ -159,8 +161,8 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 2
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            (3, DomainLinkStats("foo.com", 4, 0, 3)),
-            (2, DomainLinkStats("bar.com", 2, 0, 2))
+            (3, DomainLinkStats("foo.com", 4, 0, 3, [LinkDestination("foo.com", 3, [0, 3, 4])])),
+            (2, DomainLinkStats("bar.com", 2, 0, 2, [LinkDestination("bar.com", 2, [0, 4])]))
         ]
         self.assertEqual(expected_result, actual_result)
 
@@ -178,8 +180,19 @@ class TestComputeTopNDomains(unittest.TestCase):
         n = 2
         actual_result = compute_top_domains(externals, n)
         expected_result = [
-            (3, DomainLinkStats("foo.com", 3, 0, 3)),
-            (2, DomainLinkStats("bar.com", 2, 0, 2))
+            (3, DomainLinkStats("foo.com", 3, 0, 3,
+                                [
+                                    LinkDestination("http://foo.com/", 1, [4]),
+                                    LinkDestination("http://foo.com/bar.html", 1, [0]),
+                                    LinkDestination("http://foo.com/qux.css", 1, [3]),
+                                ])
+            ),
+            (2, DomainLinkStats("bar.com", 2, 0, 2,
+                                [
+                                    LinkDestination("http://bar.com/baz.html", 1, [4]),
+                                    LinkDestination("http://bar.com/image.jpg", 1, [0])
+                                ])
+            )
         ]
         self.assertEqual(expected_result, actual_result)
 
@@ -197,8 +210,20 @@ class TestComputeTopNSecondLevelDomain(unittest.TestCase):
         n = 2
         actual_result = compute_top_second_level_domains(externals, n)
         expected_result = [
-            (4, DomainLinkStats("foo.com", 4, 0, 4)),
-            (2, DomainLinkStats("bar.com", 2, 0, 2))
+            (4, DomainLinkStats("foo.com", 4, 0, 4,
+                                [
+                                    LinkDestination("http://foo.com/bar.html", 1, [0]),
+                                    LinkDestination("http://foo.com/qux.css", 1, [3]),
+                                    LinkDestination("http://foo.com/", 1, [4]),
+                                    LinkDestination("http://bar.foo.com/baz.html", 1, [4])
+                                ])
+            ),
+            (2, DomainLinkStats("bar.com", 2, 0, 2,
+                                [
+                                    LinkDestination("http://bar.com/image.jpg", 1, [0]),
+                                    LinkDestination("http://bar.com/baz.html", 1, [4]),
+                                ])
+            )
         ]
         self.assertEqual(expected_result, actual_result)
 
