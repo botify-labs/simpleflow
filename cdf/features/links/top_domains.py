@@ -42,6 +42,9 @@ class DomainLinkStats(object):
         self.sample_nofollow_links = sample_nofollow_links or []
 
     def to_dict(self):
+        #key function to sort the sample links by number of links
+        #and then alphabetically
+        key = lambda x: (x.unique_links, x.url)
         return {
             'domain': self.name,
             'unique_follow_links': self.follow_unique,
@@ -49,11 +52,11 @@ class DomainLinkStats(object):
             'no_follow_links': self.nofollow,
             'follow_samples': [
                 sample_link.to_dict() for sample_link in
-                sorted(self.sample_follow_links, key=lambda x: (x.unique_links, x.url))
+                sorted(self.sample_follow_links, key=key)
             ],
             'nofollow_samples': [
                 sample_link.to_dict() for sample_link in
-                sorted(self.sample_nofollow_links, key=lambda x: (x.unique_links, x.url))
+                sorted(self.sample_nofollow_links, key=key)
             ]
         }
 
@@ -62,6 +65,7 @@ class DomainLinkStats(object):
 
     def __repr__(self):
         return "DomainLinkStats({})".format(self.to_dict())
+
 
 def filter_external_outlinks(outlinks):
     """Filter outlinks stream for external, <a> links
@@ -239,19 +243,14 @@ def compute_domain_stats(grouped_outlinks, nb_samples):
     domain, outlinks = grouped_outlinks
     bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
 
-    follow_outlinks = filter(
-        lambda x: is_follow_link(x[bitmask_index], is_bitmask=True),
-        outlinks
-    )
+    key = lambda x: is_follow_link(x[bitmask_index], is_bitmask=True)
+    follow_outlinks = ifilter(key, outlinks)
     domain_stats.sample_follow_links = compute_sample_links(follow_outlinks,
                                                             nb_samples)
 
-    nofollow_outlinks = ifilterfalse(
-        lambda x: is_follow_link(x[bitmask_index], is_bitmask=True),
-        outlinks
-    )
+    nofollow_outlinks = ifilterfalse(key, outlinks)
     domain_stats.sample_nofollow_links = compute_sample_links(nofollow_outlinks,
-                                                               nb_samples)
+                                                              nb_samples)
     return domain_stats
 
 
