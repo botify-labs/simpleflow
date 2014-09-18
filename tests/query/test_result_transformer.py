@@ -1,12 +1,17 @@
 import unittest
 import copy
 from mock import MagicMock
-from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND, ElasticSearchBackend
+from cdf.metadata.url.backend import (
+    ELASTICSEARCH_BACKEND,
+    ElasticSearchBackend
+)
 
-from cdf.query.result_transformer import (IdToUrlTransformer,
-                                          DefaultValueTransformer,
-                                          ExternalUrlNormalizer,
-                                          AggregationTransformer)
+from cdf.query.result_transformer import (
+    IdToUrlTransformer,
+    DefaultValueTransformer,
+    ExternalUrlNormalizer,
+    AggregationTransformer
+)
 
 ELASTICSEARCH_INDEX = 'mock'
 CRAWL_ID = 1
