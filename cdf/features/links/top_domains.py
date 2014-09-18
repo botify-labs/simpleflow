@@ -26,6 +26,11 @@ class DomainLinkStats(object):
             'no_follow_links': self.nofollow
         }
 
+    def __eq__(self, other):
+        return self.to_dict() == other.to_dict()
+
+    def __repr__(self):
+        return "DomainLinkStats({})".format(self.to_dict())
 
 def filter_external_outlinks(outlinks):
     """Filter outlinks stream for external, <a> links
@@ -127,13 +132,15 @@ def _compute_top_domains(external_outlinks, n, key):
             #we don't want to return domain with 0 occurrences.
             continue
         if len(heap) < n:
-            heapq.heappush(heap, (nb_unique_follow_links, domain))
+            domain_stats = compute_domain_stats((domain, link_group))
+            heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
         else:
             min_value = heap[0][0]
             if nb_unique_follow_links < min_value:
                 #avoid useless pushpop()
                 continue
-            heapq.heappushpop(heap, (nb_unique_follow_links, domain))
+            domain_stats = compute_domain_stats((domain, link_group))
+            heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
     #back to a list
     result = []
     while len(heap) != 0:
