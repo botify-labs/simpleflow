@@ -105,8 +105,18 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 2
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            (3, DomainLinkStats("foo.com", 3, 0, 3, [LinkDestination("foo.com", 3, [0, 3, 4])])),
-            (2, DomainLinkStats("bar.com", 2, 0, 2, [LinkDestination("bar.com", 2, [0, 4])]))
+            (3, DomainLinkStats(
+                "foo.com", 3, 0, 3,
+                [LinkDestination("foo.com", 3, [0, 3, 4])],
+                []
+            )
+            ),
+            (2, DomainLinkStats(
+                "bar.com", 2, 0, 2,
+                [LinkDestination("bar.com", 2, [0, 4])],
+                []
+            )
+            )
         ]
         self.assertEqual(expected_result, actual_result)
 
