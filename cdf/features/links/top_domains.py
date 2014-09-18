@@ -12,20 +12,43 @@ from cdf.features.links.streams import OutlinksRawStreamDef
 
 class DomainLinkStats(object):
     """Stats of external outgoing links to a certain domain"""
-    def __init__(self, name, follow, nofollow, follow_unique):
+    def __init__(self, name, follow, nofollow, follow_unique, sample_links=None):
+        """Constructor
+        :param name: the domain name
+        :type name: str
+        :param follow: the number of follow links to the domain
+        :type follow: int
+        :param nofollow: the number of nofollow links to the domain
+        :type nofollow: int
+        :param follow_unique: the number of unique follow links to the domain
+        :type follow_unique: int
+        :param sample_links: a list of sample link destination
+                             (as a list of LinkDestination)
+        :type sample_links: list
+        """
         self.name = name
         self.follow = follow
         self.nofollow = nofollow
         self.follow_unique = follow_unique
+        self.sample_links = sample_links or []
 
     def to_dict(self):
         return {
             'domain': self.name,
             'unique_follow_links': self.follow_unique,
             'follow_links': self.follow,
-            'no_follow_links': self.nofollow
+            'no_follow_links': self.nofollow,
+            'samples': [
+                sample_link.to_dict() for sample_link in
+                sorted(self.sample_links, key=lambda x: (x.unique_links, x.url))
+            ]
         }
 
+    def __eq__(self, other):
+        return self.to_dict() == other.to_dict()
+
+    def __repr__(self):
+        return "DomainLinkStats({})".format(self.to_dict())
 
 def filter_external_outlinks(outlinks):
     """Filter outlinks stream for external, <a> links
@@ -118,6 +141,7 @@ def _compute_top_domains(external_outlinks, n, key):
     :type key: func
     :rtype: list
     """
+    nb_samples = 100
     heap = []
     for domain, link_group in _group_links(external_outlinks, key):
 
@@ -126,10 +150,17 @@ def _compute_top_domains(external_outlinks, n, key):
         if nb_unique_follow_links == 0:
             #we don't want to return domain with 0 occurrences.
             continue
+
         if len(heap) < n:
-            heapq.heappush(heap, (nb_unique_follow_links, domain))
+            domain_stats = compute_domain_stats((domain, link_group), nb_samples)
+            heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
         else:
-            heapq.heappushpop(heap, (nb_unique_follow_links, domain))
+            min_value = heap[0][0]
+            if nb_unique_follow_links < min_value:
+                #avoid useless pushpop()
+                continue
+            domain_stats = compute_domain_stats((domain, link_group), nb_samples)
+            heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
     #back to a list
     result = []
     while len(heap) != 0:
@@ -181,8 +212,28 @@ def compute_top_second_level_domains(external_outlinks, n):
     return _compute_top_domains(external_outlinks, n, key)
 
 
-def compute_domain_stats(grouped_outlinks):
+def compute_domain_stats(grouped_outlinks, nb_samples):
     """Compute full stats out of outlinks of a specific domain
+    :param grouped_outlinks: grouped qualified outlinks of a certain domain
+        eg: (domain_name, [link1, link2, ...])
+    :type grouped_outlinks: tuple
+    :param nb_samples: the number of sample links to return
+    :type nb_samples: int
+    :return: stats of outlinks that target the domain
+    :rtype: dict
+    """
+    domain_stats = compute_domain_link_counts(grouped_outlinks)
+    domain_stats.sample_links = compute_sample_links(grouped_outlinks[1],
+                                                     nb_samples)
+    return domain_stats
+
+
+def compute_domain_link_counts(grouped_outlinks):
+    """Given a set of external outlinks that point to the same domain,
+    compute various link counts:
+        - follow links
+        - nofollow links
+        - unique follow links
 
     :param grouped_outlinks: grouped qualified outlinks of a certain domain
         eg: (domain_name, [link1, link2, ...])
@@ -217,6 +268,7 @@ def compute_domain_stats(grouped_outlinks):
             nofollow += 1
 
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
+
 
 class LinkDestination(object):
     """A class to represent a link destination.
@@ -312,7 +364,7 @@ def compute_sample_links(external_outlinks, n):
     result = []
     while len(heap) != 0:
         nb_unique_links, external_url = heapq.heappop(heap)
-        result.append((nb_unique_links, external_url))
+        result.append(external_url)
     #sort by decreasing number of links
     result.reverse()
     return result
