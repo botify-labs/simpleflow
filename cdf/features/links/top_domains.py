@@ -152,16 +152,14 @@ def _compute_top_domains(external_outlinks, n, key):
             continue
 
         if len(heap) < n:
-            domain_stats = compute_domain_link_counts((domain, link_group))
-            domain_stats.sample_links = compute_sample_links(link_group, nb_samples)
+            domain_stats = compute_domain_stats((domain, link_group), nb_samples)
             heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
         else:
             min_value = heap[0][0]
             if nb_unique_follow_links < min_value:
                 #avoid useless pushpop()
                 continue
-            domain_stats = compute_domain_link_counts((domain, link_group))
-            domain_stats.sample_links = compute_sample_links(link_group, nb_samples)
+            domain_stats = compute_domain_stats((domain, link_group), nb_samples)
             heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
     #back to a list
     result = []
@@ -212,6 +210,22 @@ def compute_top_second_level_domains(external_outlinks, n):
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_second_level_domain(x[external_url_idx])
     return _compute_top_domains(external_outlinks, n, key)
+
+
+def compute_domain_stats(grouped_outlinks, nb_samples):
+    """Compute full stats out of outlinks of a specific domain
+    :param grouped_outlinks: grouped qualified outlinks of a certain domain
+        eg: (domain_name, [link1, link2, ...])
+    :type grouped_outlinks: tuple
+    :param nb_samples: the number of sample links to return
+    :type nb_samples: int
+    :return: stats of outlinks that target the domain
+    :rtype: dict
+    """
+    domain_stats = compute_domain_link_counts(grouped_outlinks)
+    domain_stats.sample_links = compute_sample_links(grouped_outlinks[1],
+                                                     nb_samples)
+    return domain_stats
 
 
 def compute_domain_link_counts(grouped_outlinks):
