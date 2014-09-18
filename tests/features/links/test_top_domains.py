@@ -105,8 +105,36 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 2
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            (3, DomainLinkStats("foo.com", 3, 0, 3, [LinkDestination("foo.com", 3, [0, 3, 4])])),
-            (2, DomainLinkStats("bar.com", 2, 0, 2, [LinkDestination("bar.com", 2, [0, 4])]))
+            (3, DomainLinkStats(
+                "foo.com", 3, 0, 3,
+                [LinkDestination("foo.com", 3, [0, 3, 4])],
+                []
+            )
+            ),
+            (2, DomainLinkStats(
+                "bar.com", 2, 0, 2,
+                [LinkDestination("bar.com", 2, [0, 4])],
+                []
+            )
+            )
+        ]
+        self.assertEqual(expected_result, actual_result)
+
+    def test_nofollow_links(self):
+        externals = iter([
+            [0, "a", 1, -1, "foo.com"],
+            [3, "a", 0, -1, "foo.com"],
+            [4, "a", 3, -1, "foo.com"],
+        ])
+        n = 1
+        actual_result = _compute_top_domains(externals, n, self.key)
+        expected_result = [
+            (1, DomainLinkStats(
+                "foo.com", 1, 2, 1,
+                [LinkDestination("foo.com", 1, [3])],
+                [LinkDestination("foo.com", 2, [0, 4])]
+            )
+            )
         ]
         self.assertEqual(expected_result, actual_result)
 

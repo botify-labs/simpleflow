@@ -1,4 +1,4 @@
-from itertools import groupby, ifilter, imap
+from itertools import groupby, ifilter, imap, ifilterfalse
 import heapq
 from cdf.features.links.helpers.predicates import (
     is_link,
@@ -12,7 +12,13 @@ from cdf.features.links.streams import OutlinksRawStreamDef
 
 class DomainLinkStats(object):
     """Stats of external outgoing links to a certain domain"""
-    def __init__(self, name, follow, nofollow, follow_unique, sample_links=None):
+    def __init__(self,
+                 name,
+                 follow,
+                 nofollow,
+                 follow_unique,
+                 sample_follow_links=None,
+                 sample_nofollow_links=None):
         """Constructor
         :param name: the domain name
         :type name: str
@@ -22,25 +28,35 @@ class DomainLinkStats(object):
         :type nofollow: int
         :param follow_unique: the number of unique follow links to the domain
         :type follow_unique: int
-        :param sample_links: a list of sample link destination
+        :param sample_follow_links: a list of sample follow link destination
                              (as a list of LinkDestination)
-        :type sample_links: list
+        :param sample_nofollow_links: a list of sample nofollow link destination
+                             (as a list of LinkDestination)
+        :type sample_nofollow_links: list
         """
         self.name = name
         self.follow = follow
         self.nofollow = nofollow
         self.follow_unique = follow_unique
-        self.sample_links = sample_links or []
+        self.sample_follow_links = sample_follow_links or []
+        self.sample_nofollow_links = sample_nofollow_links or []
 
     def to_dict(self):
+        #key function to sort the sample links by number of links
+        #and then alphabetically
+        key = lambda x: (x.unique_links, x.url)
         return {
             'domain': self.name,
             'unique_follow_links': self.follow_unique,
             'follow_links': self.follow,
             'no_follow_links': self.nofollow,
-            'samples': [
+            'follow_samples': [
                 sample_link.to_dict() for sample_link in
-                sorted(self.sample_links, key=lambda x: (x.unique_links, x.url))
+                sorted(self.sample_follow_links, key=key)
+            ],
+            'nofollow_samples': [
+                sample_link.to_dict() for sample_link in
+                sorted(self.sample_nofollow_links, key=key)
             ]
         }
 
@@ -49,6 +65,7 @@ class DomainLinkStats(object):
 
     def __repr__(self):
         return "DomainLinkStats({})".format(self.to_dict())
+
 
 def filter_external_outlinks(outlinks):
     """Filter outlinks stream for external, <a> links
@@ -223,8 +240,17 @@ def compute_domain_stats(grouped_outlinks, nb_samples):
     :rtype: dict
     """
     domain_stats = compute_domain_link_counts(grouped_outlinks)
-    domain_stats.sample_links = compute_sample_links(grouped_outlinks[1],
-                                                     nb_samples)
+    domain, outlinks = grouped_outlinks
+    bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
+
+    key = lambda x: is_follow_link(x[bitmask_index], is_bitmask=True)
+    follow_outlinks = ifilter(key, outlinks)
+    domain_stats.sample_follow_links = compute_sample_links(follow_outlinks,
+                                                            nb_samples)
+
+    nofollow_outlinks = ifilterfalse(key, outlinks)
+    domain_stats.sample_nofollow_links = compute_sample_links(nofollow_outlinks,
+                                                              nb_samples)
     return domain_stats
 
 
