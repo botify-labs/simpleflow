@@ -120,6 +120,24 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         ]
         self.assertEqual(expected_result, actual_result)
 
+    def test_nofollow_links(self):
+        externals = iter([
+            [0, "a", 1, -1, "foo.com"],
+            [3, "a", 0, -1, "foo.com"],
+            [4, "a", 3, -1, "foo.com"],
+        ])
+        n = 1
+        actual_result = _compute_top_domains(externals, n, self.key)
+        expected_result = [
+            (1, DomainLinkStats(
+                "foo.com", 1, 2, 1,
+                [LinkDestination("foo.com", 1, [3])],
+                [LinkDestination("foo.com", 2, [0, 4])]
+            )
+            )
+        ]
+        self.assertEqual(expected_result, actual_result)
+
     @mock.patch("cdf.features.links.top_domains.compute_sample_links", autospec=True)
     def test_n_too_big(self, compute_sample_links_mock):
         #mock to make expected_result easier to understand
