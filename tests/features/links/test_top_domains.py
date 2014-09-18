@@ -13,7 +13,7 @@ from cdf.features.links.top_domains import (
     compute_top_domains,
     compute_top_second_level_domains,
     DomainLinkStats,
-    compute_domain_stats,
+    compute_domain_link_counts,
     LinkDestination,
     compute_sample_links,
     get_source_sample
@@ -242,7 +242,7 @@ class TestComputeTopNSecondLevelDomain(unittest.TestCase):
         self.assertEqual(expected_result, actual_result)
 
 
-class TestDomainStats(unittest.TestCase):
+class TestDomainLinkCounts(unittest.TestCase):
     def setUp(self):
         self.groups = (
             "foo.com",
@@ -263,19 +263,19 @@ class TestDomainStats(unittest.TestCase):
         )
 
     def test_link_counts(self):
-        result = compute_domain_stats(self.groups).to_dict()
+        result = compute_domain_link_counts(self.groups).to_dict()
         expected_follow = 8
         expected_nofollow = 2
         self.assertEqual(result['follow_links'], expected_follow)
         self.assertEqual(result['no_follow_links'], expected_nofollow)
 
     def test_unique_link_counts(self):
-        result = compute_domain_stats(self.groups).to_dict()
+        result = compute_domain_link_counts(self.groups).to_dict()
         expected_unique_follow = 7
         self.assertEqual(result['unique_follow_links'], expected_unique_follow)
 
     def test_domain_name(self):
-        result = compute_domain_stats(self.groups).to_dict()
+        result = compute_domain_link_counts(self.groups).to_dict()
         expected_domain = 'foo.com'
         self.assertEqual(result['domain'], expected_domain)
 

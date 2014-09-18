@@ -152,7 +152,7 @@ def _compute_top_domains(external_outlinks, n, key):
             continue
 
         if len(heap) < n:
-            domain_stats = compute_domain_stats((domain, link_group))
+            domain_stats = compute_domain_link_counts((domain, link_group))
             domain_stats.sample_links = compute_sample_links(link_group, nb_samples)
             heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
         else:
@@ -160,7 +160,7 @@ def _compute_top_domains(external_outlinks, n, key):
             if nb_unique_follow_links < min_value:
                 #avoid useless pushpop()
                 continue
-            domain_stats = compute_domain_stats((domain, link_group))
+            domain_stats = compute_domain_link_counts((domain, link_group))
             domain_stats.sample_links = compute_sample_links(link_group, nb_samples)
             heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
     #back to a list
@@ -214,8 +214,12 @@ def compute_top_second_level_domains(external_outlinks, n):
     return _compute_top_domains(external_outlinks, n, key)
 
 
-def compute_domain_stats(grouped_outlinks):
-    """Compute full stats out of outlinks of a specific domain
+def compute_domain_link_counts(grouped_outlinks):
+    """Given a set of external outlinks that point to the same domain,
+    compute various link counts:
+        - follow links
+        - nofollow links
+        - unique follow links
 
     :param grouped_outlinks: grouped qualified outlinks of a certain domain
         eg: (domain_name, [link1, link2, ...])
