@@ -69,6 +69,50 @@ class DomainLinkStats(object):
         return "DomainLinkStats({})".format(self.to_dict())
 
 
+class LinkDestination(object):
+    """A class to represent a link destination.
+    The link destination is defined by :
+        - its destination urls
+        - the number of unique links that point to it
+        - a sample of source urlids.
+    """
+    def __init__(self, destination_url, unique_links, sample_sources):
+        """Constructor
+        :param destination_url: the destination url
+        :type: str
+        :param unique_links: the number of unique links that point to
+                             the destination url
+        :type unique_links: int
+        :param sample_sources: a list of sample source urlids.
+        :type sample_source: list
+        """
+        self.url = destination_url
+        self.unique_links = unique_links
+        self.sample_sources = sample_sources
+
+    def __eq__(self, other):
+        return (
+            self.url == other.url and
+            self.unique_links == other.unique_links and
+            self.sample_sources == other.sample_sources
+        )
+
+    def __repr__(self):
+        return "{}: {}, {}".format(self.url,
+                                   self.unique_links,
+                                   self.sample_sources)
+
+    def to_dict(self):
+        """Return a dict representation of the object
+        :rtype: dict
+        """
+        return {
+            "url": self.url,
+            "unique_links": self.unique_links,
+            "sources": self.sample_sources
+        }
+
+
 def filter_external_outlinks(outlinks):
     """Filter outlinks stream for external, <a> links
 
@@ -318,50 +362,6 @@ def compute_domain_link_counts(grouped_outlinks):
             nofollow += 1
 
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
-
-
-class LinkDestination(object):
-    """A class to represent a link destination.
-    The link destination is defined by :
-        - its destination urls
-        - the number of unique links that point to it
-        - a sample of source urlids.
-    """
-    def __init__(self, destination_url, unique_links, sample_sources):
-        """Constructor
-        :param destination_url: the destination url
-        :type: str
-        :param unique_links: the number of unique links that point to
-                             the destination url
-        :type unique_links: int
-        :param sample_sources: a list of sample source urlids.
-        :type sample_source: list
-        """
-        self.url = destination_url
-        self.unique_links = unique_links
-        self.sample_sources = sample_sources
-
-    def __eq__(self, other):
-        return (
-            self.url == other.url and
-            self.unique_links == other.unique_links and
-            self.sample_sources == other.sample_sources
-        )
-
-    def __repr__(self):
-        return "{}: {}, {}".format(self.url,
-                                   self.unique_links,
-                                   self.sample_sources)
-
-    def to_dict(self):
-        """Return a dict representation of the object
-        :rtype: dict
-        """
-        return {
-            "url": self.url,
-            "unique_links": self.unique_links,
-            "sources": self.sample_sources
-        }
 
 
 def get_source_sample(external_outlinks, n):
