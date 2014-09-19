@@ -81,6 +81,7 @@ from cdf.features.links.tasks import (
     make_links_counter_file,
     make_bad_link_file,
     make_bad_link_counter_file,
+    make_top_domains_files
 )
 compute_metadata_count = as_activity(compute_metadata_count)
 make_metadata_duplicates_file = as_activity(make_metadata_duplicates_file)
@@ -90,6 +91,7 @@ make_context_aware_metadata_duplicates_file = as_activity(
 make_links_counter_file = as_activity(make_links_counter_file)
 make_bad_link_file = as_activity(make_bad_link_file)
 make_bad_link_counter_file = as_activity(make_bad_link_counter_file)
+make_top_domains_files = as_activity(make_top_domains_files)
 
 from cdf.tasks.url_data import (
     generate_documents,
@@ -579,6 +581,14 @@ class AnalysisWorkflow(Workflow):
 
         insights_result = self.compute_insights(context)
 
+        #compute top domains after the push to elasticsearch because
+        #it requires elasticsearch to resolve the source urlids
+        #for the sample links.
+        top_domains_result = self.submit(
+            make_top_domains_files,
+            s3_uri=s3_uri
+        )
+
         suggest_summary_result = self.submit(
             make_suggest_summary_file,
             crawl_id=crawl_id,
@@ -587,7 +597,11 @@ class AnalysisWorkflow(Workflow):
             revision_number=revision_number,
             **es_params
         )
-        futures.wait(suggest_summary_result, insights_result)
+        futures.wait(
+            suggest_summary_result,
+            insights_result,
+            top_domains_result
+        )
 
         crawl_status_result = self.submit(
             update_crawl_status,
