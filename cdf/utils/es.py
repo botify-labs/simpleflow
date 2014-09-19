@@ -24,7 +24,14 @@ def bulk(client, docs, chunk_size=500, bulk_type='index', **kwargs):
 
 
 def _chunk(stream, size):
-    """Chunk the stream
+    """Chunk the input stream according to size
+
+    >>> _chunk([1, 2, 3, 4, 5], 2)
+    [[1, 2], [3, 4], [5]]
+
+    This helper slice the input stream into chunk of `size`. At the end of
+    the `stream`, `islice` will return an empty list [], which will stops
+    the `takeWhile` wrapper
     """
     _stream = iter(stream)
     return takewhile(bool, (list(islice(_stream, size)) for _ in count()))
