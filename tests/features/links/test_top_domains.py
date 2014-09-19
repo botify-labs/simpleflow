@@ -7,6 +7,7 @@ from cdf.features.links.streams import OutlinksRawStreamDef
 from cdf.features.links.top_domains import (
     _group_links,
     filter_external_outlinks,
+    filter_invalid_destination_urls,
     count_unique_links,
     count_unique_follow_links,
     _compute_top_domains,
@@ -18,6 +19,24 @@ from cdf.features.links.top_domains import (
     compute_sample_links,
     get_source_sample
 )
+
+
+class TestFilterInvalidDestinationUrls(unittest.TestCase):
+    def test_nominal_case(self):
+        externals = iter([
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://bar/image.jpg"],
+            [3, "a", 0, -1, "http://foo.com/qux.css"],
+            [4, "a", 0, -1, "foo"],
+        ])
+
+        actual_result = filter_invalid_destination_urls(externals)
+        expected_result = [
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [3, "a", 0, -1, "http://foo.com/qux.css"]
+        ]
+        actual_result = list(actual_result)
+        self.assertEqual(expected_result, list(actual_result))
 
 
 class TopDomainTestCase(unittest.TestCase):

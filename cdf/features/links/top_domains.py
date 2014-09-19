@@ -1,5 +1,6 @@
 from itertools import groupby, ifilter, imap, ifilterfalse
 import heapq
+
 from cdf.features.links.helpers.predicates import (
     is_link,
     is_link_internal,
@@ -7,6 +8,7 @@ from cdf.features.links.helpers.predicates import (
 )
 from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
+from cdf.exceptions import InvalidUrlException
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 
@@ -88,6 +90,28 @@ def filter_external_outlinks(outlinks):
         filtered
     )
     return filtered
+
+
+def filter_invalid_destination_urls(outlinks):
+    """Remove external outlinks for which the destination url is invalid.
+    The destination is declared as invalid.
+    if we cannot extract the second level domain from it.
+    For instance these urls are declared as invalid:
+        - "http://iballisticsquid/",
+        - "http://http//www.rueducommerce.fr/selection/23217"
+    :param outlinks: the stream of external outlinks
+                     (based on OutLinksRawStreamDef)
+    :type outlinks: iterator
+    :rtype: iterator.
+    """
+    external_url_idx = OutlinksRawStreamDef.field_idx('external_url')
+    def is_valid(x):
+        try:
+            get_second_level_domain(x[external_url_idx])
+            return True
+        except InvalidUrlException:
+            return False
+    return ifilter(is_valid, outlinks)
 
 
 def _group_links(link_stream, key):

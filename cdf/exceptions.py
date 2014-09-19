@@ -10,6 +10,10 @@ class MalformedFileNameError(Exception):
     pass
 
 
+class InvalidUrlException(Exception):
+    pass
+
+
 class ElasticSearchIncompleteIndex(Exception):
     pass
 
