@@ -122,11 +122,15 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
 
 @with_temporary_dir
 def make_top_domains_files(s3_uri,
+                           nb_top_domains,
                            tmp_dir=None,
                            force_fetch=DEFAULT_FORCE_FETCH):
     """Compute top domains and top second level domains for a given crawl.
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
+    :param nb_top_domains: the number of top domains to return
+                           (typical value: 100)
+    :type nb_top_domains: int
     :param tmp_dir: the path to the tmp directory to use.
                     If None, a new tmp directory will be created.
     :type tmp_dir: str
@@ -145,8 +149,6 @@ def make_top_domains_files(s3_uri,
 
     stream_cache = MarshalStreamCache()
     stream_cache.cache(outlinks)
-
-    nb_top_domains = 100
 
     result = []
 

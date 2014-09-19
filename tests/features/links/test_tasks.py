@@ -202,7 +202,8 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
         OutlinksRawStreamDef.persist(externals, s3_uri)
 
         #actual call
-        actual_result = compute_top_domains(s3_uri)
+        nb_top_domains = 10
+        actual_result = compute_top_domains(s3_uri, nb_top_domains)
 
         #check file uris
         expected_result = [
