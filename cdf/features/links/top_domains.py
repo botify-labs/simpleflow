@@ -1,6 +1,5 @@
 from itertools import groupby, ifilter, imap, ifilterfalse
 import heapq
-from tld.exceptions import TldDomainNotFound, TldBadUrl
 
 from cdf.features.links.helpers.predicates import (
     is_link,
@@ -9,6 +8,7 @@ from cdf.features.links.helpers.predicates import (
 )
 from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
+from cdf.exceptions import InvalidUrlException
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 
@@ -109,7 +109,7 @@ def filter_invalid_destination_urls(outlinks):
         try:
             get_second_level_domain(x[external_url_idx])
             return True
-        except (TldDomainNotFound, TldBadUrl):
+        except InvalidUrlException:
             return False
     return ifilter(is_valid, outlinks)
 

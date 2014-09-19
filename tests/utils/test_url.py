@@ -1,4 +1,5 @@
 import unittest
+from cdf.exceptions import InvalidUrlException
 from cdf.utils.url import get_domain, get_second_level_domain
 
 
@@ -28,4 +29,18 @@ class TestGetSecondLevelDomain(unittest.TestCase):
         self.assertEqual(
             "bar.co.uk",
             get_second_level_domain("http://foo.bar.co.uk/baz.html")
+        )
+
+    def test_invalid_url(self):
+        self.assertRaises(
+            InvalidUrlException,
+            get_second_level_domain,
+            "foo"
+        )
+
+    def test_invalid_tld_url(self):
+        self.assertRaises(
+            InvalidUrlException,
+            get_second_level_domain,
+            "http://foo.bar"
         )
