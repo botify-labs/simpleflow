@@ -120,28 +120,24 @@ def get_speed_insights():
             "Fast Urls",
             PositiveTrend.UP,
             LtFilter(field, 500),
-            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
         ),
         Insight(
             "speed_medium",
             "Medium Urls",
             PositiveTrend.DOWN,
             BetweenFilter(field, [500, 999]),
-            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
         ),
         Insight(
             "speed_slow",
             "Slow Urls",
             PositiveTrend.DOWN,
             BetweenFilter(field, [1000, 1999]),
-            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
         ),
         Insight(
             "speed_slowest",
             "Slowest Urls",
             PositiveTrend.DOWN,
             GteFilter(field, 2000),
-            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
         ),
     ]
 
