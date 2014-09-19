@@ -6,6 +6,7 @@ from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
 from cdf.features.links.helpers.masks import follow_mask
 from cdf.query.constants import MGET_CHUNKS_SIZE, SUB_AGG, METRIC_AGG_PREFIX
+from cdf.utils.es import multi_get
 
 
 class ResultTransformer(object):
@@ -319,17 +320,18 @@ class IdToUrlTransformer(ResultTransformer):
         Return a dict with url_id as key a a tuple (url, http_code) as value
         """
         urls = {}
-        for i in xrange(0, len(ids), MGET_CHUNKS_SIZE):
-            resolved_urls = self.es_conn.mget(body={"ids": ids},
-                                              index=self.es_index,
-                                              doc_type=self.es_doctype,
-                                              routing=self.crawl_id,
-                                              preference=self.crawl_id,
-                                              _source=["url", "http_code"])
-            urls.update({
-                get_url_id(url['_id']): (url['_source']['url'], url['_source']['http_code'])
-                for url in resolved_urls['docs'] if url["found"]
-            })
+        resolved = multi_get(
+            self.es_conn, self.es_index, self.es_doctype, ids,
+            fields=['url', 'http_code'],
+            routing=self.crawl_id,
+            chunk_size=MGET_CHUNKS_SIZE
+        )
+
+        urls.update({
+            get_url_id(_id): (doc['url'], doc['http_code'])
+            for _id, doc, found in resolved if found
+        })
+
         return urls
 
     def transform(self):
