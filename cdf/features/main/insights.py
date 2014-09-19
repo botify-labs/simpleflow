@@ -34,6 +34,7 @@ def get_http_code_ranges_insights():
         Insight(
             "code_network_errors",
             "Network Errors",
+            PositiveTrend.DOWN,
             LtFilter("http_code", 0)
         )
     )
