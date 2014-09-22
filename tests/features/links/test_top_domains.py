@@ -1,7 +1,10 @@
 import unittest
 import mock
-
 import os.path
+
+from cdf.testing.es_mock import (
+    mock_es_mget, CRAWL_ID
+)
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 from cdf.features.links.top_domains import (
@@ -17,7 +20,8 @@ from cdf.features.links.top_domains import (
     compute_domain_link_counts,
     LinkDestination,
     compute_sample_links,
-    get_source_sample
+    get_source_sample,
+    resolve_sample_url_id
 )
 
 
@@ -399,3 +403,34 @@ class TestGetSourceSample(unittest.TestCase):
         ])
         n = 2
         self.assertEqual([0, 3], get_source_sample(externals, n))
+
+
+class TestSourceSampleUrl(unittest.TestCase):
+    def setUp(self):
+        self.es_conn = mock.MagicMock()
+        self.es_conn.mget = mock_es_mget
+
+    def test_harness(self):
+        results = [
+            DomainLinkStats(
+                '', 0, 0, 0,
+                [LinkDestination('', 0, [1, 2, 5])]
+            ),
+            DomainLinkStats(
+                '', 0, 0, 0,
+                [LinkDestination('', 0, [4, 3])]
+            )
+        ]
+        resolve_sample_url_id(self.es_conn, '', '', CRAWL_ID, results)
+
+        expected_0 = LinkDestination('', 0, ['url1', 'url2', 'url5'])
+        expected_1 = LinkDestination('', 0, ['url4', 'url3'])
+
+        self.assertEqual(
+            results[0].sample_follow_links,
+            [expected_0]
+        )
+        self.assertEqual(
+            results[1].sample_follow_links,
+            [expected_1]
+        )

@@ -1,15 +1,25 @@
 from itertools import groupby, ifilter, imap, ifilterfalse
 import heapq
+from cdf.analysis.urls.utils import get_url_id, get_es_id
 
 from cdf.features.links.helpers.predicates import (
     is_link,
     is_link_internal,
     is_follow_link
 )
+from cdf.utils.es import multi_get
 from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
 from cdf.exceptions import InvalidUrlException
 from cdf.features.links.streams import OutlinksRawStreamDef
+
+
+FOLLOW_SAMPLES = 'follow_samples'
+NOFOLLOW_SAMPLES = 'nofollow_samples'
+DOMAIN = 'domain'
+UNIQUE_FOLLOW_LINKS = 'unique_follow_links'
+FOLLOW_LINKS = 'follow_links'
+NOFOLLOW_LINKS = 'no_follow_links'
 
 
 class DomainLinkStats(object):
@@ -69,15 +79,16 @@ class DomainLinkStats(object):
         #and then alphabetically
         key = lambda x: (x.unique_links, x.url)
         return {
-            'domain': self.name,
-            'unique_follow_links': self.follow_unique,
-            'follow_links': self.follow,
-            'no_follow_links': self.nofollow,
-            'follow_samples': [
+            DOMAIN: self.name,
+            UNIQUE_FOLLOW_LINKS: self.follow_unique,
+            FOLLOW_LINKS: self.follow,
+            NOFOLLOW_LINKS: self.nofollow,
+            FOLLOW_SAMPLES: [
                 sample_link.to_dict() for sample_link in
                 sorted(self.sample_follow_links, key=key)
             ],
-            'nofollow_samples': [
+            # FIXME inconsistent naming
+            NOFOLLOW_SAMPLES: [
                 sample_link.to_dict() for sample_link in
                 sorted(self.sample_nofollow_links, key=key)
             ]
@@ -455,3 +466,38 @@ def compute_sample_links(external_outlinks, n):
     #sort by decreasing number of links
     result.reverse()
     return result
+
+
+def resolve_sample_url_id(es_client, index, doc_type, crawl_id, results):
+    """Resolve and in-place replace url_id in the samples
+
+    :param results: top domains analysis results (DomainLinkStats)
+    :type results: list
+    :return: top domain analysis results with all sample url_ids replaced
+    by their corresponding url
+    :rtype: list
+    """
+    url_ids = set()
+
+    # collect url_ids
+    for domain_stats in results:
+        url_ids.update(domain_stats.extract_ids())
+
+    url_ids = [get_es_id(crawl_id, i) for i in url_ids]
+
+    # resolve using ES
+    resolved = multi_get(
+        es_client, index, doc_type,
+        ids=url_ids, fields=['url'],
+        routing=crawl_id
+    )
+
+    id_to_url = {
+        get_url_id(es_id): doc['url']
+        for es_id, doc, found in resolved if found
+    }
+
+    for domain_stats in results:
+        domain_stats.replace_ids(id_to_url)
+
+    return results
