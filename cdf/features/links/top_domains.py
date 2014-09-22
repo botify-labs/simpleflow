@@ -218,7 +218,7 @@ def _group_links(link_stream, key):
     link_stream = external_sort(link_stream, key=key)
     #group by key function
     for key_value, link_group in groupby(link_stream, key=key):
-        yield key_value, list(link_group)
+        yield key_value, link_group
 
 
 def count_unique_links(external_outlinks):
@@ -276,7 +276,7 @@ def _compute_top_full_domains(external_outlinks, n, key):
     nb_samples = 100
     heap = []
     for domain, link_group in _group_links(external_outlinks, key):
-
+        link_group = list(link_group)
         nb_unique_follow_links = count_unique_follow_links(link_group)
 
         if nb_unique_follow_links == 0:

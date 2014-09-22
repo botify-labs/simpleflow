@@ -83,7 +83,10 @@ class TestGroupLinks(TopDomainTestCase):
             (".jpg", [[0, "a", 0, -1, "http://bar.com/image.jpg"]])
         ]
 
-        self.assertEqual(expected_result, list(actual_result))
+        self.assertEqual(
+            expected_result,
+            [(domain, list(links)) for domain, links in actual_result]
+        )
 
 
 class TestCountUniqueLinks(unittest.TestCase):
