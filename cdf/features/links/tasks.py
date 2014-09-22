@@ -13,7 +13,7 @@ from cdf.features.links.streams import (
     InlinksRawStreamDef, BadLinksStreamDef,
     BadLinksCountersStreamDef)
 from cdf.features.links.top_domains import (
-    compute_top_domains,
+    compute_top_full_domains,
     compute_top_second_level_domains,
     filter_external_outlinks,
     filter_invalid_destination_urls
@@ -152,13 +152,13 @@ def make_top_domains_files(s3_uri,
 
     result = []
 
-    logger.info("Computing top %d domains.", nb_top_domains)
-    top_domains = compute_top_domains(
+    logger.info("Computing top %d full domains.", nb_top_domains)
+    top_domains = compute_top_full_domains(
         stream_cache.get_stream(),
         nb_top_domains
     )
     #TODO resolve url ids
-    s3_destination = "{}/top_domains.json".format(s3_uri)
+    s3_destination = "{}/top_full_domains.json".format(s3_uri)
     push_content(
         s3_destination,
         json.dumps([domain.to_dict() for _, domain in top_domains])

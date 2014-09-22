@@ -207,7 +207,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
 
         #check file uris
         expected_result = [
-            "s3://test_bucket/top_domains.json",
+            "s3://test_bucket/top_full_domains.json",
             "s3://test_bucket/top_second_level_domains.json"
         ]
         self.assertListEqual(expected_result, actual_result)
@@ -249,7 +249,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
             }
         ]
 
-        k = bucket.get_key("top_domains.json")
+        k = bucket.get_key("top_full_domains.json")
         actual_top_domains = json.loads(k.get_contents_as_string())
         self.assertEqual(expected_top_domains, actual_top_domains)
 

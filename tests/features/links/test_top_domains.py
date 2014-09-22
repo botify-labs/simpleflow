@@ -10,8 +10,8 @@ from cdf.features.links.top_domains import (
     filter_invalid_destination_urls,
     count_unique_links,
     count_unique_follow_links,
-    _compute_top_domains,
-    compute_top_domains,
+    _compute_top_full_domains,
+    compute_top_full_domains,
     compute_top_second_level_domains,
     DomainLinkStats,
     compute_domain_link_counts,
@@ -122,7 +122,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [4, "a", 0, -1, "foo.com"],
         ])
         n = 2
-        actual_result = _compute_top_domains(externals, n, self.key)
+        actual_result = _compute_top_full_domains(externals, n, self.key)
         expected_result = [
             (3, DomainLinkStats(
                 "foo.com", 3, 0, 3,
@@ -146,7 +146,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [4, "a", 3, -1, "foo.com"],
         ])
         n = 1
-        actual_result = _compute_top_domains(externals, n, self.key)
+        actual_result = _compute_top_full_domains(externals, n, self.key)
         expected_result = [
             (1, DomainLinkStats(
                 "foo.com", 1, 2, 1,
@@ -168,7 +168,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [4, "a", 0, -1, "foo.com"],
         ])
         n = 10
-        actual_result = _compute_top_domains(externals, n, self.key)
+        actual_result = _compute_top_full_domains(externals, n, self.key)
         expected_result = [
             (2, DomainLinkStats("foo.com", 2, 0, 2, [])),
             (1, DomainLinkStats("bar.com", 1, 0, 1, []))
@@ -187,7 +187,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [4, "a", 0, -1, "bar.com"],
         ])
         n = 1
-        actual_result = _compute_top_domains(externals, n, self.key)
+        actual_result = _compute_top_full_domains(externals, n, self.key)
         expected_result = [
             (2, DomainLinkStats("bar.foo.com", 2, 0, 2, []))
         ]
@@ -201,7 +201,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [3, "a", 1, -1, "foo.com"]
         ])
         n = 2
-        actual_result = _compute_top_domains(externals, n, self.key)
+        actual_result = _compute_top_full_domains(externals, n, self.key)
         expected_result = []
         self.assertEqual(expected_result, actual_result)
 
@@ -220,7 +220,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
             [0, "a", 0, -1, "foo.com"]  # duplicated link
         ])
         n = 2
-        actual_result = _compute_top_domains(externals, n, self.key)
+        actual_result = _compute_top_full_domains(externals, n, self.key)
         expected_result = [
             (3, DomainLinkStats("foo.com", 4, 0, 3, [])),
             (2, DomainLinkStats("bar.com", 2, 0, 2, []))
@@ -239,7 +239,7 @@ class TestComputeTopNDomains(unittest.TestCase):
             [4, "a", 0, -1, "http://foo.com/"],
         ])
         n = 2
-        actual_result = compute_top_domains(externals, n)
+        actual_result = compute_top_full_domains(externals, n)
         expected_result = [
             (3, DomainLinkStats(
                     "foo.com", 3, 0, 3,
