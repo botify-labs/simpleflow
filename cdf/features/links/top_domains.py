@@ -19,7 +19,7 @@ NOFOLLOW_SAMPLES = 'nofollow_samples'
 DOMAIN = 'domain'
 UNIQUE_FOLLOW_LINKS = 'unique_follow_links'
 FOLLOW_LINKS = 'follow_links'
-NOFOLLOW_LINKS = 'no_follow_links'
+NOFOLLOW_LINKS = 'nofollow_links'
 
 
 class DomainLinkStats(object):

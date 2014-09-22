@@ -217,7 +217,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
             {
                 "domain": "foo.com",
                 "follow_links": 3,
-                "no_follow_links": 0,
+                "nofollow_links": 0,
                 "unique_follow_links": 3,
                 "follow_samples": [
                     {"url": "http://foo.com/", "unique_links": 1, "sources": [4]},
@@ -229,7 +229,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
             {
                 "domain": "bar.com",
                 "follow_links": 2,
-                "no_follow_links": 0,
+                "nofollow_links": 0,
                 "unique_follow_links": 2,
                 "follow_samples": [
                     {"url": "http://bar.com/baz.html", "unique_links": 1, "sources": [4]},
@@ -240,7 +240,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
             {
                 "domain": "bar.foo.com",
                 "follow_links": 1,
-                "no_follow_links": 0,
+                "nofollow_links": 0,
                 "unique_follow_links": 1,
                 "follow_samples": [
                     {"url": "http://bar.foo.com/baz.html", "unique_links": 1, "sources": [4]},
@@ -257,7 +257,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
             {
                 "domain": "foo.com",
                 "follow_links": 4,
-                "no_follow_links": 0,
+                "nofollow_links": 0,
                 "unique_follow_links": 4,
                 "follow_samples": [
                     {"url": "http://bar.foo.com/baz.html", "unique_links": 1, "sources": [4]},
@@ -270,7 +270,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
             {
                 "domain": "bar.com",
                 "follow_links": 2,
-                "no_follow_links": 0,
+                "nofollow_links": 0,
                 "unique_follow_links": 2,
                 "follow_samples": [
                     {"url": "http://bar.com/baz.html", "unique_links": 1, "sources": [4]},

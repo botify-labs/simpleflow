@@ -180,7 +180,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         self.assertEqual(expected_result, actual_result)
 
     @mock.patch("cdf.features.links.top_domains.compute_sample_links", autospec=True)
-    def test_no_follow_links(self, compute_sample_links_mock):
+    def test_nofollow_links(self, compute_sample_links_mock):
         #mock to make expected_result easier to understand
         compute_sample_links_mock.return_value = []
 
@@ -322,7 +322,7 @@ class TestDomainLinkCounts(unittest.TestCase):
         expected_follow = 8
         expected_nofollow = 2
         self.assertEqual(result['follow_links'], expected_follow)
-        self.assertEqual(result['no_follow_links'], expected_nofollow)
+        self.assertEqual(result['nofollow_links'], expected_nofollow)
 
     def test_unique_link_counts(self):
         result = compute_domain_link_counts(self.groups).to_dict()
