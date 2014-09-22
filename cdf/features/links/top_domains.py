@@ -43,6 +43,27 @@ class DomainLinkStats(object):
         self.sample_follow_links = sample_follow_links or []
         self.sample_nofollow_links = sample_nofollow_links or []
 
+    def extract_ids(self):
+        """Extract url ids from all samples, de-duplication is applied
+        """
+        ids = set()
+        for sample in self.sample_follow_links:
+            ids.update(sample.extract_ids())
+        for sample in self.sample_nofollow_links:
+            ids.update(sample.extract_ids())
+        return ids
+
+    def replace_ids(self, id_to_url):
+        """Replace url id by its corresponding url in every sample
+
+        :param id_to_url: url_id -> url lookup
+        :type id_to_url: dict
+        """
+        for sample in self.sample_follow_links:
+            sample.replace_ids(id_to_url)
+        for sample in self.sample_nofollow_links:
+            sample.replace_ids(id_to_url)
+
     def to_dict(self):
         #key function to sort the sample links by number of links
         #and then alphabetically
@@ -101,6 +122,22 @@ class LinkDestination(object):
         return "{}: {}, {}".format(self.url,
                                    self.unique_links,
                                    self.sample_sources)
+
+    def extract_ids(self):
+        """Extract url ids
+        """
+        return self.sample_sources
+
+    def replace_ids(self, id_to_url):
+        """Replace url ids with its corresponding url
+
+        :param id_to_url: url_id -> url lookup
+        :type id_to_url: dict
+        """
+        self.sample_sources = [
+            id_to_url[i]
+            for i in self.sample_sources
+        ]
 
     def to_dict(self):
         """Return a dict representation of the object
