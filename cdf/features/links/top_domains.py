@@ -1,15 +1,25 @@
 from itertools import groupby, ifilter, imap, ifilterfalse
 import heapq
+from cdf.analysis.urls.utils import get_url_id, get_es_id
 
 from cdf.features.links.helpers.predicates import (
     is_link,
     is_link_internal,
     is_follow_link
 )
+from cdf.utils.es import multi_get
 from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
 from cdf.exceptions import InvalidUrlException
 from cdf.features.links.streams import OutlinksRawStreamDef
+
+
+FOLLOW_SAMPLES = 'follow_samples'
+NOFOLLOW_SAMPLES = 'nofollow_samples'
+DOMAIN = 'domain'
+UNIQUE_FOLLOW_LINKS = 'unique_follow_links'
+FOLLOW_LINKS = 'follow_links'
+NOFOLLOW_LINKS = 'no_follow_links'
 
 
 class DomainLinkStats(object):
@@ -43,20 +53,42 @@ class DomainLinkStats(object):
         self.sample_follow_links = sample_follow_links or []
         self.sample_nofollow_links = sample_nofollow_links or []
 
+    def extract_ids(self):
+        """Extract url ids from all samples, de-duplication is applied
+        """
+        ids = set()
+        for sample in self.sample_follow_links:
+            ids.update(sample.extract_ids())
+        for sample in self.sample_nofollow_links:
+            ids.update(sample.extract_ids())
+        return ids
+
+    def replace_ids(self, id_to_url):
+        """Replace url id by its corresponding url in every sample
+
+        :param id_to_url: url_id -> url lookup
+        :type id_to_url: dict
+        """
+        for sample in self.sample_follow_links:
+            sample.replace_ids(id_to_url)
+        for sample in self.sample_nofollow_links:
+            sample.replace_ids(id_to_url)
+
     def to_dict(self):
         #key function to sort the sample links by number of links
         #and then alphabetically
         key = lambda x: (x.unique_links, x.url)
         return {
-            'domain': self.name,
-            'unique_follow_links': self.follow_unique,
-            'follow_links': self.follow,
-            'no_follow_links': self.nofollow,
-            'follow_samples': [
+            DOMAIN: self.name,
+            UNIQUE_FOLLOW_LINKS: self.follow_unique,
+            FOLLOW_LINKS: self.follow,
+            NOFOLLOW_LINKS: self.nofollow,
+            FOLLOW_SAMPLES: [
                 sample_link.to_dict() for sample_link in
                 sorted(self.sample_follow_links, key=key)
             ],
-            'nofollow_samples': [
+            # FIXME inconsistent naming
+            NOFOLLOW_SAMPLES: [
                 sample_link.to_dict() for sample_link in
                 sorted(self.sample_nofollow_links, key=key)
             ]
@@ -67,6 +99,66 @@ class DomainLinkStats(object):
 
     def __repr__(self):
         return "DomainLinkStats({})".format(self.to_dict())
+
+
+class LinkDestination(object):
+    """A class to represent a link destination.
+    The link destination is defined by :
+        - its destination urls
+        - the number of unique links that point to it
+        - a sample of source urlids.
+    """
+    def __init__(self, destination_url, unique_links, sample_sources):
+        """Constructor
+        :param destination_url: the destination url
+        :type: str
+        :param unique_links: the number of unique links that point to
+                             the destination url
+        :type unique_links: int
+        :param sample_sources: a list of sample source urlids.
+        :type sample_source: list
+        """
+        self.url = destination_url
+        self.unique_links = unique_links
+        self.sample_sources = sample_sources
+
+    def __eq__(self, other):
+        return (
+            self.url == other.url and
+            self.unique_links == other.unique_links and
+            self.sample_sources == other.sample_sources
+        )
+
+    def __repr__(self):
+        return "{}: {}, {}".format(self.url,
+                                   self.unique_links,
+                                   self.sample_sources)
+
+    def extract_ids(self):
+        """Extract url ids
+        """
+        return self.sample_sources
+
+    def replace_ids(self, id_to_url):
+        """Replace url ids with its corresponding url
+
+        :param id_to_url: url_id -> url lookup
+        :type id_to_url: dict
+        """
+        self.sample_sources = [
+            id_to_url[i]
+            for i in self.sample_sources
+        ]
+
+    def to_dict(self):
+        """Return a dict representation of the object
+        :rtype: dict
+        """
+        return {
+            "url": self.url,
+            "unique_links": self.unique_links,
+            "sources": self.sample_sources
+        }
 
 
 def filter_external_outlinks(outlinks):
@@ -320,50 +412,6 @@ def compute_domain_link_counts(grouped_outlinks):
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
 
 
-class LinkDestination(object):
-    """A class to represent a link destination.
-    The link destination is defined by :
-        - its destination urls
-        - the number of unique links that point to it
-        - a sample of source urlids.
-    """
-    def __init__(self, destination_url, unique_links, sample_sources):
-        """Constructor
-        :param destination_url: the destination url
-        :type: str
-        :param unique_links: the number of unique links that point to
-                             the destination url
-        :type unique_links: int
-        :param sample_sources: a list of sample source urlids.
-        :type sample_source: list
-        """
-        self.url = destination_url
-        self.unique_links = unique_links
-        self.sample_sources = sample_sources
-
-    def __eq__(self, other):
-        return (
-            self.url == other.url and
-            self.unique_links == other.unique_links and
-            self.sample_sources == other.sample_sources
-        )
-
-    def __repr__(self):
-        return "{}: {}, {}".format(self.url,
-                                   self.unique_links,
-                                   self.sample_sources)
-
-    def to_dict(self):
-        """Return a dict representation of the object
-        :rtype: dict
-        """
-        return {
-            "url": self.url,
-            "unique_links": self.unique_links,
-            "sources": self.sample_sources
-        }
-
-
 def get_source_sample(external_outlinks, n):
     """Compute a list of n different sample source urlids
     from a set of external outlinks that point to the same url.
@@ -418,3 +466,38 @@ def compute_sample_links(external_outlinks, n):
     #sort by decreasing number of links
     result.reverse()
     return result
+
+
+def resolve_sample_url_id(es_client, index, doc_type, crawl_id, results):
+    """Resolve and in-place replace url_id in the samples
+
+    :param results: top domains analysis results (DomainLinkStats)
+    :type results: list
+    :return: top domain analysis results with all sample url_ids replaced
+    by their corresponding url
+    :rtype: list
+    """
+    url_ids = set()
+
+    # collect url_ids
+    for domain_stats in results:
+        url_ids.update(domain_stats.extract_ids())
+
+    url_ids = [get_es_id(crawl_id, i) for i in url_ids]
+
+    # resolve using ES
+    resolved = multi_get(
+        es_client, index, doc_type,
+        ids=url_ids, fields=['url'],
+        routing=crawl_id
+    )
+
+    id_to_url = {
+        get_url_id(es_id): doc['url']
+        for es_id, doc, found in resolved if found
+    }
+
+    for domain_stats in results:
+        domain_stats.replace_ids(id_to_url)
+
+    return results
