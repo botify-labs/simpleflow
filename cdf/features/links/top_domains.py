@@ -166,7 +166,7 @@ def count_unique_follow_links(external_outlinks):
     return count_unique_links(external_follow_outlinks)
 
 
-def _compute_top_domains(external_outlinks, n, key):
+def _compute_top_full_domains(external_outlinks, n, key):
     """A helper function to compute the top n domains given a custom criterion.
     For each destination domain the function counts the number of unique follow
     links that points to it and use this number to select the top n domains.
@@ -212,7 +212,7 @@ def _compute_top_domains(external_outlinks, n, key):
     return result
 
 
-def compute_top_domains(external_outlinks, n):
+def compute_top_full_domains(external_outlinks, n):
     """A helper function to compute the top n domains.
     For each destination domain the function counts the number of unique follow
     links that points to it and use this number to select the top n domains.
@@ -230,7 +230,7 @@ def compute_top_domains(external_outlinks, n):
     """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_domain(x[external_url_idx])
-    return _compute_top_domains(external_outlinks, n, key)
+    return _compute_top_full_domains(external_outlinks, n, key)
 
 
 def compute_top_second_level_domains(external_outlinks, n):
@@ -250,7 +250,7 @@ def compute_top_second_level_domains(external_outlinks, n):
     """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_second_level_domain(x[external_url_idx])
-    return _compute_top_domains(external_outlinks, n, key)
+    return _compute_top_full_domains(external_outlinks, n, key)
 
 
 def compute_domain_stats(grouped_outlinks, nb_samples):

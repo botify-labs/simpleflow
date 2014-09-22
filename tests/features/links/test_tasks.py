@@ -1,10 +1,12 @@
 import unittest
 import tempfile
+import json
 import shutil
 from moto import mock_s3
 import boto
 
 from cdf.features.links.streams import (
+    OutlinksRawStreamDef,
     OutlinksStreamDef,
     BadLinksStreamDef,
     BadLinksCountersStreamDef,
@@ -15,7 +17,8 @@ from cdf.features.links.streams import (
 from cdf.features.links.tasks import (
     make_bad_link_file as compute_bad_link,
     make_links_counter_file as compute_link_counter,
-    make_bad_link_counter_file as compute_bad_link_counter
+    make_bad_link_counter_file as compute_bad_link_counter,
+    make_top_domains_files as compute_top_domains
 )
 from cdf.features.main.streams import InfosStreamDef
 from cdf.utils.s3 import list_files
@@ -174,3 +177,112 @@ class TestBadLinkCounterTask(unittest.TestCase):
             [1, 500, 2],  # 2 500 link
         ]
         self.assertEqual(result, expected)
+
+
+class TestMakeTopDomainsFiles(unittest.TestCase):
+    @mock_s3
+    def test_nominal_case(self):
+
+        #mock
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        s3_uri = "s3://test_bucket"
+
+        externals = iter([
+            [0, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, "a", 0, -1, "http://bar.com/image.jpg"],
+            [3, "a", 0, -1, "http://foo.com/qux.css"],
+            [3, "canonical", 0, 0],  # canonical
+            [4, "a", 0, -1, "http://bar.foo.com/baz.html"],
+            [4, "a", 0, -1, "http://bar.com/baz.html"],
+            [4, "a", 0, 3],  # internal link
+            [4, "a", 0, -1, "http://foo.com/"],
+            [4, "a", 0, -1, "foo"],  # invalid url
+        ])
+        OutlinksRawStreamDef.persist(externals, s3_uri)
+
+        #actual call
+        nb_top_domains = 10
+        actual_result = compute_top_domains(s3_uri, nb_top_domains)
+
+        #check file uris
+        expected_result = [
+            "s3://test_bucket/top_full_domains.json",
+            "s3://test_bucket/top_second_level_domains.json"
+        ]
+        self.assertListEqual(expected_result, actual_result)
+
+        #check file contents
+        expected_top_domains = [
+            {
+                "domain": "foo.com",
+                "follow_links": 3,
+                "no_follow_links": 0,
+                "unique_follow_links": 3,
+                "follow_samples": [
+                    {"url": "http://foo.com/", "unique_links": 1, "sources": [4]},
+                    {"url": "http://foo.com/bar.html", "unique_links": 1, "sources": [0]},
+                    {"url": "http://foo.com/qux.css", "unique_links": 1, "sources": [3]}
+                ],
+                "nofollow_samples": []
+            },
+            {
+                "domain": "bar.com",
+                "follow_links": 2,
+                "no_follow_links": 0,
+                "unique_follow_links": 2,
+                "follow_samples": [
+                    {"url": "http://bar.com/baz.html", "unique_links": 1, "sources": [4]},
+                    {"url": "http://bar.com/image.jpg", "unique_links": 1, "sources": [0]}
+                ],
+                "nofollow_samples": []
+            },
+            {
+                "domain": "bar.foo.com",
+                "follow_links": 1,
+                "no_follow_links": 0,
+                "unique_follow_links": 1,
+                "follow_samples": [
+                    {"url": "http://bar.foo.com/baz.html", "unique_links": 1, "sources": [4]},
+                ],
+                "nofollow_samples": []
+            }
+        ]
+
+        k = bucket.get_key("top_full_domains.json")
+        actual_top_domains = json.loads(k.get_contents_as_string())
+        self.assertEqual(expected_top_domains, actual_top_domains)
+
+        expected_top_second_level_domains = [
+            {
+                "domain": "foo.com",
+                "follow_links": 4,
+                "no_follow_links": 0,
+                "unique_follow_links": 4,
+                "follow_samples": [
+                    {"url": "http://bar.foo.com/baz.html", "unique_links": 1, "sources": [4]},
+                    {"url": "http://foo.com/", "unique_links": 1, "sources": [4]},
+                    {"url": "http://foo.com/bar.html", "unique_links": 1, "sources": [0]},
+                    {"url": "http://foo.com/qux.css", "unique_links": 1, "sources": [3]}
+                ],
+                "nofollow_samples": []
+            },
+            {
+                "domain": "bar.com",
+                "follow_links": 2,
+                "no_follow_links": 0,
+                "unique_follow_links": 2,
+                "follow_samples": [
+                    {"url": "http://bar.com/baz.html", "unique_links": 1, "sources": [4]},
+                    {"url": "http://bar.com/image.jpg", "unique_links": 1, "sources": [0]}
+                ],
+                "nofollow_samples": []
+            }
+        ]
+
+        k = bucket.get_key("top_second_level_domains.json")
+        actual_top_second_level_domains = json.loads(k.get_contents_as_string())
+        self.assertEqual(
+            expected_top_second_level_domains,
+            actual_top_second_level_domains
+        )

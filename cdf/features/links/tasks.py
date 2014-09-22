@@ -1,8 +1,10 @@
 import os
 import gzip
+import json
 
 from cdf.log import logger
-from cdf.utils.s3 import push_file
+from cdf.core.streams.cache import MarshalStreamCache
+from cdf.utils.s3 import push_file, push_content
 from cdf.features.links.links import OutlinksTransducer, InlinksTransducer
 from cdf.features.links.bad_links import get_bad_links, get_bad_link_counters
 from cdf.features.main.streams import InfosStreamDef
@@ -10,6 +12,12 @@ from cdf.features.links.streams import (
     OutlinksRawStreamDef, OutlinksStreamDef,
     InlinksRawStreamDef, BadLinksStreamDef,
     BadLinksCountersStreamDef)
+from cdf.features.links.top_domains import (
+    compute_top_full_domains,
+    compute_top_second_level_domains,
+    filter_external_outlinks,
+    filter_invalid_destination_urls
+)
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 
@@ -110,3 +118,64 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
         s3_uri,
         part_id=part_id
     )
+
+
+@with_temporary_dir
+def make_top_domains_files(s3_uri,
+                           nb_top_domains,
+                           tmp_dir=None,
+                           force_fetch=DEFAULT_FORCE_FETCH):
+    """Compute top domains and top second level domains for a given crawl.
+    :param s3_uri: the s3 uri where the crawl data is stored.
+    :type s3_uri: str
+    :param nb_top_domains: the number of top domains to return
+                           (typical value: 100)
+    :type nb_top_domains: int
+    :param tmp_dir: the path to the tmp directory to use.
+                    If None, a new tmp directory will be created.
+    :type tmp_dir: str
+    :param force_fetch: if True, the files will be downloaded from s3
+                        even if they are in the tmp directory.
+                        if False, files that are present in the tmp_directory
+                        will not be downloaded from s3.
+    :type force_fetch: bool
+    :returns: the list of s3_uri for the generated files.
+    :rtype: list
+    """
+    logger.info("Preprocessing and caching stream.")
+    outlinks = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    outlinks = filter_external_outlinks(outlinks)
+    outlinks = filter_invalid_destination_urls(outlinks)
+
+    stream_cache = MarshalStreamCache()
+    stream_cache.cache(outlinks)
+
+    result = []
+
+    logger.info("Computing top %d full domains.", nb_top_domains)
+    top_domains = compute_top_full_domains(
+        stream_cache.get_stream(),
+        nb_top_domains
+    )
+    #TODO resolve url ids
+    s3_destination = "{}/top_full_domains.json".format(s3_uri)
+    push_content(
+        s3_destination,
+        json.dumps([domain.to_dict() for _, domain in top_domains])
+    )
+    result.append(s3_destination)
+
+    logger.info("Computing top %d second level domains.", nb_top_domains)
+    top_domains = compute_top_second_level_domains(
+        stream_cache.get_stream(),
+        nb_top_domains
+    )
+    #TODO resolve url ids
+    s3_destination = "{}/top_second_level_domains.json".format(s3_uri)
+    push_content(
+        s3_destination,
+        json.dumps([domain.to_dict() for _, domain in top_domains])
+    )
+    result.append(s3_destination)
+
+    return result
