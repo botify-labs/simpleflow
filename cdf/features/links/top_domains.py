@@ -425,20 +425,35 @@ def compute_domain_link_counts(grouped_outlinks):
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
 
 
-def get_source_sample(external_outlinks, n):
-    """Compute a list of n different sample source urlids
-    from a set of external outlinks that point to the same url.
-    :param external_outlinks: the input stream of external outlinks
-                              (based on OutlinksRawStreamDef).
-                              They all point to the same domain.
-    :type external_outlinks: iterable
-    :param n: the maximum number of sample links to return
-    :type n: int
-    :rtype: list
+def compute_link_destination_stats(links, external_url, nb_source_samples):
+    """Given a list of external outlinks that point to the same url,
+    count the number of unique links and return a sample of source urlid.
+    :param links: the input stream of external outlinks
+                  (based on OutlinksRawStreamDef).
+                  They all point to the same domain.
+    :type links: iterable
+    :param external_url: the destination url
+    :type external_url: str
+    :param nb_source_samples: the number of source urlids
+                              to return as a sample.
+    :type nb_source_samples: int
+    :rtype: LinkDestination
     """
-    id_idx = OutlinksRawStreamDef.field_idx("id")
-    source_urlids = set([x[id_idx] for x in external_outlinks])
-    return heapq.nsmallest(n, source_urlids)
+    id_index = OutlinksRawStreamDef.field_idx("id")
+    #build the set of source urlids
+    link_set = set()
+    for link in links:
+        link_set.add(link[id_index])
+
+    nb_unique_links = len(link_set)
+    sample_sources = sorted(link_set)[:nb_source_samples]
+
+    link_sample = LinkDestination(
+        external_url,
+        nb_unique_links,
+        sample_sources
+    )
+    return link_sample
 
 
 def compute_sample_links(external_outlinks, n):
@@ -460,13 +475,13 @@ def compute_sample_links(external_outlinks, n):
     external_outlinks = external_sort(external_outlinks, key=lambda x: x[external_url_idx])
     heap = []
     for external_url, links in groupby(external_outlinks, key=lambda x: x[external_url_idx]):
-        #transform iterator in list because we will need it more than once.
-        stream_cache = MarshalStreamCache()
-        stream_cache.cache(links)
-        nb_unique_links = count_unique_links(stream_cache.get_stream())
         nb_source_samples = 3
-        sample_sources = get_source_sample(stream_cache.get_stream(), nb_source_samples)
-        link_sample = LinkDestination(external_url, nb_unique_links, sample_sources)
+        link_sample = compute_link_destination_stats(
+            links,
+            external_url,
+            nb_source_samples
+        )
+        nb_unique_links = link_sample.unique_links
         if len(heap) < n:
             heapq.heappush(heap, (nb_unique_links, link_sample))
         else:

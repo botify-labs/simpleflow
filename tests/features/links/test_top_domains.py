@@ -20,7 +20,7 @@ from cdf.features.links.top_domains import (
     compute_domain_link_counts,
     LinkDestination,
     compute_sample_links,
-    get_source_sample,
+    compute_link_destination_stats,
     resolve_sample_url_id
 )
 
@@ -394,7 +394,7 @@ class TestComputeSampleLinks(unittest.TestCase):
         self.assertEqual(expected_result, actual_result)
 
 
-class TestGetSourceSample(unittest.TestCase):
+class TestComputeLinkDestinationStats(unittest.TestCase):
     def test_nominal_case(self):
         externals = iter([
             [3, "a", 0, -1, "http://foo.com/"],
@@ -405,7 +405,13 @@ class TestGetSourceSample(unittest.TestCase):
             [4, "a", 5, -1, "http://foo.com/"]
         ])
         n = 2
-        self.assertEqual([0, 3], get_source_sample(externals, n))
+        actual_result = compute_link_destination_stats(
+            externals,
+            "http://foo.com/",
+            n
+        )
+        expected_result = LinkDestination("http://foo.com/", 4, [0, 3])
+        self.assertEqual(expected_result, actual_result)
 
 
 class TestSourceSampleUrl(unittest.TestCase):
@@ -424,6 +430,7 @@ class TestSourceSampleUrl(unittest.TestCase):
                 [LinkDestination('', 0, [4, 3])]
             )
         ]
+        LinkDestination('', 0, [4, 3])
         resolve_sample_url_id(self.es_conn, '', '', CRAWL_ID, results)
 
         expected_0 = LinkDestination('', 0, ['url1', 'url2', 'url5'])
