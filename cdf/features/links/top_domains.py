@@ -10,6 +10,7 @@ from cdf.features.links.helpers.predicates import (
 from cdf.utils.es import multi_get
 from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
+from cdf.core.streams.cache import MarshalStreamCache
 from cdf.exceptions import InvalidUrlException
 from cdf.features.links.streams import OutlinksRawStreamDef
 
@@ -276,22 +277,32 @@ def _compute_top_full_domains(external_outlinks, n, key):
     nb_samples = 100
     heap = []
     for domain, link_group in _group_links(external_outlinks, key):
-        link_group = list(link_group)
-        nb_unique_follow_links = count_unique_follow_links(link_group)
+
+        stream_cache = MarshalStreamCache()
+        stream_cache.cache(link_group)
+        nb_unique_follow_links = count_unique_follow_links(
+            stream_cache.get_stream()
+        )
 
         if nb_unique_follow_links == 0:
             #we don't want to return domain with 0 occurrences.
             continue
 
         if len(heap) < n:
-            domain_stats = compute_domain_stats((domain, link_group), nb_samples)
+            domain_stats = compute_domain_stats(
+                (domain, stream_cache.get_stream()),
+                nb_samples
+            )
             heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
         else:
             min_value = heap[0][0]
             if nb_unique_follow_links < min_value:
                 #avoid useless pushpop()
                 continue
-            domain_stats = compute_domain_stats((domain, link_group), nb_samples)
+            domain_stats = compute_domain_stats(
+                (domain, stream_cache.get_stream()),
+                nb_samples
+            )
             heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
     #back to a list
     result = []
@@ -354,16 +365,19 @@ def compute_domain_stats(grouped_outlinks, nb_samples):
     :return: stats of outlinks that target the domain
     :rtype: dict
     """
-    domain_stats = compute_domain_link_counts(grouped_outlinks)
     domain, outlinks = grouped_outlinks
+
+    stream_cache = MarshalStreamCache()
+    stream_cache.cache(outlinks)
+    domain_stats = compute_domain_link_counts((domain, stream_cache.get_stream()))
     bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
 
     key = lambda x: is_follow_link(x[bitmask_index], is_bitmask=True)
-    follow_outlinks = ifilter(key, outlinks)
+    follow_outlinks = ifilter(key, stream_cache.get_stream())
     domain_stats.sample_follow_links = compute_sample_links(follow_outlinks,
                                                             nb_samples)
 
-    nofollow_outlinks = ifilterfalse(key, outlinks)
+    nofollow_outlinks = ifilterfalse(key, stream_cache.get_stream())
     domain_stats.sample_nofollow_links = compute_sample_links(nofollow_outlinks,
                                                               nb_samples)
     return domain_stats
@@ -443,14 +457,15 @@ def compute_sample_links(external_outlinks, n):
     :rtype: list
     """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
-    external_outlinks = sorted(external_outlinks, key=lambda x: x[external_url_idx])
+    external_outlinks = external_sort(external_outlinks, key=lambda x: x[external_url_idx])
     heap = []
     for external_url, links in groupby(external_outlinks, key=lambda x: x[external_url_idx]):
         #transform iterator in list because we will need it more than once.
-        links = list(links)
-        nb_unique_links = count_unique_links(links)
+        stream_cache = MarshalStreamCache()
+        stream_cache.cache(links)
+        nb_unique_links = count_unique_links(stream_cache.get_stream())
         nb_source_samples = 3
-        sample_sources = get_source_sample(links, nb_source_samples)
+        sample_sources = get_source_sample(stream_cache.get_stream(), nb_source_samples)
         link_sample = LinkDestination(external_url, nb_unique_links, sample_sources)
         if len(heap) < n:
             heapq.heappush(heap, (nb_unique_links, link_sample))
