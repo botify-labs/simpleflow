@@ -12,9 +12,20 @@ class ES(object):
     """High level ElasticSearch handler
     """
     def __init__(self, es_location, es_index, es_doc_type):
+        self.es_location = es_location
         self.es_client = Elasticsearch(urlparse(es_location).netloc)
         self.index = es_index
         self.doc_type = es_doc_type
+
+    def __eq__(self, other):
+        return (
+            self.es_location == other.es_location
+            and self.index == other.index
+            and self.doc_type == other.doc_type
+        )
+
+    def __repr__(self):
+        return '<ES of %s/%s/%s>' % (self.es_location, self.index, self.doc_type)
 
     def bulk(self, docs, bulk_type='index', **kwargs):
         bulk_actions = []
