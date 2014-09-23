@@ -233,11 +233,10 @@ def count_unique_links(external_outlinks):
     #remove duplicate links
     id_index = OutlinksRawStreamDef.field_idx("id")
     external_url_index = OutlinksRawStreamDef.field_idx("external_url")
-    external_outlinks = imap(
-        lambda x: (x[id_index], x[external_url_index]),
-        external_outlinks
-    )
-    result = len(set(external_outlinks))
+    key = lambda x: (x[id_index], x[external_url_index])
+    result = 0
+    for _, g in _group_links(external_outlinks, key):
+        result += 1
     return result
 
 
@@ -293,6 +292,7 @@ def _compute_top_full_domains(external_outlinks, n, key):
                 (domain, stream_cache.get_stream()),
                 nb_samples
             )
+            domain_stats.follow_unique = nb_unique_follow_links
             heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
         else:
             min_value = heap[0][0]
@@ -303,6 +303,7 @@ def _compute_top_full_domains(external_outlinks, n, key):
                 (domain, stream_cache.get_stream()),
                 nb_samples
             )
+            domain_stats.follow_unique = nb_unique_follow_links
             heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
     #back to a list
     result = []
@@ -388,7 +389,6 @@ def compute_domain_link_counts(grouped_outlinks):
     compute various link counts:
         - follow links
         - nofollow links
-        - unique follow links
 
     :param grouped_outlinks: grouped qualified outlinks of a certain domain
         eg: (domain_name, [link1, link2, ...])
@@ -403,22 +403,12 @@ def compute_domain_link_counts(grouped_outlinks):
 
     # indices
     mask_idx = OutlinksRawStreamDef.field_idx('bitmask')
-    external_url_idx = OutlinksRawStreamDef.field_idx('external_url')
-    src_id_idx = OutlinksRawStreamDef.field_idx('id')
-
-    seen_urls = set()
     domain_name, links = grouped_outlinks
     for link in links:
         is_follow = is_follow_link(link[mask_idx], is_bitmask=True)
-        dest_url = link[external_url_idx]
-        src_id = link[src_id_idx]
 
         if is_follow:
             follow += 1
-            if (src_id, dest_url) not in seen_urls:
-                follow_unique += 1
-            # add to seen set
-            seen_urls.add((src_id, dest_url))
         else:
             nofollow += 1
 
