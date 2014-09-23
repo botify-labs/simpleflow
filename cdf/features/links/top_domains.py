@@ -285,26 +285,25 @@ def _compute_top_full_domains(external_outlinks, n, key):
             #we don't want to return domain with 0 occurrences.
             continue
 
+        insert_in_heap = False
         if len(heap) < n:
-            sample_follow_links, sample_nofollow_links = compute_domain_sample_sets(
-                stream_cache,
-                nb_samples
-            )
-            domain_stats.sample_follow_links = sample_follow_links
-            domain_stats.sample_nofollow_links = sample_nofollow_links
-            heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
+            insert_in_heap = True
         else:
             min_value = heap[0][0]
-            if nb_unique_follow_links < min_value:
-                #avoid useless pushpop()
-                continue
+            if nb_unique_follow_links > min_value:
+                insert_in_heap = True
+
+        if insert_in_heap:
             sample_follow_links, sample_nofollow_links = compute_domain_sample_sets(
                 stream_cache,
                 nb_samples
             )
             domain_stats.sample_follow_links = sample_follow_links
             domain_stats.sample_nofollow_links = sample_nofollow_links
-            heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
+            if len(heap) < n:
+                heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
+            else:
+                heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
     #back to a list
     result = []
     while len(heap) != 0:
