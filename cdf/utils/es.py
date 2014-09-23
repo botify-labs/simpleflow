@@ -9,10 +9,10 @@ from itertools import (
 
 # TODO(darkjh) use thrift protocol
 class ES(object):
-    """High level ElasticSearch wrapper
+    """High level ElasticSearch handler
     """
     def __init__(self, es_location, es_index, es_doc_type):
-        self.es = Elasticsearch(urlparse(es_location).netloc)
+        self.es_client = Elasticsearch(urlparse(es_location).netloc)
         self.index = es_index
         self.doc_type = es_doc_type
 
@@ -31,7 +31,7 @@ class ES(object):
         if not bulk_actions:
             return {}
 
-        return self.es.bulk(bulk_actions, **kwargs)
+        return self.es_client.bulk(bulk_actions, **kwargs)
 
     def mget(self, ids, fields, routing, chunk_size=500):
         """Issue a multi get to ElasticSearch, retrieve some fields
@@ -66,7 +66,7 @@ class ES(object):
         """
         results = []
         for trunk in _chunk(ids, chunk_size):
-            resolved = self.es.mget(
+            resolved = self.es_client.mget(
                 body={"ids": trunk},
                 index=self.index,
                 doc_type=self.doc_type,
@@ -93,7 +93,7 @@ class ES(object):
         :return: raw ElasticSearch search results
         :rtype: dict
         """
-        return self.es.search(
+        return self.es_client.search(
             body=body,
             index=self.index,
             doc_type=self.doc_type,
@@ -108,7 +108,7 @@ class ES(object):
 
         :return: refresh status per shard (success or fail)
         """
-        return self.es.indices.refresh(index=self.index)
+        return self.es_client.indices.refresh(index=self.index)
 
 
 def bulk(client, docs, chunk_size=500, bulk_type='index', **kwargs):
