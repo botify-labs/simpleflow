@@ -19,7 +19,7 @@ NOFOLLOW_SAMPLES = 'nofollow_samples'
 DOMAIN = 'domain'
 UNIQUE_FOLLOW_LINKS = 'unique_follow_links'
 FOLLOW_LINKS = 'follow_links'
-NOFOLLOW_LINKS = 'no_follow_links'
+NOFOLLOW_LINKS = 'nofollow_links'
 
 
 class DomainLinkStats(object):
@@ -87,7 +87,6 @@ class DomainLinkStats(object):
                 sample_link.to_dict() for sample_link in
                 sorted(self.sample_follow_links, key=key)
             ],
-            # FIXME inconsistent naming
             NOFOLLOW_SAMPLES: [
                 sample_link.to_dict() for sample_link in
                 sorted(self.sample_nofollow_links, key=key)
