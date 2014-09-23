@@ -402,15 +402,25 @@ def compute_domain_link_counts(grouped_outlinks):
     follow_unique = 0
 
     # indices
+    id_index = OutlinksRawStreamDef.field_idx("id")
+    external_url_index = OutlinksRawStreamDef.field_idx("external_url")
     mask_idx = OutlinksRawStreamDef.field_idx('bitmask')
+    key = lambda x: (
+            x[id_index],
+            x[external_url_index],
+            is_follow_link(x[mask_idx], is_bitmask=True)
+    )
     domain_name, links = grouped_outlinks
-    for link in links:
-        is_follow = is_follow_link(link[mask_idx], is_bitmask=True)
-
+    for key_value, g in _group_links(links, key):
+        urlid, external_url, is_follow = key_value
+        group_size = 0
+        for _ in g:
+            group_size += 1
         if is_follow:
-            follow += 1
+            follow += group_size
+            follow_unique += 1
         else:
-            nofollow += 1
+            nofollow += group_size
 
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
 
