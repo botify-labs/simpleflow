@@ -6,7 +6,6 @@ from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
 from cdf.features.links.helpers.masks import follow_mask
 from cdf.query.constants import MGET_CHUNKS_SIZE, SUB_AGG, METRIC_AGG_PREFIX
-from cdf.utils.es import multi_get
 
 
 class ResultTransformer(object):
@@ -272,16 +271,11 @@ class IdToUrlTransformer(ResultTransformer):
             # a list of query fields, flatten
             self.fields = kwargs['fields']
             # ES info.
-            self.es_conn = kwargs['es_conn']
-            self.es_index = kwargs['es_index']
-            self.es_doctype = kwargs['es_doctype']
+            self.es = kwargs['es']
             self.crawl_id = kwargs['crawl_id']
         else:
-            # TODO manage `fields` in query
             self.fields = query.fields
-            self.es_conn = query.search_backend
-            self.es_index = query.es_index
-            self.es_doctype = query.es_doc_type
+            self.es = query.search_backend
             self.crawl_id = query.crawl_id
 
         self.backend = backend
@@ -320,8 +314,8 @@ class IdToUrlTransformer(ResultTransformer):
         Return a dict with url_id as key a a tuple (url, http_code) as value
         """
         urls = {}
-        resolved = multi_get(
-            self.es_conn, self.es_index, self.es_doctype, ids,
+        resolved = self.es.mget(
+            ids,
             fields=['url', 'http_code'],
             routing=self.crawl_id,
             chunk_size=MGET_CHUNKS_SIZE
