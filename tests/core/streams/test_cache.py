@@ -24,6 +24,28 @@ class TestStreamCache(unittest.TestCase):
         stream = cache.get_stream()
         self.assertEqual(list(stream), self.data)
 
+    def test_buffer_size(self):
+        cache = MarshalStreamCache(buffer_size=2)
+        cache.cache(iter(self.data))
+
+        # first consume
+        stream = cache.get_stream()
+        self.assertEqual(list(stream), self.data)
+        # second consume
+        stream = cache.get_stream()
+        self.assertEqual(list(stream), self.data)
+
+    def test_null_buffer_size(self):
+        cache = MarshalStreamCache(buffer_size=0)
+        cache.cache(iter(self.data))
+
+        # first consume
+        stream = cache.get_stream()
+        self.assertEqual(list(stream), self.data)
+        # second consume
+        stream = cache.get_stream()
+        self.assertEqual(list(stream), self.data)
+
     def test_file_cleaning(self):
         path = '/tmp/cachefile'
 
