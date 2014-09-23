@@ -491,9 +491,11 @@ def compute_sample_links(external_outlinks, n):
     return result
 
 
-def resolve_sample_url_id(es_client, index, doc_type, crawl_id, results):
+def resolve_sample_url_id(es, crawl_id, results):
     """Resolve and in-place replace url_id in the samples
 
+    :param es: ElasticSearch handler
+    :type es: cdf.util.es.ES
     :param results: top domains analysis results (DomainLinkStats)
     :type results: list
     :return: top domain analysis results with all sample url_ids replaced
@@ -509,9 +511,9 @@ def resolve_sample_url_id(es_client, index, doc_type, crawl_id, results):
     url_ids = [get_es_id(crawl_id, i) for i in url_ids]
 
     # resolve using ES
-    resolved = multi_get(
-        es_client, index, doc_type,
-        ids=url_ids, fields=['url'],
+    resolved = es.mget(
+        ids=url_ids,
+        fields=['url'],
         routing=crawl_id
     )
 
