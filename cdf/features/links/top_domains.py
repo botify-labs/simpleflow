@@ -279,31 +279,31 @@ def _compute_top_full_domains(external_outlinks, n, key):
 
         stream_cache = MarshalStreamCache()
         stream_cache.cache(link_group)
-        nb_unique_follow_links = count_unique_follow_links(
-            stream_cache.get_stream()
-        )
-
+        domain_stats = compute_domain_link_counts((domain, stream_cache.get_stream()))
+        nb_unique_follow_links = domain_stats.follow_unique
         if nb_unique_follow_links == 0:
             #we don't want to return domain with 0 occurrences.
             continue
 
         if len(heap) < n:
-            domain_stats = compute_domain_stats(
-                (domain, stream_cache.get_stream()),
+            sample_follow_links, sample_nofollow_links = compute_domain_sample_sets(
+                stream_cache,
                 nb_samples
             )
-            domain_stats.follow_unique = nb_unique_follow_links
+            domain_stats.sample_follow_links = sample_follow_links
+            domain_stats.sample_nofollow_links = sample_nofollow_links
             heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
         else:
             min_value = heap[0][0]
             if nb_unique_follow_links < min_value:
                 #avoid useless pushpop()
                 continue
-            domain_stats = compute_domain_stats(
-                (domain, stream_cache.get_stream()),
+            sample_follow_links, sample_nofollow_links = compute_domain_sample_sets(
+                stream_cache,
                 nb_samples
             )
-            domain_stats.follow_unique = nb_unique_follow_links
+            domain_stats.sample_follow_links = sample_follow_links
+            domain_stats.sample_nofollow_links = sample_nofollow_links
             heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
     #back to a list
     result = []
@@ -356,32 +356,27 @@ def compute_top_second_level_domains(external_outlinks, n):
     return _compute_top_full_domains(external_outlinks, n, key)
 
 
-def compute_domain_stats(grouped_outlinks, nb_samples):
+def compute_domain_sample_sets(stream_cache, nb_samples):
     """Compute full stats out of outlinks of a specific domain
-    :param grouped_outlinks: grouped qualified outlinks of a certain domain
+    :param stream_cache: a stream cache for grouped qualified outlinks of a certain domain
         eg: (domain_name, [link1, link2, ...])
-    :type grouped_outlinks: tuple
+    :type stream_cache: AbstractStreamCache
     :param nb_samples: the number of sample links to return
     :type nb_samples: int
     :return: stats of outlinks that target the domain
     :rtype: dict
     """
-    domain, outlinks = grouped_outlinks
-
-    stream_cache = MarshalStreamCache()
-    stream_cache.cache(outlinks)
-    domain_stats = compute_domain_link_counts((domain, stream_cache.get_stream()))
     bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
 
     key = lambda x: is_follow_link(x[bitmask_index], is_bitmask=True)
     follow_outlinks = ifilter(key, stream_cache.get_stream())
-    domain_stats.sample_follow_links = compute_sample_links(follow_outlinks,
-                                                            nb_samples)
+    sample_follow_links = compute_sample_links(follow_outlinks,
+                                               nb_samples)
 
     nofollow_outlinks = ifilterfalse(key, stream_cache.get_stream())
-    domain_stats.sample_nofollow_links = compute_sample_links(nofollow_outlinks,
-                                                              nb_samples)
-    return domain_stats
+    sample_nofollow_links = compute_sample_links(nofollow_outlinks,
+                                                 nb_samples)
+    return sample_follow_links, sample_nofollow_links
 
 
 def compute_domain_link_counts(grouped_outlinks):

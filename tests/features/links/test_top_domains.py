@@ -329,7 +329,7 @@ class TestDomainLinkCounts(unittest.TestCase):
 
     def test_unique_link_counts(self):
         result = compute_domain_link_counts(self.groups).to_dict()
-        expected_unique_follow = 7
+        expected_unique_follow = 7  #FIXME
         self.assertEqual(result['unique_follow_links'], expected_unique_follow)
 
     def test_domain_name(self):
