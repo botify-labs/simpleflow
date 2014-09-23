@@ -87,7 +87,6 @@ class DomainLinkStats(object):
                 sample_link.to_dict() for sample_link in
                 sorted(self.sample_follow_links, key=key)
             ],
-            # FIXME inconsistent naming
             NOFOLLOW_SAMPLES: [
                 sample_link.to_dict() for sample_link in
                 sorted(self.sample_nofollow_links, key=key)
