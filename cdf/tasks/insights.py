@@ -7,7 +7,6 @@ from cdf.core.metadata import generate_data_format
 
 from cdf.exceptions import ApiError, ApiFormatError, BotifyQueryException
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
-from cdf.utils.es import ES
 from cdf.utils.s3 import push_content
 from cdf.utils.auth import get_botify_api_token
 from cdf.query.query import Query

@@ -5,7 +5,7 @@ from cdf.query.query_parsing import QueryParser
 from cdf.query.result_transformer import transform_result, transform_aggregation_result
 from cdf.utils.dict import deep_dict
 from cdf.core.metadata import generate_data_format
-from cdf.utils.es import ES
+from cdf.utils.es import EsHandler
 
 # Compatibility hack
 # a fake, all complete feature option is created
@@ -55,7 +55,7 @@ class QueryBuilder(object):
         else:
             data_format = generate_data_format(feature_options)
             self.data_backend = ElasticSearchBackend(data_format)
-        self.es = ES(es_location, es_index, es_doc_type)
+        self.es = EsHandler(es_location, es_index, es_doc_type)
 
     def get_query(self, crawl_id, botify_query,
                   start=0, limit=100, sort=['id']):
@@ -105,7 +105,7 @@ class Query(object):
         self.backend = backend
 
         if es_handler is None:
-            self.es_handler = ES(es_location, es_index, es_doc_type)
+            self.es_handler = EsHandler(es_location, es_index, es_doc_type)
         else:
             self.es_handler = es_handler
 

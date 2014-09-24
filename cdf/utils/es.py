@@ -8,7 +8,7 @@ from cdf.utils.url import get_domain
 
 
 # TODO(darkjh) use thrift protocol
-class ES(object):
+class EsHandler(object):
     """High level ElasticSearch handler
     """
     def __init__(self, es_location, es_index, es_doc_type):
