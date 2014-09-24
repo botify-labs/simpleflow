@@ -275,7 +275,7 @@ class IdToUrlTransformer(ResultTransformer):
             self.crawl_id = kwargs['crawl_id']
         else:
             self.fields = query.fields
-            self.es = query.search_backend
+            self.es = query.es_handler
             self.crawl_id = query.crawl_id
 
         self.backend = backend

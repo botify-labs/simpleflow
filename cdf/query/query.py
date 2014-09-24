@@ -7,11 +7,10 @@ from cdf.utils.dict import deep_dict
 from cdf.core.metadata import generate_data_format
 from cdf.utils.es import ES
 
-# a hack for the moment
+# Compatibility hack
 # a fake, all complete feature option is created
 # and the complete data format is generated based on it
 # this will enable front-end to work as it is now
-# TODO should change this to use crawl specific data format
 _ALL_FIELDS = {
     'main': {'lang': True},
     'main_image': None,
@@ -67,8 +66,13 @@ class QueryBuilder(object):
         :return: query object
         :type: Query
         """
-        return Query(self.es, crawl_id, botify_query,
-                     start, limit, sort, backend=self.data_backend)
+        # currently for compatibility reason
+        # the Query object's ctor interface is maintained
+        return Query(
+            None, None, None, crawl_id, botify_query,
+            start, limit, sort, backend=self.data_backend,
+            es_handler=self.es
+        )
 
 
 class Query(object):
@@ -79,24 +83,14 @@ class Query(object):
     gets the result back from ElasticSearch on `query.count` and `query.results`
     properties.
     """
-    def __init__(self, es, crawl_id, botify_query,
-                 start=0, limit=100, sort=['id'],
-                 backend=_COMPARISON_ES_BACKEND):
+    def __init__(self, es_location, es_index, es_doc_type, crawl_id,
+                 botify_query, start=0, limit=100, sort=['id'],
+                 backend=_COMPARISON_ES_BACKEND, es_handler=None, **kwargs):
         """Constructor
-        :param es: the search handler to use
-        :type es: cdf.util.es.ES
-        :param crawl_id: crawl_id
-        :type crawl_id: int
-        :param botify_query: botify's query
-        :type botify_query: dict
-        :param start: offset of the query result
-        :type start: int
-        :param limit: size limit of the query result
-        :type limit: int
-        :param sort: sort field
-        :param sort: list
-        :param backend: data backend
-        :type backend; DataBackend
+
+        :param es_handler: ES handler to use, if `None`, client need to pass ES
+            related params
+        :param kwargs: keyword args is maintained for compatibility reason
         """
         self.crawl_id = crawl_id
         self.botify_query = botify_query
@@ -109,7 +103,12 @@ class Query(object):
         self._aggs = []
         self.executed = False
         self.backend = backend
-        self.search_backend = es
+
+        if es_handler is None:
+            self.es_handler = ES(es_location, es_index, es_doc_type)
+        else:
+            self.es_handler = es_handler
+
         self.parser = QueryParser(data_backend=backend)
 
     @property
@@ -178,7 +177,7 @@ class Query(object):
         es_query = self.es_query
 
         # Issue a ES search
-        temp_results = self.search_backend.search(
+        temp_results = self.es_handler.search(
             body=es_query,
             routing=self.crawl_id,
             size=self.limit,

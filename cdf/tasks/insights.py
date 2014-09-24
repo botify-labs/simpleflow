@@ -79,8 +79,9 @@ def compute_insight_value(insight,
     """
     trend = []
     for crawl_id, query_backend in sorted(crawl_backends.items()):
-        es = ES(es_location, es_index, es_doc_type)
-        query = Query(es,
+        query = Query(es_location,
+                      es_index,
+                      es_doc_type,
                       crawl_id,
                       insight.query,
                       backend=query_backend)

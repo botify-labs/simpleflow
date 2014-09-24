@@ -82,8 +82,8 @@ class TestComputeInsightValue(unittest.TestCase):
         #check the calls to Query.__init__()
         es_handler = ES(self.es_location, self.es_index, 'urls')
         expected_query_calls = [
-            mock.call(es_handler, 1001, insight.query, backend="foo"),
-            mock.call(es_handler, 2008, insight.query, backend="bar"),
+            mock.call(self.es_location, self.es_index, self.es_doc_type, 1001, insight.query, backend="foo"),
+            mock.call(self.es_location, self.es_index, self.es_doc_type, 2008, insight.query, backend="bar"),
         ]
         self.assertEqual(expected_query_calls, query_mock.mock_calls)
 
