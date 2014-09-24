@@ -69,21 +69,24 @@ class MergeExternalSort(ExternalSort):
         self.block_size = block_size
         #the maximum number of open files this instance will use.
         self.max_open_files_nb = 100
-        self.buffer = None
 
     def external_sort(self, stream, key):
         logger.debug("Splitting stream into chunks of size %d.", self.block_size)
         chunk_file_paths = []
+        #a buffer to store data in memory
+        #if the input stream is small, it will fit in the buffer
+        #and no file creation will be required to sort the stream.
         _buffer = None
         #split the stream into multiple chunks
         for chunk_elements in split_iterable(stream, self.block_size):
+            chunk_elements = sorted(list(chunk_elements), key=key)
             if _buffer is None:
-                _buffer = sorted(chunk_elements, key=key)
+                _buffer = chunk_elements
             else:
                 #dump each chunk in a file
                 chunk_file_path = self.dump_stream(_buffer)
                 chunk_file_paths.append(chunk_file_path)
-                _buffer = sorted(chunk_elements, key=key)
+                _buffer = chunk_elements
 
         #merge files until there are no more than max_nb_files
         while len(chunk_file_paths) > self.max_open_files_nb:
@@ -98,7 +101,10 @@ class MergeExternalSort(ExternalSort):
                 os.remove(path)
 
         logger.debug("Merging sorted stream chunks")
-        for element in self.get_stream_from_file_paths(chunk_file_paths, _buffer, key):
+        streams = self.get_streams_from_files(chunk_file_paths)
+        if _buffer is not None:
+            streams.append(_buffer)
+        for element in merge_sorted_streams(streams, key):
             yield element
 
         #delete chunk files
@@ -123,7 +129,20 @@ class MergeExternalSort(ExternalSort):
         dump_file.close()
         return dump_file.name
 
-    def get_stream_from_file_paths(self, file_paths, _buffer, key):
+    def get_streams_from_files(self, file_paths):
+        """Return a list of streams from a list of file paths
+        :param file_paths: the input list of file paths
+        :type file_paths: list
+        :rtype: list
+        """
+        streams = []
+        for file_path in file_paths:
+            streams.append(
+                self.get_stream_from_file(open(file_path, "rb"))
+            )
+        return streams
+
+    def get_stream_from_file_paths(self, file_paths, key):
         """Generates a sorted stream from a list of sorted files.
         :param file_paths: the path to the input files
         :type file_paths: list
@@ -131,13 +150,7 @@ class MergeExternalSort(ExternalSort):
         :type key: function
         :returns: iterator
         """
-        streams = []
-        if _buffer is not None:
-            streams.append(iter(_buffer))
-        for file_path in file_paths:
-            streams.append(
-                self.get_stream_from_file(open(file_path, "rb"))
-            )
+        streams = self.get_streams_from_files(file_paths)
         for element in merge_sorted_streams(streams, key):
             yield element
 
@@ -150,7 +163,7 @@ class MergeExternalSort(ExternalSort):
         :returns: str - the path to the generated file
         """
         result = self.dump_stream(
-            self.get_stream_from_file_paths(file_paths, None, key)
+            self.get_stream_from_file_paths(file_paths, key)
         )
         return result
 
