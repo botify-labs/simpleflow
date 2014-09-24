@@ -249,7 +249,7 @@ class AnalysisWorkflow(Workflow):
         *context* must contain:
 
         - features_options
-        - s3_uri
+        - crawl_location
         - first_part_id_size
         - part_id_size
         - crawl_endpoint
@@ -264,7 +264,7 @@ class AnalysisWorkflow(Workflow):
 
         """
         config = context['features_options']['ganalytics']
-        s3_uri = context['s3_uri']
+        s3_uri = context['crawl_location']
 
         import_result = self.submit(
             import_data_from_ganalytics,
@@ -304,7 +304,7 @@ class AnalysisWorkflow(Workflow):
     def compute_sitemaps(self, context):
         sitemaps_result = futures.Future()
         config = context['features_options']['sitemaps']
-        s3_uri = context['s3_uri']
+        s3_uri = context['crawl_location']
         download_result = self.submit(
             download_sitemap_files,
             config['urls'],
@@ -328,6 +328,7 @@ class AnalysisWorkflow(Workflow):
         :returns: future
         """
         crawl_id = context['crawl_id']
+        s3_uri = context['crawl_location']
 
         api_address = self.submit(
             get_api_address,
@@ -354,14 +355,20 @@ class AnalysisWorkflow(Workflow):
             context["es_location"],
             context["es_index"],
             context["es_doc_type"],
-            context["s3_uri"]
+            context["s3_uri"],
+            s3_uri
         )
         return insights_result
 
     def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
-        s3_uri = context.get('s3_uri') or context['crawl_location']
+
+        # The variable is called ``s3_uri`` because all tasks use this name
+        # However the workflow calls it ``crawl_location`` because we may
+        # use another storage backend to store data files.
+        s3_uri = context['crawl_location']
+
         tmp_dir = context.get('tmp_dir', None)
         first_part_id_size = context.get(
             'first_part_id_size',
