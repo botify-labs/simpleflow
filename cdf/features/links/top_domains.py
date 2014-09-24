@@ -7,7 +7,6 @@ from cdf.features.links.helpers.predicates import (
     is_link_internal,
     is_follow_link
 )
-from cdf.utils.es import multi_get
 from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
 from cdf.core.streams.cache import BufferedMarshalStreamCache
