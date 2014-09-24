@@ -26,6 +26,7 @@ class AbstractStreamCache(object):
         """
         raise NotImplemented
 
+
 class MarshalStreamCache(AbstractStreamCache):
     def __init__(self, tmp_file=None, buffer_size=100000):
         self.tmp_file = tmp_file
@@ -51,9 +52,8 @@ class MarshalStreamCache(AbstractStreamCache):
                 if f is None:
                     f = open(self._get_filepath(), "wb")
                     logger.info("Creating file")
-                for elem in self.buffer:
+                for elem in chunk_elements:
                     marshal.dump(elem, f)
-                self.buffer = list(chunk_elements)
         if f is not None:
             f.close()
 
@@ -63,6 +63,9 @@ class MarshalStreamCache(AbstractStreamCache):
         return self.tmp_file
 
     def get_stream(self):
+        if self.buffer is not None:
+            for elt in self.buffer:
+                yield elt
         if self.tmp_file is not None:
             with open(self.tmp_file) as f:
                 while True:
@@ -70,9 +73,6 @@ class MarshalStreamCache(AbstractStreamCache):
                         yield marshal.load(f)
                     except EOFError:
                         break
-        if self.buffer is not None:
-            for elt in self.buffer:
-                yield elt
 
     def _dump_in_file(self, iterator, f):
         for elem in iterator:
@@ -83,5 +83,3 @@ class MarshalStreamCache(AbstractStreamCache):
         """
         if self.tmp_file is not None:
             os.remove(self.tmp_file)
-
-
