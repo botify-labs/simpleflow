@@ -15,6 +15,6 @@ requests
 retrying>=1.2.2
 simpleflow
 plyvel
-tld>=0.7
+tld==0.7
 botify-autotagging
 python-google-analytics
