@@ -30,7 +30,7 @@ class QueryBuilder(object):
     """Build queries with a specific data format
     """
     def __init__(self, es_location, es_index, es_doc_type,
-                 feature_options=None, data_backend=None):
+                 crawl_id, feature_options=None, data_backend=None):
         """Init a query builder
 
         Ideally a query builder should be used as a factory object.
@@ -44,6 +44,8 @@ class QueryBuilder(object):
         :type es_index: str
         :param es_doc_type: ElasticSearch document type
         :type es_doc_type: str
+        :param crawl_id: crawl id
+        :type crawl_id: int
         :param feature_options: feature options of the crawl
         :type feature_options: dict
         :param data_backend: optionally query builder can take a
@@ -56,9 +58,9 @@ class QueryBuilder(object):
             data_format = generate_data_format(feature_options)
             self.data_backend = ElasticSearchBackend(data_format)
         self.es = EsHandler(es_location, es_index, es_doc_type)
+        self.crawl_id = crawl_id
 
-    def get_query(self, crawl_id, botify_query,
-                  start=0, limit=100, sort=['id']):
+    def get_query(self, botify_query, start=0, limit=100, sort=['id']):
         """Produce a query instance
 
         Params have the exact meaning as those of Query
@@ -69,7 +71,7 @@ class QueryBuilder(object):
         # currently for compatibility reason
         # the Query object's ctor interface is maintained
         return Query(
-            None, None, None, crawl_id, botify_query,
+            None, None, None, self.crawl_id, botify_query,
             start, limit, sort, backend=self.data_backend,
             es_handler=self.es
         )

@@ -25,6 +25,7 @@ QUERY_BUILDER = QueryBuilder(
     es_location=ELASTICSEARCH_LOCATION,
     es_index=ELASTICSEARCH_INDEX,
     es_doc_type=DOC_TYPE,
+    crawl_id=CRAWL_ID,
     data_backend=ELASTICSEARCH_BACKEND
 )
 
@@ -54,12 +55,12 @@ def convert(input):
 
 
 def _get_query_result(botify_query):
-    q = QUERY_BUILDER.get_query(CRAWL_ID, botify_query)
+    q = QUERY_BUILDER.get_query(botify_query)
     return convert(list(q.results))
 
 
 def _get_query_agg_result(botify_query):
-    q = QUERY_BUILDER.get_query(CRAWL_ID, botify_query)
+    q = QUERY_BUILDER.get_query(botify_query)
     return q.aggs
 
 
