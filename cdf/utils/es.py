@@ -1,10 +1,10 @@
 from elasticsearch import Elasticsearch
-from urlparse import urlparse
 from itertools import (
     takewhile,
     islice,
     count
 )
+from cdf.utils.url import get_domain
 
 
 # TODO(darkjh) use thrift protocol
@@ -13,7 +13,7 @@ class ES(object):
     """
     def __init__(self, es_location, es_index, es_doc_type):
         self.es_location = es_location
-        self.es_client = Elasticsearch(urlparse(es_location).netloc)
+        self.es_client = Elasticsearch(get_domain(es_location))
         self.index = es_index
         self.doc_type = es_doc_type
 
