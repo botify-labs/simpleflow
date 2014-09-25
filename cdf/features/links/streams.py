@@ -401,7 +401,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             # increment follow counters
             if not (url_dst, mask) in document['processed_outlink_link']:
                 follow['unique'] += 1
-        elif not is_follow:
+
+        if not is_follow:
             # increment nofollow combination counters
             key = _get_nofollow_combination_key(follow_keys)
             follow['combinations'][key] += 1
