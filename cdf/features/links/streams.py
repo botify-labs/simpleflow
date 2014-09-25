@@ -377,64 +377,75 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         url_src, link_type, follow_keys, url_dst, external_url = stream
 
         if link_type == "a":
-            # is_internal = url_dst > 0
-            is_internal = is_link_internal(follow_keys, url_dst)
-            is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
-            outlink_type = "outlinks_internal" if is_internal else "outlinks_external"
-            mask = list_to_mask(follow_keys)
-
-            outlink_nb = document[outlink_type]['nb']
-            outlink_nb['total'] += 1
-
-            # target dict changes with link follow status
-            follow = outlink_nb['follow' if is_follow else 'nofollow']
-            follow['total'] += 1
-            if is_internal and is_follow:
-                # increment follow counters
-                if not (url_dst, mask) in document['processed_outlink_link']:
-                    follow['unique'] += 1
-            elif not is_follow:
-                # increment nofollow combination counters
-                key = _get_nofollow_combination_key(follow_keys)
-                follow['combinations'][key] += 1
-
-            # internal outlinks
-            # still need dest url id check since we can have internal url
-            # blocked by robots.txt
-            if is_internal and url_dst > 0:
-                outlink_urls = document['outlinks_internal']['urls']
-                exists = (url_dst, mask) in document['processed_outlink_link']
-                if len(outlink_urls) < 300 and not exists:
-                    outlink_urls.append([url_dst, mask])
-
-                # add this link's dest to the processed set
-                document['processed_outlink_url'].add(url_dst)
-                document['processed_outlink_link'].add((url_dst, mask))
-
-                document['outlinks_internal']['urls_exists'] = True
-
+            self._process_link(document, stream)
         elif link_type.startswith('r'):
-            http_code = link_type[1:]
-            redirects_to = document['redirect']['to']
-            redirects_to['url'] = {}
-            if url_dst == -1:
-                redirects_to['url']['url_str'] = external_url
-            else:
-                redirects_to['url']['url_id'] = url_dst
-            redirects_to['url']['http_code'] = int(http_code)
-            redirects_to['url_exists'] = True
-
+            self._process_redirection(document, stream)
         elif link_type == "canonical":
-            canonical_to = document['canonical']['to']
-            if canonical_to.get('equal', None) is None:
-                # We take only the first canonical found
-                canonical_to['equal'] = url_src == url_dst
-                canonical_to['url'] = {}
-                if url_dst > 0:
-                    canonical_to['url']['url_id'] = url_dst
-                else:
-                    canonical_to['url']['url_str'] = external_url
-                canonical_to['url_exists'] = True
+            self._process_canonical(document, stream)
+
+    def _process_link(self, document, stream):
+        url_src, link_type, follow_keys, url_dst, external_url = stream
+        # is_internal = url_dst > 0
+        is_internal = is_link_internal(follow_keys, url_dst)
+        is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
+        outlink_type = "outlinks_internal" if is_internal else "outlinks_external"
+        mask = list_to_mask(follow_keys)
+
+        outlink_nb = document[outlink_type]['nb']
+        outlink_nb['total'] += 1
+
+        # target dict changes with link follow status
+        follow = outlink_nb['follow' if is_follow else 'nofollow']
+        follow['total'] += 1
+        if is_internal and is_follow:
+            # increment follow counters
+            if not (url_dst, mask) in document['processed_outlink_link']:
+                follow['unique'] += 1
+        elif not is_follow:
+            # increment nofollow combination counters
+            key = _get_nofollow_combination_key(follow_keys)
+            follow['combinations'][key] += 1
+
+        # internal outlinks
+        # still need dest url id check since we can have internal url
+        # blocked by robots.txt
+        if is_internal and url_dst > 0:
+            outlink_urls = document['outlinks_internal']['urls']
+            exists = (url_dst, mask) in document['processed_outlink_link']
+            if len(outlink_urls) < 300 and not exists:
+                outlink_urls.append([url_dst, mask])
+
+            # add this link's dest to the processed set
+            document['processed_outlink_url'].add(url_dst)
+            document['processed_outlink_link'].add((url_dst, mask))
+
+            document['outlinks_internal']['urls_exists'] = True
+
+    def _process_redirection(self, document, stream):
+        url_src, link_type, follow_keys, url_dst, external_url = stream
+        http_code = link_type[1:]
+        redirects_to = document['redirect']['to']
+        redirects_to['url'] = {}
+        if url_dst == -1:
+            redirects_to['url']['url_str'] = external_url
+        else:
+            redirects_to['url']['url_id'] = url_dst
+        redirects_to['url']['http_code'] = int(http_code)
+        redirects_to['url_exists'] = True
+
+    def _process_canonical(self, document, stream):
+        url_src, link_type, follow_keys, url_dst, external_url = stream
+        canonical_to = document['canonical']['to']
+        if canonical_to.get('equal', None) is None:
+            # We take only the first canonical found
+            canonical_to['equal'] = url_src == url_dst
+            canonical_to['url'] = {}
+            if url_dst > 0:
+                canonical_to['url']['url_id'] = url_dst
+            else:
+                canonical_to['url']['url_str'] = external_url
+            canonical_to['url_exists'] = True
+
 
     def post_process_document(self, document):
         # If not "outlinks_internal" : we want to store a non-crawled url
