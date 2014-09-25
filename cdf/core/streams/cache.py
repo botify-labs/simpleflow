@@ -87,10 +87,6 @@ class BufferedMarshalStreamCache(AbstractStreamCache):
         self.marshal_stream_cache = MarshalStreamCache(self.tmp_file)
 
     def cache(self, iterator):
-        #handle special case where buffer size is null
-        if self.buffer_size == 0:
-            self.marshal_stream_cache.cache(iterator)
-
         self.buffer = self.take(self.buffer_size, iterator)
         self.marshal_stream_cache.cache(iterator)
 
