@@ -10,6 +10,7 @@ from cdf.features.links.helpers.predicates import (
 from cdf.utils.es import multi_get
 from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
+from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.exceptions import InvalidUrlException
 from cdf.features.links.streams import OutlinksRawStreamDef
 
@@ -218,7 +219,7 @@ def _group_links(link_stream, key):
     link_stream = external_sort(link_stream, key=key)
     #group by key function
     for key_value, link_group in groupby(link_stream, key=key):
-        yield key_value, list(link_group)
+        yield key_value, link_group
 
 
 def count_unique_links(external_outlinks):
@@ -232,11 +233,10 @@ def count_unique_links(external_outlinks):
     #remove duplicate links
     id_index = OutlinksRawStreamDef.field_idx("id")
     external_url_index = OutlinksRawStreamDef.field_idx("external_url")
-    external_outlinks = imap(
-        lambda x: (x[id_index], x[external_url_index]),
-        external_outlinks
-    )
-    result = len(set(external_outlinks))
+    key = lambda x: (x[id_index], x[external_url_index])
+    result = 0
+    for _, g in _group_links(external_outlinks, key):
+        result += 1
     return result
 
 
@@ -257,7 +257,7 @@ def count_unique_follow_links(external_outlinks):
     return count_unique_links(external_follow_outlinks)
 
 
-def _compute_top_full_domains(external_outlinks, n, key):
+def _compute_top_domains(external_outlinks, n, key):
     """A helper function to compute the top n domains given a custom criterion.
     For each destination domain the function counts the number of unique follow
     links that points to it and use this number to select the top n domains.
@@ -277,22 +277,33 @@ def _compute_top_full_domains(external_outlinks, n, key):
     heap = []
     for domain, link_group in _group_links(external_outlinks, key):
 
-        nb_unique_follow_links = count_unique_follow_links(link_group)
-
+        stream_cache = BufferedMarshalStreamCache()
+        stream_cache.cache(link_group)
+        domain_stats = compute_domain_link_counts((domain, stream_cache.get_stream()))
+        nb_unique_follow_links = domain_stats.follow_unique
         if nb_unique_follow_links == 0:
             #we don't want to return domain with 0 occurrences.
             continue
 
+        insert_in_heap = False
         if len(heap) < n:
-            domain_stats = compute_domain_stats((domain, link_group), nb_samples)
-            heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
+            insert_in_heap = True
         else:
             min_value = heap[0][0]
-            if nb_unique_follow_links < min_value:
-                #avoid useless pushpop()
-                continue
-            domain_stats = compute_domain_stats((domain, link_group), nb_samples)
-            heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
+            if nb_unique_follow_links > min_value:
+                insert_in_heap = True
+
+        if insert_in_heap:
+            sample_follow_links, sample_nofollow_links = compute_domain_sample_sets(
+                stream_cache,
+                nb_samples
+            )
+            domain_stats.sample_follow_links = sample_follow_links
+            domain_stats.sample_nofollow_links = sample_nofollow_links
+            if len(heap) < n:
+                heapq.heappush(heap, (nb_unique_follow_links, domain_stats))
+            else:
+                heapq.heappushpop(heap, (nb_unique_follow_links, domain_stats))
     #back to a list
     result = []
     while len(heap) != 0:
@@ -321,7 +332,7 @@ def compute_top_full_domains(external_outlinks, n):
     """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_domain(x[external_url_idx])
-    return _compute_top_full_domains(external_outlinks, n, key)
+    return _compute_top_domains(external_outlinks, n, key)
 
 
 def compute_top_second_level_domains(external_outlinks, n):
@@ -341,32 +352,30 @@ def compute_top_second_level_domains(external_outlinks, n):
     """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_second_level_domain(x[external_url_idx])
-    return _compute_top_full_domains(external_outlinks, n, key)
+    return _compute_top_domains(external_outlinks, n, key)
 
 
-def compute_domain_stats(grouped_outlinks, nb_samples):
+def compute_domain_sample_sets(stream_cache, nb_samples):
     """Compute full stats out of outlinks of a specific domain
-    :param grouped_outlinks: grouped qualified outlinks of a certain domain
+    :param stream_cache: a stream cache for grouped qualified outlinks of a certain domain
         eg: (domain_name, [link1, link2, ...])
-    :type grouped_outlinks: tuple
+    :type stream_cache: AbstractStreamCache
     :param nb_samples: the number of sample links to return
     :type nb_samples: int
     :return: stats of outlinks that target the domain
     :rtype: dict
     """
-    domain_stats = compute_domain_link_counts(grouped_outlinks)
-    domain, outlinks = grouped_outlinks
     bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
 
     key = lambda x: is_follow_link(x[bitmask_index], is_bitmask=True)
-    follow_outlinks = ifilter(key, outlinks)
-    domain_stats.sample_follow_links = compute_sample_links(follow_outlinks,
-                                                            nb_samples)
+    follow_outlinks = ifilter(key, stream_cache.get_stream())
+    sample_follow_links = compute_sample_links(follow_outlinks,
+                                               nb_samples)
 
-    nofollow_outlinks = ifilterfalse(key, outlinks)
-    domain_stats.sample_nofollow_links = compute_sample_links(nofollow_outlinks,
-                                                              nb_samples)
-    return domain_stats
+    nofollow_outlinks = ifilterfalse(key, stream_cache.get_stream())
+    sample_nofollow_links = compute_sample_links(nofollow_outlinks,
+                                                 nb_samples)
+    return sample_follow_links, sample_nofollow_links
 
 
 def compute_domain_link_counts(grouped_outlinks):
@@ -374,7 +383,6 @@ def compute_domain_link_counts(grouped_outlinks):
     compute various link counts:
         - follow links
         - nofollow links
-        - unique follow links
 
     :param grouped_outlinks: grouped qualified outlinks of a certain domain
         eg: (domain_name, [link1, link2, ...])
@@ -388,43 +396,58 @@ def compute_domain_link_counts(grouped_outlinks):
     follow_unique = 0
 
     # indices
+    id_index = OutlinksRawStreamDef.field_idx("id")
+    external_url_index = OutlinksRawStreamDef.field_idx("external_url")
     mask_idx = OutlinksRawStreamDef.field_idx('bitmask')
-    external_url_idx = OutlinksRawStreamDef.field_idx('external_url')
-    src_id_idx = OutlinksRawStreamDef.field_idx('id')
-
-    seen_urls = set()
+    key = lambda x: (
+            x[id_index],
+            x[external_url_index],
+            is_follow_link(x[mask_idx], is_bitmask=True)
+    )
     domain_name, links = grouped_outlinks
-    for link in links:
-        is_follow = is_follow_link(link[mask_idx], is_bitmask=True)
-        dest_url = link[external_url_idx]
-        src_id = link[src_id_idx]
-
+    for key_value, g in _group_links(links, key):
+        urlid, external_url, is_follow = key_value
+        group_size = 0
+        for _ in g:
+            group_size += 1
         if is_follow:
-            follow += 1
-            if (src_id, dest_url) not in seen_urls:
-                follow_unique += 1
-            # add to seen set
-            seen_urls.add((src_id, dest_url))
+            follow += group_size
+            follow_unique += 1
         else:
-            nofollow += 1
+            nofollow += group_size
 
     return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
 
 
-def get_source_sample(external_outlinks, n):
-    """Compute a list of n different sample source urlids
-    from a set of external outlinks that point to the same url.
-    :param external_outlinks: the input stream of external outlinks
-                              (based on OutlinksRawStreamDef).
-                              They all point to the same domain.
-    :type external_outlinks: iterable
-    :param n: the maximum number of sample links to return
-    :type n: int
-    :rtype: list
+def compute_link_destination_stats(links, external_url, nb_source_samples):
+    """Given a list of external outlinks that point to the same url,
+    count the number of unique links and return a sample of source urlid.
+    :param links: the input stream of external outlinks
+                  (based on OutlinksRawStreamDef).
+                  They all point to the same domain.
+    :type links: iterable
+    :param external_url: the destination url
+    :type external_url: str
+    :param nb_source_samples: the number of source urlids
+                              to return as a sample.
+    :type nb_source_samples: int
+    :rtype: LinkDestination
     """
-    id_idx = OutlinksRawStreamDef.field_idx("id")
-    source_urlids = set([x[id_idx] for x in external_outlinks])
-    return heapq.nsmallest(n, source_urlids)
+    id_index = OutlinksRawStreamDef.field_idx("id")
+    #build the set of source urlids
+    link_set = set()
+    for link in links:
+        link_set.add(link[id_index])
+
+    nb_unique_links = len(link_set)
+    sample_sources = sorted(link_set)[:nb_source_samples]
+
+    link_sample = LinkDestination(
+        external_url,
+        nb_unique_links,
+        sample_sources
+    )
+    return link_sample
 
 
 def compute_sample_links(external_outlinks, n):
@@ -443,15 +466,16 @@ def compute_sample_links(external_outlinks, n):
     :rtype: list
     """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
-    external_outlinks = sorted(external_outlinks, key=lambda x: x[external_url_idx])
+    external_outlinks = external_sort(external_outlinks, key=lambda x: x[external_url_idx])
     heap = []
     for external_url, links in groupby(external_outlinks, key=lambda x: x[external_url_idx]):
-        #transform iterator in list because we will need it more than once.
-        links = list(links)
-        nb_unique_links = count_unique_links(links)
         nb_source_samples = 3
-        sample_sources = get_source_sample(links, nb_source_samples)
-        link_sample = LinkDestination(external_url, nb_unique_links, sample_sources)
+        link_sample = compute_link_destination_stats(
+            links,
+            external_url,
+            nb_source_samples
+        )
+        nb_unique_links = link_sample.unique_links
         if len(heap) < n:
             heapq.heappush(heap, (nb_unique_links, link_sample))
         else:

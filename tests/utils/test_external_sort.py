@@ -19,6 +19,7 @@ class TestExternalSort(unittest.TestCase):
 
 class TestMergeExternalSort(unittest.TestCase):
     def setUp(self):
+        self.stream = iter([2, 5, 6, 1, 4, 9, 3, 7, 8, 0])
         self.block_size = 3
         self.implementations = [
             JsonExternalSort,
@@ -34,15 +35,19 @@ class TestMergeExternalSort(unittest.TestCase):
             yield self.check_many_files, implementation
 
     def check_nominal_case(self, input_class):
-        stream = iter([2, 5, 6, 1, 4, 9, 3, 7, 8, 0])
         external_sort = input_class(self.block_size)
-        actual_result = external_sort.external_sort(stream, lambda x: x)
+        actual_result = external_sort.external_sort(self.stream, lambda x: x)
+        self.assertEqual(range(10), list(actual_result))
+
+    def check_large_block_size(self, input_class):
+        block_size = 100
+        external_sort = input_class(block_size)
+        actual_result = external_sort.external_sort(self.stream, lambda x: x)
         self.assertEqual(range(10), list(actual_result))
 
     def check_custom_key(self, input_class):
-        stream = iter([2, 5, 6, 1, 4, 9, 3, 7, 8, 0])
         external_sort = input_class(self.block_size)
-        actual_result = external_sort.external_sort(stream, lambda x: -x)
+        actual_result = external_sort.external_sort(self.stream, lambda x: -x)
         self.assertEqual(range(9, -1, -1), list(actual_result))
 
     def check_many_files(self, input_class):
