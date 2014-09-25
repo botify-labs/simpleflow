@@ -4,8 +4,8 @@ import marshal
 import os
 from itertools import islice
 
-from cdf.log import logger
 from cdf.utils.external_sort import split_iterable
+
 
 class AbstractStreamCache(object):
     __metaclass__ = abc.ABCMeta
@@ -39,7 +39,6 @@ class MarshalStreamCache(AbstractStreamCache):
         for chunk_elements in split_iterable(iterator, self.chunk_size):
             if f is None:
                 f = open(self._get_filepath(), "wb")
-                logger.info("Creating file")
             for elem in chunk_elements:
                 marshal.dump(elem, f)
         if f is not None:

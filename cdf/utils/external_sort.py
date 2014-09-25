@@ -117,7 +117,6 @@ class MergeExternalSort(ExternalSort):
         :type stream: iterator
         :returns: str - the path to the file where the stream was dumped
         """
-        logger.info("Creating tmp file for ExternalSort")
         dump_file = tempfile.NamedTemporaryFile("wb", delete=False)
         for element in stream:
                 #we use the .file attribute because of
