@@ -3,7 +3,7 @@ from urlparse import urlparse, urljoin
 import requests
 import logging
 from elasticsearch import Elasticsearch
-from cdf.core.metadata.metadata import generate_data_format
+from cdf.core.metadata.dataformat import generate_data_format
 
 from cdf.exceptions import ApiError, ApiFormatError, BotifyQueryException
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend

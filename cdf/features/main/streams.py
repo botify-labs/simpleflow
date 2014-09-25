@@ -12,7 +12,7 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
-from cdf.core.metadata.metadata import make_fields_private, check_enabled
+from cdf.core.metadata.dataformat import make_fields_private, check_enabled
 
 __all__ = ["IdStreamDef", "InfosStreamDef", "SuggestStreamDef"]
 

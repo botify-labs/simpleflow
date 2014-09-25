@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import Counter
-from cdf.core.metadata.metadata import check_enabled
+from cdf.core.metadata.dataformat import check_enabled
 
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, BOOLEAN_TYPE, STRUCT_TYPE,

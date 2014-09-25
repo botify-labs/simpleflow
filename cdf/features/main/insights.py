@@ -1,5 +1,5 @@
 from cdf.metadata.url.url_metadata import FLOAT_TYPE
-from cdf.core.metadata import RENDERING
+from cdf.core.metadata.constants import RENDERING
 from cdf.core.insights import Insight, PositiveTrend
 from cdf.query.filter import (EqFilter,
                               LtFilter,

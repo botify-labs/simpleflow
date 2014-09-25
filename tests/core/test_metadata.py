@@ -3,7 +3,7 @@ import mock
 
 from cdf.core.metadata.constants import FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import ES_NO_INDEX
-from cdf.core.metadata.metadata import (
+from cdf.core.metadata.dataformat import (
     make_fields_private,
     generate_data_format,
 )
