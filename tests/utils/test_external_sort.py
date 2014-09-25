@@ -39,6 +39,13 @@ class TestMergeExternalSort(unittest.TestCase):
         actual_result = external_sort.external_sort(stream, lambda x: x)
         self.assertEqual(range(10), list(actual_result))
 
+    def check_large_block_size(self, input_class):
+        stream = iter([2, 5, 6, 1, 4, 9, 3, 7, 8, 0])
+        block_size = 100
+        external_sort = input_class(block_size)
+        actual_result = external_sort.external_sort(stream, lambda x: x)
+        self.assertEqual(range(10), list(actual_result))
+
     def check_custom_key(self, input_class):
         stream = iter([2, 5, 6, 1, 4, 9, 3, 7, 8, 0])
         external_sort = input_class(self.block_size)
