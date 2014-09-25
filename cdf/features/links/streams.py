@@ -397,10 +397,11 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         # target dict changes with link follow status
         follow = outlink_nb['follow' if is_follow else 'nofollow']
         follow['total'] += 1
-        if is_internal and is_follow:
-            # increment follow counters
-            if not (url_dst, mask) in document['processed_outlink_link']:
-                follow['unique'] += 1
+        if is_internal:
+            if is_follow:
+                # increment follow counters
+                if not (url_dst, mask) in document['processed_outlink_link']:
+                    follow['unique'] += 1
 
         if not is_follow:
             # increment nofollow combination counters
