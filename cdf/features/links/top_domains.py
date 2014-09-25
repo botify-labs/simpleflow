@@ -10,7 +10,7 @@ from cdf.features.links.helpers.predicates import (
 from cdf.utils.es import multi_get
 from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
-from cdf.core.streams.cache import MarshalStreamCache
+from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.exceptions import InvalidUrlException
 from cdf.features.links.streams import OutlinksRawStreamDef
 
@@ -277,7 +277,7 @@ def _compute_top_domains(external_outlinks, n, key):
     heap = []
     for domain, link_group in _group_links(external_outlinks, key):
 
-        stream_cache = MarshalStreamCache()
+        stream_cache = BufferedMarshalStreamCache()
         stream_cache.cache(link_group)
         domain_stats = compute_domain_link_counts((domain, stream_cache.get_stream()))
         nb_unique_follow_links = domain_stats.follow_unique

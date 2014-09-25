@@ -3,7 +3,7 @@ import gzip
 import json
 
 from cdf.log import logger
-from cdf.core.streams.cache import MarshalStreamCache
+from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.utils.s3 import push_file, push_content
 from cdf.features.links.links import OutlinksTransducer, InlinksTransducer
 from cdf.features.links.bad_links import get_bad_links, get_bad_link_counters
@@ -147,7 +147,7 @@ def make_top_domains_files(s3_uri,
     outlinks = filter_external_outlinks(outlinks)
     outlinks = filter_invalid_destination_urls(outlinks)
 
-    stream_cache = MarshalStreamCache()
+    stream_cache = BufferedMarshalStreamCache()
     stream_cache.cache(outlinks)
 
     result = []
