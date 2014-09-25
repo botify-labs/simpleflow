@@ -4,7 +4,7 @@ from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
 from cdf.query.result_transformer import transform_result, transform_aggregation_result
 from cdf.utils.dict import deep_dict
-from cdf.core.metadata import generate_data_format
+from cdf.core.metadata.metadata import generate_data_format
 from cdf.utils.es import EsHandler
 
 # Compatibility hack

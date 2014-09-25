@@ -1,7 +1,7 @@
 import unittest
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
-from cdf.query.constants import FIELD_RIGHTS
+from cdf.core.metadata.constants import FIELD_RIGHTS
 from cdf.exceptions import BotifyQueryException
 
 

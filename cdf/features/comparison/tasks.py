@@ -14,7 +14,7 @@ from cdf.features.comparison.matching import (
     document_url_id_correction)
 from cdf.features.comparison.constants import (
     MATCHED_FILE_PATTERN,
-    COMPARISON_PATH, EXTRA_FIELDS_FORMAT)
+    COMPARISON_PATH)
 from cdf.utils.s3 import fetch_file, push_file, stream_files
 from cdf.utils.path import makedirs
 

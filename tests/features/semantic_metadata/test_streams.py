@@ -1,10 +1,9 @@
 import unittest
 
-from cdf.query.constants import RENDERING
+from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.features.semantic_metadata.streams import (
     _get_duplicate_document_mapping
 )
-from cdf.query.constants import FIELD_RIGHTS
 
 
 class TestGetDuplicateDocumentMapping(unittest.TestCase):

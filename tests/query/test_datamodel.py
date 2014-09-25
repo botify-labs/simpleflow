@@ -7,7 +7,7 @@ from cdf.query.datamodel import (
     get_fields,
     get_groups,
 )
-from cdf.query.constants import RENDERING, FIELD_RIGHTS
+from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 
 

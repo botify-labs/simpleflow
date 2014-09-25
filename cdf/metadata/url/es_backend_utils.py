@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from cdf.utils.dict import update_path_in_dict
-from cdf.query.constants import FIELD_RIGHTS
+from cdf.core.metadata.metadata import FIELD_RIGHTS
 from .url_metadata import (STRING_TYPE, BOOLEAN_TYPE,
                            STRUCT_TYPE, MULTI_FIELD, LIST,
                            ES_NOT_ANALYZED, ES_NO_INDEX, LONG_TYPE,
