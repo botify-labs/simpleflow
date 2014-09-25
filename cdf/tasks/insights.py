@@ -3,7 +3,7 @@ from urlparse import urlparse, urljoin
 import requests
 import logging
 from elasticsearch import Elasticsearch
-from cdf.core.metadata import generate_data_format
+from cdf.core.metadata.dataformat import generate_data_format
 
 from cdf.exceptions import ApiError, ApiFormatError, BotifyQueryException
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
@@ -76,15 +76,12 @@ def compute_insight_value(insight,
     :type es_doc_type: str
     :returns: InsightValue
     """
-    #TODO check if using 0 is ok.
-    revision_number = 0
     trend = []
     for crawl_id, query_backend in sorted(crawl_backends.items()):
         query = Query(es_location,
                       es_index,
                       es_doc_type,
                       crawl_id,
-                      revision_number,
                       insight.query,
                       backend=query_backend)
         trend_point = InsightTrendPoint(crawl_id,
@@ -130,9 +127,7 @@ def compute_insight_values(crawls, es_location, es_index, es_doc_type):
 
 @with_temporary_dir
 def compute_insights(crawls,
-                     es_location,
-                     es_index,
-                     es_doc_type,
+                     es,
                      s3_uri,
                      tmp_dir=None,
                      force_fetch=False):
@@ -140,13 +135,8 @@ def compute_insights(crawls,
     as a json file.
     :param crawls: a dict crawl_id -> feature options
     :type crawls: dict
-    :param es_location: the location of the elasticsearch server.
-                        For instance "http://elasticsearch1.staging.saas.botify.com:9200"
-    :type es_location: str
-    :param es_index: the name of the elasticsearch index to use.
-                     Usually "botify".
-    :param es_doc_type: the doc_type to query
-    :type es_doc_type: str
+    :param es: ElasticSearch handler
+    :type es: cdf.util.es.ES
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
     :param user_agent: the user agent to use for the query.
@@ -157,7 +147,7 @@ def compute_insights(crawls,
     :type force_fetch: bool
     :returns: str - the uri of the generated json document
     """
-    result = compute_insight_values(crawls, es_location, es_index, es_doc_type)
+    result = compute_insight_values(crawls, es)
 
     destination_uri = "{}/precomputation/insights.json".format(s3_uri)
     push_content(

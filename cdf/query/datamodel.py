@@ -1,7 +1,7 @@
-from cdf.query.constants import RENDERING, FIELD_RIGHTS
+from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
 from cdf.core.features import Feature
-from cdf.core.metadata import generate_data_format
+from cdf.core.metadata.dataformat import generate_data_format
 
 __all__ = ['get_fields', 'get_groups']
 

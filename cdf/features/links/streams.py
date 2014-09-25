@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import Counter
-from cdf.core.metadata import check_enabled
+from cdf.core.metadata.dataformat import check_enabled
 
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, BOOLEAN_TYPE, STRUCT_TYPE,
@@ -13,7 +13,7 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.log import logger
 from cdf.features.links.helpers.masks import list_to_mask
 from cdf.utils.convert import _raw_to_bool
-from cdf.query.constants import RENDERING, FIELD_RIGHTS
+from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.features.links.helpers.predicates import  is_link_internal
 from cdf.features.links.helpers.masks import follow_mask
 from cdf.features.links.settings import GROUPS, NB_TOP_ANCHORS

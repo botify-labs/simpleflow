@@ -3,7 +3,7 @@ import mock
 import os.path
 
 from cdf.testing.es_mock import (
-    mock_es_mget, CRAWL_ID
+    get_es_mget_mock, CRAWL_ID
 )
 from cdf.features.links.streams import OutlinksRawStreamDef
 
@@ -417,7 +417,7 @@ class TestComputeLinkDestinationStats(unittest.TestCase):
 class TestSourceSampleUrl(unittest.TestCase):
     def setUp(self):
         self.es_conn = mock.MagicMock()
-        self.es_conn.mget = mock_es_mget
+        self.es_conn.mget = get_es_mget_mock()
 
     def test_harness(self):
         results = [
@@ -430,8 +430,7 @@ class TestSourceSampleUrl(unittest.TestCase):
                 [LinkDestination('', 0, [4, 3])]
             )
         ]
-        LinkDestination('', 0, [4, 3])
-        resolve_sample_url_id(self.es_conn, '', '', CRAWL_ID, results)
+        resolve_sample_url_id(self.es_conn, CRAWL_ID, results)
 
         expected_0 = LinkDestination('', 0, ['url1', 'url2', 'url5'])
         expected_1 = LinkDestination('', 0, ['url4', 'url3'])

@@ -4,7 +4,7 @@ from cdf.metadata.url.url_metadata import (
     STRING_TYPE, ES_NO_INDEX
 )
 from cdf.core.streams.base import StreamDefBase
-from cdf.query.constants import RENDERING, FIELD_RIGHTS
+from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from .settings import IMAGE_FIELDS
 
 

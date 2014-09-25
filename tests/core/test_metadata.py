@@ -1,14 +1,16 @@
 import unittest
 import mock
 
-from cdf.query.constants import FIELD_RIGHTS
+from cdf.core.metadata.constants import FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import ES_NO_INDEX
-from cdf.core.metadata import (
+from cdf.core.metadata.dataformat import (
     make_fields_private,
     generate_data_format,
-    get_comparison_data_format
 )
-from cdf.features.comparison.constants import EXTRA_FIELDS_FORMAT
+from cdf.features.comparison.streams import (
+    get_comparison_data_format,
+    EXTRA_FIELDS_FORMAT
+)
 from cdf.core.features import Feature
 from cdf.core.streams.base import StreamDefBase
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend

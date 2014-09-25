@@ -4,7 +4,7 @@ from cdf.metadata.url.url_metadata import (
 from cdf.core.features import StreamDefBase
 from .settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 from .metrics import compute_average_value, compute_percentage
-from cdf.query.constants import RENDERING
+from cdf.core.metadata.constants import RENDERING
 
 
 class RawVisitsStreamDef(StreamDefBase):

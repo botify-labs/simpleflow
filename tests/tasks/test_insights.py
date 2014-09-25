@@ -20,6 +20,7 @@ from cdf.tasks.insights import (
     get_api_address,
     get_feature_options
 )
+from cdf.utils.es import EsHandler
 
 
 class TestGetQueryAggResult(unittest.TestCase):
@@ -79,9 +80,10 @@ class TestComputeInsightValue(unittest.TestCase):
         self.assertDictEqual(expected_result.to_dict(), actual_result.to_dict())
 
         #check the calls to Query.__init__()
+        es_handler = EsHandler(self.es_location, self.es_index, 'urls')
         expected_query_calls = [
-            mock.call(self.es_location, self.es_index, "urls", 1001, 0, insight.query, backend="foo"),
-            mock.call(self.es_location, self.es_index, "urls", 2008, 0, insight.query, backend="bar"),
+            mock.call(self.es_location, self.es_index, self.es_doc_type, 1001, insight.query, backend="foo"),
+            mock.call(self.es_location, self.es_index, self.es_doc_type, 2008, insight.query, backend="bar"),
         ]
         self.assertEqual(expected_query_calls, query_mock.mock_calls)
 

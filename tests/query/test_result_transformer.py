@@ -1,14 +1,12 @@
 import unittest
 import copy
 from mock import MagicMock
-from cdf.testing.es_mock import (
-    mock_es_mget
-)
+
+from cdf.testing.es_mock import get_es_mget_mock
 from cdf.metadata.url.backend import (
     ELASTICSEARCH_BACKEND,
     ElasticSearchBackend
 )
-
 from cdf.query.result_transformer import (
     IdToUrlTransformer,
     DefaultValueTransformer,
@@ -16,26 +14,27 @@ from cdf.query.result_transformer import (
     AggregationTransformer
 )
 
-ELASTICSEARCH_INDEX = 'mock'
 CRAWL_ID = 1
-CRAWL_NAME = 'crawl_%d' % CRAWL_ID
-REVISION_ID = 1
 ES_BACKEND = ELASTICSEARCH_BACKEND
 
 
 class TestIdToUrlTransformer(unittest.TestCase):
     def setUp(self):
-        mock_conn = MagicMock()
-        mock_conn.mget = mock_es_mget
-        self.es_conn = mock_conn
-
-    def tearDown(self):
-        pass
+        self.mget_responses = {
+            '1:1': ['url1', 0],
+            '1:2': ['url2', 0],
+            '1:3': ['url3', 0],
+            '1:4': ['url4', 0],
+            '1:5': ['url5', 0]
+        }
+        self.es = MagicMock()
+        self.es.mget = get_es_mget_mock(self.mget_responses)
 
     def _get_id_url_transformer(self, fields, es_result):
-        return IdToUrlTransformer(fields=fields, es_result=es_result,
-                                  es_conn=self.es_conn, es_index=None, es_doctype=None,
-                                  crawl_id=CRAWL_ID, backend=ES_BACKEND)
+        return IdToUrlTransformer(
+            fields=fields, es_result=es_result,
+            es=self.es, crawl_id=CRAWL_ID, backend=ES_BACKEND
+        )
 
     def test_error_links(self):
         es_result = {

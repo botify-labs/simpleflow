@@ -3,7 +3,7 @@ import unittest
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
 from cdf.exceptions import BotifyQueryException
-from cdf.core.metadata import assemble_data_format
+from cdf.core.metadata.dataformat import assemble_data_format
 
 CRAWL_ID = 1
 

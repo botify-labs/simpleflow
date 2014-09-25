@@ -6,8 +6,8 @@ from cdf.metadata.url.url_metadata import (
 )
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
-from cdf.query.constants import RENDERING, FIELD_RIGHTS
-from cdf.core.metadata import make_fields_private
+from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
+from cdf.core.metadata.dataformat import make_fields_private
 
 def _raw_to_bool(string):
     return string == '1'

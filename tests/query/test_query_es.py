@@ -1,8 +1,6 @@
 """Integration test for url query with ElasticSearch backend
 """
 
-import ast
-import json
 import unittest
 import time
 import copy
@@ -11,7 +9,7 @@ from nose.plugins.attrib import attr
 from elasticsearch import Elasticsearch
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 
-from cdf.query.query import Query
+from cdf.query.query import QueryBuilder
 
 ELASTICSEARCH_LOCATION = 'http://localhost:9200'
 ELASTICSEARCH_INDEX = 'cdf_test'
@@ -22,14 +20,14 @@ REVISION_ID = 1
 ES = Elasticsearch()
 ES_BACKEND = ELASTICSEARCH_BACKEND
 
-QUERY_ARGS = {
-    'es_location': ELASTICSEARCH_LOCATION,
-    'es_index': ELASTICSEARCH_INDEX,
-    'es_doc_type': DOC_TYPE,
-    'crawl_id': CRAWL_ID,
-    'revision_number': REVISION_ID,
-    'backend': ES_BACKEND
-}
+
+QUERY_BUILDER = QueryBuilder(
+    es_location=ELASTICSEARCH_LOCATION,
+    es_index=ELASTICSEARCH_INDEX,
+    es_doc_type=DOC_TYPE,
+    crawl_id=CRAWL_ID,
+    data_backend=ELASTICSEARCH_BACKEND
+)
 
 
 def _get_simple_bql_query(field, predicate, value, fields=['id']):
@@ -57,12 +55,13 @@ def convert(input):
 
 
 def _get_query_result(botify_query):
-    return convert(list(Query(botify_query=botify_query, **QUERY_ARGS).results))
+    q = QUERY_BUILDER.get_query(botify_query)
+    return convert(list(q.results))
 
 
 def _get_query_agg_result(botify_query):
-    query = Query(botify_query=botify_query, **QUERY_ARGS)
-    return query.aggs
+    q = QUERY_BUILDER.get_query(botify_query)
+    return q.aggs
 
 
 URLS_FIXTURE = [
@@ -727,7 +726,6 @@ class TestQueryES(unittest.TestCase):
         ]
         self.assertEqual(results, expected)
 
-    # TODO possible bug in elasticsearch-py
     def test_agg_range(self):
         botify_query = {
             'aggs': [

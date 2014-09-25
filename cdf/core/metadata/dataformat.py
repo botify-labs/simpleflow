@@ -1,8 +1,8 @@
 import copy
 
-from cdf.query.constants import FIELD_RIGHTS
 from cdf.core.features import Feature
-from cdf.features.comparison.constants import EXTRA_FIELDS_FORMAT
+from cdf.core.metadata.constants import FIELD_RIGHTS
+from cdf.features.comparison.streams import get_comparison_data_format
 
 
 def make_fields_private(mapping):
@@ -164,43 +164,3 @@ def assemble_data_format():
     return urls_def
 
 
-def _transform_comparison_field(field):
-    return 'previous.' + field
-
-
-def _transform_comparison_config(config):
-    config = copy.deepcopy(config)
-    group_key = 'group'
-    verbose_key = 'verbose_name'
-
-    # make `Previous xxx` group
-    group = config.get(group_key, '')
-    if group is not '':
-        group = 'previous.' + group
-        config[group_key] = group
-
-    # rename verbose name
-    if verbose_key in config:
-        config[verbose_key] = 'Previous {}'.format(config[verbose_key])
-    return config
-
-
-def get_comparison_data_format(data_format, extras=EXTRA_FIELDS_FORMAT):
-    """Prepare internal data format for comparison feature
-
-    Create `previous` fields.
-    Also need to create new groups
-        1. `Previous.xxx` group
-
-    :param data_format: original internal data format
-    :param extras: extra fields to be added for comparison feature
-    :return: comparison's additional data format, to be merged with
-        original data format
-    """
-    previous_format = {
-        _transform_comparison_field(k): _transform_comparison_config(v)
-        for k, v in data_format.iteritems()
-    }
-    previous_format.update(extras)
-
-    return previous_format

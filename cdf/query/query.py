@@ -1,18 +1,16 @@
 import copy
 
-from elasticsearch import Elasticsearch
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
 from cdf.query.result_transformer import transform_result, transform_aggregation_result
 from cdf.utils.dict import deep_dict
-from cdf.core.metadata import generate_data_format
+from cdf.core.metadata.dataformat import generate_data_format
+from cdf.utils.es import EsHandler
 
-
-# a hack for the moment
+# Compatibility hack
 # a fake, all complete feature option is created
 # and the complete data format is generated based on it
 # this will enable front-end to work as it is now
-# TODO should change this to use crawl specific data format
 _ALL_FIELDS = {
     'main': {'lang': True},
     'main_image': None,
@@ -28,6 +26,57 @@ _DATA_FORMAT = generate_data_format(_FEATURE_OPTION)
 _COMPARISON_ES_BACKEND = ElasticSearchBackend(_DATA_FORMAT)
 
 
+class QueryBuilder(object):
+    """Build queries with a specific data format
+    """
+    def __init__(self, es_location, es_index, es_doc_type,
+                 crawl_id, feature_options=None, data_backend=None):
+        """Init a query builder
+
+        Ideally a query builder should be used as a factory object.
+        For example a query builder is created for each crawl, then
+        all subsequent query of this crawl is produced by the query
+        builder instance
+
+        :param es_location: ElasticSearch location
+        :type es_doc_type: str
+        :param es_index: ElasticSearch index
+        :type es_index: str
+        :param es_doc_type: ElasticSearch document type
+        :type es_doc_type: str
+        :param crawl_id: crawl id
+        :type crawl_id: int
+        :param feature_options: feature options of the crawl
+        :type feature_options: dict
+        :param data_backend: optionally query builder can take a
+            data backend directly
+        :type data_backend: DataBackend
+        """
+        if data_backend is not None:
+            self.data_backend = data_backend
+        else:
+            data_format = generate_data_format(feature_options)
+            self.data_backend = ElasticSearchBackend(data_format)
+        self.es = EsHandler(es_location, es_index, es_doc_type)
+        self.crawl_id = crawl_id
+
+    def get_query(self, botify_query, start=0, limit=100, sort=['id']):
+        """Produce a query instance
+
+        Params have the exact meaning as those of Query
+
+        :return: query object
+        :type: Query
+        """
+        # currently for compatibility reason
+        # the Query object's ctor interface is maintained
+        return Query(
+            None, None, None, self.crawl_id, botify_query,
+            start, limit, sort, backend=self.data_backend,
+            es_handler=self.es
+        )
+
+
 class Query(object):
     """Abstraction between front-end's botify format query and the ElasticSearch
     API calls
@@ -36,19 +85,16 @@ class Query(object):
     gets the result back from ElasticSearch on `query.count` and `query.results`
     properties.
     """
-
-    def __init__(self, es_location, es_index, es_doc_type, crawl_id, revision_number,
+    def __init__(self, es_location, es_index, es_doc_type, crawl_id,
                  botify_query, start=0, limit=100, sort=['id'],
-                 backend=_COMPARISON_ES_BACKEND, search_backend=None):
-
+                 backend=_COMPARISON_ES_BACKEND, es_handler=None, **kwargs):
         """Constructor
-        search_backend : the search backend to use. If None, use ElasticSearch.
+
+        :param es_handler: ES handler to use, if `None`, client need to pass ES
+            related params
+        :param kwargs: keyword args is maintained for compatibility reason
         """
-        self.es_location = es_location
-        self.es_index = es_index
-        self.es_doc_type = es_doc_type
         self.crawl_id = crawl_id
-        self.revision_number = revision_number
         self.botify_query = botify_query
         self.fields = None
         self.start = start
@@ -60,11 +106,10 @@ class Query(object):
         self.executed = False
         self.backend = backend
 
-        if search_backend:
-            self.search_backend = search_backend
+        if es_handler is None:
+            self.es_handler = EsHandler(es_location, es_index, es_doc_type)
         else:
-            host, port = self.es_location[7:].split(':')
-            self.search_backend = Elasticsearch([{'host': host, 'port': int(port)}])
+            self.es_handler = es_handler
 
         self.parser = QueryParser(data_backend=backend)
 
@@ -134,13 +179,12 @@ class Query(object):
         es_query = self.es_query
 
         # Issue a ES search
-        temp_results = self.search_backend.search(body=es_query,
-                                                  index=self.es_index,
-                                                  doc_type=self.es_doc_type,
-                                                  routing=self.crawl_id,
-                                                  preference=self.crawl_id,
-                                                  size=self.limit,
-                                                  from_=self.start)
+        temp_results = self.es_handler.search(
+            body=es_query,
+            routing=self.crawl_id,
+            size=self.limit,
+            start=self.start
+        )
 
         # Return directly if search has no result
         self._count = self._get_hit_count(temp_results)
