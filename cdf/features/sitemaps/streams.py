@@ -1,5 +1,7 @@
 from cdf.core.features import StreamDefBase
-from cdf.metadata.url.url_metadata import BOOLEAN_TYPE
+from cdf.metadata.url.url_metadata import (
+    BOOLEAN_TYPE, AGG_CATEGORICAL
+)
 
 
 class SitemapStreamDef(StreamDefBase):
@@ -15,7 +17,10 @@ class SitemapStreamDef(StreamDefBase):
         # url property data
         "sitemaps.present": {
             "verbose_name": "Present in sitemap",
-            "type": BOOLEAN_TYPE
+            "type": BOOLEAN_TYPE,
+            "settings": {
+                AGG_CATEGORICAL
+            }
         }
     }
 
