@@ -4,7 +4,7 @@ import json
 import shutil
 from moto import mock_s3
 import boto
-from mock import MagicMock
+import mock
 
 from cdf.features.links.streams import (
     OutlinksRawStreamDef,
@@ -184,21 +184,26 @@ class TestBadLinkCounterTask(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-class TestMakeTopDomainsFiles(unittest.TestCase):
-    def setUp(self):
-        self.mget_responses = {
+def _mock_es_handler_init(*args, **kwargs):
+    mget_responses = {
             '1:0': ['url0'],
             '1:1': ['url1'],
             '1:2': ['url2'],
             '1:3': ['url3'],
             '1:4': ['url4'],
         }
-        self.es_handler = MagicMock()
-        self.es_handler.mget = get_es_mget_mock(self.mget_responses)
+    es_handler = mock.MagicMock()
+    es_handler.mget = get_es_mget_mock(mget_responses)
+    return es_handler
 
+
+class TestMakeTopDomainsFiles(unittest.TestCase):
     @mock_s3
+    @mock.patch(
+        'cdf.features.links.tasks.EsHandler',
+        _mock_es_handler_init
+    )
     def test_nominal_case(self):
-
         #mock
         s3 = boto.connect_s3()
         bucket = s3.create_bucket('test_bucket')
@@ -222,8 +227,10 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
         actual_result = compute_top_domains(
             CRAWL_ID,
             s3_uri,
-            self.es_handler,
-            nb_top_domains
+            nb_top_domains,
+            "mock_es_location",
+            "mock_es_index",
+            "mock_es_doc_type"
         )
 
         #check file uris

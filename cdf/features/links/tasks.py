@@ -4,6 +4,7 @@ import json
 
 from cdf.log import logger
 from cdf.core.streams.cache import BufferedMarshalStreamCache
+from cdf.utils.es import EsHandler
 from cdf.utils.s3 import push_file, push_content
 from cdf.features.links.links import OutlinksTransducer, InlinksTransducer
 from cdf.features.links.bad_links import get_bad_links, get_bad_link_counters
@@ -124,8 +125,10 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
 @with_temporary_dir
 def make_top_domains_files(crawl_id,
                            s3_uri,
-                           es_handler,
                            nb_top_domains,
+                           es_location,
+                           es_index,
+                           es_doc_type,
                            tmp_dir=None,
                            force_fetch=DEFAULT_FORCE_FETCH):
     """Compute top domains and top second level domains for a given crawl.
@@ -133,11 +136,12 @@ def make_top_domains_files(crawl_id,
     :type crawl_id: int
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
-    :param es_handler: es handler to use
-    :type es_handler: EsHandler
     :param nb_top_domains: the number of top domains to return
                            (typical value: 100)
     :type nb_top_domains: int
+    :param es_location:
+    :param es_index:
+    :param es_doc_type:
     :param tmp_dir: the path to the tmp directory to use.
                     If None, a new tmp directory will be created.
     :type tmp_dir: str
@@ -150,6 +154,7 @@ def make_top_domains_files(crawl_id,
     :rtype: list
     """
     logger.info("Preprocessing and caching stream.")
+    es_handler = EsHandler(es_location, es_index, es_doc_type)
     outlinks = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     outlinks = filter_external_outlinks(outlinks)
     outlinks = filter_invalid_destination_urls(outlinks)
