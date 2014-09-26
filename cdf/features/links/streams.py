@@ -412,7 +412,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 outlink_urls.append([url_dst, mask])
 
             # add this link's dest to the processed set
-            document['processed_outlink_link'].add((url_dst, mask))
+            document['processed_outlink_link'].add((url_dst, is_follow))
 
             document['outlinks_internal']['urls_exists'] = True
 
@@ -446,8 +446,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         # If not "outlinks_internal" : we want to store a non-crawled url
         if not 'outlinks_internal' in document:
             return
-        document['outlinks_internal']['nb']['follow']['unique'] = len([url_dst for url_dst, mask in document['processed_outlink_link'] if mask==0])
-        document['outlinks_internal']['nb']['unique'] = len(set([url_dst for url_dst, mask in document['processed_outlink_link']]))
+        document['outlinks_internal']['nb']['follow']['unique'] = len([url_dst for url_dst, is_follow in document['processed_outlink_link'] if is_follow])
+        document['outlinks_internal']['nb']['unique'] = len(set([url_dst for url_dst, _ in document['processed_outlink_link']]))
 
         # delete intermediate data structures
         del document["processed_outlink_link"]
