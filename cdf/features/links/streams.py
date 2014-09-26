@@ -692,7 +692,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
                 follow['combinations'][key] += 1
 
         inlink_urls = document['inlinks_internal']['urls']
-        exists = (url_src, mask) in document['processed_inlink_link']
+        exists = [url_src, mask] in inlink_urls
         if len(inlink_urls) < 300 and not exists:
             inlink_urls.append([url_src, mask])
 
