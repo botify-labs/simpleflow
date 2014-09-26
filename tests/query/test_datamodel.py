@@ -55,6 +55,18 @@ class CustomStreamDef(StreamDefBase):
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT
             }
+        },
+        "private": {
+            "type": "string",
+            "settings": {
+                FIELD_RIGHTS.PRIVATE
+            }
+        },
+        "admin": {
+            "type": "string",
+            "settings": {
+                FIELD_RIGHTS.ADMIN
+            }
         }
     }
 
@@ -140,6 +152,40 @@ class FieldsTestCase(unittest.TestCase):
             'delay'
         ]
         self.assertEqual(expected, data_model)
+
+    def test_private(self):
+        data_model = get_fields(
+            {'feature1': None},
+            available_features=self.features
+        )
+        data_model = [k['value'] for k in data_model]
+        # by default `private` is excluded
+        self.assertFalse("private" in data_model)
+
+        data_model = get_fields(
+            {'feature1': None},
+            remove_private=False,
+            available_features=self.features
+        )
+        data_model = [k['value'] for k in data_model]
+        self.assertTrue("private" in data_model)
+
+    def test_admin(self):
+        data_model = get_fields(
+            {'feature1': None},
+            available_features=self.features
+        )
+        data_model = [k['value'] for k in data_model]
+        # by default `admin` is excluded
+        self.assertFalse("admin" in data_model)
+
+        data_model = get_fields(
+            {'feature1': None},
+            remove_admin=False,
+            available_features=self.features
+        )
+        data_model = [k['value'] for k in data_model]
+        self.assertTrue("admin" in data_model)
 
 
 class ComparisonTestCase(unittest.TestCase):
