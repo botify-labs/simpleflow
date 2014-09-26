@@ -420,8 +420,6 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             exists = [url_dst, mask] in outlink_urls
             if len(outlink_urls) < 300 and not exists:
                 outlink_urls.append([url_dst, mask])
-            #TODO check if it can be move to postprocessing
-            document['outlinks_internal']['urls_exists'] = True
 
         #update the set of processed links
         if is_internal:
@@ -458,11 +456,12 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 canonical_to['url']['url_str'] = external_url
             canonical_to['url_exists'] = True
 
-
     def post_process_document(self, document):
         # If not "outlinks_internal" : we want to store a non-crawled url
         if not 'outlinks_internal' in document:
             return
+        document['outlinks_internal']['urls_exists'] = len(document['outlinks_internal']['urls']) > 0
+
         document['outlinks_internal']['nb']['follow']['unique'] = len(
             [url_dst for url_dst, is_follow in document['processed_outlink_link'] if is_follow]
         )
