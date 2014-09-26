@@ -421,7 +421,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             "link_meta_robots": 0,
         }
         self.assertEqual(int_outlinks_nb['nofollow'],
-                         {'total': 0, 'combinations': expected_combinations})
+                         {'total': 0, 'unique': 0, 'combinations': expected_combinations})
 
         # check for url3
         # check that url 3 has 1 outlink
@@ -462,7 +462,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             [1, 'a', list_to_mask(['follow']), 3, ''],
             # these 2 cases should be considered as internal link
             [1, 'a', list_to_mask(['robots']), -1, 'www.site.com'],
-            [1, 'a', list_to_mask(['robots']), -1, 'www.site.com/abc'],
+            [1, 'a', list_to_mask(['robots']), -1, 'www.site.com'],
         ]
 
         gen = UrlDocumentGenerator([
@@ -476,6 +476,7 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         self.assertEquals(int_outlinks_nb['total'], 6)
         self.assertEquals(int_outlinks_nb['nofollow']['total'], 3)
+        self.assertEquals(int_outlinks_nb['nofollow']['unique'], 2)
         expected_combinations = {
             "link": 1,
             "meta": 0,

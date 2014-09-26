@@ -90,10 +90,20 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL
             }
         },
+        "outlinks_internal.nb.nofollow.unique": {
+            "verbose_name": "Unique Number of NoFollow Internal Outlinks",
+            "group": GROUPS.outlinks_internal_nofollow.name,
+            "order": 5,
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
         "outlinks_internal.nb.nofollow.total": {
             "verbose_name": "Number of Internal NoFollow Outlinks",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 5,
+            "order": 6,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -103,7 +113,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.nb.nofollow.combinations.link": {
             "verbose_name": "Number of Internal NoFollow Outlinks strictly in link nofollow",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 6,
+            "order": 7,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -113,7 +123,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.nb.nofollow.combinations.meta": {
             "verbose_name": "Number of Internal NoFollow Outlinks strictly in meta nofollow",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 7,
+            "order": 8,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -123,7 +133,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.nb.nofollow.combinations.robots": {
             "verbose_name": "Number of Internal NoFollow Outlinks strictly disallowed by robots.txt",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 8,
+            "order": 9,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -133,7 +143,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.nb.nofollow.combinations.link_meta": {
             "verbose_name": "Number of Internal NoFollow Outlinks both in link and meta nofollow",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 9,
+            "order": 10,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -143,7 +153,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.nb.nofollow.combinations.link_robots": {
             "verbose_name": "Number of Internal NoFollow Outlinks both in link nofollow and disallowed by robots.txt",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 10,
+            "order": 11,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -154,7 +164,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "verbose_name": "Number of Internal NoFollow Outlinks both in meta nofollow and disallowed by robots.txt",
             "group": GROUPS.outlinks_internal_nofollow.name,
             "type": INT_TYPE,
-            "order": 11,
+            "order": 12,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -164,7 +174,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "verbose_name": "Number of Internal NoFollow Outlinks both in link, meta nofollow and disallowed by robots.txt",
             "group": GROUPS.outlinks_internal_nofollow.name,
             "type": INT_TYPE,
-            "order": 12,
+            "order": 13,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -173,7 +183,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.urls": {
             "verbose_name": "Sample of Internal Outlinks",
             "group": GROUPS.outlinks_internal.name,
-            "order": 13,
+            "order": 14,
             "type": INT_TYPE,
             "settings": {
                 ES_NO_INDEX,
@@ -410,11 +420,17 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             exists = [url_dst, mask] in outlink_urls
             if len(outlink_urls) < 300 and not exists:
                 outlink_urls.append([url_dst, mask])
+            document['outlinks_internal']['urls_exists'] = True
 
+        #update the set of processed links
+        if is_internal:
+            if url_dst <= 0:
+                #the url is blocked by a robots.txt
+                #the url_dst is not meaningful.
+                #we replace it by the external_url.
+                url_dst = external_url
             # add this link's dest to the processed set
             document['processed_outlink_link'].add((url_dst, is_follow))
-
-            document['outlinks_internal']['urls_exists'] = True
 
     def _process_redirection(self, document, stream):
         url_src, link_type, follow_keys, url_dst, external_url = stream
@@ -446,8 +462,15 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         # If not "outlinks_internal" : we want to store a non-crawled url
         if not 'outlinks_internal' in document:
             return
-        document['outlinks_internal']['nb']['follow']['unique'] = len([url_dst for url_dst, is_follow in document['processed_outlink_link'] if is_follow])
-        document['outlinks_internal']['nb']['unique'] = len(set([url_dst for url_dst, _ in document['processed_outlink_link']]))
+        document['outlinks_internal']['nb']['follow']['unique'] = len(
+            [url_dst for url_dst, is_follow in document['processed_outlink_link'] if is_follow]
+        )
+        document['outlinks_internal']['nb']['nofollow']['unique'] = len(
+            [url_dst for url_dst, is_follow in document['processed_outlink_link'] if not is_follow]
+        )
+        document['outlinks_internal']['nb']['unique'] = len(
+            set([url_dst for url_dst, _ in document['processed_outlink_link']])
+        )
 
         # delete intermediate data structures
         del document["processed_outlink_link"]
