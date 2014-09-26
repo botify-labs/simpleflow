@@ -39,6 +39,7 @@ from simpleflow import (
 )
 
 from . import constants
+from cdf.utils.es import EsHandler
 
 
 logger = logging.getLogger(__name__)
@@ -384,6 +385,8 @@ class AnalysisWorkflow(Workflow):
             'es_doc_type': context['es_doc_type']
         }
 
+        es_handler = EsHandler(**es_params)
+
         revision_number = context['revision_number']
         features_flags = context.get('features_flags', [])
 
@@ -594,6 +597,8 @@ class AnalysisWorkflow(Workflow):
         nb_top_domains = 100  # TODO get it from context.
         top_domains_result = self.submit(
             make_top_domains_files,
+            crawl_id=crawl_id,
+            es_handler=es_handler,
             s3_uri=s3_uri,
             nb_top_domains=nb_top_domains
         )
