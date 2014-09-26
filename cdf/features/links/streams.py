@@ -653,65 +653,75 @@ class InlinksStreamDef(InlinksRawStreamDef):
         url_dst, link_type, follow_keys, url_src, text_hash, text = stream
 
         if link_type == "a":
-            is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
-            mask = list_to_mask(follow_keys)
-            inlink_nb = document['inlinks_internal']['nb']
-            inlink_nb['total'] += 1
-
-            follow = inlink_nb['follow' if is_follow else 'nofollow']
-            follow['total'] += 1
-
-            # `text` is not always filled, so we have to push it in a temporary
-            # dictionnary when found
-            if text != self.TEXT_HASH_ALREADY_SET and text_hash not in document['tmp_anchors_txt']:
-                if text == '':
-                    text = self.TEXT_EMPTY
-                document['tmp_anchors_txt'][text_hash] = text
-
-            if is_follow:
-                if not (url_src, mask) in document["processed_inlink_link"]:
-                    follow['unique'] += 1
-
-                # We increment the number of occurrences found for `text_hash` only
-                # for follow inlinks
-                if text_hash:
-                    document['tmp_anchors_nb'][text_hash] += 1
-            else:
-                key = _get_nofollow_combination_key(follow_keys)
-                if 'robots' in key:
-                    logger.warn('Skip `robots` mask in inlink mask')
-                else:
-                    follow['combinations'][key] += 1
-
-            inlink_urls = document['inlinks_internal']['urls']
-            exists = (url_src, mask) in document['processed_inlink_link']
-            if len(inlink_urls) < 300 and not exists:
-                inlink_urls.append([url_src, mask])
-
-            # add src to processed set
-            document['processed_inlink_url'].add(url_src)
-            document['processed_inlink_link'].add((url_src, mask))
-
-            document['inlinks_internal']['urls_exists'] = True
-
+            self._process_link(document, stream)
         elif link_type.startswith('r'):
-            # TODO dangerous assumption of crawl's string format to be 'r3xx'
-            http_code = int(link_type[1:])
-            redirects_from = document['redirect']['from']
-            redirects_from['nb'] += 1
-            if len(redirects_from['urls']) < 300:
-                redirects_from['urls'].append([url_src, http_code])
-            redirects_from['urls_exists'] = True
-
+            self._process_redirection(document, stream)
         elif link_type == "canonical":
-            canonical_from = document['canonical']['from']
+            self._process_canonical(document, stream)
 
-            # only count for none self canonical
-            if url_dst != url_src:
-                canonical_from['nb'] += 1
-                if len(canonical_from['urls']) < 300:
-                    canonical_from['urls'].append(url_src)
-                canonical_from['urls_exists'] = True
+    def _process_link(self, document, stream):
+        url_dst, link_type, follow_keys, url_src, text_hash, text = stream
+        is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
+        mask = list_to_mask(follow_keys)
+        inlink_nb = document['inlinks_internal']['nb']
+        inlink_nb['total'] += 1
+
+        follow = inlink_nb['follow' if is_follow else 'nofollow']
+        follow['total'] += 1
+
+        # `text` is not always filled, so we have to push it in a temporary
+        # dictionnary when found
+        if text != self.TEXT_HASH_ALREADY_SET and text_hash not in document['tmp_anchors_txt']:
+            if text == '':
+                text = self.TEXT_EMPTY
+            document['tmp_anchors_txt'][text_hash] = text
+
+        if is_follow:
+            if not (url_src, mask) in document["processed_inlink_link"]:
+                follow['unique'] += 1
+
+            # We increment the number of occurrences found for `text_hash` only
+            # for follow inlinks
+            if text_hash:
+                document['tmp_anchors_nb'][text_hash] += 1
+        else:
+            key = _get_nofollow_combination_key(follow_keys)
+            if 'robots' in key:
+                logger.warn('Skip `robots` mask in inlink mask')
+            else:
+                follow['combinations'][key] += 1
+
+        inlink_urls = document['inlinks_internal']['urls']
+        exists = (url_src, mask) in document['processed_inlink_link']
+        if len(inlink_urls) < 300 and not exists:
+            inlink_urls.append([url_src, mask])
+
+        # add src to processed set
+        document['processed_inlink_url'].add(url_src)
+        document['processed_inlink_link'].add((url_src, mask))
+
+        document['inlinks_internal']['urls_exists'] = True
+
+    def _process_redirection(self, document, stream):
+        url_dst, link_type, follow_keys, url_src, text_hash, text = stream
+        # TODO dangerous assumption of crawl's string format to be 'r3xx'
+        http_code = int(link_type[1:])
+        redirects_from = document['redirect']['from']
+        redirects_from['nb'] += 1
+        if len(redirects_from['urls']) < 300:
+            redirects_from['urls'].append([url_src, http_code])
+        redirects_from['urls_exists'] = True
+
+    def _process_canonical(self, document, stream):
+        url_dst, link_type, follow_keys, url_src, text_hash, text = stream
+        canonical_from = document['canonical']['from']
+
+        # only count for none self canonical
+        if url_dst != url_src:
+            canonical_from['nb'] += 1
+            if len(canonical_from['urls']) < 300:
+                canonical_from['urls'].append(url_src)
+            canonical_from['urls_exists'] = True
 
     def post_process_document(self, document):
         # If not "inlinks_internal" : we want to store a non-crawled url
