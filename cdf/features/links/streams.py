@@ -208,6 +208,16 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL
             }
         },
+        "outlinks_external.nb.unique": {
+            "verbose_name": "Unique Number of External Outlinks",
+            "group": GROUPS.outlinks_external.name,
+            "order": 1,
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
         "outlinks_external.nb.follow.total": {
             "verbose_name": "Number of External Follow Outlinks",
             "group": GROUPS.outlinks_external.name,
@@ -426,7 +436,6 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         # target dict changes with link follow status
         follow = outlink_nb['follow' if is_follow else 'nofollow']
         follow['total'] += 1
-
         if not is_follow:
             # increment nofollow combination counters
             key = _get_nofollow_combination_key(follow_keys)
@@ -503,6 +512,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             )
             document['outlinks_external']['nb']['nofollow']['unique'] = len(
                 [url_dst for url_dst, is_follow in document['processed_external_outlinks'] if not is_follow]
+            )
+            document['outlinks_external']['nb']['unique'] = len(
+                set([url_dst for url_dst, _ in document['processed_external_outlinks']])
             )
             # delete intermediate data structures
             del document["processed_external_outlinks"]

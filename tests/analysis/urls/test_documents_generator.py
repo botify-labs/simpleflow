@@ -398,6 +398,9 @@ class TestOutlinksGeneration(unittest.TestCase):
         self.assertEquals(int_outlinks_nb['unique'], 3)
         self.assertEquals(int_outlinks_nb['follow']['total'], 3)
         self.assertEquals(int_outlinks_nb['follow']['unique'], 2)
+
+        self.assertEquals(ext_outlinks_nb['total'], 3)
+        self.assertEquals(ext_outlinks_nb['unique'], 1)
         self.assertEquals(ext_outlinks_nb['follow']['total'], 2)
         self.assertEquals(ext_outlinks_nb['follow']['unique'], 1)
         self.assertEquals(ext_outlinks_nb['nofollow']['total'], 1)
