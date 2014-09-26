@@ -370,8 +370,6 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
     def pre_process_document(self, document):
         # resolve a (dest, mask) to its index in `inlinks_internal` list
         document["processed_outlink_link"] = set()
-        # a temp set to track all `seen` dest url of outgoing links
-        document["processed_outlink_url"] = set()
 
     def process_document(self, document, stream):
         url_src, link_type, follow_keys, url_dst, external_url = stream
@@ -414,7 +412,6 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 outlink_urls.append([url_dst, mask])
 
             # add this link's dest to the processed set
-            document['processed_outlink_url'].add(url_dst)
             document['processed_outlink_link'].add((url_dst, mask))
 
             document['outlinks_internal']['urls_exists'] = True
@@ -450,10 +447,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         if not 'outlinks_internal' in document:
             return
         document['outlinks_internal']['nb']['follow']['unique'] = len([url_dst for url_dst, mask in document['processed_outlink_link'] if mask==0])
-        document['outlinks_internal']['nb']['unique'] = len(document['processed_outlink_url'])
+        document['outlinks_internal']['nb']['unique'] = len(set([url_dst for url_dst, mask in document['processed_outlink_link']]))
 
         # delete intermediate data structures
-        del document['processed_outlink_url']
         del document["processed_outlink_link"]
 
 
