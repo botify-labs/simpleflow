@@ -20,9 +20,15 @@ class RENDERING(Enum):
     PERCENT = 'percent'
 
 
+# TODO(darkjh) separate this enum
+#   - field has roles: filters, select etc
+#   - field has its visibility: private, admin etc.
+#   so they should go into 2 different enums
 class FIELD_RIGHTS(Enum):
     # This field is private and cannot be requested outside
     PRIVATE = 'private'
+    # This field is visible only to admin user
+    ADMIN = 'admin'
     # This field can be called in filtering operations
     FILTERS = 'filters'
     # This field can be called in filtering operations
