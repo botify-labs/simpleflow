@@ -412,8 +412,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         # still need dest url id check since we can have internal url
         # blocked by robots.txt
         if is_internal and url_dst > 0:
+            #store sample internal links
             outlink_urls = document['outlinks_internal']['urls']
-            exists = (url_dst, mask) in document['processed_outlink_link']
+            exists = [url_dst, mask] in outlink_urls
             if len(outlink_urls) < 300 and not exists:
                 outlink_urls.append([url_dst, mask])
 
