@@ -379,7 +379,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
 
     def pre_process_document(self, document):
         # resolve a (dest, mask) to its index in `inlinks_internal` list
-        document["processed_outlink_link"] = set()
+        document["processed_internal_outlinks"] = set()
 
     def process_document(self, document, stream):
         url_src, link_type, follow_keys, url_dst, external_url = stream
@@ -429,7 +429,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 #we replace it by the external_url.
                 url_dst = external_url
             # add this link's dest to the processed set
-            document['processed_outlink_link'].add((url_dst, is_follow))
+            document['processed_internal_outlinks'].add((url_dst, is_follow))
 
     def _process_redirection(self, document, stream):
         url_src, link_type, follow_keys, url_dst, external_url = stream
@@ -463,17 +463,17 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         document['outlinks_internal']['urls_exists'] = len(document['outlinks_internal']['urls']) > 0
 
         document['outlinks_internal']['nb']['follow']['unique'] = len(
-            [url_dst for url_dst, is_follow in document['processed_outlink_link'] if is_follow]
+            [url_dst for url_dst, is_follow in document['processed_internal_outlinks'] if is_follow]
         )
         document['outlinks_internal']['nb']['nofollow']['unique'] = len(
-            [url_dst for url_dst, is_follow in document['processed_outlink_link'] if not is_follow]
+            [url_dst for url_dst, is_follow in document['processed_internal_outlinks'] if not is_follow]
         )
         document['outlinks_internal']['nb']['unique'] = len(
-            set([url_dst for url_dst, _ in document['processed_outlink_link']])
+            set([url_dst for url_dst, _ in document['processed_internal_outlinks']])
         )
 
         # delete intermediate data structures
-        del document["processed_outlink_link"]
+        del document["processed_internal_outlinks"]
 
 
 class InlinksRawStreamDef(StreamDefBase):
