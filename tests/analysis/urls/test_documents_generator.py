@@ -306,6 +306,7 @@ class TestInlinksGeneration(unittest.TestCase):
             [1, 'a', list_to_mask(['follow']), 2],
             [1, 'a', list_to_mask(['link']), 3],
             [1, 'a', list_to_mask(['link', 'meta']), 3],
+            [1, 'a', list_to_mask(['follow']), 3],
         ]
 
         gen = UrlDocumentGenerator([
@@ -316,8 +317,9 @@ class TestInlinksGeneration(unittest.TestCase):
 
         document = _next_doc(gen)
         inlinks = document['inlinks_internal']
-        self.assertEquals(inlinks['nb']['total'], 5)
+        self.assertEquals(inlinks['nb']['total'], 6)
         self.assertEquals(inlinks['nb']['nofollow']['total'], 2)
+        self.assertEquals(inlinks['nb']['nofollow']['unique'], 1)
         expected_combinations = {
             "link": 1,
             "meta": 0,
@@ -325,12 +327,13 @@ class TestInlinksGeneration(unittest.TestCase):
         }
         self.assertEquals(inlinks['nb']['nofollow']['combinations'],
                           expected_combinations)
-        self.assertEquals(inlinks['nb']['follow']['total'], 3)
-        self.assertEquals(inlinks['nb']['follow']['unique'], 1)
+        self.assertEquals(inlinks['nb']['follow']['total'], 4)
+        self.assertEquals(inlinks['nb']['follow']['unique'], 2)
         expected_inlinks = [
             [2, list_to_mask(['follow'])],
             [3, list_to_mask(['link'])],
-            [3, list_to_mask(['link', 'meta'])]
+            [3, list_to_mask(['link', 'meta'])],
+            [3, list_to_mask(['follow'])]
         ]
         self.assertEquals(inlinks['urls'], expected_inlinks)
         self.assertEquals(inlinks['urls_exists'], True)

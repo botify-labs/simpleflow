@@ -549,6 +549,15 @@ class InlinksStreamDef(InlinksRawStreamDef):
                 AGG_NUMERICAL
             }
         },
+        "inlinks_internal.nb.nofollow.unique": {
+            "verbose_name": "Unique Number of NoFollow Internal Incoming Links",
+            "type": INT_TYPE,
+            "order": 6,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
         "inlinks_internal.nb.nofollow.total": {
             "verbose_name": "Number of Internal Incoming NoFollow Links",
             "group": GROUPS.inlinks_nofollow.name,
@@ -562,7 +571,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.nb.nofollow.combinations.link": {
             "verbose_name": "Number of NoFollow links strictly in link nofollow",
             "group": GROUPS.inlinks_nofollow.name,
-            "order": 6,
+            "order": 7,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -572,7 +581,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.nb.nofollow.combinations.meta": {
             "verbose_name": "Number of NoFollow links strictly in meta nofollow",
             "group": GROUPS.inlinks_nofollow.name,
-            "order": 7,
+            "order": 8,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -582,7 +591,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.nb.nofollow.combinations.link_meta": {
             "verbose_name": "Number of NoFollow links both in link and meta nofollow",
             "group": GROUPS.inlinks_nofollow.name,
-            "order": 8,
+            "order": 9,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -592,7 +601,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.urls": {
             "verbose_name": "Sample of internal inlinks urls",
             "group": GROUPS.inlinks.name,
-            "order": 9,
+            "order": 10,
             "type": INT_TYPE,
             "settings": {
                 ES_NO_INDEX,
@@ -726,6 +735,9 @@ class InlinksStreamDef(InlinksRawStreamDef):
             return
         document['inlinks_internal']['nb']['follow']['unique'] = len(
             [url_dst for url_dst, is_follow in document['processed_inlink_link'] if is_follow]
+        )
+        document['inlinks_internal']['nb']['nofollow']['unique'] = len(
+            [url_dst for url_dst, is_follow in document['processed_inlink_link'] if not is_follow]
         )
 
         document["inlinks_internal"]["anchors"]["top"] = {"text": [], "nb": []}
