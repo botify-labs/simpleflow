@@ -318,6 +318,7 @@ class TestInlinksGeneration(unittest.TestCase):
         document = _next_doc(gen)
         inlinks = document['inlinks_internal']
         self.assertEquals(inlinks['nb']['total'], 6)
+        self.assertEquals(inlinks['nb']['unique'], 2)
         self.assertEquals(inlinks['nb']['nofollow']['total'], 2)
         self.assertEquals(inlinks['nb']['nofollow']['unique'], 1)
         expected_combinations = {

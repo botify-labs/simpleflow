@@ -697,8 +697,6 @@ class InlinksStreamDef(InlinksRawStreamDef):
     def pre_process_document(self, document):
         # temporary structures for analytic processing
         document["processed_inlink_link"] = set()
-        # a temp set to track all `seen` src url of incoming links
-        document["processed_inlink_url"] = set()
         document["tmp_anchors_txt"] = {}
         document["tmp_anchors_nb"] = Counter()
 
@@ -747,7 +745,6 @@ class InlinksStreamDef(InlinksRawStreamDef):
             inlink_urls.append([url_src, mask])
 
         # add src to processed set
-        document['processed_inlink_url'].add(url_src)
         document['processed_inlink_link'].add((url_src, is_follow))
 
         document['inlinks_internal']['urls_exists'] = True
@@ -801,10 +798,10 @@ class InlinksStreamDef(InlinksRawStreamDef):
                 document["inlinks_internal"]["anchors"]["top"]["text"].append(document["tmp_anchors_txt"][text_hash])
                 document["inlinks_internal"]["anchors"]["top"]["nb"].append(nb)
 
-        document['inlinks_internal']['nb']['unique'] = len(document['processed_inlink_url'])
-
+        document['inlinks_internal']['nb']['unique'] = len(
+            set([url_dst for url_dst, _ in document['processed_inlink_link']])
+        )
         # delete intermediate data structures
-        del document['processed_inlink_url']
         del document["processed_inlink_link"]
         del document["tmp_anchors_txt"]
         del document["tmp_anchors_nb"]
