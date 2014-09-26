@@ -397,11 +397,6 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         # target dict changes with link follow status
         follow = outlink_nb['follow' if is_follow else 'nofollow']
         follow['total'] += 1
-        if is_internal:
-            if is_follow:
-                # increment follow counters
-                if not (url_dst, mask) in document['processed_outlink_link']:
-                    follow['unique'] += 1
 
         if not is_follow:
             # increment nofollow combination counters
@@ -454,7 +449,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         # If not "outlinks_internal" : we want to store a non-crawled url
         if not 'outlinks_internal' in document:
             return
-
+        document['outlinks_internal']['nb']['follow']['unique'] = len([url_dst for url_dst, mask in document['processed_outlink_link'] if mask==0])
         document['outlinks_internal']['nb']['unique'] = len(document['processed_outlink_url'])
 
         # delete intermediate data structures
