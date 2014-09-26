@@ -118,7 +118,7 @@ class TestFieldsParsing(ParsingTestCase):
         self.assertParsingError(self.parser.parse_fields, invalid)
 
     def test_wrong_fields_select(self):
-        fields = ['filterable_only_field']
+        fields = ['some_field']
         parsed = self.parser.parse_fields(fields)
         self.assertParsingError(parsed.validate)
 
