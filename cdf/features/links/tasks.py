@@ -161,7 +161,7 @@ def make_top_domains_files(s3_uri,
     s3_destination = "{}/top_full_domains.json".format(s3_uri)
     push_content(
         s3_destination,
-        json.dumps([domain.to_dict() for _, domain in top_domains])
+        json.dumps([domain.to_dict() for domain in top_domains])
     )
     result.append(s3_destination)
 
@@ -174,7 +174,7 @@ def make_top_domains_files(s3_uri,
     s3_destination = "{}/top_second_level_domains.json".format(s3_uri)
     push_content(
         s3_destination,
-        json.dumps([domain.to_dict() for _, domain in top_domains])
+        json.dumps([domain.to_dict() for domain in top_domains])
     )
     result.append(s3_destination)
 
