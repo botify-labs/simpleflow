@@ -363,6 +363,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             [1, 'a', list_to_mask(['link']), 4, ''],
             [1, 'a', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
             [1, 'a', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
+            [1, 'a', list_to_mask(['meta']), -1, 'http://www.youtube.com'],
             [3, 'a', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
             [3, 'a', list_to_mask(['robots', 'link']), 5, ''],
             [3, 'a', list_to_mask(['robots', 'link']), 5, ''],
@@ -396,6 +397,9 @@ class TestOutlinksGeneration(unittest.TestCase):
         self.assertEquals(int_outlinks_nb['follow']['total'], 3)
         self.assertEquals(int_outlinks_nb['follow']['unique'], 2)
         self.assertEquals(ext_outlinks_nb['follow']['total'], 2)
+        self.assertEquals(ext_outlinks_nb['follow']['unique'], 1)
+        self.assertEquals(ext_outlinks_nb['nofollow']['total'], 1)
+        self.assertEquals(ext_outlinks_nb['nofollow']['unique'], 1)
         expected_outlinks_internal = [
             [2, list_to_mask(['follow'])],
             [3, list_to_mask(['link'])],
@@ -432,6 +436,9 @@ class TestOutlinksGeneration(unittest.TestCase):
         int_outlinks_nb = document['outlinks_internal']['nb']
         ext_outlinks_nb = document['outlinks_external']['nb']
         self.assertEquals(ext_outlinks_nb['follow']['total'], 1)
+        self.assertEquals(ext_outlinks_nb['follow']['unique'], 1)
+        self.assertEquals(ext_outlinks_nb['nofollow']['total'], 0)
+        self.assertEquals(ext_outlinks_nb['nofollow']['unique'], 0)
         expected_combinations = {
             "link": 1,
             "meta": 0,

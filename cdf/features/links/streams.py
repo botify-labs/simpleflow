@@ -218,6 +218,16 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL
             }
         },
+        "outlinks_external.nb.follow.unique": {
+            "verbose_name": "Unique Number of External Follow Outlinks",
+            "group": GROUPS.outlinks_external.name,
+            "order": 3,
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
         "outlinks_external.nb.nofollow.total": {
             "verbose_name": "Number of External NoFollow Outlinks",
             "group": GROUPS.outlinks_external_nofollow.name,
@@ -228,10 +238,20 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL
             }
         },
+        "outlinks_external.nb.nofollow.unique": {
+            "verbose_name": "Unique Number of External NoFollow Outlinks",
+            "group": GROUPS.outlinks_external_nofollow.name,
+            "order": 2,
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
         "outlinks_external.nb.nofollow.combinations.link": {
             "verbose_name": "Number of External NoFollow Outlinks strictly in link nofollow",
             "group": GROUPS.outlinks_external_nofollow.name,
-            "order": 2,
+            "order": 3,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -241,7 +261,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_external.nb.nofollow.combinations.meta": {
             "verbose_name": "Number of External NoFollow Outlinks strictly in meta nofollow",
             "group": GROUPS.outlinks_external_nofollow.name,
-            "order": 3,
+            "order": 4,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -251,7 +271,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_external.nb.nofollow.combinations.link_meta": {
             "verbose_name": "Number of External NoFollow Outlinks both in link and meta nofollow",
             "group": GROUPS.outlinks_external_nofollow.name,
-            "order": 4,
+            "order": 5,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -378,8 +398,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
     }
 
     def pre_process_document(self, document):
-        # resolve a (dest, mask) to its index in `inlinks_internal` list
+        # store a (dest, is_follow) set of processed links
         document["processed_internal_outlinks"] = set()
+        document["processed_external_outlinks"] = set()
 
     def process_document(self, document, stream):
         url_src, link_type, follow_keys, url_dst, external_url = stream
@@ -430,6 +451,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 url_dst = external_url
             # add this link's dest to the processed set
             document['processed_internal_outlinks'].add((url_dst, is_follow))
+        else:
+            document['processed_external_outlinks'].add((external_url, is_follow))
 
     def _process_redirection(self, document, stream):
         url_src, link_type, follow_keys, url_dst, external_url = stream
@@ -458,22 +481,31 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
 
     def post_process_document(self, document):
         # If not "outlinks_internal" : we want to store a non-crawled url
-        if not 'outlinks_internal' in document:
-            return
-        document['outlinks_internal']['urls_exists'] = len(document['outlinks_internal']['urls']) > 0
+        if 'outlinks_internal' in document:
+            document['outlinks_internal']['urls_exists'] = len(document['outlinks_internal']['urls']) > 0
 
-        document['outlinks_internal']['nb']['follow']['unique'] = len(
-            [url_dst for url_dst, is_follow in document['processed_internal_outlinks'] if is_follow]
-        )
-        document['outlinks_internal']['nb']['nofollow']['unique'] = len(
-            [url_dst for url_dst, is_follow in document['processed_internal_outlinks'] if not is_follow]
-        )
-        document['outlinks_internal']['nb']['unique'] = len(
-            set([url_dst for url_dst, _ in document['processed_internal_outlinks']])
-        )
+            document['outlinks_internal']['nb']['follow']['unique'] = len(
+                [url_dst for url_dst, is_follow in document['processed_internal_outlinks'] if is_follow]
+            )
+            document['outlinks_internal']['nb']['nofollow']['unique'] = len(
+                [url_dst for url_dst, is_follow in document['processed_internal_outlinks'] if not is_follow]
+            )
+            document['outlinks_internal']['nb']['unique'] = len(
+                set([url_dst for url_dst, _ in document['processed_internal_outlinks']])
+            )
+            # delete intermediate data structures
+            del document["processed_internal_outlinks"]
 
-        # delete intermediate data structures
-        del document["processed_internal_outlinks"]
+        if 'outlinks_external' in document:
+            #external_outlinks
+            document['outlinks_external']['nb']['follow']['unique'] = len(
+                [url_dst for url_dst, is_follow in document['processed_external_outlinks'] if is_follow]
+            )
+            document['outlinks_external']['nb']['nofollow']['unique'] = len(
+                [url_dst for url_dst, is_follow in document['processed_external_outlinks'] if not is_follow]
+            )
+            # delete intermediate data structures
+            del document["processed_external_outlinks"]
 
 
 class InlinksRawStreamDef(StreamDefBase):
