@@ -5,12 +5,35 @@ from cdf.core.metadata.constants import FIELD_RIGHTS
 from cdf.features.comparison.streams import get_comparison_data_format
 
 
-def make_fields_private(mapping):
-    """Make all the field of the mapping private.
-    The initial intent of this function was to temporarly hide fields
+def set_visibility(mapping, visibility):
+    """Set all the field of the mapping a visibility level
+    The initial intent of this function was to temporally hide fields
     that we do not want to display to the user because they are still under
     development.
-    If you definitely want to make a field private, it is recommanded to
+    If you definitely want to set the visibility level, it is recommended to
+    explicit add FIELD_RIGHTS flags to its settings.
+    :param mapping: input mapping as a dict field_name -> parameter dict
+    :type mapping: dict
+    :param visibility: visibility flag
+    :type visibility: FIELD_RIGHTS
+    :returns: dict - the modified mapping
+    """
+    if not isinstance(visibility, FIELD_RIGHTS):
+        raise Exception("Wrong visibility config")
+
+    for field in mapping.itervalues():
+        if "settings" not in field:
+            field["settings"] = set()
+        field["settings"].add(visibility)
+    return mapping
+
+
+def make_fields_private(mapping):
+    """Make all the field of the mapping private.
+    The initial intent of this function was to temporally hide fields
+    that we do not want to display to the user because they are still under
+    development.
+    If you definitely want to make a field private, it is recommended to
     explicit add FIELD_RIGHTS.PRIVATE to its settings.
     :param mapping: input mapping as a dict field_name -> parameter dict
     :type mapping: dict
@@ -19,14 +42,7 @@ def make_fields_private(mapping):
     for field in mapping.itervalues():
         if "settings" not in field:
             field["settings"] = set()
-
-        #remove existing field rights
         settings = field["settings"]
-        existing_field_rights = [
-            elt for elt in settings if isinstance(elt, FIELD_RIGHTS)
-        ]
-        for field_right in existing_field_rights:
-            settings.remove(field_right)
 
         #add private right
         settings.add(FIELD_RIGHTS.PRIVATE)
