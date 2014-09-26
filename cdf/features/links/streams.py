@@ -420,6 +420,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             exists = [url_dst, mask] in outlink_urls
             if len(outlink_urls) < 300 and not exists:
                 outlink_urls.append([url_dst, mask])
+            #TODO check if it can be move to postprocessing
             document['outlinks_internal']['urls_exists'] = True
 
         #update the set of processed links
