@@ -677,9 +677,6 @@ class InlinksStreamDef(InlinksRawStreamDef):
             document['tmp_anchors_txt'][text_hash] = text
 
         if is_follow:
-            if not (url_src, is_follow) in document["processed_inlink_link"]:
-                follow['unique'] += 1
-
             # We increment the number of occurrences found for `text_hash` only
             # for follow inlinks
             if text_hash:
@@ -727,6 +724,9 @@ class InlinksStreamDef(InlinksRawStreamDef):
         # If not "inlinks_internal" : we want to store a non-crawled url
         if not 'inlinks_internal' in document:
             return
+        document['inlinks_internal']['nb']['follow']['unique'] = len(
+            [url_dst for url_dst, is_follow in document['processed_inlink_link'] if is_follow]
+        )
 
         document["inlinks_internal"]["anchors"]["top"] = {"text": [], "nb": []}
 
