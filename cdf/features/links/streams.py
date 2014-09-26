@@ -677,7 +677,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             document['tmp_anchors_txt'][text_hash] = text
 
         if is_follow:
-            if not (url_src, mask) in document["processed_inlink_link"]:
+            if not (url_src, is_follow) in document["processed_inlink_link"]:
                 follow['unique'] += 1
 
             # We increment the number of occurrences found for `text_hash` only
@@ -698,7 +698,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
 
         # add src to processed set
         document['processed_inlink_url'].add(url_src)
-        document['processed_inlink_link'].add((url_src, mask))
+        document['processed_inlink_link'].add((url_src, is_follow))
 
         document['inlinks_internal']['urls_exists'] = True
 
