@@ -274,10 +274,6 @@ class ElasticSearchBackend(DataBackend):
             lookup = set()
 
             for field_name, values in self.data_format.iteritems():
-                settings = values.get('settings', {})
-                # If FIELD_RIGHTS are set in settings, check that there is a selectable right
-                if any(f in settings for f in FIELD_RIGHTS) and FIELD_RIGHTS.SELECT not in settings:
-                    continue
                 splits = _split_path(field_name)
                 for i, _ in enumerate(splits):
                     lookup.add('.'.join(splits[:i + 1]))

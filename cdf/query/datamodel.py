@@ -45,9 +45,8 @@ def _render_field(field, field_config):
     }
 
 
-def _is_private_fields(config):
-    """Check private/admin fields"""
-    return FIELD_RIGHTS.PRIVATE in config.get("settings", [])
+def _check_visibility(config, visibility):
+    return visibility in config.get("settings", [])
 
 
 def _is_exists_fields(name):
@@ -63,7 +62,7 @@ def _data_model_sort_key(elem):
     return group, order
 
 
-def get_fields(feature_options, remove_private=True,
+def get_fields(feature_options, remove_private=True, remove_admin=True,
                available_features=Feature.get_features()):
     """Returns a front-end friendly data model according to feature_options
 
@@ -79,6 +78,11 @@ def get_fields(feature_options, remove_private=True,
         },
         ...
     ]
+
+    :param feature_options: feature options
+    :param remove_private: should PRIVATE visibility fields be excluded
+    :param remove_admin: should ADMIN visibility fields be excluded
+    :param available_features: all available features
     """
     # TODO(darkjh) create "Diff {}" groups for previous diff
     data_format = generate_data_format(
@@ -92,11 +96,14 @@ def get_fields(feature_options, remove_private=True,
         # is it a `_exists` field ?
         is_exists = _is_exists_fields(name)
         # is it a private/admin field ?
-        is_private = _is_private_fields(config)
+        is_private = _check_visibility(config, FIELD_RIGHTS.PRIVATE)
+        is_admin = _check_visibility(config, FIELD_RIGHTS.ADMIN)
+
         # do we remove this field b/c of private/admin ?
         is_private = remove_private and is_private
+        is_admin = remove_admin and is_admin
 
-        if not is_exists and not is_private:
+        if not is_exists and not is_private and not is_admin:
             fields.append((name, config))
 
     # sort on group, then order within group

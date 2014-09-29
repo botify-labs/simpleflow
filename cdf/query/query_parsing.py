@@ -872,7 +872,6 @@ class BotifyQuery(Term):
             self.aggs.validate()
 
 
-# TODO refactor split class
 class QueryParser(object):
     """Parser for botify front-end query
 

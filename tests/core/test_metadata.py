@@ -4,8 +4,8 @@ import mock
 from cdf.core.metadata.constants import FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import ES_NO_INDEX
 from cdf.core.metadata.dataformat import (
-    make_fields_private,
     generate_data_format,
+    set_visibility
 )
 from cdf.features.comparison.streams import (
     get_comparison_data_format,
@@ -16,27 +16,30 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 
 
-class TestMakeFieldsPrivate(unittest.TestCase):
-    def test_nominal_case(self):
+class TestSetVisibility(unittest.TestCase):
+    def test_harness(self):
         input_mapping = {
             "foo": {
                 "verbose_name": "I am foo",
-                "settings": set([ES_NO_INDEX, FIELD_RIGHTS.SELECT])
+                "settings": {ES_NO_INDEX, FIELD_RIGHTS.SELECT}
             },
             "bar": {
                 "verbose_name": "I am bar",
             }
         }
-
-        actual_result = make_fields_private(input_mapping)
+        result = set_visibility(input_mapping, FIELD_RIGHTS.ADMIN)
         self.assertEquals(
-            set([ES_NO_INDEX, FIELD_RIGHTS.PRIVATE]),
-            actual_result["foo"]["settings"]
+            {ES_NO_INDEX, FIELD_RIGHTS.SELECT, FIELD_RIGHTS.ADMIN},
+            result["foo"]["settings"]
         )
         self.assertTrue(
-            set([FIELD_RIGHTS.PRIVATE]),
-            actual_result["bar"]["settings"]
+            {FIELD_RIGHTS.ADMIN},
+            result["bar"]["settings"]
         )
+
+    def test_wrong_visibilit_flag(self):
+        # not a `FIELD_RIGHTS` object, should raise
+        self.assertRaises(Exception, set_visibility, {}, "wrong flag")
 
 
 # Have to set a lambda here since we need to check equality

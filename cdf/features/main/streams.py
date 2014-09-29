@@ -12,7 +12,7 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.utils.date import date_2k_mn_to_date
 from cdf.utils.hashing import string_to_int64
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
-from cdf.core.metadata.dataformat import make_fields_private, check_enabled
+from cdf.core.metadata.dataformat import check_enabled, set_visibility
 
 __all__ = ["IdStreamDef", "InfosStreamDef", "SuggestStreamDef"]
 
@@ -324,17 +324,18 @@ class ZoneStreamDef(StreamDefBase):
         ('id', int),
         ('zone', str)
     )
-    URL_DOCUMENT_MAPPING = make_fields_private(
+    URL_DOCUMENT_MAPPING = set_visibility(
         {
             "zone": {
                 "verbose_name": "Zone",
                 "type": STRING_TYPE,
                 "settings": {
                     ES_NOT_ANALYZED,
-                    AGG_CATEGORICAL
+                    AGG_CATEGORICAL,
                 }
             }
-        }
+        },
+        FIELD_RIGHTS.ADMIN
     )
 
     def process_document(self, document, stream):
@@ -353,7 +354,7 @@ class StrategicUrlStreamDef(StreamDefBase):
         ('strategic', cast_bool),  # is this url SEO strategic
         ('reason', int)  # why this url is NOT SEO strategic
     )
-    URL_DOCUMENT_MAPPING = make_fields_private(
+    URL_DOCUMENT_MAPPING = set_visibility(
         {
             "strategic.is_strategic": {
                 "verbose_name": "Strategic url",
@@ -366,31 +367,32 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "verbose_name": "Non strategic reason: bad http code",
                 "type": BOOLEAN_TYPE,
                 "settings": {
-                    AGG_CATEGORICAL
+                    AGG_CATEGORICAL,
                 }
             },
             "strategic.reason.content_type": {
                 "verbose_name": "Non strategic reason: bad content type",
                 "type": BOOLEAN_TYPE,
                 "settings": {
-                    AGG_CATEGORICAL
+                    AGG_CATEGORICAL,
                 }
             },
             "strategic.reason.noindex": {
                 "verbose_name": "Non strategic reason: url is of no-index",
                 "type": BOOLEAN_TYPE,
                 "settings": {
-                    AGG_CATEGORICAL
+                    AGG_CATEGORICAL,
                 }
             },
             "strategic.reason.canonical": {
                 "verbose_name": "Non strategic reason: url has non self-canonical",
                 "type": BOOLEAN_TYPE,
                 "settings": {
-                    AGG_CATEGORICAL
+                    AGG_CATEGORICAL,
                 }
             }
-        }
+        },
+        FIELD_RIGHTS.ADMIN
     )
 
     def process_document(self, document, stream):
