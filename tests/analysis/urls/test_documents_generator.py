@@ -568,6 +568,8 @@ class TestOutlinksGeneration(unittest.TestCase):
                 'urls_exists': True
             },
             'total': 5
+            'total': 5,
+            'total_bad_http_codes': 5
         }
         expected_2 = {
             '3xx': {
@@ -582,6 +584,8 @@ class TestOutlinksGeneration(unittest.TestCase):
                 'nb': 0
             },
             'total': 11
+            'total': 11,
+            'total_bad_http_codes': 11
         }
 
         key = 'outlinks_errors'

@@ -953,6 +953,8 @@ class BadLinksStreamDef(StreamDefBase):
             "default_value": None
         },
         # total error_links number
+        # DEPRECATED: this field has been replaced by
+        #"outlinks_errors.total_bad_http_codes"
         "outlinks_errors.total": {
             "type": "integer",
             "verbose_name": "Number of error links in 3xx/4xx/5xx",
@@ -960,6 +962,17 @@ class BadLinksStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
+            }
+        },
+        # total error_links number corresponding to bad http codes.
+        "outlinks_errors.total_bad_http_codes": {
+            "type": "integer",
+            "verbose_name": "Number of error links in 3xx/4xx/5xx",
+            "order": 100,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.ADMIN
             }
         },
     }
@@ -984,6 +997,7 @@ class BadLinksStreamDef(StreamDefBase):
 
         # increment the consolidate value
         errors['total'] += 1
+        errors['total_bad_http_codes'] += 1
 
         errors[error_kind]['urls_exists'] = True
 
