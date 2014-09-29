@@ -4,7 +4,8 @@ from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
 from cdf.features.links.bad_links import (
     get_bad_links,
     get_bad_link_counters,
-    get_links_to_not_strategic_urls
+    get_links_to_not_strategic_urls,
+    get_link_to_not_strategic_urls_counters
 )
 
 
@@ -85,5 +86,27 @@ class TestGetLinkToNotStrategicUrls(unittest.TestCase):
         expected_result = [
             (1, 3),
             (2, 3)
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+
+class TestGetLinkToNotStrategicUrlsCounters(unittest.TestCase):
+    def test_nominal_case(self):
+        stream_not_strategic_links = iter([
+            (1, 3),
+            (1, 5),
+            (3, 1),
+            (5, 10),
+            (5, 11),
+            (5, 12)
+        ])
+
+        actual_result = get_link_to_not_strategic_urls_counters(
+            stream_not_strategic_links
+        )
+        expected_result = [
+            (1, 2),
+            (3, 1),
+            (5, 3)
         ]
         self.assertEqual(expected_result, list(actual_result))
