@@ -4,7 +4,7 @@ import os.path
 
 from cdf.testing.es_mock import (
     get_es_mget_mock, CRAWL_ID
-)
+    )
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 from cdf.features.links.top_domains import (
@@ -22,7 +22,7 @@ from cdf.features.links.top_domains import (
     compute_sample_links,
     compute_link_destination_stats,
     resolve_sample_url_id
-)
+    )
 
 
 class TestFilterInvalidDestinationUrls(unittest.TestCase):
@@ -95,7 +95,7 @@ class TestCountUniqueLinks(unittest.TestCase):
             [0, "a", 0, -1, "http://foo.com/bar.html"],
             [0, "a", 0, -1, "http://foo.com/baz.html"],
             [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [0, "a", 0, -1, "http://foo.com/baz.html"],  # duplicate link
+            [0, "a", 0, -1, "http://foo.com/baz.html"], # duplicate link
             [3, "a", 0, -1, "http://foo.com/baz.css"]
         ])
         self.assertEqual(4, count_unique_links(external_outlinks))
@@ -107,7 +107,7 @@ class TestCountUniqueFollowLinks(unittest.TestCase):
             [0, "a", 0, -1, "http://foo.com/bar.html"],
             [0, "a", 0, -1, "http://foo.com/baz.html"],
             [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [0, "a", 0, -1, "http://foo.com/baz.html"],  # duplicate link
+            [0, "a", 0, -1, "http://foo.com/baz.html"], # duplicate link
             [3, "a", 0, -1, "http://foo.com/baz.css"],
             [3, "a", 1, -1, "http://foo.com"]  # no follow
         ])
@@ -131,17 +131,15 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 2
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            (3, DomainLinkStats(
+            DomainLinkStats(
                 "foo.com", 3, 0, 3,
                 [LinkDestination("foo.com", 3, [0, 3, 4])],
                 []
-            )
             ),
-            (2, DomainLinkStats(
+            DomainLinkStats(
                 "bar.com", 2, 0, 2,
                 [LinkDestination("bar.com", 2, [0, 4])],
                 []
-            )
             )
         ]
         self.assertEqual(expected_result, actual_result)
@@ -155,11 +153,10 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 1
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            (1, DomainLinkStats(
+            DomainLinkStats(
                 "foo.com", 1, 2, 1,
                 [LinkDestination("foo.com", 1, [3])],
                 [LinkDestination("foo.com", 2, [0, 4])]
-            )
             )
         ]
         self.assertEqual(expected_result, actual_result)
@@ -177,8 +174,8 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 10
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            (2, DomainLinkStats("foo.com", 2, 0, 2, [])),
-            (1, DomainLinkStats("bar.com", 1, 0, 1, []))
+            DomainLinkStats("foo.com", 2, 0, 2, []),
+            DomainLinkStats("bar.com", 1, 0, 1, [])
         ]
         self.assertEqual(expected_result, actual_result)
 
@@ -188,7 +185,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         compute_sample_links_mock.return_value = []
 
         externals = iter([
-            [0, "a", 1, -1, "bar.com"],  # no follow
+            [0, "a", 1, -1, "bar.com"], # no follow
             [3, "a", 0, -1, "bar.foo.com"],
             [4, "a", 0, -1, "bar.foo.com"],
             [4, "a", 0, -1, "bar.com"],
@@ -196,12 +193,11 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 1
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            (2, DomainLinkStats("bar.foo.com", 2, 0, 2, []))
+            DomainLinkStats("bar.foo.com", 2, 0, 2, [])
         ]
         self.assertEqual(expected_result, actual_result)
 
     def test_all_nofollow_links(self):
-
         #all no follow links
         externals = iter([
             [0, "a", 1, -1, "foo.com"],
@@ -229,8 +225,8 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 2
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            (3, DomainLinkStats("foo.com", 4, 0, 3, [])),
-            (2, DomainLinkStats("bar.com", 2, 0, 2, []))
+            DomainLinkStats("foo.com", 4, 0, 3, []),
+            DomainLinkStats("bar.com", 2, 0, 2, [])
         ]
         self.assertEqual(expected_result, actual_result)
 
@@ -248,20 +244,20 @@ class TestComputeTopNDomains(unittest.TestCase):
         n = 2
         actual_result = compute_top_full_domains(externals, n)
         expected_result = [
-            (3, DomainLinkStats(
-                    "foo.com", 3, 0, 3,
-                    [
-                        LinkDestination("http://foo.com/", 1, [4]),
-                        LinkDestination("http://foo.com/bar.html", 1, [0]),
-                        LinkDestination("http://foo.com/qux.css", 1, [3]),
-                    ])
+            DomainLinkStats(
+                "foo.com", 3, 0, 3,
+                [
+                    LinkDestination("http://foo.com/", 1, [4]),
+                    LinkDestination("http://foo.com/bar.html", 1, [0]),
+                    LinkDestination("http://foo.com/qux.css", 1, [3]),
+                ]
             ),
-            (2, DomainLinkStats(
-                    "bar.com", 2, 0, 2,
-                    [
-                        LinkDestination("http://bar.com/baz.html", 1, [4]),
-                        LinkDestination("http://bar.com/image.jpg", 1, [0])
-                    ])
+            DomainLinkStats(
+                "bar.com", 2, 0, 2,
+                [
+                    LinkDestination("http://bar.com/baz.html", 1, [4]),
+                    LinkDestination("http://bar.com/image.jpg", 1, [0])
+                ]
             )
         ]
         self.assertEqual(expected_result, actual_result)
@@ -280,21 +276,21 @@ class TestComputeTopNSecondLevelDomain(unittest.TestCase):
         n = 2
         actual_result = compute_top_second_level_domains(externals, n)
         expected_result = [
-            (4, DomainLinkStats(
-                    "foo.com", 4, 0, 4,
-                    [
-                        LinkDestination("http://foo.com/bar.html", 1, [0]),
-                        LinkDestination("http://foo.com/qux.css", 1, [3]),
-                        LinkDestination("http://foo.com/", 1, [4]),
-                        LinkDestination("http://bar.foo.com/baz.html", 1, [4])
-                    ])
+            DomainLinkStats(
+                "foo.com", 4, 0, 4,
+                [
+                    LinkDestination("http://foo.com/bar.html", 1, [0]),
+                    LinkDestination("http://foo.com/qux.css", 1, [3]),
+                    LinkDestination("http://foo.com/", 1, [4]),
+                    LinkDestination("http://bar.foo.com/baz.html", 1, [4])
+                ]
             ),
-            (2, DomainLinkStats(
-                    "bar.com", 2, 0, 2,
-                    [
-                        LinkDestination("http://bar.com/image.jpg", 1, [0]),
-                        LinkDestination("http://bar.com/baz.html", 1, [4]),
-                    ])
+            DomainLinkStats(
+                "bar.com", 2, 0, 2,
+                [
+                    LinkDestination("http://bar.com/image.jpg", 1, [0]),
+                    LinkDestination("http://bar.com/baz.html", 1, [4]),
+                ]
             )
         ]
         self.assertEqual(expected_result, actual_result)
@@ -362,7 +358,7 @@ class TestComputeSampleLinks(unittest.TestCase):
             [0, "a", 0, -1, "http://foo.com/bar.html"],
             [0, "a", 0, -1, "http://foo.com/bar.html"],
             [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/bar.html"],  # many duplicates
+            [0, "a", 0, -1, "http://foo.com/bar.html"], # many duplicates
             [3, "a", 0, -1, "http://foo.com/qux.html"],
             [4, "a", 0, -1, "http://foo.com/baz.html"],
             [4, "a", 0, -1, "http://foo.com/qux.html"],

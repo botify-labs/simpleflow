@@ -307,7 +307,7 @@ def _compute_top_domains(external_outlinks, n, key):
     result = []
     while len(heap) != 0:
         nb_unique_follow_links, domain = heapq.heappop(heap)
-        result.append((nb_unique_follow_links, domain))
+        result.append(domain)
     #sort by decreasing number of links
     result.reverse()
     return result
@@ -485,7 +485,6 @@ def compute_sample_links(external_outlinks, n):
     while len(heap) != 0:
         nb_unique_links, external_url = heapq.heappop(heap)
         result.append(external_url)
-    #sort by decreasing number of links
     result.reverse()
     return result
 

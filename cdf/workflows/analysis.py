@@ -594,8 +594,10 @@ class AnalysisWorkflow(Workflow):
         nb_top_domains = 100  # TODO get it from context.
         top_domains_result = self.submit(
             make_top_domains_files,
+            crawl_id=crawl_id,
             s3_uri=s3_uri,
-            nb_top_domains=nb_top_domains
+            nb_top_domains=nb_top_domains,
+            **es_params
         )
 
         suggest_summary_result = self.submit(
