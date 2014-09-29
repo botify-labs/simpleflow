@@ -14,14 +14,16 @@ from cdf.features.links.streams import (
     OutlinksCountersStreamDef,
     OutcanonicalCountersStreamDef,
     OutredirectCountersStreamDef,
-    LinksToNotStrategicStreamDef
+    LinksToNotStrategicStreamDef,
+    LinksToNotStrategicCountersStreamDef
 )
 from cdf.features.links.tasks import (
     make_bad_link_file as compute_bad_link,
     make_links_counter_file as compute_link_counter,
     make_bad_link_counter_file as compute_bad_link_counter,
     make_top_domains_files as compute_top_domains,
-    make_links_to_not_strategic_file
+    make_links_to_not_strategic_file,
+    make_links_to_not_strategic_counter_file
 )
 from cdf.features.main.streams import InfosStreamDef, StrategicUrlStreamDef
 from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
@@ -242,6 +244,53 @@ class TestMakeLinksToNotStrategicFile(unittest.TestCase):
         ]
         self.assertEqual(expected_stream, list(actual_stream))
 
+class TestMakeLinksToNotStrategicCounterFile(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+
+    @mock_s3
+    def test_nominal_case(self):
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        s3_uri = 's3://test_bucket'
+        crawl_id = 4
+        part_id = 3
+
+        not_strategic_links_stream = iter([
+            (1, 3),
+            (1, 5),
+            (3, 1),
+            (5, 10),
+            (5, 11),
+            (5, 12)
+        ])
+
+        LinksToNotStrategicStreamDef.persist(
+            not_strategic_links_stream,
+            s3_uri,
+            part_id=part_id
+        )
+
+        actual_result = make_links_to_not_strategic_counter_file(
+            crawl_id,
+            s3_uri,
+            part_id
+        )
+
+        expected_result = "s3://test_bucket/url_not_strategic_links_counters.txt.3.gz"
+        self.assertEqual(expected_result, actual_result)
+
+        actual_stream = LinksToNotStrategicCountersStreamDef.load(
+            s3_uri,
+            self.tmp_dir
+        )
+        expected_stream = [
+            [1, 2],
+            [3, 1],
+            [5, 3]
+        ]
+
+        self.assertEqual(expected_stream, list(actual_stream))
 
 def _mock_es_handler_init(*args, **kwargs):
     mget_responses = {
