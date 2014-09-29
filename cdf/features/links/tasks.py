@@ -178,11 +178,13 @@ def make_links_to_not_strategic_counter_file(crawl_id, s3_uri,
         force_fetch=force_fetch
     )
     generator = get_link_to_not_strategic_urls_counters(stream)
-    LinksToNotStrategicCountersStreamDef.persist(
+    result = LinksToNotStrategicCountersStreamDef.persist(
         generator,
         s3_uri,
         part_id=part_id
     )
+
+    return result
 
 
 @with_temporary_dir
