@@ -306,6 +306,7 @@ class TestInlinksGeneration(unittest.TestCase):
             [1, 'a', list_to_mask(['follow']), 2],
             [1, 'a', list_to_mask(['link']), 3],
             [1, 'a', list_to_mask(['link', 'meta']), 3],
+            [1, 'a', list_to_mask(['follow']), 3],
         ]
 
         gen = UrlDocumentGenerator([
@@ -316,8 +317,10 @@ class TestInlinksGeneration(unittest.TestCase):
 
         document = _next_doc(gen)
         inlinks = document['inlinks_internal']
-        self.assertEquals(inlinks['nb']['total'], 5)
+        self.assertEquals(inlinks['nb']['total'], 6)
+        self.assertEquals(inlinks['nb']['unique'], 2)
         self.assertEquals(inlinks['nb']['nofollow']['total'], 2)
+        self.assertEquals(inlinks['nb']['nofollow']['unique'], 1)
         expected_combinations = {
             "link": 1,
             "meta": 0,
@@ -325,12 +328,13 @@ class TestInlinksGeneration(unittest.TestCase):
         }
         self.assertEquals(inlinks['nb']['nofollow']['combinations'],
                           expected_combinations)
-        self.assertEquals(inlinks['nb']['follow']['total'], 3)
-        self.assertEquals(inlinks['nb']['follow']['unique'], 1)
+        self.assertEquals(inlinks['nb']['follow']['total'], 4)
+        self.assertEquals(inlinks['nb']['follow']['unique'], 2)
         expected_inlinks = [
             [2, list_to_mask(['follow'])],
             [3, list_to_mask(['link'])],
-            [3, list_to_mask(['link', 'meta'])]
+            [3, list_to_mask(['link', 'meta'])],
+            [3, list_to_mask(['follow'])]
         ]
         self.assertEquals(inlinks['urls'], expected_inlinks)
         self.assertEquals(inlinks['urls_exists'], True)
@@ -360,6 +364,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             [1, 'a', list_to_mask(['link']), 4, ''],
             [1, 'a', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
             [1, 'a', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
+            [1, 'a', list_to_mask(['meta']), -1, 'http://www.youtube.com'],
             [3, 'a', list_to_mask(['follow']), -1, 'http://www.youtube.com'],
             [3, 'a', list_to_mask(['robots', 'link']), 5, ''],
             [3, 'a', list_to_mask(['robots', 'link']), 5, ''],
@@ -390,9 +395,17 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         self.assertItemsEqual(int_outlinks_nb['nofollow']['combinations'],
                               expected_combinations)
+        self.assertEquals(int_outlinks_nb['total'], 5)
+        self.assertEquals(int_outlinks_nb['unique'], 3)
         self.assertEquals(int_outlinks_nb['follow']['total'], 3)
         self.assertEquals(int_outlinks_nb['follow']['unique'], 2)
+
+        self.assertEquals(ext_outlinks_nb['total'], 3)
+        self.assertEquals(ext_outlinks_nb['unique'], 1)
         self.assertEquals(ext_outlinks_nb['follow']['total'], 2)
+        self.assertEquals(ext_outlinks_nb['follow']['unique'], 1)
+        self.assertEquals(ext_outlinks_nb['nofollow']['total'], 1)
+        self.assertEquals(ext_outlinks_nb['nofollow']['unique'], 1)
         expected_outlinks_internal = [
             [2, list_to_mask(['follow'])],
             [3, list_to_mask(['link'])],
@@ -421,7 +434,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             "link_meta_robots": 0,
         }
         self.assertEqual(int_outlinks_nb['nofollow'],
-                         {'total': 0, 'combinations': expected_combinations})
+                         {'total': 0, 'unique': 0, 'combinations': expected_combinations})
 
         # check for url3
         # check that url 3 has 1 outlink
@@ -429,6 +442,9 @@ class TestOutlinksGeneration(unittest.TestCase):
         int_outlinks_nb = document['outlinks_internal']['nb']
         ext_outlinks_nb = document['outlinks_external']['nb']
         self.assertEquals(ext_outlinks_nb['follow']['total'], 1)
+        self.assertEquals(ext_outlinks_nb['follow']['unique'], 1)
+        self.assertEquals(ext_outlinks_nb['nofollow']['total'], 0)
+        self.assertEquals(ext_outlinks_nb['nofollow']['unique'], 0)
         expected_combinations = {
             "link": 1,
             "meta": 0,
@@ -462,7 +478,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             [1, 'a', list_to_mask(['follow']), 3, ''],
             # these 2 cases should be considered as internal link
             [1, 'a', list_to_mask(['robots']), -1, 'www.site.com'],
-            [1, 'a', list_to_mask(['robots']), -1, 'www.site.com/abc'],
+            [1, 'a', list_to_mask(['robots']), -1, 'www.site.com'],
         ]
 
         gen = UrlDocumentGenerator([
@@ -476,6 +492,7 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         self.assertEquals(int_outlinks_nb['total'], 6)
         self.assertEquals(int_outlinks_nb['nofollow']['total'], 3)
+        self.assertEquals(int_outlinks_nb['nofollow']['unique'], 2)
         expected_combinations = {
             "link": 1,
             "meta": 0,

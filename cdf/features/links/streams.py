@@ -90,10 +90,20 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL
             }
         },
+        "outlinks_internal.nb.nofollow.unique": {
+            "verbose_name": "Unique Number of NoFollow Internal Outlinks",
+            "group": GROUPS.outlinks_internal_nofollow.name,
+            "order": 5,
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
         "outlinks_internal.nb.nofollow.total": {
             "verbose_name": "Number of Internal NoFollow Outlinks",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 5,
+            "order": 6,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -103,7 +113,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.nb.nofollow.combinations.link": {
             "verbose_name": "Number of Internal NoFollow Outlinks strictly in link nofollow",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 6,
+            "order": 7,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -113,7 +123,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.nb.nofollow.combinations.meta": {
             "verbose_name": "Number of Internal NoFollow Outlinks strictly in meta nofollow",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 7,
+            "order": 8,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -123,7 +133,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.nb.nofollow.combinations.robots": {
             "verbose_name": "Number of Internal NoFollow Outlinks strictly disallowed by robots.txt",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 8,
+            "order": 9,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -133,7 +143,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.nb.nofollow.combinations.link_meta": {
             "verbose_name": "Number of Internal NoFollow Outlinks both in link and meta nofollow",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 9,
+            "order": 10,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -143,7 +153,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.nb.nofollow.combinations.link_robots": {
             "verbose_name": "Number of Internal NoFollow Outlinks both in link nofollow and disallowed by robots.txt",
             "group": GROUPS.outlinks_internal_nofollow.name,
-            "order": 10,
+            "order": 11,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -154,7 +164,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "verbose_name": "Number of Internal NoFollow Outlinks both in meta nofollow and disallowed by robots.txt",
             "group": GROUPS.outlinks_internal_nofollow.name,
             "type": INT_TYPE,
-            "order": 11,
+            "order": 12,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -164,7 +174,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "verbose_name": "Number of Internal NoFollow Outlinks both in link, meta nofollow and disallowed by robots.txt",
             "group": GROUPS.outlinks_internal_nofollow.name,
             "type": INT_TYPE,
-            "order": 12,
+            "order": 13,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
@@ -173,7 +183,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_internal.urls": {
             "verbose_name": "Sample of Internal Outlinks",
             "group": GROUPS.outlinks_internal.name,
-            "order": 13,
+            "order": 14,
             "type": INT_TYPE,
             "settings": {
                 ES_NO_INDEX,
@@ -198,10 +208,30 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL
             }
         },
+        "outlinks_external.nb.unique": {
+            "verbose_name": "Unique Number of External Outlinks",
+            "group": GROUPS.outlinks_external.name,
+            "order": 1,
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
         "outlinks_external.nb.follow.total": {
             "verbose_name": "Number of External Follow Outlinks",
             "group": GROUPS.outlinks_external.name,
             "order": 2,
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
+        "outlinks_external.nb.follow.unique": {
+            "verbose_name": "Unique Number of External Follow Outlinks",
+            "group": GROUPS.outlinks_external.name,
+            "order": 3,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -218,10 +248,20 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL
             }
         },
+        "outlinks_external.nb.nofollow.unique": {
+            "verbose_name": "Unique Number of External NoFollow Outlinks",
+            "group": GROUPS.outlinks_external_nofollow.name,
+            "order": 2,
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
         "outlinks_external.nb.nofollow.combinations.link": {
             "verbose_name": "Number of External NoFollow Outlinks strictly in link nofollow",
             "group": GROUPS.outlinks_external_nofollow.name,
-            "order": 2,
+            "order": 3,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -231,7 +271,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_external.nb.nofollow.combinations.meta": {
             "verbose_name": "Number of External NoFollow Outlinks strictly in meta nofollow",
             "group": GROUPS.outlinks_external_nofollow.name,
-            "order": 3,
+            "order": 4,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -241,7 +281,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         "outlinks_external.nb.nofollow.combinations.link_meta": {
             "verbose_name": "Number of External NoFollow Outlinks both in link and meta nofollow",
             "group": GROUPS.outlinks_external_nofollow.name,
-            "order": 4,
+            "order": 5,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -368,84 +408,116 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
     }
 
     def pre_process_document(self, document):
-        # resolve a (dest, mask) to its index in `inlinks_internal` list
-        document["processed_outlink_link"] = set()
-        # a temp set to track all `seen` dest url of outgoing links
-        document["processed_outlink_url"] = set()
+        # store a (dest, is_follow) set of processed links
+        document["processed_internal_outlinks"] = set()
+        document["processed_external_outlinks"] = set()
 
     def process_document(self, document, stream):
         url_src, link_type, follow_keys, url_dst, external_url = stream
 
         if link_type == "a":
-            # is_internal = url_dst > 0
-            is_internal = is_link_internal(follow_keys, url_dst)
-            is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
-            outlink_type = "outlinks_internal" if is_internal else "outlinks_external"
-            mask = list_to_mask(follow_keys)
-
-            outlink_nb = document[outlink_type]['nb']
-            outlink_nb['total'] += 1
-
-            # target dict changes with link follow status
-            follow = outlink_nb['follow' if is_follow else 'nofollow']
-            follow['total'] += 1
-            if is_internal and is_follow:
-                # increment follow counters
-                if not (url_dst, mask) in document['processed_outlink_link']:
-                    follow['unique'] += 1
-            elif not is_follow:
-                # increment nofollow combination counters
-                key = _get_nofollow_combination_key(follow_keys)
-                follow['combinations'][key] += 1
-
-            # internal outlinks
-            # still need dest url id check since we can have internal url
-            # blocked by robots.txt
-            if is_internal and url_dst > 0:
-                outlink_urls = document['outlinks_internal']['urls']
-                exists = (url_dst, mask) in document['processed_outlink_link']
-                if len(outlink_urls) < 300 and not exists:
-                    outlink_urls.append([url_dst, mask])
-
-                # add this link's dest to the processed set
-                document['processed_outlink_url'].add(url_dst)
-                document['processed_outlink_link'].add((url_dst, mask))
-
-                document['outlinks_internal']['urls_exists'] = True
-
+            self._process_link(document, stream)
         elif link_type.startswith('r'):
-            http_code = link_type[1:]
-            redirects_to = document['redirect']['to']
-            redirects_to['url'] = {}
-            if url_dst == -1:
-                redirects_to['url']['url_str'] = external_url
-            else:
-                redirects_to['url']['url_id'] = url_dst
-            redirects_to['url']['http_code'] = int(http_code)
-            redirects_to['url_exists'] = True
-
+            self._process_redirection(document, stream)
         elif link_type == "canonical":
-            canonical_to = document['canonical']['to']
-            if canonical_to.get('equal', None) is None:
-                # We take only the first canonical found
-                canonical_to['equal'] = url_src == url_dst
-                canonical_to['url'] = {}
-                if url_dst > 0:
-                    canonical_to['url']['url_id'] = url_dst
-                else:
-                    canonical_to['url']['url_str'] = external_url
-                canonical_to['url_exists'] = True
+            self._process_canonical(document, stream)
+
+    def _process_link(self, document, stream):
+        url_src, link_type, follow_keys, url_dst, external_url = stream
+        # is_internal = url_dst > 0
+        is_internal = is_link_internal(follow_keys, url_dst)
+        is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
+        outlink_type = "outlinks_internal" if is_internal else "outlinks_external"
+        mask = list_to_mask(follow_keys)
+
+        outlink_nb = document[outlink_type]['nb']
+        outlink_nb['total'] += 1
+
+        # target dict changes with link follow status
+        follow = outlink_nb['follow' if is_follow else 'nofollow']
+        follow['total'] += 1
+        if not is_follow:
+            # increment nofollow combination counters
+            key = _get_nofollow_combination_key(follow_keys)
+            follow['combinations'][key] += 1
+
+        # internal outlinks
+        # still need dest url id check since we can have internal url
+        # blocked by robots.txt
+        if is_internal and url_dst > 0:
+            #store sample internal links
+            outlink_urls = document['outlinks_internal']['urls']
+            exists = [url_dst, mask] in outlink_urls
+            if len(outlink_urls) < 300 and not exists:
+                outlink_urls.append([url_dst, mask])
+
+        #update the set of processed links
+        if is_internal:
+            if url_dst <= 0:
+                #the url is blocked by a robots.txt
+                #the url_dst is not meaningful.
+                #we replace it by the external_url.
+                url_dst = external_url
+            # add this link's dest to the processed set
+            document['processed_internal_outlinks'].add((url_dst, is_follow))
+        else:
+            document['processed_external_outlinks'].add((external_url, is_follow))
+
+    def _process_redirection(self, document, stream):
+        url_src, link_type, follow_keys, url_dst, external_url = stream
+        http_code = link_type[1:]
+        redirects_to = document['redirect']['to']
+        redirects_to['url'] = {}
+        if url_dst == -1:
+            redirects_to['url']['url_str'] = external_url
+        else:
+            redirects_to['url']['url_id'] = url_dst
+        redirects_to['url']['http_code'] = int(http_code)
+        redirects_to['url_exists'] = True
+
+    def _process_canonical(self, document, stream):
+        url_src, link_type, follow_keys, url_dst, external_url = stream
+        canonical_to = document['canonical']['to']
+        if canonical_to.get('equal', None) is None:
+            # We take only the first canonical found
+            canonical_to['equal'] = url_src == url_dst
+            canonical_to['url'] = {}
+            if url_dst > 0:
+                canonical_to['url']['url_id'] = url_dst
+            else:
+                canonical_to['url']['url_str'] = external_url
+            canonical_to['url_exists'] = True
 
     def post_process_document(self, document):
         # If not "outlinks_internal" : we want to store a non-crawled url
-        if not 'outlinks_internal' in document:
-            return
+        if 'outlinks_internal' in document:
+            document['outlinks_internal']['urls_exists'] = len(document['outlinks_internal']['urls']) > 0
 
-        document['outlinks_internal']['nb']['unique'] = len(document['processed_outlink_url'])
+            document['outlinks_internal']['nb']['follow']['unique'] = len(
+                [url_dst for url_dst, is_follow in document['processed_internal_outlinks'] if is_follow]
+            )
+            document['outlinks_internal']['nb']['nofollow']['unique'] = len(
+                [url_dst for url_dst, is_follow in document['processed_internal_outlinks'] if not is_follow]
+            )
+            document['outlinks_internal']['nb']['unique'] = len(
+                set([url_dst for url_dst, _ in document['processed_internal_outlinks']])
+            )
+            # delete intermediate data structures
+            del document["processed_internal_outlinks"]
 
-        # delete intermediate data structures
-        del document['processed_outlink_url']
-        del document["processed_outlink_link"]
+        if 'outlinks_external' in document:
+            #external_outlinks
+            document['outlinks_external']['nb']['follow']['unique'] = len(
+                [url_dst for url_dst, is_follow in document['processed_external_outlinks'] if is_follow]
+            )
+            document['outlinks_external']['nb']['nofollow']['unique'] = len(
+                [url_dst for url_dst, is_follow in document['processed_external_outlinks'] if not is_follow]
+            )
+            document['outlinks_external']['nb']['unique'] = len(
+                set([url_dst for url_dst, _ in document['processed_external_outlinks']])
+            )
+            # delete intermediate data structures
+            del document["processed_external_outlinks"]
 
 
 class InlinksRawStreamDef(StreamDefBase):
@@ -521,6 +593,15 @@ class InlinksStreamDef(InlinksRawStreamDef):
                 AGG_NUMERICAL
             }
         },
+        "inlinks_internal.nb.nofollow.unique": {
+            "verbose_name": "Unique Number of NoFollow Internal Incoming Links",
+            "type": INT_TYPE,
+            "order": 6,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL
+            }
+        },
         "inlinks_internal.nb.nofollow.total": {
             "verbose_name": "Number of Internal Incoming NoFollow Links",
             "group": GROUPS.inlinks_nofollow.name,
@@ -534,7 +615,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.nb.nofollow.combinations.link": {
             "verbose_name": "Number of NoFollow links strictly in link nofollow",
             "group": GROUPS.inlinks_nofollow.name,
-            "order": 6,
+            "order": 7,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -544,7 +625,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.nb.nofollow.combinations.meta": {
             "verbose_name": "Number of NoFollow links strictly in meta nofollow",
             "group": GROUPS.inlinks_nofollow.name,
-            "order": 7,
+            "order": 8,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -554,7 +635,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.nb.nofollow.combinations.link_meta": {
             "verbose_name": "Number of NoFollow links both in link and meta nofollow",
             "group": GROUPS.inlinks_nofollow.name,
-            "order": 8,
+            "order": 9,
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -564,7 +645,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.urls": {
             "verbose_name": "Sample of internal inlinks urls",
             "group": GROUPS.inlinks.name,
-            "order": 9,
+            "order": 10,
             "type": INT_TYPE,
             "settings": {
                 ES_NO_INDEX,
@@ -616,8 +697,6 @@ class InlinksStreamDef(InlinksRawStreamDef):
     def pre_process_document(self, document):
         # temporary structures for analytic processing
         document["processed_inlink_link"] = set()
-        # a temp set to track all `seen` src url of incoming links
-        document["processed_inlink_url"] = set()
         document["tmp_anchors_txt"] = {}
         document["tmp_anchors_nb"] = Counter()
 
@@ -625,70 +704,82 @@ class InlinksStreamDef(InlinksRawStreamDef):
         url_dst, link_type, follow_keys, url_src, text_hash, text = stream
 
         if link_type == "a":
-            is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
-            mask = list_to_mask(follow_keys)
-            inlink_nb = document['inlinks_internal']['nb']
-            inlink_nb['total'] += 1
-
-            follow = inlink_nb['follow' if is_follow else 'nofollow']
-            follow['total'] += 1
-
-            # `text` is not always filled, so we have to push it in a temporary
-            # dictionnary when found
-            if text != self.TEXT_HASH_ALREADY_SET and text_hash not in document['tmp_anchors_txt']:
-                if text == '':
-                    text = self.TEXT_EMPTY
-                document['tmp_anchors_txt'][text_hash] = text
-
-            if is_follow:
-                if not (url_src, mask) in document["processed_inlink_link"]:
-                    follow['unique'] += 1
-
-                # We increment the number of occurrences found for `text_hash` only
-                # for follow inlinks
-                if text_hash:
-                    document['tmp_anchors_nb'][text_hash] += 1
-            else:
-                key = _get_nofollow_combination_key(follow_keys)
-                if 'robots' in key:
-                    logger.warn('Skip `robots` mask in inlink mask')
-                else:
-                    follow['combinations'][key] += 1
-
-            inlink_urls = document['inlinks_internal']['urls']
-            exists = (url_src, mask) in document['processed_inlink_link']
-            if len(inlink_urls) < 300 and not exists:
-                inlink_urls.append([url_src, mask])
-
-            # add src to processed set
-            document['processed_inlink_url'].add(url_src)
-            document['processed_inlink_link'].add((url_src, mask))
-
-            document['inlinks_internal']['urls_exists'] = True
-
+            self._process_link(document, stream)
         elif link_type.startswith('r'):
-            # TODO dangerous assumption of crawl's string format to be 'r3xx'
-            http_code = int(link_type[1:])
-            redirects_from = document['redirect']['from']
-            redirects_from['nb'] += 1
-            if len(redirects_from['urls']) < 300:
-                redirects_from['urls'].append([url_src, http_code])
-            redirects_from['urls_exists'] = True
-
+            self._process_redirection(document, stream)
         elif link_type == "canonical":
-            canonical_from = document['canonical']['from']
+            self._process_canonical(document, stream)
 
-            # only count for none self canonical
-            if url_dst != url_src:
-                canonical_from['nb'] += 1
-                if len(canonical_from['urls']) < 300:
-                    canonical_from['urls'].append(url_src)
-                canonical_from['urls_exists'] = True
+    def _process_link(self, document, stream):
+        url_dst, link_type, follow_keys, url_src, text_hash, text = stream
+        is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
+        mask = list_to_mask(follow_keys)
+        inlink_nb = document['inlinks_internal']['nb']
+        inlink_nb['total'] += 1
+
+        follow = inlink_nb['follow' if is_follow else 'nofollow']
+        follow['total'] += 1
+
+        # `text` is not always filled, so we have to push it in a temporary
+        # dictionnary when found
+        if text != self.TEXT_HASH_ALREADY_SET and text_hash not in document['tmp_anchors_txt']:
+            if text == '':
+                text = self.TEXT_EMPTY
+            document['tmp_anchors_txt'][text_hash] = text
+
+        if is_follow:
+            # We increment the number of occurrences found for `text_hash` only
+            # for follow inlinks
+            if text_hash:
+                document['tmp_anchors_nb'][text_hash] += 1
+        else:
+            key = _get_nofollow_combination_key(follow_keys)
+            if 'robots' in key:
+                logger.warn('Skip `robots` mask in inlink mask')
+            else:
+                follow['combinations'][key] += 1
+
+        inlink_urls = document['inlinks_internal']['urls']
+        exists = [url_src, mask] in inlink_urls
+        if len(inlink_urls) < 300 and not exists:
+            inlink_urls.append([url_src, mask])
+
+        # add src to processed set
+        document['processed_inlink_link'].add((url_src, is_follow))
+
+        document['inlinks_internal']['urls_exists'] = True
+
+    def _process_redirection(self, document, stream):
+        url_dst, link_type, follow_keys, url_src, text_hash, text = stream
+        # TODO dangerous assumption of crawl's string format to be 'r3xx'
+        http_code = int(link_type[1:])
+        redirects_from = document['redirect']['from']
+        redirects_from['nb'] += 1
+        if len(redirects_from['urls']) < 300:
+            redirects_from['urls'].append([url_src, http_code])
+        redirects_from['urls_exists'] = True
+
+    def _process_canonical(self, document, stream):
+        url_dst, link_type, follow_keys, url_src, text_hash, text = stream
+        canonical_from = document['canonical']['from']
+
+        # only count for none self canonical
+        if url_dst != url_src:
+            canonical_from['nb'] += 1
+            if len(canonical_from['urls']) < 300:
+                canonical_from['urls'].append(url_src)
+            canonical_from['urls_exists'] = True
 
     def post_process_document(self, document):
         # If not "inlinks_internal" : we want to store a non-crawled url
         if not 'inlinks_internal' in document:
             return
+        document['inlinks_internal']['nb']['follow']['unique'] = len(
+            [url_dst for url_dst, is_follow in document['processed_inlink_link'] if is_follow]
+        )
+        document['inlinks_internal']['nb']['nofollow']['unique'] = len(
+            [url_dst for url_dst, is_follow in document['processed_inlink_link'] if not is_follow]
+        )
 
         document["inlinks_internal"]["anchors"]["top"] = {"text": [], "nb": []}
 
@@ -707,10 +798,10 @@ class InlinksStreamDef(InlinksRawStreamDef):
                 document["inlinks_internal"]["anchors"]["top"]["text"].append(document["tmp_anchors_txt"][text_hash])
                 document["inlinks_internal"]["anchors"]["top"]["nb"].append(nb)
 
-        document['inlinks_internal']['nb']['unique'] = len(document['processed_inlink_url'])
-
+        document['inlinks_internal']['nb']['unique'] = len(
+            set([url_dst for url_dst, _ in document['processed_inlink_link']])
+        )
         # delete intermediate data structures
-        del document['processed_inlink_url']
         del document["processed_inlink_link"]
         del document["tmp_anchors_txt"]
         del document["tmp_anchors_nb"]
