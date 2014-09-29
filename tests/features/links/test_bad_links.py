@@ -1,6 +1,12 @@
 # -*- coding:utf-8 -*-
 import unittest
-from cdf.features.links.bad_links import get_bad_links, get_bad_link_counters
+from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
+from cdf.features.links.bad_links import (
+    get_bad_links,
+    get_bad_link_counters,
+    get_links_to_not_strategic_urls
+)
+
 
 class TestBadLink(unittest.TestCase):
 
@@ -56,3 +62,28 @@ class TestBadLink(unittest.TestCase):
             (3, 400, 2)
         ]
         self.assertEquals(results, expected)
+
+
+class TestGetLinkToNotStrategicUrls(unittest.TestCase):
+    def test_nominal_case(self):
+        stream_strategic = iter([
+            (1, True, encode_reason_mask()),
+            (2, True, encode_reason_mask()),
+            (3, False, encode_reason_mask(REASON_HTTP_CODE))
+        ])
+
+        stream_outlinks = iter([
+            (1, 'a', 0, 2),
+            (1, 'a', 0, 3),
+            (2, 'a', 0, 3)
+        ])
+        actual_result = get_links_to_not_strategic_urls(
+            stream_strategic,
+            stream_outlinks
+        )
+
+        expected_result = [
+            (1, 3),
+            (2, 3)
+        ]
+        self.assertEqual(expected_result, list(actual_result))
