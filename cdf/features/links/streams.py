@@ -1009,3 +1009,68 @@ class BadLinksCountersStreamDef(StreamDefBase):
         ('http_code', int),
         ('score', int)
     )
+
+class LinksToNotStrategicStreamDef(StreamDefBase):
+    FILE = 'url_not_strategic_links'
+    HEADERS = (
+        ('id', int),
+        ('dst_url_id', int)
+    )
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
+    URL_DOCUMENT_MAPPING = {
+        # erroneous outgoing internal links
+        "outlinks_errors.not_strategic.nb": {
+            "type": INT_TYPE,
+            "verbose_name": "Number of error links to not strategic urls.",
+            "order": 101,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.ADMIN
+            }
+        },
+        "outlinks_errors.not_strategic.urls": {
+            "type": INT_TYPE,
+            "verbose_name": "Sample of error links to not strategic urls.",
+            "order": 102,
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.ADMIN,
+                RENDERING.URL,
+                URL_ID
+            }
+        },
+        "outlinks_errors.not_strategic.urls_exists": {
+            "type": "boolean",
+            "default_value": None
+        },
+
+    }
+
+    def process_document(self, document, stream_not_strategic_links):
+        _, url_dest_id = stream_not_strategic_links
+
+        errors = document['outlinks_errors']
+
+        error_kind = "not_strategic"
+
+        errors[error_kind]['nb'] += 1
+        error_urls = errors[error_kind]['urls']
+        if len(error_urls) < 10:
+            error_urls.append(url_dest_id)
+
+        # increment the consolidate value
+        errors['total'] += 1
+
+        errors[error_kind]['urls_exists'] = True
+
+
+class LinksToNotStrategicCountersStreamDef(StreamDefBase):
+    FILE = 'url_not_strategic_links_counters'
+    HEADERS = (
+        ('id', int),
+        ('score', int)
+    )
+

@@ -567,7 +567,9 @@ class TestOutlinksGeneration(unittest.TestCase):
                 'urls': [5],
                 'urls_exists': True
             },
-            'total': 5
+            'not_strategic': {
+                'nb': 0
+            },
             'total': 5,
             'total_bad_http_codes': 5
         }
@@ -583,7 +585,9 @@ class TestOutlinksGeneration(unittest.TestCase):
             '5xx': {
                 'nb': 0
             },
-            'total': 11
+            'not_strategic': {
+                'nb': 0
+            },
             'total': 11,
             'total_bad_http_codes': 11
         }
