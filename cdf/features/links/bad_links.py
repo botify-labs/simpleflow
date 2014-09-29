@@ -1,8 +1,12 @@
 from collections import Counter
 from itertools import groupby
 
-from cdf.features.main.streams import InfosStreamDef
-from cdf.features.links.streams import OutlinksStreamDef, BadLinksStreamDef
+from cdf.features.main.streams import InfosStreamDef, StrategicUrlStreamDef
+from cdf.features.links.streams import (
+    OutlinksStreamDef,
+    BadLinksStreamDef,
+    LinksToNotStrategicStreamDef
+)
 
 
 def get_bad_links(stream_infos, stream_outlinks):
@@ -33,6 +37,33 @@ def get_bad_links(stream_infos, stream_outlinks):
             yield (outlink[src_url_idx], dest, bad_code[dest])
 
 
+def get_links_to_not_strategic_urls(stream_strategic, stream_outlinks):
+    """
+    (url_src_id, url_dest_id, error_http_code)
+    """
+    # Resolve indexes
+    url_id_idx = StrategicUrlStreamDef.field_idx('id')
+    strategic_idx = StrategicUrlStreamDef.field_idx('strategic')
+    dest_url_idx = OutlinksStreamDef.field_idx('dst_url_id')
+    src_url_idx = OutlinksStreamDef.field_idx('id')
+    link_type_idx = OutlinksStreamDef.field_idx('link_type')
+
+    # Find all non strategic url ids
+    non_strategic_urlids = set()
+    for strategic_entry in stream_strategic:
+        strategic = strategic_entry[strategic_idx]
+        if strategic is False:
+            non_strategic_urlids.add(strategic_entry[url_id_idx])
+
+    # Iterator over outlinks and extract all normal links whose destination
+    # is in the *bad_code* dict
+    for outlink in stream_outlinks:
+        dest = outlink[dest_url_idx]
+        link_type = outlink[link_type_idx]
+        if link_type == 'a' and dest in non_strategic_urlids:
+            yield (outlink[src_url_idx], dest)
+
+
 def get_bad_link_counters(stream_bad_links):
     """
     A counter of (url_src_id, error_http_code, count)
@@ -52,3 +83,16 @@ def get_bad_link_counters(stream_bad_links):
 
         for http_code in cnt:
             yield (src_url_id, http_code, cnt[http_code])
+
+
+def get_link_to_not_strategic_urls_counters(stream_not_strategic_links):
+    """
+    A counter of (url_src_id, count)
+    Sorted on `url_src_id`
+    """
+    # Resolve indexes
+    src_url_idx = LinksToNotStrategicStreamDef.field_idx('id')
+
+    # Group by source url_id
+    for src_url_id, g in groupby(stream_not_strategic_links, lambda x: x[src_url_idx]):
+        yield (src_url_id, len(list(g)))
