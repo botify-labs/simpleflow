@@ -219,11 +219,10 @@ class TestMakeLinksToNotStrategicFile(unittest.TestCase):
             s3_uri
         )
 
-        crawl_id = 4
         first_part_id_size = 2
         part_id_size = 10
         actual_result = make_links_to_not_strategic_file(
-            crawl_id, s3_uri,
+            s3_uri,
             first_part_id_size=first_part_id_size,
             part_id_size=part_id_size
         )
@@ -253,7 +252,6 @@ class TestMakeLinksToNotStrategicCounterFile(unittest.TestCase):
         s3 = boto.connect_s3()
         bucket = s3.create_bucket('test_bucket')
         s3_uri = 's3://test_bucket'
-        crawl_id = 4
         part_id = 3
 
         not_strategic_links_stream = iter([
@@ -272,7 +270,6 @@ class TestMakeLinksToNotStrategicCounterFile(unittest.TestCase):
         )
 
         actual_result = make_links_to_not_strategic_counter_file(
-            crawl_id,
             s3_uri,
             part_id
         )

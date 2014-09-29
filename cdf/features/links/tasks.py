@@ -105,7 +105,7 @@ def make_bad_link_file(crawl_id, s3_uri,
 
 
 @with_temporary_dir
-def make_links_to_not_strategic_file(crawl_id, s3_uri,
+def make_links_to_not_strategic_file(s3_uri,
                                      first_part_id_size=500000,
                                      part_id_size=500000,
                                      tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
@@ -160,7 +160,7 @@ def make_bad_link_counter_file(crawl_id, s3_uri,
 
 
 @with_temporary_dir
-def make_links_to_not_strategic_counter_file(crawl_id, s3_uri,
+def make_links_to_not_strategic_counter_file(s3_uri,
                                              part_id,
                                              tmp_dir=None,
                                              force_fetch=DEFAULT_FORCE_FETCH):
