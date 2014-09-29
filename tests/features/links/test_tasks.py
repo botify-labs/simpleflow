@@ -13,15 +13,18 @@ from cdf.features.links.streams import (
     BadLinksCountersStreamDef,
     OutlinksCountersStreamDef,
     OutcanonicalCountersStreamDef,
-    OutredirectCountersStreamDef
+    OutredirectCountersStreamDef,
+    LinksToNotStrategicStreamDef
 )
 from cdf.features.links.tasks import (
     make_bad_link_file as compute_bad_link,
     make_links_counter_file as compute_link_counter,
     make_bad_link_counter_file as compute_bad_link_counter,
-    make_top_domains_files as compute_top_domains
+    make_top_domains_files as compute_top_domains,
+    make_links_to_not_strategic_file
 )
-from cdf.features.main.streams import InfosStreamDef
+from cdf.features.main.streams import InfosStreamDef, StrategicUrlStreamDef
+from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
 from cdf.testing.es_mock import (
     get_es_mget_mock,
     CRAWL_ID
@@ -182,6 +185,62 @@ class TestBadLinkCounterTask(unittest.TestCase):
             [1, 500, 2],  # 2 500 link
         ]
         self.assertEqual(result, expected)
+
+
+class TestMakeLinksToNotStrategicFile(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+
+    @mock_s3
+    def test_nominal_case(self):
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        s3_uri = 's3://test_bucket'
+
+        strategic_stream = iter([
+            (1, True, encode_reason_mask()),
+            (2, True, encode_reason_mask()),
+            (3, False, encode_reason_mask(REASON_HTTP_CODE))
+        ])
+        StrategicUrlStreamDef.persist(
+            strategic_stream,
+            s3_uri
+        )
+
+        outlinks_stream = iter([
+            (1, 'a', 0, 2),
+            (1, 'a', 0, 3),
+            (2, 'a', 0, 3)
+        ])
+        OutlinksStreamDef.persist(
+            outlinks_stream,
+            s3_uri
+        )
+
+        crawl_id = 4
+        first_part_id_size = 2
+        part_id_size = 10
+        actual_result = make_links_to_not_strategic_file(
+            crawl_id, s3_uri,
+            first_part_id_size=first_part_id_size,
+            part_id_size=part_id_size
+        )
+
+        expected_result = [
+            "s3://test_bucket/url_not_strategic_links.txt.0.gz",
+            "s3://test_bucket/url_not_strategic_links.txt.1.gz"
+        ]
+        self.assertEqual(expected_result, actual_result)
+
+        actual_stream = list(
+            LinksToNotStrategicStreamDef.load(s3_uri, self.tmp_dir)
+        )
+
+        expected_stream = [
+            [1, 3],
+            [2, 3]
+        ]
+        self.assertEqual(expected_stream, list(actual_stream))
 
 
 def _mock_es_handler_init(*args, **kwargs):
