@@ -7,7 +7,7 @@ from cdf.features.comparison.streams import get_comparison_data_format
 
 def set_visibility(mapping, visibility):
     """Set all the field of the mapping a visibility level
-    The initial intent of this function was to temporally hide fields
+    The initial intent of this function was to temporarily hide fields
     that we do not want to display to the user because they are still under
     development.
     If you definitely want to set the visibility level, it is recommended to
@@ -25,27 +25,6 @@ def set_visibility(mapping, visibility):
         if "settings" not in field:
             field["settings"] = set()
         field["settings"].add(visibility)
-    return mapping
-
-
-def make_fields_private(mapping):
-    """Make all the field of the mapping private.
-    The initial intent of this function was to temporally hide fields
-    that we do not want to display to the user because they are still under
-    development.
-    If you definitely want to make a field private, it is recommended to
-    explicit add FIELD_RIGHTS.PRIVATE to its settings.
-    :param mapping: input mapping as a dict field_name -> parameter dict
-    :type mapping: dict
-    :returns: dict - the modified mapping
-    """
-    for field in mapping.itervalues():
-        if "settings" not in field:
-            field["settings"] = set()
-        settings = field["settings"]
-
-        #add private right
-        settings.add(FIELD_RIGHTS.PRIVATE)
     return mapping
 
 
