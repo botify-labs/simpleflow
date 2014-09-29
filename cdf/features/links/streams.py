@@ -97,7 +97,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.ADMIN
             }
         },
         "outlinks_internal.nb.nofollow.total": {
@@ -215,7 +216,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.ADMIN
             }
         },
         "outlinks_external.nb.follow.total": {
@@ -235,7 +237,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.ADMIN
             }
         },
         "outlinks_external.nb.nofollow.total": {
@@ -255,7 +258,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.ADMIN
             }
         },
         "outlinks_external.nb.nofollow.combinations.link": {
@@ -599,7 +603,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "order": 6,
             "settings": {
                 ES_DOC_VALUE,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.ADMIN
             }
         },
         "inlinks_internal.nb.nofollow.total": {
