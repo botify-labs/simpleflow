@@ -1061,9 +1061,6 @@ class LinksToNotStrategicStreamDef(StreamDefBase):
         if len(error_urls) < 10:
             error_urls.append(url_dest_id)
 
-        # increment the consolidate value
-        errors['total'] += 1
-
         errors[error_kind]['urls_exists'] = True
 
 
