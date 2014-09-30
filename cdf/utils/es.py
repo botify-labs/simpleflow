@@ -1,10 +1,10 @@
+from cdf.utils.url import get_domain
 from elasticsearch import Elasticsearch
 from itertools import (
     takewhile,
     islice,
     count
 )
-from cdf.utils.url import get_domain
 
 
 # TODO(darkjh) use thrift protocol
