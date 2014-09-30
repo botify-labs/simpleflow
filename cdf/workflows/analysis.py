@@ -355,7 +355,6 @@ class AnalysisWorkflow(Workflow):
             context["es_location"],
             context["es_index"],
             context["es_doc_type"],
-            context["s3_uri"],
             s3_uri
         )
         return insights_result
