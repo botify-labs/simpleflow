@@ -38,8 +38,13 @@ def get_bad_links(stream_infos, stream_outlinks):
 
 
 def get_links_to_not_strategic_urls(stream_strategic, stream_outlinks):
-    """
-    (url_src_id, url_dest_id, error_http_code)
+    """Compute a stream of outlinks to not strategic urls.
+    The result stream is based on LinksToNotStrategicStreamDef.
+    :param stream_strategic: a stream of strategic urls (based on StrategicUrlStreamDef)
+    :type stream_strategic: iterable
+    :param stream_outlinks: a stream of outlinks (based on OutlinksStreamDef)
+    :type stream_outlinks: iterable
+    :returns: iterable - the stream of outlinks to not strategic urls.
     """
     # Resolve indexes
     url_id_idx = StrategicUrlStreamDef.field_idx('id')
@@ -87,8 +92,12 @@ def get_bad_link_counters(stream_bad_links):
 
 def get_link_to_not_strategic_urls_counters(stream_not_strategic_links):
     """
-    A counter of (url_src_id, count)
-    Sorted on `url_src_id`
+    Compute a stream of links to not strategic urls count, given an input
+    stream based on LinksToNotStrategicStreamDef.
+    The result stream is based on LinksToNotStrategicCountersStreamDef.
+    :param stream_not_strategic_links: the input stream (based LinksToNotStrategicStreamDef)
+    :type stream_not_strategic_links: iterator
+    :returns: iterator
     """
     # Resolve indexes
     src_url_idx = LinksToNotStrategicStreamDef.field_idx('id')
