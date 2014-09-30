@@ -127,7 +127,9 @@ def compute_insight_values(crawls, es_location, es_index, es_doc_type):
 
 @with_temporary_dir
 def compute_insights(crawls,
-                     es,
+                     es_location,
+                     es_index,
+                     es_doc_type,
                      s3_uri,
                      tmp_dir=None,
                      force_fetch=False):
@@ -135,8 +137,15 @@ def compute_insights(crawls,
     as a json file.
     :param crawls: a dict crawl_id -> feature options
     :type crawls: dict
-    :param es: ElasticSearch handler
-    :type es: cdf.util.es.ES
+    :param es_location: the location of the elasticsearch server.
+                        For instance "http://elasticsearch1.staging.saas.botify.com:9200"
+    :type es_location: str
+    :param es_index: the name of the elasticsearch index to use.
+                     Usually "botify".
+    :type es_index: str
+    :param es_doc_type: the doc_type to query
+    :type es_doc_type: str
+
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
     :param user_agent: the user agent to use for the query.
@@ -147,7 +156,7 @@ def compute_insights(crawls,
     :type force_fetch: bool
     :returns: str - the uri of the generated json document
     """
-    result = compute_insight_values(crawls, es)
+    result = compute_insight_values(crawls, es_location, es_index, es_doc_type)
 
     destination_uri = "{}/precomputation/insights.json".format(s3_uri)
     push_content(
