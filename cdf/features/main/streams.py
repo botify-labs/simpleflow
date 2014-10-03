@@ -361,6 +361,8 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    FIELD_RIGHTS.FILTERS,
+                    FIELD_RIGHTS.SELECT
                 }
             },
             "strategic.reason.http_code": {
@@ -368,6 +370,8 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    FIELD_RIGHTS.FILTERS,
+                    FIELD_RIGHTS.SELECT
                 }
             },
             "strategic.reason.content_type": {
@@ -375,6 +379,8 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    FIELD_RIGHTS.FILTERS,
+                    FIELD_RIGHTS.SELECT
                 }
             },
             "strategic.reason.noindex": {
@@ -382,6 +388,8 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    FIELD_RIGHTS.FILTERS,
+                    FIELD_RIGHTS.SELECT
                 }
             },
             "strategic.reason.canonical": {
@@ -389,6 +397,8 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    FIELD_RIGHTS.FILTERS,
+                    FIELD_RIGHTS.SELECT
                 }
             }
         },

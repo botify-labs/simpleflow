@@ -1,7 +1,8 @@
 from cdf.metadata.url.url_metadata import FLOAT_TYPE
 from cdf.core.metadata.constants import RENDERING
 from cdf.core.insights import Insight, PositiveTrend
-from cdf.query.filter import (EqFilter,
+from cdf.query.filter import (AndFilter,
+                              EqFilter,
                               LtFilter,
                               GteFilter,
                               BetweenFilter,
@@ -66,22 +67,20 @@ def get_http_code_insights():
 
 
 def get_strategic_urls_insights():
-    return []
-    #FIXME uncomment this when strategic urls have been implemented
-#    return [
-#        Insight(
-#            "strategic_1",
-#            "Strategic Urls",
-#            PositiveTrend.UP,
-#            EqFilter("strategic", True)
-#        ),
-#        Insight(
-#            "strategic_0",
-#            "Non Strategic Urls",
-#            PositiveTrend.DOWN,
-#            EqFilter("strategic", False)
-#        )
-#    ]
+    return [
+        Insight(
+            "strategic_1",
+            "Strategic Urls",
+            PositiveTrend.UP,
+            EqFilter("strategic.is_strategic", True)
+        ),
+        Insight(
+            "strategic_0",
+            "Non Strategic Urls",
+            PositiveTrend.DOWN,
+            EqFilter("strategic.is_strategic", False)
+        )
+    ]
 
 
 def get_content_type_insights():
@@ -143,64 +142,54 @@ def get_speed_insights():
 
 
 def get_strategic_urls_speed_insights():
-    return []
-    #FIXME uncomment when strategic urls have been implemented
-#    field = "delay_last_byte"
-#    strategic_predicate = EqFilter("strategic", True)
-#    return [
-#        Insight(
-#            "speed_fast_strategic",
-#            "Fast Strategic Urls",
-#            PositiveTrend.UP,
-#            AndFilter(
-#                [
-#                    strategic_predicate,
-#                    LtFilter(field, 500),
-#                    field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
-
-#                ]
-#            )
-#        ),
-#        Insight(
-#            "speed_medium_strategic",
-#            "Medium Strategic Urls",
-#            PositiveTrend.DOWN,
-#            AndFilter(
-#                [
-#                    strategic_predicate,
-#                    BetweenFilter(field, [500, 999]),
-#                    field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
-
-#                ]
-#            )
-#        ),
-#        Insight(
-#            "speed_slow_strategic",
-#            "Slow Strategic Urls",
-#            PositiveTrend.DOWN,
-#            AndFilter(
-#                [
-#                    strategic_predicate,
-#                    BetweenFilter(field, [1000, 1999]),
-#                    field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
-
-#                ]
-#            )
-#        ),
-#        Insight(
-#            "speed_slowest_strategic",
-#            "Slowest Strategic Urls",
-#            PositiveTrend.DOWN,
-#            AndFilter(
-#                [
-#                    strategic_predicate,
-#                    GteFilter(field, 2000),
-#                    field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
-
-#                ]
-#            )
-#        ),
-#    ]
+    field = "delay_last_byte"
+    strategic_predicate = EqFilter("strategic.is_strategic", True)
+    return [
+        Insight(
+            "speed_fast_strategic",
+            "Fast Strategic Urls",
+            PositiveTrend.UP,
+            AndFilter(
+                [
+                    strategic_predicate,
+                    LtFilter(field, 500),
+                ]
+            )
+        ),
+        Insight(
+            "speed_medium_strategic",
+            "Medium Strategic Urls",
+            PositiveTrend.DOWN,
+            AndFilter(
+                [
+                    strategic_predicate,
+                    BetweenFilter(field, [500, 999]),
+                ]
+            )
+        ),
+        Insight(
+            "speed_slow_strategic",
+            "Slow Strategic Urls",
+            PositiveTrend.DOWN,
+            AndFilter(
+                [
+                    strategic_predicate,
+                    BetweenFilter(field, [1000, 1999]),
+                ]
+            )
+        ),
+        Insight(
+            "speed_slowest_strategic",
+            "Slowest Strategic Urls",
+            PositiveTrend.DOWN,
+            AndFilter(
+                [
+                    strategic_predicate,
+                    GteFilter(field, 2000),
+                ]
+            )
+        ),
+    ]
 
 
 #insights for domain/subdomains
@@ -231,9 +220,15 @@ def get_average_speed_insights():
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
             field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
-        )
+        ),
+        Insight(
+            "speed_strategic_avg",
+            "Average Load time on strategic urls (in ms)",
+            EqFilter("strategic.is_strategic", True),
+            metric_agg=AvgAggregation(field),
+            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+        ),
     ]
-    #TODO"speed_strategic_avg", "Average Load time on strategic urls (in ms)", {"field": "strategic", "value": true}),
 
 
 def get_average_depth_insights():
@@ -245,9 +240,16 @@ def get_average_depth_insights():
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
             field_type=FLOAT_TYPE
+        ),
+        Insight(
+            "depth_strategic_avg",
+            "Average Depth on strategic urls",
+            PositiveTrend.DOWN,
+            EqFilter("strategic.is_strategic", True),
+            metric_agg=AvgAggregation(field),
+            field_type=FLOAT_TYPE
         )
     ]
-    #TODO"depth_strategic_avg", "Average Depth on strategic urls", {"field": "strategic", "value": true}),
 
 
 def get_insights():
