@@ -61,7 +61,7 @@ def get_links_to_not_strategic_urls(stream_strategic, stream_outlinks):
             non_strategic_urlids.add(strategic_entry[url_id_idx])
 
     # Iterator over outlinks and extract all normal links whose destination
-    # is in the *bad_code* dict
+    # is in the *non_strategic_urlids* dict
     for outlink in stream_outlinks:
         dest = outlink[dest_url_idx]
         link_type = outlink[link_type_idx]
