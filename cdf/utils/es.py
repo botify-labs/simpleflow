@@ -1,10 +1,7 @@
 from cdf.utils.url import get_domain
+from cdf.utils.stream import chunk
 from elasticsearch import Elasticsearch
-from itertools import (
-    takewhile,
-    islice,
-    count
-)
+
 
 
 # TODO(darkjh) use thrift protocol
@@ -76,7 +73,7 @@ class EsHandler(object):
         :rtype: list
         """
         results = []
-        for trunk in _chunk(ids, chunk_size):
+        for trunk in chunk(ids, chunk_size):
             resolved = self.es_client.mget(
                 body={"ids": trunk},
                 index=self.index,
@@ -140,15 +137,4 @@ def bulk(client, docs, chunk_size=500, bulk_type='index', **kwargs):
     return client.bulk(bulk_actions, **kwargs)
 
 
-def _chunk(stream, size):
-    """Chunk the input stream according to size
 
-    >>> _chunk([1, 2, 3, 4, 5], 2)
-    [[1, 2], [3, 4], [5]]
-
-    This helper slice the input stream into chunk of `size`. At the end of
-    the `stream`, `islice` will return an empty list [], which will stops
-    the `takeWhile` wrapper
-    """
-    _stream = iter(stream)
-    return takewhile(bool, (list(islice(_stream, size)) for _ in count()))
