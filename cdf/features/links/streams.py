@@ -953,6 +953,8 @@ class BadLinksStreamDef(StreamDefBase):
             "default_value": None
         },
         # total error_links number
+        # DEPRECATED: this field has been replaced by
+        #"outlinks_errors.total_bad_http_codes"
         "outlinks_errors.total": {
             "type": "integer",
             "verbose_name": "Number of error links in 3xx/4xx/5xx",
@@ -960,6 +962,17 @@ class BadLinksStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL
+            }
+        },
+        # total error_links number corresponding to bad http codes.
+        "outlinks_errors.total_bad_http_codes": {
+            "type": "integer",
+            "verbose_name": "Number of error links in 3xx/4xx/5xx",
+            "order": 100,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.ADMIN
             }
         },
     }
@@ -984,6 +997,7 @@ class BadLinksStreamDef(StreamDefBase):
 
         # increment the consolidate value
         errors['total'] += 1
+        errors['total_bad_http_codes'] += 1
 
         errors[error_kind]['urls_exists'] = True
 
@@ -995,3 +1009,65 @@ class BadLinksCountersStreamDef(StreamDefBase):
         ('http_code', int),
         ('score', int)
     )
+
+class LinksToNonStrategicStreamDef(StreamDefBase):
+    FILE = 'url_non_strategic_links'
+    HEADERS = (
+        ('id', int),
+        ('dst_url_id', int)
+    )
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
+    URL_DOCUMENT_MAPPING = {
+        # erroneous outgoing internal links
+        "outlinks_errors.non_strategic.nb": {
+            "type": INT_TYPE,
+            "verbose_name": "Number of error links to non strategic urls.",
+            "order": 101,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.ADMIN
+            }
+        },
+        "outlinks_errors.non_strategic.urls": {
+            "type": INT_TYPE,
+            "verbose_name": "Sample of error links to non strategic urls.",
+            "order": 102,
+            "settings": {
+                ES_NO_INDEX,
+                LIST,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.ADMIN,
+                RENDERING.URL,
+                URL_ID
+            }
+        },
+        "outlinks_errors.non_strategic.urls_exists": {
+            "type": "boolean",
+            "default_value": None
+        },
+
+    }
+
+    def process_document(self, document, stream_non_strategic_links):
+        _, url_dest_id = stream_non_strategic_links
+
+        errors = document['outlinks_errors']
+
+        error_kind = "non_strategic"
+
+        errors[error_kind]['nb'] += 1
+        error_urls = errors[error_kind]['urls']
+        if len(error_urls) < 10:
+            error_urls.append(url_dest_id)
+
+        errors[error_kind]['urls_exists'] = True
+
+
+class LinksToNonStrategicCountersStreamDef(StreamDefBase):
+    FILE = 'url_non_strategic_links_counters'
+    HEADERS = (
+        ('id', int),
+        ('score', int)
+    )
+

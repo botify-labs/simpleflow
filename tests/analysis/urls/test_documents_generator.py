@@ -18,7 +18,12 @@ from cdf.log import logger
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.features.links.helpers.masks import list_to_mask
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
-from cdf.features.links.streams import OutlinksStreamDef, InlinksStreamDef, BadLinksStreamDef
+from cdf.features.links.streams import (
+    OutlinksStreamDef,
+    InlinksStreamDef,
+    BadLinksStreamDef,
+    LinksToNonStrategicStreamDef
+)
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
     ContentsDuplicateStreamDef,
@@ -567,7 +572,11 @@ class TestOutlinksGeneration(unittest.TestCase):
                 'urls': [5],
                 'urls_exists': True
             },
-            'total': 5
+            'non_strategic': {
+                'nb': 0
+            },
+            'total': 5,
+            'total_bad_http_codes': 5
         }
         expected_2 = {
             '3xx': {
@@ -581,7 +590,63 @@ class TestOutlinksGeneration(unittest.TestCase):
             '5xx': {
                 'nb': 0
             },
-            'total': 11
+            'non_strategic': {
+                'nb': 0
+            },
+            'total': 11,
+            'total_bad_http_codes': 11
+        }
+
+        key = 'outlinks_errors'
+
+        # check url1
+        document = _next_doc(gen)
+        self.assertDictEqual(document[key], expected_1)
+
+        # check url2
+        document = _next_doc(gen)
+        self.assertDictEqual(document[key], expected_2)
+
+    def test_links(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
+        ]
+
+        links_to_non_strategic_urls = [
+            [1, 5],
+            [1, 100],
+            [1, 101],
+            [1, 102],
+            [1, 103]
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(iter(patterns)),
+            LinksToNonStrategicStreamDef.load_iterator(iter(links_to_non_strategic_urls))
+        ])
+
+        expected_1 = {
+            '3xx': {'nb': 0},
+            '4xx': {'nb': 0},
+            '5xx': {'nb': 0},
+            'total_bad_http_codes': 0,
+            'total': 0,
+            'non_strategic': {
+                'nb': 5,
+                'urls': [5, 100, 101, 102, 103],
+                'urls_exists': True
+            }
+        }
+        expected_2 = {
+            '3xx': {'nb': 0},
+            '4xx': {'nb': 0},
+            '5xx': {'nb': 0},
+            'total_bad_http_codes': 0,
+            'total': 0,
+            'non_strategic': {
+                'nb': 0
+            }
         }
 
         key = 'outlinks_errors'
