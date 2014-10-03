@@ -68,7 +68,7 @@ class TestSplitStream(unittest.TestCase):
         nb_parts = 10
         stream_size = 5
         actual_result = split_stream(range(stream_size), stream_size, nb_parts)
-        expected_result = [[0], [1], [2], [3], [4], [], [], [], [], []]
+        expected_result = [[], [], [], [], [], [0], [1], [2], [3], [4]]
         self.assertEqual(expected_result, [list(g) for g in actual_result])
 
 

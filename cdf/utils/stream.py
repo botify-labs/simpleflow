@@ -28,21 +28,23 @@ def split_stream(input_stream, stream_size, nb_parts):
     if nb_parts <= 0:
         raise ValueError("nb_parts must be strictly positive")
 
+    #if there are more parts than elements in the stream, generate empty lists
+    #to reach the desired number of parts.
+    for _ in range(stream_size, nb_parts):
+        yield []
+
     #add index to be able to compute the part index of each element.
     input_stream = enumerate(input_stream)
     for _, g in groupby(input_stream,
-                                  lambda x: _get_part_index(x[0], nb_parts, stream_size)):
+                        lambda x: _get_part_index(x[0], nb_parts, stream_size)):
         #remove enumeration index
         yield imap(lambda x: x[1], g)
-    #generate empty lists for remaining elements
-    for _ in range(stream_size, nb_parts):
-        yield []
 
 
 def chunk(stream, size):
     """Chunk the input stream according to size
 
-    >>> _chunk([1, 2, 3, 4, 5], 2)
+    >>> chunk([1, 2, 3, 4, 5], 2)
     [[1, 2], [3, 4], [5]]
 
     This helper slice the input stream into chunk of `size`. At the end of
