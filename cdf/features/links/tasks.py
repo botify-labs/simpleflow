@@ -106,8 +106,8 @@ def make_bad_link_file(crawl_id, s3_uri,
 
 @with_temporary_dir
 def make_links_to_not_strategic_file(s3_uri,
-                                     first_part_id_size=500000,
-                                     part_id_size=500000,
+                                     first_part_id_size,
+                                     part_id_size,
                                      tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     """
     Generate a tsv file that list all urls outlink to a non strategic url:
