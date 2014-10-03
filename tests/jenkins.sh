@@ -35,6 +35,10 @@ done
 $PIP install python-google-analytics
 
 pip install -e .
+
+# force update `nose`
+$PIP install -U --timeout 180 nose
+
 #ignore integration tests
 nosetests --with-xunit --with-coverage --cover-package=cdf --cover-xml --cover-inclusive -e=*integration*
 [ $? -ne 0 ] && STATUS=1
