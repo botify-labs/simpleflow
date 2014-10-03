@@ -5,7 +5,7 @@ from cdf.features.main.streams import InfosStreamDef, StrategicUrlStreamDef
 from cdf.features.links.streams import (
     OutlinksStreamDef,
     BadLinksStreamDef,
-    LinksToNotStrategicStreamDef
+    LinksToNonStrategicStreamDef
 )
 
 
@@ -37,14 +37,14 @@ def get_bad_links(stream_infos, stream_outlinks):
             yield (outlink[src_url_idx], dest, bad_code[dest])
 
 
-def get_links_to_not_strategic_urls(stream_strategic, stream_outlinks):
-    """Compute a stream of outlinks to not strategic urls.
-    The result stream is based on LinksToNotStrategicStreamDef.
+def get_links_to_non_strategic_urls(stream_strategic, stream_outlinks):
+    """Compute a stream of outlinks to non strategic urls.
+    The result stream is based on LinksToNonStrategicStreamDef.
     :param stream_strategic: a stream of strategic urls (based on StrategicUrlStreamDef)
     :type stream_strategic: iterable
     :param stream_outlinks: a stream of outlinks (based on OutlinksStreamDef)
     :type stream_outlinks: iterable
-    :returns: iterable - the stream of outlinks to not strategic urls.
+    :returns: iterable - the stream of outlinks to non strategic urls.
     """
     # Resolve indexes
     url_id_idx = StrategicUrlStreamDef.field_idx('id')
@@ -90,18 +90,18 @@ def get_bad_link_counters(stream_bad_links):
             yield (src_url_id, http_code, cnt[http_code])
 
 
-def get_link_to_not_strategic_urls_counters(stream_not_strategic_links):
+def get_link_to_non_strategic_urls_counters(stream_non_strategic_links):
     """
-    Compute a stream of links to not strategic urls count, given an input
-    stream based on LinksToNotStrategicStreamDef.
-    The result stream is based on LinksToNotStrategicCountersStreamDef.
-    :param stream_not_strategic_links: the input stream (based LinksToNotStrategicStreamDef)
-    :type stream_not_strategic_links: iterator
+    Compute a stream of links to non strategic urls count, given an input
+    stream based on LinksToNonStrategicStreamDef.
+    The result stream is based on LinksToNonStrategicCountersStreamDef.
+    :param stream_non_strategic_links: the input stream (based LinksToNonStrategicStreamDef)
+    :type stream_non_strategic_links: iterator
     :returns: iterator
     """
     # Resolve indexes
-    src_url_idx = LinksToNotStrategicStreamDef.field_idx('id')
+    src_url_idx = LinksToNonStrategicStreamDef.field_idx('id')
 
     # Group by source url_id
-    for src_url_id, g in groupby(stream_not_strategic_links, lambda x: x[src_url_idx]):
+    for src_url_id, g in groupby(stream_non_strategic_links, lambda x: x[src_url_idx]):
         yield (src_url_id, len(list(g)))

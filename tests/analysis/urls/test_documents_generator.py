@@ -22,7 +22,7 @@ from cdf.features.links.streams import (
     OutlinksStreamDef,
     InlinksStreamDef,
     BadLinksStreamDef,
-    LinksToNotStrategicStreamDef
+    LinksToNonStrategicStreamDef
 )
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
@@ -572,7 +572,7 @@ class TestOutlinksGeneration(unittest.TestCase):
                 'urls': [5],
                 'urls_exists': True
             },
-            'not_strategic': {
+            'non_strategic': {
                 'nb': 0
             },
             'total': 5,
@@ -590,7 +590,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             '5xx': {
                 'nb': 0
             },
-            'not_strategic': {
+            'non_strategic': {
                 'nb': 0
             },
             'total': 11,
@@ -613,7 +613,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
         ]
 
-        links_to_not_strategic_urls = [
+        links_to_non_strategic_urls = [
             [1, 5],
             [1, 100],
             [1, 101],
@@ -623,7 +623,7 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(patterns)),
-            LinksToNotStrategicStreamDef.load_iterator(iter(links_to_not_strategic_urls))
+            LinksToNonStrategicStreamDef.load_iterator(iter(links_to_non_strategic_urls))
         ])
 
         expected_1 = {
@@ -632,7 +632,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             '5xx': {'nb': 0},
             'total_bad_http_codes': 0,
             'total': 0,
-            'not_strategic': {
+            'non_strategic': {
                 'nb': 5,
                 'urls': [5, 100, 101, 102, 103],
                 'urls_exists': True
@@ -644,7 +644,7 @@ class TestOutlinksGeneration(unittest.TestCase):
             '5xx': {'nb': 0},
             'total_bad_http_codes': 0,
             'total': 0,
-            'not_strategic': {
+            'non_strategic': {
                 'nb': 0
             }
         }

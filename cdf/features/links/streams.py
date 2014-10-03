@@ -1010,8 +1010,8 @@ class BadLinksCountersStreamDef(StreamDefBase):
         ('score', int)
     )
 
-class LinksToNotStrategicStreamDef(StreamDefBase):
-    FILE = 'url_not_strategic_links'
+class LinksToNonStrategicStreamDef(StreamDefBase):
+    FILE = 'url_non_strategic_links'
     HEADERS = (
         ('id', int),
         ('dst_url_id', int)
@@ -1019,9 +1019,9 @@ class LinksToNotStrategicStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
     URL_DOCUMENT_MAPPING = {
         # erroneous outgoing internal links
-        "outlinks_errors.not_strategic.nb": {
+        "outlinks_errors.non_strategic.nb": {
             "type": INT_TYPE,
-            "verbose_name": "Number of error links to not strategic urls.",
+            "verbose_name": "Number of error links to non strategic urls.",
             "order": 101,
             "settings": {
                 ES_DOC_VALUE,
@@ -1029,9 +1029,9 @@ class LinksToNotStrategicStreamDef(StreamDefBase):
                 FIELD_RIGHTS.ADMIN
             }
         },
-        "outlinks_errors.not_strategic.urls": {
+        "outlinks_errors.non_strategic.urls": {
             "type": INT_TYPE,
-            "verbose_name": "Sample of error links to not strategic urls.",
+            "verbose_name": "Sample of error links to non strategic urls.",
             "order": 102,
             "settings": {
                 ES_NO_INDEX,
@@ -1042,19 +1042,19 @@ class LinksToNotStrategicStreamDef(StreamDefBase):
                 URL_ID
             }
         },
-        "outlinks_errors.not_strategic.urls_exists": {
+        "outlinks_errors.non_strategic.urls_exists": {
             "type": "boolean",
             "default_value": None
         },
 
     }
 
-    def process_document(self, document, stream_not_strategic_links):
-        _, url_dest_id = stream_not_strategic_links
+    def process_document(self, document, stream_non_strategic_links):
+        _, url_dest_id = stream_non_strategic_links
 
         errors = document['outlinks_errors']
 
-        error_kind = "not_strategic"
+        error_kind = "non_strategic"
 
         errors[error_kind]['nb'] += 1
         error_urls = errors[error_kind]['urls']
@@ -1064,8 +1064,8 @@ class LinksToNotStrategicStreamDef(StreamDefBase):
         errors[error_kind]['urls_exists'] = True
 
 
-class LinksToNotStrategicCountersStreamDef(StreamDefBase):
-    FILE = 'url_not_strategic_links_counters'
+class LinksToNonStrategicCountersStreamDef(StreamDefBase):
+    FILE = 'url_non_strategic_links_counters'
     HEADERS = (
         ('id', int),
         ('score', int)
