@@ -1,6 +1,6 @@
 import unittest
 
-from cdf.utils.stream import split_list, split_stream
+from cdf.utils.stream import split_list, split_stream, chunk
 
 
 class TestSplitList(unittest.TestCase):
@@ -70,3 +70,34 @@ class TestSplitStream(unittest.TestCase):
         actual_result = split_stream(range(stream_size), stream_size, nb_parts)
         expected_result = [[0], [1], [2], [3], [4], [], [], [], [], []]
         self.assertEqual(expected_result, [list(g) for g in actual_result])
+
+
+class TestChunk(unittest.TestCase):
+    def test_nominal_case(self):
+        stream = iter(range(6))
+        chunk_size = 2
+        actual_result = chunk(stream, chunk_size)
+        expected_result = [[0, 1], [2, 3], [4, 5]]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_incomplete_chunk(self):
+        stream = iter(range(7))
+        chunk_size = 2
+        actual_result = chunk(stream, chunk_size)
+        expected_result = [[0, 1], [2, 3], [4, 5], [6]]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_big_chunk(self):
+        stream = iter(range(4))
+        chunk_size = 5
+        actual_result = chunk(stream, chunk_size)
+        expected_result = [[0, 1, 2, 3]]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_empty_stream(self):
+        stream = iter([])
+        chunk_size = 5
+        actual_result = chunk(stream, chunk_size)
+        expected_result = []
+        self.assertEqual(expected_result, list(actual_result))
+
