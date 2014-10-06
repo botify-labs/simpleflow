@@ -22,12 +22,12 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_nominal_case(self):
         inlinks_count_stream = iter([
-            (1, 0, 10,  10),
-            (2, 0, 2, 2),
-            (3, 0, 1, 1),
-            (4, 0, 6, 6),
-            (5, 0, 5, 5),
-            (6, 0, 8, 8)
+            (1, ["follow"], 10,  10),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+            (4, ["follow"], 6, 6),
+            (5, ["follow"], 5, 5),
+            (6, ["follow"], 8, 8)
         ])
         actual_result = generate_follow_inlinks_stream(self.urlids_stream,
                                                        inlinks_count_stream,
@@ -44,14 +44,14 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_nofollow_links(self):
         inlinks_count_stream = iter([
-            (1, 0, 10,  10),
-            (1, 2, 1,  1),
-            (2, 0, 2, 2),
-            (3, 0, 1, 1),
-            (3, 3, 2, 2),
-            (4, 0, 6, 6),
-            (5, 0, 5, 5),
-            (6, 0, 8, 8)
+            (1, ["follow"], 10,  10),
+            (1, ["meta"], 1,  1),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+            (3, ["meta", "link"], 2, 2),
+            (4, ["follow"], 6, 6),
+            (5, ["follow"], 5, 5),
+            (6, ["follow"], 8, 8)
         ])
         actual_result = generate_follow_inlinks_stream(self.urlids_stream,
                                                        inlinks_count_stream,
@@ -68,11 +68,11 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_missing_urlid(self):
         inlinks_count_stream = iter([
-            (1, 0, 10,  10),
-            (2, 0, 2, 2),
-            (3, 0, 1, 1),
-            (5, 0, 5, 5),
-            (6, 0, 8, 8)
+            (1, ["follow"], 10,  10),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+            (5, ["follow"], 5, 5),
+            (6, ["follow"], 8, 8)
         ])
         actual_result = generate_follow_inlinks_stream(self.urlids_stream,
                                                        inlinks_count_stream,
@@ -89,9 +89,9 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_missing_urlids(self):
         inlinks_count_stream = iter([
-            (1, 0, 10,  10),
-            (3, 0, 1, 1),
-            (6, 0, 8, 8)
+            (1, ["follow"], 10,  10),
+            (3, ["follow"], 1, 1),
+            (6, ["follow"], 8, 8)
         ])
 
         urlids = iter([
@@ -116,12 +116,12 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_max_crawled_urlid(self):
         inlinks_count_stream = iter([
-            (1, 0, 10,  10),
-            (2, 0, 2, 2),
-            (3, 0, 1, 1),
-            (4, 0, 6, 6),
-            (5, 0, 5, 5),
-            (6, 0, 8, 8)
+            (1, ["follow"], 10,  10),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+            (4, ["follow"], 6, 6),
+            (5, ["follow"], 5, 5),
+            (6, ["follow"], 8, 8)
         ])
         max_crawled_urlid = 4
         actual_result = generate_follow_inlinks_stream(self.urlids_stream,

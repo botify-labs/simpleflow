@@ -128,7 +128,7 @@ def generate_follow_inlinks_stream(urlid_stream,
 
     #keep only follow links
     inlinks_counter_stream = ifilter(
-        lambda x: is_follow_link(x[follow_mask_index], is_bitmask=True),
+        lambda x: is_follow_link(x[follow_mask_index], is_bitmask=False),
         inlinks_counter_stream
     )
     urlid_id_index = IdStreamDef.field_idx("id")
