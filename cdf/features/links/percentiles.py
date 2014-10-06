@@ -1,5 +1,6 @@
 from itertools import ifilter
 
+from cdf.utils.stream import split_stream
 from cdf.core.streams.utils import group_left
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.links.helpers.predicates import is_follow_link
@@ -152,6 +153,51 @@ def generate_follow_inlinks_stream(urlid_stream,
             #if the list is empty, there is no link
             nb_links = 0
         yield (urlid, nb_links)
+
+
+def compute_quantiles(urlid_stream,
+                      inlinks_counter_stream,
+                      max_crawled_urlid,
+                      nb_quantiles):
+    """Given a InlinksCountersStreamDef compute the quantile id of each url.
+    The criterion used to determine the quantile id is
+    the number of follow inlinks.
+    Basically the function sort the url by increasing number of follow inlinks
+    and split the resulting stream in nb_quantiles chunks.
+    Then it sort the result stream by urlid.
+    :param urlid: the stream of urlids (based on IdStreamDef)
+    :type urlid: iterator
+    :param inlinks_counter_stream: the input stream (based on InlinksCountersStreamDef)
+                         that counts the number of inlinks per url.
+    :type inlinks_counter_stream: iterator
+    :param max_crawled_urlid: the highest urlid corresponding to a crawled url.
+    :type max_crawled_urlid: int
+    :param nb_quantiles: the number of quantiles (i.e. 100 for quantiles)
+    :type nb_quantiles: int
+    """
+    inlink_count_stream = generate_follow_inlinks_stream(urlid_stream,
+                                                         inlinks_counter_stream,
+                                                         max_crawled_urlid)
+
+    #the urls are sorted by increasing number of links and then
+    #by decreasing urlid.
+    #The second sort criterion is here only to ensure that the process is
+    #deterministic.
+    #High urlids tend to have high quantile ids because they are high level urls
+    #To respect this, we sort by decreasing urlid.
+    inlink_count = sorted(list(inlink_count_stream), key=lambda x: (x[1], -x[0]))
+    #generate quantile stream
+    result = []
+    quantile_generator = split_stream(inlink_count, len(inlink_count), nb_quantiles)
+    for quantile_index, urlids in enumerate(quantile_generator):
+        for urlid, _ in urlids:
+            result.append((urlid, quantile_index))
+
+    #sort stream by urlid
+    #as the amount of data per url is small, we know that the data fits in
+    #memory and we can use "sorted"
+    for element in sorted(result, key=lambda x: x[0]):
+        yield element
 
 
 def compute_percentile_stats(percentile_stream):
