@@ -1071,3 +1071,11 @@ class LinksToNonStrategicCountersStreamDef(StreamDefBase):
         ('score', int)
     )
 
+
+class InlinksPercentilesStreamDef(StreamDefBase):
+    FILE = 'inlinks_percentiles'
+    HEADERS = (
+        ('id', int),
+        ('percentile_id', int),
+        ('nb_follow_inlinks', int)
+    )
