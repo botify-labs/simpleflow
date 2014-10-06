@@ -165,6 +165,7 @@ def compute_quantiles(urlid_stream,
     Basically the function sort the url by increasing number of follow inlinks
     and split the resulting stream in nb_quantiles chunks.
     Then it sort the result stream by urlid.
+    The result stream has the form (url_id, percentile_id, nb_follow_inlinks)
     :param urlid: the stream of urlids (based on IdStreamDef)
     :type urlid: iterator
     :param inlinks_counter_stream: the input stream (based on InlinksCountersStreamDef)
@@ -190,8 +191,8 @@ def compute_quantiles(urlid_stream,
     result = []
     quantile_generator = split_stream(inlink_count, len(inlink_count), nb_quantiles)
     for quantile_index, urlids in enumerate(quantile_generator):
-        for urlid, _ in urlids:
-            result.append((urlid, quantile_index))
+        for urlid, nb_follow_inlinks in urlids:
+            result.append((urlid, quantile_index, nb_follow_inlinks))
 
     #sort stream by urlid
     #as the amount of data per url is small, we know that the data fits in

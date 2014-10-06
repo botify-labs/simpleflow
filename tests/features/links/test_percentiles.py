@@ -205,12 +205,12 @@ class TestComputePercentile(unittest.TestCase):
                                           self.max_crawled_urlid,
                                           nb_elements)
         expected_result = [
-            (1, 2),
-            (2, 0),
-            (3, 0),
-            (4, 1),
-            (5, 1),
-            (6, 2)
+            (1, 2, 10),
+            (2, 0, 2),
+            (3, 0, 1),
+            (4, 1, 6),
+            (5, 1, 5),
+            (6, 2, 8)
         ]
         self.assertEqual(expected_result, list(actual_result))
 
@@ -231,12 +231,12 @@ class TestComputePercentile(unittest.TestCase):
                                           nb_elements)
         #the urls are sorted by decreasing urlids
         expected_result = [
-            (1, 2),
-            (2, 2),
-            (3, 1),
-            (4, 1),
-            (5, 0),
-            (6, 0)
+            (1, 2, 4),
+            (2, 2, 4),
+            (3, 1, 4),
+            (4, 1, 4),
+            (5, 0, 4),
+            (6, 0, 4)
         ]
         self.assertEqual(expected_result, list(actual_result))
 
