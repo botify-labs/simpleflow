@@ -496,12 +496,12 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
             tmp_dir=self.tmp_dir
         )
         expected_stream = [
-            [1, 99, 10],
-            [2, 95, 2],
-            [3, 94, 1],
-            [4, 97, 6],
-            [5, 96, 5],
-            [6, 98, 8]
+            [1, 5, 10],
+            [2, 1, 2],
+            [3, 0, 1],
+            [4, 3, 6],
+            [5, 2, 5],
+            [6, 4, 8]
         ]
         self.assertEqual(expected_stream, list(actual_stream))
 
