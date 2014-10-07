@@ -315,10 +315,12 @@ def make_inlinks_percentiles_file(s3_uri,
     max_crawled_urlid = get_max_crawled_urlid(crawler_metakeys)
     #generate stream
     nb_quantiles = 100
-    percentile_stream = compute_quantiles(urlid_stream,
-                                          inlinks_counter_stream,
-                                          max_crawled_urlid,
-                                          nb_quantiles)
+    percentile_stream = compute_quantiles(
+        urlid_stream,
+        inlinks_counter_stream,
+        max_crawled_urlid,
+        nb_quantiles
+    )
     #persist stream
     output_files = InlinksPercentilesStreamDef.persist(
         percentile_stream,

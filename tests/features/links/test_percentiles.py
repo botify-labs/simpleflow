@@ -30,9 +30,11 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (5, ["follow"], 5, 5),
             (6, ["follow"], 8, 8)
         ])
-        actual_result = generate_follow_inlinks_stream(self.urlids_stream,
-                                                       inlinks_count_stream,
-                                                       self.max_crawled_urlid)
+        actual_result = generate_follow_inlinks_stream(
+            self.urlids_stream,
+            inlinks_count_stream,
+            self.max_crawled_urlid
+        )
         expected_result = [
             (1, 10),
             (2, 2),
@@ -54,9 +56,11 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (5, ["follow"], 5, 5),
             (6, ["follow"], 8, 8)
         ])
-        actual_result = generate_follow_inlinks_stream(self.urlids_stream,
-                                                       inlinks_count_stream,
-                                                       self.max_crawled_urlid)
+        actual_result = generate_follow_inlinks_stream(
+            self.urlids_stream,
+            inlinks_count_stream,
+            self.max_crawled_urlid
+        )
         expected_result = [
             (1, 10),
             (2, 2),
@@ -75,9 +79,11 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (5, ["follow"], 5, 5),
             (6, ["follow"], 8, 8)
         ])
-        actual_result = generate_follow_inlinks_stream(self.urlids_stream,
-                                                       inlinks_count_stream,
-                                                       self.max_crawled_urlid)
+        actual_result = generate_follow_inlinks_stream(
+            self.urlids_stream,
+            inlinks_count_stream,
+            self.max_crawled_urlid
+        )
         expected_result = [
             (1, 10),
             (2, 2),
@@ -103,9 +109,11 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (5, "http", "foo.com", "/qux"),
             (6, "http", "foo.com", "/barbar"),
         ])
-        actual_result = generate_follow_inlinks_stream(urlids,
-                                                       inlinks_count_stream,
-                                                       self.max_crawled_urlid)
+        actual_result = generate_follow_inlinks_stream(
+            urlids,
+            inlinks_count_stream,
+            self.max_crawled_urlid
+        )
         expected_result = [
             (1, 10),
             (3, 1),
@@ -125,9 +133,11 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (6, ["follow"], 8, 8)
         ])
         max_crawled_urlid = 4
-        actual_result = generate_follow_inlinks_stream(self.urlids_stream,
-                                                       inlinks_count_stream,
-                                                       max_crawled_urlid)
+        actual_result = generate_follow_inlinks_stream(
+            self.urlids_stream,
+            inlinks_count_stream,
+            max_crawled_urlid
+        )
         expected_result = [
             (1, 10),
             (2, 2),
@@ -200,10 +210,12 @@ class TestComputePercentile(unittest.TestCase):
             (6, ["follow"], 8, 8)
         ])
         nb_elements = 3
-        actual_result = compute_quantiles(self.urlids_stream,
-                                          inlinks_count_stream,
-                                          self.max_crawled_urlid,
-                                          nb_elements)
+        actual_result = compute_quantiles(
+            self.urlids_stream,
+            inlinks_count_stream,
+            self.max_crawled_urlid,
+            nb_elements
+        )
         expected_result = [
             (1, 2, 10),
             (2, 0, 2),
@@ -225,10 +237,12 @@ class TestComputePercentile(unittest.TestCase):
             (6, ["follow"], 4, 4)
         ])
         nb_elements = 3
-        actual_result = compute_quantiles(self.urlids_stream,
-                                          inlinks_count_stream,
-                                          self.max_crawled_urlid,
-                                          nb_elements)
+        actual_result = compute_quantiles(
+            self.urlids_stream,
+            inlinks_count_stream,
+            self.max_crawled_urlid,
+            nb_elements
+        )
         #the urls are sorted by decreasing urlids
         expected_result = [
             (1, 2, 4),

@@ -176,9 +176,11 @@ def compute_quantiles(urlid_stream,
     :param nb_quantiles: the number of quantiles (i.e. 100 for quantiles)
     :type nb_quantiles: int
     """
-    inlink_count_stream = generate_follow_inlinks_stream(urlid_stream,
-                                                         inlinks_counter_stream,
-                                                         max_crawled_urlid)
+    inlink_count_stream = generate_follow_inlinks_stream(
+        urlid_stream,
+        inlinks_counter_stream,
+        max_crawled_urlid
+    )
 
     #the urls are sorted by increasing number of links and then
     #by decreasing urlid.
