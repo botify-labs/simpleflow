@@ -71,6 +71,24 @@ class TestSplitStream(unittest.TestCase):
         expected_result = [[], [], [], [], [], [0], [1], [2], [3], [4]]
         self.assertEqual(expected_result, [list(g) for g in actual_result])
 
+    def test_negative_stream_size(self):
+        nb_parts = 5
+        stream_size = -1
+        actual_result = split_stream(range(5), stream_size, nb_parts)
+        self.assertRaises(
+            ValueError,
+            list,
+            actual_result
+        )
+
+    def test_empty_stream(self):
+        nb_parts = 5
+        stream_size = 0
+        actual_result = split_stream(range(stream_size), stream_size, nb_parts)
+        #we generate empty quantiles
+        expected_result = [[], [], [], [], []]
+        self.assertEqual(expected_result, list(actual_result))
+
 
 class TestChunk(unittest.TestCase):
     def test_nominal_case(self):

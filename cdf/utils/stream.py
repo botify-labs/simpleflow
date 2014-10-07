@@ -28,6 +28,9 @@ def split_stream(input_stream, stream_size, nb_parts):
     if nb_parts <= 0:
         raise ValueError("nb_parts must be strictly positive")
 
+    if stream_size < 0:
+        raise ValueError("stream_size must be positive")
+
     #if there are more parts than elements in the stream, generate empty lists
     #to reach the desired number of parts.
     for _ in range(stream_size, nb_parts):
