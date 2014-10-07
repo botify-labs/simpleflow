@@ -153,23 +153,24 @@ class TestPercentileStats(unittest.TestCase):
         for m in metrics:
             stat.merge(m)
 
-        self.assertEqual(stat.min, min(metrics))
-        self.assertEqual(stat.max, max(metrics))
-        self.assertEqual(stat.avg, sum(metrics) / len(metrics))
-        self.assertEqual(stat.url_total, len(metrics))
-        self.assertEqual(stat.metric_total, sum(metrics))
+        self.assertEqual(stat.min, 15)
+        self.assertEqual(stat.max, 10239)
+        self.assertEqual(stat.avg, 2071)
+        self.assertEqual(stat.url_total, 5)
+        self.assertEqual(stat.metric_total, 10356)
 
     def test_to_dict(self):
         stat = PercentileStats.new_empty(10)
         stat.merge(1)
+        stat.merge(5)
         result = stat.to_dict()
         expected = {
             'id': 10,
-            'metric_total': 1,
-            'url_total': 1,
-            'avg': 1,
+            'metric_total': 6,
+            'url_total': 2,
+            'avg': 3,
             'min': 1,
-            'max': 1,
+            'max': 5,
         }
         self.assertEqual(result, expected)
 
@@ -208,14 +209,43 @@ class TestPercentileStatsComputation(unittest.TestCase):
     def setUp(self):
         self._generate_fixture()
 
-    def test_harness(self):
+    def test_random(self):
         result = compute_percentile_stats(self.fixture)
         self.assertEqual(len(result), len(self.p_length))
 
         for stat in result:
             pid = stat.percentile_id
-            self.assertEqual(stat.min, min(self.metrics[pid]))
-            self.assertEqual(stat.max, max(self.metrics[pid]))
-            self.assertEqual(stat.metric_total, sum(self.metrics[pid]))
-            self.assertEqual(stat.url_total, self.p_length[pid])
-            self.assertEqual(stat.avg, sum(self.metrics[pid]) / self.p_length[pid])
+            try:
+                self.assertEqual(stat.min, min(self.metrics[pid]))
+                self.assertEqual(stat.max, max(self.metrics[pid]))
+                self.assertEqual(stat.metric_total, sum(self.metrics[pid]))
+                self.assertEqual(stat.url_total, self.p_length[pid])
+                self.assertEqual(stat.avg, sum(self.metrics[pid]) / self.p_length[pid])
+            except AssertionError:
+                print "Fixture:\n {}".format(self.fixture)
+                raise
+
+    def test_harness(self):
+        fixture = [
+            (1, 1, 15),
+            (2, 2, 40),
+            (3, 2, 2),
+            (4, 1, 9),
+            (5, 1, 17),
+        ]
+        result = compute_percentile_stats(fixture)
+        self.assertEqual(len(result), 2)
+
+        stat1 = result[0]
+        self.assertEqual(stat1.min, 9)
+        self.assertEqual(stat1.max, 17)
+        self.assertEqual(stat1.url_total, 3)
+        self.assertEqual(stat1.metric_total, 41)
+        self.assertEqual(stat1.avg, 41 / 3)
+
+        stat1 = result[1]
+        self.assertEqual(stat1.min, 2)
+        self.assertEqual(stat1.max, 40)
+        self.assertEqual(stat1.url_total, 2)
+        self.assertEqual(stat1.metric_total, 42)
+        self.assertEqual(stat1.avg, 21)
