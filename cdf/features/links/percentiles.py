@@ -6,6 +6,105 @@ from cdf.features.links.helpers.predicates import is_follow_link
 from cdf.features.links.streams import InlinksCountersStreamDef
 
 
+class PercentileStats(object):
+    """Monoid like class to represent stats of a percentile group
+    """
+    def __init__(self, metric_total, url_total, percentile_id, min, max):
+        """Init a percentile stat instance
+
+        Use the factory method `new_empty` instead of this ctor
+
+        :param metric_total: total sum of all metrics
+        :type metric_total: int
+        :param url_total: total url count
+        :type url_total: int
+        :param percentile_id: percentile id
+        :type percentile_id: int
+        :param min: min value for the metric
+        :type min: int
+        :param max: max value for the metric
+        :type max: int
+        """
+        self.metric_total = metric_total
+        self.url_total = url_total
+        self._min = min
+        self._max = max
+        self.percentile_id = percentile_id
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+
+        return (
+            self.percentile_id == other.percentile_id and
+            self.url_total == other.url_total and
+            self.metric_total == other.metric_total and
+            self.min == other.min and
+            self.max == other.max
+        )
+
+    @property
+    def avg(self):
+        if self.url_total == 0:
+            # simply returns 0 for empty percentile group
+            return 0
+        return self.metric_total / self.url_total
+
+    @property
+    def min(self):
+        if self._min is None:
+            return 0
+        return self._min
+
+    @property
+    def max(self):
+        if self._max is None:
+            return 0
+        return self._max
+
+    @classmethod
+    def new_empty(cls, pid):
+        """Factory method for generating an empty percentile stats instance
+        """
+        return cls(0, 0, percentile_id=pid, min=None, max=None)
+
+    def _merge_min(self, _min):
+        if self._min is None:
+            self._min = _min
+        else:
+            if _min < self._min:
+                self._min = _min
+
+    def _merge_max(self, _max):
+        if self._max is None:
+            self._max = _max
+        else:
+            if _max > self._max:
+                self._max = _max
+
+    def merge(self, metric_value):
+        """Merge a metric value into the percentile group
+
+        :param metric_value: domain metric value
+        """
+        self._merge_max(metric_value)
+        self._merge_min(metric_value)
+        self.metric_total += metric_value
+        self.url_total += 1
+
+    def to_dict(self):
+        """Serialize this percentile stat in dict/json
+        """
+        return {
+            'id': self.percentile_id,
+            'metric_total': self.metric_total,
+            'url_total': self.url_total,
+            'min': self.min,
+            'max': self.max,
+            'avg': self.avg
+        }
+
+
 def generate_follow_inlinks_stream(urlid_stream,
                                    inlinks_counter_stream,
                                    max_crawled_urlid):
@@ -54,3 +153,22 @@ def generate_follow_inlinks_stream(urlid_stream,
             nb_links = 0
         yield (urlid, nb_links)
 
+
+def compute_percentile_stats(percentile_stream):
+    """Compute percentile stats by a pass of percentile stream
+
+    :param percentile_stream: percentile stream of form:
+        (`url_id`, `percentile_id`, `metric_value`)
+    :type percentile_stream: iterator
+    :return: list of stats of each percentile
+    :rtype: list
+    """
+    stats = {}
+    for url_id, pid, metric_value in percentile_stream:
+        if pid not in stats:
+            stats[pid] = PercentileStats.new_empty(pid)
+        stat = stats[pid]
+        stat.merge(metric_value)
+
+    # in-memory operations since at most 100 percentiles
+    return [stats[i] for i in sorted(stats)]
