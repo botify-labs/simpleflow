@@ -10,6 +10,21 @@ class PercentileStats(object):
     """Monoid like class to represent stats of a percentile group
     """
     def __init__(self, metric_total, url_total, percentile_id, min, max):
+        """Init a percentile stat instance
+
+        Use the factory method `new_empty` instead of this ctor
+
+        :param metric_total: total sum of all metrics
+        :type metric_total: int
+        :param url_total: total url count
+        :type url_total: int
+        :param percentile_id: percentile id
+        :type percentile_id: int
+        :param min: min value for the metric
+        :type min: int
+        :param max: max value for the metric
+        :type max: int
+        """
         self.metric_total = metric_total
         self.url_total = url_total
         self._min = min
@@ -48,7 +63,7 @@ class PercentileStats(object):
         return self._max
 
     @classmethod
-    def new_emtpy(cls, pid):
+    def new_empty(cls, pid):
         """Factory method for generating an empty percentile stats instance
         """
         return cls(0, 0, percentile_id=pid, min=None, max=None)
@@ -69,6 +84,7 @@ class PercentileStats(object):
 
     def merge(self, metric_value):
         """Merge a metric value into the percentile group
+
         :param metric_value: domain metric value
         """
         self._merge_max(metric_value)
@@ -77,6 +93,8 @@ class PercentileStats(object):
         self.url_total += 1
 
     def to_dict(self):
+        """Serialize this percentile stat in dict/json
+        """
         return {
             'id': self.percentile_id,
             'metric_total': self.metric_total,
@@ -135,3 +153,22 @@ def generate_follow_inlinks_stream(urlid_stream,
             nb_links = 0
         yield (urlid, nb_links)
 
+
+def compute_percentile_stats(percentile_stream):
+    """Compute percentile stats by a pass of percentile stream
+
+    :param percentile_stream: percentile stream of form:
+        (`url_id`, `percentile_id`, `metric_value`)
+    :type percentile_stream: iterator
+    :return: list of stats of each percentile
+    :rtype: list
+    """
+    stats = {}
+    for url_id, pid, metric_value in percentile_stream:
+        if pid not in stats:
+            stats[pid] = PercentileStats.new_empty(pid)
+        stat = stats[pid]
+        stat.merge(metric_value)
+
+    # in-memory operations since at most 100 percentiles
+    return [stats[i] for i in sorted(stats)]
