@@ -168,11 +168,11 @@ class TestGetFeatureOptions(unittest.TestCase):
         #mocking
         get_botify_api_token_mock.return_value = "foo"
         httpretty.register_uri(httpretty.GET,
-                               "http://api.foo.com/crawls/1001/",
+                               "http://api.foo.com/crawls/1001/config/",
                                body='{"features": {"option1": true}}',
                                content_type="application/json")
         httpretty.register_uri(httpretty.GET,
-                               "http://api.foo.com/crawls/2008/",
+                               "http://api.foo.com/crawls/2008/config/",
                                body='{"features": {"option1": false}}',
                                content_type="application/json")
 
@@ -189,7 +189,7 @@ class TestGetFeatureOptions(unittest.TestCase):
     def test_api_error(self, get_botify_api_token_mock):
         get_botify_api_token_mock.return_value = "foo"
         httpretty.register_uri(httpretty.GET,
-                               "http://api.foo.com/crawls/1001/",
+                               "http://api.foo.com/crawls/1001/config/",
                                status=500)
         crawl_ids = [1001]
         self.assertRaises(
@@ -203,7 +203,7 @@ class TestGetFeatureOptions(unittest.TestCase):
     def test_missing_features(self, get_botify_api_token_mock):
         get_botify_api_token_mock.return_value = "foo"
         httpretty.register_uri(httpretty.GET,
-                               "http://api.foo.com/crawls/1001/",
+                               "http://api.foo.com/crawls/1001/config/",
                                body='{}',
                                content_type="application/json")
         crawl_ids = [1001]
