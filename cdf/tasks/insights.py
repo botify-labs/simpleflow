@@ -195,7 +195,7 @@ def get_feature_options(api_address, crawl_ids):
     "Authorization": "Token {}".format(get_botify_api_token())
     }
     for crawl_id in crawl_ids:
-        endpoint = urljoin(api_address, "crawls/{}/".format(crawl_id))
+        endpoint = urljoin(api_address, "crawls/{}/config/".format(crawl_id))
         r = requests.get(endpoint, headers=headers)
         if not r.ok:
             raise ApiError("{}: {}".format(r.status_code, r.reason))
