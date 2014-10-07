@@ -1079,3 +1079,23 @@ class InlinksPercentilesStreamDef(StreamDefBase):
         ('percentile_id', int),
         ('nb_follow_inlinks', int)
     )
+
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.inlinks.name
+    URL_DOCUMENT_MAPPING = {
+        # erroneous outgoing internal links
+        "inlinks_internal.percentile_id": {
+            "type": INT_TYPE,
+            "verbose_name": "Percentile id.",
+            "order": 101,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                AGG_CATEGORICAL,
+                FIELD_RIGHTS.ADMIN
+            }
+        },
+    }
+
+    def process_document(self, document, input_stream):
+        _, percentile_id, _ = input_stream
+        document["inlinks_internal"]["percentile_id"] = percentile_id
