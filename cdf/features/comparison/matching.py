@@ -423,6 +423,9 @@ def document_merge(matching_stream, new_crawl_id):
     result_doc = None
     for state, (ref_doc, new_doc) in matching_stream:
         if state is MatchingState.MATCH:
+            # remove `_id` field in ref doc if it's present
+            if '_id' in ref_doc:
+                del ref_doc['_id']
             # merged the reference document
             result_doc = new_doc
             result_doc[_PREV_KEY] = ref_doc
