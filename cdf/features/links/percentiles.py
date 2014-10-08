@@ -108,8 +108,9 @@ class PercentileStats(object):
 
 def generate_follow_inlinks_stream(urlid_stream,
                                    inlinks_counter_stream,
+                                   inredirections_counter_stream,
                                    max_crawled_urlid):
-    """Compute a stream of follow inlinks count.
+    """Compute a stream of follow inlinks count - including the in redirections.
     This function transforms InlinksCountersStreamDef which does not exactly
     fit our needs.
     It removes nofollow urls and insert elements for all crawled urlids.
@@ -120,6 +121,12 @@ def generate_follow_inlinks_stream(urlid_stream,
                                    (based on InlinksCountersStreamDef)
                                    that counts the number of inlinks per url.
     :type inlinks_counter_stream: iterator
+    :param inredirections_counter_stream: the stream of in redirections counter
+                                         (based on InredirectCountersStreamDef)
+    :type inredirections_counter_stream: iterator
+    :param inredirections_counter_stream: the stream of in redirections counter
+                                         (based on InredirectCountersStreamDef)
+    :type inredirections_counter_stream: iterator
     :param max_crawled_urlid: the highest urlid corresponding to a crawled url.
     :type max_crawled_urlid: int
     :param nb_quantiles: the number of quantiles (i.e. 100 for quantiles)
@@ -154,11 +161,12 @@ def generate_follow_inlinks_stream(urlid_stream,
 
 def compute_quantiles(urlid_stream,
                       inlinks_counter_stream,
+                      inredirections_counter_stream,
                       max_crawled_urlid,
                       nb_quantiles):
     """Given a InlinksCountersStreamDef compute the quantile id of each url.
     The criterion used to determine the quantile id is
-    the number of follow inlinks.
+    the number of follow inlinks - including the in redirections.
     Basically the function sort the url by increasing number of follow inlinks
     and split the resulting stream in nb_quantiles chunks.
     Then it sort the result stream by urlid.
@@ -168,6 +176,9 @@ def compute_quantiles(urlid_stream,
     :param inlinks_counter_stream: the input stream (based on InlinksCountersStreamDef)
                          that counts the number of inlinks per url.
     :type inlinks_counter_stream: iterator
+    :param inredirections_counter_stream: the stream of in redirections counter
+                                         (based on InredirectCountersStreamDef)
+    :type inredirections_counter_stream: iterator
     :param max_crawled_urlid: the highest urlid corresponding to a crawled url.
     :type max_crawled_urlid: int
     :param nb_quantiles: the number of quantiles (i.e. 100 for quantiles)
@@ -176,6 +187,7 @@ def compute_quantiles(urlid_stream,
     inlink_count_stream = generate_follow_inlinks_stream(
         urlid_stream,
         inlinks_counter_stream,
+        inredirections_counter_stream,
         max_crawled_urlid
     )
 
