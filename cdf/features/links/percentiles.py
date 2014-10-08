@@ -146,12 +146,9 @@ def generate_follow_inlinks_stream(urlid_stream,
 
         if urlid > max_crawled_urlid:
             break
-
+        nb_links = 0
         if len(counter) > 0:
             nb_links = counter[0][nb_links_index]
-        else:
-            #if the list is empty, there is no link
-            nb_links = 0
         yield (urlid, nb_links)
 
 
