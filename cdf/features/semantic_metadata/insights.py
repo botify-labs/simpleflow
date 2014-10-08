@@ -15,6 +15,7 @@ def get_metadata_insights(metadata):
     name = "Unique {}".format(metadata.title())
     duplicate_field = "metadata.{}.duplicates.nb".format(metadata)
     nb_field = "metadata.{}.nb".format(metadata)
+    additional_fields = ["metadata.{}.contents".format(metadata)]
     result.append(
         Insight(
             identifier,
@@ -23,7 +24,8 @@ def get_metadata_insights(metadata):
             AndFilter([
                 EqFilter(duplicate_field, 0),
                 GtFilter(nb_field, 0)
-            ])
+            ]),
+            additional_fields=additional_fields
         )
     )
 
@@ -31,12 +33,18 @@ def get_metadata_insights(metadata):
     identifier = "meta_{}_not_set".format(metadata)
     name = "Not Set {}".format(metadata.title())
     field = "metadata.{}.nb".format(metadata)
+    additional_fields = [
+        "metadata.{}.contents".format(metadata),
+        "metadata.{}.duplicates.nb".format(metadata),
+        "metadata.{}.duplicates.urls".format(metadata)
+    ]
     result.append(
         Insight(
             identifier,
             name,
             PositiveTrend.DOWN,
-            EqFilter(field, 0)
+            EqFilter(field, 0),
+            additional_fields=additional_fields
         )
     )
 

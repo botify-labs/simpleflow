@@ -27,6 +27,7 @@ class Insight(object):
                  positive_trend,
                  input_filter=None,
                  metric_agg=None,
+                 additional_fields=None,
                  field_type=INT_TYPE):
         """Constructor
         :param identifier: the insight identifier (short)
@@ -40,6 +41,10 @@ class Insight(object):
         :param metric_agg: the aggregation to compute for the botify query.
                            If None, use a simple count on the urls
         :type metric_agg: MetricAggregation
+        :param additional_fields: list of strings that represent fields
+                                  that are not part of the query
+                                  but that will be displayed on a detailed view.
+        :type additional_fields: list
         :param field_type: how the value computed by this insights should be displayed.
                            This parameter should be an Enum.
                            It is an integer since :
@@ -55,6 +60,7 @@ class Insight(object):
         self.filter = input_filter
         self.metric_agg = metric_agg or CountAggregation("url")
         self.field_type = field_type
+        self.additional_fields = additional_fields
 
     @property
     def query(self):
@@ -90,7 +96,7 @@ class InsightValue(object):
         """Returns a dict representation of the object
         :returns: dict
         """
-        return {
+        result = {
             "identifier": self.insight.identifier,
             "name": self.insight.name,
             "positive_trend": self.insight.positive_trend.value,
@@ -99,6 +105,9 @@ class InsightValue(object):
             "type": self.insight.field_type,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
         }
+        if self.insight.additional_fields is not None:
+            result["additional_fields"] = self.insight.additional_fields
+        return result
 
     def __repr__(self):
         return '<InsightValue: ' + repr(self.to_dict()) + '>'
