@@ -4,7 +4,10 @@ from cdf.utils.stream import split_stream
 from cdf.core.streams.utils import group_left
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.links.helpers.predicates import is_follow_link
-from cdf.features.links.streams import InlinksCountersStreamDef
+from cdf.features.links.streams import (
+    InlinksCountersStreamDef,
+    InredirectCountersStreamDef
+)
 
 
 class PercentileStats(object):
@@ -134,28 +137,36 @@ def generate_follow_inlinks_stream(urlid_stream,
     """
     follow_mask_index = InlinksCountersStreamDef.field_idx("follow")
 
-    #keep only follow links
+    #only follow links
     inlinks_counter_stream = ifilter(
         lambda x: is_follow_link(x[follow_mask_index], is_bitmask=False),
         inlinks_counter_stream
     )
     urlid_id_index = IdStreamDef.field_idx("id")
     urlid_links_index = InlinksCountersStreamDef.field_idx("id")
+    urlid_redirections_index = InredirectCountersStreamDef.field_idx("id")
 
     grouped_stream = group_left(
         left=(urlid_stream, urlid_id_index),
-        inlinks_counter_stream=(inlinks_counter_stream, urlid_links_index))
+        inlinks_counter_stream=(inlinks_counter_stream, urlid_links_index),
+        inredirections_counter_stream=(inredirections_counter_stream, urlid_redirections_index)
+    )
 
     nb_links_index = InlinksCountersStreamDef.field_idx("score")
+    nb_redirections_index = InredirectCountersStreamDef.field_idx("score")
     for grouped_entries in grouped_stream:
         urlid = grouped_entries[0]
-        counter = grouped_entries[2]["inlinks_counter_stream"]
+        links_counter = grouped_entries[2]["inlinks_counter_stream"]
+        redirections_counter = grouped_entries[2]["inredirections_counter_stream"]
 
         if urlid > max_crawled_urlid:
             break
         nb_links = 0
-        if len(counter) > 0:
-            nb_links = counter[0][nb_links_index]
+        if len(links_counter) > 0:
+            nb_links += links_counter[0][nb_links_index]
+        if len(redirections_counter) > 0:
+            nb_links += redirections_counter[0][nb_redirections_index]
+
         yield (urlid, nb_links)
 
 

@@ -29,23 +29,28 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (2, ["follow"], 2, 2),
             (3, ["follow"], 1, 1),
             (4, ["follow"], 6, 6),
-            (5, ["follow"], 5, 5),
             (6, ["follow"], 8, 8)
+        ])
+
+        inredirections_stream = iter([
+            (3, 4),
+            (5, 2),
+            (6, 1)
         ])
 
         actual_result = generate_follow_inlinks_stream(
             self.urlids_stream,
             inlinks_count_stream,
-            self.inredirections_stream,
+            inredirections_stream,
             self.max_crawled_urlid
         )
         expected_result = [
             (1, 10),
             (2, 2),
-            (3, 1),
+            (3, 5),
             (4, 6),
-            (5, 5),
-            (6, 8)
+            (5, 2),
+            (6, 9)
         ]
         self.assertEqual(expected_result, list(actual_result))
 
@@ -73,6 +78,34 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (4, 6),
             (5, 5),
             (6, 8)
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_all_redirections_case(self):
+        inlinks_count_stream = iter([
+        ])
+
+        inredirections_stream = iter([
+            (1, 4),
+            (3, 7),
+            (4, 9),
+            (5, 2),
+            (6, 1)
+        ])
+
+        actual_result = generate_follow_inlinks_stream(
+            self.urlids_stream,
+            inlinks_count_stream,
+            inredirections_stream,
+            self.max_crawled_urlid
+        )
+        expected_result = [
+            (1, 4),
+            (2, 0),
+            (3, 7),
+            (4, 9),
+            (5, 2),
+            (6, 1)
         ]
         self.assertEqual(expected_result, list(actual_result))
 
