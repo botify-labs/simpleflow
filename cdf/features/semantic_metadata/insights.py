@@ -34,18 +34,12 @@ def get_metadata_insights(metadata):
     identifier = "meta_{}_not_set".format(metadata)
     name = "Not Set {}".format(metadata.title())
     field = "metadata.{}.nb".format(metadata)
-    additional_fields = [
-        "metadata.{}.contents".format(metadata),
-        "metadata.{}.duplicates.nb".format(metadata),
-        "metadata.{}.duplicates.urls".format(metadata)
-    ]
     result.append(
         Insight(
             identifier,
             name,
             PositiveTrend.DOWN,
-            EqFilter(field, 0),
-            additional_fields=additional_fields
+            EqFilter(field, 0)
         )
     )
 
@@ -53,6 +47,11 @@ def get_metadata_insights(metadata):
     identifier = "meta_{}_duplicate".format(metadata)
     name = "Duplicate {}".format(metadata.title())
     field = "metadata.{}.duplicates.nb".format(metadata)
+    additional_fields = [
+        "metadata.{}.contents".format(metadata),
+        "metadata.{}.duplicates.nb".format(metadata),
+        "metadata.{}.duplicates.urls".format(metadata)
+    ]
     additional_filter = EqFilter("metadata.{}.is_first".format(metadata), True)
     result.append(
         Insight(
@@ -60,6 +59,7 @@ def get_metadata_insights(metadata):
             name,
             PositiveTrend.DOWN,
             GtFilter(field, 0),
+            additional_fields=additional_fields,
             additional_filter=additional_filter,
             sort_by=DescendingSort(field)
         )
