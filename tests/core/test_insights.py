@@ -140,6 +140,39 @@ class TestInsightValue(unittest.TestCase):
             insight_value.to_dict()
         )
 
+    def test_additional_filter(self):
+        self.insight.additional_filter = EqFilter("bar_field", "bar")
+
+        trend = [
+            InsightTrendPoint(1001, 3.14),
+            InsightTrendPoint(2008, 2.72)
+        ]
+
+        insight_value = InsightValue(self.insight,
+                                     "foo_feature",
+                                     trend)
+
+        expected_dict = {
+            "identifier": "foo",
+            "name": "Foo insight",
+            "positive_trend": "up",
+            "feature": "foo_feature",
+            "type": "integer",
+            "query":  {
+                'aggs': [{'metrics': [{'count': 'url'}]}],
+                'filters': {'field': 'foo_field', 'predicate': 'eq', 'value': 1001}
+            },
+            "trend": [
+                {"crawl_id": 1001, "score": 3.14},
+                {"crawl_id": 2008, "score": 2.72}
+            ],
+            "additional_filter": {"field": "bar_field", 'predicate': 'eq', 'value': 'bar'}
+        }
+        self.assertEqual(
+            expected_dict,
+            insight_value.to_dict()
+        )
+
     def test_sort_by(self):
         self.insight.sort_by = AscendingSort("bar")
 

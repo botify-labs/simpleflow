@@ -53,12 +53,14 @@ def get_metadata_insights(metadata):
     identifier = "meta_{}_duplicate".format(metadata)
     name = "Duplicate {}".format(metadata.title())
     field = "metadata.{}.duplicates.nb".format(metadata)
+    additional_filter = EqFilter("metadata.{}.is_first".format(metadata), True)
     result.append(
         Insight(
             identifier,
             name,
             PositiveTrend.DOWN,
             GtFilter(field, 0),
+            additional_filter=additional_filter,
             sort_by=DescendingSort(field)
         )
     )

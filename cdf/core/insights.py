@@ -28,6 +28,7 @@ class Insight(object):
                  input_filter=None,
                  metric_agg=None,
                  additional_fields=None,
+                 additional_filter=None,
                  sort_by=None,
                  field_type=INT_TYPE):
         """Constructor
@@ -46,6 +47,9 @@ class Insight(object):
                                   that are not part of the query
                                   but that will be displayed on a detailed view.
         :type additional_fields: list
+        :param additional_filter: a filter that has no impact on the query but
+                                  will be used to filter data in a detailed view.
+        :type additional_filter: Filter
         :param sort_by: a sort predicate. It is no impact on the query
                         but will be used to sort the detailed view.
         :type sort_by: Sort
@@ -65,6 +69,7 @@ class Insight(object):
         self.metric_agg = metric_agg or CountAggregation("url")
         self.field_type = field_type
         self.additional_fields = additional_fields
+        self.additional_filter = additional_filter
         self.sort_by = sort_by
 
     @property
@@ -112,6 +117,9 @@ class InsightValue(object):
         }
         if self.insight.additional_fields is not None:
             result["additional_fields"] = self.insight.additional_fields
+
+        if self.insight.additional_filter is not None:
+            result["additional_filter"] = self.insight.additional_filter.to_dict()
 
         if self.insight.sort_by is not None:
             result["sort_by"] = self.insight.sort_by.to_dict()
