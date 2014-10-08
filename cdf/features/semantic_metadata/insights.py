@@ -1,5 +1,6 @@
 from cdf.core.insights import Insight, PositiveTrend
 from cdf.query.filter import EqFilter, GtFilter, AndFilter
+from cdf.query.sort import DescendingSort
 
 
 def get_metadata_insights(metadata):
@@ -57,7 +58,8 @@ def get_metadata_insights(metadata):
             identifier,
             name,
             PositiveTrend.DOWN,
-            GtFilter(field, 0)
+            GtFilter(field, 0),
+            sort_by=DescendingSort(field)
         )
     )
 
