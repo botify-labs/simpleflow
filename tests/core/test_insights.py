@@ -78,15 +78,16 @@ class TestInsightValue(unittest.TestCase):
             EqFilter("foo_field", 1001)
         )
 
-    def test_to_dict(self):
         trend = [
             InsightTrendPoint(1001, 3.14),
             InsightTrendPoint(2008, 2.72)
         ]
 
-        insight_value = InsightValue(self.insight,
-                                     "foo_feature",
-                                     trend)
+        self.insight_value = InsightValue(self.insight,
+                                          "foo_feature",
+                                          trend)
+
+    def test_to_dict(self):
         expected_dict = {
             "identifier": "foo",
             "name": "Foo insight",
@@ -104,107 +105,42 @@ class TestInsightValue(unittest.TestCase):
         }
         self.assertEqual(
             expected_dict,
-            insight_value.to_dict()
+            self.insight_value.to_dict()
         )
 
     def test_additional_fields(self):
         self.insight.additional_fields = ["bar", "baz"]
 
-        trend = [
-            InsightTrendPoint(1001, 3.14),
-            InsightTrendPoint(2008, 2.72)
-        ]
-
-        insight_value = InsightValue(self.insight,
-                                     "foo_feature",
-                                     trend)
-
-        expected_dict = {
-            "identifier": "foo",
-            "name": "Foo insight",
-            "positive_trend": "up",
-            "feature": "foo_feature",
-            "type": "integer",
-            "query":  {
-                'aggs': [{'metrics': [{'count': 'url'}]}],
-                'filters': {'field': 'foo_field', 'predicate': 'eq', 'value': 1001}
-            },
-            "trend": [
-                {"crawl_id": 1001, "score": 3.14},
-                {"crawl_id": 2008, "score": 2.72}
-            ],
-            "additional_fields": ["bar", "baz"]
-        }
+        expected_value = ["bar", "baz"]
         self.assertEqual(
-            expected_dict,
-            insight_value.to_dict()
+            expected_value,
+            self.insight_value.to_dict()["additional_fields"]
         )
 
     def test_additional_filter(self):
         self.insight.additional_filter = EqFilter("bar_field", "bar")
 
-        trend = [
-            InsightTrendPoint(1001, 3.14),
-            InsightTrendPoint(2008, 2.72)
-        ]
-
-        insight_value = InsightValue(self.insight,
-                                     "foo_feature",
-                                     trend)
-
-        expected_dict = {
-            "identifier": "foo",
-            "name": "Foo insight",
-            "positive_trend": "up",
-            "feature": "foo_feature",
-            "type": "integer",
-            "query":  {
-                'aggs': [{'metrics': [{'count': 'url'}]}],
-                'filters': {'field': 'foo_field', 'predicate': 'eq', 'value': 1001}
-            },
-            "trend": [
-                {"crawl_id": 1001, "score": 3.14},
-                {"crawl_id": 2008, "score": 2.72}
-            ],
-            "additional_filter": {"field": "bar_field", 'predicate': 'eq', 'value': 'bar'}
+        expected_value = {
+            "field": "bar_field",
+            'predicate': 'eq',
+            'value': 'bar'
         }
+
         self.assertEqual(
-            expected_dict,
-            insight_value.to_dict()
+            expected_value,
+            self.insight_value.to_dict()['additional_filter']
         )
 
     def test_sort_by(self):
         self.insight.sort_by = AscendingSort("bar")
 
-        trend = [
-            InsightTrendPoint(1001, 3.14),
-            InsightTrendPoint(2008, 2.72)
-        ]
+        expected_value = {"asc": "bar"}
 
-        insight_value = InsightValue(self.insight,
-                                     "foo_feature",
-                                     trend)
-
-        expected_dict = {
-            "identifier": "foo",
-            "name": "Foo insight",
-            "positive_trend": "up",
-            "feature": "foo_feature",
-            "type": "integer",
-            "query":  {
-                'aggs': [{'metrics': [{'count': 'url'}]}],
-                'filters': {'field': 'foo_field', 'predicate': 'eq', 'value': 1001}
-            },
-            "trend": [
-                {"crawl_id": 1001, "score": 3.14},
-                {"crawl_id": 2008, "score": 2.72}
-            ],
-            "sort_by": {"asc": "bar"}
-        }
         self.assertEqual(
-            expected_dict,
-            insight_value.to_dict()
+            expected_value,
+            self.insight_value.to_dict()["sort_by"]
         )
+
 
 class TestInsightTrendPoint(unittest.TestCase):
     def test_to_dict(self):
@@ -212,4 +148,3 @@ class TestInsightTrendPoint(unittest.TestCase):
             {"crawl_id": 1001, "score": 3.14},
             InsightTrendPoint(1001, 3.14).to_dict()
         )
-
