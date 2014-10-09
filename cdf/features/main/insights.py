@@ -24,7 +24,7 @@ def get_http_code_ranges_insights():
         range_name = "{}xx".format(range_start / 100)
         insight = Insight(
             "code_{}".format(range_name),
-            "{} Urls".format(range_name),
+            "{} URLs".format(range_name),
             positive_trend,
             BetweenFilter("http_code", [range_start, range_start + 99])
         )
@@ -58,7 +58,7 @@ def get_http_code_insights():
     for code, positive_trend in http_codes:
         insight = Insight(
             "code_{}".format(code),
-            "{} Urls".format(code),
+            "{} URLs".format(code),
             positive_trend,
             EqFilter("http_code", code)
         )
@@ -76,7 +76,7 @@ def get_strategic_urls_insights():
         ),
         Insight(
             "strategic_0",
-            "Non Strategic Urls",
+            "Non Strategic URLs",
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", False)
         )
@@ -89,7 +89,7 @@ def get_content_type_insights():
     for content_type in ["text/html", "text/css"]:
         insight = Insight(
             "content_{}".format(content_type),
-            "{} Urls".format(content_type[len("text/"):].upper()),
+            "{} URLs".format(content_type[len("text/"):].upper()),
             PositiveTrend.UNKNOWN,
             EqFilter("content_type", content_type)
         )
@@ -102,7 +102,7 @@ def get_protocol_insights():
     for protocol in ["http", "https"]:
         insight = Insight(
             "protocol_{}".format(protocol),
-            "{} Urls".format(protocol.upper()),
+            "{} URLs".format(protocol.upper()),
             PositiveTrend.UNKNOWN,
             EqFilter("protocol", protocol)
         )
@@ -116,7 +116,7 @@ def get_speed_insights():
     return [
         Insight(
             "speed_fast",
-            "Fast Urls",
+            "Fast URLs",
             PositiveTrend.UP,
             LtFilter(field, 500),
         ),
@@ -128,13 +128,13 @@ def get_speed_insights():
         ),
         Insight(
             "speed_slow",
-            "Slow Urls",
+            "Slow URLs",
             PositiveTrend.DOWN,
             BetweenFilter(field, [1000, 1999]),
         ),
         Insight(
             "speed_slowest",
-            "Slowest Urls",
+            "Slowest URLs",
             PositiveTrend.DOWN,
             GteFilter(field, 2000),
         ),
@@ -147,7 +147,7 @@ def get_strategic_urls_speed_insights():
     return [
         Insight(
             "speed_fast_strategic",
-            "Fast Strategic Urls",
+            "Fast Strategic URLs",
             PositiveTrend.UP,
             AndFilter(
                 [
@@ -158,7 +158,7 @@ def get_strategic_urls_speed_insights():
         ),
         Insight(
             "speed_medium_strategic",
-            "Medium Strategic Urls",
+            "Medium Strategic URLs",
             PositiveTrend.DOWN,
             AndFilter(
                 [
@@ -169,7 +169,7 @@ def get_strategic_urls_speed_insights():
         ),
         Insight(
             "speed_slow_strategic",
-            "Slow Strategic Urls",
+            "Slow Strategic URLs",
             PositiveTrend.DOWN,
             AndFilter(
                 [
@@ -180,7 +180,7 @@ def get_strategic_urls_speed_insights():
         ),
         Insight(
             "speed_slowest_strategic",
-            "Slowest Strategic Urls",
+            "Slowest Strategic URLs",
             PositiveTrend.DOWN,
             AndFilter(
                 [
@@ -198,13 +198,13 @@ def get_domain_insights():
     return [
         Insight(
             "domain_www",
-            "Urls from www",
+            "URLs from WWW",
             PositiveTrend.UNKNOWN,
             www_predicate
         ),
         Insight(
             "domain_not_www",
-            "Urls from subdomains",
+            "URLs from Subdomains",
             PositiveTrend.UNKNOWN,
             NotFilter(www_predicate)
         )
@@ -216,14 +216,14 @@ def get_average_speed_insights():
     return [
         Insight(
             "speed_avg",
-            "Average Load time (in ms)",
+            "Average Load Time (in ms)",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
             field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
         ),
         Insight(
             "speed_strategic_avg",
-            "Average Load time on strategic urls (in ms)",
+            "Average Load Time on Strategic URLs (in ms)",
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
             field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
@@ -243,7 +243,7 @@ def get_average_depth_insights():
         ),
         Insight(
             "depth_strategic_avg",
-            "Average Depth on strategic urls",
+            "Average Depth on Strategic URLs",
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
