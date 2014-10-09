@@ -16,6 +16,7 @@ def get_metadata_insights(metadata):
     name = "Unique {}".format(metadata.title())
     duplicate_field = "metadata.{}.duplicates.nb".format(metadata)
     nb_field = "metadata.{}.nb".format(metadata)
+    strategic_field = "strategic.is_strategic"
     additional_fields = ["metadata.{}.contents".format(metadata)]
     result.append(
         Insight(
@@ -24,7 +25,8 @@ def get_metadata_insights(metadata):
             PositiveTrend.UP,
             AndFilter([
                 EqFilter(duplicate_field, 0),
-                GtFilter(nb_field, 0)
+                GtFilter(nb_field, 0),
+                EqFilter(strategic_field, True)
             ]),
             additional_fields=additional_fields
         )
@@ -39,7 +41,10 @@ def get_metadata_insights(metadata):
             identifier,
             name,
             PositiveTrend.DOWN,
-            EqFilter(field, 0)
+            AndFilter([
+                EqFilter(field, 0),
+                EqFilter(strategic_field, True)
+            ])
         )
     )
 
@@ -58,7 +63,10 @@ def get_metadata_insights(metadata):
             identifier,
             name,
             PositiveTrend.DOWN,
-            GtFilter(field, 0),
+            AndFilter([
+                GtFilter(field, 0),
+                EqFilter(strategic_field, True)
+            ]),
             additional_fields=additional_fields,
             additional_filter=additional_filter,
             sort_by=DescendingSort(field)
