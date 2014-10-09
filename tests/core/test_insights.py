@@ -2,6 +2,7 @@ import unittest
 
 from cdf.core.insights import PositiveTrend, Insight, InsightValue, InsightTrendPoint
 from cdf.query.filter import EqFilter
+from cdf.query.sort import AscendingSort
 from cdf.query.aggregation import MaxAggregation
 
 
@@ -77,15 +78,16 @@ class TestInsightValue(unittest.TestCase):
             EqFilter("foo_field", 1001)
         )
 
-    def test_to_dict(self):
         trend = [
             InsightTrendPoint(1001, 3.14),
             InsightTrendPoint(2008, 2.72)
         ]
 
-        insight_value = InsightValue(self.insight,
-                                     "foo_feature",
-                                     trend)
+        self.insight_value = InsightValue(self.insight,
+                                          "foo_feature",
+                                          trend)
+
+    def test_to_dict(self):
         expected_dict = {
             "identifier": "foo",
             "name": "Foo insight",
@@ -103,7 +105,40 @@ class TestInsightValue(unittest.TestCase):
         }
         self.assertEqual(
             expected_dict,
-            insight_value.to_dict()
+            self.insight_value.to_dict()
+        )
+
+    def test_additional_fields(self):
+        self.insight.additional_fields = ["bar", "baz"]
+
+        expected_value = ["bar", "baz"]
+        self.assertEqual(
+            expected_value,
+            self.insight_value.to_dict()["additional_fields"]
+        )
+
+    def test_additional_filter(self):
+        self.insight.additional_filter = EqFilter("bar_field", "bar")
+
+        expected_value = {
+            "field": "bar_field",
+            'predicate': 'eq',
+            'value': 'bar'
+        }
+
+        self.assertEqual(
+            expected_value,
+            self.insight_value.to_dict()['additional_filter']
+        )
+
+    def test_sort_by(self):
+        self.insight.sort_by = AscendingSort("bar")
+
+        expected_value = {"asc": "bar"}
+
+        self.assertEqual(
+            expected_value,
+            self.insight_value.to_dict()["sort_by"]
         )
 
 

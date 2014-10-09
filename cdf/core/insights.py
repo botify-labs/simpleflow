@@ -27,6 +27,9 @@ class Insight(object):
                  positive_trend,
                  input_filter=None,
                  metric_agg=None,
+                 additional_fields=None,
+                 additional_filter=None,
+                 sort_by=None,
                  field_type=INT_TYPE):
         """Constructor
         :param identifier: the insight identifier (short)
@@ -40,6 +43,16 @@ class Insight(object):
         :param metric_agg: the aggregation to compute for the botify query.
                            If None, use a simple count on the urls
         :type metric_agg: MetricAggregation
+        :param additional_fields: list of strings that represent fields
+                                  that are not part of the query
+                                  but that will be displayed on a detailed view.
+        :type additional_fields: list
+        :param additional_filter: a filter that has no impact on the query but
+                                  will be used to filter data in a detailed view.
+        :type additional_filter: Filter
+        :param sort_by: a sort predicate. It is no impact on the query
+                        but will be used to sort the detailed view.
+        :type sort_by: Sort
         :param field_type: how the value computed by this insights should be displayed.
                            This parameter should be an Enum.
                            It is an integer since :
@@ -55,6 +68,9 @@ class Insight(object):
         self.filter = input_filter
         self.metric_agg = metric_agg or CountAggregation("url")
         self.field_type = field_type
+        self.additional_fields = additional_fields
+        self.additional_filter = additional_filter
+        self.sort_by = sort_by
 
     @property
     def query(self):
@@ -90,7 +106,7 @@ class InsightValue(object):
         """Returns a dict representation of the object
         :returns: dict
         """
-        return {
+        result = {
             "identifier": self.insight.identifier,
             "name": self.insight.name,
             "positive_trend": self.insight.positive_trend.value,
@@ -99,6 +115,16 @@ class InsightValue(object):
             "type": self.insight.field_type,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
         }
+        if self.insight.additional_fields is not None:
+            result["additional_fields"] = self.insight.additional_fields
+
+        if self.insight.additional_filter is not None:
+            result["additional_filter"] = self.insight.additional_filter.to_dict()
+
+        if self.insight.sort_by is not None:
+            result["sort_by"] = self.insight.sort_by.to_dict()
+
+        return result
 
     def __repr__(self):
         return '<InsightValue: ' + repr(self.to_dict()) + '>'
