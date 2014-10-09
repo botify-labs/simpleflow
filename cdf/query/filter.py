@@ -145,7 +145,25 @@ class GteFilter(ConcreteFilter):
 
 
 class BetweenFilter(ConcreteFilter):
-    """An filter for "between" predicate"""
+    """A filter for "between" predicate"""
     def __init__(self, field, value):
         super(self.__class__, self).__init__(field, "between", value)
 
+
+class ExistFilter(Filter):
+    """A filter for "exists" predicate"""
+    def __init__(self, field):
+        self.field = field
+
+    def to_dict(self):
+        """Return a dict version of the predicate.
+        Usually, this representation is used to build filters for queries.
+        :returns: dict
+        """
+        return {
+            "predicate": "exists",
+            "field": self.field
+        }
+
+    def __repr__(self):
+        return repr(self.to_dict())
