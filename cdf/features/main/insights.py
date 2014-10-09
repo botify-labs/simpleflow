@@ -252,6 +252,24 @@ def get_average_depth_insights():
     ]
 
 
+def get_index_insights():
+    field = "metadata.robots.noindex"
+    return [
+        Insight(
+            "index_ok",
+            "Index URLs",
+            PositiveTrend.UNKNOWN,
+            EqFilter(field, False)
+        ),
+        Insight(
+            "index_ko",
+            "No-Index URLs",
+            PositiveTrend.UNKNOWN,
+            EqFilter(field, True)
+        )
+    ]
+
+
 def get_insights():
     insights = []
     insights.extend(get_http_code_ranges_insights())
@@ -264,6 +282,7 @@ def get_insights():
     insights.extend(get_domain_insights())
     insights.extend(get_average_speed_insights())
     insights.extend(get_average_depth_insights())
+    insights.extend(get_index_insights())
     return insights
 
 #actual insight definition
