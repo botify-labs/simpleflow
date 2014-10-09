@@ -1,5 +1,5 @@
 from cdf.core.insights import Insight, PositiveTrend
-from cdf.query.filter import EqFilter, GtFilter
+from cdf.query.filter import EqFilter, GtFilter, AndFilter
 
 
 def get_metadata_insights(metadata):
@@ -13,13 +13,17 @@ def get_metadata_insights(metadata):
     #unique
     identifier = "meta_{}_unique".format(metadata)
     name = "Unique {}".format(metadata.title())
-    field = "metadata.{}.duplicates.nb".format(metadata)
+    duplicate_field = "metadata.{}.duplicates.nb".format(metadata)
+    nb_field = "metadata.{}.nb".format(metadata)
     result.append(
         Insight(
             identifier,
             name,
             PositiveTrend.UP,
-            EqFilter(field, 0)
+            AndFilter([
+                EqFilter(duplicate_field, 0),
+                GtFilter(nb_field, 0)
+            ])
         )
     )
 
