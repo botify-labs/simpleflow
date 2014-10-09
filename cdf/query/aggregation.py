@@ -40,3 +40,9 @@ class CountAggregation(MetricAggregation):
     """A specialization of MetricAggregation for the "count" operator"""
     def __init__(self, field):
         super(self.__class__, self).__init__("count", field)
+
+
+class SumAggregation(MetricAggregation):
+    """A specialization of MetricAggregation for the "sum" operator"""
+    def __init__(self, field):
+        super(self.__class__, self).__init__("sum", field)
