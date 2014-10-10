@@ -67,13 +67,52 @@ def get_misc_sitemap_insights():
             "URLs in Sitemap with only 1 Follow Link",
             PositiveTrend.DOWN,
             AndFilter([
-                EqFilter("strategic.is_strategic"),
+                EqFilter("inlinks_internal.nb.follow.unique", 1),
+                EqFilter("sitemaps.present", True)
+            ])
+        ),
+        Insight(
+            "sitemaps_not_strategic_outlink",
+            "URLs in Sitemap with only a non Strategic Outlink",
+            PositiveTrend.DOWN,
+            AndFilter([
+                ExistFilter("outlinks_errors.non_strategic.urls_exists"),
                 EqFilter("sitemaps.present", True)
             ])
         )
     ]
 
 
+def get_bad_metadata_strategic_sitemap_insights():
+    result = []
+    for metadata in ["title", "h1", "descrption"]:
+        additional_fields = [
+            "metadata.{}.contents".format(metadata),
+            "metadata.{}.nb".format(metadata),
+            "metadata.{}.duplicates.nb".format(metadata),
+            "metadata.{}.duplicates.urls".format(metadata)
+        ]
+
+        insight = Insight(
+            "sitemaps_bad_{}".format(metadata),
+            "Strategic URLs in Sitemap with a Bad {}".format(metadata.title),
+            PositiveTrend.DOWN,
+            AndFilter([
+                EqFilter("strategic.is_strategic", True),
+                EqFilter("sitemaps.present", True),
+                OrFilter([
+                    EqFilter("metadata.{}.nb".format(metadata), 0),
+                    GtFilter("metadata.{}.duplicates.nb".format(metadata), 0)
+                ])
+            ]),
+            additional_fields=additional_fields
+        )
+        result.append(insight)
+    return result
+
+
 insights = []
 insights.extend(get_main_sitemap_insights())
 insights.extend(get_strategic_sitemap_insights())
+insights.extend(get_misc_sitemap_insights())
+insights.extend(get_bad_metadata_strategic_sitemap_insights())
