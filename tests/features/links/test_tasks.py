@@ -432,30 +432,16 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
 
 class TestMakeInlinksPercentileFile(unittest.TestCase):
     def setUp(self):
-        self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
-
-    @mock_s3
-    def test_nominal_case(self):
-
-        #mock
-        s3 = boto.connect_s3()
-        bucket = s3.create_bucket('test_bucket')
-        s3_uri = "s3://test_bucket"
-
-        urlids_stream = iter([
+        self.s3_uri = "s3://test_bucket"
+        self.ids = [
             (1, "http", "foo.com", "/"),
             (2, "http", "foo.com", "/index.html"),
             (3, "http", "foo.com", "/bar"),
             (4, "http", "foo.com", "/baz"),
             (5, "http", "foo.com", "/qux"),
             (6, "http", "foo.com", "/barbar"),
-        ])
-        IdStreamDef.persist(urlids_stream, s3_uri)
-
-        inlinks_count_stream = [
+        ]
+        self.inlinks_count = [
             (1, 0, 10,  10),
             (2, 0, 2, 2),
             (3, 0, 1, 1),
@@ -463,11 +449,23 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
             (5, 0, 5, 5),
             (6, 0, 8, 8)
         ]
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    def _launch_task(self):
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+
+        urlids_stream = iter(self.ids)
+        IdStreamDef.persist(urlids_stream, self.s3_uri)
+
         first_part_size = 2
         part_size = 10
         InlinksCountersStreamDef.persist(
-            inlinks_count_stream,
-            s3_uri,
+            self.inlinks_count,
+            self.s3_uri,
             first_part_size=first_part_size,
             part_size=part_size
         )
@@ -477,10 +475,16 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
         key.set_contents_from_string('{"max_uid_we_crawled": 6}')
 
         actual_result = make_inlinks_percentiles_file(
-            s3_uri,
+            self.s3_uri,
             first_part_size,
             part_size
         )
+        return actual_result
+
+    @mock_s3
+    def test_inlinks_percentile_file(self):
+        actual_result = self._launch_task()
+
         expected_result = [
             "s3://test_bucket/inlinks_percentiles.txt.0.gz",
             "s3://test_bucket/inlinks_percentiles.txt.1.gz",
@@ -488,7 +492,7 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
         self.assertEqual(expected_result, actual_result)
 
         actual_stream = InlinksPercentilesStreamDef.load(
-            s3_uri,
+            self.s3_uri,
             tmp_dir=self.tmp_dir
         )
         expected_stream = [
@@ -500,3 +504,20 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
             [6, 98, 8]
         ]
         self.assertEqual(expected_stream, list(actual_stream))
+
+    @mock_s3
+    def test_inlinks_percentile_graph_data(self):
+        self._launch_task()
+        s3 = boto.connect_s3()
+        bucket = s3.get_bucket('test_bucket')
+
+        key = bucket.get_key('precomputation/inlinks_percentiles.json')
+        content = json.loads(key.get_contents_as_string())
+        content = content['percentiles']
+
+        self.assertEqual(len(content), 6)
+        self.assertIn('avg', content[0])
+        self.assertIn('min', content[0])
+        self.assertIn('max', content[0])
+        self.assertIn('metric_total', content[0])
+        self.assertIn('url_total', content[0])

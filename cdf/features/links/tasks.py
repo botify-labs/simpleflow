@@ -40,7 +40,10 @@ from cdf.features.links.top_domains import (
     filter_invalid_destination_urls,
     resolve_sample_url_id
 )
-from cdf.features.links.percentiles import compute_quantiles
+from cdf.features.links.percentiles import (
+    compute_quantiles,
+    compute_percentile_stats
+)
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 
@@ -292,7 +295,10 @@ def make_inlinks_percentiles_file(s3_uri,
                                   tmp_dir=None,
                                   force_fetch=DEFAULT_FORCE_FETCH):
     """Compute the InlinksPercentilesStreamDef stream that assigns
-    a percentile id to every crawled url.
+    a percentile id to every crawled url
+
+    Also compute the percentile graph data
+
     :param s3_uri: the s3 uri where the crawl data is stored.
     :type s3_uri: str
     :param first_part_id_size: the size of the first part.
@@ -321,6 +327,22 @@ def make_inlinks_percentiles_file(s3_uri,
         max_crawled_urlid,
         nb_quantiles
     )
+    #store percentile stream in memory
+    #3 ints, at most 1M elements
+    #so at most 20MB
+    percentile_stream = list(percentile_stream)
+
+    #compute inlink percentile graph data
+    stats = compute_percentile_stats(percentile_stream)
+    dest_uri = os.path.join(
+        s3_uri, 'precomputation', 'inlinks_percentiles.json')
+
+    result = {
+        'domain': 'inlinks',
+        'percentiles': [s.to_dict() for s in stats]
+    }
+    push_content(dest_uri, json.dumps(result))
+
     #persist stream
     output_files = InlinksPercentilesStreamDef.persist(
         percentile_stream,
