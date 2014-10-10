@@ -20,7 +20,8 @@ from cdf.features.links.streams import (
     LinksToNonStrategicStreamDef,
     LinksToNonStrategicCountersStreamDef,
     InlinksCountersStreamDef,
-    InlinksPercentilesStreamDef
+    InlinksPercentilesStreamDef,
+    InredirectCountersStreamDef
 )
 from cdf.features.links.tasks import (
     make_bad_link_file as compute_bad_link,
@@ -441,14 +442,21 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
             (5, "http", "foo.com", "/qux"),
             (6, "http", "foo.com", "/barbar"),
         ]
+
         self.inlinks_count = [
             (1, 0, 10,  10),
             (2, 0, 2, 2),
             (3, 0, 1, 1),
             (4, 0, 6, 6),
-            (5, 0, 5, 5),
             (6, 0, 8, 8)
         ]
+
+        self.inredirections_count_stream = [
+            (3, 4),
+            (5, 2),
+            (6, 1)
+        ]
+
         self.tmp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -465,6 +473,13 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
         part_size = 10
         InlinksCountersStreamDef.persist(
             self.inlinks_count,
+            self.s3_uri,
+            first_part_size=first_part_size,
+            part_size=part_size
+        )
+
+        InredirectCountersStreamDef.persist(
+            self.inredirections_count_stream,
             self.s3_uri,
             first_part_size=first_part_size,
             part_size=part_size
@@ -498,10 +513,10 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
         expected_stream = [
             [1, 5, 10],
             [2, 1, 2],
-            [3, 0, 1],
+            [3, 2, 5],
             [4, 3, 6],
-            [5, 2, 5],
-            [6, 4, 8]
+            [5, 0, 2],
+            [6, 4, 9]
         ]
         self.assertEqual(expected_stream, list(actual_stream))
 

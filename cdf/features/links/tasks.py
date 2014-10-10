@@ -31,7 +31,8 @@ from cdf.features.links.streams import (
     BadLinksCountersStreamDef,
     LinksToNonStrategicStreamDef,
     LinksToNonStrategicCountersStreamDef,
-    InlinksPercentilesStreamDef
+    InlinksPercentilesStreamDef,
+    InredirectCountersStreamDef
 )
 from cdf.features.links.top_domains import (
     compute_top_full_domains,
@@ -311,7 +312,7 @@ def make_inlinks_percentiles_file(s3_uri,
     #get streams
     urlid_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     inlinks_counter_stream = InlinksCountersStreamDef.load(s3_uri, tmp_dir=tmp_dir)
-
+    inredirections_counter_stream = InredirectCountersStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     #get max crawled urlid
     global_crawl_info_filename = "files.json"
     fetch_file(os.path.join(s3_uri, global_crawl_info_filename),
@@ -324,6 +325,7 @@ def make_inlinks_percentiles_file(s3_uri,
     percentile_stream = compute_quantiles(
         urlid_stream,
         inlinks_counter_stream,
+        inredirections_counter_stream,
         max_crawled_urlid,
         nb_quantiles
     )
