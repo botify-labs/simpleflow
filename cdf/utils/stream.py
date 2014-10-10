@@ -16,6 +16,8 @@ def _get_part_index(index, nb_parts, size):
 
 def split_stream(input_stream, stream_size, nb_parts):
     """Split a stream into n chunks of approximatively the same size.
+    If stream_size is lower than nb_parts, the function generates only
+    stream_size chunks.
     :param input_stream: the stream to split
     :type input_stream: iterator
     :param stream_size: the size of the input stream.
@@ -30,11 +32,6 @@ def split_stream(input_stream, stream_size, nb_parts):
 
     if stream_size < 0:
         raise ValueError("stream_size must be positive")
-
-    #if there are more parts than elements in the stream, generate empty lists
-    #to reach the desired number of parts.
-    for _ in range(stream_size, nb_parts):
-        yield []
 
     #add index to be able to compute the part index of each element.
     input_stream = enumerate(input_stream)
