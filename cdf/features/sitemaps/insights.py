@@ -2,6 +2,7 @@ from cdf.core.insights import Insight, PositiveTrend
 from cdf.query.filter import (
     EqFilter,
     GtFilter,
+    GteFilter,
     AndFilter,
     OrFilter,
     BetweenFilter,
@@ -79,7 +80,27 @@ def get_misc_sitemap_insights():
                 ExistFilter("outlinks_errors.non_strategic.urls_exists"),
                 EqFilter("sitemaps.present", True)
             ])
-        )
+        ),
+        Insight(
+            "sitemaps_slow_urls",
+            "Slow / Slowest URLs in Sitemap",
+            PositiveTrend.DOWN,
+            AndFilter([
+                GteFilter("delay_last_byte", 1000),
+                EqFilter("sitemaps.present", True)
+            ]),
+            additional_fields="delay_last_byte",
+            sort_by=DescendingSort("delay_last_byte")
+        ),
+        Insight(
+            "sitemaps_no_index",
+            "URLs in Sitemap with a meta no-index",
+            PositiveTrend.DOWN,
+            AndFilter([
+                EqFilter("metadata.robots.noindex", True),
+                EqFilter("sitemaps.present", True)
+            ])
+        ),
     ]
 
 
@@ -95,7 +116,7 @@ def get_bad_metadata_strategic_sitemap_insights():
 
         insight = Insight(
             "sitemaps_bad_{}".format(metadata),
-            "Strategic URLs in Sitemap with a Bad {}".format(metadata.title),
+            "Strategic URLs in Sitemap with a Bad {}".format(metadata.title()),
             PositiveTrend.DOWN,
             AndFilter([
                 EqFilter("strategic.is_strategic", True),
