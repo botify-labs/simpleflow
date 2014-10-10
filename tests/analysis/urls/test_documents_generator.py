@@ -22,7 +22,8 @@ from cdf.features.links.streams import (
     OutlinksStreamDef,
     InlinksStreamDef,
     BadLinksStreamDef,
-    LinksToNonStrategicStreamDef
+    LinksToNonStrategicStreamDef,
+    InlinksPercentilesStreamDef
 )
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
@@ -658,6 +659,31 @@ class TestOutlinksGeneration(unittest.TestCase):
         # check url2
         document = _next_doc(gen)
         self.assertDictEqual(document[key], expected_2)
+
+
+    def test_inlinks_percentile_id(self):
+        patterns = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
+        ]
+
+        percentile_id = [
+            [1, 10, 4],
+            [2, 5, 3]
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(iter(patterns)),
+            InlinksPercentilesStreamDef.load_iterator(iter(percentile_id))
+        ])
+
+        # check url1
+        document = _next_doc(gen)
+        self.assertEqual(document["inlinks_internal"]["percentile_id"], 10)
+
+        # check url2
+        document = _next_doc(gen)
+        self.assertEqual(document["inlinks_internal"]["percentile_id"], 5)
 
 
 class TestRedirectsGeneration(unittest.TestCase):

@@ -6,6 +6,9 @@ from moto import mock_s3
 import boto
 import mock
 
+from cdf.features.main.streams import (
+    IdStreamDef
+)
 from cdf.features.links.streams import (
     OutlinksRawStreamDef,
     OutlinksStreamDef,
@@ -15,7 +18,9 @@ from cdf.features.links.streams import (
     OutcanonicalCountersStreamDef,
     OutredirectCountersStreamDef,
     LinksToNonStrategicStreamDef,
-    LinksToNonStrategicCountersStreamDef
+    LinksToNonStrategicCountersStreamDef,
+    InlinksCountersStreamDef,
+    InlinksPercentilesStreamDef
 )
 from cdf.features.links.tasks import (
     make_bad_link_file as compute_bad_link,
@@ -23,7 +28,8 @@ from cdf.features.links.tasks import (
     make_bad_link_counter_file as compute_bad_link_counter,
     make_top_domains_files as compute_top_domains,
     make_links_to_non_strategic_file,
-    make_links_to_non_strategic_counter_file
+    make_links_to_non_strategic_counter_file,
+    make_inlinks_percentiles_file
 )
 from cdf.features.main.streams import InfosStreamDef, StrategicUrlStreamDef
 from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
@@ -422,3 +428,75 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
             expected_top_second_level_domains,
             actual_top_second_level_domains
         )
+
+
+class TestMakeInlinksPercentileFile(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    @mock_s3
+    def test_nominal_case(self):
+
+        #mock
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        s3_uri = "s3://test_bucket"
+
+        urlids_stream = iter([
+            (1, "http", "foo.com", "/"),
+            (2, "http", "foo.com", "/index.html"),
+            (3, "http", "foo.com", "/bar"),
+            (4, "http", "foo.com", "/baz"),
+            (5, "http", "foo.com", "/qux"),
+            (6, "http", "foo.com", "/barbar"),
+        ])
+        IdStreamDef.persist(urlids_stream, s3_uri)
+
+        inlinks_count_stream = [
+            (1, 0, 10,  10),
+            (2, 0, 2, 2),
+            (3, 0, 1, 1),
+            (4, 0, 6, 6),
+            (5, 0, 5, 5),
+            (6, 0, 8, 8)
+        ]
+        first_part_size = 2
+        part_size = 10
+        InlinksCountersStreamDef.persist(
+            inlinks_count_stream,
+            s3_uri,
+            first_part_size=first_part_size,
+            part_size=part_size
+        )
+
+        #mock files.json
+        key = bucket.new_key("files.json")
+        key.set_contents_from_string('{"max_uid_we_crawled": 6}')
+
+        actual_result = make_inlinks_percentiles_file(
+            s3_uri,
+            first_part_size,
+            part_size
+        )
+        expected_result = [
+            "s3://test_bucket/inlinks_percentiles.txt.0.gz",
+            "s3://test_bucket/inlinks_percentiles.txt.1.gz",
+        ]
+        self.assertEqual(expected_result, actual_result)
+
+        actual_stream = InlinksPercentilesStreamDef.load(
+            s3_uri,
+            tmp_dir=self.tmp_dir
+        )
+        expected_stream = [
+            [1, 99, 10],
+            [2, 95, 2],
+            [3, 94, 1],
+            [4, 97, 6],
+            [5, 96, 5],
+            [6, 98, 8]
+        ]
+        self.assertEqual(expected_stream, list(actual_stream))

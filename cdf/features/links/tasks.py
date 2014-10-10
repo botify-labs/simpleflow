@@ -5,7 +5,12 @@ import json
 from cdf.log import logger
 from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.utils.es import EsHandler
-from cdf.utils.s3 import push_file, push_content
+from cdf.utils.s3 import push_file, push_content, fetch_file
+from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
+from cdf.core.streams.stream_factory import (
+    load_crawler_metakeys,
+    get_max_crawled_urlid
+)
 from cdf.features.links.links import OutlinksTransducer, InlinksTransducer
 from cdf.features.links.bad_links import (
     get_bad_links,
@@ -13,13 +18,20 @@ from cdf.features.links.bad_links import (
     get_links_to_non_strategic_urls,
     get_link_to_non_strategic_urls_counters
 )
-from cdf.features.main.streams import InfosStreamDef, StrategicUrlStreamDef
+from cdf.features.main.streams import (
+    InfosStreamDef,
+    StrategicUrlStreamDef,
+    IdStreamDef
+)
 from cdf.features.links.streams import (
     OutlinksRawStreamDef, OutlinksStreamDef,
-    InlinksRawStreamDef, BadLinksStreamDef,
+    InlinksRawStreamDef,
+    InlinksCountersStreamDef,
+    BadLinksStreamDef,
     BadLinksCountersStreamDef,
     LinksToNonStrategicStreamDef,
-    LinksToNonStrategicCountersStreamDef
+    LinksToNonStrategicCountersStreamDef,
+    InlinksPercentilesStreamDef
 )
 from cdf.features.links.top_domains import (
     compute_top_full_domains,
@@ -28,6 +40,7 @@ from cdf.features.links.top_domains import (
     filter_invalid_destination_urls,
     resolve_sample_url_id
 )
+from cdf.features.links.percentiles import compute_quantiles
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 
@@ -270,3 +283,49 @@ def make_top_domains_files(crawl_id,
     result.append(s3_destination)
 
     return result
+
+
+@with_temporary_dir
+def make_inlinks_percentiles_file(s3_uri,
+                                  first_part_id_size=FIRST_PART_ID_SIZE,
+                                  part_id_size=PART_ID_SIZE,
+                                  tmp_dir=None,
+                                  force_fetch=DEFAULT_FORCE_FETCH):
+    """Compute the InlinksPercentilesStreamDef stream that assigns
+    a percentile id to every crawled url.
+    :param s3_uri: the s3 uri where the crawl data is stored.
+    :type s3_uri: str
+    :param first_part_id_size: the size of the first part.
+    :type first_part_id_size: int
+    :param part_id_size: the size of the parts (except the first one)
+    :type part_id_size: int
+    :returns: list - the list of generated files
+    """
+
+    #get streams
+    urlid_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    inlinks_counter_stream = InlinksCountersStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+
+    #get max crawled urlid
+    global_crawl_info_filename = "files.json"
+    fetch_file(os.path.join(s3_uri, global_crawl_info_filename),
+               os.path.join(tmp_dir, global_crawl_info_filename),
+               force_fetch=force_fetch)
+    crawler_metakeys = load_crawler_metakeys(tmp_dir)
+    max_crawled_urlid = get_max_crawled_urlid(crawler_metakeys)
+    #generate stream
+    nb_quantiles = 100
+    percentile_stream = compute_quantiles(
+        urlid_stream,
+        inlinks_counter_stream,
+        max_crawled_urlid,
+        nb_quantiles
+    )
+    #persist stream
+    output_files = InlinksPercentilesStreamDef.persist(
+        percentile_stream,
+        s3_uri,
+        first_part_size=first_part_id_size,
+        part_size=part_id_size
+    )
+    return output_files

@@ -4,7 +4,8 @@ import random
 from cdf.features.links.percentiles import (
     generate_follow_inlinks_stream,
     PercentileStats,
-    compute_percentile_stats
+    compute_percentile_stats,
+    compute_quantiles
 )
 
 
@@ -22,16 +23,18 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_nominal_case(self):
         inlinks_count_stream = iter([
-            (1, 0, 10,  10),
-            (2, 0, 2, 2),
-            (3, 0, 1, 1),
-            (4, 0, 6, 6),
-            (5, 0, 5, 5),
-            (6, 0, 8, 8)
+            (1, ["follow"], 10,  10),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+            (4, ["follow"], 6, 6),
+            (5, ["follow"], 5, 5),
+            (6, ["follow"], 8, 8)
         ])
-        actual_result = generate_follow_inlinks_stream(self.urlids_stream,
-                                                       inlinks_count_stream,
-                                                       self.max_crawled_urlid)
+        actual_result = generate_follow_inlinks_stream(
+            self.urlids_stream,
+            inlinks_count_stream,
+            self.max_crawled_urlid
+        )
         expected_result = [
             (1, 10),
             (2, 2),
@@ -44,18 +47,20 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_nofollow_links(self):
         inlinks_count_stream = iter([
-            (1, 0, 10,  10),
-            (1, 2, 1,  1),
-            (2, 0, 2, 2),
-            (3, 0, 1, 1),
-            (3, 3, 2, 2),
-            (4, 0, 6, 6),
-            (5, 0, 5, 5),
-            (6, 0, 8, 8)
+            (1, ["follow"], 10,  10),
+            (1, ["meta"], 1,  1),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+            (3, ["meta", "link"], 2, 2),
+            (4, ["follow"], 6, 6),
+            (5, ["follow"], 5, 5),
+            (6, ["follow"], 8, 8)
         ])
-        actual_result = generate_follow_inlinks_stream(self.urlids_stream,
-                                                       inlinks_count_stream,
-                                                       self.max_crawled_urlid)
+        actual_result = generate_follow_inlinks_stream(
+            self.urlids_stream,
+            inlinks_count_stream,
+            self.max_crawled_urlid
+        )
         expected_result = [
             (1, 10),
             (2, 2),
@@ -68,15 +73,17 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_missing_urlid(self):
         inlinks_count_stream = iter([
-            (1, 0, 10,  10),
-            (2, 0, 2, 2),
-            (3, 0, 1, 1),
-            (5, 0, 5, 5),
-            (6, 0, 8, 8)
+            (1, ["follow"], 10,  10),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+            (5, ["follow"], 5, 5),
+            (6, ["follow"], 8, 8)
         ])
-        actual_result = generate_follow_inlinks_stream(self.urlids_stream,
-                                                       inlinks_count_stream,
-                                                       self.max_crawled_urlid)
+        actual_result = generate_follow_inlinks_stream(
+            self.urlids_stream,
+            inlinks_count_stream,
+            self.max_crawled_urlid
+        )
         expected_result = [
             (1, 10),
             (2, 2),
@@ -89,9 +96,9 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_missing_urlids(self):
         inlinks_count_stream = iter([
-            (1, 0, 10,  10),
-            (3, 0, 1, 1),
-            (6, 0, 8, 8)
+            (1, ["follow"], 10,  10),
+            (3, ["follow"], 1, 1),
+            (6, ["follow"], 8, 8)
         ])
 
         urlids = iter([
@@ -102,9 +109,11 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (5, "http", "foo.com", "/qux"),
             (6, "http", "foo.com", "/barbar"),
         ])
-        actual_result = generate_follow_inlinks_stream(urlids,
-                                                       inlinks_count_stream,
-                                                       self.max_crawled_urlid)
+        actual_result = generate_follow_inlinks_stream(
+            urlids,
+            inlinks_count_stream,
+            self.max_crawled_urlid
+        )
         expected_result = [
             (1, 10),
             (3, 1),
@@ -116,17 +125,19 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_max_crawled_urlid(self):
         inlinks_count_stream = iter([
-            (1, 0, 10,  10),
-            (2, 0, 2, 2),
-            (3, 0, 1, 1),
-            (4, 0, 6, 6),
-            (5, 0, 5, 5),
-            (6, 0, 8, 8)
+            (1, ["follow"], 10,  10),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+            (4, ["follow"], 6, 6),
+            (5, ["follow"], 5, 5),
+            (6, ["follow"], 8, 8)
         ])
         max_crawled_urlid = 4
-        actual_result = generate_follow_inlinks_stream(self.urlids_stream,
-                                                       inlinks_count_stream,
-                                                       max_crawled_urlid)
+        actual_result = generate_follow_inlinks_stream(
+            self.urlids_stream,
+            inlinks_count_stream,
+            max_crawled_urlid
+        )
         expected_result = [
             (1, 10),
             (2, 2),
@@ -173,6 +184,75 @@ class TestPercentileStats(unittest.TestCase):
             'max': 5,
         }
         self.assertEqual(result, expected)
+
+
+
+
+class TestComputePercentile(unittest.TestCase):
+    def setUp(self):
+        self.urlids_stream = iter([
+            (1, "http", "foo.com", "/"),
+            (2, "http", "foo.com", "/index.html"),
+            (3, "http", "foo.com", "/bar"),
+            (4, "http", "foo.com", "/baz"),
+            (5, "http", "foo.com", "/qux"),
+            (6, "http", "foo.com", "/barbar"),
+        ])
+        self.max_crawled_urlid = 6
+
+    def test_nominal_case(self):
+        inlinks_count_stream = iter([
+            (1, ["follow"], 10,  10),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+            (4, ["follow"], 6, 6),
+            (5, ["follow"], 5, 5),
+            (6, ["follow"], 8, 8)
+        ])
+        nb_elements = 3
+        actual_result = compute_quantiles(
+            self.urlids_stream,
+            inlinks_count_stream,
+            self.max_crawled_urlid,
+            nb_elements
+        )
+        expected_result = [
+            (1, 2, 10),
+            (2, 0, 2),
+            (3, 0, 1),
+            (4, 1, 6),
+            (5, 1, 5),
+            (6, 2, 8)
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_secondary_sort_criterion(self):
+        #all urls have the same number of inlinks
+        inlinks_count_stream = iter([
+            (1, ["follow"], 4, 4),
+            (2, ["follow"], 4, 4),
+            (3, ["follow"], 4, 4),
+            (4, ["follow"], 4, 4),
+            (5, ["follow"], 4, 4),
+            (6, ["follow"], 4, 4)
+        ])
+        nb_elements = 3
+        actual_result = compute_quantiles(
+            self.urlids_stream,
+            inlinks_count_stream,
+            self.max_crawled_urlid,
+            nb_elements
+        )
+        #the urls are sorted by decreasing urlids
+        expected_result = [
+            (1, 2, 4),
+            (2, 2, 4),
+            (3, 1, 4),
+            (4, 1, 4),
+            (5, 0, 4),
+            (6, 0, 4)
+        ]
+        self.assertEqual(expected_result, list(actual_result))
 
 
 class TestPercentileStatsComputation(unittest.TestCase):
