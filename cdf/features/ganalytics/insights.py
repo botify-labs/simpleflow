@@ -7,19 +7,34 @@ from cdf.query.filter import (
 from cdf.query.sort import DescendingSort
 from cdf.query.aggregation import AvgAggregation, SumAggregation
 from cdf.metadata.url.url_metadata import FLOAT_TYPE
-from cdf.core.metadata.constants import RENDERING
 from cdf.features.ganalytics.streams import _iterate_sources
 
 
 def get_medium_source_insights(medium, source):
+    """Return all the Google Analytics insights related to a given
+    (medium, source) tuple
+    :param medium: the traffic medium to consider
+    :type medium: str ("organic" or "social")
+    :param source: the traffic source to consider
+    :type source : str (from ORGANIC_SOURCES or SOCIAL_SOURCES)
+    :returns: list - list of Insight
+    """
     result = []
     result.extend(get_ganalytics_main_metric_insights(medium, source))
     result.extend(get_strategic_active_insights(medium, source))
-    result.extend(get_strategic_visit_nb_range_insight(medium, source))
+    result.extend(get_strategic_visit_nb_range_insights(medium, source))
     return result
 
 
 def get_ganalytics_main_metric_insights(medium, source):
+    """Return the Google Analytics insights related to the main metric
+    for a given (medium, source) tuple
+    :param medium: the traffic medium to consider
+    :type medium: str ("organic" or "social")
+    :param source: the traffic source to consider
+    :type source : str (from ORGANIC_SOURCES or SOCIAL_SOURCES)
+    :returns: list - list of Insight
+    """
     name_prefix = "{}_{}".format(medium, source)
     visit_field = "visits.{}.{}.nb".format(medium, source)
     return [
@@ -72,6 +87,14 @@ def get_ganalytics_main_metric_insights(medium, source):
 
 
 def get_strategic_active_insights(medium, source):
+    """For a given (medium, source) tuple, compute the count of URLs
+    for all the possible combinations of "is_strategic" and "is_active"
+    :param medium: the traffic medium to consider
+    :type medium: str ("organic" or "social")
+    :param source: the traffic source to consider
+    :type source : str (from ORGANIC_SOURCES or SOCIAL_SOURCES)
+    :returns: list - list of Insight
+    """
     name_prefix = "{}_{}".format(medium, source)
     visit_field = "visits.{}.{}.nb".format(medium, source)
     strategic_field = "strategic.is_strategic"
@@ -119,7 +142,15 @@ def get_strategic_active_insights(medium, source):
     ]
 
 
-def get_strategic_visit_nb_range_insight(medium, source):
+def get_strategic_visit_nb_range_insights(medium, source):
+    """Return the Google Analytics insights related
+    to the active strategic URLs for a given (medium, source) tuple
+    :param medium: the traffic medium to consider
+    :type medium: str ("organic" or "social")
+    :param source: the traffic source to consider
+    :type source : str (from ORGANIC_SOURCES or SOCIAL_SOURCES)
+    :returns: list - list of Insight
+    """
     name_prefix = "{}_{}".format(medium, source)
     visit_field = "visits.{}.{}.nb".format(medium, source)
     strategic_field = "strategic.is_strategic"
@@ -172,6 +203,9 @@ def get_strategic_visit_nb_range_insight(medium, source):
 
 
 def get_ganalytics_insights():
+    """Return all the Google Analytics insights
+    :returns: list - list of Insight
+    """
     result = []
     for medium, source in _iterate_sources():
         result.extend(get_medium_source_insights(medium, source))

@@ -13,6 +13,9 @@ from cdf.query.aggregation import AvgAggregation, SumAggregation
 
 
 def get_average_inlinks_insights():
+    """Return insights related to inlinks averages.
+    :returns: list - list of Insight
+    """
     return [
         Insight(
             "inlinks_avg",
@@ -32,6 +35,9 @@ def get_average_inlinks_insights():
 
 
 def get_inlinks_sum_insights():
+    """Return insights related to inlinks sums.
+    :returns: list - list of Insight
+    """
     return [
         Insight(
             "inlinks_sum",
@@ -55,6 +61,9 @@ def get_inlinks_sum_insights():
 
 
 def get_outlinks_sum_insights():
+    """Return insights related to outlinks sums.
+    :returns: list - list of Insight
+    """
     return [
         Insight(
             "outlinks_internal_sum_follow",
@@ -90,6 +99,10 @@ def get_outlinks_sum_insights():
 
 
 def get_inlinks_range_insights():
+    """Return insights related to the URLs that receive
+    a given number of inlinks.
+    :returns: list - list of Insight
+    """
     field = "inlinks_internal.nb.follow.unique"
     return [
         Insight(
@@ -118,11 +131,22 @@ def get_inlinks_range_insights():
         )
     ]
 
+
 def get_inlinks_above_below_average_insights():
     #TODO implement this
+    #2 ideas for this:
+    # - wait for elasticsearch to implement nested queries
+    # - implement Insight.compute_value() and by default launch a query
+    #   to ElasticSearch. But create a specific implementation for this
+    #   insight that launches a query to compute the average number of inlinks
+    #   and an other query to get the URLs below this threshold.
     return []
 
+
 def get_misc_inlinks_insights():
+    """Return misc insights related to inlinks.
+    :returns: list - list of Insight
+    """
     result = []
 
     field = "inlinks_internal.nb.nofollow.total"
@@ -183,6 +207,9 @@ def get_misc_inlinks_insights():
 
 
 def get_average_outlinks_insights():
+    """Return insights related to internal outlinks averages.
+    :returns: list - list of Insight
+    """
     return [
         Insight(
             "outlinks_avg",
@@ -202,6 +229,9 @@ def get_average_outlinks_insights():
 
 
 def get_outlinks_internal_insights():
+    """Return insights related to the presence of internal outlinks.
+    :returns: list - list of Insight
+    """
     result = []
     field = "outlinks_internal.nb.follow.unique"
     result.append(
@@ -230,6 +260,9 @@ def get_outlinks_internal_insights():
 
 
 def get_outlinks_external_insights():
+    """Return insights related to the presence of external outlinks.
+    :returns: list - list of Insight
+    """
     result = []
     field = "outlinks_external.nb.follow.unique"
     result.append(
@@ -257,6 +290,9 @@ def get_outlinks_external_insights():
     return result
 
 def get_misc_outlinks_insights():
+    """Return miscinsights related to outlinks.
+    :returns: list - list of Insight
+    """
     result = []
     field = "outlinks_errors.total_bad_http_codes"
     result.append(
@@ -285,11 +321,18 @@ def get_misc_outlinks_insights():
 
 
 def get_http_code_is_good_predicate():
+    """Helper function that returns a filter that selects
+    urls with good http code
+    :returns: Filter
+    """
     return BetweenFilter("http_code", [200, 299])  # TODO implement http_code_is_code
 
 
 def get_canonical_insights():
     result = []
+    """Return miscinsights related to outlinks.
+    :returns: list - list of Insight
+    """
     result.append(
         Insight(
             "canonical_set",

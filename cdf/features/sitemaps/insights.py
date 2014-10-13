@@ -12,6 +12,9 @@ from cdf.query.sort import DescendingSort
 
 
 def get_main_sitemap_insights():
+    """Return the main insights related to the sitemaps.
+    :returns: list - list of Insight
+    """
     return [
         Insight(
             "sitemaps_urls_common",
@@ -30,6 +33,9 @@ def get_main_sitemap_insights():
 
 
 def get_strategic_sitemap_insights():
+    """Return the insights related to the sitemaps and is_strategic field.
+    :returns: list - list of Insight
+    """
     return [
         Insight(
             "sitemaps_not_strategic",
@@ -53,6 +59,9 @@ def get_strategic_sitemap_insights():
 
 
 def get_misc_sitemap_insights():
+    """Return misc insights related to sitemaps.
+    :returns: list - list of Insight
+    """
     return [
         Insight(
             "sitemaps_bad_http_code",
@@ -105,6 +114,9 @@ def get_misc_sitemap_insights():
 
 
 def get_bad_metadata_strategic_sitemap_insights():
+    """Return insights related to sitemaps and bad metadata.
+    :returns: list - list of Insight
+    """
     result = []
     for metadata in ["title", "h1", "description"]:
         additional_fields = [
