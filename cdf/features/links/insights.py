@@ -7,6 +7,7 @@ from cdf.query.filter import (
     BetweenFilter,
     NotFilter,
     ExistFilter)
+from cdf.metadata.url.url_metadata import FLOAT_TYPE
 from cdf.query.sort import DescendingSort
 from cdf.query.aggregation import AvgAggregation, SumAggregation
 
@@ -17,13 +18,15 @@ def get_average_inlinks_insights():
             "inlinks_avg",
             "Average Inlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=AvgAggregation("inlinks_internal.nb.unique")
+            metric_agg=AvgAggregation("inlinks_internal.nb.unique"),
+            field_type=FLOAT_TYPE
         ),
         Insight(
             "inlinks_avg_follow",
             "Average Follow Inlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=AvgAggregation("inlinks_internal.nb.follow.unique")
+            metric_agg=AvgAggregation("inlinks_internal.nb.follow.unique"),
+            field_type=FLOAT_TYPE
         ),
     ]
 
@@ -178,19 +181,22 @@ def get_misc_inlinks_insights():
     )
     return result
 
+
 def get_average_outlinks_insights():
     return [
         Insight(
             "outlinks_avg",
             "Average Internal Outlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=AvgAggregation("outlinks_internal.nb.unique")
+            metric_agg=AvgAggregation("outlinks_internal.nb.unique"),
+            field_type=FLOAT_TYPE
         ),
         Insight(
             "outlinks_avg_follow",
             "Average Internal Follow Outlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=AvgAggregation("outlinks_internal.nb.follow.unique")
+            metric_agg=AvgAggregation("outlinks_internal.nb.follow.unique"),
+            field_type=FLOAT_TYPE
         )
     ]
 

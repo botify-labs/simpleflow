@@ -6,6 +6,7 @@ from cdf.query.filter import (
     BetweenFilter)
 from cdf.query.sort import DescendingSort
 from cdf.query.aggregation import AvgAggregation, SumAggregation
+from cdf.metadata.url.url_metadata import FLOAT_TYPE
 from cdf.core.metadata.constants import RENDERING
 from cdf.features.ganalytics.streams import _iterate_sources
 
@@ -27,7 +28,8 @@ def get_ganalytics_main_metric_insights(medium, source):
             "Average Visits by Active Page",
             PositiveTrend.UNKNOWN,
             GtFilter(visit_field, 0),
-            metric_agg=AvgAggregation(visit_field)
+            metric_agg=AvgAggregation(visit_field),
+            field_type=FLOAT_TYPE
         ),
         Insight(
             "{}_visits_inlinks_avg".format(name_prefix),
@@ -36,7 +38,8 @@ def get_ganalytics_main_metric_insights(medium, source):
             GtFilter(visit_field, 0),
             metric_agg=AvgAggregation(
                 "inlinks_internal.nb.unique"
-            )
+            ),
+            field_type=FLOAT_TYPE
         ),
         Insight(
             "{}_visits_ko_strategic_1_follow_inlink".format(name_prefix),
