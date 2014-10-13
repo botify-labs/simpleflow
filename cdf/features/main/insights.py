@@ -10,6 +10,16 @@ from cdf.query.filter import (AndFilter,
 from cdf.query.aggregation import AvgAggregation
 
 
+def get_all_urls_insight():
+    return [
+        Insight(
+            "all",
+            "Crawled URLs",
+            PositiveTrend.UNKNOWN
+        )
+    ]
+
+
 def get_http_code_ranges_insights():
     #insights by http ranges
     result = []
@@ -290,6 +300,7 @@ def get_gzipped_insights():
 
 def get_insights():
     insights = []
+    insights.extend(get_all_urls_insight())
     insights.extend(get_http_code_ranges_insights())
     insights.extend(get_http_code_insights())
     insights.extend(get_strategic_urls_insights())
