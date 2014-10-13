@@ -9,7 +9,7 @@ from cdf.query.filter import (
     NotFilter,
     ExistFilter)
 from cdf.query.sort import DescendingSort
-from cdf.query.aggregation import AvgAggregation, SumAggregation
+
 
 def get_main_sitemap_insights():
     return [
