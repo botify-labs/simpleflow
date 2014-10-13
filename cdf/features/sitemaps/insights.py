@@ -106,7 +106,7 @@ def get_misc_sitemap_insights():
 
 def get_bad_metadata_strategic_sitemap_insights():
     result = []
-    for metadata in ["title", "h1", "descrption"]:
+    for metadata in ["title", "h1", "description"]:
         additional_fields = [
             "metadata.{}.contents".format(metadata),
             "metadata.{}.nb".format(metadata),
