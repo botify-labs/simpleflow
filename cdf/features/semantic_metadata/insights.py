@@ -14,7 +14,7 @@ def get_metadata_insights(metadata):
     #unique
     identifier = "meta_{}_unique".format(metadata)
     name = "Unique {}".format(metadata.title())
-    duplicate_field = "metadata.{}.duplicates.nb".format(metadata)
+    duplicate_field = "metadata.{}.duplicates.context_aware.nb".format(metadata)
     nb_field = "metadata.{}.nb".format(metadata)
     strategic_field = "strategic.is_strategic"
     additional_fields = ["metadata.{}.contents".format(metadata)]
@@ -51,11 +51,11 @@ def get_metadata_insights(metadata):
     #duplicate
     identifier = "meta_{}_duplicate".format(metadata)
     name = "Duplicate {}".format(metadata.title())
-    field = "metadata.{}.duplicates.nb".format(metadata)
+    field = "metadata.{}.duplicates.context_aware.nb".format(metadata)
     additional_fields = [
         "metadata.{}.contents".format(metadata),
-        "metadata.{}.duplicates.nb".format(metadata),
-        "metadata.{}.duplicates.urls".format(metadata)
+        "metadata.{}.duplicates.context_aware.nb".format(metadata),
+        "metadata.{}.duplicates.context_aware.urls".format(metadata)
     ]
     additional_filter = EqFilter("metadata.{}.is_first".format(metadata), True)
     result.append(
