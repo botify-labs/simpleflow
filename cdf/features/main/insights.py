@@ -122,7 +122,7 @@ def get_speed_insights():
         ),
         Insight(
             "speed_medium",
-            "Medium Urls",
+            "Medium URLs",
             PositiveTrend.DOWN,
             BetweenFilter(field, [500, 999]),
         ),

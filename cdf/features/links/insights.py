@@ -83,7 +83,7 @@ def get_misc_inlinks_insights():
     result.append(
         Insight(
             "inlinks_has_nofollow",
-            "URLs with nofollow inlinks",
+            "URLs with Nofollow Inlinks",
             PositiveTrend.UNKNOWN,
             GtFilter(field, 0),
             additional_fields=[field],
