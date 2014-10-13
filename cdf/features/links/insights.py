@@ -41,6 +41,12 @@ def get_inlinks_sum_insights():
             "Total Number of Follow Inlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=SumAggregation("inlinks_internal.nb.follow.unique")
+        ),
+        Insight(
+            "inlinks_sum_nofollow",
+            "Total Number of Nofollow Inlinks",
+            PositiveTrend.UNKNOWN,
+            metric_agg=SumAggregation("inlinks_internal.nb.nofollow.unique")
         )
     ]
 
@@ -125,6 +131,20 @@ def get_misc_inlinks_insights():
             AndFilter([
                 EqFilter("strategic.is_strategic", False),
                 GtFilter(field, 0)
+            ]),
+            additional_fields=[field],
+            sort_by=DescendingSort(field)
+        )
+    )
+
+    result.append(
+        Insight(
+            "inlinks_follow_strategic_1",
+            "Strategic URLs with only 1 Follow Inlink",
+            PositiveTrend.UNKNOWN,
+            AndFilter([
+                EqFilter("strategic.is_strategic", True),
+                EqFilter(field, 1)
             ]),
             additional_fields=[field],
             sort_by=DescendingSort(field)
@@ -236,7 +256,7 @@ def get_misc_outlinks_insights():
     result.append(
         Insight(
             "outlinks_not_strategic",
-            "Strategic URLs with outlinks to non Strategic URLs",
+            "Strategic URLs with Outlinks to non Strategic URLs",
             PositiveTrend.DOWN,
             GtFilter(field, 0),
             additional_fields=[field],
