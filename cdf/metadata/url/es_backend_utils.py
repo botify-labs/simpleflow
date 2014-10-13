@@ -250,12 +250,6 @@ class ElasticSearchBackend(DataBackend):
         lookup = set()
 
         for field_name, values in self.data_format.iteritems():
-            settings = values.get('settings', {})
-            if (
-                any(f in settings for f in FIELD_RIGHTS) and
-                (FIELD_RIGHTS.FILTERS not in settings and FIELD_RIGHTS.FILTERS_EXIST not in settings)
-            ):
-                continue
             splits = _split_path(field_name)
             for i, _ in enumerate(splits):
                 lookup.add('.'.join(splits[:i + 1]))

@@ -122,6 +122,7 @@ class TestFieldsParsing(ParsingTestCase):
         parsed = self.parser.parse_fields(fields)
         self.assertParsingError(parsed.validate)
 
+    @unittest.skip('Temporarily deactivate field right filtering')
     def test_wrong_fields_filter(self):
         _filter = {'field': 'selectable_only_field', 'value': 1}
         parsed = self.parser.parse_predicate_filter(_filter)
