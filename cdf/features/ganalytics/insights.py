@@ -30,37 +30,6 @@ def get_ganalytics_main_metric_insights(medium, source):
             metric_agg=AvgAggregation(visit_field)
         ),
         Insight(
-            "{}_visits_session_duration_avg".format(name_prefix),
-            "Average Session Time by Active Page",
-            PositiveTrend.UNKNOWN,
-            GtFilter(visit_field, 0),
-            #FIXME formula is wrong as it does not consider the number of visits
-            metric_agg=AvgAggregation(
-                "visits.{}.{}.average_session_duration".format(medium, source)
-            ),
-            field_type=RENDERING.TIME_SEC.value
-        ),
-        Insight(
-            "{}_visits_conversion_rate_avg".format(name_prefix),
-            "Average Conversion Rate by Active Page",
-            PositiveTrend.UNKNOWN,
-            GtFilter(visit_field, 0),
-            #FIXME formula is wrong as it does not consider the number of visits
-            metric_agg=AvgAggregation(
-                "visits.{}.{}.goal_conversion_rate_all".format(medium, source)
-            )
-        ),
-        Insight(
-            "{}_visits_pages_per_session_avg".format(name_prefix),
-            "Average Pages per Sessions by Active Page",
-            PositiveTrend.UNKNOWN,
-            GtFilter(visit_field, 0),
-            #FIXME formula is wrong as it does not consider the number of visits
-            metric_agg=AvgAggregation(
-                "visits.{}.{}.pages_per_session".format(medium, source)
-            )
-        ),
-        Insight(
             "{}_visits_inlinks_avg".format(name_prefix),
             "Average Follow Inlinks by Active URL",
             PositiveTrend.UNKNOWN,
