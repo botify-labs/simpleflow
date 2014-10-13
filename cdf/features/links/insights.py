@@ -10,6 +10,7 @@ from cdf.query.filter import (
 from cdf.query.sort import DescendingSort
 from cdf.query.aggregation import AvgAggregation, SumAggregation
 
+
 def get_average_inlinks_insights():
     return [
         Insight(
@@ -42,6 +43,30 @@ def get_inlinks_sum_insights():
             metric_agg=SumAggregation("inlinks_internal.nb.follow.unique")
         )
     ]
+
+
+def get_outlinks_sum_insights():
+    return [
+        Insight(
+            "outlinks_internal_sum_follow",
+            "Total Number of Internal Follow Outlinks",
+            PositiveTrend.UNKNOWN,
+            metric_agg=SumAggregation("inlinks_internal.nb.follow.unique")
+        ),
+        Insight(
+            "outlinks_external_sum_follow",
+            "Total Number of External Follow Outlinks",
+            PositiveTrend.UNKNOWN,
+            metric_agg=SumAggregation("outlinks_external.nb.follow.unique")
+        ),
+        Insight(
+            "outlinks_errors_sum",
+            "Total Number of Broken Follow Outlinks",
+            PositiveTrend.DOWN,
+            metric_agg=SumAggregation("outlinks_errors.non_strategic.nb")
+        )
+    ]
+
 
 def get_inlinks_range_insights():
     field = "inlinks_internal.nb.follow.unique"
@@ -299,9 +324,11 @@ def get_canonical_insights():
     )
     return result
 
+
 #actual insight definition
 insights = []
 insights.extend(get_average_inlinks_insights())
+insights.extend(get_inlinks_sum_insights())
 insights.extend(get_inlinks_sum_insights())
 insights.extend(get_inlinks_range_insights())
 insights.extend(get_inlinks_above_below_average_insights())
