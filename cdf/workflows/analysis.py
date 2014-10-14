@@ -83,7 +83,8 @@ from cdf.features.links.tasks import (
     make_bad_link_counter_file,
     make_links_to_non_strategic_file,
     make_links_to_non_strategic_counter_file,
-    make_top_domains_files
+    make_top_domains_files,
+    make_inlinks_percentiles_file
 )
 compute_metadata_count = as_activity(compute_metadata_count)
 make_metadata_duplicates_file = as_activity(make_metadata_duplicates_file)
@@ -96,6 +97,7 @@ make_bad_link_counter_file = as_activity(make_bad_link_counter_file)
 make_links_to_non_strategic_file = as_activity(make_links_to_non_strategic_file)
 make_links_to_non_strategic_counter_file = as_activity(make_links_to_non_strategic_counter_file)
 make_top_domains_files = as_activity(make_top_domains_files)
+make_inlinks_percentiles_file = as_activity(make_inlinks_percentiles_file)
 
 from cdf.tasks.url_data import (
     generate_documents,
@@ -545,6 +547,17 @@ class AnalysisWorkflow(Workflow):
             intermediary_files.extend(self.compute_sitemaps(context))
 
         futures.wait(*intermediary_files)
+
+        # inlink percentiles depends on link counters
+        percentile_results = self.submit(
+            make_inlinks_percentiles_file,
+            s3_uri=s3_uri,
+            first_part_id_size=first_part_id_size,
+            part_id_size=part_id_size,
+            tmp_dir=tmp_dir
+        )
+        futures.wait(percentile_results)
+
         aggregators_results = [
             self.submit(
                 compute_aggregators_from_part_id,
