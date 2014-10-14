@@ -329,11 +329,10 @@ def get_http_code_is_good_predicate():
 
 
 def get_canonical_insights():
-    result = []
     """Return miscinsights related to outlinks.
     :returns: list - list of Insight
     """
-    result.append(
+    return [
         Insight(
             "canonical_set",
             "2xx URLs with a Canonical Set",
@@ -343,10 +342,7 @@ def get_canonical_insights():
                 ExistFilter("canonical.to.url_exists")
             ]),
             additional_fields=["canonical.to.url"],
-        )
-    )
-
-    result.append(
+        ),
         Insight(
             "canonical_bad",
             "2xx URLs with a Canonical Set / not Equal",
@@ -362,10 +358,7 @@ def get_canonical_insights():
                 ])
             ]),
             additional_fields=["canonical.to.url"],
-        )
-    )
-
-    result.append(
+        ),
         Insight(
             "canonical_not_set",
             "2xx URLs with a Canonical not Set",
@@ -375,10 +368,7 @@ def get_canonical_insights():
                 NotFilter(ExistFilter("canonical.to.url_exists"))
             ]),
             additional_fields=["canonical.to.url"]
-        )
-    )
-
-    result.append(
+        ),
         Insight(
             "canonical_not_equal",
             "2xx URLs with a Canonical not Equal",
@@ -388,10 +378,7 @@ def get_canonical_insights():
                 EqFilter("canonical.to.equal", False)
             ]),
             additional_fields=["canonical.to.url"]
-        )
-    )
-
-    result.append(
+        ),
         Insight(
             "canonical_equal",
             "2xx URLs with a Canonical Equal",
@@ -402,8 +389,7 @@ def get_canonical_insights():
             ]),
             additional_fields=["canonical.to.url"]
         )
-    )
-    return result
+    ]
 
 
 #actual insight definition
