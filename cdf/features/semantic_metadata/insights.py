@@ -14,8 +14,9 @@ def get_metadata_insights(metadata):
     #unique
     identifier = "meta_{}_unique".format(metadata)
     name = "Unique {}".format(metadata.title())
-    duplicate_field = "metadata.{}.duplicates.nb".format(metadata)
+    duplicate_field = "metadata.{}.duplicates.context_aware.nb".format(metadata)
     nb_field = "metadata.{}.nb".format(metadata)
+    strategic_field = "strategic.is_strategic"
     additional_fields = ["metadata.{}.contents".format(metadata)]
     result.append(
         Insight(
@@ -24,7 +25,8 @@ def get_metadata_insights(metadata):
             PositiveTrend.UP,
             AndFilter([
                 EqFilter(duplicate_field, 0),
-                GtFilter(nb_field, 0)
+                GtFilter(nb_field, 0),
+                EqFilter(strategic_field, True)
             ]),
             additional_fields=additional_fields
         )
@@ -39,18 +41,21 @@ def get_metadata_insights(metadata):
             identifier,
             name,
             PositiveTrend.DOWN,
-            EqFilter(field, 0)
+            AndFilter([
+                EqFilter(field, 0),
+                EqFilter(strategic_field, True)
+            ])
         )
     )
 
     #duplicate
     identifier = "meta_{}_duplicate".format(metadata)
     name = "Duplicate {}".format(metadata.title())
-    field = "metadata.{}.duplicates.nb".format(metadata)
+    field = "metadata.{}.duplicates.context_aware.nb".format(metadata)
     additional_fields = [
         "metadata.{}.contents".format(metadata),
-        "metadata.{}.duplicates.nb".format(metadata),
-        "metadata.{}.duplicates.urls".format(metadata)
+        "metadata.{}.duplicates.context_aware.nb".format(metadata),
+        "metadata.{}.duplicates.context_aware.urls".format(metadata)
     ]
     additional_filter = EqFilter("metadata.{}.is_first".format(metadata), True)
     result.append(
@@ -58,7 +63,10 @@ def get_metadata_insights(metadata):
             identifier,
             name,
             PositiveTrend.DOWN,
-            GtFilter(field, 0),
+            AndFilter([
+                GtFilter(field, 0),
+                EqFilter(strategic_field, True)
+            ]),
             additional_fields=additional_fields,
             additional_filter=additional_filter,
             sort_by=DescendingSort(field)
@@ -67,7 +75,12 @@ def get_metadata_insights(metadata):
 
     return result
 
+
+def get_semantic_metadata_insights():
+    result = []
+    for metadata in ["title", "description", "h1"]:
+        result.extend(get_metadata_insights(metadata))
+    return result
+
 #actual insight definition
-insights = []
-for metadata in ["title", "description", "h1"]:
-    insights.extend(get_metadata_insights(metadata))
+insights = get_semantic_metadata_insights()

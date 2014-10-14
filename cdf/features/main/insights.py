@@ -10,6 +10,16 @@ from cdf.query.filter import (AndFilter,
 from cdf.query.aggregation import AvgAggregation
 
 
+def get_all_urls_insight():
+    return [
+        Insight(
+            "all",
+            "Crawled URLs",
+            PositiveTrend.UNKNOWN
+        )
+    ]
+
+
 def get_http_code_ranges_insights():
     #insights by http ranges
     result = []
@@ -122,7 +132,7 @@ def get_speed_insights():
         ),
         Insight(
             "speed_medium",
-            "Medium Urls",
+            "Medium URLs",
             PositiveTrend.DOWN,
             BetweenFilter(field, [500, 999]),
         ),
@@ -252,8 +262,45 @@ def get_average_depth_insights():
     ]
 
 
+def get_index_insights():
+    field = "metadata.robots.noindex"
+    return [
+        Insight(
+            "index_ok",
+            "Index URLs",
+            PositiveTrend.UNKNOWN,
+            EqFilter(field, False)
+        ),
+        Insight(
+            "index_ko",
+            "No-Index URLs",
+            PositiveTrend.UNKNOWN,
+            EqFilter(field, True)
+        )
+    ]
+
+
+def get_gzipped_insights():
+    field = "gzipped"
+    return [
+        Insight(
+            "gzipped_ok",
+            "GZIP URLs",
+            PositiveTrend.UNKNOWN,
+            EqFilter(field, False)
+        ),
+        Insight(
+            "index_ko",
+            "NON GZIP URLs",
+            PositiveTrend.UNKNOWN,
+            EqFilter(field, True)
+        )
+    ]
+
+
 def get_insights():
     insights = []
+    insights.extend(get_all_urls_insight())
     insights.extend(get_http_code_ranges_insights())
     insights.extend(get_http_code_insights())
     insights.extend(get_strategic_urls_insights())
@@ -264,6 +311,8 @@ def get_insights():
     insights.extend(get_domain_insights())
     insights.extend(get_average_speed_insights())
     insights.extend(get_average_depth_insights())
+    insights.extend(get_index_insights())
+    insights.extend(get_gzipped_insights())
     return insights
 
 #actual insight definition
