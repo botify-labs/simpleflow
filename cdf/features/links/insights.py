@@ -115,7 +115,7 @@ def get_inlinks_range_insights():
         ),
         Insight(
             "inlinks_follow_2_5",
-            "URLs Between 1 and 5 Follow Inlinks",
+            "URLs Between 2 and 5 Follow Inlinks",
             PositiveTrend.UNKNOWN,
             BetweenFilter(field, [2, 5]),
             additional_fields=[field],
