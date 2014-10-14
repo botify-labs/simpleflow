@@ -289,6 +289,7 @@ def get_outlinks_external_insights():
 
     return result
 
+
 def get_misc_outlinks_insights():
     """Return miscinsights related to outlinks.
     :returns: list - list of Insight
@@ -396,12 +397,13 @@ def get_links_insights():
     result = []
     result.extend(get_average_inlinks_insights())
     result.extend(get_inlinks_sum_insights())
-    result.extend(get_inlinks_sum_insights())
+    result.extend(get_outlinks_sum_insights())
     result.extend(get_inlinks_range_insights())
     result.extend(get_inlinks_above_below_average_insights())
     result.extend(get_misc_inlinks_insights())
     result.extend(get_average_outlinks_insights())
     result.extend(get_outlinks_internal_insights())
+    result.extend(get_outlinks_external_insights())
     result.extend(get_misc_outlinks_insights())
     result.extend(get_canonical_insights())
     return result
