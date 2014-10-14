@@ -144,8 +144,13 @@ def get_bad_metadata_strategic_sitemap_insights():
     return result
 
 
-insights = []
-insights.extend(get_main_sitemap_insights())
-insights.extend(get_strategic_sitemap_insights())
-insights.extend(get_misc_sitemap_insights())
-insights.extend(get_bad_metadata_strategic_sitemap_insights())
+def get_sitemaps_insights():
+    result = []
+    result.extend(get_main_sitemap_insights())
+    result.extend(get_strategic_sitemap_insights())
+    result.extend(get_misc_sitemap_insights())
+    result.extend(get_bad_metadata_strategic_sitemap_insights())
+    return result
+
+
+insights = get_sitemaps_insights()

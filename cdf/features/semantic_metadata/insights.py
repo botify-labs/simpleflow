@@ -75,7 +75,12 @@ def get_metadata_insights(metadata):
 
     return result
 
+
+def get_semantic_metadata_insights():
+    result = []
+    for metadata in ["title", "description", "h1"]:
+        result.extend(get_metadata_insights(metadata))
+    return result
+
 #actual insight definition
-insights = []
-for metadata in ["title", "description", "h1"]:
-    insights.extend(get_metadata_insights(metadata))
+insights = get_semantic_metadata_insights()
