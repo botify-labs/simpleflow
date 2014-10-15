@@ -71,16 +71,17 @@ class ContentsStreamDef(StreamDefBase):
 
 def _get_duplicate_document_mapping(metadata_list,
                                     duplicate_type,
-                                    verbose_duplicate_type,
+                                    verbose_prefix,
                                     order_seed):
     """Generate mapping for duplicate documents
     :param duplicate_type: the kind of duplicate.
                            this string will be used to generate the field types
     :type duplicate_type: str
-    :type verbose_duplicate_type: the description of the duplicate type.
-                                  this string will be used to generate the
-                                  verbose names.
-    :type verbose_duplicate_type: str
+    :type verbose_prefix: the prefix to apply to the verbose description
+                          of the duplicate type.
+                          This string will be used to generate the
+                          verbose names.
+    :type verbose_prefix: str
     :param order_seed: the base number to use to generate the "order" settings
     :type order_seed: int
     :param private: if True, all the generated fields will be private
@@ -88,6 +89,10 @@ def _get_duplicate_document_mapping(metadata_list,
     :returns: dict
     """
     result = {}
+    verbose_duplicate_type = "duplicate"
+    if len(verbose_prefix) > 0:
+        verbose_duplicate_type = "{} {}".format(verbose_prefix, verbose_duplicate_type)
+
     for i, metadata_type in enumerate(metadata_list):
         prefix = "metadata.{}.{}".format(metadata_type, duplicate_type)
         result["{}.nb".format(prefix)] = {
@@ -109,8 +114,11 @@ def _get_duplicate_document_mapping(metadata_list,
             "order": order_seed + 20 + i,
             "type": BOOLEAN_TYPE,
         }
+        same_metadata_type = metadata_type.capitalize()
+        if len(verbose_prefix) > 0:
+            same_metadata_type = "{} {}".format(verbose_prefix, same_metadata_type)
         result["{}.urls".format(prefix)] = {
-            "verbose_name": "Pages with the same {}".format(metadata_type.capitalize()),
+            "verbose_name": "Pages with the same {}".format(same_metadata_type),
             "type": INT_TYPE,
             "order": order_seed + 10 + i,
             "settings": {
@@ -177,7 +185,7 @@ class ContentsDuplicateStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
         ["title", "description", "h1"],
         "duplicates",
-        "duplicate",
+        "",
         100
     )
 
@@ -196,7 +204,7 @@ class ContentsContextAwareDuplicateStreamDef(StreamDefBase):
         _get_duplicate_document_mapping(
             ["title", "description", "h1"],
             "duplicates.context_aware",
-            "context aware duplicate",
+            "context-aware",
             200
         ),
         FIELD_RIGHTS.ADMIN

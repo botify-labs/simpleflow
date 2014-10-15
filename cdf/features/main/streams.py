@@ -325,6 +325,7 @@ class ZoneStreamDef(StreamDefBase):
         ('id', int),
         ('zone', str)
     )
+    URL_DOCUMENT_DEFAULT_GROUP = "main"
     URL_DOCUMENT_MAPPING = set_visibility(
         {
             "zone": {
@@ -355,6 +356,7 @@ class StrategicUrlStreamDef(StreamDefBase):
         ('strategic', cast_bool),  # is this url SEO strategic
         ('reason', int)  # why this url is NOT SEO strategic
     )
+    URL_DOCUMENT_DEFAULT_GROUP = "main"
     URL_DOCUMENT_MAPPING = set_visibility(
         {
             "strategic.is_strategic": {
