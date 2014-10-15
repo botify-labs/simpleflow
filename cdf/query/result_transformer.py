@@ -88,6 +88,13 @@ def _transform_outlinks(es_results, id_to_url):
         target['urls'] = _transform_link_items(target['urls'], id_to_url)
 
 
+def _transform_links(es_results, id_to_url, link_path):
+    if path_in_dict(link_path, es_results):
+        original_links = get_subdict_from_path(link_path, es_results)
+        transformed_links = _transform_link_items(original_links, id_to_url)
+        update_path_in_dict(link_path, transformed_links, es_results)
+
+
 def _transform_link_items(items, id_to_url):
     res = []
     for item in items:
@@ -207,63 +214,106 @@ def _transform_metadata_duplicate(es_result, id_to_url, meta_type):
             target['urls'] = urls
 
 
+class IdResolutionStrategy(object):
+    def extract(self, result):
+        pass
+
+    def transform(self, result, id_to_url):
+        pass
+
+
+class LinksStrategy(IdResolutionStrategy):
+    def __init__(self, field):
+        self.field = field
+
+    @classmethod
+    def extract_link_id(cls, link_tuple):
+        return link_tuple[0]
+
+    def extract(self, result):
+        return _extract_list_ids(result, self.field, self.extract_link_id)
+
+    def transform(self, result, id_to_url):
+        return _transform_links(result, id_to_url, self.field)
+
+
+class ErrorLinkStrategy(IdResolutionStrategy):
+    def __init__(self, field, error_type):
+        self.field = field
+        self.error_type = error_type
+
+    def extract(self, result):
+        return _extract_list_ids(result, self.field)
+
+    def transform(self, result, id_to_url):
+        return _transform_error_links(result, id_to_url, self.error_type)
+
+
+class MetaDuplicateStrategy(IdResolutionStrategy):
+    def __init__(self, field, meta_type):
+        self.field = field
+        self.meta_type = meta_type
+
+    def extract(self, result):
+        return _extract_list_ids(result, self.field)
+
+    def transform(self, result, id_to_url):
+        return _transform_metadata_duplicate(result, id_to_url, self.meta_type)
+
+
+class RedirectToStrategy(IdResolutionStrategy):
+    def extract(self, result):
+        return _extract_single_id(result, 'redirect.to.url.url_id')
+
+    def transform(self, result, id_to_url):
+        return _transform_redirects_to(result, id_to_url)
+
+
+class RedirectFromStrategy(IdResolutionStrategy):
+    def extract(self, result):
+        return _extract_list_ids(result, 'redirect.from.urls', lambda l: l[0])
+
+    def transform(self, result, id_to_url):
+        return _transform_redirects_from(result, id_to_url)
+
+
+class CanonicalToStrategy(IdResolutionStrategy):
+    def extract(self, result):
+        return _extract_single_id(result, 'canonical.to.url.url_id')
+
+    def transform(self, result, id_to_url):
+        return _transform_canonical_to(result, id_to_url)
+
+
+class CanonicalFromStrategy(IdResolutionStrategy):
+    def extract(self, result):
+        return _extract_list_ids(result, 'canonical.from.urls')
+
+    def transform(self, result, id_to_url):
+        return _transform_canonical_from(result, id_to_url)
+
+
 class IdToUrlTransformer(ResultTransformer):
     """Replace all `url_id` in ElasticSearch result by their
     corresponding complete url"""
 
     FIELD_TRANSFORM_STRATEGY = {
-        'outlinks_errors.3xx.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'outlinks_errors.3xx.urls'),
-            'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '3xx')
-        },
-        'outlinks_errors.4xx.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'outlinks_errors.4xx.urls'),
-            'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '4xx')
-        },
-        'outlinks_errors.5xx.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'outlinks_errors.5xx.urls'),
-            'transform': lambda res, id_to_url: _transform_error_links(res, id_to_url, '5xx')
-        },
+        'outlinks_errors.3xx.urls': ErrorLinkStrategy('outlinks_errors.3xx.urls', '3xx'),
+        'outlinks_errors.4xx.urls': ErrorLinkStrategy('outlinks_errors.4xx.urls', '4xx'),
+        'outlinks_errors.5xx.urls': ErrorLinkStrategy('outlinks_errors.5xx.urls', '5xx'),
 
-        'inlinks_internal.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'inlinks_internal.urls', lambda l: l[0]),
-            'transform': lambda res, id_to_url: _transform_inlinks(res, id_to_url)
-        },
-        'outlinks_internal.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'outlinks_internal.urls', lambda l: l[0]),
-            'transform': lambda res, id_to_url: _transform_outlinks(res, id_to_url)
-        },
+        'inlinks_internal.urls': LinksStrategy('inlinks_internal.urls'),
+        'outlinks_internal.urls': LinksStrategy('outlinks_internal.urls'),
 
-        'canonical.to.url': {
-            'extract': lambda res: _extract_single_id(res, 'canonical.to.url.url_id'),
-            'transform': lambda res, id_to_url: _transform_canonical_to(res, id_to_url)
-        },
-        'canonical.from.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'canonical.from.urls'),
-            'transform': lambda res, id_to_url: _transform_canonical_from(res, id_to_url)
-        },
+        'canonical.to.url': CanonicalToStrategy(),
+        'canonical.from.urls': CanonicalFromStrategy(),
 
-        'redirect.to.url': {
-            'extract': lambda res: _extract_single_id(res, 'redirect.to.url.url_id'),
-            'transform': lambda res, id_to_url: _transform_redirects_to(res, id_to_url)
-        },
-        'redirect.from.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'redirect.from.urls', lambda l: l[0]),
-            'transform': lambda res, id_to_url: _transform_redirects_from(res, id_to_url)
-        },
+        'redirect.to.url': RedirectToStrategy(),
+        'redirect.from.urls': RedirectFromStrategy(),
 
-        'metadata.title.duplicates.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'metadata.title.duplicates.urls'),
-            'transform': lambda res, id_to_url: _transform_metadata_duplicate(res, id_to_url, 'title')
-        },
-        'metadata.h1.duplicates.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'metadata.h1.duplicates.urls'),
-            'transform': lambda res, id_to_url: _transform_metadata_duplicate(res, id_to_url, 'h1')
-        },
-        'metadata.description.duplicates.urls': {
-            'extract': lambda res: _extract_list_ids(res, 'metadata.description.duplicates.urls'),
-            'transform': lambda res, id_to_url: _transform_metadata_duplicate(res, id_to_url, 'description')
-        }
+        'metadata.title.duplicates.urls': MetaDuplicateStrategy('metadata.title.duplicates.urls', 'title'),
+        'metadata.h1.duplicates.urls': MetaDuplicateStrategy('metadata.h1.duplicates.urls', 'h1'),
+        'metadata.description.duplicates.urls': MetaDuplicateStrategy('metadata.description.duplicates.urls', 'description')
     }
 
     def __init__(self, es_result, query=None, backend=None, **kwargs):
@@ -305,7 +355,7 @@ class IdToUrlTransformer(ResultTransformer):
             for field in self.fields_to_transform:
                 if not path_in_dict(field, result):
                     continue
-                id_list = self.FIELD_TRANSFORM_STRATEGY[field]['extract'](result)
+                id_list = self.FIELD_TRANSFORM_STRATEGY[field].extract(result)
                 for url_id in id_list:
                     self.ids.add(url_id)
 
@@ -345,7 +395,7 @@ class IdToUrlTransformer(ResultTransformer):
             for field in self.fields_to_transform:
                 if not path_in_dict(field, result):
                     continue
-                trans_func = self.FIELD_TRANSFORM_STRATEGY[field]['transform']
+                trans_func = self.FIELD_TRANSFORM_STRATEGY[field].transform
                 # Reminder, in-place transformation
                 trans_func(result, id_to_url)
 
