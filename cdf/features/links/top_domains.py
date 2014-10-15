@@ -75,9 +75,9 @@ class DomainLinkStats(object):
             sample.replace_ids(id_to_url)
 
     def to_dict(self):
-        #key function to sort the sample links by number of links
+        #key function to sort the sample links by decreasing number of links
         #and then alphabetically
-        key = lambda x: (x.unique_links, x.url)
+        key = lambda x: (-x.unique_links, x.url)
         return {
             DOMAIN: self.name,
             UNIQUE_FOLLOW_LINKS: self.follow_unique,

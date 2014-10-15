@@ -25,6 +25,57 @@ from cdf.features.links.top_domains import (
     )
 
 
+class TestDomainLinkStats(unittest.TestCase):
+    def test_to_dict(self):
+        domain_link_stats = DomainLinkStats(
+            name="foo.com",
+            follow=5,
+            nofollow=3,
+            follow_unique=2,
+            sample_follow_links=[
+                LinkDestination("foo.com/1", 1, []),
+                LinkDestination("foo.com/2", 2, [])
+            ],
+            sample_nofollow_links=[
+                LinkDestination("foo.com/1", 4, []),
+                LinkDestination("foo.com/2", 2, [])
+            ]
+        )
+
+        expected_result = {
+            "domain": "foo.com",
+            "unique_follow_links": 2,
+            "follow_links": 5,
+            "nofollow_links": 3,
+            "follow_samples": [
+                #samples are sorted by decreasing unique_links
+                {
+                    "url": "foo.com/2",
+                    "sources": [],
+                    "unique_links": 2
+                },
+                {
+                    "url": "foo.com/1",
+                    "sources": [],
+                    "unique_links": 1
+                }
+            ],
+            "nofollow_samples": [
+                {
+                    "url": "foo.com/1",
+                    "sources": [],
+                    "unique_links": 4
+                },
+                {
+                    "url": "foo.com/2",
+                    "sources": [],
+                    "unique_links": 2
+                }
+            ]
+        }
+        self.assertEqual(expected_result, domain_link_stats.to_dict())
+
+
 class TestFilterInvalidDestinationUrls(unittest.TestCase):
     def test_nominal_case(self):
         externals = iter([
