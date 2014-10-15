@@ -308,7 +308,8 @@ class SuggestStreamDef(StreamDefBase):
             "verbose_name": "Suggested patterns",
             "type": LONG_TYPE,
             "settings": {
-                LIST
+                LIST,
+                FIELD_RIGHTS.PRIVATE
             }
         },
     }
