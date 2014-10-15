@@ -30,7 +30,8 @@ class Insight(object):
                  additional_fields=None,
                  additional_filter=None,
                  sort_by=None,
-                 data_type=INT_TYPE):
+                 data_type=INT_TYPE,
+                 field_type=INT_TYPE):
         """Constructor
         :param identifier: the insight identifier (short)
         :type identifier: str
@@ -58,8 +59,10 @@ class Insight(object):
                           This parameter should be an Enum.
                           It is a string since
                           the base datatypes are not grouped in a enum.
-
         :type data_type: str
+        :param field_type: what type of concept the value represents:
+                          "url", "time_sec", etc.
+        :type field_type: RENDERING
         """
         self.identifier = identifier
         self.name = name
@@ -67,6 +70,7 @@ class Insight(object):
         self.filter = input_filter
         self.metric_agg = metric_agg or CountAggregation("url")
         self.data_type = data_type
+        self.field_type = field_type
         self.additional_fields = additional_fields
         self.additional_filter = additional_filter
         self.sort_by = sort_by
