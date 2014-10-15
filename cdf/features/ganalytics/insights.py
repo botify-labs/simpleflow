@@ -44,7 +44,7 @@ def get_ganalytics_main_metric_insights(medium, source):
             PositiveTrend.UNKNOWN,
             GtFilter(visit_field, 0),
             metric_agg=AvgAggregation(visit_field),
-            field_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE
         ),
         Insight(
             "{}_visits_inlinks_avg".format(name_prefix),
@@ -54,7 +54,7 @@ def get_ganalytics_main_metric_insights(medium, source):
             metric_agg=AvgAggregation(
                 "inlinks_internal.nb.unique"
             ),
-            field_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE
         ),
         Insight(
             "{}_visits_ko_strategic_1_follow_inlink".format(name_prefix),

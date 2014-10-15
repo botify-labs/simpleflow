@@ -229,14 +229,14 @@ def get_average_speed_insights():
             "Average Load Time (in ms)",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
-            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+            data_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
         ),
         Insight(
             "speed_strategic_avg",
             "Average Load Time on Strategic URLs (in ms)",
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
-            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+            data_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
         ),
     ]
 
@@ -249,7 +249,7 @@ def get_average_depth_insights():
             "Average Depth",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
-            field_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE
         ),
         Insight(
             "depth_strategic_avg",
@@ -257,7 +257,7 @@ def get_average_depth_insights():
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
-            field_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE
         )
     ]
 

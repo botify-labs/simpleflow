@@ -22,14 +22,14 @@ def get_average_inlinks_insights():
             "Average Inlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("inlinks_internal.nb.unique"),
-            field_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE
         ),
         Insight(
             "inlinks_avg_follow",
             "Average Follow Inlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("inlinks_internal.nb.follow.unique"),
-            field_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE
         ),
     ]
 
@@ -216,14 +216,14 @@ def get_average_outlinks_insights():
             "Average Internal Outlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("outlinks_internal.nb.unique"),
-            field_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE
         ),
         Insight(
             "outlinks_avg_follow",
             "Average Internal Follow Outlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("outlinks_internal.nb.follow.unique"),
-            field_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE
         )
     ]
 
