@@ -111,7 +111,7 @@ class InsightValue(object):
             "positive_trend": self.insight.positive_trend.value,
             "feature": self.feature_name,
             "query": self.insight.query,
-            "type": self.insight.data_type,
+            "data_type": self.insight.data_type,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
         }
         if self.insight.additional_fields is not None:
