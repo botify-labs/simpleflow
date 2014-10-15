@@ -11,6 +11,7 @@ from cdf.query.constants import MGET_CHUNKS_SIZE, SUB_AGG, METRIC_AGG_PREFIX
 class ResultTransformer(object):
     """Post-processing for ElasticSearch search results
     """
+    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def transform(self):
@@ -215,16 +216,21 @@ def _transform_metadata_duplicate(es_result, id_to_url, meta_type):
 
 
 class IdResolutionStrategy(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
     def extract(self, result):
         pass
 
+    @abc.abstractmethod
     def transform(self, result, id_to_url):
         pass
 
 
 class LinksStrategy(IdResolutionStrategy):
-    def __init__(self, field):
-        self.field = field
+    def __init__(self, field, prefix=''):
+        self.field = prefix + field
 
     @classmethod
     def extract_link_id(cls, link_tuple):
@@ -238,8 +244,8 @@ class LinksStrategy(IdResolutionStrategy):
 
 
 class ErrorLinkStrategy(IdResolutionStrategy):
-    def __init__(self, field, error_type):
-        self.field = field
+    def __init__(self, field, error_type, prefix=''):
+        self.field = prefix + field
         self.error_type = error_type
 
     def extract(self, result):
@@ -250,8 +256,8 @@ class ErrorLinkStrategy(IdResolutionStrategy):
 
 
 class MetaDuplicateStrategy(IdResolutionStrategy):
-    def __init__(self, field, meta_type):
-        self.field = field
+    def __init__(self, field, meta_type, prefix=''):
+        self.field = prefix + field
         self.meta_type = meta_type
 
     def extract(self, result):
@@ -262,32 +268,44 @@ class MetaDuplicateStrategy(IdResolutionStrategy):
 
 
 class RedirectToStrategy(IdResolutionStrategy):
+    def __init__(self, prefix=''):
+        self.field = prefix + 'redirect.to.url.url_id'
+
     def extract(self, result):
-        return _extract_single_id(result, 'redirect.to.url.url_id')
+        return _extract_single_id(result, self.field)
 
     def transform(self, result, id_to_url):
         return _transform_redirects_to(result, id_to_url)
 
 
 class RedirectFromStrategy(IdResolutionStrategy):
+    def __init__(self, prefix=''):
+        self.field = prefix + 'redirect.from.urls'
+
     def extract(self, result):
-        return _extract_list_ids(result, 'redirect.from.urls', lambda l: l[0])
+        return _extract_list_ids(result, self.field, lambda l: l[0])
 
     def transform(self, result, id_to_url):
         return _transform_redirects_from(result, id_to_url)
 
 
 class CanonicalToStrategy(IdResolutionStrategy):
+    def __init__(self, prefix=''):
+        self.field = prefix + 'canonical.to.url.url_id'
+
     def extract(self, result):
-        return _extract_single_id(result, 'canonical.to.url.url_id')
+        return _extract_single_id(result, self.field)
 
     def transform(self, result, id_to_url):
         return _transform_canonical_to(result, id_to_url)
 
 
 class CanonicalFromStrategy(IdResolutionStrategy):
+    def __init__(self, prefix=''):
+        self.field = prefix + 'canonical.from.urls'
+
     def extract(self, result):
-        return _extract_list_ids(result, 'canonical.from.urls')
+        return _extract_list_ids(result, self.field)
 
     def transform(self, result, id_to_url):
         return _transform_canonical_from(result, id_to_url)
