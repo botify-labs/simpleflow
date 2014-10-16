@@ -68,9 +68,10 @@ class IdResolutionStrategy(object):
             url_id
         )
 
+
 class LinksStrategy(IdResolutionStrategy):
-    def __init__(self, field, prefix=''):
-        self.field = prefix + field
+    def __init__(self, link_type, prefix=''):
+        self.field = prefix + '{}.urls'.format(link_type)
 
     @classmethod
     def extract_link_id(cls, link_tuple):
@@ -104,7 +105,7 @@ class LinksStrategy(IdResolutionStrategy):
 
 
 class ErrorLinkStrategy(IdResolutionStrategy):
-    def __init__(self, field, error_type, prefix=''):
+    def __init__(self, error_type, prefix=''):
         self.error_type = error_type
         self.field = prefix + 'outlinks_errors.{}.urls'.format(self.error_type)
 
@@ -125,9 +126,8 @@ class ErrorLinkStrategy(IdResolutionStrategy):
 
 
 class MetaDuplicateStrategy(IdResolutionStrategy):
-    def __init__(self, field, meta_type, prefix=''):
-        self.field = prefix + field
-        self.meta_type = meta_type
+    def __init__(self, meta_type, prefix=''):
+        self.field = prefix + 'metadata.{}.duplicates.urls'.format(meta_type)
 
     def extract(self, result):
         return self._extract_list_ids(result, self.field)
@@ -251,12 +251,12 @@ class IdToUrlTransformer(ResultTransformer):
     corresponding complete url"""
 
     FIELD_TRANSFORM_STRATEGY = {
-        'outlinks_errors.3xx.urls': ErrorLinkStrategy('outlinks_errors.3xx.urls', '3xx'),
-        'outlinks_errors.4xx.urls': ErrorLinkStrategy('outlinks_errors.4xx.urls', '4xx'),
-        'outlinks_errors.5xx.urls': ErrorLinkStrategy('outlinks_errors.5xx.urls', '5xx'),
+        'outlinks_errors.3xx.urls': ErrorLinkStrategy('3xx'),
+        'outlinks_errors.4xx.urls': ErrorLinkStrategy('4xx'),
+        'outlinks_errors.5xx.urls': ErrorLinkStrategy('5xx'),
 
-        'inlinks_internal.urls': LinksStrategy('inlinks_internal.urls'),
-        'outlinks_internal.urls': LinksStrategy('outlinks_internal.urls'),
+        'inlinks_internal.urls': LinksStrategy('inlinks_internal'),
+        'outlinks_internal.urls': LinksStrategy('outlinks_internal'),
 
         'canonical.to.url': CanonicalToStrategy(),
         'canonical.from.urls': CanonicalFromStrategy(),
@@ -264,9 +264,9 @@ class IdToUrlTransformer(ResultTransformer):
         'redirect.to.url': RedirectToStrategy(),
         'redirect.from.urls': RedirectFromStrategy(),
 
-        'metadata.title.duplicates.urls': MetaDuplicateStrategy('metadata.title.duplicates.urls', 'title'),
-        'metadata.h1.duplicates.urls': MetaDuplicateStrategy('metadata.h1.duplicates.urls', 'h1'),
-        'metadata.description.duplicates.urls': MetaDuplicateStrategy('metadata.description.duplicates.urls', 'description')
+        'metadata.title.duplicates.urls': MetaDuplicateStrategy('title'),
+        'metadata.h1.duplicates.urls': MetaDuplicateStrategy('h1'),
+        'metadata.description.duplicates.urls': MetaDuplicateStrategy('description')
     }
 
     def __init__(self, es_result, query=None, backend=None, **kwargs):
