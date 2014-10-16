@@ -94,6 +94,7 @@ class TestInsightValue(unittest.TestCase):
             "positive_trend": "up",
             "feature": "foo_feature",
             "data_type": "integer",
+            "field_type": "integer",
             "query":  {
                 'aggs': [{'metrics': [{'count': 'url'}]}],
                 'filters': {'field': 'foo_field', 'predicate': 'eq', 'value': 1001}
