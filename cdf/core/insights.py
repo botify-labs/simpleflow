@@ -1,6 +1,7 @@
 from enum import Enum
 from cdf.metadata.url.url_metadata import INT_TYPE
 from cdf.query.aggregation import CountAggregation
+from cdf.core.metadata.constants import RENDERING
 
 
 class PositiveTrend(Enum):
@@ -31,7 +32,7 @@ class Insight(object):
                  additional_filter=None,
                  sort_by=None,
                  data_type=INT_TYPE,
-                 field_type=INT_TYPE):
+                 field_type=RENDERING.URL):
         """Constructor
         :param identifier: the insight identifier (short)
         :type identifier: str
