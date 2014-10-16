@@ -23,197 +23,7 @@ class ResultTransformer(object):
 # Essentially, they just go down in the result dict and extract/transform
 # the list of url_ids
 
-# all `transform` functions here modifies ES result IN PLACE
-
-def _extract_list_ids(es_result, path, extract_func=None):
-    if path_in_dict(path, es_result):
-        ids = get_subdict_from_path(path, es_result)
-        if extract_func:
-            # apply custom logic on list for extraction
-            return map(extract_func, ids)
-        else:
-            return ids
-    else:
-        return []
-
-
-def _extract_single_id(es_result, path, extract_func=None):
-    if path_in_dict(path, es_result):
-        url_id = get_subdict_from_path(path, es_result)
-        if extract_func:
-            return filter(None, [extract_func(url_id)])
-        else:
-            return [url_id]
-    else:
-        return []
-
-
-def _transform_list_field(es_result, path, func):
-    if path_in_dict(es_result, path):
-        original = get_subdict_from_path(es_result, path)
-        # in place list comprehension with `None` check
-        original[:] = [res for res in (func(item) for item in original) if res]
-
-
-def _transform_single_field(es_result, path, func):
-    if path_in_dict(es_result, path):
-        original = get_subdict_from_path(es_result, path)
-        update_path_in_dict(path, func(original), es_result)
-
-
-def _transform_error_links(es_result, id_to_url, code_kind):
-    path = 'outlinks_errors'
-    if path_in_dict(path, es_result):
-        target = get_subdict_from_path(path, es_result)
-        if code_kind in target:
-            original = target[code_kind]['urls']
-            urls = []
-            for url_id in original:
-                if url_id not in id_to_url:
-                    logger.warning("Urlid %d could not be found in elasticsearch.", url_id)
-                    continue
-                urls.append(id_to_url.get(url_id)[0])
-                # in-place
-            target[code_kind]['urls'] = urls
-
-
-def _transform_inlinks(es_results, id_to_url):
-    if path_in_dict('inlinks_internal.urls', es_results):
-        target = es_results['inlinks_internal']
-        target['urls'] = _transform_link_items(target['urls'], id_to_url)
-
-
-def _transform_outlinks(es_results, id_to_url):
-    if path_in_dict('outlinks_internal.urls', es_results):
-        target = es_results['outlinks_internal']
-        target['urls'] = _transform_link_items(target['urls'], id_to_url)
-
-
-def _transform_links(es_results, id_to_url, link_path):
-    if path_in_dict(link_path, es_results):
-        original_links = get_subdict_from_path(link_path, es_results)
-        transformed_links = _transform_link_items(original_links, id_to_url)
-        update_path_in_dict(link_path, transformed_links, es_results)
-
-
-def _transform_link_items(items, id_to_url):
-    res = []
-    for item in items:
-        mask = follow_mask(item[1])
-        url_id = item[0]
-        url, http_code = id_to_url.get(url_id, (None, None))
-        if not url:
-            logger.warning(
-                "Urlid %d could not be found in elasticsearch.", url_id)
-            continue
-        if mask != ['follow']:
-            mask = ["nofollow_{}".format(m) for m in mask]
-        res.append({
-            'url': {
-                'url': url,
-                'crawled': http_code > 0
-            },
-            'status': mask
-        })
-    return res
-
-
-def _transform_single_link_to(es_result, id_to_url, path):
-    if path_in_dict(path, es_result):
-        target = get_subdict_from_path(path, es_result)
-        if target.get('url_id', 0) > 0:
-            # to an internal url
-            url_id = target['url_id']
-            if url_id not in id_to_url:
-                logger.warning(
-                    "Urlid %d could not be found in elasticsearch.", url_id)
-                return
-
-            url, http_code = id_to_url.get(url_id)
-            target['url'] = url
-            target['crawled'] = True if http_code > 0 else False
-
-        # delete unused field
-        target.pop('url_id', None)
-
-
-# 3 cases
-#   - not_crawled url
-#   - normal url
-#   - external url
-# same for redirect_to
-def _transform_canonical_to(es_result, id_to_url):
-    _transform_single_link_to(es_result, id_to_url, 'canonical.to.url')
-
-
-def _transform_redirects_to(es_result, id_to_url):
-    if path_in_dict('redirect.to.url', es_result):
-        target = get_subdict_from_path('redirect.to.url', es_result)
-        if target.get('url_id', 0) > 0:
-            # to an internal url
-            url_id = target['url_id']
-            if url_id not in id_to_url:
-                logger.warning(
-                    "Urlid %d could not be found in elasticsearch.", url_id)
-                return
-
-            url, http_code = id_to_url.get(url_id)
-            target['url'] = url
-            target['crawled'] = True if http_code > 0 else False
-            del target['http_code']
-
-        # delete unused field
-        target.pop('url_id', None)
-
-
-def _transform_canonical_from(es_result, id_to_url):
-    path = 'canonical.from'
-    if path_in_dict(path, es_result):
-        target = get_subdict_from_path(path, es_result)
-        if 'urls' in target:
-            urls = []
-            for uid in target['urls']:
-                if uid not in id_to_url:
-                    logger.warning(
-                        "Urlid %d could not be found in elasticsearch.", uid)
-                    continue
-                urls.append(id_to_url.get(uid)[0])
-            target['urls'] = urls
-
-
-def _transform_redirects_from(es_result, id_to_url):
-    path = 'redirect.from'
-    if path_in_dict(path, es_result):
-        target = get_subdict_from_path(path, es_result)
-        if 'urls' in target:
-            urls = []
-            for uid, http_code in target['urls']:
-                if uid not in id_to_url:
-                    logger.warning(
-                        "Urlid %d could not be found in elasticsearch.", uid)
-                    continue
-                urls.append([id_to_url.get(uid)[0], http_code])
-            target['urls'] = urls
-
-
-def _transform_metadata_duplicate(es_result, id_to_url, meta_type):
-    path = 'metadata.{}.duplicates'.format(meta_type)
-    if path_in_dict(path, es_result):
-        target = get_subdict_from_path(path, es_result)
-        if 'urls' in target:
-            urls = []
-            for uid in target['urls']:
-                if uid not in id_to_url:
-                    logger.warning(
-                        "Urlid %d could not be found in elasticsearch.", uid)
-                    continue
-                url, http_code = id_to_url.get(uid)
-                urls.append({
-                    'url': url,
-                    'crawled': True  # only crawled url has metadata
-                })
-            target['urls'] = urls
-
+# all `transform` strategies here modifies ES result IN PLACE
 
 class IdResolutionStrategy(object):
 
@@ -227,6 +37,36 @@ class IdResolutionStrategy(object):
     def transform(self, result, id_to_url):
         pass
 
+    @classmethod
+    def _extract_list_ids(cls, es_result, path, extract_func=None):
+        if path_in_dict(path, es_result):
+            ids = get_subdict_from_path(path, es_result)
+            if extract_func:
+                # apply custom logic on list for extraction
+                return map(extract_func, ids)
+            else:
+                return ids
+        else:
+            return []
+
+
+    @classmethod
+    def _extract_single_id(cls, es_result, path, extract_func=None):
+        if path_in_dict(path, es_result):
+            url_id = get_subdict_from_path(path, es_result)
+            if extract_func:
+                return filter(None, [extract_func(url_id)])
+            else:
+                return [url_id]
+        else:
+            return []
+
+    @classmethod
+    def _report_not_found(cls, url_id):
+        logger.warning(
+            'url_id {} could not be found in data storage',
+            url_id
+        )
 
 class LinksStrategy(IdResolutionStrategy):
     def __init__(self, field, prefix=''):
@@ -237,22 +77,51 @@ class LinksStrategy(IdResolutionStrategy):
         return link_tuple[0]
 
     def extract(self, result):
-        return _extract_list_ids(result, self.field, self.extract_link_id)
+        return self._extract_list_ids(result, self.field, self.extract_link_id)
 
     def transform(self, result, id_to_url):
-        return _transform_links(result, id_to_url, self.field)
+        if path_in_dict(self.field, result):
+            target = get_subdict_from_path(self.field, result)
+
+            urls = []
+            for url_id, mask in target:
+                mask = follow_mask(mask)
+                url, http_code = id_to_url.get(url_id, (None, None))
+                if not url:
+                    self._report_not_found(url_id)
+                    continue
+                if mask != ['follow']:
+                    mask = ["nofollow_{}".format(m) for m in mask]
+                urls.append({
+                    'url': {
+                        'url': url,
+                        'crawled': http_code > 0
+                    },
+                    'status': mask
+                })
+            del target[:]
+            target.extend(urls)
 
 
 class ErrorLinkStrategy(IdResolutionStrategy):
     def __init__(self, field, error_type, prefix=''):
-        self.field = prefix + field
         self.error_type = error_type
+        self.field = prefix + 'outlinks_errors.{}.urls'.format(self.error_type)
 
     def extract(self, result):
-        return _extract_list_ids(result, self.field)
+        return self._extract_list_ids(result, self.field)
 
     def transform(self, result, id_to_url):
-        return _transform_error_links(result, id_to_url, self.error_type)
+        if path_in_dict(self.field, result):
+            target = get_subdict_from_path(self.field, result)
+            urls = []
+            for url_id in target:
+                if url_id not in id_to_url:
+                    self._report_not_found(url_id)
+                    continue
+                urls.append(id_to_url.get(url_id)[0])
+            del target[:]
+            target.extend(urls)
 
 
 class MetaDuplicateStrategy(IdResolutionStrategy):
@@ -261,21 +130,47 @@ class MetaDuplicateStrategy(IdResolutionStrategy):
         self.meta_type = meta_type
 
     def extract(self, result):
-        return _extract_list_ids(result, self.field)
+        return self._extract_list_ids(result, self.field)
 
     def transform(self, result, id_to_url):
-        return _transform_metadata_duplicate(result, id_to_url, self.meta_type)
+        if path_in_dict(self.field, result):
+            target = get_subdict_from_path(self.field, result)
+
+            urls = []
+            for url_id in target:
+                if url_id not in id_to_url:
+                    self._report_not_found(url_id)
+                    continue
+                urls.append({'url': id_to_url.get(url_id)[0], 'crawled': True})
+            del target[:]
+            target.extend(urls)
 
 
 class RedirectToStrategy(IdResolutionStrategy):
     def __init__(self, prefix=''):
-        self.field = prefix + 'redirect.to.url.url_id'
+        self.field = prefix + 'redirect.to.url'
+        self.extract_field = self.field + '.url_id'
 
     def extract(self, result):
-        return _extract_single_id(result, self.field)
+        return self._extract_single_id(result, self.extract_field)
 
     def transform(self, result, id_to_url):
-        return _transform_redirects_to(result, id_to_url)
+        if path_in_dict(self.field, result):
+            target = get_subdict_from_path('redirect.to.url', result)
+            if target.get('url_id', 0) > 0:
+                # to an internal url
+                url_id = target['url_id']
+                if url_id not in id_to_url:
+                    self._report_not_found(url_id)
+                    return
+
+                url, http_code = id_to_url.get(url_id)
+                target['url'] = url
+                target['crawled'] = True if http_code > 0 else False
+                del target['http_code']
+
+            # delete unused field
+            target.pop('url_id', None)
 
 
 class RedirectFromStrategy(IdResolutionStrategy):
@@ -283,21 +178,50 @@ class RedirectFromStrategy(IdResolutionStrategy):
         self.field = prefix + 'redirect.from.urls'
 
     def extract(self, result):
-        return _extract_list_ids(result, self.field, lambda l: l[0])
+        return self._extract_list_ids(result, self.field, lambda l: l[0])
 
     def transform(self, result, id_to_url):
-        return _transform_redirects_from(result, id_to_url)
+        if path_in_dict(self.field, result):
+            target = get_subdict_from_path(self.field, result)
+
+            urls = []
+            for url_id, http_code in target:
+                if url_id not in id_to_url:
+                    self._report_not_found(url_id)
+                    continue
+                urls.append([id_to_url.get(url_id)[0], http_code])
+            del target[:]
+            target.extend(urls)
 
 
 class CanonicalToStrategy(IdResolutionStrategy):
     def __init__(self, prefix=''):
-        self.field = prefix + 'canonical.to.url.url_id'
+        self.field = prefix + 'canonical.to.url'
+        self.extract_field = self.field + '.url_id'
 
     def extract(self, result):
-        return _extract_single_id(result, self.field)
+        return self._extract_single_id(result, self.extract_field)
 
     def transform(self, result, id_to_url):
-        return _transform_canonical_to(result, id_to_url)
+        # 3 cases
+        #   - not_crawled url
+        #   - normal url
+        #   - external url
+        if path_in_dict(self.field, result):
+            target = get_subdict_from_path(self.field, result)
+            if target.get('url_id', 0) > 0:
+                # to an internal url
+                url_id = target['url_id']
+                if url_id not in id_to_url:
+                    self._report_not_found(url_id)
+                    return
+
+                url, http_code = id_to_url.get(url_id)
+                target['url'] = url
+                target['crawled'] = True if http_code > 0 else False
+
+            # delete unused field
+            target.pop('url_id', None)
 
 
 class CanonicalFromStrategy(IdResolutionStrategy):
@@ -305,10 +229,21 @@ class CanonicalFromStrategy(IdResolutionStrategy):
         self.field = prefix + 'canonical.from.urls'
 
     def extract(self, result):
-        return _extract_list_ids(result, self.field)
+        return self._extract_list_ids(result, self.field)
 
     def transform(self, result, id_to_url):
-        return _transform_canonical_from(result, id_to_url)
+        path = 'canonical.from.urls'
+        if path_in_dict(path, result):
+            target = get_subdict_from_path(path, result)
+            urls = []
+            for url_id in target:
+                if url_id not in id_to_url:
+                    self._report_not_found(url_id)
+                    continue
+                urls.append(id_to_url.get(url_id)[0])
+
+            del target[:]
+            target.extend(urls)
 
 
 class IdToUrlTransformer(ResultTransformer):
