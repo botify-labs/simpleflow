@@ -1,4 +1,4 @@
-from cdf.metadata.url.url_metadata import FLOAT_TYPE
+from cdf.metadata.url.url_metadata import INT_TYPE, FLOAT_TYPE
 from cdf.core.metadata.constants import RENDERING
 from cdf.core.insights import Insight, PositiveTrend
 from cdf.query.filter import (AndFilter,
@@ -229,14 +229,16 @@ def get_average_speed_insights():
             "Average Load Time (in ms)",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
-            data_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+            data_type=INT_TYPE,
+            field_type=RENDERING.TIME_MILLISEC.value  # the param is a string so we need to use the enum value
         ),
         Insight(
             "speed_strategic_avg",
             "Average Load Time on Strategic URLs (in ms)",
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
-            data_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+            data_type=INT_TYPE,
+            field_type=RENDERING.TIME_MILLISEC.value  # the param is a string so we need to use the enum value
         ),
     ]
 
