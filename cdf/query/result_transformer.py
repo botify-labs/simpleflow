@@ -258,6 +258,18 @@ class CanonicalFromStrategy(IdResolutionStrategy):
 
             del target[:]
             target.extend(urls)
+        return result
+
+
+def _construct_strategies(meta_strategies, with_previous=False):
+    strategies = {}
+    previous = 'previous.'
+    for field, (cls, params) in meta_strategies.iteritems():
+        strategies[field] = cls(*params) if len(params) > 0 else cls()
+        if with_previous:
+            previous_params = params + [previous]
+            strategies[previous + field] = cls(*previous_params)
+    return strategies
 
 
 class IdToUrlTransformer(ResultTransformer):
@@ -265,28 +277,31 @@ class IdToUrlTransformer(ResultTransformer):
     corresponding complete url"""
 
     FIELD_TRANSFORM_STRATEGY = {
-        'outlinks_errors.3xx.urls': ErrorLinkStrategy('3xx'),
-        'outlinks_errors.4xx.urls': ErrorLinkStrategy('4xx'),
-        'outlinks_errors.5xx.urls': ErrorLinkStrategy('5xx'),
-        'outlinks_errors.non_strategic.urls': ErrorLinkStrategy('non_strategic'),
+        # Format:
+        #   field: (StrategyClass, [params])
+        'outlinks_errors.3xx.urls': (ErrorLinkStrategy, ['3xx']),
+        'outlinks_errors.4xx.urls': (ErrorLinkStrategy, ['4xx']),
+        'outlinks_errors.5xx.urls': (ErrorLinkStrategy, ['5xx']),
+        'outlinks_errors.non_strategic.urls': (ErrorLinkStrategy, ['non_strategic']),
 
-        'inlinks_internal.urls': LinksStrategy('inlinks_internal'),
-        'outlinks_internal.urls': LinksStrategy('outlinks_internal'),
+        'inlinks_internal.urls': (LinksStrategy, ['inlinks_internal']),
+        'outlinks_internal.urls': (LinksStrategy, ['outlinks_internal']),
 
-        'canonical.to.url': CanonicalToStrategy(),
-        'canonical.from.urls': CanonicalFromStrategy(),
+        'canonical.to.url': (CanonicalToStrategy, []),
+        'canonical.from.urls': (CanonicalFromStrategy, []),
 
-        'redirect.to.url': RedirectToStrategy(),
-        'redirect.from.urls': RedirectFromStrategy(),
+        'redirect.to.url': (RedirectToStrategy, []),
+        'redirect.from.urls': (RedirectFromStrategy, []),
 
-        'metadata.title.duplicates.urls': MetaDuplicateStrategy('title'),
-        'metadata.h1.duplicates.urls': MetaDuplicateStrategy('h1'),
-        'metadata.description.duplicates.urls': MetaDuplicateStrategy('description'),
+        'metadata.title.duplicates.urls': (MetaDuplicateStrategy, ['title']),
+        'metadata.h1.duplicates.urls': (MetaDuplicateStrategy, ['h1']),
+        'metadata.description.duplicates.urls': (MetaDuplicateStrategy, ['description']),
 
-        'metadata.title.duplicates.context_aware.urls': ContextAwareMetaDuplicationStrategy('title'),
-        'metadata.h1.duplicates.context_aware.urls': ContextAwareMetaDuplicationStrategy('h1'),
-        'metadata.description.duplicates.context_aware.urls': ContextAwareMetaDuplicationStrategy('description')
+        'metadata.title.duplicates.context_aware.urls': (ContextAwareMetaDuplicationStrategy, ['title']),
+        'metadata.h1.duplicates.context_aware.urls': (ContextAwareMetaDuplicationStrategy, ['h1']),
+        'metadata.description.duplicates.context_aware.urls': (ContextAwareMetaDuplicationStrategy, ['description']),
     }
+    FIELD_TRANSFORM_STRATEGY = _construct_strategies(FIELD_TRANSFORM_STRATEGY, with_previous=True)
 
     def __init__(self, es_result, query=None, backend=None, **kwargs):
         if not query:
