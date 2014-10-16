@@ -88,8 +88,8 @@ class TestIdToUrlTransformer(unittest.TestCase):
     def test_links(self):
         es_result = {
             'outlinks_internal': {
-                # uid, mask, link number
-                'urls': [[5, 7, 40]]
+                # uid, mask
+                'urls': [[5, 7]]
             }
         }
         trans = self._get_id_url_transformer(fields=['outlinks_internal.urls'],
