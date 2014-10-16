@@ -24,14 +24,20 @@ class TestGetDuplicateDocumentMapping(unittest.TestCase):
                 'settings': set([
                     'es:doc_values',
                     'agg:categorical',
-                    'agg:numerical'
+                    'agg:numerical',
+                    FIELD_RIGHTS.FILTERS,
+                    FIELD_RIGHTS.SELECT
                 ])
             },
             'metadata.title.foo_duplicate.is_first': {
                 'type': 'boolean',
                 'verbose_name':
                 'First foo duplicate Title found',
-                'order': 120
+                'order': 120,
+                'settings': set([
+                    FIELD_RIGHTS.SELECT,
+                    FIELD_RIGHTS.FILTERS
+                ])
             },
             'metadata.title.foo_duplicate.urls': {
                 'type': 'integer',

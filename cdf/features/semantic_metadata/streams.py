@@ -104,7 +104,9 @@ def _get_duplicate_document_mapping(metadata_list,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT
             }
         }
         result["{}.is_first".format(prefix)] = {
@@ -113,6 +115,10 @@ def _get_duplicate_document_mapping(metadata_list,
             ),
             "order": order_seed + 20 + i,
             "type": BOOLEAN_TYPE,
+            "settings": {
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS
+            }
         }
         same_metadata_type = metadata_type.capitalize()
         if len(verbose_prefix) > 0:
