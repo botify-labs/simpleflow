@@ -19,26 +19,43 @@ class ResultTransformer(object):
         pass
 
 
-# url_id extract (prepare) and transform functions for different field
-# Essentially, they just go down in the result dict and extract/transform
-# the list of url_ids
-
-# all `transform` strategies here modifies ES result IN PLACE
-
 class IdResolutionStrategy(object):
+    """Url id resolution strategy interface
+
+    Each sub-class denotes specific logic of extracting urls ids and in-place
+    resolution for each url_id field
+    """
 
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def extract(self, result):
+        """Extract url ids from a retrieved document
+
+        :param result: raw retrieved document
+        :type result: dict
+        :return: url ids
+        :rtype: int | list
+        """
         pass
 
     @abc.abstractmethod
     def transform(self, result, id_to_url):
+        """Resolve url_id to their corresponding urls in-place
+
+        :param result: raw retrieved document to resolve
+        :type result: dict
+        :param id_to_url: lookup table (url_id -> url)
+        :type id_to_url: dict
+        :return: transformed result (original's reference)
+        :rtype: dict
+        """
         pass
 
     @classmethod
     def _extract_list_ids(cls, es_result, path, extract_func=None):
+        """Helper for extracting a list of url ids
+        """
         if path_in_dict(path, es_result):
             ids = get_subdict_from_path(path, es_result)
             if extract_func:
@@ -52,6 +69,8 @@ class IdResolutionStrategy(object):
 
     @classmethod
     def _extract_single_id(cls, es_result, path, extract_func=None):
+        """Helper for extracting a single url id
+        """
         if path_in_dict(path, es_result):
             url_id = get_subdict_from_path(path, es_result)
             if extract_func:
@@ -70,6 +89,21 @@ class IdResolutionStrategy(object):
 
 
 class LinksStrategy(IdResolutionStrategy):
+    """Strategy for links fields
+
+    Links are stored as a list of tuples:
+        [(url_id, mask), ...]
+
+    Need to be transformed to:
+        [
+            {
+                'url': {'url': 'abc.com', 'crawled': True}},
+                'status': [...] # decoded follow status
+            }
+        ...
+        ]
+    """
+
     def __init__(self, link_type, prefix=''):
         self.field = prefix + '{}.urls'.format(link_type)
 
@@ -106,6 +140,14 @@ class LinksStrategy(IdResolutionStrategy):
 
 
 class ErrorLinkStrategy(IdResolutionStrategy):
+    """Strategy for error links fields
+
+    Error links are stored as list of ints:
+        [1, 2, 3, ...]
+    Need to be transformed:
+        ['url1', 'url2', ...]
+    """
+
     def __init__(self, error_type, prefix=''):
         self.error_type = error_type
         self.field = prefix + 'outlinks_errors.{}.urls'.format(self.error_type)
@@ -128,6 +170,16 @@ class ErrorLinkStrategy(IdResolutionStrategy):
 
 
 class MetaDuplicateStrategy(IdResolutionStrategy):
+    """Strategy for metadata duplication list fields
+
+    Duplication url id list are stored as list of ints:
+        [1, 2, 3, ...]
+    Need to be transformed:
+        [{'url': 'url1', 'crawled': True}, ...]
+
+    `crawled` key is always True since crawler only extract content from
+    crawled page
+    """
     def __init__(self, meta_type, prefix=''):
         self.field = prefix + 'metadata.{}.duplicates.urls'.format(meta_type)
 
@@ -150,11 +202,22 @@ class MetaDuplicateStrategy(IdResolutionStrategy):
 
 
 class ContextAwareMetaDuplicationStrategy(MetaDuplicateStrategy):
+    """Strategy for context-aware duplication field
+
+    Same as above.
+    """
     def __init__(self, meta_type, prefix=''):
         self.field = prefix + 'metadata.{}.duplicates.context_aware.urls'.format(meta_type)
 
 
 class RedirectToStrategy(IdResolutionStrategy):
+    """Strategy for `redirect.to` field
+
+    It's store as a url id:
+        {'redirect.to.url.url_id': 5}
+    Need to be transformed:
+        {'redirect.to.url': {'url': 'url5', 'crawled': True}}
+    """
     def __init__(self, prefix=''):
         self.field = prefix + 'redirect.to.url'
         self.extract_field = self.field + '.url_id'
@@ -184,6 +247,13 @@ class RedirectToStrategy(IdResolutionStrategy):
 
 
 class RedirectFromStrategy(IdResolutionStrategy):
+    """Strategy for `redirect.from` field
+
+    It's stored as a list of lists:
+        [[1, 301], [2, 302], ...]
+    Need to be transformed:
+        [['url1', 301], ['url2', 302]]
+    """
     def __init__(self, prefix=''):
         self.field = prefix + 'redirect.from.urls'
 
@@ -207,6 +277,10 @@ class RedirectFromStrategy(IdResolutionStrategy):
 
 
 class CanonicalToStrategy(IdResolutionStrategy):
+    """Strategy for `canonical.to` field
+
+    Same as `redirect.to`
+    """
     def __init__(self, prefix=''):
         self.field = prefix + 'canonical.to.url'
         self.extract_field = self.field + '.url_id'
@@ -239,6 +313,14 @@ class CanonicalToStrategy(IdResolutionStrategy):
 
 
 class CanonicalFromStrategy(IdResolutionStrategy):
+    """Strategy for `canonical.from` field
+
+    It's stored as a list of ints:
+        [1, 2, 3, ...]
+    Need to be transformed:
+        ['url1', 'url2', 'url3', ...]
+    """
+
     def __init__(self, prefix=''):
         self.field = prefix + 'canonical.from.urls'
 
@@ -262,6 +344,10 @@ class CanonicalFromStrategy(IdResolutionStrategy):
 
 
 def _construct_strategies(meta_strategies, with_previous=False):
+    """Construct resolution strategy mapping from a meta-mapping
+
+    It could also take account of `previous` fields
+    """
     strategies = {}
     previous = 'previous.'
     for field, (cls, params) in meta_strategies.iteritems():
