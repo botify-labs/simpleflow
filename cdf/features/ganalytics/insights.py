@@ -8,6 +8,7 @@ from cdf.query.sort import DescendingSort
 from cdf.query.aggregation import AvgAggregation, SumAggregation
 from cdf.metadata.url.url_metadata import FLOAT_TYPE
 from cdf.features.ganalytics.streams import _iterate_sources
+from cdf.core.metadata.constants import RENDERING
 
 
 def get_medium_source_insights(medium, source):
@@ -44,7 +45,8 @@ def get_ganalytics_main_metric_insights(medium, source):
             PositiveTrend.UNKNOWN,
             GtFilter(visit_field, 0),
             metric_agg=AvgAggregation(visit_field),
-            data_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE,
+            field_type=RENDERING.VISIT
         ),
         Insight(
             "{}_visits_inlinks_avg".format(name_prefix),
@@ -54,7 +56,8 @@ def get_ganalytics_main_metric_insights(medium, source):
             metric_agg=AvgAggregation(
                 "inlinks_internal.nb.unique"
             ),
-            data_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE,
+            field_type=RENDERING.LINK
         ),
         Insight(
             "{}_visits_ko_strategic_1_follow_inlink".format(name_prefix),
@@ -73,7 +76,8 @@ def get_ganalytics_main_metric_insights(medium, source):
             GtFilter(visit_field, 0),
             additional_fields=[visit_field],
             metric_agg=SumAggregation(visit_field),
-            sort_by=DescendingSort(visit_field)
+            sort_by=DescendingSort(visit_field),
+            field_type=RENDERING.VISIT
         ),
         Insight(
             "{}_visits".format(name_prefix),
