@@ -98,7 +98,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN
+                FIELD_RIGHTS.ADMIN,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT
             }
         },
         "outlinks_internal.nb.nofollow.total": {
@@ -217,7 +219,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN
+                FIELD_RIGHTS.ADMIN,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT
             }
         },
         "outlinks_external.nb.follow.total": {
@@ -238,7 +242,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN
+                FIELD_RIGHTS.ADMIN,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT
             }
         },
         "outlinks_external.nb.nofollow.total": {
@@ -259,7 +265,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN
+                FIELD_RIGHTS.ADMIN,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT
             }
         },
         "outlinks_external.nb.nofollow.combinations.link": {
@@ -604,7 +612,9 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN
+                FIELD_RIGHTS.ADMIN,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT
             }
         },
         "inlinks_internal.nb.nofollow.total": {
@@ -972,7 +982,9 @@ class BadLinksStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN
+                FIELD_RIGHTS.ADMIN,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT
             }
         },
     }
@@ -1026,7 +1038,9 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN
+                FIELD_RIGHTS.ADMIN,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT
             }
         },
         "outlinks_errors.non_strategic.urls": {
@@ -1091,7 +1105,9 @@ class InlinksPercentilesStreamDef(StreamDefBase):
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
                 AGG_CATEGORICAL,
-                FIELD_RIGHTS.ADMIN
+                FIELD_RIGHTS.ADMIN,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT
             }
         },
     }

@@ -334,6 +334,8 @@ class ZoneStreamDef(StreamDefBase):
                 "settings": {
                     ES_NOT_ANALYZED,
                     AGG_CATEGORICAL,
+                    FIELD_RIGHTS.FILTERS,
+                    FIELD_RIGHTS.SELECT,
                 }
             }
         },
