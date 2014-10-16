@@ -6,6 +6,7 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.query.datamodel import (
     get_fields,
     get_groups,
+    _get_field_rights
 )
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
@@ -186,6 +187,32 @@ class FieldsTestCase(unittest.TestCase):
         )
         data_model = [k['value'] for k in data_model]
         self.assertTrue("admin" in data_model)
+
+
+class TestGetFieldRights(unittest.TestCase):
+    def test_nominal_case(self):
+        settings = set([LIST, FIELD_RIGHTS.SELECT])
+        actual_result = _get_field_rights(settings)
+        expected_result = ["select"]
+        self.assertItemsEqual(expected_result, actual_result)
+
+    def test_default_value(self):
+        settings = set([LIST])
+        actual_result = _get_field_rights(settings)
+        expected_result = ["select", "filters"]
+        self.assertItemsEqual(expected_result, actual_result)
+
+    def test_admin_field(self):
+        settings = set([LIST, FIELD_RIGHTS.ADMIN, FIELD_RIGHTS.SELECT])
+        actual_result = _get_field_rights(settings)
+        expected_result = ["admin", "select"]
+        self.assertItemsEqual(expected_result, actual_result)
+
+    def test_default_value_admin_field(self):
+        settings = set([LIST, FIELD_RIGHTS.ADMIN])
+        actual_result = _get_field_rights(settings)
+        expected_result = ["admin", "select", "filters"]
+        self.assertItemsEqual(expected_result, actual_result)
 
 
 class ComparisonTestCase(unittest.TestCase):

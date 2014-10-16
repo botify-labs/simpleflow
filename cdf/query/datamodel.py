@@ -26,12 +26,7 @@ def _render_field(field, field_config):
         if flag in settings:
             field_type = flag.value
             break
-    rights = []
-    for field_right in FIELD_RIGHTS:
-        if field_right in settings:
-            rights.append(field_right.value)
-    if not rights:
-        rights = [FIELD_RIGHTS.FILTERS.value, FIELD_RIGHTS.SELECT.value]
+    rights = _get_field_rights(settings)
 
     return {
         "name": field_config.get("verbose_name", ""),
@@ -43,6 +38,26 @@ def _render_field(field, field_config):
         "multiple": LIST in settings,
         "rights": rights
     }
+
+
+def _get_field_rights(settings):
+    """Compute field rights from the field settings.
+    In standard cases, the function just select rights from the settings and
+    add them to a list.
+    However if no right is set (or only the ADMIN right),
+    the "select" and "filters" rights are returned as default values.
+    :param settings: the field settings
+    :type settings: set
+    :returns: list - a list of strings representing the rights.
+    """
+    result = []
+    for field_right in FIELD_RIGHTS:
+        if field_right in settings:
+            result.append(field_right.value)
+    # Set default value
+    if not result or result == [FIELD_RIGHTS.ADMIN.value]:
+        result.extend([FIELD_RIGHTS.FILTERS.value, FIELD_RIGHTS.SELECT.value])
+    return result
 
 
 def _check_visibility(config, visibility):
