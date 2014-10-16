@@ -102,6 +102,7 @@ class LinksStrategy(IdResolutionStrategy):
                 })
             del target[:]
             target.extend(urls)
+        return result
 
 
 class ErrorLinkStrategy(IdResolutionStrategy):
@@ -123,6 +124,7 @@ class ErrorLinkStrategy(IdResolutionStrategy):
                 urls.append(id_to_url.get(url_id)[0])
             del target[:]
             target.extend(urls)
+        return result
 
 
 class MetaDuplicateStrategy(IdResolutionStrategy):
@@ -144,6 +146,7 @@ class MetaDuplicateStrategy(IdResolutionStrategy):
                 urls.append({'url': id_to_url.get(url_id)[0], 'crawled': True})
             del target[:]
             target.extend(urls)
+        return result
 
 
 class ContextAwareMetaDuplicationStrategy(MetaDuplicateStrategy):
@@ -177,6 +180,8 @@ class RedirectToStrategy(IdResolutionStrategy):
             # delete unused field
             target.pop('url_id', None)
 
+        return result
+
 
 class RedirectFromStrategy(IdResolutionStrategy):
     def __init__(self, prefix=''):
@@ -197,6 +202,8 @@ class RedirectFromStrategy(IdResolutionStrategy):
                 urls.append([id_to_url.get(url_id)[0], http_code])
             del target[:]
             target.extend(urls)
+
+        return result
 
 
 class CanonicalToStrategy(IdResolutionStrategy):
@@ -227,6 +234,8 @@ class CanonicalToStrategy(IdResolutionStrategy):
 
             # delete unused field
             target.pop('url_id', None)
+
+        return result
 
 
 class CanonicalFromStrategy(IdResolutionStrategy):
