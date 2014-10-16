@@ -39,7 +39,7 @@ class TestIdToUrlTransformer(unittest.TestCase):
     def test_error_links(self):
         es_result = {
             'outlinks_errors': {
-                '3xx': {
+                'non_strategic': {
                     'urls': [1, 2, 3]
                 },
                 '5xx': {
@@ -56,7 +56,7 @@ class TestIdToUrlTransformer(unittest.TestCase):
 
         expected = {
             'outlinks_errors': {
-                '3xx': {
+                'non_strategic': {
                     'urls': [1, 2, 3],
                 },
                 '5xx': {
@@ -74,7 +74,7 @@ class TestIdToUrlTransformer(unittest.TestCase):
 
         expected = {
             'outlinks_errors': {
-                '3xx': {
+                'non_strategic': {
                     'urls': ['url1', 'url2', 'url3'],
                 },
                 '5xx': {
@@ -138,6 +138,38 @@ class TestIdToUrlTransformer(unittest.TestCase):
                             {'url': 'url1', 'crawled': True},
                             {'url': 'url5', 'crawled': True},
                         ]
+                    }
+                }
+            }
+        }
+        self.assertDictEqual(expected, es_result)
+
+    def test_context_aware_metadata_duplicate(self):
+        es_result = {
+            'metadata': {
+                'title': {
+                    'duplicates': {
+                        'context_aware': {
+                            'urls': [1, 5]
+                        }
+                    }
+                }
+            }
+        }
+        trans = self._get_id_url_transformer(fields=['metadata.title'],
+                                             es_result=[es_result])
+        trans.transform()
+
+        expected = {
+            'metadata': {
+                'title': {
+                    'duplicates': {
+                        'context_aware': {
+                            'urls': [
+                                {'url': 'url1', 'crawled': True},
+                                {'url': 'url5', 'crawled': True},
+                            ]
+                        }
                     }
                 }
             }

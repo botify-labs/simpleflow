@@ -146,6 +146,11 @@ class MetaDuplicateStrategy(IdResolutionStrategy):
             target.extend(urls)
 
 
+class ContextAwareMetaDuplicationStrategy(MetaDuplicateStrategy):
+    def __init__(self, meta_type, prefix=''):
+        self.field = prefix + 'metadata.{}.duplicates.context_aware.urls'.format(meta_type)
+
+
 class RedirectToStrategy(IdResolutionStrategy):
     def __init__(self, prefix=''):
         self.field = prefix + 'redirect.to.url'
@@ -254,6 +259,7 @@ class IdToUrlTransformer(ResultTransformer):
         'outlinks_errors.3xx.urls': ErrorLinkStrategy('3xx'),
         'outlinks_errors.4xx.urls': ErrorLinkStrategy('4xx'),
         'outlinks_errors.5xx.urls': ErrorLinkStrategy('5xx'),
+        'outlinks_errors.non_strategic.urls': ErrorLinkStrategy('non_strategic'),
 
         'inlinks_internal.urls': LinksStrategy('inlinks_internal'),
         'outlinks_internal.urls': LinksStrategy('outlinks_internal'),
@@ -266,7 +272,11 @@ class IdToUrlTransformer(ResultTransformer):
 
         'metadata.title.duplicates.urls': MetaDuplicateStrategy('title'),
         'metadata.h1.duplicates.urls': MetaDuplicateStrategy('h1'),
-        'metadata.description.duplicates.urls': MetaDuplicateStrategy('description')
+        'metadata.description.duplicates.urls': MetaDuplicateStrategy('description'),
+
+        'metadata.title.duplicates.context_aware.urls': ContextAwareMetaDuplicationStrategy('title'),
+        'metadata.h1.duplicates.context_aware.urls': ContextAwareMetaDuplicationStrategy('h1'),
+        'metadata.description.duplicates.context_aware.urls': ContextAwareMetaDuplicationStrategy('description')
     }
 
     def __init__(self, es_result, query=None, backend=None, **kwargs):
