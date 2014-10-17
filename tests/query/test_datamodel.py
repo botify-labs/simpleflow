@@ -216,15 +216,18 @@ class TestGetFieldRights(unittest.TestCase):
 
 
 class ComparisonTestCase(unittest.TestCase):
-    def test_previous(self):
+    def setUp(self):
+        self.feature_options = {
+            "main": None,
+            "links": None,
+            # TODO it's better to name it `feature_options` for consistency
+            "comparison": {"options": {"main": None}}
+        }
+
+    def test_fields(self):
         # current crawl : feature main, links and comparison are enabled
         # previous crawl : only main is enabled
-        fields = get_fields(
-            {"main": None,
-             "links": None,
-             # TODO it's better to name it `feature_options` for consistency
-             "comparison": {"options": {"main": None}}}
-        )
+        fields = get_fields(self.feature_options)
         fields_configs = [f['value'] for f in fields]
         self.assertIn('url', fields_configs)
         self.assertIn('previous.url', fields_configs)
@@ -233,3 +236,21 @@ class ComparisonTestCase(unittest.TestCase):
 
         fields_verbose = [f['name'] for f in fields]
         self.assertIn('Previous Http Code', fields_verbose)
+
+    def test_groups(self):
+        # current crawl : feature main, links and comparison are enabled
+        # previous crawl : only main is enabled
+        groups = get_groups(self.feature_options)
+        names = [g['id'] for g in groups]
+
+        self.assertIn('main', names)
+        self.assertIn('previous.main', names)
+
+    def test_groups_non_comparison(self):
+        # current crawl : feature main, links and comparison are enabled
+        # previous crawl : only main is enabled
+        groups = get_groups({'main': None})
+        names = [g['id'] for g in groups]
+
+        self.assertIn('main', names)
+        self.assertNotIn('previous.main', names)
