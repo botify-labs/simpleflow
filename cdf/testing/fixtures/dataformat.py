@@ -673,5 +673,18 @@ DATA_FORMAT_FIXTURE = {
             ES_DOC_VALUE,
             AGG_NUMERICAL
         }
+    },
+
+    # a `previous` field
+    "previous.inlinks_internal.urls": {
+        "order": 1009,
+        "type": INT_TYPE,
+        "settings": {
+            ES_NO_INDEX,
+            LIST,
+            RENDERING.URL_LINK_STATUS,
+            FIELD_RIGHTS.SELECT,
+            URL_ID
+        }
     }
 }

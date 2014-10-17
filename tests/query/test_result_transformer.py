@@ -4,18 +4,286 @@ from mock import MagicMock
 
 from cdf.testing.es_mock import get_es_mget_mock
 from cdf.metadata.url.backend import (
-    ELASTICSEARCH_BACKEND,
     ElasticSearchBackend
 )
 from cdf.query.result_transformer import (
     IdToUrlTransformer,
     DefaultValueTransformer,
     ExternalUrlNormalizer,
-    AggregationTransformer
+    AggregationTransformer,
+    RedirectToStrategy)
+from cdf.query.result_transformer import (
+    ErrorLinkStrategy,
+    LinksStrategy,
+    ContextAwareMetaDuplicationStrategy,
+    MetaDuplicateStrategy,
+    CanonicalFromStrategy,
+    CanonicalToStrategy,
+    RedirectFromStrategy,
 )
+from cdf.testing.fixtures.dataformat import DATA_FORMAT_FIXTURE
 
 CRAWL_ID = 1
-ES_BACKEND = ELASTICSEARCH_BACKEND
+ES_BACKEND = ElasticSearchBackend(DATA_FORMAT_FIXTURE)
+
+
+class TestUrlIdResolutionStrategies(unittest.TestCase):
+    def setUp(self):
+        self.id_to_url = {
+            1: ['url1', 0],
+            2: ['url2', 0],
+            3: ['url3', 0],
+            4: ['url4', 0],
+            5: ['url5', 0]
+        }
+
+    def test_error_links(self):
+        strat = ErrorLinkStrategy('toto')
+        es_result = {
+            'outlinks_errors': {
+                'toto': {
+                    'urls': [1, 2]
+                },
+            }
+        }
+        expected_extract = [1, 2]
+        expected_transform = {
+            'outlinks_errors': {
+                'toto': {
+                    'urls': ['url1', 'url2']
+                },
+            }
+        }
+
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
+
+    def test_links(self):
+        strat = LinksStrategy('outlinks_internal')
+        es_result = {
+            'outlinks_internal': {
+                # uid, mask
+                'urls': [[5, 7]]
+            }
+        }
+
+        expected_extract = [5]
+        expected_transform = {
+            'outlinks_internal': {
+                'urls': [
+                    {
+                        'url': {
+                            'url': 'url5',
+                            # mock http code = 0
+                            'crawled': False,
+                        },
+                        'status': [
+                            'nofollow_robots',
+                            'nofollow_meta',
+                            'nofollow_link'
+                        ]
+                    }
+                ]
+            }
+        }
+
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
+
+    def test_meta_duplication(self):
+        strat = MetaDuplicateStrategy('toto')
+        es_result = {
+            'metadata': {
+                'toto': {
+                    'duplicates': {
+                        'urls': [1, 5]
+                    }
+                }
+            }
+        }
+
+        expected_extract = [1, 5]
+        expected_transform = {
+            'metadata': {
+                'toto': {
+                    'duplicates': {
+                        'urls': [
+                            {'url': 'url1', 'crawled': True},
+                            {'url': 'url5', 'crawled': True},
+                        ]
+                    }
+                }
+            }
+        }
+
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
+
+    def test_context_aware_duplication(self):
+        strat = ContextAwareMetaDuplicationStrategy('toto')
+        es_result = {
+            'metadata': {
+                'toto': {
+                    'duplicates': {
+                        'context_aware': {
+                            'urls': [1, 5]
+                        }
+                    }
+                }
+            }
+        }
+
+        expected_extract = [1, 5]
+        expected_transform = {
+            'metadata': {
+                'toto': {
+                    'duplicates': {
+                        'context_aware': {
+                            'urls': [
+                                {'url': 'url1', 'crawled': True},
+                                {'url': 'url5', 'crawled': True},
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
+
+    # canonical to external url is handled by ExternalUrlNormalizer
+    def test_canonical_to(self):
+        strat = CanonicalToStrategy()
+        es_result = {
+            'canonical': {
+                'to': {
+                    'url': {
+                        'url_id': 4,
+                    }
+                },
+                'equal': True
+            }
+        }
+
+        expected_extract = [4]
+        expected_transform = {
+            'canonical': {
+                'to': {
+                    'url': {'url': 'url4', 'crawled': False},
+                },
+                'equal': True
+            }
+        }
+
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
+
+    def test_canonial_from(self):
+        strat = CanonicalFromStrategy()
+        es_result = {
+            'canonical': {
+                'from': {
+                    'urls': [1, 2, 4, 5]
+                }
+            }
+        }
+
+        expected_extract = [1, 2, 4, 5]
+        expected_transform = {
+            'canonical': {
+                'from': {
+                    'urls': ['url1', 'url2', 'url4', 'url5']
+                }
+            }
+        }
+
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
+
+    # redirection to external url is handled by ExternalUrlNormalizer
+    def test_redirect_to(self):
+        strat = RedirectToStrategy()
+        es_result = {
+            'redirect': {
+                'to': {
+                    'url': {'url_id': 4, 'http_code': 300}
+                },
+            }
+        }
+
+        expected_extract = [4]
+        expected_transform = {
+            'redirect': {
+                'to': {
+                    'url': {'url': 'url4', 'crawled': False}
+                },
+            }
+        }
+
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
+
+    def test_redirect_from(self):
+        strat = RedirectFromStrategy()
+        es_result = {
+            'redirect': {
+                'from': {
+                    'urls': [[1, 200]]
+                }
+            }
+        }
+
+        expected_extract = [1]
+        expected_transform = {
+            'redirect': {
+                'from': {
+                    'urls': [
+                        # crawled is always true for redirect from
+                        # here http code comes from `redirect.from.urls`, in production
+                        # this should be the same code as in resolved pair (url, http_code)
+                        ['url1', 200]
+                    ]
+                }
+            }
+        }
+
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
+
+    def test_previous(self):
+        strat = ErrorLinkStrategy('toto', 'previous.')
+        es_result = {
+            'previous': {
+                'outlinks_errors': {
+                    'toto': {
+                        'urls': [1, 2]
+                    },
+                }
+            }
+        }
+        expected_extract = [1, 2]
+        expected_transform = {
+            'previous': {
+                'outlinks_errors': {
+                    'toto': {
+                        'urls': ['url1', 'url2']
+                    },
+                }
+            }
+        }
+
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
 
 
 class TestIdToUrlTransformer(unittest.TestCase):
@@ -36,60 +304,11 @@ class TestIdToUrlTransformer(unittest.TestCase):
             es=self.es, crawl_id=CRAWL_ID, backend=ES_BACKEND
         )
 
-    def test_error_links(self):
-        es_result = {
-            'outlinks_errors': {
-                '3xx': {
-                    'urls': [1, 2, 3]
-                },
-                '5xx': {
-                    'urls': [1, 3, 4, 5]
-                }
-            }
-        }
-
-        # partial transformation, controled by `fields` param
-        test_input = copy.deepcopy(es_result)
-        trans = self._get_id_url_transformer(fields=['outlinks_errors.5xx'],
-                                             es_result=[test_input])
-        trans.transform()
-
-        expected = {
-            'outlinks_errors': {
-                '3xx': {
-                    'urls': [1, 2, 3],
-                },
-                '5xx': {
-                    'urls': ['url1', 'url3', 'url4', 'url5']
-                }
-            }
-        }
-        self.assertEqual(test_input, expected)
-
-        # children fields transformation
-        test_input = copy.deepcopy(es_result)
-        trans = self._get_id_url_transformer(fields=['outlinks_errors'],
-                                             es_result=[test_input])
-        trans.transform()
-
-        expected = {
-            'outlinks_errors': {
-                '3xx': {
-                    'urls': ['url1', 'url2', 'url3'],
-                },
-                '5xx': {
-                    'urls': ['url1', 'url3', 'url4', 'url5']
-                }
-            }
-        }
-
-        self.assertDictEqual(expected, test_input)
-
-    def test_links(self):
+    def test_harness(self):
         es_result = {
             'outlinks_internal': {
-                # uid, mask, link number
-                'urls': [[5, 7, 40]]
+                # uid, mask
+                'urls': [[5, 7]]
             }
         }
         trans = self._get_id_url_transformer(fields=['outlinks_internal.urls'],
@@ -116,7 +335,7 @@ class TestIdToUrlTransformer(unittest.TestCase):
         }
         self.assertDictEqual(expected, es_result)
 
-    def test_metadata_duplicate(self):
+    def test_children_fields(self):
         es_result = {
             'metadata': {
                 'title': {
@@ -126,7 +345,7 @@ class TestIdToUrlTransformer(unittest.TestCase):
                 }
             }
         }
-        trans = self._get_id_url_transformer(fields=['metadata.title'],
+        trans = self._get_id_url_transformer(fields=['metadata'],
                                              es_result=[es_result])
         trans.transform()
 
@@ -144,7 +363,40 @@ class TestIdToUrlTransformer(unittest.TestCase):
         }
         self.assertDictEqual(expected, es_result)
 
-    def test_metadata_duplicate_empty(self):
+    def test_controllable_fields(self):
+        es_result = {
+            'outlinks_errors': {
+                '3xx': {
+                    'urls': [1, 2, 3]
+                },
+                '5xx': {
+                    'urls': [1, 3, 4, 5]
+                }
+            }
+        }
+
+        # partial transformation, controlled by `fields` param
+        test_input = copy.deepcopy(es_result)
+        trans = self._get_id_url_transformer(
+            fields=['outlinks_errors.5xx'],
+            es_result=[test_input]
+        )
+        trans.transform()
+
+        expected = {
+            'outlinks_errors': {
+                '3xx': {
+                    # `3xx` is not transformed
+                    'urls': [1, 2, 3],
+                },
+                '5xx': {
+                    'urls': ['url1', 'url3', 'url4', 'url5']
+                }
+            }
+        }
+        self.assertEqual(test_input, expected)
+
+    def test_empty_result(self):
         es_result = {'other_info': 1}
         expected = copy.deepcopy(es_result)
         trans = self._get_id_url_transformer(fields=['metadata.h1'],
@@ -152,103 +404,41 @@ class TestIdToUrlTransformer(unittest.TestCase):
         trans.transform()
         self.assertEqual(es_result, expected)
 
-    def test_redirect_from(self):
+    def test_previous(self):
         es_result = {
-            'redirect': {
-                'from': {
-                    'urls': [[1, 200]]
+            'previous': {
+                'outlinks_internal': {
+                    # uid, mask
+                    'urls': [[5, 7]]
                 }
             }
         }
-        trans = self._get_id_url_transformer(fields=['redirect'],
-                                             es_result=[es_result])
+        trans = self._get_id_url_transformer(
+            fields=['previous.outlinks_internal.urls'],
+            es_result=[es_result]
+        )
         trans.transform()
 
         expected = {
-            'redirect': {
-                'from': {
+            'previous': {
+                'outlinks_internal': {
                     'urls': [
-                        # crawled is always true for redirect from
-                        # here http code comes from `redirect.from.urls`, in production
-                        # this should be the same code as in resolved pair (url, http_code)
-                        ['url1', 200]
+                        {
+                            'url': {
+                                'url': 'url5',
+                                # mock http code = 0
+                                'crawled': False,
+                            },
+                            'status': [
+                                'nofollow_robots',
+                                'nofollow_meta',
+                                'nofollow_link'
+                            ]
+                        }
                     ]
                 }
             }
         }
-
-        self.assertDictEqual(expected, es_result)
-
-    def test_canonical_from(self):
-        es_result = {
-            'canonical': {
-                'from': {
-                    'urls': [1, 2, 4, 5]
-                }
-            }
-        }
-        trans = self._get_id_url_transformer(fields=['canonical'],
-                                             es_result=[es_result])
-        trans.transform()
-
-        expected = {
-            'canonical': {
-                'from': {
-                    'urls': ['url1', 'url2', 'url4', 'url5']
-                }
-            }
-        }
-
-        self.assertDictEqual(expected, es_result)
-
-    # canonical to external url is handled by ExternalUrlNormalizer
-    def test_redirect_to_internal(self):
-        es_result = {
-            'redirect': {
-                'to': {
-                    'url': {'url_id': 4, 'http_code': 300}
-                },
-            }
-        }
-        trans = self._get_id_url_transformer(fields=['redirect.to'],
-                                             es_result=[es_result])
-        trans.transform()
-
-        expected = {
-            'redirect': {
-                'to': {
-                    'url': {'url': 'url4', 'crawled': False}
-                },
-            }
-        }
-
-        self.assertDictEqual(expected, es_result)
-
-    # canonical to external url is handled by ExternalUrlNormalizer
-    def test_canonical_to_internal(self):
-        es_result = {
-            'canonical': {
-                'to': {
-                    'url': {
-                        'url_id': 4,
-                    }
-                },
-                'equal': True
-            }
-        }
-        trans = self._get_id_url_transformer(fields=['canonical.to'],
-                                             es_result=[es_result])
-        trans.transform()
-
-        expected = {
-            'canonical': {
-                'to': {
-                    'url': {'url': 'url4', 'crawled': False},
-                },
-                'equal': True
-            }
-        }
-
         self.assertDictEqual(expected, es_result)
 
 
