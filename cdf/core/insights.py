@@ -1,6 +1,7 @@
 from enum import Enum
 from cdf.metadata.url.url_metadata import INT_TYPE
 from cdf.query.aggregation import CountAggregation
+from cdf.core.metadata.constants import RENDERING
 
 
 class PositiveTrend(Enum):
@@ -30,7 +31,8 @@ class Insight(object):
                  additional_fields=None,
                  additional_filter=None,
                  sort_by=None,
-                 field_type=INT_TYPE):
+                 data_type=INT_TYPE,
+                 field_type=RENDERING.URL):
         """Constructor
         :param identifier: the insight identifier (short)
         :type identifier: str
@@ -53,20 +55,22 @@ class Insight(object):
         :param sort_by: a sort predicate. It is no impact on the query
                         but will be used to sort the detailed view.
         :type sort_by: Sort
-        :param field_type: how the value computed by this insights should be displayed.
-                           This parameter should be an Enum.
-                           It is an integer since :
-                           - RENDERING misses the base datatypes
-                             (from cdf.metadata.url.url_metadata)
-                           - the base datatypes are not grouped in a enum.
-
-        :type field_type: str
+        :param data_type: how the value computed by this insights should be displayed:
+                          'float', 'integer', etc.
+                          This parameter should be an Enum.
+                          It is a string since
+                          the base datatypes are not grouped in a enum.
+        :type data_type: str
+        :param field_type: what type of concept the value represents:
+                          "url", "time_sec", etc.
+        :type field_type: RENDERING
         """
         self.identifier = identifier
         self.name = name
         self.positive_trend = positive_trend
         self.filter = input_filter
         self.metric_agg = metric_agg or CountAggregation("url")
+        self.data_type = data_type
         self.field_type = field_type
         self.additional_fields = additional_fields
         self.additional_filter = additional_filter
@@ -112,7 +116,8 @@ class InsightValue(object):
             "positive_trend": self.insight.positive_trend.value,
             "feature": self.feature_name,
             "query": self.insight.query,
-            "type": self.insight.field_type,
+            "data_type": self.insight.data_type,
+            "field_type": self.insight.field_type.value,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
         }
         if self.insight.additional_fields is not None:

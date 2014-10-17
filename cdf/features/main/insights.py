@@ -128,25 +128,25 @@ def get_speed_insights():
             "speed_fast",
             "Fast URLs",
             PositiveTrend.UP,
-            LtFilter(field, 500),
+            LtFilter(field, 500)
         ),
         Insight(
             "speed_medium",
             "Medium URLs",
             PositiveTrend.DOWN,
-            BetweenFilter(field, [500, 999]),
+            BetweenFilter(field, [500, 999])
         ),
         Insight(
             "speed_slow",
             "Slow URLs",
             PositiveTrend.DOWN,
-            BetweenFilter(field, [1000, 1999]),
+            BetweenFilter(field, [1000, 1999])
         ),
         Insight(
             "speed_slowest",
             "Slowest URLs",
             PositiveTrend.DOWN,
-            GteFilter(field, 2000),
+            GteFilter(field, 2000)
         ),
     ]
 
@@ -229,14 +229,14 @@ def get_average_speed_insights():
             "Average Load Time (in ms)",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
-            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+            field_type=RENDERING.TIME_MILLISEC  # the param is a string so we need to use the enum value
         ),
         Insight(
             "speed_strategic_avg",
             "Average Load Time on Strategic URLs (in ms)",
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
-            field_type=RENDERING.TIME_MILLISEC.value  #the param is a string so we need to use the enum value
+            field_type=RENDERING.TIME_MILLISEC  # the param is a string so we need to use the enum value
         ),
     ]
 
@@ -249,7 +249,8 @@ def get_average_depth_insights():
             "Average Depth",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
-            field_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE,
+            field_type=RENDERING.DEPTH
         ),
         Insight(
             "depth_strategic_avg",
@@ -257,7 +258,8 @@ def get_average_depth_insights():
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
-            field_type=FLOAT_TYPE
+            data_type=FLOAT_TYPE,
+            field_type=RENDERING.DEPTH
         )
     ]
 

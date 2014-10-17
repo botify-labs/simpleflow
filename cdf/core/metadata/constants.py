@@ -14,6 +14,9 @@ class RENDERING(Enum):
     # Returns a map dict:
     # {'text': ["My text", "My other text", ..], 'nb': [20, 10..]}
     STRING_NB_MAP = 'string_nb_map'
+    DEPTH = 'depth'
+    LINK = 'link'
+    VISIT = 'visit'
     TIME_SEC = 'time_sec'
     TIME_MILLISEC = 'time_millisec'
     TIME_MIN = 'time_min'
