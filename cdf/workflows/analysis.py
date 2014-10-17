@@ -142,12 +142,10 @@ match_documents = as_activity(match_documents)
 
 from cdf.tasks.insights import (
     refresh_index,
-    get_api_address,
     get_feature_options
 )
 from cdf.tasks.insights import compute_insights as compute_insights_task
 refresh_index = as_activity(refresh_index)
-get_api_address = as_activity(get_api_address)
 get_feature_options = as_activity(get_feature_options)
 compute_insights_task = as_activity(compute_insights_task)
 
@@ -335,16 +333,15 @@ class AnalysisWorkflow(Workflow):
         """
         crawl_id = context['crawl_id']
         s3_uri = context['crawl_location']
+        config_endpoint = context['config_endpoint']
+        crawl_configurations = context['features_options']['comparison']['config']
 
-        api_address = self.submit(
-            get_api_address,
-            context["revision_endpoint"]
-        )
+        #insert current analysis configuration at the beginning of the list.
+        crawl_configurations.insert(0, [crawl_id,  config_endpoint, s3_uri])
 
         crawl_feature_options = self.submit(
             get_feature_options,
-            api_address,
-            crawl_ids=[crawl_id]
+            crawl_configurations
         )
 
         elastic_search_ready = self.submit(
@@ -592,7 +589,8 @@ class AnalysisWorkflow(Workflow):
         futures.wait(*documents_results)
         has_comparison = 'comparison' in features_flags
         if has_comparison:
-            ref_s3_uri = context['features_options']['comparison']['s3_uri']
+            previous_analysis = context['features_options']['comparison']['s3_uri'][0]
+            _, _, ref_s3_uri = previous_analysis
             comparison = self.submit(
                 match_documents,
                 new_s3_uri=s3_uri,
