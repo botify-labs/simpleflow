@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-version = (0, 3, 16)
+version = (0, 3, 17)
 __title__ = "botify-cdf"
 __author__ = "ampelmann"
 __license__ = "MIT"
