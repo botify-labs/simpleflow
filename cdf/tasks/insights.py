@@ -166,24 +166,11 @@ def compute_insights(crawls,
     return destination_uri
 
 
-def get_api_address(crawl_endpoint):
-    """Return the API address given the API crawl endpoit.
-    This function is somehow a hack made necessary
-    by the fact that the analysis context does not contain the API address
-    :param crawl_endpoint: the crawl endpoint (ex: http://api.staging.botify.com/crawls/1540/revisions/1568/)
-    :type crawl_endpoint: str
-    :returns: str
-    """
-    parsed_url = urlparse(crawl_endpoint)
-    return "{}://{}".format(parsed_url.scheme, parsed_url.netloc)
-
-
-def get_feature_options(api_address, crawl_ids):
+def get_feature_options(crawl_configurations):
     """Return the feature options corresponding to a list of crawl ids.
     Feature options are retrieved through the API.
-    :param api_address: the API address (ex: http://api.botify.com"
-    :type api_address: str
-    :param crawl_ids: the list of crawl ids to consider as a list of ints.
+    :param crawl_configurations: the list of crawl configurations to consider
+                                 as a list of tuples (crawl_id, config_endpoint, s3_uri)
     :type crawl_ids: list
     :returns: dict - a dict crawl_id -> feature_options
     :raises: ApiError - if one API call fails
@@ -192,11 +179,10 @@ def get_feature_options(api_address, crawl_ids):
     """
     result = {}
     headers = {
-    "Authorization": "Token {}".format(get_botify_api_token())
+        "Authorization": "Token {}".format(get_botify_api_token())
     }
-    for crawl_id in crawl_ids:
-        endpoint = urljoin(api_address, "crawls/{}/config/".format(crawl_id))
-        r = requests.get(endpoint, headers=headers)
+    for crawl_id, config_endpoint, s3_uri in crawl_configurations:
+        r = requests.get(config_endpoint, headers=headers)
         if not r.ok:
             raise ApiError("{}: {}".format(r.status_code, r.reason))
         if "features" not in r.json():
