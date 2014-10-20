@@ -11,58 +11,12 @@ from cdf.metadata.url.url_metadata import (
     LIST,
     DIFF_QUALITATIVE,
     DIFF_QUANTITATIVE,
-    STRING_TYPE,
-    ES_DOC_VALUE
+    STRING_TYPE, INT_TYPE, LONG_TYPE,
+    FLOAT_TYPE, DATE_TYPE,
+    BOOLEAN_TYPE, ES_DOC_VALUE
 )
 from cdf.utils.features import get_urls_data_format_definition
 from cdf.features.comparison import logger
-
-
-def get_diff_strategy(data_format):
-    """Generate diff strategy from url data format
-
-    :param data_format: url data format
-    :return: diff strategy dict (field -> diff_func)
-    """
-    diff_strategy = {}
-    for field, value in data_format.iteritems():
-        if 'settings' in value:
-            settings = value['settings']
-            if DIFF_QUANTITATIVE in settings:
-                diff_strategy[field] = quantitative_diff
-            elif DIFF_QUALITATIVE in settings:
-                if LIST in settings:
-                    diff_strategy[field] = qualitative_diff_list
-                else:
-                    diff_strategy[field] = qualitative_diff
-    return diff_strategy
-
-
-def get_diff_data_format(data_format):
-    """Generate the diff sub-document's data format
-
-    The result should be used in the final mapping generation.
-    Fields are not prefixed, should be prefixed if needed in
-    mapping generation.
-
-    :param data_format: url data format
-    :return: diff sub-document's data format
-    """
-    diff_mapping = {}
-    for field, value in data_format.iteritems():
-        if 'settings' in value:
-            settings = value['settings']
-            if DIFF_QUALITATIVE in settings:
-                diff_mapping[field] = {'type': STRING_TYPE}
-            elif DIFF_QUANTITATIVE in settings:
-                field_type = value['type']
-                mapping = {'type': field_type}
-                # also add doc_value flag, if it's present for
-                # the original field
-                if ES_DOC_VALUE in settings:
-                    mapping['settings'] = {ES_DOC_VALUE}
-                diff_mapping[field] = mapping
-    return diff_mapping
 
 
 def qualitative_diff(ref_value, new_value):
@@ -133,6 +87,87 @@ def quantitative_diff(ref_value, new_value):
     if ref_value is None or new_value is None:
         return None
     return ref_value - new_value
+
+
+DEFAULT_TYPE_STRATEGY = {
+    INT_TYPE: quantitative_diff,
+    LONG_TYPE: quantitative_diff,
+    FLOAT_TYPE: quantitative_diff,
+    DATE_TYPE: qualitative_diff,
+    STRING_TYPE: qualitative_diff,
+    BOOLEAN_TYPE: qualitative_diff,
+}
+
+
+def get_diff_strategy(data_format, type_strategy=DEFAULT_TYPE_STRATEGY):
+    """Generate diff strategy from url data format
+
+    Two diffing strategies:
+        qualitative: returns a state (EQUAL, CHANGED, DISAPPEAR, APPEAR)
+        quantitative: returns the diff value
+
+    Diffing strategy can be deduced from the field type:
+        number: quantitative
+        string: qualitative
+        list: qualitative
+        bool: qualitative
+
+    This function will try to deduce the diffing strategy if there's no
+    strategy defined for the field in data format
+
+    :param data_format: url data format
+    :return: diff strategy dict (field -> diff_func)
+    """
+    diff_strategy = {}
+    for field, value in data_format.iteritems():
+        field_type = value['type']
+        diff_strategy[field] = type_strategy.get(field_type, None)
+
+        # check `settings` for explicit diff strategy
+        # override previous deduced strategy
+        if 'settings' in value:
+            settings = value['settings']
+            if DIFF_QUANTITATIVE in settings:
+                diff_strategy[field] = quantitative_diff
+            elif DIFF_QUALITATIVE in settings:
+                if LIST in settings:
+                    diff_strategy[field] = qualitative_diff_list
+                else:
+                    diff_strategy[field] = qualitative_diff
+
+        # no diff strategy for this field, reports
+        if field not in diff_strategy or diff_strategy.get(field) is None:
+            logger.warning('No diff strategy found for {}'.format(field))
+            diff_strategy.pop(field, None)
+
+    return diff_strategy
+
+
+def get_diff_data_format(data_format):
+    """Generate the diff sub-document's data format
+
+    The result should be used in the final mapping generation.
+    Fields are not prefixed, should be prefixed if needed in
+    mapping generation.
+
+    :param data_format: url data format
+    :return: diff sub-document's data format
+    """
+    diff_mapping = {}
+    for field, value in data_format.iteritems():
+        if 'settings' in value:
+            settings = value['settings']
+            if DIFF_QUALITATIVE in settings:
+                diff_mapping[field] = {'type': STRING_TYPE}
+            elif DIFF_QUANTITATIVE in settings:
+                field_type = value['type']
+                mapping = {'type': field_type}
+                # also add doc_value flag, if it's present for
+                # the original field
+                if ES_DOC_VALUE in settings:
+                    mapping['settings'] = {ES_DOC_VALUE}
+                diff_mapping[field] = mapping
+    return diff_mapping
 
 
 # Generated from url data format
