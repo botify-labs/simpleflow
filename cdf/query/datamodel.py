@@ -1,5 +1,5 @@
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
-from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
+from cdf.metadata.url.url_metadata import LIST
 from cdf.core.features import Feature
 from cdf.core.metadata.dataformat import generate_data_format
 
@@ -144,6 +144,16 @@ def get_groups(features_options):
     groups = []
     for feature in Feature.get_features():
         for group in feature.groups:
+            # with hack for `previous`
+            previous_name = 'previous.{}'.format(group.name)
             if group.name in allowed_groups:
-                groups.append({'id': group.name, 'name': group.value})
+                groups.append({
+                    'id': group.name,
+                    'name': group.value
+                })
+            if previous_name in allowed_groups:
+                groups.append({
+                    'id': previous_name,
+                    'name': 'Previous {}'.format(group.value)
+                })
     return groups
