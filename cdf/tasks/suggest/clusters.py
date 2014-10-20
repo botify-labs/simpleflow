@@ -13,7 +13,7 @@ from autotagging.visualization.textual import (save_mixed_clusters,
                                                save_child_relationship)
 
 from cdf.utils.path import makedirs
-from cdf.utils.remote_files import nb_parts_from_crawl_location
+from cdf.utils.remote_files import enumerate_partitions
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
 from cdf.analysis.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
@@ -48,7 +48,7 @@ def compute_mixed_clusters(crawl_id,
                os.path.join(tmp_dir, global_crawl_info_filename),
                force_fetch=force_fetch)
 
-    for part_id in xrange(0, nb_parts_from_crawl_location(s3_uri)):
+    for part_id in enumerate_partitions(s3_uri):
         fetch_files(s3_uri,
                     tmp_dir,
                     regexp=['url(ids|infos|contents).txt.%d.gz' % part_id],

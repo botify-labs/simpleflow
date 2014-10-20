@@ -8,7 +8,7 @@ from elasticsearch import Elasticsearch
 from cdf.log import logger
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.es import bulk
-from cdf.utils.remote_files import nb_parts_from_crawl_location
+from cdf.utils.remote_files import enumerate_partitions
 from cdf.utils.s3 import fetch_files, push_file
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.utils import get_data_streams_from_storage
@@ -93,8 +93,7 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
 
     # support for different `part_id` param
     if part_id is None:
-        parts = nb_parts_from_crawl_location(s3_uri)
-        part_ids = range(parts)
+        part_ids = enumerate_partitions(s3_uri)
     else:
         part_ids = part_id if isinstance(part_id, list) else [part_id]
 
