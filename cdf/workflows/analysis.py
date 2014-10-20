@@ -336,7 +336,7 @@ class AnalysisWorkflow(Workflow):
         config_endpoint = context['config_endpoint']
 
         #consider current analysis configuration.
-        crawl_configurations = [crawl_id,  config_endpoint, s3_uri]
+        crawl_configurations = [[crawl_id,  config_endpoint, s3_uri]]
         if 'comparison' in context['features_options']:
             crawl_configurations.extend(context['features_options']['comparison']['config'])
 
