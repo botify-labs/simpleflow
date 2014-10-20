@@ -5,11 +5,9 @@ from cdf.features.comparison.diff import (
     document_diff,
     diff, qualitative_diff_list)
 from cdf.features.comparison.constants import (
-    CHANGED,
-    EQUAL,
-    APPEARED,
-    DISAPPEARED,
-    MatchingState)
+    QualitativeDiffResult as qdr,
+    MatchingState
+)
 
 
 class TestDocumentDiff(unittest.TestCase):
@@ -26,7 +24,7 @@ class TestDocumentDiff(unittest.TestCase):
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
 
-        expected = {'b': {'qualitative': CHANGED}}
+        expected = {'b': {'qualitative': qdr.CHANGED}}
         self.assertEqual(diff_result, expected)
 
     def test_qualitative_field_equal(self):
@@ -36,7 +34,7 @@ class TestDocumentDiff(unittest.TestCase):
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
 
-        expected = {'b': {'qualitative': EQUAL}}
+        expected = {'b': {'qualitative': qdr.EQUAL}}
         self.assertEqual(diff_result, expected)
 
     def test_qualitative_field_appeared(self):
@@ -45,7 +43,7 @@ class TestDocumentDiff(unittest.TestCase):
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        expected = {'b': {'qualitative': APPEARED}}
+        expected = {'b': {'qualitative': qdr.APPEARED}}
 
         self.assertEqual(diff_result, expected)
 
@@ -55,7 +53,7 @@ class TestDocumentDiff(unittest.TestCase):
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        expected = {'b': {'qualitative': DISAPPEARED}}
+        expected = {'b': {'qualitative': qdr.DISAPPEARED}}
 
         self.assertEqual(diff_result, expected)
 
@@ -89,7 +87,7 @@ class TestDocumentDiff(unittest.TestCase):
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        self.assertEqual(diff_result, {'c': {'list': EQUAL}})
+        self.assertEqual(diff_result, {'c': {'list': qdr.EQUAL}})
 
     def test_list_field_one_empty(self):
         ref_doc = {'c': {'list': ['a']}}
@@ -97,14 +95,14 @@ class TestDocumentDiff(unittest.TestCase):
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        self.assertEqual(diff_result, {'c': {'list': DISAPPEARED}})
+        self.assertEqual(diff_result, {'c': {'list': qdr.DISAPPEARED}})
 
         ref_doc = {'c': {'list': []}}
         new_doc = {'c': {'list': ['b']}}
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        self.assertEqual(diff_result, {'c': {'list': APPEARED}})
+        self.assertEqual(diff_result, {'c': {'list': qdr.APPEARED}})
 
     def test_list_field_compare(self):
         # only first element of the list is taken into account
@@ -113,14 +111,14 @@ class TestDocumentDiff(unittest.TestCase):
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        self.assertEqual(diff_result, {'c': {'list': CHANGED}})
+        self.assertEqual(diff_result, {'c': {'list': qdr.CHANGED}})
 
         ref_doc = {'c': {'list': ['a', 'b']}}
         new_doc = {'c': {'list': ['a']}}
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        self.assertEqual(diff_result, {'c': {'list': EQUAL}})
+        self.assertEqual(diff_result, {'c': {'list': qdr.EQUAL}})
 
     def test_diff_document_stream(self):
         doc_a = {'a': {'quantitative': 123}}
@@ -141,8 +139,7 @@ class TestDocumentDiff(unittest.TestCase):
             (MatchingState.DISCOVER, (None, {}, None)),
             (MatchingState.MATCH, ({}, doc_a, None)),
             (MatchingState.MATCH, (doc_b_ref, doc_b_new,
-                                   {'b': {'qualitative': CHANGED}})),
+                                   {'b': {'qualitative': qdr.CHANGED}})),
             (MatchingState.DISAPPEAR, ({}, None, None)),
         ]
         self.assertEqual(results, expected)
-

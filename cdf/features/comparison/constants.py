@@ -22,7 +22,8 @@ class MatchingState(Enum):
 
 
 # Qualitative diff result status
-EQUAL = 'equal'
-CHANGED = 'changed'
-APPEARED = 'appeared'
-DISAPPEARED = 'disappeared'
+class QualitativeDiffResult(Enum):
+    EQUAL = 'equal'
+    CHANGED = 'changed'
+    APPEARED = 'appeared'
+    DISAPPEARED = 'disappeared'

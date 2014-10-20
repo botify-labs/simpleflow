@@ -1,8 +1,5 @@
 from cdf.features.comparison.constants import (
-    CHANGED,
-    EQUAL,
-    DISAPPEARED,
-    APPEARED,
+    QualitativeDiffResult,
     MatchingState
 )
 from cdf.utils.dict import (
@@ -83,19 +80,19 @@ def qualitative_diff(ref_value, new_value):
         else:
             # reference is None,  new is not None
             # appeared
-            return APPEARED
+            return QualitativeDiffResult.APPEARED
     else:
         if new_value is None:
             # reference is not None, new is None
             # disappeared
-            return DISAPPEARED
+            return QualitativeDiffResult.DISAPPEARED
         else:
             # both not None
             # need compare
             if ref_value == new_value:
-                return EQUAL
+                return QualitativeDiffResult.EQUAL
             else:
-                return CHANGED
+                return QualitativeDiffResult.CHANGED
 
 
 def qualitative_diff_list(ref_value, new_value):
@@ -108,13 +105,13 @@ def qualitative_diff_list(ref_value, new_value):
     # empty -> non-empty => appear
     # non-empty -> empty =< disappear
     if len_new == 0 and len_ref > 0:
-        return DISAPPEARED
+        return QualitativeDiffResult.DISAPPEARED
     if len_new > 0 and len_ref == 0:
-        return APPEARED
+        return QualitativeDiffResult.APPEARED
 
     # both empty list => equal
     if len_new == len_ref == 0:
-        return EQUAL
+        return QualitativeDiffResult.EQUAL
 
     # both non-empty
     ref_value = ref_value[0]
