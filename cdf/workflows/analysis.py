@@ -334,10 +334,11 @@ class AnalysisWorkflow(Workflow):
         crawl_id = context['crawl_id']
         s3_uri = context['crawl_location']
         config_endpoint = context['config_endpoint']
-        crawl_configurations = context['features_options']['comparison']['config']
 
-        #insert current analysis configuration at the beginning of the list.
-        crawl_configurations.insert(0, [crawl_id,  config_endpoint, s3_uri])
+        #consider current analysis configuration.
+        crawl_configurations = [crawl_id,  config_endpoint, s3_uri]
+        if 'comparison' in context['features_options']:
+            crawl_configurations.extend(context['features_options']['comparison']['config'])
 
         crawl_feature_options = self.submit(
             get_feature_options,
