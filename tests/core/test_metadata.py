@@ -2,18 +2,22 @@ import unittest
 import mock
 
 from cdf.core.metadata.constants import FIELD_RIGHTS
-from cdf.metadata.url.url_metadata import ES_NO_INDEX
 from cdf.core.metadata.dataformat import (
     generate_data_format,
     set_visibility
 )
 from cdf.features.comparison.streams import (
     get_comparison_data_format,
+    get_diff_data_format,
     EXTRA_FIELDS_FORMAT
 )
 from cdf.core.features import Feature
 from cdf.core.streams.base import StreamDefBase
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
+from cdf.metadata.url.url_metadata import (
+    DIFF_QUALITATIVE, DIFF_QUANTITATIVE,
+    ES_NOT_ANALYZED, ES_NO_INDEX
+)
 
 
 class TestSetVisibility(unittest.TestCase):
@@ -37,7 +41,7 @@ class TestSetVisibility(unittest.TestCase):
             result["bar"]["settings"]
         )
 
-    def test_wrong_visibilit_flag(self):
+    def test_wrong_visibility_flag(self):
         # not a `FIELD_RIGHTS` object, should raise
         self.assertRaises(Exception, set_visibility, {}, "wrong flag")
 
@@ -218,3 +222,47 @@ class TestComparisonMapping(unittest.TestCase):
         }
 
         self.assertEqual(result['urls']['properties'], expected)
+
+
+class TestDiffMapping(unittest.TestCase):
+    mapping = {
+        'a': {
+            'type': 'boolean',
+            'group': 'important',
+            'settings': {
+                DIFF_QUALITATIVE
+            }
+        },
+        'b': {
+            'type': 'integer',
+            'verbose_name': 'bbbb',
+            'settings': {
+                DIFF_QUANTITATIVE
+            }
+        },
+    }
+
+    def test_harness(self):
+        result = get_diff_data_format(self.mapping)
+        expected = {
+            'diff.a': {
+                'type': 'string',
+                'group': 'Diff important',
+                'settings': {
+                    ES_NOT_ANALYZED
+                }
+            },
+            'diff.b': {
+                'type': 'integer',
+                'verbose_name': 'Diff bbbb',
+            }
+        }
+        self.assertEqual(result, expected)
+
+    def test_no_diff_field(self):
+        result = get_diff_data_format({
+            'c': {
+                'type': 'integer'
+            }
+        })
+        self.assertEqual(result, {})

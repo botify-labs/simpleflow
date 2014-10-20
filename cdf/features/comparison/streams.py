@@ -1,7 +1,11 @@
 import copy
 
 from cdf.core.metadata.constants import FIELD_RIGHTS
-from cdf.metadata.url.url_metadata import BOOLEAN_TYPE
+from cdf.metadata.url.url_metadata import (
+    BOOLEAN_TYPE,  STRING_TYPE,
+    DIFF_QUANTITATIVE, DIFF_QUALITATIVE,
+    ES_DOC_VALUE, ES_NOT_ANALYZED
+)
 
 
 # The document merge hack needs some extra flag fields
@@ -41,6 +45,57 @@ def _transform_comparison_config(config):
     if verbose_key in config:
         config[verbose_key] = 'Previous {}'.format(config[verbose_key])
     return config
+
+
+def _transform_diff_config(config, group=None, verbose_name=None):
+    if group is not None:
+        config['group'] = 'Diff {}'.format(group)
+
+    if verbose_name is not None:
+        config['verbose_name'] = 'Diff {}'.format(verbose_name)
+
+    return config
+
+
+def get_diff_data_format(data_format):
+    """Generate the diff sub-document's data format
+
+    The result should be used in the final mapping generation.
+    Fields are not prefixed, should be prefixed if needed in
+    mapping generation.
+
+    :param data_format: url data format
+    :return: diff sub-document's data format
+    """
+    diff_mapping = {}
+    for field, value in data_format.iteritems():
+        f = 'diff.' + field
+        group = value.get('group', None)
+        verbose_name = value.get('verbose_name', None)
+        if 'settings' in value:
+            settings = value['settings']
+            if DIFF_QUALITATIVE in settings:
+                mapping = {
+                    'type': STRING_TYPE,
+                    'settings': {
+                        ES_NOT_ANALYZED
+                    }
+                }
+                diff_mapping[f] = _transform_diff_config(
+                    mapping, group, verbose_name)
+            elif DIFF_QUANTITATIVE in settings:
+                field_type = value['type']
+                mapping = {
+                    'type': field_type
+                }
+                # also add doc_value flag, if it's present for
+                # the original field
+                if ES_DOC_VALUE in settings:
+                    mapping['settings'] = {ES_DOC_VALUE}
+                diff_mapping[f] = _transform_diff_config(
+                    mapping, group, verbose_name)
+
+    return diff_mapping
 
 
 def get_comparison_data_format(data_format, extras=EXTRA_FIELDS_FORMAT):
