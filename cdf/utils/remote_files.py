@@ -3,18 +3,6 @@ from cdf.exceptions import MalformedFileNameError
 from cdf.utils import s3, path
 
 
-def nb_parts_from_crawl_location(uri):
-    """
-    Return the number of parts from a raw data crawl location
-    """
-    regexp = r'urlids\.txt\.([0-9]+)\.gz'
-    if s3.is_s3_uri(uri):
-        files = s3.list_files(uri, regexp=regexp)
-    else:
-        files = path.list_files(uri, regexp=regexp)
-    return len(files)
-
-
 def enumerate_partitions(uri):
     """
     Return the list of partition ids
@@ -48,6 +36,3 @@ def get_part_id_from_filename(filename):
             "%s does not contained any part id." % filename
         )
     return int(m.group(1))
-
-
-
