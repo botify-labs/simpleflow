@@ -1,4 +1,5 @@
 import re
+from cdf.exceptions import MalformedFileNameError
 from cdf.utils import s3, path
 
 
@@ -27,13 +28,26 @@ def enumerate_partitions(uri):
         files = [f.name for f in files]
     else:
         files = path.list_files(uri, regexp=regexp)
-    pattern = r"urlids\.txt\.(\d+)\.gz$"
-    pattern = re.compile(pattern)
-    result = []
-    for f in files:
-        m = pattern.search(f)
-        if m is None:
-            continue
-        result.append(int(m.group(1)))
+    result = [get_part_id_from_filename(f) for f in files]
     result = sorted(result)
     return result
+
+
+def get_part_id_from_filename(filename):
+    """Return the part id from a filename
+    If the part id can not be extracted raise a MalformedFileNameError
+
+    :param filename: the input filename
+    :type filename: str
+    :returns: int -- the part id
+    """
+    regex = re.compile(".*txt.([\d]+).gz")
+    m = regex.match(filename)
+    if not m:
+        raise MalformedFileNameError(
+            "%s does not contained any part id." % filename
+        )
+    return int(m.group(1))
+
+
+

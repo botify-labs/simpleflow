@@ -1,7 +1,11 @@
 import unittest
 import boto
 from moto import mock_s3
-from cdf.utils.remote_files import enumerate_partitions
+from cdf.exceptions import MalformedFileNameError
+from cdf.utils.remote_files import (
+    enumerate_partitions,
+    get_part_id_from_filename
+)
 
 
 class TestEnumeratePartitions(unittest.TestCase):
@@ -42,3 +46,21 @@ class TestEnumeratePartitions(unittest.TestCase):
         self._create_file(test_bucket, "urlids_txt_0_gz.foo")
 
         self.assertEquals([], enumerate_partitions("s3://test_bucket/"))
+
+
+class TestGetPartIdFromFileName(unittest.TestCase):
+    def test_nominal_case(self):
+        self.assertEqual(0, get_part_id_from_filename("urlcontents.txt.0.gz"))
+        self.assertEqual(10, get_part_id_from_filename("urlcontents.txt.10.gz"))
+        self.assertEqual(0, get_part_id_from_filename("/tmp/urlcontents.txt.0.gz"))
+
+    def test_malformed_filename(self):
+        self.assertRaises(MalformedFileNameError,
+                          get_part_id_from_filename,
+                          "urlcontents.txt.gz")
+
+        self.assertRaises(MalformedFileNameError,
+                          get_part_id_from_filename,
+                          "urlcontents.txt.-1.gz")
+
+
