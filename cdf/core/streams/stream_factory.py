@@ -11,28 +11,11 @@ from cdf.core.streams.utils import split_file
 
 from cdf.log import logger
 
-from cdf.exceptions import MalformedFileNameError
 from cdf.core.features import Feature
+from cdf.utils.remote_files import get_part_id_from_filename
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.semantic_metadata.streams import ContentsStreamDef
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
-
-
-def get_part_id_from_filename(filename):
-    """Return the part id from a filename
-    If the part id can not be extracted raise a MalformedFileNameError
-
-    :param filename: the input filename
-    :type filename: str
-    :returns: int -- the part id
-    """
-    regex = re.compile(".*txt.([\d]+).gz")
-    m = regex.match(filename)
-    if not m:
-        raise MalformedFileNameError(
-            "%s does not contained any part id." % filename
-        )
-    return int(m.group(1))
 
 
 class StreamFactoryCache(object):

@@ -4,9 +4,7 @@ import StringIO
 
 from mock import MagicMock, patch
 
-from cdf.exceptions import MalformedFileNameError
-from cdf.core.streams.stream_factory import (get_part_id_from_filename,
-                                             StreamFactoryCache,
+from cdf.core.streams.stream_factory import (StreamFactoryCache,
                                              FileStreamFactory,
                                              ProtocolStreamFactory,
                                              HostStreamFactory,
@@ -15,22 +13,6 @@ from cdf.core.streams.stream_factory import (get_part_id_from_filename,
                                              MetadataStreamFactory,
                                              get_max_crawled_urlid,
                                              _get_nb_crawled_urls_from_stream)
-
-
-class TestGetPartIdFromFileName(unittest.TestCase):
-    def test_nominal_case(self):
-        self.assertEqual(0, get_part_id_from_filename("urlcontents.txt.0.gz"))
-        self.assertEqual(10, get_part_id_from_filename("urlcontents.txt.10.gz"))
-        self.assertEqual(0, get_part_id_from_filename("/tmp/urlcontents.txt.0.gz"))
-
-    def test_malformed_filename(self):
-        self.assertRaises(MalformedFileNameError,
-                          get_part_id_from_filename,
-                          "urlcontents.txt.gz")
-
-        self.assertRaises(MalformedFileNameError,
-                          get_part_id_from_filename,
-                          "urlcontents.txt.-1.gz")
 
 
 class TestStreamFactoryCache(unittest.TestCase):

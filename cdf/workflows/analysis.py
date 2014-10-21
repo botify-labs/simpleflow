@@ -131,10 +131,7 @@ from cdf.features.sitemaps.tasks import (
 download_sitemap_files = as_activity(download_sitemap_files)
 match_sitemap_urls = as_activity(match_sitemap_urls)
 
-from cdf.utils.remote_files import (
-    nb_parts_from_crawl_location as enumerate_partitions
-)
-enumerate_partitions.name = 'enumerate_partitions'
+from cdf.utils.remote_files import enumerate_partitions
 enumerate_partitions = as_activity(enumerate_partitions)
 
 from cdf.features.comparison.tasks import match_documents
@@ -435,7 +432,7 @@ class AnalysisWorkflow(Workflow):
                     tmp_dir=tmp_dir,
                     part_id=part_id,
                 )
-                for part_id in xrange(partitions.result)
+                for part_id in partitions.result
             ]
 
         inlinks_results = [
@@ -447,7 +444,7 @@ class AnalysisWorkflow(Workflow):
                 link_direction='in',
                 part_id=part_id,
             )
-            for part_id in xrange(partitions.result)
+            for part_id in partitions.result
         ]
 
         outlinks_results = [
@@ -459,9 +456,8 @@ class AnalysisWorkflow(Workflow):
                 link_direction='out',
                 part_id=part_id,
             )
-            for part_id in xrange(partitions.result)
+            for part_id in partitions.result
         ]
-
 
         filled_metadata_count_results = [
             self.submit(
@@ -470,7 +466,7 @@ class AnalysisWorkflow(Workflow):
                 tmp_dir=tmp_dir,
                 part_id=part_id
             )
-            for part_id in xrange(partitions.result)
+            for part_id in partitions.result
         ]
 
         zone_results = [
@@ -480,7 +476,7 @@ class AnalysisWorkflow(Workflow):
                 tmp_dir=tmp_dir,
                 part_id=part_id
             )
-            for part_id in xrange(partitions.result)
+            for part_id in partitions.result
         ]
 
         strategic_urls_results = [
@@ -491,7 +487,7 @@ class AnalysisWorkflow(Workflow):
                 tmp_dir=tmp_dir,
                 part_id=part_id
             )
-            for part_id in xrange(partitions.result)
+            for part_id in partitions.result
         ]
         #zone aware duplication computation needs zones and strategic urls
         futures.wait(*(zone_results + strategic_urls_results))
@@ -521,7 +517,7 @@ class AnalysisWorkflow(Workflow):
                     tmp_dir=tmp_dir,
                     part_id=part_id,
                 )
-                for part_id in xrange(partitions.result)
+                for part_id in partitions.result
             ]
         # Group all the futures that need to terminate before computing the
         # aggregations and generating documents.
@@ -564,7 +560,7 @@ class AnalysisWorkflow(Workflow):
                 tmp_dir=tmp_dir,
                 part_id=part_id,
             )
-            for part_id in xrange(partitions.result)
+            for part_id in partitions.result
         ]
 
         futures.wait(*aggregators_results)
@@ -582,7 +578,7 @@ class AnalysisWorkflow(Workflow):
                 tmp_dir=tmp_dir,
                 part_id=part_id,
             )
-            for part_id in xrange(partitions.result)
+            for part_id in partitions.result
         ]
 
         # document merging for comparison
@@ -616,7 +612,7 @@ class AnalysisWorkflow(Workflow):
                     comparison=has_comparison,
                     **es_params
                 )
-                for part_id in xrange(partitions.result)
+                for part_id in partitions.result
             ]
 
         futures.wait(*(elastic_search_results + [consolidate_result]))

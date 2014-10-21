@@ -96,10 +96,13 @@ def _mock_fetch_files(s3_uri, dest_dir,
     return [(f, True) for f in local_files]
 
 
-def _mock_nb_parts(s3_uri, dirpath=None):
+def _mock_enumerate_partitions(s3_uri, dirpath=None):
+    regex = r'urlids\.txt\.([0-9]+)\.gz'
     files = _list_local_files(dirpath if dirpath else RESULT_DIR,
-                              'urlids.txt.([0-9]+)')
-    return len(files)
+                              regex)
+    pattern = re.compile(regex)
+    result = sorted([int(pattern.search(f).group(1)) for f in files])
+    return result
 
 
 class MockIntegrationTest(unittest.TestCase):
@@ -108,7 +111,7 @@ class MockIntegrationTest(unittest.TestCase):
     @patch('cdf.utils.s3.push_content', _mock_push_content)
     @patch('cdf.utils.s3.fetch_file', _mock_fetch_file)
     @patch('cdf.utils.s3.fetch_files', _mock_fetch_files)
-    @patch('cdf.utils.remote_files.nb_parts_from_crawl_location', _mock_nb_parts)
+    @patch('cdf.utils.remote_files.enumerate_partitions', _mock_enumerate_partitions)
     def setUpClass(cls):
         # generate inlink file
         generate_inlink_file(os.path.join(MOCK_CRAWL_DIR, 'urllinks.txt'),
@@ -139,14 +142,14 @@ class MockIntegrationTest(unittest.TestCase):
         force_fetch = True
 
         # figure out number of partitions
-        from cdf.utils.remote_files import nb_parts_from_crawl_location
-        parts = nb_parts_from_crawl_location(S3_URI, crawl_dir)
+        from cdf.utils.remote_files import enumerate_partitions
+        parts = enumerate_partitions(crawl_dir)
 
         # bad link
         links_tasks.make_bad_link_file(CRAWL_ID, TEST_DIR, 4, 2, tmp_dir=RESULT_DIR)
 
         # aggregate bad links on (url, http_code)
-        for part_id in xrange(0, parts):
+        for part_id in parts:
             links_tasks.make_bad_link_counter_file(CRAWL_ID, TEST_DIR, part_id, tmp_dir=RESULT_DIR)
 
         # metadata duplication detection
@@ -158,7 +161,7 @@ class MockIntegrationTest(unittest.TestCase):
                                               tmp_dir=RESULT_DIR, force_fetch=force_fetch)
 
         # aggregation for each partition
-        for part_id in xrange(0, parts):
+        for part_id in parts:
             logger.info("Compute inlinks counter file")
             links_tasks.make_links_counter_file(CRAWL_ID, TEST_DIR, part_id, "in",
                                                 tmp_dir=RESULT_DIR, force_fetch=force_fetch)
@@ -177,7 +180,7 @@ class MockIntegrationTest(unittest.TestCase):
         es_index = 'integration-test'
         es_doc_type = 'crawls'
         ud.prepare_crawl_index(CRAWL_ID, es_location, es_index, es_doc_type)
-        for part_id in xrange(0, parts):
+        for part_id in parts:
             ud.generate_documents(CRAWL_ID, TEST_DIR, part_id, force_fetch=force_fetch, tmp_dir=RESULT_DIR)
             ud.push_documents_to_elastic_search(CRAWL_ID, TEST_DIR, es_location,
                                                 es_index, es_doc_type, part_id=None,
