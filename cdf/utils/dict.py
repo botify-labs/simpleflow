@@ -62,7 +62,7 @@ def path_in_dict(path, dict):
     res = True
     try:
         get_subdict_from_path(path, dict)
-    except KeyError:
+    except (KeyError, TypeError):
         res = False
     return res
 
