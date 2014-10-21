@@ -272,7 +272,10 @@ class SitemapTextDocument(SitemapDocument):
                     continue
                 except StopIteration:
                     break
-                if len(row) != 1:
+                if len(row) == 0:
+                    #ignore empty lines
+                    continue
+                elif len(row) > 1:
                     logger.warning("'%s' should have exactly one field.", row)
                     self.invalid_urls += 1
                     continue
