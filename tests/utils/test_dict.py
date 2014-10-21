@@ -10,14 +10,8 @@ from cdf.utils.dict import (
 )
 
 
-class TestDictUtils(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_update_path(self):
+class TestUpdatePath(unittest.TestCase):
+    def test_empty_dict(self):
         # all empty
         _dict = {}
         _path = 'a.b.c'
@@ -27,6 +21,7 @@ class TestDictUtils(unittest.TestCase):
         update_path_in_dict(_path, _value, _dict)
         self.assertDictEqual(expected, _dict)
 
+    def test_subpath_addition(self):
         # add a sub-path to existing dict
         _dict = {'a': {'d': 2}}
         _path = 'a.b.c'
@@ -36,7 +31,7 @@ class TestDictUtils(unittest.TestCase):
         update_path_in_dict(_path, _value, _dict)
         self.assertDictEqual(expected, _dict)
 
-        # override existing value
+    def test_override_existing_value(self):
         _dict = {'a': {'b': {'c': 2}}}
         _path = 'a.b.c'
         _value = 10
@@ -45,6 +40,7 @@ class TestDictUtils(unittest.TestCase):
         update_path_in_dict(_path, _value, _dict)
         self.assertDictEqual(expected, _dict)
 
+    def test_existing_value_addition(self):
         # add value among existing values
         _dict = {'a': {'b': {'d': 100, 'f': 20}}}
         _path = 'a.b.c'
@@ -54,7 +50,7 @@ class TestDictUtils(unittest.TestCase):
         update_path_in_dict(_path, _value, _dict)
         self.assertDictEqual(expected, _dict)
 
-        # top-level update
+    def test_top_level_update(self):
         _dict = {'a': 1}
         _path = 'a'
         _value = 2
@@ -63,6 +59,7 @@ class TestDictUtils(unittest.TestCase):
         update_path_in_dict(_path, _value, _dict)
         self.assertDictEqual(expected, _dict)
 
+    def test_no_update(self):
         # won't update a non-dict element
         _dict = {'a': 1}
         _path = 'a.b'
@@ -72,20 +69,27 @@ class TestDictUtils(unittest.TestCase):
         update_path_in_dict(_path, _value, _dict)
         self.assertDictEqual(expected, _dict)
 
-    def test_flatten(self):
+
+class TestFlattenDict(unittest.TestCase):
+    def test_nominal_case(self):
         _dict = {'a': {'b': {'d': 100, 'f': 20}}}
         expected = {'a.b.d': 100, 'a.b.f': 20}
         self.assertDictEqual(flatten_dict(_dict), expected)
 
+    def test_flat_dict(self):
         _dict = {'a.b.c': 100}
         self.assertDictEqual(flatten_dict(_dict), _dict)
 
-    def test_deep_dict(self):
+
+class TestDeepDict(unittest.TestCase):
+    def test_nominal_case(self):
         _dict = {'a.b.d': 100, 'a.b.f': 20}
         expected = {'a': {'b': {'d': 100, 'f': 20}}}
         self.assertDictEqual(deep_dict(_dict), expected)
 
-    def test_update_dict(self):
+
+class TestUpdateDict(unittest.TestCase):
+    def test_nominal_case(self):
         _dict = {'a': {'b': {'c': 1}}, 'k': 3}
         update = {'a': {'e': 2}, 'k': 5}
         expected = {'a': {'e': 2, 'b': {'c': 1}}, 'k': 5}
@@ -93,28 +97,29 @@ class TestDictUtils(unittest.TestCase):
         update_dict(_dict, update)
         self.assertDictEqual(_dict, expected)
 
-    def test_delete_path(self):
-        # normal case
-        _dict = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
+
+class TestDeletePath(unittest.TestCase):
+    def setUp(self):
+        self._dict = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
+
+    def test_nominal_case(self):
         path = 'a.b.c'
         expected = {'a': {'b': {'d': [1, 2]}}}
-        delete_path_in_dict(path, _dict)
-        self.assertEqual(_dict, expected)
+        delete_path_in_dict(path, self._dict)
+        self.assertEqual(self._dict, expected)
 
-        # length 1 path
-        _dict = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
+    def test_length_one_path(self):
         path = 'a'
         expected = {}
-        delete_path_in_dict(path, _dict)
-        self.assertEqual(_dict, expected)
+        delete_path_in_dict(path, self._dict)
+        self.assertEqual(self._dict, expected)
 
-
+    def test_unexisting_path(self):
         # `path` does not exist
-        _dict = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
         path = 'd.k'
         expected = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
-        delete_path_in_dict(path, _dict)
-        self.assertDictEqual(_dict, expected)
+        delete_path_in_dict(path, self._dict)
+        self.assertDictEqual(self._dict, expected)
 
 
 class TestPathInDict(unittest.TestCase):
