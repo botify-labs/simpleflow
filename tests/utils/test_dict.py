@@ -1,6 +1,13 @@
 import unittest
 
-from cdf.utils.dict import update_path_in_dict, flatten_dict, deep_dict, update_dict, delete_path_in_dict
+from cdf.utils.dict import (
+    update_path_in_dict,
+    flatten_dict,
+    deep_dict,
+    update_dict,
+    delete_path_in_dict,
+    path_in_dict
+)
 
 
 class TestDictUtils(unittest.TestCase):
@@ -108,3 +115,20 @@ class TestDictUtils(unittest.TestCase):
         expected = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
         delete_path_in_dict(path, _dict)
         self.assertDictEqual(_dict, expected)
+
+
+class TestPathInDict(unittest.TestCase):
+    def setUp(self):
+        self._dict = {'a': {'b': {'c': 1, 'd': [1, 2]}}}
+
+    def test_positive_case(self):
+        self.assertTrue(path_in_dict("a.b.c", self._dict))
+
+    def test_negative_case(self):
+        self.assertFalse(path_in_dict("a.z", self._dict))
+
+    def test_short_path(self):
+        self.assertTrue(path_in_dict("a.b", self._dict))
+
+    def test_too_long_path(self):
+        self.assertFalse(path_in_dict("a.b.c.e", self._dict))
