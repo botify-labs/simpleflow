@@ -1,6 +1,7 @@
 from cdf.metadata.url.url_metadata import (
-    INT_TYPE, FLOAT_TYPE, ES_DOC_VALUE, AGG_NUMERICAL,
-    DIFF_QUANTITATIVE)
+    INT_TYPE, FLOAT_TYPE, ES_DOC_VALUE,
+    AGG_NUMERICAL, DIFF_QUANTITATIVE
+)
 from cdf.core.features import StreamDefBase
 from .settings import ORGANIC_SOURCES, SOCIAL_SOURCES
 from .metrics import compute_average_value, compute_percentage

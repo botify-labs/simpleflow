@@ -351,6 +351,7 @@ class ZoneStreamDef(StreamDefBase):
                     AGG_CATEGORICAL,
                     FIELD_RIGHTS.FILTERS,
                     FIELD_RIGHTS.SELECT,
+                    DIFF_QUALITATIVE
                 }
             }
         },
@@ -381,6 +382,7 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    DIFF_QUALITATIVE,
                     FIELD_RIGHTS.FILTERS,
                     FIELD_RIGHTS.SELECT
                 }
@@ -390,6 +392,7 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    DIFF_QUALITATIVE,
                     FIELD_RIGHTS.FILTERS,
                     FIELD_RIGHTS.SELECT
                 }
@@ -399,6 +402,7 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    DIFF_QUALITATIVE,
                     FIELD_RIGHTS.FILTERS,
                     FIELD_RIGHTS.SELECT
                 }
@@ -408,6 +412,7 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    DIFF_QUALITATIVE,
                     FIELD_RIGHTS.FILTERS,
                     FIELD_RIGHTS.SELECT
                 }
@@ -417,6 +422,7 @@ class StrategicUrlStreamDef(StreamDefBase):
                 "type": BOOLEAN_TYPE,
                 "settings": {
                     AGG_CATEGORICAL,
+                    DIFF_QUALITATIVE,
                     FIELD_RIGHTS.FILTERS,
                     FIELD_RIGHTS.SELECT
                 }

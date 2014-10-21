@@ -194,7 +194,8 @@ def _get_duplicate_document_mapping(metadata_list,
             "type": BOOLEAN_TYPE,
             "settings": {
                 FIELD_RIGHTS.SELECT,
-                FIELD_RIGHTS.FILTERS
+                FIELD_RIGHTS.FILTERS,
+                DIFF_QUALITATIVE
             }
         }
         same_metadata_type = metadata_type.capitalize()
@@ -316,7 +317,8 @@ class ContentsCountStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                AGG_CATEGORICAL
+                AGG_CATEGORICAL,
+                DIFF_QUANTITATIVE
             }
         },
         # h1 tag

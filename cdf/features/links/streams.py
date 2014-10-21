@@ -105,7 +105,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_internal.nb.nofollow.total": {
@@ -235,7 +236,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_external.nb.follow.total": {
@@ -259,7 +261,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_external.nb.nofollow.total": {
@@ -283,7 +286,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_external.nb.nofollow.combinations.link": {
@@ -644,7 +648,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
             }
         },
         "inlinks_internal.nb.nofollow.total": {
@@ -940,7 +945,6 @@ class BadLinksStreamDef(StreamDefBase):
                 FIELD_RIGHTS.SELECT,
                 RENDERING.URL,
                 URL_ID,
-                DIFF_QUALITATIVE
             }
         },
         "outlinks_errors.3xx.urls_exists": {
@@ -1024,7 +1028,8 @@ class BadLinksStreamDef(StreamDefBase):
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
             }
         },
     }
@@ -1062,6 +1067,7 @@ class BadLinksCountersStreamDef(StreamDefBase):
         ('score', int)
     )
 
+
 class LinksToNonStrategicStreamDef(StreamDefBase):
     FILE = 'url_non_strategic_links'
     HEADERS = (
@@ -1080,7 +1086,8 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
             }
         },
         "outlinks_errors.non_strategic.urls": {
@@ -1147,7 +1154,8 @@ class InlinksPercentilesStreamDef(StreamDefBase):
                 AGG_CATEGORICAL,
                 FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
             }
         },
     }
