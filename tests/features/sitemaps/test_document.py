@@ -388,8 +388,8 @@ class TestSitemapTextDocument(unittest.TestCase):
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
         self.assertEqual(2, sitemap_document.valid_urls)
-        #empty lines are considered as invalid lines
-        self.assertEqual(1, sitemap_document.invalid_urls)
+        #empty lines are ignored.
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
 
 class TestUrlValidator(unittest.TestCase):
