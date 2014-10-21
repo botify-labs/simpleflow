@@ -205,29 +205,27 @@ class TestSitemapRssDocument(unittest.TestCase):
 
     def test_nominal_case(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8" ?>'
-                         '<rss version="2.0">'
-                         '<channel>'
-                         ' <title>RSS Title</title>'
-                         ' <description>This is an example of an RSS feed</description>'
-                         ' <link>http://www.example.com/main.html</link>'
-                         ' <item>'
-                         '  <title>Example entry</title>'
-                         '  <description>Here is some text containing an interesting description.</description>'
-                         '  <link>http://www.example.com/blog/post/1</link>'
-                         ' </item>'
-                         '</channel>'
-                         '</rss>')
+                        '<rss version="2.0">'
+                        '<channel>'
+                        ' <title>RSS Title</title>'
+                        ' <description>This is an example of an RSS feed</description>'
+                        ' <item>'
+                        '  <title>Example entry</title>'
+                        '  <description>Here is some text containing an interesting description.</description>'
+                        '  <link>http://www.example.com/blog/post/1</link>'
+                        ' </item>'
+                        '</channel>'
+                        '</rss>')
         self.file.close()
         sitemap_document = SitemapRssDocument(self.file.name, self.url)
         self.assertEqual(SiteMapType.SITEMAP_RSS,
                          sitemap_document.get_sitemap_type())
         expected_urls = [
-            "http://www.example.com/main.html",
             "http://www.example.com/blog/post/1"
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
-        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.valid_urls)
         self.assertEqual(0, sitemap_document.invalid_urls)
 
     def test_invalid_xml(self):
@@ -242,30 +240,56 @@ class TestSitemapRssDocument(unittest.TestCase):
 
     def test_invalid_url(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8" ?>'
-                         '<rss version="2.0">'
-                         '<channel>'
-                         ' <title>RSS Title</title>'
-                         ' <description>This is an example of an RSS feed</description>'
-                         ' <link>http://www.example.com/main.html</link>'
-                         ' <title>Invalid url</title>'
-                         ' <link>foo</link>'
-                         ' <item>'
-                         '  <title>Example entry</title>'
-                         '  <description>Here is some text containing an interesting description.</description>'
-                         '  <link>http://www.example.com/blog/post/1</link>'
-                         ' </item>'
-                         '</channel>'
-                         '</rss>')
+                        '<rss version="2.0">'
+                        '<channel>'
+                        ' <title>RSS Title</title>'
+                        ' <description>This is an example of an RSS feed</description>'
+                        ' <title>Invalid url</title>'
+                        ' <item>'
+                        '  <link>foo</link>'
+                        ' </item>'
+                        ' <item>'
+                        '  <title>Example entry</title>'
+                        '  <description>Here is some text containing an interesting description.</description>'
+                        '  <link>http://www.example.com/blog/post/1</link>'
+                        ' </item>'
+                        '</channel>'
+                        '</rss>')
         self.file.close()
         sitemap_document = SitemapRssDocument(self.file.name, self.url)
         expected_urls = [
-            "http://www.example.com/main.html",
             "http://www.example.com/blog/post/1"
         ]
 
         self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
-        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.valid_urls)
         self.assertEqual(1, sitemap_document.invalid_urls)
+
+    def test_title_link(self):
+        self.file.write('<?xml version="1.0" encoding="UTF-8" ?>'
+                        '<rss version="2.0">'
+                        '<channel>'
+                        ' <title>RSS Title</title>'
+                        ' <description>This is an example of an RSS feed</description>'
+                        ' <link>http://www.example.com/main.html</link>'  # this link should be ignored
+                        ' <item>'
+                        '  <title>Example entry</title>'
+                        '  <description>Here is some text containing an interesting description.</description>'
+                        '  <link>http://www.example.com/blog/post/1</link>'
+                        ' </item>'
+                        '</channel>'
+                        '</rss>')
+        self.file.close()
+        sitemap_document = SitemapRssDocument(self.file.name, self.url)
+        self.assertEqual(SiteMapType.SITEMAP_RSS,
+                         sitemap_document.get_sitemap_type())
+        expected_urls = [
+            "http://www.example.com/blog/post/1"
+        ]
+
+        self.assertEqual(expected_urls, list(sitemap_document.get_urls()))
+        self.assertEqual(1, sitemap_document.valid_urls)
+        self.assertEqual(0, sitemap_document.invalid_urls)
 
 
 class TestSitemapTextDocument(unittest.TestCase):

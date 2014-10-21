@@ -223,7 +223,13 @@ class SitemapRssDocument(AbstractSitemapXml):
     def _is_valid_element(self, element):
         """Implementation of the template method for RSS sitemaps"""
         localname = etree.QName(element.tag).localname
-        return localname == "link"
+        if localname != "link":
+            return False
+        #check the parent tag, to avoid returning
+        #image urls found in image sitemaps
+        parent_node = element.getparent()
+        parent_localname = etree.QName(parent_node.tag).localname
+        return parent_localname == "item"
 
     def _is_valid_url(self, url):
         """Implementation of the template method for RSS sitemaps"""
