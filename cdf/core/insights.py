@@ -3,6 +3,13 @@ import abc
 from cdf.metadata.url.url_metadata import INT_TYPE
 from cdf.query.aggregation import CountAggregation
 from cdf.core.metadata.constants import RENDERING
+from cdf.query.filter import (
+    AndFilter,
+    OrFilter,
+    EqFilter,
+    NotFilter,
+    ExistFilter
+)
 
 
 class PositiveTrend(Enum):
@@ -116,6 +123,39 @@ class Insight(AbstractInsight):
     def __repr__(self):
         return "{}: {}".format(self.identifier, self.query_to_display)
 
+
+class ComparisonAwareInsight(AbstractInsight):
+    """A decorator that modifies the Elasticsearch queries
+    to that they are compatible with crawls with comparisons.
+    """
+    def __init__(self, insight):
+        """Constructor
+        :param insight: the insight to decorate
+        :type insight: Insight
+        """
+        self.insight = insight
+
+    @property
+    def query(self):
+        #select only documents from the current crawl
+        filters = OrFilter([
+            NotFilter(ExistFilter("disappeared")),
+            EqFilter("disappeared", False)
+        ])
+        if self.insight.filter is not None:
+            filters = AndFilter([filters, self.filter.to_dict()])
+
+        result = {}
+        result["filters"] = filters
+        #self.aggs is alway set (see constructor)
+        result["aggs"] = [{'metrics': [self.insight.metric_agg.to_dict()]}]
+        return result
+
+    @property
+    def query_to_display(self):
+        #do not modify the insight query to display
+        #we do not want the users to be aware of the comparison tricks.
+        return self.insight.query_to_display
 
 
 class InsightValue(object):
