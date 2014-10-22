@@ -101,6 +101,82 @@ class TestComputeInsightValue(unittest.TestCase):
             [{'crawl_id': 1, 'score': None}]
         )
 
+    @mock.patch("cdf.tasks.insights.get_query_agg_result", autospec=True)
+    @mock.patch("cdf.tasks.insights.Query", autospec=True)
+    def test_comparison_case(self,
+                             query_mock,
+                             get_query_agg_result_mock):
+        #mocking
+        get_query_agg_result_mock.return_value = 3.14
+
+        #definition
+        insight = Insight(
+            "foo",
+            "Foo insight",
+            PositiveTrend.UP,
+            EqFilter("foo_field", 1001)
+        )
+        crawls = {2008: {"comparison": {"options": []}}}
+
+        #actual call
+        actual_result = compute_insight_value(
+            insight,
+            self.feature_name,
+            crawls,
+            self.es_location,
+            self.es_index,
+            self.es_doc_type
+        )
+
+        #check values
+        positive_trend = [
+            InsightTrendPoint(2008, 3.14)
+        ]
+        expected_result = InsightValue(
+            insight, self.feature_name, positive_trend)
+
+        self.assertDictEqual(
+            expected_result.to_dict(),
+            actual_result.to_dict()
+        )
+
+        decorated_query = {
+            "filters": {
+                "and": [
+                    {"or": [
+                        {"not": {
+                            "predicate": "exists",
+                            "field": "disappeared"
+                        }
+                        },
+                        {
+                            "predicate": "eq",
+                            "field": "disappeared",
+                            "value": False
+                        }
+                    ]
+                    },
+                    {
+                        "field": "foo_field",
+                        "predicate": "eq",
+                        "value": 1001
+                    }
+                ]
+            },
+            "aggs": [
+                {"metrics": [{"count": "url"}]}
+            ]
+        }
+
+        query_mock.assert_called_once_with(
+            self.es_location,
+            self.es_index,
+            self.es_doc_type,
+            2008,
+            decorated_query,
+            backend=mock.ANY
+        )
+
 
 class TestComputeInsightValues(unittest.TestCase):
     @mock.patch.object(Feature, 'get_features')

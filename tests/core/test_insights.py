@@ -1,6 +1,12 @@
 import unittest
 
-from cdf.core.insights import PositiveTrend, Insight, InsightValue, InsightTrendPoint
+from cdf.core.insights import (
+    PositiveTrend,
+    Insight,
+    ComparisonAwareInsight,
+    InsightValue,
+    InsightTrendPoint
+)
 from cdf.query.filter import EqFilter
 from cdf.query.sort import AscendingSort
 from cdf.query.aggregation import MaxAggregation
@@ -66,6 +72,112 @@ class TestInsight(unittest.TestCase):
         self.assertEqual(
             "foo: {'aggs': [{'metrics': [{'count': 'url'}]}]}",
             repr(insight)
+        )
+
+
+class TestComparisonAwareInsight(unittest.TestCase):
+    def setUp(self):
+        self.identifier = "foo"
+        self.name = "Foo"
+        self.positive_trend = PositiveTrend.UP
+        self.eq_filter = EqFilter("bar", 5)
+
+    def test_nominal_case(self):
+        insight = Insight(self.identifier,
+                          self.name,
+                          self.positive_trend,
+                          self.eq_filter)
+        insight = ComparisonAwareInsight(insight)
+        expected_query = {
+            "filters": {
+                "and": [
+                    {"or": [
+                        {"not": {
+                            "predicate": "exists",
+                            "field": "disappeared"
+                        }
+                        },
+                        {
+                            "predicate": "eq",
+                            "field": "disappeared",
+                            "value": False
+                        }
+                    ]
+                    },
+                    {
+                        "field": "bar",
+                        "predicate": "eq",
+                        "value": 5
+                    }
+                ]
+            },
+            "aggs": [
+                {"metrics": [{"count": "url"}]}
+            ]
+        }
+        self.assertEqual(expected_query, insight.query)
+        expected_query_to_display = {
+            "filters": {
+                "field": "bar",
+                "predicate": "eq",
+                "value": 5
+            },
+            "aggs": [
+                {"metrics": [{"count": "url"}]}
+            ]
+
+        }
+        self.assertEqual(expected_query_to_display, insight.query_to_display)
+
+    def test_no_filter(self):
+        insight = Insight(self.identifier,
+                          self.name,
+                          self.positive_trend)
+        insight = ComparisonAwareInsight(insight)
+        expected_query = {
+            "filters": {
+                "or": [
+                    {
+                        "not": {
+                            "predicate": "exists",
+                            "field": "disappeared"
+                        }
+                    },
+                    {
+                        "predicate": "eq",
+                        "field": "disappeared",
+                        "value": False
+                    }
+                ]
+            },
+            "aggs": [
+                {"metrics": [{"count": "url"}]}
+            ]
+        }
+        self.assertEqual(expected_query, insight.query)
+        expected_query_to_display = {
+            "aggs": [
+                {"metrics": [{"count": "url"}]}
+            ]
+
+        }
+        self.assertEqual(expected_query_to_display, insight.query_to_display)
+
+    def test_attribute_delegation(self):
+        insight = Insight(self.identifier,
+                          self.name,
+                          self.positive_trend,
+                          self.eq_filter)
+        insight = ComparisonAwareInsight(insight)
+
+        #getter is delegated to Insight
+        self.assertEqual(self.positive_trend, insight.positive_trend)
+        #but there should be an error if the field does not exist in Insight.
+        self.assertRaises(
+            AttributeError,
+            getattr,
+            insight,
+            "foo"
         )
 
 
