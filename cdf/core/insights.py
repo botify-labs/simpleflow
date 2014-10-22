@@ -136,6 +136,38 @@ class ComparisonAwareInsight(AbstractInsight):
         self.insight = insight
 
     @property
+    def identifier(self):
+        return self.insight.identifier
+
+    @property
+    def name(self):
+        return self.insight.name
+
+    @property
+    def positive_trend(self):
+        return self.insight.positive_trend
+
+    @property
+    def data_type(self):
+        return self.insight.data_type
+
+    @property
+    def field_type(self):
+        return self.insight.field_type
+
+    @property
+    def additional_filter(self):
+        return self.insight.additional_filter
+
+    @property
+    def additional_fields(self):
+        return self.insight.additional_fields
+
+    @property
+    def sort_by(self):
+        return self.insight.sort_by
+
+    @property
     def query(self):
         #select only documents from the current crawl
         filters = OrFilter([
@@ -143,10 +175,10 @@ class ComparisonAwareInsight(AbstractInsight):
             EqFilter("disappeared", False)
         ])
         if self.insight.filter is not None:
-            filters = AndFilter([filters, self.filter.to_dict()])
+            filters = AndFilter([filters, self.insight.filter])
 
         result = {}
-        result["filters"] = filters
+        result["filters"] = filters.to_dict()
         #self.aggs is alway set (see constructor)
         result["aggs"] = [{'metrics': [self.insight.metric_agg.to_dict()]}]
         return result
