@@ -143,7 +143,7 @@ class InsightValue(object):
             "name": self.insight.name,
             "positive_trend": self.insight.positive_trend.value,
             "feature": self.feature_name,
-            "query": self.insight.query,
+            "query": self.insight.query_to_display,
             "data_type": self.insight.data_type,
             "field_type": self.insight.field_type.value,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
