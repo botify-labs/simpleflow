@@ -89,48 +89,29 @@ def quantitative_diff(ref_value, new_value):
     return ref_value - new_value
 
 
-DEFAULT_TYPE_STRATEGY = {
-    INT_TYPE: quantitative_diff,
-    LONG_TYPE: quantitative_diff,
-    FLOAT_TYPE: quantitative_diff,
-    DATE_TYPE: qualitative_diff,
-    STRING_TYPE: qualitative_diff,
-    BOOLEAN_TYPE: qualitative_diff,
-}
-
-
-def get_diff_strategy(data_format, type_strategy=DEFAULT_TYPE_STRATEGY):
+def get_diff_strategy(data_format):
     """Generate diff strategy from url data format
 
     Two diffing strategies:
         qualitative: returns a state (EQUAL, CHANGED, DISAPPEAR, APPEAR)
         quantitative: returns the diff value
 
-    Diffing strategy can be deduced from the field type:
-        number: quantitative
-        string: qualitative
-        list: qualitative
-        bool: qualitative
-
-    This function will try to deduce the diffing strategy if there's no
-    strategy defined for the field in data format
+    No strategy will be generated if there's no diff markers in field's data
+    format.
 
     :param data_format: url data format
     :return: diff strategy dict (field -> diff_func)
     """
     diff_strategy = {}
     for field, value in data_format.iteritems():
-        field_type = value['type']
-        diff_strategy[field] = type_strategy.get(field_type, None)
-
         # check `settings` for explicit diff strategy
-        # override previous deduced strategy
         if 'settings' in value:
             settings = value['settings']
             if DIFF_QUANTITATIVE in settings:
                 diff_strategy[field] = quantitative_diff
             elif DIFF_QUALITATIVE in settings:
                 if LIST in settings:
+                    # special case: list field
                     diff_strategy[field] = qualitative_diff_list
                 else:
                     diff_strategy[field] = qualitative_diff
