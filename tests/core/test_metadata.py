@@ -7,7 +7,7 @@ from cdf.core.metadata.dataformat import (
     set_visibility
 )
 from cdf.features.comparison.streams import (
-    get_comparison_data_format,
+    get_previous_data_format,
     get_diff_data_format,
     EXTRA_FIELDS_FORMAT
 )
@@ -187,7 +187,7 @@ class TestComparisonMapping(unittest.TestCase):
     }
 
     def test_group(self):
-        format = get_comparison_data_format(self.mapping, {})
+        format = get_previous_data_format(self.mapping, {})
         group_key = 'group'
         expected_group = 'previous.important'
         result = format['previous.outer.inner'][group_key]
@@ -196,7 +196,7 @@ class TestComparisonMapping(unittest.TestCase):
         self.assertNotIn('outer.inner', format)
 
     def test_comparison_mapping(self):
-        format = get_comparison_data_format(self.mapping, self.extras)
+        format = get_previous_data_format(self.mapping, self.extras)
         result = ElasticSearchBackend(format).mapping()
         expected = {
             'previous_exists': {

@@ -98,7 +98,7 @@ def get_diff_data_format(data_format):
     return diff_mapping
 
 
-def get_comparison_data_format(data_format, extras=EXTRA_FIELDS_FORMAT):
+def get_previous_data_format(data_format, extras=EXTRA_FIELDS_FORMAT):
     """Prepare internal data format for comparison feature
 
     Create `previous` fields.

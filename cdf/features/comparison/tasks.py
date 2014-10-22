@@ -12,10 +12,7 @@ from cdf.features.comparison.matching import (
     load_raw_documents, _LEVELDB_BLOCK_SIZE,
     document_merge, generate_conversion_table,
     document_url_id_correction)
-from cdf.features.comparison.diff import (
-    diff,
-    get_diff_data_format
-)
+from cdf.features.comparison.diff import diff
 from cdf.features.comparison.constants import (
     MATCHED_FILE_PATTERN,
     COMPARISON_PATH)
@@ -179,25 +176,25 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
     new_db.destroy()
 
 
-def get_comparison_data_format(data_format,
-                               extras=EXTRA_FIELDS_FORMAT):
-    """Prepare ElasticSearch mapping for comparison feature
-
-    :param data_format: original internal data format
-    :param diff_data_format: diff sub-document data format
-    :param extras: extra fields to be added
-    :return: mutated data_format for comparison
-    """
-    previous_format = {
-        'previous.' + k: v for k, v in data_format.iteritems()
-    }
-    diff_format = {
-        'diff.' + k: v
-        for k, v in get_diff_data_format(data_format).iteritems()
-    }
-    format = copy.deepcopy(data_format)
-    format.update(previous_format)
-    format.update(diff_format)
-    format.update(extras)
-
-    return format
+# def get_comparison_data_format(data_format,
+#                                extras=EXTRA_FIELDS_FORMAT):
+#     """Prepare ElasticSearch mapping for comparison feature
+#
+#     :param data_sformat: original internal data format
+#     :param diff_data_format: diff sub-document data format
+#     :param extras: extra fields to be added
+#     :return: mutated data_format for comparison
+#     """
+#     previous_format = {
+#         'previous.' + k: v for k, v in data_format.iteritems()
+#     }
+#     diff_format = {
+#         'diff.' + k: v
+#         for k, v in get_diff_data_format(data_format).iteritems()
+#     }
+#     format = copy.deepcopy(data_format)
+#     format.update(previous_format)
+#     format.update(diff_format)
+#     format.update(extras)
+#
+#     return format

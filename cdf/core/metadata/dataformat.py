@@ -2,7 +2,7 @@ import copy
 
 from cdf.core.features import Feature
 from cdf.core.metadata.constants import FIELD_RIGHTS
-from cdf.features.comparison.streams import get_comparison_data_format
+from cdf.features.comparison.streams import get_previous_data_format
 
 
 def set_visibility(mapping, visibility):
@@ -135,7 +135,7 @@ def generate_data_format(feature_options,
         del feature_options[comparison_key]
         previous_format = _generate_data_format(
             previous_options, available_features)
-        previous_format = get_comparison_data_format(previous_format)
+        previous_format = get_previous_data_format(previous_format)
         data_format = _generate_data_format(feature_options, available_features)
 
         # merge the two data formats
