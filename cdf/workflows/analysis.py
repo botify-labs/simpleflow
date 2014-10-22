@@ -335,7 +335,7 @@ class AnalysisWorkflow(Workflow):
         #consider current analysis configuration.
         crawl_configurations = [[crawl_id,  config_endpoint, s3_uri]]
         if 'comparison' in context['features_options']:
-            crawl_configurations.extend(context['features_options']['comparison']['config'])
+            crawl_configurations.extend(context['features_options']['comparison']['history'])
 
         crawl_feature_options = self.submit(
             get_feature_options,
@@ -586,7 +586,7 @@ class AnalysisWorkflow(Workflow):
         futures.wait(*documents_results)
         has_comparison = 'comparison' in features_flags
         if has_comparison:
-            previous_analysis = context['features_options']['comparison']['s3_uri'][0]
+            previous_analysis = context['features_options']['comparison']['history'][0]
             _, _, ref_s3_uri = previous_analysis
             comparison = self.submit(
                 match_documents,
