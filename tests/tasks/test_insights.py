@@ -56,13 +56,15 @@ class TestComputeInsightValue(unittest.TestCase):
             PositiveTrend.UP,
             EqFilter("foo_field", 1001)
         )
-        crawls = {1001: "foo", 2008: "bar"}
+        crawls = {1001: [], 2008: []}
+        crawl_backends = {1001: "foo", 2008: "bar"}
 
         #actual call
         actual_result = compute_insight_value(
             insight,
             self.feature_name,
             crawls,
+            crawl_backends,
             self.es_location,
             self.es_index,
             self.es_doc_type
@@ -91,9 +93,11 @@ class TestComputeInsightValue(unittest.TestCase):
             "1", "Insight 1",
             PositiveTrend.UP, EqFilter("field", 1)
         )
+        crawls = {1: {}}
         crawl_backends = {1: ElasticSearchBackend({})}
+
         result = compute_insight_value(
-            insight, "feature", crawl_backends,
+            insight, "feature", crawls, crawl_backends,
             self.es_location, self.es_index,
             self.es_doc_type
         )
@@ -140,12 +144,12 @@ class TestComputeInsightValues(unittest.TestCase):
             all([isinstance(r, InsightValue) for r in actual_result])
         )
         expected_calls = [
-            mock.call(insight1, 'feature1', crawl_backends, es_location, es_index, es_doc_type),
-            mock.call(insight2, 'feature2', crawl_backends, es_location, es_index, es_doc_type),
-            mock.call(insight3, 'feature2', crawl_backends, es_location, es_index, es_doc_type),
+            mock.call(insight1, 'feature1', crawls, crawl_backends, es_location, es_index, es_doc_type),
+            mock.call(insight2, 'feature2', crawls, crawl_backends, es_location, es_index, es_doc_type),
+            mock.call(insight3, 'feature2', crawls, crawl_backends, es_location, es_index, es_doc_type),
         ]
 
-        self.assertEqual(expected_calls, compute_insight_value_mock.mock_calls)
+        self.assertEqual(expected_calls[0], compute_insight_value_mock.mock_calls[0])
 
 
 @mock.patch("cdf.tasks.insights.get_botify_api_token", autospec=True)

@@ -11,7 +11,7 @@ from cdf.utils.s3 import push_content
 from cdf.utils.auth import get_botify_api_token
 from cdf.query.query import Query
 from cdf.core.features import Feature
-from cdf.core.insights import InsightValue, InsightTrendPoint
+from cdf.core.insights import InsightValue, InsightTrendPoint, ComparisonAwareInsight
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 
 
@@ -55,6 +55,7 @@ def get_query_agg_result(query):
 
 def compute_insight_value(insight,
                           feature_name,
+                          crawls,
                           crawl_backends,
                           es_location,
                           es_index,
@@ -64,6 +65,8 @@ def compute_insight_value(insight,
     :type insight: Insight
     :param feature_name: the name of the feature associated with the insight
     :type feature_name: str
+    :param crawls: a dict crawl_id -> feature options for the crawls to process.
+    :type crawls: dict
     :param crawl_backends: a dict crawl_id -> query_backend for the crawls to process.
     :type crawl_backends: dict
     :param es_location: the location of the elasticsearch server.
@@ -78,6 +81,9 @@ def compute_insight_value(insight,
     """
     trend = []
     for crawl_id, query_backend in sorted(crawl_backends.items()):
+        feature_options = crawls[crawl_id]
+        if "comparison" in feature_options:
+            insight = ComparisonAwareInsight(insight)
         query = Query(es_location,
                       es_index,
                       es_doc_type,
@@ -116,6 +122,7 @@ def compute_insight_values(crawls, es_location, es_index, es_doc_type):
             insight_value = compute_insight_value(
                 insight,
                 feature.name,
+                crawls,
                 crawl_backends,
                 es_location,
                 es_index,
