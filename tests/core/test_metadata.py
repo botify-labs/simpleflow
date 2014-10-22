@@ -247,7 +247,7 @@ class TestDiffMapping(unittest.TestCase):
         expected = {
             'diff.a': {
                 'type': 'string',
-                'group': 'Diff important',
+                'group': 'diff.important',
                 'settings': {
                     ES_NOT_ANALYZED
                 }

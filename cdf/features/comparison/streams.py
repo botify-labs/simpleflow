@@ -49,7 +49,7 @@ def _transform_comparison_config(config):
 
 def _transform_diff_config(config, group=None, verbose_name=None):
     if group is not None:
-        config['group'] = 'Diff {}'.format(group)
+        config['group'] = 'diff.{}'.format(group)
 
     if verbose_name is not None:
         config['verbose_name'] = 'Diff {}'.format(verbose_name)
