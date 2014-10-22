@@ -135,37 +135,10 @@ class ComparisonAwareInsight(AbstractInsight):
         """
         self.insight = insight
 
-    @property
-    def identifier(self):
-        return self.insight.identifier
-
-    @property
-    def name(self):
-        return self.insight.name
-
-    @property
-    def positive_trend(self):
-        return self.insight.positive_trend
-
-    @property
-    def data_type(self):
-        return self.insight.data_type
-
-    @property
-    def field_type(self):
-        return self.insight.field_type
-
-    @property
-    def additional_filter(self):
-        return self.insight.additional_filter
-
-    @property
-    def additional_fields(self):
-        return self.insight.additional_fields
-
-    @property
-    def sort_by(self):
-        return self.insight.sort_by
+    def __getattr__(self, name):
+        #delegate attribute access to self.insight
+        #see Python Cookbook 8.15
+        return getattr(self.insight, name)
 
     @property
     def query(self):
