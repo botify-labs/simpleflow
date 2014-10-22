@@ -1,4 +1,5 @@
 from enum import Enum
+import abc
 from cdf.metadata.url.url_metadata import INT_TYPE
 from cdf.query.aggregation import CountAggregation
 from cdf.core.metadata.constants import RENDERING
@@ -15,7 +16,27 @@ class PositiveTrend(Enum):
     UNKNOWN = 'unknown'
 
 
-class Insight(object):
+class AbstractInsight(object):
+    """Abstract class to represent insights"""
+    __metaclass__ = abc.ABCMeta
+
+    @property
+    @abc.abstractmethod
+    def query(self):
+        """Return the query corresponding to the insight
+        :returns: dict"""
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
+    def query_to_display(self):
+        """Return the query to display to the final user.
+        It might be slightly different from the query run on Elasticsearch
+        :returns: dict"""
+        raise NotImplementedError()
+
+
+class Insight(AbstractInsight):
     """A class to represent an insight
     An insight is a number that will be displayed on the report.
     It corresponds to a number of urls.
@@ -86,8 +107,15 @@ class Insight(object):
         result["aggs"] = [{'metrics': [self.metric_agg.to_dict()]}]
         return result
 
+    @property
+    def query_to_display(self):
+        """Return the query to display to the final user.
+        It might be slightly different from the query run on Elasticsearch"""
+        return self.query
+
     def __repr__(self):
-        return "{}: {}".format(self.identifier, self.query)
+        return "{}: {}".format(self.identifier, self.query_to_display)
+
 
 
 class InsightValue(object):
