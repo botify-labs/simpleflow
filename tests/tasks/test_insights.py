@@ -19,7 +19,6 @@ from cdf.tasks.insights import (
     compute_insight_values,
     get_feature_options
 )
-from cdf.utils.es import EsHandler
 
 
 class TestGetQueryAggResult(unittest.TestCase):
@@ -56,15 +55,13 @@ class TestComputeInsightValue(unittest.TestCase):
             PositiveTrend.UP,
             EqFilter("foo_field", 1001)
         )
-        crawls = {1001: [], 2008: []}
-        crawl_backends = {1001: "foo", 2008: "bar"}
+        crawls = {1001: {"foo"}, 2008: {"bar"}}
 
         #actual call
         actual_result = compute_insight_value(
             insight,
             self.feature_name,
             crawls,
-            crawl_backends,
             self.es_location,
             self.es_index,
             self.es_doc_type
@@ -81,10 +78,9 @@ class TestComputeInsightValue(unittest.TestCase):
         self.assertDictEqual(expected_result.to_dict(), actual_result.to_dict())
 
         #check the calls to Query.__init__()
-        es_handler = EsHandler(self.es_location, self.es_index, 'urls')
         expected_query_calls = [
-            mock.call(self.es_location, self.es_index, self.es_doc_type, 1001, insight.query, backend="foo"),
-            mock.call(self.es_location, self.es_index, self.es_doc_type, 2008, insight.query, backend="bar"),
+            mock.call(self.es_location, self.es_index, self.es_doc_type, 1001, insight.query, backend=ElasticSearchBackend({})),
+            mock.call(self.es_location, self.es_index, self.es_doc_type, 2008, insight.query, backend=ElasticSearchBackend({}))
         ]
         self.assertEqual(expected_query_calls, query_mock.mock_calls)
 
@@ -94,10 +90,9 @@ class TestComputeInsightValue(unittest.TestCase):
             PositiveTrend.UP, EqFilter("field", 1)
         )
         crawls = {1: {}}
-        crawl_backends = {1: ElasticSearchBackend({})}
 
         result = compute_insight_value(
-            insight, "feature", crawls, crawl_backends,
+            insight, "feature", crawls,
             self.es_location, self.es_index,
             self.es_doc_type
         )
@@ -130,7 +125,6 @@ class TestComputeInsightValues(unittest.TestCase):
         get_features_mock.return_value = [feature1, feature2]
 
         crawls = {1001: {}}
-        crawl_backends = {1001: ElasticSearchBackend({})}
         es_location = "http://elasticsearch.com"
         es_index = "botify"
         es_doc_type = "urls"
@@ -144,12 +138,12 @@ class TestComputeInsightValues(unittest.TestCase):
             all([isinstance(r, InsightValue) for r in actual_result])
         )
         expected_calls = [
-            mock.call(insight1, 'feature1', crawls, crawl_backends, es_location, es_index, es_doc_type),
-            mock.call(insight2, 'feature2', crawls, crawl_backends, es_location, es_index, es_doc_type),
-            mock.call(insight3, 'feature2', crawls, crawl_backends, es_location, es_index, es_doc_type),
+            mock.call(insight1, 'feature1', crawls, es_location, es_index, es_doc_type),
+            mock.call(insight2, 'feature2', crawls, es_location, es_index, es_doc_type),
+            mock.call(insight3, 'feature2', crawls, es_location, es_index, es_doc_type),
         ]
 
-        self.assertEqual(expected_calls[0], compute_insight_value_mock.mock_calls[0])
+        self.assertEqual(expected_calls, compute_insight_value_mock.mock_calls)
 
 
 @mock.patch("cdf.tasks.insights.get_botify_api_token", autospec=True)

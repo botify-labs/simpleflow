@@ -56,7 +56,6 @@ def get_query_agg_result(query):
 def compute_insight_value(insight,
                           feature_name,
                           crawls,
-                          crawl_backends,
                           es_location,
                           es_index,
                           es_doc_type):
@@ -67,8 +66,6 @@ def compute_insight_value(insight,
     :type feature_name: str
     :param crawls: a dict crawl_id -> feature options for the crawls to process.
     :type crawls: dict
-    :param crawl_backends: a dict crawl_id -> query_backend for the crawls to process.
-    :type crawl_backends: dict
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -80,10 +77,10 @@ def compute_insight_value(insight,
     :returns: InsightValue
     """
     trend = []
-    for crawl_id, query_backend in sorted(crawl_backends.items()):
-        feature_options = crawls[crawl_id]
+    for crawl_id, feature_options in sorted(crawls.items()):
         if "comparison" in feature_options:
             insight = ComparisonAwareInsight(insight)
+        query_backend = ElasticSearchBackend(generate_data_format(feature_options))
         query = Query(es_location,
                       es_index,
                       es_doc_type,
@@ -110,12 +107,6 @@ def compute_insight_values(crawls, es_location, es_index, es_doc_type):
     :type es_doc_type: str
     :returns: list - a list of InsightValue
     """
-    # generate crawl specific data format for querying
-    crawl_backends = {
-        crawl_id: ElasticSearchBackend(generate_data_format(options))
-        for crawl_id, options
-        in crawls.iteritems()
-    }
     result = []
     for feature in Feature.get_features():
         for insight in feature.get_insights():
@@ -123,7 +114,6 @@ def compute_insight_values(crawls, es_location, es_index, es_doc_type):
                 insight,
                 feature.name,
                 crawls,
-                crawl_backends,
                 es_location,
                 es_index,
                 es_doc_type
