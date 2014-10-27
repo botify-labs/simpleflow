@@ -11,11 +11,12 @@ from cdf.features.comparison.constants import (
 
 
 class TestDocumentDiff(unittest.TestCase):
-    TEST_DIFF_STRATEGY = {
-        'a.quantitative': compute_quantitative_diff,
-        'b.qualitative': compute_qualitative_diff,
-        'c.list': compute_qualitative_diff_list
-    }
+    def setUp(self):
+        self.TEST_DIFF_STRATEGY = {
+            'a.quantitative': compute_quantitative_diff,
+            'b.qualitative': compute_qualitative_diff,
+            'c.list': compute_qualitative_diff_list
+        }
 
     def test_qualitative_field_changed(self):
         ref_doc = {'b': {'qualitative': 123}}
