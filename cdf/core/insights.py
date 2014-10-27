@@ -75,7 +75,7 @@ class Insight(AbstractInsight):
                  additional_filter=None,
                  sort_by=None,
                  data_type=INT_TYPE,
-                 field_type=RENDERING.URL):
+                 unit=RENDERING.URL):
         """Constructor
         :param identifier: the insight identifier (short)
         :type identifier: str
@@ -104,9 +104,9 @@ class Insight(AbstractInsight):
                           It is a string since
                           the base datatypes are not grouped in a enum.
         :type data_type: str
-        :param field_type: what type of concept the value represents:
+        :param unit: what type of concept the value represents:
                           "url", "time_sec", etc.
-        :type field_type: RENDERING
+        :type unit: RENDERING
         """
         self.identifier = identifier
         self.name = name
@@ -114,7 +114,7 @@ class Insight(AbstractInsight):
         self.filter = input_filter
         self.metric_agg = metric_agg or CountAggregation("url")
         self.data_type = data_type
-        self.field_type = field_type
+        self.unit = unit
         self.additional_fields = additional_fields
         self.additional_filter = additional_filter
         self.sort_by = sort_by
@@ -220,7 +220,7 @@ class InsightValue(object):
             "feature": self.feature_name,
             "query": self.insight.query_to_display,
             "data_type": self.insight.data_type,
-            "field_type": self.insight.field_type.value,
+            "unit": self.insight.unit.value,
             "aggregator": self.insight.aggregator.value,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
         }

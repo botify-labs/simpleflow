@@ -46,7 +46,7 @@ def get_ganalytics_main_metric_insights(medium, source):
             GtFilter(visit_field, 0),
             metric_agg=AvgAggregation(visit_field),
             data_type=FLOAT_TYPE,
-            field_type=RENDERING.VISIT
+            unit=RENDERING.VISIT
         ),
         Insight(
             "{}_visits_inlinks_avg".format(name_prefix),
@@ -57,7 +57,7 @@ def get_ganalytics_main_metric_insights(medium, source):
                 "inlinks_internal.nb.unique"
             ),
             data_type=FLOAT_TYPE,
-            field_type=RENDERING.LINK
+            unit=RENDERING.LINK
         ),
         Insight(
             "{}_visits_ko_strategic_1_follow_inlink".format(name_prefix),
@@ -77,7 +77,7 @@ def get_ganalytics_main_metric_insights(medium, source):
             additional_fields=[visit_field],
             metric_agg=SumAggregation(visit_field),
             sort_by=DescendingSort(visit_field),
-            field_type=RENDERING.VISIT
+            unit=RENDERING.VISIT
         ),
         Insight(
             "{}_visits".format(name_prefix),

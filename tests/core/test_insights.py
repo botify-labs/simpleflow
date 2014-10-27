@@ -221,7 +221,7 @@ class TestInsightValue(unittest.TestCase):
             "positive_trend": "up",
             "feature": "foo_feature",
             "data_type": "integer",
-            "field_type": "url",
+            "unit": "url",
             "aggregator": "count",
             "query":  {
                 'aggs': [{'metrics': [{'count': 'url'}]}],
