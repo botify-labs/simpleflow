@@ -116,7 +116,7 @@ def get_diff_strategy(data_format):
 
         # no diff strategy for this field, reports
         if field not in diff_strategy or diff_strategy.get(field) is None:
-            logger.warning('No diff strategy found for {}'.format(field))
+            logger.debug('No diff strategy found for {}'.format(field))
             diff_strategy.pop(field, None)
 
     return diff_strategy
