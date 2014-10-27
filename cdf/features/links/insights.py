@@ -11,7 +11,7 @@ from cdf.metadata.url.url_metadata import FLOAT_TYPE
 from cdf.query.sort import DescendingSort
 from cdf.query.aggregation import AvgAggregation, SumAggregation
 from cdf.core.metadata.constants import RENDERING
-
+from cdf.features.main.insights import get_http_code_is_good_predicate
 
 def get_average_inlinks_insights():
     """Return insights related to inlinks averages.
@@ -332,14 +332,6 @@ def get_misc_outlinks_insights():
         )
     )
     return result
-
-
-def get_http_code_is_good_predicate():
-    """Helper function that returns a filter that selects
-    urls with good http code
-    :returns: Filter
-    """
-    return BetweenFilter("http_code", [200, 299])  # TODO implement http_code_is_code
 
 
 def get_canonical_insights():

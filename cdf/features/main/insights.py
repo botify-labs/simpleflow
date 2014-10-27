@@ -20,6 +20,32 @@ def get_all_urls_insight():
     ]
 
 
+def get_http_code_is_good_predicate():
+    """Helper function that returns a filter that selects
+    urls with good http code
+    :returns: Filter
+    """
+    # TODO implement http_code_is_code
+    return BetweenFilter("http_code", [200, 299])
+
+
+def get_http_code_ok_ko_insights():
+    return [
+        Insight(
+            "code_ok",
+            "Good HTTP Code URLs",
+            PositiveTrend.UNKNOWN,
+            get_http_code_is_good_predicate()
+        ),
+        Insight(
+            "code_ko",
+            "Bad HTTP Code URLs",
+            PositiveTrend.UNKNOWN,
+            NotFilter(get_http_code_is_good_predicate())
+        )
+    ]
+
+
 def get_http_code_ranges_insights():
     #insights by http ranges
     result = []
