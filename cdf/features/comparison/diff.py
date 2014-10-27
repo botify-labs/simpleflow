@@ -11,11 +11,8 @@ from cdf.metadata.url.url_metadata import (
     LIST,
     DIFF_QUALITATIVE,
     DIFF_QUANTITATIVE,
-    STRING_TYPE, INT_TYPE, LONG_TYPE,
-    FLOAT_TYPE, DATE_TYPE,
-    BOOLEAN_TYPE
 )
-from cdf.utils.features import get_urls_data_format_definition
+from cdf.core.metadata.dataformat import assemble_data_format
 from cdf.features.comparison import logger
 
 
@@ -125,7 +122,7 @@ def get_diff_strategy(data_format):
 
 
 # Generated from url data format
-DIFF_STRATEGY = get_diff_strategy(get_urls_data_format_definition())
+DIFF_STRATEGY = get_diff_strategy(assemble_data_format())
 
 
 # TODO should use an object-oriented style
