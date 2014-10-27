@@ -1,5 +1,6 @@
 from cdf.metadata.url.url_metadata import (
-    INT_TYPE, FLOAT_TYPE, ES_DOC_VALUE, AGG_NUMERICAL
+    INT_TYPE, FLOAT_TYPE, ES_DOC_VALUE,
+    AGG_NUMERICAL, DIFF_QUANTITATIVE
 )
 from cdf.core.features import StreamDefBase
 from .settings import ORGANIC_SOURCES, SOCIAL_SOURCES
@@ -105,11 +106,12 @@ def _update_document_mapping(mapping, medium, sources, metrics):
                 "type": data_type,
                 "settings": {
                     ES_DOC_VALUE,
-                    AGG_NUMERICAL
+                    AGG_NUMERICAL,
+                    DIFF_QUANTITATIVE
                 },
                 "verbose_name": verbose_name.format(source=source_target),
                 "group": key_prefix,
-                "priority": i + 1
+                "order": i + 1
             }
             if flag:
                 mapping[key]["settings"].add(flag)

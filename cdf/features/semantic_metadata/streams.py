@@ -2,7 +2,8 @@ from cdf.utils.dict import get_subdict_from_path
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID
+    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
+    DIFF_QUALITATIVE, DIFF_QUANTITATIVE
 )
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
@@ -25,40 +26,115 @@ class ContentsStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
     URL_DOCUMENT_MAPPING = {
         # title tag
+        "metadata.title.nb": {
+            "verbose_name": "Number of Page Titles",
+            "type": INT_TYPE,
+            "order": 10,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                AGG_CATEGORICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
         "metadata.title.contents": {
             "verbose_name": "Title",
             "order": 1,
             "type": STRING_TYPE,
-            "settings": {ES_NOT_ANALYZED, LIST}
+            "settings": {
+                ES_NOT_ANALYZED,
+                LIST,
+                DIFF_QUALITATIVE
+            }
         },
         # h1 tag
+        "metadata.h1.nb": {
+            "verbose_name": "Number of H1",
+            "type": INT_TYPE,
+            "order": 12,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
         "metadata.h1.contents": {
             "verbose_name": "H1",
             "order": 3,
             "type": STRING_TYPE,
-            "settings": {ES_NOT_ANALYZED, LIST}
+            "settings": {
+                ES_NOT_ANALYZED,
+                LIST,
+                DIFF_QUALITATIVE
+            }
         },
         # description tag
+        "metadata.description.nb": {
+            "verbose_name": "Number of Page Description",
+            "type": INT_TYPE,
+            "order": 11,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
         "metadata.description.contents": {
             "verbose_name": "Page description",
             "type": STRING_TYPE,
             "order": 2,
-            "settings": {ES_NOT_ANALYZED, LIST}
+            "settings": {
+                ES_NOT_ANALYZED,
+                LIST,
+                DIFF_QUALITATIVE
+            }
         },
         # h2 tag
+        "metadata.h2.nb": {
+            "verbose_name": "Number of H2",
+            "type": INT_TYPE,
+            "order": 13,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
         "metadata.h2.contents": {
             "verbose_name": "H2",
             "order": 4,
             "type": STRING_TYPE,
-            "settings": {ES_NOT_ANALYZED, LIST}
+            "settings": {
+                ES_NOT_ANALYZED,
+                LIST,
+                DIFF_QUALITATIVE
+            }
         },
 
         # h3 tag
+        "metadata.h3.nb": {
+            "verbose_name": "Number of H3",
+            "type": INT_TYPE,
+            "order": 14,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
         "metadata.h3.contents": {
             "verbose_name": "H3",
             "type": STRING_TYPE,
             "order": 5,
-            "settings": {ES_NOT_ANALYZED, LIST}
+            "settings": {
+                ES_NOT_ANALYZED,
+                LIST,
+                DIFF_QUALITATIVE
+            }
         },
     }
 
@@ -106,7 +182,8 @@ def _get_duplicate_document_mapping(metadata_list,
                 AGG_CATEGORICAL,
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
             }
         }
         result["{}.is_first".format(prefix)] = {
@@ -117,7 +194,8 @@ def _get_duplicate_document_mapping(metadata_list,
             "type": BOOLEAN_TYPE,
             "settings": {
                 FIELD_RIGHTS.SELECT,
-                FIELD_RIGHTS.FILTERS
+                FIELD_RIGHTS.FILTERS,
+                DIFF_QUALITATIVE
             }
         }
         same_metadata_type = metadata_type.capitalize()
@@ -239,7 +317,8 @@ class ContentsCountStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                AGG_CATEGORICAL
+                AGG_CATEGORICAL,
+                DIFF_QUANTITATIVE
             }
         },
         # h1 tag
@@ -250,7 +329,8 @@ class ContentsCountStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         # description tag
@@ -261,7 +341,8 @@ class ContentsCountStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
-                AGG_NUMERICAL
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         # h2 tag

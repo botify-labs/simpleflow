@@ -1,3 +1,5 @@
+from enum import Enum
+
 # A intermediate definition of url data format
 #
 # Keys are represented in a path format
@@ -65,3 +67,8 @@ STRING_NB_MAP_MAPPING = {
 # Do not push a field with this flag
 # in elasticsearch mapping
 FAKE_FIELD = 'es:fake'
+
+
+# Comparison/Diff related
+DIFF_QUALITATIVE = 'diff:qualitative'
+DIFF_QUANTITATIVE = 'diff:quantitative'

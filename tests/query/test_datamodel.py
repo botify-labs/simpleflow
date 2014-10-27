@@ -191,25 +191,25 @@ class FieldsTestCase(unittest.TestCase):
 
 class TestGetFieldRights(unittest.TestCase):
     def test_nominal_case(self):
-        settings = set([LIST, FIELD_RIGHTS.SELECT])
+        settings = {LIST, FIELD_RIGHTS.SELECT}
         actual_result = _get_field_rights(settings)
         expected_result = ["select"]
         self.assertItemsEqual(expected_result, actual_result)
 
     def test_default_value(self):
-        settings = set([LIST])
+        settings = {LIST}
         actual_result = _get_field_rights(settings)
         expected_result = ["select", "filters"]
         self.assertItemsEqual(expected_result, actual_result)
 
     def test_admin_field(self):
-        settings = set([LIST, FIELD_RIGHTS.ADMIN, FIELD_RIGHTS.SELECT])
+        settings = {LIST, FIELD_RIGHTS.ADMIN, FIELD_RIGHTS.SELECT}
         actual_result = _get_field_rights(settings)
         expected_result = ["admin", "select"]
         self.assertItemsEqual(expected_result, actual_result)
 
     def test_default_value_admin_field(self):
-        settings = set([LIST, FIELD_RIGHTS.ADMIN])
+        settings = {LIST, FIELD_RIGHTS.ADMIN}
         actual_result = _get_field_rights(settings)
         expected_result = ["admin", "select", "filters"]
         self.assertItemsEqual(expected_result, actual_result)
@@ -221,7 +221,7 @@ class ComparisonTestCase(unittest.TestCase):
             "main": None,
             "links": None,
             # TODO it's better to name it `feature_options` for consistency
-            "comparison": {"options": {"main": None}}
+            "comparison": {"options": {"main": None, "links": None}}
         }
 
     def test_fields(self):
@@ -231,8 +231,8 @@ class ComparisonTestCase(unittest.TestCase):
         fields_configs = [f['value'] for f in fields]
         self.assertIn('url', fields_configs)
         self.assertIn('previous.url', fields_configs)
-        # links not enabled on the previous crawl
-        self.assertNotIn('previous.outlinks_internal.nb.total', fields_configs)
+        # `main_image` not enabled on the previous crawl
+        self.assertNotIn('previous.main_image', fields_configs)
 
         fields_verbose = [f['name'] for f in fields]
         self.assertIn('Previous Http Code', fields_verbose)
@@ -243,14 +243,16 @@ class ComparisonTestCase(unittest.TestCase):
         groups = get_groups(self.feature_options)
         names = [g['id'] for g in groups]
 
-        self.assertIn('main', names)
-        self.assertIn('previous.main', names)
+        self.assertIn('inlinks', names)
+        self.assertIn('previous.inlinks', names)
+        self.assertIn('diff.inlinks', names)
 
     def test_groups_non_comparison(self):
         # current crawl : feature main, links and comparison are enabled
         # previous crawl : only main is enabled
-        groups = get_groups({'main': None})
+        groups = get_groups({'links': None})
         names = [g['id'] for g in groups]
 
-        self.assertIn('main', names)
-        self.assertNotIn('previous.main', names)
+        self.assertIn('inlinks', names)
+        self.assertNotIn('previous.inlinks', names)
+        self.assertNotIn('diff.inlinks', names)

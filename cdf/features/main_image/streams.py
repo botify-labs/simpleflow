@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from cdf.metadata.url.url_metadata import (
-    STRING_TYPE, ES_NO_INDEX
+    STRING_TYPE, ES_NO_INDEX, DIFF_QUALITATIVE
 )
 from cdf.core.streams.base import StreamDefBase
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
@@ -52,7 +52,8 @@ class ContentsExtendedStreamDef(StreamDefBase):
             "settings": {
                 ES_NO_INDEX,
                 RENDERING.IMAGE_URL,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUALITATIVE
             }
         }
     }

@@ -99,7 +99,6 @@ def get_fields(feature_options, remove_private=True, remove_admin=True,
     :param remove_admin: should ADMIN visibility fields be excluded
     :param available_features: all available features
     """
-    # TODO(darkjh) create "Diff {}" groups for previous diff
     data_format = generate_data_format(
         feature_options, available_features=available_features)
 
@@ -146,6 +145,7 @@ def get_groups(features_options):
         for group in feature.groups:
             # with hack for `previous`
             previous_name = 'previous.{}'.format(group.name)
+            diff_name = 'diff.{}'.format(group.name)
             if group.name in allowed_groups:
                 groups.append({
                     'id': group.name,
@@ -155,5 +155,10 @@ def get_groups(features_options):
                 groups.append({
                     'id': previous_name,
                     'name': 'Previous {}'.format(group.value)
+                })
+            if diff_name in allowed_groups:
+                groups.append({
+                    'id': diff_name,
+                    'name': 'Diff {}'.format(group.value)
                 })
     return groups

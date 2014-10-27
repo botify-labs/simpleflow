@@ -12,6 +12,7 @@ from cdf.features.comparison.matching import (
     load_raw_documents, _LEVELDB_BLOCK_SIZE,
     document_merge, generate_conversion_table,
     document_url_id_correction)
+from cdf.features.comparison.diff import diff
 from cdf.features.comparison.constants import (
     MATCHED_FILE_PATTERN,
     COMPARISON_PATH)
@@ -139,7 +140,7 @@ def match_documents(ref_s3_uri, new_s3_uri, new_crawl_id,
 
     # construct the final stream
     merged_stream = document_merge(
-        document_match(ref_stream, new_stream), new_crawl_id)
+        diff(document_match(ref_stream, new_stream)), new_crawl_id)
 
     matched_count = 0
     # Write into partition files
