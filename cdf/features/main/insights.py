@@ -20,6 +20,32 @@ def get_all_urls_insight():
     ]
 
 
+def get_http_code_is_good_predicate():
+    """Helper function that returns a filter that selects
+    urls with good http code
+    :returns: Filter
+    """
+    # TODO implement http_code_is_code
+    return BetweenFilter("http_code", [200, 299])
+
+
+def get_http_code_ok_ko_insights():
+    return [
+        Insight(
+            "code_ok",
+            "Good HTTP Code URLs",
+            PositiveTrend.UNKNOWN,
+            get_http_code_is_good_predicate()
+        ),
+        Insight(
+            "code_ko",
+            "Bad HTTP Code URLs",
+            PositiveTrend.UNKNOWN,
+            NotFilter(get_http_code_is_good_predicate())
+        )
+    ]
+
+
 def get_http_code_ranges_insights():
     #insights by http ranges
     result = []
@@ -96,7 +122,9 @@ def get_strategic_urls_insights():
 def get_content_type_insights():
     #insights for content types
     result = []
-    for content_type in ["text/html", "text/css"]:
+    TEXT_HTML = "text/html"
+    TEXT_CSS = "text/css"
+    for content_type in [TEXT_HTML, TEXT_CSS]:
         insight = Insight(
             "content_{}".format(content_type),
             "{} URLs".format(content_type[len("text/"):].upper()),
@@ -104,6 +132,15 @@ def get_content_type_insights():
             EqFilter("content_type", content_type)
         )
         result.append(insight)
+
+    result.append(
+        Insight(
+            "content_not_html",
+            "Not HTML URLs",
+            PositiveTrend.UNKNOWN,
+            NotFilter(EqFilter("content_type", TEXT_HTML))
+        )
+    )
     return result
 
 
@@ -148,6 +185,12 @@ def get_speed_insights():
             PositiveTrend.DOWN,
             GteFilter(field, 2000)
         ),
+        Insight(
+            "speed_gt_1s",
+            "Slow URLs > 1s",
+            PositiveTrend.DOWN,
+            GteFilter(field, 1000)
+        )
     ]
 
 
@@ -303,6 +346,7 @@ def get_gzipped_insights():
 def get_insights():
     insights = []
     insights.extend(get_all_urls_insight())
+    insights.extend(get_http_code_ok_ko_insights())
     insights.extend(get_http_code_ranges_insights())
     insights.extend(get_http_code_insights())
     insights.extend(get_strategic_urls_insights())
