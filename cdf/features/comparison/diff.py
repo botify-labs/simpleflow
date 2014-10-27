@@ -111,16 +111,17 @@ def get_diff_strategy(data_format):
     diff_strategy = {}
     for field, value in data_format.iteritems():
         # check `settings` for explicit diff strategy
-        if 'settings' in value:
-            settings = value['settings']
-            if DIFF_QUANTITATIVE in settings:
-                diff_strategy[field] = compute_quantitative_diff
-            elif DIFF_QUALITATIVE in settings:
-                if LIST in settings:
-                    # special case: list field
-                    diff_strategy[field] = compute_qualitative_diff_list
-                else:
-                    diff_strategy[field] = compute_qualitative_diff
+        if 'settings' not in value:
+            continue
+        settings = value['settings']
+        if DIFF_QUANTITATIVE in settings:
+            diff_strategy[field] = compute_quantitative_diff
+        elif DIFF_QUALITATIVE in settings:
+            if LIST in settings:
+                # special case: list field
+                diff_strategy[field] = compute_qualitative_diff_list
+            else:
+                diff_strategy[field] = compute_qualitative_diff
 
         # no diff strategy for this field, reports
         if field not in diff_strategy or diff_strategy.get(field) is None:
