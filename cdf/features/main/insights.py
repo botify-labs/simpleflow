@@ -292,8 +292,8 @@ def get_gzipped_insights():
             EqFilter(field, False)
         ),
         Insight(
-            "index_ko",
-            "NON GZIP URLs",
+            "gzipped_ko",
+            "Non GZIP URLs",
             PositiveTrend.UNKNOWN,
             EqFilter(field, True)
         )
