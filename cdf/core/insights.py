@@ -1,7 +1,15 @@
 from enum import Enum
+import abc
 from cdf.metadata.url.url_metadata import INT_TYPE
 from cdf.query.aggregation import CountAggregation
 from cdf.core.metadata.constants import RENDERING
+from cdf.query.filter import (
+    AndFilter,
+    OrFilter,
+    EqFilter,
+    NotFilter,
+    ExistFilter
+)
 
 
 class PositiveTrend(Enum):
@@ -15,7 +23,27 @@ class PositiveTrend(Enum):
     UNKNOWN = 'unknown'
 
 
-class Insight(object):
+class AbstractInsight(object):
+    """Abstract class to represent insights"""
+    __metaclass__ = abc.ABCMeta
+
+    @property
+    @abc.abstractmethod
+    def query(self):
+        """Return the query corresponding to the insight
+        :returns: dict"""
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
+    def query_to_display(self):
+        """Return the query to display to the final user.
+        It might be slightly different from the query run on Elasticsearch
+        :returns: dict"""
+        raise NotImplementedError()
+
+
+class Insight(AbstractInsight):
     """A class to represent an insight
     An insight is a number that will be displayed on the report.
     It corresponds to a number of urls.
@@ -86,8 +114,53 @@ class Insight(object):
         result["aggs"] = [{'metrics': [self.metric_agg.to_dict()]}]
         return result
 
+    @property
+    def query_to_display(self):
+        """Return the query to display to the final user.
+        It might be slightly different from the query run on Elasticsearch"""
+        return self.query
+
     def __repr__(self):
-        return "{}: {}".format(self.identifier, self.query)
+        return "{}: {}".format(self.identifier, self.query_to_display)
+
+
+class ComparisonAwareInsight(AbstractInsight):
+    """A decorator that modifies the Elasticsearch queries
+    to that they are compatible with crawls with comparisons.
+    """
+    def __init__(self, insight):
+        """Constructor
+        :param insight: the insight to decorate
+        :type insight: Insight
+        """
+        self.insight = insight
+
+    def __getattr__(self, name):
+        #delegate attribute access to self.insight
+        #see Python Cookbook 8.15
+        return getattr(self.insight, name)
+
+    @property
+    def query(self):
+        #select only documents from the current crawl
+        filters = OrFilter([
+            NotFilter(ExistFilter("disappeared")),
+            EqFilter("disappeared", False)
+        ])
+        if self.insight.filter is not None:
+            filters = AndFilter([filters, self.insight.filter])
+
+        result = {}
+        result["filters"] = filters.to_dict()
+        #self.aggs is alway set (see constructor)
+        result["aggs"] = [{'metrics': [self.insight.metric_agg.to_dict()]}]
+        return result
+
+    @property
+    def query_to_display(self):
+        #do not modify the insight query to display
+        #we do not want the users to be aware of the comparison tricks.
+        return self.insight.query_to_display
 
 
 class InsightValue(object):
@@ -115,7 +188,7 @@ class InsightValue(object):
             "name": self.insight.name,
             "positive_trend": self.insight.positive_trend.value,
             "feature": self.feature_name,
-            "query": self.insight.query,
+            "query": self.insight.query_to_display,
             "data_type": self.insight.data_type,
             "field_type": self.insight.field_type.value,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
