@@ -27,10 +27,12 @@ EXTRA_FIELDS_FORMAT = {
 
 
 def _transform_comparison_field(field):
+    """Previous field should be prefix with `previous`"""
     return 'previous.' + field
 
 
 def _transform_comparison_config(config):
+    """Handle previous field's config's content"""
     config = copy.deepcopy(config)
     group_key = 'group'
     verbose_key = 'verbose_name'
@@ -48,6 +50,7 @@ def _transform_comparison_config(config):
 
 
 def _transform_diff_config(config, group=None, verbose_name=None):
+    """Handle diff field's config's content"""
     if group is not None:
         config['group'] = 'diff.{}'.format(group)
 

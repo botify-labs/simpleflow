@@ -48,6 +48,14 @@ def compute_qualitative_diff(ref_value, new_value):
 
 
 def compute_qualitative_diff_list(ref_value, new_value):
+    """Compare list fields' values
+
+    Note that list fields' diff are always qualitative
+
+    :param ref_value: the previous(reference) value
+    :param new_value: the current value
+    :return: a diff status string
+    """
     if ref_value is None and new_value is None:
         return None
 
