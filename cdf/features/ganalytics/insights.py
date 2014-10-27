@@ -45,7 +45,7 @@ def get_ganalytics_main_metric_insights(medium, source):
             PositiveTrend.UNKNOWN,
             GtFilter(visit_field, 0),
             metric_agg=AvgAggregation(visit_field),
-            data_type=FLOAT_TYPE,
+            type=FLOAT_TYPE,
             unit=RENDERING.VISIT
         ),
         Insight(
@@ -56,7 +56,7 @@ def get_ganalytics_main_metric_insights(medium, source):
             metric_agg=AvgAggregation(
                 "inlinks_internal.nb.unique"
             ),
-            data_type=FLOAT_TYPE,
+            type=FLOAT_TYPE,
             unit=RENDERING.LINK
         ),
         Insight(

@@ -292,7 +292,7 @@ def get_average_depth_insights():
             "Average Depth",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
-            data_type=FLOAT_TYPE,
+            type=FLOAT_TYPE,
             unit=RENDERING.DEPTH
         ),
         Insight(
@@ -301,7 +301,7 @@ def get_average_depth_insights():
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
-            data_type=FLOAT_TYPE,
+            type=FLOAT_TYPE,
             unit=RENDERING.DEPTH
         )
     ]

@@ -220,7 +220,7 @@ class TestInsightValue(unittest.TestCase):
             "name": "Foo insight",
             "positive_trend": "up",
             "feature": "foo_feature",
-            "data_type": "integer",
+            "type": "integer",
             "unit": "url",
             "aggregator": "count",
             "query":  {
