@@ -1,6 +1,7 @@
 import unittest
 
 from cdf.core.insights import (
+    Aggregator,
     PositiveTrend,
     Insight,
     ComparisonAwareInsight,
@@ -9,7 +10,7 @@ from cdf.core.insights import (
 )
 from cdf.query.filter import EqFilter
 from cdf.query.sort import AscendingSort
-from cdf.query.aggregation import MaxAggregation
+from cdf.query.aggregation import MaxAggregation, SumAggregation
 
 
 class TestInsight(unittest.TestCase):
@@ -66,6 +67,20 @@ class TestInsight(unittest.TestCase):
             ]
         }
         self.assertEqual(expected_query, insight.query)
+
+    def test_aggregator(self):
+        max_insight = Insight(self.identifier,
+                              self.name,
+                              self.positive_trend,
+                              metric_agg=self.max_agg)
+        self.assertEqual(Aggregator.MAX, max_insight.aggregator)
+
+        sum_insight = Insight(self.identifier,
+                              self.name,
+                              self.positive_trend,
+                              metric_agg=SumAggregation("foo"))
+        self.assertEqual(Aggregator.SUM, sum_insight.aggregator)
+
 
     def test_repr(self):
         insight = Insight(self.identifier, self.name, self.positive_trend)
@@ -207,6 +222,7 @@ class TestInsightValue(unittest.TestCase):
             "feature": "foo_feature",
             "data_type": "integer",
             "field_type": "url",
+            "aggregator": "count",
             "query":  {
                 'aggs': [{'metrics': [{'count': 'url'}]}],
                 'filters': {'field': 'foo_field', 'predicate': 'eq', 'value': 1001}
