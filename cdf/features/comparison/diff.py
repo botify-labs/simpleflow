@@ -27,6 +27,7 @@ def qualitative_diff(ref_value, new_value):
         if new_value is None:
             # both None
             # impossible
+            logger.warning('Both value is None in diff')
             return None
         else:
             # reference is None,  new is not None
