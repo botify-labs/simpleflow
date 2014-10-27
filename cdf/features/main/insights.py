@@ -174,6 +174,12 @@ def get_speed_insights():
             PositiveTrend.DOWN,
             GteFilter(field, 2000)
         ),
+        Insight(
+            "speed_gt_1s",
+            "Slow URLs > 1s",
+            PositiveTrend.DOWN,
+            GteFilter(field, 1000)
+        )
     ]
 
 
@@ -329,6 +335,7 @@ def get_gzipped_insights():
 def get_insights():
     insights = []
     insights.extend(get_all_urls_insight())
+    insights.extend(get_http_code_ok_ko_insights())
     insights.extend(get_http_code_ranges_insights())
     insights.extend(get_http_code_insights())
     insights.extend(get_strategic_urls_insights())
