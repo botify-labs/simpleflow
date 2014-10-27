@@ -122,7 +122,9 @@ def get_strategic_urls_insights():
 def get_content_type_insights():
     #insights for content types
     result = []
-    for content_type in ["text/html", "text/css"]:
+    TEXT_HTML = "text/html"
+    TEXT_CSS = "text/css"
+    for content_type in [TEXT_HTML, TEXT_CSS]:
         insight = Insight(
             "content_{}".format(content_type),
             "{} URLs".format(content_type[len("text/"):].upper()),
@@ -130,6 +132,15 @@ def get_content_type_insights():
             EqFilter("content_type", content_type)
         )
         result.append(insight)
+
+    result.append(
+        Insight(
+            "content_not_html",
+            "Not HTML URLs",
+            PositiveTrend.UNKNOWN,
+            NotFilter(EqFilter("content_type", TEXT_HTML))
+        )
+    )
     return result
 
 
