@@ -1,9 +1,9 @@
 import unittest
 from cdf.features.comparison.diff import (
-    qualitative_diff,
-    quantitative_diff,
+    compute_qualitative_diff,
+    compute_quantitative_diff,
     document_diff,
-    diff, qualitative_diff_list)
+    diff, compute_qualitative_diff_list)
 from cdf.features.comparison.constants import (
     QualitativeDiffResult as qdr,
     MatchingState
@@ -12,9 +12,9 @@ from cdf.features.comparison.constants import (
 
 class TestDocumentDiff(unittest.TestCase):
     TEST_DIFF_STRATEGY = {
-        'a.quantitative': quantitative_diff,
-        'b.qualitative': qualitative_diff,
-        'c.list': qualitative_diff_list
+        'a.quantitative': compute_quantitative_diff,
+        'b.qualitative': compute_qualitative_diff,
+        'c.list': compute_qualitative_diff_list
     }
 
     def test_qualitative_field_changed(self):

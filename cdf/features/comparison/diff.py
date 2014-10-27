@@ -16,7 +16,7 @@ from cdf.core.metadata.dataformat import assemble_data_format
 from cdf.features.comparison import logger
 
 
-def qualitative_diff(ref_value, new_value):
+def compute_qualitative_diff(ref_value, new_value):
     """Compare qualitative diff fields' values
 
     :param ref_value: the previous(reference) value
@@ -47,7 +47,7 @@ def qualitative_diff(ref_value, new_value):
                 return QualitativeDiffResult.CHANGED
 
 
-def qualitative_diff_list(ref_value, new_value):
+def compute_qualitative_diff_list(ref_value, new_value):
     if ref_value is None and new_value is None:
         return None
 
@@ -69,10 +69,10 @@ def qualitative_diff_list(ref_value, new_value):
     ref_value = ref_value[0]
     new_value = new_value[0]
 
-    return qualitative_diff(ref_value, new_value)
+    return compute_qualitative_diff(ref_value, new_value)
 
 
-def quantitative_diff(ref_value, new_value):
+def compute_quantitative_diff(ref_value, new_value):
     """Calculate quantitative diff
 
     The difference is always calculated by:
@@ -106,13 +106,13 @@ def get_diff_strategy(data_format):
         if 'settings' in value:
             settings = value['settings']
             if DIFF_QUANTITATIVE in settings:
-                diff_strategy[field] = quantitative_diff
+                diff_strategy[field] = compute_quantitative_diff
             elif DIFF_QUALITATIVE in settings:
                 if LIST in settings:
                     # special case: list field
-                    diff_strategy[field] = qualitative_diff_list
+                    diff_strategy[field] = compute_qualitative_diff_list
                 else:
-                    diff_strategy[field] = qualitative_diff
+                    diff_strategy[field] = compute_qualitative_diff
 
         # no diff strategy for this field, reports
         if field not in diff_strategy or diff_strategy.get(field) is None:
