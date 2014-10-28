@@ -1,5 +1,5 @@
 from cdf.core.insights import Insight, PositiveTrend
-from cdf.query.filter import EqFilter, GtFilter, AndFilter
+from cdf.query.filter import EqFilter, GtFilter, AndFilter, OrFilter
 from cdf.query.sort import DescendingSort
 
 
@@ -70,6 +70,33 @@ def get_metadata_insights(metadata):
             additional_fields=additional_fields,
             additional_filter=additional_filter,
             sort_by=DescendingSort(field)
+        )
+    )
+
+    #bad
+    identifier = "meta_{}_bad".format(metadata)
+    name = "URLs with bad {}".format(metadata.title())
+    nb_field = "metadata.{}.nb".format(metadata)
+    duplicates_field = "metadata.{}.duplicates.context_aware.nb".format(metadata)
+    additional_fields = [
+        "metadata.{}.contents".format(metadata),
+        "metadata.{}.duplicates.context_aware.nb".format(metadata),
+        "metadata.{}.duplicates.context_aware.urls".format(metadata),
+        "metadata.{}.nb".format(metadata)
+    ]
+    additional_filter = EqFilter("metadata.{}.is_first".format(metadata), True)
+    result.append(
+        Insight(
+            identifier,
+            name,
+            PositiveTrend.DOWN,
+            OrFilter([
+                AndFilter([EqFilter(nb_field, 0), EqFilter(strategic_field, True)]),
+                AndFilter([GtFilter(duplicates_field, 0), EqFilter(strategic_field, True)])
+            ]),
+            additional_fields=additional_fields,
+            additional_filter=additional_filter,
+            sort_by=DescendingSort(duplicates_field)
         )
     )
 

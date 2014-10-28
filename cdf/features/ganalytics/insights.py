@@ -171,12 +171,23 @@ def get_strategic_visit_nb_range_insights(medium, source):
             sort_by=DescendingSort(visit_field)
         ),
         Insight(
-            "{}_visits_strategic_2_10".format(name_prefix),
-            "Strategic Active URLs with 2 to 10 Visits",
+            "{}_visits_strategic_2_5".format(name_prefix),
+            "Strategic Active URLs with 2 to 5 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(strategic_field, True),
-                BetweenFilter(visit_field, [2, 10])
+                BetweenFilter(visit_field, [2, 5])
+            ]),
+            additional_fields=[visit_field],
+            sort_by=DescendingSort(visit_field)
+        ),
+        Insight(
+            "{}_visits_strategic_6_10".format(name_prefix),
+            "Strategic Active URLs with 6 to 10 Visits",
+            PositiveTrend.UNKNOWN,
+            AndFilter([
+                EqFilter(strategic_field, True),
+                BetweenFilter(visit_field, [6, 10])
             ]),
             additional_fields=[visit_field],
             sort_by=DescendingSort(visit_field)

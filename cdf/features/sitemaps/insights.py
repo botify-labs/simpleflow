@@ -130,13 +130,17 @@ def get_bad_metadata_strategic_sitemap_insights():
             "sitemaps_bad_{}".format(metadata),
             "Strategic URLs in Sitemap with a Bad {}".format(metadata.title()),
             PositiveTrend.DOWN,
-            AndFilter([
-                EqFilter("strategic.is_strategic", True),
-                EqFilter("sitemaps.present", True),
-                OrFilter([
+            #some fields are duplicated
+            #but the URL Explorer is not able to display AndFilter -> OrFilter
+            OrFilter([
+                AndFilter([
                     EqFilter("metadata.{}.nb".format(metadata), 0),
-                    GtFilter("metadata.{}.duplicates.nb".format(metadata), 0)
-                ])
+                    EqFilter("strategic.is_strategic", True),
+                    EqFilter("sitemaps.present", True)]),
+                AndFilter([
+                    GtFilter("metadata.{}.duplicates.nb".format(metadata), 0),
+                    EqFilter("strategic.is_strategic", True),
+                    EqFilter("sitemaps.present", True)])
             ]),
             additional_fields=additional_fields
         )
