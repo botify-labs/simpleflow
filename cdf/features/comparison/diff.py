@@ -32,19 +32,19 @@ def compute_qualitative_diff(ref_value, new_value):
         else:
             # reference is None,  new is not None
             # appeared
-            return QualitativeDiffResult.APPEARED
+            return QualitativeDiffResult.APPEARED.value
     else:
         if new_value is None:
             # reference is not None, new is None
             # disappeared
-            return QualitativeDiffResult.DISAPPEARED
+            return QualitativeDiffResult.DISAPPEARED.value
         else:
             # both not None
             # need compare
             if ref_value == new_value:
-                return QualitativeDiffResult.EQUAL
+                return QualitativeDiffResult.EQUAL.value
             else:
-                return QualitativeDiffResult.CHANGED
+                return QualitativeDiffResult.CHANGED.value
 
 
 def compute_qualitative_diff_list(ref_value, new_value):
@@ -65,13 +65,13 @@ def compute_qualitative_diff_list(ref_value, new_value):
     # empty -> non-empty => appear
     # non-empty -> empty =< disappear
     if len_new == 0 and len_ref > 0:
-        return QualitativeDiffResult.DISAPPEARED
+        return QualitativeDiffResult.DISAPPEARED.value
     if len_new > 0 and len_ref == 0:
-        return QualitativeDiffResult.APPEARED
+        return QualitativeDiffResult.APPEARED.value
 
     # both empty list => equal
     if len_new == len_ref == 0:
-        return QualitativeDiffResult.EQUAL
+        return QualitativeDiffResult.EQUAL.value
 
     # both non-empty
     ref_value = ref_value[0]

@@ -25,7 +25,7 @@ class TestDocumentDiff(unittest.TestCase):
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
 
-        expected = {'b': {'qualitative': qdr.CHANGED}}
+        expected = {'b': {'qualitative': qdr.CHANGED.value}}
         self.assertEqual(diff_result, expected)
 
     def test_qualitative_field_equal(self):
@@ -35,7 +35,7 @@ class TestDocumentDiff(unittest.TestCase):
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
 
-        expected = {'b': {'qualitative': qdr.EQUAL}}
+        expected = {'b': {'qualitative': qdr.EQUAL.value}}
         self.assertEqual(diff_result, expected)
 
     def test_qualitative_field_appeared(self):
@@ -44,7 +44,7 @@ class TestDocumentDiff(unittest.TestCase):
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        expected = {'b': {'qualitative': qdr.APPEARED}}
+        expected = {'b': {'qualitative': qdr.APPEARED.value}}
 
         self.assertEqual(diff_result, expected)
 
@@ -54,7 +54,7 @@ class TestDocumentDiff(unittest.TestCase):
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        expected = {'b': {'qualitative': qdr.DISAPPEARED}}
+        expected = {'b': {'qualitative': qdr.DISAPPEARED.value}}
 
         self.assertEqual(diff_result, expected)
 
@@ -88,7 +88,7 @@ class TestDocumentDiff(unittest.TestCase):
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        self.assertEqual(diff_result, {'c': {'list': qdr.EQUAL}})
+        self.assertEqual(diff_result, {'c': {'list': qdr.EQUAL.value}})
 
     def test_list_field_one_empty(self):
         ref_doc = {'c': {'list': ['a']}}
@@ -96,14 +96,14 @@ class TestDocumentDiff(unittest.TestCase):
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        self.assertEqual(diff_result, {'c': {'list': qdr.DISAPPEARED}})
+        self.assertEqual(diff_result, {'c': {'list': qdr.DISAPPEARED.value}})
 
         ref_doc = {'c': {'list': []}}
         new_doc = {'c': {'list': ['b']}}
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        self.assertEqual(diff_result, {'c': {'list': qdr.APPEARED}})
+        self.assertEqual(diff_result, {'c': {'list': qdr.APPEARED.value}})
 
     def test_list_field_compare(self):
         # only first element of the list is taken into account
@@ -112,14 +112,14 @@ class TestDocumentDiff(unittest.TestCase):
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        self.assertEqual(diff_result, {'c': {'list': qdr.CHANGED}})
+        self.assertEqual(diff_result, {'c': {'list': qdr.CHANGED.value}})
 
         ref_doc = {'c': {'list': ['a', 'b']}}
         new_doc = {'c': {'list': ['a']}}
 
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
-        self.assertEqual(diff_result, {'c': {'list': qdr.EQUAL}})
+        self.assertEqual(diff_result, {'c': {'list': qdr.EQUAL.value}})
 
     def test_diff_document_stream(self):
         doc_a = {'a': {'quantitative': 123}}
@@ -140,7 +140,7 @@ class TestDocumentDiff(unittest.TestCase):
             (MatchingState.DISCOVER, (None, {}, None)),
             (MatchingState.MATCH, ({}, doc_a, None)),
             (MatchingState.MATCH, (doc_b_ref, doc_b_new,
-                                   {'b': {'qualitative': qdr.CHANGED}})),
+                                   {'b': {'qualitative': qdr.CHANGED.value}})),
             (MatchingState.DISAPPEAR, ({}, None, None)),
         ]
         self.assertEqual(results, expected)
