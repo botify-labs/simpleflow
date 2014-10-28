@@ -234,8 +234,10 @@ def compute_percentile_stats(percentile_stream):
     """
     stats = {}
     for url_id, pid, metric_value in percentile_stream:
-        if pid not in stats:
-            stats[pid] = PercentileStats.new_empty(pid)
+        index = pid
+        if index not in stats:
+            # percentile_id starts from 1
+            stats[index] = PercentileStats.new_empty(index+1)
         stat = stats[pid]
         stat.merge(metric_value)
 
