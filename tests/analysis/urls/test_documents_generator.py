@@ -660,7 +660,6 @@ class TestOutlinksGeneration(unittest.TestCase):
         document = _next_doc(gen)
         self.assertDictEqual(document[key], expected_2)
 
-
     def test_inlinks_percentile_id(self):
         patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
@@ -679,11 +678,11 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         # check url1
         document = _next_doc(gen)
-        self.assertEqual(document["inlinks_internal"]["percentile_id"], 10)
+        self.assertEqual(document["inlinks_internal"]["percentile"], 10)
 
         # check url2
         document = _next_doc(gen)
-        self.assertEqual(document["inlinks_internal"]["percentile_id"], 5)
+        self.assertEqual(document["inlinks_internal"]["percentile"], 5)
 
 
 class TestRedirectsGeneration(unittest.TestCase):

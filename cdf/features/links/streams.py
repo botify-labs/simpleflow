@@ -1144,9 +1144,9 @@ class InlinksPercentilesStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.inlinks.name
     URL_DOCUMENT_MAPPING = {
         # erroneous outgoing internal links
-        "inlinks_internal.percentile_id": {
+        "inlinks_internal.percentile": {
             "type": INT_TYPE,
-            "verbose_name": "Percentile id.",
+            "verbose_name": "Inlinks Percentile",
             "order": 101,
             "settings": {
                 ES_DOC_VALUE,
@@ -1162,4 +1162,4 @@ class InlinksPercentilesStreamDef(StreamDefBase):
 
     def process_document(self, document, input_stream):
         _, percentile_id, _ = input_stream
-        document["inlinks_internal"]["percentile_id"] = percentile_id
+        document["inlinks_internal"]["percentile"] = percentile_id
