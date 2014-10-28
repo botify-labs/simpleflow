@@ -1,7 +1,13 @@
 from enum import Enum
 import abc
 from cdf.metadata.url.url_metadata import INT_TYPE
-from cdf.query.aggregation import CountAggregation
+from cdf.query.aggregation import (
+    CountAggregation,
+    SumAggregation,
+    MinAggregation,
+    MaxAggregation,
+    AvgAggregation
+)
 from cdf.core.metadata.constants import RENDERING
 from cdf.query.filter import (
     AndFilter,
@@ -21,6 +27,15 @@ class PositiveTrend(Enum):
     UP = 'up'
     DOWN = 'down'
     UNKNOWN = 'unknown'
+
+
+class Aggregator(Enum):
+    '''Represent the kind of aggregation'''
+    COUNT = 'count'
+    SUM = 'sum'
+    MIN = 'min'
+    MAX = 'max'
+    AVG = 'avg'
 
 
 class AbstractInsight(object):
@@ -120,6 +135,21 @@ class Insight(AbstractInsight):
         It might be slightly different from the query run on Elasticsearch"""
         return self.query
 
+    @property
+    def aggregator(self):
+        """Return the type of aggregation.
+        It is deduced from self.metric_agg
+        :rtype: Aggregator
+        """
+        mapping = {
+            CountAggregation: Aggregator.COUNT,
+            SumAggregation: Aggregator.SUM,
+            MinAggregation: Aggregator.MIN,
+            MaxAggregation: Aggregator.MAX,
+            AvgAggregation: Aggregator.AVG
+        }
+        return mapping[type(self.metric_agg)]
+
     def __repr__(self):
         return "{}: {}".format(self.identifier, self.query_to_display)
 
@@ -191,6 +221,7 @@ class InsightValue(object):
             "query": self.insight.query_to_display,
             "data_type": self.insight.data_type,
             "field_type": self.insight.field_type.value,
+            "aggregator": self.insight.aggregator.value,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
         }
         if self.insight.additional_fields is not None:
