@@ -23,16 +23,16 @@ def get_average_inlinks_insights():
             "Average Inlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("inlinks_internal.nb.unique"),
-            data_type=FLOAT_TYPE,
-            field_type=RENDERING.LINK
+            type=FLOAT_TYPE,
+            unit=RENDERING.LINK
         ),
         Insight(
             "inlinks_avg_follow",
             "Average Follow Inlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("inlinks_internal.nb.follow.unique"),
-            data_type=FLOAT_TYPE,
-            field_type=RENDERING.LINK
+            type=FLOAT_TYPE,
+            unit=RENDERING.LINK
         ),
     ]
 
@@ -47,21 +47,21 @@ def get_inlinks_sum_insights():
             "Total Number of Inlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=SumAggregation("inlinks_internal.nb.unique"),
-            field_type=RENDERING.LINK
+            unit=RENDERING.LINK
         ),
         Insight(
             "inlinks_sum_follow",
             "Total Number of Follow Inlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=SumAggregation("inlinks_internal.nb.follow.unique"),
-            field_type=RENDERING.LINK
+            unit=RENDERING.LINK
         ),
         Insight(
             "inlinks_sum_nofollow",
             "Total Number of Nofollow Inlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=SumAggregation("inlinks_internal.nb.nofollow.unique"),
-            field_type=RENDERING.LINK
+            unit=RENDERING.LINK
         )
     ]
 
@@ -76,35 +76,35 @@ def get_outlinks_sum_insights():
             "Total Number of Internal Follow Outlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=SumAggregation("inlinks_internal.nb.follow.unique"),
-            field_type=RENDERING.LINK
+            unit=RENDERING.LINK
         ),
         Insight(
             "outlinks_external_sum_follow",
             "Total Number of External Follow Outlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=SumAggregation("outlinks_external.nb.follow.unique"),
-            field_type=RENDERING.LINK
+            unit=RENDERING.LINK
         ),
         Insight(
             "outlinks_internal_sum_nofollow",
             "Total Number of Internal Nofollow Outlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=SumAggregation("inlinks_internal.nb.nofollow.unique"),
-            field_type=RENDERING.LINK
+            unit=RENDERING.LINK
         ),
         Insight(
             "outlinks_external_sum_nofollow",
             "Total Number of External Nofollow Outlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=SumAggregation("outlinks_external.nb.nofollow.unique"),
-            field_type=RENDERING.LINK
+            unit=RENDERING.LINK
         ),
         Insight(
             "outlinks_errors_sum",
             "Total Number of Broken Follow Outlinks",
             PositiveTrend.DOWN,
             metric_agg=SumAggregation("outlinks_errors.non_strategic.nb"),
-            field_type=RENDERING.LINK
+            unit=RENDERING.LINK
         )
     ]
 
@@ -227,16 +227,16 @@ def get_average_outlinks_insights():
             "Average Internal Outlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("outlinks_internal.nb.unique"),
-            data_type=FLOAT_TYPE,
-            field_type=RENDERING.LINK
+            type=FLOAT_TYPE,
+            unit=RENDERING.LINK
         ),
         Insight(
             "outlinks_avg_follow",
             "Average Internal Follow Outlinks",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("outlinks_internal.nb.follow.unique"),
-            data_type=FLOAT_TYPE,
-            field_type=RENDERING.LINK
+            type=FLOAT_TYPE,
+            unit=RENDERING.LINK
         )
     ]
 

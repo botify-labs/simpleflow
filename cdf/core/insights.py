@@ -74,8 +74,8 @@ class Insight(AbstractInsight):
                  additional_fields=None,
                  additional_filter=None,
                  sort_by=None,
-                 data_type=INT_TYPE,
-                 field_type=RENDERING.URL):
+                 type=INT_TYPE,
+                 unit=RENDERING.URL):
         """Constructor
         :param identifier: the insight identifier (short)
         :type identifier: str
@@ -98,23 +98,23 @@ class Insight(AbstractInsight):
         :param sort_by: a sort predicate. It is no impact on the query
                         but will be used to sort the detailed view.
         :type sort_by: Sort
-        :param data_type: how the value computed by this insights should be displayed:
+        :param type: how the value computed by this insights should be displayed:
                           'float', 'integer', etc.
                           This parameter should be an Enum.
                           It is a string since
                           the base datatypes are not grouped in a enum.
-        :type data_type: str
-        :param field_type: what type of concept the value represents:
+        :type type: str
+        :param unit: what type of concept the value represents:
                           "url", "time_sec", etc.
-        :type field_type: RENDERING
+        :type unit: RENDERING
         """
         self.identifier = identifier
         self.name = name
         self.positive_trend = positive_trend
         self.filter = input_filter
         self.metric_agg = metric_agg or CountAggregation("url")
-        self.data_type = data_type
-        self.field_type = field_type
+        self.type = type
+        self.unit = unit
         self.additional_fields = additional_fields
         self.additional_filter = additional_filter
         self.sort_by = sort_by
@@ -219,8 +219,8 @@ class InsightValue(object):
             "positive_trend": self.insight.positive_trend.value,
             "feature": self.feature_name,
             "query": self.insight.query_to_display,
-            "data_type": self.insight.data_type,
-            "field_type": self.insight.field_type.value,
+            "type": self.insight.type,
+            "unit": self.insight.unit.value,
             "aggregator": self.insight.aggregator.value,
             "trend": [trend_point.to_dict() for trend_point in self.trend]
         }
