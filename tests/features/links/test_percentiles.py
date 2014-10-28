@@ -337,13 +337,13 @@ class TestPercentileStatsComputation(unittest.TestCase):
         self.assertEqual(len(result), len(self.p_length))
 
         for stat in result:
-            pid = stat.percentile_id
+            index = stat.percentile_id - 1
             try:
-                self.assertEqual(stat.min, min(self.metrics[pid]))
-                self.assertEqual(stat.max, max(self.metrics[pid]))
-                self.assertEqual(stat.metric_total, sum(self.metrics[pid]))
-                self.assertEqual(stat.url_total, self.p_length[pid])
-                self.assertEqual(stat.avg, sum(self.metrics[pid]) / self.p_length[pid])
+                self.assertEqual(stat.min, min(self.metrics[index]))
+                self.assertEqual(stat.max, max(self.metrics[index]))
+                self.assertEqual(stat.metric_total, sum(self.metrics[index]))
+                self.assertEqual(stat.url_total, self.p_length[index])
+                self.assertEqual(stat.avg, sum(self.metrics[index]) / self.p_length[index])
             except AssertionError:
                 print "Fixture:\n {}".format(self.fixture)
                 raise
@@ -372,3 +372,16 @@ class TestPercentileStatsComputation(unittest.TestCase):
         self.assertEqual(stat1.url_total, 2)
         self.assertEqual(stat1.metric_total, 42)
         self.assertEqual(stat1.avg, 21)
+
+    def test_percentile_ids(self):
+        fixture = [
+            (1, 0, 15),
+            (2, 1, 40),
+            (3, 1, 2),
+            (4, 0, 9),
+            (5, 0, 17),
+        ]
+        result = compute_percentile_stats(fixture)
+        # make sure that percentile id starts from 1
+        self.assertEqual(result[0].percentile_id, 1)
+        self.assertEqual(result[1].percentile_id, 2)
