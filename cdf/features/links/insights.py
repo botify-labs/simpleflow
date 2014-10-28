@@ -351,7 +351,7 @@ def get_canonical_insights():
         ),
         Insight(
             "canonical_bad",
-            "2xx URLs with a Canonical Set / not Equal",
+            "2xx URLs with a Canonical not Set / not Equal",
             PositiveTrend.UNKNOWN,
             OrFilter([
                 AndFilter([
