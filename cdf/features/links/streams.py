@@ -1146,7 +1146,7 @@ class InlinksPercentilesStreamDef(StreamDefBase):
         # erroneous outgoing internal links
         "inlinks_internal.percentile": {
             "type": INT_TYPE,
-            "verbose_name": "Percentile id.",
+            "verbose_name": "Inlinks Percentile",
             "order": 101,
             "settings": {
                 ES_DOC_VALUE,
