@@ -8,7 +8,6 @@ from cdf.metadata.url.url_metadata import (
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
 from cdf.core.streams.base import StreamDefBase
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
-from cdf.core.metadata.dataformat import set_visibility
 
 
 def _raw_to_bool(string):
@@ -284,14 +283,11 @@ class ContentsContextAwareDuplicateStreamDef(StreamDefBase):
     HEADERS = CONTENTSDUPLICATE_HEADERS
     URL_DOCUMENT_DEFAULT_GROUP = "semantic_metadata"
 
-    URL_DOCUMENT_MAPPING = set_visibility(
-        _get_duplicate_document_mapping(
-            ["title", "description", "h1"],
-            "duplicates.context_aware",
-            "context-aware",
-            200
-        ),
-        FIELD_RIGHTS.ADMIN
+    URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
+        ["title", "description", "h1"],
+        "duplicates.context_aware",
+        "context-aware",
+        200
     )
 
     def process_document(self, document, stream):
