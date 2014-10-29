@@ -49,23 +49,37 @@ def _transform_comparison_config(config):
     return config
 
 
-def _transform_diff_config(config, group=None, verbose_name=None):
+def _transform_diff_config(config, diff_kind):
     """Handle diff field's config's content"""
-    if group is not None:
-        config['group'] = 'diff.{}'.format(group)
+    diff_config = {}
+    if diff_kind == DIFF_QUANTITATIVE:
+        diff_config = copy.deepcopy(config)
 
-    if verbose_name is not None:
-        config['verbose_name'] = 'Diff {}'.format(verbose_name)
+        # remove `settings`, diff field need new settings
+        origin_settings = diff_config.pop('settings')
 
-    return config
+        if ES_DOC_VALUE in origin_settings:
+            diff_config['settings'] = {ES_DOC_VALUE}
+    elif diff_kind == DIFF_QUALITATIVE:
+        # for qualitative diff
+        #   - change type to STRING_TYPE
+        #   - set to es:not_analyzed
+        diff_config['type'] = STRING_TYPE
+        diff_config['settings'] = {ES_NOT_ANALYZED}
+
+    if 'group' in config:
+        diff_config['group'] = 'diff.{}'.format(config['group'])
+
+    if 'verbose_name' in config:
+        diff_config['verbose_name'] = 'Diff {}'.format(config['verbose_name'])
+
+    return diff_config
 
 
 def get_diff_data_format(data_format):
     """Generate the diff sub-document's data format
 
     The result should be used in the final mapping generation.
-    Fields are not prefixed, should be prefixed if needed in
-    mapping generation.
 
     :param data_format: url data format
     :return: diff sub-document's data format
@@ -73,30 +87,16 @@ def get_diff_data_format(data_format):
     diff_mapping = {}
     for field, value in data_format.iteritems():
         f = 'diff.' + field
-        group = value.get('group', None)
-        verbose_name = value.get('verbose_name', None)
-        if 'settings' in value:
-            settings = value['settings']
-            if DIFF_QUALITATIVE in settings:
-                mapping = {
-                    'type': STRING_TYPE,
-                    'settings': {
-                        ES_NOT_ANALYZED
-                    }
-                }
-                diff_mapping[f] = _transform_diff_config(
-                    mapping, group, verbose_name)
-            elif DIFF_QUANTITATIVE in settings:
-                field_type = value['type']
-                mapping = {
-                    'type': field_type
-                }
-                # also add doc_value flag, if it's present for
-                # the original field
-                if ES_DOC_VALUE in settings:
-                    mapping['settings'] = {ES_DOC_VALUE}
-                diff_mapping[f] = _transform_diff_config(
-                    mapping, group, verbose_name)
+
+        if 'settings' not in value:
+            continue
+
+        settings = value['settings']
+
+        if DIFF_QUALITATIVE in settings:
+            diff_mapping[f] = _transform_diff_config(value, DIFF_QUALITATIVE)
+        elif DIFF_QUANTITATIVE in settings:
+            diff_mapping[f] = _transform_diff_config(value, DIFF_QUANTITATIVE)
 
     return diff_mapping
 

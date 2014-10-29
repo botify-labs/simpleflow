@@ -9,7 +9,8 @@ from cdf.core.metadata.dataformat import (
 from cdf.features.comparison.streams import (
     get_previous_data_format,
     get_diff_data_format,
-    EXTRA_FIELDS_FORMAT
+    EXTRA_FIELDS_FORMAT,
+    _transform_diff_config
 )
 from cdf.core.features import Feature
 from cdf.core.streams.base import StreamDefBase
@@ -229,6 +230,7 @@ class TestDiffMapping(unittest.TestCase):
         'a': {
             'type': 'boolean',
             'group': 'important',
+            'some_other_things': 12345,
             'settings': {
                 DIFF_QUALITATIVE
             }
@@ -236,6 +238,7 @@ class TestDiffMapping(unittest.TestCase):
         'b': {
             'type': 'integer',
             'verbose_name': 'bbbb',
+            'some_other_things': 12345,
             'settings': {
                 DIFF_QUANTITATIVE
             }
@@ -254,10 +257,31 @@ class TestDiffMapping(unittest.TestCase):
             },
             'diff.b': {
                 'type': 'integer',
+                'some_other_things': 12345,
                 'verbose_name': 'Diff bbbb',
             }
         }
         self.assertEqual(result, expected)
+
+    def test_config_transformation_qualitative(self):
+        res = _transform_diff_config(self.mapping['a'], DIFF_QUALITATIVE)
+        expected = {
+            'type': 'string',
+            'group': 'diff.important',
+            'settings': {
+                ES_NOT_ANALYZED
+            }
+        }
+        self.assertEqual(res, expected)
+
+    def test_config_transformation_quantitative(self):
+        res = _transform_diff_config(self.mapping['b'], DIFF_QUANTITATIVE)
+        expected = {
+            'type': 'integer',
+            'some_other_things': 12345,
+            'verbose_name': 'Diff bbbb',
+        }
+        self.assertEqual(res, expected)
 
     def test_no_diff_field(self):
         result = get_diff_data_format({
