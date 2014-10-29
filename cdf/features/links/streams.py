@@ -103,7 +103,6 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.SELECT,
                 DIFF_QUANTITATIVE
@@ -234,7 +233,6 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.SELECT,
                 DIFF_QUANTITATIVE
@@ -259,7 +257,6 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.SELECT,
                 DIFF_QUANTITATIVE
@@ -284,7 +281,6 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.SELECT,
                 DIFF_QUANTITATIVE
@@ -646,7 +642,6 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.SELECT,
                 DIFF_QUANTITATIVE
@@ -1026,7 +1021,6 @@ class BadLinksStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.SELECT,
                 DIFF_QUANTITATIVE
@@ -1084,7 +1078,6 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.SELECT,
                 DIFF_QUANTITATIVE
@@ -1098,7 +1091,6 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
                 ES_NO_INDEX,
                 LIST,
                 FIELD_RIGHTS.SELECT,
-                FIELD_RIGHTS.ADMIN,
                 RENDERING.URL,
                 URL_ID
             }
@@ -1152,7 +1144,6 @@ class InlinksPercentilesStreamDef(StreamDefBase):
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
                 AGG_CATEGORICAL,
-                FIELD_RIGHTS.ADMIN,
                 FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.SELECT,
                 DIFF_QUANTITATIVE
