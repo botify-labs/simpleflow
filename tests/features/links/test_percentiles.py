@@ -259,12 +259,12 @@ class TestComputePercentile(unittest.TestCase):
             nb_elements
         )
         expected_result = [
-            (1, 2, 10),
-            (2, 0, 2),
-            (3, 0, 1),
-            (4, 1, 6),
-            (5, 1, 5),
-            (6, 2, 8)
+            (1, 3, 10),
+            (2, 1, 2),
+            (3, 1, 1),
+            (4, 2, 6),
+            (5, 2, 5),
+            (6, 3, 8)
         ]
         self.assertEqual(expected_result, list(actual_result))
 
@@ -288,12 +288,12 @@ class TestComputePercentile(unittest.TestCase):
         )
         #the urls are sorted by decreasing urlids
         expected_result = [
-            (1, 2, 4),
-            (2, 2, 4),
-            (3, 1, 4),
-            (4, 1, 4),
-            (5, 0, 4),
-            (6, 0, 4)
+            (1, 3, 4),
+            (2, 3, 4),
+            (3, 2, 4),
+            (4, 2, 4),
+            (5, 1, 4),
+            (6, 1, 4)
         ]
         self.assertEqual(expected_result, list(actual_result))
 
@@ -304,12 +304,12 @@ class TestPercentileStatsComputation(unittest.TestCase):
         """
         # percentiles
         pid_size = random.randint(5, 10)
-        pids = range(0, pid_size)
+        pids = range(1, pid_size+1)
         # length per percentile group
         p_length = [random.randint(5, 15) for _ in xrange(0, pid_size)]
         # metrics
         metrics = [
-            [random.randint(0, 100) for _ in xrange(0, p_length[i])]
+            [random.randint(0, 100) for _ in xrange(0, p_length[i-1])]
             for i in pids
         ]
         # urls (not important, all set as 1)
@@ -360,6 +360,7 @@ class TestPercentileStatsComputation(unittest.TestCase):
         self.assertEqual(len(result), 2)
 
         stat1 = result[0]
+        self.assertEqual(stat1.percentile_id, 1)
         self.assertEqual(stat1.min, 9)
         self.assertEqual(stat1.max, 17)
         self.assertEqual(stat1.url_total, 3)
@@ -367,6 +368,7 @@ class TestPercentileStatsComputation(unittest.TestCase):
         self.assertEqual(stat1.avg, 41 / 3)
 
         stat1 = result[1]
+        self.assertEqual(stat1.percentile_id, 2)
         self.assertEqual(stat1.min, 2)
         self.assertEqual(stat1.max, 40)
         self.assertEqual(stat1.url_total, 2)
@@ -375,11 +377,11 @@ class TestPercentileStatsComputation(unittest.TestCase):
 
     def test_percentile_ids(self):
         fixture = [
-            (1, 0, 15),
-            (2, 1, 40),
-            (3, 1, 2),
-            (4, 0, 9),
-            (5, 0, 17),
+            (1, 1, 15),
+            (2, 2, 40),
+            (3, 2, 2),
+            (4, 1, 9),
+            (5, 1, 17),
         ]
         result = compute_percentile_stats(fixture)
         # make sure that percentile id starts from 1
