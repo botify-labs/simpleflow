@@ -229,6 +229,7 @@ class TestDiffMapping(unittest.TestCase):
         'a': {
             'type': 'boolean',
             'group': 'important',
+            'some_other_things': 12345,
             'settings': {
                 DIFF_QUALITATIVE
             }
@@ -236,6 +237,7 @@ class TestDiffMapping(unittest.TestCase):
         'b': {
             'type': 'integer',
             'verbose_name': 'bbbb',
+            'some_other_things': 12345,
             'settings': {
                 DIFF_QUANTITATIVE
             }
@@ -254,6 +256,7 @@ class TestDiffMapping(unittest.TestCase):
             },
             'diff.b': {
                 'type': 'integer',
+                'some_other_things': 12345,
                 'verbose_name': 'Diff bbbb',
             }
         }
