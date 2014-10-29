@@ -16,7 +16,10 @@ import abc
 from copy import deepcopy
 
 from cdf.exceptions import BotifyQueryException
-from .constants import QUERY_AGG, SUB_AGG, METRIC_AGG_PREFIX
+from .constants import (
+    QUERY_AGG, SUB_AGG, METRIC_AGG_PREFIX,
+    DISTINCT_AGG_BUCKET_SIZE
+)
 
 
 __ALL__ = ['QueryParser']
@@ -714,7 +717,7 @@ class DistinctOp(GroupAggOp):
         """Init a distinct group aggregator
         """
         self.field = content['field']
-        self.size = content.get('size', 50)
+        self.size = content.get('size', DISTINCT_AGG_BUCKET_SIZE)
         self.valid_fields = agg_fields['categorical']
 
     def transform(self):

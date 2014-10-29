@@ -2,6 +2,7 @@ import unittest
 
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
+from cdf.query.constants import DISTINCT_AGG_BUCKET_SIZE
 from cdf.exceptions import BotifyQueryException
 from cdf.core.metadata.dataformat import assemble_data_format
 
@@ -326,7 +327,7 @@ class TestAggregationTransformation(QueryTransformationTestCase):
             'queryagg_00': {
                 'terms': {
                     'field': 'http_code',
-                    'size': 50,
+                    'size': DISTINCT_AGG_BUCKET_SIZE,
                     'order': {'_term': 'asc'}
                 },
                 'aggs': {
@@ -393,10 +394,18 @@ class TestAggregationTransformation(QueryTransformationTestCase):
 
         expected_agg = {
             'queryagg_00': {
-                'terms': {'field': 'field1', 'size': 50, 'order': {'_term': 'asc'}},
+                'terms': {
+                    'field': 'field1',
+                    'size': DISTINCT_AGG_BUCKET_SIZE,
+                    'order': {'_term': 'asc'}
+                },
                 'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}},
             'queryagg_01': {
-                'terms': {'field': 'field2', 'size': 50, 'order': {'_term': 'asc'}},
+                'terms': {
+                    'field': 'field2',
+                    'size': DISTINCT_AGG_BUCKET_SIZE,
+                    'order': {'_term': 'asc'}
+                },
                 'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}}
         }
 

@@ -2,6 +2,9 @@ from enum import Enum
 
 MGET_CHUNKS_SIZE = 1000
 
+# Default bucket size value for distinct field aggregation
+DISTINCT_AGG_BUCKET_SIZE = 100
+
 # Basic name prefix for top-level aggregations in translated ES query
 QUERY_AGG = 'queryagg'
 
