@@ -1,6 +1,8 @@
 import unittest
 import mock
 import httpretty
+import boto
+from moto import mock_s3
 
 from cdf.exceptions import ApiError, ApiFormatError
 from cdf.core.features import Feature
@@ -17,6 +19,7 @@ from cdf.tasks.insights import (
     get_query_agg_result,
     compute_insight_value,
     compute_insight_values,
+    compute_insights,
     get_feature_options
 )
 
@@ -220,6 +223,28 @@ class TestComputeInsightValues(unittest.TestCase):
         ]
 
         self.assertEqual(expected_calls, compute_insight_value_mock.mock_calls)
+
+
+class TestComputeInsights(unittest.TestCase):
+    @mock_s3
+    @mock.patch("cdf.tasks.insights.compute_insight_values", autospec=True)
+    def test_nominal_case(self, compute_insight_values_mock):
+        crawls = {"1001": {}, "2008": {}}  # crawl ids are strings
+        es_location = "foo"
+        es_index = "bar"
+        es_doc_type = "baz"
+        s3_uri = "s3://test_bucket"
+        s3 = boto.connect_s3()
+        s3.create_bucket('test_bucket')
+
+        actual_result = compute_insights(crawls, es_location, es_index, es_doc_type, s3_uri)
+        compute_insight_values_mock.assert_called_once_with(
+            {1001: {}, 2008: {}},  # crawl ids are integers
+            es_location,
+            es_index,
+            es_doc_type)
+        expected_result = "s3://test_bucket/precomputation/insights.json"
+        self.assertEqual(expected_result, actual_result)
 
 
 @mock.patch("cdf.tasks.insights.get_botify_api_token", autospec=True)
