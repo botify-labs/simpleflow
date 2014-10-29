@@ -213,6 +213,8 @@ def compute_quantiles(urlid_stream,
     result = []
     quantile_generator = split_stream(inlink_count, len(inlink_count), nb_quantiles)
     for quantile_index, urlids in enumerate(quantile_generator):
+        # quantile starts from 1
+        quantile_index += 1
         for urlid, nb_follow_inlinks in urlids:
             result.append((urlid, quantile_index, nb_follow_inlinks))
 
@@ -234,11 +236,11 @@ def compute_percentile_stats(percentile_stream):
     """
     stats = {}
     for url_id, pid, metric_value in percentile_stream:
-        index = pid
+        index = pid - 1
         if index not in stats:
             # percentile_id starts from 1
-            stats[index] = PercentileStats.new_empty(index+1)
-        stat = stats[pid]
+            stats[index] = PercentileStats.new_empty(pid)
+        stat = stats[index]
         stat.merge(metric_value)
 
     # in-memory operations since at most 100 percentiles

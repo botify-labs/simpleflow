@@ -253,6 +253,7 @@ class TestMakeLinksToNonStrategicFile(unittest.TestCase):
         ]
         self.assertEqual(expected_stream, list(actual_stream))
 
+
 class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
@@ -511,12 +512,12 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
             tmp_dir=self.tmp_dir
         )
         expected_stream = [
-            [1, 5, 10],
-            [2, 1, 2],
-            [3, 2, 5],
-            [4, 3, 6],
-            [5, 0, 2],
-            [6, 4, 9]
+            [1, 6, 10],
+            [2, 2, 2],
+            [3, 3, 5],
+            [4, 4, 6],
+            [5, 1, 2],
+            [6, 5, 9]
         ]
         self.assertEqual(expected_stream, list(actual_stream))
 
