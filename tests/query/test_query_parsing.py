@@ -1,6 +1,7 @@
 import unittest
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.query.query_parsing import QueryParser
+from cdf.query.constants import DISTINCT_AGG_BUCKET_SIZE
 from cdf.core.metadata.constants import FIELD_RIGHTS
 from cdf.exceptions import BotifyQueryException
 
@@ -206,7 +207,7 @@ class TestAggregationParsing(ParsingTestCase):
         self.assertEquals(
             parsed.named_aggs[0].transform(),
             {'terms': {
-                'field': 'http_code', 'size': 100,
+                'field': 'http_code', 'size': DISTINCT_AGG_BUCKET_SIZE,
                 'order': {'_term': 'asc'}},
              'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}}
         )
@@ -230,7 +231,7 @@ class TestAggregationParsing(ParsingTestCase):
             {
                 'terms': {
                     'field': 'host',
-                    'size': 100,
+                    'size': DISTINCT_AGG_BUCKET_SIZE,
                     'order': {'_term': 'asc'}
                 },
                 'aggs': {
@@ -260,14 +261,14 @@ class TestAggregationParsing(ParsingTestCase):
             {
                 'terms': {
                     'field': 'http_code',
-                    'size': 100,
+                    'size': DISTINCT_AGG_BUCKET_SIZE,
                     'order': {'_term': 'asc'}
                 },
                 'aggs': {
                     'subagg': {
                         'terms': {
                             'field': 'depth',
-                            'size': 100,
+                            'size': DISTINCT_AGG_BUCKET_SIZE,
                             'order': {'_term': 'asc'}
                         },
                         'aggs': {
