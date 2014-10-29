@@ -714,7 +714,7 @@ class DistinctOp(GroupAggOp):
         """Init a distinct group aggregator
         """
         self.field = content['field']
-        self.size = content.get('size', 50)
+        self.size = content.get('size', 100)
         self.valid_fields = agg_fields['categorical']
 
     def transform(self):

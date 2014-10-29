@@ -326,7 +326,7 @@ class TestAggregationTransformation(QueryTransformationTestCase):
             'queryagg_00': {
                 'terms': {
                     'field': 'http_code',
-                    'size': 50,
+                    'size': 100,
                     'order': {'_term': 'asc'}
                 },
                 'aggs': {
@@ -393,10 +393,10 @@ class TestAggregationTransformation(QueryTransformationTestCase):
 
         expected_agg = {
             'queryagg_00': {
-                'terms': {'field': 'field1', 'size': 50, 'order': {'_term': 'asc'}},
+                'terms': {'field': 'field1', 'size': 100, 'order': {'_term': 'asc'}},
                 'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}},
             'queryagg_01': {
-                'terms': {'field': 'field2', 'size': 50, 'order': {'_term': 'asc'}},
+                'terms': {'field': 'field2', 'size': 100, 'order': {'_term': 'asc'}},
                 'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}}
         }
 

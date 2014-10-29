@@ -206,7 +206,7 @@ class TestAggregationParsing(ParsingTestCase):
         self.assertEquals(
             parsed.named_aggs[0].transform(),
             {'terms': {
-                'field': 'http_code', 'size': 50,
+                'field': 'http_code', 'size': 100,
                 'order': {'_term': 'asc'}},
              'aggs': {'metricagg_00': {'value_count': {'field': 'id'}}}}
         )
@@ -230,7 +230,7 @@ class TestAggregationParsing(ParsingTestCase):
             {
                 'terms': {
                     'field': 'host',
-                    'size': 50,
+                    'size': 100,
                     'order': {'_term': 'asc'}
                 },
                 'aggs': {
@@ -260,14 +260,14 @@ class TestAggregationParsing(ParsingTestCase):
             {
                 'terms': {
                     'field': 'http_code',
-                    'size': 50,
+                    'size': 100,
                     'order': {'_term': 'asc'}
                 },
                 'aggs': {
                     'subagg': {
                         'terms': {
                             'field': 'depth',
-                            'size': 50,
+                            'size': 100,
                             'order': {'_term': 'asc'}
                         },
                         'aggs': {
