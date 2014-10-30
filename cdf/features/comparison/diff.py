@@ -84,7 +84,7 @@ def compute_quantitative_diff(ref_value, new_value):
     """Calculate quantitative diff
 
     The difference is always calculated by:
-        `ref_value` - `new_value`
+        `new_value` - `ref_value`
 
     :param ref_value: the previous(reference) value
     :param new_value: the current value
@@ -92,7 +92,7 @@ def compute_quantitative_diff(ref_value, new_value):
     """
     if ref_value is None or new_value is None:
         return None
-    return ref_value - new_value
+    return new_value - ref_value
 
 
 def get_diff_strategy(data_format):

@@ -65,7 +65,7 @@ class TestDocumentDiff(unittest.TestCase):
         diff_result = document_diff(
             ref_doc, new_doc, diff_strategy=self.TEST_DIFF_STRATEGY)
 
-        expected = {'a': {'quantitative': -2}}
+        expected = {'a': {'quantitative': 125 - 123}}
         self.assertEqual(diff_result, expected)
 
     def test_quantitative_field_missing(self):
