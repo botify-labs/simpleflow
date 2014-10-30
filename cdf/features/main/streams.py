@@ -435,5 +435,4 @@ class StrategicUrlStreamDef(StreamDefBase):
 
             reasons = decode_reason_mask(mask)
             for reason in Reasons:
-                if reason in reasons:
-                    reason_field[reason.name] = True
+                reason_field[reason.name] = reason in reasons
