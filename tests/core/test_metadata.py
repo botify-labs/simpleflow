@@ -232,6 +232,7 @@ class TestDiffMapping(unittest.TestCase):
             'group': 'important',
             'some_other_things': 12345,
             'settings': {
+                'other_setting',
                 DIFF_QUALITATIVE
             }
         },
@@ -240,6 +241,7 @@ class TestDiffMapping(unittest.TestCase):
             'verbose_name': 'bbbb',
             'some_other_things': 12345,
             'settings': {
+                'other_setting',
                 DIFF_QUANTITATIVE
             }
         },
@@ -259,6 +261,9 @@ class TestDiffMapping(unittest.TestCase):
                 'type': 'integer',
                 'some_other_things': 12345,
                 'verbose_name': 'Diff bbbb',
+                'settings': {
+                    'other_setting'
+                }
             }
         }
         self.assertEqual(result, expected)
@@ -280,6 +285,9 @@ class TestDiffMapping(unittest.TestCase):
             'type': 'integer',
             'some_other_things': 12345,
             'verbose_name': 'Diff bbbb',
+            'settings': {
+                'other_setting'
+            }
         }
         self.assertEqual(res, expected)
 

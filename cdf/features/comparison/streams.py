@@ -1,6 +1,6 @@
 import copy
 
-from cdf.core.metadata.constants import FIELD_RIGHTS
+from cdf.core.metadata.constants import FIELD_RIGHTS, RENDERING
 from cdf.metadata.url.url_metadata import (
     BOOLEAN_TYPE,  STRING_TYPE,
     DIFF_QUANTITATIVE, DIFF_QUALITATIVE,
@@ -55,11 +55,15 @@ def _transform_diff_config(config, diff_kind):
     if diff_kind == DIFF_QUANTITATIVE:
         diff_config = copy.deepcopy(config)
 
-        # remove `settings`, diff field need new settings
-        origin_settings = diff_config.pop('settings')
+        # remove diff related `settings`
+        # keep all others
+        settings = diff_config.get('settings', {})
+        settings.discard(DIFF_QUALITATIVE)
+        settings.discard(DIFF_QUANTITATIVE)
+        # do not leave empty settings
+        if len(settings) == 0:
+            diff_config.pop('settings')
 
-        if ES_DOC_VALUE in origin_settings:
-            diff_config['settings'] = {ES_DOC_VALUE}
     elif diff_kind == DIFF_QUALITATIVE:
         # for qualitative diff
         #   - change type to STRING_TYPE
