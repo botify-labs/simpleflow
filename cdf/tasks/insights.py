@@ -132,7 +132,8 @@ def compute_insights(crawls,
                      force_fetch=False):
     """A task to compute the insights and push their values to s3
     as a json file.
-    :param crawls: a dict crawl_id -> feature options
+    :param crawls: a dict crawl_id -> feature options.
+                   crawl ids can be either integers or strings
     :type crawls: dict
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
@@ -153,6 +154,8 @@ def compute_insights(crawls,
     :type force_fetch: bool
     :returns: str - the uri of the generated json document
     """
+    #make sure crawl ids are integers (cf. https://github.com/sem-io/botify-cdf/issues/811)
+    crawls = {int(crawl_id): feature_options for crawl_id, feature_options in crawls.iteritems()}
     result = compute_insight_values(crawls, es_location, es_index, es_doc_type)
 
     destination_uri = "{}/precomputation/insights.json".format(s3_uri)
