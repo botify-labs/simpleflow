@@ -326,7 +326,10 @@ def get_misc_outlinks_insights():
             "outlinks_not_strategic",
             "Strategic URLs with Outlinks to non Strategic URLs",
             PositiveTrend.DOWN,
-            GtFilter(field, 0),
+            AndFilter([
+                EqFilter("strategic.is_strategic", True),
+                GtFilter(field, 0)
+            ]),
             additional_fields=[field],
             sort_by=DescendingSort(field)
         )
