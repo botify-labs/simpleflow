@@ -81,6 +81,41 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
         ]
         self.assertEqual(expected_result, list(actual_result))
 
+    def test_multiple_lines_per_urlid(self):
+        #sometimes follow links are split for a given urlid are split
+        #on multiple lines in InlinksCountersStreamDef.
+        #For instance if some inlinks have "prev" property
+        #and some others not,
+        #the mask for the former links will be "32",
+        #and the mask for the latter links will be "0"
+        inlinks_count_stream = iter([
+            (1, ["follow"], 7, 7),
+            (1, ["follow"], 3, 3),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+            (4, ["follow"], 2, 2),
+            (4, ["follow"], 4, 4),
+            (6, ["follow"], 8, 8)
+        ])
+
+        inredirections_stream = iter([])
+
+        actual_result = generate_follow_inlinks_stream(
+            self.urlids_stream,
+            inlinks_count_stream,
+            inredirections_stream,
+            self.max_crawled_urlid
+        )
+        expected_result = [
+            (1, 10),
+            (2, 2),
+            (3, 1),
+            (4, 6),
+            (5, 0),
+            (6, 8)
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
     def test_all_redirections_case(self):
         inlinks_count_stream = iter([
         ])
