@@ -117,7 +117,7 @@ def generate_follow_inlinks_stream(urlid_stream,
     This function transforms InlinksCountersStreamDef which does not exactly
     fit our needs.
     It removes nofollow urls and insert elements for all crawled urlids.
-    It generates a stream (nb follow links, urlid)
+    It generates a stream (urlid, nb follow links)
     :param urlid: the stream of urlids (based on IdStreamDef)
     :type urlid: iterator
     :param inlinks_counter_stream: the input stream
