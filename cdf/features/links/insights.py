@@ -75,7 +75,7 @@ def get_outlinks_sum_insights():
             "outlinks_internal_sum_follow",
             "Total Number of Internal Follow Outlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=SumAggregation("inlinks_internal.nb.follow.unique"),
+            metric_agg=SumAggregation("outlinks_internal.nb.follow.unique"),
             unit=RENDERING.LINK
         ),
         Insight(
@@ -89,7 +89,7 @@ def get_outlinks_sum_insights():
             "outlinks_internal_sum_nofollow",
             "Total Number of Internal Nofollow Outlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=SumAggregation("inlinks_internal.nb.nofollow.unique"),
+            metric_agg=SumAggregation("outlinks_internal.nb.nofollow.unique"),
             unit=RENDERING.LINK
         ),
         Insight(
