@@ -118,7 +118,7 @@ def get_inlinks_range_insights():
     return [
         Insight(
             "inlinks_follow_1",
-            "URLs 1 Follow Inlink",
+            "URLs with 1 Follow Inlink",
             PositiveTrend.DOWN,
             EqFilter(field, 1),
             additional_fields=[field],
