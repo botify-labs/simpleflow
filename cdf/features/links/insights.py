@@ -20,7 +20,7 @@ def get_average_inlinks_insights():
     return [
         Insight(
             "inlinks_avg",
-            "Average Inlinks",
+            "Average Inlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("inlinks_internal.nb.unique"),
             type=FLOAT_TYPE,
@@ -28,7 +28,7 @@ def get_average_inlinks_insights():
         ),
         Insight(
             "inlinks_avg_follow",
-            "Average Follow Inlinks",
+            "Average Follow Inlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("inlinks_internal.nb.follow.unique"),
             type=FLOAT_TYPE,
@@ -224,7 +224,7 @@ def get_average_outlinks_insights():
     return [
         Insight(
             "outlinks_avg",
-            "Average Internal Outlinks",
+            "Average Internal Outlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("outlinks_internal.nb.unique"),
             type=FLOAT_TYPE,
@@ -232,7 +232,7 @@ def get_average_outlinks_insights():
         ),
         Insight(
             "outlinks_avg_follow",
-            "Average Internal Follow Outlinks",
+            "Average Internal Follow Outlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("outlinks_internal.nb.follow.unique"),
             type=FLOAT_TYPE,
