@@ -258,6 +258,9 @@ class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
 
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
     @mock_s3
     def test_nominal_case(self):
         s3 = boto.connect_s3()
