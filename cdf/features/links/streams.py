@@ -596,7 +596,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
     URL_DOCUMENT_MAPPING = {
         # incoming links, must be internal
         "inlinks_internal.nb.total": {
-            "verbose_name": "Number of Internal Incoming Links",
+            "verbose_name": "Number of Internal Inlinks",
             "type": INT_TYPE,
             "order": 1,
             "settings": {
@@ -606,7 +606,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             }
         },
         "inlinks_internal.nb.unique": {
-            "verbose_name": "Unique Number of Internal Incoming Links",
+            "verbose_name": "Unique Number of Internal Inlinks",
             "type": INT_TYPE,
             "order": 2,
             "settings": {
@@ -616,7 +616,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             }
         },
         "inlinks_internal.nb.follow.unique": {
-            "verbose_name": "Unique Number of Follow Internal Incoming Links",
+            "verbose_name": "Unique Number of Follow Internal Inlinks",
             "type": INT_TYPE,
             "order": 4,
             "settings": {
@@ -626,7 +626,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             }
         },
         "inlinks_internal.nb.follow.total": {
-            "verbose_name": "Number of Internal Incoming Follow Links",
+            "verbose_name": "Number of Internal Follow Inlinks",
             "type": INT_TYPE,
             "order": 3,
             "settings": {
@@ -636,7 +636,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             }
         },
         "inlinks_internal.nb.nofollow.unique": {
-            "verbose_name": "Unique Number of NoFollow Internal Incoming Links",
+            "verbose_name": "Unique Number of NoFollow Internal Inlinks",
             "type": INT_TYPE,
             "order": 6,
             "settings": {
@@ -648,7 +648,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             }
         },
         "inlinks_internal.nb.nofollow.total": {
-            "verbose_name": "Number of Internal Incoming NoFollow Links",
+            "verbose_name": "Number of Internal NoFollow Inlinks",
             "group": GROUPS.inlinks_nofollow.name,
             "order": 5,
             "type": INT_TYPE,
@@ -1073,7 +1073,7 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
         # erroneous outgoing internal links
         "outlinks_errors.non_strategic.nb": {
             "type": INT_TYPE,
-            "verbose_name": "Number of error links to non strategic urls.",
+            "verbose_name": "Number of error links to not strategic urls.",
             "order": 101,
             "settings": {
                 ES_DOC_VALUE,
@@ -1085,7 +1085,7 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
         },
         "outlinks_errors.non_strategic.urls": {
             "type": INT_TYPE,
-            "verbose_name": "Sample of error links to non strategic urls.",
+            "verbose_name": "Sample of error links to not strategic urls.",
             "order": 102,
             "settings": {
                 ES_NO_INDEX,

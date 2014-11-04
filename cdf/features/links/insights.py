@@ -20,7 +20,7 @@ def get_average_inlinks_insights():
     return [
         Insight(
             "inlinks_avg",
-            "Average Inlinks",
+            "Average Inlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("inlinks_internal.nb.unique"),
             type=FLOAT_TYPE,
@@ -28,7 +28,7 @@ def get_average_inlinks_insights():
         ),
         Insight(
             "inlinks_avg_follow",
-            "Average Follow Inlinks",
+            "Average Follow Inlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("inlinks_internal.nb.follow.unique"),
             type=FLOAT_TYPE,
@@ -118,7 +118,7 @@ def get_inlinks_range_insights():
     return [
         Insight(
             "inlinks_follow_1",
-            "URLs 1 Follow Inlink",
+            "URLs with 1 Follow Inlink",
             PositiveTrend.DOWN,
             EqFilter(field, 1),
             additional_fields=[field],
@@ -176,7 +176,7 @@ def get_misc_inlinks_insights():
     result.append(
         Insight(
             "inlinks_not_strategic_follow",
-            "Non Strategic URLs with Follow Inlinks",
+            "Not Strategic URLs with Follow Inlinks",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter("strategic.is_strategic", False),
@@ -224,7 +224,7 @@ def get_average_outlinks_insights():
     return [
         Insight(
             "outlinks_avg",
-            "Average Internal Outlinks",
+            "Average Internal Outlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("outlinks_internal.nb.unique"),
             type=FLOAT_TYPE,
@@ -232,7 +232,7 @@ def get_average_outlinks_insights():
         ),
         Insight(
             "outlinks_avg_follow",
-            "Average Internal Follow Outlinks",
+            "Average Internal Follow Outlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation("outlinks_internal.nb.follow.unique"),
             type=FLOAT_TYPE,
@@ -324,7 +324,7 @@ def get_misc_outlinks_insights():
     result.append(
         Insight(
             "outlinks_not_strategic",
-            "Strategic URLs with Outlinks to non Strategic URLs",
+            "Strategic URLs with Outlinks to not Strategic URLs",
             PositiveTrend.DOWN,
             AndFilter([
                 EqFilter("strategic.is_strategic", True),

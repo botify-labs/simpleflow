@@ -74,7 +74,7 @@ def get_misc_sitemap_insights():
         ),
         Insight(
             "sitemaps_1_follow_inlink",
-            "URLs in Sitemap with only 1 Follow Link",
+            "URLs in Sitemap with only 1 Follow Inlink",
             PositiveTrend.DOWN,
             AndFilter([
                 EqFilter("inlinks_internal.nb.follow.unique", 1),
@@ -83,7 +83,7 @@ def get_misc_sitemap_insights():
         ),
         Insight(
             "sitemaps_not_strategic_outlink",
-            "URLs in Sitemap with a non Strategic Outlink",
+            "URLs in Sitemap with a not Strategic Outlink",
             PositiveTrend.DOWN,
             AndFilter([
                 ExistFilter("outlinks_errors.non_strategic.urls_exists"),

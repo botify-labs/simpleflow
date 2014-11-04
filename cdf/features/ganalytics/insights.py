@@ -41,7 +41,7 @@ def get_ganalytics_main_metric_insights(medium, source):
     return [
         Insight(
             "{}_visits_nb_avg".format(name_prefix),
-            "Average Visits by Active Page",
+            "Average Visits by Active URL",
             PositiveTrend.UNKNOWN,
             GtFilter(visit_field, 0),
             metric_agg=AvgAggregation(visit_field),
@@ -61,7 +61,7 @@ def get_ganalytics_main_metric_insights(medium, source):
         ),
         Insight(
             "{}_visits_ko_strategic_1_follow_inlink".format(name_prefix),
-            "Strategic Not Active URLs with 1 Follow Link",
+            "Strategic Not Active URLs with 1 Follow Inlink",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(visit_field, 0),
