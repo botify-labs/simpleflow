@@ -112,7 +112,7 @@ def get_strategic_urls_insights():
         ),
         Insight(
             "strategic_0",
-            "Non Strategic URLs",
+            "Not Strategic URLs",
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", False)
         )

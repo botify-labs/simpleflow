@@ -1073,7 +1073,7 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
         # erroneous outgoing internal links
         "outlinks_errors.non_strategic.nb": {
             "type": INT_TYPE,
-            "verbose_name": "Number of error links to non strategic urls.",
+            "verbose_name": "Number of error links to not strategic urls.",
             "order": 101,
             "settings": {
                 ES_DOC_VALUE,
@@ -1085,7 +1085,7 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
         },
         "outlinks_errors.non_strategic.urls": {
             "type": INT_TYPE,
-            "verbose_name": "Sample of error links to non strategic urls.",
+            "verbose_name": "Sample of error links to not strategic urls.",
             "order": 102,
             "settings": {
                 ES_NO_INDEX,
