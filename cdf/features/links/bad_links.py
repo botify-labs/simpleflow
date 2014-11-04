@@ -25,7 +25,7 @@ def get_bad_links(stream_infos, stream_outlinks):
     bad_code = {}
     for info in stream_infos:
         http_code = info[http_code_idx]
-        if (http_code >= 300):
+        if http_code >= 300:
             bad_code[info[url_id_idx]] = http_code
 
     # Iterator over outlinks and extract all normal links whose destination
@@ -52,6 +52,7 @@ def get_links_to_non_strategic_urls(stream_strategic, stream_outlinks):
     dest_url_idx = OutlinksStreamDef.field_idx('dst_url_id')
     src_url_idx = OutlinksStreamDef.field_idx('id')
     link_type_idx = OutlinksStreamDef.field_idx('link_type')
+    follow_idx = OutlinksStreamDef.field_idx('follow')
 
     # Find all non strategic url ids
     non_strategic_urlids = set()
@@ -65,8 +66,9 @@ def get_links_to_non_strategic_urls(stream_strategic, stream_outlinks):
     for outlink in stream_outlinks:
         dest = outlink[dest_url_idx]
         link_type = outlink[link_type_idx]
+        is_follow = 'follow' in outlink[follow_idx]
         if link_type == 'a' and dest in non_strategic_urlids:
-            yield (outlink[src_url_idx], dest)
+            yield (outlink[src_url_idx], 1 if is_follow else 0, dest)
 
 
 def get_bad_link_counters(stream_bad_links):

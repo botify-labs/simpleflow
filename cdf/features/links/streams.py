@@ -1066,15 +1066,28 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
     FILE = 'url_non_strategic_links'
     HEADERS = (
         ('id', int),
+        ('follow', _raw_to_bool),
         ('dst_url_id', int)
     )
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
     URL_DOCUMENT_MAPPING = {
         # erroneous outgoing internal links
-        "outlinks_errors.non_strategic.nb": {
+        "outlinks_errors.non_strategic.nb.follow.unique": {
             "type": INT_TYPE,
             "verbose_name": "Number of error links to not strategic urls.",
             "order": 101,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
+            }
+        },
+        "outlinks_errors.non_strategic.nb.follow.total": {
+            "type": INT_TYPE,
+            "verbose_name": "Number of error links to not strategic urls.",
+            "order": 102,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
