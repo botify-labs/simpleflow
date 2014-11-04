@@ -358,6 +358,7 @@ class TestDomainLinkCounts(unittest.TestCase):
                 [3, "a", 0, -1, "B"],
                 [4, "a", 0, -1, "C"],
                 [5, "a", 1, -1, "A"],
+                [5, "a", 1, -1, "A"],
                 [6, "a", 0, -1, "A"],
                 [7, "a", 0, -1, "A"],
                 # url 8 has 2 follow to A
@@ -372,14 +373,16 @@ class TestDomainLinkCounts(unittest.TestCase):
     def test_link_counts(self):
         result = compute_domain_link_counts(self.groups).to_dict()
         expected_follow = 8
-        expected_nofollow = 2
+        expected_nofollow = 3
         self.assertEqual(result['follow_links'], expected_follow)
         self.assertEqual(result['nofollow_links'], expected_nofollow)
 
     def test_unique_link_counts(self):
         result = compute_domain_link_counts(self.groups).to_dict()
-        expected_unique_follow = 7  #FIXME
+        expected_unique_follow = 7
         self.assertEqual(result['unique_follow_links'], expected_unique_follow)
+        expected_unique_nofollow = 2
+        self.assertEqual(result['unique_nofollow_links'], expected_unique_nofollow)
 
     def test_domain_name(self):
         result = compute_domain_link_counts(self.groups).to_dict()
