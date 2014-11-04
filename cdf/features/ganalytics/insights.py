@@ -61,7 +61,7 @@ def get_ganalytics_main_metric_insights(medium, source):
         ),
         Insight(
             "{}_visits_ko_strategic_1_follow_inlink".format(name_prefix),
-            "Strategic Not Active URLs with 1 Follow Link",
+            "Strategic Not Active URLs with 1 Follow Inlink",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(visit_field, 0),

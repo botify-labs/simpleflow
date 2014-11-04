@@ -74,7 +74,7 @@ def get_misc_sitemap_insights():
         ),
         Insight(
             "sitemaps_1_follow_inlink",
-            "URLs in Sitemap with only 1 Follow Link",
+            "URLs in Sitemap with only 1 Follow Inlink",
             PositiveTrend.DOWN,
             AndFilter([
                 EqFilter("inlinks_internal.nb.follow.unique", 1),
