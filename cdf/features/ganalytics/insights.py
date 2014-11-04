@@ -41,7 +41,7 @@ def get_ganalytics_main_metric_insights(medium, source):
     return [
         Insight(
             "{}_visits_nb_avg".format(name_prefix),
-            "Average Visits by Active Page",
+            "Average Visits by Active URL",
             PositiveTrend.UNKNOWN,
             GtFilter(visit_field, 0),
             metric_agg=AvgAggregation(visit_field),
