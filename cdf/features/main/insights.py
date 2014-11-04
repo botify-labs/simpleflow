@@ -163,31 +163,31 @@ def get_speed_insights():
     return [
         Insight(
             "speed_fast",
-            "Fast URLs",
+            "Fast URLs (<500 ms)",
             PositiveTrend.UP,
             LtFilter(field, 500)
         ),
         Insight(
             "speed_medium",
-            "Medium URLs",
+            "Medium URLs (500 ms < 1 s)",
             PositiveTrend.DOWN,
             BetweenFilter(field, [500, 999])
         ),
         Insight(
             "speed_slow",
-            "Slow URLs",
+            "Slow URLs (1 s < 2 s)",
             PositiveTrend.DOWN,
             BetweenFilter(field, [1000, 1999])
         ),
         Insight(
             "speed_slowest",
-            "Slowest URLs",
+            "Slowest URLs (>2 s)",
             PositiveTrend.DOWN,
             GteFilter(field, 2000)
         ),
         Insight(
             "speed_gt_1s",
-            "Slow URLs > 1s",
+            "Slow URLs (>1s)",
             PositiveTrend.DOWN,
             GteFilter(field, 1000)
         )
@@ -200,7 +200,7 @@ def get_strategic_urls_speed_insights():
     return [
         Insight(
             "speed_fast_strategic",
-            "Fast Strategic URLs",
+            "Fast Strategic URLs (<500 ms)",
             PositiveTrend.UP,
             AndFilter(
                 [
@@ -211,7 +211,7 @@ def get_strategic_urls_speed_insights():
         ),
         Insight(
             "speed_medium_strategic",
-            "Medium Strategic URLs",
+            "Medium Strategic URLs (500 ms < 1 s)",
             PositiveTrend.DOWN,
             AndFilter(
                 [
@@ -222,7 +222,7 @@ def get_strategic_urls_speed_insights():
         ),
         Insight(
             "speed_slow_strategic",
-            "Slow Strategic URLs",
+            "Slow Strategic URLs (1 s < 2 s)",
             PositiveTrend.DOWN,
             AndFilter(
                 [
@@ -233,7 +233,7 @@ def get_strategic_urls_speed_insights():
         ),
         Insight(
             "speed_slowest_strategic",
-            "Slowest Strategic URLs",
+            "Slowest Strategic URLs (>2 s)",
             PositiveTrend.DOWN,
             AndFilter(
                 [
