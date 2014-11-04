@@ -33,13 +33,13 @@ def get_http_code_ok_ko_insights():
     return [
         Insight(
             "code_ok",
-            "Good HTTP Code URLs",
+            "Good HTTP Status Code URLs",
             PositiveTrend.UP,
             get_http_code_is_good_predicate()
         ),
         Insight(
             "code_ko",
-            "Bad HTTP Code URLs",
+            "Bad HTTP Status Code URLs",
             PositiveTrend.DOWN,
             NotFilter(get_http_code_is_good_predicate())
         )

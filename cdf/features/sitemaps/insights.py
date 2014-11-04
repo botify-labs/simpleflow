@@ -65,7 +65,7 @@ def get_misc_sitemap_insights():
     return [
         Insight(
             "sitemaps_bad_http_code",
-            "URLs in Sitemap with a Bad HTTP Code",
+            "URLs in Sitemap with a Bad HTTP Status Code",
             PositiveTrend.DOWN,
             AndFilter([
                 NotFilter(BetweenFilter("http_code", [200, 299])),
