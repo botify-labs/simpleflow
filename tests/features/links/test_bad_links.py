@@ -93,20 +93,22 @@ class TestGetLinkToNonStrategicUrls(unittest.TestCase):
 class TestGetLinkToNonStrategicUrlsCounters(unittest.TestCase):
     def test_nominal_case(self):
         stream_non_strategic_links = iter([
-            (1, 3),
-            (1, 5),
-            (3, 1),
-            (5, 10),
-            (5, 11),
-            (5, 12)
+            (1, 1, 3),
+            (1, 1, 5),
+            (1, 0, 5),  # ignored
+            (1, 0, 5),  # ignored
+            (5, 1, 10),
+            (5, 1, 10),
+            (5, 1, 10),
+            (5, 1, 11),
+            (5, 1, 12)
         ])
 
         actual_result = get_link_to_non_strategic_urls_counters(
             stream_non_strategic_links
         )
         expected_result = [
-            (1, 2),
-            (3, 1),
-            (5, 3)
+            (1, 2, 2),
+            (5, 3, 5)
         ]
         self.assertEqual(expected_result, list(actual_result))

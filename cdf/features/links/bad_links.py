@@ -105,5 +105,17 @@ def get_link_to_non_strategic_urls_counters(stream_non_strategic_links):
     src_url_idx = LinksToNonStrategicStreamDef.field_idx('id')
 
     # Group by source url_id
-    for src_url_id, g in groupby(stream_non_strategic_links, lambda x: x[src_url_idx]):
-        yield (src_url_id, len(list(g)))
+    for src_url_id, g in groupby(
+            stream_non_strategic_links, lambda x: x[src_url_idx]):
+        unique = 0
+        total = 0
+        dests = set()
+        for _, follow, dest in g:
+            if not follow:
+                continue
+            if dest not in dests:
+                unique += 1
+                dests.add(dest)
+            total += 1
+
+        yield (src_url_id, unique, total)
