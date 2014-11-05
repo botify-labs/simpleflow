@@ -341,6 +341,9 @@ def get_canonical_insights():
     """Return miscinsights related to outlinks.
     :returns: list - list of Insight
     """
+    canonical_to_equal = "canonical.to.equal"
+    canonical_to_url = "canonical.to.url"
+    canonical_to_url_exists = "canonical.to.url_exists"
     return [
         Insight(
             "canonical_set",
@@ -348,9 +351,9 @@ def get_canonical_insights():
             PositiveTrend.UNKNOWN,
             AndFilter([
                 get_http_code_is_good_predicate(),
-                ExistFilter("canonical.to.url_exists")
+                ExistFilter(canonical_to_url_exists)
             ]),
-            additional_fields=["canonical.to.url"]
+            additional_fields=[canonical_to_equal, canonical_to_url]
         ),
         Insight(
             "canonical_bad",
@@ -359,14 +362,14 @@ def get_canonical_insights():
             OrFilter([
                 AndFilter([
                     get_http_code_is_good_predicate(),
-                    NotFilter(ExistFilter("canonical.to.url_exists"))
+                    NotFilter(ExistFilter(canonical_to_url_exists))
                 ]),
                 AndFilter([
                     get_http_code_is_good_predicate(),
-                    EqFilter("canonical.to.equal", False)
+                    EqFilter(canonical_to_equal, False)
                 ])
             ]),
-            additional_fields=["canonical.to.url"]
+            additional_fields=[canonical_to_equal, canonical_to_url]
         ),
         Insight(
             "canonical_not_set",
@@ -374,9 +377,9 @@ def get_canonical_insights():
             PositiveTrend.UNKNOWN,
             AndFilter([
                 get_http_code_is_good_predicate(),
-                NotFilter(ExistFilter("canonical.to.url_exists"))
+                NotFilter(ExistFilter(canonical_to_url_exists))
             ]),
-            additional_fields=["canonical.to.url"]
+            additional_fields=[canonical_to_equal, canonical_to_url]
         ),
         Insight(
             "canonical_not_equal",
@@ -384,9 +387,9 @@ def get_canonical_insights():
             PositiveTrend.UNKNOWN,
             AndFilter([
                 get_http_code_is_good_predicate(),
-                EqFilter("canonical.to.equal", False)
+                EqFilter(canonical_to_equal, False)
             ]),
-            additional_fields=["canonical.to.url"]
+            additional_fields=[canonical_to_equal, canonical_to_url]
         ),
         Insight(
             "canonical_equal",
@@ -394,9 +397,9 @@ def get_canonical_insights():
             PositiveTrend.UNKNOWN,
             AndFilter([
                 get_http_code_is_good_predicate(),
-                EqFilter("canonical.to.equal", True)
+                EqFilter(canonical_to_equal, True)
             ]),
-            additional_fields=["canonical.to.url"]
+            additional_fields=[canonical_to_url]
         )
     ]
 
