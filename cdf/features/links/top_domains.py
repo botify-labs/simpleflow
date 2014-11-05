@@ -19,6 +19,7 @@ NOFOLLOW_SAMPLES = 'nofollow_samples'
 DOMAIN = 'domain'
 UNIQUE_FOLLOW_LINKS = 'unique_follow_links'
 FOLLOW_LINKS = 'follow_links'
+UNIQUE_NOFOLLOW_LINKS = 'unique_nofollow_links'
 NOFOLLOW_LINKS = 'nofollow_links'
 
 
@@ -29,6 +30,7 @@ class DomainLinkStats(object):
                  follow,
                  nofollow,
                  follow_unique,
+                 nofollow_unique,
                  sample_follow_links=None,
                  sample_nofollow_links=None):
         """Constructor
@@ -40,6 +42,8 @@ class DomainLinkStats(object):
         :type nofollow: int
         :param follow_unique: the number of unique follow links to the domain
         :type follow_unique: int
+        :param follow_unique: the number of unique nofollow links to the domain
+        :type nofollow_unique: int
         :param sample_follow_links: a list of sample follow link destination
                              (as a list of LinkDestination)
         :param sample_nofollow_links: a list of sample nofollow link destination
@@ -50,6 +54,7 @@ class DomainLinkStats(object):
         self.follow = follow
         self.nofollow = nofollow
         self.follow_unique = follow_unique
+        self.nofollow_unique = nofollow_unique
         self.sample_follow_links = sample_follow_links or []
         self.sample_nofollow_links = sample_nofollow_links or []
 
@@ -82,6 +87,7 @@ class DomainLinkStats(object):
             DOMAIN: self.name,
             UNIQUE_FOLLOW_LINKS: self.follow_unique,
             FOLLOW_LINKS: self.follow,
+            UNIQUE_NOFOLLOW_LINKS: self.nofollow_unique,
             NOFOLLOW_LINKS: self.nofollow,
             FOLLOW_SAMPLES: [
                 sample_link.to_dict() for sample_link in
@@ -393,6 +399,7 @@ def compute_domain_link_counts(grouped_outlinks):
     follow = 0
     nofollow = 0
     follow_unique = 0
+    nofollow_unique = 0
 
     # indices
     id_index = OutlinksRawStreamDef.field_idx("id")
@@ -414,8 +421,8 @@ def compute_domain_link_counts(grouped_outlinks):
             follow_unique += 1
         else:
             nofollow += group_size
-
-    return DomainLinkStats(domain_name, follow, nofollow, follow_unique)
+            nofollow_unique += 1
+    return DomainLinkStats(domain_name, follow, nofollow, follow_unique, nofollow_unique)
 
 
 def compute_link_destination_stats(links, external_url, nb_source_samples):

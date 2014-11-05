@@ -32,6 +32,7 @@ class TestDomainLinkStats(unittest.TestCase):
             follow=5,
             nofollow=3,
             follow_unique=2,
+            nofollow_unique=1,
             sample_follow_links=[
                 LinkDestination("foo.com/1", 1, []),
                 LinkDestination("foo.com/2", 2, [])
@@ -47,6 +48,7 @@ class TestDomainLinkStats(unittest.TestCase):
             "unique_follow_links": 2,
             "follow_links": 5,
             "nofollow_links": 3,
+            "unique_nofollow_links": 1,
             "follow_samples": [
                 #samples are sorted by decreasing unique_links
                 {
@@ -183,12 +185,12 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
             DomainLinkStats(
-                "foo.com", 3, 0, 3,
+                "foo.com", 3, 0, 3, 0,
                 [LinkDestination("foo.com", 3, [0, 3, 4])],
                 []
             ),
             DomainLinkStats(
-                "bar.com", 2, 0, 2,
+                "bar.com", 2, 0, 2, 0,
                 [LinkDestination("bar.com", 2, [0, 4])],
                 []
             )
@@ -225,8 +227,8 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 10
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            DomainLinkStats("foo.com", 2, 0, 2, []),
-            DomainLinkStats("bar.com", 1, 0, 1, [])
+            DomainLinkStats("foo.com", 2, 0, 2, 0, []),
+            DomainLinkStats("bar.com", 1, 0, 1, 0, [])
         ]
         self.assertEqual(expected_result, actual_result)
 
@@ -244,7 +246,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 1
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            DomainLinkStats("bar.foo.com", 2, 0, 2, [])
+            DomainLinkStats("bar.foo.com", 2, 0, 2, 0, [])
         ]
         self.assertEqual(expected_result, actual_result)
 
@@ -276,8 +278,8 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         n = 2
         actual_result = _compute_top_domains(externals, n, self.key)
         expected_result = [
-            DomainLinkStats("foo.com", 4, 0, 3, []),
-            DomainLinkStats("bar.com", 2, 0, 2, [])
+            DomainLinkStats("foo.com", 4, 0, 3, 0, []),
+            DomainLinkStats("bar.com", 2, 0, 2, 0, [])
         ]
         self.assertEqual(expected_result, actual_result)
 
@@ -296,7 +298,7 @@ class TestComputeTopNDomains(unittest.TestCase):
         actual_result = compute_top_full_domains(externals, n)
         expected_result = [
             DomainLinkStats(
-                "foo.com", 3, 0, 3,
+                "foo.com", 3, 0, 3, 0,
                 [
                     LinkDestination("http://foo.com/", 1, [4]),
                     LinkDestination("http://foo.com/bar.html", 1, [0]),
@@ -304,7 +306,7 @@ class TestComputeTopNDomains(unittest.TestCase):
                 ]
             ),
             DomainLinkStats(
-                "bar.com", 2, 0, 2,
+                "bar.com", 2, 0, 2, 0,
                 [
                     LinkDestination("http://bar.com/baz.html", 1, [4]),
                     LinkDestination("http://bar.com/image.jpg", 1, [0])
@@ -328,7 +330,7 @@ class TestComputeTopNSecondLevelDomain(unittest.TestCase):
         actual_result = compute_top_second_level_domains(externals, n)
         expected_result = [
             DomainLinkStats(
-                "foo.com", 4, 0, 4,
+                "foo.com", 4, 0, 4, 0,
                 [
                     LinkDestination("http://foo.com/bar.html", 1, [0]),
                     LinkDestination("http://foo.com/qux.css", 1, [3]),
@@ -337,7 +339,7 @@ class TestComputeTopNSecondLevelDomain(unittest.TestCase):
                 ]
             ),
             DomainLinkStats(
-                "bar.com", 2, 0, 2,
+                "bar.com", 2, 0, 2, 0,
                 [
                     LinkDestination("http://bar.com/image.jpg", 1, [0]),
                     LinkDestination("http://bar.com/baz.html", 1, [4]),
@@ -356,6 +358,7 @@ class TestDomainLinkCounts(unittest.TestCase):
                 [3, "a", 0, -1, "B"],
                 [4, "a", 0, -1, "C"],
                 [5, "a", 1, -1, "A"],
+                [5, "a", 1, -1, "A"],
                 [6, "a", 0, -1, "A"],
                 [7, "a", 0, -1, "A"],
                 # url 8 has 2 follow to A
@@ -370,14 +373,16 @@ class TestDomainLinkCounts(unittest.TestCase):
     def test_link_counts(self):
         result = compute_domain_link_counts(self.groups).to_dict()
         expected_follow = 8
-        expected_nofollow = 2
+        expected_nofollow = 3
         self.assertEqual(result['follow_links'], expected_follow)
         self.assertEqual(result['nofollow_links'], expected_nofollow)
 
     def test_unique_link_counts(self):
         result = compute_domain_link_counts(self.groups).to_dict()
-        expected_unique_follow = 7  #FIXME
+        expected_unique_follow = 7
         self.assertEqual(result['unique_follow_links'], expected_unique_follow)
+        expected_unique_nofollow = 2
+        self.assertEqual(result['unique_nofollow_links'], expected_unique_nofollow)
 
     def test_domain_name(self):
         result = compute_domain_link_counts(self.groups).to_dict()
@@ -469,11 +474,11 @@ class TestSourceSampleUrl(unittest.TestCase):
     def test_harness(self):
         results = [
             DomainLinkStats(
-                '', 0, 0, 0,
+                '', 0, 0, 0, 0,
                 [LinkDestination('', 0, [1, 2, 5])]
             ),
             DomainLinkStats(
-                '', 0, 0, 0,
+                '', 0, 0, 0, 0,
                 [LinkDestination('', 0, [4, 3])]
             )
         ]

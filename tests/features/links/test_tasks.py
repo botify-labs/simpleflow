@@ -369,6 +369,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
                 "follow_links": 3,
                 "nofollow_links": 0,
                 "unique_follow_links": 3,
+                "unique_nofollow_links": 0,
                 "follow_samples": [
                     {"url": "http://foo.com/", "unique_links": 1, "sources": ["url4"]},
                     {"url": "http://foo.com/bar.html", "unique_links": 1, "sources": ["url0"]},
@@ -381,6 +382,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
                 "follow_links": 2,
                 "nofollow_links": 0,
                 "unique_follow_links": 2,
+                "unique_nofollow_links": 0,
                 "follow_samples": [
                     {"url": "http://bar.com/baz.html", "unique_links": 1, "sources": ["url4"]},
                     {"url": "http://bar.com/image.jpg", "unique_links": 1, "sources": ["url0"]}
@@ -392,6 +394,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
                 "follow_links": 1,
                 "nofollow_links": 0,
                 "unique_follow_links": 1,
+                "unique_nofollow_links": 0,
                 "follow_samples": [
                     {"url": "http://bar.foo.com/baz.html", "unique_links": 1, "sources": ["url4"]},
                 ],
@@ -409,6 +412,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
                 "follow_links": 4,
                 "nofollow_links": 0,
                 "unique_follow_links": 4,
+                "unique_nofollow_links": 0,
                 "follow_samples": [
                     {"url": "http://bar.foo.com/baz.html", "unique_links": 1, "sources": ["url4"]},
                     {"url": "http://foo.com/", "unique_links": 1, "sources": ["url4"]},
@@ -422,6 +426,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
                 "follow_links": 2,
                 "nofollow_links": 0,
                 "unique_follow_links": 2,
+                "unique_nofollow_links": 0,
                 "follow_samples": [
                     {"url": "http://bar.com/baz.html", "unique_links": 1, "sources": ["url4"]},
                     {"url": "http://bar.com/image.jpg", "unique_links": 1, "sources": ["url0"]}
