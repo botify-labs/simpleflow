@@ -341,6 +341,7 @@ def get_canonical_insights():
     """Return miscinsights related to outlinks.
     :returns: list - list of Insight
     """
+    canonical_to_equal = "canonical.to.equal"
     return [
         Insight(
             "canonical_set",
@@ -350,7 +351,7 @@ def get_canonical_insights():
                 get_http_code_is_good_predicate(),
                 ExistFilter("canonical.to.url_exists")
             ]),
-            additional_fields=["canonical.to.url"]
+            additional_fields=[canonical_to_equal, "canonical.to.url"]
         ),
         Insight(
             "canonical_bad",
@@ -363,10 +364,10 @@ def get_canonical_insights():
                 ]),
                 AndFilter([
                     get_http_code_is_good_predicate(),
-                    EqFilter("canonical.to.equal", False)
+                    EqFilter(canonical_to_equal, False)
                 ])
             ]),
-            additional_fields=["canonical.to.url"]
+            additional_fields=[canonical_to_equal, "canonical.to.url"]
         ),
         Insight(
             "canonical_not_set",
@@ -376,7 +377,7 @@ def get_canonical_insights():
                 get_http_code_is_good_predicate(),
                 NotFilter(ExistFilter("canonical.to.url_exists"))
             ]),
-            additional_fields=["canonical.to.url"]
+            additional_fields=[canonical_to_equal, "canonical.to.url"]
         ),
         Insight(
             "canonical_not_equal",
@@ -384,9 +385,9 @@ def get_canonical_insights():
             PositiveTrend.UNKNOWN,
             AndFilter([
                 get_http_code_is_good_predicate(),
-                EqFilter("canonical.to.equal", False)
+                EqFilter(canonical_to_equal, False)
             ]),
-            additional_fields=["canonical.to.url"]
+            additional_fields=[canonical_to_equal, "canonical.to.url"]
         ),
         Insight(
             "canonical_equal",
@@ -394,7 +395,7 @@ def get_canonical_insights():
             PositiveTrend.UNKNOWN,
             AndFilter([
                 get_http_code_is_good_predicate(),
-                EqFilter("canonical.to.equal", True)
+                EqFilter(canonical_to_equal, True)
             ]),
             additional_fields=["canonical.to.url"]
         )
