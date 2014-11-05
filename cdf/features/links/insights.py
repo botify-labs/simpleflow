@@ -245,6 +245,8 @@ def get_outlinks_internal_insights():
     """Return insights related to the presence of internal outlinks.
     :returns: list - list of Insight
     """
+    urls_field = "outlinks_internal.urls"
+
     result = []
     field = "outlinks_internal.nb.follow.unique"
     result.append(
@@ -253,7 +255,7 @@ def get_outlinks_internal_insights():
             "URLs with Internal Follow Outlinks",
             PositiveTrend.UNKNOWN,
             GtFilter(field, 0),
-            additional_fields=[field],
+            additional_fields=[field, urls_field],
             sort_by=DescendingSort(field)
         )
     )
@@ -264,7 +266,7 @@ def get_outlinks_internal_insights():
             "URLs with Internal Nofollow Outlinks",
             PositiveTrend.UNKNOWN,
             GtFilter(field, 0),
-            additional_fields=[field],
+            additional_fields=[field, urls_field],
             sort_by=DescendingSort(field)
         )
     )
@@ -315,7 +317,12 @@ def get_misc_outlinks_insights():
             "URLs with Outlinks to non 2xx Status",
             PositiveTrend.DOWN,
             GtFilter(field, 0),
-            additional_fields=[field],
+            additional_fields=[
+                field,
+                "outlinks_errors.3xx.urls",
+                "outlinks_errors.4xx.urls",
+                "outlinks_errors.5xx.urls"
+            ],
             sort_by=DescendingSort(field)
         )
     )
@@ -330,7 +337,7 @@ def get_misc_outlinks_insights():
                 EqFilter("strategic.is_strategic", True),
                 GtFilter(field, 0)
             ]),
-            additional_fields=[field],
+            additional_fields=[field, "outlinks_errors.non_strategic.urls"],
             sort_by=DescendingSort(field)
         )
     )
