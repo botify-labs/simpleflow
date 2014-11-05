@@ -343,6 +343,7 @@ def get_canonical_insights():
     """
     canonical_to_equal = "canonical.to.equal"
     canonical_to_url = "canonical.to.url"
+    canonical_to_url_exists = "canonical.to.url_exists"
     return [
         Insight(
             "canonical_set",
@@ -350,7 +351,7 @@ def get_canonical_insights():
             PositiveTrend.UNKNOWN,
             AndFilter([
                 get_http_code_is_good_predicate(),
-                ExistFilter("canonical.to.url_exists")
+                ExistFilter(canonical_to_url_exists)
             ]),
             additional_fields=[canonical_to_equal, canonical_to_url]
         ),
@@ -361,7 +362,7 @@ def get_canonical_insights():
             OrFilter([
                 AndFilter([
                     get_http_code_is_good_predicate(),
-                    NotFilter(ExistFilter("canonical.to.url_exists"))
+                    NotFilter(ExistFilter(canonical_to_url_exists))
                 ]),
                 AndFilter([
                     get_http_code_is_good_predicate(),
@@ -376,7 +377,7 @@ def get_canonical_insights():
             PositiveTrend.UNKNOWN,
             AndFilter([
                 get_http_code_is_good_predicate(),
-                NotFilter(ExistFilter("canonical.to.url_exists"))
+                NotFilter(ExistFilter(canonical_to_url_exists))
             ]),
             additional_fields=[canonical_to_equal, canonical_to_url]
         ),
