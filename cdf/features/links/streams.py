@@ -889,8 +889,8 @@ class InlinksCountersStreamDef(StreamDefBase):
     HEADERS = (
         ('id', int),
         ('follow', follow_mask),
-        ('score', int),
-        ('score_unique', int),
+        ('count', int),
+        ('count_unique', int),
     )
 
 
