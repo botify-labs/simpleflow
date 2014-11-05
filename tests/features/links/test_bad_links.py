@@ -1,22 +1,19 @@
 # -*- coding:utf-8 -*-
 import unittest
-from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
+from cdf.features.main.reasons import (
+    encode_reason_mask,
+    REASON_HTTP_CODE
+)
 from cdf.features.links.bad_links import (
     get_bad_links,
     get_bad_link_counters,
     get_links_to_non_strategic_urls,
     get_link_to_non_strategic_urls_counters
 )
+from cdf.features.links.helpers.masks import follow_mask
 
 
 class TestBadLink(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_bad_links(self):
         stream_infos = iter((
             [1, 0, '', 1, 12345, 200, 1, 1, 1],
@@ -66,26 +63,29 @@ class TestBadLink(unittest.TestCase):
 
 
 class TestGetLinkToNonStrategicUrls(unittest.TestCase):
-    def test_nominal_case(self):
-        stream_strategic = iter([
+    def setUp(self):
+        self.stream_strategic = iter([
             (1, True, encode_reason_mask()),
             (2, True, encode_reason_mask()),
             (3, False, encode_reason_mask(REASON_HTTP_CODE))
         ])
 
+    def test_harness(self):
         stream_outlinks = iter([
-            (1, 'a', 0, 2),
-            (1, 'a', 0, 3),
-            (2, 'a', 0, 3)
+            (1, 'a', follow_mask(0), 2),  # strategic
+            (1, 'a', follow_mask(0), 3),
+            (1, 'a', follow_mask(0), 3),
+            (1, 'a', follow_mask(4), 3)   # nofollow link
         ])
         actual_result = get_links_to_non_strategic_urls(
-            stream_strategic,
+            self.stream_strategic,
             stream_outlinks
         )
 
         expected_result = [
-            (1, 3),
-            (2, 3)
+            (1, 1, 3),
+            (1, 1, 3),
+            (1, 0, 3),
         ]
         self.assertEqual(expected_result, list(actual_result))
 
@@ -93,20 +93,22 @@ class TestGetLinkToNonStrategicUrls(unittest.TestCase):
 class TestGetLinkToNonStrategicUrlsCounters(unittest.TestCase):
     def test_nominal_case(self):
         stream_non_strategic_links = iter([
-            (1, 3),
-            (1, 5),
-            (3, 1),
-            (5, 10),
-            (5, 11),
-            (5, 12)
+            (1, 1, 3),
+            (1, 1, 5),
+            (1, 0, 5),  # ignored
+            (1, 0, 5),  # ignored
+            (5, 1, 10),
+            (5, 1, 10),
+            (5, 1, 10),
+            (5, 1, 11),
+            (5, 1, 12)
         ])
 
         actual_result = get_link_to_non_strategic_urls_counters(
             stream_non_strategic_links
         )
         expected_result = [
-            (1, 2),
-            (3, 1),
-            (5, 3)
+            (1, 2, 2),
+            (5, 3, 5)
         ]
         self.assertEqual(expected_result, list(actual_result))

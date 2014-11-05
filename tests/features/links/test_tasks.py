@@ -222,7 +222,8 @@ class TestMakeLinksToNonStrategicFile(unittest.TestCase):
         outlinks_stream = iter([
             (1, 'a', 0, 2),
             (1, 'a', 0, 3),
-            (2, 'a', 0, 3)
+            (2, 'a', 0, 3),
+            (2, 'a', 4, 3),
         ])
         OutlinksStreamDef.persist(
             outlinks_stream,
@@ -248,8 +249,9 @@ class TestMakeLinksToNonStrategicFile(unittest.TestCase):
         )
 
         expected_stream = [
-            [1, 3],
-            [2, 3]
+            [1, True, 3],
+            [2, True, 3],
+            [2, False, 3],
         ]
         self.assertEqual(expected_stream, list(actual_stream))
 
@@ -257,6 +259,9 @@ class TestMakeLinksToNonStrategicFile(unittest.TestCase):
 class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
 
     @mock_s3
     def test_nominal_case(self):
@@ -266,12 +271,12 @@ class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
         part_id = 3
 
         non_strategic_links_stream = iter([
-            (1, 3),
-            (1, 5),
-            (3, 1),
-            (5, 10),
-            (5, 11),
-            (5, 12)
+            (1, 1, 3),
+            (1, 1, 5),
+            (3, 1, 1),
+            (5, 1, 10),
+            (5, 1, 11),
+            (5, 1, 12)
         ])
 
         LinksToNonStrategicStreamDef.persist(
@@ -293,12 +298,13 @@ class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
             self.tmp_dir
         )
         expected_stream = [
-            [1, 2],
-            [3, 1],
-            [5, 3]
+            [1, 2, 2],
+            [3, 1, 1],
+            [5, 3, 3]
         ]
 
         self.assertEqual(expected_stream, list(actual_stream))
+
 
 def _mock_es_handler_init(*args, **kwargs):
     mget_responses = {

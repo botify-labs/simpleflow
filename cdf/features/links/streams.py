@@ -1066,27 +1066,15 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
     FILE = 'url_non_strategic_links'
     HEADERS = (
         ('id', int),
+        ('follow', _raw_to_bool),
         ('dst_url_id', int)
     )
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
     URL_DOCUMENT_MAPPING = {
-        # erroneous outgoing internal links
-        "outlinks_errors.non_strategic.nb": {
-            "type": INT_TYPE,
-            "verbose_name": "Number of error links to not strategic urls.",
-            "order": 101,
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL,
-                FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.SELECT,
-                DIFF_QUANTITATIVE
-            }
-        },
         "outlinks_errors.non_strategic.urls": {
             "type": INT_TYPE,
             "verbose_name": "Sample of error links to not strategic urls.",
-            "order": 102,
+            "order": 103,
             "settings": {
                 ES_NO_INDEX,
                 LIST,
@@ -1099,19 +1087,17 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
             "type": "boolean",
             "default_value": None
         },
-
     }
 
     def process_document(self, document, stream_non_strategic_links):
-        _, url_dest_id = stream_non_strategic_links
+        _, follow, url_dest_id = stream_non_strategic_links
 
         errors = document['outlinks_errors']
-
         error_kind = "non_strategic"
-
-        errors[error_kind]['nb'] += 1
         error_urls = errors[error_kind]['urls']
-        if len(error_urls) < 10:
+
+        # capture 10 follow samples
+        if len(error_urls) < 10 and follow:
             error_urls.append(url_dest_id)
 
         errors[error_kind]['urls_exists'] = True
@@ -1121,8 +1107,46 @@ class LinksToNonStrategicCountersStreamDef(StreamDefBase):
     FILE = 'url_non_strategic_links_counters'
     HEADERS = (
         ('id', int),
-        ('score', int)
+        ('follow_unique', int),
+        ('follow_total', int),
     )
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
+    URL_DOCUMENT_MAPPING = {
+        # erroneous outgoing internal links
+        "outlinks_errors.non_strategic.nb.follow.unique": {
+            "type": INT_TYPE,
+            "verbose_name": "Number of unique error links to not strategic urls.",
+            "order": 101,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
+            }
+        },
+        "outlinks_errors.non_strategic.nb.follow.total": {
+            "type": INT_TYPE,
+            "verbose_name": "Number of error links to not strategic urls.",
+            "order": 102,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
+            }
+        }
+    }
+
+    def process_document(self, document, stream_non_strategic_counters):
+        _, unique, total = stream_non_strategic_counters
+
+        errors = document['outlinks_errors']
+        error_kind = "non_strategic"
+        non_strategic = errors[error_kind]
+        non_strategic['nb']['follow']['unique'] = unique
+        non_strategic['nb']['follow']['total'] = total
 
 
 class InlinksPercentilesStreamDef(StreamDefBase):
