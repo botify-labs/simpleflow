@@ -25,11 +25,11 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
 
     def test_nominal_case(self):
         inlinks_count_stream = iter([
-            (1, ["follow"], 10,  10),
+            (1, ["follow"], 10,  9),
             (2, ["follow"], 2, 2),
             (3, ["follow"], 1, 1),
             (4, ["follow"], 6, 6),
-            (6, ["follow"], 8, 8)
+            (6, ["follow"], 8, 7)
         ])
 
         inredirections_stream = iter([
@@ -45,12 +45,12 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             self.max_crawled_urlid
         )
         expected_result = [
-            (1, 10),
+            (1, 9),
             (2, 2),
             (3, 5),
             (4, 6),
             (5, 2),
-            (6, 9)
+            (6, 8)
         ]
         self.assertEqual(expected_result, list(actual_result))
 
