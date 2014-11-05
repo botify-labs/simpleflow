@@ -16,9 +16,13 @@ import logging
 
 from cdf.log import logger
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
-from cdf.features.links.helpers.masks import follow_mask, list_to_mask
+from cdf.features.links.helpers.masks import list_to_mask
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
-from cdf.features.links.streams import InlinksStreamDef, OutlinksStreamDef, BadLinksStreamDef, LinksToNonStrategicStreamDef, InlinksPercentilesStreamDef
+from cdf.features.links.streams import (
+    InlinksStreamDef, OutlinksStreamDef,
+    BadLinksStreamDef, LinksToNonStrategicStreamDef,
+    InlinksPercentilesStreamDef, LinksToNonStrategicCountersStreamDef
+)
 
 
 logger.setLevel(logging.DEBUG)
@@ -290,11 +294,8 @@ class TestOutlinksGeneration(unittest.TestCase):
         document = _next_doc(gen)
         self.assertDictEqual(document[key], expected_2)
 
-    def test_links(self):
-        patterns = [
-            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
-            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
-        ]
+    def test_to_non_strategic_links(self):
+        patterns = self.ids[:2]
 
         links_to_non_strategic_urls = [
             [1, 1, 5],
@@ -311,37 +312,55 @@ class TestOutlinksGeneration(unittest.TestCase):
         ])
 
         expected_1 = {
-            '3xx': {'nb': 0},
-            '4xx': {'nb': 0},
-            '5xx': {'nb': 0},
-            'total_bad_http_codes': 0,
-            'total': 0,
-            'non_strategic': {
-                'nb': {'follow': {'unique': 5, 'total': 5}},
-                'urls': [5, 100, 101, 102, 103],
-                'urls_exists': True
-            }
+            'nb': {'follow': {'unique': 0, 'total': 0}},
+            'urls': [5, 100, 101, 102, 103],
+            'urls_exists': True
         }
         expected_2 = {
-            '3xx': {'nb': 0},
-            '4xx': {'nb': 0},
-            '5xx': {'nb': 0},
-            'total_bad_http_codes': 0,
-            'total': 0,
-            'non_strategic': {
-                'nb': {'follow': {'unique': 0, 'total': 0}}
-            }
+            'nb': {'follow': {'unique': 0, 'total': 0}}
         }
 
         key = 'outlinks_errors'
+        sub_key = 'non_strategic'
 
         # check url1
         document = _next_doc(gen)
-        self.assertDictEqual(document[key], expected_1)
+        self.assertDictEqual(document[key][sub_key], expected_1)
 
         # check url2
         document = _next_doc(gen)
-        self.assertDictEqual(document[key], expected_2)
+        self.assertDictEqual(document[key][sub_key], expected_2)
+
+    def test_non_strategic_link_counter(self):
+        patterns = self.ids[:2]
+
+        links_to_non_strategic_urls = [
+            [1, 4, 8]
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(iter(patterns)),
+            LinksToNonStrategicCountersStreamDef.load_iterator(
+                iter(links_to_non_strategic_urls))
+        ])
+
+        expected_1 = {
+            'nb': {'follow': {'unique': 4, 'total': 8}}
+        }
+        expected_2 = {
+            'nb': {'follow': {'unique': 0, 'total': 0}}
+        }
+
+        key = 'outlinks_errors'
+        sub_key = 'non_strategic'
+
+        # check url1
+        document = _next_doc(gen)
+        self.assertDictEqual(document[key][sub_key], expected_1)
+
+        # check url2
+        document = _next_doc(gen)
+        self.assertDictEqual(document[key][sub_key], expected_2)
 
     def test_inlinks_percentile_id(self):
         patterns = [
@@ -368,7 +387,7 @@ class TestOutlinksGeneration(unittest.TestCase):
         self.assertEqual(document["inlinks_internal"]["percentile"], 5)
 
 
-class TestRedirectsGeneration(unittest.TestCase):
+class TestRedirects(unittest.TestCase):
     def test_redirect_to(self):
         """Test for redirect_to related counters
 
@@ -469,7 +488,7 @@ class TestRedirectsGeneration(unittest.TestCase):
         self.assertEquals(document['redirect']['from'], expected)
 
 
-class TestCanonicalGeneration(unittest.TestCase):
+class TestCanonical(unittest.TestCase):
     def test_canonical_to(self):
         """Test for canonical related counters
 
@@ -596,7 +615,7 @@ class TestCanonicalGeneration(unittest.TestCase):
         self.assertFalse('urls_exists' in canonical_from)
 
 
-class TestBasicInfoGeneration(unittest.TestCase):
+class TestTopAnchors(unittest.TestCase):
     def setUp(self):
         self.patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
