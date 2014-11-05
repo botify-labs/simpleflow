@@ -160,42 +160,49 @@ def get_protocol_insights():
 #speed insights
 def get_speed_insights():
     field = "delay_last_byte"
+    additional_fields = [field]
     return [
         Insight(
             "speed_fast",
             "Fast URLs (<500 ms)",
             PositiveTrend.UP,
-            LtFilter(field, 500)
+            LtFilter(field, 500),
+            additional_fields=additional_fields
         ),
         Insight(
             "speed_medium",
             "Medium URLs (500 ms < 1 s)",
             PositiveTrend.DOWN,
-            BetweenFilter(field, [500, 999])
+            BetweenFilter(field, [500, 999]),
+            additional_fields=additional_fields
         ),
         Insight(
             "speed_slow",
             "Slow URLs (1 s < 2 s)",
             PositiveTrend.DOWN,
-            BetweenFilter(field, [1000, 1999])
+            BetweenFilter(field, [1000, 1999]),
+            additional_fields=additional_fields
         ),
         Insight(
             "speed_slowest",
             "Slowest URLs (>2 s)",
             PositiveTrend.DOWN,
-            GteFilter(field, 2000)
+            GteFilter(field, 2000),
+            additional_fields=additional_fields
         ),
         Insight(
             "speed_gt_1s",
             "Slow URLs (>1s)",
             PositiveTrend.DOWN,
-            GteFilter(field, 1000)
+            GteFilter(field, 1000),
+            additional_fields=additional_fields
         )
     ]
 
 
 def get_strategic_urls_speed_insights():
     field = "delay_last_byte"
+    additional_fields = [field]
     strategic_predicate = EqFilter("strategic.is_strategic", True)
     return [
         Insight(
@@ -207,7 +214,8 @@ def get_strategic_urls_speed_insights():
                     strategic_predicate,
                     LtFilter(field, 500),
                 ]
-            )
+            ),
+            additional_fields=additional_fields
         ),
         Insight(
             "speed_medium_strategic",
@@ -218,7 +226,8 @@ def get_strategic_urls_speed_insights():
                     strategic_predicate,
                     BetweenFilter(field, [500, 999]),
                 ]
-            )
+            ),
+            additional_fields=additional_fields
         ),
         Insight(
             "speed_slow_strategic",
@@ -229,7 +238,8 @@ def get_strategic_urls_speed_insights():
                     strategic_predicate,
                     BetweenFilter(field, [1000, 1999]),
                 ]
-            )
+            ),
+            additional_fields=additional_fields
         ),
         Insight(
             "speed_slowest_strategic",
@@ -240,7 +250,8 @@ def get_strategic_urls_speed_insights():
                     strategic_predicate,
                     GteFilter(field, 2000),
                 ]
-            )
+            ),
+            additional_fields=additional_fields
         ),
     ]
 
