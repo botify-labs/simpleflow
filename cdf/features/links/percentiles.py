@@ -152,7 +152,7 @@ def generate_follow_inlinks_stream(urlid_stream,
         inredirections_counter_stream=(inredirections_counter_stream, urlid_redirections_index)
     )
 
-    nb_links_index = InlinksCountersStreamDef.field_idx("score")
+    nb_links_index = InlinksCountersStreamDef.field_idx("score_unique")
     nb_redirections_index = InredirectCountersStreamDef.field_idx("score")
     for grouped_entries in grouped_stream:
         urlid = grouped_entries[0]
