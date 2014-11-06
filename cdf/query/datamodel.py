@@ -73,8 +73,12 @@ def _data_model_sort_key(elem):
     """A safe sort key function for data model"""
     _, config = elem
     group = config.get('group', '')
-    order = config.get('order', 99999)
-    return group, order
+    #main group should appear first.
+    #Thus its key should be empty
+    if group == "main":
+        group = ""
+    name = config.get('verbose_name', '')
+    return group, name
 
 
 def get_fields(feature_options, remove_private=True, remove_admin=True,

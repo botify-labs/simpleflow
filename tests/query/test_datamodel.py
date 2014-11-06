@@ -6,7 +6,8 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.query.datamodel import (
     get_fields,
     get_groups,
-    _get_field_rights
+    _get_field_rights,
+    _data_model_sort_key
 )
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
@@ -70,6 +71,26 @@ class CustomStreamDef(StreamDefBase):
             }
         }
     }
+
+
+class TestDataModelSortKey(unittest.TestCase):
+    def test_nominal_case(self):
+        elem = (11, {"group": "foo", "order": 10, "verbose_name": "bar"})
+        self.assertEqual(_data_model_sort_key(elem), ("foo", "bar"))
+
+    def test_missing_group(self):
+        elem = (11, {"order": 10, "verbose_name": "bar"})
+        self.assertEqual(_data_model_sort_key(elem), ("", "bar"))
+
+    def test_missing_verbose_name(self):
+        elem = (11, {"group": "foo"})
+        self.assertEqual(_data_model_sort_key(elem), ("foo", ""))
+
+    def test_main_group(self):
+        elem = (11, {"group": "main", "order": 10, "verbose_name": "bar"})
+        #main group should appear first.
+        #Thus its key should be empty
+        self.assertEqual(_data_model_sort_key(elem), ("", "bar"))
 
 
 class FieldsTestCase(unittest.TestCase):
@@ -147,10 +168,10 @@ class FieldsTestCase(unittest.TestCase):
         data_model = [k['value'] for k in data_model]
         # datamodel should be sorted within each field
         expected = [
-            'url',
-            'content_same_urls',
             'content',
-            'delay'
+            'content_same_urls',
+            'url',
+            'delay'  # delay is in an other group
         ]
         self.assertEqual(expected, data_model)
 
