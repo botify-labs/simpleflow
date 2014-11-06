@@ -1,5 +1,6 @@
 from itertools import groupby, ifilter, imap, ifilterfalse
 import heapq
+import tempfile
 from cdf.analysis.urls.utils import get_url_id, get_es_id
 
 from cdf.features.links.helpers.predicates import (
@@ -211,28 +212,36 @@ def filter_invalid_destination_urls(outlinks):
     return ifilter(is_valid, outlinks)
 
 
-def _group_links(link_stream, key):
+def _group_links(link_stream, key, tmp_dir=None):
     """A helper function to group elements of a outlink stream
     according to a generic criterion.
     It returns tuples (key_value, corresponding links)
     :param link_stream: the input outlink stream from OutlinksRawStreamDef
                         (should contains only outlinks,
                         no inlinks, no canonical)
+    :param tmp_dir: the directory where to save temporary files/results.
+                    if None, temp files will be stored in an arbitrary location
+                    (presumably /tmp)
+    :type tmp_dir: str
     :param link_stream: iterable
     """
     #sort links by key function
-    link_stream = external_sort(link_stream, key=key)
+    link_stream = external_sort(link_stream, key=key, tmp_dir=tmp_dir)
     #group by key function
     for key_value, link_group in groupby(link_stream, key=key):
         yield key_value, link_group
 
 
-def count_unique_links(external_outlinks):
+def count_unique_links(external_outlinks, tmp_dir=None):
     """Count the number of unique links in a set of external outlinks.
     i.e. if a link to B occurs twice in page A, it is counted only once.
     :param external_outlinks: the input stream of external outlinks
                               (based on OutlinksRawStreamDef)
     :type external_outlinks: iterable
+    :param tmp_dir: the directory where to save temporary files/results.
+                    if None, temp files will be stored in an arbitrary location
+                    (presumably /tmp)
+    :type tmp_dir: str
     :rtype: int
     """
     #remove duplicate links
@@ -240,17 +249,21 @@ def count_unique_links(external_outlinks):
     external_url_index = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: (x[id_index], x[external_url_index])
     result = 0
-    for _, g in _group_links(external_outlinks, key):
+    for _, g in _group_links(external_outlinks, key, tmp_dir):
         result += 1
     return result
 
 
-def count_unique_follow_links(external_outlinks):
+def count_unique_follow_links(external_outlinks, tmp_dir=None):
     """Count the number of unique follow links in a set of external outlinks.
     i.e. if a link to B occurs twice in page A, it is counted only once.
     :param external_outlinks: the input stream of external outlinks
                               (based on OutlinksRawStreamDef)
     :type external_outlinks: iterable
+    :param tmp_dir: the directory where to save temporary files/results.
+                    if None, temp files will be stored in an arbitrary location
+                    (presumably /tmp)
+    :type tmp_dir: str
     :rtype: int
     """
     bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
@@ -259,10 +272,10 @@ def count_unique_follow_links(external_outlinks):
         lambda x: is_follow_link(x[bitmask_index], is_bitmask=True),
         external_outlinks
     )
-    return count_unique_links(external_follow_outlinks)
+    return count_unique_links(external_follow_outlinks, tmp_dir)
 
 
-def _compute_top_domains(external_outlinks, n, key):
+def _compute_top_domains(external_outlinks, n, key, tmp_dir=None):
     """A helper function to compute the top n domains given a custom criterion.
     For each destination domain the function counts the number of unique follow
     links that points to it and use this number to select the top n domains.
@@ -276,15 +289,19 @@ def _compute_top_domains(external_outlinks, n, key):
     :param key: the function that extracts the domain from an entry from
                 external_outlinks.
     :type key: func
+    :param tmp_dir: the directory where to save temporary files/results.
+                    if None, temp files will be stored in an arbitrary location
+                    (presumably /tmp)
+    :type tmp_dir: str
     :rtype: list
     """
     nb_samples = 100
     heap = []
-    for domain, link_group in _group_links(external_outlinks, key):
-
-        stream_cache = BufferedMarshalStreamCache()
+    for domain, link_group in _group_links(external_outlinks, key, tmp_dir):
+        f = tempfile.NamedTemporaryFile(delete=False, dir=tmp_dir)
+        stream_cache = BufferedMarshalStreamCache(f.name)
         stream_cache.cache(link_group)
-        domain_stats = compute_domain_link_counts((domain, stream_cache.get_stream()))
+        domain_stats = compute_domain_link_counts((domain, stream_cache.get_stream()), tmp_dir)
         nb_unique_follow_links = domain_stats.follow_unique
         if nb_unique_follow_links == 0:
             #we don't want to return domain with 0 occurrences.
@@ -301,7 +318,8 @@ def _compute_top_domains(external_outlinks, n, key):
         if insert_in_heap:
             sample_follow_links, sample_nofollow_links = compute_domain_sample_sets(
                 stream_cache,
-                nb_samples
+                nb_samples,
+                tmp_dir
             )
             domain_stats.sample_follow_links = sample_follow_links
             domain_stats.sample_nofollow_links = sample_nofollow_links
@@ -319,7 +337,7 @@ def _compute_top_domains(external_outlinks, n, key):
     return result
 
 
-def compute_top_full_domains(external_outlinks, n):
+def compute_top_full_domains(external_outlinks, n, tmp_dir=None):
     """A helper function to compute the top n domains.
     For each destination domain the function counts the number of unique follow
     links that points to it and use this number to select the top n domains.
@@ -333,14 +351,18 @@ def compute_top_full_domains(external_outlinks, n):
     :param key: the function that extracts the domain from an entry from
                 external_outlinks.
     :type key: func
+    :param tmp_dir: the directory where to save temporary files/results.
+                    if None, temp files will be stored in an arbitrary location
+                    (presumably /tmp)
+    :type tmp_dir: str
     :rtype: list
     """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_domain(x[external_url_idx])
-    return _compute_top_domains(external_outlinks, n, key)
+    return _compute_top_domains(external_outlinks, n, key, tmp_dir)
 
 
-def compute_top_second_level_domains(external_outlinks, n):
+def compute_top_second_level_domains(external_outlinks, n, tmp_dir=None):
     """A helper function to compute the top n second level domains.
     The method is very similar to "compute_top_n_domains()" but it consider
     "doctissimo.fr" and "forum.doctissimo.fr" as the same domain
@@ -353,20 +375,28 @@ def compute_top_second_level_domains(external_outlinks, n):
     :param key: the function that extracts the domain from an entry from
                 external_outlinks.
     :type key: func
+    :param tmp_dir: the directory where to save temporary files/results.
+                    if None, temp files will be stored in an arbitrary location
+                    (presumably /tmp)
+    :type tmp_dir: str
     :rtype: list
     """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
     key = lambda x: get_second_level_domain(x[external_url_idx])
-    return _compute_top_domains(external_outlinks, n, key)
+    return _compute_top_domains(external_outlinks, n, key, tmp_dir)
 
 
-def compute_domain_sample_sets(stream_cache, nb_samples):
+def compute_domain_sample_sets(stream_cache, nb_samples, tmp_dir=None):
     """Compute full stats out of outlinks of a specific domain
     :param stream_cache: a stream cache for grouped qualified outlinks of a certain domain
         eg: (domain_name, [link1, link2, ...])
     :type stream_cache: AbstractStreamCache
     :param nb_samples: the number of sample links to return
     :type nb_samples: int
+    :param tmp_dir: the directory where to save temporary files/results.
+                    if None, temp files will be stored in an arbitrary location
+                    (presumably /tmp)
+    :type tmp_dir: str
     :return: stats of outlinks that target the domain
     :rtype: dict
     """
@@ -375,15 +405,17 @@ def compute_domain_sample_sets(stream_cache, nb_samples):
     key = lambda x: is_follow_link(x[bitmask_index], is_bitmask=True)
     follow_outlinks = ifilter(key, stream_cache.get_stream())
     sample_follow_links = compute_sample_links(follow_outlinks,
-                                               nb_samples)
+                                               nb_samples,
+                                               tmp_dir)
 
     nofollow_outlinks = ifilterfalse(key, stream_cache.get_stream())
     sample_nofollow_links = compute_sample_links(nofollow_outlinks,
-                                                 nb_samples)
+                                                 nb_samples,
+                                                 tmp_dir)
     return sample_follow_links, sample_nofollow_links
 
 
-def compute_domain_link_counts(grouped_outlinks):
+def compute_domain_link_counts(grouped_outlinks, tmp_dir=None):
     """Given a set of external outlinks that point to the same domain,
     compute various link counts:
         - follow links
@@ -392,6 +424,10 @@ def compute_domain_link_counts(grouped_outlinks):
     :param grouped_outlinks: grouped qualified outlinks of a certain domain
         eg: (domain_name, [link1, link2, ...])
     :type grouped_outlinks: tuple
+    :param tmp_dir: the directory where to save temporary files/results.
+                    if None, temp files will be stored in an arbitrary location
+                    (presumably /tmp)
+    :type tmp_dir: str
     :return: stats of outlinks that target the domain
     :rtype: dict
     """
@@ -411,7 +447,7 @@ def compute_domain_link_counts(grouped_outlinks):
             is_follow_link(x[mask_idx], is_bitmask=True)
     )
     domain_name, links = grouped_outlinks
-    for key_value, g in _group_links(links, key):
+    for key_value, g in _group_links(links, key, tmp_dir):
         urlid, external_url, is_follow = key_value
         group_size = 0
         for _ in g:
@@ -456,7 +492,7 @@ def compute_link_destination_stats(links, external_url, nb_source_samples):
     return link_sample
 
 
-def compute_sample_links(external_outlinks, n):
+def compute_sample_links(external_outlinks, n, tmp_dir=None):
     """Compute sample links from a set of external outlinks that point
     to the same domain.
     The method select the n most linked urls (via the number of unique links)
@@ -469,10 +505,18 @@ def compute_sample_links(external_outlinks, n):
     :type external_outlinks: iterable
     :param n: the maximum number of sample links to return
     :type n: int
+    :param tmp_dir: the directory where to save temporary files/results.
+                    if None, temp files will be stored in an arbitrary location
+                    (presumably /tmp)
+    :type tmp_dir: str
     :rtype: list
     """
     external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
-    external_outlinks = external_sort(external_outlinks, key=lambda x: x[external_url_idx])
+    external_outlinks = external_sort(
+        external_outlinks,
+        key=lambda x: x[external_url_idx],
+        tmp_dir=tmp_dir
+    )
     heap = []
     for external_url, links in groupby(external_outlinks, key=lambda x: x[external_url_idx]):
         nb_source_samples = 3
