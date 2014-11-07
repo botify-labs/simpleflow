@@ -79,12 +79,38 @@ def _data_model_sort_key(elem):
 
 
 def _get_group_sort_key(group):
-    #main group should appear first.
-    #Thus its key should be empty
-    if group == "main":
-        group = ""
-    return group
+    """Return a key to sort groups.
+    The group order should be :
+    - Main
+    - All , groups, sorted alphabetically
+    - Previous Main
+    - All groups, sorted alphabetically
+    - Diff Main
+    - All groups, sorted alphabetically
+    :param group: the group name (ex: previous.inlinks)
+    :type group: str
+    :returns: tuple (the exact definition does not matter, what is important
+                     is that it sorts the groups correctly, cf unit tests)
+    """
+    group_chunks = group.split(".")
 
+    comparison_order = 0
+    if group_chunks[0] == "previous":
+        comparison_order = 1
+        #remove prefix to get main_order correctly
+        group = ".".join(group_chunks[1:])
+    elif group_chunks[0] == "diff":
+        comparison_order = 2
+        #remove prefix to get main_order correctly
+        group = ".".join(group_chunks[1:])
+
+    #main group should appear first.
+    main_order = 1
+    if group == "main":
+        main_order = 0
+    #sort by comparison status then by "main" status, then by alphabetical
+    #order
+    return comparison_order, main_order, group
 
 
 def get_fields(feature_options, remove_private=True, remove_admin=True,
