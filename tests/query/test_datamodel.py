@@ -73,33 +73,92 @@ class CustomStreamDef(StreamDefBase):
         }
     }
 
-
 class TestDataModelSortKey(unittest.TestCase):
     def test_nominal_case(self):
-        elem = (11, {"group": "foo", "order": 10, "verbose_name": "bar"})
-        self.assertEqual(_data_model_sort_key(elem), ("foo", "bar"))
+        self.assertLess(
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "bar"})),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"})),
+        )
+
+    def test_different_groups(self):
+        #fields are sorted alphabetically
+        self.assertLess(
+            _data_model_sort_key((11, {"group": "bar", "verbose_name": "foo"})),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "bar"})),
+        )
 
     def test_missing_group(self):
-        elem = (11, {"order": 10, "verbose_name": "bar"})
-        self.assertEqual(_data_model_sort_key(elem), ("", "bar"))
+        self.assertLess(
+            _data_model_sort_key((11, {"verbose_name": "bar"})),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"})),
+        )
 
     def test_missing_verbose_name(self):
-        elem = (11, {"group": "foo"})
-        self.assertEqual(_data_model_sort_key(elem), ("foo", ""))
-
-    def test_main_group(self):
-        elem = (11, {"group": "main", "order": 10, "verbose_name": "bar"})
-        #main group should appear first.
-        #Thus its key should be empty
-        self.assertEqual(_data_model_sort_key(elem), ("", "bar"))
+        self.assertLess(
+            _data_model_sort_key((11, {"group": "foo"})),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"})),
+        )
 
 
 class TestGetGroupSortKey(unittest.TestCase):
     def test_nominal_case(self):
-        self.assertEqual("foo", _get_group_sort_key("foo"))
+        #standard fields should be ordered alphabetically
+        self.assertLess(_get_group_sort_key("bar"), _get_group_sort_key("foo"))
 
     def test_main_case(self):
-        self.assertEqual("", _get_group_sort_key("main"))
+        #main should come before anything else
+        self.assertLess(_get_group_sort_key("main"), _get_group_sort_key("foo"))
+        #even groups without name
+        self.assertLess(_get_group_sort_key("main"), _get_group_sort_key(""))
+
+    def test_previous_fields(self):
+        #previous fields come after standard field
+        self.assertLess(
+            _get_group_sort_key("qux"),
+            _get_group_sort_key("previous.bar")
+        )
+        #standard previous fields are order alphabetically
+        self.assertLess(
+            _get_group_sort_key("previous.bar"),
+            _get_group_sort_key("previous.foo")
+        )
+        #previous.main comes before other previous fields
+        self.assertLess(
+            _get_group_sort_key("previous.main"),
+            _get_group_sort_key("previous.foo")
+        )
+        #previous fields come before diff fields
+        self.assertLess(
+            _get_group_sort_key("previous.foo"),
+            _get_group_sort_key("diff.foo")
+        )
+
+    def test_diff_fields(self):
+        #diff fields come after standard field
+        self.assertLess(
+            _get_group_sort_key("qux"),
+            _get_group_sort_key("diff.bar")
+        )
+        #diff fields come after previous field
+        self.assertLess(
+            _get_group_sort_key("previous.qux"),
+            _get_group_sort_key("diff.bar")
+        )
+        #standard diff fields are order alphabetically
+        self.assertLess(
+            _get_group_sort_key("diff.bar"),
+            _get_group_sort_key("diff.foo")
+        )
+        #diff.main comes before other diff fields
+        self.assertLess(
+            _get_group_sort_key("diff.main"),
+            _get_group_sort_key("diff.foo")
+        )
+        #diff.main comes after any main field
+        self.assertLess(
+            _get_group_sort_key("previous.qux"),
+            _get_group_sort_key("diff.main")
+        )
 
 
 class FieldsTestCase(unittest.TestCase):
