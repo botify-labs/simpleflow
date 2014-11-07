@@ -197,4 +197,5 @@ def get_groups(features_options):
                     'id': diff_name,
                     'name': 'Diff {}'.format(group.value)
                 })
+    groups = sorted(groups, key=lambda x: _get_group_sort_key(x['id']))
     return groups

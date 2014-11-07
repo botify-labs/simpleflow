@@ -227,7 +227,7 @@ class FieldsTestCase(unittest.TestCase):
         groups = get_groups({"main": {"lang": True}})
         self.assertEquals(
             [g['id'] for g in groups],
-            ['scheme', 'main']
+            ['main', 'scheme']
         )
 
     def test_ordering(self):
