@@ -26,7 +26,6 @@ class TestGetDuplicateDocumentMapping(unittest.TestCase):
             'metadata.title.foo_duplicate.nb': {
                 'type': 'integer',
                 'verbose_name': 'Number of foo duplicate Title',
-                'order': 100,
                 'settings': {
                     'es:doc_values',
                     'agg:categorical',
@@ -40,7 +39,6 @@ class TestGetDuplicateDocumentMapping(unittest.TestCase):
                 'type': 'boolean',
                 'verbose_name':
                 'First foo duplicate Title found',
-                'order': 120,
                 'settings': {
                     FIELD_RIGHTS.SELECT,
                     FIELD_RIGHTS.FILTERS,
@@ -50,7 +48,6 @@ class TestGetDuplicateDocumentMapping(unittest.TestCase):
             'metadata.title.foo_duplicate.urls': {
                 'type': 'integer',
                 'verbose_name': 'Pages with the same foo Title',
-                'order': 110,
                 'settings': {
                     'es:no_index',
                     'url_id',

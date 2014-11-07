@@ -15,7 +15,6 @@ DATA_FORMAT_FIXTURE = {
     "url": {
         "verbose_name": "Url",
         "type": STRING_TYPE,
-        "order": 0,
         "settings": {
             ES_NOT_ANALYZED,
             RENDERING.URL
@@ -43,13 +42,11 @@ DATA_FORMAT_FIXTURE = {
     "path": {
         "verbose_name": "Path",
         "type": STRING_TYPE,
-        "order": 2,
         "settings": {ES_NOT_ANALYZED}
     },
     "http_code": {
         "verbose_name": "Http Code",
         "type": INT_TYPE,
-        "order": 1,
         "settings": {
             ES_DOC_VALUE,
             # `http_code` have 2 roles
@@ -60,7 +57,6 @@ DATA_FORMAT_FIXTURE = {
     "depth": {
         "verbose_name": "Depth",
         "type": INT_TYPE,
-        "order": 5,
         "settings": {
             ES_DOC_VALUE,
             # assume possible depth is finite
@@ -71,14 +67,12 @@ DATA_FORMAT_FIXTURE = {
     # title tag
     "metadata.title.contents": {
         "verbose_name": "Title",
-        "order": 1,
         "type": STRING_TYPE,
         "settings": {ES_NOT_ANALYZED, LIST}
     },
     # h1 tag
     "metadata.h1.contents": {
         "verbose_name": "H1",
-        "order": 3,
         "type": STRING_TYPE,
         "settings": {ES_NOT_ANALYZED, LIST}
     },
@@ -86,13 +80,11 @@ DATA_FORMAT_FIXTURE = {
     "metadata.description.contents": {
         "verbose_name": "Page description",
         "type": STRING_TYPE,
-        "order": 2,
         "settings": {ES_NOT_ANALYZED, LIST}
     },
     # h2 tag
     "metadata.h2.contents": {
         "verbose_name": "H2",
-        "order": 4,
         "type": STRING_TYPE,
         "settings": {ES_NOT_ANALYZED, LIST}
     },
@@ -101,14 +93,12 @@ DATA_FORMAT_FIXTURE = {
     "metadata.h3.contents": {
         "verbose_name": "H3",
         "type": STRING_TYPE,
-        "order": 5,
         "settings": {ES_NOT_ANALYZED, LIST}
     },
     # title tag
     "metadata.title.nb": {
         "verbose_name": "Number of Page Titles",
         "type": INT_TYPE,
-        "order": 10,
         "settings": {
             ES_DOC_VALUE,
             AGG_NUMERICAL,
@@ -119,7 +109,6 @@ DATA_FORMAT_FIXTURE = {
     "metadata.h1.nb": {
         "verbose_name": "Number of H1",
         "type": INT_TYPE,
-        "order": 12,
         "settings": {
             ES_DOC_VALUE,
             AGG_CATEGORICAL,
@@ -130,7 +119,6 @@ DATA_FORMAT_FIXTURE = {
     "metadata.description.nb": {
         "verbose_name": "Number of Page Description",
         "type": INT_TYPE,
-        "order": 11,
         "settings": {
             ES_DOC_VALUE,
             AGG_CATEGORICAL,
@@ -141,7 +129,6 @@ DATA_FORMAT_FIXTURE = {
     "metadata.h2.nb": {
         "verbose_name": "Number of H2",
         "type": INT_TYPE,
-        "order": 13,
         "settings": {
             ES_DOC_VALUE,
             AGG_CATEGORICAL,
@@ -152,7 +139,6 @@ DATA_FORMAT_FIXTURE = {
     "metadata.h3.nb": {
         "verbose_name": "Number of H3",
         "type": INT_TYPE,
-        "order": 14,
         "settings": {
             ES_DOC_VALUE,
             AGG_CATEGORICAL,
@@ -237,7 +223,6 @@ DATA_FORMAT_FIXTURE = {
 
     "canonical.to.url": {
         "verbose_name": "Canonical To",
-        "order": 1,
         "type": STRUCT_TYPE,
         "values": {
             "url_str": {"type": "string"},
@@ -253,7 +238,6 @@ DATA_FORMAT_FIXTURE = {
     },
     "canonical.to.equal": {
         "verbose_name": "Canonical is the Same Url",
-        "order": 2,
         "type": BOOLEAN_TYPE,
         "settings": {AGG_CATEGORICAL}
     },
@@ -265,7 +249,6 @@ DATA_FORMAT_FIXTURE = {
     # incoming canonical link
     "canonical.from.nb": {
         "verbose_name": "Number of Incoming Canonical",
-        "order": 3,
         "type": INT_TYPE,
         "settings": {
             ES_DOC_VALUE,
@@ -275,7 +258,6 @@ DATA_FORMAT_FIXTURE = {
     },
     "canonical.from.urls": {
         "verbose_name": "Canonical From",
-        "order": 4,
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
@@ -294,7 +276,6 @@ DATA_FORMAT_FIXTURE = {
     # outgoing redirection
     "redirect.to.url": {
         "verbose_name": "Redirects to",
-        "order": 1,
         "type": STRUCT_TYPE,
         "values": {
             "url_str": {"type": "string"},
@@ -317,7 +298,6 @@ DATA_FORMAT_FIXTURE = {
     # incoming redirection
     "redirect.from.nb": {
         "verbose_name": "Number of Incoming Redirects",
-        "order": 3,
         "type": INT_TYPE,
         "settings": {
             ES_DOC_VALUE,
@@ -327,7 +307,6 @@ DATA_FORMAT_FIXTURE = {
     },
     "redirect.from.urls": {
         "verbose_name": "Redirected From",
-        "order": 4,
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
@@ -347,7 +326,6 @@ DATA_FORMAT_FIXTURE = {
     "outlinks_errors.3xx.nb": {
         "type": INT_TYPE,
         "verbose_name": "Number of error links in 3xx",
-        "order": 100,
         "settings": {
             ES_DOC_VALUE,
             AGG_NUMERICAL
@@ -356,7 +334,6 @@ DATA_FORMAT_FIXTURE = {
     "outlinks_errors.3xx.urls": {
         "type": INT_TYPE,
         "verbose_name": "Sample of error links in 3xx",
-        "order": 101,
         "settings": {
             ES_NO_INDEX,
             LIST,
@@ -373,7 +350,6 @@ DATA_FORMAT_FIXTURE = {
     "outlinks_errors.4xx.nb": {
         "type": INT_TYPE,
         "verbose_name": "Number of error links in 4xx",
-        "order": 102,
         "settings": {
             ES_DOC_VALUE,
             AGG_NUMERICAL
@@ -382,7 +358,6 @@ DATA_FORMAT_FIXTURE = {
     "outlinks_errors.4xx.urls": {
         "type": INT_TYPE,
         "verbose_name": "Sample of error links in 4xx",
-        "order": 103,
         "settings": {
             ES_NO_INDEX,
             LIST,
@@ -399,7 +374,6 @@ DATA_FORMAT_FIXTURE = {
     "outlinks_errors.5xx.nb": {
         "type": INT_TYPE,
         "verbose_name": "Number of error links in 5xx",
-        "order": 104,
         "settings": {
             ES_DOC_VALUE,
             AGG_NUMERICAL
@@ -408,7 +382,6 @@ DATA_FORMAT_FIXTURE = {
     "outlinks_errors.5xx.urls": {
         "type": INT_TYPE,
         "verbose_name": "Sample of error links in 5xx",
-        "order": 105,
         "settings": {
             ES_NO_INDEX,
             LIST,
@@ -425,7 +398,6 @@ DATA_FORMAT_FIXTURE = {
     "outlinks_errors.total": {
         "type": "integer",
         "verbose_name": "Number of error links in 3xx/4xx/5xx",
-        "order": 99,
         "settings": {
             ES_DOC_VALUE,
             AGG_NUMERICAL
@@ -490,7 +462,6 @@ DATA_FORMAT_FIXTURE = {
         }
     },
     "inlinks_internal.urls": {
-        "order": 9,
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
@@ -677,7 +648,6 @@ DATA_FORMAT_FIXTURE = {
 
     # a `previous` field
     "previous.inlinks_internal.urls": {
-        "order": 1009,
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
