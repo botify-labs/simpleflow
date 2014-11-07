@@ -28,7 +28,6 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.title.nb": {
             "verbose_name": "Number of Page Titles",
             "type": INT_TYPE,
-            "order": 10,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
@@ -38,7 +37,6 @@ class ContentsStreamDef(StreamDefBase):
         },
         "metadata.title.contents": {
             "verbose_name": "Title",
-            "order": 1,
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -50,7 +48,6 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.h1.nb": {
             "verbose_name": "Number of H1",
             "type": INT_TYPE,
-            "order": 12,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -60,7 +57,6 @@ class ContentsStreamDef(StreamDefBase):
         },
         "metadata.h1.contents": {
             "verbose_name": "H1",
-            "order": 3,
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -72,7 +68,6 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.description.nb": {
             "verbose_name": "Number of Page Description",
             "type": INT_TYPE,
-            "order": 11,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -83,7 +78,6 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.description.contents": {
             "verbose_name": "Page description",
             "type": STRING_TYPE,
-            "order": 2,
             "settings": {
                 ES_NOT_ANALYZED,
                 LIST,
@@ -94,7 +88,6 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.h2.nb": {
             "verbose_name": "Number of H2",
             "type": INT_TYPE,
-            "order": 13,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -104,7 +97,6 @@ class ContentsStreamDef(StreamDefBase):
         },
         "metadata.h2.contents": {
             "verbose_name": "H2",
-            "order": 4,
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -117,7 +109,6 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.h3.nb": {
             "verbose_name": "Number of H3",
             "type": INT_TYPE,
-            "order": 14,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -128,7 +119,6 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.h3.contents": {
             "verbose_name": "H3",
             "type": STRING_TYPE,
-            "order": 5,
             "settings": {
                 ES_NOT_ANALYZED,
                 LIST,
@@ -175,7 +165,6 @@ def _get_duplicate_document_mapping(metadata_list,
                 verbose_duplicate_type, metadata_type.capitalize()
             ),
             "type": INT_TYPE,
-            "order": order_seed + i,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -189,7 +178,6 @@ def _get_duplicate_document_mapping(metadata_list,
             "verbose_name": "First {} {} found".format(
                 verbose_duplicate_type, metadata_type.capitalize()
             ),
-            "order": order_seed + 20 + i,
             "type": BOOLEAN_TYPE,
             "settings": {
                 FIELD_RIGHTS.SELECT,
@@ -203,7 +191,6 @@ def _get_duplicate_document_mapping(metadata_list,
         result["{}.urls".format(prefix)] = {
             "verbose_name": "Pages with the same {}".format(same_metadata_type),
             "type": INT_TYPE,
-            "order": order_seed + 10 + i,
             "settings": {
                 ES_NO_INDEX,
                 LIST,
@@ -309,7 +296,6 @@ class ContentsCountStreamDef(StreamDefBase):
         "metadata.title.nb": {
             "verbose_name": "Number of Page Titles",
             "type": INT_TYPE,
-            "order": 10,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
@@ -321,7 +307,6 @@ class ContentsCountStreamDef(StreamDefBase):
         "metadata.h1.nb": {
             "verbose_name": "Number of H1",
             "type": INT_TYPE,
-            "order": 12,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -333,7 +318,6 @@ class ContentsCountStreamDef(StreamDefBase):
         "metadata.description.nb": {
             "verbose_name": "Number of Page Description",
             "type": INT_TYPE,
-            "order": 11,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -345,7 +329,6 @@ class ContentsCountStreamDef(StreamDefBase):
         "metadata.h2.nb": {
             "verbose_name": "Number of H2",
             "type": INT_TYPE,
-            "order": 13,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -356,7 +339,6 @@ class ContentsCountStreamDef(StreamDefBase):
         "metadata.h3.nb": {
             "verbose_name": "Number of H3",
             "type": INT_TYPE,
-            "order": 14,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,

@@ -6,7 +6,9 @@ from cdf.core.streams.base import StreamDefBase
 from cdf.query.datamodel import (
     get_fields,
     get_groups,
-    _get_field_rights
+    _get_field_rights,
+    _data_model_sort_key,
+    _get_group_sort_key
 )
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
@@ -23,7 +25,6 @@ class CustomStreamDef(StreamDefBase):
         "url": {
             "verbose_name": "Url",
             "type": "string",
-            "order": 1,  # rank 1
             "settings": {
                 RENDERING.URL
             }
@@ -40,7 +41,6 @@ class CustomStreamDef(StreamDefBase):
         "content": {
             "verbose_name": "Contents",
             "type": "string",
-            "order": 1000,  # rank 3
             "settings": {
                 LIST,
                 FIELD_RIGHTS.FILTERS
@@ -49,7 +49,6 @@ class CustomStreamDef(StreamDefBase):
         "content_same_urls": {
             "verbose_name": "Contents with the same url",
             "type": "string",
-            "order": 5,  # rank 2
             "settings": {
                 LIST,
                 ES_NO_INDEX,
@@ -70,6 +69,111 @@ class CustomStreamDef(StreamDefBase):
             }
         }
     }
+
+class TestDataModelSortKey(unittest.TestCase):
+    def test_nominal_case(self):
+        self.assertLess(
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "bar"})),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"})),
+        )
+
+    def test_different_groups(self):
+        #fields are sorted alphabetically
+        self.assertLess(
+            _data_model_sort_key((11, {"group": "bar", "verbose_name": "foo"})),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "bar"})),
+        )
+
+    def test_missing_group(self):
+        self.assertLess(
+            _data_model_sort_key((11, {"verbose_name": "bar"})),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"})),
+        )
+
+    def test_missing_verbose_name(self):
+        self.assertLess(
+            _data_model_sort_key((11, {"group": "foo"})),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"})),
+        )
+
+
+class TestGetGroupSortKey(unittest.TestCase):
+    def test_nominal_case(self):
+        #standard fields should be ordered alphabetically
+        self.assertLess(_get_group_sort_key("bar"), _get_group_sort_key("foo"))
+
+    def test_scheme_case(self):
+        #scheme should come before anything else
+        self.assertLess(_get_group_sort_key("scheme"), _get_group_sort_key("foo"))
+        #even groups without name
+        self.assertLess(_get_group_sort_key("scheme"), _get_group_sort_key(""))
+
+    def test_main_case(self):
+        #main should come before anything else (except scheme)
+        self.assertLess(_get_group_sort_key("main"), _get_group_sort_key("foo"))
+        #even groups without name
+        self.assertLess(_get_group_sort_key("main"), _get_group_sort_key(""))
+        #but not before scheme
+        self.assertLess(_get_group_sort_key("scheme"), _get_group_sort_key("main"))
+
+    def test_previous_fields(self):
+        #previous fields come after standard field
+        self.assertLess(
+            _get_group_sort_key("qux"),
+            _get_group_sort_key("previous.bar")
+        )
+        #standard previous fields are order alphabetically
+        self.assertLess(
+            _get_group_sort_key("previous.bar"),
+            _get_group_sort_key("previous.foo")
+        )
+        #previous.schem comes before other previous fields
+        self.assertLess(
+            _get_group_sort_key("previous.scheme"),
+            _get_group_sort_key("previous.foo")
+        )
+        #previous.main comes before other previous fields
+        self.assertLess(
+            _get_group_sort_key("previous.main"),
+            _get_group_sort_key("previous.foo")
+        )
+        #previous fields come before diff fields
+        self.assertLess(
+            _get_group_sort_key("previous.foo"),
+            _get_group_sort_key("diff.foo")
+        )
+
+    def test_diff_fields(self):
+        #diff fields come after standard field
+        self.assertLess(
+            _get_group_sort_key("qux"),
+            _get_group_sort_key("diff.bar")
+        )
+        #diff fields come after previous field
+        self.assertLess(
+            _get_group_sort_key("previous.qux"),
+            _get_group_sort_key("diff.bar")
+        )
+        #standard diff fields are order alphabetically
+        self.assertLess(
+            _get_group_sort_key("diff.bar"),
+            _get_group_sort_key("diff.foo")
+        )
+        #diff.scheme comes before other diff fields
+        self.assertLess(
+            _get_group_sort_key("diff.scheme"),
+            _get_group_sort_key("diff.foo")
+        )
+        #diff.main comes before other diff fields
+        self.assertLess(
+            _get_group_sort_key("diff.main"),
+            _get_group_sort_key("diff.foo")
+        )
+        #diff.main comes after any main field
+        self.assertLess(
+            _get_group_sort_key("previous.qux"),
+            _get_group_sort_key("diff.main")
+        )
 
 
 class FieldsTestCase(unittest.TestCase):
@@ -147,10 +251,10 @@ class FieldsTestCase(unittest.TestCase):
         data_model = [k['value'] for k in data_model]
         # datamodel should be sorted within each field
         expected = [
-            'url',
-            'content_same_urls',
             'content',
-            'delay'
+            'content_same_urls',
+            'url',
+            'delay'  # delay is in an other group
         ]
         self.assertEqual(expected, data_model)
 

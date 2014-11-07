@@ -73,8 +73,51 @@ def _data_model_sort_key(elem):
     """A safe sort key function for data model"""
     _, config = elem
     group = config.get('group', '')
-    order = config.get('order', 99999)
-    return group, order
+    group_key = _get_group_sort_key(group)
+    name = config.get('verbose_name', '')
+    return group_key, name
+
+
+def _get_group_sort_key(group):
+    """Return a key to sort groups.
+    The group order should be :
+    - Scheme
+    - Main
+    - All , groups, sorted alphabetically
+    - Previous Scheme
+    - Previous Main
+    - All groups, sorted alphabetically
+    - Previous Scheme
+    - Diff Main
+    - All groups, sorted alphabetically
+    :param group: the group name (ex: previous.inlinks)
+    :type group: str
+    :returns: tuple (the exact definition does not matter, what is important
+                     is that it sorts the groups correctly, cf unit tests)
+    """
+    group_chunks = group.split(".")
+
+    comparison_order = 0
+    if group_chunks[0] == "previous":
+        comparison_order = 1
+        #remove prefix to get main_order correctly
+        group = ".".join(group_chunks[1:])
+    elif group_chunks[0] == "diff":
+        comparison_order = 2
+        #remove prefix to get main_order correctly
+        group = ".".join(group_chunks[1:])
+
+    #scheme group should appear first.
+    #then main group
+    if group == "scheme":
+        group_order = 0
+    elif group == "main":
+        group_order = 1
+    else:
+        group_order = 2
+    #sort by comparison status then by "group" status, then by alphabetical
+    #order
+    return comparison_order, group_order, group
 
 
 def get_fields(feature_options, remove_private=True, remove_admin=True,
@@ -161,4 +204,5 @@ def get_groups(features_options):
                     'id': diff_name,
                     'name': 'Diff {}'.format(group.value)
                 })
+    groups = sorted(groups, key=lambda x: _get_group_sort_key(x['id']))
     return groups

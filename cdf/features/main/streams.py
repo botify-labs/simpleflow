@@ -33,7 +33,6 @@ class IdStreamDef(StreamDefBase):
         "url": {
             "verbose_name": "Url",
             "type": STRING_TYPE,
-            "order": 0,
             "settings": {
                 ES_NOT_ANALYZED,
                 RENDERING.URL
@@ -51,7 +50,6 @@ class IdStreamDef(StreamDefBase):
         "host": {
             "verbose_name": "Host",
             "type": STRING_TYPE,
-            "order": 1,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
@@ -80,12 +78,10 @@ class IdStreamDef(StreamDefBase):
         "path": {
             "verbose_name": "Path",
             "type": STRING_TYPE,
-            "order": 2,
             "settings": {ES_NOT_ANALYZED}
         },
         "protocol": {
             "verbose_name": "Protocol",
-            "order": 3,
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -95,13 +91,11 @@ class IdStreamDef(StreamDefBase):
         },
         "query_string": {
             "verbose_name": "Query String",
-            "order": 4,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
         "query_string_keys": {
             "verbose_name": "Query String Keys",
-            "order": 5,
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
@@ -143,7 +137,6 @@ class InfosStreamDef(StreamDefBase):
         "byte_size": {
             "verbose_name": "Byte Size",
             "type": INT_TYPE,
-            "order": 0,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
@@ -153,7 +146,6 @@ class InfosStreamDef(StreamDefBase):
         "http_code": {
             "verbose_name": "Http Code",
             "type": INT_TYPE,
-            "order": 1,
             "settings": {
                 ES_DOC_VALUE,
                 # `http_code` have 2 roles
@@ -165,13 +157,11 @@ class InfosStreamDef(StreamDefBase):
         "date_crawled": {
             "verbose_name": "Date crawled",
             "type": DATE_TYPE,
-            "order": 2,
             "settings": {ES_DOC_VALUE}
         },
         "delay_first_byte": {
             "verbose_name": "Delay first byte received",
             "type": INT_TYPE,
-            "order": 3,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
@@ -182,7 +172,6 @@ class InfosStreamDef(StreamDefBase):
         "delay_last_byte": {
             "verbose_name": "Delay total",
             "type": INT_TYPE,
-            "order": 4,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
@@ -193,7 +182,6 @@ class InfosStreamDef(StreamDefBase):
         "depth": {
             "verbose_name": "Depth",
             "type": INT_TYPE,
-            "order": 5,
             "settings": {
                 ES_DOC_VALUE,
                 # assume possible depth is finite
@@ -205,7 +193,6 @@ class InfosStreamDef(StreamDefBase):
         "gzipped": {
             "verbose_name": "Url compressed",
             "type": BOOLEAN_TYPE,
-            "order": 7,
             "settings": {
                 AGG_CATEGORICAL,
                 DIFF_QUALITATIVE
@@ -214,7 +201,6 @@ class InfosStreamDef(StreamDefBase):
         "content_type": {
             "verbose_name": "Content-type",
             "type": STRING_TYPE,
-            "order": 8,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
@@ -226,7 +212,6 @@ class InfosStreamDef(StreamDefBase):
         "metadata.robots.nofollow": {
             "verbose_name": "Has robots anchors as `nofollow`",
             "type": BOOLEAN_TYPE,
-            "order": 9,
             "settings": {
                 AGG_CATEGORICAL,
                 DIFF_QUALITATIVE
@@ -235,7 +220,6 @@ class InfosStreamDef(StreamDefBase):
         "metadata.robots.noindex": {
             "verbose_name": "Has robots anchors as `noindex`",
             "type": BOOLEAN_TYPE,
-            "order": 10,
             "settings": {
                 AGG_CATEGORICAL,
                 DIFF_QUALITATIVE
@@ -244,7 +228,6 @@ class InfosStreamDef(StreamDefBase):
         "lang": {
             "verbose_name": "Lang",
             "type": STRING_TYPE,
-            "order": 6,
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
