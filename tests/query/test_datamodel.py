@@ -102,11 +102,19 @@ class TestGetGroupSortKey(unittest.TestCase):
         #standard fields should be ordered alphabetically
         self.assertLess(_get_group_sort_key("bar"), _get_group_sort_key("foo"))
 
+    def test_scheme_case(self):
+        #scheme should come before anything else
+        self.assertLess(_get_group_sort_key("scheme"), _get_group_sort_key("foo"))
+        #even groups without name
+        self.assertLess(_get_group_sort_key("scheme"), _get_group_sort_key(""))
+
     def test_main_case(self):
-        #main should come before anything else
+        #main should come before anything else (except scheme)
         self.assertLess(_get_group_sort_key("main"), _get_group_sort_key("foo"))
         #even groups without name
         self.assertLess(_get_group_sort_key("main"), _get_group_sort_key(""))
+        #but not before scheme
+        self.assertLess(_get_group_sort_key("scheme"), _get_group_sort_key("main"))
 
     def test_previous_fields(self):
         #previous fields come after standard field
@@ -117,6 +125,11 @@ class TestGetGroupSortKey(unittest.TestCase):
         #standard previous fields are order alphabetically
         self.assertLess(
             _get_group_sort_key("previous.bar"),
+            _get_group_sort_key("previous.foo")
+        )
+        #previous.schem comes before other previous fields
+        self.assertLess(
+            _get_group_sort_key("previous.scheme"),
             _get_group_sort_key("previous.foo")
         )
         #previous.main comes before other previous fields
@@ -144,6 +157,11 @@ class TestGetGroupSortKey(unittest.TestCase):
         #standard diff fields are order alphabetically
         self.assertLess(
             _get_group_sort_key("diff.bar"),
+            _get_group_sort_key("diff.foo")
+        )
+        #diff.scheme comes before other diff fields
+        self.assertLess(
+            _get_group_sort_key("diff.scheme"),
             _get_group_sort_key("diff.foo")
         )
         #diff.main comes before other diff fields
@@ -224,7 +242,7 @@ class FieldsTestCase(unittest.TestCase):
         groups = get_groups({"main": {"lang": True}})
         self.assertEquals(
             [g['id'] for g in groups],
-            ['main', 'scheme']
+            ['scheme', 'main']
         )
 
     def test_ordering(self):

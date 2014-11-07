@@ -81,10 +81,13 @@ def _data_model_sort_key(elem):
 def _get_group_sort_key(group):
     """Return a key to sort groups.
     The group order should be :
+    - Scheme
     - Main
     - All , groups, sorted alphabetically
+    - Previous Scheme
     - Previous Main
     - All groups, sorted alphabetically
+    - Previous Scheme
     - Diff Main
     - All groups, sorted alphabetically
     :param group: the group name (ex: previous.inlinks)
@@ -104,13 +107,17 @@ def _get_group_sort_key(group):
         #remove prefix to get main_order correctly
         group = ".".join(group_chunks[1:])
 
-    #main group should appear first.
-    main_order = 1
-    if group == "main":
-        main_order = 0
-    #sort by comparison status then by "main" status, then by alphabetical
+    #scheme group should appear first.
+    #then main group
+    if group == "scheme":
+        group_order = 0
+    elif group == "main":
+        group_order = 1
+    else:
+        group_order = 2
+    #sort by comparison status then by "group" status, then by alphabetical
     #order
-    return comparison_order, main_order, group
+    return comparison_order, group_order, group
 
 
 def get_fields(feature_options, remove_private=True, remove_admin=True,
