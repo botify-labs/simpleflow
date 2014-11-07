@@ -7,7 +7,8 @@ from cdf.query.datamodel import (
     get_fields,
     get_groups,
     _get_field_rights,
-    _data_model_sort_key
+    _data_model_sort_key,
+    _get_group_sort_key
 )
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
@@ -91,6 +92,14 @@ class TestDataModelSortKey(unittest.TestCase):
         #main group should appear first.
         #Thus its key should be empty
         self.assertEqual(_data_model_sort_key(elem), ("", "bar"))
+
+
+class TestGetGroupSortKey(unittest.TestCase):
+    def test_nominal_case(self):
+        self.assertEqual("foo", _get_group_sort_key("foo"))
+
+    def test_main_case(self):
+        self.assertEqual("", _get_group_sort_key("main"))
 
 
 class FieldsTestCase(unittest.TestCase):
