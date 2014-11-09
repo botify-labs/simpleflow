@@ -57,6 +57,25 @@ class TestImportDataFromGanalytics(unittest.TestCase):
                                             expected_end_date,
                                             tmp_dir)
 
+        # Call now with pre-set values
+        date_start = datetime.date(2014, 1, 1)
+        date_end = datetime.date(2014, 1, 31)
+        import_data_from_ganalytics(access_token,
+                                    refresh_token,
+                                    ganalytics_site_id,
+                                    s3_uri,
+                                    date_start,
+                                    date_end,
+                                    tmp_dir=tmp_dir,
+                                    force_fetch=force_fetch)
+
+        mock_import.assert_called_with("ga:12345678",
+                                            'mock_credentials',
+                                            date_start,
+                                            date_end,
+                                            tmp_dir)
+
+
 
 class TestGetApiRequests(unittest.TestCase):
     def test_nominal_case(self):
