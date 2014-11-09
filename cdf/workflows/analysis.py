@@ -272,7 +272,9 @@ class AnalysisWorkflow(Workflow):
             config['access_token'],
             config['refresh_token'],
             config['ganalytics_site_id'],
-            s3_uri)
+            s3_uri,
+            config['date_start'],
+            config['date_end'])
 
         # Explicit dependency because we cannot use an argument to express the
         # dependency between ``import_data_from_ganalytics`` and
