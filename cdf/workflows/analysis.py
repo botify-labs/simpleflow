@@ -31,6 +31,7 @@ executed.
 """
 
 import logging
+from datetime import datetime
 
 from simpleflow import (
     Workflow,
@@ -39,7 +40,6 @@ from simpleflow import (
 )
 
 from . import constants
-
 
 logger = logging.getLogger(__name__)
 
@@ -273,8 +273,8 @@ class AnalysisWorkflow(Workflow):
             config['refresh_token'],
             config['ganalytics_site_id'],
             s3_uri,
-            config['date_start'],
-            config['date_end'])
+            datetime.strptime(config['date_start'],'%Y-%m-%d').date(),
+            datetime.strptime(config['date_end'],'%Y-%m-%d').date())
 
         # Explicit dependency because we cannot use an argument to express the
         # dependency between ``import_data_from_ganalytics`` and
