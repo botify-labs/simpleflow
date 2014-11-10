@@ -58,8 +58,8 @@ class TestImportDataFromGanalytics(unittest.TestCase):
                                             tmp_dir)
 
         # Call now with pre-set values
-        date_start = datetime.date(2014, 1, 1)
-        date_end = datetime.date(2014, 1, 31)
+        date_start = '2014-1-1'
+        date_end = '2014-1-31'
         import_data_from_ganalytics(access_token,
                                     refresh_token,
                                     ganalytics_site_id,
@@ -70,11 +70,27 @@ class TestImportDataFromGanalytics(unittest.TestCase):
                                     force_fetch=force_fetch)
 
         mock_import.assert_called_with("ga:12345678",
-                                            'mock_credentials',
-                                            date_start,
-                                            date_end,
-                                            tmp_dir)
+                                        'mock_credentials',
+                                        datetime.date(2014, 1, 1),
+                                        datetime.date(2014, 1, 31),
+                                        tmp_dir)
 
+        # Call with wrong date strings
+        # should raise exception
+        date_start = '2014asdoginweg'
+        date_end = '2014-1-31'
+        self.assertRaises(
+            Exception,
+            import_data_from_ganalytics,
+            access_token,
+            refresh_token,
+            ganalytics_site_id,
+            s3_uri,
+            date_start,
+            date_end,
+            tmp_dir=tmp_dir,
+            force_fetch=force_fetch
+        )
 
 
 class TestGetApiRequests(unittest.TestCase):

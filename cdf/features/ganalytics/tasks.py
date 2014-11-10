@@ -22,6 +22,20 @@ from cdf.features.ganalytics.ghost import (build_ghost_counts_dict,
                                            save_ghost_pages_count,
                                            GoogleAnalyticsAggregator)
 
+
+def parse_str_date(date_str):
+    """Parse a date string into date object
+
+    :param date_str: date string in `%Y-%m-%d` format,
+        in case of missing, use today's date
+    :type date_str: str
+    :return: date object
+    """
+    if date_str is None:
+        return datetime.date.today()
+    return datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+
+
 @with_temporary_dir
 def import_data_from_ganalytics(access_token,
                                 refresh_token,
@@ -54,10 +68,10 @@ def import_data_from_ganalytics(access_token,
                        If None, the task uses the date from 31 days ago.
                        (so that if both date_start and date_end are None,
                        the import period is the last 30 days)
-    :param date_start: date
+    :type date_start: str
     :param date_end: Final date to retrieve data.
                      If none, the task uses the date from yesterday.
-    :param date_end: date
+    :type date_end: str
     :param s3_uri: the uri where to store the data
     :type s3_uri: str
     :param tmp_dir: the path to the tmp directory to use.
@@ -72,8 +86,13 @@ def import_data_from_ganalytics(access_token,
     #set date_start and date_end default values if necessary
     if date_start is None:
         date_start = datetime.date.today() - datetime.timedelta(31)
+    else:
+        date_start = parse_str_date(date_start)
     if date_end is None:
         date_end = datetime.date.today() - datetime.timedelta(1)
+    else:
+        date_end = parse_str_date(date_end)
+
     credentials = get_credentials(access_token, refresh_token)
     import_data(
         "ga:{}".format(ganalytics_site_id),
