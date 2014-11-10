@@ -79,7 +79,7 @@ def _data_model_sort_key(elem, groups):
     return group_key, name
 
 
-def _get_group_sort_key(group_id, group_name=""):
+def _get_group_sort_key(group_id, group_name):
     """Return a key to sort groups.
     The group order should be :
     - Scheme

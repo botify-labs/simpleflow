@@ -139,11 +139,20 @@ class TestGetGroupSortKey(unittest.TestCase):
 
     def test_main_case(self):
         #main should come before anything else (except scheme)
-        self.assertLess(_get_group_sort_key("main"), _get_group_sort_key("foo"))
+        self.assertLess(
+            _get_group_sort_key("main", "Main"),
+            _get_group_sort_key("foo", "Foo")
+        )
         #even groups without name
-        self.assertLess(_get_group_sort_key("main"), _get_group_sort_key(""))
+        self.assertLess(
+            _get_group_sort_key("main", "Main"),
+            _get_group_sort_key("", "")
+        )
         #but not before scheme
-        self.assertLess(_get_group_sort_key("scheme"), _get_group_sort_key("main"))
+        self.assertLess(
+            _get_group_sort_key("scheme", "Scheme"),
+            _get_group_sort_key("main", "Main")
+        )
 
     def test_previous_fields(self):
         #previous fields come after standard field
