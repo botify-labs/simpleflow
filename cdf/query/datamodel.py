@@ -222,5 +222,4 @@ def get_groups(features_options):
     allowed_groups = set([f['group'] for f in get_fields(features_options)])
     all_groups = get_all_groups()
     result = [g for g in all_groups if g["id"] in allowed_groups]
-    result = sorted(result, key=lambda g: _get_group_sort_key(g['id'], g['name']))
     return result
