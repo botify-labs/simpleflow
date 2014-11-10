@@ -17,23 +17,44 @@ from analytics.import_analytics import import_data
 
 from cdf.utils.auth import get_credentials
 from cdf.features.ganalytics.matching import match_analytics_to_crawl_urls_stream
-from cdf.features.ganalytics.ghost import (build_ghost_counts_dict,
-                                           save_ghost_pages,
-                                           save_ghost_pages_count,
-                                           GoogleAnalyticsAggregator)
+from cdf.features.ganalytics.ghost import (
+    build_ghost_counts_dict,
+    save_ghost_pages,
+    save_ghost_pages_count
+)
 
 
-def parse_str_date(date_str):
-    """Parse a date string into date object
+def parse_start_end_dates(start_date_str, end_date_str):
+    """Parse start and ends date strings with sanity checks
 
-    :param date_str: date string in `%Y-%m-%d` format,
-        in case of missing, use today's date
-    :type date_str: str
-    :return: date object
+    Date string format: `%Y-%m-%d`.
+    In case of `None`, start date is default to 31 days ago,
+    end date is default to yesterday.
+
+    :param start_date_str: start date string
+    :type start_date_str: str
+    :param end_date_str: end date string
+    :type end_date_str: str
+    :return: pair of date objects: (start_date, end_date)
+    :rtype: (date, date)
     """
-    if date_str is None:
-        return datetime.date.today()
-    return datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+    if start_date_str is None:
+        start_date = datetime.date.today() - datetime.timedelta(31)
+    else:
+        start_date = datetime.datetime.strptime(
+            start_date_str, '%Y-%m-%d').date()
+    if end_date_str is None:
+        end_date = datetime.date.today() - datetime.timedelta(1)
+    else:
+        end_date = datetime.datetime.strptime(
+            end_date_str, '%Y-%m-%d').date()
+
+    # date check
+    if not end_date > start_date:
+        raise Exception('Start date should precede end date: '
+                        '{}, {}'.format(start_date, end_date))
+
+    return start_date, end_date
 
 
 @with_temporary_dir
@@ -65,11 +86,13 @@ def import_data_from_ganalytics(access_token,
                                filtered).
     :type ganalytics_size_id: int
     :param date_start: Beginning date to retrieve data.
+                       Date string format is `%Y-%m-%d`.
                        If None, the task uses the date from 31 days ago.
                        (so that if both date_start and date_end are None,
                        the import period is the last 30 days)
     :type date_start: str
     :param date_end: Final date to retrieve data.
+                     Date string format is `%Y-%m-%d`.
                      If none, the task uses the date from yesterday.
     :type date_end: str
     :param s3_uri: the uri where to store the data
@@ -82,16 +105,8 @@ def import_data_from_ganalytics(access_token,
                         if False, files that are present in the tmp_directory
                         will not be downloaded from s3.
     """
-
-    #set date_start and date_end default values if necessary
-    if date_start is None:
-        date_start = datetime.date.today() - datetime.timedelta(31)
-    else:
-        date_start = parse_str_date(date_start)
-    if date_end is None:
-        date_end = datetime.date.today() - datetime.timedelta(1)
-    else:
-        date_end = parse_str_date(date_end)
+    # parse date strings
+    date_start, date_end = parse_start_end_dates(date_start, date_end)
 
     credentials = get_credentials(access_token, refresh_token)
     import_data(
