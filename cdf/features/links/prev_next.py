@@ -1,6 +1,5 @@
 import itertools
 from cdf.features.links.streams import InlinksStreamDef
-from cdf.features.links.helpers.masks import prev_next_mask
 
 
 def compute_prev_next_stream(inlinks_stream):
@@ -17,9 +16,8 @@ def compute_prev_next_stream(inlinks_stream):
         receives_next = False
         for inlink in inlinks:
             follow_mask = inlink[follow_mask_index]
-            prev_next_masks = prev_next_mask(follow_mask)
-            if "prev" in prev_next_masks:
+            if "prev" in follow_mask:
                 receives_prev = True
-            if "next" in prev_next_masks:
+            if "next" in follow_mask:
                 receives_next = True
         yield url_id, receives_prev, receives_next
