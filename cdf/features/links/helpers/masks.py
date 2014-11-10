@@ -19,8 +19,8 @@ _NOFOLLOW_MASKS = [
 ]
 
 _PREV_NEXT_MASKS = [
-    (32, "prev"),
-    (64, "next")
+    (32, "next"),
+    (64, "prev")
 ]
 
 
