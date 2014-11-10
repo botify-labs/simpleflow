@@ -63,7 +63,7 @@ def make_metadata_duplicates_file(crawl_id, s3_uri,
         tmp_dir=tmp_dir,
         force_fetch=force_fetch
     )
-    generator = get_duplicate_metadata(contents_stream, tmp_dir)
+    generator = get_duplicate_metadata(contents_stream)
     generator = itertools.imap(to_string, generator)
     files = ContentsDuplicateStreamDef.persist(
         generator,
@@ -76,10 +76,10 @@ def make_metadata_duplicates_file(crawl_id, s3_uri,
 
 @with_temporary_dir
 def make_context_aware_metadata_duplicates_file(s3_uri,
-                                                first_part_id_size,
-                                                part_id_size,
-                                                tmp_dir=None,
-                                                force_fetch=DEFAULT_FORCE_FETCH):
+                                             first_part_id_size,
+                                             part_id_size,
+                                             tmp_dir=None,
+                                             force_fetch=DEFAULT_FORCE_FETCH):
     """Compute zone aware duplicates.
     :param s3_uri: the uri where the crawl data is stored.
     :type s3_uri: str
@@ -111,8 +111,7 @@ def make_context_aware_metadata_duplicates_file(s3_uri,
     generator = get_context_aware_duplicate_metadata(
         contents_stream,
         zone_stream,
-        strategic_urls_stream,
-        tmp_dir=tmp_dir
+        strategic_urls_stream
     )
     generator = itertools.imap(to_string, generator)
     files = ContentsContextAwareDuplicateStreamDef.persist(
