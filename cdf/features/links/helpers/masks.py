@@ -56,7 +56,7 @@ def list_to_mask(lst):
     mask = 0
     if lst == ['follow']:
         return 0
-    for mask_int, mask_name in _NOFOLLOW_MASKS:
+    for mask_int, mask_name in _NOFOLLOW_MASKS + _PREV_NEXT_MASKS:
         if mask_name in lst:
             mask += mask_int
     return mask
