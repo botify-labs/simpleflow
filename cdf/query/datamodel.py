@@ -70,7 +70,15 @@ def _is_exists_fields(name):
 
 
 def _data_model_sort_key(elem, groups):
-    """A safe sort key function for data model"""
+    """A safe sort key function for data model
+    :param elem: the input element. It is a tuple field name, field configuration
+                 with field configuration a dict.
+    :type elem: tuple
+    :param groups: a dict group_id -> group_label
+    :type groups: dict
+    :returns: tuple (the exact definition does not matter, what is important
+                     is that it sorts the groups correctly, cf unit tests)
+    """
     _, config = elem
     group_id = config.get('group', '')
     group_name = groups.get(group_id, "")
