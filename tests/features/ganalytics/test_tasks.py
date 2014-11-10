@@ -11,9 +11,55 @@ import boto
 
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.ganalytics.streams import VisitsStreamDef
-from cdf.features.ganalytics.tasks import (import_data_from_ganalytics,
-                                           get_api_requests,
-                                           match_analytics_to_crawl_urls)
+from cdf.features.ganalytics.tasks import (
+    import_data_from_ganalytics,
+    get_api_requests,
+    match_analytics_to_crawl_urls,
+    parse_start_end_dates
+)
+
+
+class TestDateStringParsing(unittest.TestCase):
+    def test_harness(self):
+        date_start, date_end = parse_start_end_dates(
+            '2014-01-01', '2014-1-31')
+        expected_start = datetime.date(2014, 1, 1)
+        expected_end = datetime.date(2014, 1, 31)
+
+        self.assertEqual(date_start, expected_start)
+        self.assertEqual(date_end, expected_end)
+
+    def test_default_case(self):
+        date_start, date_end = parse_start_end_dates(None, None)
+        expected_start = datetime.date.today() - datetime.timedelta(31)
+        expected_end = datetime.date.today() - datetime.timedelta(1)
+
+        self.assertEqual(date_start, expected_start)
+        self.assertEqual(date_end, expected_end)
+
+    def test_end_precede_start(self):
+        # Start date should always precede end date
+        # should raise exception otherwise
+        date_start = '2014-2-1'
+        date_end = '2014-1-31'
+        self.assertRaises(
+            Exception,
+            parse_start_end_dates,
+            date_start,
+            date_end,
+        )
+
+    def test_wrong_format(self):
+        # Call with wrong date strings
+        # should raise exception
+        date_start = '2014asdoginweg'
+        date_end = '2014-1-31'
+        self.assertRaises(
+            Exception,
+            parse_start_end_dates,
+            date_start,
+            date_end,
+        )
 
 
 class TestImportDataFromGanalytics(unittest.TestCase):
@@ -21,9 +67,9 @@ class TestImportDataFromGanalytics(unittest.TestCase):
     @patch("cdf.features.ganalytics.tasks.get_credentials")
     @patch("cdf.features.ganalytics.tasks.import_data")
     @patch('cdf.utils.s3.push_file')
-    def test_date_start_date_end_default_values(self, mock_push, mock_import,
-                                                mock_credentials,
-                                                mock_load_metadata):
+    def test_harness(self, mock_push, mock_import,
+                     mock_credentials,
+                     mock_load_metadata):
 
         mock_credentials.return_value = "mock_credentials"
         mock_load_metadata.return_value = {
@@ -58,8 +104,8 @@ class TestImportDataFromGanalytics(unittest.TestCase):
                                             tmp_dir)
 
         # Call now with pre-set values
-        date_start = datetime.date(2014, 1, 1)
-        date_end = datetime.date(2014, 1, 31)
+        date_start = '2014-1-1'
+        date_end = '2014-1-31'
         import_data_from_ganalytics(access_token,
                                     refresh_token,
                                     ganalytics_site_id,
@@ -70,11 +116,10 @@ class TestImportDataFromGanalytics(unittest.TestCase):
                                     force_fetch=force_fetch)
 
         mock_import.assert_called_with("ga:12345678",
-                                            'mock_credentials',
-                                            date_start,
-                                            date_end,
-                                            tmp_dir)
-
+                                        'mock_credentials',
+                                        datetime.date(2014, 1, 1),
+                                        datetime.date(2014, 1, 31),
+                                        tmp_dir)
 
 
 class TestGetApiRequests(unittest.TestCase):
