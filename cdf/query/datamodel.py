@@ -69,11 +69,12 @@ def _is_exists_fields(name):
     return name.endswith('_exists')
 
 
-def _data_model_sort_key(elem):
+def _data_model_sort_key(elem, groups):
     """A safe sort key function for data model"""
     _, config = elem
-    group = config.get('group', '')
-    group_key = _get_group_sort_key(group)
+    group_id = config.get('group', '')
+    group_name = groups.get(group_id, "")
+    group_key = _get_group_sort_key(group_id, group_name)
     name = config.get('verbose_name', '')
     return group_key, name
 
@@ -165,7 +166,9 @@ def get_fields(feature_options, remove_private=True, remove_admin=True,
         if not is_exists and not is_private and not is_admin:
             fields.append((name, config))
     # sort on group, then order within group
-    fields.sort(key=_data_model_sort_key)
+    groups = get_all_groups()
+    group_names = {g["id"]: g["name"] for g in groups}
+    fields.sort(key=lambda x: _data_model_sort_key(x, group_names))
 
     # render data format to datamodel in place
     for i, (name, config) in enumerate(fields):

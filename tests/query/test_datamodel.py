@@ -20,7 +20,7 @@ class CustomStreamDef(StreamDefBase):
         ('id', int),
         ('url', str)
     )
-    URL_DOCUMENT_DEFAULT_GROUP = "main_group"
+    URL_DOCUMENT_DEFAULT_GROUP = "main"
     URL_DOCUMENT_MAPPING = {
         "url": {
             "verbose_name": "Url",
@@ -29,12 +29,11 @@ class CustomStreamDef(StreamDefBase):
                 RENDERING.URL
             }
         },
-        "delay": {
-            "verbose_name": "Delay",
-            "type": "integer",
-            "group": "metrics",
+        "title": {
+            "verbose_name": "Title",
+            "type": "string",
+            "group": "semantic_metadata",
             "settings": {
-                RENDERING.TIME_SEC,
                 FIELD_RIGHTS.SELECT
             }
         },
@@ -71,31 +70,52 @@ class CustomStreamDef(StreamDefBase):
     }
 
 class TestDataModelSortKey(unittest.TestCase):
+    def setUp(self):
+        self.groups = {
+            "foo": "Foo",
+            "bar": "Bar",
+            "": ""
+        }
+
     def test_nominal_case(self):
         self.assertLess(
-            _data_model_sort_key((11, {"group": "foo", "verbose_name": "bar"})),
-            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"})),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "bar"}), self.groups),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"}), self.groups),
         )
 
     def test_different_groups(self):
         #fields are sorted alphabetically
         self.assertLess(
-            _data_model_sort_key((11, {"group": "bar", "verbose_name": "foo"})),
-            _data_model_sort_key((11, {"group": "foo", "verbose_name": "bar"})),
+            _data_model_sort_key((11, {"group": "bar", "verbose_name": "foo"}), self.groups),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "bar"}), self.groups),
         )
 
     def test_missing_group(self):
         self.assertLess(
-            _data_model_sort_key((11, {"verbose_name": "bar"})),
-            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"})),
+            _data_model_sort_key((11, {"verbose_name": "bar"}), self.groups),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"}), self.groups),
         )
 
     def test_missing_verbose_name(self):
         self.assertLess(
-            _data_model_sort_key((11, {"group": "foo"})),
-            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"})),
+            _data_model_sort_key((11, {"group": "foo"}), self.groups),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"}), self.groups),
         )
 
+    def test_missing_group_name(self):
+        #when there is no group name, we set the group name to ""
+        self.assertLess(
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"}), {}),
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"}), self.groups)
+        )
+
+    def test_group_name_ordering(self):
+        groups = {"foo": "a", "bar": "z"}
+        self.assertLess(
+            #foo comes first because its group name is "a"
+            _data_model_sort_key((11, {"group": "foo", "verbose_name": "foo"}), groups),
+            _data_model_sort_key((11, {"group": "bar", "verbose_name": "bar"}), groups)
+        )
 
 class TestGetGroupSortKey(unittest.TestCase):
     def test_nominal_case(self):
@@ -113,7 +133,7 @@ class TestGetGroupSortKey(unittest.TestCase):
         )
         #even groups without name
         self.assertLess(
-            _get_group_sort_key("scheme"), "Scheme",
+            _get_group_sort_key("scheme", "Scheme"),
             _get_group_sort_key("", "")
         )
 
@@ -204,22 +224,22 @@ class FieldsTestCase(unittest.TestCase):
                 "data_type": "string",
                 "field_type": "url",
                 "is_sortable": True,
-                "group": "main_group",
+                "group": "main",
                 "multiple": False,
                 "rights": ["filters", "select"]
             }
         )
 
         self.assertEquals(
-            data_model['delay'],
+            data_model['title'],
 
             {
-                "value": "delay",
-                "name": "Delay",
-                "data_type": "integer",
-                "field_type": "time_sec",
+                "value": "title",
+                "name": "Title",
+                "data_type": "string",
+                "field_type": "string",
                 "is_sortable": True,
-                "group": "metrics",
+                "group": "semantic_metadata",
                 "multiple": False,
                 "rights": ["select"]
             }
@@ -263,7 +283,7 @@ class FieldsTestCase(unittest.TestCase):
             'content',
             'content_same_urls',
             'url',
-            'delay'  # delay is in an other group
+            'title'  # title is in an other group
         ]
         self.assertEqual(expected, data_model)
 
