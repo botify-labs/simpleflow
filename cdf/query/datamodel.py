@@ -174,6 +174,31 @@ def get_fields(feature_options, remove_private=True, remove_admin=True,
     return fields
 
 
+def get_all_groups():
+    """Returns all the groups.
+    :returns: list"""
+    groups = []
+    for feature in Feature.get_features():
+        for group in feature.groups:
+            # with hack for `previous`
+            previous_name = 'previous.{}'.format(group.name)
+            diff_name = 'diff.{}'.format(group.name)
+            groups.append({
+                'id': group.name,
+                'name': group.value
+            })
+            groups.append({
+                'id': previous_name,
+                'name': 'Previous {}'.format(group.value)
+            })
+            groups.append({
+                'id': diff_name,
+                'name': 'Diff {}'.format(group.value)
+            })
+    groups = sorted(groups, key=lambda g: _get_group_sort_key(g['id'], g['name']))
+    return groups
+
+
 def get_groups(features_options):
     """
     Returns a list of allowed groups from enabled features
@@ -184,26 +209,7 @@ def get_groups(features_options):
     ]
     """
     allowed_groups = set([f['group'] for f in get_fields(features_options)])
-    groups = []
-    for feature in Feature.get_features():
-        for group in feature.groups:
-            # with hack for `previous`
-            previous_name = 'previous.{}'.format(group.name)
-            diff_name = 'diff.{}'.format(group.name)
-            if group.name in allowed_groups:
-                groups.append({
-                    'id': group.name,
-                    'name': group.value
-                })
-            if previous_name in allowed_groups:
-                groups.append({
-                    'id': previous_name,
-                    'name': 'Previous {}'.format(group.value)
-                })
-            if diff_name in allowed_groups:
-                groups.append({
-                    'id': diff_name,
-                    'name': 'Diff {}'.format(group.value)
-                })
-    groups = sorted(groups, key=lambda x: _get_group_sort_key(x['id'], x['name']))
-    return groups
+    all_groups = get_all_groups()
+    result = [g for g in all_groups if g["id"] in allowed_groups]
+    result = sorted(result, key=lambda g: _get_group_sort_key(g['id'], g['name']))
+    return result
