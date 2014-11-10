@@ -100,13 +100,22 @@ class TestDataModelSortKey(unittest.TestCase):
 class TestGetGroupSortKey(unittest.TestCase):
     def test_nominal_case(self):
         #standard fields should be ordered alphabetically
-        self.assertLess(_get_group_sort_key("bar"), _get_group_sort_key("foo"))
+        self.assertLess(
+            _get_group_sort_key("bar", "Bar"),
+            _get_group_sort_key("foo", "Foo")
+        )
 
     def test_scheme_case(self):
         #scheme should come before anything else
-        self.assertLess(_get_group_sort_key("scheme"), _get_group_sort_key("foo"))
+        self.assertLess(
+            _get_group_sort_key("scheme", "Scheme"),
+            _get_group_sort_key("foo", "Foo")
+        )
         #even groups without name
-        self.assertLess(_get_group_sort_key("scheme"), _get_group_sort_key(""))
+        self.assertLess(
+            _get_group_sort_key("scheme"), "Scheme",
+            _get_group_sort_key("", "")
+        )
 
     def test_main_case(self):
         #main should come before anything else (except scheme)
@@ -119,60 +128,60 @@ class TestGetGroupSortKey(unittest.TestCase):
     def test_previous_fields(self):
         #previous fields come after standard field
         self.assertLess(
-            _get_group_sort_key("qux"),
-            _get_group_sort_key("previous.bar")
+            _get_group_sort_key("qux", "Qux"),
+            _get_group_sort_key("previous.bar", "Previous Bar")
         )
         #standard previous fields are order alphabetically
         self.assertLess(
-            _get_group_sort_key("previous.bar"),
-            _get_group_sort_key("previous.foo")
+            _get_group_sort_key("previous.bar", "Previous Bar"),
+            _get_group_sort_key("previous.foo", "Previous Foo")
         )
         #previous.schem comes before other previous fields
         self.assertLess(
-            _get_group_sort_key("previous.scheme"),
-            _get_group_sort_key("previous.foo")
+            _get_group_sort_key("previous.scheme", "Previous Scheme"),
+            _get_group_sort_key("previous.foo", "Previous Foo")
         )
         #previous.main comes before other previous fields
         self.assertLess(
-            _get_group_sort_key("previous.main"),
-            _get_group_sort_key("previous.foo")
+            _get_group_sort_key("previous.main", "Previous Main"),
+            _get_group_sort_key("previous.foo", "Previous Foo")
         )
         #previous fields come before diff fields
         self.assertLess(
-            _get_group_sort_key("previous.foo"),
-            _get_group_sort_key("diff.foo")
+            _get_group_sort_key("previous.foo", "Previous Foo"),
+            _get_group_sort_key("diff.foo", "Diff Foo")
         )
 
     def test_diff_fields(self):
         #diff fields come after standard field
         self.assertLess(
-            _get_group_sort_key("qux"),
-            _get_group_sort_key("diff.bar")
+            _get_group_sort_key("qux", "Qux"),
+            _get_group_sort_key("diff.bar", "Diff Bar")
         )
         #diff fields come after previous field
         self.assertLess(
-            _get_group_sort_key("previous.qux"),
-            _get_group_sort_key("diff.bar")
+            _get_group_sort_key("previous.qux", "Previous Qux"),
+            _get_group_sort_key("diff.bar", "Diff Bar")
         )
         #standard diff fields are order alphabetically
         self.assertLess(
-            _get_group_sort_key("diff.bar"),
-            _get_group_sort_key("diff.foo")
+            _get_group_sort_key("diff.bar", "Diff Bar"),
+            _get_group_sort_key("diff.foo", "Diff Foo")
         )
         #diff.scheme comes before other diff fields
         self.assertLess(
-            _get_group_sort_key("diff.scheme"),
-            _get_group_sort_key("diff.foo")
+            _get_group_sort_key("diff.scheme", "Diff Scheme"),
+            _get_group_sort_key("diff.foo", "Diff Foo")
         )
         #diff.main comes before other diff fields
         self.assertLess(
-            _get_group_sort_key("diff.main"),
-            _get_group_sort_key("diff.foo")
+            _get_group_sort_key("diff.main", "Diff Main"),
+            _get_group_sort_key("diff.foo", "Diff Foo")
         )
         #diff.main comes after any main field
         self.assertLess(
-            _get_group_sort_key("previous.qux"),
-            _get_group_sort_key("diff.main")
+            _get_group_sort_key("previous.qux", "Previous Qux"),
+            _get_group_sort_key("diff.main", "Diff Main")
         )
 
 

@@ -78,7 +78,7 @@ def _data_model_sort_key(elem):
     return group_key, name
 
 
-def _get_group_sort_key(group_id):
+def _get_group_sort_key(group_id, group_name=""):
     """Return a key to sort groups.
     The group order should be :
     - Scheme
@@ -90,8 +90,10 @@ def _get_group_sort_key(group_id):
     - Previous Scheme
     - Diff Main
     - All groups, sorted alphabetically
-    :param group_id: the group name (ex: previous.inlinks)
+    :param group_id: the group id (ex: previous.inlinks)
     :type group_id: str
+    :param group_name: the group labels (ex: "Previous Number of Inlinks")
+    :type group_name: str
     :returns: tuple (the exact definition does not matter, what is important
                      is that it sorts the groups correctly, cf unit tests)
     """
@@ -117,7 +119,7 @@ def _get_group_sort_key(group_id):
         group_order = 2
     #sort by comparison status then by "group" status, then by alphabetical
     #order
-    return comparison_order, group_order, group_id
+    return comparison_order, group_order, group_name
 
 
 def get_fields(feature_options, remove_private=True, remove_admin=True,
@@ -203,5 +205,5 @@ def get_groups(features_options):
                     'id': diff_name,
                     'name': 'Diff {}'.format(group.value)
                 })
-    groups = sorted(groups, key=lambda x: _get_group_sort_key(x['id']))
+    groups = sorted(groups, key=lambda x: _get_group_sort_key(x['id'], x['name']))
     return groups
