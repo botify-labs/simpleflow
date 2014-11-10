@@ -64,7 +64,7 @@ def filter_redundant_metadata(stream_contents):
                 yield content
 
 
-def generate_duplicate_stream(stream_contents, key, tmp_dir=None):
+def generate_duplicate_stream(stream_contents, key):
     """Generate duplicate stream (based on ContentsDuplicateStreamDef)
     from a contents stream.
     :param stream_contents: the contents stream
@@ -81,7 +81,7 @@ def generate_duplicate_stream(stream_contents, key, tmp_dir=None):
     # only preserve 10 duplicating urls
     nb_samples_to_return = 10
     #use external sort to prevent swapping
-    stream_contents = external_sort(stream_contents, key=key, tmp_dir=tmp_dir)
+    stream_contents = external_sort(stream_contents, key=key)
     for _, contents in groupby(stream_contents, key=key):
         #required to know the list lenght
         contents = list(contents)
@@ -137,7 +137,7 @@ def preprocess_duplicate_computation(stream_contents):
     return stream_contents
 
 
-def get_duplicate_metadata(stream_contents, tmp_dir=None):
+def get_duplicate_metadata(stream_contents):
     """
     Return a tuple of urls having a duplicate metadata (the first one found for each page)
     The 1st index is the url_id concerned
@@ -157,8 +157,7 @@ def get_duplicate_metadata(stream_contents, tmp_dir=None):
     get_hash_and_content_type = itemgetter(2, 1)  # content hash, content type
     stream_duplicates = generate_duplicate_stream(
         stream_contents,
-        key=get_hash_and_content_type,
-        tmp_dir=tmp_dir
+        key=get_hash_and_content_type
     )
 
     #the output stream is different from input stream
@@ -168,8 +167,7 @@ def get_duplicate_metadata(stream_contents, tmp_dir=None):
     #sort by urlid
     stream_duplicates = external_sort(
         stream_duplicates,
-        key=itemgetter(url_id_idx, content_meta_type_idx),
-        tmp_dir=tmp_dir
+        key=itemgetter(url_id_idx, content_meta_type_idx)
     )
 
     return stream_duplicates
@@ -223,9 +221,8 @@ def append_zone(stream_contents, stream_zones):
 
 
 def get_context_aware_duplicate_metadata(stream_contents,
-                                         stream_zones,
-                                         stream_strategic_urls,
-                                         tmp_dir=None):
+                                      stream_zones,
+                                      stream_strategic_urls):
     """
     Return a tuple of urls having a duplicate metadata (the first one found for each page).
     The difference with get_duplicate_metadata() is that:
@@ -263,8 +260,7 @@ def get_context_aware_duplicate_metadata(stream_contents,
     #sort by urlid
     stream_duplicates = external_sort(
         stream_duplicates,
-        key=itemgetter(url_id_idx, content_meta_type_idx),
-        tmp_dir=tmp_dir
+        key=itemgetter(url_id_idx, content_meta_type_idx)
     )
 
     return stream_duplicates

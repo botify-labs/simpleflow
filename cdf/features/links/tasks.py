@@ -1,7 +1,6 @@
 import os
 import gzip
 import json
-import tempfile
 
 from cdf.log import logger
 from cdf.core.streams.cache import BufferedMarshalStreamCache
@@ -254,9 +253,7 @@ def make_top_domains_files(crawl_id,
     outlinks = filter_external_outlinks(outlinks)
     outlinks = filter_invalid_destination_urls(outlinks)
 
-    #create a cache tmp file (will be removed by "stream_cache"
-    f = tempfile.NamedTemporaryFile(delete=False, dir=tmp_dir)
-    stream_cache = BufferedMarshalStreamCache(f.name)
+    stream_cache = BufferedMarshalStreamCache()
     stream_cache.cache(outlinks)
 
     result = []
@@ -264,8 +261,7 @@ def make_top_domains_files(crawl_id,
     logger.info("Computing top %d full domains.", nb_top_domains)
     top_domains = compute_top_full_domains(
         stream_cache.get_stream(),
-        nb_top_domains,
-        tmp_dir
+        nb_top_domains
     )
     # resolve url ids
     resolve_sample_url_id(es_handler, crawl_id, top_domains)
@@ -279,8 +275,7 @@ def make_top_domains_files(crawl_id,
     logger.info("Computing top %d second level domains.", nb_top_domains)
     top_domains = compute_top_second_level_domains(
         stream_cache.get_stream(),
-        nb_top_domains,
-        tmp_dir
+        nb_top_domains
     )
     # resolve url ids
     resolve_sample_url_id(es_handler, crawl_id, top_domains)

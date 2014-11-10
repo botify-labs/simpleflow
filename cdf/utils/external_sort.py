@@ -11,7 +11,7 @@ from abc import ABCMeta, abstractmethod
 logger = logging.getLogger(__name__)
 
 
-def external_sort(stream, key, tmp_dir=None):
+def external_sort(stream, key):
     """Sort a stream according to a key function.
     This is a commodity function that avoids
     the creation of an ExternalSort object.
@@ -24,7 +24,7 @@ def external_sort(stream, key, tmp_dir=None):
     :returns: iterator
     """
     #use MarshalExternalSort as it is the fastest method so far.
-    external_sort = MarshalExternalSort(tmp_dir=tmp_dir)
+    external_sort = MarshalExternalSort()
     return external_sort.external_sort(stream, key)
 
 
@@ -56,7 +56,7 @@ class MergeExternalSort(ExternalSort):
         - how to serialize the stream elements in a file
         - how to read a stream of elements from a file
     """
-    def __init__(self, block_size=100000, tmp_dir=None):
+    def __init__(self, block_size=100000):
         """Constructor.
         :param block_size: the number of elements contained
                            in each temporary file.
@@ -69,7 +69,6 @@ class MergeExternalSort(ExternalSort):
         self.block_size = block_size
         #the maximum number of open files this instance will use.
         self.max_open_files_nb = 100
-        self.tmp_dir = tmp_dir or ""
 
     def external_sort(self, stream, key):
         logger.debug("Splitting stream into chunks of size %d.", self.block_size)
@@ -118,7 +117,7 @@ class MergeExternalSort(ExternalSort):
         :type stream: iterator
         :returns: str - the path to the file where the stream was dumped
         """
-        dump_file = tempfile.NamedTemporaryFile("wb", delete=False, dir=self.tmp_dir)
+        dump_file = tempfile.NamedTemporaryFile("wb", delete=False)
         for element in stream:
                 #we use the .file attribute because of
                 #the Marshal implementation of MergeExternalSort.
