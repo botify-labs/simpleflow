@@ -34,11 +34,11 @@ def follow_mask(mask):
     Nofollow list is always ordered according to following ordering:
         ["robots", "meta", "link"]
     """
-    _mask = int(mask) & 31
-    if _mask in (0, 8):
-        return ["follow"]
+    _mask = int(mask)
     masks = []
-    for bitmask, term in _NOFOLLOW_MASKS:
+    if _mask & 31 in (0, 8):
+        masks.append("follow")
+    for bitmask, term in _NOFOLLOW_MASKS + _PREV_NEXT_MASKS:
         if bitmask & _mask == bitmask:
             masks.append(term)
     return masks

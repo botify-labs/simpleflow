@@ -25,3 +25,10 @@ class TestMasks(unittest.TestCase):
             for subset in itertools.combinations(_NOFOLLOW_MASKS, L):
                 counter = sum(k[0] for k in subset)
                 self.assertEquals(follow_mask(str(counter)), [k[1] for k in subset])
+
+    def test_prev_next(self):
+        self.assertItemsEqual(follow_mask("32"), ["next", "follow"])
+        self.assertItemsEqual(follow_mask("64"), ["prev", "follow"])
+
+        self.assertItemsEqual(follow_mask("33"), ["next", "link"])
+        self.assertItemsEqual(follow_mask("68"), ["prev", "robots"])
