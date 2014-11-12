@@ -4,7 +4,10 @@ import logging
 import itertools
 
 from cdf.log import logger
-from cdf.features.links.helpers.masks import follow_mask, _NOFOLLOW_MASKS
+from cdf.features.links.helpers.masks import (
+    follow_mask,
+    list_to_mask,
+    _NOFOLLOW_MASKS)
 
 logger.setLevel(logging.DEBUG)
 
@@ -32,3 +35,18 @@ class TestMasks(unittest.TestCase):
 
         self.assertItemsEqual(follow_mask("33"), ["next", "link"])
         self.assertItemsEqual(follow_mask("68"), ["prev", "robots"])
+
+
+class TestListToMask(unittest.TestCase):
+    def test_follow(self):
+        self.assertEqual(0, list_to_mask(['follow']))
+
+    def test_no_follow(self):
+        self.assertEqual(4, list_to_mask(["robots"]))
+        self.assertEqual(5, list_to_mask(["link", "robots"]))
+
+    def test_prev_next(self):
+        self.assertEqual(32, list_to_mask(["next"]))
+        self.assertEqual(64, list_to_mask(["prev"]))
+        self.assertEqual(37, list_to_mask(["next", "link", "robots"]))
+        self.assertEqual(64, list_to_mask(["prev", "follow"]))
