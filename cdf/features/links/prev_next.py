@@ -20,4 +20,4 @@ def compute_prev_next_stream(inlinks_stream):
                 receives_prev = True
             if "next" in follow_mask:
                 receives_next = True
-        yield url_id, receives_prev, receives_next
+        yield url_id, int(receives_prev), int(receives_next)

@@ -14,8 +14,8 @@ class TestComputePrevNextStream(unittest.TestCase):
         actual_stream = compute_prev_next_stream(inlinks_stream)
 
         expected_stream = [
-            (1, True, False),
-            (2, False, False),
-            (3, True, True)
+            (1, 1, 0),
+            (2, 0, 0),
+            (3, 1, 1)
         ]
         self.assertEqual(expected_stream, list(actual_stream))
