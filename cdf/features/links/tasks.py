@@ -359,9 +359,18 @@ def make_prev_next_file(s3_uri,
                         part_id_size=PART_ID_SIZE,
                         tmp_dir=None,
                         force_fetch=DEFAULT_FORCE_FETCH):
+    """Create 'prev/next' files that indicates for each url
+    if it receives at least a prev link or at least of next link.
+    :param s3_uri: the s3 uri where the crawl data is stored.
+    :type s3_uri: str
+    :param first_part_id_size: the size of the first part.
+    :type first_part_id_size: int
+    :param part_id_size: the size of the parts (except the first one)
+    :type part_id_size: int
+    :returns: list - the list of generated files
+    """
     inlinks_stream = InlinksStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     prev_next_stream = compute_prev_next_stream(inlinks_stream)
-
     output_files = PrevNextStreamDef.persist(
         prev_next_stream,
         s3_uri,

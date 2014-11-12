@@ -21,7 +21,8 @@ from cdf.features.links.streams import (
     InlinksStreamDef,
     InlinksCountersStreamDef,
     InlinksPercentilesStreamDef,
-    InredirectCountersStreamDef
+    InredirectCountersStreamDef,
+    PrevNextStreamDef
 )
 from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
 from cdf.features.links.tasks import (
@@ -584,6 +585,12 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
         self.assertIn('url_total', content[0])
 
 class TestMakePrevNextFile(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
     @mock_s3
     def test_nominal_case(self):
         s3_uri = 's3://test_bucket'
@@ -619,3 +626,11 @@ class TestMakePrevNextFile(unittest.TestCase):
         ]
         self.assertEqual(expected_result, actual_result)
 
+        actual_stream = PrevNextStreamDef.load(s3_uri, self.tmp_dir)
+
+        expected_stream = [
+            [1, True, False],
+            [2, False, False],
+            [3, True, True]
+        ]
+        self.assertEqual(expected_stream, list(actual_stream))
