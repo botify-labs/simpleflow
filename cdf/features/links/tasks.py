@@ -25,13 +25,15 @@ from cdf.features.main.streams import (
 from cdf.features.links.streams import (
     OutlinksRawStreamDef, OutlinksStreamDef,
     InlinksRawStreamDef,
+    InlinksStreamDef,
     InlinksCountersStreamDef,
     BadLinksStreamDef,
     BadLinksCountersStreamDef,
     LinksToNonCompliantStreamDef,
     LinksToNonCompliantCountersStreamDef,
     InlinksPercentilesStreamDef,
-    InredirectCountersStreamDef
+    InredirectCountersStreamDef,
+    PrevNextStreamDef
 )
 from cdf.features.links.top_domains import (
     compute_top_full_domains,
@@ -44,6 +46,7 @@ from cdf.features.links.percentiles import (
     compute_quantiles,
     compute_percentile_stats
 )
+from cdf.features.links.prev_next import compute_prev_next_stream
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 
@@ -344,6 +347,23 @@ def make_inlinks_percentiles_file(s3_uri,
     #persist stream
     output_files = InlinksPercentilesStreamDef.persist(
         percentile_stream,
+        s3_uri,
+        first_part_size=first_part_id_size,
+        part_size=part_id_size
+    )
+    return output_files
+
+@with_temporary_dir
+def make_prev_next_file(s3_uri,
+                        first_part_id_size=FIRST_PART_ID_SIZE,
+                        part_id_size=PART_ID_SIZE,
+                        tmp_dir=None,
+                        force_fetch=DEFAULT_FORCE_FETCH):
+    inlinks_stream = InlinksStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    prev_next_stream = compute_prev_next_stream(inlinks_stream)
+
+    output_files = PrevNextStreamDef.persist(
+        prev_next_stream,
         s3_uri,
         first_part_size=first_part_id_size,
         part_size=part_id_size
