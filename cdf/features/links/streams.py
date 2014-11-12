@@ -1135,3 +1135,37 @@ class InlinksPercentilesStreamDef(StreamDefBase):
     def process_document(self, document, input_stream):
         _, percentile_id, _ = input_stream
         document["inlinks_internal"]["percentile"] = percentile_id
+
+
+class PrevNextStreamDef(StreamDefBase):
+    FILE = 'prev_next'
+    HEADERS = (
+        ('id', int),
+        ('receives_prev', _raw_to_bool),
+        ('receives_next', _raw_to_bool)
+    )
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
+    URL_DOCUMENT_MAPPING = {
+        "internal_inlinks.receives_prev": {
+            "type": BOOLEAN_TYPE,
+            "verbose_name": "Receives at least a prev links.",
+            "settings": {
+                FIELD_RIGHTS.SELECT,
+            }
+        },
+        "internal_inlinks.receives_next": {
+            "type": BOOLEAN_TYPE,
+            "verbose_name": "Receives at least a next links.",
+            "settings": {
+                FIELD_RIGHTS.SELECT,
+            }
+        }
+    }
+
+    def process_document(self, document, stream_element):
+        _, receives_prev, receives_next = stream_element
+
+        inlinks_internal = document['inlinks_internal']
+        inlinks_internal["receives_prev"] = receives_prev
+        inlinks_internal["receives_next"] = receives_next
+
