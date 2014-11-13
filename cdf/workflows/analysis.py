@@ -364,7 +364,6 @@ class AnalysisWorkflow(Workflow):
 
     def push_documents_to_elastic_search(self, crawl_id, tmp_dir, es_params,
                                          has_comparison, partitions):
-        elastic_search_results = [futures.Future()]
         elastic_search_results = [
             self.submit(
                 push_documents_to_elastic_search,
