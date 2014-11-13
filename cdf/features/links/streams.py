@@ -1146,18 +1146,20 @@ class PrevNextStreamDef(StreamDefBase):
     )
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
     URL_DOCUMENT_MAPPING = {
-        "internal_inlinks.receives_prev": {
+        "inlinks_internal.receives_prev": {
             "type": BOOLEAN_TYPE,
+            "default_value": False,
             "verbose_name": "Receives at least a prev links.",
             "settings": {
                 FIELD_RIGHTS.SELECT,
             }
         },
-        "internal_inlinks.receives_next": {
+        "inlinks_internal.receives_next": {
             "type": BOOLEAN_TYPE,
+            "default_value": False,
             "verbose_name": "Receives at least a next links.",
             "settings": {
-                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.SELECT
             }
         }
     }
