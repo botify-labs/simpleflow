@@ -362,7 +362,7 @@ class AnalysisWorkflow(Workflow):
         )
         return insights_result
 
-    def push_documents_to_elastic_search(self, crawl_id, tmp_dir, es_params,
+    def push_documents_to_elastic_search(self, crawl_id, s3_uri, tmp_dir, es_params,
                                          has_comparison, partitions):
         elastic_search_results = [
             self.submit(
@@ -413,6 +413,7 @@ class AnalysisWorkflow(Workflow):
             # We assume that documents are already generated and available
             # on S3
             self.push_documents_to_elastic_search(crawl_id,
+                                                  s3_uri,
                                                   tmp_dir,
                                                   es_params,
                                                   has_comparison,
@@ -633,7 +634,7 @@ class AnalysisWorkflow(Workflow):
 
         if all(result.finished for result in documents_results):
             elastic_search_results = self.push_documents_to_elastic_search(
-                crawl_id, tmp_dir, es_params,
+                crawl_id, s3_uri, tmp_dir, es_params,
                 has_comparison, partitions
             )
             futures.wait(*(elastic_search_results + [consolidate_result]))
