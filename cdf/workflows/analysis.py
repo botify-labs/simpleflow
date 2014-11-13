@@ -362,6 +362,23 @@ class AnalysisWorkflow(Workflow):
         )
         return insights_result
 
+    def push_documents_to_elastic_search(self, crawl_id, tmp_dir, es_params,
+                                         has_comparison, partitions):
+        elastic_search_results = [futures.Future()]
+        elastic_search_results = [
+            self.submit(
+                push_documents_to_elastic_search,
+                crawl_id=crawl_id,
+                s3_uri=s3_uri,
+                tmp_dir=tmp_dir,
+                part_id=part_id,
+                comparison=has_comparison,
+                **es_params
+            )
+            for part_id in partitions.result
+        ]
+        return elastic_search_results
+
     def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
@@ -386,8 +403,23 @@ class AnalysisWorkflow(Workflow):
             'es_doc_type': context['es_doc_type']
         }
 
+        partitions = self.submit(enumerate_partitions, s3_uri)
+
         revision_number = context['revision_number']
         features_flags = context.get('features_flags', [])
+        has_comparison = 'comparison' in features_flags
+
+        if context.get('push_to_elastic_search_only'):
+            # Quickfix for big failure of ES
+            # We assume that documents are already generated and available
+            # on S3
+            self.push_documents_to_elastic_search(crawl_id,
+                                                  tmp_dir,
+                                                  es_params,
+                                                  has_comparison,
+                                                  partitions)
+            futures.wait(*elastic_search_results)
+            return
 
         clusters_result = self.submit(
             compute_suggested_patterns,
@@ -413,7 +445,6 @@ class AnalysisWorkflow(Workflow):
             part_id_size,
             tmp_dir=tmp_dir)
 
-        partitions = self.submit(enumerate_partitions, s3_uri)
 
         # ``make_bad_link_counter_file`` depends on ``make_bad_link_file`` but
         # does not take its result (that is None) as an argument. Further below
@@ -586,7 +617,6 @@ class AnalysisWorkflow(Workflow):
         # document merging for comparison
         # need to wait for documents generation
         futures.wait(*documents_results)
-        has_comparison = 'comparison' in features_flags
         if has_comparison:
             previous_analysis = context['features_options']['comparison']['history'][0]
             _, _, ref_s3_uri = previous_analysis
@@ -602,23 +632,12 @@ class AnalysisWorkflow(Workflow):
         if has_comparison:
             futures.wait(comparison)
 
-        elastic_search_results = [futures.Future()]
         if all(result.finished for result in documents_results):
-            elastic_search_results = [
-                self.submit(
-                    push_documents_to_elastic_search,
-                    crawl_id=crawl_id,
-                    s3_uri=s3_uri,
-                    tmp_dir=tmp_dir,
-                    part_id=part_id,
-                    comparison=has_comparison,
-                    **es_params
-                )
-                for part_id in partitions.result
-            ]
-
-        futures.wait(*(elastic_search_results + [consolidate_result]))
-
+            elastic_search_results = self.push_documents_to_elastic_search(
+                crawl_id, tmp_dir, es_params,
+                has_comparison, partitions
+            )
+            futures.wait(*(elastic_search_results + [consolidate_result]))
         insights_result = self.compute_insights(context)
 
         #compute top domains after the push to elasticsearch because
