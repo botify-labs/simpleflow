@@ -409,7 +409,7 @@ class AnalysisWorkflow(Workflow):
         features_flags = context.get('features_flags', [])
         has_comparison = 'comparison' in features_flags
 
-        if context.get('push_to_elastic_search_only'):
+        if 'push_to_elastic_search_only' in context:
             # Quickfix for big failure of ES
             # We assume that documents are already generated and available
             # on S3
@@ -633,6 +633,7 @@ class AnalysisWorkflow(Workflow):
         if has_comparison:
             futures.wait(comparison)
 
+        elastic_search_results = [futures.Future()]
         if all(result.finished for result in documents_results):
             elastic_search_results = self.push_documents_to_elastic_search(
                 crawl_id, s3_uri, tmp_dir, es_params,
