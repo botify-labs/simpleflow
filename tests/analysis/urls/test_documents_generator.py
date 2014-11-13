@@ -23,7 +23,8 @@ from cdf.features.links.streams import (
     InlinksStreamDef,
     BadLinksStreamDef,
     LinksToNonCompliantStreamDef,
-    InlinksPercentilesStreamDef
+    InlinksPercentilesStreamDef,
+    PrevNextStreamDef
 )
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
@@ -433,3 +434,61 @@ class TestGlobalDocumentGeneration(unittest.TestCase):
         self.assertFalse('processed_outlink_url' in document)
         self.assertFalse('inlinks_id_to_idx' in document)
         self.assertFalse('outlinks_id_to_idx' in document)
+
+
+class TestPrevNextGeneration(unittest.TestCase):
+    def test_nominal_case(self):
+        ids = [
+            [0, "http", "www.site.com", "/path/index.html", ""],
+            [1, "http", "www.site.com", "/path/name.html", ""],
+            [2, "http", "wwww.site.com", "/path/name.html", "?page=2"],
+        ]
+
+        prev_nexts = [
+            (0, True, False),
+            (1, False, False),
+            (2, True, True)
+        ]
+
+        id_stream = IdStreamDef.load_iterator(iter(ids))
+        prev_next_stream = PrevNextStreamDef.load_iterator(
+            iter(prev_nexts)
+        )
+
+        document_generator = UrlDocumentGenerator([id_stream, prev_next_stream])
+        documents = list(document_generator)
+        prev_status = [
+            (i, d["inlinks_internal"]["receives_prev"]) for i, d in documents
+        ]
+        expected_prev_status = [(0, True), (1, False), (2, True)]
+        self.assertEqual(expected_prev_status, prev_status)
+
+        next_status = [
+            (i, d["inlinks_internal"]["receives_next"]) for i, d in documents
+        ]
+        expected_next_status = [(0, False), (1, False), (2, True)]
+        self.assertEqual(expected_next_status, next_status)
+
+    def test_default_value(self):
+        ids = [
+            [0, "http", "www.site.com", "/path/index.html", ""],
+        ]
+
+        prev_nexts = []
+
+        id_stream = IdStreamDef.load_iterator(iter(ids))
+        prev_next_stream = PrevNextStreamDef.load_iterator(
+            iter(prev_nexts)
+        )
+
+        document_generator = UrlDocumentGenerator([id_stream, prev_next_stream])
+        documents = list(document_generator)
+
+        self.assertEqual(1, len(documents))
+        doc = documents[0][1]
+        self.assertIn("receives_prev", doc["inlinks_internal"])
+        self.assertEquals(False, doc["inlinks_internal"]["receives_prev"])
+        self.assertIn("receives_next", doc["inlinks_internal"])
+        self.assertEquals(False, doc["inlinks_internal"]["receives_next"])
+
+
