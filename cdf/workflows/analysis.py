@@ -413,12 +413,13 @@ class AnalysisWorkflow(Workflow):
             # Quickfix for big failure of ES
             # We assume that documents are already generated and available
             # on S3
-            self.push_documents_to_elastic_search(crawl_id,
-                                                  s3_uri,
-                                                  tmp_dir,
-                                                  es_params,
-                                                  has_comparison,
-                                                  partitions)
+            elastic_search_results = self.push_documents_to_elastic_search(
+                crawl_id,
+                s3_uri,
+                tmp_dir,
+                es_params,
+                has_comparison,
+                partitions)
             futures.wait(*elastic_search_results)
             return
 
