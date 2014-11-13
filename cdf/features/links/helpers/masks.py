@@ -45,6 +45,14 @@ def follow_mask(mask):
 
 
 def prev_next_mask(mask):
+    """Given a int mask returns a list containing the corresponding prev/next
+    attributes.
+    The result list contains strings.
+    Its potential elements are "prev", "next"
+    :param mask: the input mask
+    :type mask: int
+    :returns: list
+    """
     flags = []
     for local_mask, name in _PREV_NEXT_MASKS:
         if int(mask) & local_mask == local_mask:
