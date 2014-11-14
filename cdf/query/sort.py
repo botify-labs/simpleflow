@@ -21,7 +21,9 @@ class Sort(object):
     def to_dict(self):
         """Return a dict representation of the object
         :returns: dict"""
-        return {self.order.value: self.field}
+        return [
+            {self.field: {'order': self.order.value}}
+        ]
 
 
 class AscendingSort(Sort):
