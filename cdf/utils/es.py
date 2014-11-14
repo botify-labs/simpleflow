@@ -119,7 +119,8 @@ class EsHandler(object):
         return self.es_client.indices.refresh(index=self.index)
 
 
-def bulk(client, docs, chunk_size=500, bulk_type='index', **kwargs):
+def bulk(client, docs, bulk_type='index', stats_only=True, **kwargs):
+    success, failed = 0, 0
     bulk_actions = []
     for d in docs:
         action = {bulk_type: {}}
@@ -131,10 +132,21 @@ def bulk(client, docs, chunk_size=500, bulk_type='index', **kwargs):
         bulk_actions.append(action)
         bulk_actions.append(d.get('_source', d))
 
-    if not bulk_actions:
-        return {}
+    # issue the bulk
+    responses = client.bulk(bulk_actions, **kwargs)
 
-    return client.bulk(bulk_actions, **kwargs)
+    if not stats_only:
+        return responses
+    # parse responses
+    err = responses.get('errors')
+    if err is False:
+        return len(docs), 0
 
+    for req, item in zip(bulk_actions[::2], responses['items']):
+        err = item['index' if '_id' in req['index'] else 'create'].get('error')
+        if err:
+            failed += 1
+        else:
+            success += 1
 
-
+    return success, failed

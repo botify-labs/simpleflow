@@ -67,6 +67,15 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
                            ELASTICSEARCH_BACKEND.mapping())
 
 
+def _bulk(es, docs, es_index, es_doc_type):
+    oks, errs = bulk(es, docs, stats_only=True, doc_type=es_doc_type, index=es_index)
+    if oks == 0:
+        raise Exception('All bulk ops have failed, stopping pushing ...')
+    logger.info('Bulk of {} elements finished with {} successes and {}'
+                ' fails, continue  ...'.format(len(docs), oks, errs))
+    return oks, errs
+
+
 @with_temporary_dir
 def push_documents_to_elastic_search(crawl_id, s3_uri,
                                      es_location, es_index, es_doc_type,
@@ -105,15 +114,15 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
     reader = itertools.chain(*[gzip.open(f[0], 'r') for f in files_fetched])
 
     docs = []
-    for i, line in enumerate(reader):
+    for i, line in enumerate(reader, 1):
         docs.append(json.loads(line))
         if i % 3000 == 0:
             logger.info('{} items pushed to ES index {} for part {}'.format(
                 i, es_index, part_ids))
-            bulk(es, docs, doc_type=es_doc_type, index=es_index)
+            _bulk(es, docs, es_doc_type=es_doc_type, es_index=es_index)
             docs = []
     if len(docs) > 0:
-        bulk(es, docs, doc_type=es_doc_type, index=es_index)
+        _bulk(es, docs, es_doc_type=es_doc_type, es_index=es_index)
 
 
 @with_temporary_dir
