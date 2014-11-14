@@ -16,7 +16,7 @@ from cdf.features.links.helpers.masks import list_to_mask
 from cdf.utils.convert import _raw_to_bool
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.features.links.helpers.predicates import is_link_internal
-from cdf.features.links.helpers.masks import follow_mask
+from cdf.features.links.helpers.masks import follow_mask, _NOFOLLOW_MASKS
 from cdf.features.links.settings import GROUPS, NB_TOP_ANCHORS
 
 
@@ -24,7 +24,8 @@ __all__ = ["OutlinksRawStreamDef", "OutlinksStreamDef"]
 
 
 def _get_nofollow_combination_key(keys):
-    return '_'.join(sorted(keys))
+    nofollow_mask_ids = map(lambda x: x[1], _NOFOLLOW_MASKS)
+    return '_'.join(sorted([k for k in keys if k in nofollow_mask_ids]))
 
 
 class OutlinksRawStreamDef(StreamDefBase):
@@ -435,7 +436,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         url_src, link_type, follow_keys, url_dst, external_url = stream
         # is_internal = url_dst > 0
         is_internal = is_link_internal(follow_keys, url_dst)
-        is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
+        is_follow = ("follow" in follow_keys)
         outlink_type = "outlinks_internal" if is_internal else "outlinks_external"
         mask = list_to_mask(follow_keys)
 
@@ -730,7 +731,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
 
     def _process_link(self, document, stream):
         url_dst, link_type, follow_keys, url_src, text_hash, text = stream
-        is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
+        is_follow = ("follow" in follow_keys)
         mask = list_to_mask(follow_keys)
         inlink_nb = document['inlinks_internal']['nb']
         inlink_nb['total'] += 1
