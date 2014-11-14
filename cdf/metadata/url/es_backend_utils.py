@@ -378,13 +378,17 @@ class ElasticSearchBackend(DataBackend):
         :return: an empty json document
         """
         default_document = {}
-        for path, value in self.data_format.iteritems():
-            default = None
-            if 'settings' in value and LIST in value['settings']:
-                default = []
-            elif value['type'] in ('long', 'integer'):
-                default = 0
-
+        default_values = self.field_default_value()
+        print default_values['canonical.to.url']
+        for path, _ in self.data_format.iteritems():
+            if path in default_values:
+                default = default_values[path]
+            # if 'settings' in value and LIST in value['settings']:
+            #     default = []
+            # elif value['type'] in ('long', 'integer'):
+            #     default = 0
+            else:
+                default = None
             if flatten:
                 default_document[path] = default
             else:
