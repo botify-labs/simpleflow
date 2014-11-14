@@ -263,7 +263,7 @@ class TestInsightValue(unittest.TestCase):
     def test_sort_by(self):
         self.insight.sort_by = AscendingSort("bar")
 
-        expected_value = {"asc": "bar"}
+        expected_value = [{"bar": {"order": "asc"}}]
 
         self.assertEqual(
             expected_value,
