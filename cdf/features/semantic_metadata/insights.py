@@ -57,7 +57,9 @@ def get_metadata_insights(metadata):
         "metadata.{}.duplicates.context_aware.nb".format(metadata),
         "metadata.{}.duplicates.context_aware.urls".format(metadata)
     ]
-    additional_filter = EqFilter("metadata.{}.is_first".format(metadata), True)
+    additional_filter = EqFilter(
+        "metadata.{}.duplicates.context_aware.is_first".format(metadata), True
+    )
     result.append(
         Insight(
             identifier,
@@ -84,7 +86,9 @@ def get_metadata_insights(metadata):
         "metadata.{}.duplicates.context_aware.urls".format(metadata),
         "metadata.{}.nb".format(metadata)
     ]
-    additional_filter = EqFilter("metadata.{}.is_first".format(metadata), True)
+    additional_filter = EqFilter(
+        "metadata.{}.duplicates.context_aware.is_first".format(metadata), True
+    )
     result.append(
         Insight(
             identifier,
