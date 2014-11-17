@@ -69,16 +69,25 @@ def _is_exists_fields(name):
     return name.endswith('_exists')
 
 
-def _data_model_sort_key(elem):
-    """A safe sort key function for data model"""
+def _data_model_sort_key(elem, groups):
+    """A safe sort key function for data model
+    :param elem: the input element. It is a tuple field name, field configuration
+                 with field configuration a dict.
+    :type elem: tuple
+    :param groups: a dict group_id -> group_label
+    :type groups: dict
+    :returns: tuple (the exact definition does not matter, what is important
+                     is that it sorts the groups correctly, cf unit tests)
+    """
     _, config = elem
-    group = config.get('group', '')
-    group_key = _get_group_sort_key(group)
+    group_id = config.get('group', '')
+    group_name = groups.get(group_id, "")
+    group_key = _get_group_sort_key(group_id, group_name)
     name = config.get('verbose_name', '')
     return group_key, name
 
 
-def _get_group_sort_key(group):
+def _get_group_sort_key(group_id, group_name):
     """Return a key to sort groups.
     The group order should be :
     - Scheme
@@ -90,34 +99,36 @@ def _get_group_sort_key(group):
     - Previous Scheme
     - Diff Main
     - All groups, sorted alphabetically
-    :param group: the group name (ex: previous.inlinks)
-    :type group: str
+    :param group_id: the group id (ex: previous.inlinks)
+    :type group_id: str
+    :param group_name: the group labels (ex: "Previous Number of Inlinks")
+    :type group_name: str
     :returns: tuple (the exact definition does not matter, what is important
                      is that it sorts the groups correctly, cf unit tests)
     """
-    group_chunks = group.split(".")
+    group_id_chunks = group_id.split(".")
 
     comparison_order = 0
-    if group_chunks[0] == "previous":
+    if group_id_chunks[0] == "previous":
         comparison_order = 1
         #remove prefix to get main_order correctly
-        group = ".".join(group_chunks[1:])
-    elif group_chunks[0] == "diff":
+        group_id = ".".join(group_id_chunks[1:])
+    elif group_id_chunks[0] == "diff":
         comparison_order = 2
         #remove prefix to get main_order correctly
-        group = ".".join(group_chunks[1:])
+        group_id = ".".join(group_id_chunks[1:])
 
-    #scheme group should appear first.
+    #scheme group_id should appear first.
     #then main group
-    if group == "scheme":
+    if group_id == "scheme":
         group_order = 0
-    elif group == "main":
+    elif group_id == "main":
         group_order = 1
     else:
         group_order = 2
     #sort by comparison status then by "group" status, then by alphabetical
     #order
-    return comparison_order, group_order, group
+    return comparison_order, group_order, group_name
 
 
 def get_fields(feature_options, remove_private=True, remove_admin=True,
@@ -162,15 +173,41 @@ def get_fields(feature_options, remove_private=True, remove_admin=True,
 
         if not is_exists and not is_private and not is_admin:
             fields.append((name, config))
-
     # sort on group, then order within group
-    fields.sort(key=_data_model_sort_key)
+    groups = get_all_groups()
+    group_names = {g["id"]: g["name"] for g in groups}
+    fields.sort(key=lambda x: _data_model_sort_key(x, group_names))
 
     # render data format to datamodel in place
     for i, (name, config) in enumerate(fields):
         fields[i] = _render_field(name, config)
 
     return fields
+
+
+def get_all_groups():
+    """Returns all the groups.
+    :returns: list"""
+    groups = []
+    for feature in Feature.get_features():
+        for group in feature.groups:
+            # with hack for `previous`
+            previous_name = 'previous.{}'.format(group.name)
+            diff_name = 'diff.{}'.format(group.name)
+            groups.append({
+                'id': group.name,
+                'name': group.value
+            })
+            groups.append({
+                'id': previous_name,
+                'name': 'Previous {}'.format(group.value)
+            })
+            groups.append({
+                'id': diff_name,
+                'name': 'Diff {}'.format(group.value)
+            })
+    groups = sorted(groups, key=lambda g: _get_group_sort_key(g['id'], g['name']))
+    return groups
 
 
 def get_groups(features_options):
@@ -183,26 +220,6 @@ def get_groups(features_options):
     ]
     """
     allowed_groups = set([f['group'] for f in get_fields(features_options)])
-    groups = []
-    for feature in Feature.get_features():
-        for group in feature.groups:
-            # with hack for `previous`
-            previous_name = 'previous.{}'.format(group.name)
-            diff_name = 'diff.{}'.format(group.name)
-            if group.name in allowed_groups:
-                groups.append({
-                    'id': group.name,
-                    'name': group.value
-                })
-            if previous_name in allowed_groups:
-                groups.append({
-                    'id': previous_name,
-                    'name': 'Previous {}'.format(group.value)
-                })
-            if diff_name in allowed_groups:
-                groups.append({
-                    'id': diff_name,
-                    'name': 'Diff {}'.format(group.value)
-                })
-    groups = sorted(groups, key=lambda x: _get_group_sort_key(x['id']))
-    return groups
+    all_groups = get_all_groups()
+    result = [g for g in all_groups if g["id"] in allowed_groups]
+    return result
