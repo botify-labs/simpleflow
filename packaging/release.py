@@ -51,14 +51,27 @@ def get_last_release_version():
     return [int(i) for i in release_version.split(".")]
 
 
-def get_release_version():
+def get_release_version(level=0):
     """Returns the version number of the next release version
     as a tuple (major, minor, micro).
+    :param level: version level to be incremented
+        0 for micro
+        1 for minor
+        2 for major
+    :type level: int
     :returns: tuple
     """
     major, minor, micro = get_last_release_version()
     #increment micro version and reset micro version
-    result = [major, minor, micro + 1]
+    if level == 0:
+        result = [major, minor, micro + 1]
+    elif level == 1:
+        result = [major, minor + 1, 0]
+    elif level == 2:
+        result = [major + 1, 0, 0]
+    else:
+        raise ValueError("Unknown version level: {}, "
+                         "should be 0, 1 or 2".format(level))
     result = [int(i) for i in result]
     result = tuple(result)
     return result
@@ -192,13 +205,16 @@ def upload_package(dry_run):
         print " ".join(command)
 
 
-def release_official_version(dry_run):
+def release_official_version(dry_run, level=0):
     """Release an official version of cdf
     :param dry_run: if True, nothing is actually done.
                     the function just prints what it would do
-    :type dry_run: bool"""
+    :type dry_run: bool
+    :param level: release level to increment, see `get_release_version`
+    :type level: int
+    """
     #bump version
-    version = get_release_version()
+    version = get_release_version(level)
     tag = ".".join([str(i) for i in version])
     print "Creating cdf {}".format(tag)
 
@@ -254,6 +270,13 @@ if __name__ == "__main__":
                         action="store_true",
                         help='Dry run')
 
+    parser.add_argument('-l',
+                        dest="level",
+                        default=0,
+                        action="store",
+                        type=int,
+                        help='Version level, defaults to micro level (0)')
+
     args = parser.parse_args()
 
     if not args.force and not args.dry_run:
@@ -262,4 +285,4 @@ if __name__ == "__main__":
     if args.force and args.dry_run:
         raise ValueError("You cannot choose both options '-f' and '-n'")
 
-    release_official_version(args.dry_run)
+    release_official_version(args.dry_run, int(args.level))
