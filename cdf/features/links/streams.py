@@ -486,8 +486,12 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
     def _process_canonical(self, document, stream):
         url_src, link_type, follow_keys, url_dst, external_url = stream
         canonical_to = document['canonical']['to']
-        if canonical_to.get('equal', None) is None:
-            # We take only the first canonical found
+
+        if document.get('canonical_processed', None) is None:
+            # we take only the first canonical found
+            # set a marker here
+            document['canonical_processed'] = True
+
             canonical_to['equal'] = url_src == url_dst
             canonical_to['url'] = {}
             if url_dst > 0:
@@ -526,6 +530,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             )
             # delete intermediate data structures
             del document["processed_external_outlinks"]
+
+        # remove canonical processing marker
+        document.pop('canonical_processed', None)
 
 
 class InlinksRawStreamDef(StreamDefBase):
