@@ -11,6 +11,8 @@ def compute_prev_next_stream(inlinks_stream):
     """
     id_index = InlinksStreamDef.field_idx('id')
     follow_mask_index = InlinksStreamDef.field_idx('follow')
+
+    inlinks_stream = itertools.ifilter(lambda x: 'follow' in x[follow_mask_index], inlinks_stream)
     for url_id, inlinks in itertools.groupby(inlinks_stream, key=lambda x: x[id_index]):
         receives_prev = False
         receives_next = False

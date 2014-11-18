@@ -1,14 +1,15 @@
 import unittest
 from cdf.features.links.prev_next import compute_prev_next_stream
 
+
 class TestComputePrevNextStream(unittest.TestCase):
     def test_nominal_case(self):
         inlinks_stream = iter([
-            (1, 'a', ["prev"], "", "", ""),
-            (2, 'a', [], "", "", ""),
-            (3, 'a', ["prev"], "", "", ""),
-            (3, 'a', ["prev"], "", "", ""),
-            (3, 'a', ["next"], "", "", ""),
+            (1, 'a', ["prev", "follow"], "", "", ""),
+            (2, 'a', ["follow"], "", "", ""),
+            (3, 'a', ["prev", "follow"], "", "", ""),
+            (3, 'a', ["prev", "follow"], "", "", ""),
+            (3, 'a', ["next", "follow"], "", "", ""),
         ])
 
         actual_stream = compute_prev_next_stream(inlinks_stream)
