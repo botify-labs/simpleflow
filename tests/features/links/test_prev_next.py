@@ -20,3 +20,20 @@ class TestComputePrevNextStream(unittest.TestCase):
             (3, 1, 1)
         ]
         self.assertEqual(expected_stream, list(actual_stream))
+
+    def test_nofollow_case(self):
+        inlinks_stream = iter([
+            (1, 'a', ["prev", "follow"], "", "", ""),
+            (2, 'a', [], "", "", ""),
+            (3, 'a', ["prev"], "", "", ""),
+            (3, 'a', ["prev", "follow"], "", "", ""),
+            (3, 'a', ["next"], "", "", ""),
+        ])
+
+        actual_stream = compute_prev_next_stream(inlinks_stream)
+
+        expected_stream = [
+            (1, 1, 0),
+            (3, 1, 0)
+        ]
+        self.assertEqual(expected_stream, list(actual_stream))
