@@ -41,6 +41,12 @@ sys.path.insert(0, LOCAL_PACKAGE_PATH)
 import cdf
 
 
+class Level(object):
+    micro = 'micro'
+    minor = 'minor'
+    major = 'major'
+
+
 def get_last_release_version():
     """Returns the version number of the last release
     as a tuple (major, minor, micro).
@@ -51,27 +57,29 @@ def get_last_release_version():
     return [int(i) for i in release_version.split(".")]
 
 
-def get_release_version(level=0):
+def get_release_version(level=Level.micro):
     """Returns the version number of the next release version
     as a tuple (major, minor, micro).
     :param level: version level to be incremented
-        0 for micro
-        1 for minor
-        2 for major
-    :type level: int
+    :type level: str
     :returns: tuple
     """
     major, minor, micro = get_last_release_version()
     #increment micro version and reset micro version
-    if level == 0:
+    if level == Level.micro:
         result = [major, minor, micro + 1]
-    elif level == 1:
+    elif level == Level.minor:
         result = [major, minor + 1, 0]
-    elif level == 2:
+    elif level == Level.major:
         result = [major + 1, 0, 0]
     else:
-        raise ValueError("Unknown version level: {}, "
-                         "should be 0, 1 or 2".format(level))
+        raise ValueError(
+            "Unknown version level: {}, "
+            "should be {}, {} or {}".format(
+                level, Level.micro,
+                Level.minor, Level.major
+            )
+        )
     result = [int(i) for i in result]
     result = tuple(result)
     return result
@@ -205,13 +213,13 @@ def upload_package(dry_run):
         print " ".join(command)
 
 
-def release_official_version(dry_run, level=0):
+def release_official_version(dry_run, level=Level.micro):
     """Release an official version of cdf
     :param dry_run: if True, nothing is actually done.
                     the function just prints what it would do
     :type dry_run: bool
     :param level: release level to increment, see `get_release_version`
-    :type level: int
+    :type level: str
     """
     #bump version
     version = get_release_version(level)
@@ -272,10 +280,11 @@ if __name__ == "__main__":
 
     parser.add_argument('-l',
                         dest="level",
-                        default=0,
+                        default=Level.micro,
                         action="store",
-                        type=int,
-                        help='Version level, defaults to micro level (0)')
+                        help='Version level: {}, {} or {}. '
+                             'Defaults to micro level.'.format(
+                             Level.major, Level.minor, Level.micro))
 
     args = parser.parse_args()
 
@@ -285,4 +294,4 @@ if __name__ == "__main__":
     if args.force and args.dry_run:
         raise ValueError("You cannot choose both options '-f' and '-n'")
 
-    release_official_version(args.dry_run, int(args.level))
+    release_official_version(args.dry_run, args.level)
