@@ -21,8 +21,7 @@ from cdf.features.links.streams import (
     InlinksStreamDef,
     InlinksCountersStreamDef,
     InlinksPercentilesStreamDef,
-    InredirectCountersStreamDef,
-    PrevNextStreamDef
+    InredirectCountersStreamDef
 )
 from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
 from cdf.features.links.tasks import (
@@ -36,7 +35,6 @@ from cdf.features.links.tasks import (
     make_prev_next_file
 )
 
-from cdf.features.links.helpers.masks import list_to_mask
 from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
 from cdf.utils.s3 import list_files
 
@@ -583,54 +581,3 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
         self.assertIn('max', content[0])
         self.assertIn('metric_total', content[0])
         self.assertIn('url_total', content[0])
-
-class TestMakePrevNextFile(unittest.TestCase):
-    def setUp(self):
-        self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
-
-    @mock_s3
-    def test_nominal_case(self):
-        s3_uri = 's3://test_bucket'
-        s3 = boto.connect_s3()
-        s3.create_bucket('test_bucket')
-        first_part_id_size = 2
-        part_id_size = 5
-        src_url_id = 10
-        fake_hash = "10012008"
-
-        inlinks_stream = iter([
-            (1, 'a', list_to_mask(["prev"]), src_url_id, fake_hash, ""),
-            (2, 'a', list_to_mask([]), src_url_id, fake_hash, ""),
-            (3, 'a', list_to_mask(["prev"]), src_url_id, fake_hash, ""),
-            (3, 'a', list_to_mask(["prev"]), src_url_id, fake_hash, ""),
-            (3, 'a', list_to_mask(["next"]), src_url_id, fake_hash, "")
-        ])
-
-        InlinksStreamDef.persist(
-            inlinks_stream,
-            s3_uri,
-            first_part_size=first_part_id_size,
-            part_size=part_id_size
-        )
-
-        actual_result = make_prev_next_file(s3_uri,
-                                            first_part_id_size=first_part_id_size,
-                                            part_id_size=part_id_size)
-
-        expected_result = [
-            "s3://test_bucket/prev_next.txt.0.gz",
-            "s3://test_bucket/prev_next.txt.1.gz",
-        ]
-        self.assertEqual(expected_result, actual_result)
-
-        actual_stream = PrevNextStreamDef.load(s3_uri, self.tmp_dir)
-
-        expected_stream = [
-            [1, True, False],
-            [2, False, False],
-            [3, True, True]
-        ]
-        self.assertEqual(expected_stream, list(actual_stream))

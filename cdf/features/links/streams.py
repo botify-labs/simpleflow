@@ -710,6 +710,24 @@ class InlinksStreamDef(InlinksRawStreamDef):
                 FIELD_RIGHTS.FILTERS
             },
             "enabled": check_enabled("top_anchors")
+        },
+        "inlinks_internal.receives_prev": {
+            "type": BOOLEAN_TYPE,
+            "default_value": False,
+            "verbose_name": "Receives at least a prev links.",
+            "settings": {
+                FIELD_RIGHTS.SELECT,
+            },
+            "enabled": check_enabled("prev_next")
+        },
+        "inlinks_internal.receives_next": {
+            "type": BOOLEAN_TYPE,
+            "default_value": False,
+            "verbose_name": "Receives at least a next links.",
+            "settings": {
+                FIELD_RIGHTS.SELECT
+            },
+            "enabled": check_enabled("prev_next")
         }
     }
 
@@ -767,6 +785,15 @@ class InlinksStreamDef(InlinksRawStreamDef):
         document['processed_inlink_link'].add((url_src, is_follow))
 
         document['inlinks_internal']['urls_exists'] = True
+
+        self._process_prev_next(document, follow_keys)
+
+    def _process_prev_next(self, document, follow_keys):
+        if "follow" in follow_keys:
+            if "prev" in follow_keys:
+                document["inlinks_internal"]["receives_prev"] = True
+            if "next" in follow_keys:
+                document["inlinks_internal"]["receives_next"] = True
 
     def _process_redirection(self, document, stream):
         url_dst, link_type, follow_keys, url_src, text_hash, text = stream
@@ -1136,39 +1163,3 @@ class InlinksPercentilesStreamDef(StreamDefBase):
     def process_document(self, document, input_stream):
         _, percentile_id, _ = input_stream
         document["inlinks_internal"]["percentile"] = percentile_id
-
-
-class PrevNextStreamDef(StreamDefBase):
-    FILE = 'prev_next'
-    HEADERS = (
-        ('id', int),
-        ('receives_prev', _raw_to_bool),
-        ('receives_next', _raw_to_bool)
-    )
-    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
-    URL_DOCUMENT_MAPPING = {
-        "inlinks_internal.receives_prev": {
-            "type": BOOLEAN_TYPE,
-            "default_value": False,
-            "verbose_name": "Receives at least a prev links.",
-            "settings": {
-                FIELD_RIGHTS.SELECT,
-            }
-        },
-        "inlinks_internal.receives_next": {
-            "type": BOOLEAN_TYPE,
-            "default_value": False,
-            "verbose_name": "Receives at least a next links.",
-            "settings": {
-                FIELD_RIGHTS.SELECT
-            }
-        }
-    }
-
-    def process_document(self, document, stream_element):
-        _, receives_prev, receives_next = stream_element
-
-        inlinks_internal = document['inlinks_internal']
-        inlinks_internal["receives_prev"] = receives_prev
-        inlinks_internal["receives_next"] = receives_next
-

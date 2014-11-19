@@ -21,10 +21,6 @@ from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.links.streams import (
     OutlinksStreamDef,
     InlinksStreamDef,
-    BadLinksStreamDef,
-    LinksToNonCompliantStreamDef,
-    InlinksPercentilesStreamDef,
-    PrevNextStreamDef
 )
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
@@ -444,18 +440,20 @@ class TestPrevNextGeneration(unittest.TestCase):
             [2, "http", "wwww.site.com", "/path/name.html", "?page=2"],
         ]
 
-        prev_nexts = [
-            (0, True, False),
-            (1, False, False),
-            (2, True, True)
-        ]
-
+        inlinks_stream = iter([
+            (0, 'a', list_to_mask(["prev", "follow"]), 10, "", ""),
+            (0, 'a', list_to_mask(["next", "link"]), 10, "", ""),  # nofollow
+            (1, 'a', list_to_mask(["follow"]), 10, "", ""),
+            (2, 'a', list_to_mask(["prev", "follow"]), 10, "", ""),
+            (2, 'a', list_to_mask(["prev", "follow"]), 10, "", ""),
+            (2, 'a', list_to_mask(["next", "follow"]), 10, "", ""),
+        ])
         id_stream = IdStreamDef.load_iterator(iter(ids))
-        prev_next_stream = PrevNextStreamDef.load_iterator(
-            iter(prev_nexts)
+        inlinks_stream = InlinksStreamDef.load_iterator(
+            iter(inlinks_stream)
         )
 
-        document_generator = UrlDocumentGenerator([id_stream, prev_next_stream])
+        document_generator = UrlDocumentGenerator([id_stream, inlinks_stream])
         documents = list(document_generator)
         prev_status = [
             (i, d["inlinks_internal"]["receives_prev"]) for i, d in documents
@@ -474,14 +472,12 @@ class TestPrevNextGeneration(unittest.TestCase):
             [0, "http", "www.site.com", "/path/index.html", ""],
         ]
 
-        prev_nexts = []
-
         id_stream = IdStreamDef.load_iterator(iter(ids))
-        prev_next_stream = PrevNextStreamDef.load_iterator(
-            iter(prev_nexts)
+        inlinks_stream = InlinksStreamDef.load_iterator(
+            iter([])
         )
 
-        document_generator = UrlDocumentGenerator([id_stream, prev_next_stream])
+        document_generator = UrlDocumentGenerator([id_stream, inlinks_stream])
         documents = list(document_generator)
 
         self.assertEqual(1, len(documents))
