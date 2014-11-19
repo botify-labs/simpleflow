@@ -227,9 +227,13 @@ class TestComputeInsightValues(unittest.TestCase):
 
 class TestComputeInsights(unittest.TestCase):
     @mock_s3
+    @mock.patch("cdf.tasks.insights.get_feature_options", autospec=True)
     @mock.patch("cdf.tasks.insights.compute_insight_values", autospec=True)
-    def test_nominal_case(self, compute_insight_values_mock):
-        crawls = {"1001": {}, "2008": {}}  # crawl ids are strings
+    def test_nominal_case(self,
+                          compute_insight_values_mock,
+                          get_feature_options_mock):
+        crawl_configurations = [(1001, "foo", "s3://foo"), (2008, "bar", "s3://bar")]
+        get_feature_options_mock.return_value = {1001: {}, 2008: {}}
         es_location = "foo"
         es_index = "bar"
         es_doc_type = "baz"
@@ -237,7 +241,9 @@ class TestComputeInsights(unittest.TestCase):
         s3 = boto.connect_s3()
         s3.create_bucket('test_bucket')
 
-        actual_result = compute_insights(crawls, es_location, es_index, es_doc_type, s3_uri)
+        actual_result = compute_insights(
+            crawl_configurations, es_location, es_index, es_doc_type, s3_uri
+        )
         compute_insight_values_mock.assert_called_once_with(
             {1001: {}, 2008: {}},  # crawl ids are integers
             es_location,
@@ -245,6 +251,7 @@ class TestComputeInsights(unittest.TestCase):
             es_doc_type)
         expected_result = "s3://test_bucket/precomputation/insights.json"
         self.assertEqual(expected_result, actual_result)
+        get_feature_options_mock.assert_called_once_with(crawl_configurations)
 
 
 @mock.patch("cdf.tasks.insights.get_botify_api_token", autospec=True)
