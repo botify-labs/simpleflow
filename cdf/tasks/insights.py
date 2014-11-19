@@ -123,7 +123,7 @@ def compute_insight_values(crawls, es_location, es_index, es_doc_type):
 
 
 @with_temporary_dir
-def compute_insights(crawls,
+def compute_insights(crawl_configurations,
                      es_location,
                      es_index,
                      es_doc_type,
@@ -132,9 +132,9 @@ def compute_insights(crawls,
                      force_fetch=False):
     """A task to compute the insights and push their values to s3
     as a json file.
-    :param crawls: a dict crawl_id -> feature options.
-                   crawl ids can be either integers or strings
-    :type crawls: dict
+    :param crawl_configurations: the list of crawl configurations to consider
+                                 as a list of tuples (crawl_id, config_endpoint, s3_uri)
+    :type crawl_configurations: list
     :param es_location: the location of the elasticsearch server.
                         For instance "http://elasticsearch1.staging.saas.botify.com:9200"
     :type es_location: str
@@ -154,8 +154,7 @@ def compute_insights(crawls,
     :type force_fetch: bool
     :returns: str - the uri of the generated json document
     """
-    #make sure crawl ids are integers (cf. https://github.com/sem-io/botify-cdf/issues/811)
-    crawls = {int(crawl_id): feature_options for crawl_id, feature_options in crawls.iteritems()}
+    crawls = get_feature_options(crawl_configurations)
     result = compute_insight_values(crawls, es_location, es_index, es_doc_type)
 
     destination_uri = "{}/precomputation/insights.json".format(s3_uri)
@@ -171,7 +170,7 @@ def get_feature_options(crawl_configurations):
     Feature options are retrieved through the API.
     :param crawl_configurations: the list of crawl configurations to consider
                                  as a list of tuples (crawl_id, config_endpoint, s3_uri)
-    :type crawl_ids: list
+    :type crawl_configurations: list
     :returns: dict - a dict crawl_id -> feature_options
     :raises: ApiError - if one API call fails
     :raises: ApiFormatError - if one API answer does not have the expected format.

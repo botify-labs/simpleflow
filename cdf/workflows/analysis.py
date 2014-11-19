@@ -334,27 +334,22 @@ class AnalysisWorkflow(Workflow):
         s3_uri = context['crawl_location']
         config_endpoint = context['config_endpoint']
 
-        #consider current analysis configuration.
-        crawl_configurations = [[crawl_id,  config_endpoint, s3_uri]]
-        if 'comparison' in context['features_options']:
-            crawl_configurations.extend(context['features_options']['comparison']['history'])
-
-        crawl_feature_options = self.submit(
-            get_feature_options,
-            crawl_configurations
-        )
-
         elastic_search_ready = self.submit(
             refresh_index,
             context["es_location"],
             context["es_index"],
         )
 
-        futures.wait(elastic_search_ready, crawl_feature_options)
+        futures.wait(elastic_search_ready)
+
+        #consider current analysis configuration.
+        crawl_configurations = [[crawl_id,  config_endpoint, s3_uri]]
+        if 'comparison' in context['features_options']:
+            crawl_configurations.extend(context['features_options']['comparison']['history'])
 
         insights_result = self.submit(
             compute_insights_task,
-            crawl_feature_options,
+            crawl_configurations,
             context["es_location"],
             context["es_index"],
             context["es_doc_type"],
