@@ -1,14 +1,14 @@
 from cdf.metadata.url.url_metadata import FLOAT_TYPE
 from cdf.core.metadata.constants import RENDERING
 from cdf.core.insights import Insight, PositiveTrend
-from cdf.query.filter import (AndFilter,
-                              EqFilter,
-                              LtFilter,
-                              GteFilter,
-                              BetweenFilter,
-                              NotFilter)
+from cdf.query.filter import (
+    AndFilter, EqFilter, LtFilter,
+    GteFilter, BetweenFilter, NotFilter
+)
 from cdf.query.aggregation import AvgAggregation
-from cdf.query.sort import Sort, AscendingSort, DescendingSort
+from cdf.query.sort import (
+    AscendingSort, DescendingSort
+)
 
 
 def get_all_urls_insight():
@@ -26,7 +26,7 @@ def get_http_code_is_good_predicate():
     urls with good http code
     :returns: Filter
     """
-    # TODO implement http_code_is_code
+    # TODO implement http_code_is_good
     return BetweenFilter("http_code", [200, 299])
 
 
@@ -56,6 +56,8 @@ def get_http_code_ranges_insights():
         (400, PositiveTrend.DOWN),
         (500, PositiveTrend.DOWN)
     ]
+    field = 'http_code'
+    additional_fields = [field]
 
     for range_start, positive_trend in ranges:
         range_name = "{}xx".format(range_start / 100)
@@ -63,7 +65,9 @@ def get_http_code_ranges_insights():
             "code_{}".format(range_name),
             "{} URLs".format(range_name),
             positive_trend,
-            BetweenFilter("http_code", [range_start, range_start + 99])
+            BetweenFilter("http_code", [range_start, range_start + 99]),
+            additional_fields=additional_fields,
+            sort_by=AscendingSort(field)
         )
         result.append(insight)
 
@@ -73,7 +77,9 @@ def get_http_code_ranges_insights():
             "code_network_errors",
             "Network Errors",
             PositiveTrend.DOWN,
-            LtFilter("http_code", 0)
+            LtFilter("http_code", 0),
+            additional_fields=additional_fields,
+            sort_by=AscendingSort(field)
         )
     )
 
