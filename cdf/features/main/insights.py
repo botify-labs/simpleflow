@@ -131,12 +131,13 @@ def get_content_type_insights():
     result = []
     TEXT_HTML = "text/html"
     TEXT_CSS = "text/css"
+    content_type_field = "content_type"
     for content_type in [TEXT_HTML, TEXT_CSS]:
         insight = Insight(
             "content_{}".format(content_type),
             "{} URLs".format(content_type[len("text/"):].upper()),
             PositiveTrend.UNKNOWN,
-            EqFilter("content_type", content_type)
+            EqFilter(content_type_field, content_type)
         )
         result.append(insight)
 
@@ -145,7 +146,9 @@ def get_content_type_insights():
             "content_not_html",
             "Not HTML URLs",
             PositiveTrend.UNKNOWN,
-            NotFilter(EqFilter("content_type", TEXT_HTML))
+            NotFilter(EqFilter(content_type_field, TEXT_HTML)),
+            additional_fields=[content_type_field],
+            sort_by=AscendingSort(content_type_field)
         )
     )
     return result
