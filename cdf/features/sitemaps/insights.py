@@ -98,7 +98,7 @@ def get_misc_sitemap_insights():
                 GteFilter("delay_last_byte", 1000),
                 EqFilter("sitemaps.present", True)
             ]),
-            additional_fields="delay_last_byte",
+            additional_fields=["delay_last_byte"],
             sort_by=DescendingSort("delay_last_byte")
         ),
         Insight(
