@@ -86,7 +86,7 @@ def get_misc_sitemap_insights():
             "URLs in Sitemap with a not Strategic Outlink",
             PositiveTrend.DOWN,
             AndFilter([
-                ExistFilter("outlinks_errors.non_strategic.urls_exists"),
+                ExistFilter("outlinks_errors.non_strategic.urls"),
                 EqFilter("sitemaps.present", True)
             ])
         ),
