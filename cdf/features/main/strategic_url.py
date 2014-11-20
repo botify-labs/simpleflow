@@ -50,11 +50,10 @@ def is_strategic_url(url_id, infos_mask, http_code,
         return True, 0
 
 
-def generate_strategic_stream(infos_stream, outlinks_stream):
+def generate_strategic_stream(infos_stream):
     """Generate a strategic url stream
 
     :param infos_stream: stream of dataset `urlinfos`
-    :param outlinks_stream: stream of dataset `urloutlinks`
     :return: the strategic stream
     """
     urlid_idx = InfosStreamDef.field_idx('id')

@@ -170,15 +170,9 @@ class TestStrategicUrlStream(unittest.TestCase):
             [3, 4, 'text/html', None, None, 200] + [None] * 4,
             [4, 32, 'text/html', None, None, 200] + [None] * 4,
         ]
-        self.outlinks_stream = [
-            [4, 'canonical', None, 1, None]
-        ]
 
     def test_harness(self):
-        result = list(generate_strategic_stream(
-            iter(self.infos_stream),
-            iter(self.outlinks_stream))
-        )
+        result = list(generate_strategic_stream(iter(self.infos_stream)))
         expected = [
             (1, True, 0),
             (2, False, REASON_CONTENT_TYPE.code),
@@ -200,10 +194,6 @@ class TestStrategicUrlTask(unittest.TestCase):
             [3, 4, 'text/html', 0, 0, 200, 0, 0, 0, 'en'],
             [4, 32, 'text/html', 0, 0, 200, 0, 0, 0, 'en'],
         ]
-        self.outlinks_stream = [
-            # canonical to 1
-            [4, 'canonical', 0, 1, '']
-        ]
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
@@ -217,8 +207,6 @@ class TestStrategicUrlTask(unittest.TestCase):
 
         InfosStreamDef.persist(
             self.infos_stream, s3_uri, part_id)
-        OutlinksStreamDef.persist(
-            self.outlinks_stream, s3_uri, part_id)
 
         # launch task
         compute_strategic_urls(123, s3_uri,
