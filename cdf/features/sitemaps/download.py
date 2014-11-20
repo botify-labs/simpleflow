@@ -46,7 +46,7 @@ def download_sitemaps(input_url, output_directory, user_agent, metadata):
     try:
         download_url(input_url, output_file_path, user_agent)
     except DownloadError as e:
-        logger.error("Download error: %s", str(e))
+        logger.info("Download error: %s", str(e))
         metadata.add_error(
             Error(input_url, SiteMapType.UNKNOWN, e.__class__.__name__, str(e))
         )
@@ -126,7 +126,7 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document,
             download_url(url, file_path, user_agent)
             sitemap_document = instanciate_sitemap_document(file_path, url)
         except (DownloadError, UnhandledFileType) as e:
-            logger.error("Skipping {}: {}".format(url, str(e)))
+            logger.info("Skipping {}: {}".format(url, str(e)))
             if os.path.isfile(file_path):
                 os.remove(file_path)
             metadata.add_error(
@@ -142,7 +142,7 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document,
             )
         elif is_sitemap_index(sitemap_type):
             error_message = "'{}' is a sitemap index. It cannot be referenced in a sitemap index.".format(url)
-            logger.warning(error_message)
+            logger.info(error_message)
             metadata.add_error(
                 Error(url, sitemap_type, "NotASitemapFile", error_message)
             )
@@ -150,7 +150,7 @@ def download_sitemaps_from_sitemap_index(sitemap_index_document,
         else:
             #  if not, remove file
             error_message = "'{}' is not a sitemap file.".format(url)
-            logger.warning(error_message)
+            logger.info(error_message)
             metadata.add_error(
                 Error(url, sitemap_type, "UnhandledFileType", error_message)
             )
