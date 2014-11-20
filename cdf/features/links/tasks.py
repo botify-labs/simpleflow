@@ -310,7 +310,7 @@ def make_inlinks_percentiles_file(s3_uri,
     """
 
     #get streams
-    urlid_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    urlid_stream = InfosStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     inlinks_counter_stream = InlinksCountersStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     inredirections_counter_stream = InredirectCountersStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     #get max crawled urlid

@@ -1,5 +1,7 @@
+from itertools import ifilter
 import unittest
 import random
+from cdf.core.streams.utils import group_left
 
 from cdf.features.links.percentiles import (
     generate_follow_inlinks_stream,
@@ -9,20 +11,23 @@ from cdf.features.links.percentiles import (
 )
 
 
-class TestGenerateFollowInlinksStream(unittest.TestCase):
+class InlinkPercentileTestCase(unittest.TestCase):
     def setUp(self):
-        self.urlids_stream = iter([
-            (1, "http", "foo.com", "/"),
-            (2, "http", "foo.com", "/index.html"),
-            (3, "http", "foo.com", "/bar"),
-            (4, "http", "foo.com", "/baz"),
-            (5, "http", "foo.com", "/qux"),
-            (6, "http", "foo.com", "/barbar"),
+        # simplified urlinfo stream data
+        self.urlinfos_stream = iter([
+            (1, 0, "", 0, 0, 200, 0, 0, 0, "?"),
+            (2, 0, "", 1, 0, 200, 0, 0, 0, "?"),
+            (3, 0, "", 1, 0, 200, 0, 0, 0, "?"),
+            (4, 0, "", 1, 0, 200, 0, 0, 0, "?"),
+            (5, 0, "", 1, 0, 200, 0, 0, 0, "?"),
+            (6, 0, "", 1, 0, 200, 0, 0, 0, "?"),
         ])
         self.inredirections_stream = iter([
         ])
         self.max_crawled_urlid = 6
 
+
+class TestGenerateFollowInlinksStream(InlinkPercentileTestCase):
     def test_nominal_case(self):
         inlinks_count_stream = iter([
             (1, ["follow"], 10,  9),
@@ -39,7 +44,7 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
         ])
 
         actual_result = generate_follow_inlinks_stream(
-            self.urlids_stream,
+            self.urlinfos_stream,
             inlinks_count_stream,
             inredirections_stream,
             self.max_crawled_urlid
@@ -66,7 +71,7 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (6, ["follow"], 8, 8)
         ])
         actual_result = generate_follow_inlinks_stream(
-            self.urlids_stream,
+            self.urlinfos_stream,
             inlinks_count_stream,
             self.inredirections_stream,
             self.max_crawled_urlid
@@ -101,7 +106,7 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
         inredirections_stream = iter([])
 
         actual_result = generate_follow_inlinks_stream(
-            self.urlids_stream,
+            self.urlinfos_stream,
             inlinks_count_stream,
             inredirections_stream,
             self.max_crawled_urlid
@@ -129,7 +134,7 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
         ])
 
         actual_result = generate_follow_inlinks_stream(
-            self.urlids_stream,
+            self.urlinfos_stream,
             inlinks_count_stream,
             inredirections_stream,
             self.max_crawled_urlid
@@ -153,7 +158,7 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (6, ["follow"], 8, 8)
         ])
         actual_result = generate_follow_inlinks_stream(
-            self.urlids_stream,
+            self.urlinfos_stream,
             inlinks_count_stream,
             self.inredirections_stream,
             self.max_crawled_urlid
@@ -175,14 +180,12 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (6, ["follow"], 8, 8)
         ])
 
-        urlids = iter([
-            (1, "http", "foo.com", "/"),
-            #urlid 2 does not exist
-            (3, "http", "foo.com", "/bar"),
-            (4, "http", "foo.com", "/baz"),
-            (5, "http", "foo.com", "/qux"),
-            (6, "http", "foo.com", "/barbar"),
-        ])
+        # filter out the second url
+        urlids = ifilter(
+            lambda x: x[0] != 2,
+            self.urlinfos_stream
+        )
+
         actual_result = generate_follow_inlinks_stream(
             urlids,
             inlinks_count_stream,
@@ -209,7 +212,7 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
         ])
         max_crawled_urlid = 4
         actual_result = generate_follow_inlinks_stream(
-            self.urlids_stream,
+            self.urlinfos_stream,
             inlinks_count_stream,
             self.inredirections_stream,
             max_crawled_urlid
@@ -221,6 +224,31 @@ class TestGenerateFollowInlinksStream(unittest.TestCase):
             (4, 6)
         ]
         self.assertEqual(expected_result, list(actual_result))
+
+    def test_non_crawled_url(self):
+        urlinfos_stream = iter([
+            (1, 0, "", 0, 0, 200),
+            (2, 0, "", 1, 0, 0),  # non-crawled url
+            (3, 0, "", 1, 0, 200),
+        ])
+        inlinks_counter_stream = iter([
+            (1, ["follow"], 10,  10),
+            (2, ["follow"], 2, 2),
+            (3, ["follow"], 1, 1),
+        ])
+
+        max_crawled_urlid = 3
+        result = list(generate_follow_inlinks_stream(
+            urlinfos_stream,
+            inlinks_counter_stream,
+            self.inredirections_stream,
+            max_crawled_urlid
+        ))
+        expected = [
+            (1, 10),
+            (3, 1)
+        ]
+        self.assertEqual(result, expected)
 
 
 class TestPercentileStats(unittest.TestCase):
@@ -262,20 +290,7 @@ class TestPercentileStats(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-class TestComputePercentile(unittest.TestCase):
-    def setUp(self):
-        self.urlids_stream = iter([
-            (1, "http", "foo.com", "/"),
-            (2, "http", "foo.com", "/index.html"),
-            (3, "http", "foo.com", "/bar"),
-            (4, "http", "foo.com", "/baz"),
-            (5, "http", "foo.com", "/qux"),
-            (6, "http", "foo.com", "/barbar"),
-        ])
-        self.inredirections_stream = iter([
-        ])
-        self.max_crawled_urlid = 6
-
+class TestComputePercentile(InlinkPercentileTestCase):
     def test_nominal_case(self):
         inlinks_count_stream = iter([
             (1, ["follow"], 10,  10),
@@ -287,7 +302,7 @@ class TestComputePercentile(unittest.TestCase):
         ])
         nb_elements = 3
         actual_result = compute_quantiles(
-            self.urlids_stream,
+            self.urlinfos_stream,
             inlinks_count_stream,
             self.inredirections_stream,
             self.max_crawled_urlid,
@@ -315,7 +330,7 @@ class TestComputePercentile(unittest.TestCase):
         ])
         nb_elements = 3
         actual_result = compute_quantiles(
-            self.urlids_stream,
+            self.urlinfos_stream,
             inlinks_count_stream,
             self.inredirections_stream,
             self.max_crawled_urlid,
