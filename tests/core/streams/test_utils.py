@@ -10,13 +10,6 @@ logger.setLevel(logging.DEBUG)
 
 
 class TestUtils(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_split_file(self):
         f = StringIO()
         f.write('1\t2\n')
@@ -28,7 +21,6 @@ class TestUtils(unittest.TestCase):
 
 
 class TestUtilsGroupLeft(unittest.TestCase):
-
     def setUp(self):
         self.stream_1 = iter([
             (1, 'riri'),
@@ -43,6 +35,26 @@ class TestUtilsGroupLeft(unittest.TestCase):
             (5, 'geotrouvetout')
         ])
 
+    def test_harness(self):
+        stream_1 = iter([
+            (1, 'riri'),
+            (2, 'fifi'),
+            (3, 'loulou')
+        ])
+        stream_2 = iter([
+            (1, 'donald'),
+            (2, 'mickey'),
+            (3, 'daisy')
+        ])
+        result = list(group_left((stream_1, 0),
+                                 stream_2=(stream_2, 0)))
+        expected = [
+            (1, (1, 'riri'), {'stream_2': [(1, 'donald')]}),
+            (2, (2, 'fifi'), {'stream_2': [(2, 'mickey')]}),
+            (3, (3, 'loulou'), {'stream_2': [(3, 'daisy')]}),
+        ]
+        self.assertEqual(result, expected)
+
     def test_group_left(self):
         result = list(group_left((self.stream_1, 0), stream_2=(self.stream_2, 0)))
         self.assertEquals(len(result), 4)
@@ -56,3 +68,24 @@ class TestUtilsGroupLeft(unittest.TestCase):
         stream_3 = iter([])
         result = list(group_left((self.stream_1, 0), stream_2=(self.stream_2, 0), stream_3=(stream_3, 0)))
         self.assertEquals(len(result), 4)
+
+    def test_left_skip(self):
+        stream_1 = iter([
+            (1, 'riri'),
+            (3, 'loulou'),
+            (7, 'rapetou')
+        ])
+        stream_2 = iter([
+            (1, 'donald'),
+            (2, 'mickey'),
+            (3, 'daisy')
+        ])
+
+        result = list(group_left((stream_1, 0),
+                                 stream_2=(stream_2, 0)))
+        expected = [
+            (1, (1, 'riri'), {'stream_2': [(1, 'donald')]}),
+            (3, (3, 'loulou'), {'stream_2': [(3, 'daisy')]}),
+            (7, (7, 'rapetou'), {'stream_2': []}),
+        ]
+        self.assertEqual(result, expected)
