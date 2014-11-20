@@ -8,7 +8,9 @@ values on-demand. Calling a stream operation after another does not iterate two
 times on the values.
 
 """
+
 import os
+from itertools import groupby
 from cdf.utils import s3
 
 
@@ -61,7 +63,7 @@ def split_file(iterable, char='\t'):
     return split(rstrip(iterable))
 
 
-def group_left(left, **stream_defs):
+def group_left1(left, **stream_defs):
     """
     :param left: (stream, key_index)
     :param **stream_defs: {stream_name: (stream, key_index)
@@ -102,6 +104,62 @@ def group_left(left, **stream_defs):
                 except StopIteration:
                     break
         yield current_id, line, stream_lines
+
+
+def group_left(left, **streams):
+    """Join multiple key-sorted streams together
+
+    :param left: reference stream
+    :type left: iterator
+    :param streams: other streams
+    :type streams: dict
+    :return: grouped stream: (key, left_item, right_items)
+    :rtype: (key_type, list, dict)
+    """
+    # grouped right streams by its key field
+    grouped_streams = {
+        name: groupby(stream, lambda l: l[idx])
+        for name, (stream, idx) in streams.iteritems()
+    }
+    left_stream, left_key_idx = left
+
+    last_buffer = {}
+
+    for line in left_stream:
+        # current id in left stream
+        current_id = line[left_key_idx]
+        # result buffer for right streams
+        result_buffer = {name: [] for name in streams.iterkeys()}
+
+        for stream_name, grouped_stream in grouped_streams.iteritems():
+            # check if we've already get the id from the iterator
+            if stream_name in last_buffer:
+                key = last_buffer[stream_name][0]
+                if key < current_id:
+                    # remove it
+                    last_buffer.pop(stream_name)
+                elif key == current_id:
+                    result_buffer[stream_name] = list(
+                        last_buffer.pop(stream_name)[1])
+                    continue
+                else:
+                    # if key is still bigger than the current_id
+                    # no need to examine the stream, fast-forward to next
+                    continue
+
+            for key, group in grouped_stream:
+                if key < current_id:
+                    # ignore lines with non-existing id in left stream
+                    continue
+                elif key > current_id:
+                    # potentially next ids, store it in the last buffer
+                    last_buffer[stream_name] = (key, group)
+                    break
+                else:  # key is the current_id
+                    result_buffer[stream_name] = list(group)
+                    break
+
+        yield current_id, line, result_buffer
 
 
 def get_data_streams_from_storage(streams, storage_uri, tmp_dir, part_id=None, force_fetch=False):

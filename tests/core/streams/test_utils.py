@@ -89,3 +89,24 @@ class TestUtilsGroupLeft(unittest.TestCase):
             (7, (7, 'rapetou'), {'stream_2': []}),
         ]
         self.assertEqual(result, expected)
+
+    def test_multiple_jump(self):
+        stream_1 = iter([
+            (466, 'riri'),
+            (467, 'loulou'),
+            (472, 'rapetou'),
+            (474, 'a')
+        ])
+        stream_2 = iter([
+            (467, 'donald'),
+            (468, 'mickey'),
+            (469, 'a'),
+            (472, 'b'),
+            (474, 'c'),
+        ])
+
+        result = list(group_left((stream_1, 0),
+                                 stream_2=(stream_2, 0),
+                                 stream_3=(iter([]), 0)))
+        print result
+
