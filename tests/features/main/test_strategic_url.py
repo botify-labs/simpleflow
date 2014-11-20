@@ -86,7 +86,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
         ]
         result = is_strategic_url(
             self.url_id,
-            self.strategic_mask,
+            16,
             self.strategic_http_code,
             self.strategic_content_type,
             outlinks
@@ -101,25 +101,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
         ]
         result = is_strategic_url(
             self.url_id,
-            self.strategic_mask,
-            self.strategic_http_code,
-            self.strategic_content_type,
-            outlinks
-        )
-        expected = (False, REASON_CANONICAL.code)
-        self.assertEqual(result, expected)
-
-    def test_first_canonical(self):
-        # only take the first canonical into account
-        # so even if we have a self-canonical, this url
-        # is still non strategic
-        outlinks = [
-            [1, 'canonical', None, 4, ''],
-            [1, 'canonical', None, 1, '']  # self canonical
-        ]
-        result = is_strategic_url(
-            self.url_id,
-            self.strategic_mask,
+            32,
             self.strategic_http_code,
             self.strategic_content_type,
             outlinks
@@ -131,7 +113,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
         outlinks = [
             [1, 'canonical', None, 4, '']
         ]
-        noindex_mask = 4
+        noindex_mask = 4 | 32
         result = is_strategic_url(
             self.url_id,
             noindex_mask,
@@ -209,7 +191,7 @@ class TestStrategicUrlStream(unittest.TestCase):
             [2, 0, 'yo/yo', None, None, 200] + [None] * 4,
             # no-index
             [3, 4, 'text/html', None, None, 200] + [None] * 4,
-            [4, 0, 'text/html', None, None, 200] + [None] * 4,
+            [4, 32, 'text/html', None, None, 200] + [None] * 4,
         ]
         self.outlinks_stream = [
             [4, 'canonical', None, 1, None]
@@ -239,7 +221,7 @@ class TestStrategicUrlTask(unittest.TestCase):
             [2, 0, 'yo/yo', 0, 0, 200, 0, 0, 0, 'en'],
             # no-index
             [3, 4, 'text/html', 0, 0, 200, 0, 0, 0, 'en'],
-            [4, 0, 'text/html', 0, 0, 200, 0, 0, 0, 'en'],
+            [4, 32, 'text/html', 0, 0, 200, 0, 0, 0, 'en'],
         ]
         self.outlinks_stream = [
             # canonical to 1

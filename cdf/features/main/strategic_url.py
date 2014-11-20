@@ -42,17 +42,9 @@ def is_strategic_url(url_id, infos_mask, http_code,
     if noindex == True:
         reasons.add(REASON_NOINDEX)
 
-    # check `canonical`
-    canonical_dest = None
-    for _, link_type, _, dest, _ in outlinks:
-        # takes the first canonical
-        if link_type.startswith('c'):
-            canonical_dest = dest
-            break
-
-    if canonical_dest is not None:
-        if canonical_dest != url_id:
-            reasons.add(REASON_CANONICAL)
+    canonical_bad = ((32 & infos_mask) == 32)
+    if canonical_bad is True:
+        reasons.add(REASON_CANONICAL)
 
     if len(reasons) > 0:
         return False, encode_reason_mask(*reasons)
