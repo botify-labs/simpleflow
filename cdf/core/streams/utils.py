@@ -81,6 +81,10 @@ def group_left(left, **stream_defs):
 
         for stream_name, stream_def in stream_defs.iteritems():
             stream, key_idx = stream_def
+            if stream_name in id_:
+                if id_[stream_name] < current_id:
+                    id_.pop(stream_name)
+
             if not stream_name in id_:
                 try:
                     right_line[stream_name] = stream.next()

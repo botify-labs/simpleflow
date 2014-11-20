@@ -446,13 +446,13 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
 class TestMakeInlinksPercentileFile(unittest.TestCase):
     def setUp(self):
         self.s3_uri = "s3://test_bucket"
-        self.ids = [
-            (1, "http", "foo.com", "/"),
-            (2, "http", "foo.com", "/index.html"),
-            (3, "http", "foo.com", "/bar"),
-            (4, "http", "foo.com", "/baz"),
-            (5, "http", "foo.com", "/qux"),
-            (6, "http", "foo.com", "/barbar"),
+        self.infos = [
+            (1, 0, "", 0, 0, 200, 0, 0, 0, "?"),
+            (2, 0, "", 1, 0, 200, 0, 0, 0, "?"),
+            (3, 0, "", 1, 0, 200, 0, 0, 0, "?"),
+            (4, 0, "", 1, 0, 200, 0, 0, 0, "?"),
+            (5, 0, "", 1, 0, 200, 0, 0, 0, "?"),
+            (6, 0, "", 1, 0, 200, 0, 0, 0, "?"),
         ]
 
         self.inlinks_count = [
@@ -478,8 +478,8 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
         s3 = boto.connect_s3()
         bucket = s3.create_bucket('test_bucket')
 
-        urlids_stream = iter(self.ids)
-        IdStreamDef.persist(urlids_stream, self.s3_uri)
+        urlids_stream = iter(self.infos)
+        InfosStreamDef.persist(urlids_stream, self.s3_uri)
 
         first_part_size = 2
         part_size = 10

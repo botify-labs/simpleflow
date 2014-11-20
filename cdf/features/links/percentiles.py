@@ -2,7 +2,7 @@ from itertools import ifilter
 
 from cdf.utils.stream import split_stream
 from cdf.core.streams.utils import group_left
-from cdf.features.main.streams import IdStreamDef
+from cdf.features.main.streams import InfosStreamDef
 from cdf.features.links.helpers.predicates import is_follow_link
 from cdf.features.links.streams import (
     InlinksCountersStreamDef,
@@ -109,7 +109,7 @@ class PercentileStats(object):
         }
 
 
-def generate_follow_inlinks_stream(urlid_stream,
+def generate_follow_inlinks_stream(urlinfo_stream,
                                    inlinks_counter_stream,
                                    inredirections_counter_stream,
                                    max_crawled_urlid):
@@ -118,15 +118,13 @@ def generate_follow_inlinks_stream(urlid_stream,
     fit our needs.
     It removes nofollow urls and insert elements for all crawled urlids.
     It generates a stream (urlid, nb follow links)
-    :param urlid: the stream of urlids (based on IdStreamDef)
-    :type urlid: iterator
+
+    :param urlinfo_stream: the stream of urlinfo (based on InfosStreamDef)
+    :type urlinfo_stream: iterator
     :param inlinks_counter_stream: the input stream
                                    (based on InlinksCountersStreamDef)
                                    that counts the number of inlinks per url.
     :type inlinks_counter_stream: iterator
-    :param inredirections_counter_stream: the stream of in redirections counter
-                                         (based on InredirectCountersStreamDef)
-    :type inredirections_counter_stream: iterator
     :param inredirections_counter_stream: the stream of in redirections counter
                                          (based on InredirectCountersStreamDef)
     :type inredirections_counter_stream: iterator
@@ -136,18 +134,26 @@ def generate_follow_inlinks_stream(urlid_stream,
     :type nb_quantiles: int
     """
     follow_mask_index = InlinksCountersStreamDef.field_idx("follow")
+    http_code_index = InfosStreamDef.field_idx("http_code")
 
     #only follow links
     inlinks_counter_stream = ifilter(
         lambda x: is_follow_link(x[follow_mask_index], is_bitmask=False),
         inlinks_counter_stream
     )
-    urlid_id_index = IdStreamDef.field_idx("id")
+
+    # only crawled urls
+    urlinfo_stream = ifilter(
+        lambda x: x[http_code_index] != 0,
+        urlinfo_stream
+    )
+
+    urlid_info_index = InfosStreamDef.field_idx("id")
     urlid_links_index = InlinksCountersStreamDef.field_idx("id")
     urlid_redirections_index = InredirectCountersStreamDef.field_idx("id")
 
     grouped_stream = group_left(
-        left=(urlid_stream, urlid_id_index),
+        left=(urlinfo_stream, urlid_info_index),
         inlinks_counter_stream=(inlinks_counter_stream, urlid_links_index),
         inredirections_counter_stream=(inredirections_counter_stream, urlid_redirections_index)
     )
