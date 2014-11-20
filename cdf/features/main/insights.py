@@ -8,6 +8,7 @@ from cdf.query.filter import (AndFilter,
                               BetweenFilter,
                               NotFilter)
 from cdf.query.aggregation import AvgAggregation
+from cdf.query.sort import Sort, AscendingSort, DescendingSort
 
 
 def get_all_urls_insight():
@@ -167,6 +168,7 @@ def get_speed_insights():
             "Fast URLs (<500 ms)",
             PositiveTrend.UP,
             LtFilter(field, 500),
+            sort_by=DescendingSort(field),
             additional_fields=additional_fields
         ),
         Insight(
@@ -174,6 +176,7 @@ def get_speed_insights():
             "Medium URLs (500 ms < 1 s)",
             PositiveTrend.DOWN,
             BetweenFilter(field, [500, 999]),
+            sort_by=DescendingSort(field),
             additional_fields=additional_fields
         ),
         Insight(
@@ -181,6 +184,7 @@ def get_speed_insights():
             "Slow URLs (1 s < 2 s)",
             PositiveTrend.DOWN,
             BetweenFilter(field, [1000, 1999]),
+            sort_by=DescendingSort(field),
             additional_fields=additional_fields
         ),
         Insight(
@@ -188,6 +192,7 @@ def get_speed_insights():
             "Slowest URLs (>2 s)",
             PositiveTrend.DOWN,
             GteFilter(field, 2000),
+            sort_by=DescendingSort(field),
             additional_fields=additional_fields
         ),
         Insight(
@@ -195,6 +200,7 @@ def get_speed_insights():
             "Slow URLs (>1s)",
             PositiveTrend.DOWN,
             GteFilter(field, 1000),
+            sort_by=DescendingSort(field),
             additional_fields=additional_fields
         )
     ]
@@ -215,6 +221,7 @@ def get_strategic_urls_speed_insights():
                     LtFilter(field, 500),
                 ]
             ),
+            sort_by=DescendingSort(field),
             additional_fields=additional_fields
         ),
         Insight(
@@ -227,6 +234,7 @@ def get_strategic_urls_speed_insights():
                     BetweenFilter(field, [500, 999]),
                 ]
             ),
+            sort_by=DescendingSort(field),
             additional_fields=additional_fields
         ),
         Insight(
@@ -239,6 +247,7 @@ def get_strategic_urls_speed_insights():
                     BetweenFilter(field, [1000, 1999]),
                 ]
             ),
+            sort_by=DescendingSort(field),
             additional_fields=additional_fields
         ),
         Insight(
@@ -251,6 +260,7 @@ def get_strategic_urls_speed_insights():
                     GteFilter(field, 2000),
                 ]
             ),
+            sort_by=DescendingSort(field),
             additional_fields=additional_fields
         ),
     ]
@@ -277,12 +287,15 @@ def get_domain_insights():
 
 def get_average_speed_insights():
     field = "delay_last_byte"
+    additional_fields = [field]
     return [
         Insight(
             "speed_avg",
             "Average Load Time (in ms)",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
+            sort_by=DescendingSort(field),
+            additional_fields=additional_fields,
             unit=RENDERING.TIME_MILLISEC  # the param is a string so we need to use the enum value
         ),
         Insight(
@@ -290,6 +303,8 @@ def get_average_speed_insights():
             "Average Load Time on Strategic URLs (in ms)",
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
+            sort_by=DescendingSort(field),
+            additional_fields=additional_fields,
             unit=RENDERING.TIME_MILLISEC  # the param is a string so we need to use the enum value
         ),
     ]
