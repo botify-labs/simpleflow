@@ -116,7 +116,7 @@ def get_strategic_active_insights(medium, source):
         ),
         Insight(
             "{}_visits_not_strategic".format(name_prefix),
-            "Not Strategic Not Active URLs",
+            "Not Strategic Active URLs",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 GtFilter(visit_field, 0),
