@@ -318,12 +318,15 @@ def get_average_speed_insights():
 
 def get_average_depth_insights():
     field = "depth"
+    additional_fields = [field]
     return [
         Insight(
             "depth_avg",
             "Average Depth",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
+            additional_fields=additional_fields,
+            sort_by=AscendingSort(field),
             type=FLOAT_TYPE,
             unit=RENDERING.DEPTH
         ),
@@ -333,6 +336,8 @@ def get_average_depth_insights():
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
+            additional_fields=additional_fields,
+            sort_by=AscendingSort(field),
             type=FLOAT_TYPE,
             unit=RENDERING.DEPTH
         )
