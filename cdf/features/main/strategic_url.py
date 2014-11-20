@@ -7,7 +7,7 @@ STRATEGIC_CONTENT_TYPE = 'text/html'
 
 
 def is_strategic_url(url_id, infos_mask, http_code,
-                     content_type, outlinks):
+                     content_type):
     """Logic to check if a url is SEO strategic
 
     It returns a tuple of form:
@@ -22,8 +22,6 @@ def is_strategic_url(url_id, infos_mask, http_code,
     :type http_code: int
     :param content_type: content type of the url
     :type content_type: str
-    :param outlinks: all out-going links to the url
-    :type outlinks: list
     :return: tuple indicating if the url is strategic plus its reason
     :rtype (bool, int)
     """
@@ -59,16 +57,14 @@ def generate_strategic_stream(infos_stream, outlinks_stream):
     :param outlinks_stream: stream of dataset `urloutlinks`
     :return: the strategic stream
     """
+    urlid_idx = InfosStreamDef.field_idx('id')
     http_idx = InfosStreamDef.field_idx('http_code')
     mask_idx = InfosStreamDef.field_idx('infos_mask')
     ctype_idx = InfosStreamDef.field_idx('content_type')
 
-    grouped_stream = group_left(left=(infos_stream, 0),
-                                outlinks_stream=(outlinks_stream, 0))
-
-    for uid, info, outlink in grouped_stream:
+    for info in infos_stream:
+        uid = info[urlid_idx]
         http_code = info[http_idx]
-        outlinks = outlink['outlinks_stream']
         infos_mask = info[mask_idx]
         content_type = info[ctype_idx]
 
@@ -76,8 +72,7 @@ def generate_strategic_stream(infos_stream, outlinks_stream):
             uid,
             infos_mask,
             http_code,
-            content_type,
-            outlinks
+            content_type
         )
 
         yield uid, is_strategic, reason_mask

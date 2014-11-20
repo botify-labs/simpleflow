@@ -26,7 +26,6 @@ class TestStrategicUrlDetection(unittest.TestCase):
         self.strategic_http_code = 200
         self.strategic_content_type = 'text/html'
         self.strategic_mask = 0
-        self.strategic_outlinks = []
 
     def test_noindex(self):
         noindex_mask = 4
@@ -34,8 +33,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.url_id,
             noindex_mask,
             self.strategic_http_code,
-            self.strategic_content_type,
-            self.strategic_outlinks
+            self.strategic_content_type
         )
         expected = (False, REASON_NOINDEX.code)
         self.assertEqual(result, expected)
@@ -46,8 +44,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.url_id,
             self.strategic_mask,
             bad_http_code,
-            self.strategic_content_type,
-            self.strategic_outlinks
+            self.strategic_content_type
         )
         expected = (False, REASON_HTTP_CODE.code)
         self.assertEqual(result, expected)
@@ -58,68 +55,49 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.url_id,
             self.strategic_mask,
             self.strategic_http_code,
-            bad_content_type,
-            self.strategic_outlinks
+            bad_content_type
         )
         expected = (False, REASON_CONTENT_TYPE.code)
         self.assertEqual(result, expected)
 
     def test_no_canonical(self):
         # no canonical -> strategic
-        outlinks = [
-            [1, 'a', None, 4, '']
-        ]
         result = is_strategic_url(
             self.url_id,
             self.strategic_mask,
             self.strategic_http_code,
-            self.strategic_content_type,
-            outlinks
+            self.strategic_content_type
         )
         expected = (True, 0)
         self.assertEqual(result, expected)
 
     def test_self_canonical(self):
-        # self canonical -> strategic
-        outlinks = [
-            [1, 'canonical', None, 1, '']
-        ]
         result = is_strategic_url(
             self.url_id,
             16,
             self.strategic_http_code,
-            self.strategic_content_type,
-            outlinks
+            self.strategic_content_type
         )
         expected = (True, 0)
         self.assertEqual(result, expected)
 
     def test_canonical(self):
-        # has canonical to other page -> non-strategic
-        outlinks = [
-            [1, 'canonical', None, 4, '']
-        ]
         result = is_strategic_url(
             self.url_id,
             32,
             self.strategic_http_code,
-            self.strategic_content_type,
-            outlinks
+            self.strategic_content_type
         )
         expected = (False, REASON_CANONICAL.code)
         self.assertEqual(result, expected)
 
     def test_multiple_reasons(self):
-        outlinks = [
-            [1, 'canonical', None, 4, '']
-        ]
         noindex_mask = 4 | 32
         result = is_strategic_url(
             self.url_id,
             noindex_mask,
             self.strategic_http_code,
-            self.strategic_content_type,
-            outlinks
+            self.strategic_content_type
         )
         expected_mask = encode_reason_mask(REASON_CANONICAL, REASON_NOINDEX)
         expected = (False, expected_mask)
@@ -131,8 +109,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.url_id,
             self.strategic_mask,
             self.strategic_http_code,
-            self.strategic_content_type,
-            self.strategic_outlinks
+            self.strategic_content_type
         )
         expected = (True, 0)
         self.assertEqual(result, expected)
