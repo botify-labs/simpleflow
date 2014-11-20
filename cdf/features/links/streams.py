@@ -970,7 +970,8 @@ class BadLinksStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
-                DIFF_QUANTITATIVE
+                DIFF_QUANTITATIVE,
+                FIELD_RIGHTS.PRIVATE
             }
         },
         # total error_links number corresponding to bad http codes.
