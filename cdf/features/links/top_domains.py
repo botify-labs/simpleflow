@@ -11,6 +11,7 @@ from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
 from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.exceptions import InvalidUrlException
+from cdf.features.main.streams import IdStreamDef
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 
@@ -496,11 +497,43 @@ def compute_sample_links(external_outlinks, n):
     return result
 
 
-def resolve_sample_url_id(es, crawl_id, results):
+def build_url(protocol, host, path, query_string):
+    return "{}://{}{}{}".format(protocol, host, path, query_string)
+
+
+def resolve(urlids_stream, urlids):
+    """Returns a dict urlid -> url for a given set of urlids
+    :param urlids_stream: the urlids stream (based on IdStreamDef)
+    :type urlids_stream: iterable
+    :param urlids: the list of urlids to keep
+    :type urlids: list
+    :returns: dict - urlid -> url
+    """
+    urlid_idx = IdStreamDef.field_idx("id")
+    protocol_idx = IdStreamDef.field_idx("protocol")
+    host_idx = IdStreamDef.field_idx("host")
+    path_idx = IdStreamDef.field_idx("path")
+    query_string_idx = IdStreamDef.field_idx("query_string")
+
+    urlids = set(urlids)
+    #keep only urls in urlids
+    urlids_stream = ifilter(lambda x: x[urlid_idx] in urlids, urlids_stream)
+    result = {}
+    for x in urlids_stream:
+        urlid = x[urlid_idx]
+        url = build_url(x[protocol_idx],
+                        x[host_idx],
+                        x[path_idx],
+                        x[query_string_idx])
+        result[urlid] = url
+    return result
+
+
+def resolve_sample_url_id(urlids_stream, results):
     """Resolve and in-place replace url_id in the samples
 
-    :param es: ElasticSearch handler
-    :type es: cdf.util.es.ES
+    :param urlids_stream: the urlids stream
+    :type urlids_stream: iterable
     :param results: top domains analysis results (DomainLinkStats)
     :type results: list
     :return: top domain analysis results with all sample url_ids replaced
@@ -513,19 +546,7 @@ def resolve_sample_url_id(es, crawl_id, results):
     for domain_stats in results:
         url_ids.update(domain_stats.extract_ids())
 
-    url_ids = [get_es_id(crawl_id, i) for i in url_ids]
-
-    # resolve using ES
-    resolved = es.mget(
-        ids=url_ids,
-        fields=['url'],
-        routing=crawl_id
-    )
-
-    id_to_url = {
-        get_url_id(es_id): doc['url']
-        for es_id, doc, found in resolved if found
-    }
+    id_to_url = resolve(urlids_stream, url_ids)
 
     for domain_stats in results:
         domain_stats.replace_ids(id_to_url)

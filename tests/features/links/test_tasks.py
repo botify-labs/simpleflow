@@ -321,16 +321,11 @@ def _mock_es_handler_init(*args, **kwargs):
 
 class TestMakeTopDomainsFiles(unittest.TestCase):
     @mock_s3
-    @mock.patch(
-        'cdf.features.links.tasks.EsHandler',
-        _mock_es_handler_init
-    )
     def test_nominal_case(self):
         #mock
         s3 = boto.connect_s3()
         bucket = s3.create_bucket('test_bucket')
         s3_uri = "s3://test_bucket"
-
         externals = iter([
             [0, "a", 0, -1, "http://foo.com/bar.html"],
             [0, "a", 0, -1, "http://bar.com/image.jpg"],
@@ -343,6 +338,13 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
             [4, "a", 0, -1, "foo"],  # invalid url
         ])
         OutlinksRawStreamDef.persist(externals, s3_uri)
+
+        ids = iter([
+            [0, "http", "host.com", "/url0", ""],
+            [3, "http", "host.com", "/url3", ""],
+            [4, "http", "host.com", "/url4", ""]
+        ])
+        IdStreamDef.persist(ids, s3_uri)
 
         #actual call
         nb_top_domains = 10
@@ -371,9 +373,9 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
                 "unique_follow_links": 3,
                 "unique_nofollow_links": 0,
                 "follow_samples": [
-                    {"url": "http://foo.com/", "unique_links": 1, "sources": ["url4"]},
-                    {"url": "http://foo.com/bar.html", "unique_links": 1, "sources": ["url0"]},
-                    {"url": "http://foo.com/qux.css", "unique_links": 1, "sources": ["url3"]}
+                    {"url": "http://foo.com/", "unique_links": 1, "sources": ["http://host.com/url4"]},
+                    {"url": "http://foo.com/bar.html", "unique_links": 1, "sources": ["http://host.com/url0"]},
+                    {"url": "http://foo.com/qux.css", "unique_links": 1, "sources": ["http://host.com/url3"]}
                 ],
                 "nofollow_samples": []
             },
@@ -384,8 +386,8 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
                 "unique_follow_links": 2,
                 "unique_nofollow_links": 0,
                 "follow_samples": [
-                    {"url": "http://bar.com/baz.html", "unique_links": 1, "sources": ["url4"]},
-                    {"url": "http://bar.com/image.jpg", "unique_links": 1, "sources": ["url0"]}
+                    {"url": "http://bar.com/baz.html", "unique_links": 1, "sources": ["http://host.com/url4"]},
+                    {"url": "http://bar.com/image.jpg", "unique_links": 1, "sources": ["http://host.com/url0"]}
                 ],
                 "nofollow_samples": []
             },
@@ -396,7 +398,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
                 "unique_follow_links": 1,
                 "unique_nofollow_links": 0,
                 "follow_samples": [
-                    {"url": "http://bar.foo.com/baz.html", "unique_links": 1, "sources": ["url4"]},
+                    {"url": "http://bar.foo.com/baz.html", "unique_links": 1, "sources": ["http://host.com/url4"]},
                 ],
                 "nofollow_samples": []
             }
@@ -414,10 +416,10 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
                 "unique_follow_links": 4,
                 "unique_nofollow_links": 0,
                 "follow_samples": [
-                    {"url": "http://bar.foo.com/baz.html", "unique_links": 1, "sources": ["url4"]},
-                    {"url": "http://foo.com/", "unique_links": 1, "sources": ["url4"]},
-                    {"url": "http://foo.com/bar.html", "unique_links": 1, "sources": ["url0"]},
-                    {"url": "http://foo.com/qux.css", "unique_links": 1, "sources": ["url3"]}
+                    {"url": "http://bar.foo.com/baz.html", "unique_links": 1, "sources": ["http://host.com/url4"]},
+                    {"url": "http://foo.com/", "unique_links": 1, "sources": ["http://host.com/url4"]},
+                    {"url": "http://foo.com/bar.html", "unique_links": 1, "sources": ["http://host.com/url0"]},
+                    {"url": "http://foo.com/qux.css", "unique_links": 1, "sources": ["http://host.com/url3"]}
                 ],
                 "nofollow_samples": []
             },
@@ -428,8 +430,8 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
                 "unique_follow_links": 2,
                 "unique_nofollow_links": 0,
                 "follow_samples": [
-                    {"url": "http://bar.com/baz.html", "unique_links": 1, "sources": ["url4"]},
-                    {"url": "http://bar.com/image.jpg", "unique_links": 1, "sources": ["url0"]}
+                    {"url": "http://bar.com/baz.html", "unique_links": 1, "sources": ["http://host.com/url4"]},
+                    {"url": "http://bar.com/image.jpg", "unique_links": 1, "sources": ["http://host.com/url0"]}
                 ],
                 "nofollow_samples": []
             }

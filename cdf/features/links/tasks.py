@@ -4,7 +4,6 @@ import json
 
 from cdf.log import logger
 from cdf.core.streams.cache import BufferedMarshalStreamCache
-from cdf.utils.es import EsHandler
 from cdf.utils.s3 import push_file, push_content, fetch_file
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.core.streams.stream_factory import (
@@ -248,7 +247,6 @@ def make_top_domains_files(crawl_id,
     :rtype: list
     """
     logger.info("Preprocessing and caching stream.")
-    es_handler = EsHandler(es_location, es_index, es_doc_type)
     outlinks = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     outlinks = filter_external_outlinks(outlinks)
     outlinks = filter_invalid_destination_urls(outlinks)
@@ -264,7 +262,8 @@ def make_top_domains_files(crawl_id,
         nb_top_domains
     )
     # resolve url ids
-    resolve_sample_url_id(es_handler, crawl_id, top_domains)
+    urlids_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    resolve_sample_url_id(urlids_stream, top_domains)
     s3_destination = "{}/top_full_domains.json".format(s3_uri)
     push_content(
         s3_destination,
@@ -278,7 +277,8 @@ def make_top_domains_files(crawl_id,
         nb_top_domains
     )
     # resolve url ids
-    resolve_sample_url_id(es_handler, crawl_id, top_domains)
+    urlids_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    resolve_sample_url_id(urlids_stream, top_domains)
     s3_destination = "{}/top_second_level_domains.json".format(s3_uri)
     push_content(
         s3_destination,
