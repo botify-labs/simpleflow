@@ -11,6 +11,7 @@ from cdf.utils.external_sort import external_sort
 from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.exceptions import InvalidUrlException
 from cdf.features.main.streams import IdStreamDef
+from cdf.features.main.utils import get_url_to_id_dict_from_stream
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 
@@ -496,10 +497,6 @@ def compute_sample_links(external_outlinks, n):
     return result
 
 
-def build_url(protocol, host, path, query_string):
-    return "{}://{}{}{}".format(protocol, host, path, query_string)
-
-
 def resolve(urlids_stream, urlids):
     """Returns a dict urlid -> url for a given set of urlids
     :param urlids_stream: the urlids stream (based on IdStreamDef)
@@ -509,22 +506,11 @@ def resolve(urlids_stream, urlids):
     :returns: dict - urlid -> url
     """
     urlid_idx = IdStreamDef.field_idx("id")
-    protocol_idx = IdStreamDef.field_idx("protocol")
-    host_idx = IdStreamDef.field_idx("host")
-    path_idx = IdStreamDef.field_idx("path")
-    query_string_idx = IdStreamDef.field_idx("query_string")
-
     urlids = set(urlids)
     #keep only urls in urlids
     urlids_stream = ifilter(lambda x: x[urlid_idx] in urlids, urlids_stream)
-    result = {}
-    for x in urlids_stream:
-        urlid = x[urlid_idx]
-        url = build_url(x[protocol_idx],
-                        x[host_idx],
-                        x[path_idx],
-                        x[query_string_idx])
-        result[urlid] = url
+    result = get_url_to_id_dict_from_stream(urlids_stream)
+    result = {y: x for x, y in result.iteritems()}
     return result
 
 
