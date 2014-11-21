@@ -42,5 +42,5 @@ def download_url(url, output_file_path, user_agent=None):
                 output_file.write(chunk)
     else:
         error_message = "Could not download {}: {}".format(url, response.status_code)
-        logger.warning(error_message)
+        logger.info(error_message)
         raise DownloadError(error_message)
