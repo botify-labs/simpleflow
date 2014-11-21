@@ -11,7 +11,7 @@ from cdf.utils.external_sort import external_sort
 from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.exceptions import InvalidUrlException
 from cdf.features.main.streams import IdStreamDef
-from cdf.features.main.utils import get_url_to_id_dict_from_stream
+from cdf.features.main.utils import get_id_to_url_dict_from_stream
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 
@@ -509,8 +509,7 @@ def resolve(urlids_stream, urlids):
     urlids = set(urlids)
     #keep only urls in urlids
     urlids_stream = ifilter(lambda x: x[urlid_idx] in urlids, urlids_stream)
-    result = get_url_to_id_dict_from_stream(urlids_stream)
-    result = {y: x for x, y in result.iteritems()}
+    result = get_id_to_url_dict_from_stream(urlids_stream)
     return result
 
 
