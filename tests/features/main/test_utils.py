@@ -2,7 +2,7 @@ import unittest
 from cdf.features.main.utils import (
     get_url_to_id_dict_from_stream,
     get_id_to_url_dict_from_stream,
-    filter_urlids
+    _filter_urlids
 )
 
 
@@ -58,7 +58,7 @@ class TestFilterUrlIds(unittest.TestCase):
         ])
 
     def test_nominal_case(self):
-        actual_result = filter_urlids([0, 4], self.urlids_stream)
+        actual_result = _filter_urlids([0, 4], self.urlids_stream)
         expected_result = [
             [0, "http", "host.com", "/url0", ""],
             [4, "http", "host.com", "/url4", ""],
@@ -66,7 +66,7 @@ class TestFilterUrlIds(unittest.TestCase):
         self.assertEqual(expected_result, list(actual_result))
 
     def test_unsorted_urlids(self):
-        actual_result = filter_urlids([4, 0], self.urlids_stream)
+        actual_result = _filter_urlids([4, 0], self.urlids_stream)
         expected_result = [
             [0, "http", "host.com", "/url0", ""],
             [4, "http", "host.com", "/url4", ""],
@@ -82,7 +82,7 @@ class TestFilterUrlIds(unittest.TestCase):
             [5, "http", "host.com", "/url5", ""]
         ])
 
-        actual_result = filter_urlids([2, 4, 5], urlids_stream)
+        actual_result = _filter_urlids([2, 4, 5], urlids_stream)
         expected_result = [
             [2, "http", "host.com", "/url2", ""],
             [5, "http", "host.com", "/url5", ""],
@@ -90,9 +90,9 @@ class TestFilterUrlIds(unittest.TestCase):
         self.assertEqual(expected_result, list(actual_result))
 
     def test_empty_urlids(self):
-        actual_result = filter_urlids([], self.urlids_stream)
+        actual_result = _filter_urlids([], self.urlids_stream)
         self.assertEqual([], list(actual_result))
 
     def test_emtpy_urlids_stream(self):
-        actual_result = filter_urlids([0, 4], iter([]))
+        actual_result = _filter_urlids([0, 4], iter([]))
         self.assertEqual([], list(actual_result))

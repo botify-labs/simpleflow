@@ -27,13 +27,13 @@ def get_id_to_url_dict_from_stream(stream, urlids=None):
     :returns: dict - urlid -> url
     """
     if urlids is not None:
-        stream = filter_urlids(urlids, stream)
+        stream = _filter_urlids(urlids, stream)
     return {
         urlid: url for url, urlid in get_url_to_id_dict_from_stream(stream).iteritems()
     }
 
 
-def filter_urlids(urlids, urlids_stream):
+def _filter_urlids(urlids, urlids_stream):
     """Filter a urlids stream. Keep only the elements which urlids are in a
     whitelist.
     :param urlids: the whitelist of urlids as a list of ints
