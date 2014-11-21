@@ -18,7 +18,8 @@ from cdf.features.links.top_domains import (
     LinkDestination,
     compute_sample_links,
     compute_link_destination_stats,
-    resolve_sample_url_id
+    resolve_sample_url_id,
+    filter_urlids
     )
 
 
@@ -461,6 +462,58 @@ class TestComputeLinkDestinationStats(unittest.TestCase):
         )
         expected_result = LinkDestination("http://foo.com/", 4, [0, 3])
         self.assertEqual(expected_result, actual_result)
+
+
+class TestFilterUrlIds(unittest.TestCase):
+    def setUp(self):
+        self.urlids_stream = iter([
+            [0, "http", "host.com", "/url0", ""],
+            [1, "http", "host.com", "/url1", ""],
+            [2, "http", "host.com", "/url2", ""],
+            [3, "http", "host.com", "/url3", ""],
+            [4, "http", "host.com", "/url4", ""],
+            [5, "http", "host.com", "/url5", ""]
+        ])
+
+    def test_nominal_case(self):
+        actual_result = filter_urlids([0, 4], self.urlids_stream)
+        expected_result = [
+            [0, "http", "host.com", "/url0", ""],
+            [4, "http", "host.com", "/url4", ""],
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_unsorted_urlids(self):
+        actual_result = filter_urlids([4, 0], self.urlids_stream)
+        expected_result = [
+            [0, "http", "host.com", "/url0", ""],
+            [4, "http", "host.com", "/url4", ""],
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_no_corresponding_entry(self):
+        urlids_stream = iter([
+            [0, "http", "host.com", "/url0", ""],
+            [2, "http", "host.com", "/url2", ""],
+            [3, "http", "host.com", "/url3", ""],
+            #4 is missing
+            [5, "http", "host.com", "/url5", ""]
+        ])
+
+        actual_result = filter_urlids([2, 4, 5], urlids_stream)
+        expected_result = [
+            [2, "http", "host.com", "/url2", ""],
+            [5, "http", "host.com", "/url5", ""],
+        ]
+        self.assertEqual(expected_result, list(actual_result))
+
+    def test_empty_urlids(self):
+        actual_result = filter_urlids([], self.urlids_stream)
+        self.assertEqual([], list(actual_result))
+
+    def test_emtpy_urlids_stream(self):
+        actual_result = filter_urlids([0, 4], iter([]))
+        self.assertEqual([], list(actual_result))
 
 
 class TestSourceSampleUrl(unittest.TestCase):

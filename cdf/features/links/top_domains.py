@@ -497,6 +497,19 @@ def compute_sample_links(external_outlinks, n):
     return result
 
 
+def filter_urlids(urlids, urlids_stream):
+    """Filter a urlids stream. Keep only the elements which urlids are in a
+    whitelist.
+    :param urlids: the whitelist of urlids as a list of ints
+    :type urlids: list
+    :param urlids_stream: the input stream (based on IdStreamDef)
+    :type urlids_stream: iterable
+    :returns: iterable
+    """
+    urlid_idx = IdStreamDef.field_idx("id")
+    urlids = set(urlids)
+    return ifilter(lambda x: x[urlid_idx] in urlids, urlids_stream)
+
 def resolve(urlids_stream, urlids):
     """Returns a dict urlid -> url for a given set of urlids
     :param urlids_stream: the urlids stream (based on IdStreamDef)
@@ -505,10 +518,8 @@ def resolve(urlids_stream, urlids):
     :type urlids: list
     :returns: dict - urlid -> url
     """
-    urlid_idx = IdStreamDef.field_idx("id")
-    urlids = set(urlids)
     #keep only urls in urlids
-    urlids_stream = ifilter(lambda x: x[urlid_idx] in urlids, urlids_stream)
+    urlids_stream = filter_urlids(urlids, urlids_stream)
     result = get_id_to_url_dict_from_stream(urlids_stream)
     return result
 
