@@ -1,6 +1,7 @@
-from itertools import groupby, ifilter, ifilterfalse
+from itertools import groupby, ifilter, ifilterfalse, imap
 import heapq
 
+from cdf.core.streams.utils import group_left
 from cdf.features.links.helpers.predicates import (
     is_link,
     is_link_internal,
@@ -507,8 +508,16 @@ def filter_urlids(urlids, urlids_stream):
     :returns: iterable
     """
     urlid_idx = IdStreamDef.field_idx("id")
-    urlids = set(urlids)
-    return ifilter(lambda x: x[urlid_idx] in urlids, urlids_stream)
+    urlids = imap(lambda x: [x], sorted(urlids))
+    grouped_stream = group_left(
+        (urlids_stream, urlid_idx),
+        ids=(iter(urlids), 0)
+    )
+    #keep only entries corresponding to an element in the whitelist
+    grouped_stream = ifilter(lambda x: len(x[2]["ids"]) > 0, grouped_stream)
+    result = imap(lambda x: x[1], grouped_stream)
+    return result
+
 
 def resolve(urlids_stream, urlids):
     """Returns a dict urlid -> url for a given set of urlids
