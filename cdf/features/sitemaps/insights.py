@@ -18,7 +18,7 @@ def get_main_sitemap_insights():
     return [
         Insight(
             "sitemaps_urls_common",
-            "URLs in Sitemap and Structure",
+            "URLs in Sitemaps and Structure",
             PositiveTrend.UP,
             EqFilter("sitemaps.present", True)
         ),
@@ -39,7 +39,7 @@ def get_strategic_sitemap_insights():
     return [
         Insight(
             "sitemaps_not_strategic",
-            "Not Strategic URLs in Sitemap",
+            "Not Strategic URLs in Sitemaps",
             PositiveTrend.DOWN,
             AndFilter([
                 EqFilter("strategic.is_strategic", False),
@@ -48,7 +48,7 @@ def get_strategic_sitemap_insights():
         ),
         Insight(
             "sitemaps_strategic",
-            "Strategic URLs in Sitemap",
+            "Strategic URLs in Sitemaps",
             PositiveTrend.UP,
             AndFilter([
                 EqFilter("strategic.is_strategic", True),
@@ -65,7 +65,7 @@ def get_misc_sitemap_insights():
     return [
         Insight(
             "sitemaps_bad_http_code",
-            "URLs in Sitemap with a Bad HTTP Status Code",
+            "URLs in Sitemaps with a Bad HTTP Status Code",
             PositiveTrend.DOWN,
             AndFilter([
                 NotFilter(BetweenFilter("http_code", [200, 299])),
@@ -74,7 +74,7 @@ def get_misc_sitemap_insights():
         ),
         Insight(
             "sitemaps_1_follow_inlink",
-            "URLs in Sitemap with only 1 Follow Inlink",
+            "URLs in Sitemaps with only 1 Follow Inlink",
             PositiveTrend.DOWN,
             AndFilter([
                 EqFilter("inlinks_internal.nb.follow.unique", 1),
@@ -83,7 +83,7 @@ def get_misc_sitemap_insights():
         ),
         Insight(
             "sitemaps_not_strategic_outlink",
-            "URLs in Sitemap with a not Strategic Outlink",
+            "URLs in Sitemaps with a not Strategic Outlink",
             PositiveTrend.DOWN,
             AndFilter([
                 ExistFilter("outlinks_errors.non_strategic.urls"),
@@ -92,7 +92,7 @@ def get_misc_sitemap_insights():
         ),
         Insight(
             "sitemaps_slow_urls",
-            "Slow / Slowest URLs in Sitemap",
+            "Slow / Slowest URLs in Sitemaps",
             PositiveTrend.DOWN,
             AndFilter([
                 GteFilter("delay_last_byte", 1000),
@@ -103,7 +103,7 @@ def get_misc_sitemap_insights():
         ),
         Insight(
             "sitemaps_no_index",
-            "URLs in Sitemap with a meta no-index",
+            "URLs in Sitemaps with a meta no-index",
             PositiveTrend.DOWN,
             AndFilter([
                 EqFilter("metadata.robots.noindex", True),
@@ -128,7 +128,7 @@ def get_bad_metadata_strategic_sitemap_insights():
 
         insight = Insight(
             "sitemaps_bad_{}".format(metadata),
-            "Strategic URLs in Sitemap with a Bad {}".format(metadata.title()),
+            "Strategic URLs in Sitemaps with a Bad {}".format(metadata.title()),
             PositiveTrend.DOWN,
             #some fields are duplicated
             #but the URL Explorer is not able to display AndFilter -> OrFilter
