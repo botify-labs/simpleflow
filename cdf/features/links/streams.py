@@ -320,6 +320,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "verbose_name": "Canonical is the Same Url",
             "group": GROUPS.canonical.name,
             "type": BOOLEAN_TYPE,
+            "default_value": None,
             "settings": {
                 AGG_CATEGORICAL,
                 DIFF_QUALITATIVE
