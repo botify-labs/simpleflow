@@ -1,5 +1,6 @@
 from cdf.core.streams.utils import group_left
 from cdf.features.main.streams import InfosStreamDef
+from cdf.features.main.helpers.masks import urlinfos_mask
 from .reasons import *
 
 STRATEGIC_HTTP_CODE = 200
@@ -35,13 +36,12 @@ def is_strategic_url(url_id, infos_mask, http_code,
     if content_type != STRATEGIC_CONTENT_TYPE:
         reasons.add(REASON_CONTENT_TYPE)
 
+    infos_mask = urlinfos_mask(infos_mask)
     # check no-index
-    noindex = ((4 & infos_mask) == 4)
-    if noindex == True:
+    if "meta_noindex" in infos_mask:
         reasons.add(REASON_NOINDEX)
 
-    canonical_bad = ((32 & infos_mask) == 32)
-    if canonical_bad is True:
+    if "bad_canonical" in infos_mask:
         reasons.add(REASON_CANONICAL)
 
     if len(reasons) > 0:
