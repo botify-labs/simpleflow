@@ -1,7 +1,6 @@
-from itertools import groupby, ifilter, ifilterfalse, imap
+from itertools import groupby, ifilter, ifilterfalse
 import heapq
 
-from cdf.core.streams.utils import group_left
 from cdf.features.links.helpers.predicates import (
     is_link,
     is_link_internal,
@@ -11,7 +10,6 @@ from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
 from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.exceptions import InvalidUrlException
-from cdf.features.main.streams import IdStreamDef
 from cdf.features.main.utils import get_id_to_url_dict_from_stream
 from cdf.features.links.streams import OutlinksRawStreamDef
 
@@ -408,9 +406,9 @@ def compute_domain_link_counts(grouped_outlinks):
     external_url_index = OutlinksRawStreamDef.field_idx("external_url")
     mask_idx = OutlinksRawStreamDef.field_idx('bitmask')
     key = lambda x: (
-            x[id_index],
-            x[external_url_index],
-            is_follow_link(x[mask_idx], is_bitmask=True)
+        x[id_index],
+        x[external_url_index],
+        is_follow_link(x[mask_idx], is_bitmask=True)
     )
     domain_name, links = grouped_outlinks
     for key_value, g in _group_links(links, key):
@@ -498,41 +496,6 @@ def compute_sample_links(external_outlinks, n):
     return result
 
 
-def filter_urlids(urlids, urlids_stream):
-    """Filter a urlids stream. Keep only the elements which urlids are in a
-    whitelist.
-    :param urlids: the whitelist of urlids as a list of ints
-    :type urlids: list
-    :param urlids_stream: the input stream (based on IdStreamDef)
-    :type urlids_stream: iterable
-    :returns: iterable
-    """
-    urlid_idx = IdStreamDef.field_idx("id")
-    urlids = imap(lambda x: [x], sorted(urlids))
-    grouped_stream = group_left(
-        (urlids_stream, urlid_idx),
-        ids=(iter(urlids), 0)
-    )
-    #keep only entries corresponding to an element in the whitelist
-    grouped_stream = ifilter(lambda x: len(x[2]["ids"]) > 0, grouped_stream)
-    result = imap(lambda x: x[1], grouped_stream)
-    return result
-
-
-def resolve(urlids_stream, urlids):
-    """Returns a dict urlid -> url for a given set of urlids
-    :param urlids_stream: the urlids stream (based on IdStreamDef)
-    :type urlids_stream: iterable
-    :param urlids: the list of urlids to keep
-    :type urlids: list
-    :returns: dict - urlid -> url
-    """
-    #keep only urls in urlids
-    urlids_stream = filter_urlids(urlids, urlids_stream)
-    result = get_id_to_url_dict_from_stream(urlids_stream)
-    return result
-
-
 def resolve_sample_url_id(urlids_stream, results):
     """Resolve and in-place replace url_id in the samples
 
@@ -550,7 +513,7 @@ def resolve_sample_url_id(urlids_stream, results):
     for domain_stats in results:
         url_ids.update(domain_stats.extract_ids())
 
-    id_to_url = resolve(urlids_stream, url_ids)
+    id_to_url = get_id_to_url_dict_from_stream(urlids_stream, url_ids)
 
     for domain_stats in results:
         domain_stats.replace_ids(id_to_url)
