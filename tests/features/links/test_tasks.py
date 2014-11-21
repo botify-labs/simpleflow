@@ -4,7 +4,6 @@ import json
 import shutil
 from moto import mock_s3
 import boto
-import mock
 
 from cdf.features.main.streams import (
     IdStreamDef
@@ -34,10 +33,6 @@ from cdf.features.links.tasks import (
 )
 from cdf.features.main.streams import InfosStreamDef, StrategicUrlStreamDef
 from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
-from cdf.testing.es_mock import (
-    get_es_mget_mock,
-    CRAWL_ID
-)
 from cdf.utils.s3 import list_files
 
 
@@ -306,19 +301,6 @@ class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
         self.assertEqual(expected_stream, list(actual_stream))
 
 
-def _mock_es_handler_init(*args, **kwargs):
-    mget_responses = {
-            '1:0': ['url0'],
-            '1:1': ['url1'],
-            '1:2': ['url2'],
-            '1:3': ['url3'],
-            '1:4': ['url4'],
-        }
-    es_handler = mock.MagicMock()
-    es_handler.mget = get_es_mget_mock(mget_responses)
-    return es_handler
-
-
 class TestMakeTopDomainsFiles(unittest.TestCase):
     @mock_s3
     def test_nominal_case(self):
@@ -347,9 +329,10 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
         IdStreamDef.persist(ids, s3_uri)
 
         #actual call
+        crawl_id = 1001
         nb_top_domains = 10
         actual_result = compute_top_domains(
-            CRAWL_ID,
+            crawl_id,
             s3_uri,
             nb_top_domains,
             "mock_es_location",

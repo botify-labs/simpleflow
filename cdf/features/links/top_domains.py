@@ -1,6 +1,5 @@
-from itertools import groupby, ifilter, imap, ifilterfalse
+from itertools import groupby, ifilter, ifilterfalse
 import heapq
-from cdf.analysis.urls.utils import get_url_id, get_es_id
 
 from cdf.features.links.helpers.predicates import (
     is_link,
