@@ -1,4 +1,3 @@
-from cdf.core.streams.utils import group_left
 from cdf.features.main.streams import InfosStreamDef
 from cdf.features.main.helpers.masks import urlinfos_mask
 from .reasons import *
