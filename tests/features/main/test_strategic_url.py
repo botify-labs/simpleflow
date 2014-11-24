@@ -5,6 +5,7 @@ from moto import mock_s3
 import boto
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.base import Stream
+from cdf.features.main.helpers.masks import UrlInfosMask
 from cdf.features.main.strategic_url import (
     generate_strategic_stream,
     is_strategic_url,
@@ -73,7 +74,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
     def test_self_canonical(self):
         result = is_strategic_url(
             self.url_id,
-            16,
+            UrlInfosMask.HAS_CANONICAL.value,
             self.strategic_http_code,
             self.strategic_content_type
         )
@@ -83,7 +84,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
     def test_canonical(self):
         result = is_strategic_url(
             self.url_id,
-            32,
+            UrlInfosMask.BAD_CANONICAL.value,
             self.strategic_http_code,
             self.strategic_content_type
         )
@@ -91,7 +92,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_multiple_reasons(self):
-        noindex_mask = 4 | 32
+        noindex_mask = UrlInfosMask.META_NOINDEX.value | UrlInfosMask.BAD_CANONICAL.value
         result = is_strategic_url(
             self.url_id,
             noindex_mask,
