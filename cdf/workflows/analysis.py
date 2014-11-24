@@ -646,8 +646,7 @@ class AnalysisWorkflow(Workflow):
             make_top_domains_files,
             crawl_id=crawl_id,
             s3_uri=s3_uri,
-            nb_top_domains=nb_top_domains,
-            **es_params
+            nb_top_domains=nb_top_domains
         )
 
         suggest_summary_result = self.submit(

@@ -219,9 +219,6 @@ def make_links_to_non_strategic_counter_file(s3_uri,
 def make_top_domains_files(crawl_id,
                            s3_uri,
                            nb_top_domains,
-                           es_location,
-                           es_index,
-                           es_doc_type,
                            tmp_dir=None,
                            force_fetch=DEFAULT_FORCE_FETCH):
     """Compute top domains and top second level domains for a given crawl.
@@ -232,9 +229,6 @@ def make_top_domains_files(crawl_id,
     :param nb_top_domains: the number of top domains to return
                            (typical value: 100)
     :type nb_top_domains: int
-    :param es_location:
-    :param es_index:
-    :param es_doc_type:
     :param tmp_dir: the path to the tmp directory to use.
                     If None, a new tmp directory will be created.
     :type tmp_dir: str

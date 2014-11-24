@@ -334,10 +334,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
         actual_result = compute_top_domains(
             crawl_id,
             s3_uri,
-            nb_top_domains,
-            "mock_es_location",
-            "mock_es_index",
-            "mock_es_doc_type"
+            nb_top_domains
         )
 
         #check file uris
