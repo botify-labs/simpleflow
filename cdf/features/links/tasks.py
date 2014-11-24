@@ -245,19 +245,22 @@ def make_top_domains_files(crawl_id,
     outlinks = filter_external_outlinks(outlinks)
     outlinks = filter_invalid_destination_urls(outlinks)
 
-    stream_cache = BufferedMarshalStreamCache()
-    stream_cache.cache(outlinks)
+    outlinks_stream_cache = BufferedMarshalStreamCache()
+    outlinks_stream_cache.cache(outlinks)
+
+    urlids_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    urlids_stream_cache = BufferedMarshalStreamCache()
+    urlids_stream_cache.cache(urlids_stream)
 
     result = []
 
     logger.info("Computing top %d full domains.", nb_top_domains)
     top_domains = compute_top_full_domains(
-        stream_cache.get_stream(),
+        outlinks_stream_cache.get_stream(),
         nb_top_domains
     )
     # resolve url ids
-    urlids_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
-    resolve_sample_url_id(urlids_stream, top_domains)
+    resolve_sample_url_id(urlids_stream_cache.get_stream(), top_domains)
     s3_destination = "{}/top_full_domains.json".format(s3_uri)
     push_content(
         s3_destination,
@@ -267,12 +270,11 @@ def make_top_domains_files(crawl_id,
 
     logger.info("Computing top %d second level domains.", nb_top_domains)
     top_domains = compute_top_second_level_domains(
-        stream_cache.get_stream(),
+        outlinks_stream_cache.get_stream(),
         nb_top_domains
     )
     # resolve url ids
-    urlids_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
-    resolve_sample_url_id(urlids_stream, top_domains)
+    resolve_sample_url_id(urlids_stream_cache.get_stream(), top_domains)
     s3_destination = "{}/top_second_level_domains.json".format(s3_uri)
     push_content(
         s3_destination,
