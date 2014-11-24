@@ -357,7 +357,7 @@ class StrategicUrlStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "main"
     URL_DOCUMENT_MAPPING = {
         "strategic.is_strategic": {
-            "verbose_name": "Strategic url",
+            "verbose_name": "Compliant url",
             "type": BOOLEAN_TYPE,
             "settings": {
                 AGG_CATEGORICAL,
@@ -367,7 +367,7 @@ class StrategicUrlStreamDef(StreamDefBase):
             }
         },
         "strategic.reason.http_code": {
-            "verbose_name": "Not strategic reason: bad http code",
+            "verbose_name": "Not compliant reason: bad http code",
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
@@ -378,7 +378,7 @@ class StrategicUrlStreamDef(StreamDefBase):
             }
         },
         "strategic.reason.content_type": {
-            "verbose_name": "Not strategic reason: bad content type",
+            "verbose_name": "Not compliant reason: bad content type",
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
@@ -389,7 +389,7 @@ class StrategicUrlStreamDef(StreamDefBase):
             }
         },
         "strategic.reason.noindex": {
-            "verbose_name": "Not strategic reason: url is of no-index",
+            "verbose_name": "Not compliant reason: url is of no-index",
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
@@ -400,7 +400,7 @@ class StrategicUrlStreamDef(StreamDefBase):
             }
         },
         "strategic.reason.canonical": {
-            "verbose_name": "Not strategic reason: url has non self-canonical",
+            "verbose_name": "Not compliant reason: url has non self-canonical",
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
