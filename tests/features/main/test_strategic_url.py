@@ -5,7 +5,6 @@ from moto import mock_s3
 import boto
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.base import Stream
-from cdf.features.links.streams import OutlinksStreamDef
 from cdf.features.main.strategic_url import (
     generate_strategic_stream,
     is_strategic_url,
