@@ -13,16 +13,21 @@ from cdf.query.aggregation import AvgAggregation, SumAggregation
 from cdf.core.metadata.constants import RENDERING
 from cdf.features.main.insights import get_http_code_is_good_predicate
 
+
 def get_average_inlinks_insights():
     """Return insights related to inlinks averages.
     :returns: list - list of Insight
     """
+    unique_inlink_nb = "inlinks_internal.nb.unique"
+    follow_unique_inlink_nb = "inlinks_internal.nb.follow.unique"
     return [
         Insight(
             "inlinks_avg",
             "Average Inlinks by URL",
             PositiveTrend.UNKNOWN,
-            metric_agg=AvgAggregation("inlinks_internal.nb.unique"),
+            metric_agg=AvgAggregation(unique_inlink_nb),
+            sort_by=DescendingSort(unique_inlink_nb),
+            additional_fields=[follow_unique_inlink_nb],
             type=FLOAT_TYPE,
             unit=RENDERING.LINK
         ),
@@ -30,7 +35,8 @@ def get_average_inlinks_insights():
             "inlinks_avg_follow",
             "Average Follow Inlinks by URL",
             PositiveTrend.UNKNOWN,
-            metric_agg=AvgAggregation("inlinks_internal.nb.follow.unique"),
+            metric_agg=AvgAggregation(follow_unique_inlink_nb),
+            sort_by=DescendingSort(follow_unique_inlink_nb),
             type=FLOAT_TYPE,
             unit=RENDERING.LINK
         ),
@@ -41,6 +47,7 @@ def get_inlinks_sum_insights():
     """Return insights related to inlinks sums.
     :returns: list - list of Insight
     """
+    follow_unique_inlink_nb = "inlinks_internal.nb.follow.unique"
     return [
         Insight(
             "inlinks_sum",
@@ -53,7 +60,8 @@ def get_inlinks_sum_insights():
             "inlinks_sum_follow",
             "Total Number of Follow Inlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=SumAggregation("inlinks_internal.nb.follow.unique"),
+            metric_agg=SumAggregation(follow_unique_inlink_nb),
+            additional_fields=[follow_unique_inlink_nb],
             unit=RENDERING.LINK
         ),
         Insight(
@@ -70,12 +78,14 @@ def get_outlinks_sum_insights():
     """Return insights related to outlinks sums.
     :returns: list - list of Insight
     """
+    follow_unique_outlinks = "outlinks_internal.nb.follow.unique"
     return [
         Insight(
             "outlinks_internal_sum_follow",
             "Total Number of Internal Follow Outlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=SumAggregation("outlinks_internal.nb.follow.unique"),
+            metric_agg=SumAggregation(follow_unique_outlinks),
+            additional_fields=[follow_unique_outlinks],
             unit=RENDERING.LINK
         ),
         Insight(
@@ -115,6 +125,7 @@ def get_inlinks_range_insights():
     :returns: list - list of Insight
     """
     field = "inlinks_internal.nb.follow.unique"
+    sort_by = DescendingSort(field)
     return [
         Insight(
             "inlinks_follow_1",
@@ -122,7 +133,7 @@ def get_inlinks_range_insights():
             PositiveTrend.DOWN,
             EqFilter(field, 1),
             additional_fields=[field],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         ),
         Insight(
             "inlinks_follow_2_5",
@@ -130,7 +141,7 @@ def get_inlinks_range_insights():
             PositiveTrend.UNKNOWN,
             BetweenFilter(field, [2, 5]),
             additional_fields=[field],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         ),
         Insight(
             "inlinks_follow_6_10",
@@ -138,7 +149,7 @@ def get_inlinks_range_insights():
             PositiveTrend.UNKNOWN,
             BetweenFilter(field, [6, 10]),
             additional_fields=[field],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         )
     ]
 
@@ -161,6 +172,7 @@ def get_misc_inlinks_insights():
     result = []
 
     field = "inlinks_internal.nb.nofollow.total"
+    sort_by = DescendingSort(field)
     result.append(
         Insight(
             "inlinks_has_nofollow",
@@ -168,7 +180,7 @@ def get_misc_inlinks_insights():
             PositiveTrend.UNKNOWN,
             GtFilter(field, 0),
             additional_fields=[field],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         )
     )
 
@@ -183,7 +195,7 @@ def get_misc_inlinks_insights():
                 GtFilter(field, 0)
             ]),
             additional_fields=[field],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         )
     )
 
@@ -197,7 +209,7 @@ def get_misc_inlinks_insights():
                 EqFilter(field, 1)
             ]),
             additional_fields=[field],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         )
     )
 
@@ -210,8 +222,8 @@ def get_misc_inlinks_insights():
                 NotFilter(BetweenFilter("http_code", [200, 299])),
                 GtFilter(field, 0)
             ]),
-            additional_fields=[field],
-            sort_by=DescendingSort(field)
+            additional_fields=[field, "http_code"],
+            sort_by=sort_by
         )
     )
     return result
@@ -221,12 +233,15 @@ def get_average_outlinks_insights():
     """Return insights related to internal outlinks averages.
     :returns: list - list of Insight
     """
+    follow_unique_outlink = "outlinks_internal.nb.follow.unique"
+    unique_outlink = "outlinks_internal.nb.unique"
     return [
         Insight(
             "outlinks_avg",
             "Average Internal Outlinks by URL",
             PositiveTrend.UNKNOWN,
-            metric_agg=AvgAggregation("outlinks_internal.nb.unique"),
+            metric_agg=AvgAggregation(unique_outlink),
+            sort_by=DescendingSort(unique_outlink),
             type=FLOAT_TYPE,
             unit=RENDERING.LINK
         ),
@@ -234,7 +249,9 @@ def get_average_outlinks_insights():
             "outlinks_avg_follow",
             "Average Internal Follow Outlinks by URL",
             PositiveTrend.UNKNOWN,
-            metric_agg=AvgAggregation("outlinks_internal.nb.follow.unique"),
+            metric_agg=AvgAggregation(follow_unique_outlink),
+            additional_fields=[follow_unique_outlink],
+            sort_by=DescendingSort(follow_unique_outlink),
             type=FLOAT_TYPE,
             unit=RENDERING.LINK
         )
@@ -246,9 +263,10 @@ def get_outlinks_internal_insights():
     :returns: list - list of Insight
     """
     urls_field = "outlinks_internal.urls"
-
     result = []
     field = "outlinks_internal.nb.follow.unique"
+    sort_by = DescendingSort(field)
+
     result.append(
         Insight(
             "outlinks_internal_follow",
@@ -256,7 +274,7 @@ def get_outlinks_internal_insights():
             PositiveTrend.UNKNOWN,
             GtFilter(field, 0),
             additional_fields=[field, urls_field],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         )
     )
     field = "outlinks_internal.nb.nofollow.unique"
@@ -267,7 +285,7 @@ def get_outlinks_internal_insights():
             PositiveTrend.UNKNOWN,
             GtFilter(field, 0),
             additional_fields=[field, urls_field],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         )
     )
 
@@ -280,6 +298,8 @@ def get_outlinks_external_insights():
     """
     result = []
     field = "outlinks_external.nb.follow.unique"
+    sort_by = DescendingSort(field)
+
     result.append(
         Insight(
             "outlinks_external_follow",
@@ -287,7 +307,7 @@ def get_outlinks_external_insights():
             PositiveTrend.UNKNOWN,
             GtFilter(field, 0),
             additional_fields=[field],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         )
     )
     field = "outlinks_external.nb.nofollow.unique"
@@ -298,7 +318,7 @@ def get_outlinks_external_insights():
             PositiveTrend.UNKNOWN,
             GtFilter(field, 0),
             additional_fields=[field],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         )
     )
 
@@ -311,6 +331,8 @@ def get_misc_outlinks_insights():
     """
     result = []
     field = "outlinks_errors.total_bad_http_codes"
+    sort_by = DescendingSort(field)
+
     result.append(
         Insight(
             "outlinks_errors",
@@ -323,11 +345,11 @@ def get_misc_outlinks_insights():
                 "outlinks_errors.4xx.urls",
                 "outlinks_errors.5xx.urls"
             ],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         )
     )
 
-    field = "outlinks_errors.non_strategic.nb"
+    field = "outlinks_errors.non_strategic.nb.follow.unique"
     result.append(
         Insight(
             "outlinks_not_strategic",
@@ -338,7 +360,7 @@ def get_misc_outlinks_insights():
                 GtFilter(field, 0)
             ]),
             additional_fields=[field, "outlinks_errors.non_strategic.urls"],
-            sort_by=DescendingSort(field)
+            sort_by=sort_by
         )
     )
     return result

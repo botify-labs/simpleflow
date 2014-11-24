@@ -57,9 +57,7 @@ def get_metadata_insights(metadata):
         "metadata.{}.duplicates.context_aware.nb".format(metadata),
         "metadata.{}.duplicates.context_aware.urls".format(metadata)
     ]
-    additional_filter = EqFilter(
-        "metadata.{}.duplicates.context_aware.is_first".format(metadata), True
-    )
+
     result.append(
         Insight(
             identifier,
@@ -70,7 +68,6 @@ def get_metadata_insights(metadata):
                 EqFilter(strategic_field, True)
             ]),
             additional_fields=additional_fields,
-            additional_filter=additional_filter,
             sort_by=DescendingSort(field)
         )
     )
@@ -86,9 +83,6 @@ def get_metadata_insights(metadata):
         "metadata.{}.duplicates.context_aware.urls".format(metadata),
         "metadata.{}.nb".format(metadata)
     ]
-    additional_filter = EqFilter(
-        "metadata.{}.duplicates.context_aware.is_first".format(metadata), True
-    )
     result.append(
         Insight(
             identifier,
@@ -99,7 +93,6 @@ def get_metadata_insights(metadata):
                 AndFilter([GtFilter(duplicates_field, 0), EqFilter(strategic_field, True)])
             ]),
             additional_fields=additional_fields,
-            additional_filter=additional_filter,
             sort_by=DescendingSort(duplicates_field)
         )
     )

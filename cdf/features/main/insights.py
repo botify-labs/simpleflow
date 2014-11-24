@@ -1,13 +1,14 @@
 from cdf.metadata.url.url_metadata import FLOAT_TYPE
 from cdf.core.metadata.constants import RENDERING
 from cdf.core.insights import Insight, PositiveTrend
-from cdf.query.filter import (AndFilter,
-                              EqFilter,
-                              LtFilter,
-                              GteFilter,
-                              BetweenFilter,
-                              NotFilter)
+from cdf.query.filter import (
+    AndFilter, EqFilter, LtFilter,
+    GteFilter, BetweenFilter, NotFilter
+)
 from cdf.query.aggregation import AvgAggregation
+from cdf.query.sort import (
+    AscendingSort, DescendingSort
+)
 
 
 def get_all_urls_insight():
@@ -25,7 +26,7 @@ def get_http_code_is_good_predicate():
     urls with good http code
     :returns: Filter
     """
-    # TODO implement http_code_is_code
+    # TODO implement http_code_is_good
     return BetweenFilter("http_code", [200, 299])
 
 
@@ -55,6 +56,9 @@ def get_http_code_ranges_insights():
         (400, PositiveTrend.DOWN),
         (500, PositiveTrend.DOWN)
     ]
+    field = 'http_code'
+    additional_fields = [field]
+    sort_by = AscendingSort(field)
 
     for range_start, positive_trend in ranges:
         range_name = "{}xx".format(range_start / 100)
@@ -62,7 +66,9 @@ def get_http_code_ranges_insights():
             "code_{}".format(range_name),
             "{} URLs".format(range_name),
             positive_trend,
-            BetweenFilter("http_code", [range_start, range_start + 99])
+            BetweenFilter("http_code", [range_start, range_start + 99]),
+            additional_fields=additional_fields,
+            sort_by=sort_by
         )
         result.append(insight)
 
@@ -72,7 +78,9 @@ def get_http_code_ranges_insights():
             "code_network_errors",
             "Network Errors",
             PositiveTrend.DOWN,
-            LtFilter("http_code", 0)
+            LtFilter("http_code", 0),
+            additional_fields=additional_fields,
+            sort_by=sort_by
         )
     )
 
@@ -124,12 +132,13 @@ def get_content_type_insights():
     result = []
     TEXT_HTML = "text/html"
     TEXT_CSS = "text/css"
+    content_type_field = "content_type"
     for content_type in [TEXT_HTML, TEXT_CSS]:
         insight = Insight(
             "content_{}".format(content_type),
             "{} URLs".format(content_type[len("text/"):].upper()),
             PositiveTrend.UNKNOWN,
-            EqFilter("content_type", content_type)
+            EqFilter(content_type_field, content_type)
         )
         result.append(insight)
 
@@ -138,7 +147,9 @@ def get_content_type_insights():
             "content_not_html",
             "Not HTML URLs",
             PositiveTrend.UNKNOWN,
-            NotFilter(EqFilter("content_type", TEXT_HTML))
+            NotFilter(EqFilter(content_type_field, TEXT_HTML)),
+            additional_fields=[content_type_field],
+            sort_by=AscendingSort(content_type_field)
         )
     )
     return result
@@ -161,12 +172,14 @@ def get_protocol_insights():
 def get_speed_insights():
     field = "delay_last_byte"
     additional_fields = [field]
+    sort_by = DescendingSort(field)
     return [
         Insight(
             "speed_fast",
             "Fast URLs (<500 ms)",
             PositiveTrend.UP,
             LtFilter(field, 500),
+            sort_by=sort_by,
             additional_fields=additional_fields
         ),
         Insight(
@@ -174,6 +187,7 @@ def get_speed_insights():
             "Medium URLs (500 ms < 1 s)",
             PositiveTrend.DOWN,
             BetweenFilter(field, [500, 999]),
+            sort_by=sort_by,
             additional_fields=additional_fields
         ),
         Insight(
@@ -181,6 +195,7 @@ def get_speed_insights():
             "Slow URLs (1 s < 2 s)",
             PositiveTrend.DOWN,
             BetweenFilter(field, [1000, 1999]),
+            sort_by=sort_by,
             additional_fields=additional_fields
         ),
         Insight(
@@ -188,6 +203,7 @@ def get_speed_insights():
             "Slowest URLs (>2 s)",
             PositiveTrend.DOWN,
             GteFilter(field, 2000),
+            sort_by=sort_by,
             additional_fields=additional_fields
         ),
         Insight(
@@ -195,6 +211,7 @@ def get_speed_insights():
             "Slow URLs (>1s)",
             PositiveTrend.DOWN,
             GteFilter(field, 1000),
+            sort_by=sort_by,
             additional_fields=additional_fields
         )
     ]
@@ -204,6 +221,7 @@ def get_strategic_urls_speed_insights():
     field = "delay_last_byte"
     additional_fields = [field]
     strategic_predicate = EqFilter("strategic.is_strategic", True)
+    sort_by = DescendingSort(field)
     return [
         Insight(
             "speed_fast_strategic",
@@ -215,6 +233,7 @@ def get_strategic_urls_speed_insights():
                     LtFilter(field, 500),
                 ]
             ),
+            sort_by=sort_by,
             additional_fields=additional_fields
         ),
         Insight(
@@ -227,6 +246,7 @@ def get_strategic_urls_speed_insights():
                     BetweenFilter(field, [500, 999]),
                 ]
             ),
+            sort_by=sort_by,
             additional_fields=additional_fields
         ),
         Insight(
@@ -239,6 +259,7 @@ def get_strategic_urls_speed_insights():
                     BetweenFilter(field, [1000, 1999]),
                 ]
             ),
+            sort_by=sort_by,
             additional_fields=additional_fields
         ),
         Insight(
@@ -251,6 +272,7 @@ def get_strategic_urls_speed_insights():
                     GteFilter(field, 2000),
                 ]
             ),
+            sort_by=sort_by,
             additional_fields=additional_fields
         ),
     ]
@@ -277,12 +299,16 @@ def get_domain_insights():
 
 def get_average_speed_insights():
     field = "delay_last_byte"
+    additional_fields = [field]
+    sort_by = DescendingSort(field)
     return [
         Insight(
             "speed_avg",
             "Average Load Time (in ms)",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
+            sort_by=sort_by,
+            additional_fields=additional_fields,
             unit=RENDERING.TIME_MILLISEC  # the param is a string so we need to use the enum value
         ),
         Insight(
@@ -290,6 +316,8 @@ def get_average_speed_insights():
             "Average Load Time on Strategic URLs (in ms)",
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
+            sort_by=sort_by,
+            additional_fields=additional_fields,
             unit=RENDERING.TIME_MILLISEC  # the param is a string so we need to use the enum value
         ),
     ]
@@ -297,12 +325,16 @@ def get_average_speed_insights():
 
 def get_average_depth_insights():
     field = "depth"
+    additional_fields = [field]
+    sort_by = AscendingSort(field)
     return [
         Insight(
             "depth_avg",
             "Average Depth",
             PositiveTrend.DOWN,
             metric_agg=AvgAggregation(field),
+            additional_fields=additional_fields,
+            sort_by=sort_by,
             type=FLOAT_TYPE,
             unit=RENDERING.DEPTH
         ),
@@ -312,6 +344,8 @@ def get_average_depth_insights():
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
+            additional_fields=additional_fields,
+            sort_by=sort_by,
             type=FLOAT_TYPE,
             unit=RENDERING.DEPTH
         )
