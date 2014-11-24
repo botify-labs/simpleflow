@@ -13,7 +13,7 @@ def get_metadata_insights(metadata):
 
     #unique
     identifier = "meta_{}_unique".format(metadata)
-    name = "Unique {} on Strategic URLs".format(metadata.title())
+    name = "Unique {} on Compliant URLs".format(metadata.title())
     duplicate_field = "metadata.{}.duplicates.context_aware.nb".format(metadata)
     nb_field = "metadata.{}.nb".format(metadata)
     strategic_field = "strategic.is_strategic"
@@ -34,7 +34,7 @@ def get_metadata_insights(metadata):
 
     #not set
     identifier = "meta_{}_not_set".format(metadata)
-    name = "Not Set {} on Strategic URLs".format(metadata.title())
+    name = "Not Set {} on Compliant URLs".format(metadata.title())
     field = "metadata.{}.nb".format(metadata)
     result.append(
         Insight(
@@ -50,7 +50,7 @@ def get_metadata_insights(metadata):
 
     #duplicate
     identifier = "meta_{}_duplicate".format(metadata)
-    name = "Duplicate {} on Strategic URLs".format(metadata.title())
+    name = "Duplicate {} on Compliant URLs".format(metadata.title())
     field = "metadata.{}.duplicates.context_aware.nb".format(metadata)
     additional_fields = [
         "metadata.{}.contents".format(metadata),
@@ -74,7 +74,7 @@ def get_metadata_insights(metadata):
 
     #bad
     identifier = "meta_{}_bad".format(metadata)
-    name = "Strategic URLs with Bad {}".format(metadata.title())
+    name = "Compliant URLs with Bad {}".format(metadata.title())
     nb_field = "metadata.{}.nb".format(metadata)
     duplicates_field = "metadata.{}.duplicates.context_aware.nb".format(metadata)
     additional_fields = [

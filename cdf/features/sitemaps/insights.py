@@ -39,7 +39,7 @@ def get_strategic_sitemap_insights():
     return [
         Insight(
             "sitemaps_not_strategic",
-            "Not Strategic URLs in Sitemaps",
+            "Not Compliant URLs in Sitemaps",
             PositiveTrend.DOWN,
             AndFilter([
                 EqFilter("strategic.is_strategic", False),
@@ -48,7 +48,7 @@ def get_strategic_sitemap_insights():
         ),
         Insight(
             "sitemaps_strategic",
-            "Strategic URLs in Sitemaps",
+            "Compliant URLs in Sitemaps",
             PositiveTrend.UP,
             AndFilter([
                 EqFilter("strategic.is_strategic", True),
@@ -83,7 +83,7 @@ def get_misc_sitemap_insights():
         ),
         Insight(
             "sitemaps_not_strategic_outlink",
-            "URLs in Sitemaps with a not Strategic Outlink",
+            "URLs in Sitemaps with a not Compliant Outlink",
             PositiveTrend.DOWN,
             AndFilter([
                 GtFilter("outlinks_errors.non_strategic.nb.follow.unique", 0),
@@ -128,7 +128,7 @@ def get_bad_metadata_strategic_sitemap_insights():
 
         insight = Insight(
             "sitemaps_bad_{}".format(metadata),
-            "Strategic URLs in Sitemaps with a Bad {}".format(metadata.title()),
+            "Compliant URLs in Sitemaps with a Bad {}".format(metadata.title()),
             PositiveTrend.DOWN,
             #some fields are duplicated
             #but the URL Explorer is not able to display AndFilter -> OrFilter

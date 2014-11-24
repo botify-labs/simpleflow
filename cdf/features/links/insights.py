@@ -188,7 +188,7 @@ def get_misc_inlinks_insights():
     result.append(
         Insight(
             "inlinks_not_strategic_follow",
-            "Not Strategic URLs with Follow Inlinks",
+            "Not Compliant URLs with Follow Inlinks",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter("strategic.is_strategic", False),
@@ -202,7 +202,7 @@ def get_misc_inlinks_insights():
     result.append(
         Insight(
             "inlinks_follow_strategic_1",
-            "Strategic URLs with only 1 Follow Inlink",
+            "Compliant URLs with only 1 Follow Inlink",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter("strategic.is_strategic", True),
@@ -353,7 +353,7 @@ def get_misc_outlinks_insights():
     result.append(
         Insight(
             "outlinks_not_strategic",
-            "Strategic URLs with Outlinks to not Strategic URLs",
+            "Compliant URLs with Outlinks to not Compliant URLs",
             PositiveTrend.DOWN,
             AndFilter([
                 EqFilter("strategic.is_strategic", True),
