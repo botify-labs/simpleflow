@@ -4,7 +4,6 @@ import json
 
 from cdf.log import logger
 from cdf.core.streams.cache import BufferedMarshalStreamCache
-from cdf.utils.es import EsHandler
 from cdf.utils.s3 import push_file, push_content, fetch_file
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.core.streams.stream_factory import (
@@ -220,9 +219,6 @@ def make_links_to_non_strategic_counter_file(s3_uri,
 def make_top_domains_files(crawl_id,
                            s3_uri,
                            nb_top_domains,
-                           es_location,
-                           es_index,
-                           es_doc_type,
                            tmp_dir=None,
                            force_fetch=DEFAULT_FORCE_FETCH):
     """Compute top domains and top second level domains for a given crawl.
@@ -233,9 +229,6 @@ def make_top_domains_files(crawl_id,
     :param nb_top_domains: the number of top domains to return
                            (typical value: 100)
     :type nb_top_domains: int
-    :param es_location:
-    :param es_index:
-    :param es_doc_type:
     :param tmp_dir: the path to the tmp directory to use.
                     If None, a new tmp directory will be created.
     :type tmp_dir: str
@@ -248,23 +241,26 @@ def make_top_domains_files(crawl_id,
     :rtype: list
     """
     logger.info("Preprocessing and caching stream.")
-    es_handler = EsHandler(es_location, es_index, es_doc_type)
     outlinks = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     outlinks = filter_external_outlinks(outlinks)
     outlinks = filter_invalid_destination_urls(outlinks)
 
-    stream_cache = BufferedMarshalStreamCache()
-    stream_cache.cache(outlinks)
+    outlinks_stream_cache = BufferedMarshalStreamCache()
+    outlinks_stream_cache.cache(outlinks)
+
+    urlids_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    urlids_stream_cache = BufferedMarshalStreamCache()
+    urlids_stream_cache.cache(urlids_stream)
 
     result = []
 
     logger.info("Computing top %d full domains.", nb_top_domains)
     top_domains = compute_top_full_domains(
-        stream_cache.get_stream(),
+        outlinks_stream_cache.get_stream(),
         nb_top_domains
     )
     # resolve url ids
-    resolve_sample_url_id(es_handler, crawl_id, top_domains)
+    resolve_sample_url_id(urlids_stream_cache.get_stream(), top_domains)
     s3_destination = "{}/top_full_domains.json".format(s3_uri)
     push_content(
         s3_destination,
@@ -274,11 +270,11 @@ def make_top_domains_files(crawl_id,
 
     logger.info("Computing top %d second level domains.", nb_top_domains)
     top_domains = compute_top_second_level_domains(
-        stream_cache.get_stream(),
+        outlinks_stream_cache.get_stream(),
         nb_top_domains
     )
     # resolve url ids
-    resolve_sample_url_id(es_handler, crawl_id, top_domains)
+    resolve_sample_url_id(urlids_stream_cache.get_stream(), top_domains)
     s3_destination = "{}/top_second_level_domains.json".format(s3_uri)
     push_content(
         s3_destination,

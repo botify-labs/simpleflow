@@ -1,6 +1,5 @@
-from itertools import groupby, ifilter, imap, ifilterfalse
+from itertools import groupby, ifilter, ifilterfalse
 import heapq
-from cdf.analysis.urls.utils import get_url_id, get_es_id
 
 from cdf.features.links.helpers.predicates import (
     is_link,
@@ -11,6 +10,7 @@ from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
 from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.exceptions import InvalidUrlException
+from cdf.features.main.utils import get_id_to_url_dict_from_stream
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 
@@ -406,9 +406,9 @@ def compute_domain_link_counts(grouped_outlinks):
     external_url_index = OutlinksRawStreamDef.field_idx("external_url")
     mask_idx = OutlinksRawStreamDef.field_idx('bitmask')
     key = lambda x: (
-            x[id_index],
-            x[external_url_index],
-            is_follow_link(x[mask_idx], is_bitmask=True)
+        x[id_index],
+        x[external_url_index],
+        is_follow_link(x[mask_idx], is_bitmask=True)
     )
     domain_name, links = grouped_outlinks
     for key_value, g in _group_links(links, key):
@@ -496,11 +496,11 @@ def compute_sample_links(external_outlinks, n):
     return result
 
 
-def resolve_sample_url_id(es, crawl_id, results):
+def resolve_sample_url_id(urlids_stream, results):
     """Resolve and in-place replace url_id in the samples
 
-    :param es: ElasticSearch handler
-    :type es: cdf.util.es.ES
+    :param urlids_stream: the urlids stream
+    :type urlids_stream: iterable
     :param results: top domains analysis results (DomainLinkStats)
     :type results: list
     :return: top domain analysis results with all sample url_ids replaced
@@ -513,19 +513,7 @@ def resolve_sample_url_id(es, crawl_id, results):
     for domain_stats in results:
         url_ids.update(domain_stats.extract_ids())
 
-    url_ids = [get_es_id(crawl_id, i) for i in url_ids]
-
-    # resolve using ES
-    resolved = es.mget(
-        ids=url_ids,
-        fields=['url'],
-        routing=crawl_id
-    )
-
-    id_to_url = {
-        get_url_id(es_id): doc['url']
-        for es_id, doc, found in resolved if found
-    }
+    id_to_url = get_id_to_url_dict_from_stream(urlids_stream, url_ids)
 
     for domain_stats in results:
         domain_stats.replace_ids(id_to_url)

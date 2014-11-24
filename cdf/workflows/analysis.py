@@ -530,6 +530,14 @@ class AnalysisWorkflow(Workflow):
             tmp_dir=tmp_dir
         )
 
+        nb_top_domains = 100  # TODO get it from context.
+        top_domains_result = self.submit(
+            make_top_domains_files,
+            crawl_id=crawl_id,
+            s3_uri=s3_uri,
+            nb_top_domains=nb_top_domains
+        )
+
         links_to_non_strategic_urls = self.submit(
             make_links_to_non_strategic_file,
             s3_uri,
@@ -561,6 +569,7 @@ class AnalysisWorkflow(Workflow):
             zone_results +
             strategic_urls_results +
             [context_aware_metadata_dup_result] +
+            [top_domains_result] +
             links_to_non_strategic_urls_counter_results +
             filled_metadata_count_results)
 
@@ -638,18 +647,6 @@ class AnalysisWorkflow(Workflow):
             futures.wait(*(elastic_search_results + [consolidate_result]))
         insights_result = self.compute_insights(context)
 
-        #compute top domains after the push to elasticsearch because
-        #it requires elasticsearch to resolve the source urlids
-        #for the sample links.
-        nb_top_domains = 100  # TODO get it from context.
-        top_domains_result = self.submit(
-            make_top_domains_files,
-            crawl_id=crawl_id,
-            s3_uri=s3_uri,
-            nb_top_domains=nb_top_domains,
-            **es_params
-        )
-
         suggest_summary_result = self.submit(
             make_suggest_summary_file,
             crawl_id=crawl_id,
@@ -660,8 +657,7 @@ class AnalysisWorkflow(Workflow):
         )
         futures.wait(
             suggest_summary_result,
-            insights_result,
-            top_domains_result
+            insights_result
         )
 
         crawl_status_result = self.submit(

@@ -2,9 +2,6 @@ import unittest
 import mock
 import os.path
 
-from cdf.testing.es_mock import (
-    get_es_mget_mock, CRAWL_ID
-    )
 from cdf.features.links.streams import OutlinksRawStreamDef
 
 from cdf.features.links.top_domains import (
@@ -21,7 +18,7 @@ from cdf.features.links.top_domains import (
     LinkDestination,
     compute_sample_links,
     compute_link_destination_stats,
-    resolve_sample_url_id
+    resolve_sample_url_id,
     )
 
 
@@ -466,11 +463,8 @@ class TestComputeLinkDestinationStats(unittest.TestCase):
         self.assertEqual(expected_result, actual_result)
 
 
-class TestSourceSampleUrl(unittest.TestCase):
-    def setUp(self):
-        self.es_conn = mock.MagicMock()
-        self.es_conn.mget = get_es_mget_mock()
 
+class TestSourceSampleUrl(unittest.TestCase):
     def test_harness(self):
         results = [
             DomainLinkStats(
@@ -482,10 +476,24 @@ class TestSourceSampleUrl(unittest.TestCase):
                 [LinkDestination('', 0, [4, 3])]
             )
         ]
-        resolve_sample_url_id(self.es_conn, CRAWL_ID, results)
 
-        expected_0 = LinkDestination('', 0, ['url1', 'url2', 'url5'])
-        expected_1 = LinkDestination('', 0, ['url4', 'url3'])
+        ids = iter([
+            [0, "http", "host.com", "/url0", ""],
+            [1, "http", "host.com", "/url1", ""],
+            [2, "http", "host.com", "/url2", ""],
+            [3, "http", "host.com", "/url3", ""],
+            [4, "http", "host.com", "/url4", ""],
+            [5, "http", "host.com", "/url5", ""]
+        ])
+
+        resolve_sample_url_id(ids, results)
+
+        expected_0 = LinkDestination(
+            '', 0, ['http://host.com/url1', 'http://host.com/url2', 'http://host.com/url5']
+        )
+        expected_1 = LinkDestination(
+            '', 0, ['http://host.com/url4', 'http://host.com/url3']
+        )
 
         self.assertEqual(
             results[0].sample_follow_links,
