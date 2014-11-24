@@ -1,16 +1,19 @@
 import unittest
-from cdf.features.main.helpers.masks import urlinfos_mask
+from cdf.features.main.helpers.masks import UrlInfosMask, urlinfos_mask
 
 
 class TestUrlinfosMask(unittest.TestCase):
     def test_nominal_case(self):
-        self.assertItemsEqual(["has_canonical", "gzip"], urlinfos_mask(17))
+        self.assertItemsEqual(
+            [UrlInfosMask.HAS_CANONICAL, UrlInfosMask.GZIP],
+            urlinfos_mask(17)
+        )
 
     def test_empty_result(self):
         self.assertItemsEqual([], urlinfos_mask(0))
 
     def test_single_attribute(self):
-        self.assertItemsEqual(["bad_canonical"], urlinfos_mask(32))
+        self.assertItemsEqual([UrlInfosMask.BAD_CANONICAL], urlinfos_mask(32))
 
     def test_out_of_range(self):
         self.assertItemsEqual([], urlinfos_mask(128))

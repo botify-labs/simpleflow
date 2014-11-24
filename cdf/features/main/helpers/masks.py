@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from enum import Enum
+
 """
 Real bitmask is :
 
@@ -12,15 +14,15 @@ urlinfo_mask :
 64 : blocked by config (! not possible = always 0)
 """
 
-# Order of masks is important !
-_URLINFOS_MASKS = [
-    (1, "gzip"),
-    (4, "meta_noindex"),
-    (8, "meta_nofollow"),
-    (16, "has_canonical"),
-    (32, "bad_canonical"),
-    (64, "blocked_by_config")
-]
+
+class UrlInfosMask(Enum):
+    '''A class to represent the different flags in urlinfos mask'''
+    GZIP = 1
+    META_NOINDEX = 4
+    META_NOFOLLOW = 8
+    HAS_CANONICAL = 16
+    BAD_CANONICAL = 32
+    BLOCKED_BY_CONFIG = 64
 
 
 def urlinfos_mask(mask):
@@ -32,7 +34,4 @@ def urlinfos_mask(mask):
     masks = []
     if mask < 0:
         return masks
-    for bitmask, term in _URLINFOS_MASKS:
-        if bitmask & mask != 0:
-            masks.append(term)
-    return masks
+    return [flag for flag in UrlInfosMask if flag.value & mask != 0]
