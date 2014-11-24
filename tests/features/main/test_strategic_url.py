@@ -5,7 +5,7 @@ from moto import mock_s3
 import boto
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.base import Stream
-from cdf.features.links.streams import OutlinksStreamDef
+from cdf.features.main.helpers.masks import UrlInfosMask
 from cdf.features.main.strategic_url import (
     generate_strategic_stream,
     is_strategic_url,
@@ -26,7 +26,6 @@ class TestStrategicUrlDetection(unittest.TestCase):
         self.strategic_http_code = 200
         self.strategic_content_type = 'text/html'
         self.strategic_mask = 0
-        self.strategic_outlinks = []
 
     def test_noindex(self):
         noindex_mask = 4
@@ -34,8 +33,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.url_id,
             noindex_mask,
             self.strategic_http_code,
-            self.strategic_content_type,
-            self.strategic_outlinks
+            self.strategic_content_type
         )
         expected = (False, REASON_NOINDEX.code)
         self.assertEqual(result, expected)
@@ -46,8 +44,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.url_id,
             self.strategic_mask,
             bad_http_code,
-            self.strategic_content_type,
-            self.strategic_outlinks
+            self.strategic_content_type
         )
         expected = (False, REASON_HTTP_CODE.code)
         self.assertEqual(result, expected)
@@ -58,86 +55,49 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.url_id,
             self.strategic_mask,
             self.strategic_http_code,
-            bad_content_type,
-            self.strategic_outlinks
+            bad_content_type
         )
         expected = (False, REASON_CONTENT_TYPE.code)
         self.assertEqual(result, expected)
 
     def test_no_canonical(self):
         # no canonical -> strategic
-        outlinks = [
-            [1, 'a', None, 4, '']
-        ]
         result = is_strategic_url(
             self.url_id,
             self.strategic_mask,
             self.strategic_http_code,
-            self.strategic_content_type,
-            outlinks
+            self.strategic_content_type
         )
         expected = (True, 0)
         self.assertEqual(result, expected)
 
     def test_self_canonical(self):
-        # self canonical -> strategic
-        outlinks = [
-            [1, 'canonical', None, 1, '']
-        ]
         result = is_strategic_url(
             self.url_id,
-            self.strategic_mask,
+            UrlInfosMask.HAS_CANONICAL.value,
             self.strategic_http_code,
-            self.strategic_content_type,
-            outlinks
+            self.strategic_content_type
         )
         expected = (True, 0)
         self.assertEqual(result, expected)
 
     def test_canonical(self):
-        # has canonical to other page -> non-strategic
-        outlinks = [
-            [1, 'canonical', None, 4, '']
-        ]
         result = is_strategic_url(
             self.url_id,
-            self.strategic_mask,
+            UrlInfosMask.BAD_CANONICAL.value,
             self.strategic_http_code,
-            self.strategic_content_type,
-            outlinks
-        )
-        expected = (False, REASON_CANONICAL.code)
-        self.assertEqual(result, expected)
-
-    def test_first_canonical(self):
-        # only take the first canonical into account
-        # so even if we have a self-canonical, this url
-        # is still non strategic
-        outlinks = [
-            [1, 'canonical', None, 4, ''],
-            [1, 'canonical', None, 1, '']  # self canonical
-        ]
-        result = is_strategic_url(
-            self.url_id,
-            self.strategic_mask,
-            self.strategic_http_code,
-            self.strategic_content_type,
-            outlinks
+            self.strategic_content_type
         )
         expected = (False, REASON_CANONICAL.code)
         self.assertEqual(result, expected)
 
     def test_multiple_reasons(self):
-        outlinks = [
-            [1, 'canonical', None, 4, '']
-        ]
-        noindex_mask = 4
+        noindex_mask = UrlInfosMask.META_NOINDEX.value | UrlInfosMask.BAD_CANONICAL.value
         result = is_strategic_url(
             self.url_id,
             noindex_mask,
             self.strategic_http_code,
-            self.strategic_content_type,
-            outlinks
+            self.strategic_content_type
         )
         expected_mask = encode_reason_mask(REASON_CANONICAL, REASON_NOINDEX)
         expected = (False, expected_mask)
@@ -149,8 +109,7 @@ class TestStrategicUrlDetection(unittest.TestCase):
             self.url_id,
             self.strategic_mask,
             self.strategic_http_code,
-            self.strategic_content_type,
-            self.strategic_outlinks
+            self.strategic_content_type
         )
         expected = (True, 0)
         self.assertEqual(result, expected)
@@ -209,17 +168,11 @@ class TestStrategicUrlStream(unittest.TestCase):
             [2, 0, 'yo/yo', None, None, 200] + [None] * 4,
             # no-index
             [3, 4, 'text/html', None, None, 200] + [None] * 4,
-            [4, 0, 'text/html', None, None, 200] + [None] * 4,
-        ]
-        self.outlinks_stream = [
-            [4, 'canonical', None, 1, None]
+            [4, 32, 'text/html', None, None, 200] + [None] * 4,
         ]
 
     def test_harness(self):
-        result = list(generate_strategic_stream(
-            iter(self.infos_stream),
-            iter(self.outlinks_stream))
-        )
+        result = list(generate_strategic_stream(iter(self.infos_stream)))
         expected = [
             (1, True, 0),
             (2, False, REASON_CONTENT_TYPE.code),
@@ -239,11 +192,7 @@ class TestStrategicUrlTask(unittest.TestCase):
             [2, 0, 'yo/yo', 0, 0, 200, 0, 0, 0, 'en'],
             # no-index
             [3, 4, 'text/html', 0, 0, 200, 0, 0, 0, 'en'],
-            [4, 0, 'text/html', 0, 0, 200, 0, 0, 0, 'en'],
-        ]
-        self.outlinks_stream = [
-            # canonical to 1
-            [4, 'canonical', 0, 1, '']
+            [4, 32, 'text/html', 0, 0, 200, 0, 0, 0, 'en'],
         ]
 
     def tearDown(self):
@@ -258,8 +207,6 @@ class TestStrategicUrlTask(unittest.TestCase):
 
         InfosStreamDef.persist(
             self.infos_stream, s3_uri, part_id)
-        OutlinksStreamDef.persist(
-            self.outlinks_stream, s3_uri, part_id)
 
         # launch task
         compute_strategic_urls(123, s3_uri,

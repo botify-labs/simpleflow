@@ -245,12 +245,7 @@ def compute_strategic_urls(crawl_id, s3_uri, part_id,
         s3_uri, tmp_dir, part_id=part_id,
         force_fetch=force_fetch
     )
-    outlinks_stream = OutlinksStreamDef.load(
-        s3_uri, tmp_dir, part_id=part_id,
-        force_fetch=force_fetch
-    )
-
-    stream = generate_strategic_stream(infos_stream, outlinks_stream)
+    stream = generate_strategic_stream(infos_stream)
     StrategicUrlStreamDef.persist(
         stream=stream,
         uri=s3_uri,
