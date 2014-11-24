@@ -163,6 +163,8 @@ def get_strategic_visit_nb_range_insights(medium, source):
     name_prefix = "{}_{}".format(medium, source)
     visit_field = "visits.{}.{}.nb".format(medium, source)
     strategic_field = "strategic.is_strategic"
+    sort_by = DescendingSort(visit_field)
+
     return [
         Insight(
             "{}_visits_strategic_1".format(name_prefix),
@@ -173,7 +175,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
                 EqFilter(visit_field, 1)
             ]),
             additional_fields=[visit_field],
-            sort_by=DescendingSort(visit_field)
+            sort_by=sort_by
         ),
         Insight(
             "{}_visits_strategic_2_5".format(name_prefix),
@@ -184,7 +186,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
                 BetweenFilter(visit_field, [2, 5])
             ]),
             additional_fields=[visit_field],
-            sort_by=DescendingSort(visit_field)
+            sort_by=sort_by
         ),
         Insight(
             "{}_visits_strategic_6_10".format(name_prefix),
@@ -195,7 +197,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
                 BetweenFilter(visit_field, [6, 10])
             ]),
             additional_fields=[visit_field],
-            sort_by=DescendingSort(visit_field)
+            sort_by=sort_by
         ),
         Insight(
             "{}_visits_strategic_11_100".format(name_prefix),
@@ -206,7 +208,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
                 BetweenFilter(visit_field, [11, 100])
             ]),
             additional_fields=[visit_field],
-            sort_by=DescendingSort(visit_field)
+            sort_by=sort_by
         ),
         Insight(
             "{}_visits_strategic_gt_100".format(name_prefix),
@@ -217,7 +219,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
                 GtFilter(visit_field, 100)
             ]),
             additional_fields=[visit_field],
-            sort_by=DescendingSort(visit_field)
+            sort_by=sort_by
         )
     ]
 
