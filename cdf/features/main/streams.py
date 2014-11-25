@@ -348,7 +348,7 @@ def cast_bool(str):
 
 
 class CompliantUrlStreamDef(StreamDefBase):
-    FILE = 'strategic_urls'
+    FILE = 'compliant_urls'
     HEADERS = (
         ('id', int),  # url_id
         ('compliant', cast_bool),  # is this url SEO compliant
