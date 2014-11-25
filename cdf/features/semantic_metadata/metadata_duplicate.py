@@ -221,8 +221,8 @@ def append_zone(stream_contents, stream_zones):
 
 
 def get_context_aware_duplicate_metadata(stream_contents,
-                                      stream_zones,
-                                      stream_compliant_urls):
+                                         stream_zones,
+                                         stream_compliant_urls):
     """
     Return a tuple of urls having a duplicate metadata (the first one found for each page).
     The difference with get_duplicate_metadata() is that:
