@@ -8,7 +8,7 @@ import boto
 
 from cdf.utils.hashing import string_to_int32
 from cdf.features.semantic_metadata.metadata_duplicate import notset_hash_value
-from cdf.features.main.streams import ZoneStreamDef, StrategicUrlStreamDef
+from cdf.features.main.streams import ZoneStreamDef, CompliantUrlStreamDef
 from cdf.features.semantic_metadata.streams import (
     ContentsCountStreamDef,
     ContentsDuplicateStreamDef,
@@ -196,13 +196,13 @@ class TestMakeContextAwareMetadataDuplicatesFile(unittest.TestCase):
             part_size=part_size
         )
 
-        strategic_urls = iter([
+        compliant_urls = iter([
             (1, True, 0),
             (2, False, 0),
             (3, True, 0)
         ])
-        StrategicUrlStreamDef.persist(
-            iter(strategic_urls),
+        CompliantUrlStreamDef.persist(
+            iter(compliant_urls),
             self.s3_uri,
             first_part_size=first_part_size,
             part_size=part_size

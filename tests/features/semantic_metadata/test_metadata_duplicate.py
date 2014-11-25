@@ -5,7 +5,7 @@ from cdf.features.semantic_metadata.metadata_duplicate import (
     notset_hash_value,
     filter_redundant_metadata,
     preprocess_duplicate_computation,
-    filter_non_strategic_urls,
+    filter_non_compliant_urls,
     append_zone,
     generate_duplicate_stream
 )
@@ -108,7 +108,7 @@ class TestPreprocessDuplicateComputation(unittest.TestCase):
         self.assertEqual(expected_result, list(actual_result))
 
 
-class TestFilterNonStrategicUrls(unittest.TestCase):
+class TestFilterNonCompliantUrls(unittest.TestCase):
     def test_nominal_case(self):
         contents_stream = iter([
             (1, 1, string_to_int32("title1")),
@@ -118,14 +118,14 @@ class TestFilterNonStrategicUrls(unittest.TestCase):
             (9, 4, string_to_int32("description1"))
         ])
 
-        strategic_urls_stream = iter([
+        compliant_urls_stream = iter([
             (1, True, None),
             (6, False, None),
             (9, True, None),
         ])
 
-        actual_result = filter_non_strategic_urls(contents_stream,
-                                                  strategic_urls_stream)
+        actual_result = filter_non_compliant_urls(contents_stream,
+                                                  compliant_urls_stream)
         expected_result = [
             (1, 1, string_to_int32("title1")),
             (1, 4, string_to_int32("description1")),

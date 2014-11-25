@@ -2,17 +2,17 @@ from cdf.core.streams.utils import group_left
 from cdf.features.main.streams import InfosStreamDef
 from .reasons import *
 
-STRATEGIC_HTTP_CODE = 200
-STRATEGIC_CONTENT_TYPE = 'text/html'
+COMPLIANT_HTTP_CODE = 200
+COMPLIANT_CONTENT_TYPE = 'text/html'
 
 
-def is_strategic_url(url_id, infos_mask, http_code,
+def is_compliant_url(url_id, infos_mask, http_code,
                      content_type, outlinks):
-    """Logic to check if a url is SEO strategic
+    """Logic to check if a url is SEO compliant
 
     It returns a tuple of form:
-        (is_strategic, reason_mask)
-    If a url is not SEO strategic, `reason_mask` will be non empty
+        (is_compliant, reason_mask)
+    If a url is not SEO compliant, `reason_mask` will be non empty
 
     :param url_id: url id
     :type url_id: int
@@ -24,17 +24,17 @@ def is_strategic_url(url_id, infos_mask, http_code,
     :type content_type: str
     :param outlinks: all out-going links to the url
     :type outlinks: list
-    :return: tuple indicating if the url is strategic plus its reason
+    :return: tuple indicating if the url is compliant plus its reason
     :rtype (bool, int)
     """
     reasons = set()
 
     # check `http_code`
-    if http_code != STRATEGIC_HTTP_CODE:
+    if http_code != COMPLIANT_HTTP_CODE:
         reasons.add(REASON_HTTP_CODE)
 
     # check `content_type`
-    if content_type != STRATEGIC_CONTENT_TYPE:
+    if content_type != COMPLIANT_CONTENT_TYPE:
         reasons.add(REASON_CONTENT_TYPE)
 
     # check no-index
@@ -60,12 +60,12 @@ def is_strategic_url(url_id, infos_mask, http_code,
         return True, 0
 
 
-def generate_strategic_stream(infos_stream, outlinks_stream):
-    """Generate a strategic url stream
+def generate_compliant_stream(infos_stream, outlinks_stream):
+    """Generate a compliant url stream
 
     :param infos_stream: stream of dataset `urlinfos`
     :param outlinks_stream: stream of dataset `urloutlinks`
-    :return: the strategic stream
+    :return: the compliant stream
     """
     http_idx = InfosStreamDef.field_idx('http_code')
     mask_idx = InfosStreamDef.field_idx('infos_mask')
@@ -80,7 +80,7 @@ def generate_strategic_stream(infos_stream, outlinks_stream):
         infos_mask = info[mask_idx]
         content_type = info[ctype_idx]
 
-        is_strategic, reason_mask = is_strategic_url(
+        is_compliant, reason_mask = is_compliant_url(
             uid,
             infos_mask,
             http_code,
@@ -88,4 +88,4 @@ def generate_strategic_stream(infos_stream, outlinks_stream):
             outlinks
         )
 
-        yield uid, is_strategic, reason_mask
+        yield uid, is_compliant, reason_mask

@@ -66,9 +66,9 @@ def as_activity(func):
 from cdf.features.main.tasks import compute_suggested_patterns
 compute_suggested_patterns = as_activity(compute_suggested_patterns)
 
-from cdf.features.main.tasks import compute_zones, compute_strategic_urls
+from cdf.features.main.tasks import compute_zones, compute_compliant_urls
 compute_zones = as_activity(compute_zones)
-compute_strategic_urls = as_activity(compute_strategic_urls)
+compute_compliant_urls = as_activity(compute_compliant_urls)
 
 from cdf.features.semantic_metadata.tasks import (
     compute_metadata_count,
@@ -80,8 +80,8 @@ from cdf.features.links.tasks import (
     make_links_counter_file,
     make_bad_link_file,
     make_bad_link_counter_file,
-    make_links_to_non_strategic_file,
-    make_links_to_non_strategic_counter_file,
+    make_links_to_non_compliant_file,
+    make_links_to_non_compliant_counter_file,
     make_top_domains_files,
     make_inlinks_percentiles_file
 )
@@ -93,8 +93,8 @@ make_context_aware_metadata_duplicates_file = as_activity(
 make_links_counter_file = as_activity(make_links_counter_file)
 make_bad_link_file = as_activity(make_bad_link_file)
 make_bad_link_counter_file = as_activity(make_bad_link_counter_file)
-make_links_to_non_strategic_file = as_activity(make_links_to_non_strategic_file)
-make_links_to_non_strategic_counter_file = as_activity(make_links_to_non_strategic_counter_file)
+make_links_to_non_compliant_file = as_activity(make_links_to_non_compliant_file)
+make_links_to_non_compliant_counter_file = as_activity(make_links_to_non_compliant_counter_file)
 make_top_domains_files = as_activity(make_top_domains_files)
 make_inlinks_percentiles_file = as_activity(make_inlinks_percentiles_file)
 
@@ -509,9 +509,9 @@ class AnalysisWorkflow(Workflow):
             for part_id in partitions.result
         ]
 
-        strategic_urls_results = [
+        compliant_urls_results = [
             self.submit(
-                compute_strategic_urls,
+                compute_compliant_urls,
                 crawl_id=crawl_id,
                 s3_uri=s3_uri,
                 tmp_dir=tmp_dir,
@@ -519,8 +519,8 @@ class AnalysisWorkflow(Workflow):
             )
             for part_id in partitions.result
         ]
-        #zone aware duplication computation needs zones and strategic urls
-        futures.wait(*(zone_results + strategic_urls_results))
+        #zone aware duplication computation needs zones and compliant urls
+        futures.wait(*(zone_results + compliant_urls_results))
 
         context_aware_metadata_dup_result = self.submit(
             make_context_aware_metadata_duplicates_file,
@@ -538,19 +538,19 @@ class AnalysisWorkflow(Workflow):
             nb_top_domains=nb_top_domains
         )
 
-        links_to_non_strategic_urls = self.submit(
-            make_links_to_non_strategic_file,
+        links_to_non_compliant_urls = self.submit(
+            make_links_to_non_compliant_file,
             s3_uri,
             first_part_id_size=first_part_id_size,
             part_id_size=part_id_size,
             tmp_dir=tmp_dir
         )
 
-        links_to_non_strategic_urls_counter_results = [futures.Future()]
-        if links_to_non_strategic_urls.finished:
-            links_to_non_strategic_urls_counter_results = [
+        links_to_non_compliant_urls_counter_results = [futures.Future()]
+        if links_to_non_compliant_urls.finished:
+            links_to_non_compliant_urls_counter_results = [
                 self.submit(
-                    make_links_to_non_strategic_counter_file,
+                    make_links_to_non_compliant_counter_file,
                     s3_uri=s3_uri,
                     tmp_dir=tmp_dir,
                     part_id=part_id,
@@ -567,10 +567,10 @@ class AnalysisWorkflow(Workflow):
             inlinks_results +
             outlinks_results +
             zone_results +
-            strategic_urls_results +
+            compliant_urls_results +
             [context_aware_metadata_dup_result] +
             [top_domains_result] +
-            links_to_non_strategic_urls_counter_results +
+            links_to_non_compliant_urls_counter_results +
             filled_metadata_count_results)
 
         if 'ganalytics' in features_flags:

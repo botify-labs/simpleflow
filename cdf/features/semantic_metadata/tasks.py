@@ -13,7 +13,7 @@ from cdf.features.semantic_metadata.streams import (
 )
 from cdf.features.main.streams import (
     ZoneStreamDef,
-    StrategicUrlStreamDef
+    CompliantUrlStreamDef
 )
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
@@ -102,7 +102,7 @@ def make_context_aware_metadata_duplicates_file(s3_uri,
         tmp_dir=tmp_dir,
         force_fetch=force_fetch
     )
-    strategic_urls_stream = StrategicUrlStreamDef.load(
+    compliant_urls_stream = CompliantUrlStreamDef.load(
         s3_uri,
         tmp_dir=tmp_dir,
         force_fetch=force_fetch
@@ -111,7 +111,7 @@ def make_context_aware_metadata_duplicates_file(s3_uri,
     generator = get_context_aware_duplicate_metadata(
         contents_stream,
         zone_stream,
-        strategic_urls_stream
+        compliant_urls_stream
     )
     generator = itertools.imap(to_string, generator)
     files = ContentsContextAwareDuplicateStreamDef.persist(

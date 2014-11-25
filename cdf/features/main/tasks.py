@@ -13,7 +13,7 @@ from autotagging.visualization.textual import (save_mixed_clusters,
                                                save_url_suggested_clusters,
                                                save_child_relationship)
 from cdf.features.links.streams import OutlinksStreamDef
-from cdf.features.main.strategic_url import generate_strategic_stream
+from cdf.features.main.compliant_url import generate_compliant_stream
 
 from cdf.utils.path import makedirs
 from cdf.utils.remote_files import enumerate_partitions
@@ -35,7 +35,7 @@ from cdf.features.main.streams import (
     IdStreamDef,
     InfosStreamDef,
     ZoneStreamDef,
-    StrategicUrlStreamDef
+    CompliantUrlStreamDef
 )
 from cdf.features.main.zones import generate_zone_stream
 
@@ -238,7 +238,7 @@ def compute_zones(s3_uri,
 
 
 @with_temporary_dir
-def compute_strategic_urls(crawl_id, s3_uri, part_id,
+def compute_compliant_urls(crawl_id, s3_uri, part_id,
                            tmp_dir=None, force_fetch=False):
     # prepare streams
     infos_stream = InfosStreamDef.load(
@@ -250,8 +250,8 @@ def compute_strategic_urls(crawl_id, s3_uri, part_id,
         force_fetch=force_fetch
     )
 
-    stream = generate_strategic_stream(infos_stream, outlinks_stream)
-    StrategicUrlStreamDef.persist(
+    stream = generate_compliant_stream(infos_stream, outlinks_stream)
+    CompliantUrlStreamDef.persist(
         stream=stream,
         uri=s3_uri,
         part_id=part_id

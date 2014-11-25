@@ -89,7 +89,7 @@ class TestZoneAwareMetadataDuplicateGenerator(unittest.TestCase):
             [3, 4, 1111, 'My Desc'],
         ))
 
-    def test_strategic_urls(self):
+    def test_compliant_urls(self):
 
         stream_zones = iter([
             (1, "en-US,https"),
@@ -97,15 +97,15 @@ class TestZoneAwareMetadataDuplicateGenerator(unittest.TestCase):
             (3, "en-US,https")
         ])
 
-        stream_strategic_urls = iter([
+        stream_compliant_urls = iter([
             (1, True, 0),
             (2, False, 0),
             (3, True, 0)
         ])
 
         generator = get_context_aware_duplicate_metadata(self.stream_contents,
-                                                      stream_zones,
-                                                      stream_strategic_urls)
+                                                         stream_zones,
+                                                         stream_compliant_urls)
         results = list(generator)
         expected = [
             (1, 1, 2, True, [3]),
@@ -124,15 +124,15 @@ class TestZoneAwareMetadataDuplicateGenerator(unittest.TestCase):
             (3, "en-US,https")
         ])
 
-        stream_strategic_urls = iter([
+        stream_compliant_urls = iter([
             (1, True, 0),
             (2, True, 0),
             (3, True, 0)
         ])
 
         generator = get_context_aware_duplicate_metadata(self.stream_contents,
-                                                      stream_zones,
-                                                      stream_strategic_urls)
+                                                         stream_zones,
+                                                         stream_compliant_urls)
         results = list(generator)
         expected = [
             (1, 1, 2, True, [3]),

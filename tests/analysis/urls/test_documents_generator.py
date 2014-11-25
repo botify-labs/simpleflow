@@ -22,7 +22,7 @@ from cdf.features.links.streams import (
     OutlinksStreamDef,
     InlinksStreamDef,
     BadLinksStreamDef,
-    LinksToNonStrategicStreamDef,
+    LinksToNonCompliantStreamDef,
     InlinksPercentilesStreamDef
 )
 from cdf.features.semantic_metadata.streams import (
