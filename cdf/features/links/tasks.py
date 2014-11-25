@@ -28,8 +28,8 @@ from cdf.features.links.streams import (
     InlinksCountersStreamDef,
     BadLinksStreamDef,
     BadLinksCountersStreamDef,
-    LinksToNonStrategicStreamDef,
-    LinksToNonStrategicCountersStreamDef,
+    LinksToNonCompliantStreamDef,
+    LinksToNonCompliantCountersStreamDef,
     InlinksPercentilesStreamDef,
     InredirectCountersStreamDef
 )
@@ -149,7 +149,7 @@ def make_links_to_non_strategic_file(s3_uri,
         OutlinksStreamDef.load(**stream_kwargs)
     )
 
-    result = LinksToNonStrategicStreamDef.persist(
+    result = LinksToNonCompliantStreamDef.persist(
         generator, s3_uri,
         first_part_size=first_part_id_size,
         part_size=part_id_size
@@ -199,14 +199,14 @@ def make_links_to_non_strategic_counter_file(s3_uri,
     :type part_id: int
     :returns: list - the list of generated files
     """
-    stream = LinksToNonStrategicStreamDef.load(
+    stream = LinksToNonCompliantStreamDef.load(
         s3_uri,
         tmp_dir=tmp_dir,
         part_id=part_id,
         force_fetch=force_fetch
     )
     generator = get_link_to_non_strategic_urls_counters(stream)
-    result = LinksToNonStrategicCountersStreamDef.persist(
+    result = LinksToNonCompliantCountersStreamDef.persist(
         generator,
         s3_uri,
         part_id=part_id

@@ -16,8 +16,8 @@ from cdf.features.links.streams import (
     OutlinksCountersStreamDef,
     OutcanonicalCountersStreamDef,
     OutredirectCountersStreamDef,
-    LinksToNonStrategicStreamDef,
-    LinksToNonStrategicCountersStreamDef,
+    LinksToNonCompliantStreamDef,
+    LinksToNonCompliantCountersStreamDef,
     InlinksCountersStreamDef,
     InlinksPercentilesStreamDef,
     InredirectCountersStreamDef
@@ -240,7 +240,7 @@ class TestMakeLinksToNonStrategicFile(unittest.TestCase):
         self.assertEqual(expected_result, actual_result)
 
         actual_stream = list(
-            LinksToNonStrategicStreamDef.load(s3_uri, self.tmp_dir)
+            LinksToNonCompliantStreamDef.load(s3_uri, self.tmp_dir)
         )
 
         expected_stream = [
@@ -274,7 +274,7 @@ class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
             (5, 1, 12)
         ])
 
-        LinksToNonStrategicStreamDef.persist(
+        LinksToNonCompliantStreamDef.persist(
             non_strategic_links_stream,
             s3_uri,
             part_id=part_id
@@ -288,7 +288,7 @@ class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
         expected_result = "s3://test_bucket/url_non_strategic_links_counters.txt.3.gz"
         self.assertEqual(expected_result, actual_result)
 
-        actual_stream = LinksToNonStrategicCountersStreamDef.load(
+        actual_stream = LinksToNonCompliantCountersStreamDef.load(
             s3_uri,
             self.tmp_dir
         )

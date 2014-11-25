@@ -5,7 +5,7 @@ from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
 from cdf.features.links.streams import (
     OutlinksStreamDef,
     BadLinksStreamDef,
-    LinksToNonStrategicStreamDef
+    LinksToNonCompliantStreamDef
 )
 
 
@@ -39,7 +39,7 @@ def get_bad_links(stream_infos, stream_outlinks):
 
 def get_links_to_non_strategic_urls(stream_strategic, stream_outlinks):
     """Compute a stream of outlinks to non strategic urls.
-    The result stream is based on LinksToNonStrategicStreamDef.
+    The result stream is based on LinksToNonCompliantStreamDef.
     :param stream_strategic: a stream of strategic urls (based on CompliantUrlStreamDef)
     :type stream_strategic: iterable
     :param stream_outlinks: a stream of outlinks (based on OutlinksStreamDef)
@@ -95,14 +95,14 @@ def get_bad_link_counters(stream_bad_links):
 def get_link_to_non_strategic_urls_counters(stream_non_strategic_links):
     """
     Compute a stream of links to non strategic urls count, given an input
-    stream based on LinksToNonStrategicStreamDef.
-    The result stream is based on LinksToNonStrategicCountersStreamDef.
-    :param stream_non_strategic_links: the input stream (based LinksToNonStrategicStreamDef)
+    stream based on LinksToNonCompliantStreamDef.
+    The result stream is based on LinksToNonCompliantCountersStreamDef.
+    :param stream_non_strategic_links: the input stream (based LinksToNonCompliantStreamDef)
     :type stream_non_strategic_links: iterator
     :returns: iterator
     """
     # Resolve indexes
-    src_url_idx = LinksToNonStrategicStreamDef.field_idx('id')
+    src_url_idx = LinksToNonCompliantStreamDef.field_idx('id')
 
     # Group by source url_id
     for src_url_id, g in groupby(

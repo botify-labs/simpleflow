@@ -20,8 +20,8 @@ from cdf.features.links.helpers.masks import list_to_mask
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.links.streams import (
     InlinksStreamDef, OutlinksStreamDef,
-    BadLinksStreamDef, LinksToNonStrategicStreamDef,
-    InlinksPercentilesStreamDef, LinksToNonStrategicCountersStreamDef
+    BadLinksStreamDef, LinksToNonCompliantStreamDef,
+    InlinksPercentilesStreamDef, LinksToNonCompliantCountersStreamDef
 )
 
 
@@ -307,7 +307,7 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(patterns)),
-            LinksToNonStrategicStreamDef.load_iterator(
+            LinksToNonCompliantStreamDef.load_iterator(
                 iter(links_to_non_strategic_urls))
         ])
 
@@ -340,7 +340,7 @@ class TestOutlinksGeneration(unittest.TestCase):
 
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(patterns)),
-            LinksToNonStrategicCountersStreamDef.load_iterator(
+            LinksToNonCompliantCountersStreamDef.load_iterator(
                 iter(links_to_non_strategic_urls))
         ])
 

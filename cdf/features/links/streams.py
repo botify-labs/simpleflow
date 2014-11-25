@@ -1023,7 +1023,7 @@ class BadLinksCountersStreamDef(StreamDefBase):
     )
 
 
-class LinksToNonStrategicStreamDef(StreamDefBase):
+class LinksToNonCompliantStreamDef(StreamDefBase):
     FILE = 'url_non_strategic_links'
     HEADERS = (
         ('id', int),
@@ -1049,8 +1049,8 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
         },
     }
 
-    def process_document(self, document, stream_non_strategic_links):
-        _, follow, url_dest_id = stream_non_strategic_links
+    def process_document(self, document, stream_non_compliant_links):
+        _, follow, url_dest_id = stream_non_compliant_links
 
         errors = document['outlinks_errors']
         error_kind = "non_strategic"
@@ -1063,7 +1063,7 @@ class LinksToNonStrategicStreamDef(StreamDefBase):
         errors[error_kind]['urls_exists'] = True
 
 
-class LinksToNonStrategicCountersStreamDef(StreamDefBase):
+class LinksToNonCompliantCountersStreamDef(StreamDefBase):
     FILE = 'url_non_strategic_links_counters'
     HEADERS = (
         ('id', int),
@@ -1097,14 +1097,14 @@ class LinksToNonStrategicCountersStreamDef(StreamDefBase):
         }
     }
 
-    def process_document(self, document, stream_non_strategic_counters):
-        _, unique, total = stream_non_strategic_counters
+    def process_document(self, document, stream_non_compliant_counters):
+        _, unique, total = stream_non_compliant_counters
 
         errors = document['outlinks_errors']
         error_kind = "non_strategic"
-        non_strategic = errors[error_kind]
-        non_strategic['nb']['follow']['unique'] = unique
-        non_strategic['nb']['follow']['total'] = total
+        non_compliant = errors[error_kind]
+        non_compliant['nb']['follow']['unique'] = unique
+        non_compliant['nb']['follow']['total'] = total
 
 
 class InlinksPercentilesStreamDef(StreamDefBase):
