@@ -7,8 +7,8 @@ from cdf.features.main.reasons import (
 from cdf.features.links.bad_links import (
     get_bad_links,
     get_bad_link_counters,
-    get_links_to_non_strategic_urls,
-    get_link_to_non_strategic_urls_counters
+    get_links_to_non_compliant_urls,
+    get_link_to_non_compliant_urls_counters
 )
 from cdf.features.links.helpers.masks import follow_mask
 
@@ -77,7 +77,7 @@ class TestGetLinkToNonStrategicUrls(unittest.TestCase):
             (1, 'a', follow_mask(0), 3),
             (1, 'a', follow_mask(4), 3)   # nofollow link
         ])
-        actual_result = get_links_to_non_strategic_urls(
+        actual_result = get_links_to_non_compliant_urls(
             self.stream_strategic,
             stream_outlinks
         )
@@ -104,7 +104,7 @@ class TestGetLinkToNonStrategicUrlsCounters(unittest.TestCase):
             (5, 1, 12)
         ])
 
-        actual_result = get_link_to_non_strategic_urls_counters(
+        actual_result = get_link_to_non_compliant_urls_counters(
             stream_non_strategic_links
         )
         expected_result = [

@@ -27,8 +27,8 @@ from cdf.features.links.tasks import (
     make_links_counter_file as compute_link_counter,
     make_bad_link_counter_file as compute_bad_link_counter,
     make_top_domains_files as compute_top_domains,
-    make_links_to_non_strategic_file,
-    make_links_to_non_strategic_counter_file,
+    make_links_to_non_compliant_file,
+    make_links_to_non_compliant_counter_file,
     make_inlinks_percentiles_file
 )
 from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
@@ -204,13 +204,13 @@ class TestMakeLinksToNonStrategicFile(unittest.TestCase):
         bucket = s3.create_bucket('test_bucket')
         s3_uri = 's3://test_bucket'
 
-        strategic_stream = iter([
+        compliant_stream = iter([
             (1, True, encode_reason_mask()),
             (2, True, encode_reason_mask()),
             (3, False, encode_reason_mask(REASON_HTTP_CODE))
         ])
         CompliantUrlStreamDef.persist(
-            strategic_stream,
+            compliant_stream,
             s3_uri
         )
 
@@ -227,7 +227,7 @@ class TestMakeLinksToNonStrategicFile(unittest.TestCase):
 
         first_part_id_size = 2
         part_id_size = 10
-        actual_result = make_links_to_non_strategic_file(
+        actual_result = make_links_to_non_compliant_file(
             s3_uri,
             first_part_id_size=first_part_id_size,
             part_id_size=part_id_size
@@ -265,7 +265,7 @@ class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
         s3_uri = 's3://test_bucket'
         part_id = 3
 
-        non_strategic_links_stream = iter([
+        non_compliant_links_stream = iter([
             (1, 1, 3),
             (1, 1, 5),
             (3, 1, 1),
@@ -275,12 +275,12 @@ class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
         ])
 
         LinksToNonCompliantStreamDef.persist(
-            non_strategic_links_stream,
+            non_compliant_links_stream,
             s3_uri,
             part_id=part_id
         )
 
-        actual_result = make_links_to_non_strategic_counter_file(
+        actual_result = make_links_to_non_compliant_counter_file(
             s3_uri,
             part_id
         )
