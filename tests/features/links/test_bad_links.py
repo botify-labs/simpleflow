@@ -62,9 +62,9 @@ class TestBadLink(unittest.TestCase):
         self.assertEquals(results, expected)
 
 
-class TestGetLinkToNonStrategicUrls(unittest.TestCase):
+class TestGetLinkToNonCompliantUrls(unittest.TestCase):
     def setUp(self):
-        self.stream_strategic = iter([
+        self.stream_compliant = iter([
             (1, True, encode_reason_mask()),
             (2, True, encode_reason_mask()),
             (3, False, encode_reason_mask(REASON_HTTP_CODE))
@@ -72,13 +72,13 @@ class TestGetLinkToNonStrategicUrls(unittest.TestCase):
 
     def test_harness(self):
         stream_outlinks = iter([
-            (1, 'a', follow_mask(0), 2),  # strategic
+            (1, 'a', follow_mask(0), 2),  # compliant
             (1, 'a', follow_mask(0), 3),
             (1, 'a', follow_mask(0), 3),
             (1, 'a', follow_mask(4), 3)   # nofollow link
         ])
         actual_result = get_links_to_non_compliant_urls(
-            self.stream_strategic,
+            self.stream_compliant,
             stream_outlinks
         )
 
@@ -90,9 +90,9 @@ class TestGetLinkToNonStrategicUrls(unittest.TestCase):
         self.assertEqual(expected_result, list(actual_result))
 
 
-class TestGetLinkToNonStrategicUrlsCounters(unittest.TestCase):
+class TestGetLinkToNonCompliantUrlsCounters(unittest.TestCase):
     def test_nominal_case(self):
-        stream_non_strategic_links = iter([
+        stream_non_compliant_links = iter([
             (1, 1, 3),
             (1, 1, 5),
             (1, 0, 5),  # ignored
@@ -105,7 +105,7 @@ class TestGetLinkToNonStrategicUrlsCounters(unittest.TestCase):
         ])
 
         actual_result = get_link_to_non_compliant_urls_counters(
-            stream_non_strategic_links
+            stream_non_compliant_links
         )
         expected_result = [
             (1, 2, 2),

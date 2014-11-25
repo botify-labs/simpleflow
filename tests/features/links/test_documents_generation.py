@@ -294,10 +294,10 @@ class TestOutlinksGeneration(unittest.TestCase):
         document = _next_doc(gen)
         self.assertDictEqual(document[key], expected_2)
 
-    def test_to_non_strategic_links(self):
+    def test_to_non_compliant_links(self):
         patterns = self.ids[:2]
 
-        links_to_non_strategic_urls = [
+        links_to_non_compliant_urls = [
             [1, 1, 5],
             [1, 1, 100],
             [1, 1, 101],
@@ -308,7 +308,7 @@ class TestOutlinksGeneration(unittest.TestCase):
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(patterns)),
             LinksToNonCompliantStreamDef.load_iterator(
-                iter(links_to_non_strategic_urls))
+                iter(links_to_non_compliant_urls))
         ])
 
         expected_1 = {
@@ -331,17 +331,17 @@ class TestOutlinksGeneration(unittest.TestCase):
         document = _next_doc(gen)
         self.assertDictEqual(document[key][sub_key], expected_2)
 
-    def test_non_strategic_link_counter(self):
+    def test_non_compliant_link_counter(self):
         patterns = self.ids[:2]
 
-        links_to_non_strategic_urls = [
+        links_to_non_compliant_urls = [
             [1, 4, 8]
         ]
 
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(patterns)),
             LinksToNonCompliantCountersStreamDef.load_iterator(
-                iter(links_to_non_strategic_urls))
+                iter(links_to_non_compliant_urls))
         ])
 
         expected_1 = {

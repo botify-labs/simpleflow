@@ -191,7 +191,7 @@ class TestBadLinkCounterTask(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-class TestMakeLinksToNonStrategicFile(unittest.TestCase):
+class TestMakeLinksToNonCompliantFile(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
 
@@ -251,7 +251,7 @@ class TestMakeLinksToNonStrategicFile(unittest.TestCase):
         self.assertEqual(expected_stream, list(actual_stream))
 
 
-class TestMakeLinksToNonStrategicCounterFile(unittest.TestCase):
+class TestMakeLinksToNonCompliantCounterFile(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
 

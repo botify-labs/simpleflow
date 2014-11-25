@@ -11,7 +11,7 @@ def _next_doc(generator):
     return next(generator)[1]
 
 
-class TestStrategicUrlDocument(unittest.TestCase):
+class TestCompliantUrlDocument(unittest.TestCase):
 
     def setUp(self):
         self.patterns = [
@@ -22,30 +22,30 @@ class TestStrategicUrlDocument(unittest.TestCase):
             [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
         ]
 
-    def test_strategic(self):
-        strategic = [
+    def test_compliant(self):
+        compliant = [
             [1, 'true', 0],
         ]
 
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(self.patterns)),
             InfosStreamDef.load_iterator(iter(self.infos)),
-            CompliantUrlStreamDef.load_iterator(iter(strategic))
+            CompliantUrlStreamDef.load_iterator(iter(compliant))
         ])
 
         document = _next_doc(gen)
         self.assertTrue(document['strategic']['is_strategic'])
         self.assertEqual(document['strategic']['reason'], {})
 
-    def test_non_strategic(self):
-        strategic = [
+    def test_non_compliant(self):
+        compliant = [
             [1, 'false', 4],
         ]
 
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(self.patterns)),
             InfosStreamDef.load_iterator(iter(self.infos)),
-            CompliantUrlStreamDef.load_iterator(iter(strategic))
+            CompliantUrlStreamDef.load_iterator(iter(compliant))
         ])
 
         document = _next_doc(gen)
