@@ -16,7 +16,7 @@ def get_metadata_insights(metadata):
     name = "Unique {} on Compliant URLs".format(metadata.title())
     duplicate_field = "metadata.{}.duplicates.context_aware.nb".format(metadata)
     nb_field = "metadata.{}.nb".format(metadata)
-    strategic_field = "strategic.is_strategic"
+    compliant_field = "strategic.is_strategic"
     additional_fields = ["metadata.{}.contents".format(metadata)]
     result.append(
         Insight(
@@ -26,7 +26,7 @@ def get_metadata_insights(metadata):
             AndFilter([
                 EqFilter(duplicate_field, 0),
                 GtFilter(nb_field, 0),
-                EqFilter(strategic_field, True)
+                EqFilter(compliant_field, True)
             ]),
             additional_fields=additional_fields
         )
@@ -43,7 +43,7 @@ def get_metadata_insights(metadata):
             PositiveTrend.DOWN,
             AndFilter([
                 EqFilter(field, 0),
-                EqFilter(strategic_field, True)
+                EqFilter(compliant_field, True)
             ])
         )
     )
@@ -65,7 +65,7 @@ def get_metadata_insights(metadata):
             PositiveTrend.DOWN,
             AndFilter([
                 GtFilter(field, 0),
-                EqFilter(strategic_field, True)
+                EqFilter(compliant_field, True)
             ]),
             additional_fields=additional_fields,
             sort_by=DescendingSort(field)
@@ -89,8 +89,8 @@ def get_metadata_insights(metadata):
             name,
             PositiveTrend.DOWN,
             OrFilter([
-                AndFilter([EqFilter(nb_field, 0), EqFilter(strategic_field, True)]),
-                AndFilter([GtFilter(duplicates_field, 0), EqFilter(strategic_field, True)])
+                AndFilter([EqFilter(nb_field, 0), EqFilter(compliant_field, True)]),
+                AndFilter([GtFilter(duplicates_field, 0), EqFilter(compliant_field, True)])
             ]),
             additional_fields=additional_fields,
             sort_by=DescendingSort(duplicates_field)

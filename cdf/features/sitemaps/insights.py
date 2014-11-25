@@ -32,7 +32,7 @@ def get_main_sitemap_insights():
     ]
 
 
-def get_strategic_sitemap_insights():
+def get_compliant_sitemap_insights():
     """Return the insights related to the sitemaps and is_strategic field.
     :returns: list - list of Insight
     """
@@ -113,7 +113,7 @@ def get_misc_sitemap_insights():
     ]
 
 
-def get_bad_metadata_strategic_sitemap_insights():
+def get_bad_metadata_compliant_sitemap_insights():
     """Return insights related to sitemaps and bad metadata.
     :returns: list - list of Insight
     """
@@ -151,9 +151,9 @@ def get_bad_metadata_strategic_sitemap_insights():
 def get_sitemaps_insights():
     result = []
     result.extend(get_main_sitemap_insights())
-    result.extend(get_strategic_sitemap_insights())
+    result.extend(get_compliant_sitemap_insights())
     result.extend(get_misc_sitemap_insights())
-    result.extend(get_bad_metadata_strategic_sitemap_insights())
+    result.extend(get_bad_metadata_compliant_sitemap_insights())
     return result
 
 

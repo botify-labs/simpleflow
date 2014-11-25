@@ -22,8 +22,8 @@ def get_medium_source_insights(medium, source):
     """
     result = []
     result.extend(get_ganalytics_main_metric_insights(medium, source))
-    result.extend(get_strategic_active_insights(medium, source))
-    result.extend(get_strategic_visit_nb_range_insights(medium, source))
+    result.extend(get_compliant_active_insights(medium, source))
+    result.extend(get_compliant_visit_nb_range_insights(medium, source))
     return result
 
 
@@ -95,7 +95,7 @@ def get_ganalytics_main_metric_insights(medium, source):
     ]
 
 
-def get_strategic_active_insights(medium, source):
+def get_compliant_active_insights(medium, source):
     """For a given (medium, source) tuple, compute the count of URLs
     for all the possible combinations of "is_strategic" and "is_active"
     :param medium: the traffic medium to consider
@@ -106,7 +106,7 @@ def get_strategic_active_insights(medium, source):
     """
     name_prefix = "{}_{}".format(medium, source)
     visit_field = "visits.{}.{}.nb".format(medium, source)
-    strategic_field = "strategic.is_strategic"
+    compliant_field = "strategic.is_strategic"
     return [
         Insight(
             "{}_visits_strategic".format(name_prefix),
@@ -114,7 +114,7 @@ def get_strategic_active_insights(medium, source):
             PositiveTrend.UNKNOWN,
             AndFilter([
                 GtFilter(visit_field, 0),
-                EqFilter(strategic_field, True)
+                EqFilter(compliant_field, True)
             ]),
             additional_fields=[visit_field],
             sort_by=DescendingSort(visit_field)
@@ -125,7 +125,7 @@ def get_strategic_active_insights(medium, source):
             PositiveTrend.UNKNOWN,
             AndFilter([
                 GtFilter(visit_field, 0),
-                EqFilter(strategic_field, False)
+                EqFilter(compliant_field, False)
             ]),
             additional_fields=[visit_field],
             sort_by=DescendingSort(visit_field)
@@ -136,7 +136,7 @@ def get_strategic_active_insights(medium, source):
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(visit_field, 0),
-                EqFilter(strategic_field, True)
+                EqFilter(compliant_field, True)
             ])
         ),
         Insight(
@@ -145,15 +145,15 @@ def get_strategic_active_insights(medium, source):
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(visit_field, 0),
-                EqFilter(strategic_field, False)
+                EqFilter(compliant_field, False)
             ])
         )
     ]
 
 
-def get_strategic_visit_nb_range_insights(medium, source):
+def get_compliant_visit_nb_range_insights(medium, source):
     """Return the Google Analytics insights related
-    to the active strategic URLs for a given (medium, source) tuple
+    to the active compliant URLs for a given (medium, source) tuple
     :param medium: the traffic medium to consider
     :type medium: str ("organic" or "social")
     :param source: the traffic source to consider
@@ -162,7 +162,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
     """
     name_prefix = "{}_{}".format(medium, source)
     visit_field = "visits.{}.{}.nb".format(medium, source)
-    strategic_field = "strategic.is_strategic"
+    compliant_field = "strategic.is_strategic"
     sort_by = DescendingSort(visit_field)
 
     return [
@@ -171,7 +171,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
             "Compliant Active URLs with 1 Visit",
             PositiveTrend.UNKNOWN,
             AndFilter([
-                EqFilter(strategic_field, True),
+                EqFilter(compliant_field, True),
                 EqFilter(visit_field, 1)
             ]),
             additional_fields=[visit_field],
@@ -182,7 +182,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
             "Compliant Active URLs with 2 to 5 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
-                EqFilter(strategic_field, True),
+                EqFilter(compliant_field, True),
                 BetweenFilter(visit_field, [2, 5])
             ]),
             additional_fields=[visit_field],
@@ -193,7 +193,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
             "Compliant Active URLs with 6 to 10 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
-                EqFilter(strategic_field, True),
+                EqFilter(compliant_field, True),
                 BetweenFilter(visit_field, [6, 10])
             ]),
             additional_fields=[visit_field],
@@ -204,7 +204,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
             "Compliant Active URLs with 11 to 100 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
-                EqFilter(strategic_field, True),
+                EqFilter(compliant_field, True),
                 BetweenFilter(visit_field, [11, 100])
             ]),
             additional_fields=[visit_field],
@@ -215,7 +215,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
             "Compliant Active URLs with +100 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
-                EqFilter(strategic_field, True),
+                EqFilter(compliant_field, True),
                 GtFilter(visit_field, 100)
             ]),
             additional_fields=[visit_field],

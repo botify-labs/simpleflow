@@ -110,7 +110,7 @@ def get_http_code_insights():
     return result
 
 
-def get_strategic_urls_insights():
+def get_compliant_urls_insights():
     return [
         Insight(
             "strategic_1",
@@ -217,10 +217,10 @@ def get_speed_insights():
     ]
 
 
-def get_strategic_urls_speed_insights():
+def get_compliant_urls_speed_insights():
     field = "delay_last_byte"
     additional_fields = [field]
-    strategic_predicate = EqFilter("strategic.is_strategic", True)
+    compliant_predicate = EqFilter("strategic.is_strategic", True)
     sort_by = DescendingSort(field)
     return [
         Insight(
@@ -229,7 +229,7 @@ def get_strategic_urls_speed_insights():
             PositiveTrend.UP,
             AndFilter(
                 [
-                    strategic_predicate,
+                    compliant_predicate,
                     LtFilter(field, 500),
                 ]
             ),
@@ -242,7 +242,7 @@ def get_strategic_urls_speed_insights():
             PositiveTrend.DOWN,
             AndFilter(
                 [
-                    strategic_predicate,
+                    compliant_predicate,
                     BetweenFilter(field, [500, 999]),
                 ]
             ),
@@ -255,7 +255,7 @@ def get_strategic_urls_speed_insights():
             PositiveTrend.DOWN,
             AndFilter(
                 [
-                    strategic_predicate,
+                    compliant_predicate,
                     BetweenFilter(field, [1000, 1999]),
                 ]
             ),
@@ -268,7 +268,7 @@ def get_strategic_urls_speed_insights():
             PositiveTrend.DOWN,
             AndFilter(
                 [
-                    strategic_predicate,
+                    compliant_predicate,
                     GteFilter(field, 2000),
                 ]
             ),
@@ -394,11 +394,11 @@ def get_insights():
     insights.extend(get_http_code_ok_ko_insights())
     insights.extend(get_http_code_ranges_insights())
     insights.extend(get_http_code_insights())
-    insights.extend(get_strategic_urls_insights())
+    insights.extend(get_compliant_urls_insights())
     insights.extend(get_content_type_insights())
     insights.extend(get_protocol_insights())
     insights.extend(get_speed_insights())
-    insights.extend(get_strategic_urls_speed_insights())
+    insights.extend(get_compliant_urls_speed_insights())
     insights.extend(get_domain_insights())
     insights.extend(get_average_speed_insights())
     insights.extend(get_average_depth_insights())
