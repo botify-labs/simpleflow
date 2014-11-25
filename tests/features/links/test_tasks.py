@@ -234,8 +234,8 @@ class TestMakeLinksToNonCompliantFile(unittest.TestCase):
         )
 
         expected_result = [
-            "s3://test_bucket/url_non_strategic_links.txt.0.gz",
-            "s3://test_bucket/url_non_strategic_links.txt.1.gz"
+            "s3://test_bucket/url_non_compliant_links.txt.0.gz",
+            "s3://test_bucket/url_non_compliant_links.txt.1.gz"
         ]
         self.assertEqual(expected_result, actual_result)
 
@@ -285,7 +285,7 @@ class TestMakeLinksToNonCompliantCounterFile(unittest.TestCase):
             part_id
         )
 
-        expected_result = "s3://test_bucket/url_non_strategic_links_counters.txt.3.gz"
+        expected_result = "s3://test_bucket/url_non_compliant_links_counters.txt.3.gz"
         self.assertEqual(expected_result, actual_result)
 
         actual_stream = LinksToNonCompliantCountersStreamDef.load(

@@ -1024,7 +1024,7 @@ class BadLinksCountersStreamDef(StreamDefBase):
 
 
 class LinksToNonCompliantStreamDef(StreamDefBase):
-    FILE = 'url_non_strategic_links'
+    FILE = 'url_non_compliant_links'
     HEADERS = (
         ('id', int),
         ('follow', _raw_to_bool),
@@ -1064,7 +1064,7 @@ class LinksToNonCompliantStreamDef(StreamDefBase):
 
 
 class LinksToNonCompliantCountersStreamDef(StreamDefBase):
-    FILE = 'url_non_strategic_links_counters'
+    FILE = 'url_non_compliant_links_counters'
     HEADERS = (
         ('id', int),
         ('follow_unique', int),
