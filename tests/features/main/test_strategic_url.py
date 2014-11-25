@@ -14,7 +14,7 @@ from cdf.features.main.tasks import (
     compute_compliant_urls
 )
 from cdf.features.main.streams import (
-    StrategicUrlStreamDef,
+    CompliantUrlStreamDef,
     InfosStreamDef,
     IdStreamDef)
 from cdf.features.main.reasons import *
@@ -273,7 +273,7 @@ class TestCompliantUrlTask(unittest.TestCase):
             [3, False, REASON_NOINDEX.code],
             [4, False, REASON_CANONICAL.code],
         ]
-        result = list(StrategicUrlStreamDef.load(
+        result = list(CompliantUrlStreamDef.load(
             s3_uri, self.tmp_dir, part_id
         ))
 
@@ -298,7 +298,7 @@ class TestDocumentGeneration(unittest.TestCase):
 
     def test_harness(self):
         ids_stream = Stream(IdStreamDef(), iter(self.ids))
-        strategy_url_stream = Stream(StrategicUrlStreamDef(), iter(self.strategy_url))
+        strategy_url_stream = Stream(CompliantUrlStreamDef(), iter(self.strategy_url))
 
         documents = list(UrlDocumentGenerator([
             ids_stream,

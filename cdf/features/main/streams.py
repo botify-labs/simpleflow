@@ -347,12 +347,12 @@ def cast_bool(str):
     return str.lower() == 'true'
 
 
-class StrategicUrlStreamDef(StreamDefBase):
+class CompliantUrlStreamDef(StreamDefBase):
     FILE = 'strategic_urls'
     HEADERS = (
         ('id', int),  # url_id
-        ('strategic', cast_bool),  # is this url SEO strategic
-        ('reason', int)  # why this url is NOT SEO strategic
+        ('strategic', cast_bool),  # is this url SEO compliant
+        ('reason', int)  # why this url is NOT SEO compliant
     )
     URL_DOCUMENT_DEFAULT_GROUP = "main"
     URL_DOCUMENT_MAPPING = {
@@ -413,10 +413,10 @@ class StrategicUrlStreamDef(StreamDefBase):
     }
 
     def process_document(self, document, stream):
-        _, is_strategic, mask = stream
-        document['strategic']['is_strategic'] = is_strategic
+        _, is_compliant, mask = stream
+        document['strategic']['is_strategic'] = is_compliant
 
-        if is_strategic is False:
+        if is_compliant is False:
             document['strategic']['reason'] = {}
             reason_field = document['strategic']['reason']
 

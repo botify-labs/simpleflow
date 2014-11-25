@@ -2,7 +2,7 @@ import unittest
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 
 from cdf.features.main.streams import (
-    StrategicUrlStreamDef,
+    CompliantUrlStreamDef,
     IdStreamDef, InfosStreamDef
 )
 
@@ -30,7 +30,7 @@ class TestStrategicUrlDocument(unittest.TestCase):
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(self.patterns)),
             InfosStreamDef.load_iterator(iter(self.infos)),
-            StrategicUrlStreamDef.load_iterator(iter(strategic))
+            CompliantUrlStreamDef.load_iterator(iter(strategic))
         ])
 
         document = _next_doc(gen)
@@ -45,7 +45,7 @@ class TestStrategicUrlDocument(unittest.TestCase):
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(self.patterns)),
             InfosStreamDef.load_iterator(iter(self.infos)),
-            StrategicUrlStreamDef.load_iterator(iter(strategic))
+            CompliantUrlStreamDef.load_iterator(iter(strategic))
         ])
 
         document = _next_doc(gen)

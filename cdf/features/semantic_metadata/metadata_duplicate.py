@@ -2,7 +2,7 @@ from collections import Counter
 from itertools import groupby, ifilter, imap
 from operator import itemgetter
 from cdf.core.streams.utils import group_left
-from cdf.features.main.streams import StrategicUrlStreamDef
+from cdf.features.main.streams import CompliantUrlStreamDef
 from cdf.features.semantic_metadata.settings import MANDATORY_CONTENT_TYPES_IDS
 from cdf.features.semantic_metadata.streams import (
     ContentsStreamDef,
@@ -180,7 +180,7 @@ def filter_non_strategic_urls(stream_contents,
                             (based on ContentsStreamDef)
     :type stream_contents: iterator
     :param stream_strategic_urls: the input strategic_url stream
-                                  (based on StrategicUrlStreamDef)
+                                  (based on CompliantUrlStreamDef)
     :type stream_strategic_urls: iterator
     :returns: iterator
     """
@@ -189,7 +189,7 @@ def filter_non_strategic_urls(stream_contents,
         contents=(stream_contents, 0)
     )
     #actual filtering
-    strategic_idx = StrategicUrlStreamDef.field_idx("strategic")
+    strategic_idx = CompliantUrlStreamDef.field_idx("strategic")
     grouped_stream = ifilter(
         lambda x: x[1][strategic_idx],
         grouped_stream

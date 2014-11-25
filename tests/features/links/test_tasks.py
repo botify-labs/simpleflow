@@ -31,7 +31,7 @@ from cdf.features.links.tasks import (
     make_links_to_non_strategic_counter_file,
     make_inlinks_percentiles_file
 )
-from cdf.features.main.streams import InfosStreamDef, StrategicUrlStreamDef
+from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
 from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
 from cdf.utils.s3 import list_files
 
@@ -209,7 +209,7 @@ class TestMakeLinksToNonStrategicFile(unittest.TestCase):
             (2, True, encode_reason_mask()),
             (3, False, encode_reason_mask(REASON_HTTP_CODE))
         ])
-        StrategicUrlStreamDef.persist(
+        CompliantUrlStreamDef.persist(
             strategic_stream,
             s3_uri
         )

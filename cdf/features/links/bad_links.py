@@ -1,7 +1,7 @@
 from collections import Counter
 from itertools import groupby
 
-from cdf.features.main.streams import InfosStreamDef, StrategicUrlStreamDef
+from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
 from cdf.features.links.streams import (
     OutlinksStreamDef,
     BadLinksStreamDef,
@@ -40,15 +40,15 @@ def get_bad_links(stream_infos, stream_outlinks):
 def get_links_to_non_strategic_urls(stream_strategic, stream_outlinks):
     """Compute a stream of outlinks to non strategic urls.
     The result stream is based on LinksToNonStrategicStreamDef.
-    :param stream_strategic: a stream of strategic urls (based on StrategicUrlStreamDef)
+    :param stream_strategic: a stream of strategic urls (based on CompliantUrlStreamDef)
     :type stream_strategic: iterable
     :param stream_outlinks: a stream of outlinks (based on OutlinksStreamDef)
     :type stream_outlinks: iterable
     :returns: iterable - the stream of outlinks to non strategic urls.
     """
     # Resolve indexes
-    url_id_idx = StrategicUrlStreamDef.field_idx('id')
-    strategic_idx = StrategicUrlStreamDef.field_idx('strategic')
+    url_id_idx = CompliantUrlStreamDef.field_idx('id')
+    strategic_idx = CompliantUrlStreamDef.field_idx('strategic')
     dest_url_idx = OutlinksStreamDef.field_idx('dst_url_id')
     src_url_idx = OutlinksStreamDef.field_idx('id')
     link_type_idx = OutlinksStreamDef.field_idx('link_type')

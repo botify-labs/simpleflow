@@ -35,7 +35,7 @@ from cdf.features.main.streams import (
     IdStreamDef,
     InfosStreamDef,
     ZoneStreamDef,
-    StrategicUrlStreamDef
+    CompliantUrlStreamDef
 )
 from cdf.features.main.zones import generate_zone_stream
 
@@ -251,7 +251,7 @@ def compute_compliant_urls(crawl_id, s3_uri, part_id,
     )
 
     stream = generate_compliant_stream(infos_stream, outlinks_stream)
-    StrategicUrlStreamDef.persist(
+    CompliantUrlStreamDef.persist(
         stream=stream,
         uri=s3_uri,
         part_id=part_id

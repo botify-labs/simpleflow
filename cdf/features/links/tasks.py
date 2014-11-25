@@ -19,7 +19,7 @@ from cdf.features.links.bad_links import (
 )
 from cdf.features.main.streams import (
     InfosStreamDef,
-    StrategicUrlStreamDef,
+    CompliantUrlStreamDef,
     IdStreamDef
 )
 from cdf.features.links.streams import (
@@ -145,7 +145,7 @@ def make_links_to_non_strategic_file(s3_uri,
     }
 
     generator = get_links_to_non_strategic_urls(
-        StrategicUrlStreamDef.load(**stream_kwargs),
+        CompliantUrlStreamDef.load(**stream_kwargs),
         OutlinksStreamDef.load(**stream_kwargs)
     )
 
