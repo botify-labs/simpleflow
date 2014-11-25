@@ -87,7 +87,7 @@ class TestCompliantUrlDetection(unittest.TestCase):
         ]
         result = is_compliant_url(
             self.url_id,
-            16,
+            self.compliant_mask,
             self.compliant_http_code,
             self.compliant_content_type,
             outlinks
@@ -121,7 +121,7 @@ class TestCompliantUrlDetection(unittest.TestCase):
 
         result = is_compliant_url(
             self.url_id,
-            32,
+            self.compliant_mask,
             self.compliant_http_code,
             self.compliant_content_type,
             outlinks
