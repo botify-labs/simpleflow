@@ -351,7 +351,7 @@ class CompliantUrlStreamDef(StreamDefBase):
     FILE = 'strategic_urls'
     HEADERS = (
         ('id', int),  # url_id
-        ('strategic', cast_bool),  # is this url SEO compliant
+        ('compliant', cast_bool),  # is this url SEO compliant
         ('reason', int)  # why this url is NOT SEO compliant
     )
     URL_DOCUMENT_DEFAULT_GROUP = "main"

@@ -48,7 +48,7 @@ def get_links_to_non_compliant_urls(stream_compliant, stream_outlinks):
     """
     # Resolve indexes
     url_id_idx = CompliantUrlStreamDef.field_idx('id')
-    compliant_idx = CompliantUrlStreamDef.field_idx('strategic')
+    compliant_idx = CompliantUrlStreamDef.field_idx('compliant')
     dest_url_idx = OutlinksStreamDef.field_idx('dst_url_id')
     src_url_idx = OutlinksStreamDef.field_idx('id')
     link_type_idx = OutlinksStreamDef.field_idx('link_type')

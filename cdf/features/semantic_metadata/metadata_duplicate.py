@@ -189,7 +189,7 @@ def filter_non_compliant_urls(stream_contents,
         contents=(stream_contents, 0)
     )
     #actual filtering
-    compliant_idx = CompliantUrlStreamDef.field_idx("strategic")
+    compliant_idx = CompliantUrlStreamDef.field_idx("compliant")
     grouped_stream = ifilter(
         lambda x: x[1][compliant_idx],
         grouped_stream
