@@ -13,3 +13,6 @@ DOCS_NAME_PATTERN = 'url_documents.json.{}.gz'
 
 COMPARISON_DOCS_DIRPATH = os.path.join(DOCS_DIRPATH, COMPARISON_PATH)
 COMPARISON_DOCS_NAME_PATTERN = MATCHED_FILE_PATTERN
+
+# acceptable push/index error rate limit
+ERROR_RATE_LIMIT = 0.03
