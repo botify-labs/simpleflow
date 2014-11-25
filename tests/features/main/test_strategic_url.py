@@ -7,11 +7,11 @@ from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.base import Stream
 from cdf.features.links.streams import OutlinksStreamDef
 from cdf.features.main.strategic_url import (
-    generate_strategic_stream,
-    is_strategic_url,
+    generate_compliant_stream,
+    is_compliant_url,
 )
 from cdf.features.main.tasks import (
-    compute_strategic_urls
+    compute_compliant_urls
 )
 from cdf.features.main.streams import (
     StrategicUrlStreamDef,
@@ -20,21 +20,21 @@ from cdf.features.main.streams import (
 from cdf.features.main.reasons import *
 
 
-class TestStrategicUrlDetection(unittest.TestCase):
+class TestCompliantUrlDetection(unittest.TestCase):
     def setUp(self):
         self.url_id = 1
-        self.strategic_http_code = 200
-        self.strategic_content_type = 'text/html'
-        self.strategic_mask = 0
+        self.compliant_http_code = 200
+        self.compliant_content_type = 'text/html'
+        self.compliant_mask = 0
         self.strategic_outlinks = []
 
     def test_noindex(self):
         noindex_mask = 4
-        result = is_strategic_url(
+        result = is_compliant_url(
             self.url_id,
             noindex_mask,
-            self.strategic_http_code,
-            self.strategic_content_type,
+            self.compliant_http_code,
+            self.compliant_content_type,
             self.strategic_outlinks
         )
         expected = (False, REASON_NOINDEX.code)
@@ -42,11 +42,11 @@ class TestStrategicUrlDetection(unittest.TestCase):
 
     def test_http_code(self):
         bad_http_code = 301
-        result = is_strategic_url(
+        result = is_compliant_url(
             self.url_id,
-            self.strategic_mask,
+            self.compliant_mask,
             bad_http_code,
-            self.strategic_content_type,
+            self.compliant_content_type,
             self.strategic_outlinks
         )
         expected = (False, REASON_HTTP_CODE.code)
@@ -54,10 +54,10 @@ class TestStrategicUrlDetection(unittest.TestCase):
 
     def test_content_type(self):
         bad_content_type = 'hey/yo'
-        result = is_strategic_url(
+        result = is_compliant_url(
             self.url_id,
-            self.strategic_mask,
-            self.strategic_http_code,
+            self.compliant_mask,
+            self.compliant_http_code,
             bad_content_type,
             self.strategic_outlinks
         )
@@ -65,15 +65,16 @@ class TestStrategicUrlDetection(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_no_canonical(self):
-        # no canonical -> strategic
+        # no canonical -> compliant
         outlinks = [
             [1, 'a', None, 4, '']
         ]
-        result = is_strategic_url(
+
+        result = is_compliant_url(
             self.url_id,
-            self.strategic_mask,
-            self.strategic_http_code,
-            self.strategic_content_type,
+            self.compliant_mask,
+            self.compliant_http_code,
+            self.compliant_content_type,
             outlinks
         )
         expected = (True, 0)
@@ -84,26 +85,26 @@ class TestStrategicUrlDetection(unittest.TestCase):
         outlinks = [
             [1, 'canonical', None, 1, '']
         ]
-        result = is_strategic_url(
+        result = is_compliant_url(
             self.url_id,
-            self.strategic_mask,
-            self.strategic_http_code,
-            self.strategic_content_type,
+            16,
+            self.compliant_http_code,
+            self.compliant_content_type,
             outlinks
         )
         expected = (True, 0)
         self.assertEqual(result, expected)
 
     def test_canonical(self):
-        # has canonical to other page -> non-strategic
+        # has canonical to other page -> non-compliant
         outlinks = [
             [1, 'canonical', None, 4, '']
         ]
-        result = is_strategic_url(
+        result = is_compliant_url(
             self.url_id,
-            self.strategic_mask,
-            self.strategic_http_code,
-            self.strategic_content_type,
+            self.compliant_mask,
+            self.compliant_http_code,
+            self.compliant_content_type,
             outlinks
         )
         expected = (False, REASON_CANONICAL.code)
@@ -117,11 +118,12 @@ class TestStrategicUrlDetection(unittest.TestCase):
             [1, 'canonical', None, 4, ''],
             [1, 'canonical', None, 1, '']  # self canonical
         ]
-        result = is_strategic_url(
+
+        result = is_compliant_url(
             self.url_id,
-            self.strategic_mask,
-            self.strategic_http_code,
-            self.strategic_content_type,
+            32,
+            self.compliant_http_code,
+            self.compliant_content_type,
             outlinks
         )
         expected = (False, REASON_CANONICAL.code)
@@ -132,11 +134,11 @@ class TestStrategicUrlDetection(unittest.TestCase):
             [1, 'canonical', None, 4, '']
         ]
         noindex_mask = 4
-        result = is_strategic_url(
+        result = is_compliant_url(
             self.url_id,
             noindex_mask,
-            self.strategic_http_code,
-            self.strategic_content_type,
+            self.compliant_http_code,
+            self.compliant_content_type,
             outlinks
         )
         expected_mask = encode_reason_mask(REASON_CANONICAL, REASON_NOINDEX)
@@ -145,11 +147,11 @@ class TestStrategicUrlDetection(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_harness(self):
-        result = is_strategic_url(
+        result = is_compliant_url(
             self.url_id,
-            self.strategic_mask,
-            self.strategic_http_code,
-            self.strategic_content_type,
+            self.compliant_mask,
+            self.compliant_http_code,
+            self.compliant_content_type,
             self.strategic_outlinks
         )
         expected = (True, 0)
@@ -200,10 +202,10 @@ class TestNonStrategyReason(unittest.TestCase):
         self.assertItemsEqual(reasons, [TEST_REASON_B, TEST_REASON_A])
 
 
-class TestStrategicUrlStream(unittest.TestCase):
+class TestCompliantUrlStream(unittest.TestCase):
     def setUp(self):
         self.infos_stream = [
-            # strategic
+            # compliant
             [1, 0, 'text/html', None, None, 200] + [None] * 4,
             # bad content type
             [2, 0, 'yo/yo', None, None, 200] + [None] * 4,
@@ -216,7 +218,7 @@ class TestStrategicUrlStream(unittest.TestCase):
         ]
 
     def test_harness(self):
-        result = list(generate_strategic_stream(
+        result = list(generate_compliant_stream(
             iter(self.infos_stream),
             iter(self.outlinks_stream))
         )
@@ -229,11 +231,11 @@ class TestStrategicUrlStream(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-class TestStrategicUrlTask(unittest.TestCase):
+class TestCompliantUrlTask(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
         self.infos_stream = [
-            # strategic
+            # compliant
             [1, 0, 'text/html', 0, 0, 200, 0, 0, 0, 'en'],
             # bad content type
             [2, 0, 'yo/yo', 0, 0, 200, 0, 0, 0, 'en'],
@@ -262,7 +264,7 @@ class TestStrategicUrlTask(unittest.TestCase):
             self.outlinks_stream, s3_uri, part_id)
 
         # launch task
-        compute_strategic_urls(123, s3_uri,
+        compute_compliant_urls(123, s3_uri,
                                part_id, tmp_dir=self.tmp_dir)
 
         expected = [
