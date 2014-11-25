@@ -114,13 +114,13 @@ def get_strategic_urls_insights():
     return [
         Insight(
             "strategic_1",
-            "Strategic Urls",
+            "Compliant Urls",
             PositiveTrend.UP,
             EqFilter("strategic.is_strategic", True)
         ),
         Insight(
             "strategic_0",
-            "Not Strategic URLs",
+            "Not Compliant URLs",
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", False)
         )
@@ -225,7 +225,7 @@ def get_strategic_urls_speed_insights():
     return [
         Insight(
             "speed_fast_strategic",
-            "Fast Strategic URLs (<500 ms)",
+            "Fast Compliant URLs (<500 ms)",
             PositiveTrend.UP,
             AndFilter(
                 [
@@ -238,7 +238,7 @@ def get_strategic_urls_speed_insights():
         ),
         Insight(
             "speed_medium_strategic",
-            "Medium Strategic URLs (500 ms < 1 s)",
+            "Medium Compliant URLs (500 ms < 1 s)",
             PositiveTrend.DOWN,
             AndFilter(
                 [
@@ -251,7 +251,7 @@ def get_strategic_urls_speed_insights():
         ),
         Insight(
             "speed_slow_strategic",
-            "Slow Strategic URLs (1 s < 2 s)",
+            "Slow Compliant URLs (1 s < 2 s)",
             PositiveTrend.DOWN,
             AndFilter(
                 [
@@ -264,7 +264,7 @@ def get_strategic_urls_speed_insights():
         ),
         Insight(
             "speed_slowest_strategic",
-            "Slowest Strategic URLs (>2 s)",
+            "Slowest Compliant URLs (>2 s)",
             PositiveTrend.DOWN,
             AndFilter(
                 [
@@ -313,7 +313,7 @@ def get_average_speed_insights():
         ),
         Insight(
             "speed_strategic_avg",
-            "Average Load Time on Strategic URLs (in ms)",
+            "Average Load Time on Compliant URLs (in ms)",
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
             sort_by=sort_by,
@@ -340,7 +340,7 @@ def get_average_depth_insights():
         ),
         Insight(
             "depth_strategic_avg",
-            "Average Depth on Strategic URLs",
+            "Average Depth on Compliant URLs",
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),

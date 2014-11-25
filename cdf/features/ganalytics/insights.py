@@ -66,7 +66,7 @@ def get_ganalytics_main_metric_insights(medium, source):
         ),
         Insight(
             "{}_visits_ko_strategic_1_follow_inlink".format(name_prefix),
-            "Strategic Not Active URLs with 1 Follow Inlink",
+            "Compliant Not Active URLs with 1 Follow Inlink",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(visit_field, 0),
@@ -110,7 +110,7 @@ def get_strategic_active_insights(medium, source):
     return [
         Insight(
             "{}_visits_strategic".format(name_prefix),
-            "Strategic Active URLs",
+            "Compliant Active URLs",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 GtFilter(visit_field, 0),
@@ -121,7 +121,7 @@ def get_strategic_active_insights(medium, source):
         ),
         Insight(
             "{}_visits_not_strategic".format(name_prefix),
-            "Not Strategic Active URLs",
+            "Not Compliant Active URLs",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 GtFilter(visit_field, 0),
@@ -132,7 +132,7 @@ def get_strategic_active_insights(medium, source):
         ),
         Insight(
             "{}_visits_ko_strategic".format(name_prefix),
-            "Strategic Not Active URLs",
+            "Compliant Not Active URLs",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(visit_field, 0),
@@ -141,7 +141,7 @@ def get_strategic_active_insights(medium, source):
         ),
         Insight(
             "{}_visits_ko_not_strategic".format(name_prefix),
-            "Not Strategic Not Active URLs",
+            "Not Compliant Not Active URLs",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(visit_field, 0),
@@ -168,7 +168,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
     return [
         Insight(
             "{}_visits_strategic_1".format(name_prefix),
-            "Strategic Active URLs with 1 Visit",
+            "Compliant Active URLs with 1 Visit",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(strategic_field, True),
@@ -179,7 +179,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
         ),
         Insight(
             "{}_visits_strategic_2_5".format(name_prefix),
-            "Strategic Active URLs with 2 to 5 Visits",
+            "Compliant Active URLs with 2 to 5 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(strategic_field, True),
@@ -190,7 +190,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
         ),
         Insight(
             "{}_visits_strategic_6_10".format(name_prefix),
-            "Strategic Active URLs with 6 to 10 Visits",
+            "Compliant Active URLs with 6 to 10 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(strategic_field, True),
@@ -201,7 +201,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
         ),
         Insight(
             "{}_visits_strategic_11_100".format(name_prefix),
-            "Strategic Active URLs with 11 to 100 Visits",
+            "Compliant Active URLs with 11 to 100 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(strategic_field, True),
@@ -212,7 +212,7 @@ def get_strategic_visit_nb_range_insights(medium, source):
         ),
         Insight(
             "{}_visits_strategic_gt_100".format(name_prefix),
-            "Strategic Active URLs with +100 Visits",
+            "Compliant Active URLs with +100 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
                 EqFilter(strategic_field, True),
