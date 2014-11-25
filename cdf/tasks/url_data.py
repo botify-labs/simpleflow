@@ -69,13 +69,36 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
                            ELASTICSEARCH_BACKEND.mapping())
 
 
-def _bulk(es, docs, es_index, es_doc_type):
-    oks, errs = bulk(es, docs, stats_only=True, doc_type=es_doc_type, index=es_index)
-    if oks == 0:
-        raise Exception('All bulk ops have failed, stopping pushing ...')
-    logger.info('Bulk of {} elements finished with {} successes and {}'
-                ' fails, continue  ...'.format(len(docs), oks, errs))
-    return oks, errs
+def push_document_stream(doc_stream, es, es_index, es_doc_type):
+    """Push a document stream to ElasticSearch
+
+    :param doc_stream: decoded document stream
+    :type  doc_stream: iterator
+    :param es: ES client
+    :type  es: ElasticSearch
+    :param es_index: ES index name
+    :type  es_index: str
+    :param es_doc_type: ES doc_type
+    :type  es_doc_type: str
+    :raises Exception: if push error rate is above limit
+    """
+    oks = 0
+    errs = 0
+    for docs in chunk(doc_stream, 3000):
+        o, e = bulk(es, docs, stats_only=True,
+                    doc_type=es_doc_type, index=es_index)
+        logger.info('Pushed bulk of {} elements finished with '
+                    '{} successes and {} fails, '
+                    'continue  ...'.format(len(docs), oks, errs))
+        oks += o
+        errs += e
+
+    # check push error rate
+    all = oks + errs
+    error_rate = float(errs) / all if all > 0 else 0
+    if error_rate > ERROR_RATE_LIMIT:
+        raise Exception('Push error rate exceeds '
+                        'limit: {}'.format(error_rate))
 
 
 @with_temporary_dir
@@ -107,22 +130,9 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
                                 force_fetch=force_fetch)
 
     reader = itertools.chain(*[gzip.open(f[0], 'r') for f in files_fetched])
-    stream = itertools.imap(lambda x: json.loads(x), reader)
+    stream = itertools.imap(json.loads, reader)
 
-    oks = 0
-    errs = 0
-    for docs in chunk(stream, 3000):
-        # logger.info('{} items pushed to ES index {}'.format(i, es_index))
-        o, e = _bulk(es, docs, es_doc_type=es_doc_type, es_index=es_index)
-        oks += o
-        errs += e
-
-    # check push error rate
-    all = oks + errs
-    error_rate = float(errs) / all if all > 0 else 0
-    if error_rate > ERROR_RATE_LIMIT:
-        raise Exception('Push error rate exceeds '
-                        'limit: {}'.format(error_rate))
+    push_document_stream(stream, es, es_index, es_doc_type)
 
 
 @with_temporary_dir
