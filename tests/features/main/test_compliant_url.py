@@ -26,7 +26,7 @@ class TestCompliantUrlDetection(unittest.TestCase):
         self.compliant_http_code = 200
         self.compliant_content_type = 'text/html'
         self.compliant_mask = 0
-        self.strategic_outlinks = []
+        self.compliant_outlinks = []
 
     def test_noindex(self):
         noindex_mask = 4
@@ -35,7 +35,7 @@ class TestCompliantUrlDetection(unittest.TestCase):
             noindex_mask,
             self.compliant_http_code,
             self.compliant_content_type,
-            self.strategic_outlinks
+            self.compliant_outlinks
         )
         expected = (False, REASON_NOINDEX.code)
         self.assertEqual(result, expected)
@@ -47,7 +47,7 @@ class TestCompliantUrlDetection(unittest.TestCase):
             self.compliant_mask,
             bad_http_code,
             self.compliant_content_type,
-            self.strategic_outlinks
+            self.compliant_outlinks
         )
         expected = (False, REASON_HTTP_CODE.code)
         self.assertEqual(result, expected)
@@ -59,7 +59,7 @@ class TestCompliantUrlDetection(unittest.TestCase):
             self.compliant_mask,
             self.compliant_http_code,
             bad_content_type,
-            self.strategic_outlinks
+            self.compliant_outlinks
         )
         expected = (False, REASON_CONTENT_TYPE.code)
         self.assertEqual(result, expected)
@@ -81,7 +81,7 @@ class TestCompliantUrlDetection(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_self_canonical(self):
-        # self canonical -> strategic
+        # self canonical -> compliant
         outlinks = [
             [1, 'canonical', None, 1, '']
         ]
@@ -113,7 +113,7 @@ class TestCompliantUrlDetection(unittest.TestCase):
     def test_first_canonical(self):
         # only take the first canonical into account
         # so even if we have a self-canonical, this url
-        # is still non strategic
+        # is still non compliant
         outlinks = [
             [1, 'canonical', None, 4, ''],
             [1, 'canonical', None, 1, '']  # self canonical
@@ -152,7 +152,7 @@ class TestCompliantUrlDetection(unittest.TestCase):
             self.compliant_mask,
             self.compliant_http_code,
             self.compliant_content_type,
-            self.strategic_outlinks
+            self.compliant_outlinks
         )
         expected = (True, 0)
         self.assertEqual(result, expected)
