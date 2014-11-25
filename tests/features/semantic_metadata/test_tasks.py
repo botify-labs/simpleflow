@@ -196,13 +196,13 @@ class TestMakeContextAwareMetadataDuplicatesFile(unittest.TestCase):
             part_size=part_size
         )
 
-        strategic_urls = iter([
+        compliant_urls = iter([
             (1, True, 0),
             (2, False, 0),
             (3, True, 0)
         ])
         CompliantUrlStreamDef.persist(
-            iter(strategic_urls),
+            iter(compliant_urls),
             self.s3_uri,
             first_part_size=first_part_size,
             part_size=part_size

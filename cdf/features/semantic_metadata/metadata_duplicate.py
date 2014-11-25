@@ -173,25 +173,25 @@ def get_duplicate_metadata(stream_contents):
     return stream_duplicates
 
 
-def filter_non_strategic_urls(stream_contents,
-                              stream_strategic_urls):
-    """Remove non strategic urls from a contents stream.
+def filter_non_compliant_urls(stream_contents,
+                              stream_compliant_urls):
+    """Remove non compliant urls from a contents stream.
     :param stream_contents: the input contents stream.
                             (based on ContentsStreamDef)
     :type stream_contents: iterator
-    :param stream_strategic_urls: the input strategic_url stream
+    :param stream_compliant_urls: the input compliant_url stream
                                   (based on CompliantUrlStreamDef)
-    :type stream_strategic_urls: iterator
+    :type stream_compliant_urls: iterator
     :returns: iterator
     """
     grouped_stream = group_left(
-        (stream_strategic_urls, 0),
+        (stream_compliant_urls, 0),
         contents=(stream_contents, 0)
     )
     #actual filtering
-    strategic_idx = CompliantUrlStreamDef.field_idx("strategic")
+    compliant_idx = CompliantUrlStreamDef.field_idx("strategic")
     grouped_stream = ifilter(
-        lambda x: x[1][strategic_idx],
+        lambda x: x[1][compliant_idx],
         grouped_stream
     )
     grouped_stream = imap(lambda x: x[2]["contents"], grouped_stream)
@@ -222,11 +222,11 @@ def append_zone(stream_contents, stream_zones):
 
 def get_context_aware_duplicate_metadata(stream_contents,
                                       stream_zones,
-                                      stream_strategic_urls):
+                                      stream_compliant_urls):
     """
     Return a tuple of urls having a duplicate metadata (the first one found for each page).
     The difference with get_duplicate_metadata() is that:
-    - it consider only strategic urls
+    - it consider only compliant urls
     - two contents from different zones are always considered as different
     The 1st index is the url_id concerned
     The 2nd index is the content type (h1, title, description)
@@ -241,9 +241,9 @@ def get_context_aware_duplicate_metadata(stream_contents,
     #stream preprocessing
     stream_contents = preprocess_duplicate_computation(stream_contents)
 
-    #remove non strategic urls
-    stream_contents = filter_non_strategic_urls(stream_contents,
-                                                stream_strategic_urls)
+    #remove non compliant urls
+    stream_contents = filter_non_compliant_urls(stream_contents,
+                                                stream_compliant_urls)
 
     stream_contents = append_zone(stream_contents, stream_zones)
     #actual duplicate computation
