@@ -13,7 +13,7 @@ from autotagging.visualization.textual import (save_mixed_clusters,
                                                save_url_suggested_clusters,
                                                save_child_relationship)
 from cdf.features.links.streams import OutlinksStreamDef
-from cdf.features.main.strategic_url import generate_compliant_stream
+from cdf.features.main.compliant_url import generate_compliant_stream
 
 from cdf.utils.path import makedirs
 from cdf.utils.remote_files import enumerate_partitions

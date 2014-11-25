@@ -6,7 +6,7 @@ import boto
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.base import Stream
 from cdf.features.links.streams import OutlinksStreamDef
-from cdf.features.main.strategic_url import (
+from cdf.features.main.compliant_url import (
     generate_compliant_stream,
     is_compliant_url,
 )
