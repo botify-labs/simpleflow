@@ -31,8 +31,7 @@ from cdf.features.links.tasks import (
     make_top_domains_files as compute_top_domains,
     make_links_to_non_compliant_file,
     make_links_to_non_compliant_counter_file,
-    make_inlinks_percentiles_file,
-    make_prev_next_file
+    make_inlinks_percentiles_file
 )
 
 from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
