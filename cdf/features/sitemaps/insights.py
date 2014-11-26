@@ -25,7 +25,7 @@ def get_main_sitemap_insights():
         #TODO handle sitemaps_urls_only_sitemaps
         Insight(
             "sitemaps_urls_only_structure",
-            "URLs only in Structure",
+            "URLs not in Sitemaps",
             PositiveTrend.DOWN,
             EqFilter("sitemaps.present", False)
         )
