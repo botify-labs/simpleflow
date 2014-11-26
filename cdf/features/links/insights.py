@@ -26,8 +26,8 @@ def get_average_inlinks_insights():
             "Average Inlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation(unique_inlink_nb),
-            sort_by=DescendingSort(unique_inlink_nb),
             additional_fields=[follow_unique_inlink_nb],
+            sort_by=DescendingSort(unique_inlink_nb),
             type=FLOAT_TYPE,
             unit=RENDERING.LINK
         ),
@@ -36,6 +36,7 @@ def get_average_inlinks_insights():
             "Average Follow Inlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation(follow_unique_inlink_nb),
+            additional_fields=[follow_unique_inlink_nb],
             sort_by=DescendingSort(follow_unique_inlink_nb),
             type=FLOAT_TYPE,
             unit=RENDERING.LINK
