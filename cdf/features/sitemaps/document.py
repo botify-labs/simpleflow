@@ -300,6 +300,8 @@ class UrlValidator(object):
         :type url: str
         :returns: bool
         """
+        if url is None:
+            return False
         if len(url) > cls.MAXIMUM_LENGTH:
             return False
         if cls.validation_regex.match(url) is None:
