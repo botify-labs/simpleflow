@@ -286,7 +286,8 @@ def _compute_top_domains(external_outlinks, n, key):
         stream_cache.cache(link_group)
         domain_stats = compute_domain_link_counts((domain, stream_cache.get_stream()))
         nb_unique_follow_links = domain_stats.follow_unique
-        if nb_unique_follow_links == 0:
+        nb_unique_nofollow_links = domain_stats.nofollow_unique
+        if nb_unique_follow_links + nb_unique_nofollow_links == 0:
             #we don't want to return domain with 0 occurrences.
             continue
 
