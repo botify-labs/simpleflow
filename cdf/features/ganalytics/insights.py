@@ -39,6 +39,7 @@ def get_ganalytics_main_metric_insights(medium, source):
     name_prefix = "{}_{}".format(medium, source)
     visit_field = "visits.{}.{}.nb".format(medium, source)
     unique_inlinks_nb_field = "inlinks_internal.nb.unique"
+    unique_follow_inlinks_nb_field = "inlinks_internal.nb.follow.unique"
     return [
         Insight(
             "{}_visits_nb_avg".format(name_prefix),
@@ -53,7 +54,7 @@ def get_ganalytics_main_metric_insights(medium, source):
         ),
         Insight(
             "{}_visits_inlinks_avg".format(name_prefix),
-            "Average Follow Inlinks by Active URL",
+            "Average Inlinks by Active URL",
             PositiveTrend.UNKNOWN,
             GtFilter(visit_field, 0),
             metric_agg=AvgAggregation(
@@ -61,6 +62,19 @@ def get_ganalytics_main_metric_insights(medium, source):
             ),
             sort_by=DescendingSort(unique_inlinks_nb_field),
             additional_fields=[unique_inlinks_nb_field],
+            type=FLOAT_TYPE,
+            unit=RENDERING.LINK
+        ),
+        Insight(
+            "{}_visits_follow_inlinks_avg".format(name_prefix),
+            "Average Follow Inlinks by Active URL",
+            PositiveTrend.UNKNOWN,
+            GtFilter(visit_field, 0),
+            metric_agg=AvgAggregation(
+                unique_follow_inlinks_nb_field
+            ),
+            sort_by=DescendingSort(unique_follow_inlinks_nb_field),
+            additional_fields=[unique_follow_inlinks_nb_field],
             type=FLOAT_TYPE,
             unit=RENDERING.LINK
         ),
