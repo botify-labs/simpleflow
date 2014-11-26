@@ -912,6 +912,7 @@ class BadLinksStreamDef(StreamDefBase):
     HEADERS = (
         ('id', int),
         ('dst_url_id', int),
+        ('follow', _raw_to_bool),
         ('http_code', int)
     )
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name

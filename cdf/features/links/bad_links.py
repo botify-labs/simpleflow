@@ -1,4 +1,3 @@
-from collections import Counter
 from itertools import groupby
 
 from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
@@ -10,8 +9,9 @@ from cdf.features.links.streams import (
 
 
 def get_bad_links(stream_infos, stream_outlinks):
-    """
-    (url_src_id, url_dest_id, error_http_code)
+    """Detects bad links
+
+    Result stream is based on BadLinksStreamDef
     """
     # Resolve indexes
     http_code_idx = InfosStreamDef.field_idx('http_code')
@@ -19,6 +19,7 @@ def get_bad_links(stream_infos, stream_outlinks):
     dest_url_idx = OutlinksStreamDef.field_idx('dst_url_id')
     src_url_idx = OutlinksStreamDef.field_idx('id')
     link_type_idx = OutlinksStreamDef.field_idx('link_type')
+    follow_idx = OutlinksStreamDef.field_idx('follow')
 
     # Find all bad code pages
     # (url_id -> error_http_code)
@@ -33,8 +34,10 @@ def get_bad_links(stream_infos, stream_outlinks):
     for outlink in stream_outlinks:
         dest = outlink[dest_url_idx]
         link_type = outlink[link_type_idx]
+        is_follow = 'follow' in outlink[follow_idx]
         if link_type == 'a' and dest in bad_code:
-            yield (outlink[src_url_idx], dest, bad_code[dest])
+            yield (outlink[src_url_idx], dest,
+                   1 if is_follow else 0, bad_code[dest])
 
 
 def get_links_to_non_compliant_urls(stream_compliant, stream_outlinks):
@@ -72,24 +75,25 @@ def get_links_to_non_compliant_urls(stream_compliant, stream_outlinks):
 
 
 def get_bad_link_counters(stream_bad_links):
-    """
-    A counter of (url_src_id, error_http_code, count)
-    Sorted on `url_src_id`
+    """Count bad links by url_id and http_code
+
+    Result stream is based on BadLinksCountersStreamDef
     """
     # Resolve indexes
     src_url_idx = BadLinksStreamDef.field_idx('id')
-    http_code_idx = BadLinksStreamDef.field_idx('http_code')
 
     # Group by source url_id
-    for src_url_id, g in groupby(stream_bad_links, lambda x: x[src_url_idx]):
-        links = list(g)
-        cnt = Counter()
+    for src_url_id, group in groupby(
+            stream_bad_links, lambda x: x[src_url_idx]):
+        links = sorted([
+            (code, dest) for (_, dest, follow, code) in group
+            if follow
+        ])
 
-        for link in links:
-            cnt[link[http_code_idx]] += 1
-
-        for http_code in cnt:
-            yield (src_url_id, http_code, cnt[http_code])
+        # group by http_code
+        for code, code_group in groupby(links, lambda x: x[0]):
+            dests = set(dest for _, dest in code_group)
+            yield (src_url_id, code, len(dests))
 
 
 def get_link_to_non_compliant_urls_counters(stream_non_compliant_links):
