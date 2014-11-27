@@ -1,6 +1,20 @@
 import unittest
-from cdf.features.links.helpers.masks import build_nofollow_combination_lookup
+from cdf.features.links.helpers.masks import (
+    build_nofollow_combination_lookup, compute_nofollow_combination
+)
 
+class TestComputeNoFollowCombination(unittest.TestCase):
+    def test_nominal_case(self):
+        self.assertEqual(
+            "meta_robots",
+            compute_nofollow_combination(["robots", "meta"], ["robots", "meta"])
+        )
+
+    def test_allowed_masks(self):
+        self.assertEqual(
+            "meta_robots",
+            compute_nofollow_combination(["robots", "meta", "prev"], ["robots", "meta"])
+        )
 
 class TestBuildNofollowCombinationLookup(unittest.TestCase):
     def test_nominal_case(self):

@@ -28,6 +28,19 @@ _PREV_NEXT_MASKS = [
 _PREV_NEXT_MASK_IDS = map(lambda x: x[1], _PREV_NEXT_MASKS)
 
 
+def compute_nofollow_combination(keys, allowed_mask_ids):
+    """Compute a canonical string for a list of nofollow keys.
+    :param keys: the input list of nofollow keys
+    :type keys: list
+    :param allowed_mask_ids: the list of mask ids that can figure
+                             in the nofollow combination
+    :type allowed_mask_ids: list
+    :returns: string
+    """
+    return '_'.join(
+        sorted([k for k in keys if k in allowed_mask_ids])
+    )
+
 def build_nofollow_combination_lookup(mask_ids, allowed_mask_ids):
     """Given a list of mask ids build a lookup table tuple -> nofollow_combination.
     The dict keys are all the possible permutations of mask ids
@@ -50,10 +63,9 @@ def build_nofollow_combination_lookup(mask_ids, allowed_mask_ids):
     result = {}
     for i in range(len(mask_ids) + 1):
         for keys in itertools.permutations(mask_ids, i):
-            nofollow_combination = '_'.join(
-                sorted([k for k in keys if k in allowed_mask_ids])
+            result[tuple(keys)] = compute_nofollow_combination(
+                keys, allowed_mask_ids
             )
-            result[tuple(keys)] = nofollow_combination
     return result
 
 #a lookup table to get the nofollow combination given a list of keys
