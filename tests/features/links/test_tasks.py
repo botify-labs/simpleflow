@@ -90,8 +90,8 @@ class TestBadLinksTask(unittest.TestCase):
 
         result = list(BadLinksStreamDef.load(s3_uri, tmp_dir=self.tmp_dir))
         expected = [
-            [4, 2, 301],
-            [5, 3, 500]
+            [4, 2, 1, 301],
+            [5, 3, 1, 500]
         ]
         self.assertEqual(result, expected)
 
@@ -153,9 +153,9 @@ class TestLinksCounterTask(unittest.TestCase):
 class TestBadLinkCounterTask(unittest.TestCase):
     def setUp(self):
         self.badlinks = [
-            [1, 2, 500],
-            [1, 9, 500],
-            [1, 2, 400],
+            [1, 2, 1, 500],
+            [1, 9, 1, 500],
+            [1, 2, 1, 400],
         ]
         self.tmp_dir = tempfile.mkdtemp()
 

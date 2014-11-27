@@ -14,6 +14,7 @@ Source stream format reminder:
 import unittest
 import logging
 
+from cdf.features.links.bad_links import get_bad_link_counters
 from cdf.log import logger
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.features.links.helpers.masks import list_to_mask
@@ -21,9 +22,8 @@ from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.links.streams import (
     InlinksStreamDef, OutlinksStreamDef,
     BadLinksStreamDef, LinksToNonCompliantStreamDef,
-    InlinksPercentilesStreamDef, LinksToNonCompliantCountersStreamDef
-)
-
+    InlinksPercentilesStreamDef, LinksToNonCompliantCountersStreamDef,
+    BadLinksCountersStreamDef)
 
 logger.setLevel(logging.DEBUG)
 
@@ -207,40 +207,68 @@ class TestOutlinksGeneration(unittest.TestCase):
                           expected_outlinks)
         self.assertEquals(document['outlinks_internal']['urls_exists'], True)
 
-    def test_bad_links(self):
+    def test_inlinks_percentile_id(self):
         patterns = [
             [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
             [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
         ]
 
-        infos = [
-            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
-            [2, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
-        ]
-
-        badlinks = [
-            [1, 5, 500],
-            [1, 100, 302],
-            [1, 101, 302],
-            [1, 102, 302],
-            [1, 103, 402],
-            [2, 100, 402],
-            [2, 101, 402],
-            [2, 102, 402],
-            [2, 103, 402],
-            [2, 104, 402],
-            [2, 105, 402],
-            [2, 106, 402],
-            [2, 107, 402],
-            [2, 108, 402],
-            [2, 109, 402],
-            [2, 110, 402],
+        percentile_id = [
+            [1, 10, 4],
+            [2, 5, 3]
         ]
 
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(patterns)),
-            InfosStreamDef.load_iterator(iter(infos)),
-            BadLinksStreamDef.load_iterator(iter(badlinks))
+            InlinksPercentilesStreamDef.load_iterator(iter(percentile_id))
+        ])
+
+        # check url1
+        document = _next_doc(gen)
+        self.assertEqual(document["inlinks_internal"]["percentile"], 10)
+
+        # check url2
+        document = _next_doc(gen)
+        self.assertEqual(document["inlinks_internal"]["percentile"], 5)
+
+
+class TestBadLinks(unittest.TestCase):
+    def setUp(self):
+        self.ids = [
+            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
+            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
+        ]
+        self.infos = [
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+            [2, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+        ]
+        self.badlinks = [
+            [1, 5, 1, 500],
+            [1, 100, 1, 302],
+            [1, 101, 1, 302],
+            [1, 102, 1, 302],
+            [1, 103, 1, 402],
+            [2, 100, 1, 402],
+            [2, 101, 1, 402],
+            [2, 102, 1, 402],
+            [2, 103, 1, 402],
+            [2, 104, 1, 402],
+            [2, 105, 1, 402],
+            [2, 106, 1, 402],
+            [2, 107, 1, 402],
+            [2, 108, 1, 402],
+            [2, 109, 1, 402],
+            [2, 110, 1, 402],
+        ]
+        self.badlink_counters = get_bad_link_counters(self.badlinks)
+
+    def test_bad_links(self):
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            BadLinksStreamDef.load_iterator(iter(self.badlinks)),
+            BadLinksCountersStreamDef.load_iterator(
+                iter(self.badlink_counters))
         ])
 
         expected_1 = {
@@ -294,6 +322,24 @@ class TestOutlinksGeneration(unittest.TestCase):
         document = _next_doc(gen)
         self.assertDictEqual(document[key], expected_2)
 
+    def test_bad_links_unique(self):
+        self.badlinks = [
+            [1, 5, 1, 302],
+            [1, 5, 1, 302],
+            [1, 5, 1, 302],
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            BadLinksStreamDef.load_iterator(iter(self.badlinks)),
+        ])
+
+        key = 'outlinks_errors'
+        expected = [5]
+        document = _next_doc(gen)
+        self.assertEqual(document[key]['3xx']['urls'], expected)
+
     def test_to_non_compliant_links(self):
         patterns = self.ids[:2]
 
@@ -331,6 +377,24 @@ class TestOutlinksGeneration(unittest.TestCase):
         document = _next_doc(gen)
         self.assertDictEqual(document[key][sub_key], expected_2)
 
+    def test_to_non_compliant_links_unique(self):
+        patterns = self.ids[:2]
+
+        links_to_non_strategic_urls = [
+            [1, 1, 5],
+            [1, 1, 5],
+        ]
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(iter(patterns)),
+            LinksToNonCompliantStreamDef.load_iterator(
+                iter(links_to_non_strategic_urls))
+        ])
+        key = 'outlinks_errors'
+        sub_key = 'non_strategic'
+
+        document = _next_doc(gen)
+        self.assertEqual(document[key][sub_key]['urls'], [5])
+
     def test_non_compliant_link_counter(self):
         patterns = self.ids[:2]
 
@@ -361,30 +425,6 @@ class TestOutlinksGeneration(unittest.TestCase):
         # check url2
         document = _next_doc(gen)
         self.assertDictEqual(document[key][sub_key], expected_2)
-
-    def test_inlinks_percentile_id(self):
-        patterns = [
-            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
-            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
-        ]
-
-        percentile_id = [
-            [1, 10, 4],
-            [2, 5, 3]
-        ]
-
-        gen = UrlDocumentGenerator([
-            IdStreamDef.load_iterator(iter(patterns)),
-            InlinksPercentilesStreamDef.load_iterator(iter(percentile_id))
-        ])
-
-        # check url1
-        document = _next_doc(gen)
-        self.assertEqual(document["inlinks_internal"]["percentile"], 10)
-
-        # check url2
-        document = _next_doc(gen)
-        self.assertEqual(document["inlinks_internal"]["percentile"], 5)
 
 
 class TestRedirects(unittest.TestCase):
