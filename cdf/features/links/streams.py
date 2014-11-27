@@ -16,7 +16,9 @@ from cdf.features.links.helpers.masks import list_to_mask
 from cdf.utils.convert import _raw_to_bool
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.features.links.helpers.predicates import is_link_internal
-from cdf.features.links.helpers.masks import follow_mask, _NOFOLLOW_MASKS
+from cdf.features.links.helpers.masks import (
+    follow_mask, _NOFOLLOW_MASK_IDS
+)
 from cdf.features.links.settings import GROUPS, NB_TOP_ANCHORS
 
 
@@ -24,8 +26,7 @@ __all__ = ["OutlinksRawStreamDef", "OutlinksStreamDef"]
 
 
 def _get_nofollow_combination_key(keys):
-    nofollow_mask_ids = map(lambda x: x[1], _NOFOLLOW_MASKS)
-    return '_'.join(sorted([k for k in keys if k in nofollow_mask_ids]))
+    return '_'.join(sorted([k for k in keys if k in _NOFOLLOW_MASK_IDS]))
 
 
 class OutlinksRawStreamDef(StreamDefBase):

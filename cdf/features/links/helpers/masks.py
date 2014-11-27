@@ -17,6 +17,7 @@ _NOFOLLOW_MASKS = [
     (2, "meta"),
     (1, "link"),
 ]
+_NOFOLLOW_MASK_IDS = map(lambda x: x[1], _NOFOLLOW_MASKS)
 
 _PREV_NEXT_MASKS = [
     (32, "next"),
