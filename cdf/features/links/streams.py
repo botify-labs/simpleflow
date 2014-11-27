@@ -750,7 +750,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
 
     def _process_link(self, document, stream):
         url_dst, link_type, follow_keys, url_src, text_hash, text = stream
-        is_follow = ("follow" in follow_keys)
+        is_follow = "follow" in follow_keys
         mask = list_to_mask(follow_keys)
         inlink_nb = document['inlinks_internal']['nb']
         inlink_nb['total'] += 1
