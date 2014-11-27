@@ -1,10 +1,10 @@
 import unittest
-from cdf.features.links.helpers.masks import get_key_to_nofollow_combination
+from cdf.features.links.helpers.masks import build_nofollow_combination_lookup
 
 
-class TestGetKeyToNofollowCombination(unittest.TestCase):
+class TestBuildNofollowCombinationLookup(unittest.TestCase):
     def test_nominal_case(self):
-        actual_result = get_key_to_nofollow_combination(
+        actual_result = build_nofollow_combination_lookup(
             ["foo", "bar"], ["foo", "bar"]
         )
         expected_result = {
@@ -17,7 +17,7 @@ class TestGetKeyToNofollowCombination(unittest.TestCase):
         self.assertEquals(expected_result, actual_result)
 
     def test_allowed_masks(self):
-        actual_result = get_key_to_nofollow_combination(
+        actual_result = build_nofollow_combination_lookup(
             ["foo", "bar", "baz"],
             ["foo", "bar"]
         )
@@ -42,7 +42,7 @@ class TestGetKeyToNofollowCombination(unittest.TestCase):
         self.assertEquals(expected_result, actual_result)
 
     def test_empty_mask_ids(self):
-        actual_result = get_key_to_nofollow_combination([], [])
+        actual_result = build_nofollow_combination_lookup([], [])
         expected_result = {
             (): ""
         }
