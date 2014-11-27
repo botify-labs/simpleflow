@@ -718,6 +718,8 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "verbose_name": "Receives at least a prev links.",
             "settings": {
                 FIELD_RIGHTS.SELECT,
+                AGG_CATEGORICAL,
+                DIFF_QUALITATIVE
             },
             "enabled": check_enabled("prev_next")
         },
@@ -726,7 +728,9 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "default_value": False,
             "verbose_name": "Receives at least a next links.",
             "settings": {
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                AGG_CATEGORICAL,
+                DIFF_QUALITATIVE
             },
             "enabled": check_enabled("prev_next")
         }
