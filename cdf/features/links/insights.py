@@ -48,6 +48,7 @@ def get_inlinks_sum_insights():
     """Return insights related to inlinks sums.
     :returns: list - list of Insight
     """
+    unique_inlink_nb = "inlinks_internal.nb.unique"
     follow_unique_inlink_nb = "inlinks_internal.nb.follow.unique"
     nofollow_unique_inlink_nb = "inlinks_internal.nb.nofollow.unique"
     return [
@@ -55,7 +56,9 @@ def get_inlinks_sum_insights():
             "inlinks_sum",
             "Total Number of Inlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=SumAggregation("inlinks_internal.nb.unique"),
+            metric_agg=SumAggregation(unique_inlink_nb),
+            additional_fields=[unique_inlink_nb],
+            sort_by=DescendingSort(unique_inlink_nb),
             unit=RENDERING.LINK
         ),
         Insight(
@@ -64,6 +67,7 @@ def get_inlinks_sum_insights():
             PositiveTrend.UNKNOWN,
             metric_agg=SumAggregation(follow_unique_inlink_nb),
             additional_fields=[follow_unique_inlink_nb],
+            sort_by=DescendingSort(follow_unique_inlink_nb),
             unit=RENDERING.LINK
         ),
         Insight(
