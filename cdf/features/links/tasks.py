@@ -25,6 +25,7 @@ from cdf.features.main.streams import (
 from cdf.features.links.streams import (
     OutlinksRawStreamDef, OutlinksStreamDef,
     InlinksRawStreamDef,
+    InlinksStreamDef,
     InlinksCountersStreamDef,
     BadLinksStreamDef,
     BadLinksCountersStreamDef,

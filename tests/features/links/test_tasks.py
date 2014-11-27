@@ -18,10 +18,12 @@ from cdf.features.links.streams import (
     OutredirectCountersStreamDef,
     LinksToNonCompliantStreamDef,
     LinksToNonCompliantCountersStreamDef,
+    InlinksStreamDef,
     InlinksCountersStreamDef,
     InlinksPercentilesStreamDef,
     InredirectCountersStreamDef
 )
+from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
 from cdf.features.links.tasks import (
     make_bad_link_file as compute_bad_link,
     make_links_counter_file as compute_link_counter,
@@ -31,7 +33,7 @@ from cdf.features.links.tasks import (
     make_links_to_non_compliant_counter_file,
     make_inlinks_percentiles_file
 )
-from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
+
 from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
 from cdf.utils.s3 import list_files
 

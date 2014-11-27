@@ -16,7 +16,9 @@ from cdf.features.links.helpers.masks import list_to_mask
 from cdf.utils.convert import _raw_to_bool
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.features.links.helpers.predicates import is_link_internal
-from cdf.features.links.helpers.masks import follow_mask
+from cdf.features.links.helpers.masks import (
+    follow_mask, KEY_TO_NOFOLLOW_COMBINATION
+)
 from cdf.features.links.settings import GROUPS, NB_TOP_ANCHORS
 
 
@@ -24,7 +26,7 @@ __all__ = ["OutlinksRawStreamDef", "OutlinksStreamDef"]
 
 
 def _get_nofollow_combination_key(keys):
-    return '_'.join(sorted(keys))
+    return KEY_TO_NOFOLLOW_COMBINATION[tuple(keys)]
 
 
 class OutlinksRawStreamDef(StreamDefBase):
@@ -435,7 +437,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         url_src, link_type, follow_keys, url_dst, external_url = stream
         # is_internal = url_dst > 0
         is_internal = is_link_internal(follow_keys, url_dst)
-        is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
+        is_follow = ("follow" in follow_keys)
         outlink_type = "outlinks_internal" if is_internal else "outlinks_external"
         mask = list_to_mask(follow_keys)
 
@@ -709,6 +711,24 @@ class InlinksStreamDef(InlinksRawStreamDef):
                 FIELD_RIGHTS.FILTERS
             },
             "enabled": check_enabled("top_anchors")
+        },
+        "inlinks_internal.receives_prev": {
+            "type": BOOLEAN_TYPE,
+            "default_value": False,
+            "verbose_name": "Receives at least a prev links.",
+            "settings": {
+                FIELD_RIGHTS.SELECT,
+            },
+            "enabled": check_enabled("prev_next")
+        },
+        "inlinks_internal.receives_next": {
+            "type": BOOLEAN_TYPE,
+            "default_value": False,
+            "verbose_name": "Receives at least a next links.",
+            "settings": {
+                FIELD_RIGHTS.SELECT
+            },
+            "enabled": check_enabled("prev_next")
         }
     }
 
@@ -730,7 +750,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
 
     def _process_link(self, document, stream):
         url_dst, link_type, follow_keys, url_src, text_hash, text = stream
-        is_follow = len(follow_keys) == 1 and follow_keys[0] == "follow"
+        is_follow = "follow" in follow_keys
         mask = list_to_mask(follow_keys)
         inlink_nb = document['inlinks_internal']['nb']
         inlink_nb['total'] += 1
@@ -766,6 +786,15 @@ class InlinksStreamDef(InlinksRawStreamDef):
         document['processed_inlink_link'].add((url_src, is_follow))
 
         document['inlinks_internal']['urls_exists'] = True
+
+        self._process_prev_next(document, follow_keys)
+
+    def _process_prev_next(self, document, follow_keys):
+        if "follow" in follow_keys:
+            if "prev" in follow_keys:
+                document["inlinks_internal"]["receives_prev"] = True
+            if "next" in follow_keys:
+                document["inlinks_internal"]["receives_next"] = True
 
     def _process_redirection(self, document, stream):
         url_dst, link_type, follow_keys, url_src, text_hash, text = stream
