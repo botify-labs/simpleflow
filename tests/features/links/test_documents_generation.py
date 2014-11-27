@@ -322,7 +322,7 @@ class TestBadLinks(unittest.TestCase):
         document = _next_doc(gen)
         self.assertDictEqual(document[key], expected_2)
 
-    def test_duplicate_links(self):
+    def test_bad_links_unique(self):
         self.badlinks = [
             [1, 5, 1, 302],
             [1, 5, 1, 302],
@@ -376,6 +376,24 @@ class TestBadLinks(unittest.TestCase):
         # check url2
         document = _next_doc(gen)
         self.assertDictEqual(document[key][sub_key], expected_2)
+
+    def test_to_non_compliant_links_unique(self):
+        patterns = self.ids[:2]
+
+        links_to_non_strategic_urls = [
+            [1, 1, 5],
+            [1, 1, 5],
+        ]
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(iter(patterns)),
+            LinksToNonCompliantStreamDef.load_iterator(
+                iter(links_to_non_strategic_urls))
+        ])
+        key = 'outlinks_errors'
+        sub_key = 'non_strategic'
+
+        document = _next_doc(gen)
+        self.assertEqual(document[key][sub_key]['urls'], [5])
 
     def test_non_compliant_link_counter(self):
         patterns = self.ids[:2]

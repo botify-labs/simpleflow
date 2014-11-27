@@ -1107,7 +1107,7 @@ class LinksToNonCompliantStreamDef(StreamDefBase):
         error_urls = errors[error_kind]['urls']
 
         # capture 10 follow samples
-        if len(error_urls) < 10 and follow:
+        if len(error_urls) < 10 and follow and url_dest_id not in error_urls:
             error_urls.append(url_dest_id)
 
         errors[error_kind]['urls_exists'] = True
