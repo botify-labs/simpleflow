@@ -17,6 +17,11 @@ class MetricAggregation(object):
         :returns: dict"""
         return {self.predicate: self.field}
 
+    def __eq__(self, other):
+        return self.to_dict() == other.to_dict()
+
+    def __ne__(self, other):
+        return self.to_dict() != other.to_dict()
 
 class AvgAggregation(MetricAggregation):
     """A specialization of MetricAggregation for the "avg" operator"""

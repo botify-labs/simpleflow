@@ -155,6 +155,12 @@ class Insight(AbstractInsight):
     def __repr__(self):
         return "{}: {}".format(self.identifier, self.query_to_display)
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not self.__dict__ == other.__dict__
+
 
 class ComparisonAwareInsight(AbstractInsight):
     """A decorator that modifies the Elasticsearch queries
