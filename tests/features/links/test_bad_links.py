@@ -14,10 +14,6 @@ from cdf.features.links.bad_links import (
 from cdf.features.links.helpers.masks import follow_mask
 
 
-def _sort_key_func(record):
-    return record[0], record[1]
-
-
 class TestBadLink(unittest.TestCase):
     def setUp(self):
         self.infos = iter((
@@ -39,13 +35,15 @@ class TestBadLink(unittest.TestCase):
         )
 
         u = get_bad_links(self.infos, stream_outlinks)
-        results = sorted(list(u), key=_sort_key_func)
+        results = list(u)
         expected = [
             (4, 2, 1, 301),
             (5, 3, 1, 500),
             (5, 3, 0, 500)
         ]
-        self.assertEquals(results, expected)
+        expected_order = [4, 5, 5]
+        self.assertEqual([i[0] for i in results], expected_order)
+        self.assertItemsEqual(results, expected)
 
     def test_bad_links_follow(self):
         stream_outlinks = OutlinksStreamDef.load_iterator(
@@ -58,14 +56,14 @@ class TestBadLink(unittest.TestCase):
             ]
         )
         u = get_bad_links(self.infos, stream_outlinks)
-        results = sorted(list(u), key=_sort_key_func)
+        results = list(u)
         expected = [
             (4, 2, 1, 301),
             (4, 2, 1, 301),
             (4, 2, 0, 301),
             (4, 3, 0, 500),
         ]
-        self.assertEquals(results, expected)
+        self.assertItemsEqual(results, expected)
 
     def test_bad_link_counters_harness(self):
         stream_bad_links = iter((
@@ -81,7 +79,7 @@ class TestBadLink(unittest.TestCase):
 
         u = get_bad_link_counters(stream_bad_links)
         # counters are sorted only on *id*
-        results = sorted(list(u), key=_sort_key_func)
+        results = list(u)
         expected = [
             (1, 400, 1),
             (1, 500, 2),
@@ -89,7 +87,7 @@ class TestBadLink(unittest.TestCase):
             (3, 300, 1),
             (3, 400, 2)
         ]
-        self.assertEquals(results, expected)
+        self.assertItemsEqual(results, expected)
 
     def test_bad_link_counters_nofollow_unique(self):
         stream_bad_links = iter((
@@ -102,12 +100,12 @@ class TestBadLink(unittest.TestCase):
 
         u = get_bad_link_counters(stream_bad_links)
         # counters are sorted only on *id*
-        results = sorted(list(u), key=_sort_key_func)
+        results = list(u)
         expected = [
             (2, 301, 1),
             (2, 500, 1)
         ]
-        self.assertEquals(results, expected)
+        self.assertItemsEqual(results, expected)
 
 
 class TestGetLinkToNonCompliantUrls(unittest.TestCase):
