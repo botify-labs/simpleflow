@@ -907,6 +907,17 @@ class IncanonicalCountersStreamDef(StreamDefBase):
     )
 
 
+def _get_bad_http_code_kind(http_code):
+    error_kind = None
+    if 300 <= http_code < 400:
+        error_kind = '3xx'
+    elif 400 <= http_code < 500:
+        error_kind = '4xx'
+    elif http_code >= 500:
+        error_kind = '5xx'
+    return error_kind
+
+
 class BadLinksStreamDef(StreamDefBase):
     FILE = 'urlbadlinks'
     HEADERS = (
@@ -918,15 +929,6 @@ class BadLinksStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
     URL_DOCUMENT_MAPPING = {
         # erroneous outgoing internal links
-        "outlinks_errors.3xx.nb": {
-            "type": INT_TYPE,
-            "verbose_name": "Number of error links in 3xx",
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL,
-                DIFF_QUANTITATIVE
-            }
-        },
         "outlinks_errors.3xx.urls": {
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 3xx",
@@ -943,15 +945,6 @@ class BadLinksStreamDef(StreamDefBase):
             "default_value": None
         },
 
-        "outlinks_errors.4xx.nb": {
-            "type": INT_TYPE,
-            "verbose_name": "Number of error links in 4xx",
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL,
-                DIFF_QUANTITATIVE
-            }
-        },
         "outlinks_errors.4xx.urls": {
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 4xx",
@@ -968,15 +961,6 @@ class BadLinksStreamDef(StreamDefBase):
             "default_value": None
         },
 
-        "outlinks_errors.5xx.nb": {
-            "type": INT_TYPE,
-            "verbose_name": "Number of error links in 5xx",
-            "settings": {
-                ES_DOC_VALUE,
-                AGG_NUMERICAL,
-                DIFF_QUANTITATIVE
-            }
-        },
         "outlinks_errors.5xx.urls": {
             "type": INT_TYPE,
             "verbose_name": "Sample of error links in 5xx",
@@ -992,6 +976,63 @@ class BadLinksStreamDef(StreamDefBase):
             "type": "boolean",
             "default_value": None
         },
+    }
+
+    def process_document(self, document, stream_badlinks):
+        _, url_dest_id, follow, http_code = stream_badlinks
+
+        errors = document['outlinks_errors']
+        error_kind = _get_bad_http_code_kind(http_code)
+
+        error_urls = errors[error_kind]['urls']
+        # url list length bounded at 10, should not be a perf problem
+        if len(error_urls) < 10 and url_dest_id not in error_urls:
+            error_urls.append(url_dest_id)
+
+        errors[error_kind]['urls_exists'] = True
+
+
+class BadLinksCountersStreamDef(StreamDefBase):
+    FILE = 'urlbadlinks_counters'
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
+    HEADERS = (
+        ('id', int),
+        ('http_code', int),
+        ('score', int)
+    )
+    URL_DOCUMENT_MAPPING = {
+        # erroneous outgoing internal links
+        # TODO structure should be changed to reflect follow and unique
+        "outlinks_errors.3xx.nb": {
+            "type": INT_TYPE,
+            "verbose_name": "Number of error links in 3xx",
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
+
+        "outlinks_errors.4xx.nb": {
+            "type": INT_TYPE,
+            "verbose_name": "Number of error links in 4xx",
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
+
+        "outlinks_errors.5xx.nb": {
+            "type": INT_TYPE,
+            "verbose_name": "Number of error links in 5xx",
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
+
         # total error_links number
         # DEPRECATED: this field has been replaced by
         #"outlinks_errors.total_bad_http_codes"
@@ -1019,38 +1060,17 @@ class BadLinksStreamDef(StreamDefBase):
         },
     }
 
-    def process_document(self, document, stream_badlinks):
-        _, url_dest_id, http_code = stream_badlinks
+    def process_document(self, document, stream_badlinks_counters):
+        src_id, http_code, count = stream_badlinks_counters
 
         errors = document['outlinks_errors']
+        error_kind = _get_bad_http_code_kind(http_code)
 
-        error_kind = None
-        if 300 <= http_code < 400:
-            error_kind = '3xx'
-        elif 400 <= http_code < 500:
-            error_kind = '4xx'
-        elif http_code >= 500:
-            error_kind = '5xx'
-
-        errors[error_kind]['nb'] += 1
-        error_urls = errors[error_kind]['urls']
-        if len(error_urls) < 10:
-            error_urls.append(url_dest_id)
+        errors[error_kind]['nb'] = count
 
         # increment the consolidate value
-        errors['total'] += 1
-        errors['total_bad_http_codes'] += 1
-
-        errors[error_kind]['urls_exists'] = True
-
-
-class BadLinksCountersStreamDef(StreamDefBase):
-    FILE = 'urlbadlinks_counters'
-    HEADERS = (
-        ('id', int),
-        ('http_code', int),
-        ('score', int)
-    )
+        errors['total'] += count
+        errors['total_bad_http_codes'] += count
 
 
 class LinksToNonCompliantStreamDef(StreamDefBase):
