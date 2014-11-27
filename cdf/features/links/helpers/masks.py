@@ -35,12 +35,11 @@ def follow_mask(mask):
         ["robots", "meta", "link"]
     """
     _mask = int(mask)
-    masks = []
-    if _mask & 31 in (0, 8):
-        masks.append("follow")
-    for bitmask, term in _NOFOLLOW_MASKS + _PREV_NEXT_MASKS:
-        if bitmask & _mask == bitmask:
-            masks.append(term)
+    if _mask & 7 == 0:
+        masks = ["follow"]
+    else:
+        masks = [term for bitmask, term in _NOFOLLOW_MASKS if bitmask & _mask != 0]
+    masks += [term for bitmask, term in _PREV_NEXT_MASKS if bitmask & _mask != 0]
     return masks
 
 
