@@ -1,4 +1,8 @@
-from cdf.core.insights import Insight, PositiveTrend
+from cdf.core.insights import (
+    Insight,
+    PositiveTrend,
+    strategic_to_compliant_migration_decorator
+)
 from cdf.query.filter import (
     EqFilter,
     GtFilter,
@@ -441,6 +445,7 @@ def get_canonical_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_links_insights():
     result = []
     result.extend(get_average_inlinks_insights())

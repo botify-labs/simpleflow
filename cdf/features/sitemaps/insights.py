@@ -1,4 +1,8 @@
-from cdf.core.insights import Insight, PositiveTrend
+from cdf.core.insights import (
+    Insight,
+    PositiveTrend,
+    strategic_to_compliant_migration_decorator
+)
 from cdf.query.filter import (
     EqFilter,
     GtFilter,
@@ -148,7 +152,7 @@ def get_bad_metadata_compliant_sitemap_insights():
         result.append(insight)
     return result
 
-
+@strategic_to_compliant_migration_decorator
 def get_sitemaps_insights():
     result = []
     result.extend(get_main_sitemap_insights())

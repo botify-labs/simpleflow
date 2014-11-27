@@ -1,6 +1,10 @@
 from cdf.metadata.url.url_metadata import FLOAT_TYPE
 from cdf.core.metadata.constants import RENDERING
-from cdf.core.insights import Insight, PositiveTrend
+from cdf.core.insights import (
+    Insight,
+    PositiveTrend,
+    strategic_to_compliant_migration_decorator
+)
 from cdf.query.filter import (
     AndFilter, EqFilter, LtFilter,
     GteFilter, BetweenFilter, NotFilter
@@ -388,6 +392,7 @@ def get_gzipped_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_insights():
     insights = []
     insights.extend(get_all_urls_insight())

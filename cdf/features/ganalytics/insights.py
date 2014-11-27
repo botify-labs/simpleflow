@@ -1,4 +1,8 @@
-from cdf.core.insights import Insight, PositiveTrend
+from cdf.core.insights import (
+    Insight,
+    PositiveTrend,
+    strategic_to_compliant_migration_decorator
+)
 from cdf.query.filter import (
     EqFilter,
     GtFilter,
@@ -237,7 +241,7 @@ def get_compliant_visit_nb_range_insights(medium, source):
         )
     ]
 
-
+@strategic_to_compliant_migration_decorator
 def get_ganalytics_insights():
     """Return all the Google Analytics insights
     :returns: list - list of Insight
