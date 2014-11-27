@@ -86,6 +86,19 @@ class TestSitemapXmlDocument(unittest.TestCase):
         self.assertEqual(2, sitemap_document.valid_urls)
         self.assertEqual(1, sitemap_document.invalid_urls)
 
+    def test_empty_loc(self):
+        self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
+                        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                        '<url><loc>http://foo/bar</loc></url>'
+                        '<url><loc/></url>'
+                        '<url><loc>http://foo/baz</loc></url>'
+                        '</urlset>')
+        self.file.close()
+        sitemap_document = SitemapXmlDocument(self.file.name, self.url)
+        self.assertEqual(["http://foo/bar", "http://foo/baz"], list(sitemap_document.get_urls()))
+        self.assertEqual(2, sitemap_document.valid_urls)
+        self.assertEqual(1, sitemap_document.invalid_urls)
+
     def test_image_sitemap(self):
         self.file.write('<?xml version="1.0" encoding="UTF-8"?>'
                         '<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
@@ -396,6 +409,9 @@ class TestUrlValidator(unittest.TestCase):
     def test_nominal_case(self):
         self.assertTrue(UrlValidator.is_valid("http://foo.com"))
         self.assertTrue(UrlValidator.is_valid("https://foo.com"))
+
+    def test_none(self):
+        self.assertFalse(UrlValidator.is_valid(None))
 
     def test_case_insensitivity(self):
         self.assertTrue(UrlValidator.is_valid("HTTP://foo.com"))
