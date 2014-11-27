@@ -193,6 +193,7 @@ def get_misc_inlinks_insights():
     )
 
     field = "inlinks_internal.nb.follow.unique"
+    sort_by = DescendingSort(field)
     result.append(
         Insight(
             "inlinks_not_strategic_follow",
