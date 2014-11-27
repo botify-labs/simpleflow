@@ -26,8 +26,8 @@ def get_average_inlinks_insights():
             "Average Inlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation(unique_inlink_nb),
-            sort_by=DescendingSort(unique_inlink_nb),
             additional_fields=[follow_unique_inlink_nb],
+            sort_by=DescendingSort(unique_inlink_nb),
             type=FLOAT_TYPE,
             unit=RENDERING.LINK
         ),
@@ -36,6 +36,7 @@ def get_average_inlinks_insights():
             "Average Follow Inlinks by URL",
             PositiveTrend.UNKNOWN,
             metric_agg=AvgAggregation(follow_unique_inlink_nb),
+            additional_fields=[follow_unique_inlink_nb],
             sort_by=DescendingSort(follow_unique_inlink_nb),
             type=FLOAT_TYPE,
             unit=RENDERING.LINK
@@ -47,13 +48,17 @@ def get_inlinks_sum_insights():
     """Return insights related to inlinks sums.
     :returns: list - list of Insight
     """
+    unique_inlink_nb = "inlinks_internal.nb.unique"
     follow_unique_inlink_nb = "inlinks_internal.nb.follow.unique"
+    nofollow_unique_inlink_nb = "inlinks_internal.nb.nofollow.unique"
     return [
         Insight(
             "inlinks_sum",
             "Total Number of Inlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=SumAggregation("inlinks_internal.nb.unique"),
+            metric_agg=SumAggregation(unique_inlink_nb),
+            additional_fields=[unique_inlink_nb],
+            sort_by=DescendingSort(unique_inlink_nb),
             unit=RENDERING.LINK
         ),
         Insight(
@@ -62,13 +67,16 @@ def get_inlinks_sum_insights():
             PositiveTrend.UNKNOWN,
             metric_agg=SumAggregation(follow_unique_inlink_nb),
             additional_fields=[follow_unique_inlink_nb],
+            sort_by=DescendingSort(follow_unique_inlink_nb),
             unit=RENDERING.LINK
         ),
         Insight(
             "inlinks_sum_nofollow",
             "Total Number of Nofollow Inlinks",
             PositiveTrend.UNKNOWN,
-            metric_agg=SumAggregation("inlinks_internal.nb.nofollow.unique"),
+            metric_agg=SumAggregation(nofollow_unique_inlink_nb),
+            additional_fields=[nofollow_unique_inlink_nb],
+            sort_by=DescendingSort(nofollow_unique_inlink_nb),
             unit=RENDERING.LINK
         )
     ]
@@ -185,6 +193,7 @@ def get_misc_inlinks_insights():
     )
 
     field = "inlinks_internal.nb.follow.unique"
+    sort_by = DescendingSort(field)
     result.append(
         Insight(
             "inlinks_not_strategic_follow",

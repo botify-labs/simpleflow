@@ -88,7 +88,8 @@ def get_misc_sitemap_insights():
             AndFilter([
                 GtFilter("outlinks_errors.non_strategic.nb.follow.unique", 0),
                 EqFilter("sitemaps.present", True)
-            ])
+            ]),
+            additional_fields=["outlinks_errors.non_strategic.nb.follow.unique"]
         ),
         Insight(
             "sitemaps_slow_urls",
