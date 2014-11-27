@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import itertools
 """
 Real bitmask is :
 1 link no follow
@@ -19,10 +20,47 @@ _NOFOLLOW_MASKS = [
 ]
 _NOFOLLOW_MASK_IDS = map(lambda x: x[1], _NOFOLLOW_MASKS)
 
+
 _PREV_NEXT_MASKS = [
     (32, "next"),
     (64, "prev")
 ]
+_PREV_NEXT_MASK_IDS = map(lambda x: x[1], _PREV_NEXT_MASKS)
+
+
+def get_key_to_nofollow_combination(mask_ids, allowed_mask_ids):
+    """Given a list of mask ids build a dict tuple -> nofollow_combination.
+    The dict keys are all the possible permutations of mask ids
+    and nofollow combination is a canonical string that represents the combination.
+
+    For instance if mask_ids is ["robots", "meta"] the dict will be
+    () -> ""
+    ("robots") -> "robots"
+    ("meta") -> "meta"
+    ("robots", "meta") -> "meta_robots"
+    ("meta", "robots") -> "meta_robots"
+
+    :param mask_ids: the input list of mask ids as a list of strings
+    :type mask_ids: list
+    :param allowed_mask_ids: the list of mask ids that can figure
+                             in the nofollow combination
+    :type allowed_mask_ids: list
+    :returns: dict
+    """
+    result = {}
+    for i in range(len(mask_ids) + 1):
+        for keys in itertools.permutations(mask_ids, i):
+            nofollow_combination = '_'.join(
+                sorted([k for k in keys if k in allowed_mask_ids])
+            )
+            result[tuple(keys)] = nofollow_combination
+    return result
+
+#a lookup table to get the nofollow combination given a list of keys
+KEY_TO_NOFOLLOW_COMBINATION = get_key_to_nofollow_combination(
+    _NOFOLLOW_MASK_IDS + _PREV_NEXT_MASK_IDS,
+    _NOFOLLOW_MASK_IDS
+)
 
 
 def follow_mask(mask):
