@@ -103,8 +103,6 @@ from cdf.tasks.url_data import (
     push_documents_to_elastic_search
 )
 generate_documents = as_activity(generate_documents)
-push_documents_to_elastic_search = as_activity(
-    push_documents_to_elastic_search)
 
 from cdf.tasks.aggregators import (
     compute_aggregators_from_part_id,
@@ -144,6 +142,17 @@ from cdf.tasks.insights import compute_insights as compute_insights_task
 refresh_index = as_activity(refresh_index)
 get_feature_options = as_activity(get_feature_options)
 compute_insights_task = as_activity(compute_insights_task)
+
+push_documents_to_elastic_search = activity.with_attributes(
+    version='2.7',
+    task_list='analysis',
+    schedule_to_start_timeout=54000,  # 15h
+    start_to_close_timeout=21600,     # 6h
+    schedule_to_close_timeout=75600,  # 21h
+    heartbeat_timeout=300,
+    retry=0,  # retry is handled per bulk
+    raises_on_failure=True,
+)(push_documents_to_elastic_search)
 
 UPDATE_STATUS_TIMEOUTS = {
     'schedule_to_start_timeout': 14400,  # 4h
