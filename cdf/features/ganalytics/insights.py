@@ -31,6 +31,7 @@ def get_medium_source_insights(medium, source):
     return result
 
 
+@strategic_to_compliant_migration_decorator
 def get_ganalytics_main_metric_insights(medium, source):
     """Return the Google Analytics insights related to the main metric
     for a given (medium, source) tuple
@@ -113,6 +114,7 @@ def get_ganalytics_main_metric_insights(medium, source):
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_compliant_active_insights(medium, source):
     """For a given (medium, source) tuple, compute the count of URLs
     for all the possible combinations of "is_strategic" and "is_active"
@@ -169,6 +171,7 @@ def get_compliant_active_insights(medium, source):
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_compliant_visit_nb_range_insights(medium, source):
     """Return the Google Analytics insights related
     to the active compliant URLs for a given (medium, source) tuple
@@ -241,7 +244,6 @@ def get_compliant_visit_nb_range_insights(medium, source):
         )
     ]
 
-@strategic_to_compliant_migration_decorator
 def get_ganalytics_insights():
     """Return all the Google Analytics insights
     :returns: list - list of Insight

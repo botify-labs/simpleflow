@@ -36,6 +36,7 @@ def get_main_sitemap_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_compliant_sitemap_insights():
     """Return the insights related to the sitemaps and is_strategic field.
     :returns: list - list of Insight
@@ -62,6 +63,7 @@ def get_compliant_sitemap_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_misc_sitemap_insights():
     """Return misc insights related to sitemaps.
     :returns: list - list of Insight
@@ -152,7 +154,6 @@ def get_bad_metadata_compliant_sitemap_insights():
         result.append(insight)
     return result
 
-@strategic_to_compliant_migration_decorator
 def get_sitemaps_insights():
     result = []
     result.extend(get_main_sitemap_insights())

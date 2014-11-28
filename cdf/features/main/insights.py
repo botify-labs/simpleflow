@@ -114,6 +114,7 @@ def get_http_code_insights():
     return result
 
 
+@strategic_to_compliant_migration_decorator
 def get_compliant_urls_insights():
     return [
         Insight(
@@ -221,6 +222,7 @@ def get_speed_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_compliant_urls_speed_insights():
     field = "delay_last_byte"
     additional_fields = [field]
@@ -301,6 +303,7 @@ def get_domain_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_average_speed_insights():
     field = "delay_last_byte"
     additional_fields = [field]
@@ -327,6 +330,7 @@ def get_average_speed_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_average_depth_insights():
     field = "depth"
     additional_fields = [field]
@@ -392,7 +396,6 @@ def get_gzipped_insights():
     ]
 
 
-@strategic_to_compliant_migration_decorator
 def get_insights():
     insights = []
     insights.extend(get_all_urls_insight())

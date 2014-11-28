@@ -177,6 +177,7 @@ def get_inlinks_above_below_average_insights():
     return []
 
 
+@strategic_to_compliant_migration_decorator
 def get_misc_inlinks_insights():
     """Return misc insights related to inlinks.
     :returns: list - list of Insight
@@ -338,6 +339,7 @@ def get_outlinks_external_insights():
     return result
 
 
+@strategic_to_compliant_migration_decorator
 def get_misc_outlinks_insights():
     """Return miscinsights related to outlinks.
     :returns: list - list of Insight
@@ -445,7 +447,6 @@ def get_canonical_insights():
     ]
 
 
-@strategic_to_compliant_migration_decorator
 def get_links_insights():
     result = []
     result.extend(get_average_inlinks_insights())
