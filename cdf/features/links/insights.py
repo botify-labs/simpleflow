@@ -201,7 +201,7 @@ def get_misc_inlinks_insights():
     sort_by = DescendingSort(field)
     result.append(
         Insight(
-            "inlinks_not_strategic_follow",
+            "inlinks_not_compliant_follow",
             "Not Compliant URLs with Follow Inlinks",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -215,7 +215,7 @@ def get_misc_inlinks_insights():
 
     result.append(
         Insight(
-            "inlinks_follow_strategic_1",
+            "inlinks_follow_compliant_1",
             "Compliant URLs with only 1 Follow Inlink",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -367,7 +367,7 @@ def get_misc_outlinks_insights():
     field = "outlinks_errors.non_strategic.nb.follow.unique"
     result.append(
         Insight(
-            "outlinks_not_strategic",
+            "outlinks_not_compliant",
             "Compliant URLs with Outlinks to not Compliant URLs",
             PositiveTrend.DOWN,
             AndFilter([

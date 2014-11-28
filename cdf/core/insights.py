@@ -203,7 +203,7 @@ class ComparisonAwareInsight(AbstractInsight):
 
 def strategic_to_compliant_migration(insights):
     """Given a list of insights, copy the ones that contain "strategic" in
-    their identifier. Replace "strategic" with "compliant" in the copy insight.
+    their identifier. Replace "compliant" with "strategic" in the copy insight.
     Returns the original list of insights plus the copy insights.
     :param insights: the input list of insights
     :type insights: list
@@ -212,10 +212,10 @@ def strategic_to_compliant_migration(insights):
     result = []
     for insight in insights:
         result.append(insight)
-        if "strategic" in insight.identifier:
+        if "compliant" in insight.identifier:
             compliant_insight = copy.deepcopy(insight)
             compliant_insight.identifier = compliant_insight.identifier.replace(
-                "strategic", "compliant"
+                "compliant", "strategic"
             )
             result.append(compliant_insight)
     return result

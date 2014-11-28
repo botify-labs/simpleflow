@@ -210,8 +210,8 @@ class TestStrategicToCompliantMigration(unittest.TestCase):
                     "Foo",
                     self.positive_trend,
                     EqFilter("bar", 5)),
-            Insight("foo_strategic",
-                    "Foo strategic",
+            Insight("foo_compliant",
+                    "Foo compliant",
                     self.positive_trend,
                     EqFilter("foo", 10))
         ]
@@ -222,12 +222,12 @@ class TestStrategicToCompliantMigration(unittest.TestCase):
                     "Foo",
                     self.positive_trend,
                     EqFilter("bar", 5)),
-            Insight("foo_strategic",
-                    "Foo strategic",
+            Insight("foo_compliant",
+                    "Foo compliant",
                     self.positive_trend,
                     EqFilter("foo", 10)),
-            Insight("foo_compliant",
-                    "Foo strategic",
+            Insight("foo_strategic",
+                    "Foo compliant",
                     self.positive_trend,
                     EqFilter("foo", 10))
         ]
@@ -235,20 +235,20 @@ class TestStrategicToCompliantMigration(unittest.TestCase):
 
     def test_multiple_insight_occurrences(self):
         insights = [
-            Insight("strategic_foo_strategic",
-                    "Foo strategic",
+            Insight("compliant_foo_compliant",
+                    "Foo compliant",
                     self.positive_trend,
                     EqFilter("foo", 10))
         ]
 
         actual_result = strategic_to_compliant_migration(insights)
         expected_result = [
-            Insight("strategic_foo_strategic",
-                    "Foo strategic",
+            Insight("compliant_foo_compliant",
+                    "Foo compliant",
                     self.positive_trend,
                     EqFilter("foo", 10)),
-            Insight("compliant_foo_compliant",
-                    "Foo strategic",
+            Insight("strategic_foo_strategic",
+                    "Foo compliant",
                     self.positive_trend,
                     EqFilter("foo", 10))
         ]

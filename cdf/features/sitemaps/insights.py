@@ -43,7 +43,7 @@ def get_compliant_sitemap_insights():
     """
     return [
         Insight(
-            "sitemaps_not_strategic",
+            "sitemaps_not_compliant",
             "Not Compliant URLs in Sitemaps",
             PositiveTrend.DOWN,
             AndFilter([
@@ -52,7 +52,7 @@ def get_compliant_sitemap_insights():
             ])
         ),
         Insight(
-            "sitemaps_strategic",
+            "sitemaps_compliant",
             "Compliant URLs in Sitemaps",
             PositiveTrend.UP,
             AndFilter([
@@ -88,7 +88,7 @@ def get_misc_sitemap_insights():
             ])
         ),
         Insight(
-            "sitemaps_not_strategic_outlink",
+            "sitemaps_not_compliant_outlink",
             "URLs in Sitemaps with a not Compliant Outlink",
             PositiveTrend.DOWN,
             AndFilter([
