@@ -4,6 +4,7 @@ import itertools
 import ujson as json
 
 from elasticsearch import Elasticsearch
+from retrying import retry
 
 from cdf.log import logger
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
@@ -84,9 +85,15 @@ def push_document_stream(doc_stream, es, es_index, es_doc_type):
     """
     oks = 0
     errs = 0
-    for docs in chunk(doc_stream, 3000):
-        o, e = bulk(es, docs, stats_only=True,
+
+    # Document push retry is handled for each bulk
+    @retry(stop_max_attempt_number=1)
+    def push_chunk(chunk):
+        return bulk(es, docs, stats_only=True,
                     doc_type=es_doc_type, index=es_index)
+
+    for docs in chunk(doc_stream, 3000):
+        o, e = push_chunk(docs)
         logger.info('Pushed bulk of {} elements finished with '
                     '{} successes and {} fails, '
                     'continue  ...'.format(len(docs), oks, errs))
