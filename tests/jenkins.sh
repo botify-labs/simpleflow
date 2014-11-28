@@ -27,6 +27,8 @@ if [ $PIP = "pip-accel" ]; then
 fi
 
 #install runtime and test dependencies
+export C_INCLUDE_PATH=/usr/lib/openmpi/include
+
 for REQUIREMENT in $(cat packaging/python.deps packaging/python_test.deps)
 do
     $PIP install --timeout 180 $REQUIREMENT
