@@ -718,6 +718,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "verbose_name": "Receives at least a prev links.",
             "settings": {
                 FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS,
                 AGG_CATEGORICAL,
                 DIFF_QUALITATIVE
             },
@@ -729,6 +730,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "verbose_name": "Receives at least a next links.",
             "settings": {
                 FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS,
                 AGG_CATEGORICAL,
                 DIFF_QUALITATIVE
             },
