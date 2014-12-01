@@ -5,6 +5,7 @@ from cdf.core.insights import (
     PositiveTrend,
     Insight,
     ComparisonAwareInsight,
+    strategic_to_compliant_migration,
     InsightValue,
     InsightTrendPoint
 )
@@ -194,6 +195,67 @@ class TestComparisonAwareInsight(unittest.TestCase):
             insight,
             "foo"
         )
+
+
+class TestStrategicToCompliantMigration(unittest.TestCase):
+    def setUp(self):
+        self.identifier = "foo"
+        self.name = "Foo"
+        self.positive_trend = PositiveTrend.UP
+        self.eq_filter = EqFilter("bar", 5)
+
+    def test_nominal_case(self):
+        insights = [
+            Insight("foo",
+                    "Foo",
+                    self.positive_trend,
+                    EqFilter("bar", 5)),
+            Insight("foo_compliant",
+                    "Foo compliant",
+                    self.positive_trend,
+                    EqFilter("foo", 10))
+        ]
+
+        actual_result = strategic_to_compliant_migration(insights)
+        expected_result = [
+            Insight("foo",
+                    "Foo",
+                    self.positive_trend,
+                    EqFilter("bar", 5)),
+            Insight("foo_compliant",
+                    "Foo compliant",
+                    self.positive_trend,
+                    EqFilter("foo", 10)),
+            Insight("foo_strategic",
+                    "Foo compliant",
+                    self.positive_trend,
+                    EqFilter("foo", 10))
+        ]
+        self.assertEqual(expected_result, actual_result)
+
+    def test_multiple_insight_occurrences(self):
+        insights = [
+            Insight("compliant_foo_compliant",
+                    "Foo compliant",
+                    self.positive_trend,
+                    EqFilter("foo", 10))
+        ]
+
+        actual_result = strategic_to_compliant_migration(insights)
+        expected_result = [
+            Insight("compliant_foo_compliant",
+                    "Foo compliant",
+                    self.positive_trend,
+                    EqFilter("foo", 10)),
+            Insight("strategic_foo_strategic",
+                    "Foo compliant",
+                    self.positive_trend,
+                    EqFilter("foo", 10))
+        ]
+        self.assertEqual(expected_result, actual_result)
+
+    def test_empty_list(self):
+        self.assertEqual([], strategic_to_compliant_migration([]))
 
 
 class TestInsightValue(unittest.TestCase):

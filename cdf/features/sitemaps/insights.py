@@ -1,4 +1,8 @@
-from cdf.core.insights import Insight, PositiveTrend
+from cdf.core.insights import (
+    Insight,
+    PositiveTrend,
+    strategic_to_compliant_migration_decorator
+)
 from cdf.query.filter import (
     EqFilter,
     GtFilter,
@@ -32,13 +36,14 @@ def get_main_sitemap_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_compliant_sitemap_insights():
     """Return the insights related to the sitemaps and is_strategic field.
     :returns: list - list of Insight
     """
     return [
         Insight(
-            "sitemaps_not_strategic",
+            "sitemaps_not_compliant",
             "Not Compliant URLs in Sitemaps",
             PositiveTrend.DOWN,
             AndFilter([
@@ -47,7 +52,7 @@ def get_compliant_sitemap_insights():
             ])
         ),
         Insight(
-            "sitemaps_strategic",
+            "sitemaps_compliant",
             "Compliant URLs in Sitemaps",
             PositiveTrend.UP,
             AndFilter([
@@ -58,6 +63,7 @@ def get_compliant_sitemap_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_misc_sitemap_insights():
     """Return misc insights related to sitemaps.
     :returns: list - list of Insight
@@ -82,7 +88,7 @@ def get_misc_sitemap_insights():
             ])
         ),
         Insight(
-            "sitemaps_not_strategic_outlink",
+            "sitemaps_not_compliant_outlink",
             "URLs in Sitemaps with a not Compliant Outlink",
             PositiveTrend.DOWN,
             AndFilter([
@@ -147,7 +153,6 @@ def get_bad_metadata_compliant_sitemap_insights():
         )
         result.append(insight)
     return result
-
 
 def get_sitemaps_insights():
     result = []

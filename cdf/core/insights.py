@@ -1,4 +1,6 @@
 from enum import Enum
+from functools import wraps
+import copy
 import abc
 from cdf.metadata.url.url_metadata import INT_TYPE
 from cdf.query.aggregation import (
@@ -153,6 +155,12 @@ class Insight(AbstractInsight):
     def __repr__(self):
         return "{}: {}".format(self.identifier, self.query_to_display)
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not self.__dict__ == other.__dict__
+
 
 class ComparisonAwareInsight(AbstractInsight):
     """A decorator that modifies the Elasticsearch queries
@@ -191,6 +199,43 @@ class ComparisonAwareInsight(AbstractInsight):
         #do not modify the insight query to display
         #we do not want the users to be aware of the comparison tricks.
         return self.insight.query_to_display
+
+
+def strategic_to_compliant_migration(insights):
+    """Given a list of insights, copy the ones that contain "strategic" in
+    their identifier. Replace "compliant" with "strategic" in the copy insight.
+    Returns the original list of insights plus the copy insights.
+    :param insights: the input list of insights
+    :type insights: list
+    :returns: list
+    """
+    result = []
+    for insight in insights:
+        result.append(insight)
+        if "compliant" in insight.identifier:
+            compliant_insight = copy.deepcopy(insight)
+            compliant_insight.identifier = compliant_insight.identifier.replace(
+                "compliant", "strategic"
+            )
+            result.append(compliant_insight)
+    return result
+
+
+def strategic_to_compliant_migration_decorator(func):
+    '''Decorator that applies 'strategic_to_compliant_migration'
+    to the result of a function.
+    The function should return a list of Insights.
+    The goal of this decorator is to handle the replacement of "strategic"
+    by "compliant" in insight identifiers.
+    As described in https://github.com/sem-io/botify-cdf/issues/936, to handle
+    this migration we need to duplicate the insights temporarly.
+    This decorator make the duplication easy.
+    '''
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        return strategic_to_compliant_migration(result)
+    return wrapper
 
 
 class InsightValue(object):

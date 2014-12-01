@@ -1,4 +1,8 @@
-from cdf.core.insights import Insight, PositiveTrend
+from cdf.core.insights import (
+    Insight,
+    PositiveTrend,
+    strategic_to_compliant_migration_decorator
+)
 from cdf.query.filter import (
     EqFilter,
     GtFilter,
@@ -27,6 +31,7 @@ def get_medium_source_insights(medium, source):
     return result
 
 
+@strategic_to_compliant_migration_decorator
 def get_ganalytics_main_metric_insights(medium, source):
     """Return the Google Analytics insights related to the main metric
     for a given (medium, source) tuple
@@ -79,7 +84,7 @@ def get_ganalytics_main_metric_insights(medium, source):
             unit=RENDERING.LINK
         ),
         Insight(
-            "{}_visits_ko_strategic_1_follow_inlink".format(name_prefix),
+            "{}_visits_ko_compliant_1_follow_inlink".format(name_prefix),
             "Compliant Not Active URLs with 1 Follow Inlink",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -109,6 +114,7 @@ def get_ganalytics_main_metric_insights(medium, source):
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_compliant_active_insights(medium, source):
     """For a given (medium, source) tuple, compute the count of URLs
     for all the possible combinations of "is_strategic" and "is_active"
@@ -123,7 +129,7 @@ def get_compliant_active_insights(medium, source):
     compliant_field = "strategic.is_strategic"
     return [
         Insight(
-            "{}_visits_strategic".format(name_prefix),
+            "{}_visits_compliant".format(name_prefix),
             "Compliant Active URLs",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -134,7 +140,7 @@ def get_compliant_active_insights(medium, source):
             sort_by=DescendingSort(visit_field)
         ),
         Insight(
-            "{}_visits_not_strategic".format(name_prefix),
+            "{}_visits_not_compliant".format(name_prefix),
             "Not Compliant Active URLs",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -145,7 +151,7 @@ def get_compliant_active_insights(medium, source):
             sort_by=DescendingSort(visit_field)
         ),
         Insight(
-            "{}_visits_ko_strategic".format(name_prefix),
+            "{}_visits_ko_compliant".format(name_prefix),
             "Compliant Not Active URLs",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -154,7 +160,7 @@ def get_compliant_active_insights(medium, source):
             ])
         ),
         Insight(
-            "{}_visits_ko_not_strategic".format(name_prefix),
+            "{}_visits_ko_not_compliant".format(name_prefix),
             "Not Compliant Not Active URLs",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -165,6 +171,7 @@ def get_compliant_active_insights(medium, source):
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_compliant_visit_nb_range_insights(medium, source):
     """Return the Google Analytics insights related
     to the active compliant URLs for a given (medium, source) tuple
@@ -181,7 +188,7 @@ def get_compliant_visit_nb_range_insights(medium, source):
 
     return [
         Insight(
-            "{}_visits_strategic_1".format(name_prefix),
+            "{}_visits_compliant_1".format(name_prefix),
             "Compliant Active URLs with 1 Visit",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -192,7 +199,7 @@ def get_compliant_visit_nb_range_insights(medium, source):
             sort_by=sort_by
         ),
         Insight(
-            "{}_visits_strategic_2_5".format(name_prefix),
+            "{}_visits_compliant_2_5".format(name_prefix),
             "Compliant Active URLs with 2 to 5 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -203,7 +210,7 @@ def get_compliant_visit_nb_range_insights(medium, source):
             sort_by=sort_by
         ),
         Insight(
-            "{}_visits_strategic_6_10".format(name_prefix),
+            "{}_visits_compliant_6_10".format(name_prefix),
             "Compliant Active URLs with 6 to 10 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -214,7 +221,7 @@ def get_compliant_visit_nb_range_insights(medium, source):
             sort_by=sort_by
         ),
         Insight(
-            "{}_visits_strategic_11_100".format(name_prefix),
+            "{}_visits_compliant_11_100".format(name_prefix),
             "Compliant Active URLs with 11 to 100 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -225,7 +232,7 @@ def get_compliant_visit_nb_range_insights(medium, source):
             sort_by=sort_by
         ),
         Insight(
-            "{}_visits_strategic_gt_100".format(name_prefix),
+            "{}_visits_compliant_gt_100".format(name_prefix),
             "Compliant Active URLs with +100 Visits",
             PositiveTrend.UNKNOWN,
             AndFilter([
@@ -236,7 +243,6 @@ def get_compliant_visit_nb_range_insights(medium, source):
             sort_by=sort_by
         )
     ]
-
 
 def get_ganalytics_insights():
     """Return all the Google Analytics insights

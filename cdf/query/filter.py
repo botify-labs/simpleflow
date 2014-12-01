@@ -19,6 +19,12 @@ class Filter(object):
         """
         raise NotImplementedError()
 
+    def __eq__(self, other):
+        return self.to_dict() == other.to_dict()
+
+    def __ne__(self, other):
+        return self.to_dict() != other.to_dict()
+
 
 class FilterCombination(Filter):
     """An class to represent the combination of multiple filters

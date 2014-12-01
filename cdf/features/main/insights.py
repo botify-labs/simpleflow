@@ -1,6 +1,10 @@
 from cdf.metadata.url.url_metadata import FLOAT_TYPE
 from cdf.core.metadata.constants import RENDERING
-from cdf.core.insights import Insight, PositiveTrend
+from cdf.core.insights import (
+    Insight,
+    PositiveTrend,
+    strategic_to_compliant_migration_decorator
+)
 from cdf.query.filter import (
     AndFilter, EqFilter, LtFilter,
     GteFilter, BetweenFilter, NotFilter
@@ -110,16 +114,17 @@ def get_http_code_insights():
     return result
 
 
+@strategic_to_compliant_migration_decorator
 def get_compliant_urls_insights():
     return [
         Insight(
-            "strategic_1",
+            "compliant_1",
             "Compliant Urls",
             PositiveTrend.UP,
             EqFilter("strategic.is_strategic", True)
         ),
         Insight(
-            "strategic_0",
+            "compliant_0",
             "Not Compliant URLs",
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", False)
@@ -217,6 +222,7 @@ def get_speed_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_compliant_urls_speed_insights():
     field = "delay_last_byte"
     additional_fields = [field]
@@ -224,7 +230,7 @@ def get_compliant_urls_speed_insights():
     sort_by = DescendingSort(field)
     return [
         Insight(
-            "speed_fast_strategic",
+            "speed_fast_compliant",
             "Fast Compliant URLs (<500 ms)",
             PositiveTrend.UP,
             AndFilter(
@@ -237,7 +243,7 @@ def get_compliant_urls_speed_insights():
             additional_fields=additional_fields
         ),
         Insight(
-            "speed_medium_strategic",
+            "speed_medium_compliant",
             "Medium Compliant URLs (500 ms < 1 s)",
             PositiveTrend.DOWN,
             AndFilter(
@@ -250,7 +256,7 @@ def get_compliant_urls_speed_insights():
             additional_fields=additional_fields
         ),
         Insight(
-            "speed_slow_strategic",
+            "speed_slow_compliant",
             "Slow Compliant URLs (1 s < 2 s)",
             PositiveTrend.DOWN,
             AndFilter(
@@ -263,7 +269,7 @@ def get_compliant_urls_speed_insights():
             additional_fields=additional_fields
         ),
         Insight(
-            "speed_slowest_strategic",
+            "speed_slowest_compliant",
             "Slowest Compliant URLs (>2 s)",
             PositiveTrend.DOWN,
             AndFilter(
@@ -297,6 +303,7 @@ def get_domain_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_average_speed_insights():
     field = "delay_last_byte"
     additional_fields = [field]
@@ -312,7 +319,7 @@ def get_average_speed_insights():
             unit=RENDERING.TIME_MILLISEC  # the param is a string so we need to use the enum value
         ),
         Insight(
-            "speed_strategic_avg",
+            "speed_compliant_avg",
             "Average Load Time on Compliant URLs (in ms)",
             EqFilter("strategic.is_strategic", True),
             metric_agg=AvgAggregation(field),
@@ -323,6 +330,7 @@ def get_average_speed_insights():
     ]
 
 
+@strategic_to_compliant_migration_decorator
 def get_average_depth_insights():
     field = "depth"
     additional_fields = [field]
@@ -339,7 +347,7 @@ def get_average_depth_insights():
             unit=RENDERING.DEPTH
         ),
         Insight(
-            "depth_strategic_avg",
+            "depth_compliant_avg",
             "Average Depth on Compliant URLs",
             PositiveTrend.DOWN,
             EqFilter("strategic.is_strategic", True),
