@@ -38,19 +38,6 @@ DEFAULT_OPTION = 'default'
 MISSING_VALUE = '[missing]'
 
 
-def return_value(value, cast_func, options):
-    if value == MISSING_VALUE:
-        if MISSING_OPTION in options:
-            return cast_func(options[MISSING_OPTION])
-        elif DEFAULT_OPTION in options:
-            return cast_func(options[DEFAULT_OPTION])
-        else:
-            return cast_func('')
-    elif value == '' and DEFAULT_OPTION in options:
-        return cast_func(options[DEFAULT_OPTION])
-    return cast_func(value)
-
-
 class FieldCaster(object):
     def cast(value):
         pass
