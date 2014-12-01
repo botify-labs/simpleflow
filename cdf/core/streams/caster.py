@@ -51,6 +51,7 @@ def return_value(value, cast_func, options):
     return cast_func(value)
 
 
+
 class Caster(object):
     """
     Cast each field value to an object with respect to a definition mapping in
@@ -59,6 +60,11 @@ class Caster(object):
     """
     def __init__(self, fields):
         self._fields = []
+        self.no_missing_field = all([len(field) == 2 for field in fields])
+        if self.no_missing_field is True:
+            self._fields = fields
+            return
+
         for field in fields:
             # Add empty options if the field definition has only 2 values (field_name, caster_func)
             if len(field) == 2:
@@ -71,5 +77,10 @@ class Caster(object):
                 (name, cast, options), value in izip_longest(self._fields, line, fillvalue=MISSING_VALUE)]
 
     def cast(self, iterable):
-        for i in iterable:
-            yield self.cast_line(i)
+        if self.no_missing_field:
+            #simple case, we can simply apply the cast functions
+            for i in iterable:
+                yield [cast(value) for (name, cast), value in zip(self._fields, i)]
+        else:
+            for i in iterable:
+                yield self.cast_line(i)
