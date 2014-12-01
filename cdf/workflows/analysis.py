@@ -390,7 +390,10 @@ class AnalysisWorkflow(Workflow):
             'es_doc_type': context['es_doc_type']
         }
 
-        partitions = self.submit(enumerate_partitions, s3_uri)
+        partitions = self.submit(enumerate_partitions,
+                                 s3_uri,
+                                 first_part_id_size,
+                                 part_id_size)
 
         revision_number = context['revision_number']
         features_flags = context.get('features_flags', [])

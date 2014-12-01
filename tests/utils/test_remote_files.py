@@ -1,5 +1,6 @@
 import unittest
 import boto
+import mock
 from moto import mock_s3
 from cdf.exceptions import MalformedFileNameError
 from cdf.utils.remote_files import (
@@ -46,6 +47,20 @@ class TestEnumeratePartitions(unittest.TestCase):
         self._create_file(test_bucket, "urlids_txt_0_gz.foo")
 
         self.assertEquals([], enumerate_partitions("s3://test_bucket/"))
+
+    @mock_s3
+    def test_enumerate_partions_crawled_urls(self):
+        test_bucket = self._get_bucket()
+        self._create_file(test_bucket, "urlids.txt.0.gz")
+        self._create_file(test_bucket, "urlids.txt.1.gz")
+        self._create_file(test_bucket, "urlids.txt.2.gz")
+        self._create_file(test_bucket, "files.json")
+        with mock.patch('cdf.utils.remote_files.get_crawl_info') as get_crawl_info:
+            get_crawl_info.return_value = {"max_uid_we_crawled": 1025,
+                                           "lines_per_file_first": 1024,
+                                           "lines_per_file": 300000}
+            self.assertEquals([0, 1],
+                              enumerate_partitions("s3://test_bucket/", only_crawled_urls=True))
 
 
 class TestGetPartIdFromFileName(unittest.TestCase):
