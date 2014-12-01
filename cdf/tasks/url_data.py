@@ -4,7 +4,9 @@ import itertools
 import ujson as json
 
 from elasticsearch import Elasticsearch
+from retrying import retry
 
+from cdf.exceptions import ErrorRateLimitExceeded
 from cdf.log import logger
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.es import bulk
@@ -13,13 +15,15 @@ from cdf.utils.s3 import fetch_files, push_file
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.core.streams.utils import get_data_streams_from_storage
 from cdf.core.features import Feature
+from cdf.utils.stream import chunk
 from .decorators import TemporaryDirTask as with_temporary_dir
 from .constants import (
     DEFAULT_FORCE_FETCH,
     DOCS_NAME_PATTERN,
     DOCS_DIRPATH,
     COMPARISON_DOCS_DIRPATH,
-    COMPARISON_DOCS_NAME_PATTERN
+    COMPARISON_DOCS_NAME_PATTERN,
+    ERROR_RATE_LIMIT
 )
 
 
@@ -67,28 +71,58 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
                            ELASTICSEARCH_BACKEND.mapping())
 
 
-def _bulk(es, docs, es_index, es_doc_type):
-    oks, errs = bulk(es, docs, stats_only=True, doc_type=es_doc_type, index=es_index)
-    if oks == 0:
-        raise Exception('All bulk ops have failed, stopping pushing ...')
-    logger.info('Bulk of {} elements finished with {} successes and {}'
-                ' fails, continue  ...'.format(len(docs), oks, errs))
-    return oks, errs
+def push_document_stream(doc_stream, es, es_index, es_doc_type,
+                         max_error_rate=ERROR_RATE_LIMIT):
+    """Push a document stream to ElasticSearch
+
+    :param doc_stream: decoded document stream
+    :type  doc_stream: iterator
+    :param es: ES client
+    :type  es: ElasticSearch
+    :param es_index: ES index name
+    :type  es_index: str
+    :param es_doc_type: ES doc_type
+    :type  es_doc_type: str
+    :param max_error_rate: max accepted error rate
+    :type  max_error_rate: float
+    :raises Exception: if push error rate is above limit
+    """
+    oks = 0
+    errs = 0
+
+    # Document push retry is handled for each bulk
+    @retry(stop_max_attempt_number=1)
+    def push_chunk(chunk):
+        return bulk(es, docs, stats_only=True,
+                    doc_type=es_doc_type, index=es_index)
+
+    for docs in chunk(doc_stream, 3000):
+        o, e = push_chunk(docs)
+        logger.info('Pushed bulk of {} elements finished with '
+                    '{} successes and {} fails, '
+                    'continue  ...'.format(len(docs), oks, errs))
+        oks += o
+        errs += e
+
+    # check push error rate
+    all = oks + errs
+    error_rate = float(errs) / all if all > 0 else 0
+    if error_rate > max_error_rate:
+        raise ErrorRateLimitExceeded('Push error rate exceeds '
+                                    'limit: {}'.format(error_rate))
 
 
 @with_temporary_dir
 def push_documents_to_elastic_search(crawl_id, s3_uri,
                                      es_location, es_index, es_doc_type,
-                                     part_id=None,
                                      comparison=False,
                                      tmp_dir=None,
                                      force_fetch=DEFAULT_FORCE_FETCH):
     """Push pre-generated url documents to ElasticSearch
 
+    It will tries to find and push all partition documents.
+
     :param s3_uri: s3 bucket uri for the crawl in processing
-    :param part_id: part_id of the crawl
-        - if `None`, will push for all possible part_id
-        - if is a list or an int, will push the specified parts
     :param comparison: if the comparison feature is activated
         this changes the generated document location
     :param es_location: ES location, eg. `http://location_url:9200`
@@ -99,12 +133,7 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
     host, port = es_location[7:].split(':')
     es = Elasticsearch([{'host': host, 'port': int(port)}])
     docs_uri = _get_docs_dirpath(s3_uri, comparison=comparison)
-
-    # support for different `part_id` param
-    if part_id is None:
-        part_ids = enumerate_partitions(s3_uri)
-    else:
-        part_ids = part_id if isinstance(part_id, list) else [part_id]
+    part_ids = enumerate_partitions(s3_uri)
 
     fetch_regexp = [_get_docs_filename(i, comparison) for i in part_ids]
     files_fetched = fetch_files(docs_uri, tmp_dir,
@@ -112,17 +141,9 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
                                 force_fetch=force_fetch)
 
     reader = itertools.chain(*[gzip.open(f[0], 'r') for f in files_fetched])
+    stream = itertools.imap(json.loads, reader)
 
-    docs = []
-    for i, line in enumerate(reader, 1):
-        docs.append(json.loads(line))
-        if i % 3000 == 0:
-            logger.info('{} items pushed to ES index {} for part {}'.format(
-                i, es_index, part_ids))
-            _bulk(es, docs, es_doc_type=es_doc_type, es_index=es_index)
-            docs = []
-    if len(docs) > 0:
-        _bulk(es, docs, es_doc_type=es_doc_type, es_index=es_index)
+    push_document_stream(stream, es, es_index, es_doc_type)
 
 
 @with_temporary_dir

@@ -103,8 +103,6 @@ from cdf.tasks.url_data import (
     push_documents_to_elastic_search
 )
 generate_documents = as_activity(generate_documents)
-push_documents_to_elastic_search = as_activity(
-    push_documents_to_elastic_search)
 
 from cdf.tasks.aggregators import (
     compute_aggregators_from_part_id,
@@ -144,6 +142,17 @@ from cdf.tasks.insights import compute_insights as compute_insights_task
 refresh_index = as_activity(refresh_index)
 get_feature_options = as_activity(get_feature_options)
 compute_insights_task = as_activity(compute_insights_task)
+
+push_documents_to_elastic_search = activity.with_attributes(
+    version='2.7',
+    task_list='analysis',
+    schedule_to_start_timeout=54000,  # 15h
+    start_to_close_timeout=36000,     # 10h
+    schedule_to_close_timeout=90000,  # 25h
+    heartbeat_timeout=300,
+    retry=0,  # retry is handled per bulk
+    raises_on_failure=True,
+)(push_documents_to_elastic_search)
 
 UPDATE_STATUS_TIMEOUTS = {
     'schedule_to_start_timeout': 14400,  # 4h
@@ -357,23 +366,6 @@ class AnalysisWorkflow(Workflow):
         )
         return insights_result
 
-    def push_documents_to_elastic_search(self, crawl_id, s3_uri, tmp_dir, es_params,
-                                         has_comparison, partitions):
-        elastic_search_results = [futures.Future()]
-        elastic_search_results = [
-            self.submit(
-                push_documents_to_elastic_search,
-                crawl_id=crawl_id,
-                s3_uri=s3_uri,
-                tmp_dir=tmp_dir,
-                part_id=part_id,
-                comparison=has_comparison,
-                **es_params
-            )
-            for part_id in partitions.result
-        ]
-        return elastic_search_results
-
     def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
@@ -408,14 +400,15 @@ class AnalysisWorkflow(Workflow):
             # Quickfix for big failure of ES
             # We assume that documents are already generated and available
             # on S3
-            elastic_search_results = self.push_documents_to_elastic_search(
+            elastic_search_result = self.submit(
+                push_documents_to_elastic_search,
                 crawl_id,
                 s3_uri,
-                tmp_dir,
-                es_params,
-                has_comparison,
-                partitions)
-            futures.wait(*elastic_search_results)
+                comparison=has_comparison,
+                tmp_dir=tmp_dir,
+                **es_params
+            )
+            futures.wait(elastic_search_result)
             return
 
         clusters_result = self.submit(
@@ -638,13 +631,16 @@ class AnalysisWorkflow(Workflow):
         if has_comparison:
             futures.wait(comparison)
 
-        elastic_search_results = [futures.Future()]
-        if all(result.finished for result in documents_results):
-            elastic_search_results = self.push_documents_to_elastic_search(
-                crawl_id, s3_uri, tmp_dir, es_params,
-                has_comparison, partitions
-            )
-            futures.wait(*(elastic_search_results + [consolidate_result]))
+        elastic_search_result = self.submit(
+            push_documents_to_elastic_search,
+            crawl_id,
+            s3_uri,
+            comparison=has_comparison,
+            tmp_dir=tmp_dir,
+            **es_params
+        )
+        futures.wait(elastic_search_result)
+
         insights_result = self.compute_insights(context)
 
         suggest_summary_result = self.submit(
