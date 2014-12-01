@@ -715,18 +715,24 @@ class InlinksStreamDef(InlinksRawStreamDef):
         "inlinks_internal.receives_prev": {
             "type": BOOLEAN_TYPE,
             "default_value": False,
-            "verbose_name": "Receives at least a prev links.",
+            "verbose_name": "Receives at least a prev link.",
             "settings": {
                 FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS,
+                AGG_CATEGORICAL,
+                DIFF_QUALITATIVE
             },
             "enabled": check_enabled("prev_next")
         },
         "inlinks_internal.receives_next": {
             "type": BOOLEAN_TYPE,
             "default_value": False,
-            "verbose_name": "Receives at least a next links.",
+            "verbose_name": "Receives at least a next link.",
             "settings": {
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS,
+                AGG_CATEGORICAL,
+                DIFF_QUALITATIVE
             },
             "enabled": check_enabled("prev_next")
         }

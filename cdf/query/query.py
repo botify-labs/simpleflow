@@ -14,7 +14,7 @@ from cdf.utils.es import EsHandler
 _ALL_FIELDS = {
     'main': {'lang': True},
     'main_image': None,
-    'links': {'top_anchors': True},
+    'links': {'top_anchors': True, 'prev_next': True},
     'semantic_metadata': None,
     'sitemaps': None,  # not sure
     'ganalytics': None,
