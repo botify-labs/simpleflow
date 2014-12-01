@@ -562,7 +562,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         ('follow', follow_mask),
         ('src_url_id', int),
         ('text_hash', str),
-        ('text', str)
+        ('text', str, {"default": "", "missing": ""})
     )
 
     # Check this value if the text is already set
