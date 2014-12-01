@@ -33,3 +33,9 @@ class ApiError(Exception):
 #raised when the format returned by the API is wrong (or unexpected)
 class ApiFormatError(Exception):
     pass
+
+
+class ErrorRateLimitExceeded(Exception):
+    """Raised when error occurs during document pushing
+    """
+    pass

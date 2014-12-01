@@ -6,6 +6,7 @@ import ujson as json
 from elasticsearch import Elasticsearch
 from retrying import retry
 
+from cdf.exceptions import ErrorRateLimitExceeded
 from cdf.log import logger
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.es import bulk
@@ -107,8 +108,8 @@ def push_document_stream(doc_stream, es, es_index, es_doc_type,
     all = oks + errs
     error_rate = float(errs) / all if all > 0 else 0
     if error_rate > max_error_rate:
-        raise Exception('Push error rate exceeds '
-                        'limit: {}'.format(error_rate))
+        raise ErrorRateLimitExceeded('Push error rate exceeds '
+                                    'limit: {}'.format(error_rate))
 
 
 @with_temporary_dir

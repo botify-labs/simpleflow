@@ -1,6 +1,7 @@
 import unittest
 import mock
 
+from cdf.exceptions import ErrorRateLimitExceeded
 from cdf.tasks.url_data import push_document_stream
 
 
@@ -33,7 +34,7 @@ class TestDocumentPushError(unittest.TestCase):
     def test_push_not_accept(self):
         # should raise exception
         self.assertRaises(
-            Exception,
+            ErrorRateLimitExceeded,
             push_document_stream,
             self.stream,  # mock stream
             None, "", "",  # not important param
