@@ -103,15 +103,9 @@ class Caster(object):
                 caster = AdvancedFieldCaster(cast, options)
                 self.casters.append(caster.cast)
 
-    def cast_line(self, line):
-        return [cast(value) for
-                cast, value in izip_longest(self.casters, line, fillvalue=MISSING_VALUE)]
-
     def cast(self, iterable):
-        if self.no_missing_field is True:
-            #simple case, we can simply apply the cast functions
-            for i in iterable:
-                yield [cast(value) for cast, value in zip(self.casters, i)]
-        else:
-            for i in iterable:
-                yield self.cast_line(i)
+        #simple case, we can simply apply the cast functions
+        for line in iterable:
+            yield [cast(value) for cast, value in izip_longest(self.casters, line, fillvalue=MISSING_VALUE)]
+
+
