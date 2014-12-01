@@ -70,7 +70,8 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
                            ELASTICSEARCH_BACKEND.mapping())
 
 
-def push_document_stream(doc_stream, es, es_index, es_doc_type):
+def push_document_stream(doc_stream, es, es_index, es_doc_type,
+                         max_error_rate=ERROR_RATE_LIMIT):
     """Push a document stream to ElasticSearch
 
     :param doc_stream: decoded document stream
@@ -81,6 +82,8 @@ def push_document_stream(doc_stream, es, es_index, es_doc_type):
     :type  es_index: str
     :param es_doc_type: ES doc_type
     :type  es_doc_type: str
+    :param max_error_rate: max accepted error rate
+    :type  max_error_rate: float
     :raises Exception: if push error rate is above limit
     """
     oks = 0
@@ -103,7 +106,7 @@ def push_document_stream(doc_stream, es, es_index, es_doc_type):
     # check push error rate
     all = oks + errs
     error_rate = float(errs) / all if all > 0 else 0
-    if error_rate > ERROR_RATE_LIMIT:
+    if error_rate > max_error_rate:
         raise Exception('Push error rate exceeds '
                         'limit: {}'.format(error_rate))
 
