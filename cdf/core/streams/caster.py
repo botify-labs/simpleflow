@@ -91,35 +91,27 @@ class Caster(object):
 
     """
     def __init__(self, fields):
-        self._fields = []
         self.no_missing_field = all([len(field) == 2 for field in fields])
-        if self.no_missing_field is True:
-            self._fields = fields
-            return
-
         self.casters = []
         for field in fields:
             # Add empty options if the field definition has only 2 values (field_name, caster_func)
             if len(field) == 2:
-                self._fields.append(field + ({},))
                 name, cast = field
-                caster = BasicFieldCaster(cast)
-                self.casters.append(caster)
+                self.casters.append(cast)
             else:
-                self._fields.append(field)
                 name, cast, options = field
                 caster = AdvancedFieldCaster(cast, options)
-                self.casters.append(caster)
+                self.casters.append(caster.cast)
 
     def cast_line(self, line):
-        return [caster.cast(value) for
-                caster, value in izip_longest(self.casters, line, fillvalue=MISSING_VALUE)]
+        return [cast(value) for
+                cast, value in izip_longest(self.casters, line, fillvalue=MISSING_VALUE)]
 
     def cast(self, iterable):
         if self.no_missing_field is True:
             #simple case, we can simply apply the cast functions
             for i in iterable:
-                yield [cast(value) for (name, cast), value in zip(self._fields, i)]
+                yield [cast(value) for cast, value in zip(self.casters, i)]
         else:
             for i in iterable:
                 yield self.cast_line(i)
