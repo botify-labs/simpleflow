@@ -66,7 +66,7 @@ class BasicFieldCaster(FieldCaster):
         return self._cast(value)
 
 
-class AdvancedFieldCaster(FieldCaster):
+class MissingValueFieldCaster(FieldCaster):
     """An implementation of FieldCaster that is
     able to handle missing values.
     """
@@ -118,7 +118,7 @@ class Caster(object):
                 name, cast, options = field
                 #if the field has size 3, decorate caster so that it can
                 #handle missing values
-                caster = AdvancedFieldCaster(cast, options)
+                caster = MissingValueFieldCaster(cast, options)
                 self.casters.append(caster.cast)
 
     def cast(self, iterable):
