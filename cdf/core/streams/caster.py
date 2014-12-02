@@ -123,7 +123,9 @@ class Caster(object):
 
     def cast(self, iterable):
         return imap(
-            lambda line: [cast(value) for cast, value in izip_longest(self.casters, line, fillvalue=MISSING_VALUE)],
+            lambda line: [cast(value)
+                          for cast, value
+                          in izip_longest(self.casters, line, fillvalue=MISSING_VALUE)],
             iterable)
 
 
