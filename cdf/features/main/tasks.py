@@ -16,7 +16,7 @@ from cdf.features.links.streams import OutlinksStreamDef
 from cdf.features.main.compliant_url import generate_compliant_stream
 
 from cdf.utils.path import makedirs
-from cdf.utils.remote_files import enumerate_partitions, load_crawler_metakeys
+from cdf.utils.remote_files import enumerate_partitions, get_crawl_info
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
 from cdf.analysis.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
@@ -68,7 +68,7 @@ def compute_suggested_patterns(crawl_id,
 
     logger.info("Compute patterns cluster")
 
-    crawler_metakeys = load_crawler_metakeys(tmp_dir)
+    crawler_metakeys = get_crawl_info(s3_uri, tmp_dir=tmp_dir)
     nb_crawled_urls = get_nb_crawled_urls(tmp_dir)
 
     patterns = []

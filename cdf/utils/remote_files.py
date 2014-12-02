@@ -7,6 +7,8 @@ from cdf.analysis.urls.utils import get_part_id
 from cdf.exceptions import MalformedFileNameError
 from cdf.utils import s3, path
 from cdf.core import constants
+from cdf.tasks.constants import DEFAULT_FORCE_FETCH
+from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 
 
 def enumerate_partitions(uri, only_crawled_urls=False):
@@ -52,17 +54,18 @@ def get_part_id_from_filename(filename):
     return int(m.group(1))
 
 
-def get_crawl_info(uri, force_fetch=True):
+@with_temporary_dir
+def get_crawl_info(uri, tmp_dir=None, force_fetch=DEFAULT_FORCE_FETCH):
     """
     Return crawl dictionnary based on JSON data stored on S3
     """
-    tmp_dir = tempfile.mkdtemp()
-    global_crawl_info_filename = "files.json"
-    s3.fetch_file(os.path.join(uri, global_crawl_info_filename),
-                  os.path.join(tmp_dir, global_crawl_info_filename),
+    filename = "files.json"
+    crawl_info_path = os.path.join(tmp_dir, filename)
+    s3.fetch_file(os.path.join(uri, filename),
+                  crawl_info_path,
                   force_fetch=force_fetch)
-    crawler_metakeys = load_crawler_metakeys(tmp_dir)
-    shutil.rmtree(tmp_dir)
+    with open(crawl_info_path) as f:
+        crawler_metakeys = json.load(f)
     return crawler_metakeys
 
 
