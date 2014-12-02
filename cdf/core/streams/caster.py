@@ -80,7 +80,7 @@ class AdvancedFieldCaster(FieldCaster):
         """
         self._cast = cast
         self.options = options
-        #precompute the value to return in cast of missing value
+        #precompute the value to return in case of missing value
         if MISSING_OPTION in self.options:
             self.missing_value = self._cast(self.options[MISSING_OPTION])
         elif DEFAULT_OPTION in self.options:
@@ -88,11 +88,16 @@ class AdvancedFieldCaster(FieldCaster):
         else:
             self.missing_value = self._cast('')
 
+        self.empty_value = None
+        if DEFAULT_OPTION in self.options:
+            #precompute the value to return in case of empty string
+            self.empty_value = self._cast(self.options[DEFAULT_OPTION])
+
     def cast(self, value):
         if value == MISSING_VALUE:
             return self.missing_value
-        elif value == '' and DEFAULT_OPTION in self.options:
-            return self._cast(self.options[DEFAULT_OPTION])
+        elif value == '' and self.empty_value is not None:
+            return self.empty_value
         return self._cast(value)
 
 
