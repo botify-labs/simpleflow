@@ -395,7 +395,7 @@ class AnalysisWorkflow(Workflow):
 
         crawled_partitions = self.submit(enumerate_partitions,
                                          s3_uri,
-                                         True)
+                                         only_crawled_urls=True)
 
         revision_number = context['revision_number']
         features_flags = context.get('features_flags', [])
