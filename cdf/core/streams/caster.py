@@ -1,4 +1,5 @@
-from itertools import izip_longest
+import abc
+from itertools import izip_longest, imap
 
 """
 A stream is a generator of values. A value may be any object but usually is a
@@ -39,12 +40,26 @@ MISSING_VALUE = '[missing]'
 
 
 class FieldCaster(object):
+    """Abstract class for casters"""
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
     def cast(value):
+        """Cast a value
+        :param value: the input value
+        :type value: str
+        :returns: depends on the caster
+        """
         pass
 
 
 class BasicFieldCaster(FieldCaster):
+    """Simple implementation of FieldCaster"""
     def __init__(self, cast):
+        """Constructor
+        :param cast: the cast function
+        :type cast: func
+        """
         self._cast = cast
 
     def cast(self, value):
@@ -52,10 +67,20 @@ class BasicFieldCaster(FieldCaster):
 
 
 class AdvancedFieldCaster(FieldCaster):
+    """An implementation of FieldCaster that is
+    able to handle missing values.
+    """
     def __init__(self, cast, options):
+        """Constructor
+        :param cast: the cast function
+        :type cast: func
+        :param options: the options to handle missing values.
+                        a dict string -> value
+                        the keys can be MISSING_OPTION, DEFAULT_OPTION
+        """
         self._cast = cast
         self.options = options
-        self.missing_value = None
+        #precompute the value to return in cast of missing value
         if MISSING_OPTION in self.options:
             self.missing_value = self._cast(self.options[MISSING_OPTION])
         elif DEFAULT_OPTION in self.options:
@@ -78,21 +103,23 @@ class Caster(object):
 
     """
     def __init__(self, fields):
-        self.no_missing_field = all([len(field) == 2 for field in fields])
         self.casters = []
         for field in fields:
-            # Add empty options if the field definition has only 2 values (field_name, caster_func)
             if len(field) == 2:
+                #if the field has size 2, simply apply caster
                 name, cast = field
                 self.casters.append(cast)
             else:
                 name, cast, options = field
+                #if the field has size 3, decorate caster so that it can
+                #handle missing values
                 caster = AdvancedFieldCaster(cast, options)
                 self.casters.append(caster.cast)
 
     def cast(self, iterable):
-        #simple case, we can simply apply the cast functions
-        for line in iterable:
-            yield [cast(value) for cast, value in izip_longest(self.casters, line, fillvalue=MISSING_VALUE)]
+        return imap(
+            lambda line: [cast(value) for cast, value in izip_longest(self.casters, line, fillvalue=MISSING_VALUE)],
+            iterable)
+
 
 
