@@ -22,9 +22,9 @@ from cdf.core.streams.stream_factory import (ProtocolStreamFactory,
                                              PathStreamFactory,
                                              HostStreamFactory,
                                              QueryStringStreamFactory,
-                                             MetadataStreamFactory)
-from cdf.utils.crawl_info import (load_crawler_metakeys,
-                                  get_nb_crawled_urls)
+                                             MetadataStreamFactory,
+                                             get_nb_crawled_urls)
+from cdf.utils.crawl_info import load_crawler_metakeys
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 
 
