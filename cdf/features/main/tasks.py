@@ -16,7 +16,7 @@ from cdf.features.links.streams import OutlinksStreamDef
 from cdf.features.main.compliant_url import generate_compliant_stream
 
 from cdf.utils.path import makedirs
-from cdf.utils.remote_files import enumerate_partitions
+from cdf.utils.remote_files import enumerate_partitions, load_crawler_metakeys
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
 from cdf.analysis.urls.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
@@ -29,7 +29,6 @@ from cdf.core.streams.stream_factory import (StreamFactoryCache,
                                              QueryStringStreamFactory,
                                              MetadataStreamFactory,
                                              get_nb_crawled_urls)
-from cdf.utils.crawl_info import load_crawler_metakeys
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.features.main.streams import (
     IdStreamDef,

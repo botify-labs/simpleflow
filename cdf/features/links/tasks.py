@@ -6,7 +6,7 @@ from cdf.log import logger
 from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.utils.s3 import push_file, push_content, fetch_file
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
-from cdf.utils.crawl_info import (
+from cdf.utils.remote_files import (
     load_crawler_metakeys,
     get_max_crawled_urlid
 )

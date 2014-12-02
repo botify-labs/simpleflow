@@ -12,8 +12,11 @@ from cdf.core.streams.utils import split_file
 from cdf.log import logger
 
 from cdf.core.features import Feature
-from cdf.utils.remote_files import get_part_id_from_filename
-from cdf.utils.crawl_info import load_crawler_metakeys, get_max_crawled_urlid
+from cdf.utils.remote_files import (
+    get_part_id_from_filename,
+    load_crawler_metakeys,
+    get_max_crawled_urlid
+)
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.semantic_metadata.streams import ContentsStreamDef
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
