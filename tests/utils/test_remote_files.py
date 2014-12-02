@@ -1,26 +1,19 @@
 import unittest
 import boto
 import mock
+import json
 from moto import mock_s3
 from cdf.exceptions import MalformedFileNameError
 from cdf.utils.remote_files import (
     enumerate_partitions,
-    get_part_id_from_filename
+    get_part_id_from_filename,
+    get_crawl_info,
+    get_max_crawled_partid
 )
+from tests.mixins import TestBucketMixin
 
 
-class TestEnumeratePartitions(unittest.TestCase):
-
-    def _get_bucket(self):
-        bucket = 'test_bucket'
-        s3 = boto.connect_s3()
-        test_bucket = s3.create_bucket(bucket)
-        return test_bucket
-
-    def _create_file(self, bucket, file_name):
-        key = boto.s3.key.Key(bucket)
-        key.name = file_name
-        key.set_contents_from_string("")
+class TestEnumeratePartitions(unittest.TestCase, TestBucketMixin):
 
     @mock_s3
     def test_nominal_case(self):
@@ -78,4 +71,43 @@ class TestGetPartIdFromFileName(unittest.TestCase):
                           get_part_id_from_filename,
                           "urlcontents.txt.-1.gz")
 
+
+class TestGetCrawlInfo(unittest.TestCase, TestBucketMixin):
+
+    @mock_s3
+    def test_nominal_case(self):
+        test_bucket = self._get_bucket()
+        crawl_info = {"max_uid_we_crawled": 1000}
+        self._create_json_file(test_bucket,
+                               "files.json",
+                               crawl_info)
+        self.assertEquals(get_crawl_info("s3://test_bucket"),
+                          crawl_info)
+
+
+class TestGetMaxCrawledPartId(unittest.TestCase):
+
+    def test_nominal_case(self):
+        # Test 1 url
+        crawl_info = {"max_uid_we_crawled": 1,
+                      "lines_per_file_first": 100,
+                      "lines_per_file": 200}
+        self.assertEquals(
+            get_max_crawled_partid(crawl_info),
+            0
+        )
+
+        # Test 101 urls
+        crawl_info["max_uid_we_crawled"] = 101
+        self.assertEquals(
+            get_max_crawled_partid(crawl_info),
+            1
+        )
+
+        # Test 301 urls
+        crawl_info["max_uid_we_crawled"] = 301
+        self.assertEquals(
+            get_max_crawled_partid(crawl_info),
+            2
+        )
 
