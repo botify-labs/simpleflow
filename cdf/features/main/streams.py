@@ -25,7 +25,8 @@ class IdStreamDef(StreamDefBase):
         ('protocol', str),
         ('host', str),
         ('path', str),
-        ('query_string', str, {"default": "", "missing": ""}),
+        # explicitly declare the field as potentially missing
+        ('query_string', str, {"default": "", "missing": ""})
     )
     URL_DOCUMENT_DEFAULT_GROUP = "scheme"
     URL_DOCUMENT_MAPPING = {

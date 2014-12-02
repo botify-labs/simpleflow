@@ -561,6 +561,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         ('link_type', str),
         ('follow', follow_mask),
         ('src_url_id', int),
+        # explicitly declare the fields as potentially missing
         ('text_hash', str, {"default": "", "missing": ""}),
         ('text', str, {"default": "", "missing": ""})
     )
