@@ -31,9 +31,9 @@ class TestComputeZones(unittest.TestCase):
         urlids = boto.s3.key.Key(bucket)
         urlids.key = "crawl_result/urlids.txt.0.gz"
         ids = iter([
-            (1, "http", "foo.com", "/"),
-            (2, "https", "foo.com", "/bar"),
-            (9, "https", "foo.com", "/baz")
+            (1, "http", "foo.com", "/", ""),
+            (2, "https", "foo.com", "/bar", ""),
+            (9, "https", "foo.com", "/baz", "")
         ])
         IdStreamDef.persist(ids, self.s3_uri, part_id=0)
 
