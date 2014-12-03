@@ -1,6 +1,3 @@
-import abc
-from itertools import izip_longest, imap
-
 """
 A stream is a generator of values. A value may be any object but usually is a
 string or a tuple. The purpose of this module is to provide simple operations
@@ -30,6 +27,10 @@ Example:
 >>> inlinks = cast(streams.utils.split_file((open('test.data'))))
 
 """
+
+import abc
+from itertools import izip_longest, imap
+
 
 __all__ = ['Caster']
 
