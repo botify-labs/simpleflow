@@ -6,8 +6,8 @@ from cdf.log import logger
 from cdf.core.streams.cache import BufferedMarshalStreamCache
 from cdf.utils.s3 import push_file, push_content, fetch_file
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
-from cdf.core.streams.stream_factory import (
-    load_crawler_metakeys,
+from cdf.utils.remote_files import (
+    get_crawl_info,
     get_max_crawled_urlid
 )
 from cdf.features.links.links import OutlinksTransducer, InlinksTransducer
@@ -311,11 +311,7 @@ def make_inlinks_percentiles_file(s3_uri,
     inlinks_counter_stream = InlinksCountersStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     inredirections_counter_stream = InredirectCountersStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     #get max crawled urlid
-    global_crawl_info_filename = "files.json"
-    fetch_file(os.path.join(s3_uri, global_crawl_info_filename),
-               os.path.join(tmp_dir, global_crawl_info_filename),
-               force_fetch=force_fetch)
-    crawler_metakeys = load_crawler_metakeys(tmp_dir)
+    crawler_metakeys = get_crawl_info(s3_uri, tmp_dir=tmp_dir)
     max_crawled_urlid = get_max_crawled_urlid(crawler_metakeys)
     #generate stream
     nb_quantiles = 100

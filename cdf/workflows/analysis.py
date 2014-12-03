@@ -390,7 +390,12 @@ class AnalysisWorkflow(Workflow):
             'es_doc_type': context['es_doc_type']
         }
 
-        partitions = self.submit(enumerate_partitions, s3_uri)
+        partitions = self.submit(enumerate_partitions,
+                                 s3_uri)
+
+        crawled_partitions = self.submit(enumerate_partitions,
+                                         s3_uri,
+                                         only_crawled_urls=True)
 
         revision_number = context['revision_number']
         features_flags = context.get('features_flags', [])
@@ -455,7 +460,7 @@ class AnalysisWorkflow(Workflow):
                     tmp_dir=tmp_dir,
                     part_id=part_id,
                 )
-                for part_id in partitions.result
+                for part_id in crawled_partitions.result
             ]
 
         inlinks_results = [
@@ -467,7 +472,7 @@ class AnalysisWorkflow(Workflow):
                 link_direction='in',
                 part_id=part_id,
             )
-            for part_id in partitions.result
+            for part_id in crawled_partitions.result
         ]
 
         outlinks_results = [
@@ -479,7 +484,7 @@ class AnalysisWorkflow(Workflow):
                 link_direction='out',
                 part_id=part_id,
             )
-            for part_id in partitions.result
+            for part_id in crawled_partitions.result
         ]
 
         filled_metadata_count_results = [
@@ -489,7 +494,7 @@ class AnalysisWorkflow(Workflow):
                 tmp_dir=tmp_dir,
                 part_id=part_id
             )
-            for part_id in partitions.result
+            for part_id in crawled_partitions.result
         ]
 
         zone_results = [
@@ -499,7 +504,7 @@ class AnalysisWorkflow(Workflow):
                 tmp_dir=tmp_dir,
                 part_id=part_id
             )
-            for part_id in partitions.result
+            for part_id in crawled_partitions.result
         ]
 
         compliant_urls_results = [
@@ -510,7 +515,7 @@ class AnalysisWorkflow(Workflow):
                 tmp_dir=tmp_dir,
                 part_id=part_id
             )
-            for part_id in partitions.result
+            for part_id in crawled_partitions.result
         ]
         #zone aware duplication computation needs zones and compliant urls
         futures.wait(*(zone_results + compliant_urls_results))
@@ -548,7 +553,7 @@ class AnalysisWorkflow(Workflow):
                     tmp_dir=tmp_dir,
                     part_id=part_id,
                 )
-                for part_id in partitions.result
+                for part_id in crawled_partitions.result
             ]
         # Group all the futures that need to terminate before computing the
         # aggregations and generating documents.
@@ -592,7 +597,7 @@ class AnalysisWorkflow(Workflow):
                 tmp_dir=tmp_dir,
                 part_id=part_id,
             )
-            for part_id in partitions.result
+            for part_id in crawled_partitions.result
         ]
 
         futures.wait(*aggregators_results)

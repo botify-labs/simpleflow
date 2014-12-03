@@ -322,6 +322,13 @@ class MetricsAggregator(object):
             #if k == 2:
             #    break
             infos = result[2]['infos'][0]
+
+            # If the page has not been crawled, we skip it
+            http_code = infos[http_code_idx]
+            in_queue = http_code in (0, 1, 2)
+            if in_queue:
+                continue
+
             outlinks = result[2]['outlinkscounters']
             inlinks = result[2]['inlinkscounters']
             contents_duplicate = result[2]['contentsduplicate']
@@ -337,12 +344,6 @@ class MetricsAggregator(object):
             # Reminder : 1 gzipped, 2 notused, 4 meta_noindex 8 meta_nofollow 16 has_canonical 32 bad canonical
             index = not (4 & infos[infos_mask_idx] == 4)
             follow = not (8 & infos[infos_mask_idx] == 8)
-
-            http_code = infos[http_code_idx]
-            in_queue = http_code in (0, 1, 2)
-            # If the page has not been crawled, we skip it
-            if in_queue:
-                continue
 
             suggest_keys = get_keys_from_stream_suggest(result[2]['suggest'])
 
