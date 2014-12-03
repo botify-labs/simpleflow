@@ -159,3 +159,9 @@ class TestCaster(unittest.TestCase):
             [1, 'http://www.site.com/', 'fr'],
         ]
         self.assertEquals(list(urls), expected)
+
+    def test_cast_line_generator(self):
+        fields = []
+        caster = Caster(fields)
+        cast_line = caster.cast_line_generator([int, float, _raw_to_bool])
+        self.assertEqual([10, 3.14, True], cast_line(["10", "3.14", 1]))
