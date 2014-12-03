@@ -1,5 +1,7 @@
 def pad_list(input_list, goal_length, fill_value):
     """Pad elements at the end of a list so that it reach a goal length.
+    If the input list is larger than the goal length, the function returns
+    it as is.
     :param input_list: the input list
     :type input_list: list
     :param goal_length: the size of the returned list
