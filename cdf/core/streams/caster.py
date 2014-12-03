@@ -29,7 +29,7 @@ Example:
 """
 
 import abc
-from itertools import izip_longest, imap
+from itertools import imap
 
 
 __all__ = ['Caster']
@@ -102,11 +102,46 @@ class MissingValueFieldCaster(FieldCaster):
         return self._cast(value)
 
 
+def cast_line_generator(casters):
+    """Generates a function that casts a line
+    :param casters: the input list of casters
+    :type casters: list
+    :returns: function - a function that takes a line of string as input
+                         and cast each of its element
+                         with the appropriate caster.
+    """
+    lambda_code = "lambda x: ["
+    lambda_code += ", ".join(
+        ["caster_{}(x[{}])".format(i, i) for i in range(len(casters))]
+    )
+    lambda_code += "]"
+
+    globals_dict = {}
+    for i, caster in enumerate(casters):
+        globals_dict["caster_{}".format(i)] = caster
+    return eval(lambda_code, globals_dict)
+
+
+def pad_list(input_list, goal_length, fill_value):
+    """Pad elements at the end of a list so that it reach a goal length.
+    :param input_list: the input list
+    :type input_list: list
+    :param goal_length: the size of the returned list
+    :type goal_lenght: int
+    :param fill_value: the value of the padding elements
+    :type fill_value: unknown
+    :returns: list"""
+    length = len(input_list)
+    if length >= goal_length:
+        return input_list
+    else:
+        return input_list + [fill_value] * (goal_length - length)
+
+
 class Caster(object):
     """
     Cast each field value to an object with respect to a definition mapping in
     *fields*.
-
     """
     def __init__(self, fields):
         self.casters = []
@@ -121,13 +156,14 @@ class Caster(object):
                 #handle missing values
                 caster = MissingValueFieldCaster(cast, options)
                 self.casters.append(caster.cast)
+        self.no_missing_fields = all([len(f) == 2 for f in fields])
 
     def cast(self, iterable):
-        return imap(
-            lambda line: [cast(value)
-                          for cast, value
-                          in izip_longest(self.casters, line, fillvalue=MISSING_VALUE)],
-            iterable)
-
-
-
+        if not self.no_missing_fields:
+            #pad MISSING_VALUE if some fields are missing
+            iterable = imap(
+                lambda x:  pad_list(x, len(self.casters), MISSING_VALUE),
+                iterable
+            )
+        cast_line = cast_line_generator(self.casters)
+        return imap(cast_line, iterable)
