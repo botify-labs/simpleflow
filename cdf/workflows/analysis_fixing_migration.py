@@ -63,16 +63,6 @@ def as_activity(func):
     )(func)
 
 
-from cdf.features.main.tasks import compute_zones, compute_compliant_urls
-compute_zones = as_activity(compute_zones)
-compute_compliant_urls = as_activity(compute_compliant_urls)
-
-from cdf.features.semantic_metadata.tasks import (
-    compute_metadata_count,
-    make_metadata_duplicates_file,
-    make_context_aware_metadata_duplicates_file,
-)
-
 from cdf.features.links.tasks import (
     make_bad_link_file,
     make_bad_link_counter_file,
@@ -81,11 +71,7 @@ from cdf.features.links.tasks import (
     make_top_domains_files,
     make_inlinks_percentiles_file
 )
-compute_metadata_count = as_activity(compute_metadata_count)
-make_metadata_duplicates_file = as_activity(make_metadata_duplicates_file)
-make_context_aware_metadata_duplicates_file = as_activity(
-    make_context_aware_metadata_duplicates_file
-)
+
 make_bad_link_counter_file = as_activity(make_bad_link_counter_file)
 make_links_to_non_compliant_file = as_activity(make_links_to_non_compliant_file)
 make_links_to_non_compliant_counter_file = as_activity(make_links_to_non_compliant_counter_file)
@@ -97,30 +83,6 @@ from cdf.tasks.url_data import (
     push_documents_to_elastic_search
 )
 generate_documents = as_activity(generate_documents)
-
-from cdf.tasks.aggregators import (
-    compute_aggregators_from_part_id,
-    make_suggest_summary_file,
-    consolidate_aggregators,
-)
-compute_aggregators_from_part_id = as_activity(
-    compute_aggregators_from_part_id)
-make_suggest_summary_file = as_activity(make_suggest_summary_file)
-consolidate_aggregators = as_activity(consolidate_aggregators)
-
-from cdf.features.ganalytics.tasks import (
-    import_data_from_ganalytics,
-    match_analytics_to_crawl_urls
-)
-import_data_from_ganalytics = as_activity(import_data_from_ganalytics)
-match_analytics_to_crawl_urls = as_activity(match_analytics_to_crawl_urls)
-
-from cdf.features.sitemaps.tasks import (
-    download_sitemap_files,
-    match_sitemap_urls,
-)
-download_sitemap_files = as_activity(download_sitemap_files)
-match_sitemap_urls = as_activity(match_sitemap_urls)
 
 from cdf.utils.remote_files import enumerate_partitions
 enumerate_partitions = as_activity(enumerate_partitions)
@@ -309,14 +271,6 @@ class AnalysisFixingMigrationWorkflow(Workflow):
         revision_number = context['revision_number']
         features_flags = context.get('features_flags', [])
         has_comparison = 'comparison' in features_flags
-
-        metadata_dup_result = self.submit(
-            make_metadata_duplicates_file,
-            crawl_id,
-            s3_uri,
-            first_part_id_size,
-            part_id_size,
-            tmp_dir=tmp_dir)
 
         # ``make_bad_link_counter_file`` depends on ``make_bad_link_file`` but
         # does not take its result (that is None) as an argument. Further below

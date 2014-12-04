@@ -108,20 +108,6 @@ compute_aggregators_from_part_id = as_activity(
 make_suggest_summary_file = as_activity(make_suggest_summary_file)
 consolidate_aggregators = as_activity(consolidate_aggregators)
 
-from cdf.features.ganalytics.tasks import (
-    import_data_from_ganalytics,
-    match_analytics_to_crawl_urls
-)
-import_data_from_ganalytics = as_activity(import_data_from_ganalytics)
-match_analytics_to_crawl_urls = as_activity(match_analytics_to_crawl_urls)
-
-from cdf.features.sitemaps.tasks import (
-    download_sitemap_files,
-    match_sitemap_urls,
-)
-download_sitemap_files = as_activity(download_sitemap_files)
-match_sitemap_urls = as_activity(match_sitemap_urls)
-
 from cdf.utils.remote_files import enumerate_partitions
 enumerate_partitions = as_activity(enumerate_partitions)
 
