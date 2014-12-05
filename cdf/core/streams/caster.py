@@ -130,6 +130,15 @@ class Caster(object):
                              and cast each of its element
                              with the appropriate caster.
         """
+
+        # the naive implementation of this method is
+        # lambda fields: [
+        #    caster(field) for caster, field in zip(self.casters, fields)
+        # ]
+        #
+        # the use of metaprogramming removes :
+        #  - costly list comprehension
+        #  - the dereferencing of self.casters elements
         lambda_code = "lambda x: ["
         lambda_code += ", ".join(
             ["caster_{}(x[{}])".format(i, i) for i in range(len(casters))]
