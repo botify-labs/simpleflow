@@ -25,12 +25,12 @@ class TestBadLink(unittest.TestCase):
     def test_bad_links_harness(self):
         stream_outlinks = OutlinksStreamDef.load_iterator(
             [
-                [4, 'a', 0, 1],
-                [4, 'a', 0, 2],
-                [5, 'a', 0, 1],
-                [5, 'a', 0, 3],
-                [5, 'a', 4, 3],
-                [6, 'canonical', 0, 2],
+                [4, 'a', 0, 1, ""],
+                [4, 'a', 0, 2, ""],
+                [5, 'a', 0, 1, ""],
+                [5, 'a', 0, 3, ""],
+                [5, 'a', 4, 3, ""],
+                [6, 'canonical', 0, 2, ""],
             ]
         )
 
@@ -48,11 +48,11 @@ class TestBadLink(unittest.TestCase):
     def test_bad_links_follow(self):
         stream_outlinks = OutlinksStreamDef.load_iterator(
             [
-                [4, 'a', 0, 1],
-                [4, 'a', 0, 2],
-                [4, 'a', 0, 2],  # duplicated
-                [4, 'a', 1, 2],  # nofollow
-                [4, 'a', 4, 3],
+                [4, 'a', 0, 1, ""],
+                [4, 'a', 0, 2, ""],
+                [4, 'a', 0, 2, ""],  # duplicated
+                [4, 'a', 1, 2, ""],  # nofollow
+                [4, 'a', 4, 3, ""],
             ]
         )
         u = get_bad_links(self.infos, stream_outlinks)

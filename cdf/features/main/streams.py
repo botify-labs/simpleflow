@@ -25,7 +25,7 @@ class IdStreamDef(StreamDefBase):
         ('protocol', str),
         ('host', str),
         ('path', str),
-        ('query_string', str),
+        ('query_string', str)
     )
     URL_DOCUMENT_DEFAULT_GROUP = "scheme"
     URL_DOCUMENT_MAPPING = {

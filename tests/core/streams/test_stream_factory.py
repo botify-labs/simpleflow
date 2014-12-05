@@ -86,7 +86,7 @@ class TestStreamFactory(unittest.TestCase):
         stream_factory = FileStreamFactory(dirpath, content, crawler_metakeys)
         #fake file object
         file_content = ("1\thttp\twww.foo.com\t/bar\t?param=value\n"
-                        "3\thttp\twww.foo.com\t/bar/baz")
+                        "3\thttp\twww.foo.com\t/bar/baz\t")
         file = StringIO.StringIO(file_content)
 
         expected_result = [[1, "http", "www.foo.com", "/bar", "?param=value"],

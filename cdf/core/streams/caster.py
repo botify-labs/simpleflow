@@ -1,5 +1,3 @@
-from itertools import izip_longest
-
 """
 A stream is a generator of values. A value may be any object but usually is a
 string or a tuple. The purpose of this module is to provide simple operations
@@ -30,6 +28,10 @@ Example:
 
 """
 
+import abc
+from itertools import imap
+from cdf.utils.list import pad_list
+
 __all__ = ['Caster']
 
 MISSING_OPTION = 'missing'
@@ -38,38 +40,122 @@ DEFAULT_OPTION = 'default'
 MISSING_VALUE = '[missing]'
 
 
-def return_value(value, cast_func, options):
-    if value == MISSING_VALUE:
-        if MISSING_OPTION in options:
-            return cast_func(options[MISSING_OPTION])
-        elif DEFAULT_OPTION in options:
-            return cast_func(options[DEFAULT_OPTION])
+class FieldCaster(object):
+    """Abstract class for casters"""
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def cast(value):
+        """Cast a value
+        :param value: the input value
+        :type value: str
+        :returns: depends on the caster
+        """
+        pass
+
+
+class BasicFieldCaster(FieldCaster):
+    """Simple implementation of FieldCaster"""
+    def __init__(self, cast):
+        """Constructor
+        :param cast: the cast function
+        :type cast: func
+        """
+        self._cast = cast
+
+    def cast(self, value):
+        return self._cast(value)
+
+
+class MissingValueFieldCaster(FieldCaster):
+    """An implementation of FieldCaster that is
+    able to handle missing values.
+    """
+    def __init__(self, cast, options):
+        """Constructor
+        :param cast: the cast function
+        :type cast: func
+        :param options: the options to handle missing values.
+                        a dict string -> value
+                        the keys can be MISSING_OPTION, DEFAULT_OPTION
+        """
+        self._cast = cast
+        self.options = options
+        #precompute the value to return in case of missing value
+        if MISSING_OPTION in self.options:
+            self.missing_value = self._cast(self.options[MISSING_OPTION])
+        elif DEFAULT_OPTION in self.options:
+            self.missing_value = self._cast(self.options[DEFAULT_OPTION])
         else:
-            return cast_func('')
-    elif value == '' and DEFAULT_OPTION in options:
-        return cast_func(options[DEFAULT_OPTION])
-    return cast_func(value)
+            self.missing_value = self._cast('')
+
+        self.empty_value = None
+        if DEFAULT_OPTION in self.options:
+            #precompute the value to return in case of empty string
+            self.empty_value = self._cast(self.options[DEFAULT_OPTION])
+
+    def cast(self, value):
+        if value == MISSING_VALUE:
+            return self.missing_value
+        elif value == '' and self.empty_value is not None:
+            return self.empty_value
+        return self._cast(value)
 
 
 class Caster(object):
     """
     Cast each field value to an object with respect to a definition mapping in
     *fields*.
-
     """
     def __init__(self, fields):
-        self._fields = []
+        self.casters = []
         for field in fields:
-            # Add empty options if the field definition has only 2 values (field_name, caster_func)
             if len(field) == 2:
-                self._fields.append(field + ({},))
+                #if the field has size 2, simply apply caster
+                name, cast = field
+                self.casters.append(cast)
             else:
-                self._fields.append(field)
+                name, cast, options = field
+                #if the field has size 3, decorate caster so that it can
+                #handle missing values
+                caster = MissingValueFieldCaster(cast, options)
+                self.casters.append(caster.cast)
+        self.no_missing_fields = all([len(f) == 2 for f in fields])
 
-    def cast_line(self, line):
-        return [(return_value(value, cast, options) if cast else value) for
-                (name, cast, options), value in izip_longest(self._fields, line, fillvalue=MISSING_VALUE)]
+    def cast_line_generator(self, casters):
+        """Generates a function that casts a line
+        :param casters: the input list of casters
+        :type casters: list
+        :returns: function - a function that takes a line of string as input
+                             and cast each of its element
+                             with the appropriate caster.
+        """
+
+        # the naive implementation of this method is
+        # lambda fields: [
+        #    caster(field) for caster, field in zip(self.casters, fields)
+        # ]
+        #
+        # the use of metaprogramming removes :
+        #  - costly list comprehension
+        #  - the dereferencing of self.casters elements
+        lambda_code = "lambda x: ["
+        lambda_code += ", ".join(
+            ["caster_{}(x[{}])".format(i, i) for i in range(len(casters))]
+        )
+        lambda_code += "]"
+
+        globals_dict = {}
+        for i, caster in enumerate(casters):
+            globals_dict["caster_{}".format(i)] = caster
+        return eval(lambda_code, globals_dict)
 
     def cast(self, iterable):
-        for i in iterable:
-            yield self.cast_line(i)
+        if not self.no_missing_fields:
+            #pad MISSING_VALUE if some fields are missing
+            iterable = imap(
+                lambda x:  pad_list(x, len(self.casters), MISSING_VALUE),
+                iterable
+            )
+        cast_line = self.cast_line_generator(self.casters)
+        return imap(cast_line, iterable)

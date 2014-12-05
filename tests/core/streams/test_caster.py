@@ -6,9 +6,46 @@ from StringIO import StringIO
 from cdf.log import logger
 from cdf.utils.convert import _raw_to_bool
 from cdf.core.streams.utils import split_file
-from cdf.core.streams.caster import Caster
+from cdf.core.streams.caster import (
+    BasicFieldCaster, MissingValueFieldCaster, Caster,
+    MISSING_VALUE, MISSING_OPTION, DEFAULT_OPTION
+)
 
 logger.setLevel(logging.DEBUG)
+
+
+class TestBasicFieldCaster(unittest.TestCase):
+    def test_nominal_case(self):
+        caster = BasicFieldCaster(int)
+        self.assertEqual(10, caster.cast("10"))
+
+
+class TestMissingValueFieldCaster(unittest.TestCase):
+    def test_nominal_case(self):
+        caster = MissingValueFieldCaster(int, {MISSING_OPTION: 0})
+        self.assertEqual(10, caster.cast("10"))
+
+    def test_missing_value(self):
+        caster = MissingValueFieldCaster(int, {MISSING_OPTION: 0})
+        self.assertEqual(0, caster.cast(MISSING_VALUE))
+
+    def test_default_value(self):
+        caster = MissingValueFieldCaster(int, {DEFAULT_OPTION: 0})
+        self.assertEqual(0, caster.cast(MISSING_VALUE))
+
+    def test_missing_priority_over_default(self):
+        caster = MissingValueFieldCaster(
+            int, {MISSING_OPTION: 0, DEFAULT_OPTION: 10}
+        )
+        self.assertEqual(0, caster.cast(MISSING_VALUE))
+
+    def test_no_missing_no_default_value(self):
+        caster = MissingValueFieldCaster(bool, {DEFAULT_OPTION: 0})
+        self.assertEqual(False, caster.cast(MISSING_VALUE))
+
+    def test_empty_value(self):
+        caster = MissingValueFieldCaster(int, {DEFAULT_OPTION: 10})
+        self.assertEqual(10, caster.cast(''))
 
 
 class TestCaster(unittest.TestCase):
@@ -122,3 +159,9 @@ class TestCaster(unittest.TestCase):
             [1, 'http://www.site.com/', 'fr'],
         ]
         self.assertEquals(list(urls), expected)
+
+    def test_cast_line_generator(self):
+        fields = []
+        caster = Caster(fields)
+        cast_line = caster.cast_line_generator([int, float, _raw_to_bool])
+        self.assertEqual([10, 3.14, True], cast_line(["10", "3.14", 1]))
