@@ -72,6 +72,7 @@ from cdf.features.links.tasks import (
     make_inlinks_percentiles_file
 )
 
+make_bad_link_file = as_activity(make_bad_link_file)
 make_bad_link_counter_file = as_activity(make_bad_link_counter_file)
 make_links_to_non_compliant_file = as_activity(make_links_to_non_compliant_file)
 make_links_to_non_compliant_counter_file = as_activity(make_links_to_non_compliant_counter_file)
@@ -272,6 +273,15 @@ class AnalysisFixingMigrationWorkflow(Workflow):
         features_flags = context.get('features_flags', [])
         has_comparison = 'comparison' in features_flags
 
+        bad_link_result = self.submit(
+            make_bad_link_file,
+            crawl_id,
+            s3_uri,
+            first_part_id_size,
+            part_id_size,
+            tmp_dir=tmp_dir)
+
+
         # ``make_bad_link_counter_file`` depends on ``make_bad_link_file`` but
         # does not take its result (that is None) as an argument. Further below
         # we need to wait for ``bad_link_counter_results``. That's why we
@@ -281,16 +291,18 @@ class AnalysisFixingMigrationWorkflow(Workflow):
         # ``bad_link_counter_results``.  When ``bad_link_result.finished`` will
         # be True, ``bad_link_counter_results`` will be replaced by the actual
         # list of futures returned by the call to ``self.startmap()``.
-        bad_link_counter_results = [
-            self.submit(
-                make_bad_link_counter_file,
-                crawl_id=crawl_id,
-                s3_uri=s3_uri,
-                tmp_dir=tmp_dir,
-                part_id=part_id,
-            )
-            for part_id in crawled_partitions.result
-        ]
+        bad_link_counter_results = [futures.Future()]
+        if bad_link_result.finished:
+            bad_link_counter_results = [
+                self.submit(
+                    make_bad_link_counter_file,
+                    crawl_id=crawl_id,
+                    s3_uri=s3_uri,
+                    tmp_dir=tmp_dir,
+                    part_id=part_id,
+                )
+                for part_id in crawled_partitions.result
+            ]
 
         links_to_non_compliant_urls = self.submit(
             make_links_to_non_compliant_file,
