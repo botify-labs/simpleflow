@@ -1,7 +1,9 @@
+import ujson as json
+from elasticsearch import Elasticsearch
+import requests
+
 from cdf.utils.url import get_domain
 from cdf.utils.stream import chunk
-from elasticsearch import Elasticsearch
-
 
 
 # TODO(darkjh) use thrift protocol
@@ -22,7 +24,47 @@ class EsHandler(object):
         )
 
     def __repr__(self):
-        return '<ES of %s/%s/%s>' % (self.es_location, self.index, self.doc_type)
+        return '<ES of %s/%s/%s>' % (
+            self.es_location, self.index, self.doc_type)
+
+    @classmethod
+    def _get_index_action(cls, _id):
+        return json.dumps({'index': {'_id': _id}})
+
+    @classmethod
+    def _parse_bulk_responses(cls, responses):
+        success, fail = 0, 0
+        # parse responses
+        err = responses.get('errors')
+        if err is False:
+            return len(responses['items']), 0
+
+        for item in responses['items']:
+            err = item['index' if 'index' in item else 'create'].get('error', False)
+            if err:
+                fail += 1
+            else:
+                success += 1
+
+        return success, fail
+
+    def raw_bulk_index(self, raw_docs, stats_only=True):
+        bulks = []
+        for d in raw_docs:
+            doc = json.loads(d)
+            bulks.append(self._get_index_action(doc['_id']))
+            bulks.append(d)
+        bulks.append('')  # allows extra '\n' in the end
+
+        # TODO verify this format
+        endpoint = 'http://{}/{}/{}/_bulk'.format(
+            self.es_location, self.index, self.doc_type)
+        r = requests.post(endpoint, '\n'.join(bulks))
+
+        if not stats_only:
+            return r.content
+
+        return self._parse_bulk_responses(json.loads(r.content))
 
     def bulk(self, docs, bulk_type='index', **kwargs):
         bulk_actions = []
