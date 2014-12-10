@@ -9,7 +9,7 @@ from retrying import retry
 from cdf.exceptions import ErrorRateLimitExceeded
 from cdf.log import logger
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
-from cdf.utils.es import bulk
+from cdf.utils.es import bulk, EsHandler
 from cdf.utils.remote_files import enumerate_partitions
 from cdf.utils.s3 import fetch_files, push_file
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
@@ -24,7 +24,7 @@ from .constants import (
     COMPARISON_DOCS_DIRPATH,
     COMPARISON_DOCS_NAME_PATTERN,
     ERROR_RATE_LIMIT
-)
+    )
 
 
 def _get_docs_filename(part_id, comparison=False):
@@ -71,18 +71,14 @@ def prepare_crawl_index(crawl_id, es_location, es_index, es_doc_type='urls',
                            ELASTICSEARCH_BACKEND.mapping())
 
 
-def push_document_stream(doc_stream, es, es_index, es_doc_type,
+def push_document_stream(doc_stream, es_handler,
                          max_error_rate=ERROR_RATE_LIMIT):
     """Push a document stream to ElasticSearch
 
     :param doc_stream: decoded document stream
     :type  doc_stream: iterator
-    :param es: ES client
-    :type  es: ElasticSearch
-    :param es_index: ES index name
-    :type  es_index: str
-    :param es_doc_type: ES doc_type
-    :type  es_doc_type: str
+    :param es_handler: ES handler
+    :type  es_handler: EsHandler
     :param max_error_rate: max accepted error rate
     :type  max_error_rate: float
     :raises Exception: if push error rate is above limit
@@ -93,8 +89,7 @@ def push_document_stream(doc_stream, es, es_index, es_doc_type,
     # Document push retry is handled for each bulk
     @retry(stop_max_attempt_number=1)
     def push_chunk(chunk):
-        return bulk(es, docs, stats_only=True,
-                    doc_type=es_doc_type, index=es_index)
+        return es_handler.raw_bulk_index(chunk, stats_only=True)
 
     for docs in chunk(doc_stream, 3000):
         o, e = push_chunk(docs)
@@ -109,7 +104,7 @@ def push_document_stream(doc_stream, es, es_index, es_doc_type,
     error_rate = float(errs) / all if all > 0 else 0
     if error_rate > max_error_rate:
         raise ErrorRateLimitExceeded('Push error rate exceeds '
-                                    'limit: {}'.format(error_rate))
+                                     'limit: {}'.format(error_rate))
 
 
 @with_temporary_dir
@@ -130,8 +125,8 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
     :param es_doc_type: doc type in the index
     :param tmp_dir: temporary directory for processing
     """
-    host, port = es_location[7:].split(':')
-    es = Elasticsearch([{'host': host, 'port': int(port)}])
+    es_handler = EsHandler(es_location, es_index, es_doc_type)
+
     docs_uri = _get_docs_dirpath(s3_uri, comparison=comparison)
     part_ids = enumerate_partitions(s3_uri)
 
@@ -140,10 +135,9 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
                                 regexp=fetch_regexp,
                                 force_fetch=force_fetch)
 
-    reader = itertools.chain(*[gzip.open(f[0], 'r') for f in files_fetched])
-    stream = itertools.imap(json.loads, reader)
+    stream = itertools.chain(*[gzip.open(f[0], 'r') for f in files_fetched])
 
-    push_document_stream(stream, es, es_index, es_doc_type)
+    push_document_stream(stream, es_handler)
 
 
 @with_temporary_dir
