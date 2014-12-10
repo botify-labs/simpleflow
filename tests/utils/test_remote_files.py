@@ -21,7 +21,7 @@ class TestEnumeratePartitions(unittest.TestCase, TestBucketMixin):
         self._create_file(test_bucket, "urlids.txt.0.gz")
         self._create_file(test_bucket, "urlids.txt.4.gz")
 
-        self.assertEquals([0, 4], enumerate_partitions("s3://test_bucket/"))
+        self.assertEquals([0, 4], enumerate_partitions("s3://test_bucket/", 100, 200))
 
     @mock_s3
     def test_misc_files(self):
@@ -29,7 +29,7 @@ class TestEnumeratePartitions(unittest.TestCase, TestBucketMixin):
         self._create_file(test_bucket, "urlids.txt.0.gz")
         self._create_file(test_bucket, "urlinfos.txt.4.gz")
 
-        self.assertEquals([0], enumerate_partitions("s3://test_bucket/"))
+        self.assertEquals([0], enumerate_partitions("s3://test_bucket/", 100, 200))
 
     @mock_s3
     def test_regex_special_character(self):
@@ -39,7 +39,7 @@ class TestEnumeratePartitions(unittest.TestCase, TestBucketMixin):
         #check that only files ending with the patterns are considered
         self._create_file(test_bucket, "urlids_txt_0_gz.foo")
 
-        self.assertEquals([], enumerate_partitions("s3://test_bucket/"))
+        self.assertEquals([], enumerate_partitions("s3://test_bucket/", 100, 200))
 
     @mock_s3
     def test_enumerate_partions_crawled_urls(self):
@@ -49,11 +49,12 @@ class TestEnumeratePartitions(unittest.TestCase, TestBucketMixin):
         self._create_file(test_bucket, "urlids.txt.2.gz")
         self._create_file(test_bucket, "files.json")
         with mock.patch('cdf.utils.remote_files.get_crawl_info') as get_crawl_info:
-            get_crawl_info.return_value = {"max_uid_we_crawled": 1025,
-                                           "lines_per_file_first": 1024,
-                                           "lines_per_file": 300000}
+            get_crawl_info.return_value = {"max_uid_we_crawled": 1025}
             self.assertEquals([0, 1],
-                              enumerate_partitions("s3://test_bucket/", only_crawled_urls=True))
+                              enumerate_partitions("s3://test_bucket/",
+                                                   first_part_id_size=1024,
+                                                   part_id_size=300000,
+                                                   only_crawled_urls=True))
 
 
 class TestGetPartIdFromFileName(unittest.TestCase):
@@ -89,25 +90,23 @@ class TestGetMaxCrawledPartId(unittest.TestCase):
 
     def test_nominal_case(self):
         # Test 1 url
-        crawl_info = {"max_uid_we_crawled": 1,
-                      "lines_per_file_first": 100,
-                      "lines_per_file": 200}
+        crawl_info = {"max_uid_we_crawled": 1}
         self.assertEquals(
-            get_max_crawled_partid(crawl_info),
+            get_max_crawled_partid(crawl_info, 100, 200),
             0
         )
 
         # Test 101 urls
         crawl_info["max_uid_we_crawled"] = 101
         self.assertEquals(
-            get_max_crawled_partid(crawl_info),
+            get_max_crawled_partid(crawl_info, 100, 200),
             1
         )
 
         # Test 301 urls
         crawl_info["max_uid_we_crawled"] = 301
         self.assertEquals(
-            get_max_crawled_partid(crawl_info),
+            get_max_crawled_partid(crawl_info, 100, 200),
             2
         )
 
