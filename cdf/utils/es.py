@@ -72,7 +72,7 @@ class EsHandler(object):
 
         return self._parse_bulk_responses(json.loads(r.content))
 
-    def bulk(self, docs, bulk_type='index', **kwargs):
+    def bulk(self, docs, bulk_type='index', stats_only=True, **kwargs):
         bulk_actions = []
         for d in docs:
             action = {bulk_type: {}}
@@ -84,10 +84,13 @@ class EsHandler(object):
             bulk_actions.append(action)
             bulk_actions.append(d.get('_source', d))
 
-        if not bulk_actions:
-            return {}
+        # issue the bulk
+        responses = self.es_client.bulk(bulk_actions, **kwargs)
 
-        return self.es_client.bulk(bulk_actions, **kwargs)
+        if not stats_only:
+            return responses
+
+        return self._parse_bulk_responses(responses)
 
     def mget(self, ids, fields, routing, chunk_size=500):
         """Issue a multi get to ElasticSearch, retrieve some fields
@@ -167,34 +170,3 @@ class EsHandler(object):
         return self.es_client.indices.refresh(index=self.index)
 
 
-def bulk(client, docs, bulk_type='index', stats_only=True, **kwargs):
-    success, failed = 0, 0
-    bulk_actions = []
-    for d in docs:
-        action = {bulk_type: {}}
-        for key in ('_id', '_index', '_parent', '_percolate', '_routing',
-                    '_timestamp', '_ttl', '_type', '_version',):
-            if key in d:
-                action[bulk_type][key] = d.pop(key)
-
-        bulk_actions.append(action)
-        bulk_actions.append(d.get('_source', d))
-
-    # issue the bulk
-    responses = client.bulk(bulk_actions, **kwargs)
-
-    if not stats_only:
-        return responses
-    # parse responses
-    err = responses.get('errors')
-    if err is False:
-        return len(docs), 0
-
-    for req, item in zip(bulk_actions[::2], responses['items']):
-        err = item['index' if '_id' in req['index'] else 'create'].get('error')
-        if err:
-            failed += 1
-        else:
-            success += 1
-
-    return success, failed

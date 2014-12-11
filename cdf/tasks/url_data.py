@@ -9,7 +9,7 @@ from retrying import retry
 from cdf.exceptions import ErrorRateLimitExceeded
 from cdf.log import logger
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
-from cdf.utils.es import bulk, EsHandler
+from cdf.utils.es import EsHandler
 from cdf.utils.remote_files import enumerate_partitions
 from cdf.utils.s3 import fetch_files, push_file
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
