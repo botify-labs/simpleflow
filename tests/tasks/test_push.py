@@ -18,25 +18,28 @@ class TestDocumentPushError(unittest.TestCase):
     def setUp(self):
         self.stream = iter(['doc1', 'doc2', 'doc3'])
 
-    @mock.patch('cdf.tasks.url_data.bulk', _get_mock_bulk(1000, 0))
-    def test_push_all_ok(self):
+    @mock.patch('cdf.tasks.url_data.EsHandler')
+    def test_push_all_ok(self, es_handler):
+        es_handler.raw_bulk_index = _get_mock_bulk(1000, 0)
         # should terminate normally
-        push_document_stream(self.stream, None, "", "",
+        push_document_stream(self.stream, es_handler,
                              max_error_rate=MAX_ERROR_RATE)
 
-    @mock.patch('cdf.tasks.url_data.bulk', _get_mock_bulk(1000, 1))
-    def test_push_accept(self):
+    @mock.patch('cdf.tasks.url_data.EsHandler')
+    def test_push_accept(self, es_handler):
+        es_handler.raw_bulk_index = _get_mock_bulk(1000, 1)
         # should terminate normally
-        push_document_stream(self.stream, None, "", "",
+        push_document_stream(self.stream, es_handler,
                              max_error_rate=MAX_ERROR_RATE)
 
-    @mock.patch('cdf.tasks.url_data.bulk', _get_mock_bulk(94, 6))
-    def test_push_not_accept(self):
+    @mock.patch('cdf.tasks.url_data.EsHandler')
+    def test_push_not_accept(self, es_handler):
+        es_handler.raw_bulk_index = _get_mock_bulk(94, 6)
         # should raise exception
         self.assertRaises(
             ErrorRateLimitExceeded,
             push_document_stream,
             self.stream,  # mock stream
-            None, "", "",  # not important param
+            es_handler,
             MAX_ERROR_RATE
         )
