@@ -59,7 +59,10 @@ def compute_suggested_patterns(crawl_id,
                os.path.join(tmp_dir, global_crawl_info_filename),
                force_fetch=force_fetch)
 
-    for part_id in enumerate_partitions(s3_uri):
+    for part_id in enumerate_partitions(s3_uri,
+                                        first_part_id_size,
+                                        part_id_size,
+                                        only_crawled_urls=True):
         fetch_files(s3_uri,
                     tmp_dir,
                     regexp=['url(ids|infos|contents).txt.%d.gz' % part_id],
