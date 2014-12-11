@@ -288,10 +288,14 @@ class AnalysisFullMigrationWorkflow(Workflow):
         }
 
         partitions = self.submit(enumerate_partitions,
-                                 s3_uri)
+                                 s3_uri,
+                                 first_part_id_size,
+                                 part_id_size)
 
         crawled_partitions = self.submit(enumerate_partitions,
                                          s3_uri,
+                                         first_part_id_size,
+                                         part_id_size,
                                          only_crawled_urls=True)
 
         revision_number = context['revision_number']
