@@ -527,8 +527,6 @@ class AnalysisWorkflow(Workflow):
             )
             for part_id in crawled_partitions.result
         ]
-        #zone aware duplication computation needs zones and compliant urls
-        futures.wait(*(zone_results + compliant_urls_results))
 
         context_aware_metadata_dup_result = self.submit(
             make_context_aware_metadata_duplicates_file,
@@ -565,6 +563,8 @@ class AnalysisWorkflow(Workflow):
                 )
                 for part_id in crawled_partitions.result
             ]
+
+        # Intermediate files
         # Group all the futures that need to terminate before computing the
         # aggregations and generating documents.
         intermediary_files = ([
@@ -576,10 +576,9 @@ class AnalysisWorkflow(Workflow):
             outlinks_results +
             zone_results +
             compliant_urls_results +
-            [context_aware_metadata_dup_result] +
             [top_domains_result] +
-            links_to_non_compliant_urls_counter_results +
-            filled_metadata_count_results)
+            filled_metadata_count_results
+        )
 
         if 'ganalytics' in features_flags:
             intermediary_files.extend(self.compute_ganalytics(context))
@@ -587,7 +586,17 @@ class AnalysisWorkflow(Workflow):
         if 'sitemaps' in features_flags:
             intermediary_files.extend(self.compute_sitemaps(context))
 
+        # tasks that are dependent on zone & compliant urls
+        zone_compliant_dependent = (
+            [context_aware_metadata_dup_result] +
+            [links_to_non_compliant_urls] +
+            links_to_non_compliant_urls_counter_results
+        )
+
+        # execute in parallel
         futures.wait(*intermediary_files)
+        # execute zone/compliant dependant tasks
+        futures.wait(*zone_compliant_dependent)
 
         # inlink percentiles depends on link counters
         percentile_results = self.submit(
