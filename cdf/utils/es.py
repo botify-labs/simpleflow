@@ -12,7 +12,8 @@ class EsHandler(object):
     """
     def __init__(self, es_location, es_index, es_doc_type):
         self.es_location = es_location
-        self.es_client = Elasticsearch(get_domain(es_location))
+        self.es_host = self._get_domain(es_location)
+        self.es_client = Elasticsearch(self.es_host)
         self.index = es_index
         self.doc_type = es_doc_type
 
@@ -26,6 +27,12 @@ class EsHandler(object):
     def __repr__(self):
         return '<ES of %s/%s/%s>' % (
             self.es_location, self.index, self.doc_type)
+
+    @classmethod
+    def _get_domain(cls, host):
+        if host.startswith('http'):
+            return get_domain(host)
+        return host
 
     @classmethod
     def _get_index_action(cls, _id):
@@ -56,9 +63,8 @@ class EsHandler(object):
             bulks.append(d)
         bulks.append('')  # allows extra '\n' in the end
 
-        # TODO verify this format
         endpoint = 'http://{}/{}/{}/_bulk'.format(
-            self.es_location, self.index, self.doc_type)
+            self.es_host, self.index, self.doc_type)
         r = requests.post(endpoint, '\n'.join(bulks))
 
         if not stats_only:
