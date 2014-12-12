@@ -115,6 +115,8 @@ def push_document_stream(doc_stream, es, es_index, es_doc_type,
 @with_temporary_dir
 def push_documents_to_elastic_search(crawl_id, s3_uri,
                                      es_location, es_index, es_doc_type,
+                                     first_part_id_size,
+                                     part_id_size,
                                      comparison=False,
                                      tmp_dir=None,
                                      force_fetch=DEFAULT_FORCE_FETCH):
@@ -133,7 +135,7 @@ def push_documents_to_elastic_search(crawl_id, s3_uri,
     host, port = es_location[7:].split(':')
     es = Elasticsearch([{'host': host, 'port': int(port)}])
     docs_uri = _get_docs_dirpath(s3_uri, comparison=comparison)
-    part_ids = enumerate_partitions(s3_uri)
+    part_ids = enumerate_partitions(s3_uri, first_part_id_size, part_id_size)
 
     fetch_regexp = [_get_docs_filename(i, comparison) for i in part_ids]
     files_fetched = fetch_files(docs_uri, tmp_dir,

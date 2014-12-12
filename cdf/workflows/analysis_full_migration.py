@@ -485,6 +485,8 @@ class AnalysisFullMigrationWorkflow(Workflow):
             push_documents_to_elastic_search,
             crawl_id,
             s3_uri,
+            first_part_id_size=first_part_id_size,
+            part_id_size=part_id_size,
             comparison=has_comparison,
             tmp_dir=tmp_dir,
             **es_params
