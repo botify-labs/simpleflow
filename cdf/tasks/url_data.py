@@ -3,6 +3,7 @@ import gzip
 import itertools
 import ujson as json
 
+from six.moves.urllib.parse import urlparse
 from elasticsearch import Elasticsearch
 from retrying import retry
 
