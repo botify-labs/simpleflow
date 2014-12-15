@@ -61,8 +61,7 @@ def compute_suggested_patterns(crawl_id,
 
     for part_id in enumerate_partitions(s3_uri,
                                         first_part_id_size,
-                                        part_id_size,
-                                        only_crawled_urls=True):
+                                        part_id_size):
         fetch_files(s3_uri,
                     tmp_dir,
                     regexp=['url(ids|infos|contents).txt.%d.gz' % part_id],
