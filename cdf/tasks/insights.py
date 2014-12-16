@@ -1,10 +1,10 @@
 import json
-from urlparse import urlparse, urljoin
+import time
 import requests
 import logging
 from elasticsearch import Elasticsearch
-from cdf.core.metadata.dataformat import generate_data_format
 
+from cdf.core.metadata.dataformat import generate_data_format
 from cdf.exceptions import ApiError, ApiFormatError, BotifyQueryException
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.utils.s3 import push_content
@@ -47,8 +47,9 @@ def get_query_agg_result(query):
         else:
             return query.aggs[0]["metrics"][0]
     except BotifyQueryException as e:
-        logger.warning(
-            "Insight query exception: {}".format(str(e)))
+        # FIXME too much log in this part
+        # logger.warning(
+        #     "Insight query exception: {}".format(str(e)))
         # if any error occurs, returns `None`
         return None
 
@@ -76,6 +77,7 @@ def compute_insight_value(insight,
     :type es_doc_type: str
     :returns: InsightValue
     """
+    start = time.time()
     trend = []
     for crawl_id, feature_options in sorted(crawls.items()):
         if "comparison" in feature_options:
@@ -90,6 +92,9 @@ def compute_insight_value(insight,
         trend_point = InsightTrendPoint(crawl_id,
                                         get_query_agg_result(query))
         trend.append(trend_point)
+    end = time.time()
+    used = end - start
+    logger.info('Insight {} used {}s ...'.format(insight.identifier, used))
     return InsightValue(insight, feature_name, trend)
 
 
