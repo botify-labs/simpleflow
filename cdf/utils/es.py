@@ -1,9 +1,14 @@
 import ujson as json
+import logging
+
 from elasticsearch import Elasticsearch
 import requests
 
 from cdf.utils.url import get_domain
 from cdf.utils.stream import chunk
+
+
+logger = logging.getLogger(__name__)
 
 
 # TODO(darkjh) use thrift protocol
@@ -57,8 +62,17 @@ class EsHandler(object):
 
     def raw_bulk_index(self, raw_docs, stats_only=True):
         bulks = []
+        loads_fails = 0
         for d in raw_docs:
-            doc = json.loads(d)
+            try:
+                doc = json.loads(d)
+            except ValueError:
+                # skip document that cause decoding problem
+                # usually it's pdf, image or wrong-formatted html
+                logger.warn("Json decoding error for document: {} ... "
+                            "Document skipped...".format(d))
+                loads_fails += 1
+                continue
             bulks.append(self._get_index_action(doc['_id']))
             bulks.append(d)
         bulks.append('')  # allows extra '\n' in the end
@@ -70,7 +84,8 @@ class EsHandler(object):
         if not stats_only:
             return r.content
 
-        return self._parse_bulk_responses(json.loads(r.content))
+        s, f = self._parse_bulk_responses(json.loads(r.content))
+        return s, f + loads_fails
 
     def bulk(self, docs, bulk_type='index', stats_only=True, **kwargs):
         bulk_actions = []
