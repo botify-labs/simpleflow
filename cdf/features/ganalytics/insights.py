@@ -244,12 +244,20 @@ def get_compliant_visit_nb_range_insights(medium, source):
         )
     ]
 
+
+_SELECTED_SOURCE = [
+    ('organic', 'google'), ('organic', 'bing'),
+    ('social', 'facebook'), ('social', 'twitter'),
+    ('organic', 'all'), ('social', 'all'),
+]
+
+
 def get_ganalytics_insights():
     """Return all the Google Analytics insights
     :returns: list - list of Insight
     """
     result = []
-    for medium, source in _iterate_sources():
+    for medium, source in _SELECTED_SOURCE:
         result.extend(get_medium_source_insights(medium, source))
     return result
 
