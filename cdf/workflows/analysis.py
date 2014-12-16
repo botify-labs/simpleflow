@@ -243,6 +243,9 @@ def request_api(crawl_endpoint, revision_endpoint, api_requests):
     return {}
 
 
+_HISTORY_LIMIT = 3
+
+
 class AnalysisWorkflow(Workflow):
     name = 'analysis'
     version = '2.7'
@@ -355,6 +358,9 @@ class AnalysisWorkflow(Workflow):
         crawl_configurations = [[crawl_id,  config_endpoint, s3_uri]]
         if 'comparison' in context['features_options']:
             crawl_configurations.extend(context['features_options']['comparison']['history'])
+
+        # FIXME: temporarily reduce comparison to 3
+        crawl_configurations = crawl_configurations[:_HISTORY_LIMIT]
 
         insights_result = self.submit(
             compute_insights_task,
