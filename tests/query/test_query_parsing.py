@@ -155,7 +155,7 @@ class TestFilterParsing(ParsingTestCase):
         self.assertParsingError(self.parser.parse_filter, invalid)
 
         valid = {'and': [{'field': 'http_code', 'value': 200}]}
-        expected = {'and': [{'term': {'http_code': 200}}]}
+        expected = {'bool': {'must': [{'term': {'http_code': 200}}]}}
         result = self.parser.parse_boolean_filter(valid).transform()
         self.assertDictEqual(expected, result)
 

@@ -55,11 +55,11 @@ class TestQueryTransformation(QueryTransformationTestCase):
             'query': {
                 'constant_score': {
                     'filter': {
-                        'and': [
+                        'bool': {'must': [
                             self.crawl_filter,
                             self.not_crawled_filter,
                             {'term': {'http_code': 200}}
-                        ]
+                        ]}
                     }
                 }
             },
@@ -87,12 +87,14 @@ class TestQueryTransformation(QueryTransformationTestCase):
             'query': {
                 'constant_score': {
                     'filter': {
-                        'and': [
-                            self.crawl_filter,
-                            self.not_crawled_filter,
-                            {'term': {'http_code': 200}},
-                            {'range': {'delay_first_byte': {'gte': 100}}},
-                        ]
+                        'bool': {
+                            'must': [
+                                self.crawl_filter,
+                                self.not_crawled_filter,
+                                {'term': {'http_code': 200}},
+                                {'range': {'delay_first_byte': {'gte': 100}}},
+                            ]
+                        }
                     }
                 }
             },
@@ -119,12 +121,15 @@ class TestQueryTransformation(QueryTransformationTestCase):
             'query': {
                 'constant_score': {
                     'filter': {
-                        'and': [
-                            self.crawl_filter,
-                            self.not_crawled_filter,
-                            {'or': [{'term': {'http_code': 200}},
-                                    {'term': {'http_code': 301}}]}
-                        ]
+                        'bool': {
+                            'must': [
+                                self.crawl_filter,
+                                self.not_crawled_filter,
+                                {'bool': {
+                                    'should': [{'term': {'http_code': 200}},
+                                    {'term': {'http_code': 301}}]}}
+                            ]
+                        }
                     }
                 }
             },
@@ -141,7 +146,7 @@ class TestQueryTransformation(QueryTransformationTestCase):
             'query': {
                 'constant_score': {
                     'filter': {
-                        'and': [self.crawl_filter, self.not_crawled_filter]
+                        'bool': {'must': [self.crawl_filter, self.not_crawled_filter]}
                     }
                 }
             },
@@ -168,10 +173,10 @@ class TestQueryTransformation(QueryTransformationTestCase):
             'query': {
                 'constant_score': {
                     'filter': {
-                        'and': [
+                        'bool': {'must': [
                             self.crawl_filter, self.not_crawled_filter,
                             {'prefix': {'metadata.title.contents': 'News'}}
-                        ]
+                        ]}
                     }
                 }
             }
@@ -194,14 +199,14 @@ class TestQueryTransformation(QueryTransformationTestCase):
             'query': {
                 'constant_score': {
                     'filter': {
-                        'and': [
+                        'bool': {'must': [
                             self.crawl_filter,
                             self.not_crawled_filter,
-                            {'or': [
+                            {'bool': {'should': [
                                 {'exists': {'field': 'metadata.title.contents_exists'}},
                                 {'exists': {'field': 'metadata.title.contents'}},
-                            ]}
-                        ]
+                            ]}}
+                        ]}
                     }
                 }
             },
@@ -221,7 +226,7 @@ class TestQueryTransformation(QueryTransformationTestCase):
             'query': {
                 'constant_score': {
                     'filter': {
-                        'and': [self.crawl_filter, self.not_crawled_filter]
+                        'bool': {'must': [self.crawl_filter, self.not_crawled_filter]}
                     }
                 }
             },
@@ -249,11 +254,11 @@ class TestQueryTransformation(QueryTransformationTestCase):
             'query': {
                 'constant_score': {
                     'filter': {
-                        'and': [
+                        'bool': {'must': [
                             self.crawl_filter,
                             self.not_crawled_filter,
                             {'range': {'http_code': {'gte': 123, 'lte': 456}}}
-                        ]
+                        ]}
                     }
                 }
             },
