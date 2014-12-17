@@ -154,7 +154,7 @@ class EsHandler(object):
             )
         return results
 
-    def search(self, body, routing, size, start):
+    def search(self, body, routing, size, start, search_type=None):
         """
         :param body: the query body
         :type body: dict
@@ -167,14 +167,20 @@ class EsHandler(object):
         :return: raw ElasticSearch search results
         :rtype: dict
         """
+        params = {
+            'body': body,
+            'index': self.index,
+            'doc_type': self.doc_type,
+            'routing': routing,
+            'preference': routing,
+            'size': size,
+            'from_': start,
+        }
+        if search_type is not None:
+            params['search_type'] = search_type
+
         return self.es_client.search(
-            body=body,
-            index=self.index,
-            doc_type=self.doc_type,
-            routing=routing,
-            preference=routing,
-            size=size,
-            from_=start
+            **params
         )
 
     def refresh(self):
