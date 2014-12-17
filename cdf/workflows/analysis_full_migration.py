@@ -43,6 +43,9 @@ from . import constants
 logger = logging.getLogger(__name__)
 
 
+_HISTORY_LIMIT = 3
+
+
 def as_activity(func):
     """
     This decorator provides default values for the activities's attributes.
@@ -252,6 +255,9 @@ class AnalysisFullMigrationWorkflow(Workflow):
         crawl_configurations = [[crawl_id,  config_endpoint, s3_uri]]
         if 'comparison' in context['features_options']:
             crawl_configurations.extend(context['features_options']['comparison']['history'])
+
+        # FIXME: temporarily reduce comparison to 3
+        crawl_configurations = crawl_configurations[:_HISTORY_LIMIT]
 
         insights_result = self.submit(
             compute_insights_task,
