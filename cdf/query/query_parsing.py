@@ -98,21 +98,34 @@ class NotFilter(Filter):
 class BooleanFilter(Filter):
     """Class represents a `boolean` filter
 
+    It uses an `bool filter` of ES:
+        - `must`: like `and`, all condition must be satisfied for a
+            document to match
+        - `should`: like `or`, at least one condition should be satisfied
+            for a document to match
+
     Attributes:
         boolean_predicate   boolean operator, could be `and` or `or`
         filters             a list of contained filters
     """
+    _BOOL_OPS = {
+        'and': 'must',
+        'or': 'should'
+    }
 
     def __init__(self, boolean_predicate, filters):
         self.boolean_predicate = boolean_predicate
         self.filters = filters
 
+    # TODO need a way to collapse filters together
     def transform(self):
         return {
-            self.boolean_predicate: [
-                filter.transform()
-                for filter in self.filters
-            ]
+            'bool': {
+                self._BOOL_OPS[self.boolean_predicate]: [
+                    filter.transform()
+                    for filter in self.filters
+                ]
+            }
         }
 
     def validate(self):
@@ -457,11 +470,12 @@ class Exists(PredicateFilter):
         since there's no such flag, however the second check does the work
         """
         return {
-            'or': [
-                {'exists': {'field': self.field_value + '_exists'}},
-                {'exists': {'field': self.field_value}}
-            ]
-
+            'bool': {
+                'should': [
+                    {'exists': {'field': self.field_value + '_exists'}},
+                    {'exists': {'field': self.field_value}}
+                ]
+            }
         }
 
 
