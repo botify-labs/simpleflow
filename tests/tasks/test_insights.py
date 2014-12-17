@@ -82,8 +82,16 @@ class TestComputeInsightValue(unittest.TestCase):
 
         #check the calls to Query.__init__()
         expected_query_calls = [
-            mock.call(self.es_location, self.es_index, self.es_doc_type, 1001, insight.query, backend=ElasticSearchBackend({})),
-            mock.call(self.es_location, self.es_index, self.es_doc_type, 2008, insight.query, backend=ElasticSearchBackend({}))
+            mock.call(
+                self.es_location, self.es_index, self.es_doc_type,
+                1001, insight.query, backend=ElasticSearchBackend({}),
+                limit=0, search_type='count'
+            ),
+            mock.call(
+                self.es_location, self.es_index, self.es_doc_type,
+                2008, insight.query, backend=ElasticSearchBackend({}),
+                limit=0, search_type='count'
+            )
         ]
         self.assertEqual(expected_query_calls, query_mock.mock_calls)
 
@@ -177,7 +185,9 @@ class TestComputeInsightValue(unittest.TestCase):
             self.es_doc_type,
             2008,
             decorated_query,
-            backend=mock.ANY
+            backend=mock.ANY,
+            limit=0,
+            search_type='count'
         )
 
 
