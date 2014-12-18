@@ -83,12 +83,16 @@ def compute_insight_value(insight,
         if "comparison" in feature_options:
             insight = ComparisonAwareInsight(insight)
         query_backend = ElasticSearchBackend(generate_data_format(feature_options))
-        query = Query(es_location,
-                      es_index,
-                      es_doc_type,
-                      crawl_id,
-                      insight.query,
-                      backend=query_backend)
+        query = Query(
+            es_location,
+            es_index,
+            es_doc_type,
+            crawl_id,
+            insight.query,
+            backend=query_backend,
+            limit=0,
+            search_type='count'  # no search result
+        )
         trend_point = InsightTrendPoint(crawl_id,
                                         get_query_agg_result(query))
         trend.append(trend_point)

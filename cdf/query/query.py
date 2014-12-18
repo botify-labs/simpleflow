@@ -76,6 +76,23 @@ class QueryBuilder(object):
             es_handler=self.es
         )
 
+    def get_aggs_query(self, botify_query):
+        """Produce a query instance purely for aggregation usage
+
+        It means no search result will be returned, only
+        aggregation results
+
+        :return: query object
+        :type: Query
+        """
+        # currently for compatibility reason
+        # the Query object's ctor interface is maintained
+        return Query(
+            None, None, None, self.crawl_id, botify_query,
+            start=0, limit=0, search_type='count',
+            backend=self.data_backend, es_handler=self.es
+        )
+
 
 class Query(object):
     """Abstraction between front-end's botify format query and the ElasticSearch
@@ -87,7 +104,8 @@ class Query(object):
     """
     def __init__(self, es_location, es_index, es_doc_type, crawl_id,
                  botify_query, start=0, limit=100, sort=['id'],
-                 backend=_COMPARISON_ES_BACKEND, es_handler=None, **kwargs):
+                 backend=_COMPARISON_ES_BACKEND, es_handler=None,
+                 search_type=None, **kwargs):
         """Constructor
 
         :param es_handler: ES handler to use, if `None`, client need to pass ES
@@ -100,6 +118,7 @@ class Query(object):
         self.start = start
         self.limit = limit
         self.sort = sort
+        self.search_type = search_type
         self._count = 0
         self._results = []
         self._aggs = []
@@ -183,7 +202,8 @@ class Query(object):
             body=es_query,
             routing=self.crawl_id,
             size=self.limit,
-            start=self.start
+            start=self.start,
+            search_type=self.search_type
         )
 
         # Return directly if search has no result
