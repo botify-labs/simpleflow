@@ -63,49 +63,6 @@ def split_file(iterable, char='\t'):
     return split(rstrip(iterable))
 
 
-def group_left1(left, **stream_defs):
-    """
-    :param left: (stream, key_index)
-    :param **stream_defs: {stream_name: (stream, key_index)
-
-    :returns:
-    :rtype: yield (key, left_line, {stream_name1: [stream_item_1, stream_itemX..], stream_name2: line_content})
-
-    >>>> iter_streams(patterns=pattern_stream, infos=pattern_info)
-    """
-    id_ = {}
-    right_line = {}
-    left_stream, left_key_idx = left
-
-    for line in left_stream:
-        current_id = line[left_key_idx]
-        stream_lines = {stream_name: [] for stream_name in stream_defs.iterkeys()}
-
-        for stream_name, stream_def in stream_defs.iteritems():
-            stream, key_idx = stream_def
-            if stream_name in id_:
-                if id_[stream_name] < current_id:
-                    id_.pop(stream_name)
-
-            if not stream_name in id_:
-                try:
-                    right_line[stream_name] = stream.next()
-                except StopIteration:
-                    continue
-                id_[stream_name] = right_line[stream_name][key_idx]
-
-            while id_[stream_name] == current_id:
-                try:
-                    stream_lines[stream_name].append(right_line[stream_name])
-                    right_line[stream_name] = stream.next()
-                    id_[stream_name] = right_line[stream_name][key_idx]
-                except IOError, e:
-                    raise Exception('IE Error on {} : {}'.format(stream_name, e))
-                except StopIteration:
-                    break
-        yield current_id, line, stream_lines
-
-
 def group_left(left, **streams):
     """Join multiple key-sorted streams together
 
