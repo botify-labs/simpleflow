@@ -352,9 +352,12 @@ class MetricsAggregator(object):
                 if content_type == '?':
                     content_type = 'not-set'
 
+                depth = infos[depth_idx]
+                if depth > 100:
+                    depth = 100
                 key = (suggest_key,
                        content_type,
-                       infos[depth_idx],
+                       depth,
                        http_code,
                        index,
                        follow)
