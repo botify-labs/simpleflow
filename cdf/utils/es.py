@@ -18,7 +18,7 @@ class EsHandler(object):
     def __init__(self, es_location, es_index, es_doc_type):
         self.es_location = es_location
         self.es_host = self._get_domain(es_location)
-        self.es_client = Elasticsearch(self.es_host)
+        self.es_client = Elasticsearch(self.es_host, timeout=60)
         self.index = es_index
         self.doc_type = es_doc_type
 
