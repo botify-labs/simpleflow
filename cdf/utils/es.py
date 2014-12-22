@@ -14,11 +14,14 @@ logger = logging.getLogger(__name__)
 # TODO(darkjh) use thrift protocol
 class EsHandler(object):
     """High level ElasticSearch handler
+
+    :param timeout: base timeout for ElasticSearch operations, in seconds
+    :type timeout:
     """
-    def __init__(self, es_location, es_index, es_doc_type):
+    def __init__(self, es_location, es_index, es_doc_type, timeout=20):
         self.es_location = es_location
         self.es_host = self._get_domain(es_location)
-        self.es_client = Elasticsearch(self.es_host, timeout=60)
+        self.es_client = Elasticsearch(self.es_host, timeout=timeout)
         self.index = es_index
         self.doc_type = es_doc_type
 
