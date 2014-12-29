@@ -105,7 +105,7 @@ class Query(object):
     def __init__(self, es_location, es_index, es_doc_type, crawl_id,
                  botify_query, start=0, limit=100, sort=['id'],
                  backend=_COMPARISON_ES_BACKEND, es_handler=None,
-                 search_type=None, **kwargs):
+                 search_type=None, timeout=20, **kwargs):
         """Constructor
 
         :param es_handler: ES handler to use, if `None`, client need to pass ES
@@ -126,7 +126,8 @@ class Query(object):
         self.backend = backend
 
         if es_handler is None:
-            self.es_handler = EsHandler(es_location, es_index, es_doc_type)
+            self.es_handler = EsHandler(
+                es_location, es_index, es_doc_type, timeout=timeout)
         else:
             self.es_handler = es_handler
 
