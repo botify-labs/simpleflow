@@ -85,7 +85,8 @@ def get_misc_sitemap_insights():
             AndFilter([
                 EqFilter("inlinks_internal.nb.follow.unique", 1),
                 EqFilter("sitemaps.present", True)
-            ])
+            ]),
+            additional_fields=['inlinks_internal.urls']
         ),
         Insight(
             "sitemaps_not_compliant_outlink",
