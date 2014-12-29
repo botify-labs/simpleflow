@@ -127,7 +127,13 @@ def get_compliant_urls_insights():
             "compliant_0",
             "Not Compliant URLs",
             PositiveTrend.DOWN,
-            EqFilter("strategic.is_strategic", False)
+            EqFilter("strategic.is_strategic", False),
+            additional_fields=[
+                'strategic.reason.content_type',
+                'strategic.reason.http_code',
+                'strategic.reason.canonical',
+                'strategic.reason.noindex',
+            ]
         )
     ]
 
