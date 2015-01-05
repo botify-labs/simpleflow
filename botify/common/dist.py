@@ -28,7 +28,7 @@ def get_release_config():
 
 
 def get_version(config):
-    return __import__(config['package']).__version__
+    return __import__(config['package'], fromlist='[*]').__version__
 
 
 def get_dependencies(directory='packaging'):
