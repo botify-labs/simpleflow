@@ -54,6 +54,11 @@ class Release(Command):
         pkg.version.bump()
         print 'releasing {}=={}'.format(pkg.name, pkg.version)
 
+        if repo.find_tag(str(pkg.version)):
+            raise ValueError(
+                'version {} already exists'.format(str(pkg.version))
+            )
+
         if not self.dry_run:
             pkg.version.save()
 
