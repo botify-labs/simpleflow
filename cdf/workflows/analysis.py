@@ -396,11 +396,6 @@ class AnalysisWorkflow(Workflow):
             'es_doc_type': context['es_doc_type']
         }
 
-        partitions = self.submit(enumerate_partitions,
-                                 s3_uri,
-                                 first_part_id_size,
-                                 part_id_size)
-
         crawled_partitions = self.submit(enumerate_partitions,
                                          s3_uri,
                                          first_part_id_size,
@@ -626,6 +621,12 @@ class AnalysisWorkflow(Workflow):
             s3_uri,
             tmp_dir=tmp_dir)
 
+        # resolve all existing partitions
+        all_partitions = set()
+        all_partitions.update(crawled_partitions.result)
+        all_partitions.update((i.result for i in inlinks_results if i is not None))
+        all_partitions.update((i.result for i in outlinks_results if i is not None))
+
         documents_results = [
             self.submit(
                 generate_documents,
@@ -634,7 +635,7 @@ class AnalysisWorkflow(Workflow):
                 tmp_dir=tmp_dir,
                 part_id=part_id,
             )
-            for part_id in partitions.result
+            for part_id in all_partitions
         ]
 
         # document merging for comparison
