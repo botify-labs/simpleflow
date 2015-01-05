@@ -3,7 +3,6 @@ import logging
 
 from elasticsearch import Elasticsearch
 from elasticsearch.serializer import TextSerializer
-import requests
 
 from cdf.utils.url import get_domain
 from cdf.utils.stream import chunk
@@ -22,10 +21,13 @@ class EsHandler(object):
     """
     def __init__(self, es_location, es_index, es_doc_type, timeout=20):
         self.es_location = es_location
-        self.es_host = self._get_domain(es_location)
+        if not isinstance(self.es_location, list):
+            self.es_location = [self.es_location]
+        # a list of normalized ES hosts
+        self.es_host = [self._get_domain(l) for l in self.es_location]
 
         self.es_client = Elasticsearch(self.es_host, timeout=timeout)
-        # ES client with text serializer, for raw bulk only
+        # ES client with text serializer, for raw bulk index only
         self.raw_bulk_client = Elasticsearch(
             self.es_host, timeout=timeout, serializer=TextSerializer())
         self.index = es_index
@@ -200,5 +202,3 @@ class EsHandler(object):
         :return: refresh status per shard (success or fail)
         """
         return self.es_client.indices.refresh(index=self.index)
-
-
