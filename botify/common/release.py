@@ -58,6 +58,10 @@ class Release(Command):
             pkg.version.save()
 
         commit_message = 'Bump version to {}'.format(pkg.version)
+
+        if not repo.find_tag(current):
+            current = None
+
         changelog = repo.changelog(current)
         tag_message = (
             '{}\n\n'

@@ -9,7 +9,7 @@ class Git(object):
         indent=INDENT,
     )
 
-    def changelog(self, commit):
+    def changelog(self, commit=None):
         """Generate a changelog from a given tag to HEAD
 
         :param tag: the reference tag
@@ -28,8 +28,18 @@ class Git(object):
         #cf man git log for further explanations on the syntax
         #the trickiest part is the %w(...)
         #that configures the commit message indentation
+        if commit is None:
+            ref = 'HEAD'
+        else:
+            ref = '{}..HEAD'.format(commit)
+
         command = [
-            "git", "log", "{}..HEAD".format(commit),
+            "git", "log", ref,
             "--first-parent", '--pretty=format:{}'.format(self.LOG_FORMAT),
         ]
         return subprocess.check_output(command)
+
+    def find_tag(self, tag):
+        return (
+            subprocess.check_output(['git', 'tag', '-l', tag]).strip() == tag
+        )
