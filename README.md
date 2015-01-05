@@ -16,7 +16,7 @@ Add a `setup.cfg` INI file with a `release` section:
 
 ```
 [release]
-package=botify
+package=botify.common
 pypi=botify
 url='https://github.com/sem-io/botify-common'
 ```
@@ -37,3 +37,27 @@ file:
 ```
 VERSION = '0.0.1'
 ```
+
+Then edit the `setup.py` file:
+
+```python
+##!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from botify.common.dist import setup
+
+
+setup(
+    name='botify-common',
+    description='Botify common utilities',
+    namespace_packages=[
+        'botify',
+        'botify.common'
+    ],
+)
+```
+
+Here many fields are set with default value such as `author`, `author_email`,
+etc...  Packages are found automatically by `setuptools.find_packages()` behind
+the scene. The version is automatically extracted from the module with the
+`_version.py` convention.
