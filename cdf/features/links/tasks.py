@@ -91,6 +91,12 @@ def make_links_counter_file(crawl_id, s3_uri,
             os.path.join(tmp_dir, counter_filename),
         )
 
+    # if this task has generated some files (it operates on existing partition)
+    # returns True, else False
+    if len(file_created) > 0:
+        return part_id
+    return None
+
 
 @with_temporary_dir
 def make_bad_link_file(crawl_id, s3_uri,
