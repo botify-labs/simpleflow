@@ -396,6 +396,11 @@ class AnalysisWorkflow(Workflow):
             'es_doc_type': context['es_doc_type']
         }
 
+        partitions = self.submit(enumerate_partitions,
+                                 s3_uri,
+                                 first_part_id_size,
+                                 part_id_size)
+
         crawled_partitions = self.submit(enumerate_partitions,
                                          s3_uri,
                                          first_part_id_size,
@@ -477,7 +482,7 @@ class AnalysisWorkflow(Workflow):
                 link_direction='in',
                 part_id=part_id,
             )
-            for part_id in crawled_partitions.result
+            for part_id in partitions.result
         ]
 
         outlinks_results = [
