@@ -14,14 +14,16 @@ REPO_USER=$(echo "$REPO" | cut -f1 -d /)
 REPO_NAME=$(echo "$REPO" | cut -f2 -d /)
 REPO_URL="https://api.github.com/repos/"$REPO_USER"/"$REPO_NAME"/labels"
 
-# Delete default labels
-curl --user "$USER:$PASS" --include --request DELETE "https://api.github.com/repos/$REPO_USER/$REPO_NAME/labels/bug"
-curl --user "$USER:$PASS" --include --request DELETE "https://api.github.com/repos/$REPO_USER/$REPO_NAME/labels/duplicate"
-curl --user "$USER:$PASS" --include --request DELETE "https://api.github.com/repos/$REPO_USER/$REPO_NAME/labels/enhancement"
-curl --user "$USER:$PASS" --include --request DELETE "https://api.github.com/repos/$REPO_USER/$REPO_NAME/labels/help+wanted"
-curl --user "$USER:$PASS" --include --request DELETE "https://api.github.com/repos/$REPO_USER/$REPO_NAME/labels/invalid"
-curl --user "$USER:$PASS" --include --request DELETE "https://api.github.com/repos/$REPO_USER/$REPO_NAME/labels/question"
-curl --user "$USER:$PASS" --include --request DELETE "https://api.github.com/repos/$REPO_USER/$REPO_NAME/labels/wontfix"
+declare -a arrayGithubLabels=(bug duplicate enhancement help+wanted invalid question wontfix)
+
+#echo "exemple"
+#curl --user "$USER:$PASS" --include --request DELETE "https://api.github.com/repos/$REPO_USER/$REPO_NAME/labels/bug"
+
+for labelName in "${arrayGithubLabels[@]}"
+do
+  >&2 echo "deleting label:" $REPO_URL/$labelName
+  curl --user "$USER:$PASS" --include --request DELETE $REPO_URL/$labelName
+done
 
 # create labels
 declare -A arrayLabels
