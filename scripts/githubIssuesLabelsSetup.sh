@@ -61,8 +61,7 @@ arrayLabels["urgent"]="eb6420"
 for labelName in "${!arrayLabels[@]}"
 do
   labelColor=${arrayLabels[$labelName]}
-  echo "processing key :" $labelName "value:" $labelColor
   labelData='{"name":"'$labelName'","color":"'$labelColor'"}'
-  echo $labelData
+  >&2 echo "adding label:" $labelData
   curl --user "$USER:$PASS" --include --request POST --data "$labelData" $REPO_URL
 done
