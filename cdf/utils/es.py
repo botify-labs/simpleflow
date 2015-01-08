@@ -2,7 +2,7 @@ import ujson as json
 import logging
 
 from elasticsearch import Elasticsearch
-import requests
+from elasticsearch.serializer import TextSerializer
 
 from cdf.utils.url import get_domain
 from cdf.utils.stream import chunk
@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO(darkjh) use thrift protocol
+# TODO(darkjh) reuse client
 class EsHandler(object):
     """High level ElasticSearch handler
 
@@ -20,8 +21,15 @@ class EsHandler(object):
     """
     def __init__(self, es_location, es_index, es_doc_type, timeout=20):
         self.es_location = es_location
-        self.es_host = self._get_domain(es_location)
+        if not isinstance(self.es_location, list):
+            self.es_location = [self.es_location]
+        # a list of normalized ES hosts
+        self.es_host = [self._get_domain(l) for l in self.es_location]
+
         self.es_client = Elasticsearch(self.es_host, timeout=timeout)
+        # ES client with text serializer, for raw bulk index only
+        self.raw_bulk_client = Elasticsearch(
+            self.es_host, timeout=timeout, serializer=TextSerializer())
         self.index = es_index
         self.doc_type = es_doc_type
 
@@ -80,14 +88,16 @@ class EsHandler(object):
             bulks.append(d)
         bulks.append('')  # allows extra '\n' in the end
 
-        endpoint = 'http://{}/{}/{}/_bulk'.format(
-            self.es_host, self.index, self.doc_type)
-        r = requests.post(endpoint, '\n'.join(bulks))
+        endpoint = '/{}/{}/_bulk'.format(self.index, self.doc_type)
+        body = '\n'.join(bulks)
+        # perform bulk request using special client with text serializer
+        _, data_json = self.raw_bulk_client.transport.perform_request(
+            'POST', endpoint, body=body)
 
         if not stats_only:
-            return r.content
+            return data_json
 
-        s, f = self._parse_bulk_responses(json.loads(r.content))
+        s, f = self._parse_bulk_responses(data_json)
         return s, f + loads_fails
 
     def bulk(self, docs, bulk_type='index', stats_only=True, **kwargs):
@@ -192,5 +202,3 @@ class EsHandler(object):
         :return: refresh status per shard (success or fail)
         """
         return self.es_client.indices.refresh(index=self.index)
-
-
