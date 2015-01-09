@@ -1,3 +1,6 @@
+# The lines below are required to share the ``botify`` namespace with other
+# packages.  For example, being able to install on the same environment
+# ``botify.common`` and ``botify.other_package``.
 try:
     __import__('pkg_resources').declare_namespace(__name__)
 except ImportError:
