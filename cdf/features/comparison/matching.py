@@ -1,10 +1,10 @@
 import os
-import ujson as json
 import time
 
 from enum import Enum
-from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 
+from cdf.compat import json
+from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.kvstore import LevelDB
 from cdf.features.comparison import logger
 from cdf.features.comparison.constants import SEPARATOR, MatchingState

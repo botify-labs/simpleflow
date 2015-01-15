@@ -2,8 +2,8 @@ import os
 import tempfile
 import shutil
 import gzip
-import ujson as json
 
+from cdf.compat import json
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.core.decorators import feature_enabled
 from cdf.features.comparison import logger
