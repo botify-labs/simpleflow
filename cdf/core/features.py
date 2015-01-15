@@ -15,9 +15,9 @@ class Feature(object):
 
         cls.FEATURES = []
 
-        for name, module in (
-                (name, module) for name, module in
-                inspect.getmembers(cdf.features, inspect.ismodule)):
+        for name, module in inspect.getmembers(cdf.features, inspect.ismodule):
+            if name == '__builtins__':
+                continue
             settings = __import__(
                 '.'.join([cdf.features.__name__, name, 'settings']),
                 fromlist=['*'])
