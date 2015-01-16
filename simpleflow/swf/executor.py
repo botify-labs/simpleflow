@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import json
 import logging
 
+import swf.format
 import swf.models
 import swf.models.decision
 import swf.exceptions
@@ -306,8 +307,9 @@ class Executor(executor.Executor):
 
             decision = swf.models.decision.WorkflowExecutionDecision()
             decision.fail(
-                reason=reason,
-                details=details)
+                reason=swf.format.reason(reason),
+                details=swf.format.details(details),
+            )
             return [decision], {}
 
         except Exception, err:
@@ -319,12 +321,12 @@ class Executor(executor.Executor):
             self.on_failure(reason)
 
             decision = swf.models.decision.WorkflowExecutionDecision()
-            decision.fail(reason=reason)
+            decision.fail(reason=swf.format.reason(reason))
 
             return [decision], {}
 
         decision = swf.models.decision.WorkflowExecutionDecision()
-        decision.complete(result=json.dumps(result))
+        decision.complete(result=swf.format.result(json.dumps(result)))
 
         return [decision], {}
 
@@ -339,8 +341,10 @@ class Executor(executor.Executor):
 
         decision = swf.models.decision.WorkflowExecutionDecision()
         decision.fail(
-            reason='Workflow execution failed: {}'.format(reason),
-            details=details)
+            reason=swf.format.reason(
+                'Workflow execution failed: {}'.format(reason)),
+            details=swf.format.details(details),
+        )
 
         self._decisions.append(decision)
         raise exceptions.ExecutionBlocked('workflow execution failed')
