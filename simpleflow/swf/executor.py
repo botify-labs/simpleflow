@@ -326,7 +326,7 @@ class Executor(executor.Executor):
             return [decision], {}
 
         decision = swf.models.decision.WorkflowExecutionDecision()
-        decision.complete(result=json.dumps(result))
+        decision.complete(result=swf.format.result(json.dumps(result)))
 
         return [decision], {}
 
