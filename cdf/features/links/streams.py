@@ -742,6 +742,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
     def pre_process_document(self, document):
         # temporary structures for analytic processing
         document["processed_inlink_link"] = set()
+        document["samples_set"] = set()
         document["tmp_anchors_txt"] = {}
         document["tmp_anchors_nb"] = Counter()
 
@@ -757,6 +758,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
 
     def _process_link(self, document, stream):
         url_dst, link_type, follow_keys, url_src, text_hash, text = stream
+        # decode the link mask
         is_follow = "follow" in follow_keys
         mask = list_to_mask(follow_keys)
         inlink_nb = document['inlinks_internal']['nb']
@@ -766,7 +768,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         follow['total'] += 1
 
         # `text` is not always filled, so we have to push it in a temporary
-        # dictionnary when found
+        # dictionary when found
         if text != self.TEXT_HASH_ALREADY_SET and text_hash not in document['tmp_anchors_txt']:
             if text == '':
                 text = self.TEXT_EMPTY
@@ -784,10 +786,9 @@ class InlinksStreamDef(InlinksRawStreamDef):
             else:
                 follow['combinations'][key] += 1
 
-        inlink_urls = document['inlinks_internal']['urls']
-        exists = [url_src, mask] in inlink_urls
-        if len(inlink_urls) < 300 and not exists:
-            inlink_urls.append([url_src, mask])
+        samples_set = document['samples_set']
+        if len(samples_set) < 300:
+            samples_set.add((url_src, mask))
 
         # add src to processed set
         document['processed_inlink_link'].add((url_src, is_follow))
@@ -828,6 +829,9 @@ class InlinksStreamDef(InlinksRawStreamDef):
         # If not "inlinks_internal" : we want to store a non-crawled url
         if not 'inlinks_internal' in document:
             return
+
+        document['inlinks_internal']['urls'] = list(document['samples_set'])
+
         document['inlinks_internal']['nb']['follow']['unique'] = len(
             [url_dst for url_dst, is_follow in document['processed_inlink_link'] if is_follow]
         )
@@ -859,6 +863,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         del document["processed_inlink_link"]
         del document["tmp_anchors_txt"]
         del document["tmp_anchors_nb"]
+        del document['samples_set']
 
 
 class OutlinksCountersStreamDef(StreamDefBase):
