@@ -422,6 +422,8 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         # store a (dest, is_follow) set of processed links
         document["processed_internal_outlinks"] = set()
         document["processed_external_outlinks"] = set()
+        # outlink samples
+        document["outlink_sample_set"] = set()
 
     def process_document(self, document, stream):
         url_src, link_type, follow_keys, url_dst, external_url = stream
@@ -457,10 +459,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
         # blocked by robots.txt
         if is_internal and url_dst > 0:
             #store sample internal links
-            outlink_urls = document['outlinks_internal']['urls']
-            exists = [url_dst, mask] in outlink_urls
-            if len(outlink_urls) < 300 and not exists:
-                outlink_urls.append([url_dst, mask])
+            sample_set = document['outlink_sample_set']
+            if len(sample_set) < 300:
+                sample_set.add((url_dst, mask))
 
         #update the set of processed links
         if is_internal:
@@ -504,6 +505,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             canonical_to['url_exists'] = True
 
     def post_process_document(self, document):
+        if 'outlink_sample_set' in document:
+            document['outlinks_internal']['urls'] = list(document['outlink_sample_set'])
+
         # If not "outlinks_internal" : we want to store a non-crawled url
         if 'outlinks_internal' in document:
             document['outlinks_internal']['urls_exists'] = len(document['outlinks_internal']['urls']) > 0
@@ -534,8 +538,9 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             # delete intermediate data structures
             del document["processed_external_outlinks"]
 
-        # remove canonical processing marker
+        # intermediate data structure
         document.pop('canonical_processed', None)
+        document.pop('outlink_sample_set', None)
 
 
 class InlinksRawStreamDef(StreamDefBase):
@@ -742,7 +747,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
     def pre_process_document(self, document):
         # temporary structures for analytic processing
         document["processed_inlink_link"] = set()
-        document["samples_set"] = set()
+        document["inlink_sample_set"] = set()
         document["tmp_anchors_txt"] = {}
         document["tmp_anchors_nb"] = Counter()
 
@@ -786,7 +791,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             else:
                 follow['combinations'][key] += 1
 
-        samples_set = document['samples_set']
+        samples_set = document['inlink_sample_set']
         if len(samples_set) < 300:
             samples_set.add((url_src, mask))
 
@@ -830,7 +835,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         if not 'inlinks_internal' in document:
             return
 
-        document['inlinks_internal']['urls'] = list(document['samples_set'])
+        document['inlinks_internal']['urls'] = list(document['inlink_sample_set'])
 
         document['inlinks_internal']['nb']['follow']['unique'] = len(
             [url_dst for url_dst, is_follow in document['processed_inlink_link'] if is_follow]
@@ -863,7 +868,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
         del document["processed_inlink_link"]
         del document["tmp_anchors_txt"]
         del document["tmp_anchors_nb"]
-        del document['samples_set']
+        del document['inlink_sample_set']
 
 
 class OutlinksCountersStreamDef(StreamDefBase):

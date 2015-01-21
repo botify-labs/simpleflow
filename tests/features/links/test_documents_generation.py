@@ -23,7 +23,8 @@ from cdf.features.links.streams import (
     InlinksStreamDef, OutlinksStreamDef,
     BadLinksStreamDef, LinksToNonCompliantStreamDef,
     InlinksPercentilesStreamDef, LinksToNonCompliantCountersStreamDef,
-    BadLinksCountersStreamDef)
+    BadLinksCountersStreamDef
+)
 
 logger.setLevel(logging.DEBUG)
 
@@ -99,13 +100,13 @@ class TestOutlinksGeneration(unittest.TestCase):
         self.assertEquals(ext_outlinks_nb['nofollow']['total'], 1)
         self.assertEquals(ext_outlinks_nb['nofollow']['unique'], 1)
         expected_outlinks_internal = [
-            [2, list_to_mask(['follow'])],
-            [3, list_to_mask(['link'])],
-            [4, list_to_mask(['follow'])],
-            [4, list_to_mask(['link'])]
+            (2, list_to_mask(['follow'])),
+            (3, list_to_mask(['link'])),
+            (4, list_to_mask(['follow'])),
+            (4, list_to_mask(['link']))
         ]
-        self.assertEquals(document['outlinks_internal']['urls'],
-                          expected_outlinks_internal)
+        self.assertItemsEqual(document['outlinks_internal']['urls'],
+                              expected_outlinks_internal)
         self.assertEquals(document['outlinks_internal']['urls_exists'], True)
 
         # check for url2
@@ -151,11 +152,11 @@ class TestOutlinksGeneration(unittest.TestCase):
         self.assertEquals(int_outlinks_nb['nofollow']['combinations'],
                           expected_combinations)
         expected_outlinks = [
-            [5, list_to_mask(["robots", "link"])],
-            [6, list_to_mask(["link"])]
+            (5, list_to_mask(["robots", "link"])),
+            (6, list_to_mask(["link"]))
         ]
-        self.assertEqual(document['outlinks_internal']['urls'],
-                         expected_outlinks)
+        self.assertItemsEqual(document['outlinks_internal']['urls'],
+                              expected_outlinks)
         self.assertEqual(document['outlinks_internal']['urls_exists'], True)
 
     def test_outlinks_follow(self):
@@ -199,12 +200,12 @@ class TestOutlinksGeneration(unittest.TestCase):
         self.assertEquals(int_outlinks_nb['follow']['total'], 3)
         self.assertEquals(int_outlinks_nb['follow']['unique'], 2)
         expected_outlinks = [
-            [2, list_to_mask(['follow'])],
-            [2, list_to_mask(['link'])],
-            [3, list_to_mask(['follow'])]
+            (2, list_to_mask(['follow'])),
+            (2, list_to_mask(['link'])),
+            (3, list_to_mask(['follow']))
         ]
-        self.assertEquals(document['outlinks_internal']['urls'],
-                          expected_outlinks)
+        self.assertItemsEqual(document['outlinks_internal']['urls'],
+                              expected_outlinks)
         self.assertEquals(document['outlinks_internal']['urls_exists'], True)
 
     def test_inlinks_percentile_id(self):
