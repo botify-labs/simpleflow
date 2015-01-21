@@ -28,8 +28,9 @@ class EsHandler(object):
 
         self.es_client = Elasticsearch(self.es_host, timeout=timeout)
         # ES client with text serializer, for raw bulk index only
+        # its timeout is set to 2min
         self.raw_bulk_client = Elasticsearch(
-            self.es_host, timeout=timeout, serializer=TextSerializer())
+            self.es_host, timeout=120, serializer=TextSerializer())
         self.index = es_index
         self.doc_type = es_doc_type
 
