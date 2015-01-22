@@ -175,7 +175,7 @@ class TestComputeInsightValue(unittest.TestCase):
                 ]
             },
             "aggs": [
-                {"metrics": [{"count": "url"}]}
+                {"metrics": [{"count": "id"}]}
             ]
         }
 

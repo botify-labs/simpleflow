@@ -52,7 +52,7 @@ class TestInsight(unittest.TestCase):
                 "value": 5
             },
             "aggs": [
-                {"metrics": [{"count": "url"}]}
+                {"metrics": [{"count": "id"}]}
             ]
         }
         self.assertEqual(expected_query, insight.query)
@@ -86,7 +86,7 @@ class TestInsight(unittest.TestCase):
     def test_repr(self):
         insight = Insight(self.identifier, self.name, self.positive_trend)
         self.assertEqual(
-            "foo: {'aggs': [{'metrics': [{'count': 'url'}]}]}",
+            "foo: {'aggs': [{'metrics': [{'count': 'id'}]}]}",
             repr(insight)
         )
 
@@ -128,7 +128,7 @@ class TestComparisonAwareInsight(unittest.TestCase):
                 ]
             },
             "aggs": [
-                {"metrics": [{"count": "url"}]}
+                {"metrics": [{"count": "id"}]}
             ]
         }
         self.assertEqual(expected_query, insight.query)
@@ -139,7 +139,7 @@ class TestComparisonAwareInsight(unittest.TestCase):
                 "value": 5
             },
             "aggs": [
-                {"metrics": [{"count": "url"}]}
+                {"metrics": [{"count": "id"}]}
             ]
 
         }
@@ -167,13 +167,13 @@ class TestComparisonAwareInsight(unittest.TestCase):
                 ]
             },
             "aggs": [
-                {"metrics": [{"count": "url"}]}
+                {"metrics": [{"count": "id"}]}
             ]
         }
         self.assertEqual(expected_query, insight.query)
         expected_query_to_display = {
             "aggs": [
-                {"metrics": [{"count": "url"}]}
+                {"metrics": [{"count": "id"}]}
             ]
 
         }
@@ -286,7 +286,7 @@ class TestInsightValue(unittest.TestCase):
             "unit": "url",
             "aggregator": "count",
             "query":  {
-                'aggs': [{'metrics': [{'count': 'url'}]}],
+                'aggs': [{'metrics': [{'count': 'id'}]}],
                 'filters': {'field': 'foo_field', 'predicate': 'eq', 'value': 1001}
             },
             "trend": [
