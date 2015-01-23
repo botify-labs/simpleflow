@@ -114,7 +114,7 @@ class Insight(AbstractInsight):
         self.name = name
         self.positive_trend = positive_trend
         self.filter = input_filter
-        self.metric_agg = metric_agg or CountAggregation("url")
+        self.metric_agg = metric_agg or CountAggregation("id")
         self.type = type
         self.unit = unit
         self.additional_fields = additional_fields
