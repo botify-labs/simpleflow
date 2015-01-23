@@ -334,12 +334,12 @@ class TestInlinksGeneration(unittest.TestCase):
         self.assertEquals(inlinks['nb']['follow']['total'], 4)
         self.assertEquals(inlinks['nb']['follow']['unique'], 2)
         expected_inlinks = [
-            [2, list_to_mask(['follow'])],
-            [3, list_to_mask(['link'])],
-            [3, list_to_mask(['link', 'meta'])],
-            [3, list_to_mask(['follow'])]
+            (2, list_to_mask(['follow'])),
+            (3, list_to_mask(['link'])),
+            (3, list_to_mask(['link', 'meta'])),
+            (3, list_to_mask(['follow']))
         ]
-        self.assertEquals(inlinks['urls'], expected_inlinks)
+        self.assertItemsEqual(inlinks['urls'], expected_inlinks)
         self.assertEquals(inlinks['urls_exists'], True)
 
 
