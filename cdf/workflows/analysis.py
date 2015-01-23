@@ -426,13 +426,19 @@ class AnalysisWorkflow(Workflow):
             futures.wait(elastic_search_result)
             return
 
-        clusters_result = self.submit(
-            compute_suggested_patterns,
-            crawl_id,
-            s3_uri,
-            first_part_id_size,
-            part_id_size,
-            tmp_dir=tmp_dir)
+        # intermediary analysis results
+        intermediary_files = []
+
+        # suggested_pattern task can be skipped
+        if context['features_options']['main'].get('suggested_patterns', True):
+            clusters_result = self.submit(
+                compute_suggested_patterns,
+                crawl_id,
+                s3_uri,
+                first_part_id_size,
+                part_id_size,
+                tmp_dir=tmp_dir)
+            intermediary_files.append(clusters_result)
 
         metadata_dup_result = self.submit(
             make_metadata_duplicates_file,
@@ -567,8 +573,7 @@ class AnalysisWorkflow(Workflow):
         # Intermediate files
         # Group all the futures that need to terminate before computing the
         # aggregations and generating documents.
-        intermediary_files = ([
-            clusters_result,
+        intermediary_files += ([
             metadata_dup_result,
             bad_link_result] +
             bad_link_counter_results +
