@@ -78,7 +78,7 @@ def write_by_part(generator,
     """
     for part, rows in group_by_part(generator, first_part_size, part_size):
         file_name = file_pattern.format(part)
-        logger.info('Writing for file {}'.format(file_name))
+        logger.info('Writing for file %s' % file_name)
         path = os.path.join(dirpath, file_name)
         with gzip.open(path, 'w') as f:
             for row in rows:
