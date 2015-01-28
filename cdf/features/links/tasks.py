@@ -3,8 +3,8 @@ import gzip
 import json
 
 from cdf.log import logger
-from cdf.core.streams.cache import BufferedMarshalStreamCache
-from cdf.utils.s3 import push_file, push_content, fetch_file
+from cdf.core.streams.cache import BufferedStreamCache, cbor_serializer
+from cdf.utils.s3 import push_file, push_content
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils.remote_files import (
     get_crawl_info,
@@ -252,11 +252,11 @@ def make_top_domains_files(crawl_id,
     outlinks = filter_external_outlinks(outlinks)
     outlinks = filter_invalid_destination_urls(outlinks)
 
-    outlinks_stream_cache = BufferedMarshalStreamCache()
+    outlinks_stream_cache = BufferedStreamCache(serializer=cbor_serializer)
     outlinks_stream_cache.cache(outlinks)
 
     urlids_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
-    urlids_stream_cache = BufferedMarshalStreamCache()
+    urlids_stream_cache = BufferedStreamCache(serializer=cbor_serializer)
     urlids_stream_cache.cache(urlids_stream)
 
     result = []

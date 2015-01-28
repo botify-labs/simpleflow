@@ -5,6 +5,7 @@ import tempfile
 import heapq
 import os
 import marshal
+import cbor
 
 from abc import ABCMeta, abstractmethod
 
@@ -26,7 +27,7 @@ def external_sort(stream, key):
     :returns: iterator
     """
     #use MarshalExternalSort as it is the fastest method so far.
-    external_sort = MarshalExternalSort()
+    external_sort = CborExternalSort()
     return external_sort.external_sort(stream, key)
 
 
@@ -208,6 +209,18 @@ class MarshalExternalSort(MergeExternalSort):
             try:
                 yield marshal.load(f)
             except EOFError:
+                break
+
+
+class CborExternalSort(MergeExternalSort):
+    def dump(self, element, f):
+        cbor.dump(element, f)
+
+    def get_stream_from_file(self, f):
+        while True:
+            try:
+                yield cbor.load(f)
+            except (EOFError, IndexError):
                 break
 
 

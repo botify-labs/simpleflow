@@ -3,11 +3,11 @@ import os
 import gc
 
 from cdf.core.streams.cache import (
-    MarshalStreamCache,
-    BufferedMarshalStreamCache
+    FileStreamCache,
+    BufferedStreamCache
 )
 
-
+# TODO test cbor
 class TestStreamCache(unittest.TestCase):
     def setUp(self):
         self.data = [
@@ -17,7 +17,7 @@ class TestStreamCache(unittest.TestCase):
         ]
 
     def test_harness(self):
-        cache = MarshalStreamCache()
+        cache = FileStreamCache()
         cache.cache(iter(self.data))
 
         # first consume
@@ -28,7 +28,7 @@ class TestStreamCache(unittest.TestCase):
         self.assertEqual(list(stream), self.data)
 
     def test_empty_stream(self):
-        cache = MarshalStreamCache()
+        cache = FileStreamCache()
         cache.cache([])
         self.assertEqual([], list(cache.get_stream()))
 
@@ -36,7 +36,7 @@ class TestStreamCache(unittest.TestCase):
         path = '/tmp/cachefile'
 
         def test_cache():
-            cache = MarshalStreamCache(path)
+            cache = FileStreamCache(path)
             cache.cache(iter(self.data))
 
         test_cache()
@@ -53,7 +53,7 @@ class TestBufferedCache(unittest.TestCase):
         ]
 
     def test_harness(self):
-        cache = BufferedMarshalStreamCache()
+        cache = BufferedStreamCache()
         cache.cache(iter(self.data))
 
         # first consume
@@ -64,7 +64,7 @@ class TestBufferedCache(unittest.TestCase):
         self.assertEqual(list(stream), self.data)
 
     def test_buffer_size(self):
-        cache = BufferedMarshalStreamCache(buffer_size=2)
+        cache = BufferedStreamCache(buffer_size=2)
         cache.cache(iter(self.data))
 
         # first consume
@@ -75,7 +75,7 @@ class TestBufferedCache(unittest.TestCase):
         self.assertEqual(list(stream), self.data)
 
     def test_null_buffer_size(self):
-        cache = BufferedMarshalStreamCache(buffer_size=0)
+        cache = BufferedStreamCache(buffer_size=0)
         cache.cache(iter(self.data))
 
         # first consume
@@ -86,7 +86,7 @@ class TestBufferedCache(unittest.TestCase):
         self.assertEqual(list(stream), self.data)
 
     def test_large_buffer_size(self):
-        cache = BufferedMarshalStreamCache(buffer_size=100)
+        cache = BufferedStreamCache(buffer_size=100)
         cache.cache(iter(self.data))
 
         # first consume
