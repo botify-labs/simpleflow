@@ -39,8 +39,8 @@ from cdf.features.links.top_domains import (
     compute_top_second_level_domains,
     filter_external_outlinks,
     filter_invalid_destination_urls,
-    resolve_sample_url_id
-)
+    resolve_sample_url_id,
+    remove_unused_columns)
 from cdf.features.links.percentiles import (
     compute_quantiles,
     compute_percentile_stats
@@ -251,6 +251,7 @@ def make_top_domains_files(crawl_id,
     outlinks = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     outlinks = filter_external_outlinks(outlinks)
     outlinks = filter_invalid_destination_urls(outlinks)
+    outlinks = remove_unused_columns(outlinks)
 
     outlinks_stream_cache = BufferedStreamCache(serializer=cbor_serializer)
     outlinks_stream_cache.cache(outlinks)

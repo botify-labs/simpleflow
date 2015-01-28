@@ -22,6 +22,10 @@ FOLLOW_LINKS = 'follow_links'
 UNIQUE_NOFOLLOW_LINKS = 'unique_nofollow_links'
 NOFOLLOW_LINKS = 'nofollow_links'
 
+SRC_IDX = 0
+MASK_IDX = 1
+URL_IDX = 2
+
 
 class DomainLinkStats(object):
     """Stats of external outgoing links to a certain domain"""
@@ -210,6 +214,19 @@ def filter_invalid_destination_urls(outlinks):
     return ifilter(is_valid, outlinks)
 
 
+def remove_unused_columns(outlinks):
+    """Remove un-used columns in outlinks stream, keep only top_domain related
+    columns in the stream
+
+    :param outlinks: outlinks stream (OutLinksRawStreamDef)
+    :type outlinks: iterator
+    :return: stream of (src, mask, url)
+    :rtype: iterator
+    """
+    for src, _, mask, _, url in outlinks:
+        yield (src, mask, url)
+
+
 def _group_links(link_stream, key):
     """A helper function to group elements of a outlink stream
     according to a generic criterion.
@@ -235,8 +252,8 @@ def count_unique_links(external_outlinks):
     :rtype: int
     """
     #remove duplicate links
-    id_index = OutlinksRawStreamDef.field_idx("id")
-    external_url_index = OutlinksRawStreamDef.field_idx("external_url")
+    id_index = SRC_IDX
+    external_url_index = URL_IDX
     key = lambda x: (x[id_index], x[external_url_index])
     result = 0
     for _, g in _group_links(external_outlinks, key):
@@ -252,7 +269,7 @@ def count_unique_follow_links(external_outlinks):
     :type external_outlinks: iterable
     :rtype: int
     """
-    bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
+    bitmask_index = MASK_IDX
     #compute number of unique follow links
     external_follow_outlinks = ifilter(
         lambda x: is_follow_link(x[bitmask_index], is_bitmask=True),
@@ -335,7 +352,7 @@ def compute_top_full_domains(external_outlinks, n):
     :type key: func
     :rtype: list
     """
-    external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
+    external_url_idx = URL_IDX
     key = lambda x: get_domain(x[external_url_idx])
     return _compute_top_domains(external_outlinks, n, key)
 
@@ -355,7 +372,7 @@ def compute_top_second_level_domains(external_outlinks, n):
     :type key: func
     :rtype: list
     """
-    external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
+    external_url_idx = URL_IDX
     key = lambda x: get_second_level_domain(x[external_url_idx])
     return _compute_top_domains(external_outlinks, n, key)
 
@@ -370,7 +387,7 @@ def compute_domain_sample_sets(stream_cache, nb_samples):
     :return: stats of outlinks that target the domain
     :rtype: dict
     """
-    bitmask_index = OutlinksRawStreamDef.field_idx("bitmask")
+    bitmask_index = MASK_IDX
 
     key = lambda x: is_follow_link(x[bitmask_index], is_bitmask=True)
     follow_outlinks = ifilter(key, stream_cache.get_stream())
@@ -402,9 +419,9 @@ def compute_domain_link_counts(grouped_outlinks):
     nofollow_unique = 0
 
     # indices
-    id_index = OutlinksRawStreamDef.field_idx("id")
-    external_url_index = OutlinksRawStreamDef.field_idx("external_url")
-    mask_idx = OutlinksRawStreamDef.field_idx('bitmask')
+    id_index = SRC_IDX
+    external_url_index = URL_IDX
+    mask_idx = MASK_IDX
     key = lambda x: (
         x[id_index],
         x[external_url_index],
@@ -439,7 +456,7 @@ def compute_link_destination_stats(links, external_url, nb_source_samples):
     :type nb_source_samples: int
     :rtype: LinkDestination
     """
-    id_index = OutlinksRawStreamDef.field_idx("id")
+    id_index = SRC_IDX
     #build the set of source urlids
     link_set = set()
     for link in links:
@@ -471,7 +488,7 @@ def compute_sample_links(external_outlinks, n):
     :type n: int
     :rtype: list
     """
-    external_url_idx = OutlinksRawStreamDef.field_idx("external_url")
+    external_url_idx = URL_IDX
     external_outlinks = external_sort(external_outlinks, key=lambda x: x[external_url_idx])
     heap = []
     for external_url, links in groupby(external_outlinks, key=lambda x: x[external_url_idx]):

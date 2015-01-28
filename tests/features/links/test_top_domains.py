@@ -19,7 +19,7 @@ from cdf.features.links.top_domains import (
     compute_sample_links,
     compute_link_destination_stats,
     resolve_sample_url_id,
-    )
+)
 
 
 class TestDomainLinkStats(unittest.TestCase):
@@ -142,11 +142,11 @@ class TestGroupLinks(TopDomainTestCase):
 class TestCountUniqueLinks(unittest.TestCase):
     def test_nominal_case(self):
         external_outlinks = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/baz.html"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [0, "a", 0, -1, "http://foo.com/baz.html"], # duplicate link
-            [3, "a", 0, -1, "http://foo.com/baz.css"]
+            [0, 0, "http://foo.com/bar.html"],
+            [0, 0, "http://foo.com/baz.html"],
+            [3, 0, "http://foo.com/qux.css"],
+            [0, 0, "http://foo.com/baz.html"], # duplicate link
+            [3, 0, "http://foo.com/baz.css"]
         ])
         self.assertEqual(4, count_unique_links(external_outlinks))
 
@@ -154,29 +154,29 @@ class TestCountUniqueLinks(unittest.TestCase):
 class TestCountUniqueFollowLinks(unittest.TestCase):
     def test_nominal_case(self):
         external_outlinks = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/baz.html"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [0, "a", 0, -1, "http://foo.com/baz.html"], # duplicate link
-            [3, "a", 0, -1, "http://foo.com/baz.css"],
-            [3, "a", 1, -1, "http://foo.com"]  # no follow
+            [0, 0, "http://foo.com/bar.html"],
+            [0, 0, "http://foo.com/baz.html"],
+            [3, 0, "http://foo.com/qux.css"],
+            [0, 0, "http://foo.com/baz.html"], # duplicate link
+            [3, 0, "http://foo.com/baz.css"],
+            [3, 1, "http://foo.com"]  # no follow
         ])
         self.assertEqual(4, count_unique_follow_links(external_outlinks))
 
 
-class Test_ComputeTopNDomains(unittest.TestCase):
+class TestComputeTopNDomains(unittest.TestCase):
     def setUp(self):
         #extract destination url
         self.key = lambda x: x[4]
 
     def test_nominal_case(self):
         externals = iter([
-            [0, "a", 0, -1, "foo.com"],
-            [0, "a", 0, -1, "bar.com"],
-            [3, "a", 0, -1, "foo.com"],
-            [4, "a", 0, -1, "bar.foo.com"],
-            [4, "a", 0, -1, "bar.com"],
-            [4, "a", 0, -1, "foo.com"],
+            [0, 0, "foo.com"],
+            [0, 0, "bar.com"],
+            [3, 0, "foo.com"],
+            [4, 0, "bar.foo.com"],
+            [4, 0, "bar.com"],
+            [4, 0, "foo.com"],
         ])
         n = 2
         actual_result = _compute_top_domains(externals, n, self.key)
@@ -196,9 +196,9 @@ class Test_ComputeTopNDomains(unittest.TestCase):
 
     def test_nofollow_links(self):
         externals = iter([
-            [0, "a", 1, -1, "foo.com"],
-            [3, "a", 0, -1, "foo.com"],
-            [4, "a", 3, -1, "foo.com"],
+            [0, 1, "foo.com"],
+            [3, 0, "foo.com"],
+            [4, 3, "foo.com"],
         ])
         n = 1
         actual_result = _compute_top_domains(externals, n, self.key)
@@ -217,9 +217,9 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         compute_sample_links_mock.return_value = []
 
         externals = iter([
-            [0, "a", 0, -1, "foo.com"],
-            [0, "a", 0, -1, "bar.com"],
-            [4, "a", 0, -1, "foo.com"],
+            [0, 0, "foo.com"],
+            [0, 0, "bar.com"],
+            [4, 0, "foo.com"],
         ])
         n = 10
         actual_result = _compute_top_domains(externals, n, self.key)
@@ -235,10 +235,10 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         compute_sample_links_mock.return_value = []
 
         externals = iter([
-            [0, "a", 1, -1, "bar.com"], # no follow
-            [3, "a", 0, -1, "bar.foo.com"],
-            [4, "a", 0, -1, "bar.foo.com"],
-            [4, "a", 0, -1, "bar.com"],
+            [0, 1, "bar.com"], # no follow
+            [3, 0, "bar.foo.com"],
+            [4, 0, "bar.foo.com"],
+            [4, 0, "bar.com"],
         ])
         n = 1
         actual_result = _compute_top_domains(externals, n, self.key)
@@ -250,7 +250,7 @@ class Test_ComputeTopNDomains(unittest.TestCase):
     def test_all_nofollow_links(self):
         #all no follow links
         externals = iter([
-            [0, "a", 1, -1, "foo.com"]
+            [0, 1, "foo.com"]
         ])
         n = 2
         actual_result = _compute_top_domains(externals, n, self.key)
@@ -267,13 +267,13 @@ class Test_ComputeTopNDomains(unittest.TestCase):
         compute_sample_links_mock.return_value = []
 
         externals = iter([
-            [0, "a", 0, -1, "foo.com"],
-            [0, "a", 0, -1, "bar.com"],
-            [3, "a", 0, -1, "foo.com"],
-            [4, "a", 0, -1, "bar.foo.com"],
-            [4, "a", 0, -1, "bar.com"],
-            [4, "a", 0, -1, "foo.com"],
-            [0, "a", 0, -1, "foo.com"]  # duplicated link
+            [0, 0, "foo.com"],
+            [0, 0, "bar.com"],
+            [3, 0, "foo.com"],
+            [4, 0, "bar.foo.com"],
+            [4, 0, "bar.com"],
+            [4, 0, "foo.com"],
+            [0, 0, "foo.com"]  # duplicated link
         ])
         n = 2
         actual_result = _compute_top_domains(externals, n, self.key)
@@ -287,12 +287,12 @@ class Test_ComputeTopNDomains(unittest.TestCase):
 class TestComputeTopNDomains(unittest.TestCase):
     def test_nominal_case(self):
         externals = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://bar.com/image.jpg"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [4, "a", 0, -1, "http://bar.foo.com/baz.html"],
-            [4, "a", 0, -1, "http://bar.com/baz.html"],
-            [4, "a", 0, -1, "http://foo.com/"],
+            [0, 0, "http://foo.com/bar.html"],
+            [0, 0, "http://bar.com/image.jpg"],
+            [3, 0, "http://foo.com/qux.css"],
+            [4, 0, "http://bar.foo.com/baz.html"],
+            [4, 0, "http://bar.com/baz.html"],
+            [4, 0, "http://foo.com/"],
         ])
         n = 2
         actual_result = compute_top_full_domains(externals, n)
@@ -319,12 +319,12 @@ class TestComputeTopNDomains(unittest.TestCase):
 class TestComputeTopNSecondLevelDomain(unittest.TestCase):
     def test_nominal_case(self):
         externals = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://bar.com/image.jpg"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [4, "a", 0, -1, "http://bar.foo.com/baz.html"],
-            [4, "a", 0, -1, "http://bar.com/baz.html"],
-            [4, "a", 0, -1, "http://foo.com/"],
+            [0, 0, "http://foo.com/bar.html"],
+            [0, 0, "http://bar.com/image.jpg"],
+            [3, 0, "http://foo.com/qux.css"],
+            [4, 0, "http://bar.foo.com/baz.html"],
+            [4, 0, "http://bar.com/baz.html"],
+            [4, 0, "http://foo.com/"],
         ])
         n = 2
         actual_result = compute_top_second_level_domains(externals, n)
@@ -354,19 +354,19 @@ class TestDomainLinkCounts(unittest.TestCase):
         self.groups = (
             "foo.com",
             [
-                [0, "a", 0, -1, "A"],
-                [3, "a", 0, -1, "B"],
-                [4, "a", 0, -1, "C"],
-                [5, "a", 1, -1, "A"],
-                [5, "a", 1, -1, "A"],
-                [6, "a", 0, -1, "A"],
-                [7, "a", 0, -1, "A"],
+                [0, 0, "A"],
+                [3, 0, "B"],
+                [4, 0, "C"],
+                [5, 1, "A"],
+                [5, 1, "A"],
+                [6, 0, "A"],
+                [7, 0, "A"],
                 # url 8 has 2 follow to A
                 # and a nofollow to A
-                [8, "a", 2, -1, "A"],
-                [8, "a", 0, -1, "A"],
-                [8, "a", 0, -1, "A"],
-                [9, "a", 0, -1, "A"]
+                [8, 2, "A"],
+                [8, 0, "A"],
+                [8, 0, "A"],
+                [9, 0, "A"]
             ]
         )
 
@@ -393,12 +393,12 @@ class TestDomainLinkCounts(unittest.TestCase):
 class TestComputeSampleLinks(unittest.TestCase):
     def test_nominal_case(self):
         externals = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [3, "a", 0, -1, "http://foo.com/bar.html"],
-            [4, "a", 0, -1, "http://foo.com/baz.html"],
-            [5, "a", 0, -1, "http://foo.com/baz.html"],
-            [4, "a", 0, -1, "http://foo.com/bar.html"],
+            [0, 0, "http://foo.com/bar.html"],
+            [3, 0, "http://foo.com/qux.css"],
+            [3, 0, "http://foo.com/bar.html"],
+            [4, 0, "http://foo.com/baz.html"],
+            [5, 0, "http://foo.com/baz.html"],
+            [4, 0, "http://foo.com/bar.html"],
         ])
         n = 2
         actual_result = compute_sample_links(externals, n)
@@ -410,16 +410,16 @@ class TestComputeSampleLinks(unittest.TestCase):
 
     def test_unique_links(self):
         externals = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/bar.html"], # many duplicates
-            [3, "a", 0, -1, "http://foo.com/qux.html"],
-            [4, "a", 0, -1, "http://foo.com/baz.html"],
-            [4, "a", 0, -1, "http://foo.com/qux.html"],
-            [5, "a", 0, -1, "http://foo.com/baz.html"],
-            [6, "a", 0, -1, "http://foo.com/baz.html"]
+            [0, 0, "http://foo.com/bar.html"],
+            [0, 0, "http://foo.com/bar.html"],
+            [0, 0, "http://foo.com/bar.html"],
+            [0, 0, "http://foo.com/bar.html"],
+            [0, 0, "http://foo.com/bar.html"], # many duplicates
+            [3, 0, "http://foo.com/qux.html"],
+            [4, 0, "http://foo.com/baz.html"],
+            [4, 0, "http://foo.com/qux.html"],
+            [5, 0, "http://foo.com/baz.html"],
+            [6, 0, "http://foo.com/baz.html"]
         ])
         n = 2
         actual_result = compute_sample_links(externals, n)
@@ -430,12 +430,12 @@ class TestComputeSampleLinks(unittest.TestCase):
 
     def test_nofollow(self):
         externals = iter([
-            [0, "a", 1, -1, "http://foo.com/bar.html"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [3, "a", 0, -1, "http://foo.com/bar.html"],
-            [4, "a", 3, -1, "http://foo.com/baz.html"],
-            [5, "a", 0, -1, "http://foo.com/baz.html"],
-            [4, "a", 5, -1, "http://foo.com/bar.html"],
+            [0, 1, "http://foo.com/bar.html"],
+            [3, 0, "http://foo.com/qux.css"],
+            [3, 0, "http://foo.com/bar.html"],
+            [4, 3, "http://foo.com/baz.html"],
+            [5, 0, "http://foo.com/baz.html"],
+            [4, 5, "http://foo.com/bar.html"],
         ])
         n = 2
         actual_result = compute_sample_links(externals, n)
@@ -449,12 +449,12 @@ class TestComputeSampleLinks(unittest.TestCase):
 class TestComputeLinkDestinationStats(unittest.TestCase):
     def test_nominal_case(self):
         externals = iter([
-            [3, "a", 0, -1, "http://foo.com/"],
-            [3, "a", 0, -1, "http://foo.com/"],
-            [4, "a", 3, -1, "http://foo.com/"],
-            [0, "a", 1, -1, "http://foo.com/"],
-            [5, "a", 0, -1, "http://foo.com/"],
-            [4, "a", 5, -1, "http://foo.com/"]
+            [3, 0, "http://foo.com/"],
+            [3, 0, "http://foo.com/"],
+            [4, 3, "http://foo.com/"],
+            [0, 1, "http://foo.com/"],
+            [5, 0, "http://foo.com/"],
+            [4, 5, "http://foo.com/"]
         ])
         n = 2
         actual_result = compute_link_destination_stats(
@@ -464,7 +464,6 @@ class TestComputeLinkDestinationStats(unittest.TestCase):
         )
         expected_result = LinkDestination("http://foo.com/", 4, [0, 3])
         self.assertEqual(expected_result, actual_result)
-
 
 
 class TestSourceSampleUrl(unittest.TestCase):
