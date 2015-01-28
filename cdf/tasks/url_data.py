@@ -5,6 +5,7 @@ import itertools
 from six.moves.urllib.parse import urlparse
 from elasticsearch import Elasticsearch
 from retrying import retry
+import time
 
 from cdf.compat import json
 from cdf.exceptions import ErrorRateLimitExceeded
@@ -92,20 +93,38 @@ def push_document_stream(doc_stream, es_handler,
     def push_chunk(chunk):
         return es_handler.raw_bulk_index(chunk, stats_only=True)
 
+    global_start = time.time()
+    total_size = 0
     for docs in chunk(doc_stream, 3000):
+        bulk_start = time.time()
+        bulk_size = sum(map(len, docs))
+        total_size += bulk_size
         o, e = push_chunk(docs)
-        logger.info('Pushed bulk of {} elements finished with '
-                    '{} successes and {} fails, '
-                    'continue  ...'.format(len(docs), oks, errs))
+        bulk_used = time.time() - bulk_start
+        logger.info(
+            'Bulked {} documents ({} chars) in {} secs, with '
+            '{} successes and {} fails, throughput {}, '
+            'continue ...'.format(
+                len(docs), bulk_size,
+                bulk_used, oks, errs,
+                float(bulk_size) / bulk_used))
         oks += o
         errs += e
+
+    global_used = time.time() - global_start
+    logger.info(
+        'Push finished, pushed {} chars in '
+        '{}s with throughput {}'.format(
+            total_size, global_used,
+            float(total_size) / global_used))
 
     # check push error rate
     all = oks + errs
     error_rate = float(errs) / all if all > 0 else 0
     if error_rate > max_error_rate:
-        raise ErrorRateLimitExceeded('Push error rate exceeds '
-                                     'limit: {}'.format(error_rate))
+        raise ErrorRateLimitExceeded(
+            'Push error rate exceeds '
+            'limit: {}'.format(error_rate))
 
 
 @with_temporary_dir
