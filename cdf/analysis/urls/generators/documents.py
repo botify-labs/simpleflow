@@ -1,8 +1,9 @@
-import ujson
 from copy import deepcopy
+
 from cdf.core.streams.transformations import group_with
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.features.main.streams import IdStreamDef
+from cdf.compat import json
 
 
 _DEFAULT_DOCUMENT = ELASTICSEARCH_BACKEND.default_document()
@@ -88,5 +89,5 @@ class UrlDocumentGenerator(object):
         for file_type in self.files.iterkeys():
             self.files[file_type].seek(0)
         f = open(location, 'w')
-        f.writelines('\n'.join((ujson.encode(l) for l in self)))
+        f.writelines('\n'.join((json.encode(l) for l in self)))
         f.close()

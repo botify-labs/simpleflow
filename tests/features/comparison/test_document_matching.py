@@ -3,12 +3,13 @@ import os
 import shutil
 import tempfile
 import unittest
+
 import mock
-import ujson as json
 from moto import mock_s3
 import boto
 from boto.s3.key import Key
 
+from cdf.compat import json
 from cdf.features.comparison import matching
 from cdf.features.comparison.constants import MatchingState
 from cdf.features.comparison.exceptions import UrlKeyDecodingError

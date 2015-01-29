@@ -4,9 +4,11 @@ import cPickle as pickle
 import tempfile
 import heapq
 import os
-import ujson as json
 import marshal
+
 from abc import ABCMeta, abstractmethod
+
+from cdf.compat import json
 
 logger = logging.getLogger(__name__)
 

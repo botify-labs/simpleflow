@@ -1,12 +1,12 @@
 import os
 import gzip
 import itertools
-import ujson as json
 
 from six.moves.urllib.parse import urlparse
 from elasticsearch import Elasticsearch
 from retrying import retry
 
+from cdf.compat import json
 from cdf.exceptions import ErrorRateLimitExceeded
 from cdf.log import logger
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND

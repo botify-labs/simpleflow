@@ -1,9 +1,9 @@
-import ujson as json
 import logging
 
 from elasticsearch import Elasticsearch
 from elasticsearch.serializer import TextSerializer
 
+from cdf.compat import json
 from cdf.utils.url import get_domain
 from cdf.utils.stream import chunk
 
