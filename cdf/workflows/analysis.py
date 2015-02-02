@@ -695,9 +695,8 @@ class AnalysisWorkflow(Workflow):
                 new_crawl_id=crawl_id
             )
 
-        # wait document matching
-        # if `comparison` feature is activated
-        if has_comparison:
+            # wait document matching
+            # if `comparison` feature is activated
             futures.wait(comparison)
 
         elastic_search_result = self.submit(
