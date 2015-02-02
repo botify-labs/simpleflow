@@ -63,8 +63,31 @@ def as_activity(func):
     )(func)
 
 
+def optional_activity(func):
+    return activity.with_attributes(
+        version='2.7',
+        task_list='analysis',
+        schedule_to_start_timeout=54000,  # 15h
+        start_to_close_timeout=21600,     # 6h
+        schedule_to_close_timeout=75600,  # 21h
+        heartbeat_timeout=300,
+        retry=1,
+        # do not raise on optional tasks
+        raises_on_failure=False,
+    )(func)
+
+
 from cdf.features.main.tasks import compute_suggested_patterns
-compute_suggested_patterns = as_activity(compute_suggested_patterns)
+compute_suggested_patterns = optional_activity(compute_suggested_patterns)
+from cdf.tasks.aggregators import (
+    compute_aggregators_from_part_id,
+    make_suggest_summary_file,
+    consolidate_aggregators,
+)
+compute_aggregators_from_part_id = optional_activity(
+    compute_aggregators_from_part_id)
+make_suggest_summary_file = optional_activity(make_suggest_summary_file)
+consolidate_aggregators = optional_activity(consolidate_aggregators)
 
 from cdf.features.main.tasks import compute_zones, compute_compliant_urls
 compute_zones = as_activity(compute_zones)
@@ -103,16 +126,6 @@ from cdf.tasks.url_data import (
     push_documents_to_elastic_search
 )
 generate_documents = as_activity(generate_documents)
-
-from cdf.tasks.aggregators import (
-    compute_aggregators_from_part_id,
-    make_suggest_summary_file,
-    consolidate_aggregators,
-)
-compute_aggregators_from_part_id = as_activity(
-    compute_aggregators_from_part_id)
-make_suggest_summary_file = as_activity(make_suggest_summary_file)
-consolidate_aggregators = as_activity(consolidate_aggregators)
 
 from cdf.features.ganalytics.tasks import (
     import_data_from_ganalytics,
