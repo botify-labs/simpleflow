@@ -118,7 +118,7 @@ make_bad_link_file = as_activity(make_bad_link_file)
 make_bad_link_counter_file = as_activity(make_bad_link_counter_file)
 make_links_to_non_compliant_file = as_activity(make_links_to_non_compliant_file)
 make_links_to_non_compliant_counter_file = as_activity(make_links_to_non_compliant_counter_file)
-make_top_domains_files = as_activity(make_top_domains_files)
+make_top_domains_files = optional_activity(make_top_domains_files)
 make_inlinks_percentiles_file = as_activity(make_inlinks_percentiles_file)
 
 from cdf.tasks.url_data import (
