@@ -600,7 +600,6 @@ class AnalysisWorkflow(Workflow):
             outlinks_results +
             zone_results +
             compliant_urls_results +
-            [top_domains_result] +
             filled_metadata_count_results
         )
 
@@ -713,6 +712,10 @@ class AnalysisWorkflow(Workflow):
 
         insights_result = self.compute_insights(context)
         futures.wait(insights_result)
+
+        # wait for independent tasks
+        # they should be finished before status update
+        futures.wait(top_domains_result)
 
         crawl_status_result = self.submit(
             update_crawl_status,
