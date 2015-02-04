@@ -63,8 +63,31 @@ def as_activity(func):
     )(func)
 
 
+def optional_activity(func):
+    return activity.with_attributes(
+        version='2.7',
+        task_list='analysis',
+        schedule_to_start_timeout=54000,  # 15h
+        start_to_close_timeout=21600,     # 6h
+        schedule_to_close_timeout=75600,  # 21h
+        heartbeat_timeout=300,
+        retry=1,
+        # do not raise on optional tasks
+        raises_on_failure=False,
+    )(func)
+
+
 from cdf.features.main.tasks import compute_suggested_patterns
-compute_suggested_patterns = as_activity(compute_suggested_patterns)
+compute_suggested_patterns = optional_activity(compute_suggested_patterns)
+from cdf.tasks.aggregators import (
+    compute_aggregators_from_part_id,
+    make_suggest_summary_file,
+    consolidate_aggregators,
+)
+compute_aggregators_from_part_id = optional_activity(
+    compute_aggregators_from_part_id)
+make_suggest_summary_file = optional_activity(make_suggest_summary_file)
+consolidate_aggregators = optional_activity(consolidate_aggregators)
 
 from cdf.features.main.tasks import compute_zones, compute_compliant_urls
 compute_zones = as_activity(compute_zones)
@@ -103,16 +126,6 @@ from cdf.tasks.url_data import (
     push_documents_to_elastic_search
 )
 generate_documents = as_activity(generate_documents)
-
-from cdf.tasks.aggregators import (
-    compute_aggregators_from_part_id,
-    make_suggest_summary_file,
-    consolidate_aggregators,
-)
-compute_aggregators_from_part_id = as_activity(
-    compute_aggregators_from_part_id)
-make_suggest_summary_file = as_activity(make_suggest_summary_file)
-consolidate_aggregators = as_activity(consolidate_aggregators)
 
 from cdf.features.ganalytics.tasks import (
     import_data_from_ganalytics,
@@ -372,6 +385,12 @@ class AnalysisWorkflow(Workflow):
         )
         return insights_result
 
+    @classmethod
+    def has_segments(cls, context):
+        """Checks if segment (suggested pattern) feature is enabled"""
+        return context['features_options']['main'].get(
+            'suggested_patterns', True)
+
     def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
@@ -430,7 +449,7 @@ class AnalysisWorkflow(Workflow):
         intermediary_files = []
 
         # suggested_pattern task can be skipped
-        if context['features_options']['main'].get('suggested_patterns', True):
+        if self.has_segments(context):
             clusters_result = self.submit(
                 compute_suggested_patterns,
                 crawl_id,
@@ -613,23 +632,38 @@ class AnalysisWorkflow(Workflow):
         )
         futures.wait(percentile_results)
 
-        aggregators_results = [
-            self.submit(
-                compute_aggregators_from_part_id,
+        # suggested pattern related aggregation tasks
+        # TODO should be replaced by dynamic aggregation queries in ES
+        if self.has_segments(context):
+            aggregators_results = [
+                self.submit(
+                    compute_aggregators_from_part_id,
+                    crawl_id=crawl_id,
+                    s3_uri=s3_uri,
+                    tmp_dir=tmp_dir,
+                    part_id=part_id,
+                )
+                for part_id in crawled_partitions.result
+            ]
+            futures.wait(*aggregators_results)
+
+            consolidate_result = self.submit(
+                consolidate_aggregators,
+                crawl_id,
+                s3_uri,
+                tmp_dir=tmp_dir)
+            futures.wait(consolidate_result)
+
+            suggest_summary_result = self.submit(
+                make_suggest_summary_file,
                 crawl_id=crawl_id,
                 s3_uri=s3_uri,
                 tmp_dir=tmp_dir,
-                part_id=part_id,
+                revision_number=revision_number,
+                **es_params
             )
-            for part_id in crawled_partitions.result
-        ]
+            futures.wait(suggest_summary_result)
 
-        futures.wait(*aggregators_results)
-        consolidate_result = self.submit(
-            consolidate_aggregators,
-            crawl_id,
-            s3_uri,
-            tmp_dir=tmp_dir)
 
         # resolve all existing partitions
         all_partitions = set()
@@ -661,9 +695,8 @@ class AnalysisWorkflow(Workflow):
                 new_crawl_id=crawl_id
             )
 
-        # wait document matching
-        # if `comparison` feature is activated
-        if has_comparison:
+            # wait document matching
+            # if `comparison` feature is activated
             futures.wait(comparison)
 
         elastic_search_result = self.submit(
@@ -679,19 +712,7 @@ class AnalysisWorkflow(Workflow):
         futures.wait(elastic_search_result)
 
         insights_result = self.compute_insights(context)
-
-        suggest_summary_result = self.submit(
-            make_suggest_summary_file,
-            crawl_id=crawl_id,
-            s3_uri=s3_uri,
-            tmp_dir=tmp_dir,
-            revision_number=revision_number,
-            **es_params
-        )
-        futures.wait(
-            suggest_summary_result,
-            insights_result
-        )
+        futures.wait(insights_result)
 
         crawl_status_result = self.submit(
             update_crawl_status,
