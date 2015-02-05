@@ -3,8 +3,8 @@ import heapq
 
 from cdf.features.links.helpers.predicates import (
     is_link,
-    is_link_internal,
-    is_follow_link
+    is_follow_link,
+    is_external_link
 )
 from cdf.utils.url import get_domain, get_second_level_domain
 from cdf.utils.external_sort import external_sort
@@ -182,8 +182,7 @@ def filter_external_outlinks(outlinks):
     )
     # filter external outgoing links
     filtered = ifilter(
-        lambda l: not is_link_internal(
-            l[mask_idx], l[dest_idx], is_bitmask=True),
+        lambda l: is_external_link(l[mask_idx]),
         filtered
     )
     return filtered

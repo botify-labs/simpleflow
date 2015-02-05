@@ -96,10 +96,10 @@ class TestFilterInvalidDestinationUrls(unittest.TestCase):
 class TopDomainTestCase(unittest.TestCase):
     def setUp(self):
         self.externals = [
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://bar.com/image.jpg"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [4, "a", 0, -1, "http://bar.foo.com/baz.html"],
+            [0, "a", 8, -1, "http://foo.com/bar.html"],
+            [0, "a", 8, -1, "http://bar.com/image.jpg"],
+            [3, "a", 8, -1, "http://foo.com/qux.css"],
+            [4, "a", 8, -1, "http://bar.foo.com/baz.html"],
         ]
 
 
@@ -125,12 +125,12 @@ class TestGroupLinks(TopDomainTestCase):
         actual_result = _group_links(iter(self.externals), key=key)
 
         expected_result = [
-            (".css", [[3, "a", 0, -1, "http://foo.com/qux.css"]]),
+            (".css", [[3, "a", 8, -1, "http://foo.com/qux.css"]]),
             (".html", [
-                [0, "a", 0, -1, "http://foo.com/bar.html"],
-                [4, "a", 0, -1, "http://bar.foo.com/baz.html"]
+                [0, "a", 8, -1, "http://foo.com/bar.html"],
+                [4, "a", 8, -1, "http://bar.foo.com/baz.html"]
             ]),
-            (".jpg", [[0, "a", 0, -1, "http://bar.com/image.jpg"]])
+            (".jpg", [[0, "a", 8, -1, "http://bar.com/image.jpg"]])
         ]
 
         self.assertEqual(

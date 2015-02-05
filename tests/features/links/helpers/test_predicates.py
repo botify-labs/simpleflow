@@ -22,7 +22,7 @@ class TestIsFollowLink(unittest.TestCase):
 
 class TestIsExternalLink(unittest.TestCase):
     def test_bitmask(self):
-        self.assertTrue(is_external_link(8), True)
-        self.assertTrue(is_external_link(9), True)
-        self.assertTrue(is_external_link(5), False)
-        self.assertTrue(is_external_link(0), False)
+        self.assertTrue(is_external_link(8))
+        self.assertTrue(is_external_link(9))
+        self.assertFalse(is_external_link(5))
+        self.assertFalse(is_external_link(0))

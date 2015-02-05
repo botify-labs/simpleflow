@@ -18,7 +18,6 @@ from cdf.features.links.streams import (
     OutredirectCountersStreamDef,
     LinksToNonCompliantStreamDef,
     LinksToNonCompliantCountersStreamDef,
-    InlinksStreamDef,
     InlinksCountersStreamDef,
     InlinksPercentilesStreamDef,
     InredirectCountersStreamDef
@@ -311,15 +310,15 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
         bucket = s3.create_bucket('test_bucket')
         s3_uri = "s3://test_bucket"
         externals = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html", ""],
-            [0, "a", 0, -1, "http://bar.com/image.jpg", ""],
-            [3, "a", 0, -1, "http://foo.com/qux.css", ""],
+            [0, "a", 8, -1, "http://foo.com/bar.html", ""],
+            [0, "a", 8, -1, "http://bar.com/image.jpg", ""],
+            [3, "a", 8, -1, "http://foo.com/qux.css", ""],
             [3, "canonical", 0, 0, ""],  # canonical
-            [4, "a", 0, -1, "http://bar.foo.com/baz.html", ""],
-            [4, "a", 0, -1, "http://bar.com/baz.html", ""],
+            [4, "a", 8, -1, "http://bar.foo.com/baz.html", ""],
+            [4, "a", 8, -1, "http://bar.com/baz.html", ""],
             [4, "a", 0, 3, ""],  # internal link
-            [4, "a", 0, -1, "http://foo.com/", ""],
-            [4, "a", 0, -1, "foo", ""],  # invalid url
+            [4, "a", 8, -1, "http://foo.com/", ""],
+            [4, "a", 8, -1, "foo", ""],  # invalid url
         ])
         OutlinksRawStreamDef.persist(externals, s3_uri)
 
