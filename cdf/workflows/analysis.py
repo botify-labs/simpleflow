@@ -118,7 +118,7 @@ make_bad_link_file = as_activity(make_bad_link_file)
 make_bad_link_counter_file = as_activity(make_bad_link_counter_file)
 make_links_to_non_compliant_file = as_activity(make_links_to_non_compliant_file)
 make_links_to_non_compliant_counter_file = as_activity(make_links_to_non_compliant_counter_file)
-make_top_domains_files = as_activity(make_top_domains_files)
+make_top_domains_files = optional_activity(make_top_domains_files)
 make_inlinks_percentiles_file = as_activity(make_inlinks_percentiles_file)
 
 from cdf.tasks.url_data import (
@@ -600,7 +600,6 @@ class AnalysisWorkflow(Workflow):
             outlinks_results +
             zone_results +
             compliant_urls_results +
-            [top_domains_result] +
             filled_metadata_count_results
         )
 
@@ -713,6 +712,10 @@ class AnalysisWorkflow(Workflow):
 
         insights_result = self.compute_insights(context)
         futures.wait(insights_result)
+
+        # wait for independent tasks
+        # they should be finished before status update
+        futures.wait(top_domains_result)
 
         crawl_status_result = self.submit(
             update_crawl_status,
