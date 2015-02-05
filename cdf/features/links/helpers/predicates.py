@@ -1,3 +1,4 @@
+# TODO merge with below `is_link_external`
 def is_link_internal(link_mask, dest, is_bitmask=False):
     """Determine if a link is an internal link
 
@@ -17,6 +18,17 @@ def is_link_internal(link_mask, dest, is_bitmask=False):
     """
     is_robots = link_mask & 4 == 4 if is_bitmask else 'robots' in link_mask
     return dest > 0 or (dest == -1 and is_robots)
+
+
+def is_external_link(link_mask):
+    """Determine if a link is an external link
+    All we need to do here is check the presence of bit `8`
+
+    :param link_mask: link bitmask value
+    :type link_mask: int
+    :return:
+    """
+    return link_mask & 8 == 8
 
 
 def is_link(link_type):

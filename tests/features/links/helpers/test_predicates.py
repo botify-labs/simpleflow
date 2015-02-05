@@ -1,6 +1,10 @@
 import unittest
 
-from cdf.features.links.helpers.predicates import is_follow_link
+from cdf.features.links.helpers.predicates import (
+    is_follow_link,
+    is_external_link
+)
+
 
 class TestIsFollowLink(unittest.TestCase):
     def test_bitmask(self):
@@ -14,3 +18,11 @@ class TestIsFollowLink(unittest.TestCase):
         self.assertTrue(is_follow_link(["follow"]))
         self.assertFalse(is_follow_link(["foo"]))
         self.assertFalse(is_follow_link([]))
+
+
+class TestIsExternalLink(unittest.TestCase):
+    def test_bitmask(self):
+        self.assertTrue(is_external_link(8), True)
+        self.assertTrue(is_external_link(9), True)
+        self.assertTrue(is_external_link(5), False)
+        self.assertTrue(is_external_link(0), False)
