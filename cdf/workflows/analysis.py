@@ -669,6 +669,7 @@ class AnalysisWorkflow(Workflow):
         all_partitions.update(crawled_partitions.result)
         all_partitions.update((i.result for i in inlinks_results if i is not None))
         all_partitions.update((i.result for i in outlinks_results if i is not None))
+        all_partitions.discard(None)
 
         documents_results = [
             self.submit(
