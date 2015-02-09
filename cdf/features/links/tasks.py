@@ -269,7 +269,7 @@ def make_top_domains_files(crawl_id,
     )
     # resolve url ids
     resolve_sample_url_id(urlids_stream_cache.get_stream(), top_domains)
-    s3_destination = "{}/top_full_domains.json".format(s3_uri)
+    s3_destination = os.path.join(s3_uri, 'top_full_domains.json')
     push_content(
         s3_destination,
         json.dumps([domain.to_dict() for domain in top_domains])
@@ -283,7 +283,7 @@ def make_top_domains_files(crawl_id,
     )
     # resolve url ids
     resolve_sample_url_id(urlids_stream_cache.get_stream(), top_domains)
-    s3_destination = "{}/top_second_level_domains.json".format(s3_uri)
+    s3_destination = os.path.join(s3_uri, 'top_second_level_domains.json')
     push_content(
         s3_destination,
         json.dumps([domain.to_dict() for domain in top_domains])
