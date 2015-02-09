@@ -240,6 +240,29 @@ class PickleExternalSort(MergeExternalSort):
             pass
 
 
+class BufferedExternalSort(ExternalSort):
+    def __init__(self, sorter_class=MarshalExternalSort, buffer_size=100000):
+        self.sorter_class = sorter_class
+        self.buffer_size = buffer_size
+
+    def take(self, stream):
+        return list(itertools.islice(stream, self.buffer_size))
+
+    def external_sort(self, stream, key):
+        buffer = self.take(stream)
+        try:
+            elem = next(stream)
+        except StopIteration:
+            # stream exhausted, sort in memory
+            return sorted(buffer, key=key)
+
+        # stream larger than in-memory buffer
+        # apply external sort
+        sorter = self.sorter_class()
+        buffer.append(elem)
+        return sorter.external_sort(itertools.chain(buffer, stream), key=key)
+
+
 def split_iterable(iterable, block_size):
     """
     Splits an iterable into chunks of equal size.

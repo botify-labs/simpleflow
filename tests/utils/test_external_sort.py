@@ -1,7 +1,9 @@
 import unittest
+import mock
 
 from cdf.utils.external_sort import (
     external_sort,
+    BufferedExternalSort,
     JsonExternalSort,
     MarshalExternalSort,
     PickleExternalSort,
@@ -15,6 +17,26 @@ class TestExternalSort(unittest.TestCase):
         stream = iter([2, 5, 6, 1, 4, 9, 3, 7, 8, 0])
         actual_result = external_sort(stream, lambda x: x)
         self.assertEqual(range(10), list(actual_result))
+
+
+class TestBufferedExternalSort(unittest.TestCase):
+    def setUp(self):
+        self.stream = iter([2, 5, 6, 1, 4, 9, 3, 7, 8, 0])
+        self.expected = range(10)
+
+    def test_in_memory_sort(self):
+        mock_sorter = mock.MagicMock()
+        sorter = BufferedExternalSort(sorter_class=mock_sorter, buffer_size=1000)
+        result = list(sorter.external_sort(self.stream, lambda x: x))
+
+        self.assertEqual(self.expected, result)
+        # also assert that the real on-disk sort is not called
+        self.assertEqual(mock_sorter.call_count, 0)
+
+    def test_on_disk_sort(self):
+        sorter = BufferedExternalSort(buffer_size=2)
+        result = list(sorter.external_sort(self.stream, lambda x: x))
+        self.assertEqual(self.expected, result)
 
 
 class TestMergeExternalSort(unittest.TestCase):
