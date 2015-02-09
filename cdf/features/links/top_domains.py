@@ -1,5 +1,7 @@
 from itertools import groupby, ifilter, ifilterfalse
 import heapq
+import struct
+from collections import Counter
 
 from cdf.features.links.helpers.predicates import (
     is_link,
@@ -46,7 +48,7 @@ class DomainLinkStats(object):
         :type nofollow: int
         :param follow_unique: the number of unique follow links to the domain
         :type follow_unique: int
-        :param follow_unique: the number of unique nofollow links to the domain
+        :param nofollow_unique: the number of unique nofollow links to the domain
         :type nofollow_unique: int
         :param sample_follow_links: a list of sample follow link destination
                              (as a list of LinkDestination)
@@ -135,7 +137,7 @@ class LinkDestination(object):
         return (
             self.url == other.url and
             self.unique_links == other.unique_links and
-            self.sample_sources == other.sample_sources
+            sorted(self.sample_sources) == sorted(other.sample_sources)
         )
 
     def __repr__(self):
@@ -241,6 +243,169 @@ def _group_links(link_stream, key):
     #group by key function
     for key_value, link_group in groupby(link_stream, key=key):
         yield key_value, link_group
+
+
+# format: src_id(int), is_follow(bool), count(int)
+packer = struct.Struct(format='I?I')
+
+
+def _pre_aggregate_link_stream(filtered_link_stream):
+    """Helper to pre-aggregate outlinks from the same url
+
+    :param filtered_link_stream: filtered external outlinks, (src, mask, url)
+    :type filtered_link_stream: iterator
+    :return: pre-aggregated stream, (src, follow, url, count)
+    :rtype: iterator
+    """
+    for src_id, link_group in groupby(
+            filtered_link_stream, lambda x: x[SRC_IDX]):
+        # pre aggregation counter for all links in a single url page
+        counter = Counter()
+        for _, mask, url in link_group:
+            is_follow = is_follow_link(mask, is_bitmask=True)
+            counter[(is_follow, url)] += 1
+
+        for key in counter.keys():
+            is_follow, url = key
+            yield src_id, is_follow, url, counter[key]
+
+
+def _encode_leveldb_stream(pre_aggregated_stream):
+    """Encode pre-aggregated outlink stream in string format
+
+    :param pre_aggregated_stream: stream of (src, follow, url, count)
+    :type pre_aggregated_stream: iterator
+    :return: stream of string
+    :rtype: iterator
+    """
+    for src_id, is_follow, url, count in pre_aggregated_stream:
+        try:
+            sld = get_second_level_domain(url)
+        except InvalidUrlException:
+            # skip mal formed urls
+            continue
+
+        # encode key
+        num_part = packer.pack(src_id, is_follow, count)
+        key = '\0'.join((sld, url, num_part))
+
+        # all information is in key, value is omitted
+        yield key, ''
+
+
+def _decode_leveldb_stream(db):
+    """Decode sorted data stream from intermediate levelDB
+
+    :param db: levelDB instance
+    :type db: LevelDB
+    :return: decoded stream, (domain, url, src, is_follow, count)
+    :rtype: iterator
+    """
+    for line, _ in db.iterator():
+        domain, url, num_part = line.split('\0', 2)
+        src, is_follow, count = packer.unpack(num_part)
+        yield domain, url, src, is_follow, count
+
+
+class TopSecondLevelDomainAggregator(object):
+    def __init__(self, n, nb_samples=100):
+        self.n = n
+        self.heap = []
+        self.nb_samples = nb_samples
+
+    def _compute_link_counts(self, domain, group_stream):
+        follow = 0
+        nofollow = 0
+        follow_unique = 0
+        nofollow_unique = 0
+        for _, _, _, is_follow, count in group_stream:
+            if is_follow:
+                follow += count
+                follow_unique += 1
+            else:
+                nofollow += count
+                nofollow_unique += 1
+        return DomainLinkStats(
+            domain, follow, nofollow,
+            follow_unique, nofollow_unique
+        )
+
+    def _compute_sample_links(self, group_stream, n):
+        heap = []
+        # stream is also sorted on `url` part for a given domain
+        for url, group in groupby(group_stream, lambda x: x[1]):
+            nb_unique_links = 0
+            srcs = []
+            for _, _, src, _, _ in group:
+                if len(srcs) < 3:
+                    srcs.append(src)
+                nb_unique_links += 1
+            dest = LinkDestination(url, nb_unique_links, srcs)
+            if len(heap) < n:
+                heapq.heappush(heap, (nb_unique_links, dest))
+            else:
+                heapq.heappushpop(heap, (nb_unique_links, dest))
+
+        dests = []
+        while len(heap) != 0:
+            nb_unique_links, dest_stats = heapq.heappop(heap)
+            dest_stats.sample_sources.sort()
+            dests.append(dest_stats)
+        dests.reverse()
+        return dests
+
+    def _compute_sample_sets(self, group_stream_cache):
+        # TODO extract global variable
+        follow_idx = 3
+        filter_func = lambda x: x[follow_idx]
+        # follow samples
+        follow_links = ifilter(filter_func, group_stream_cache.get_stream())
+        follow_samples = self._compute_sample_links(
+            follow_links, self.nb_samples)
+
+        # nofollow samples
+        follow_links = ifilterfalse(filter_func, group_stream_cache.get_stream())
+        nofollow_samples = self._compute_sample_links(
+            follow_links, self.nb_samples)
+
+        return follow_samples, nofollow_samples
+
+    def merge(self, domain, group_stream_cache):
+        stats = self._compute_link_counts(
+            domain, group_stream_cache.get_stream())
+        nb_follow_unique = stats.follow_unique
+        nb_nofollow_unique = stats.nofollow_unique
+        if nb_follow_unique + nb_nofollow_unique == 0:
+            # we don't want to return domain with 0 occurrences
+            return
+
+        insert_heap = False
+        if len(self.heap) < self.n:
+            insert_heap = True
+        else:
+            min_value = self.heap[0][0]
+            if nb_follow_unique > min_value:
+                insert_heap = True
+
+        if insert_heap:
+            sample_follow, sample_nofollow = self._compute_sample_sets(
+                group_stream_cache,
+            )
+            stats.sample_follow_links = sample_follow
+            stats.sample_nofollow_links = sample_nofollow
+            if len(self.heap) < self.n:
+                heapq.heappush(self.heap, (nb_follow_unique, stats))
+            else:
+                heapq.heappushpop(self.heap, (nb_follow_unique, stats))
+
+    def get_result(self):
+        result = []
+        while len(self.heap) != 0:
+            nb_follow_unique, domain_stats = heapq.heappop(self.heap)
+            result.append(domain_stats)
+        # sort by decreasing number of links
+        result.reverse()
+        return result
 
 
 def count_unique_links(external_outlinks):
