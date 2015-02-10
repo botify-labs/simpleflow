@@ -1,11 +1,11 @@
 import logging
-
 from elasticsearch import Elasticsearch
 from elasticsearch.serializer import TextSerializer
 
 from cdf.compat import json
-from cdf.utils.url import get_domain
+import cdf.settings
 from cdf.utils.stream import chunk
+from cdf.utils import discovery
 
 
 logger = logging.getLogger(__name__)
@@ -19,12 +19,16 @@ class EsHandler(object):
     :param timeout: base timeout for ElasticSearch operations, in seconds
     :type timeout:
     """
-    def __init__(self, es_location, es_index, es_doc_type, timeout=20):
+    def __init__(self, es_location, es_index, es_doc_type,
+                 timeout=20,
+                 host_discovery=getattr(
+                     cdf.settings, 'HOST_DISCOVERY', None) or
+                 discovery.UrlHosts):
         self.es_location = es_location
-        if not isinstance(self.es_location, list):
-            self.es_location = [self.es_location]
-        # a list of normalized ES hosts
-        self.es_host = [self._get_domain(l) for l in self.es_location]
+        # Beware that there is no automatic mechanism to refresh the list of
+        # hosts.
+        self._host_discovery = host_discovery()
+        self.es_host = self._host_discovery.discover(es_location)
 
         self.es_client = Elasticsearch(self.es_host, timeout=timeout)
         # ES client with text serializer, for raw bulk index only
@@ -44,12 +48,6 @@ class EsHandler(object):
     def __repr__(self):
         return '<ES of %s/%s/%s>' % (
             self.es_location, self.index, self.doc_type)
-
-    @classmethod
-    def _get_domain(cls, host):
-        if host.startswith('http'):
-            return get_domain(host)
-        return host
 
     @classmethod
     def _get_index_action(cls, _id):
