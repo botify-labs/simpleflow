@@ -131,15 +131,15 @@ from cdf.features.ganalytics.tasks import (
     import_data_from_ganalytics,
     match_analytics_to_crawl_urls
 )
-import_data_from_ganalytics = as_activity(import_data_from_ganalytics)
-match_analytics_to_crawl_urls = as_activity(match_analytics_to_crawl_urls)
+import_data_from_ganalytics = optional_activity(import_data_from_ganalytics)
+match_analytics_to_crawl_urls = optional_activity(match_analytics_to_crawl_urls)
 
 from cdf.features.sitemaps.tasks import (
     download_sitemap_files,
     match_sitemap_urls,
 )
-download_sitemap_files = as_activity(download_sitemap_files)
-match_sitemap_urls = as_activity(match_sitemap_urls)
+download_sitemap_files = optional_activity(download_sitemap_files)
+match_sitemap_urls = optional_activity(match_sitemap_urls)
 
 from cdf.utils.remote_files import enumerate_partitions
 enumerate_partitions = as_activity(enumerate_partitions)
@@ -291,7 +291,7 @@ class AnalysisWorkflow(Workflow):
         config = context['features_options']['ganalytics']
         s3_uri = context['crawl_location']
 
-        import_result = self.submit(
+        ganalytics_result = self.submit(
             import_data_from_ganalytics,
             config['access_token'],
             config['refresh_token'],
@@ -305,8 +305,7 @@ class AnalysisWorkflow(Workflow):
         # dependency between ``import_data_from_ganalytics`` and
         # ``match_analytics_to_crawl_urls``. Empty future, by default with
         # state ``PENDING``, to return until the previous task is finished.
-        ganalytics_result = futures.Future()
-        if import_result.finished:
+        if ganalytics_result.finished and ganalytics_result.exception is None:
             ganalytics_result = self.submit(
                 match_analytics_to_crawl_urls,
                 s3_uri,
@@ -315,7 +314,7 @@ class AnalysisWorkflow(Workflow):
 
             # Check if the future is finished to avoid blocking on
             # ganalytics_result.result below.
-            if ganalytics_result.finished:
+            if ganalytics_result.finished and ganalytics_result.exception is None:
                 # We don't return the future returned by the call below because
                 # we don't want to break the workflow if there is an error when
                 # calling the API. As the result of this task will be stored in
@@ -338,7 +337,7 @@ class AnalysisWorkflow(Workflow):
             config['urls'],
             s3_uri,
             context["settings"]["http"]["user_agent"])
-        if download_result.finished:
+        if download_result.finished and download_result.exception is None:
             sitemaps_result = self.submit(
                 match_sitemap_urls,
                 s3_uri,
