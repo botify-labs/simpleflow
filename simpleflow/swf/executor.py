@@ -274,6 +274,26 @@ class Executor(executor.Executor):
         iterable = executor.get_actual_value(iterable)
         return super(Executor, self).starmap(callable, iterable)
 
+    def merge_previous_execution(self, execution):
+        previous_history = History(execution.history())
+        # Override input with the previous execution value.
+        self._history.events[0].input = json.dumps(
+            previous_history.events[0].input.copy(),
+        )
+
+        # Override already completed tasks to not execute them again.
+        previous_history.parse()
+        self._history._activities.update({
+            id_: activity for id_, activity in
+            previous_history._activities.iteritems() if
+            activity['state'] == 'completed'
+        })
+        self._history._child_workflows.update({
+            id_: child_workflow for id_, child_workflow in
+            previous_history._child_workflows.iteritems() if
+            child_workflow['state'] == 'completed'
+        })
+
     def replay(self, history):
         """Executes the workflow from the start until it blocks.
 
@@ -291,6 +311,17 @@ class Executor(executor.Executor):
             input = {}
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
+
+        previous_workflow_execution = input.get('_previous_workflow_execution')
+        if previous_workflow_execution:
+            # Resume previous execution by injecting input and completed task
+            # in the current history.
+            ex = swf.models.WorkflowExecution(
+                domain=self.domain,
+                workflow_id=previous_workflow_execution['workflow_id'],
+                run_id=previous_workflow_execution['run_id'],
+            )
+            self.merge_previous_execution(ex)
 
         try:
             result = self.run_workflow(*args, **kwargs)

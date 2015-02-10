@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
 import functools
 import mock
@@ -1006,3 +1007,46 @@ def test_activity_not_found_schedule_failed_already_exists():
         decisions, _ = executor.replay(history)
 
     check_task_scheduled_decision(decisions[0], increment)
+
+
+def test_resume_stopped_workflow_execution():
+    workflow = TestDefinition
+    executor = Executor(DOMAIN, workflow)
+
+    previous_history = builder.History(workflow)
+    decision_id = previous_history.last_id
+    (previous_history
+        .add_activity_task(
+            increment,
+            decision_id=decision_id,
+            last_state='completed',
+            activity_id='activity-tests.test_dataflow.increment-1',
+            input={'args': 1},
+            result=2)
+        .add_decision_task_scheduled()
+        .add_decision_task_started())
+
+    history = builder.History(
+        workflow,
+        input={
+            '_previous_workflow_execution': {
+                'workflow_id': 'WORKFLOW_ID',
+                'run_id': 'RUN_ID',
+            }
+        })
+    decision_id = previous_history.last_id
+    (history
+        .add_decision_task_scheduled()
+        .add_decision_task_started())
+
+    class FakeWorkflowExecution(object):
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def history(self):
+            return previous_history
+
+    with mock.patch('swf.models.WorkflowExecution') as Mock:
+        Mock.return_value = FakeWorkflowExecution()
+        decisions, _ = executor.replay(history)
+        check_task_scheduled_decision(decisions[0], double)
