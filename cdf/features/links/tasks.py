@@ -1,7 +1,8 @@
 import os
 import gzip
-import json
 
+from cdf.utils.kvstore import LevelDB
+from cdf.compat import json
 from cdf.log import logger
 from cdf.core.streams.cache import BufferedStreamCache, cbor_serializer
 from cdf.utils.s3 import push_file, push_content
@@ -25,7 +26,6 @@ from cdf.features.main.streams import (
 from cdf.features.links.streams import (
     OutlinksRawStreamDef, OutlinksStreamDef,
     InlinksRawStreamDef,
-    InlinksStreamDef,
     InlinksCountersStreamDef,
     BadLinksStreamDef,
     BadLinksCountersStreamDef,
@@ -35,12 +35,12 @@ from cdf.features.links.streams import (
     InredirectCountersStreamDef
 )
 from cdf.features.links.top_domains import (
-    compute_top_full_domains,
-    compute_top_second_level_domains,
+    compute_top_domain,
     filter_external_outlinks,
     filter_invalid_destination_urls,
     resolve_sample_url_id,
-    remove_unused_columns)
+    remove_unused_columns,
+)
 from cdf.features.links.percentiles import (
     compute_quantiles,
     compute_percentile_stats
@@ -253,43 +253,30 @@ def make_top_domains_files(crawl_id,
     outlinks = filter_invalid_destination_urls(outlinks)
     outlinks = remove_unused_columns(outlinks)
 
-    outlinks_stream_cache = BufferedStreamCache(serializer=cbor_serializer)
-    outlinks_stream_cache.cache(outlinks)
-
     urlids_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
     urlids_stream_cache = BufferedStreamCache(serializer=cbor_serializer)
     urlids_stream_cache.cache(urlids_stream)
 
-    result = []
+    logger.info("Computing top domains")
+    tld_result, sld_result = compute_top_domain(outlinks, nb_top_domains, tmp_dir)
 
-    logger.info("Computing top %d full domains.", nb_top_domains)
-    top_domains = compute_top_full_domains(
-        outlinks_stream_cache.get_stream(),
-        nb_top_domains
-    )
-    # resolve url ids
-    resolve_sample_url_id(urlids_stream_cache.get_stream(), top_domains)
-    s3_destination = os.path.join(s3_uri, 'top_full_domains.json')
+    # resolve urlids
+    resolve_sample_url_id(
+        urlids_stream_cache.get_stream(), tld_result + sld_result)
+
+    # persist results
+    tld_destination = os.path.join(s3_uri, 'top_full_domains.json')
     push_content(
-        s3_destination,
-        json.dumps([domain.to_dict() for domain in top_domains])
+        tld_destination,
+        json.dumps([domain.to_dict() for domain in tld_result])
     )
-    result.append(s3_destination)
-
-    logger.info("Computing top %d second level domains.", nb_top_domains)
-    top_domains = compute_top_second_level_domains(
-        outlinks_stream_cache.get_stream(),
-        nb_top_domains
-    )
-    # resolve url ids
-    resolve_sample_url_id(urlids_stream_cache.get_stream(), top_domains)
-    s3_destination = os.path.join(s3_uri, 'top_second_level_domains.json')
+    sld_destination = os.path.join(s3_uri, 'top_second_level_domains.json')
     push_content(
-        s3_destination,
-        json.dumps([domain.to_dict() for domain in top_domains])
+        sld_destination,
+        json.dumps([domain.to_dict() for domain in sld_result])
     )
-    result.append(s3_destination)
 
+    result = [tld_destination, sld_destination]
     return result
 
 
@@ -353,3 +340,16 @@ def make_inlinks_percentiles_file(s3_uri,
         part_size=part_id_size
     )
     return output_files
+
+
+if __name__ == '__main__':
+    import os
+    import logging
+    from cdf.log import logger
+    from cdf.compat import json
+
+    logger.setLevel(level=logging.DEBUG)
+
+    dir = '/home/darkjh/data/top_domain/'
+
+    make_top_domains_files(1234, dir, 100, tmp_dir=dir, force_fetch=False)
