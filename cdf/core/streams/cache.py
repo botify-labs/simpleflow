@@ -71,7 +71,7 @@ class FileStreamCache(AbstractStreamCache):
     def __del__(self):
         """Perform resource cleaning when this object is collected
         """
-        if self.tmp_file is not None:
+        if self.tmp_file is not None and os.path.exists(self.tmp_file):
             os.remove(self.tmp_file)
 
 
