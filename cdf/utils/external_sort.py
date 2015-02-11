@@ -28,7 +28,7 @@ def external_sort(stream, key):
     :returns: iterator
     """
     #use MarshalExternalSort as it is the fastest method so far.
-    external_sort = CborExternalSort()
+    external_sort = BufferedExternalSort(sorter_class=CborExternalSort)
     return external_sort.external_sort(stream, key)
 
 
