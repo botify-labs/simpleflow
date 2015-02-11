@@ -1,7 +1,10 @@
 from itertools import groupby, ifilter, ifilterfalse
+import logging
 import heapq
+import os
 import struct
 from collections import Counter
+from cdf.utils.kvstore import LevelDB
 
 from cdf.features.links.helpers.predicates import (
     is_link,
@@ -27,6 +30,9 @@ NOFOLLOW_LINKS = 'nofollow_links'
 SRC_IDX = 0
 MASK_IDX = 1
 URL_IDX = 2
+
+
+logger = logging.getLogger(__name__)
 
 
 class DomainLinkStats(object):
@@ -307,7 +313,13 @@ def _decode_leveldb_stream(db):
         yield domain, url, src, is_follow, count
 
 
-class TopSecondLevelDomainAggregator(object):
+def _get_stream_cache(stream, dir=None):
+    cache = BufferedStreamCache(dir=dir)
+    cache.cache(stream)
+    return cache
+
+
+class TopDomainAggregator(object):
     def __init__(self, n, nb_samples=100):
         self.n = n
         self.heap = []
@@ -335,12 +347,11 @@ class TopSecondLevelDomainAggregator(object):
         # stream is also sorted on `url` part for a given domain
         for url, group in groupby(group_stream, lambda x: x[1]):
             nb_unique_links = 0
-            srcs = []
+            srcs = set()
             for _, _, src, _, _ in group:
-                if len(srcs) < 3:
-                    srcs.append(src)
+                srcs.add(src)
                 nb_unique_links += 1
-            dest = LinkDestination(url, nb_unique_links, srcs)
+            dest = LinkDestination(url, nb_unique_links, sorted(srcs)[:3])
             if len(heap) < n:
                 heapq.heappush(heap, (nb_unique_links, dest))
             else:
@@ -406,6 +417,57 @@ class TopSecondLevelDomainAggregator(object):
         # sort by decreasing number of links
         result.reverse()
         return result
+
+
+class TopSecondLevelDomainAggregator(TopDomainAggregator):
+    pass
+
+
+class TopLevelDomainAggregator(TopDomainAggregator):
+    @classmethod
+    def top_level_domain_stream(cls, stream):
+        for _, url, src, follow, count in stream:
+            tld = get_domain(url)
+            yield tld, url, src, follow, count
+
+    def merge(self, domain, group_stream_cache):
+        stream = self.top_level_domain_stream(group_stream_cache.get_stream())
+        # sort on (top_level_domain, url)
+        sorted_stream = external_sort(stream, key=lambda x: (x[0], x[1]))
+        for tld, group in groupby(sorted_stream, lambda x: x[0]):
+            group_cache = _get_stream_cache(group)
+            super(TopLevelDomainAggregator, self).merge(tld, group_cache)
+
+
+def compute_top_domain(external_outlinks, n, tmp_dir):
+    top_level_domain = TopLevelDomainAggregator(n)
+    top_second_level_domain = TopSecondLevelDomainAggregator(n)
+
+    pre_aggregated = _pre_aggregate_link_stream(external_outlinks)
+    db_stream = _encode_leveldb_stream(pre_aggregated)
+
+    # TODO how to handle configs ???
+    _LEVELDB_WRITE_BUFFER = 256 * 1024 * 1024  # 256M
+    _LEVELDB_BLOCK_SIZE = 256 * 1024  # 256K
+    _BUFFER_SIZE = 10000
+
+    db = LevelDB(path=os.path.join(tmp_dir, 'linksdb'))
+    db.open(write_buffer_size=_LEVELDB_WRITE_BUFFER,
+            block_size=_LEVELDB_BLOCK_SIZE)
+
+    db.batch_write(db_stream, batch_size=50000)
+
+    decoded = _decode_leveldb_stream(db)
+
+    for domain, link_group in groupby(decoded, lambda x: x[0]):
+        logger.debug("Processing {} ...".format(domain))
+        group_cache = _get_stream_cache(
+            link_group, dir=os.path.join(tmp_dir, 'linksdb'))
+
+        top_level_domain.merge(domain, group_cache)
+        top_second_level_domain.merge(domain, group_cache)
+
+    return top_level_domain.get_result(), top_second_level_domain.get_result()
 
 
 def count_unique_links(external_outlinks):

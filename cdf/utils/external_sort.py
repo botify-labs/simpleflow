@@ -1,3 +1,4 @@
+from collections import Iterator
 import logging
 import itertools
 import cPickle as pickle
@@ -249,6 +250,8 @@ class BufferedExternalSort(ExternalSort):
         return list(itertools.islice(stream, self.buffer_size))
 
     def external_sort(self, stream, key):
+        if not isinstance(stream, Iterator):
+            stream = iter(stream)
         buffer = self.take(stream)
         try:
             elem = next(stream)
