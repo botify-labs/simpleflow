@@ -106,3 +106,6 @@ class BufferedStreamCache(AbstractStreamCache):
         from https://docs.python.org/2/library/itertools.html
         """
         return list(islice(iterable, n))
+
+    def __del__(self):
+        self.file_stream_cache.__del__()
