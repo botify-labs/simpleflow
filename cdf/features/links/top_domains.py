@@ -313,19 +313,43 @@ def _decode_leveldb_stream(db):
         yield domain, url, src, is_follow, count
 
 
-def _get_stream_cache(stream, dir=None):
-    cache = BufferedStreamCache(dir=dir)
+def _get_stream_cache(stream):
+    """Helper to cache a stream"""
+    cache = BufferedStreamCache()
     cache.cache(stream)
     return cache
 
 
 class TopDomainAggregator(object):
+    """Aggregator abstraction that takes groups of pre-aggregated external
+    outlinks information, then compute the statistics of `top_domain`
+    """
     def __init__(self, n, nb_samples=100):
+        """Constructor
+
+        :param n: number of top domains to keep
+        :type n: int
+        :param nb_samples: number of url samples per top_domain
+        :type nb_samples: int
+        """
         self.n = n
         self.heap = []
         self.nb_samples = nb_samples
 
     def _compute_link_counts(self, domain, group_stream):
+        """Given a group of pre-aggregated that point to the same domain,
+        compute various link counts:
+            - follow links
+            - nofollow links
+
+        :param domain: the domain
+        :type domain: str
+        :param group_stream: grouped pre-aggregated links of a certain
+            domain, eg: [link1, link2, ...]
+        :type group_stream: iterator
+        :return: stats of outlinks that target the domain
+        :rtype: dict
+        """
         follow = 0
         nofollow = 0
         follow_unique = 0
@@ -343,6 +367,14 @@ class TopDomainAggregator(object):
         )
 
     def _compute_sample_links(self, group_stream, n):
+        """Given a group of pre-aggregated outlinks, returns n sample urls
+        that have received the most unique links
+
+        :param group_stream: link group stream
+        :type group_stream: iterator
+        :param n: the number of sample urls
+        :type n: int
+        """
         heap = []
         # stream is also sorted on `url` part for a given domain
         for url, group in groupby(group_stream, lambda x: x[1]):
@@ -366,6 +398,18 @@ class TopDomainAggregator(object):
         return dests
 
     def _compute_sample_sets(self, group_stream_cache):
+        """Compute sample links from a group of pre-aggregated outlinks that point
+        to the same domain.
+        The method select the n most linked urls (via the number of unique links)
+        For each of the most linked urls, it reports: the url, the number
+        of unique links, 3 source urlids.
+        The function returns a list of LinkDestination.
+
+        :param group_stream_cache: cached stream of a link group
+        :type group_stream_cache: BufferedStreamCache
+        :return: follow and no-follow link samples
+        :rtype: tuple
+        """
         # TODO extract global variable
         follow_idx = 3
         filter_func = lambda x: x[follow_idx]
@@ -382,6 +426,13 @@ class TopDomainAggregator(object):
         return follow_samples, nofollow_samples
 
     def merge(self, domain, group_stream_cache):
+        """Aggregate a group of pre-aggregated links info
+
+        :param domain: the domain
+        :type domain: str
+        :param group_stream_cache: cached stream of a link group
+        :type group_stream_cache: BufferedStreamCache
+        """
         stats = self._compute_link_counts(
             domain, group_stream_cache.get_stream())
         nb_follow_unique = stats.follow_unique
@@ -410,6 +461,11 @@ class TopDomainAggregator(object):
                 heapq.heappushpop(self.heap, (nb_follow_unique, stats))
 
     def get_result(self):
+        """Return the result of the aggregator
+
+        :return: list of stats per domain (DomainLinkStats)
+        :rtype: list
+        """
         result = []
         while len(self.heap) != 0:
             nb_follow_unique, domain_stats = heapq.heappop(self.heap)
@@ -420,10 +476,13 @@ class TopDomainAggregator(object):
 
 
 class TopSecondLevelDomainAggregator(TopDomainAggregator):
+    """Aggregator for top second level domain analysis"""
     pass
 
 
 class TopLevelDomainAggregator(TopDomainAggregator):
+    """Aggregator for top level domain analysis"""
+
     @classmethod
     def top_level_domain_stream(cls, stream):
         for _, url, src, follow, count in stream:
@@ -431,8 +490,17 @@ class TopLevelDomainAggregator(TopDomainAggregator):
             yield tld, url, src, follow, count
 
     def merge(self, domain, group_stream_cache):
+        """For top-level domain, the top-level domain need to be extracted and
+        served as the sort key
+
+        :param domain: the domain
+        :type domain: str
+        :param group_stream_cache: cached stream of a link group
+        :type group_stream_cache: BufferedStreamCache
+        """
         stream = self.top_level_domain_stream(group_stream_cache.get_stream())
         # sort on (top_level_domain, url)
+        # TODO maybe this sort is not necessary
         sorted_stream = external_sort(stream, key=lambda x: (x[0], x[1]))
         for tld, group in groupby(sorted_stream, lambda x: x[0]):
             group_cache = _get_stream_cache(group)
@@ -440,6 +508,18 @@ class TopLevelDomainAggregator(TopDomainAggregator):
 
 
 def compute_top_domain(external_outlinks, n, tmp_dir):
+    """Compute `top_domain` analysis
+
+    :param external_outlinks: filtered external outlinks,
+        of format OutlinksRawStreamDef
+    :type external_outlinks: iterator
+    :param n: number of top domains to keep
+    :type n: int
+    :param tmp_dir: working directory
+    :type tmp_dir: str
+    :return: results of top-level domain and top-second-level domain analysis
+    :rtype: tuple
+    """
     top_level_domain = TopLevelDomainAggregator(n)
     top_second_level_domain = TopSecondLevelDomainAggregator(n)
 
@@ -461,8 +541,7 @@ def compute_top_domain(external_outlinks, n, tmp_dir):
 
     for domain, link_group in groupby(decoded, lambda x: x[0]):
         logger.debug("Processing {} ...".format(domain))
-        group_cache = _get_stream_cache(
-            link_group, dir=os.path.join(tmp_dir, 'linksdb'))
+        group_cache = _get_stream_cache(link_group)
 
         top_level_domain.merge(domain, group_cache)
         top_second_level_domain.merge(domain, group_cache)
