@@ -266,8 +266,6 @@ def make_top_domains_files(crawl_id,
         for i in crawled_partitions
     ]
     urlids_stream = itertools.chain(*streams)
-    urlids_stream_cache = BufferedStreamCache(serializer=cbor_serializer)
-    urlids_stream_cache.cache(urlids_stream)
 
     logger.info("Computing top domains")
     tld_result, sld_result = compute_top_domain(
@@ -275,8 +273,7 @@ def make_top_domains_files(crawl_id,
 
     # resolve urlids
     logger.info("Resolve urlids")
-    resolve_sample_url_id(
-        urlids_stream_cache.get_stream(), tld_result + sld_result)
+    resolve_sample_url_id(urlids_stream, tld_result + sld_result)
 
     # persist results
     logger.info("Persist results")
