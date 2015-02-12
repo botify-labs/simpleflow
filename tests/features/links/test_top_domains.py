@@ -259,10 +259,9 @@ class TestTopLevelDomainAggregator(unittest.TestCase):
         pre_aggregated = iter([
             ['foo.com', "http://foo.com/bar.html", 0, True, 1],
             ['foo.com', "http://bar.foo.com/baz.html", 0, True, 1],
+            ['foo.com', "http://bar.foo.com/baz.html", 4, True, 1],
             ['foo.com', "http://foo.com/qux.css", 3, True, 1],
             ['foo.com', "http://bar.foo.com/abc.html", 4, True, 1],
-            ['foo.com', "http://bar.foo.com/baz.html", 4, True, 1],
-            ['foo.com', "http://foo.com/qux.css", 4, True, 1],
         ])
         cache = _get_stream_cache(pre_aggregated)
         agg = TopLevelDomainAggregator(n=2)
@@ -278,9 +277,9 @@ class TestTopLevelDomainAggregator(unittest.TestCase):
                 ]
             ),
             DomainLinkStats(
-                'foo.com', 3, 0, 3, 0,
+                'foo.com', 2, 0, 2, 0,
                 [
-                    LinkDestination('http://foo.com/qux.css', 2, [3, 4]),
+                    LinkDestination('http://foo.com/qux.css', 1, [3]),
                     LinkDestination('http://foo.com/bar.html', 1, [0]),
                 ]
             ),
