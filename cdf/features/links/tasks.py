@@ -229,6 +229,7 @@ def make_links_to_non_compliant_counter_file(s3_uri,
 def make_top_domains_files(crawl_id,
                            s3_uri,
                            nb_top_domains,
+                           crawled_partitions,
                            tmp_dir=None,
                            force_fetch=DEFAULT_FORCE_FETCH):
     """Compute top domains and top second level domains for a given crawl.
@@ -239,6 +240,8 @@ def make_top_domains_files(crawl_id,
     :param nb_top_domains: the number of top domains to return
                            (typical value: 100)
     :type nb_top_domains: int
+    :param crawled_partitions: crawled partition ids
+    :type crawled_partitions: list
     :param tmp_dir: the path to the tmp directory to use.
                     If None, a new tmp directory will be created.
     :type tmp_dir: str
@@ -251,23 +254,24 @@ def make_top_domains_files(crawl_id,
     :rtype: list
     """
     logger.info("Preprocessing and caching stream.")
-    outlinks = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    outlinks = OutlinksRawStreamDef.load(
+        s3_uri, tmp_dir=tmp_dir, force_fetch=force_fetch)
     outlinks = filter_external_outlinks(outlinks)
     outlinks = filter_invalid_destination_urls(outlinks)
     outlinks = remove_unused_columns(outlinks)
 
-    # TODO properly handle this
-    # take only crawled urlid
-    partitions = enumerate_partitions(
-        s3_uri, 1024, 300000, only_crawled_urls=True)
-    streams = [IdStreamDef.load(s3_uri, part_id=i, tmp_dir=tmp_dir)
-               for i in partitions]
+    streams = [
+        IdStreamDef.load(
+            s3_uri, part_id=i, tmp_dir=tmp_dir, force_fetch=force_fetch)
+        for i in crawled_partitions
+    ]
     urlids_stream = itertools.chain(*streams)
     urlids_stream_cache = BufferedStreamCache(serializer=cbor_serializer)
     urlids_stream_cache.cache(urlids_stream)
 
     logger.info("Computing top domains")
-    tld_result, sld_result = compute_top_domain(outlinks, nb_top_domains, tmp_dir)
+    tld_result, sld_result = compute_top_domain(
+        outlinks, nb_top_domains, tmp_dir)
 
     # resolve urlids
     logger.info("Resolve urlids")
@@ -351,16 +355,3 @@ def make_inlinks_percentiles_file(s3_uri,
         part_size=part_id_size
     )
     return output_files
-
-
-# if __name__ == '__main__':
-#     import os
-#     import logging
-#     from cdf.log import logger
-#     from cdf.compat import json
-#
-#     logger.setLevel(level=logging.DEBUG)
-#     s3 = 's3://com.botify.saas.production.analyses/s/sho/shopstyle-fr-7619/20150206-8071/crawl-result'
-#     dir = '/home/darkjh/data/top_domain/'
-#
-#     make_top_domains_files(1234, s3, 100, tmp_dir=dir, force_fetch=False)
