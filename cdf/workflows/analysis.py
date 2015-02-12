@@ -329,15 +329,14 @@ class AnalysisWorkflow(Workflow):
         return [ganalytics_result]
 
     def compute_sitemaps(self, context):
-        sitemaps_result = futures.Future()
         config = context['features_options']['sitemaps']
         s3_uri = context['crawl_location']
-        download_result = self.submit(
+        sitemaps_result = self.submit(
             download_sitemap_files,
             config['urls'],
             s3_uri,
             context["settings"]["http"]["user_agent"])
-        if download_result.finished and download_result.exception is None:
+        if sitemaps_result.finished and sitemaps_result.exception is None:
             sitemaps_result = self.submit(
                 match_sitemap_urls,
                 s3_uri,
