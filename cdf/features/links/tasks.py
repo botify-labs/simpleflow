@@ -1,6 +1,7 @@
 import gzip
 import os
 import itertools
+import logging
 
 from cdf.compat import json
 from cdf.core.streams.cache import BufferedStreamCache, cbor_serializer
@@ -46,6 +47,9 @@ from cdf.features.links.percentiles import (
 )
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
+
+
+logger = logging.getLogger(__name__)
 
 
 @with_temporary_dir
