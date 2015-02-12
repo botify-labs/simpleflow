@@ -284,6 +284,7 @@ def _encode_leveldb_stream(pre_aggregated_stream):
     :return: stream of string
     :rtype: iterator
     """
+    p = packer
     for src_id, is_follow, url, count in pre_aggregated_stream:
         try:
             sld = get_second_level_domain(url)
@@ -292,7 +293,7 @@ def _encode_leveldb_stream(pre_aggregated_stream):
             continue
 
         # encode key
-        num_part = packer.pack(src_id, is_follow, count)
+        num_part = p.pack(src_id, is_follow, count)
         key = '\0'.join((sld, url, num_part))
 
         # all information is in key, value is omitted
@@ -307,9 +308,10 @@ def _decode_leveldb_stream(db):
     :return: decoded stream, (domain, url, src, is_follow, count)
     :rtype: iterator
     """
+    p = packer
     for line, _ in db.iterator():
         domain, url, num_part = line.split('\0', 2)
-        src, is_follow, count = packer.unpack(num_part)
+        src, is_follow, count = p.unpack(num_part)
         yield domain, url, src, is_follow, count
 
 
@@ -378,11 +380,8 @@ class TopDomainAggregator(object):
         heap = []
         # stream is also sorted on `url` part for a given domain
         for url, group in groupby(group_stream, lambda x: x[1]):
-            nb_unique_links = 0
-            srcs = set()
-            for _, _, src, _, _ in group:
-                srcs.add(src)
-                nb_unique_links += 1
+            srcs = {i[2] for i in group}
+            nb_unique_links = len(srcs)
             dest = LinkDestination(url, nb_unique_links, sorted(srcs)[:3])
             if len(heap) < n:
                 heapq.heappush(heap, (nb_unique_links, dest))
