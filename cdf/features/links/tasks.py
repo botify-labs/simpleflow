@@ -1,16 +1,15 @@
-import os
 import gzip
+import os
+import itertools
 
-from cdf.utils.kvstore import LevelDB
 from cdf.compat import json
-from cdf.log import logger
 from cdf.core.streams.cache import BufferedStreamCache, cbor_serializer
 from cdf.utils.s3 import push_file, push_content
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils.remote_files import (
     get_crawl_info,
-    get_max_crawled_urlid
-)
+    get_max_crawled_urlid,
+    enumerate_partitions)
 from cdf.features.links.links import OutlinksTransducer, InlinksTransducer
 from cdf.features.links.bad_links import (
     get_bad_links,
@@ -253,7 +252,13 @@ def make_top_domains_files(crawl_id,
     outlinks = filter_invalid_destination_urls(outlinks)
     outlinks = remove_unused_columns(outlinks)
 
-    urlids_stream = IdStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    # TODO properly handle this
+    # take only crawled urlid
+    partitions = enumerate_partitions(
+        s3_uri, 1024, 300000, only_crawled_urls=True)
+    streams = [IdStreamDef.load(s3_uri, part_id=i, tmp_dir=tmp_dir)
+               for i in partitions]
+    urlids_stream = itertools.chain(*streams)
     urlids_stream_cache = BufferedStreamCache(serializer=cbor_serializer)
     urlids_stream_cache.cache(urlids_stream)
 
@@ -261,10 +266,12 @@ def make_top_domains_files(crawl_id,
     tld_result, sld_result = compute_top_domain(outlinks, nb_top_domains, tmp_dir)
 
     # resolve urlids
+    logger.info("Resolve urlids")
     resolve_sample_url_id(
         urlids_stream_cache.get_stream(), tld_result + sld_result)
 
     # persist results
+    logger.info("Persist results")
     tld_destination = os.path.join(s3_uri, 'top_full_domains.json')
     push_content(
         tld_destination,
@@ -342,14 +349,14 @@ def make_inlinks_percentiles_file(s3_uri,
     return output_files
 
 
-if __name__ == '__main__':
-    import os
-    import logging
-    from cdf.log import logger
-    from cdf.compat import json
-
-    logger.setLevel(level=logging.DEBUG)
-
-    dir = '/home/darkjh/data/top_domain/'
-
-    make_top_domains_files(1234, dir, 100, tmp_dir=dir, force_fetch=False)
+# if __name__ == '__main__':
+#     import os
+#     import logging
+#     from cdf.log import logger
+#     from cdf.compat import json
+#
+#     logger.setLevel(level=logging.DEBUG)
+#     s3 = 's3://com.botify.saas.production.analyses/s/sho/shopstyle-fr-7619/20150206-8071/crawl-result'
+#     dir = '/home/darkjh/data/top_domain/'
+#
+#     make_top_domains_files(1234, s3, 100, tmp_dir=dir, force_fetch=False)
