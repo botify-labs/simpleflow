@@ -39,3 +39,7 @@ class ErrorRateLimitExceeded(Exception):
     """Raised when error occurs during document pushing
     """
     pass
+
+
+class HostDoesNotExist(Exception):
+    pass
