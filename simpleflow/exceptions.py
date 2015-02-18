@@ -46,7 +46,7 @@ class TaskFailed(Exception):
 
 
 class TimeoutError(Exception):
-    def __init__(self, timeout_type, timeout_value=None):
+    def __init__(self, timeout_type='unknown timeout', timeout_value=None):
         self.timeout_type = timeout_type
         self.timeout_value = timeout_value
 
