@@ -436,6 +436,7 @@ class AnalysisWorkflow(Workflow):
         # However the workflow calls it ``crawl_location`` because we may
         # use another storage backend to store data files.
         s3_uri = context['crawl_location']
+        context['s3_uri'] = context['crawl_location']
 
         tmp_dir = context.get('tmp_dir', None)
         first_part_id_size = context.get(
