@@ -389,6 +389,45 @@ class AnalysisWorkflow(Workflow):
         return context['features_options']['main'].get(
             'suggested_patterns', True)
 
+    def compute_zone_compliant_dependent(self, crawled_partitions, **context):
+        s3_uri = context["s3_uri"]
+        first_part_id_size = context["first_part_id_size"]
+        part_id_size = context["part_id_size"]
+        tmp_dir = context["tmp_dir"]
+
+        context_aware_metadata_dup_result = self.submit(
+            make_context_aware_metadata_duplicates_file,
+            s3_uri=s3_uri,
+            first_part_id_size=first_part_id_size,
+            part_id_size=part_id_size,
+            tmp_dir=tmp_dir
+        )
+
+        links_to_non_compliant_urls = self.submit(
+            make_links_to_non_compliant_file,
+            s3_uri,
+            first_part_id_size=first_part_id_size,
+            part_id_size=part_id_size,
+            tmp_dir=tmp_dir
+        )
+
+        links_to_non_compliant_urls_counter_results = [futures.Future()]
+        if links_to_non_compliant_urls.finished:
+            links_to_non_compliant_urls_counter_results = [
+                self.submit(
+                    make_links_to_non_compliant_counter_file,
+                    s3_uri=s3_uri,
+                    tmp_dir=tmp_dir,
+                    part_id=part_id,
+                )
+                for part_id in crawled_partitions.result
+            ]
+
+        return (
+            [context_aware_metadata_dup_result] +
+            links_to_non_compliant_urls_counter_results
+        )
+
     def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
@@ -551,14 +590,6 @@ class AnalysisWorkflow(Workflow):
             for part_id in crawled_partitions.result
         ]
 
-        context_aware_metadata_dup_result = self.submit(
-            make_context_aware_metadata_duplicates_file,
-            s3_uri=s3_uri,
-            first_part_id_size=first_part_id_size,
-            part_id_size=part_id_size,
-            tmp_dir=tmp_dir
-        )
-
         nb_top_domains = 100  # TODO get it from context.
         top_domains_result = self.submit(
             make_top_domains_files,
@@ -566,26 +597,6 @@ class AnalysisWorkflow(Workflow):
             s3_uri=s3_uri,
             nb_top_domains=nb_top_domains
         )
-
-        links_to_non_compliant_urls = self.submit(
-            make_links_to_non_compliant_file,
-            s3_uri,
-            first_part_id_size=first_part_id_size,
-            part_id_size=part_id_size,
-            tmp_dir=tmp_dir
-        )
-
-        links_to_non_compliant_urls_counter_results = [futures.Future()]
-        if links_to_non_compliant_urls.finished:
-            links_to_non_compliant_urls_counter_results = [
-                self.submit(
-                    make_links_to_non_compliant_counter_file,
-                    s3_uri=s3_uri,
-                    tmp_dir=tmp_dir,
-                    part_id=part_id,
-                )
-                for part_id in crawled_partitions.result
-            ]
 
         # Intermediate files
         # Group all the futures that need to terminate before computing the
@@ -607,17 +618,12 @@ class AnalysisWorkflow(Workflow):
         if 'sitemaps' in features_flags:
             intermediary_files.extend(self.compute_sitemaps(context))
 
-        # tasks that are dependent on zone & compliant urls
-        zone_compliant_dependent = (
-            [context_aware_metadata_dup_result] +
-            [links_to_non_compliant_urls] +
-            links_to_non_compliant_urls_counter_results
-        )
+        if (all(r.finished for r in zone_results) and
+            all(r.finished for r in compliant_urls_results)):
+            intermediary_files += self.compute_zone_compliant_dependent(crawled_partitions, **context)
 
         # execute in parallel
         futures.wait(*intermediary_files)
-        # execute zone/compliant dependant tasks
-        futures.wait(*zone_compliant_dependent)
 
         # inlink percentiles depends on link counters
         percentile_results = self.submit(
