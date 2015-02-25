@@ -438,11 +438,11 @@ class AnalysisWorkflow(Workflow):
         s3_uri = context['crawl_location']
         context['s3_uri'] = context['crawl_location']
 
-        tmp_dir = context.get('tmp_dir', None)
-        first_part_id_size = context.get(
+        tmp_dir = context.setdefault("tmp_dir", None)
+        first_part_id_size = context.setdefault(
             'first_part_id_size',
             constants.FIRST_PART_ID_SIZE)
-        part_id_size = context.get(
+        part_id_size = context.setdefault(
             'part_id_size',
             constants.PART_ID_SIZE)
 
