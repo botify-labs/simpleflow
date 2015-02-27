@@ -1,5 +1,10 @@
+import os
+
+from bitarray import bitarray
+
 from cdf.core.streams.utils import group_left
-from cdf.features.main.streams import InfosStreamDef
+from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
+from cdf.utils.kvstore import LevelDB
 from .reasons import *
 
 COMPLIANT_HTTP_CODE = 200
@@ -89,3 +94,14 @@ def generate_compliant_stream(infos_stream, outlinks_stream):
         )
 
         yield uid, is_compliant, reason_mask
+
+
+def make_compliant_bitarray(compliant_stream, size):
+    """
+    Make a compliant bitarray (url_id = index, True if compliant)
+    """
+    b = bitarray(size)
+    for url_id, compliant, not_compliant_reason in compliant_stream:
+        b[url_id] = compliant
+    return b
+

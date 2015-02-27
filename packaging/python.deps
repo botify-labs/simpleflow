@@ -19,3 +19,4 @@ tld==0.7
 botify-autotagging
 python-google-analytics
 cbor
+bitarray==0.8.1

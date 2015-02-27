@@ -257,3 +257,11 @@ def compute_compliant_urls(crawl_id, s3_uri, part_id,
         uri=s3_uri,
         part_id=part_id
     )
+
+@with_temporary_dir
+def compute_hreflang_out(crawl_id, s3_uri, part_id, tmp_dir=None, force_fetch=None):
+    # Make compliant db
+    db = make_compliant_db(crawl_id, s3_uri, tmp_dir)
+
+    # prepare streams
+    rel_stream = RelStreamDef.load(s3_uri, tmp_dir, part_id=part_id, force_fetch=force_fetch)
