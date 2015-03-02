@@ -6,7 +6,7 @@ from cdf.features.main.reasons import (
 )
 from cdf.metadata.url.url_metadata import (
     LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
-    DATE_TYPE, ES_NOT_ANALYZED, ES_DOC_VALUE,
+    DATE_TYPE, ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
     LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
     DIFF_QUALITATIVE, DIFF_QUANTITATIVE
 )
@@ -66,17 +66,24 @@ class RelCompliantStreamDef(StreamDefBase):
         "rel.hreflang.out.nb": {
             "verbose_name": "Outgoing Number of Href Langs",
             "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE
+            }
         },
         "rel.hreflang.out.valid.nb": {
             "verbose_name": "Outgoing Number of Valid Href Langs",
             "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE
+            }
         },
         "rel.hreflang.out.valid.langs": {
             "verbose_name": "Outgoing Valid Href Langs",
             "type": STRING_TYPE,
             "settings": [
                 LIST,
-                ES_NOT_ANALYZED
+                ES_NOT_ANALYZED,
+                ES_DOC_VALUE
             ]
         },
         "rel.hreflang.out.valid.has_warning": {
@@ -88,7 +95,8 @@ class RelCompliantStreamDef(StreamDefBase):
             "type": STRING_TYPE,
             "settings": [
                 LIST,
-                ES_NOT_ANALYZED
+                ES_NOT_ANALYZED,
+                ES_DOC_VALUE
             ]
         },
         "rel.hreflang.out.valid.values": {
@@ -96,13 +104,16 @@ class RelCompliantStreamDef(StreamDefBase):
             "type": STRING_TYPE,
             "settings": [
                 LIST,
-                ES_NOT_ANALYZED,
+                ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT
             ]
         },
         "rel.hreflang.out.not_valid.nb": {
             "verbose_name": "Outgoing Number of Not Valid Href Langs",
             "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE
+            }
         },
         "rel.hreflang.out.not_valid.errors": {
             "verbose_name": "Outgoing Not Valid Href Langs Errors",
@@ -110,13 +121,14 @@ class RelCompliantStreamDef(StreamDefBase):
             "settings": [
                 LIST,
                 ES_NOT_ANALYZED,
+                ES_DOC_VALUE
             ]
         },
         "rel.hreflang.out.not_valid.values": {
             "verbose_name": "Outgoing Not Valid Href Langs URLs",
             "type": STRING_TYPE,
             "settings": [
-                ES_NOT_ANALYZED,
+                ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT
             ]
         }
@@ -172,7 +184,8 @@ class RelCompliantStreamDef(StreamDefBase):
                 sample["url_id"] = url_id_dest
             else:
                 sample["url"] = stream[4]
-            document["hreflang_errors_samples"].append(sample)
+            if len(document["hreflang_errors_samples"]) < rel_constants.MAX_HREFLANG_OUT_ERRORS:
+                document["hreflang_errors_samples"].append(sample)
         else:
             sample = {
                 "lang": iso_codes,
@@ -183,7 +196,8 @@ class RelCompliantStreamDef(StreamDefBase):
             else:
                 sample["url"] = stream[4]
 
-            document["hreflang_valid_samples"].append(sample)
+            if len(document["hreflang_valid_samples"]) < rel_constants.MAX_HREFLANG_OUT_VALID:
+                document["hreflang_valid_samples"].append(sample)
             if warning:
                 subdoc["valid"]["has_warning"] = True
                 document["hreflang_warning"] |= warning
