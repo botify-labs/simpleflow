@@ -104,4 +104,3 @@ def make_compliant_bitarray(compliant_stream, size):
     for url_id, compliant, not_compliant_reason in compliant_stream:
         b[url_id] = compliant
     return b
-

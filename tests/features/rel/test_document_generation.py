@@ -1,3 +1,5 @@
+import shutil
+import tempfile
 import unittest
 
 from cdf.compat import json
@@ -7,8 +9,13 @@ from cdf.features.main.streams import (
     CompliantUrlStreamDef,
     IdStreamDef, InfosStreamDef
 )
-from cdf.features.rel.streams import RelStreamDef
+from cdf.features.rel.streams import RelCompliantStreamDef
 from cdf.features.rel import constants as rel_constants
+
+import boto
+from moto import mock_s3
+
+from bitarray import bitarray
 
 
 def _next_doc(generator):
@@ -18,6 +25,9 @@ def _next_doc(generator):
 class TestRelDocument(unittest.TestCase):
 
     def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        self.s3_uri = 's3://test_bucket/analysis'
+
         self.patterns = [
             [1, 'http', 'www.site.com', '/1', ''],
             [2, 'http', 'www.site.com', '/2', ''],
@@ -31,32 +41,42 @@ class TestRelDocument(unittest.TestCase):
         self.compliant = [
             [1, 'true', 0],
             [2, 'true', 0],
-            [3, 'true', 0],
+            [3, 'false', 0],
+            [4, 'false', 1],
         ]
 
         # Rel stream format
-        # uid_from type mask uid_to url value
+        # uid_from type mask uid_to url value uid_to_is_compliant
         # type :
         # 1 = hreflang
         # 2 = prev
         # 3 = next
         # 4 = author
         self.rel = [
-            [1, 1, 0, 2, "", "en-US"], # OK
-            [1, 1, 0, -1, "http://www.site.com/it", "it-IT"], # OK but warning to external URL
-            [1, 1, 0, 3, "", "jj-us"], # KO : Bad Lang
-            [1, 1, 0, 3, "", "en-ZZ"], # KO : Bad Country
-            [1, 1, 4, -1, "http://www.site.com/blocked-robot-txt", "en-US"], # OK but warning : Blocked by robotstxt
-            [1, 1, 8, -1, "http://www.site.com/blocked-config", "en-US"], # OK but warning : Blocked by config
+            [1, 1, 0, 2, "", "en-US", "1"], # OK
+            [1, 1, 0, -1, "http://www.site.com/it", "it-IT", ""], # OK but warning to external URL
+            [1, 1, 0, 3, "", "jj-us", "0"], # KO : Bad Lang
+            [1, 1, 0, 3, "", "en-ZZ", "0"], # KO : Bad Country
+            [1, 1, 4, -1, "http://www.site.com/blocked-robot-txt", "en-US", ""], # OK but warning : Blocked by robotstxt
+            [1, 1, 8, -1, "http://www.site.com/blocked-config", "en-US", ""], # OK but warning : Blocked by config
         ]
 
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    @mock_s3
     def test_hreflang_out(self):
-        gen = UrlDocumentGenerator([
-            IdStreamDef.load_iterator(iter(self.patterns)),
-            InfosStreamDef.load_iterator(iter(self.infos)),
-            CompliantUrlStreamDef.load_iterator(iter(self.compliant)),
-            RelStreamDef.load_iterator(iter(self.rel))
-        ])
+        conn = boto.connect_s3()
+        bucket = conn.create_bucket('test_bucket')
+
+        gen = UrlDocumentGenerator(
+            [
+                IdStreamDef.load_iterator(iter(self.patterns)),
+                InfosStreamDef.load_iterator(iter(self.infos)),
+                CompliantUrlStreamDef.load_iterator(iter(self.compliant)),
+                RelCompliantStreamDef.load_iterator(iter(self.rel))
+            ]
+        )
 
         document = _next_doc(gen)
         href = document["rel"]["hreflang"]["out"]
@@ -65,6 +85,7 @@ class TestRelDocument(unittest.TestCase):
         # Valid
         self.assertEquals(href["valid"]["nb"], 4)
         self.assertEquals(href["valid"]["langs"], ["en-US", "it-IT"])
+        self.assertTrue(href["valid"]["has_warning"])
         self.assertEquals(
                 href["valid"]["warning"],
                 [rel_constants.WARNING_DEST_BLOCKED_CONFIG,
@@ -82,7 +103,7 @@ class TestRelDocument(unittest.TestCase):
         # (We don't want to store them as objects)
 
         # Success
-        samples = [json.loads(k) for k in href["valid"]["samples"]]
+        samples = json.loads(href["valid"]["values"])
         self.assertEquals(len(samples), 4)
         self.assertEquals(
                 samples[0],
@@ -111,7 +132,7 @@ class TestRelDocument(unittest.TestCase):
         )
 
         # Error samples
-        samples = [json.loads(k) for k in href["not_valid"]["samples"]]
+        samples = json.loads(href["not_valid"]["values"])
         self.assertEquals(len(samples), 2)
         self.assertEquals(
                 samples[0],
