@@ -117,17 +117,17 @@ class RelStreamDef(StreamDefBase):
         errors = set()
         warning = set()
         if not is_lang_valid(iso_codes):
-            errors.add(rel_constants.LANG_NOT_RECOGNIZED)
+            errors.add(rel_constants.ERROR_LANG_NOT_RECOGNIZED)
         if country and not is_country_valid(country):
-            errors.add(rel_constants.COUNTRY_NOT_RECOGNIZED)
+            errors.add(rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED)
         if mask & rel_constants.MASK_NOFOLLOW_ROBOTS_TXT == rel_constants.MASK_NOFOLLOW_ROBOTS_TXT:
-            warning.add(rel_constants.DEST_BLOCKED_ROBOTS_TXT)
+            warning.add(rel_constants.WARNING_DEST_BLOCKED_ROBOTS_TXT)
         if mask & rel_constants.MASK_NOFOLLOW_CONFIG == rel_constants.MASK_NOFOLLOW_CONFIG:
-            warning.add(rel_constants.DEST_BLOCKED_CONFIG)
+            warning.add(rel_constants.WARNING_DEST_BLOCKED_CONFIG)
         # url_id not found and mask has not robot or config flags
         if (url_id_dest == -1 and
             mask & (rel_constants.MASK_NOFOLLOW_ROBOTS_TXT + rel_constants.MASK_NOFOLLOW_CONFIG) == 0):
-            warning.add(rel_constants.DEST_NOT_CRAWLED)
+            warning.add(rel_constants.WARNING_DEST_NOT_CRAWLED)
 
         if errors:
             subdoc["not_valid"]["nb"] += 1

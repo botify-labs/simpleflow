@@ -67,15 +67,15 @@ class TestRelDocument(unittest.TestCase):
         self.assertEquals(href["valid"]["langs"], ["en-US", "it-IT"])
         self.assertEquals(
                 href["valid"]["warning"],
-                [rel_constants.DEST_BLOCKED_CONFIG,
-                rel_constants.DEST_NOT_CRAWLED,
-                rel_constants.DEST_BLOCKED_ROBOTS_TXT])
+                [rel_constants.WARNING_DEST_BLOCKED_CONFIG,
+                rel_constants.WARNING_DEST_NOT_CRAWLED,
+                rel_constants.WARNING_DEST_BLOCKED_ROBOTS_TXT])
 
         # Errors
         self.assertEquals(href["not_valid"]["nb"], 2)
         self.assertEquals(
                 href["not_valid"]["errors"],
-                [rel_constants.COUNTRY_NOT_RECOGNIZED, rel_constants.LANG_NOT_RECOGNIZED]
+                [rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED, rel_constants.ERROR_LANG_NOT_RECOGNIZED]
         )
 
         # Samples are JSON serialized objects
@@ -94,20 +94,20 @@ class TestRelDocument(unittest.TestCase):
                 samples[1],
                 {u"url": "http://www.site.com/it",
                  u"lang": u"it-IT",
-                 u"warning": [rel_constants.DEST_NOT_CRAWLED]}
+                 u"warning": [rel_constants.WARNING_DEST_NOT_CRAWLED]}
         )
 
         self.assertEquals(
                 samples[2],
                 {u"url": "http://www.site.com/blocked-robot-txt",
                  u"lang": u"en-US",
-                 u"warning": [rel_constants.DEST_BLOCKED_ROBOTS_TXT]}
+                 u"warning": [rel_constants.WARNING_DEST_BLOCKED_ROBOTS_TXT]}
         )
         self.assertEquals(
                 samples[3],
                 {u"url": "http://www.site.com/blocked-config",
                  u"lang": u"en-US",
-                 u"warning": [rel_constants.DEST_BLOCKED_CONFIG]}
+                 u"warning": [rel_constants.WARNING_DEST_BLOCKED_CONFIG]}
         )
 
         # Error samples
@@ -116,12 +116,12 @@ class TestRelDocument(unittest.TestCase):
         self.assertEquals(
                 samples[0],
                 {u"url_id": 3,
-                 u"errors": [rel_constants.LANG_NOT_RECOGNIZED],
+                 u"errors": [rel_constants.ERROR_LANG_NOT_RECOGNIZED],
                  u"value": u"jj-us"}
         )
         self.assertEquals(
                 samples[1],
                 {u"url_id": 3,
-                 u"errors": [rel_constants.COUNTRY_NOT_RECOGNIZED],
+                 u"errors": [rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED],
                  u"value": u"en-ZZ"}
         )
