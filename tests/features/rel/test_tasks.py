@@ -76,8 +76,11 @@ class TestTasks(unittest.TestCase):
         cu.persist(self.s3_uri, first_part_size=self.first_part_size, part_size=self.part_size)
 
         convert_rel_out_to_rel_compliant_out(
-            1, self.s3_uri, self.tmp_dir,
-            first_part_id_size=self.first_part_size, part_id_size=self.part_size, crawled_partitions=[0])
+            self.s3_uri,
+            first_part_id_size=self.first_part_size,
+            part_id_size=self.part_size,
+            crawled_partitions=[0],
+            tmp_dir=self.tmp_dir)
 
         self.assertEquals(
             list(RelCompliantStreamDef.load(self.s3_uri, tmp_dir=self.tmp_dir)),

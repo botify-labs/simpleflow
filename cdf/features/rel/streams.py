@@ -28,7 +28,7 @@ from cdf.features.rel.utils import (
 from cdf.features.main.compliant_url import make_compliant_bitarray
 
 
-__all__ = ["RealStreamDef"]
+__all__ = ["RelStreamDef", "RelCompliantStreamDef", "InRelStreamDef"]
 
 
 def bool_int(value):
@@ -40,7 +40,7 @@ def bool_int(value):
 
 
 class RelStreamDef(StreamDefBase):
-    FILE = 'urlrel'
+    FILE = 'urllinkrel'
     HEADERS = (
         ('id', int),
         ('type', int),
@@ -51,7 +51,7 @@ class RelStreamDef(StreamDefBase):
     )
 
 class RelCompliantStreamDef(StreamDefBase):
-    FILE = 'urlrelcompliant'
+    FILE = 'urllinkrelcompliant'
     HEADERS = (
         ('id', int),
         ('type', int),
@@ -218,6 +218,10 @@ class RelCompliantStreamDef(StreamDefBase):
 
     def post_process_document(self, document):
         # Store the final errors lists
+        if not "hreflang_errors" in document:
+            # No stream available for this entry, nothing to delete
+            return
+
         document["rel"]["hreflang"]["out"]["not_valid"]["errors"] = list(document["hreflang_errors"])
         document["rel"]["hreflang"]["out"]["valid"]["warning"] = list(document["hreflang_warning"])
         document["rel"]["hreflang"]["out"]["not_valid"]["values"] = json.dumps(document["hreflang_errors_samples"])
@@ -229,7 +233,7 @@ class RelCompliantStreamDef(StreamDefBase):
 
 
 class InRelStreamDef(StreamDefBase):
-    FILE = 'urlinrel'
+    FILE = 'urlinlinkrel'
     HEADERS = (
         ('id', int),
         ('type', int),
@@ -364,6 +368,10 @@ class InRelStreamDef(StreamDefBase):
 
     def post_process_document(self, document):
         # Store the final errors lists
+        if not "inhreflang_entries" in document:
+            # No streams for this entry, nothing to delete
+            return
+
         for stream in document["inhreflang_entries"]:
             self.post_process_hreflang(document, stream)
 

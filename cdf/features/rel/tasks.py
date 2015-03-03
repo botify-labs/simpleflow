@@ -5,8 +5,12 @@ from cdf.features.rel.streams import (
 )
 from cdf.features.main.compliant_url import make_compliant_bitarray
 
+from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 
-def convert_rel_out_to_rel_compliant_out(crawl_id, s3_uri, tmp_dir, first_part_id_size, part_id_size, crawled_partitions):
+
+@with_temporary_dir
+def convert_rel_out_to_rel_compliant_out(s3_uri, first_part_id_size, part_id_size,
+                                         crawled_partitions, tmp_dir=None, force_fetch=False):
     """
     Take rel out stream and add compliancy flag for each destination url
     """
@@ -24,4 +28,4 @@ def convert_rel_out_to_rel_compliant_out(crawl_id, s3_uri, tmp_dir, first_part_i
         else:
             dest_compliant = '0'
         rc.append(*l + [dest_compliant])
-    rc.persist(s3_uri, tmp_dir, first_part_id_size, part_id_size)
+    rc.persist(s3_uri, first_part_size=first_part_id_size, part_size=part_id_size)
