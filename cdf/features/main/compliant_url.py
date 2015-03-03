@@ -1,10 +1,7 @@
-import os
-
 from bitarray import bitarray
 
 from cdf.core.streams.utils import group_left
-from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
-from cdf.utils.kvstore import LevelDB
+from cdf.features.main.streams import InfosStreamDef
 from .reasons import *
 
 COMPLIANT_HTTP_CODE = 200

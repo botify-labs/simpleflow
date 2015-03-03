@@ -1,4 +1,3 @@
-import os
 import shutil
 import tempfile
 import unittest
@@ -240,10 +239,6 @@ class TestMakeCompliantBitarray(unittest.TestCase):
             [2, False, ''],
             [3, True, '']
         ]
-        self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
 
     def test_harness(self):
         b = make_compliant_bitarray(self.compliant_stream, 5)
