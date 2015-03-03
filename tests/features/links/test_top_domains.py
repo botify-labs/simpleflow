@@ -1,6 +1,7 @@
 import unittest
-import mock
 import os.path
+import itertools
+from cdf.core.streams.cache import BufferedStreamCache
 
 from cdf.features.links.streams import OutlinksRawStreamDef
 
@@ -8,18 +9,36 @@ from cdf.features.links.top_domains import (
     _group_links,
     filter_external_outlinks,
     filter_invalid_destination_urls,
-    count_unique_links,
-    count_unique_follow_links,
-    _compute_top_domains,
-    compute_top_full_domains,
-    compute_top_second_level_domains,
     DomainLinkStats,
-    compute_domain_link_counts,
     LinkDestination,
-    compute_sample_links,
-    compute_link_destination_stats,
     resolve_sample_url_id,
-    )
+    TopSecondLevelDomainAggregator,
+    _pre_aggregate_link_stream,
+    TopLevelDomainAggregator
+)
+
+
+def _get_stream_cache(stream):
+    cache = BufferedStreamCache()
+    cache.cache(stream)
+    return cache
+
+
+class TestLinkDestination(unittest.TestCase):
+    def test_equals(self):
+        l1 = LinkDestination('', 2, [0, 1])
+        l2 = LinkDestination('', 2, [1, 0])
+        self.assertEqual(l1, l2)
+
+    def test_to_dict(self):
+        l = LinkDestination('foo.com/a', 2, ['a', 'b'])
+        result = l.to_dict()
+        expected = {
+            "url": 'foo.com/a',
+            "unique_links": 2,
+            "sources": ['a', 'b']
+        }
+        self.assertEqual(result, expected)
 
 
 class TestDomainLinkStats(unittest.TestCase):
@@ -93,6 +112,25 @@ class TestFilterInvalidDestinationUrls(unittest.TestCase):
         self.assertEqual(expected_result, list(actual_result))
 
 
+class TestPreAggregation(unittest.TestCase):
+    def test_pre_aggregation(self):
+        externals = [
+            [0, 9, "http://foo.com/bar.html"],
+            [0, 8, "http://foo.com/bar.html"],
+            [0, 8, "http://foo.com/bar.html"],
+            [0, 12, "http://foo.com/bar.html"],
+            [0, 8, "http://foo.com/bar.html"],
+            [3, 8, "http://foo.com/qux.css"],
+        ]
+        result = list(_pre_aggregate_link_stream(externals))
+        expected = [
+            (0, True, 'http://foo.com/bar.html', 3),
+            (0, False, 'http://foo.com/bar.html', 2),
+            (3, True, 'http://foo.com/qux.css', 1)
+        ]
+        self.assertItemsEqual(result, expected)
+
+
 class TopDomainTestCase(unittest.TestCase):
     def setUp(self):
         self.externals = [
@@ -139,332 +177,201 @@ class TestGroupLinks(TopDomainTestCase):
         )
 
 
-class TestCountUniqueLinks(unittest.TestCase):
+class TestTopSecondLevelDomainAggregator(unittest.TestCase):
     def test_nominal_case(self):
-        external_outlinks = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/baz.html"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [0, "a", 0, -1, "http://foo.com/baz.html"], # duplicate link
-            [3, "a", 0, -1, "http://foo.com/baz.css"]
+        pre_aggregated = iter([
+            ['foo.com', 'foo.com/a', 0, True, 2],
+            ['foo.com', 'foo.com/a', 1, True, 1],
+            ['foo.com', 'foo.com/a', 1, False, 3],
+            ['foo.com', 'foo.com/b', 1, True, 5],
         ])
-        self.assertEqual(4, count_unique_links(external_outlinks))
+        pre_aggregated = _get_stream_cache(pre_aggregated)
+        agg = TopSecondLevelDomainAggregator(n=2)
+
+        agg.merge('foo.com', pre_aggregated)
+        result = agg.get_result()
+        expected = [
+            DomainLinkStats(
+                'foo.com', 8, 3, 3, 1,
+                [LinkDestination('foo.com/a', 2, [0, 1]),
+                 LinkDestination('foo.com/b', 1, [1])],
+                [LinkDestination('foo.com/a', 1, [1])]
+            )
+        ]
+        self.assertEqual(expected, result)
+
+    def test_multiple_domains(self):
+        pre_aggregated = iter([
+            ['bar.com', 'bar.com/a', 0, True, 2],
+            ['foo.com', 'foo.com/a', 0, True, 2],
+            ['foo.com', 'foo.com/a', 1, True, 2],
+        ])
+        agg = TopSecondLevelDomainAggregator(n=2)
+        # patch the sample part
+        agg._compute_sample_links = lambda self, x: []
+
+        for domain, group in itertools.groupby(pre_aggregated, lambda x: x[0]):
+            group = _get_stream_cache(group)
+            agg.merge(domain, group)
+
+        result = agg.get_result()
+        expected = [
+            DomainLinkStats(
+                'foo.com', 4, 0, 2, 0, []
+            ),
+            DomainLinkStats(
+                'bar.com', 2, 0, 1, 0, []
+            ),
+        ]
+        self.assertEqual(expected, result)
+
+    def test_top_domains(self):
+        pre_aggregated = iter([
+            ['bar.com', 'bar.com/a', 0, True, 150],
+            ['bar.com', 'bar.com/a', 1, False, 150],
+            ['bar.com', 'bar.com/a', 2, False, 150],
+            ['bar.com', 'bar.com/a', 3, False, 150],
+            ['foobar.com', 'foobar.com/a', 0, True, 9],
+            ['foobar.com', 'foobar.com/b', 0, True, 2],
+            ['foo.com', 'foo.com/a', 0, True, 1],
+            ['foo.com', 'foo.com/b', 0, True, 1],
+            ['foo.com', 'foo.com/c', 0, True, 1],
+        ])
+        agg = TopSecondLevelDomainAggregator(n=1)
+        # patch the sample part
+        agg._compute_sample_links = lambda self, x: []
+
+        for domain, group in itertools.groupby(pre_aggregated, lambda x: x[0]):
+            group = _get_stream_cache(group)
+            agg.merge(domain, group)
+
+        result = agg.get_result()
+        expected = [
+            DomainLinkStats(
+                'foo.com', 3, 0, 3, 0, []
+            ),
+        ]
+        self.assertEqual(expected, result)
 
 
-class TestCountUniqueFollowLinks(unittest.TestCase):
+class TestTopLevelDomainAggregator(unittest.TestCase):
     def test_nominal_case(self):
-        external_outlinks = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/baz.html"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [0, "a", 0, -1, "http://foo.com/baz.html"], # duplicate link
-            [3, "a", 0, -1, "http://foo.com/baz.css"],
-            [3, "a", 1, -1, "http://foo.com"]  # no follow
+        pre_aggregated = iter([
+            ['foo.com', "http://foo.com/bar.html", 0, True, 1],
+            ['foo.com', "http://bar.foo.com/baz.html", 0, True, 1],
+            ['foo.com', "http://bar.foo.com/baz.html", 4, True, 1],
+            ['foo.com', "http://foo.com/qux.css", 3, True, 1],
+            ['foo.com', "http://bar.foo.com/abc.html", 4, True, 1],
         ])
-        self.assertEqual(4, count_unique_follow_links(external_outlinks))
+        cache = _get_stream_cache(pre_aggregated)
+        agg = TopLevelDomainAggregator(n=2)
+
+        agg.merge('foo.com', cache)
+        result = agg.get_result()
+        expected = [
+            DomainLinkStats(
+                'bar.foo.com', 3, 0, 3, 0,
+                [
+                    LinkDestination('http://bar.foo.com/baz.html', 2, [0, 4]),
+                    LinkDestination('http://bar.foo.com/abc.html', 1, [4]),
+                ]
+            ),
+            DomainLinkStats(
+                'foo.com', 2, 0, 2, 0,
+                [
+                    LinkDestination('http://foo.com/qux.css', 1, [3]),
+                    LinkDestination('http://foo.com/bar.html', 1, [0]),
+                ]
+            ),
+        ]
+
+        self.assertEqual(expected, result)
 
 
-class Test_ComputeTopNDomains(unittest.TestCase):
+class TestTopDomainAggregatorHelpers(unittest.TestCase):
     def setUp(self):
-        #extract destination url
-        self.key = lambda x: x[4]
+        self.agg = TopSecondLevelDomainAggregator(n=2)
 
-    def test_nominal_case(self):
-        externals = iter([
-            [0, "a", 0, -1, "foo.com"],
-            [0, "a", 0, -1, "bar.com"],
-            [3, "a", 0, -1, "foo.com"],
-            [4, "a", 0, -1, "bar.foo.com"],
-            [4, "a", 0, -1, "bar.com"],
-            [4, "a", 0, -1, "foo.com"],
+    def test_link_counts_follow(self):
+        link_group_stream = iter([
+            ['d', 'url1', 1, True, 1],
+            ['d', 'url1', 2, True, 1],
+            ['d', 'url2', 1, True, 1],
         ])
-        n = 2
-        actual_result = _compute_top_domains(externals, n, self.key)
-        expected_result = [
-            DomainLinkStats(
-                "foo.com", 3, 0, 3, 0,
-                [LinkDestination("foo.com", 3, [0, 3, 4])],
-                []
-            ),
-            DomainLinkStats(
-                "bar.com", 2, 0, 2, 0,
-                [LinkDestination("bar.com", 2, [0, 4])],
-                []
-            )
-        ]
-        self.assertEqual(expected_result, actual_result)
+        result = self.agg._compute_link_counts('d', link_group_stream)
+        expected = DomainLinkStats(
+            'd', 3, 0, 3, 0
+        )
+        self.assertEqual(result, expected)
 
-    def test_nofollow_links(self):
-        externals = iter([
-            [0, "a", 1, -1, "foo.com"],
-            [3, "a", 0, -1, "foo.com"],
-            [4, "a", 3, -1, "foo.com"],
+    def test_link_counts_mixed(self):
+        link_group_stream = iter([
+            ['d', 'url1', 1, True, 1],
+            ['d', 'url1', 2, False, 2],
+            ['d', 'url2', 1, True, 12],
+            ['d', 'url1', 2, False, 5],
+            ['d', 'url4', 1, True, 1],
         ])
-        n = 1
-        actual_result = _compute_top_domains(externals, n, self.key)
-        expected_result = [
-            DomainLinkStats(
-                "foo.com", 1, 2, 1,
-                [LinkDestination("foo.com", 1, [3])],
-                [LinkDestination("foo.com", 2, [0, 4])]
-            )
-        ]
-        self.assertEqual(expected_result, actual_result)
+        result = self.agg._compute_link_counts('d', link_group_stream)
+        expected = DomainLinkStats(
+            'd', 14, 7, 3, 2
+        )
+        self.assertEqual(result, expected)
 
-    @mock.patch("cdf.features.links.top_domains.compute_sample_links", autospec=True)
-    def test_n_too_big(self, compute_sample_links_mock):
-        #mock to make expected_result easier to understand
-        compute_sample_links_mock.return_value = []
-
-        externals = iter([
-            [0, "a", 0, -1, "foo.com"],
-            [0, "a", 0, -1, "bar.com"],
-            [4, "a", 0, -1, "foo.com"],
+    def test_sample_links_nominal(self):
+        link_group_stream = iter([
+            ['d', 'url1', 1, True, 1],
+            ['d', 'url1', 2, True, 1],
+            ['d', 'url2', 1, True, 1],
+            ['d', 'url2', 2, True, 1],
+            ['d', 'url2', 3, True, 1],
+            ['d', 'url2', 4, True, 1],
         ])
-        n = 10
-        actual_result = _compute_top_domains(externals, n, self.key)
-        expected_result = [
-            DomainLinkStats("foo.com", 2, 0, 2, 0, []),
-            DomainLinkStats("bar.com", 1, 0, 1, 0, [])
+        results = self.agg._compute_sample_links(link_group_stream, 3)
+        expected = [
+            LinkDestination('url2', 4, [1, 2, 3]),
+            LinkDestination('url1', 2, [1, 2]),
         ]
-        self.assertEqual(expected_result, actual_result)
+        self.assertEqual(results, expected)
 
-    @mock.patch("cdf.features.links.top_domains.compute_sample_links", autospec=True)
-    def test_nofollow_links(self, compute_sample_links_mock):
-        #mock to make expected_result easier to understand
-        compute_sample_links_mock.return_value = []
-
-        externals = iter([
-            [0, "a", 1, -1, "bar.com"], # no follow
-            [3, "a", 0, -1, "bar.foo.com"],
-            [4, "a", 0, -1, "bar.foo.com"],
-            [4, "a", 0, -1, "bar.com"],
+    def test_sample_links_ordering(self):
+        link_group_stream = iter([
+            ['d', "http://foo.com/", 3, True, 2],
+            ['d', "http://foo.com/", 4, True, 2],
+            ['d', "http://foo.com/", 0, True, 1],
+            ['d', "http://foo.com/", 5, True, 1],
         ])
-        n = 1
-        actual_result = _compute_top_domains(externals, n, self.key)
-        expected_result = [
-            DomainLinkStats("bar.foo.com", 2, 0, 2, 0, [])
-        ]
-        self.assertEqual(expected_result, actual_result)
+        results = self.agg._compute_sample_links(link_group_stream, 3)
+        expected = [LinkDestination("http://foo.com/", 4, [0, 3, 4])]
 
-    def test_all_nofollow_links(self):
-        #all no follow links
-        externals = iter([
-            [0, "a", 1, -1, "foo.com"]
+        self.assertEqual(expected, results)
+
+    def test_sample_sets_mixed(self):
+        link_group_stream = iter([
+            ['d', 'url1', 1, True, 1],
+            ['d', 'url1', 1, False, 1],
+            ['d', 'url1', 2, False, 1],
+            ['d', 'url2', 2, True, 1],
+            ['d', 'url2', 3, True, 1],
+            ['d', 'url4', 4, False, 1],
         ])
-        n = 2
-        actual_result = _compute_top_domains(externals, n, self.key)
-        expected_result = [
-            DomainLinkStats("foo.com", 0, 1, 0, 1, [], [
-                LinkDestination("foo.com", 1, [0])
-            ])
-        ]
-        self.assertEqual(expected_result, actual_result)
+        cache = _get_stream_cache(link_group_stream)
 
-    @mock.patch("cdf.features.links.top_domains.compute_sample_links", autospec=True)
-    def test_duplicated_links(self, compute_sample_links_mock):
-        #mock to make expected_result easier to understand
-        compute_sample_links_mock.return_value = []
-
-        externals = iter([
-            [0, "a", 0, -1, "foo.com"],
-            [0, "a", 0, -1, "bar.com"],
-            [3, "a", 0, -1, "foo.com"],
-            [4, "a", 0, -1, "bar.foo.com"],
-            [4, "a", 0, -1, "bar.com"],
-            [4, "a", 0, -1, "foo.com"],
-            [0, "a", 0, -1, "foo.com"]  # duplicated link
-        ])
-        n = 2
-        actual_result = _compute_top_domains(externals, n, self.key)
-        expected_result = [
-            DomainLinkStats("foo.com", 4, 0, 3, 0, []),
-            DomainLinkStats("bar.com", 2, 0, 2, 0, [])
-        ]
-        self.assertEqual(expected_result, actual_result)
-
-
-class TestComputeTopNDomains(unittest.TestCase):
-    def test_nominal_case(self):
-        externals = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://bar.com/image.jpg"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [4, "a", 0, -1, "http://bar.foo.com/baz.html"],
-            [4, "a", 0, -1, "http://bar.com/baz.html"],
-            [4, "a", 0, -1, "http://foo.com/"],
-        ])
-        n = 2
-        actual_result = compute_top_full_domains(externals, n)
-        expected_result = [
-            DomainLinkStats(
-                "foo.com", 3, 0, 3, 0,
-                [
-                    LinkDestination("http://foo.com/", 1, [4]),
-                    LinkDestination("http://foo.com/bar.html", 1, [0]),
-                    LinkDestination("http://foo.com/qux.css", 1, [3]),
-                ]
-            ),
-            DomainLinkStats(
-                "bar.com", 2, 0, 2, 0,
-                [
-                    LinkDestination("http://bar.com/baz.html", 1, [4]),
-                    LinkDestination("http://bar.com/image.jpg", 1, [0])
-                ]
-            )
-        ]
-        self.assertEqual(expected_result, actual_result)
-
-
-class TestComputeTopNSecondLevelDomain(unittest.TestCase):
-    def test_nominal_case(self):
-        externals = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://bar.com/image.jpg"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [4, "a", 0, -1, "http://bar.foo.com/baz.html"],
-            [4, "a", 0, -1, "http://bar.com/baz.html"],
-            [4, "a", 0, -1, "http://foo.com/"],
-        ])
-        n = 2
-        actual_result = compute_top_second_level_domains(externals, n)
-        expected_result = [
-            DomainLinkStats(
-                "foo.com", 4, 0, 4, 0,
-                [
-                    LinkDestination("http://foo.com/bar.html", 1, [0]),
-                    LinkDestination("http://foo.com/qux.css", 1, [3]),
-                    LinkDestination("http://foo.com/", 1, [4]),
-                    LinkDestination("http://bar.foo.com/baz.html", 1, [4])
-                ]
-            ),
-            DomainLinkStats(
-                "bar.com", 2, 0, 2, 0,
-                [
-                    LinkDestination("http://bar.com/image.jpg", 1, [0]),
-                    LinkDestination("http://bar.com/baz.html", 1, [4]),
-                ]
-            )
-        ]
-        self.assertEqual(expected_result, actual_result)
-
-
-class TestDomainLinkCounts(unittest.TestCase):
-    def setUp(self):
-        self.groups = (
-            "foo.com",
-            [
-                [0, "a", 0, -1, "A"],
-                [3, "a", 0, -1, "B"],
-                [4, "a", 0, -1, "C"],
-                [5, "a", 1, -1, "A"],
-                [5, "a", 1, -1, "A"],
-                [6, "a", 0, -1, "A"],
-                [7, "a", 0, -1, "A"],
-                # url 8 has 2 follow to A
-                # and a nofollow to A
-                [8, "a", 2, -1, "A"],
-                [8, "a", 0, -1, "A"],
-                [8, "a", 0, -1, "A"],
-                [9, "a", 0, -1, "A"]
-            ]
+        follow_result, nofollow_result = self.agg._compute_sample_sets(
+            cache
         )
 
-    def test_link_counts(self):
-        result = compute_domain_link_counts(self.groups).to_dict()
-        expected_follow = 8
-        expected_nofollow = 3
-        self.assertEqual(result['follow_links'], expected_follow)
-        self.assertEqual(result['nofollow_links'], expected_nofollow)
+        follow_expected = [
+            LinkDestination('url2', 2, [2, 3]),
+            LinkDestination('url1', 1, [1]),
+        ]
+        nofollow_expected = [
+            LinkDestination('url1', 2, [1, 2]),
+            LinkDestination('url4', 1, [4]),
+        ]
 
-    def test_unique_link_counts(self):
-        result = compute_domain_link_counts(self.groups).to_dict()
-        expected_unique_follow = 7
-        self.assertEqual(result['unique_follow_links'], expected_unique_follow)
-        expected_unique_nofollow = 2
-        self.assertEqual(result['unique_nofollow_links'], expected_unique_nofollow)
-
-    def test_domain_name(self):
-        result = compute_domain_link_counts(self.groups).to_dict()
-        expected_domain = 'foo.com'
-        self.assertEqual(result['domain'], expected_domain)
-
-
-class TestComputeSampleLinks(unittest.TestCase):
-    def test_nominal_case(self):
-        externals = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [3, "a", 0, -1, "http://foo.com/bar.html"],
-            [4, "a", 0, -1, "http://foo.com/baz.html"],
-            [5, "a", 0, -1, "http://foo.com/baz.html"],
-            [4, "a", 0, -1, "http://foo.com/bar.html"],
-        ])
-        n = 2
-        actual_result = compute_sample_links(externals, n)
-
-        expected_result = [LinkDestination("http://foo.com/bar.html", 3, [0, 3, 4]),
-                           LinkDestination("http://foo.com/baz.html", 2, [4, 5])]
-
-        self.assertEqual(expected_result, actual_result)
-
-    def test_unique_links(self):
-        externals = iter([
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/bar.html"],
-            [0, "a", 0, -1, "http://foo.com/bar.html"], # many duplicates
-            [3, "a", 0, -1, "http://foo.com/qux.html"],
-            [4, "a", 0, -1, "http://foo.com/baz.html"],
-            [4, "a", 0, -1, "http://foo.com/qux.html"],
-            [5, "a", 0, -1, "http://foo.com/baz.html"],
-            [6, "a", 0, -1, "http://foo.com/baz.html"]
-        ])
-        n = 2
-        actual_result = compute_sample_links(externals, n)
-
-        expected_result = [LinkDestination("http://foo.com/baz.html", 3, [4, 5, 6]),
-                           LinkDestination("http://foo.com/qux.html", 2, [3, 4])]
-        self.assertEqual(expected_result, actual_result)
-
-    def test_nofollow(self):
-        externals = iter([
-            [0, "a", 1, -1, "http://foo.com/bar.html"],
-            [3, "a", 0, -1, "http://foo.com/qux.css"],
-            [3, "a", 0, -1, "http://foo.com/bar.html"],
-            [4, "a", 3, -1, "http://foo.com/baz.html"],
-            [5, "a", 0, -1, "http://foo.com/baz.html"],
-            [4, "a", 5, -1, "http://foo.com/bar.html"],
-        ])
-        n = 2
-        actual_result = compute_sample_links(externals, n)
-
-        expected_result = [LinkDestination("http://foo.com/bar.html", 3, [0, 3, 4]),
-                           LinkDestination("http://foo.com/baz.html", 2, [4, 5])]
-
-        self.assertEqual(expected_result, actual_result)
-
-
-class TestComputeLinkDestinationStats(unittest.TestCase):
-    def test_nominal_case(self):
-        externals = iter([
-            [3, "a", 0, -1, "http://foo.com/"],
-            [3, "a", 0, -1, "http://foo.com/"],
-            [4, "a", 3, -1, "http://foo.com/"],
-            [0, "a", 1, -1, "http://foo.com/"],
-            [5, "a", 0, -1, "http://foo.com/"],
-            [4, "a", 5, -1, "http://foo.com/"]
-        ])
-        n = 2
-        actual_result = compute_link_destination_stats(
-            externals,
-            "http://foo.com/",
-            n
-        )
-        expected_result = LinkDestination("http://foo.com/", 4, [0, 3])
-        self.assertEqual(expected_result, actual_result)
-
+        self.assertEqual(follow_result, follow_expected)
+        self.assertEqual(nofollow_result, nofollow_expected)
 
 
 class TestSourceSampleUrl(unittest.TestCase):

@@ -596,7 +596,8 @@ class AnalysisWorkflow(Workflow):
             make_top_domains_files,
             crawl_id=crawl_id,
             s3_uri=s3_uri,
-            nb_top_domains=nb_top_domains
+            nb_top_domains=nb_top_domains,
+            crawled_partitions=crawled_partitions.result
         )
 
         # Intermediate files

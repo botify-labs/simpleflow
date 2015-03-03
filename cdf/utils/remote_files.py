@@ -1,12 +1,10 @@
 import re
 import os
-import tempfile
 import json
 
 from cdf.analysis.urls.utils import get_part_id
 from cdf.exceptions import MalformedFileNameError
 from cdf.utils import s3, path
-from cdf.core import constants
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 
@@ -15,16 +13,16 @@ def enumerate_partitions(uri,
                          first_part_id_size,
                          part_id_size,
                          only_crawled_urls=False):
-    """
-    Return the list of partition ids
+    """Return the list of partition ids
+
     :param uri: the crawl data location (s3_uri)
     :type uri: str
-    :param first_part_id_size : # urls of the first part
+    :param first_part_id_size: # urls of the first part
     :type first_part_id_size: int
-    :param part_id_size : # urls by part
+    :param part_id_size: # urls by part
     :type part_id_size: int
-    :param only_crawled_urls : Return partitions with at least 1 url crawled inside
-    :type only_crawled_urls : boolean
+    :param only_crawled_urls: Return partitions with at least 1 url crawled inside
+    :type only_crawled_urls: boolean
     :returns: list - sorted list of urlids
     """
     regexp = r'urlids\.txt\.([0-9]+)\.gz'

@@ -1,7 +1,10 @@
 import plyvel
-import os
+import logging
 
 _DEFAULT_BATCH_SIZE = 10000  # 10k
+
+
+logger = logging.getLogger(__name__)
 
 
 class KVStoreException(Exception):
@@ -36,10 +39,7 @@ class LevelDB(KVStore):
     def open(self, **configs):
         """Open the DB
         """
-        if os.path.exists(self.path):
-            self.db = plyvel.DB(self.path, **configs)
-        else:
-            self.db = plyvel.DB(self.path, create_if_missing=True, **configs)
+        self.db = plyvel.DB(self.path, create_if_missing=True, **configs)
 
     def close(self):
         """Close the DB
@@ -79,6 +79,8 @@ class LevelDB(KVStore):
             if count % batch_size == 0 and count > 0:
                 wb.write()
                 wb = self.db.write_batch()
+                logger.debug(
+                    "Put {} records in DB {}".format(count, self.path))
         wb.write()
 
     def iterator(self):
@@ -101,6 +103,9 @@ class LevelDB(KVStore):
         """
         self._check()
         return self.db.get(key)
+
+    def __del__(self):
+        self.destroy()
 
 
 # TODO study the python binding of RocksDB

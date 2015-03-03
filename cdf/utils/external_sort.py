@@ -1,3 +1,4 @@
+from collections import Iterator
 import logging
 import itertools
 import cPickle as pickle
@@ -5,6 +6,7 @@ import tempfile
 import heapq
 import os
 import marshal
+import cbor
 
 from abc import ABCMeta, abstractmethod
 
@@ -26,7 +28,7 @@ def external_sort(stream, key):
     :returns: iterator
     """
     #use MarshalExternalSort as it is the fastest method so far.
-    external_sort = MarshalExternalSort()
+    external_sort = BufferedExternalSort(sorter_class=CborExternalSort)
     return external_sort.external_sort(stream, key)
 
 
@@ -211,6 +213,18 @@ class MarshalExternalSort(MergeExternalSort):
                 break
 
 
+class CborExternalSort(MergeExternalSort):
+    def dump(self, element, f):
+        cbor.dump(element, f)
+
+    def get_stream_from_file(self, f):
+        while True:
+            try:
+                yield cbor.load(f)
+            except (EOFError, IndexError):
+                break
+
+
 class PickleExternalSort(MergeExternalSort):
     """Concrete implementation of MergeExternalSort
     It uses pickle to serialize the objects.
@@ -225,6 +239,31 @@ class PickleExternalSort(MergeExternalSort):
                 yield pickle.load(f)
         except EOFError:
             pass
+
+
+class BufferedExternalSort(ExternalSort):
+    def __init__(self, sorter_class=MarshalExternalSort, buffer_size=100000):
+        self.sorter_class = sorter_class
+        self.buffer_size = buffer_size
+
+    def take(self, stream):
+        return list(itertools.islice(stream, self.buffer_size))
+
+    def external_sort(self, stream, key):
+        if not isinstance(stream, Iterator):
+            stream = iter(stream)
+        buffer = self.take(stream)
+        try:
+            elem = next(stream)
+        except StopIteration:
+            # stream exhausted, sort in memory
+            return sorted(buffer, key=key)
+
+        # stream larger than in-memory buffer
+        # apply external sort
+        sorter = self.sorter_class()
+        buffer.append(elem)
+        return sorter.external_sort(itertools.chain(buffer, stream), key=key)
 
 
 def split_iterable(iterable, block_size):
