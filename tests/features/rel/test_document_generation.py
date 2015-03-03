@@ -9,7 +9,7 @@ from cdf.features.main.streams import (
     CompliantUrlStreamDef,
     IdStreamDef, InfosStreamDef
 )
-from cdf.features.rel.streams import RelCompliantStreamDef
+from cdf.features.rel.streams import RelCompliantStreamDef, InRelStreamDef
 from cdf.features.rel import constants as rel_constants
 
 import boto
@@ -35,7 +35,7 @@ class TestRelDocument(unittest.TestCase):
         ]
 
         self.infos = [
-            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456],
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en"],
         ]
 
         self.compliant = [
@@ -85,7 +85,6 @@ class TestRelDocument(unittest.TestCase):
         # Valid
         self.assertEquals(href["valid"]["nb"], 4)
         self.assertEquals(href["valid"]["langs"], ["en-US", "it-IT"])
-        self.assertTrue(href["valid"]["has_warning"])
         self.assertEquals(
                 href["valid"]["warning"],
                 [rel_constants.WARNING_DEST_BLOCKED_CONFIG,
@@ -149,4 +148,103 @@ class TestRelDocument(unittest.TestCase):
                     u"errors": [rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED,
                                 rel_constants.ERROR_DEST_NOT_COMPLIANT],
                  u"value": u"en-ZZ"}
+        )
+
+
+class TestInRelDocument(unittest.TestCase):
+
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        self.s3_uri = 's3://test_bucket/analysis'
+
+        self.patterns = [
+            [1, 'http', 'www.site.com', '/1', ''],
+            [2, 'http', 'www.site.com', '/2', ''],
+            [3, 'http', 'www.site.com', '/3', ''],
+        ]
+
+        self.infos = [
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en"], # lang en
+            [2, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en"], # lang en
+            [3, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en"], # lang en
+        ]
+
+        self.compliant = [
+            [1, 'true', 0],
+            [2, 'true', 0],
+            [3, 'false', 0],
+        ]
+
+        # Rel stream format
+        # uid_to type mask uid_from value
+        # type :
+        # 1 = hreflang
+        # 2 = prev
+        # 3 = next
+        # 4 = author
+        self.rel = [
+            [1, 1, 0, 2, "en-US"], # OK
+            [1, 1, 0, 3, "en-US"], # OK
+            [2, 1, 0, 3, "zz"], # Bad Lang
+            [3, 1, 0, 2, "en-US"], # Lang OK
+            [3, 1, 0, 2, "fr-FR"], # Lang not equal
+        ]
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    @mock_s3
+    def test_hreflang_in(self):
+        conn = boto.connect_s3()
+        bucket = conn.create_bucket('test_bucket')
+
+        gen = UrlDocumentGenerator(
+            [
+                IdStreamDef.load_iterator(iter(self.patterns)),
+                InfosStreamDef.load_iterator(iter(self.infos)),
+                CompliantUrlStreamDef.load_iterator(iter(self.compliant)),
+                InRelStreamDef.load_iterator(iter(self.rel))
+            ]
+        )
+
+        # URL 1
+        document = _next_doc(gen)
+        href = document["rel"]["hreflang"]["in"]
+        self.assertEquals(href["nb"], 2)
+        self.assertEquals(href["valid"]["nb"], 2)
+        self.assertEquals(json.loads(href["valid"]["values"]),
+                          [
+                            {"url_id": 2, "lang": "en-US"},
+                            {"url_id": 3, "lang": "en-US"}
+                          ]
+        )
+        self.assertEquals(href["not_valid"]["nb"], 0)
+        # Errors is cleaned
+        self.assertTrue("errors" not in href["not_valid"])
+        self.assertEquals(href["not_valid"]["values"], '[]')
+
+        # URL 2
+        document = _next_doc(gen)
+        href = document["rel"]["hreflang"]["in"]
+        self.assertEquals(href["nb"], 1)
+        self.assertEquals(href["valid"]["nb"], 0)
+        self.assertEquals(href["not_valid"]["nb"], 1)
+        self.assertEquals(
+                json.loads(href["not_valid"]["values"]),
+                [{"url_id": 3, "value": "zz", "errors": [rel_constants.ERROR_LANG_NOT_RECOGNIZED]}]
+        )
+
+        # URL 3
+        document = _next_doc(gen)
+        href = document["rel"]["hreflang"]["in"]
+        self.assertEquals(href["nb"], 2)
+        self.assertEquals(href["valid"]["nb"], 1)
+        self.assertEquals(
+                json.loads(href["valid"]["values"]),
+                [{"url_id": 2, "lang": "en-US"}]
+        )
+        self.assertEquals(href["not_valid"]["nb"], 1)
+        self.assertEquals(
+                json.loads(href["not_valid"]["values"]),
+                [{"url_id": 2, "value": "fr-FR", "errors": [rel_constants.ERROR_LANG_NOT_EQUAL]}]
         )

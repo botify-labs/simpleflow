@@ -251,19 +251,6 @@ class InRelStreamDef(StreamDefBase):
                 ES_DOC_VALUE
             ]
         },
-        "rel.hreflang.in.valid.has_warning": {
-            "verbose_name": "Incoming Href Langs Has Warning",
-            "type": BOOLEAN_TYPE,
-        },
-        "rel.hreflang.in.valid.warning": {
-            "verbose_name": "Incoming Href Langs Warning codes",
-            "type": STRING_TYPE,
-            "settings": [
-                LIST,
-                ES_NOT_ANALYZED,
-                ES_DOC_VALUE
-            ]
-        },
         "rel.hreflang.in.valid.values": {
             "verbose_name": "Incoming Valid Href Langs URLs",
             "type": STRING_TYPE,
@@ -300,59 +287,71 @@ class InRelStreamDef(StreamDefBase):
     }
 
     def pre_process_document(self, document):
-        # store a (dest, is_follow) set of processed links
         document["inhreflang_errors"] = set()
         document["inhreflang_errors_samples"] = []
+        document["inhreflang_valid_samples"] = []
+        document["inhreflang_entries"] = []
 
     def process_document(self, document, stream):
         if rel_constants.REL_TYPES[stream[1]] == rel_constants.REL_HREFLANG:
             self.process_hreflang(document, stream)
 
     def process_hreflang(self, document, stream):
+        # As we don't have access to the current lang now
+        # (we loose feature priority on `group_with`)
+        # we need to store all streams temporarly
+        # and process hreflang in post_process step
+        document["inhreflang_entries"].append(stream)
+
+    def post_process_hreflang(self, document, stream):
         subdoc = document["rel"]["hreflang"]["in"]
         subdoc["nb"] += 1
 
         mask = stream[2]
-        iso_codes = stream[5]
+        iso_codes = stream[4]
         lang = iso_codes[0:2]
-        url_id_dest = stream[3]
-        dest_compliant = stream[6]
+        url_id_src = stream[3]
         country = get_country(iso_codes)
         errors = set()
-        warning = set()
+
         if not is_lang_valid(iso_codes):
             errors.add(rel_constants.ERROR_LANG_NOT_RECOGNIZED)
+        elif document["lang"] != "notset" and document["lang"] != lang:
+            errors.add(rel_constants.ERROR_LANG_NOT_EQUAL)
         if country and not is_country_valid(country):
             errors.add(rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED)
-        if document["lang"] != "notset" and document["lang"] != lang:
-            errors.add(rel_constants.ERROR_LANG_NOT_EQUAL)
 
         if errors:
             subdoc["not_valid"]["nb"] += 1
-            document["hreflang_errors"] |= errors
+            document["inhreflang_errors"] |= errors
             sample = {
                 "errors": list(errors),
                 "value": iso_codes,
             }
-            if url_id_dest != -1:
-                sample["url_id"] = url_id_dest
-            else:
-                sample["url"] = stream[4]
-            if len(document["in_hreflang_errors_samples"]) < rel_constants.MAX_HREFLANG_OUT_ERRORS:
-                document["in_hreflang_errors_samples"].append(sample)
+            sample["url_id"] = url_id_src
+            if len(document["inhreflang_errors_samples"]) < rel_constants.MAX_HREFLANG_IN_ERRORS:
+                document["inhreflang_errors_samples"].append(sample)
         else:
             sample = {
                 "lang": iso_codes,
             }
-            if url_id_dest != -1:
-                sample["url_id"] = url_id_dest
-            else:
-                sample["url"] = stream[4]
+            sample["url_id"] = url_id_src
 
-            if len(document["in_hreflang_valid_samples"]) < rel_constants.MAX_HREFLANG_IN_VALID:
-                document["in_hreflang_valid_samples"].append(sample)
+            if len(document["inhreflang_valid_samples"]) < rel_constants.MAX_HREFLANG_IN_VALID:
+                document["inhreflang_valid_samples"].append(sample)
             subdoc["valid"]["nb"] += 1
             if iso_codes not in subdoc["valid"]["langs"]:
                 subdoc["valid"]["langs"].append(iso_codes)
 
+    def post_process_document(self, document):
+        # Store the final errors lists
+        for stream in document["inhreflang_entries"]:
+            self.post_process_hreflang(document, stream)
 
+        document["rel"]["hreflang"]["in"]["not_valid"]["errors"] = list(document["inhreflang_errors"])
+        document["rel"]["hreflang"]["in"]["not_valid"]["values"] = json.dumps(document["inhreflang_errors_samples"])
+        document["rel"]["hreflang"]["in"]["valid"]["values"] = json.dumps(document["inhreflang_valid_samples"])
+        del document["inhreflang_errors"]
+        del document["inhreflang_errors_samples"]
+        del document["inhreflang_valid_samples"]
+        del document["inhreflang_entries"]
