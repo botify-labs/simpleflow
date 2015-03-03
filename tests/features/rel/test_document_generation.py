@@ -54,6 +54,7 @@ class TestRelDocument(unittest.TestCase):
         # 4 = author
         self.rel = [
             [1, 1, 0, 2, "", "en-US", "1"], # OK
+            [1, 1, 0, 2, "", "x-default", "1"], # OK, x-default value
             [1, 1, 0, -1, "http://www.site.com/it", "it-IT", ""], # OK but warning to external URL
             [1, 1, 0, 3, "", "jj-us", "0"], # KO : Bad Lang
             [1, 1, 0, 3, "", "en-ZZ", "0"], # KO : Bad Country
@@ -80,11 +81,11 @@ class TestRelDocument(unittest.TestCase):
 
         document = _next_doc(gen)
         href = document["rel"]["hreflang"]["out"]
-        self.assertEquals(href["nb"], 6)
+        self.assertEquals(href["nb"], 7)
 
         # Valid
-        self.assertEquals(href["valid"]["nb"], 4)
-        self.assertEquals(href["valid"]["langs"], ["en-US", "it-IT"])
+        self.assertEquals(href["valid"]["nb"], 5)
+        self.assertEquals(href["valid"]["langs"], ["en-US", "x-default", "it-IT"])
         self.assertEquals(
                 href["valid"]["warning"],
                 [rel_constants.WARNING_DEST_BLOCKED_CONFIG,
@@ -105,7 +106,7 @@ class TestRelDocument(unittest.TestCase):
 
         # Success
         samples = json.loads(href["valid"]["values"])
-        self.assertEquals(len(samples), 4)
+        self.assertEquals(len(samples), 5)
         self.assertEquals(
                 samples[0],
                 {u"url_id": 2,
@@ -114,19 +115,25 @@ class TestRelDocument(unittest.TestCase):
         )
         self.assertEquals(
                 samples[1],
+                {u"url_id": 2,
+                 u"lang": u"x-default",
+                 u"warning": []}
+        )
+        self.assertEquals(
+                samples[2],
                 {u"url": "http://www.site.com/it",
                  u"lang": u"it-IT",
                  u"warning": [rel_constants.WARNING_DEST_NOT_CRAWLED]}
         )
 
         self.assertEquals(
-                samples[2],
+                samples[3],
                 {u"url": "http://www.site.com/blocked-robot-txt",
                  u"lang": u"en-US",
                  u"warning": [rel_constants.WARNING_DEST_BLOCKED_ROBOTS_TXT]}
         )
         self.assertEquals(
-                samples[3],
+                samples[4],
                 {u"url": "http://www.site.com/blocked-config",
                  u"lang": u"en-US",
                  u"warning": [rel_constants.WARNING_DEST_BLOCKED_CONFIG]}
@@ -184,6 +191,7 @@ class TestInRelDocument(unittest.TestCase):
         # 4 = author
         self.rel = [
             [1, 1, 0, 2, "en-US"], # OK
+            [1, 1, 0, 2, "x-default"], # Default page
             [1, 1, 0, 3, "en-US"], # OK
             [2, 1, 0, 3, "zz"], # Bad Lang
             [3, 1, 0, 2, "en-US"], # Lang OK
@@ -210,11 +218,13 @@ class TestInRelDocument(unittest.TestCase):
         # URL 1
         document = _next_doc(gen)
         href = document["rel"]["hreflang"]["in"]
-        self.assertEquals(href["nb"], 2)
-        self.assertEquals(href["valid"]["nb"], 2)
+        self.assertEquals(href["nb"], 3)
+
+        self.assertEquals(href["valid"]["nb"], 3)
         self.assertEquals(json.loads(href["valid"]["values"]),
                           [
                             {"url_id": 2, "lang": "en-US"},
+                            {"url_id": 2, "lang": "x-default"},
                             {"url_id": 3, "lang": "en-US"}
                           ]
         )

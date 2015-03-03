@@ -167,9 +167,9 @@ class RelCompliantStreamDef(StreamDefBase):
         country = get_country(iso_codes)
         errors = set()
         warning = set()
-        if not is_lang_valid(iso_codes):
+        if iso_codes != "x-default" and not is_lang_valid(iso_codes):
             errors.add(rel_constants.ERROR_LANG_NOT_RECOGNIZED)
-        if country and not is_country_valid(country):
+        if iso_codes != "x-default" and country and not is_country_valid(country):
             errors.add(rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED)
         if url_id_dest > -1 and not dest_compliant:
             errors.add(rel_constants.ERROR_DEST_NOT_COMPLIANT)
@@ -337,10 +337,11 @@ class InRelStreamDef(StreamDefBase):
         country = get_country(iso_codes)
         errors = set()
 
-        if not is_lang_valid(iso_codes):
+        if iso_codes != "x-default" and not is_lang_valid(iso_codes):
             errors.add(rel_constants.ERROR_LANG_NOT_RECOGNIZED)
-        elif document["lang"] != "notset" and document["lang"] != lang:
+        elif iso_codes != "x-default" and document["lang"] not in ("notset", "?") and document["lang"] != lang:
             errors.add(rel_constants.ERROR_LANG_NOT_EQUAL)
+
         if country and not is_country_valid(country):
             errors.add(rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED)
 
