@@ -67,14 +67,18 @@ class RelCompliantStreamDef(StreamDefBase):
             "verbose_name": "Outgoing Number of Href Langs",
             "type": INT_TYPE,
             "settings": {
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "rel.hreflang.out.valid.nb": {
             "verbose_name": "Outgoing Number of Valid Href Langs",
             "type": INT_TYPE,
             "settings": {
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "rel.hreflang.out.valid.langs": {
@@ -89,6 +93,10 @@ class RelCompliantStreamDef(StreamDefBase):
         "rel.hreflang.out.valid.has_warning": {
             "verbose_name": "Outgoing Href Langs Has Warning",
             "type": BOOLEAN_TYPE,
+            "settings": {
+                DIFF_QUALITATIVE,
+                AGG_CATEGORICAL
+            }
         },
         "rel.hreflang.out.valid.warning": {
             "verbose_name": "Outgoing Href Langs Warning codes",
@@ -103,16 +111,18 @@ class RelCompliantStreamDef(StreamDefBase):
             "verbose_name": "Outgoing Valid Href Langs URLs",
             "type": STRING_TYPE,
             "settings": [
-                LIST,
                 ES_NO_INDEX,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                RENDERING.HREFLANG_VALUES
             ]
         },
         "rel.hreflang.out.not_valid.nb": {
             "verbose_name": "Outgoing Number of Not Valid Href Langs",
             "type": INT_TYPE,
             "settings": {
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "rel.hreflang.out.not_valid.errors": {
@@ -129,7 +139,8 @@ class RelCompliantStreamDef(StreamDefBase):
             "type": STRING_TYPE,
             "settings": [
                 ES_NO_INDEX,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                RENDERING.HREFLANG_VALUES
             ]
         }
     }
@@ -232,14 +243,18 @@ class InRelStreamDef(StreamDefBase):
             "verbose_name": "Incoming Number of Href Langs",
             "type": INT_TYPE,
             "settings": {
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "rel.hreflang.in.valid.nb": {
             "verbose_name": "Incoming Number of Valid Href Langs",
             "type": INT_TYPE,
             "settings": {
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "rel.hreflang.in.valid.langs": {
@@ -257,14 +272,17 @@ class InRelStreamDef(StreamDefBase):
             "settings": [
                 LIST,
                 ES_NO_INDEX,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                RENDERING.HREFLANG_VALUES
             ]
         },
         "rel.hreflang.in.not_valid.nb": {
             "verbose_name": "Incoming Number of Not Valid Href Langs",
             "type": INT_TYPE,
             "settings": {
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
             }
         },
         "rel.hreflang.in.not_valid.errors": {
@@ -281,7 +299,8 @@ class InRelStreamDef(StreamDefBase):
             "type": STRING_TYPE,
             "settings": [
                 ES_NO_INDEX,
-                FIELD_RIGHTS.SELECT
+                FIELD_RIGHTS.SELECT,
+                RENDERING.HREFLANG_VALUES
             ]
         }
     }

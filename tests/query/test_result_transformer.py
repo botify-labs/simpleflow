@@ -2,6 +2,7 @@ import unittest
 import copy
 from mock import MagicMock
 
+from cdf.compat import json
 from cdf.testing.es_mock import get_es_mget_mock
 from cdf.metadata.url.backend import (
     ElasticSearchBackend
@@ -20,6 +21,7 @@ from cdf.query.result_transformer import (
     CanonicalFromStrategy,
     CanonicalToStrategy,
     RedirectFromStrategy,
+    HrefLangStrategy
 )
 from cdf.testing.fixtures.dataformat import DATA_FORMAT_FIXTURE
 
@@ -255,6 +257,21 @@ class TestUrlIdResolutionStrategies(unittest.TestCase):
             }
         }
 
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
+
+    def test_hreflang(self):
+        strat = HrefLangStrategy('in.not_valid')
+        es_result = json.dumps([
+            {"url": "http://www.site.com/", "value": "zz", "errors": ["DEST_BLOCKED_CONFIG"]},
+            {"url_id": 3, "value": "zz", "errors": ["LANG_NOT_RECOGNIZED"]}
+        ])
+        expected_extract = [3]
+        expected_transform = [
+                {"url": {"url": "http://www.site.com/", "crawled": False}, "value": "zz", "errors": ["DEST_BLOCKED_CONFIG"]},
+                {"url": {"url": "url3", "crawled": True}, "value": "zz", "errors": ["LANG_NOT_RECOGNIZED"]}
+        ]
         self.assertEqual(strat.extract(es_result), expected_extract)
         self.assertEqual(strat.transform(es_result, self.id_to_url),
                          expected_transform)
