@@ -354,25 +354,34 @@ class HrefLangStrategy(IdResolutionStrategy):
 
     def extract(self, result):
         _ids = []
-        result = json.loads(result)
+        target = get_subdict_from_path(self.field, result)
+        result = json.loads(target)
         for r in result:
             if "url_id" in r:
                 _ids.append(r["url_id"])
         return _ids
 
     def transform(self, result, id_to_url):
-        result = json.loads(result)
-        for i, entry in enumerate(result):
+        target = get_subdict_from_path(self.field, result)
+        if not path_in_dict(self.field, result):
+            return result
+
+        values = json.loads(target)
+        for i, entry in enumerate(values):
             if "url" in entry:
-                result[i]["url"] = {"url": result[i]["url"], "crawled": False}
+                values[i]["url"] = {"url": values[i]["url"], "crawled": False}
             elif "url_id" in entry:
                 url_id = entry["url_id"]
                 if url_id not in id_to_url:
                     self._report_not_found(url_id)
                     continue
-                result[i]["url"] = {"url": id_to_url.get(url_id)[0], "crawled": True}
-                del result[i]["url_id"]
+                url, http_code = id_to_url.get(url_id)
+                values[i]["url"] = {"url": url, "crawled": http_code != 0}
+                del values[i]["url_id"]
+
+        update_path_in_dict(self.field, values, result)
         return result
+
 
 def _construct_strategies(meta_strategies, with_previous=False):
     """Construct resolution strategy mapping from a meta-mapping
@@ -418,10 +427,10 @@ class IdToUrlTransformer(ResultTransformer):
         'metadata.h1.duplicates.context_aware.urls': (ContextAwareMetaDuplicationStrategy, ['h1']),
         'metadata.description.duplicates.context_aware.urls': (ContextAwareMetaDuplicationStrategy, ['description']),
 
-        'rel.hreflang.in.valid.values': (ContextAwareMetaDuplicationStrategy, ['in.valid']),
-        'rel.hreflang.in.not_valid.values': (ContextAwareMetaDuplicationStrategy, ['in.not_valid']),
-        'rel.hreflang.out.valid.values': (ContextAwareMetaDuplicationStrategy, ['out.valid']),
-        'rel.hreflang.out.not_valid.values': (ContextAwareMetaDuplicationStrategy, ['out.not_valid']),
+        'rel.hreflang.in.valid.values': (HrefLangStrategy, ['in.valid']),
+        'rel.hreflang.in.not_valid.values': (HrefLangStrategy, ['in.not_valid']),
+        'rel.hreflang.out.valid.values': (HrefLangStrategy, ['out.valid']),
+        'rel.hreflang.out.not_valid.values': (HrefLangStrategy, ['out.not_valid']),
     }
     FIELD_TRANSFORM_STRATEGY = _construct_strategies(FIELD_TRANSFORM_STRATEGY, with_previous=True)
 

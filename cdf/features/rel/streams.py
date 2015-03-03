@@ -61,7 +61,7 @@ class RelCompliantStreamDef(StreamDefBase):
         ('value', str),
         ('url_dest_compliant', bool_int)
     )
-    URL_DOCUMENT_DEFAULT_GROUP = "hreflang"
+    URL_DOCUMENT_DEFAULT_GROUP = "hreflang_outgoing"
     URL_DOCUMENT_MAPPING = {
         "rel.hreflang.out.nb": {
             "verbose_name": "Outgoing Number of Href Langs",
@@ -113,7 +113,7 @@ class RelCompliantStreamDef(StreamDefBase):
             "settings": [
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
-                RENDERING.HREFLANG_VALUES
+                RENDERING.HREFLANG_VALID_VALUES
             ]
         },
         "rel.hreflang.out.not_valid.nb": {
@@ -140,7 +140,7 @@ class RelCompliantStreamDef(StreamDefBase):
             "settings": [
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
-                RENDERING.HREFLANG_VALUES
+                RENDERING.HREFLANG_ERROR_VALUES
             ]
         }
     }
@@ -241,7 +241,7 @@ class InRelStreamDef(StreamDefBase):
         ('url_id_src', int),
         ('value', str),
     )
-    URL_DOCUMENT_DEFAULT_GROUP = "hreflang"
+    URL_DOCUMENT_DEFAULT_GROUP = "hreflang_incoming"
     URL_DOCUMENT_MAPPING = {
         "rel.hreflang.in.nb": {
             "verbose_name": "Incoming Number of Href Langs",
@@ -277,7 +277,7 @@ class InRelStreamDef(StreamDefBase):
                 LIST,
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
-                RENDERING.HREFLANG_VALUES
+                RENDERING.HREFLANG_VALID_VALUES
             ]
         },
         "rel.hreflang.in.not_valid.nb": {
@@ -304,7 +304,7 @@ class InRelStreamDef(StreamDefBase):
             "settings": [
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
-                RENDERING.HREFLANG_VALUES
+                RENDERING.HREFLANG_ERROR_VALUES
             ]
         }
     }

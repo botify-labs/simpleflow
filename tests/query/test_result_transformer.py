@@ -36,7 +36,8 @@ class TestUrlIdResolutionStrategies(unittest.TestCase):
             2: ['url2', 0],
             3: ['url3', 0],
             4: ['url4', 0],
-            5: ['url5', 0]
+            5: ['url5', 0],
+            6: ['url6', 200]
         }
 
     def test_error_links(self):
@@ -263,15 +264,31 @@ class TestUrlIdResolutionStrategies(unittest.TestCase):
 
     def test_hreflang(self):
         strat = HrefLangStrategy('in.not_valid')
-        es_result = json.dumps([
+        values = [
             {"url": "http://www.site.com/", "value": "zz", "errors": ["DEST_BLOCKED_CONFIG"]},
-            {"url_id": 3, "value": "zz", "errors": ["LANG_NOT_RECOGNIZED"]}
-        ])
-        expected_extract = [3]
-        expected_transform = [
-                {"url": {"url": "http://www.site.com/", "crawled": False}, "value": "zz", "errors": ["DEST_BLOCKED_CONFIG"]},
-                {"url": {"url": "url3", "crawled": True}, "value": "zz", "errors": ["LANG_NOT_RECOGNIZED"]}
+            {"url_id": 6, "value": "zz", "errors": ["LANG_NOT_RECOGNIZED"]}
         ]
+        dumped_values = json.dumps(values)
+        es_result = {
+            "rel": {
+                "hreflang": {
+                    "in": {
+                        "not_valid": {
+                            "values": dumped_values
+                        }
+                    }
+                }
+            }
+        }
+        expected_extract = [6]
+        transformed_values = [
+            {"url": {"url": "http://www.site.com/", "crawled": False}, "value": "zz", "errors": ["DEST_BLOCKED_CONFIG"]},
+            {"url": {"url": "url6", "crawled": True}, "value": "zz", "errors": ["LANG_NOT_RECOGNIZED"]}
+        ]
+
+        expected_transform = {
+            "rel": {"hreflang": {"in": {"not_valid": {"values": transformed_values }}}}
+        }
         self.assertEqual(strat.extract(es_result), expected_extract)
         self.assertEqual(strat.transform(es_result, self.id_to_url),
                          expected_transform)

@@ -6,5 +6,8 @@ DESCRIPTION = "Retrieve <rel> anchors from HTML Pages"
 ORDER = 100
 
 GROUPS = Enum('Groups',
-              [('hreflang', 'Href Lang')])
+              [
+                ('hreflang_outgoing', 'Outgoing Href Lang'),
+                ('hreflang_incoming', 'Incoming Href Lang')
+              ])
 
