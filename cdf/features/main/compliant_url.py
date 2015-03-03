@@ -97,7 +97,8 @@ def make_compliant_bitarray(compliant_stream, size):
     """
     Make a compliant bitarray (url_id = index, True if compliant)
     """
-    b = bitarray(size)
+    compliant_array = bitarray(size)
+    compliant_array.setall(False)
     for url_id, compliant, not_compliant_reason in compliant_stream:
-        b[url_id] = compliant
-    return b
+        compliant_array[url_id] = compliant
+    return compliant_array

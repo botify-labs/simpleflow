@@ -241,13 +241,13 @@ class TestMakeCompliantBitarray(unittest.TestCase):
         ]
 
     def test_harness(self):
-        b = make_compliant_bitarray(self.compliant_stream, 5)
+        bitarray = make_compliant_bitarray(self.compliant_stream, 5)
         # 0 : no url_id
         # 1 : is compliant
         # 2 : is not compliant
         # 3 : is compliant
         # 4 : is not set
-        self.assertEquals(list(b), [False, True, False, True, False])
+        self.assertEquals(list(bitarray), [False, True, False, True, False])
 
 
 class TestCompliantUrlTask(unittest.TestCase):
