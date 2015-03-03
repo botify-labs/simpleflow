@@ -96,7 +96,9 @@ class TestRelDocument(unittest.TestCase):
         self.assertEquals(href["not_valid"]["nb"], 2)
         self.assertEquals(
                 href["not_valid"]["errors"],
-                [rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED, rel_constants.ERROR_LANG_NOT_RECOGNIZED]
+                [rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED,
+                 rel_constants.ERROR_LANG_NOT_RECOGNIZED,
+                 rel_constants.ERROR_DEST_NOT_COMPLIANT]
         )
 
         # Samples are JSON serialized objects
@@ -137,12 +139,14 @@ class TestRelDocument(unittest.TestCase):
         self.assertEquals(
                 samples[0],
                 {u"url_id": 3,
-                 u"errors": [rel_constants.ERROR_LANG_NOT_RECOGNIZED],
+                 u"errors": [rel_constants.ERROR_LANG_NOT_RECOGNIZED,
+                             rel_constants.ERROR_DEST_NOT_COMPLIANT],
                  u"value": u"jj-us"}
         )
         self.assertEquals(
                 samples[1],
                 {u"url_id": 3,
-                 u"errors": [rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED],
+                    u"errors": [rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED,
+                                rel_constants.ERROR_DEST_NOT_COMPLIANT],
                  u"value": u"en-ZZ"}
         )
