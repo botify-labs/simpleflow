@@ -242,7 +242,7 @@ LANGUAGES = [
     ('zu', 'Zulu')
 ]
 
-LANGUAGES_ISO = set(l[0] for l in LANGUAGES)
+LANGUAGES_ISO = {lang[0] for lang in LANGUAGES}
 
 COUNTRIES = [
     ('AF', u'Afghanistan'),
@@ -497,4 +497,4 @@ COUNTRIES = [
 ]
 
 
-COUNTRIES_ISO = set(c[0] for c in COUNTRIES)
+COUNTRIES_ISO = {c[0] for c in COUNTRIES}

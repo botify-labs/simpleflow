@@ -356,10 +356,7 @@ class HrefLangStrategy(IdResolutionStrategy):
         _ids = []
         target = get_subdict_from_path(self.field, result)
         result = json.loads(target)
-        for r in result:
-            if "url_id" in r:
-                _ids.append(r["url_id"])
-        return _ids
+        return [r["url_id"] for r in result if "url_id" in r]
 
     def transform(self, result, id_to_url):
         target = get_subdict_from_path(self.field, result)
