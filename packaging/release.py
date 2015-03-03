@@ -132,9 +132,11 @@ def get_changelog(tag):
     #cf man git log for further explanations on the syntax
     #the trickiest part is the %w(...)
     #that configures the commit message indentation
+    # Example:
+    # - c7312f9 safer file name handling in top_domain task [Han JU]
     width = 80
     indent = 4
-    log_format = "- %s [%cn]%n%n%w({},{},{})%b".format(width, indent, indent)
+    log_format = "- %h %s [%an]%n%w({},{},{})%b".format(width, indent, indent)
     command = ["git", "log", "{}..HEAD".format(tag),
                "--first-parent", '--pretty=format:{}'.format(log_format)]
     changelog = subprocess.check_output(command)
