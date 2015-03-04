@@ -402,14 +402,16 @@ class InRelStreamDef(StreamDefBase):
             }
             sample["url_id"] = url_id_src
 
-            if iso_codes == "x-default":
-                subdoc["receives_x-default"] = True
-
             if len(document["inhreflang_valid_samples"]) < rel_constants.MAX_HREFLANG_IN_VALID:
                 document["inhreflang_valid_samples"].append(sample)
             subdoc["valid"]["nb"] += 1
-            if iso_codes not in subdoc["valid"]["langs"]:
-                subdoc["valid"]["langs"].append(iso_codes)
+
+            if iso_codes == "x-default":
+                subdoc["receives_x-default"] = True
+            elif iso_codes not in subdoc["valid"]["regions"]:
+                subdoc["valid"]["regions"].append(iso_codes)
+                if iso_codes[0:2] not in subdoc["valid"]["langs"]:
+                    subdoc["valid"]["langs"].append(iso_codes[0:2])
 
     def post_process_document(self, document):
         # Store the final errors lists

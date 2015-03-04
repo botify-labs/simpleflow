@@ -223,6 +223,8 @@ class TestInRelDocument(unittest.TestCase):
         self.assertEquals(href["nb"], 3)
 
         self.assertEquals(href["valid"]["nb"], 3)
+        self.assertEquals(href["valid"]["langs"], ["en"])
+        self.assertEquals(href["valid"]["regions"], ["en-US"])
         self.assertTrue(href["receives_x-default"])
         self.assertEquals(json.loads(href["valid"]["values"]),
                           [
