@@ -170,18 +170,21 @@ class TestInRelDocument(unittest.TestCase):
             [1, 'http', 'www.site.com', '/1', ''],
             [2, 'http', 'www.site.com', '/2', ''],
             [3, 'http', 'www.site.com', '/3', ''],
+            [4, 'http', 'www.site.com', '/4', ''],
         ]
 
         self.infos = [
             [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en"], # lang en
             [2, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en"], # lang en
             [3, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en"], # lang en
+            [4, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "?"], # lang not found
         ]
 
         self.compliant = [
             [1, 'true', 0],
             [2, 'true', 0],
-            [3, 'false', 0],
+            [3, 'true', 0],
+            [4, 'false', 0],
         ]
 
         # Rel stream format
@@ -198,6 +201,8 @@ class TestInRelDocument(unittest.TestCase):
             [2, 1, 0, 3, "zz"], # Bad Lang
             [3, 1, 0, 2, "en-US"], # Lang OK
             [3, 1, 0, 2, "fr-FR"], # Lang not equal
+            [4, 1, 0, 2, "en-US"], # OK
+            [4, 1, 0, 2, "x-default"] # OK
         ]
 
     def tearDown(self):
@@ -225,7 +230,7 @@ class TestInRelDocument(unittest.TestCase):
         self.assertEquals(href["valid"]["nb"], 3)
         self.assertEquals(href["valid"]["langs"], ["en"])
         self.assertEquals(href["valid"]["regions"], ["en-US"])
-        self.assertTrue(href["receives_x-default"])
+        self.assertTrue(href["valid"]["receives_x-default"])
         self.assertEquals(json.loads(href["valid"]["values"]),
                           [
                             {"url_id": 2, "value": "en-US"},
@@ -262,4 +267,18 @@ class TestInRelDocument(unittest.TestCase):
         self.assertEquals(
                 json.loads(href["not_valid"]["values"]),
                 [{"url_id": 2, "value": "fr-FR", "errors": [rel_constants.ERROR_LANG_NOT_EQUAL]}]
+        )
+
+        # URL 4
+        document = _next_doc(gen)
+        href = document["rel"]["hreflang"]["in"]
+        self.assertEquals(href["nb"], 2)
+        self.assertEquals(href["valid"]["nb"], 0)
+        self.assertEquals(href["not_valid"]["nb"], 2)
+        self.assertEquals(
+                json.loads(href["not_valid"]["values"]),
+                [
+                    {"url_id": 2, "value": "en-US", "errors": [rel_constants.ERROR_NOT_COMPLIANT, rel_constants.ERROR_LANG_NOT_SET]},
+                    {"url_id": 2, "value": "x-default", "errors": [rel_constants.ERROR_NOT_COMPLIANT, rel_constants.ERROR_LANG_NOT_SET]}
+                ]
         )

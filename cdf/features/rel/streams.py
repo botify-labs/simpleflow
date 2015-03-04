@@ -283,7 +283,7 @@ class InRelStreamDef(StreamDefBase):
                 DIFF_QUANTITATIVE
             }
         },
-        "rel.hreflang.in.receives_x-default": {
+        "rel.hreflang.in.valid.receives_x-default": {
             "verbose_name": "URL receives x-default from incoming Href Langs",
             "type": BOOLEAN_TYPE,
             "settings": {
@@ -378,10 +378,15 @@ class InRelStreamDef(StreamDefBase):
         country = get_country(iso_codes)
         errors = set()
 
-        if iso_codes != "x-default" and not is_lang_valid(iso_codes):
+        if document["lang"] in ("notset", "?"):
+            errors.add(rel_constants.ERROR_LANG_NOT_SET)
+        elif iso_codes != "x-default" and not is_lang_valid(iso_codes):
             errors.add(rel_constants.ERROR_LANG_NOT_RECOGNIZED)
-        elif iso_codes != "x-default" and document["lang"] not in ("notset", "?") and document["lang"] != lang:
+        elif iso_codes != "x-default" and document["lang"] != lang:
             errors.add(rel_constants.ERROR_LANG_NOT_EQUAL)
+
+        if not document["strategic"]["is_strategic"]:
+            errors.add(rel_constants.ERROR_NOT_COMPLIANT)
 
         if country and not is_country_valid(country):
             errors.add(rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED)
@@ -407,7 +412,7 @@ class InRelStreamDef(StreamDefBase):
             subdoc["valid"]["nb"] += 1
 
             if iso_codes == "x-default":
-                subdoc["receives_x-default"] = True
+                subdoc["valid"]["receives_x-default"] = True
             elif iso_codes not in subdoc["valid"]["regions"]:
                 subdoc["valid"]["regions"].append(iso_codes)
                 if iso_codes[0:2] not in subdoc["valid"]["langs"]:
