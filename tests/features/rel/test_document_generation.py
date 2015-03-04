@@ -85,7 +85,9 @@ class TestRelDocument(unittest.TestCase):
 
         # Valid
         self.assertEquals(href["valid"]["nb"], 5)
-        self.assertEquals(href["valid"]["langs"], ["en-US", "x-default", "it-IT"])
+        self.assertTrue(href["valid"]["sends_x-default"])
+        self.assertEquals(href["valid"]["langs"], ["en", "it"])
+        self.assertEquals(href["valid"]["regions"], ["en-US", "it-IT"])
         self.assertEquals(
                 href["valid"]["warning"],
                 [rel_constants.WARNING_DEST_BLOCKED_CONFIG,
@@ -110,32 +112,32 @@ class TestRelDocument(unittest.TestCase):
         self.assertEquals(
                 samples[0],
                 {u"url_id": 2,
-                 u"lang": u"en-US",
+                 u"value": u"en-US",
                  u"warning": []}
         )
         self.assertEquals(
                 samples[1],
                 {u"url_id": 2,
-                 u"lang": u"x-default",
+                 u"value": u"x-default",
                  u"warning": []}
         )
         self.assertEquals(
                 samples[2],
                 {u"url": "http://www.site.com/it",
-                 u"lang": u"it-IT",
+                 u"value": u"it-IT",
                  u"warning": [rel_constants.WARNING_DEST_NOT_CRAWLED]}
         )
 
         self.assertEquals(
                 samples[3],
                 {u"url": "http://www.site.com/blocked-robot-txt",
-                 u"lang": u"en-US",
+                 u"value": u"en-US",
                  u"warning": [rel_constants.WARNING_DEST_BLOCKED_ROBOTS_TXT]}
         )
         self.assertEquals(
                 samples[4],
                 {u"url": "http://www.site.com/blocked-config",
-                 u"lang": u"en-US",
+                 u"value": u"en-US",
                  u"warning": [rel_constants.WARNING_DEST_BLOCKED_CONFIG]}
         )
 
@@ -221,11 +223,12 @@ class TestInRelDocument(unittest.TestCase):
         self.assertEquals(href["nb"], 3)
 
         self.assertEquals(href["valid"]["nb"], 3)
+        self.assertTrue(href["receives_x-default"])
         self.assertEquals(json.loads(href["valid"]["values"]),
                           [
-                            {"url_id": 2, "lang": "en-US"},
-                            {"url_id": 2, "lang": "x-default"},
-                            {"url_id": 3, "lang": "en-US"}
+                            {"url_id": 2, "value": "en-US"},
+                            {"url_id": 2, "value": "x-default"},
+                            {"url_id": 3, "value": "en-US"}
                           ]
         )
         self.assertEquals(href["not_valid"]["nb"], 0)
@@ -251,7 +254,7 @@ class TestInRelDocument(unittest.TestCase):
         self.assertEquals(href["valid"]["nb"], 1)
         self.assertEquals(
                 json.loads(href["valid"]["values"]),
-                [{"url_id": 2, "lang": "en-US"}]
+                [{"url_id": 2, "value": "en-US"}]
         )
         self.assertEquals(href["not_valid"]["nb"], 1)
         self.assertEquals(

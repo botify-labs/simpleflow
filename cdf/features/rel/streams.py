@@ -73,7 +73,7 @@ class RelCompliantStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.out.valid.nb": {
-            "verbose_name": "Outgoing Number of Valid Href Langs",
+            "verbose_name": "Outgoing Number of Valid Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -82,7 +82,7 @@ class RelCompliantStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.out.valid.langs": {
-            "verbose_name": "Outgoing Valid Href Langs",
+            "verbose_name": "Outgoing Valid Hreflang Langs",
             "type": STRING_TYPE,
             "settings": [
                 LIST,
@@ -90,8 +90,25 @@ class RelCompliantStreamDef(StreamDefBase):
                 ES_DOC_VALUE
             ]
         },
+        "rel.hreflang.out.valid.regions": {
+            "verbose_name": "Outgoing Valid Hreflang Langs+Regions",
+            "type": STRING_TYPE,
+            "settings": [
+                LIST,
+                ES_NOT_ANALYZED,
+                ES_DOC_VALUE
+            ]
+        },
+        "rel.hreflang.out.valid.sends_x-default": {
+            "verbose_name": "Outgoing Hreflang Has Warning",
+            "type": BOOLEAN_TYPE,
+            "settings": {
+                DIFF_QUALITATIVE,
+                AGG_CATEGORICAL
+            }
+        },
         "rel.hreflang.out.valid.has_warning": {
-            "verbose_name": "Outgoing Href Langs Has Warning",
+            "verbose_name": "Outgoing Hreflang Has Warning",
             "type": BOOLEAN_TYPE,
             "settings": {
                 DIFF_QUALITATIVE,
@@ -99,7 +116,7 @@ class RelCompliantStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.out.valid.warning": {
-            "verbose_name": "Outgoing Href Langs Warning codes",
+            "verbose_name": "Outgoing Hreflang Warning codes",
             "type": STRING_TYPE,
             "settings": [
                 LIST,
@@ -108,7 +125,7 @@ class RelCompliantStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.out.valid.values": {
-            "verbose_name": "Outgoing Valid Href Langs URLs",
+            "verbose_name": "Outgoing Valid Hreflang Values",
             "type": STRING_TYPE,
             "settings": [
                 ES_NO_INDEX,
@@ -117,7 +134,7 @@ class RelCompliantStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.out.not_valid.nb": {
-            "verbose_name": "Outgoing Number of Not Valid Href Langs",
+            "verbose_name": "Outgoing Number of Not Valid Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -126,7 +143,7 @@ class RelCompliantStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.out.not_valid.errors": {
-            "verbose_name": "Outgoing Not Valid Href Langs Errors",
+            "verbose_name": "Outgoing Not Valid Hreflang Errors",
             "type": STRING_TYPE,
             "settings": [
                 LIST,
@@ -135,7 +152,7 @@ class RelCompliantStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.out.not_valid.values": {
-            "verbose_name": "Outgoing Not Valid Href Langs URLs",
+            "verbose_name": "Outgoing Not Valid Hreflang Values",
             "type": STRING_TYPE,
             "settings": [
                 ES_NO_INDEX,
@@ -199,7 +216,7 @@ class RelCompliantStreamDef(StreamDefBase):
                 document["hreflang_errors_samples"].append(sample)
         else:
             sample = {
-                "lang": iso_codes,
+                "value": iso_codes,
                 "warning": list(warning),
             }
             if url_id_dest != -1:
@@ -213,8 +230,13 @@ class RelCompliantStreamDef(StreamDefBase):
                 subdoc["valid"]["has_warning"] = True
                 document["hreflang_warning"] |= warning
             subdoc["valid"]["nb"] += 1
-            if iso_codes not in subdoc["valid"]["langs"]:
-                subdoc["valid"]["langs"].append(iso_codes)
+
+            if iso_codes == "x-default":
+                subdoc["valid"]["sends_x-default"] = True
+            elif iso_codes not in subdoc["valid"]["regions"]:
+                subdoc["valid"]["regions"].append(iso_codes)
+                if iso_codes[0:2] not in subdoc["valid"]["langs"]:
+                    subdoc["valid"]["langs"].append(iso_codes[0:2])
 
     def post_process_document(self, document):
         # Store the final errors lists
@@ -261,8 +283,25 @@ class InRelStreamDef(StreamDefBase):
                 DIFF_QUANTITATIVE
             }
         },
+        "rel.hreflang.in.receives_x-default": {
+            "verbose_name": "URL receives x-default from incoming Href Langs",
+            "type": BOOLEAN_TYPE,
+            "settings": {
+                DIFF_QUALITATIVE,
+                AGG_CATEGORICAL
+            }
+        },
         "rel.hreflang.in.valid.langs": {
-            "verbose_name": "Incoming Valid Href Langs",
+            "verbose_name": "Incoming Valid Hreflang Langs",
+            "type": STRING_TYPE,
+            "settings": [
+                LIST,
+                ES_NOT_ANALYZED,
+                ES_DOC_VALUE
+            ]
+        },
+        "rel.hreflang.in.valid.regions": {
+            "verbose_name": "Incoming Valid Hreflang Regions",
             "type": STRING_TYPE,
             "settings": [
                 LIST,
@@ -271,7 +310,7 @@ class InRelStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.in.valid.values": {
-            "verbose_name": "Incoming Valid Href Langs URLs",
+            "verbose_name": "Incoming Valid Hreflang Values",
             "type": STRING_TYPE,
             "settings": [
                 LIST,
@@ -281,7 +320,7 @@ class InRelStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.in.not_valid.nb": {
-            "verbose_name": "Incoming Number of Not Valid Href Langs",
+            "verbose_name": "Incoming Number of Not Valid Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -290,7 +329,7 @@ class InRelStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.in.not_valid.errors": {
-            "verbose_name": "Incoming Not Valid Href Langs Errors",
+            "verbose_name": "Incoming Not Valid Hreflang Errors",
             "type": STRING_TYPE,
             "settings": [
                 LIST,
@@ -299,7 +338,7 @@ class InRelStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.in.not_valid.values": {
-            "verbose_name": "Incoming Not Valid Href Langs URLs",
+            "verbose_name": "Incoming Not Valid Hreflang Values",
             "type": STRING_TYPE,
             "settings": [
                 ES_NO_INDEX,
@@ -357,9 +396,12 @@ class InRelStreamDef(StreamDefBase):
                 document["inhreflang_errors_samples"].append(sample)
         else:
             sample = {
-                "lang": iso_codes,
+                "value": iso_codes,
             }
             sample["url_id"] = url_id_src
+
+            if iso_codes == "x-default":
+                subdoc["receives_x-default"] = True
 
             if len(document["inhreflang_valid_samples"]) < rel_constants.MAX_HREFLANG_IN_VALID:
                 document["inhreflang_valid_samples"].append(sample)
