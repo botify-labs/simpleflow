@@ -181,7 +181,7 @@ class RelCompliantStreamDef(StreamDefBase):
 
         # url_id not found and mask has not robot or config flags
         if (url_id_dest == -1 and
-            mask & (rel_constants.MASK_NOFOLLOW_ROBOTS_TXT + rel_constants.MASK_NOFOLLOW_CONFIG) == 0):
+            mask & (rel_constants.MASK_NOFOLLOW_ROBOTS_TXT | rel_constants.MASK_NOFOLLOW_CONFIG) == 0):
             warning.add(rel_constants.WARNING_DEST_NOT_CRAWLED)
 
         if errors:
