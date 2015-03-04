@@ -345,6 +345,24 @@ class CanonicalFromStrategy(IdResolutionStrategy):
 
 
 class HrefLangStrategy(IdResolutionStrategy):
+    """Strategy for `rel.hreflang.in|out.valid|not_valid.values
+
+    For those fields, we store in elasticsearch a dumped json containing a list of entries
+    Each entry contains either an `url_id` key if url has been crawled (which be resolved on display)
+    or an `url` key if it's an url out of config (or blocked by robots.txt)
+
+    Returned format for valid urls :
+    [
+        {"url": {"url": "http://www.site.com/p1", "crawled": True}, "lang": "en-US", "warning": ["WARNING_CODE", ...]},
+        {"url": {"url": "http://www.site.com/p2", "crawled": True}, "lang": "en-US", "warning": ["WARNING_CODE", ...]},
+    ]
+
+    Returned format not for valid urls :
+    [
+        {"url": {"url": "http://www.site.com/p1", "crawled": False}, "lang": "eu-eu", "errors": ["ERROR_CODE", ...]},
+        {"url": {"url": "http://www.site.com/p2", "crawled": True}, "lang": "xx", "errors": ["ERROR_CODE", ...]},
+    ]
+    """
 
     def __init__(self, direction, prefix=''):
         """
@@ -353,7 +371,6 @@ class HrefLangStrategy(IdResolutionStrategy):
         self.field = prefix + 'rel.hreflang.{}.values'.format(direction)
 
     def extract(self, result):
-        _ids = []
         target = get_subdict_from_path(self.field, result)
         result = json.loads(target)
         return [r["url_id"] for r in result if "url_id" in r]
