@@ -293,6 +293,7 @@ class InRelStreamDef(StreamDefBase):
         },
         "rel.hreflang.in.valid.langs": {
             "verbose_name": "Incoming Valid Hreflang Langs",
+            "help_text": "Format ISO 639-1 for langs",
             "type": STRING_TYPE,
             "settings": [
                 LIST,
@@ -301,7 +302,8 @@ class InRelStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.in.valid.regions": {
-            "verbose_name": "Incoming Valid Hreflang Regions",
+            "verbose_name": "Incoming Valid Hreflang Lang+Region",
+            "help_text": "Format ISO 3166-1 Alpha 2 for regions",
             "type": STRING_TYPE,
             "settings": [
                 LIST,
