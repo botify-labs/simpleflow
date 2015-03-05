@@ -33,7 +33,12 @@ setup(
     zip_safe=True,
     install_requires=load_deps('packaging/python.deps'),
     tests_require=load_deps('packaging/python_test.deps'),
-
+    data_files=[
+        (
+        "cdf/features/rel/data/",
+        ["cdf/features/rel/data/ISO-3166-1-alpha-2.json"]
+        )
+    ],
     package_dir={'': '.'},
     include_package_data=False,
 
