@@ -64,7 +64,7 @@ class RelCompliantStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "hreflang_outgoing"
     URL_DOCUMENT_MAPPING = {
         "rel.hreflang.out.nb": {
-            "verbose_name": "Outgoing Number of Href Langs",
+            "verbose_name": "Number of Outgoing Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -73,7 +73,7 @@ class RelCompliantStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.out.valid.nb": {
-            "verbose_name": "Outgoing Number of Valid Hreflang",
+            "verbose_name": "Number of Outgoing Valid Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -116,7 +116,7 @@ class RelCompliantStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.out.valid.warning": {
-            "verbose_name": "Outgoing Hreflang Warning codes",
+            "verbose_name": "Outgoing Hreflang Warning Reasons",
             "type": STRING_TYPE,
             "settings": [
                 LIST,
@@ -134,7 +134,7 @@ class RelCompliantStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.out.not_valid.nb": {
-            "verbose_name": "Outgoing Number of Not Valid Hreflang",
+            "verbose_name": "Number of Outgoing Not Valid Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -266,7 +266,7 @@ class InRelStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "hreflang_incoming"
     URL_DOCUMENT_MAPPING = {
         "rel.hreflang.in.nb": {
-            "verbose_name": "Incoming Number of Href Langs",
+            "verbose_name": "Number of Incoming Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -275,7 +275,7 @@ class InRelStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.in.valid.nb": {
-            "verbose_name": "Incoming Number of Valid Href Langs",
+            "verbose_name": "Number of Incoming Valid Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -284,7 +284,7 @@ class InRelStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.in.valid.receives_x-default": {
-            "verbose_name": "URL receives x-default from incoming Href Langs",
+            "verbose_name": "URL Receives x-default From Incoming Hreflang",
             "type": BOOLEAN_TYPE,
             "settings": {
                 DIFF_QUALITATIVE,
@@ -322,7 +322,7 @@ class InRelStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.in.not_valid.nb": {
-            "verbose_name": "Incoming Number of Not Valid Hreflang",
+            "verbose_name": "Number of Incoming Not Valid Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,

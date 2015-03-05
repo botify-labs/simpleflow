@@ -3,4 +3,4 @@ include MANIFEST.in
 include packaging/*.deps
 include setup.py
 include tests/*
-
+include cdf/features/rel/data/*
