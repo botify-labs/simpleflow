@@ -152,14 +152,8 @@ enumerate_partitions = as_activity(enumerate_partitions)
 from cdf.features.comparison.tasks import match_documents
 match_documents = as_activity(match_documents)
 
-from cdf.tasks.insights import (
-    refresh_index,
-    get_feature_options
-)
-from cdf.tasks.insights import compute_insights as compute_insights_task
+from cdf.tasks.analysis import refresh_index
 refresh_index = as_activity(refresh_index)
-get_feature_options = as_activity(get_feature_options)
-compute_insights_task = as_activity(compute_insights_task)
 
 push_documents_to_elastic_search = activity.with_attributes(
     version='2.7',
@@ -351,42 +345,6 @@ class AnalysisWorkflow(Workflow):
                 context['part_id_size'])
 
         return [sitemaps_result]
-
-    def compute_insights(self, context):
-        """Compute insight values
-        :param context: the analysis context
-        :type context: dict
-        :returns: future
-        """
-        crawl_id = context['crawl_id']
-        s3_uri = context['crawl_location']
-        config_endpoint = context['config_endpoint']
-
-        elastic_search_ready = self.submit(
-            refresh_index,
-            context["es_location"],
-            context["es_index"],
-        )
-
-        futures.wait(elastic_search_ready)
-
-        #consider current analysis configuration.
-        crawl_configurations = [[crawl_id,  config_endpoint, s3_uri]]
-        if 'comparison' in context['features_options']:
-            crawl_configurations.extend(context['features_options']['comparison']['history'])
-
-        # FIXME: temporarily reduce comparison to 3
-        crawl_configurations = crawl_configurations[:_HISTORY_LIMIT]
-
-        insights_result = self.submit(
-            compute_insights_task,
-            crawl_configurations,
-            context["es_location"],
-            context["es_index"],
-            context["es_doc_type"],
-            s3_uri
-        )
-        return insights_result
 
     @classmethod
     def has_segments(cls, context):
@@ -734,8 +692,13 @@ class AnalysisWorkflow(Workflow):
         )
         futures.wait(elastic_search_result)
 
-        insights_result = self.compute_insights(context)
-        futures.wait(insights_result)
+        # Waiting for ES index to be refreshed
+        elastic_search_ready = self.submit(
+            refresh_index,
+            context["es_location"],
+            context["es_index"],
+        )
+        futures.wait(elastic_search_ready)
 
         # wait for independent tasks
         # they should be finished before status update
