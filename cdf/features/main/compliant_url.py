@@ -1,3 +1,5 @@
+from bitarray import bitarray
+
 from cdf.core.streams.utils import group_left
 from cdf.features.main.streams import InfosStreamDef
 from .reasons import *
@@ -89,3 +91,14 @@ def generate_compliant_stream(infos_stream, outlinks_stream):
         )
 
         yield uid, is_compliant, reason_mask
+
+
+def make_compliant_bitarray(compliant_stream, size):
+    """
+    Make a compliant bitarray (url_id = index, True if compliant)
+    """
+    compliant_array = bitarray(size)
+    compliant_array.setall(False)
+    for url_id, compliant, not_compliant_reason in compliant_stream:
+        compliant_array[url_id] = compliant
+    return compliant_array

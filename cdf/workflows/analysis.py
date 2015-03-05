@@ -141,6 +141,11 @@ from cdf.features.sitemaps.tasks import (
 download_sitemap_files = optional_activity(download_sitemap_files)
 match_sitemap_urls = optional_activity(match_sitemap_urls)
 
+from cdf.features.rel.tasks import (
+    convert_rel_out_to_rel_compliant_out
+)
+convert_rel_out_to_rel_compliant_out = as_activity(convert_rel_out_to_rel_compliant_out)
+
 from cdf.utils.remote_files import enumerate_partitions
 enumerate_partitions = as_activity(enumerate_partitions)
 
@@ -403,6 +408,15 @@ class AnalysisWorkflow(Workflow):
             tmp_dir=tmp_dir
         )
 
+        rel_out_to_rel_compliant_out_result = self.submit(
+            convert_rel_out_to_rel_compliant_out,
+            s3_uri=s3_uri,
+            first_part_id_size=first_part_id_size,
+            part_id_size=part_id_size,
+            crawled_partitions=crawled_partitions.result,
+            tmp_dir=tmp_dir
+        )
+
         links_to_non_compliant_urls = self.submit(
             make_links_to_non_compliant_file,
             s3_uri,
@@ -424,7 +438,10 @@ class AnalysisWorkflow(Workflow):
             ]
 
         return (
-            [context_aware_metadata_dup_result] +
+            [
+                context_aware_metadata_dup_result,
+                rel_out_to_rel_compliant_out_result
+            ] +
             links_to_non_compliant_urls_counter_results
         )
 

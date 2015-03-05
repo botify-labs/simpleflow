@@ -6,6 +6,8 @@ from cdf.query.result_transformer import transform_result, transform_aggregation
 from cdf.utils.dict import deep_dict
 from cdf.core.metadata.dataformat import generate_data_format
 from cdf.utils.es import EsHandler
+from cdf.compat import json
+
 
 # Compatibility hack
 # a fake, all complete feature option is created
@@ -18,12 +20,20 @@ _ALL_FIELDS = {
     'semantic_metadata': None,
     'sitemaps': None,  # not sure
     'ganalytics': None,
+    'rel': None,
     'comparison': {}
 }
 _FEATURE_OPTION = copy.deepcopy(_ALL_FIELDS)
 _FEATURE_OPTION['comparison']['options'] = copy.deepcopy(_ALL_FIELDS)
 _DATA_FORMAT = generate_data_format(_FEATURE_OPTION)
 _COMPARISON_ES_BACKEND = ElasticSearchBackend(_DATA_FORMAT)
+
+
+def get_mapping():
+    """
+    Return full ES mapping
+    """
+    return json.dumps(_COMPARISON_ES_BACKEND.mapping())
 
 
 class QueryBuilder(object):

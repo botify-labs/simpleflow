@@ -9,6 +9,7 @@ from cdf.features.links.streams import OutlinksStreamDef
 from cdf.features.main.compliant_url import (
     generate_compliant_stream,
     is_compliant_url,
+    make_compliant_bitarray
 )
 from cdf.features.main.tasks import (
     compute_compliant_urls
@@ -229,6 +230,24 @@ class TestCompliantUrlStream(unittest.TestCase):
             (4, False, REASON_CANONICAL.code),
         ]
         self.assertEqual(result, expected)
+
+
+class TestMakeCompliantBitarray(unittest.TestCase):
+    def setUp(self):
+        self.compliant_stream = [
+            [1, True, ''],
+            [2, False, ''],
+            [3, True, '']
+        ]
+
+    def test_harness(self):
+        bitarray = make_compliant_bitarray(self.compliant_stream, 5)
+        # 0 : no url_id
+        # 1 : is compliant
+        # 2 : is not compliant
+        # 3 : is compliant
+        # 4 : is not set
+        self.assertEquals(list(bitarray), [False, True, False, True, False])
 
 
 class TestCompliantUrlTask(unittest.TestCase):

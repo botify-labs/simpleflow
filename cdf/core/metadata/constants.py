@@ -21,6 +21,8 @@ class RENDERING(Enum):
     TIME_MILLISEC = 'time_millisec'
     TIME_MIN = 'time_min'
     PERCENT = 'percent'
+    HREFLANG_VALID_VALUES = 'hreflang_valid_values'
+    HREFLANG_ERROR_VALUES = 'hreflang_error_values'
 
 
 # TODO(darkjh) separate this enum

@@ -6,6 +6,7 @@ from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.dict import path_in_dict, get_subdict_from_path, update_path_in_dict
 from cdf.features.links.helpers.masks import follow_mask
 from cdf.query.constants import MGET_CHUNKS_SIZE, SUB_AGG, METRIC_AGG_PREFIX
+from cdf.compat import json
 
 
 class ResultTransformer(object):
@@ -343,6 +344,59 @@ class CanonicalFromStrategy(IdResolutionStrategy):
         return result
 
 
+class HrefLangStrategy(IdResolutionStrategy):
+    """Strategy for `rel.hreflang.in|out.valid|not_valid.values
+
+    For those fields, we store in elasticsearch a dumped json containing a list of entries
+    Each entry contains either an `url_id` key if url has been crawled (which be resolved on display)
+    or an `url` key if it's an url out of config (or blocked by robots.txt)
+
+    Returned format for valid urls :
+    [
+        {"url": {"url": "http://www.site.com/p1", "crawled": True}, "lang": "en-US", "warning": ["WARNING_CODE", ...]},
+        {"url": {"url": "http://www.site.com/p2", "crawled": True}, "lang": "en-US", "warning": ["WARNING_CODE", ...]},
+    ]
+
+    Returned format not for valid urls :
+    [
+        {"url": {"url": "http://www.site.com/p1", "crawled": False}, "lang": "eu-eu", "errors": ["ERROR_CODE", ...]},
+        {"url": {"url": "http://www.site.com/p2", "crawled": True}, "lang": "xx", "errors": ["ERROR_CODE", ...]},
+    ]
+    """
+
+    def __init__(self, direction, prefix=''):
+        """
+        :param direction : combination of direction and valid (ex : in.not_valid)
+        """
+        self.field = prefix + 'rel.hreflang.{}.values'.format(direction)
+
+    def extract(self, result):
+        target = get_subdict_from_path(self.field, result)
+        result = json.loads(target)
+        return [r["url_id"] for r in result if "url_id" in r]
+
+    def transform(self, result, id_to_url):
+        target = get_subdict_from_path(self.field, result)
+        if not path_in_dict(self.field, result):
+            return result
+
+        values = json.loads(target)
+        for i, entry in enumerate(values):
+            if "url" in entry:
+                values[i]["url"] = {"url": values[i]["url"], "crawled": False}
+            elif "url_id" in entry:
+                url_id = entry["url_id"]
+                if url_id not in id_to_url:
+                    self._report_not_found(url_id)
+                    continue
+                url, http_code = id_to_url.get(url_id)
+                values[i]["url"] = {"url": url, "crawled": http_code != 0}
+                del values[i]["url_id"]
+
+        update_path_in_dict(self.field, values, result)
+        return result
+
+
 def _construct_strategies(meta_strategies, with_previous=False):
     """Construct resolution strategy mapping from a meta-mapping
 
@@ -386,6 +440,11 @@ class IdToUrlTransformer(ResultTransformer):
         'metadata.title.duplicates.context_aware.urls': (ContextAwareMetaDuplicationStrategy, ['title']),
         'metadata.h1.duplicates.context_aware.urls': (ContextAwareMetaDuplicationStrategy, ['h1']),
         'metadata.description.duplicates.context_aware.urls': (ContextAwareMetaDuplicationStrategy, ['description']),
+
+        'rel.hreflang.in.valid.values': (HrefLangStrategy, ['in.valid']),
+        'rel.hreflang.in.not_valid.values': (HrefLangStrategy, ['in.not_valid']),
+        'rel.hreflang.out.valid.values': (HrefLangStrategy, ['out.valid']),
+        'rel.hreflang.out.not_valid.values': (HrefLangStrategy, ['out.not_valid']),
     }
     FIELD_TRANSFORM_STRATEGY = _construct_strategies(FIELD_TRANSFORM_STRATEGY, with_previous=True)
 
