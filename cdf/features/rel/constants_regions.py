@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 REGIONS = [
     {
         "country-code": "004",
