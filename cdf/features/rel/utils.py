@@ -1,4 +1,4 @@
-from cdf.features.rel.constants import LANGUAGES_ISO, COUNTRIES_ISO
+from cdf.features.rel.constants import LANGUAGES_ISO, REGIONS_ISO
 
 
 def is_lang_valid(value):
@@ -22,4 +22,4 @@ def is_country_valid(country_code):
     """
     Returns True is value is in format 'lang_iso-country-iso'
     """
-    return country_code in COUNTRIES_ISO
+    return country_code in REGIONS_ISO

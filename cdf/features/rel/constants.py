@@ -2,6 +2,8 @@
 from os.path import join, dirname
 from cdf.compat import json
 
+from .constants_regions import REGIONS
+
 REL_HREFLANG = 'REL_HREFLANG'
 REL_PREV = 'REL_PREV'
 REL_NEXT = 'REL_NEXT'
@@ -250,8 +252,4 @@ LANGUAGES = [
 ]
 
 LANGUAGES_ISO = {lang[0] for lang in LANGUAGES}
-
-f = open(join(dirname(__file__),'data/ISO-3166-1-alpha-2.json'))
-COUNTRIES = json.load(f)
-COUNTRIES_ISO = {c["alpha-2"] for c in COUNTRIES}
-f.close()
+REGIONS_ISO = {c["alpha-2"] for c in REGIONS}
