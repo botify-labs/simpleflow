@@ -3,4 +3,3 @@ include MANIFEST.in
 include packaging/*.deps
 include setup.py
 include tests/*
-#recursive-include cdf *.json
