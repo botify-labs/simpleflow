@@ -126,7 +126,7 @@ class RelCompliantStreamDef(StreamDefBase):
         },
         "rel.hreflang.out.valid.values": {
             "verbose_name": "Outgoing Valid Hreflang Values",
-            "type": STRING_TYPE,
+            "type": STRING_TYPE,  # JSON encoded. Contains list of dict.
             "settings": [
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
@@ -313,9 +313,8 @@ class InRelStreamDef(StreamDefBase):
         },
         "rel.hreflang.in.valid.values": {
             "verbose_name": "Incoming Valid Hreflang Values",
-            "type": STRING_TYPE,
+            "type": STRING_TYPE,  # JSON encoded. Contains list of dict.
             "settings": [
-                LIST,
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
                 RENDERING.HREFLANG_VALID_VALUES
