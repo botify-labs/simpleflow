@@ -187,7 +187,7 @@ class RelCompliantStreamDef(StreamDefBase):
         if iso_codes != "x-default" and not is_lang_valid(iso_codes):
             errors.add(rel_constants.ERROR_LANG_NOT_RECOGNIZED)
         if iso_codes != "x-default" and country and not is_country_valid(country):
-            errors.add(rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED)
+            errors.add(rel_constants.ERROR_REGION_NOT_RECOGNIZED)
         if url_id_dest > -1 and not dest_compliant:
             errors.add(rel_constants.ERROR_DEST_NOT_COMPLIANT)
 
@@ -397,7 +397,7 @@ class InRelStreamDef(StreamDefBase):
             errors.add(rel_constants.ERROR_NOT_COMPLIANT)
 
         if country and not is_country_valid(country):
-            errors.add(rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED)
+            errors.add(rel_constants.ERROR_REGION_NOT_RECOGNIZED)
 
         if errors:
             subdoc["not_valid"]["nb"] += 1
