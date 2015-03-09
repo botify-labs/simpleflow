@@ -1,25 +1,31 @@
 from cdf.features.rel.constants import LANGUAGES_ISO, REGIONS_ISO
 
 
+def extract_lang_and_region(value):
+    """
+    Return a 2-value list [lang, region] from a string
+    (expected value format is "lang-region" or "lang" without region)
+    """
+    if value == "x-default":
+        return [None, None]
+    codes = value.rsplit('-', 2)
+    # If lang is standalone, return region as None
+    if len(codes) == 1:
+        return [codes[0], None]
+    return codes[0:2]
+
+
 def is_lang_valid(value):
     """
-    Receives an iso code for lang or lang+country
+    Receives an iso code for lang or lang+region
+    Value is expected are lowerized
     """
     return value[0:2] in LANGUAGES_ISO
 
 
-def get_country(value):
+def is_region_valid(region_code):
     """
-    Return country from value when value is lang+country
-    Do not check if country code is valid (use `is_country_valid` for that)
+    Returns True is value is in format 'lang_iso-region-iso'
+    Value is expected are lowerized
     """
-    if len(value) != 5:
-        return None
-    return value[3:5].upper()
-
-
-def is_country_valid(country_code):
-    """
-    Returns True is value is in format 'lang_iso-country-iso'
-    """
-    return country_code in REGIONS_ISO
+    return region_code in REGIONS_ISO

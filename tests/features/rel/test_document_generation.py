@@ -53,7 +53,7 @@ class TestRelDocument(unittest.TestCase):
         # 3 = next
         # 4 = author
         self.rel = [
-            [1, 1, 0, 2, "", "en-US", "1"], # OK
+            [1, 1, 0, 2, "", "EN-US", "1"], # OK + EN capitalized
             [1, 1, 0, 2, "", "x-default", "1"], # OK, x-default value
             [1, 1, 0, -1, "http://www.site.com/it", "it-IT", ""], # OK but warning to external URL
             [1, 1, 0, 3, "", "jj-us", "0"], # KO : Bad Lang
@@ -87,7 +87,7 @@ class TestRelDocument(unittest.TestCase):
         self.assertEquals(href["valid"]["nb"], 5)
         self.assertTrue(href["valid"]["sends_x-default"])
         self.assertEquals(href["valid"]["langs"], ["en", "it"])
-        self.assertEquals(href["valid"]["regions"], ["en-US", "it-IT"])
+        self.assertEquals(href["valid"]["regions"], ["en-us", "it-it"])
         self.assertEquals(
                 href["valid"]["warning"],
                 [rel_constants.WARNING_DEST_BLOCKED_CONFIG,
@@ -96,9 +96,9 @@ class TestRelDocument(unittest.TestCase):
 
         # Errors
         self.assertEquals(href["not_valid"]["nb"], 2)
-        self.assertEquals(
+        self.assertItemsEqual(
                 href["not_valid"]["errors"],
-                [rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED,
+                [rel_constants.ERROR_REGION_NOT_RECOGNIZED,
                  rel_constants.ERROR_LANG_NOT_RECOGNIZED,
                  rel_constants.ERROR_DEST_NOT_COMPLIANT]
         )
@@ -112,7 +112,7 @@ class TestRelDocument(unittest.TestCase):
         self.assertEquals(
                 samples[0],
                 {u"url_id": 2,
-                 u"value": u"en-US",
+                 u"value": u"en-us",
                  u"warning": []}
         )
         self.assertEquals(
@@ -124,39 +124,40 @@ class TestRelDocument(unittest.TestCase):
         self.assertEquals(
                 samples[2],
                 {u"url": "http://www.site.com/it",
-                 u"value": u"it-IT",
+                 u"value": u"it-it",
                  u"warning": [rel_constants.WARNING_DEST_NOT_CRAWLED]}
         )
 
         self.assertEquals(
                 samples[3],
                 {u"url": "http://www.site.com/blocked-robot-txt",
-                 u"value": u"en-US",
+                 u"value": u"en-us",
                  u"warning": [rel_constants.WARNING_DEST_BLOCKED_ROBOTS_TXT]}
         )
         self.assertEquals(
                 samples[4],
                 {u"url": "http://www.site.com/blocked-config",
-                 u"value": u"en-US",
+                 u"value": u"en-us",
                  u"warning": [rel_constants.WARNING_DEST_BLOCKED_CONFIG]}
         )
 
         # Error samples
         samples = json.loads(href["not_valid"]["values"])
         self.assertEquals(len(samples), 2)
-        self.assertEquals(
-                samples[0],
-                {u"url_id": 3,
-                 u"errors": [rel_constants.ERROR_LANG_NOT_RECOGNIZED,
-                             rel_constants.ERROR_DEST_NOT_COMPLIANT],
-                 u"value": u"jj-us"}
+        self.assertEquals(samples[0]["url_id"], 3)
+        self.assertEquals(samples[0]["value"], "jj-us")
+        self.assertItemsEqual(
+            samples[0]["errors"],
+            [rel_constants.ERROR_LANG_NOT_RECOGNIZED,
+             rel_constants.ERROR_DEST_NOT_COMPLIANT]
         )
-        self.assertEquals(
-                samples[1],
-                {u"url_id": 3,
-                    u"errors": [rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED,
-                                rel_constants.ERROR_DEST_NOT_COMPLIANT],
-                 u"value": u"en-ZZ"}
+
+        self.assertEquals(samples[1]["url_id"], 3)
+        self.assertEquals(samples[1]["value"], "en-zz")
+        self.assertItemsEqual(
+            samples[1]["errors"],
+            [rel_constants.ERROR_REGION_NOT_RECOGNIZED,
+             rel_constants.ERROR_DEST_NOT_COMPLIANT]
         )
 
 
@@ -229,13 +230,13 @@ class TestInRelDocument(unittest.TestCase):
 
         self.assertEquals(href["valid"]["nb"], 3)
         self.assertEquals(href["valid"]["langs"], ["en"])
-        self.assertEquals(href["valid"]["regions"], ["en-US"])
+        self.assertEquals(href["valid"]["regions"], ["en-us"])
         self.assertTrue(href["valid"]["receives_x-default"])
         self.assertEquals(json.loads(href["valid"]["values"]),
                           [
-                            {"url_id": 2, "value": "en-US"},
+                            {"url_id": 2, "value": "en-us"},
                             {"url_id": 2, "value": "x-default"},
-                            {"url_id": 3, "value": "en-US"}
+                            {"url_id": 3, "value": "en-us"}
                           ]
         )
         self.assertEquals(href["not_valid"]["nb"], 0)
@@ -261,12 +262,12 @@ class TestInRelDocument(unittest.TestCase):
         self.assertEquals(href["valid"]["nb"], 1)
         self.assertEquals(
                 json.loads(href["valid"]["values"]),
-                [{"url_id": 2, "value": "en-US"}]
+                [{"url_id": 2, "value": "en-us"}]
         )
         self.assertEquals(href["not_valid"]["nb"], 1)
         self.assertEquals(
                 json.loads(href["not_valid"]["values"]),
-                [{"url_id": 2, "value": "fr-FR", "errors": [rel_constants.ERROR_LANG_NOT_EQUAL]}]
+                [{"url_id": 2, "value": "fr-fr", "errors": [rel_constants.ERROR_LANG_NOT_EQUAL]}]
         )
 
         # URL 4
@@ -278,7 +279,7 @@ class TestInRelDocument(unittest.TestCase):
         self.assertEquals(
                 json.loads(href["not_valid"]["values"]),
                 [
-                    {"url_id": 2, "value": "en-US", "errors": [rel_constants.ERROR_NOT_COMPLIANT, rel_constants.ERROR_LANG_NOT_SET]},
+                    {"url_id": 2, "value": "en-us", "errors": [rel_constants.ERROR_NOT_COMPLIANT, rel_constants.ERROR_LANG_NOT_SET]},
                     {"url_id": 2, "value": "x-default", "errors": [rel_constants.ERROR_NOT_COMPLIANT, rel_constants.ERROR_LANG_NOT_SET]}
                 ]
         )

@@ -21,8 +21,8 @@ from cdf.features.rel import constants as rel_constants
 
 from cdf.features.rel.utils import (
     is_lang_valid,
-    get_country,
-    is_country_valid
+    extract_lang_and_region,
+    is_region_valid
 )
 
 from cdf.features.main.compliant_url import make_compliant_bitarray
@@ -100,7 +100,7 @@ class RelCompliantStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.out.valid.sends_x-default": {
-            "verbose_name": "Outgoing Hreflang Has Warning",
+            "verbose_name": "Outgoing Hreflang Sends x-default",
             "type": BOOLEAN_TYPE,
             "settings": {
                 DIFF_QUALITATIVE,
@@ -178,16 +178,17 @@ class RelCompliantStreamDef(StreamDefBase):
         subdoc["nb"] += 1
 
         mask = stream[2]
-        iso_codes = stream[5]
+        iso_codes = stream[5].lower()
+        lang, region = extract_lang_and_region(iso_codes)
         url_id_dest = stream[3]
         dest_compliant = stream[6]
-        country = get_country(iso_codes)
         errors = set()
         warning = set()
-        if iso_codes != "x-default" and not is_lang_valid(iso_codes):
+
+        if iso_codes != "x-default" and not is_lang_valid(lang):
             errors.add(rel_constants.ERROR_LANG_NOT_RECOGNIZED)
-        if iso_codes != "x-default" and country and not is_country_valid(country):
-            errors.add(rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED)
+        if iso_codes != "x-default" and region and not is_region_valid(region):
+            errors.add(rel_constants.ERROR_REGION_NOT_RECOGNIZED)
         if url_id_dest > -1 and not dest_compliant:
             errors.add(rel_constants.ERROR_DEST_NOT_COMPLIANT)
 
@@ -236,7 +237,7 @@ class RelCompliantStreamDef(StreamDefBase):
             elif iso_codes not in subdoc["valid"]["regions"]:
                 subdoc["valid"]["regions"].append(iso_codes)
                 if iso_codes[0:2] not in subdoc["valid"]["langs"]:
-                    subdoc["valid"]["langs"].append(iso_codes[0:2])
+                    subdoc["valid"]["langs"].append(lang)
 
     def post_process_document(self, document):
         if "hreflang_warning" in document:
@@ -380,15 +381,14 @@ class InRelStreamDef(StreamDefBase):
         subdoc["nb"] += 1
 
         mask = stream[2]
-        iso_codes = stream[4]
-        lang = iso_codes[0:2]
+        iso_codes = stream[4].lower()
+        lang, region = extract_lang_and_region(iso_codes)
         url_id_src = stream[3]
-        country = get_country(iso_codes)
         errors = set()
 
         if document["lang"] in ("notset", "?"):
             errors.add(rel_constants.ERROR_LANG_NOT_SET)
-        elif iso_codes != "x-default" and not is_lang_valid(iso_codes):
+        elif iso_codes != "x-default" and not is_lang_valid(lang):
             errors.add(rel_constants.ERROR_LANG_NOT_RECOGNIZED)
         elif iso_codes != "x-default" and document["lang"] != lang:
             errors.add(rel_constants.ERROR_LANG_NOT_EQUAL)
@@ -396,8 +396,8 @@ class InRelStreamDef(StreamDefBase):
         if not document["strategic"]["is_strategic"]:
             errors.add(rel_constants.ERROR_NOT_COMPLIANT)
 
-        if country and not is_country_valid(country):
-            errors.add(rel_constants.ERROR_COUNTRY_NOT_RECOGNIZED)
+        if region and not is_region_valid(region):
+            errors.add(rel_constants.ERROR_REGION_NOT_RECOGNIZED)
 
         if errors:
             subdoc["not_valid"]["nb"] += 1
