@@ -175,8 +175,8 @@ class TestInRelDocument(unittest.TestCase):
         ]
 
         self.infos = [
-            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en"], # lang en
-            [2, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en"], # lang en
+            [1, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en-us"], # lang en + region us
+            [2, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en-uk"], # lang en + region uk
             [3, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "en"], # lang en
             [4, 1, 'text/html', 0, 1, 200, 1200, 303, 456, "?"], # lang not found
         ]
@@ -200,6 +200,7 @@ class TestInRelDocument(unittest.TestCase):
             [1, 1, 0, 2, "x-default"], # Default page
             [1, 1, 0, 3, "en-US"], # OK
             [2, 1, 0, 3, "zz"], # Bad Lang
+            [2, 1, 0, 3, "en-US"], # Bad Region
             [3, 1, 0, 2, "en-US"], # Lang OK
             [3, 1, 0, 2, "fr-FR"], # Lang not equal
             [4, 1, 0, 2, "en-US"], # OK
@@ -247,12 +248,15 @@ class TestInRelDocument(unittest.TestCase):
         # URL 2
         document = _next_doc(gen)
         href = document["rel"]["hreflang"]["in"]
-        self.assertEquals(href["nb"], 1)
+        self.assertEquals(href["nb"], 2)
         self.assertEquals(href["valid"]["nb"], 0)
-        self.assertEquals(href["not_valid"]["nb"], 1)
+        self.assertEquals(href["not_valid"]["nb"], 2)
         self.assertEquals(
-                json.loads(href["not_valid"]["values"]),
-                [{"url_id": 3, "value": "zz", "errors": [rel_constants.ERROR_LANG_NOT_RECOGNIZED]}]
+            json.loads(href["not_valid"]["values"]),
+            [
+                {"url_id": 3, "value": "zz", "errors": [rel_constants.ERROR_LANG_NOT_RECOGNIZED]},
+                {"url_id": 3, "value": "en-us", "errors": [rel_constants.ERROR_REGION_NOT_EQUAL]}
+            ]
         )
 
         # URL 3

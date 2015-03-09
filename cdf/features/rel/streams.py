@@ -386,12 +386,23 @@ class InRelStreamDef(StreamDefBase):
         url_id_src = stream[3]
         errors = set()
 
-        if document["lang"] in ("notset", "?"):
+        document_lang, document_region = extract_lang_and_region(
+                document["lang"].lower()
+        )
+
+        if document_lang in ("notset", "?"):
             errors.add(rel_constants.ERROR_LANG_NOT_SET)
         elif iso_codes != "x-default" and not is_lang_valid(lang):
             errors.add(rel_constants.ERROR_LANG_NOT_RECOGNIZED)
-        elif iso_codes != "x-default" and document["lang"] != lang:
+        elif iso_codes != "x-default" and document_lang != lang:
             errors.add(rel_constants.ERROR_LANG_NOT_EQUAL)
+        elif (
+                iso_codes != "x-default" and
+                document_region and
+                region and
+                document_region != region
+        ):
+            errors.add(rel_constants.ERROR_REGION_NOT_EQUAL)
 
         if not document["strategic"]["is_strategic"]:
             errors.add(rel_constants.ERROR_NOT_COMPLIANT)
