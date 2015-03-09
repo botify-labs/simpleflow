@@ -3,7 +3,7 @@ from cdf.features.rel.constants import LANGUAGES_ISO, REGIONS_ISO
 
 def extract_lang_and_region(value):
     """
-    Return a tuple of (lang, region) from a string
+    Return a 2-value list [lang, region] from a string
     (expected value format is "lang-region" or "lang" without region)
     """
     if value == "x-default":
