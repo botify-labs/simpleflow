@@ -126,7 +126,7 @@ class RelCompliantStreamDef(StreamDefBase):
         },
         "rel.hreflang.out.valid.values": {
             "verbose_name": "Outgoing Valid Hreflang Values",
-            "type": STRING_TYPE,
+            "type": STRING_TYPE,  # JSON encoded. Contains list of dict.
             "settings": [
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
@@ -239,19 +239,28 @@ class RelCompliantStreamDef(StreamDefBase):
                     subdoc["valid"]["langs"].append(iso_codes[0:2])
 
     def post_process_document(self, document):
-        # Store the final errors lists
-        if not "hreflang_errors" in document:
-            # No stream available for this entry, nothing to delete
-            return
+        if "hreflang_warning" in document:
+            document["rel"]["hreflang"]["out"]["valid"]["warning"] = list(
+                document["hreflang_warning"]
+            )
+            del document["hreflang_warning"]
 
-        document["rel"]["hreflang"]["out"]["not_valid"]["errors"] = list(document["hreflang_errors"])
-        document["rel"]["hreflang"]["out"]["valid"]["warning"] = list(document["hreflang_warning"])
-        document["rel"]["hreflang"]["out"]["not_valid"]["values"] = json.dumps(document["hreflang_errors_samples"])
-        document["rel"]["hreflang"]["out"]["valid"]["values"] = json.dumps(document["hreflang_valid_samples"])
-        del document["hreflang_errors"]
-        del document["hreflang_warning"]
-        del document["hreflang_errors_samples"]
-        del document["hreflang_valid_samples"]
+        if "hreflang_valid_samples" in document:
+            document["rel"]["hreflang"]["out"]["valid"]["values"] = json.dumps(
+                document["hreflang_valid_samples"]
+            )
+            del document["hreflang_valid_samples"]
+
+        if "hreflang_errors" in document:
+            document["rel"]["hreflang"]["out"]["not_valid"]["errors"] = list(
+                document["hreflang_errors"]
+            )
+            del document["hreflang_errors"]
+
+            document["rel"]["hreflang"]["out"]["not_valid"]["values"] = json.dumps(
+                document["hreflang_errors_samples"]
+            )
+            del document["hreflang_errors_samples"]
 
 
 class InRelStreamDef(StreamDefBase):
@@ -313,9 +322,8 @@ class InRelStreamDef(StreamDefBase):
         },
         "rel.hreflang.in.valid.values": {
             "verbose_name": "Incoming Valid Hreflang Values",
-            "type": STRING_TYPE,
+            "type": STRING_TYPE,  # JSON encoded. Contains list of dict.
             "settings": [
-                LIST,
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
                 RENDERING.HREFLANG_VALID_VALUES
