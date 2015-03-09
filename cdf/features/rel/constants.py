@@ -252,4 +252,4 @@ LANGUAGES = [
 ]
 
 LANGUAGES_ISO = {lang[0] for lang in LANGUAGES}
-REGIONS_ISO = {c["alpha-2"] for c in REGIONS}
+REGIONS_ISO = {c["alpha-2"].lower() for c in REGIONS}
