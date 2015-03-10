@@ -12,12 +12,12 @@ from simpleflow import (
     executor,
     futures,
     exceptions,
-    constants,
 )
 from simpleflow.activity import Activity
 from simpleflow.workflow import Workflow
 from simpleflow.history import History
 from simpleflow.swf.task import ActivityTask, WorkflowTask
+from simpleflow.swf import constants
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +69,7 @@ class Executor(executor.Executor):
         on each replay.
 
         """
+        self._open_activity_count = 0
         self._decisions = []
         self._tasks = TaskRegistry()
 
@@ -92,7 +93,7 @@ class Executor(executor.Executor):
         :type  event: swf.event.Event.
 
         """
-        future = futures.Future()
+        future = futures.Future()  # state is PENDING.
         state = event['state']
 
         if state == 'scheduled':
@@ -118,7 +119,8 @@ class Executor(executor.Executor):
             future._state = futures.RUNNING
         elif state == 'completed':
             future._state = futures.FINISHED
-            future._result = json.loads(event['result'])
+            result = event['result']
+            future._result = json.loads(result) if result else None
         elif state == 'canceled':
             future._state = futures.CANCELLED
         elif state == 'failed':
@@ -202,6 +204,7 @@ class Executor(executor.Executor):
         decisions = task.schedule(self.domain)
         # ``decisions`` contains a single decision.
         self._decisions.extend(decisions)
+        self._open_activity_count += 1
         if len(self._decisions) == constants.MAX_DECISIONS - 1:
             # We add a timer to wake up the workflow immediately after
             # completing these decisions.
@@ -226,12 +229,17 @@ class Executor(executor.Executor):
         if event:
             if event['type'] == 'activity':
                 future = self.resume_activity(task, event)
+                if future and future._state in (futures.PENDING, futures.RUNNING):
+                    self._open_activity_count += 1
             elif event['type'] == 'child_workflow':
                 future = self.resume_child_workflow(task, event)
 
         if not future:
             self.schedule_task(task)
             future = futures.Future()  # return a pending future.
+
+        if self._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT:
+            raise exceptions.ExecutionBlocked
 
         return future
 

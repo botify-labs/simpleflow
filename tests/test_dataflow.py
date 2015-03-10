@@ -26,8 +26,8 @@ from simpleflow import (
     Workflow,
     activity,
     futures,
-    constants,
 )
+from simpleflow.swf import constants
 from simpleflow.swf.executor import Executor
 
 
@@ -1007,3 +1007,142 @@ def test_activity_not_found_schedule_failed_already_exists():
         decisions, _ = executor.replay(history)
 
     check_task_scheduled_decision(decisions[0], increment)
+
+
+class TestDefinitionMoreThanMaxOpenActivities(TestWorkflow):
+    """
+    This workflow executes more tasks than the maximum number of decisions a
+    decider can take once.
+
+    """
+    def run(self):
+        results = self.map(
+            increment,
+            xrange(constants.MAX_OPEN_ACTIVITY_COUNT + 20))
+        futures.wait(*results)
+
+
+def test_more_than_1000_open_activities_scheduled():
+    workflow = TestDefinitionMoreThanMaxOpenActivities
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow)
+
+    # The first time, the executor should schedule
+    # ``constants.MAX_OPEN_ACTIVITY_COUNT`` decisions.
+    # No timer because we wait for at least an activity to complete.
+    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT / constants.MAX_DECISIONS):
+        decisions, _ = executor.replay(history)
+        assert len(decisions) == constants.MAX_DECISIONS
+
+    decision_id = history.last_id
+    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT):
+        history.add_activity_task(
+            increment,
+            decision_id=decision_id,
+            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+                i + 1),
+            last_state='scheduled',
+            result=i + 1)
+    (history
+        .add_decision_task_scheduled()
+        .add_decision_task_started())
+
+    decisions, _ = executor.replay(history)
+    assert executor._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT
+    assert len(decisions) == 0
+
+
+def test_more_than_1000_open_activities_scheduled_and_running():
+    def get_random_state():
+        import random
+        return random.choice(['scheduled', 'started'])
+
+    workflow = TestDefinitionMoreThanMaxOpenActivities
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow)
+
+    # The first time, the executor should schedule
+    # ``constants.MAX_OPEN_ACTIVITY_COUNT`` decisions.
+    # No timer because we wait for at least an activity to complete.
+    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT / constants.MAX_DECISIONS):
+        decisions, _ = executor.replay(history)
+        assert len(decisions) == constants.MAX_DECISIONS
+
+    decision_id = history.last_id
+    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT):
+        history.add_activity_task(
+            increment,
+            decision_id=decision_id,
+            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+                i + 1),
+            last_state=get_random_state(),
+            result=i + 1)
+    (history
+        .add_decision_task_scheduled()
+        .add_decision_task_started())
+
+    decisions, _ = executor.replay(history)
+    assert len(decisions) == 0
+
+
+def test_more_than_1000_open_activities_partial_max():
+    workflow = TestDefinitionMoreThanMaxOpenActivities
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow)
+    decisions, _ = executor.replay(history)
+
+    first_decision_id = history.last_id
+    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT - 2):
+        history.add_activity_task(
+            increment,
+            decision_id=first_decision_id,
+            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+                i + 1),
+            last_state='scheduled',
+            result=i + 1)
+    (history
+        .add_decision_task_scheduled()
+        .add_decision_task_started())
+
+    decisions, _ = executor.replay(history)
+    assert executor._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT
+    assert len(decisions) == 2
+
+    history.add_decision_task_completed()
+    for i in xrange(2):
+        id_ = constants.MAX_OPEN_ACTIVITY_COUNT - 2 + i + 1
+        history.add_activity_task(
+            increment,
+            decision_id=history.last_id,
+            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+                id_),
+            last_state='scheduled',
+            result=id_,
+        )
+
+    (history
+        .add_decision_task_scheduled()
+        .add_decision_task_started())
+
+    decisions, _ = executor.replay(history)
+    assert executor._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT
+    assert len(decisions) == 0
+
+    history.add_decision_task_completed()
+
+    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT - 2):
+        scheduled_id = first_decision_id + i + 1
+        history.add_activity_task_started(scheduled_id)
+        history.add_activity_task_completed(
+            scheduled_id,
+            started=history.last_id,
+        )
+
+    (history
+        .add_decision_task_scheduled()
+        .add_decision_task_started())
+
+    decisions, _ = executor.replay(history)
+    # 2 already scheduled + 20 to schedule now
+    assert executor._open_activity_count == 22
+    assert len(decisions) == 20
