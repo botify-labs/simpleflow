@@ -20,6 +20,14 @@ from cdf.features.semantic_metadata.tasks import (
     make_metadata_duplicates_file,
     make_context_aware_metadata_duplicates_file
 )
+from cdf.utils.s3 import list_files
+
+
+def _get_s3_filename(s3_uri, key_obj):
+    return os.path.join(
+        s3_uri,
+        key_obj.name.split('/')[1]
+    )
 
 
 class TestComputeMetadataCount(unittest.TestCase):
@@ -118,13 +126,17 @@ class TestComputeMetadataDuplicateFile(unittest.TestCase):
             part_size=part_size
         )
 
-        output_files = make_metadata_duplicates_file(
+        make_metadata_duplicates_file(
             self.crawl_id,
             self.s3_uri,
             first_part_size,
             part_size
         )
 
+        output_files = sorted([
+            _get_s3_filename(self.s3_uri, k) for k in
+            list_files(self.s3_uri, regexp='urlcontentsduplicate.*')
+        ])
         expected_output_files = [
             os.path.join(self.s3_uri, "urlcontentsduplicate.txt.0.gz"),
             os.path.join(self.s3_uri, "urlcontentsduplicate.txt.1.gz"),
@@ -207,10 +219,14 @@ class TestMakeContextAwareMetadataDuplicatesFile(unittest.TestCase):
             first_part_size=first_part_size,
             part_size=part_size
         )
-        output_files = make_context_aware_metadata_duplicates_file(self.s3_uri,
-                                                                first_part_size,
-                                                                part_size)
 
+        make_context_aware_metadata_duplicates_file(self.s3_uri,
+                                                    first_part_size,
+                                                    part_size)
+        output_files = sorted([
+            _get_s3_filename(self.s3_uri, k) for k in
+            list_files(self.s3_uri, regexp='urlcontentsduplicate_contextaware.*')
+        ])
         expected_output_files = [
             os.path.join(self.s3_uri, "urlcontentsduplicate_contextaware.txt.0.gz"),
             os.path.join(self.s3_uri, "urlcontentsduplicate_contextaware.txt.1.gz"),

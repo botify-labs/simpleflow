@@ -44,12 +44,13 @@ def to_string(row):
     and the lists in strings.
     """
     url_id, metadata_type, duplicates_nb, is_first, target_urls_ids = row
-    return (url_id,
-            metadata_type,
-            duplicates_nb,
-            1 if is_first else 0,
-            ';'.join(str(u) for u in target_urls_ids)
-           )
+    return (
+        url_id,
+        metadata_type,
+        duplicates_nb,
+        1 if is_first else 0,
+        ';'.join(str(u) for u in target_urls_ids)
+    )
 
 
 @with_temporary_dir
@@ -65,13 +66,12 @@ def make_metadata_duplicates_file(crawl_id, s3_uri,
     )
     generator = get_duplicate_metadata(contents_stream)
     generator = itertools.imap(to_string, generator)
-    files = ContentsDuplicateStreamDef.persist(
+    ContentsDuplicateStreamDef.persist(
         generator,
         s3_uri,
         first_part_size=first_part_id_size,
         part_size=part_id_size
     )
-    return files
 
 
 @with_temporary_dir
@@ -114,10 +114,9 @@ def make_context_aware_metadata_duplicates_file(s3_uri,
         compliant_urls_stream
     )
     generator = itertools.imap(to_string, generator)
-    files = ContentsContextAwareDuplicateStreamDef.persist(
+    ContentsContextAwareDuplicateStreamDef.persist(
         generator,
         s3_uri,
         first_part_size=first_part_id_size,
         part_size=part_id_size
     )
-    return files
