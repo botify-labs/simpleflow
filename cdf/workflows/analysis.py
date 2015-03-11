@@ -813,6 +813,10 @@ class AnalysisWorkflow(Workflow):
             self.fail('Cannot update {}'.format(
                 ' and '.join(update_status_errors)))
 
+        # conclude all tracked tasks
+        task_status = self.task_registry.get_task_status()
+        print task_status
+
         result = {}
         result.update(crawl_status_result.result)
         result.update(revision_status_result.result)
