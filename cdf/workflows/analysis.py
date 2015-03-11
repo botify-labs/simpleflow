@@ -63,8 +63,8 @@ def as_activity(func):
     )(func)
 
 
-def optional_activity(func):
-    return activity.with_attributes(
+def optional_activity(func, task_name, feature):
+    act = activity.with_attributes(
         version='2.7',
         task_list='analysis',
         schedule_to_start_timeout=54000,  # 15h
@@ -85,16 +85,17 @@ def optional_activity(func):
 
 
 from cdf.features.main.tasks import compute_suggested_patterns
-compute_suggested_patterns = optional_activity(compute_suggested_patterns)
+compute_suggested_patterns = optional_activity(
+    compute_suggested_patterns, 'segment', 'main')
 from cdf.tasks.aggregators import (
     compute_aggregators_from_part_id,
     make_suggest_summary_file,
     consolidate_aggregators,
 )
 compute_aggregators_from_part_id = optional_activity(
-    compute_aggregators_from_part_id)
-make_suggest_summary_file = optional_activity(make_suggest_summary_file)
-consolidate_aggregators = optional_activity(consolidate_aggregators)
+    compute_aggregators_from_part_id, 'segment', 'main')
+make_suggest_summary_file = optional_activity(make_suggest_summary_file, 'segment', 'main')
+consolidate_aggregators = optional_activity(consolidate_aggregators, 'segment', 'main')
 
 from cdf.features.main.tasks import compute_zones, compute_compliant_urls
 compute_zones = as_activity(compute_zones)
@@ -125,7 +126,7 @@ make_bad_link_file = as_activity(make_bad_link_file)
 make_bad_link_counter_file = as_activity(make_bad_link_counter_file)
 make_links_to_non_compliant_file = as_activity(make_links_to_non_compliant_file)
 make_links_to_non_compliant_counter_file = as_activity(make_links_to_non_compliant_counter_file)
-make_top_domains_files = optional_activity(make_top_domains_files)
+make_top_domains_files = optional_activity(make_top_domains_files, 'top_domain', 'links')
 make_inlinks_percentiles_file = as_activity(make_inlinks_percentiles_file)
 
 from cdf.tasks.url_data import (
@@ -138,15 +139,19 @@ from cdf.features.ganalytics.tasks import (
     import_data_from_ganalytics,
     match_analytics_to_crawl_urls
 )
-import_data_from_ganalytics = optional_activity(import_data_from_ganalytics)
-match_analytics_to_crawl_urls = optional_activity(match_analytics_to_crawl_urls)
+import_data_from_ganalytics = optional_activity(
+    import_data_from_ganalytics, 'document', 'ganalytics')
+match_analytics_to_crawl_urls = optional_activity(
+    match_analytics_to_crawl_urls, 'document', 'ganalytics')
 
 from cdf.features.sitemaps.tasks import (
     download_sitemap_files,
     match_sitemap_urls,
 )
-download_sitemap_files = optional_activity(download_sitemap_files)
-match_sitemap_urls = optional_activity(match_sitemap_urls)
+download_sitemap_files = optional_activity(
+    download_sitemap_files, 'document', 'sitemaps')
+match_sitemap_urls = optional_activity(
+    match_sitemap_urls, 'document', 'sitemaps')
 
 from cdf.features.rel.tasks import (
     convert_rel_out_to_rel_compliant_out
@@ -793,6 +798,10 @@ class AnalysisWorkflow(Workflow):
         if update_status_errors:
             self.fail('Cannot update {}'.format(
                 ' and '.join(update_status_errors)))
+
+        # conclude all tracked tasks
+        task_status = self.task_registry.get_task_status()
+        print task_status
 
         result = {}
         result.update(crawl_status_result.result)
