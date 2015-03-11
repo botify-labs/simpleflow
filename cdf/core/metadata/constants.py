@@ -23,6 +23,7 @@ class RENDERING(Enum):
     PERCENT = 'percent'
     HREFLANG_VALID_VALUES = 'hreflang_valid_values'
     HREFLANG_ERROR_VALUES = 'hreflang_error_values'
+    NOT_SORTABLE = 'not_sortable'
 
 
 # TODO(darkjh) separate this enum
