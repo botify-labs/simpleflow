@@ -76,6 +76,13 @@ def optional_activity(func):
         raises_on_failure=False,
     )(func)
 
+    # patch additional task tracking info
+    act.tracking = True
+    act.task_name = task_name
+    act.feature = feature
+
+    return act
+
 
 from cdf.features.main.tasks import compute_suggested_patterns
 compute_suggested_patterns = optional_activity(compute_suggested_patterns)
@@ -255,13 +262,73 @@ def request_api(crawl_endpoint, revision_endpoint, api_requests):
     return {}
 
 
-_HISTORY_LIMIT = 3
+class FeatureTaskRegistry(object):
+    """Task registry for a single feature, used by `TaskRegistry`
+    """
+    def __init__(self):
+        self.registry = {}
+
+    def register(self, future, task_name):
+        self.registry.setdefault(task_name, []).append(future)
+
+    def get_task_status(self):
+        return {
+            task: all(f.exception is None for f in futures) for
+            task, futures in self.registry.iteritems()
+        }
+
+
+class TaskRegistry(object):
+    """Task registry that associates tasks and their execution status
+
+    It aggregates tracked tasks' status for each feature.
+    All logical related tasks should be given the same name so that they are
+    tracked as the same unity.
+    """
+    def __init__(self):
+        self.registry = {}
+
+    def register(self, future, task_name, feature):
+        """Register a task
+        """
+        self.registry.setdefault(
+            feature, FeatureTaskRegistry()).register(future, task_name)
+
+    def get_task_status(self):
+        """Conclude the tasks' status
+        """
+        status = []
+        for feature, registry in self.registry.iteritems():
+            s = registry.get_task_status()
+            for task, ss in s.iteritems():
+                status.append({
+                    'task': task,
+                    'feature': feature,
+                    'success': ss
+                })
+        return status
 
 
 class AnalysisWorkflow(Workflow):
     name = 'analysis'
     version = '2.7'
     task_list = 'analysis'
+
+    def __init__(self, executor):
+        super(AnalysisWorkflow, self).__init__(executor)
+        self.task_registry = TaskRegistry()
+
+    def submit(self, func, *args, **kwargs):
+        """Override `submit` to allow register tracked tasks
+        """
+        # submit the task to executor
+        future = super(AnalysisWorkflow, self).submit(func, *args, **kwargs)
+
+        if hasattr(func, 'tracking'):
+            # this is a decorated task, need to be tracked
+            self.task_registry.register(future, func.task_name, func.feature)
+
+        return future
 
     def compute_ganalytics(self, context):
         """
