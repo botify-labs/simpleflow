@@ -1,22 +1,13 @@
 from cdf.compat import json
 
-from cdf.features.main.reasons import (
-    decode_reason_mask,
-    Reasons
-)
 from cdf.metadata.url.url_metadata import (
-    LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
-    DATE_TYPE, ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
+    INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
+    ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
     LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
     DIFF_QUALITATIVE, DIFF_QUANTITATIVE
 )
-from cdf.core.streams.exceptions import GroupWithSkipException
 from cdf.core.streams.base import StreamDefBase
-from cdf.utils.date import date_2k_mn_to_date
-from cdf.utils.hashing import string_to_int64
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
-from cdf.core.metadata.dataformat import check_enabled
-
 from cdf.features.rel import constants as rel_constants
 
 from cdf.features.rel.utils import (
@@ -24,8 +15,6 @@ from cdf.features.rel.utils import (
     extract_lang_and_region,
     is_region_valid
 )
-
-from cdf.features.main.compliant_url import make_compliant_bitarray
 
 
 __all__ = ["RelStreamDef", "RelCompliantStreamDef", "InRelStreamDef"]
@@ -49,6 +38,7 @@ class RelStreamDef(StreamDefBase):
         ('url_dest', str),
         ('value', str)
     )
+
 
 class RelCompliantStreamDef(StreamDefBase):
     FILE = 'urllinkrelcompliant'
@@ -87,7 +77,8 @@ class RelCompliantStreamDef(StreamDefBase):
             "settings": [
                 LIST,
                 ES_NOT_ANALYZED,
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                RENDERING.NOT_SORTABLE
             ]
         },
         "rel.hreflang.out.valid.regions": {
@@ -96,7 +87,8 @@ class RelCompliantStreamDef(StreamDefBase):
             "settings": [
                 LIST,
                 ES_NOT_ANALYZED,
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                RENDERING.NOT_SORTABLE
             ]
         },
         "rel.hreflang.out.valid.sends_x-default": {
@@ -121,7 +113,8 @@ class RelCompliantStreamDef(StreamDefBase):
             "settings": [
                 LIST,
                 ES_NOT_ANALYZED,
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                RENDERING.NOT_SORTABLE
             ]
         },
         "rel.hreflang.out.valid.values": {
@@ -130,7 +123,8 @@ class RelCompliantStreamDef(StreamDefBase):
             "settings": [
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
-                RENDERING.HREFLANG_VALID_VALUES
+                RENDERING.HREFLANG_VALID_VALUES,
+                RENDERING.NOT_SORTABLE
             ]
         },
         "rel.hreflang.out.not_valid.nb": {
@@ -148,7 +142,8 @@ class RelCompliantStreamDef(StreamDefBase):
             "settings": [
                 LIST,
                 ES_NOT_ANALYZED,
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                RENDERING.NOT_SORTABLE
             ]
         },
         "rel.hreflang.out.not_valid.values": {
@@ -157,7 +152,8 @@ class RelCompliantStreamDef(StreamDefBase):
             "settings": [
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
-                RENDERING.HREFLANG_ERROR_VALUES
+                RENDERING.HREFLANG_ERROR_VALUES,
+                RENDERING.NOT_SORTABLE
             ]
         }
     }
@@ -308,7 +304,8 @@ class InRelStreamDef(StreamDefBase):
             "settings": [
                 LIST,
                 ES_NOT_ANALYZED,
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                RENDERING.NOT_SORTABLE
             ]
         },
         "rel.hreflang.in.valid.regions": {
@@ -318,7 +315,8 @@ class InRelStreamDef(StreamDefBase):
             "settings": [
                 LIST,
                 ES_NOT_ANALYZED,
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                RENDERING.NOT_SORTABLE
             ]
         },
         "rel.hreflang.in.valid.values": {
@@ -327,7 +325,8 @@ class InRelStreamDef(StreamDefBase):
             "settings": [
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
-                RENDERING.HREFLANG_VALID_VALUES
+                RENDERING.HREFLANG_VALID_VALUES,
+                RENDERING.NOT_SORTABLE
             ]
         },
         "rel.hreflang.in.not_valid.nb": {
@@ -345,7 +344,8 @@ class InRelStreamDef(StreamDefBase):
             "settings": [
                 LIST,
                 ES_NOT_ANALYZED,
-                ES_DOC_VALUE
+                ES_DOC_VALUE,
+                RENDERING.NOT_SORTABLE
             ]
         },
         "rel.hreflang.in.not_valid.values": {
@@ -354,7 +354,8 @@ class InRelStreamDef(StreamDefBase):
             "settings": [
                 ES_NO_INDEX,
                 FIELD_RIGHTS.SELECT,
-                RENDERING.HREFLANG_ERROR_VALUES
+                RENDERING.HREFLANG_ERROR_VALUES,
+                RENDERING.NOT_SORTABLE
             ]
         }
     }

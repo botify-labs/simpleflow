@@ -18,6 +18,7 @@ def _render_field(field, field_config):
     group = field_config.get('group', '')
     field_type = field_config['type']
     data_type = field_config['type']
+    sortable = RENDERING.NOT_SORTABLE not in settings
 
     if RENDERING.URL in settings:
         data_type = 'string'
@@ -33,7 +34,7 @@ def _render_field(field, field_config):
         "value": field,
         "data_type": data_type,
         "field_type": field_type,
-        "is_sortable": True,
+        "is_sortable": sortable,
         "group": group,
         "multiple": LIST in settings,
         "rights": rights
@@ -111,14 +112,14 @@ def _get_group_sort_key(group_id, group_name):
     comparison_order = 0
     if group_id_chunks[0] == "previous":
         comparison_order = 1
-        #remove prefix to get main_order correctly
+        # remove prefix to get main_order correctly
         group_id = ".".join(group_id_chunks[1:])
     elif group_id_chunks[0] == "diff":
         comparison_order = 2
-        #remove prefix to get main_order correctly
+        # remove prefix to get main_order correctly
         group_id = ".".join(group_id_chunks[1:])
 
-    #scheme group_id should appear first.
+    # scheme group_id should appear first.
     #then main group
     if group_id == "scheme":
         group_order = 0
