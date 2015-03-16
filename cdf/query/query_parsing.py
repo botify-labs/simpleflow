@@ -14,6 +14,7 @@ query API (such as ElasticSearch) and for semantic validation.
 
 import abc
 from copy import deepcopy
+import re
 
 from cdf.exceptions import BotifyQueryException
 from .constants import (
@@ -217,6 +218,8 @@ class AnyStarts(PredicateFilter):
     def transform(self):
         return {
             'prefix': {
+                # ES's prefix filter does not
+                # interpret the string as regexp
                 self.field_value: self.value
             }
         }
@@ -232,7 +235,7 @@ class AnyEnds(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                self.field_value: "@%s" % self.value
+                self.field_value: "@%s" % re.escape(self.value)
             }
         }
 
@@ -247,7 +250,7 @@ class AnyContains(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                self.field_value: "@%s@" % self.value
+                self.field_value: "@%s@" % re.escape(self.value)
             }
         }
 
@@ -262,7 +265,7 @@ class AnyRe(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                self.field_value: self.value
+                self.field_value: re.escape(self.value)
             }
         }
 
@@ -277,7 +280,7 @@ class Contains(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                self.field_value: "@%s@" % self.value
+                self.field_value: "@%s@" % re.escape(self.value)
             }
         }
 
@@ -292,6 +295,8 @@ class Starts(PredicateFilter):
     def transform(self):
         return {
             'prefix': {
+                # ES's prefix filter does not
+                # interpret the string as regexp
                 self.field_value: self.value
             }
         }
@@ -307,7 +312,7 @@ class Ends(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                self.field_value: "@%s" % self.value
+                self.field_value: "@%s" % re.escape(self.value)
             }
         }
 
@@ -996,7 +1001,8 @@ class QueryParser(object):
                                query_fields=self.query_fields),
                 predicate_filter['value']
                 if 'value' in predicate_filter else None,
-                list_fields=self.list_fields)
+                list_fields=self.list_fields
+            )
 
     def parse_filter(self, filter):
         """Parse the filter sub-structure of a botify query"""
