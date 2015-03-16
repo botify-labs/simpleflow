@@ -1003,7 +1003,8 @@ class BadLinksStreamDef(StreamDefBase):
 
         error_urls = errors[error_kind]['urls']
         # url list length bounded at 10, should not be a perf problem
-        if len(error_urls) < 10 and url_dest_id not in error_urls:
+        # sample list contains follow, unique dest urls
+        if follow and len(error_urls) < 10 and url_dest_id not in error_urls:
             error_urls.append(url_dest_id)
 
         errors[error_kind]['urls_exists'] = True

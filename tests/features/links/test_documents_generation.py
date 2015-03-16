@@ -341,6 +341,24 @@ class TestBadLinks(unittest.TestCase):
         document = _next_doc(gen)
         self.assertEqual(document[key]['3xx']['urls'], expected)
 
+    def test_bad_links_follow(self):
+        self.badlinks = [
+            [1, 5, 1, 302],
+            [1, 6, 0, 302],  # nofollow link
+            [1, 7, 1, 302],
+        ]
+
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(iter(self.ids)),
+            InfosStreamDef.load_iterator(iter(self.infos)),
+            BadLinksStreamDef.load_iterator(iter(self.badlinks)),
+        ])
+
+        key = 'outlinks_errors'
+        expected = [5, 7]
+        document = _next_doc(gen)
+        self.assertEqual(document[key]['3xx']['urls'], expected)
+
     def test_to_non_compliant_links(self):
         patterns = self.ids[:2]
 
