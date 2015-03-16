@@ -17,6 +17,7 @@ from copy import deepcopy
 import re
 
 from cdf.exceptions import BotifyQueryException
+from cdf.query.regexp import normalize_regexp
 from .constants import (
     QUERY_AGG, SUB_AGG, METRIC_AGG_PREFIX,
     DISTINCT_AGG_BUCKET_SIZE
@@ -342,7 +343,7 @@ class Re(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                self.field_value: self.value
+                self.field_value: normalize_regexp(self.value)
             }
         }
 
