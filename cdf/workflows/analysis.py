@@ -776,16 +776,27 @@ class AnalysisWorkflow(Workflow):
         # they should be finished before status update
         futures.wait(top_domains_result)
 
+        # conclude all tracked tasks
+        task_status = self.task_registry.get_task_status()
+
         crawl_status_result = self.submit(
             update_crawl_status,
             crawl_id,
             context['instance_id'],
             context['crawl_endpoint'],
             'FINISHED')
+
         revision_status_result = self.submit(
-            update_revision_status,
-            context['revision_endpoint'],
-            'FINISHED')
+            request_api,
+            {
+                "method": "patch",
+                "endpoint_url": context['revision_endpoint'],
+                "data": {
+                    "status": "FINISHED",
+                    "task_status": task_status
+                }
+            }
+        )
 
         futures.wait(crawl_status_result, revision_status_result)
         update_status_errors = []
@@ -798,10 +809,6 @@ class AnalysisWorkflow(Workflow):
         if update_status_errors:
             self.fail('Cannot update {}'.format(
                 ' and '.join(update_status_errors)))
-
-        # conclude all tracked tasks
-        task_status = self.task_registry.get_task_status()
-        print task_status
 
         result = {}
         result.update(crawl_status_result.result)
