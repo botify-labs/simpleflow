@@ -788,9 +788,12 @@ class AnalysisWorkflow(Workflow):
 
         revision_status_result = self.submit(
             request_api,
+            context['crawl_endpoint'],
+            context['revision_endpoint'],
             {
                 "method": "patch",
-                "endpoint_url": context['revision_endpoint'],
+                "endpoint_url": "revision",
+                "endpoint_suffix": "",
                 "data": {
                     "status": "FINISHED",
                     "task_status": task_status
