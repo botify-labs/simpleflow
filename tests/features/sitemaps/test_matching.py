@@ -365,8 +365,9 @@ class TestDomainValidator(unittest.TestCase):
         validator = DomainValidator(["*.wired.com"])
         self.assertTrue(validator.is_valid("http://news.wired.com"))
         self.assertTrue(validator.is_valid("http://.wired.com"))
+        # note that the following is valid
+        self.assertTrue(validator.is_valid("http://wired.com"))
 
-        self.assertFalse(validator.is_valid("http://wired.com"))
         self.assertFalse(validator.is_valid("http://newswired.com"))
 
     def test_wildcard_special_characters(self):
