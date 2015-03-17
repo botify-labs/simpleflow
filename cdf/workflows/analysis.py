@@ -243,15 +243,32 @@ def update_revision_status(revision_endpoint, revision_status):
 def request_api(crawl_endpoint, revision_endpoint, api_requests):
     """Make a request to an API.
 
+    :param crawl_endpoint: URL of the crawl endpoint in the Botify Analytics
+                           API.
+    :type  crawl_endpoint: str.
+    :param revision_endpoint: URL of the revision endpoint in the Botify
+                              Analytics API.
+    :type  revision_endpoint: str.
+    :param api_requests: list of requests to send to the Botify Analytics API.
+    :type  api_requests: [{
+        'method': str,
+        'endpoint_url': str,
+        'endpoint_suffix': str,
+        'data': {
+            ...,
+            }
+        }]
+
+
     We should make all requests asynchronously in the workflow instead of
     scheduling a single task that makes all the requests.
 
     :param api: description of the request.
     :type  api: dict.
 
-    Example value for *api*:
+    Example value for *api_requests*:
 
-    {
+    [{
         "method": "patch",
         "endpoint_url": "revision",
         "endpoint_suffix": "ganalytics/",
@@ -261,7 +278,10 @@ def request_api(crawl_endpoint, revision_endpoint, api_requests):
             "sampled": metadata["sampled"],
             "queries_count": metadata["queries_count"]
         }
-    }
+    }]
+
+    Please notice the enclosing brackets ``[...]``, it's a list of several
+    requests. Even a single request must be inside a list.
 
     """
     return {}
@@ -810,10 +830,6 @@ class AnalysisWorkflow(Workflow):
         if update_status_errors:
             self.fail('Cannot update {}'.format(
                 ' and '.join(update_status_errors)))
-
-        # conclude all tracked tasks
-        task_status = self.task_registry.get_task_status()
-        print task_status
 
         result = {}
         result.update(crawl_status_result.result)
