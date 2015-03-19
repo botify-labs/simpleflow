@@ -217,6 +217,10 @@ class DomainValidator(object):
     The user specifies a list of allowed domains.
     Allowed domains can contain a '*' wildcard
     that can be replaced by anything.
+
+    Note that `*.abc.com` will also match `abc.com`, this is a
+    ergonomic feature for client.
+
     The user can also specifies a list of blacklisted domains.
     Black listed domains can not contain any wildcard."""
     def __init__(self, allowed_domains, blacklisted_domains=None):
@@ -240,6 +244,9 @@ class DomainValidator(object):
         """
         regex_pattern = re.escape(allowed_domain)
         regex_pattern = regex_pattern.replace("\\*", ".*")
+        if allowed_domain.startswith("*."):
+            regex_pattern = '({}|{})'.format(
+                regex_pattern, allowed_domain[2:])
         return re.compile(regex_pattern)
 
     def is_valid(self, url):
