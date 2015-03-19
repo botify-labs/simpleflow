@@ -248,6 +248,7 @@ class TestBadLinks(unittest.TestCase):
             [1, 100, 1, 302],
             [1, 101, 1, 302],
             [1, 102, 1, 302],
+            [1, 106, 1, 301],
             [1, 103, 1, 402],
             [2, 100, 1, 402],
             [2, 101, 1, 402],
@@ -274,8 +275,8 @@ class TestBadLinks(unittest.TestCase):
 
         expected_1 = {
             '3xx': {
-                'nb': 3,
-                'urls': [100, 101, 102],
+                'nb': 4,
+                'urls': [100, 101, 102, 106],
                 'urls_exists': True
             },
             '4xx': {
@@ -291,8 +292,8 @@ class TestBadLinks(unittest.TestCase):
             'non_strategic': {
                 'nb': {'follow': {'unique': 0, 'total': 0}}
             },
-            'total': 5,
-            'total_bad_http_codes': 5
+            'total': 6,
+            'total_bad_http_codes': 6
         }
         expected_2 = {
             '3xx': {

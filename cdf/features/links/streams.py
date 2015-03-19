@@ -1084,7 +1084,7 @@ class BadLinksCountersStreamDef(StreamDefBase):
         errors = document['outlinks_errors']
         error_kind = _get_bad_http_code_kind(http_code)
 
-        errors[error_kind]['nb'] = count
+        errors[error_kind]['nb'] += count
 
         # increment the consolidate value
         errors['total'] += count
