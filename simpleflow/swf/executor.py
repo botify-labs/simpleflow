@@ -115,6 +115,11 @@ class Executor(executor.Executor):
                             activity_type.name,
                             self.domain.name))
                 return None
+            logger.info('failed to schedule {}: {}'.format(
+                event['activity_type']['name'],
+                event['cause'],
+            ))
+            return None
         elif state == 'started':
             future._state = futures.RUNNING
         elif state == 'completed':
@@ -239,6 +244,8 @@ class Executor(executor.Executor):
             future = futures.Future()  # return a pending future.
 
         if self._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT:
+            logger.warning('limit of {} open activities reached'.format(
+                constants.MAX_OPEN_ACTIVITY_COUNT))
             raise exceptions.ExecutionBlocked
 
         return future
@@ -303,6 +310,10 @@ class Executor(executor.Executor):
         try:
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
+            logger.info('{} open activities ({} decisions)'.format(
+                self._open_activity_count,
+                len(self._decisions),
+            ))
             return self._decisions, {}
         except exceptions.TaskException, err:
             reason = 'Workflow execution error in task {}: "{}"'.format(
