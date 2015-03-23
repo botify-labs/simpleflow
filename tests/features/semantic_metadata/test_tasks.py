@@ -1,4 +1,3 @@
-import unittest
 import os
 import tempfile
 import shutil
@@ -6,6 +5,7 @@ import shutil
 from moto import mock_s3
 import boto
 
+from cdf.testing import TaskTestCase
 from cdf.utils.hashing import string_to_int32
 from cdf.features.semantic_metadata.metadata_duplicate import notset_hash_value
 from cdf.features.main.streams import ZoneStreamDef, CompliantUrlStreamDef
@@ -23,14 +23,7 @@ from cdf.features.semantic_metadata.tasks import (
 from cdf.utils.s3 import list_files
 
 
-def _get_s3_filename(s3_uri, key_obj):
-    return os.path.join(
-        s3_uri,
-        key_obj.name.split('/')[1]
-    )
-
-
-class TestComputeMetadataCount(unittest.TestCase):
+class TestComputeMetadataCount(TaskTestCase):
     def setUp(self):
         self.bucket_name = "app.foo.com"
         self.s3_uri = "s3://{}/crawl_result".format(self.bucket_name)
@@ -92,7 +85,7 @@ class TestComputeMetadataCount(unittest.TestCase):
         self.assertEqual(expected_stream, list(actual_stream))
 
 
-class TestComputeMetadataDuplicateFile(unittest.TestCase):
+class TestComputeMetadataDuplicateFile(TaskTestCase):
     def setUp(self):
         self.bucket_name = "app.foo.com"
         self.s3_uri = "s3://{}/crawl_result".format(self.bucket_name)
@@ -133,10 +126,7 @@ class TestComputeMetadataDuplicateFile(unittest.TestCase):
             part_size
         )
 
-        output_files = sorted([
-            _get_s3_filename(self.s3_uri, k) for k in
-            list_files(self.s3_uri, regexp='urlcontentsduplicate.*')
-        ])
+        output_files = self.get_files(self.s3_uri, regexp='urlcontentsduplicate.*')
         expected_output_files = [
             os.path.join(self.s3_uri, "urlcontentsduplicate.txt.0.gz"),
             os.path.join(self.s3_uri, "urlcontentsduplicate.txt.1.gz"),
@@ -160,7 +150,7 @@ class TestComputeMetadataDuplicateFile(unittest.TestCase):
         self.assertEqual(expected_stream, list(duplicate_stream))
 
 
-class TestMakeContextAwareMetadataDuplicatesFile(unittest.TestCase):
+class TestMakeContextAwareMetadataDuplicatesFile(TaskTestCase):
     def setUp(self):
         self.bucket_name = "app.foo.com"
         self.s3_uri = "s3://{}/crawl_result".format(self.bucket_name)
@@ -223,10 +213,8 @@ class TestMakeContextAwareMetadataDuplicatesFile(unittest.TestCase):
         make_context_aware_metadata_duplicates_file(self.s3_uri,
                                                     first_part_size,
                                                     part_size)
-        output_files = sorted([
-            _get_s3_filename(self.s3_uri, k) for k in
-            list_files(self.s3_uri, regexp='urlcontentsduplicate_contextaware.*')
-        ])
+        output_files = self.get_files(
+            self.s3_uri, regexp='urlcontentsduplicate_contextaware.*')
         expected_output_files = [
             os.path.join(self.s3_uri, "urlcontentsduplicate_contextaware.txt.0.gz"),
             os.path.join(self.s3_uri, "urlcontentsduplicate_contextaware.txt.1.gz"),
