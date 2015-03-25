@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# This script serves as an entrypoint for our docker container
+
+if [ "$1" == "bash" ]; then
+  /bin/bash
+elif [ "$1" == "test" ]; then
+  shift
+  export PYTHONDONTWRITEBYTECODE=true
+
+  # TODO move this into debian deps
+  if ! sudo service elasticsearch status > /dev/null
+  then
+	wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.4.4.deb;
+	sudo dpkg -i elasticsearch-1.4.4.deb;
+	rm elasticsearch-*.deb
+  else
+	echo "Elastic search already installed"
+  fi
+  sudo service elasticsearch start
+  nosetests -e '.*integration.*'
+else
+  echo "Invalid option. Please invoke the container with 'bash' or 'test'" >&2
+  exit 1
+fi

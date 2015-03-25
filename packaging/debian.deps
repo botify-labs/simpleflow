@@ -1,7 +1,5 @@
 libhdf5-mpi-dev
-libhdf5-serial-dev
 libboost-python-dev
-libboost-python1.48.0
 liblzo2-dev
 libbz2-dev
 libleveldb1
