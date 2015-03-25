@@ -19,6 +19,7 @@ Guide
    license
    install
    quickstart
+   execute
    api_reference
 
 Project info
