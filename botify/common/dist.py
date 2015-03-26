@@ -5,9 +5,8 @@ conventions of Botify's projects.
 """
 
 import setuptools
-from ConfigParser import ConfigParser
 
-from botify.common.release import Release
+from botify.common import release
 from botify.common import io
 
 
@@ -16,15 +15,6 @@ __all__ = ['setup']
 
 DEFAULT_AUTHOR = 'Botify'
 DEFAULT_AUTHOR_EMAIL = 'tech@botify.com'
-
-
-def get_release_config():
-    config = ConfigParser()
-    config.readfp(open('setup.cfg'))
-    return {
-        'package': config.get('release', 'package'),
-        'url': config.get('release', 'url'),
-    }
 
 
 def get_version(config):
@@ -44,11 +34,11 @@ def get_dependencies(directory='packaging'):
 
 
 def setup(**kwargs):
-    config = get_release_config()
+    config = release.get_config()
     dependencies = get_dependencies()
 
     cmdclass = {
-        'release': Release,
+        'release': release.Release,
     }
     if 'cmdclass' in kwargs:
         cmdclass.update(kwargs.pop('cmdclass'))

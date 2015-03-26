@@ -4,7 +4,7 @@ from botify.common.version import Version
 
 
 class PackageVersion(object):
-    def __init__(self, pkg, location='.'):
+    def __init__(self, pkg):
         self._pkg = pkg
         self._version = Version.fromstring(
             __import__(pkg.name, fromlist=['*']).__version__,
@@ -27,7 +27,7 @@ class PackageVersion(object):
 
     @property
     def path(self):
-        return os.path.join(self._pkg._location, self._pkg.name, '_version.py')
+        return os.path.join(self._pkg.path, '_version.py')
 
     def save(self):
         with open(self.path, 'w') as f:
@@ -38,7 +38,10 @@ class PackageVersion(object):
 
 
 class Package(object):
-    def __init__(self, name, location='.'):
+    def __init__(self, name, path=None):
         self.name = name
-        self._location = location
+        if path is None:
+            self.path = name
+        else:
+            self.path = path
         self.version = PackageVersion(self)

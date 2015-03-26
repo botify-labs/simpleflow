@@ -7,6 +7,25 @@ from botify.common.pypi import Pypi
 from botify.common import github
 
 
+def get_config():
+    from ConfigParser import ConfigParser
+
+    config = ConfigParser()
+    config.readfp(open('setup.cfg'))
+
+    values = {
+        'package': config.get('release', 'package'),
+        'url': config.get('release', 'url'),
+    }
+
+    path = config.get('release', 'path')
+    print('path={}'.format(path))
+    if path:
+        values['path'] = path
+
+    return values
+
+
 class Release(Command):
     """
 
@@ -17,10 +36,15 @@ class Release(Command):
         pypi=REPOSITORY_NAME_IN_PYPIRC
         url=PROJECT_URL
 
+    And the optional parameter:
+
+        path=PATH_TO_BASE_DIRECTORY
+
     """
     description = 'release the project'
     user_options = [
         ('package=', None, "package's name"),
+        ('path=', None, "path to the top-level of the package"),
         ('url=', None, 'URL of the project'),
         ('dry-run', None, 'dry run'),
         ('version=', 'v', 'version to release'),
@@ -34,6 +58,7 @@ class Release(Command):
 
     def initialize_options(self):
         self.package = None
+        self.path = None
         self.url = None
 
         self.dry_run = False
@@ -47,7 +72,11 @@ class Release(Command):
         pass
 
     def run(self):
-        pkg = Package(self.package)
+        config = get_config()
+        if 'path' in config:
+            pkg = Package(self.package, config['path'])
+        else:
+            pkg = Package(self.package)
         current = str(pkg.version)
         repo = Git()
 
