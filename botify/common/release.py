@@ -113,7 +113,7 @@ class Release(Command):
 
         commands = [
             ['git', 'add', pkg.version.path],
-            ['git', 'commit', '-m', commit_message],
+            ['git', 'commit', '-m', "'{}'".format(commit_message)],
             ['git', 'tag', '-a', str(pkg.version), '-m', tag_message],
             ['git', 'push', 'origin', self.branch],
             ['git', 'push', 'origin', str(pkg.version)]
