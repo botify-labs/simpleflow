@@ -51,7 +51,14 @@ class Release(Command):
         current = str(pkg.version)
         repo = Git()
 
-        pkg.version.bump()
+        if self.major:
+            pkg.version.increment_major()
+        elif self.minor:
+            pkg.version.increment_minor()
+        elif self.micro:
+            pkg.version.increment_micro()
+        else:
+            pkg.version.bump()
         print 'releasing {}=={}'.format(pkg.name, pkg.version)
 
         if repo.find_tag(str(pkg.version)):

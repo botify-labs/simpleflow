@@ -13,6 +13,15 @@ class PackageVersion(object):
     def __set__(self, pkg, version):
         self._version = version
 
+    def increment_major(self):
+        return self._version.increment_major()
+
+    def increment_minor(self):
+        return self._version.increment_minor()
+
+    def increment_micro(self):
+        return self._version.increment_micro()
+
     def bump(self, level=Version.MICRO):
         return self._version.bump(level)
 
