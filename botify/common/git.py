@@ -4,7 +4,7 @@ import subprocess
 class Git(object):
     WIDTH = 80
     INDENT = 4
-    LOG_FORMAT = "- %s [%cn]%n%n%w({width},{indent},{indent})%b".format(
+    LOG_FORMAT = "- %h %s [%an]%n%w({width},{indent},{indent})%b".format(
         width=WIDTH,
         indent=INDENT,
     )
