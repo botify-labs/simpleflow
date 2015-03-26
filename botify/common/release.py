@@ -19,7 +19,6 @@ def get_config():
     }
 
     path = config.get('release', 'path')
-    print('path={}'.format(path))
     if path:
         values['path'] = path
 
@@ -44,6 +43,7 @@ class Release(Command):
     description = 'release the project'
     user_options = [
         ('package=', None, "package's name"),
+        ('branch=', None, "default branch"),
         ('path=', None, "path to the top-level of the package"),
         ('url=', None, 'URL of the project'),
         ('dry-run', None, 'dry run'),
@@ -59,6 +59,7 @@ class Release(Command):
     def initialize_options(self):
         self.package = None
         self.path = None
+        self.branch = 'master'
         self.url = None
 
         self.dry_run = False
@@ -114,7 +115,7 @@ class Release(Command):
             ['git', 'add', pkg.version.path],
             ['git', 'commit', '-m', commit_message],
             ['git', 'tag', '-a', str(pkg.version), '-m', tag_message],
-            ['git', 'push', 'origin', 'devel'],
+            ['git', 'push', 'origin', self.branch],
             ['git', 'push', 'origin', str(pkg.version)]
         ]
         if not self.dry_run:
