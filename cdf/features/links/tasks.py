@@ -4,13 +4,12 @@ import itertools
 import logging
 
 from cdf.compat import json
-from cdf.core.streams.cache import BufferedStreamCache, cbor_serializer
 from cdf.utils.s3 import push_file, push_content
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils.remote_files import (
     get_crawl_info,
     get_max_crawled_urlid,
-    enumerate_partitions)
+)
 from cdf.features.links.links import OutlinksTransducer, InlinksTransducer
 from cdf.features.links.bad_links import (
     get_bad_links,
@@ -159,12 +158,12 @@ def make_links_to_non_compliant_file(s3_uri,
         OutlinksStreamDef.load(**stream_kwargs)
     )
 
-    result = LinksToNonCompliantStreamDef.persist(
+    LinksToNonCompliantStreamDef.persist(
         generator, s3_uri,
         first_part_size=first_part_id_size,
         part_size=part_id_size
     )
-    return result
+
 
 @with_temporary_dir
 def make_bad_link_counter_file(crawl_id, s3_uri,
@@ -216,13 +215,11 @@ def make_links_to_non_compliant_counter_file(s3_uri,
         force_fetch=force_fetch
     )
     generator = get_link_to_non_compliant_urls_counters(stream)
-    result = LinksToNonCompliantCountersStreamDef.persist(
+    LinksToNonCompliantCountersStreamDef.persist(
         generator,
         s3_uri,
         part_id=part_id
     )
-
-    return result
 
 
 @with_temporary_dir
@@ -345,10 +342,9 @@ def make_inlinks_percentiles_file(s3_uri,
     push_content(dest_uri, json.dumps(result))
 
     #persist stream
-    output_files = InlinksPercentilesStreamDef.persist(
+    InlinksPercentilesStreamDef.persist(
         percentile_stream,
         s3_uri,
         first_part_size=first_part_id_size,
         part_size=part_id_size
     )
-    return output_files

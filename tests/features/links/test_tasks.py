@@ -1,4 +1,3 @@
-import unittest
 import tempfile
 import json
 import shutil
@@ -34,11 +33,12 @@ from cdf.features.links.tasks import (
 )
 
 from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
+from cdf.testing import TaskTestCase
 from cdf.utils.s3 import list_files
 
 
 # TODO(darkjh) remove duplication with stream-level test
-class TestBadLinksTask(unittest.TestCase):
+class TestBadLinksTask(TaskTestCase):
     def setUp(self):
         self.info = [
             [1, 0, '', 1, 12345, 200, 1, 1, 1],
@@ -95,7 +95,7 @@ class TestBadLinksTask(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-class TestLinksCounterTask(unittest.TestCase):
+class TestLinksCounterTask(TaskTestCase):
     def setUp(self):
         self.outlinks = [
             [1, 'a', 0, 2, ''],
@@ -149,7 +149,7 @@ class TestLinksCounterTask(unittest.TestCase):
         self.assertItemsEqual(expected, result)
 
 
-class TestBadLinkCounterTask(unittest.TestCase):
+class TestBadLinkCounterTask(TaskTestCase):
     def setUp(self):
         self.badlinks = [
             [1, 2, 1, 500],
@@ -192,7 +192,7 @@ class TestBadLinkCounterTask(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-class TestMakeLinksToNonCompliantFile(unittest.TestCase):
+class TestMakeLinksToNonCompliantFile(TaskTestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
 
@@ -228,12 +228,14 @@ class TestMakeLinksToNonCompliantFile(unittest.TestCase):
 
         first_part_id_size = 2
         part_id_size = 10
-        actual_result = make_links_to_non_compliant_file(
+        make_links_to_non_compliant_file(
             s3_uri,
             first_part_id_size=first_part_id_size,
             part_id_size=part_id_size
         )
 
+        actual_result = self.get_files(
+            s3_uri, regexp='url_non_compliant_links.*')
         expected_result = [
             "s3://test_bucket/url_non_compliant_links.txt.0.gz",
             "s3://test_bucket/url_non_compliant_links.txt.1.gz"
@@ -252,7 +254,7 @@ class TestMakeLinksToNonCompliantFile(unittest.TestCase):
         self.assertEqual(expected_stream, list(actual_stream))
 
 
-class TestMakeLinksToNonCompliantCounterFile(unittest.TestCase):
+class TestMakeLinksToNonCompliantCounterFile(TaskTestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
 
@@ -281,12 +283,14 @@ class TestMakeLinksToNonCompliantCounterFile(unittest.TestCase):
             part_id=part_id
         )
 
-        actual_result = make_links_to_non_compliant_counter_file(
+        make_links_to_non_compliant_counter_file(
             s3_uri,
             part_id
         )
 
-        expected_result = "s3://test_bucket/url_non_compliant_links_counters.txt.3.gz"
+        actual_result = self.get_files(
+            s3_uri, regexp='url_non_compliant_links_counters.*')
+        expected_result = ["s3://test_bucket/url_non_compliant_links_counters.txt.3.gz"]
         self.assertEqual(expected_result, actual_result)
 
         actual_stream = LinksToNonCompliantCountersStreamDef.load(
@@ -302,7 +306,7 @@ class TestMakeLinksToNonCompliantCounterFile(unittest.TestCase):
         self.assertEqual(expected_stream, list(actual_stream))
 
 
-class TestMakeTopDomainsFiles(unittest.TestCase):
+class TestMakeTopDomainsFiles(TaskTestCase):
     @mock_s3
     def test_nominal_case(self):
         #mock
@@ -475,7 +479,7 @@ class TestMakeTopDomainsFiles(unittest.TestCase):
         )
 
 
-class TestMakeInlinksPercentileFile(unittest.TestCase):
+class TestMakeInlinksPercentileFile(TaskTestCase):
     def setUp(self):
         self.s3_uri = "s3://test_bucket"
         self.infos = [
@@ -542,7 +546,9 @@ class TestMakeInlinksPercentileFile(unittest.TestCase):
 
     @mock_s3
     def test_inlinks_percentile_file(self):
-        actual_result = self._launch_task()
+        self._launch_task()
+        actual_result = self.get_files(
+            self.s3_uri, regexp='inlinks_percentiles.txt.*')
 
         expected_result = [
             "s3://test_bucket/inlinks_percentiles.txt.0.gz",
