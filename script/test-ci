@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+shopt -s nullglob
+
+#little warning for later
+echo "WARNING: this is a temporary script and should be replaced by a generic test runner as soon as it's available!!" >&2
+
+#reset timestamps to ease docker's cache on ADDs
+/var/lib/jenkins/jobs/bin/reset-timestamps
+
+#build image
+tag="botify/botify-cdf-${BUILD_NUMBER}"
+docker build -t "$tag" .
+
+#run tests
+docker run "$tag" test
