@@ -1,9 +1,11 @@
 import subprocess
+from functools import partial
 from distutils .core import Command
 
 from botify.common.package import Package
 from botify.common.git import Git
 from botify.common.pypi import Pypi
+from botify.common import pypi
 from botify.common import github
 
 
@@ -125,5 +127,9 @@ class Release(Command):
             for command in commands:
                 print " ".join(command)
 
-        Pypi(self.pypi).upload(dry_run=self.dry_run)
+        pypi_repo = Pypi(self.pypi)
+        upload = partial(pypi_repo.upload, dry_run=self.dry_run)
+        upload(dist_type=pypi.SDIST)
+        upload(dist_type=pypi.BDIST_WHEEL)
+
         github.release(self.url, str(pkg.version), changelog, self.dry_run)
