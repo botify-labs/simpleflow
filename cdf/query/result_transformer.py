@@ -553,6 +553,12 @@ class DefaultValueTransformer(ResultTransformer):
             self.field_default_values = backend.field_default_value()
             self.backend = backend
 
+            # For each field with children, store them in a dict
+            self.field_children = {}
+            for field in self.fields:
+                if self.backend.has_child(field):
+                    self.field_children[field] = self.backend.get_children(field)
+
     def transform(self):
         # For each result document
         for result in self.results:
@@ -560,14 +566,14 @@ class DefaultValueTransformer(ResultTransformer):
             # Update the result document for default value if any of the
             # children is missing in that document
             for required_field in self.fields:
-                if not self.backend.has_child(required_field):
+                if not required_field in self.field_children:
                     if not path_in_dict(required_field, result) and \
                                     required_field in self.field_default_values:
                         default = self.field_default_values[required_field]
                         # in-place update
                         update_path_in_dict(required_field, default, result)
                 else:
-                    for child in self.backend.get_children(required_field):
+                    for child in self.field_children[required_field]:
                         if not path_in_dict(child, result) and \
                                         child in self.field_default_values:
                             default = self.field_default_values[child]
