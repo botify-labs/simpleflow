@@ -792,7 +792,7 @@ class RangeOp(GroupAggOp):
 class MetricAggOp(AggOp):
     """Metric aggregator calculates metrics inside each group
     """
-    def __init__(self, field=None):
+    def __init__(self, field=None, order="asc"):
         self.field = field
 
     def transform(self):

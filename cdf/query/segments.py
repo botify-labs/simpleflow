@@ -1,19 +1,47 @@
 from StringIO import StringIO
 from cdf.compat import json
 
+from cdf.query.query import QueryBuilder
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
+from cdf.core.metadata.dataformat import generate_data_format
 
-def get_segments_from_query(query, segments_idx):
+
+def get_segments_from_query(query, es_location, es_index, es_doc_type,
+                            crawl_id, features_options, s3_uri):
     """
-    :param query : A BSQL query
-    :parem segments_idx : A dict of segments (key : hash, value : {"human": ..., "query": ..., "total_urls": 10})
-    Return a list of most accurate segments from a BQL query
+    Return a list of segments from a given query
     """
-    query.botify_query["aggs"] = [{
+    data_format = generate_data_format(features_options)
+    data_backend = ElasticSearchBackend(data_format)
+    query_builder = QueryBuilder(es_location, es_index, es_doc_type,
+                                 crawl_id, features_options, data_backend)
+
+    # Fetch queyr aggs results
+    query["aggs"] = [{
         "group_by": ["pattern_id"],
         "metric": "count",
     }]
+    query_obj = get_query_aggs(query)
+    results = query_obj.response.aggs
+
+    # Load segments idx
+    segments_idx = load_segments_idx_from_s3(os.path.join(s3_uri, 'mixed_clusters.tsv'))
+
+    return get_segments_from_args(results, segments_idx)
+
+
+def get_segments_from_args(agg_results, segments_idx):
+    """
+    :param agg_results = a list of dicts like : {'groups': [{'pattern_id': [10873], 'metrics': [1]}]}
+    :parem segments_idx : A dict of segments (key : hash, value : {"human": ..., "query": ..., "total_urls": 10})
+    Return a list of most frequent segments from a BQL query
+    """
     results = []
-    # TODO
+    for agg in agg_results:
+        results.append({
+            "segment": segments_idx[agg["groups"][0]["pattern_id"]],
+            "nb_urls": agg["metrics"][0]
+        })
     return results
 
 
