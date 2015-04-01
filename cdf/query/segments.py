@@ -1,9 +1,12 @@
+import os
 from StringIO import StringIO
+
 from cdf.compat import json
 
 from cdf.query.query import QueryBuilder
 from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.core.metadata.dataformat import generate_data_format
+from cdf.utils import s3
 
 
 def get_segments_from_query(query, es_location, es_index, es_doc_type,
@@ -18,28 +21,28 @@ def get_segments_from_query(query, es_location, es_index, es_doc_type,
 
     # Fetch queyr aggs results
     query["aggs"] = [{
-        "group_by": ["pattern_id"],
+        "group_by": ["patterns"],
         "metric": "count",
     }]
-    query_obj = get_query_aggs(query)
-    results = query_obj.response.aggs
+    query_obj = query_builder.get_aggs_query(query)
+    results = query_obj.aggs[0]["groups"]
 
     # Load segments idx
-    segments_idx = load_segments_idx_from_s3(os.path.join(s3_uri, 'mixed_clusters.tsv'))
+    segments_idx = load_segments_idx_from_s3(os.path.join(s3_uri, 'clusters_mixed.tsv'))
 
     return get_segments_from_args(results, segments_idx)
 
 
 def get_segments_from_args(agg_results, segments_idx):
     """
-    :param agg_results = a list of dicts like : {'groups': [{'pattern_id': [10873], 'metrics': [1]}]}
+    :param agg_results = a list of dicts like : {'groups': [{'key': [10873], 'metrics': [1]}]}
     :parem segments_idx : A dict of segments (key : hash, value : {"human": ..., "query": ..., "total_urls": 10})
     Return a list of most frequent segments from a BQL query
     """
     results = []
     for agg in agg_results:
         results.append({
-            "segment": segments_idx[agg["groups"][0]["pattern_id"]],
+            "segment": segments_idx[agg["key"][0]],
             "nb_urls": agg["metrics"][0]
         })
     return results
@@ -47,8 +50,8 @@ def get_segments_from_args(agg_results, segments_idx):
 
 def load_segments_idx_from_s3(s3_uri):
     f = StringIO()
-    key = get_key_from_s3_uri(s3_uri)
-    f.write(key.get_contents_to_string(key))
+    key = s3.get_key_from_s3_uri(s3_uri)
+    key.get_contents_to_file(f)
     f.seek(0)
     segments = load_segments_idx_from_file(f)
     f.close()

@@ -307,7 +307,8 @@ class SuggestStreamDef(StreamDefBase):
             "type": LONG_TYPE,
             "settings": {
                 LIST,
-                FIELD_RIGHTS.PRIVATE
+                FIELD_RIGHTS.PRIVATE,
+                AGG_CATEGORICAL
             }
         },
     }
