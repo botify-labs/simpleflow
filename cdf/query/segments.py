@@ -27,6 +27,10 @@ def get_segments_from_query(query, es_location, es_index, es_doc_type,
     query_obj = query_builder.get_aggs_query(query)
     results = query_obj.aggs[0]["groups"]
 
+    # It's currently not possible to sort by most frequent pattern
+    # on elasticsearch (see http://www.elastic.co/guide/en/elasticsearch/reference/1.x/search-aggregations-metrics-valuecount-aggregation.html
+    results = sorted(results, key=lambda i: i["metrics"][0], reverse=True)
+
     # Load segments idx
     segments_idx = load_segments_idx_from_s3(os.path.join(s3_uri, 'clusters_mixed.tsv'))
 

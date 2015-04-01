@@ -13,8 +13,8 @@ class TestSegments(unittest.TestCase):
 
     def test_get_segments_from_args(self):
         results = [
-            {"groups": [{"pattern_id": 111}], "metrics": [10]},
-            {"groups": [{"pattern_id": 222}], "metrics": [8]}
+            {"key": [111], "metrics": [10]},
+            {"key": [222], "metrics": [8]}
         ]
         segments_idx = {
             111: {
