@@ -1,5 +1,6 @@
 import os
 from StringIO import StringIO
+from collections import defaultdict
 
 from cdf.compat import json
 
@@ -8,9 +9,12 @@ from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
 from cdf.core.metadata.dataformat import generate_data_format
 from cdf.utils import s3
 
+FILTER_LEAF = 'FILTER_LEAF'
+FILTER_ROOT = 'FILTER_ROOT'
+
 
 def get_segments_from_query(query, es_location, es_index, es_doc_type,
-                            crawl_id, features_options, s3_uri):
+                            crawl_id, features_options, s3_uri, apply_filter=None):
     """
     Return a list of segments from a given query
     """
@@ -31,40 +35,48 @@ def get_segments_from_query(query, es_location, es_index, es_doc_type,
     # on elasticsearch (see http://www.elastic.co/guide/en/elasticsearch/reference/1.x/search-aggregations-metrics-valuecount-aggregation.html
     results = sorted(results, key=lambda i: i["metrics"][0], reverse=True)
 
-    # Load segments idx
-    segments_idx = load_segments_idx_from_s3(os.path.join(s3_uri, 'clusters_mixed.tsv'))
+    f_names = s3.get_content_to_streamio_file(os.path.join(s3_uri, 'clusters_mixed.tsv'))
+    f_relationships = s3.get_content_to_streamio_file(os.path.join(s3_uri, 'cluster_mixed_children.tsv'))
+    segments = load_segments_from_files(f_names, f_relationships)
 
-    return get_segments_from_args(results, segments_idx)
+    return get_segments_from_args(results, segments, apply_filter=apply_filter)
 
 
-def get_segments_from_args(agg_results, segments_idx):
+
+def get_segments_from_args(agg_results, segments, apply_filter=None):
     """
     :param agg_results = a list of dicts like : {'groups': [{'key': [10873], 'metrics': [1]}]}
-    :parem segments_idx : A dict of segments (key : hash, value : {"human": ..., "query": ..., "total_urls": 10})
+    :param segments : A list of segments dicts {"human": ..., "query": ..., "total_urls": 10})
+    :param
     Return a list of most frequent segments from a BQL query
     """
+    segments_idx = {s["hash"]:s for s in segments}
     results = []
     for agg in agg_results:
+        segment = segments_idx[agg["key"][0]]
+
+        # Filters
+        if apply_filter == FILTER_LEAF:
+            if len(segment["children"]) > 0:
+                continue
+        if apply_filter == FILTER_ROOT:
+            if segment["parent"] is not None:
+                continue
+
         results.append({
-            "segment": segments_idx[agg["key"][0]],
+            "segment": {
+                "query": segment["query"],
+                "human": segment["human"],
+                "total_urls": segment["total_urls"]
+            },
             "nb_urls": agg["metrics"][0]
         })
     return results
 
 
-def load_segments_idx_from_s3(s3_uri):
-    f = StringIO()
-    key = s3.get_key_from_s3_uri(s3_uri)
-    key.get_contents_to_file(f)
-    f.seek(0)
-    segments = load_segments_idx_from_file(f)
-    f.close()
-    return segments
-
-
-def load_segments_idx_from_file(f):
+def load_segments_from_files(f_names, f_relationships):
     """
-    Load segments from file and return it as a dict
+    Load segments from file and return it as a list of dict objects
 
     TSV file format is :
     * human readble query
@@ -82,16 +94,34 @@ def load_segments_idx_from_file(f):
                 {"field": "path", "value": "products/", "predicate": "startswith"}
             ]
         },
+        "hash": 11229837,
+        "children": [1227267, 192762],
+        "parent": 1836753,
         "total_urls": 10
     }
     """
-    segments_idx = {}
-    for line in f:
+
+    # Prepare relationships dicts
+    rel_children = defaultdict(list)
+    rel_parent = {}
+    for line in f_relationships:
+        parent, child = line[:-1].split('\t')
+        parent = int(parent)
+        child = int(child)
+        rel_children[parent].append(child)
+        rel_parent[child] = parent
+
+    segments = []
+    for line in f_names:
         human, query, _hash, total_urls = line[:-1].split('\t')
-        segments_idx[int(_hash)] = {
+        _hash = int(_hash)
+        segments.append({
             "human": human,
             "query": json.loads(query),
-            "total_urls": int(total_urls)
-        }
-    return segments_idx
+            "hash": int(_hash),
+            "total_urls": int(total_urls),
+            "parent": rel_parent.get(_hash, None),
+            "children": rel_children[_hash]
+        })
+    return segments
 
