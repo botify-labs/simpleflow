@@ -738,6 +738,7 @@ class DistinctOp(GroupAggOp):
         """
         self.field = content['field']
         self.size = content.get('size', DISTINCT_AGG_BUCKET_SIZE)
+        self.order = content.get('order', {"_term": "asc"})
         self.valid_fields = agg_fields['categorical']
 
     def transform(self):
@@ -745,7 +746,7 @@ class DistinctOp(GroupAggOp):
             "terms": {
                 "field": self.field,
                 "size": self.size,
-                "order": {"_term": "asc"}
+                "order": self.order
             }
         }
 
@@ -792,7 +793,7 @@ class RangeOp(GroupAggOp):
 class MetricAggOp(AggOp):
     """Metric aggregator calculates metrics inside each group
     """
-    def __init__(self, field=None, order="asc"):
+    def __init__(self, field=None):
         self.field = field
 
     def transform(self):

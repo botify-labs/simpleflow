@@ -25,15 +25,16 @@ def get_segments_from_query(query, es_location, es_index, es_doc_type,
 
     # Fetch queyr aggs results
     query["aggs"] = [{
-        "group_by": ["patterns"],
+        "group_by": [{
+            "distinct": {
+                "field": "patterns",
+                "order": {"_count": "desc"}
+            }
+        }],
         "metric": "count",
     }]
     query_obj = query_builder.get_aggs_query(query)
     results = query_obj.aggs[0]["groups"]
-
-    # It's currently not possible to sort by most frequent pattern
-    # on elasticsearch (see http://www.elastic.co/guide/en/elasticsearch/reference/1.x/search-aggregations-metrics-valuecount-aggregation.html
-    results = sorted(results, key=lambda i: i["metrics"][0], reverse=True)
 
     f_names = s3.get_content_to_streamio_file(os.path.join(s3_uri, 'clusters_mixed.tsv'))
     f_relationships = s3.get_content_to_streamio_file(os.path.join(s3_uri, 'cluster_mixed_children.tsv'))
@@ -124,4 +125,3 @@ def load_segments_from_files(f_names, f_relationships):
             "children": rel_children[_hash]
         })
     return segments
-
