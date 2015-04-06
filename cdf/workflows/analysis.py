@@ -507,6 +507,30 @@ class AnalysisWorkflow(Workflow):
             links_to_non_compliant_urls_counter_results
         )
 
+    def push_to_es(self, context):
+        """
+        Push already generated documents to elasticsearch
+        """
+        elastic_search_result = self.submit(
+            push_documents_to_elastic_search,
+            context["crawl_id"],
+            context["s3_uri"],
+            first_part_id_size=context["first_part_id_size"],
+            part_id_size=context["part_id_size"],
+            comparison=context["has_comparison"],
+            tmp_dir=context["tmp_dir"],
+            **context["es_params"]
+        )
+        futures.wait(elastic_search_result)
+
+        # Waiting for ES index to be refreshed
+        elastic_search_ready = self.submit(
+            refresh_index,
+            context["es_location"],
+            context["es_index"],
+        )
+        return futures.wait(elastic_search_ready)
+
     def run(self, **context):
         # Extract variables from the context.
         crawl_id = context['crawl_id']
@@ -531,6 +555,7 @@ class AnalysisWorkflow(Workflow):
             'es_index': context['es_index'],
             'es_doc_type': context['es_doc_type']
         }
+        context["es_params"] = es_params
 
         partitions = self.submit(enumerate_partitions,
                                  s3_uri,
@@ -546,21 +571,13 @@ class AnalysisWorkflow(Workflow):
         revision_number = context['revision_number']
         features_flags = context.get('features_flags', [])
         has_comparison = 'comparison' in features_flags
+        context["has_comparison"] = has_comparison
 
         if 'push_to_elastic_search_only' in context:
             # Quickfix for big failure of ES
             # We assume that documents are already generated and available
             # on S3
-            elastic_search_result = self.submit(
-                push_documents_to_elastic_search,
-                crawl_id,
-                s3_uri,
-                comparison=has_comparison,
-                tmp_dir=tmp_dir,
-                **es_params
-            )
-            futures.wait(elastic_search_result)
-            return
+            return self.push_to_es(context)
 
         # intermediary analysis results
         intermediary_files = []
@@ -795,25 +812,7 @@ class AnalysisWorkflow(Workflow):
             # if `comparison` feature is activated
             futures.wait(comparison)
 
-        elastic_search_result = self.submit(
-            push_documents_to_elastic_search,
-            crawl_id,
-            s3_uri,
-            first_part_id_size=first_part_id_size,
-            part_id_size=part_id_size,
-            comparison=has_comparison,
-            tmp_dir=tmp_dir,
-            **es_params
-        )
-        futures.wait(elastic_search_result)
-
-        # Waiting for ES index to be refreshed
-        elastic_search_ready = self.submit(
-            refresh_index,
-            context["es_location"],
-            context["es_index"],
-        )
-        futures.wait(elastic_search_ready)
+        futures.wait(self.push_to_es(context))
 
         # wait for independent tasks
         # they should be finished before status update
