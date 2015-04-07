@@ -510,6 +510,7 @@ class AnalysisWorkflow(Workflow):
     def push_to_es(self, context):
         """
         Push already generated documents to elasticsearch
+        Return a `Future` object
         """
         elastic_search_result = self.submit(
             push_documents_to_elastic_search,
@@ -521,7 +522,8 @@ class AnalysisWorkflow(Workflow):
             tmp_dir=context["tmp_dir"],
             **context["es_params"]
         )
-        futures.wait(elastic_search_result)
+        if not elastic_search_result.finished:
+            return elastic_search_result
 
         # Waiting for ES index to be refreshed
         elastic_search_ready = self.submit(
@@ -529,7 +531,7 @@ class AnalysisWorkflow(Workflow):
             context["es_location"],
             context["es_index"],
         )
-        return futures.wait(elastic_search_ready)
+        return elastic_search_ready
 
     def run(self, **context):
         # Extract variables from the context.
@@ -577,7 +579,8 @@ class AnalysisWorkflow(Workflow):
             # Quickfix for big failure of ES
             # We assume that documents are already generated and available
             # on S3
-            return self.push_to_es(context)
+            futures.wait(self.push_to_es(context))
+            return
 
         # intermediary analysis results
         intermediary_files = []
