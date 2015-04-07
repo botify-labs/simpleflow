@@ -19,6 +19,7 @@ elif [ "$1" == "test" ]; then
   fi
   sudo service elasticsearch start
   nosetests -e '.*integration.*'
+  /virtualenv/pypy/bin/nosetests tests/utils/test_{kvstore,decorator,dict}.py
 else
   echo "Invalid option. Please invoke the container with 'bash' or 'test'" >&2
   exit 1

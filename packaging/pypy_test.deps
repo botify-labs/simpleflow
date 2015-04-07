@@ -1,0 +1,4 @@
+mock
+nose
+coverage
+moto==0.3.5
