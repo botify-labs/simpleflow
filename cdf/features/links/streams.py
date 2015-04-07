@@ -1203,3 +1203,13 @@ class InlinksPercentilesStreamDef(StreamDefBase):
     def process_document(self, document, input_stream):
         _, percentile_id, _ = input_stream
         document["inlinks_internal"]["percentile"] = percentile_id
+
+
+class PageRankStreamDef(StreamDefBase):
+    FILE = 'pagerank'
+    HEADERS = (
+        ('id', int),
+        ('pr_rank', int),
+        ('pr_value', float),
+        ('pr', int)
+    )

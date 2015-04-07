@@ -4,6 +4,7 @@ import itertools
 import logging
 
 from cdf.compat import json
+from cdf.features.links.pagerank import pagerank_filter, compute_page_rank, process_pr_result, virtuals_filter
 from cdf.utils.s3 import push_file, push_content
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils.remote_files import (
@@ -31,8 +32,8 @@ from cdf.features.links.streams import (
     LinksToNonCompliantStreamDef,
     LinksToNonCompliantCountersStreamDef,
     InlinksPercentilesStreamDef,
-    InredirectCountersStreamDef
-)
+    InredirectCountersStreamDef,
+    PageRankStreamDef)
 from cdf.features.links.top_domains import (
     compute_top_domain,
     filter_external_outlinks,
@@ -348,3 +349,51 @@ def make_inlinks_percentiles_file(s3_uri,
         first_part_size=first_part_id_size,
         part_size=part_id_size
     )
+
+
+@with_temporary_dir
+def page_rank(s3_uri,
+              virtual_pages=False,
+              first_part_id_size=FIRST_PART_ID_SIZE,
+              part_id_size=PART_ID_SIZE,
+              tmp_dir=None,
+              force_fetch=DEFAULT_FORCE_FETCH):
+    # get max crawled urlid
+    crawler_metakeys = get_crawl_info(s3_uri, tmp_dir=tmp_dir)
+    max_crawled_urlid = get_max_crawled_urlid(crawler_metakeys)
+
+    # first pass for page rank
+    s = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    s = pagerank_filter(
+        s, virtual_pages=virtual_pages, max_crawled_id=max_crawled_urlid)
+
+    pr, degrees = compute_page_rank(s)
+
+    # second pass for virtual links
+    s = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    s = virtuals_filter(s, max_crawled_urlid)
+
+    result = process_pr_result(pr)
+    PageRankStreamDef.persist(
+        iter(result), s3_uri,
+        first_part_size=FIRST_PART_ID_SIZE,
+        part_size=PART_ID_SIZE
+    )
+
+    # make result eligible for GC
+    result = None
+
+    virtuals_result = {}
+    for k, g in itertools.groupby(s, key=lambda x: x[0]):
+        g = list(g)
+        n = len(g)
+        final_outdegrees = n + degrees[k]
+        contrib = pr[k] / final_outdegrees
+
+        for _, dst in g:
+            v = virtuals_result.setdefault(dst, 0.0)
+            v += contrib
+            virtuals_result[dst] = v
+
+    dest_uri = os.path.join(s3_uri, 'pagerank_virtuals.json')
+    push_content(dest_uri, json.dumps(virtuals_result))
