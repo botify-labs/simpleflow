@@ -16,7 +16,7 @@ from cdf.compat import json
 _ALL_FIELDS = {
     'main': {'lang': True},
     'main_image': None,
-    'links': {'top_anchors': True, 'prev_next': True},
+    'links': {'top_anchors': True, 'prev_next': True, 'page_rank': True},
     'semantic_metadata': None,
     'sitemaps': None,  # not sure
     'ganalytics': None,

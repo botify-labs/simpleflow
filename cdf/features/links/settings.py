@@ -18,5 +18,6 @@ GROUPS = Enum(
         ("inlinks_nofollow", "Inlinks in No-Follow"),
         ("redirects", "Redirects"),
         ("canonical", "Canonicals"),
+        ("page_rank", "Internal Page Rank")
     ]
 )
