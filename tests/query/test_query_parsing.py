@@ -283,6 +283,37 @@ class TestAggregationParsing(ParsingTestCase):
             }
         )
 
+    def test_parse_distinct_order(self):
+        # Group by "value"
+        # Expected mapping : value => _term
+        valid = [{'group_by': [{'distinct': {'field': 'depth', 'order': {'value': 'asc'}}}],
+                  'metric': 'count'}]
+        parsed = self.parser.parse_aggregations(valid)
+        self.assertEquals(
+                parsed.named_aggs[0].transform()["terms"]["order"],
+                {"_term": "asc"})
+
+        # Group by "count"
+        # Expected mapping : count => _count
+        valid = [{'group_by': [{'distinct': {'field': 'depth', 'order': {'count': 'desc'}}}],
+                  'metric': 'count'}]
+        parsed = self.parser.parse_aggregations(valid)
+        self.assertEquals(
+                parsed.named_aggs[0].transform()["terms"]["order"],
+                {"_count": "desc"})
+
+    def test_parse_invalid_distinct_order(self):
+        # _term is not allowed
+        invalid = [{'group_by': [{'unknown': {'field': 'http_code', 'order': {"_term": "asc"}}}],
+                    'metrics': ['count']}]
+        self.assertParsingError(self.parser.parse_aggregations, invalid)
+
+        # _count is not allowed
+        invalid = [{'group_by': [{'unknown': {'field': 'http_code', 'order': {"_count": "asc"}}}],
+                    'metrics': ['count']}]
+        self.assertParsingError(self.parser.parse_aggregations, invalid)
+
+
     def test_parse_unknown_group_op(self):
         invalid = [{'group_by': [{'unknown': {'field': 'http_code'}}],
                     'metrics': ['count']}]
