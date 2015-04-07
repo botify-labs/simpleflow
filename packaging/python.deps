@@ -21,3 +21,4 @@ python-google-analytics
 cbor
 bitarray==0.8.1
 scipy==0.13.0
+networkx==1.9.1
