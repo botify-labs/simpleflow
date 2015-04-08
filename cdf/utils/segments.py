@@ -1,5 +1,4 @@
 import os
-from StringIO import StringIO
 from collections import defaultdict
 
 from cdf.compat import json
