@@ -1,31 +1,18 @@
-import plyvel
+from __future__ import absolute_import
+
 import logging
 
-_DEFAULT_BATCH_SIZE = 10000  # 10k
+import plyvel
+
+from . import base
+from . import exceptions
+from . import constants
 
 
 logger = logging.getLogger(__name__)
 
 
-class KVStoreException(Exception):
-    pass
-
-
-class KVStoreManager(object):
-    """A factory-like object that returns an kv store instance
-    It helps handling DB configurations and DB maintenance ops
-    """
-    pass
-
-
-class KVStore(object):
-    """An abstraction over different embedded key-value stores
-    """
-    pass
-
-
-# TODO abstract methods into base class
-class LevelDB(KVStore):
+class LevelDB(base.KVStore):
     def __init__(self, path):
         self.path = path
         self.db = None
@@ -34,7 +21,7 @@ class LevelDB(KVStore):
         """Check that the DB wrapper object is operational
         """
         if self.db is None:
-            raise KVStoreException('DB not initiated ...')
+            raise exceptions.KVStoreException('DB not initiated ...')
 
     def open(self, **configs):
         """Open the DB
@@ -51,6 +38,7 @@ class LevelDB(KVStore):
     def destroy(self):
         """Close and remove the whole DB (all data is lost)
         """
+        self._check()
         self.db.close()
         plyvel.destroy_db(self.path)
 
@@ -61,7 +49,7 @@ class LevelDB(KVStore):
         self.close()
         self.open(**configs)
 
-    def batch_write(self, kv_stream, batch_size=_DEFAULT_BATCH_SIZE):
+    def batch_write(self, kv_stream, batch_size=constants.DEFAULT_BATCH_SIZE):
         """Batch write a key-value stream into the DB
 
         Note it's generally better to configure the DB with large write buffer
@@ -106,8 +94,3 @@ class LevelDB(KVStore):
 
     def __del__(self):
         self.destroy()
-
-
-# TODO study the python binding of RocksDB
-class RocksDB(KVStore):
-    pass

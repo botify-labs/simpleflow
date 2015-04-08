@@ -1,0 +1,2 @@
+class KVStoreException(Exception):
+    pass

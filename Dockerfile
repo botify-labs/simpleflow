@@ -11,6 +11,9 @@ ENV PYTHONUNBUFFERED 1
 # Don't ask for interactive confirmation on install/updates
 ENV DEBIAN_FRONTEND noninteractive
 
+# Path to the directory that hosts Python virtualenvs
+ENV VIRTUALENV_PATH /virtualenv
+
 # Upgrade system and install dependencies
 # NB: the date is a tip to bypass cache and retrigger the upgrade when needed
 # It may well be possible that the build is newer though, for instance if we
@@ -60,11 +63,28 @@ RUN pip install -r /deps/botify-cdf/python.deps
 ADD packaging/python_test.deps /deps/botify-cdf/
 RUN pip install -r /deps/botify-cdf/python_test.deps
 
-# 3- INSTALL
+# 3- PREPARE pypy Environment
+# ---------------------------
+## Install pypy from a ppa to get a recent version.
+RUN apt-get install -q -y software-properties-common
+RUN apt-add-repository ppa:pypy/ppa && apt-get update && apt-get install -q -y pypy
+## Install dependencies in a virtualenv
+RUN mkdir -p ${VIRTUALENV_PATH}
+RUN apt-get install -q -y python-virtualenv pypy-dev
+RUN virtualenv -p pypy ${VIRTUALENV_PATH}/pypy
+ADD packaging/pypy.deps /deps/botify-cdf/
+ADD packaging/pypy_test.deps /deps/botify-cdf/
+RUN ${VIRTUALENV_PATH}/pypy/bin/pip install -r /deps/botify-cdf/pypy.deps && ${VIRTUALENV_PATH}/pypy/bin/pip install -r /deps/botify-cdf/pypy_test.deps
+
+# 4- INSTALL
 # -----------
 RUN mkdir -p /code/botify-cdf/
 WORKDIR /code/botify-cdf/
 ADD . /code/botify-cdf/
+## Install default CPython version
 RUN python /code/botify-cdf/setup.py install
+
+## Install cdf in pypy environment
+RUN ${VIRTUALENV_PATH}/pypy/bin/pip install -I --no-deps -e /code/botify-cdf
 
 ENTRYPOINT ["/bin/bash", "docker/run"]
