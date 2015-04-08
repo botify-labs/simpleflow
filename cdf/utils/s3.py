@@ -4,7 +4,7 @@ import re
 from urlparse import urlparse
 import zlib
 import boto
-from StringIO import StringIO
+from cStringIO import StringIO
 
 from boto.s3.key import Key
 from cdf.log import logger
