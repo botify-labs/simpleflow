@@ -210,7 +210,7 @@ def push_file(s3_uri, filename):
     key.set_contents_from_filename(filename)
 
 
-def get_content_to_streamio_file(s3_uri):
+def get_content_to_streamio(s3_uri):
     """
     Fetch content from s3 uri and write it into a StrinIO object
     Then seek to first byte

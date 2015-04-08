@@ -36,8 +36,8 @@ def get_segments_from_query(query, es_location, es_index, es_doc_type,
     query_obj = query_builder.get_aggs_query(query)
     results = query_obj.aggs[0]["groups"]
 
-    f_names = s3.get_content_to_streamio_file(os.path.join(s3_uri, 'clusters_mixed.tsv'))
-    f_relationships = s3.get_content_to_streamio_file(os.path.join(s3_uri, 'cluster_mixed_children.tsv'))
+    f_names = s3.get_content_to_streamio(os.path.join(s3_uri, 'clusters_mixed.tsv'))
+    f_relationships = s3.get_content_to_streamio(os.path.join(s3_uri, 'cluster_mixed_children.tsv'))
     segments = load_segments_from_files(f_names, f_relationships)
 
     return get_segments_from_args(results, segments, apply_filter=apply_filter)
