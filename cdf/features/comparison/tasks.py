@@ -18,6 +18,7 @@ from cdf.features.comparison.constants import (
     COMPARISON_PATH)
 from cdf.utils.s3 import fetch_file, push_file, stream_files
 from cdf.utils.path import makedirs
+from cdf.utils import safe_json
 
 _FEATURE_ID = 'comparison'
 _REF_PATH = 'compare_ref'
@@ -52,7 +53,7 @@ def _key_stream_from_db(db):
 def _doc_stream_from_db(db):
     with db.iterator() as db_iter:
         for _, doc_str in db_iter:
-            yield json.loads(doc_str)
+            yield safe_json.loads(doc_str)
 
 
 def _get_document_path(crawl_path):

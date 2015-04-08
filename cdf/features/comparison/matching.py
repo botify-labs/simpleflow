@@ -3,7 +3,8 @@ import time
 
 from enum import Enum
 
-from cdf.compat import json
+from cdf.utils import safe_json
+
 from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.kvstore import LevelDB
 from cdf.features.comparison import logger
@@ -75,7 +76,7 @@ def load_raw_documents(raw_document_stream):
     :return: a generator of (key, document)
     """
     for raw_doc in raw_document_stream:
-        doc = json.loads(raw_doc)
+        doc = safe_json.loads(raw_doc)
         uid = doc['id']
         url = doc['url']
         url_key = encode_url_key(url, uid)
