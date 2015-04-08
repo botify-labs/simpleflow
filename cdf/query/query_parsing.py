@@ -770,10 +770,12 @@ class DistinctOp(GroupAggOp):
         order_key = self.order.keys()[0]
         order_value = self.order[order_key]
         if order_key not in self.ORDER_MAPPING:
-            _raise_parsing_error('Field\'s order key {} is not valid for distinct aggregation'.format(order_key),
+            _raise_parsing_error("""Field\'s order key {} is not valid
+                                 for distinct aggregation""".format(order_key),
                                  self.field)
         if order_value not in ("asc", "desc"):
-            _raise_parsing_error('Field\'s order value {} is not valid for distinct aggregation'.format(order_value),
+            _raise_parsing_error("""Field\'s order value {} is not valid
+                                  for distinct aggregation""".format(order_value),
                                  self.field)
 
 
