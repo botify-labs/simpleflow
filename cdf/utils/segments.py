@@ -27,7 +27,7 @@ def get_segments_from_query(query, es_location, es_index, es_doc_type,
         "group_by": [{
             "distinct": {
                 "field": "patterns",
-                "order": {"_count": "desc"}
+                "order": {"count": "desc"}
             }
         }],
         "metric": "count",
