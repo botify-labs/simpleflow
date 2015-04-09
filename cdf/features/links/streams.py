@@ -6,10 +6,10 @@ from cdf.metadata.url.url_metadata import (
     INT_TYPE, BOOLEAN_TYPE, STRUCT_TYPE,
     ES_NO_INDEX, ES_DOC_VALUE,
     LIST, AGG_CATEGORICAL, AGG_NUMERICAL,
-    STRING_TYPE, ES_NOT_ANALYZED, STRING_NB_MAP_MAPPING,
+    STRING_TYPE, STRING_NB_MAP_MAPPING,
     FAKE_FIELD, URL_ID,
-    DIFF_QUALITATIVE, DIFF_QUANTITATIVE
-)
+    DIFF_QUALITATIVE, DIFF_QUANTITATIVE,
+    FLOAT_TYPE)
 from cdf.core.streams.base import StreamDefBase
 from cdf.log import logger
 from cdf.features.links.helpers.masks import list_to_mask
@@ -1203,3 +1203,57 @@ class InlinksPercentilesStreamDef(StreamDefBase):
     def process_document(self, document, input_stream):
         _, percentile_id, _ = input_stream
         document["inlinks_internal"]["percentile"] = percentile_id
+
+
+class PageRankStreamDef(StreamDefBase):
+    FILE = 'pagerank'
+    HEADERS = (
+        ('id', int),
+        ('pr_rank', int),
+        ('pr_value', float),
+        ('normalized', int)
+    )
+
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.page_rank.name
+
+    URL_DOCUMENT_MAPPING = {
+        "internal_page_rank.value": {
+            "type": FLOAT_TYPE,
+            "verbose_name": "Exact Page Rank Value",
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS
+            },
+            "enabled": check_enabled('page_rank')
+        },
+        "internal_page_rank.rank": {
+            "type": INT_TYPE,
+            "verbose_name": "Total Rank of a Page",
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS
+            },
+            "enabled": check_enabled('page_rank')
+        },
+        "internal_page_rank.normalized": {
+            "type": INT_TYPE,
+            "verbose_name": "Normalized Page Rank",
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS
+            },
+            "enabled": check_enabled('page_rank')
+        }
+    }
+
+    def process_document(self, document, input_stream):
+        _, rank, value, normalized = input_stream
+        document['internal_page_rank']['value'] = value
+        document['internal_page_rank']['rank'] = rank
+        document['internal_page_rank']['normalized'] = normalized

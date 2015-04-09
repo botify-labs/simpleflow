@@ -116,7 +116,8 @@ from cdf.features.links.tasks import (
     make_links_to_non_compliant_file,
     make_links_to_non_compliant_counter_file,
     make_top_domains_files,
-    make_inlinks_percentiles_file
+    make_inlinks_percentiles_file,
+    page_rank
 )
 compute_metadata_count = as_activity(compute_metadata_count)
 make_metadata_duplicates_file = as_activity(make_metadata_duplicates_file)
@@ -134,6 +135,7 @@ make_top_domains_files = optional_activity(
     'links',
 )
 make_inlinks_percentiles_file = as_activity(make_inlinks_percentiles_file)
+compute_page_rank = as_activity(page_rank)
 
 from cdf.tasks.url_data import (
     generate_documents,
@@ -450,6 +452,10 @@ class AnalysisWorkflow(Workflow):
         return context['features_options']['main'].get(
             'suggested_patterns', True)
 
+    @classmethod
+    def has_page_rank(cls, context):
+        return context['features_options']['links'].get('page_rank', False)
+
     def compute_zone_compliant_dependent(self, crawled_partitions, **context):
         s3_uri = context["s3_uri"]
         first_part_id_size = context["first_part_id_size"]
@@ -692,6 +698,17 @@ class AnalysisWorkflow(Workflow):
 
         if 'sitemaps' in features_flags:
             intermediary_files.extend(self.compute_sitemaps(context))
+
+        if self.has_page_rank(context):
+            pr_result = self.submit(
+                compute_page_rank,
+                s3_uri=s3_uri,
+                virtual_pages=False,
+                first_part_id_size=first_part_id_size,
+                part_id_size=part_id_size,
+                tmp_dir=tmp_dir
+            )
+            intermediary_files.append(pr_result)
 
         if (all(r.finished for r in zone_results) and
             all(r.finished for r in compliant_urls_results)):

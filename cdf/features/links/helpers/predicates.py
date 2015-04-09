@@ -20,6 +20,11 @@ def is_link_internal(link_mask, dest, is_bitmask=False):
     return dest > 0 or (dest == -1 and is_robots)
 
 
+def is_robots_blocked(link_mask):
+    """Determine if a link is blocked by robots.txt"""
+    return link_mask & 4 == 4
+
+
 def is_external_link(link_mask):
     """Determine if a link is an external link
     All we need to do here is check the presence of bit `8`
