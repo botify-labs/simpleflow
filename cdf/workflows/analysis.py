@@ -509,16 +509,19 @@ class AnalysisWorkflow(Workflow):
 
     def push_to_es(self, context):
         """
-        Push already generated documents to elasticsearch
-        Return a `Future` object
+        Push already generated documents to elasticsearch.
+
+        :rtype: futures.Future
         """
+        features_flags = context.get('features_flags', [])
+        has_comparison = 'comparison' in features_flags
         elastic_search_result = self.submit(
             push_documents_to_elastic_search,
             context["crawl_id"],
             context["s3_uri"],
             first_part_id_size=context["first_part_id_size"],
             part_id_size=context["part_id_size"],
-            comparison=context["has_comparison"],
+            comparison=has_comparison,
             tmp_dir=context["tmp_dir"],
             **context["es_params"]
         )
@@ -573,7 +576,6 @@ class AnalysisWorkflow(Workflow):
         revision_number = context['revision_number']
         features_flags = context.get('features_flags', [])
         has_comparison = 'comparison' in features_flags
-        context["has_comparison"] = has_comparison
 
         if 'push_to_elastic_search_only' in context:
             # Quickfix for big failure of ES
