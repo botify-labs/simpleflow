@@ -18,6 +18,9 @@ elif [ "$1" == "test" ]; then
 	echo "Elastic search already installed"
   fi
   sudo service elasticsearch start
+  #fail from now if tests fail
+  set -e
+  #run tests
   nosetests -e '.*integration.*'
   /virtualenv/pypy/bin/nosetests tests/utils/test_{kvstore,decorator,dict}.py
 else
