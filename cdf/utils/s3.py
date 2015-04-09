@@ -4,6 +4,8 @@ import re
 from urlparse import urlparse
 import zlib
 import boto
+from cStringIO import StringIO
+
 from boto.s3.key import Key
 from cdf.log import logger
 from cdf.utils.path import makedirs, partition_aware_sort
@@ -206,3 +208,15 @@ def push_file(s3_uri, filename):
     key = get_key_from_s3_uri(s3_uri)
     logger.info("Push %s" % s3_uri)
     key.set_contents_from_filename(filename)
+
+
+def get_content_to_streamio(s3_uri):
+    """
+    Fetch content from s3 uri and write it into a StrinIO object
+    Then seek to first byte
+    """
+    f = StringIO()
+    key = get_key_from_s3_uri(s3_uri)
+    key.get_contents_to_file(f)
+    f.seek(0)
+    return f

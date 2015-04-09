@@ -733,25 +733,49 @@ class SingleBucketOp(GroupAggOp):
 class DistinctOp(GroupAggOp):
     """Create a group for each distinct value
     """
+
+    ORDER_MAPPING = {
+        "value": "_term",
+        "count": "_count"
+    }
+
     def __init__(self, content, agg_fields):
         """Init a distinct group aggregator
         """
         self.field = content['field']
         self.size = content.get('size', DISTINCT_AGG_BUCKET_SIZE)
+        self.order = content.get('order', {"value": "asc"})
         self.valid_fields = agg_fields['categorical']
 
     def transform(self):
+        order_key = self.order.keys()[0]
         return {
             "terms": {
                 "field": self.field,
                 "size": self.size,
-                "order": {"_term": "asc"}
+                "order": {self.ORDER_MAPPING[order_key]: self.order[order_key]}
             }
         }
 
     def validate(self):
         if self.field not in self.valid_fields:
             _raise_parsing_error('Field is not valid for distinct aggregation',
+                                 self.field)
+
+        # Check that order is a single key
+        if len(self.order.keys()) > 1:
+            _raise_parsing_error('Field\'s order is not valid for distinct aggregation',
+                                 self.field)
+
+        order_key = self.order.keys()[0]
+        order_value = self.order[order_key]
+        if order_key not in self.ORDER_MAPPING:
+            _raise_parsing_error("""Field\'s order key {} is not valid
+                                 for distinct aggregation""".format(order_key),
+                                 self.field)
+        if order_value not in ("asc", "desc"):
+            _raise_parsing_error("""Field\'s order value {} is not valid
+                                  for distinct aggregation""".format(order_value),
                                  self.field)
 
 
