@@ -1220,6 +1220,7 @@ class PageRankStreamDef(StreamDefBase):
         "internal_page_rank.value": {
             "type": FLOAT_TYPE,
             "verbose_name": "Exact Page Rank Value",
+            "default_value": None,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
@@ -1231,6 +1232,7 @@ class PageRankStreamDef(StreamDefBase):
         "internal_page_rank.rank": {
             "type": INT_TYPE,
             "verbose_name": "Total Rank of a Page",
+            "default_value": None,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -1242,6 +1244,7 @@ class PageRankStreamDef(StreamDefBase):
         "internal_page_rank.normalized": {
             "type": INT_TYPE,
             "verbose_name": "Normalized Page Rank",
+            "default_value": None,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
@@ -1254,6 +1257,7 @@ class PageRankStreamDef(StreamDefBase):
 
     def process_document(self, document, input_stream):
         _, rank, value, normalized = input_stream
+        document['internal_page_rank'] = {}
         document['internal_page_rank']['value'] = value
         document['internal_page_rank']['rank'] = rank
         document['internal_page_rank']['normalized'] = normalized
