@@ -1,7 +1,7 @@
 import unittest
 from StringIO import StringIO
 
-from cdf.query.segments import (
+from cdf.utils.segments import (
     load_segments_from_files,
     get_segments_from_args
 )
