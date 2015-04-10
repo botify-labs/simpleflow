@@ -387,7 +387,7 @@ def page_rank(s3_uri,
     for k, g in itertools.groupby(s, key=lambda x: x[0]):
         g = list(g)
         n = len(g)
-        final_outdegrees = n + degrees[k]
+        final_outdegrees = n + degrees.get(k, 0)
         contrib = pr[k] / final_outdegrees
 
         for _, dst in g:
