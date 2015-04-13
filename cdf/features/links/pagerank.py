@@ -3,9 +3,13 @@
 *** PROTOTYPE NOT TO BE USED IN PRODUCTION ***
 """
 
-
+import abc
 import itertools
+from operator import itemgetter
 import networkx as nx
+import marshal
+
+from cdf.core.streams.base import StreamDefBase
 from cdf.features.links.helpers.predicates import (
     is_follow_link,
     is_external_link,
@@ -16,6 +20,64 @@ from cdf.features.links.helpers.predicates import (
 EXT_VIR = -2
 ROBOTS_VIR = -3
 NOT_CRAWLED_VIR = -4
+
+
+class EdgeListStreamDef(StreamDefBase):
+    FILE = 'edgelist'
+    HEADERS = (
+        ('src', int),
+        ('dst', int)
+    )
+
+
+class LinkGraph(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def iter_adjacency_list(self):
+        raise NotImplemented
+
+
+class FileBackedLinkGraph(LinkGraph):
+    @classmethod
+    def from_edge_list_file(cls, edge_list_file, graph_path):
+        """Parse an edge list file into graph
+
+        Outgoing edges of the same node are supposed to be consecutive
+
+        :param edge_list_file: edge list file
+        :type edge_list_file: file
+        :param graph_path: on-disk graph file's path
+        :type graph_path: str
+        :returns: graph object
+        :rtype: FileBackedLinkGraph
+        """
+        nodes = set()
+        with open(graph_path, 'wb') as graph_file:
+            stream = EdgeListStreamDef.load_file(edge_list_file)
+            for k, g in itertools.groupby(stream, key=itemgetter(0)):
+                g = [d for s, d in g]
+                nodes.add(k)
+                for d in g:
+                    nodes.add(d)
+                s = marshal.dumps((k, len(g), g))
+                graph_file.write(s)
+                graph_file.write('\n')
+
+        return cls(path=graph_path, node_count=len(nodes))
+
+    def __init__(self, path, node_count):
+        self.path = path
+        self.node_count = node_count
+
+    def iter_adjacency_list(self):
+        """Returns a generator over the graph
+        :returns: (src, out-degree, dests list)
+        :rtype: iterator
+        """
+        with open(self.path, 'rb') as graph_file:
+            for l in graph_file:
+                yield marshal.loads(l)
 
 
 def virtuals_filter(links, max_crawled_id):
