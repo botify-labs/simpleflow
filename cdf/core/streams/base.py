@@ -122,6 +122,19 @@ class StreamDefBase(object):
             return cls._get_stream_from_path(path)
 
     @classmethod
+    def load_file(cls, file):
+        """Load data stream from a file object
+
+        :param file: file object to load from
+        :type file: File
+        :return: stream
+        :rtype: stream
+        """
+        iterator = split_file(file)
+        return cls.load_iterator(iterator)
+
+
+    @classmethod
     def load_iterator(cls, iterator):
         """Load data stream from an iterator
 
