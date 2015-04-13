@@ -36,9 +36,9 @@ class Base(object):
     def test_cannot_destroy_wrong_path(self):
         with tempfile.NamedTemporaryFile() as tmp:
             db = self.cls(tmp.name)
-            self.assertRaises(exceptions.KVStoreException)
-            del db
-            gc.collect()
+            self.assertTrue(db.db is None)
+            with self.assertRaises(exceptions.KVStoreException):
+                db.destroy()
             self.assertTrue(os.path.exists(tmp.name))
 
 
