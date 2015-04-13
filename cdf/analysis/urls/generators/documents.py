@@ -18,6 +18,10 @@ def _clean_document(doc):
                 del(access[k])
     _recursive_clean(doc, doc)
 
+    # FIXME special rule for page rank prototype
+    if len(doc.get('internal_page_rank', {})) == 0:
+        doc.pop('internal_page_rank', None)
+
 
 def _pre_process_document(left_stream_def, pre_processors):
     def func(doc, stream):
