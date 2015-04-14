@@ -4,10 +4,12 @@
 """
 
 import abc
+from collections import namedtuple
 import itertools
 from operator import itemgetter
 import networkx as nx
 import marshal
+import numpy as np
 
 from cdf.core.streams.base import StreamDefBase
 from cdf.features.links.helpers.predicates import (
@@ -20,6 +22,11 @@ from cdf.features.links.helpers.predicates import (
 EXT_VIR = -2
 ROBOTS_VIR = -3
 NOT_CRAWLED_VIR = -4
+
+
+PageRankParams = namedtuple(
+    'PageRankParams', ['damping', 'epsilon', 'nb_iterations'])
+DEFAULT_PR_PARAM = PageRankParams(0.85, 0.001, 100)
 
 
 class EdgeListStreamDef(StreamDefBase):
@@ -36,6 +43,9 @@ class LinkGraph(object):
     @abc.abstractmethod
     def iter_adjacency_list(self):
         raise NotImplemented
+
+    def __iter__(self):
+        return self.iter_adjacency_list()
 
 
 class FileBackedLinkGraph(LinkGraph):
@@ -78,6 +88,45 @@ class FileBackedLinkGraph(LinkGraph):
         with open(self.path, 'rb') as graph_file:
             for l in graph_file:
                 yield marshal.loads(l)
+
+
+def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
+    """Compute the page rank vector for a given graph
+
+    :param graph: the link graph
+    :type graph: LinkGraph
+    :param params: page rank algorithm params
+    :type params: PageRankParams
+    :return: page rank vector
+    :rtype: numpy.array
+    """
+    node_count = graph.node_count
+
+    residual = float('inf')
+    src = np.repeat(1.0 / node_count, node_count)
+    iter_count = 0
+
+    while (residual > params.epsilon
+           and iter_count < params.nb_iterations):
+        # TODO reuse buffer ???
+        dst = np.zeros(node_count)
+
+        for i, od, links in graph:
+            # TODO node id translation
+            weight = src[i-1] / od
+            for j in links:
+                dst[j-1] = dst[j-1] + weight
+
+        dst *= params.damping
+
+        # with dead-ends, re-normalize to 1
+        dst += (1.0 - dst.sum()) / node_count
+
+        residual = np.linalg.norm(src - dst)
+        src = dst
+        iter_count += 1
+
+    return src
 
 
 def virtuals_filter(links, max_crawled_id):
@@ -152,7 +201,7 @@ def get_bucket_size(num_pages):
         return result[:-1]
 
 
-def compute_page_rank(links):
+def compute_page_rank_nx(links):
     dg = nx.MultiDiGraph()
     outdegrees = {}
     for k, g in itertools.groupby(links, key=lambda x: x[0]):
