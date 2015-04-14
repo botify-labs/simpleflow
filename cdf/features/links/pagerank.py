@@ -29,6 +29,45 @@ PageRankParams = namedtuple(
 DEFAULT_PR_PARAM = PageRankParams(0.85, 0.001, 100)
 
 
+class NodeIdMapping(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def get_internal_id(self, ext_id):
+        raise NotImplemented
+
+    @abc.abstractmethod
+    def get_external_id(self, int_id):
+        raise NotImplemented
+
+    @abc.abstractmethod
+    def get_node_count(self):
+        raise NotImplemented
+
+
+class DictMapping(NodeIdMapping):
+    def __init__(self, id_stream):
+        nodes = set()
+        for n in id_stream:
+            nodes.add(n)
+        nodes = np.array(list(nodes))
+        nodes.sort()
+
+        self.int_ext_array = nodes
+        self.ext_int_dict = {
+            e: i for i, e in enumerate(self.int_ext_array)
+        }
+
+    def get_internal_id(self, ext_id):
+        return self.ext_int_dict[ext_id]
+
+    def get_external_id(self, int_id):
+        return self.int_ext_array[int_id]
+
+    def get_node_count(self):
+        return len(self.int_ext_array)
+
+
 class EdgeListStreamDef(StreamDefBase):
     FILE = 'edgelist'
     HEADERS = (
@@ -50,7 +89,8 @@ class LinkGraph(object):
 
 class FileBackedLinkGraph(LinkGraph):
     @classmethod
-    def from_edge_list_file(cls, edge_list_file, graph_path):
+    def from_edge_list_file(cls, edge_list_file, graph_path,
+                            node_mapping_cls=DictMapping):
         """Parse an edge list file into graph
 
         Outgoing edges of the same node are supposed to be consecutive
@@ -62,23 +102,36 @@ class FileBackedLinkGraph(LinkGraph):
         :returns: graph object
         :rtype: FileBackedLinkGraph
         """
-        nodes = set()
+        # first pass for node id conversion
+        stream = EdgeListStreamDef.load_file(edge_list_file)
+
+        def get_id_stream(edge_list_stream):
+            for s, d in edge_list_stream:
+                yield s
+                yield d
+
+        node_mapping = node_mapping_cls(get_id_stream(stream))
+
         with open(graph_path, 'wb') as graph_file:
+            edge_list_file.seek(0)
             stream = EdgeListStreamDef.load_file(edge_list_file)
             for k, g in itertools.groupby(stream, key=itemgetter(0)):
-                g = [d for s, d in g]
-                nodes.add(k)
-                for d in g:
-                    nodes.add(d)
+                k = node_mapping.get_internal_id(k)
+                g = [node_mapping.get_internal_id(d) for s, d in g]
                 s = marshal.dumps((k, len(g), g))
                 graph_file.write(s)
                 graph_file.write('\n')
+        edge_list_file.close()
 
-        return cls(path=graph_path, node_count=len(nodes))
+        return cls(
+            path=graph_path,
+            node_mapping=node_mapping
+        )
 
-    def __init__(self, path, node_count):
+    def __init__(self, path, node_mapping):
         self.path = path
-        self.node_count = node_count
+        self.node_count = node_mapping.get_node_count()
+        self.node_mapping = node_mapping
 
     def iter_adjacency_list(self):
         """Returns a generator over the graph
@@ -113,9 +166,9 @@ def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
 
         for i, od, links in graph:
             # TODO node id translation
-            weight = src[i-1] / od
+            weight = src[i] / od
             for j in links:
-                dst[j-1] = dst[j-1] + weight
+                dst[j] = dst[j] + weight
 
         dst *= params.damping
 
