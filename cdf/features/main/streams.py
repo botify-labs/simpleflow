@@ -450,26 +450,26 @@ def _generate_ers_document_mapping():
 class ExtractResultsStreamDef(StreamDefBase):
     FILE = 'urlextract'
     HEADERS = (
-        ('id', int),  # url_id
-        ('name', str),
-        ('label', str),
-        ('agg', str),
-        ('cast', str),
-        ('rank', int),
-        ('value', str)
+        ('id', int),        # url_id
+        ('label', str),     # user-entered name
+        ('es_field', str),  # ES label
+        ('agg', str),       # list, first, count, exist
+        ('cast', str),      # empty (s), s(tr), i(nt), b(ool), f(loat)
+        ('rank', int),      # for lists; they come unordered!
+        ('value', str)      # bool is '0'/'1'
     )
 
     URL_DOCUMENT_MAPPING = _generate_ers_document_mapping()
 
     def process_document(self, document, stream):
-        url_id, name, label, agg, cast, rank, value = stream
+        url_id, label, es_field, agg, cast, rank, value = stream
         if cast:
             value = self._apply_cast(cast, value)
 
         if agg != "list":
-            document["extract"][label] = value
+            document["extract"][es_field] = value
         else:
-            self._put_in_place(document["extract"], label, rank, value)
+            self._put_in_place(document["extract"], es_field, rank, value)
 
     @staticmethod
     def _apply_cast(cast, value):
@@ -481,25 +481,25 @@ class ExtractResultsStreamDef(StreamDefBase):
         :type value: str
         :return:Casted value
         """
-        if not cast or cast[0] == 's':
+        if not cast or cast == 's':
             return value
-        if cast[0] == 'i':
+        if cast == 'i':
             return int(value)
-        if cast[0] == 'b':
-            return value == '1' or value[0].lower() in 'typo'
-        if cast[0] == 'f':
+        if cast == 'b':
+            return value == '1'  # or value[0].lower() in 'typo'
+        if cast == 'f':
             return float(value)
         raise AssertionError("{} not in 'sibf'".format(cast))
 
     @staticmethod
-    def _put_in_place(extract, label, rank, value):
+    def _put_in_place(extract, es_field, rank, value):
         """
         Put value in extract[label] at the specified rank.
         If the array is too short, add some None.
         :param extract: document["extract"]
         :type extract: dict
-        :param label: value label
-        :type label: str
+        :param es_field: ES field name
+        :type es_field: str
         :param rank: position
         :type rank: int
         :param value: what to put
@@ -507,14 +507,14 @@ class ExtractResultsStreamDef(StreamDefBase):
         """
         if rank < 0:
             return
-        if extract[label] is None:
+        if extract[es_field] is None:
             tmp = []
-        elif not isinstance(extract[label], list):
-            tmp = [extract[label]]
+        elif not isinstance(extract[es_field], list):
+            tmp = [extract[es_field]]
         else:
-            tmp = extract[label]
+            tmp = extract[es_field]
         while len(tmp) <= rank:
             tmp.append(None)
         tmp[rank] = value
-        extract[label] = tmp
+        extract[es_field] = tmp
 
