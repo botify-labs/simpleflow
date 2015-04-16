@@ -19,9 +19,9 @@ from cdf.features.links.helpers.predicates import (
 )
 
 
-EXT_VIR = -2
-ROBOTS_VIR = -3
-NOT_CRAWLED_VIR = -4
+EXT_VIR = 0
+ROBOTS_VIR = 1
+NOT_CRAWLED_VIR = 2
 
 
 PageRankParams = namedtuple(
@@ -183,6 +183,76 @@ def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
     return src
 
 
+def is_virtual_page(src, mask, dst, max_crawled_id):
+    """Predicate to check if a link is virtual
+
+    :param src: link src
+    :type src: int
+    :param mask: link mask
+    :type mask: int
+    :param dst: link dest
+    :type dst: int
+    :param max_crawled_id: max crawled url id
+    :type max_crawled_id: int
+    :return: a link tuple if it's a virtual page, otherwise False
+    """
+    if dst > max_crawled_id:
+        return src, NOT_CRAWLED_VIR
+    if is_external_link(mask):
+        return src, EXT_VIR
+    if is_robots_blocked(mask):
+        return src, ROBOTS_VIR
+
+    return False
+
+
+def pagerank_filter(link):
+    """Filter out the links that does not fall into the scope of
+    page rank computation
+
+    :param link: a link tuple
+    """
+    src, type, mask, dst, _ = link
+    return (
+        src != dst and
+        type[0] != 'c' and
+        is_follow_link(mask, True) and
+        # special case, need to know why this happens @stan
+        # equivalent to `not (not is_external_lin(mask) and dst < 0)`
+        (dst > 0 or is_external_link(mask))
+    )
+
+
+def group_links(links_stream, max_crawled_id):
+    """Group links into page rank internal format for further processing
+
+        - normal links are stored in a list: [1, 2, 5, 10, ...]
+        - virtuals are stored by count: [15, 2, 20] means 15 links to external
+            2 links to robots blocked and 20 links to non-crawled pages
+
+    :param links_stream: link stream
+    :type links_stream: iterator
+    :param max_crawled_id: max crawled url id
+    :type max_crawled_id: int
+    :return: (src, out_degree, normals, virtuals)
+    """
+    for src, g in itertools.groupby(links_stream, key=itemgetter(0)):
+        od_count = 0
+        virtuals = None
+        normals = []
+        for _, _, mask, dst, _ in g:
+            od_count += 1
+            v = is_virtual_page(src, mask, dst, max_crawled_id)
+            if v:
+                if not virtuals:
+                    virtuals = [0, 0, 0]
+                _, d = v
+                virtuals[d] += 1
+            else:
+                normals.append(dst)
+        yield (src, od_count, normals, virtuals)
+
+
 def virtuals_filter(links, max_crawled_id):
     for id, type, mask, dst, _ in links:
         if id == dst:
@@ -204,7 +274,7 @@ def virtuals_filter(links, max_crawled_id):
         yield id, dst
 
 
-def pagerank_filter(links, max_crawled_id=-1, virtual_pages=False):
+def pagerank_filter_nx(links, max_crawled_id=-1, virtual_pages=False):
     for id, type, mask, dst, ext_url in links:
         if not virtual_pages:
             # skip external, robots blocked and non-crawled pages
