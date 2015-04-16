@@ -18,9 +18,9 @@ def _generate_ers_document_mapping():
     ExtractResultsStreamDef's URL_DOCUMENT_MAPPING
     """
     dm = {}
-    for type_name in STRING_TYPE, INT_TYPE, BOOLEAN_TYPE, FLOAT_TYPE:
+    for type_name, short_type_name in (STRING_TYPE, 's'), (INT_TYPE, 'i'), (BOOLEAN_TYPE, 'b'), (FLOAT_TYPE, 'f'):
         for i in range(_EXTRACT_RESULT_COUNT):
-            dm["extract.extract_%s_%i" % (type_name, i)] = {
+            dm["extract.extract_%s_%i" % (short_type_name, i)] = {
                 "type": type_name,
                 "default_value": None,
                 "settings": {
