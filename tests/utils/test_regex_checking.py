@@ -167,18 +167,76 @@ class BasicTests(unittest.TestCase):
         s = r"[a-c]"
         self.assertTrue(check(s))
 
+    def test_class_bracket_ac2(self):
+        s = r"[ac-]"
+        self.assertTrue(check(s))
+
     def test_class_bracket_ca(self):
         s = r"[c-a]"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_class_bracket_ca2(self):
+        s = r"[c\-a]"
         self.assertTrue(check(s))
+
+    def test_class_bracket_bs_1(self):
+        s = r"[abc\]]"
+        self.assertTrue(check(s))
+
+    def test_class_bracket_bs_2(self):
+        s = r"[abc\]"
+        with self.assertRaises(RegexError):
+            check(s)
 
     def test_class_bracket_acAC(self):
         s = r"[a-cA-C]"
-        with self.assertRaises(RegexError):
-            check(s)
+        self.assertTrue(check(s))
 
     def test_class_bracket_not_abc(self):
         s = r"[^abc]"
         self.assertTrue(check(s))
+
+    def test_class_alpha(self):
+        s = r"[[:alpha:]]"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_quantifier_1(self):
+        s = r"a{1}"
+        self.assertTrue(check(s))
+
+    def test_quantifier_2(self):
+        s = r"a{1,}"
+        self.assertTrue(check(s))
+
+    def test_quantifier_3(self):
+        s = r"a{1,2}"
+        self.assertTrue(check(s))
+
+    def test_quantifier_4(self):
+        s = r"a{1,2}?"
+        self.assertTrue(check(s))
+
+    def test_quantifier_5(self):
+        s = r"{1,2}"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_quantifier_6(self):
+        s = r"*{1,2}"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_quantifier_7(self):
+        s = r"a{1,2}*"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_quantifier_8(self):
+        s = r"a{1,2}??"
+        with self.assertRaises(RegexError):
+            check(s)
 
 
 class ParserStateTests(unittest.TestCase):
@@ -310,7 +368,9 @@ class ParserStateTests(unittest.TestCase):
         ps = ParserState(s)
         tok, c = ps.next()
         self.assertEqual(Token.Class, tok)
-        self.assertEqual([(Token.Normal, '[')], c)
+        self.assertIsInstance(c, CharClass)
+        self.assertFalse(c.reverse)
+        self.assertEqual("[", c.content)
         with self.assertRaises(StopIteration):
             ps.next()
 
@@ -319,6 +379,49 @@ class ParserStateTests(unittest.TestCase):
         ps = ParserState(s)
         tok, c = ps.next()
         self.assertEqual(Token.Class, tok)
-        self.assertEqual([(Token.Normal, ']')], c)
+        self.assertIsInstance(c, CharClass)
+        self.assertFalse(c.reverse)
+        self.assertEqual("]", c.content)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_class_bracket_bs_1(self):
+        s = r"[abc\]]"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Class, tok)
+        self.assertIsInstance(c, CharClass)
+        self.assertFalse(c.reverse)
+        self.assertEqual("abc]", c.content)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_quantifier_1(self):
+        s = r"{1}"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Quantifier, tok)
+        self.assertIsInstance(c, int)
+        self.assertEqual(1, c)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_quantifier_2(self):
+        s = r"{1,}"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Quantifier, tok)
+        self.assertIsInstance(c, tuple)
+        self.assertEqual((1,), c)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_quantifier_1(self):
+        s = r"{1,2}"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Quantifier, tok)
+        self.assertIsInstance(c, tuple)
+        self.assertEqual((1,2), c)
         with self.assertRaises(StopIteration):
             ps.next()

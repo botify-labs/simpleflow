@@ -1,7 +1,7 @@
 __author__ = 'zeb'
 
 from enum import Enum
-# import re
+import re
 
 # Note: doesn't contain '.'
 _specials = set(r"^.*+?\|[(){$")
@@ -34,9 +34,20 @@ class Token(Enum):
     QMarkThatsEnough = 13,  # Internal. To address 'x*??', 'x???' ...
     Class = 14,
     BadClassError = 15,
+    Quantifier = 16,
+    BadQuantifierError = 17,
 
 
 TOKEN_GROUP_ = {Token.Normal, Token.Any, Token.KnownEscape, Token.Group, Token.Class}
+
+
+class CharClass(object):
+    """
+    Character class.
+    """
+    def __init__(self, reverse, content):
+        self.reverse = reverse
+        self.content = content
 
 
 class ParserState(object):
@@ -45,7 +56,8 @@ class ParserState(object):
     """
 
     # XXX python doesn't support z, only Z; re2 supports z and not Z; .Net accepts both.
-    KNOWN_ESCAPES = set("wsdWSD" + "Az" + "trn")
+    _KNOWN_ESCAPES = set("wsdWSD" + "Az" + "trn")
+    _RE_QUANTIFIER = re.compile(r"(\d+)(?:,(\d*))?\}")
 
     def __init__(self, regex):
         """
@@ -97,6 +109,8 @@ class ParserState(object):
             return Token.Or, c
         if c == '[':
             return self._get_char_class()
+        if c == '{':
+            return self._get_quantifier()
 
     def _get_escaped(self):
         i = self.pos
@@ -116,7 +130,7 @@ class ParserState(object):
         """
         if c in _specials or c in ']}':
             return Token.Normal, c
-        if c in self.KNOWN_ESCAPES:
+        if c in self._KNOWN_ESCAPES:
             return Token.KnownEscape, c
         return Token.UnrecognizedEscapeError, c
         # raise RegexError("Unsupported escape sequence")
@@ -137,29 +151,88 @@ class ParserState(object):
 
     def _get_char_class(self):
         content = []
+        minus_positions = []
         reverse = False
         i = self.pos
         if i >= self.len:
             return Token.BadClassError, None
-        c1 = self.regex[i]
+        # TODO? [[:xxx:]]
+        if self.regex[i:i+2] == '[:':
+            p = self.regex.find(':]], i+2')
+            if p == -1:
+                return Token.BadClassError, None
+            return Token.BadClassError, None
+        c = self.regex[i]
         if i + 1 >= self.len:
             return Token.BadClassError, None
-        # FIXME [[:xxx:]]
-        if c1 == '^':
+        if c == '^':
             reverse = True
             self.pos += 1
             i += 1
             if i >= self.len:
                 return Token.BadClassError, None
-            c1 = self.regex[i]
+            c = self.regex[i]
         while 1:
-            content.append(c1)
+            content.append(c)
             i += 1
             if i >= self.len:
                 return Token.BadClassError, None
-            c1 = self.regex[i]
-            if c1 == ']':
+            c = self.regex[i]
+            if c == ']':
                 break
+            elif c == '-':
+                minus_positions.append(len(content))
+            elif c == '\\':
+                i += 1
+                if i >= self.len:
+                    return Token.BadClassError, None
+                c = self.regex[i]
+        self.pos = i + 1
+        if minus_positions:
+            if not self._check_range_in_class(content, minus_positions):
+                return Token.BadClassError, None
+        return Token.Class, CharClass(reverse, ''.join(content))
+
+    @staticmethod
+    def _check_range_in_class(content, minus_positions):
+        """
+        Check all ranges are in order.
+        :param content:
+        :type content:
+        :param minus_positions:
+        :type minus_positions:
+        :return:
+        :rtype:
+        """
+        # Ignore '-' at end
+        if minus_positions[-1] == len(content) - 1:
+            minus_positions = minus_positions[:-1]
+        for p in minus_positions:
+            if content[p-1] > content[p+1]:
+                return False
+        return True
+
+    def _get_quantifier(self):
+        mo = self._RE_QUANTIFIER.match(self.regex, self.pos)
+        if not mo:
+            return Token.BadQuantifierError, None
+        self.pos = mo.end()
+        m, n = mo.groups()
+        try:
+            m = int(m)
+        except ValueError:
+            return Token.BadQuantifierError, None
+        if n is None:
+            return Token.Quantifier, m
+        if n != '':
+            try:
+                n = int(n)
+            except ValueError:
+                return Token.BadQuantifierError, None
+            if m > n:
+                return Token.BadQuantifierError, None
+            return Token.Quantifier, (m, n)
+        return Token.Quantifier, (m, )
 
 
 def check(regex):
@@ -188,9 +261,11 @@ def check(regex):
         elif token == Token.QMark:
             ok = prev_token in TOKEN_GROUP_
             if not ok:
-                ok = prev_token in (Token.Anchor, Token.Kleene, Token.QMark)
+                ok = prev_token in (Token.Anchor, Token.Kleene, Token.QMark, Token.Quantifier)
                 if ok:
                     token = Token.QMarkThatsEnough
+        elif token == Token.Quantifier:
+            ok = prev_token in TOKEN_GROUP_
         if ok:
             prev_token = token
             continue
