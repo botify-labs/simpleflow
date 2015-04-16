@@ -118,9 +118,7 @@ class FileBackedLinkGraph(LinkGraph):
             for k, g in itertools.groupby(stream, key=itemgetter(0)):
                 k = node_mapping.get_internal_id(k)
                 g = [node_mapping.get_internal_id(d) for s, d in g]
-                s = marshal.dumps((k, len(g), g))
-                graph_file.write(s)
-                graph_file.write('\n')
+                marshal.dump((k, len(g), g), graph_file)
         edge_list_file.close()
 
         return cls(
@@ -139,8 +137,11 @@ class FileBackedLinkGraph(LinkGraph):
         :rtype: iterator
         """
         with open(self.path, 'rb') as graph_file:
-            for l in graph_file:
-                yield marshal.loads(l)
+            while True:
+                try:
+                    yield marshal.load(graph_file)
+                except EOFError:
+                    break
 
 
 def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
