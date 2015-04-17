@@ -129,7 +129,7 @@ class ParserState(object):
 
     def _classify_escape(self, c):
         """
-        Classify the escape.
+        Classify the escape sequence.
         :param c:
         :type c: str
         :return: Token, c
@@ -143,6 +143,11 @@ class ParserState(object):
         # raise RegexError("Unsupported escape sequence")
 
     def _get_parens(self):
+        """
+        Check parens type, increments nparens.
+        :return:
+        :rtype:
+        """
         i = self.pos
         if i >= self.len:
             return Token.BadGroupError, None
@@ -219,8 +224,8 @@ class ParserState(object):
         Check all ranges are in order.
         :param content:
         :type content:
-        :param minus_positions:
-        :type minus_positions:
+        :param minus_positions: position of the '-'s in the rang
+        :type minus_positions: list
         :return:
         :rtype:
         """
@@ -233,6 +238,11 @@ class ParserState(object):
         return True
 
     def _get_quantifier(self):
+        """
+        Parse {m[,[n]]}
+        :return: (Token, int or tuple)
+        :rtype:
+        """
         mo = self._RE_QUANTIFIER.match(self.regex, self.pos)
         if not mo:
             return Token.BadQuantifierError, None
