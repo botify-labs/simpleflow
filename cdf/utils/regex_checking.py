@@ -297,6 +297,10 @@ def check(regex):
                 token = Token.BadQMarkError
         elif token == Token.Quantifier:
             ok = prev_token in TOKEN_GROUP_ or prev_token == Token.GroupEnd
+            if ok:
+                if not isinstance(c, int):
+                    c = c[-1]  # last value
+                ok = c < 1000  # re2's limit
             if not ok:
                 token = Token.BadQuantifierError
         if ok:

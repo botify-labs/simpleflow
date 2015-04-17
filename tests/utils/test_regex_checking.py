@@ -288,6 +288,21 @@ class BasicTests(unittest.TestCase):
         with self.assertRaises(RegexError):
             check(s)
 
+    def test_quantifier_10(self):
+        s = r"a{1001}"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_quantifier_11(self):
+        s = r"a{1001,}"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_quantifier_12(self):
+        s = r"a{0,1001}"
+        with self.assertRaises(RegexError):
+            check(s)
+
     def test_non_capturing(self):
         s = r"(?:...)"
         self.assertTrue(check(s))
