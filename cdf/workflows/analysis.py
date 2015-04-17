@@ -89,15 +89,6 @@ def optional_activity(func, task_name, feature):
 from cdf.features.main.tasks import compute_suggested_patterns
 compute_suggested_patterns = optional_activity(
     compute_suggested_patterns, 'segment', 'main')
-from cdf.tasks.aggregators import (
-    compute_aggregators_from_part_id,
-    make_suggest_summary_file,
-    consolidate_aggregators,
-)
-compute_aggregators_from_part_id = optional_activity(
-    compute_aggregators_from_part_id, 'segment', 'main')
-make_suggest_summary_file = optional_activity(make_suggest_summary_file, 'segment', 'main')
-consolidate_aggregators = optional_activity(consolidate_aggregators, 'segment', 'main')
 
 from cdf.features.main.tasks import compute_zones, compute_compliant_urls
 compute_zones = as_activity(compute_zones)
@@ -748,39 +739,6 @@ class AnalysisWorkflow(Workflow):
             tmp_dir=tmp_dir
         )
         futures.wait(percentile_results)
-
-        # suggested pattern related aggregation tasks
-        # TODO should be replaced by dynamic aggregation queries in ES
-        if self.has_segments(context):
-            aggregators_results = [
-                self.submit(
-                    compute_aggregators_from_part_id,
-                    crawl_id=crawl_id,
-                    s3_uri=s3_uri,
-                    tmp_dir=tmp_dir,
-                    part_id=part_id,
-                )
-                for part_id in crawled_partitions.result
-            ]
-            futures.wait(*aggregators_results)
-
-            consolidate_result = self.submit(
-                consolidate_aggregators,
-                crawl_id,
-                s3_uri,
-                tmp_dir=tmp_dir)
-            futures.wait(consolidate_result)
-
-            suggest_summary_result = self.submit(
-                make_suggest_summary_file,
-                crawl_id=crawl_id,
-                s3_uri=s3_uri,
-                tmp_dir=tmp_dir,
-                revision_number=revision_number,
-                **es_params
-            )
-            futures.wait(suggest_summary_result)
-
 
         # resolve all existing partitions
         all_partitions = set()

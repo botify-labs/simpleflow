@@ -9,7 +9,6 @@ from boto.exception import S3ResponseError
 
 from cdf.log import logger
 import cdf.tasks.url_data as ud
-import cdf.tasks.suggest.clusters as clusters
 import cdf.tasks.aggregators as agg
 from test_utils import split_partition, list_result_files, generate_inlink_file
 
@@ -135,7 +134,6 @@ class MockIntegrationTest(unittest.TestCase):
         reload(links_tasks)
         reload(metadata_tasks)
         reload(agg)
-        reload(clusters)
         reload(ud)
 
         # launch cdf's analyse process
