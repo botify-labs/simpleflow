@@ -550,10 +550,9 @@ class ParserStateTests(unittest.TestCase):
         tok, c = ps.next()
         self.assertEqual(Token.Quantifier, tok)
         self.assertIsInstance(c, tuple)
-        self.assertEqual((1,2), c)
+        self.assertEqual((1, 2), c)
         with self.assertRaises(StopIteration):
             ps.next()
-
 
 
 r"""
