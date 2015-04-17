@@ -19,6 +19,16 @@ class BasicTests(unittest.TestCase):
         s = r"(abc)"
         self.assertTrue(check(s))
 
+    def test_parens_open_1(self):
+        s = r"abc("
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_parens_open_2(self):
+        s = r"abc(def"
+        with self.assertRaises(RegexError):
+            check(s)
+
     def test_kleene_start(self):
         s = r"*"
         with self.assertRaises(RegexError):
@@ -63,10 +73,6 @@ class BasicTests(unittest.TestCase):
         s = r"|"
         self.assertTrue(check(s))
 
-    def test_named(self):
-        s = r"(?P<toto>...)"
-        self.assertTrue(check(s))
-
     def test_q_1(self):
         s = r"?"
         with self.assertRaises(RegexError):
@@ -99,8 +105,23 @@ class BasicTests(unittest.TestCase):
         with self.assertRaises(RegexError):
             check(s)
 
+    def test_q_6_p(self):
+        s = r"(.???)"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_q_7_p(self):
+        s = r"(.+??)"
+        with self.assertRaises(RegexError):
+            check(s)
+
     def test_brace_open(self):
         s = r"["
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_brace_open_p(self):
+        s = r"([)"
         with self.assertRaises(RegexError):
             check(s)
 
@@ -111,6 +132,11 @@ class BasicTests(unittest.TestCase):
 
     def test_class_empty(self):
         s = r"[]"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_class_empty_p(self):
+        s = r"([])"
         with self.assertRaises(RegexError):
             check(s)
 
@@ -202,6 +228,11 @@ class BasicTests(unittest.TestCase):
         with self.assertRaises(RegexError):
             check(s)
 
+    def test_class_not_upper(self):
+        s = r"[[:^upper:]]"
+        with self.assertRaises(RegexError):
+            check(s)
+
     def test_quantifier_1(self):
         s = r"a{1}"
         self.assertTrue(check(s))
@@ -212,6 +243,10 @@ class BasicTests(unittest.TestCase):
 
     def test_quantifier_3(self):
         s = r"a{1,2}"
+        self.assertTrue(check(s))
+
+    def test_quantifier_3_q(self):
+        s = r"(a){1,2}"
         self.assertTrue(check(s))
 
     def test_quantifier_4(self):
@@ -235,6 +270,69 @@ class BasicTests(unittest.TestCase):
 
     def test_quantifier_8(self):
         s = r"a{1,2}??"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_non_capturing(self):
+        s = r"(?:...)"
+        self.assertTrue(check(s))
+
+    def test_named(self):
+        s = r"(?P<name>...)"
+        self.assertTrue(check(s))
+
+    def test_bad_ext_1(self):
+        s = r"(?P<name...)"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_bad_ext_2(self):
+        s = r"(?=...)"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_bad_ext_3(self):
+        s = r"(?"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_bad_ext_4(self):
+        s = r"(?)"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_bad_ext_5(self):
+        s = r"(?P"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_bad_ext_6(self):
+        s = r"(?P="
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_bad_ext_7(self):
+        s = r"(?P<"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_bad_ext_8(self):
+        s = r"(?P<a"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_bad_ext_9(self):
+        s = r"(?P<a)"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_bad_ext_10(self):
+        s = r"(?P<>"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_bad_ext_11(self):
+        s = r"(?P<>)"
         with self.assertRaises(RegexError):
             check(s)
 
@@ -270,7 +368,7 @@ class ParserStateTests(unittest.TestCase):
             ps.next()
 
     def test_known_escape(self):
-        s = "wdsWDS"
+        s = "wdsWDSrnt"
         s_escaped = '\\' + '\\'.join(s)
         ps = ParserState(s_escaped)
         # zz = list(zip(ps, s))
@@ -287,8 +385,12 @@ class ParserStateTests(unittest.TestCase):
 
     def test_empty_parens(self):
         ps = ParserState("()")
-        for rx in ps:
-            self.assertEqual((Token.Group, []), rx)
+        tok, c = ps.next()
+        self.assertEqual(Token.GroupStart, tok)
+        tok, c = ps.next()
+        self.assertEqual(Token.GroupEnd, tok)
+        with self.assertRaises(StopIteration):
+            ps.next()
 
     def test_left_parens(self):
         ps = ParserState("(")
@@ -300,21 +402,6 @@ class ParserStateTests(unittest.TestCase):
         for rx in ps:
             self.assertEqual((Token.BadGroupError, None), rx)
 
-    def test_left_parens_2(self):
-        ps = ParserState("(xxx")
-        for rx in ps:
-            self.assertEqual(Token.BadGroupError, rx[0])
-
-    def test_left_parens_3(self):
-        ps = ParserState("(xxx(x)x")
-        for rx in ps:
-            self.assertEqual(Token.BadGroupError, rx[0])
-
-    def test_left_parens_4(self):
-        ps = ParserState("(xx\\)")
-        for rx in ps:
-            self.assertEqual(Token.BadGroupError, rx[0])
-
     def test_right_parens_2(self):
         ps = ParserState("xxx)x")
         for tok, c in ps:
@@ -323,20 +410,25 @@ class ParserStateTests(unittest.TestCase):
             else:
                 self.assertEqual(Token.BadGroupError, tok)
 
-    def test_parens_x(self):
-        ps = ParserState("(x)")
-        for rx in ps:
-            self.assertEqual((Token.Group, [(Token.Normal, 'x')]), rx)
+    def test_parens_nc(self):
+        ps = ParserState(r"(?:a)")
+        tok, e = ps.next()
+        self.assertEqual(Token.GroupStart, tok)
+        self.assertEqual(':', e)
+        rx = ps.next()
+        self.assertEqual((Token.Normal, 'a'), rx)
+        tok, e = ps.next()
+        self.assertEqual(Token.GroupEnd, tok)
 
-    def test_parens_xyz(self):
-        ps = ParserState("((xy)(z))")
-        for rx in ps:
-            self.assertEqual((Token.Group, [
-                (Token.Group,
-                 [(Token.Normal, 'x'), (Token.Normal, 'y')]),
-                (Token.Group,
-                 [(Token.Normal, 'z')])
-            ]), rx)
+    def test_parens_named(self):
+        ps = ParserState(r"(?P<toto>a)")
+        tok, e = ps.next()
+        self.assertEqual(Token.GroupStart, tok)
+        self.assertEqual('toto', e)
+        rx = ps.next()
+        self.assertEqual((Token.Normal, 'a'), rx)
+        tok, e = ps.next()
+        self.assertEqual(Token.GroupEnd, tok)
 
     def test_star(self):
         ps = ParserState("*")
@@ -416,7 +508,7 @@ class ParserStateTests(unittest.TestCase):
         with self.assertRaises(StopIteration):
             ps.next()
 
-    def test_quantifier_1(self):
+    def test_quantifier_3(self):
         s = r"{1,2}"
         ps = ParserState(s)
         tok, c = ps.next()

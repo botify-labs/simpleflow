@@ -23,9 +23,9 @@ class Token(Enum):
     KnownEscape = 2,
     UnrecognizedEscapeError = 3,
     BackslashAtEOLError = 4,
-    Group = 5,
+    GroupStart = 5,
     BadGroupError = 6,
-    EndGroup = 7,  # Internal
+    GroupEnd = 7,
     Kleene = 8,
     Or = 9,
     Anchor = 10,
@@ -38,7 +38,7 @@ class Token(Enum):
     BadQuantifierError = 17,
 
 
-TOKEN_GROUP_ = {Token.Normal, Token.Any, Token.KnownEscape, Token.Group, Token.Class}
+TOKEN_GROUP_ = {Token.Normal, Token.Any, Token.KnownEscape, Token.Class}
 
 
 class CharClass(object):
@@ -58,6 +58,11 @@ class ParserState(object):
     # XXX python doesn't support z, only Z; re2 supports z and not Z; .Net accepts both.
     _KNOWN_ESCAPES = set("wsdWSD" + "Az" + "trn")
     _RE_QUANTIFIER = re.compile(r"(\d+)(?:,(\d*))?\}")
+    _RE_NAMED_GROUP = re.compile(r"<(\w+)>")
+    _ERROR_TOKENS = {
+        Token.BadGroupError, Token.BadClassError, Token.BackslashAtEOLError, Token.BadQuantifierError,
+        Token.UnrecognizedEscapeError
+    }
 
     def __init__(self, regex):
         """
@@ -98,7 +103,7 @@ class ParserState(object):
             self.nparens -= 1
             if self.nparens < 0:
                 return Token.BadGroupError, None
-            return Token.EndGroup, None
+            return Token.GroupEnd, None
         if c in '*+':
             return Token.Kleene, c
         if c == '?':
@@ -136,18 +141,31 @@ class ParserState(object):
         # raise RegexError("Unsupported escape sequence")
 
     def _get_parens(self):
-        content = []
         i = self.pos
         if i >= self.len:
             return Token.BadGroupError, None
+        if self.regex[i] == '?':
+            self.pos += 1
+            i += 1
+            extension = self.regex[i]
+            self.pos += 1
+            i += 1
+            if i >= self.len:
+                return Token.BadGroupError, None
+            if extension == ':':
+                pass
+            elif extension == 'P':
+                mo = self._RE_NAMED_GROUP.match(self.regex, i)
+                if not mo:
+                    return Token.BadGroupError, None
+                self.pos = mo.end()
+                extension = mo.group(1)
+            else:
+                return Token.BadGroupError, None
+        else:
+            extension = None
         self.nparens += 1
-        for token, c in self:
-            if token == Token.BadGroupError:
-                return token, c
-            if token == Token.EndGroup:
-                return Token.Group, content
-            content.append((token, c))
-        return Token.BadGroupError, content
+        return Token.GroupStart, extension
 
     def _get_char_class(self):
         content = []
@@ -249,26 +267,34 @@ def check(regex):
 
     parser = ParserState(regex)
     prev_token = None
+    parens_pos = []
     for tc in parser:
         if not tc:
             raise RegexError(None, None, parser.pos)
         token, c = tc
         ok = False
-        if token in TOKEN_GROUP_ or token in (Token.Anchor, Token.Or):
+        if token == Token.GroupStart:
+            parens_pos.append(parser.pos)
+            ok = True
+        elif token == Token.GroupEnd:
+            parens_pos.pop()
+            ok = True
+        elif token in TOKEN_GROUP_ or token in (Token.Anchor, Token.Or):
             ok = True
         elif token == Token.Kleene:
-            ok = prev_token in TOKEN_GROUP_ or prev_token == Token.Anchor
+            ok = prev_token in TOKEN_GROUP_ or prev_token in (Token.Anchor, Token.GroupEnd)
         elif token == Token.QMark:
-            ok = prev_token in TOKEN_GROUP_
+            ok = prev_token in TOKEN_GROUP_ or prev_token == Token.GroupEnd
             if not ok:
                 ok = prev_token in (Token.Anchor, Token.Kleene, Token.QMark, Token.Quantifier)
                 if ok:
                     token = Token.QMarkThatsEnough
         elif token == Token.Quantifier:
-            ok = prev_token in TOKEN_GROUP_
+            ok = prev_token in TOKEN_GROUP_ or prev_token == Token.GroupEnd
         if ok:
             prev_token = token
             continue
         raise RegexError(token, c, parser.pos)
-
+    if parser.nparens > 0:
+        raise RegexError(Token.GroupStart, '(', parens_pos[-1])
     return True
