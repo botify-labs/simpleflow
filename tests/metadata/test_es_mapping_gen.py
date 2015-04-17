@@ -130,7 +130,7 @@ class TestMappingGeneration(unittest.TestCase):
             'list': {
                 'type': 'string',
                 'settings': {
-                    'list',
+                    ES_LIST,
                     'es:multi_field'
                 }
             },
@@ -217,11 +217,11 @@ class TestMappingGeneration(unittest.TestCase):
         data_format = {
             'outlinks.nb.nofollow.combinations.link': {
                 'type': 'integer',
-                'settings': {'list'}
+                'settings': {ES_LIST}
             },
             'outlinks.nb.nofollow.combinations.meta': {
                 'type': 'long',
-                'settings': {'list'}
+                'settings': {ES_LIST}
             },
             'outlinks.nb.follow.total': {'type': 'integer'},
             'outlinks.nb.nofollow.unique': {'type': 'long'},

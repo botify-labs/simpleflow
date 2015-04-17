@@ -47,9 +47,14 @@ DATE_TYPE = 'date'
 ES_NO_INDEX = 'es:no_index'
 ES_NOT_ANALYZED = 'es:not_analyzed'
 ES_DOC_VALUE = 'es:doc_values'
-LIST = 'list'
+ES_LIST = 'es:list'
 MULTI_FIELD = 'es:multi_field'
 URL_ID = 'url_id'
+
+# Returned value is a list
+# (It may be serialized as a string in ES,
+# but resolved as a list when unserialized)
+LIST = 'list'
 
 # Aggregation related
 # categorical fields have a finite cardinality of distinct values

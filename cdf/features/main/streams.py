@@ -5,7 +5,7 @@ from cdf.features.main.reasons import (
 from cdf.metadata.url.url_metadata import (
     LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     DATE_TYPE, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
+    ES_LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
     DIFF_QUALITATIVE, DIFF_QUANTITATIVE
 )
 from cdf.core.streams.exceptions import GroupWithSkipException
@@ -306,7 +306,7 @@ class SuggestStreamDef(StreamDefBase):
             "verbose_name": "Suggested patterns",
             "type": LONG_TYPE,
             "settings": {
-                LIST,
+                ES_LIST,
                 FIELD_RIGHTS.PRIVATE,
                 AGG_CATEGORICAL
             }

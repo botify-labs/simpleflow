@@ -1,5 +1,5 @@
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
-from cdf.metadata.url.url_metadata import LIST
+from cdf.metadata.url.url_metadata import ES_LIST, LIST
 from cdf.core.features import Feature
 from cdf.core.metadata.dataformat import generate_data_format
 
@@ -36,7 +36,7 @@ def _render_field(field, field_config):
         "field_type": field_type,
         "is_sortable": sortable,
         "group": group,
-        "multiple": LIST in settings,
+        "multiple": any(s in (LIST, ES_LIST) for s in settings),
         "rights": rights
     }
 

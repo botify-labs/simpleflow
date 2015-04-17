@@ -3,7 +3,7 @@ from cdf.metadata.url.url_metadata import (
     STRING_TYPE, ES_NOT_ANALYZED,
     ES_DOC_VALUE, AGG_CATEGORICAL,
     INT_TYPE, URL_ID, BOOLEAN_TYPE,
-    AGG_NUMERICAL, LIST, ES_NO_INDEX,
+    AGG_NUMERICAL, ES_LIST, ES_NO_INDEX,
     STRUCT_TYPE, FAKE_FIELD,
     STRING_NB_MAP_MAPPING
 )
@@ -68,32 +68,32 @@ DATA_FORMAT_FIXTURE = {
     "metadata.title.contents": {
         "verbose_name": "Title",
         "type": STRING_TYPE,
-        "settings": {ES_NOT_ANALYZED, LIST}
+        "settings": {ES_NOT_ANALYZED, ES_LIST}
     },
     # h1 tag
     "metadata.h1.contents": {
         "verbose_name": "H1",
         "type": STRING_TYPE,
-        "settings": {ES_NOT_ANALYZED, LIST}
+        "settings": {ES_NOT_ANALYZED, ES_LIST}
     },
     # description tag
     "metadata.description.contents": {
         "verbose_name": "Page description",
         "type": STRING_TYPE,
-        "settings": {ES_NOT_ANALYZED, LIST}
+        "settings": {ES_NOT_ANALYZED, ES_LIST}
     },
     # h2 tag
     "metadata.h2.contents": {
         "verbose_name": "H2",
         "type": STRING_TYPE,
-        "settings": {ES_NOT_ANALYZED, LIST}
+        "settings": {ES_NOT_ANALYZED, ES_LIST}
     },
 
     # h3 tag
     "metadata.h3.contents": {
         "verbose_name": "H3",
         "type": STRING_TYPE,
-        "settings": {ES_NOT_ANALYZED, LIST}
+        "settings": {ES_NOT_ANALYZED, ES_LIST}
     },
     # title tag
     "metadata.title.nb": {
@@ -185,7 +185,7 @@ DATA_FORMAT_FIXTURE = {
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             RENDERING.URL_STATUS,
             URL_ID,
             FIELD_RIGHTS.SELECT
@@ -195,7 +195,7 @@ DATA_FORMAT_FIXTURE = {
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             RENDERING.URL_STATUS,
             URL_ID,
             FIELD_RIGHTS.SELECT
@@ -205,7 +205,7 @@ DATA_FORMAT_FIXTURE = {
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             RENDERING.URL_STATUS,
             URL_ID,
             FIELD_RIGHTS.SELECT
@@ -261,7 +261,7 @@ DATA_FORMAT_FIXTURE = {
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             RENDERING.URL_STATUS,
             FIELD_RIGHTS.FILTERS_EXIST,
             FIELD_RIGHTS.SELECT,
@@ -310,7 +310,7 @@ DATA_FORMAT_FIXTURE = {
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             RENDERING.URL_HTTP_CODE,
             FIELD_RIGHTS.FILTERS_EXIST,
             FIELD_RIGHTS.SELECT,
@@ -336,7 +336,7 @@ DATA_FORMAT_FIXTURE = {
         "verbose_name": "Sample of error links in 3xx",
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             FIELD_RIGHTS.SELECT,
             RENDERING.URL,
             URL_ID
@@ -360,7 +360,7 @@ DATA_FORMAT_FIXTURE = {
         "verbose_name": "Sample of error links in 4xx",
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             FIELD_RIGHTS.SELECT,
             RENDERING.URL,
             URL_ID
@@ -384,7 +384,7 @@ DATA_FORMAT_FIXTURE = {
         "verbose_name": "Sample of error links in 5xx",
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             FIELD_RIGHTS.SELECT,
             RENDERING.URL,
             URL_ID
@@ -465,7 +465,7 @@ DATA_FORMAT_FIXTURE = {
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             RENDERING.URL_LINK_STATUS,
             FIELD_RIGHTS.SELECT,
             URL_ID
@@ -592,7 +592,7 @@ DATA_FORMAT_FIXTURE = {
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             RENDERING.URL_LINK_STATUS,
             FIELD_RIGHTS.SELECT
         },
@@ -651,7 +651,7 @@ DATA_FORMAT_FIXTURE = {
         "type": INT_TYPE,
         "settings": {
             ES_NO_INDEX,
-            LIST,
+            ES_LIST,
             RENDERING.URL_LINK_STATUS,
             FIELD_RIGHTS.SELECT,
             URL_ID

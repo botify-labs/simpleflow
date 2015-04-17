@@ -11,7 +11,7 @@ from cdf.query.datamodel import (
     _get_group_sort_key
 )
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
-from cdf.metadata.url.url_metadata import LIST, ES_NO_INDEX
+from cdf.metadata.url.url_metadata import ES_LIST, ES_NO_INDEX
 
 
 class CustomStreamDef(StreamDefBase):
@@ -41,7 +41,7 @@ class CustomStreamDef(StreamDefBase):
             "verbose_name": "Contents",
             "type": "string",
             "settings": {
-                LIST,
+                ES_LIST,
                 FIELD_RIGHTS.FILTERS
             }
         },
@@ -49,7 +49,7 @@ class CustomStreamDef(StreamDefBase):
             "verbose_name": "Contents with the same url",
             "type": "string",
             "settings": {
-                LIST,
+                ES_LIST,
                 ES_NO_INDEX,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT
@@ -65,6 +65,12 @@ class CustomStreamDef(StreamDefBase):
             "type": "string",
             "settings": {
                 FIELD_RIGHTS.ADMIN
+            }
+        },
+        "serialized_list": {
+            "type": "string",  # Store a json encoded into an ES string (not a list of strings)
+            "settings": {
+                LIST   # .. but when unserialized, will return a list !
             }
         }
     }
@@ -258,6 +264,8 @@ class FieldsTestCase(unittest.TestCase):
         self.assertTrue(data_model['content']["multiple"])
         # `content` field can be filtered but no returned in the results
         self.assertEquals(data_model["content"]["rights"], ["filters"])
+        # `serialized_list` is multiple (LIST flag checking)
+        self.assertTrue(data_model['serialized_list']["multiple"])
 
         # `content_same_urls` field can be filtered
         # but only with `exists` check and  returned in the results
@@ -333,25 +341,25 @@ class FieldsTestCase(unittest.TestCase):
 
 class TestGetFieldRights(unittest.TestCase):
     def test_nominal_case(self):
-        settings = {LIST, FIELD_RIGHTS.SELECT}
+        settings = {ES_LIST, FIELD_RIGHTS.SELECT}
         actual_result = _get_field_rights(settings)
         expected_result = ["select"]
         self.assertItemsEqual(expected_result, actual_result)
 
     def test_default_value(self):
-        settings = {LIST}
+        settings = {ES_LIST}
         actual_result = _get_field_rights(settings)
         expected_result = ["select", "filters"]
         self.assertItemsEqual(expected_result, actual_result)
 
     def test_admin_field(self):
-        settings = {LIST, FIELD_RIGHTS.ADMIN, FIELD_RIGHTS.SELECT}
+        settings = {ES_LIST, FIELD_RIGHTS.ADMIN, FIELD_RIGHTS.SELECT}
         actual_result = _get_field_rights(settings)
         expected_result = ["admin", "select"]
         self.assertItemsEqual(expected_result, actual_result)
 
     def test_default_value_admin_field(self):
-        settings = {LIST, FIELD_RIGHTS.ADMIN}
+        settings = {ES_LIST, FIELD_RIGHTS.ADMIN}
         actual_result = _get_field_rights(settings)
         expected_result = ["admin", "select", "filters"]
         self.assertItemsEqual(expected_result, actual_result)

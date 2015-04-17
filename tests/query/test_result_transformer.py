@@ -7,6 +7,7 @@ from cdf.testing.es_mock import get_es_mget_mock
 from cdf.metadata.url.backend import (
     ElasticSearchBackend
 )
+from cdf.metadata.url.url_metadata import ES_LIST
 from cdf.query.result_transformer import (
     IdToUrlTransformer,
     DefaultValueTransformer,
@@ -514,7 +515,7 @@ class TestDefaultValueTransformer(unittest.TestCase):
             },
             'outer.middle.list': {
                 'type': 'string',
-                'settings': {'list'}
+                'settings': {ES_LIST}
             },
             'special': {
                 'type': 'string',
