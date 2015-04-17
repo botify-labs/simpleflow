@@ -1,3 +1,5 @@
+ESCAPE_SPECIAL = r"*+?\[](){}.^$|"
+WDS_WD_SRNT = "wdsWDSAzrnt"
 __author__ = 'zeb'
 
 import unittest
@@ -43,6 +45,10 @@ class BasicTests(unittest.TestCase):
         s = r".**"
         with self.assertRaises(RegexError):
             check(s)
+
+    def test_kleene_double_3_ok(self):
+        s = r"(.*)*"
+        self.assertTrue(check(s))
 
     def test_kleene_or(self):
         s = r"|+"
@@ -151,6 +157,10 @@ class BasicTests(unittest.TestCase):
 
     def test_class_bracket_closed(self):
         s = r"[]]"
+        self.assertTrue(check(s))
+
+    def test_class_bracket_closed_2(self):
+        s = r"[\\]]"
         self.assertTrue(check(s))
 
     def test_class_bracket_open_ab(self):
@@ -273,12 +283,29 @@ class BasicTests(unittest.TestCase):
         with self.assertRaises(RegexError):
             check(s)
 
+    def test_quantifier_9(self):
+        s = r"a{2,1}"
+        with self.assertRaises(RegexError):
+            check(s)
+
     def test_non_capturing(self):
         s = r"(?:...)"
         self.assertTrue(check(s))
 
+    def test_non_capturing_2(self):
+        s = r"(?:(\w+)(\d+?)[a-z]{1,3})"
+        self.assertTrue(check(s))
+
     def test_named(self):
         s = r"(?P<name>...)"
+        self.assertTrue(check(s))
+
+    def test_named_star(self):
+        s = r"(?P<name>...)*"
+        self.assertTrue(check(s))
+
+    def test_named_quant(self):
+        s = r"(?P<name>...){2,}"
         self.assertTrue(check(s))
 
     def test_bad_ext_1(self):
@@ -353,7 +380,7 @@ class ParserStateTests(unittest.TestCase):
             ps.next()
 
     def test_escape_special(self):
-        s = r"*+?\[](){}.^$|"
+        s = ESCAPE_SPECIAL
         s_escaped = '\\' + '\\'.join(s)
         ps = ParserState(s_escaped)
         # zz = list(zip(ps, s))
@@ -368,7 +395,7 @@ class ParserStateTests(unittest.TestCase):
             ps.next()
 
     def test_known_escape(self):
-        s = "wdsWDSrnt"
+        s = WDS_WD_SRNT
         s_escaped = '\\' + '\\'.join(s)
         ps = ParserState(s_escaped)
         # zz = list(zip(ps, s))
@@ -377,6 +404,15 @@ class ParserStateTests(unittest.TestCase):
 
     def test_unknown_escape(self):
         s = "xGpP%0123456789"
+        s_escaped = '\\' + '\\'.join(s)
+        ps = ParserState(s_escaped)
+        # zz = list(zip(ps, s))
+        for rx, x in zip(ps, s):
+            self.assertEqual((Token.UnrecognizedEscapeError, x), rx)
+
+    def test_unknown_escape_2(self):
+        s = set((chr(i) for i in range(256)))
+        s = s - set(WDS_WD_SRNT) - set(ESCAPE_SPECIAL)
         s_escaped = '\\' + '\\'.join(s)
         ps = ParserState(s_escaped)
         # zz = list(zip(ps, s))
@@ -517,3 +553,34 @@ class ParserStateTests(unittest.TestCase):
         self.assertEqual((1,2), c)
         with self.assertRaises(StopIteration):
             ps.next()
+
+
+
+r"""
+Run this in .../botify-cdf. ^d to quit.
+
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import sys
+import re
+import readline
+sys.path.append(".")
+from cdf.utils.regex_checking import *
+
+PROMPT = 'regex: '
+
+while 1:
+    try:
+        line = raw_input(PROMPT)
+    except EOFError:
+        print("EOF")
+        break
+    try:
+        ok = check(line)
+        print("ok!")
+        tmp = re.compile(line)
+        del tmp
+    except RegexError as x:
+        print ('{}^ {}'.format('-' * (x.pos + len(PROMPT) - 1), x.token))
+"""

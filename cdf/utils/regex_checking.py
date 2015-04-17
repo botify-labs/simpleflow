@@ -31,11 +31,13 @@ class Token(Enum):
     Anchor = 10,
     Any = 11,
     QMark = 12,
-    QMarkThatsEnough = 13,  # Internal. To address 'x*??', 'x???' ...
+    QMarkAlreadySeenError = 13,  # Internal. To address 'x*??', 'x???' ...
     Class = 14,
     BadClassError = 15,
     Quantifier = 16,
     BadQuantifierError = 17,
+    BadKleeneError = 18,
+    BadQMarkError = 19,
 
 
 TOKEN_GROUP_ = {Token.Normal, Token.Any, Token.KnownEscape, Token.Class}
@@ -283,18 +285,24 @@ def check(regex):
             ok = True
         elif token == Token.Kleene:
             ok = prev_token in TOKEN_GROUP_ or prev_token in (Token.Anchor, Token.GroupEnd)
+            if not ok:
+                token = Token.BadKleeneError
         elif token == Token.QMark:
             ok = prev_token in TOKEN_GROUP_ or prev_token == Token.GroupEnd
             if not ok:
                 ok = prev_token in (Token.Anchor, Token.Kleene, Token.QMark, Token.Quantifier)
                 if ok:
-                    token = Token.QMarkThatsEnough
+                    token = Token.QMarkAlreadySeenError
+            if not ok:
+                token = Token.BadQMarkError
         elif token == Token.Quantifier:
             ok = prev_token in TOKEN_GROUP_ or prev_token == Token.GroupEnd
+            if not ok:
+                token = Token.BadQuantifierError
         if ok:
             prev_token = token
             continue
         raise RegexError(token, c, parser.pos)
     if parser.nparens > 0:
-        raise RegexError(Token.GroupStart, '(', parens_pos[-1])
+        raise RegexError(Token.BadGroupError, '(', parens_pos[-1])
     return True
