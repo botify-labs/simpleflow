@@ -1,3 +1,5 @@
+import re
+
 from cdf.metadata.url.url_metadata import (
     LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     DATE_TYPE, FLOAT_TYPE,
@@ -24,7 +26,7 @@ def _generate_ers_document_mapping():
                 "type": type_name,
                 "default_value": None,
                 "settings": {
-                    # LIST,
+                    ES_NOT_ANALYZED,
                 }
             }
     return dm
@@ -43,6 +45,7 @@ class ExtractResultsStreamDef(StreamDefBase):
     )
 
     URL_DOCUMENT_MAPPING = _generate_ers_document_mapping()
+    _RE_BLANKS = re.compile(r"\s+")
 
     def process_document(self, document, stream):
         url_id, label, es_field, agg, cast, rank, value = stream
@@ -66,12 +69,19 @@ class ExtractResultsStreamDef(StreamDefBase):
         """
         if not cast or cast == 's':
             return value
+        value = ExtractResultsStreamDef._RE_BLANKS.sub("", value)
         if cast == 'i':
-            return int(value)
+            try:
+                return int(value)
+            except ValueError:
+                return None
         if cast == 'b':
             return value == '1'  # or value[0].lower() in 'typo'
         if cast == 'f':
-            return float(value)
+            try:
+                return float(value)
+            except ValueError:
+                return None
         raise AssertionError("{} not in 'sibf'".format(cast))
 
     @staticmethod
