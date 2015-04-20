@@ -277,14 +277,14 @@ class ParserState(object):
         self.pos = mo.end()
         m, n = mo.groups()
         try:
-            m = int(m)
+            m = int(m, 10)
         except ValueError:
             return Token.BadQuantifierError, None
         if n is None:
             return Token.Quantifier, m
         if n != '':
             try:
-                n = int(n)
+                n = int(n, 10)
             except ValueError:
                 return Token.BadQuantifierError, None
             if m > n:

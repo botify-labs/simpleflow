@@ -79,44 +79,44 @@ class BasicTests(unittest.TestCase):
         s = r"|"
         self.assertTrue(check(s))
 
-    def test_q_1(self):
+    def test_qmark_alone(self):
         s = r"?"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_q_2(self):
+    def test_qmark_two_for_nothing(self):
         s = r"??"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_q_3(self):
+    def test_qmark_quantifier(self):
         s = r".?ab?"
         self.assertTrue(check(s))
 
-    def test_q_4(self):
+    def test_qmark_modifier(self):
         s = r".*?ab+?"
         self.assertTrue(check(s))
 
-    def test_q_5(self):
+    def test_qmark_quantifier_modifier(self):
         s = r".??"
         self.assertTrue(check(s))
 
-    def test_q_6(self):
+    def test_qmark_tripled(self):
         s = r".???"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_q_7(self):
+    def test_qmark_bad_modifier_again(self):
         s = r".+??"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_q_6_p(self):
+    def test_qmark_tripled_parens(self):
         s = r"(.???)"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_q_7_p(self):
+    def test_qmark_bad_modifier_again_parens(self):
         s = r"(.+??)"
         with self.assertRaises(RegexError):
             check(s)
@@ -126,12 +126,12 @@ class BasicTests(unittest.TestCase):
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_brace_open_p(self):
+    def test_brace_open_parens(self):
         s = r"([)"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_brace_open_not(self):
+    def test_brace_open_neg(self):
         s = r"[^"
         with self.assertRaises(RegexError):
             check(s)
@@ -141,12 +141,12 @@ class BasicTests(unittest.TestCase):
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_class_empty_p(self):
+    def test_class_empty_parens(self):
         s = r"([])"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_class_empty_not(self):
+    def test_class_empty_neg(self):
         s = r"[^]"
         with self.assertRaises(RegexError):
             check(s)
@@ -171,19 +171,19 @@ class BasicTests(unittest.TestCase):
         s = r"[]ab]"
         self.assertTrue(check(s))
 
-    def test_class_bracket_not_open(self):
+    def test_class_bracket_neg_open(self):
         s = r"[^[]"
         self.assertTrue(check(s))
 
-    def test_class_bracket_not_closed(self):
+    def test_class_bracket_neg_closed(self):
         s = r"[^]]"
         self.assertTrue(check(s))
 
-    def test_class_bracket_not_open_ab(self):
+    def test_class_bracket_neg_open_ab(self):
         s = r"[^[ab]"
         self.assertTrue(check(s))
 
-    def test_class_bracket_not_closed_ab(self):
+    def test_class_bracket_neg_closed_ab(self):
         s = r"[^]ab]"
         self.assertTrue(check(s))
 
@@ -199,28 +199,28 @@ class BasicTests(unittest.TestCase):
         s = r"[cba]"
         self.assertTrue(check(s))
 
-    def test_class_bracket_ac(self):
+    def test_class_bracket_atoc(self):
         s = r"[a-c]"
         self.assertTrue(check(s))
 
-    def test_class_bracket_ac2(self):
+    def test_class_bracket_acto(self):
         s = r"[ac-]"
         self.assertTrue(check(s))
 
-    def test_class_bracket_ca(self):
+    def test_class_bracket_ctoa(self):
         s = r"[c-a]"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_class_bracket_ca2(self):
+    def test_class_bracket_cminusa(self):
         s = r"[c\-a]"
         self.assertTrue(check(s))
 
-    def test_class_bracket_bs_1(self):
+    def test_class_bracket_bs_1_ok(self):
         s = r"[abc\]]"
         self.assertTrue(check(s))
 
-    def test_class_bracket_bs_2(self):
+    def test_class_bracket_bs_2_unended(self):
         s = r"[abc\]"
         with self.assertRaises(RegexError):
             check(s)
@@ -229,7 +229,7 @@ class BasicTests(unittest.TestCase):
         s = r"[a-cA-C]"
         self.assertTrue(check(s))
 
-    def test_class_bracket_not_abc(self):
+    def test_class_bracket_neg_abc(self):
         s = r"[^abc]"
         self.assertTrue(check(s))
 
@@ -238,7 +238,7 @@ class BasicTests(unittest.TestCase):
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_class_not_upper(self):
+    def test_class_neg_upper(self):
         s = r"[[:^upper:]]"
         with self.assertRaises(RegexError):
             check(s)
@@ -247,63 +247,68 @@ class BasicTests(unittest.TestCase):
         s = r"a{1}"
         self.assertTrue(check(s))
 
-    def test_quantifier_2(self):
+    def test_quantifier_1_more(self):
         s = r"a{1,}"
         self.assertTrue(check(s))
 
-    def test_quantifier_3(self):
+    def test_quantifier_1_2(self):
         s = r"a{1,2}"
         self.assertTrue(check(s))
 
-    def test_quantifier_3_q(self):
+    def test_quantifier_1_2_parens(self):
         s = r"(a){1,2}"
         self.assertTrue(check(s))
 
-    def test_quantifier_4(self):
+    def test_quantifier_1_2_qmark(self):
         s = r"a{1,2}?"
         self.assertTrue(check(s))
 
-    def test_quantifier_5(self):
+    def test_quantifier_on_nothing(self):
         s = r"{1,2}"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_quantifier_6(self):
+    def test_quantifier_on_kleene(self):
         s = r"*{1,2}"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_quantifier_7(self):
+    def test_quantifier_then_kleene(self):
         s = r"a{1,2}*"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_quantifier_8(self):
+    def test_quantifier_qmark_qmark(self):
         s = r"a{1,2}??"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_quantifier_9(self):
+    def test_quantifier_wrong_order(self):
         s = r"a{2,1}"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_quantifier_10(self):
+    def test_quantifier_not_int(self):
+        s = r"a{a,b}"
+        with self.assertRaises(RegexError):
+            check(s)
+
+    def test_quantifier_too_large(self):
         s = r"a{1001}"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_quantifier_11(self):
+    def test_quantifier_m_too_large(self):
         s = r"a{1001,}"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_quantifier_12(self):
+    def test_quantifier_n_too_large(self):
         s = r"a{0,1001}"
         with self.assertRaises(RegexError):
             check(s)
 
-    def test_quantifier_13(self):
+    def test_quantifier_on_anchor(self):
         s = r"${1}"
         self.assertTrue(check(s))
 
@@ -644,7 +649,7 @@ class ParserStateTests(unittest.TestCase):
         self.assertEqual(Token.BadClassError, tok)
         # Rest of line not checked
         # with self.assertRaises(StopIteration):
-        #     ps.next()
+        # ps.next()
 
     def test_class_bracket_range_7(self):
         s = r"[---]"
@@ -689,30 +694,34 @@ class ParserStateTests(unittest.TestCase):
 
 
 r"""
-Run this in .../botify-cdf. ^d to quit.
+Run this in .../botify-cdf.
+^d to quit.
+PYTHONPATH=. python tests/utils/test_regex_checking.py
 
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-import sys
-import re
-import readline
-sys.path.append(".")
-from cdf.utils.regex_checking import *
-
-PROMPT = 'regex: '
-
-while 1:
-    try:
-        line = raw_input(PROMPT)
-    except EOFError:
-        print("EOF")
-        break
-    try:
-        ok = check(line)
-        print("ok!")
-        tmp = re.compile(line)
-        del tmp
-    except RegexError as x:
-        print ('{}^ {}'.format('-' * (x.pos + len(PROMPT) - 1), x.token))
 """
+
+
+def cli():
+    import re
+    # noinspection PyUnresolvedReferences
+    import readline
+    from cdf.utils.regex_checking import (check, RegexError)
+
+    prompt = 'regex: '
+    while 1:
+        try:
+            line = raw_input(prompt)
+        except EOFError:
+            print("EOF")
+            break
+        try:
+            check(line)
+            print("ok!")
+            tmp = re.compile(line)
+            del tmp
+        except RegexError as x:
+            print ('{}^ {}'.format('-' * (x.pos + len(prompt) - 1), x.token))
+
+
+if __name__ == '__main__':
+    cli()
