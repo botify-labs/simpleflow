@@ -10,6 +10,7 @@ from operator import itemgetter
 import networkx as nx
 import marshal
 import numpy as np
+import logging
 
 from cdf.core.streams.base import StreamDefBase
 from cdf.features.links.helpers.predicates import (
@@ -18,6 +19,7 @@ from cdf.features.links.helpers.predicates import (
     is_robots_blocked
 )
 
+logger = logging.getLogger(__name__)
 
 EXT_VIR = 0
 ROBOTS_VIR = 1
@@ -26,7 +28,7 @@ NOT_CRAWLED_VIR = 2
 
 PageRankParams = namedtuple(
     'PageRankParams', ['damping', 'epsilon', 'nb_iterations'])
-DEFAULT_PR_PARAM = PageRankParams(0.85, 0.001, 100)
+DEFAULT_PR_PARAM = PageRankParams(0.85, 0.0001, 100)
 
 
 class NodeIdMapping(object):
@@ -166,7 +168,6 @@ def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
         dst = np.zeros(node_count)
 
         for i, od, links in graph:
-            # TODO node id translation
             weight = src[i] / od
             for j in links:
                 dst[j] = dst[j] + weight
@@ -176,7 +177,12 @@ def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
         # with dead-ends, re-normalize to 1
         dst += (1.0 - dst.sum()) / node_count
 
-        residual = np.linalg.norm(src - dst)
+        residual = np.linalg.norm(
+            (src / np.linalg.norm(src)) - (dst / np.linalg.norm(dst)),
+            ord=1
+        )
+        logger.info("%d iteration with residual %s", iter_count, str(residual))
+
         src = dst
         iter_count += 1
 
