@@ -384,6 +384,32 @@ def process_pr_result(pr_kv_list):
     return sorted(with_ranks, key=lambda x: x[0])
 
 
+def process_virtual_result(virtuals_file, pr):
+    virtuals_result = {
+        EXT_VIR: 0.0,
+        ROBOTS_VIR: 0.0,
+        NOT_CRAWLED_VIR: 0.0,
+    }
+
+    while True:
+        try:
+            # not that `src` is internal id
+            src, od, virtuals = marshal.load(virtuals_file)
+            contrib = pr[src] / od
+
+            exts = virtuals[EXT_VIR]
+            robots = virtuals[ROBOTS_VIR]
+            non_crawls = virtuals[NOT_CRAWLED_VIR]
+
+            virtuals_result[EXT_VIR] += contrib * exts
+            virtuals_result[ROBOTS_VIR] += contrib * robots
+            virtuals_result[NOT_CRAWLED_VIR] += contrib * non_crawls
+        except EOFError:
+            break
+
+    return virtuals_result
+
+
 def process_pr_result_nx(pr_dict):
     # sorted on page rank value
     pr = sorted([(k, v) for k, v in pr_dict.iteritems() if k > 0],
