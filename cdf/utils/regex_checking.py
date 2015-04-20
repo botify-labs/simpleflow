@@ -3,6 +3,7 @@
 """
 
 from enum import Enum
+import collections
 import re
 
 _specials = set(r"^.*+?\|[(){$")
@@ -60,7 +61,7 @@ class CharClass(object):
         self.content = content
 
 
-class ParserState(object):
+class ParserState(collections.Iterator):
     """
     State of the RE parser. Iterable, returning (Token, str).
 
