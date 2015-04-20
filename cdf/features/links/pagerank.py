@@ -312,6 +312,17 @@ def pagerank_filter_nx(links, max_crawled_id=-1, virtual_pages=False):
 
 
 def get_bucket_size(num_pages):
+    """Get the normalization bucket sizes, given the total
+    number of pages
+
+    :param num_pages: total number of pages in page rank computation
+    :type num_pages: int
+    :return: a list of n number indicating the bucket size of each
+        normalized page rank number
+        For > 1023 pages, there'll be 9 numbers
+        For < 1023 pages, the element number depends on page number
+    :rtype: list
+    """
     result = []
     if num_pages > 1023:
         c = num_pages
@@ -323,7 +334,7 @@ def get_bucket_size(num_pages):
     else:
         c = 0
         total = 0
-        while total <= num_pages:
+        while total < num_pages:
             size = pow(2, c)
             result.append(size)
             total += size
@@ -343,7 +354,37 @@ def compute_page_rank_nx(links):
     return nx.pagerank_scipy(dg), outdegrees
 
 
-def process_pr_result(pr_dict):
+# TODO same pr value should have the same normalized pr
+def process_pr_result(pr_kv_list):
+    pr_sorted = sorted(pr_kv_list, key=itemgetter(1), reverse=True)
+
+    with_ranks = []
+    r = 1
+    for k, g in itertools.groupby(pr_sorted, key=itemgetter(1)):
+        c = 0
+        for k, v in g:
+            c += 1
+            with_ranks.append([k, r, v])
+        r += c
+
+    buckets = get_bucket_size(len(with_ranks))
+    i = 0
+    rank = 10
+    for s in buckets:
+        for _ in range(0, s):
+            with_ranks[i].append(rank)
+            i += 1
+        rank -= 1
+    # attribute the last rank for the rest of the urls
+    while i < len(with_ranks):
+        with_ranks[i].append(rank)
+        i += 1
+
+    # sorted on url_id
+    return sorted(with_ranks, key=lambda x: x[0])
+
+
+def process_pr_result_nx(pr_dict):
     # sorted on page rank value
     pr = sorted([(k, v) for k, v in pr_dict.iteritems() if k > 0],
                 key=lambda x: x[1], reverse=True)
