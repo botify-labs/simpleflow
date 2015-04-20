@@ -1,21 +1,27 @@
-__author__ = 'zeb'
+"""Check a regex against our reduced syntax
+
+"""
 
 from enum import Enum
 import re
 
-# Note: doesn't contain '.'
 _specials = set(r"^.*+?\|[(){$")
 
 
 class RegexError(Exception):
     """
     Exception on parsing a RE.
+
+    `token` represents the error, `pos` is its position. `c` is mostly useless.
     """
     def __init__(self, token, c, pos):
         super(RegexError, self).__init__()
         self.token = token
         self.c = c
         self.pos = pos
+
+    def __str__(self):
+        return "Error {} at {}".format(self.token, self.pos)
 
 
 class Token(Enum):
@@ -31,21 +37,23 @@ class Token(Enum):
     Anchor = 10,
     Any = 11,
     QMark = 12,
-    QMarkAlreadySeenError = 13,  # Internal. To address 'x*??', 'x???' ...
+    QMarkAlreadySeenError = 13,  # To guard against 'x*??', 'x???' ...
     Class = 14,
     BadClassError = 15,
     Quantifier = 16,
     BadQuantifierError = 17,
     BadKleeneError = 18,
     BadQMarkError = 19,
+    BadGroupExtensionError = 20,
 
 
-TOKEN_GROUP_ = {Token.Normal, Token.Any, Token.KnownEscape, Token.Class}
+# Tokens which can precede '*', '+' '{}', '?'
+_REPEATABLE_TOKENS = {Token.Normal, Token.Any, Token.KnownEscape, Token.Class, Token.Anchor, Token.GroupEnd}
 
 
 class CharClass(object):
     """
-    Character class.
+    Character class: [a-zA-Z].
     """
     def __init__(self, reverse, content):
         self.reverse = reverse
@@ -55,21 +63,22 @@ class CharClass(object):
 class ParserState(object):
     """
     State of the RE parser. Iterable, returning (Token, str).
+
+    This is mostly a tokenizer, though it sometimes does (a bit too) more.
     """
 
+    # \w etc; \A \z; \t \r \n
     # XXX python doesn't support z, only Z; re2 supports z and not Z; .Net accepts both.
     _KNOWN_ESCAPES = set("wsdWSD" + "Az" + "trn")
+    # {m[,[n]]}
     _RE_QUANTIFIER = re.compile(r"(\d+)(?:,(\d*))?\}")
+    # <name>
     _RE_NAMED_GROUP = re.compile(r"<(\w+)>")
-    _ERROR_TOKENS = {
-        Token.BadGroupError, Token.BadClassError, Token.BackslashAtEOLError, Token.BadQuantifierError,
-        Token.UnrecognizedEscapeError
-    }
 
     def __init__(self, regex):
         """
         Initialize the ParserState
-        :param regex: The regex
+        :param regex: The regex string
         :type regex: str
         """
         self.pos = 0
@@ -93,6 +102,13 @@ class ParserState(object):
         raise StopIteration()
 
     def _tokenize(self, c):
+        """
+        Tokenize c
+        :param c: current character (at self.pos-1)
+        :type c: str
+        :return: (Token.Type, value)
+        :rtype: tuple
+        """
         if c not in _specials:
             return Token.Normal, c
         if c == '.':
@@ -120,16 +136,20 @@ class ParserState(object):
             return self._get_quantifier()
 
     def _get_escaped(self):
+        """
+        Check and return escaped character at self.pos
+        :return:
+        :rtype:
+        """
         i = self.pos
         if i < self.len:
             self.pos += 1
             return self._classify_escape(self.regex[i])
         return Token.BackslashAtEOLError, '\\'
-        # raise RegexError("\\ at end of expression")
 
     def _classify_escape(self, c):
         """
-        Classify the escape sequence.
+        Classify the escape sequence: known or unrecognized.
         :param c:
         :type c: str
         :return: Token, c
@@ -144,14 +164,15 @@ class ParserState(object):
 
     def _get_parens(self):
         """
-        Check parens type, increments nparens.
-        :return:
+        Check parens type (normal or extended), increment nparens.
+        :return: (Token, type)
         :rtype:
         """
         i = self.pos
         if i >= self.len:
             return Token.BadGroupError, None
         if self.regex[i] == '?':
+            # extended notation
             self.pos += 1
             i += 1
             extension = self.regex[i]
@@ -168,16 +189,23 @@ class ParserState(object):
                 self.pos = mo.end()
                 extension = mo.group(1)
             else:
-                return Token.BadGroupError, None
+                return Token.BadGroupExtensionError, None
         else:
             extension = None
         self.nparens += 1
         return Token.GroupStart, extension
 
     def _get_char_class(self):
+        """
+        Parse a character class.
+        To cope with []] and [^]], don't check ']' on first char. We also don't need to check '-' at start
+        ('\' however must be recognized here)
+        :return: (Token, CharClass) or (Token.BadClassError, None)
+        :rtype: tuple
+        """
         content = []
-        minus_positions = []
         reverse = False
+        prev_char = None
         i = self.pos
         if i >= self.len:
             return Token.BadClassError, None
@@ -188,60 +216,60 @@ class ParserState(object):
                 return Token.BadClassError, None
             return Token.BadClassError, None
         c = self.regex[i]
-        if i + 1 >= self.len:
-            return Token.BadClassError, None
+        # if i + 1 >= self.len:
+        #     return Token.BadClassError, None
         if c == '^':
             reverse = True
             self.pos += 1
             i += 1
-            if i >= self.len:
-                return Token.BadClassError, None
-            c = self.regex[i]
+            # if i >= self.len:
+            #     return Token.BadClassError, None
+        start = True
         while 1:
-            content.append(c)
-            i += 1
             if i >= self.len:
                 return Token.BadClassError, None
             c = self.regex[i]
             if c == ']':
-                break
-            elif c == '-':
-                minus_positions.append(len(content))
+                if not start:
+                    break
+                # no elif: we want to go to `content.append(c)`
+            if c == '-' and prev_char is not None and self.regex[i + 1] != ']':
+                i += 1
+                # if i >= self.len:
+                #     return Token.BadClassError, None
+                c = self.regex[i]
+                if c == '\\':
+                    i += 1
+                    # if i >= self.len:
+                    #     return Token.BadClassError, None
+                    c = self.regex[i]
+                if c < prev_char:
+                    return Token.BadClassError, None
+                content.append('-')
+                content.append(c)
+                # [b-d-a] is b|c|d|-|a: the second '-' doesn't mark a range. So prev_char must be reset after 'd'.
+                prev_char = None
             elif c == '\\':
                 i += 1
-                if i >= self.len:
-                    return Token.BadClassError, None
+                # if i >= self.len:
+                #     return Token.BadClassError, None
                 c = self.regex[i]
+                content.append(c)
+                prev_char = c
+            else:
+                content.append(c)
+                prev_char = c
+            i += 1
+            start = False
         self.pos = i + 1
-        if minus_positions:
-            if not self._check_range_in_class(content, minus_positions):
-                return Token.BadClassError, None
         return Token.Class, CharClass(reverse, ''.join(content))
-
-    @staticmethod
-    def _check_range_in_class(content, minus_positions):
-        """
-        Check all ranges are in order.
-        :param content:
-        :type content:
-        :param minus_positions: position of the '-'s in the rang
-        :type minus_positions: list
-        :return:
-        :rtype:
-        """
-        # Ignore '-' at end
-        if minus_positions[-1] == len(content) - 1:
-            minus_positions = minus_positions[:-1]
-        for p in minus_positions:
-            if content[p-1] > content[p+1]:
-                return False
-        return True
 
     def _get_quantifier(self):
         """
-        Parse {m[,[n]]}
-        :return: (Token, int or tuple)
-        :rtype:
+        Parse {m[,[n]]}.
+        Check that m <= n.
+        :return: (Token, values). m => int; m, => (int, ); m,n => (int, int)
+        :rtype: tuple
         """
         mo = self._RE_QUANTIFIER.match(self.regex, self.pos)
         if not mo:
@@ -266,6 +294,13 @@ class ParserState(object):
 
 
 def check(regex):
+    """
+    Main entry point.
+    :param regex: The regex to test
+    :type regex:
+    :return: True if OK, raise on error.
+    :rtype:
+    """
     # Quick checks
     if not regex:
         return True
@@ -282,31 +317,40 @@ def check(regex):
     parens_pos = []
     for tc in parser:
         if not tc:
+            # Unknown error
             raise RegexError(None, None, parser.pos)
         token, c = tc
         ok = False
         if token == Token.GroupStart:
+            # '(': push position on our stack
             parens_pos.append(parser.pos)
             ok = True
         elif token == Token.GroupEnd:
+            # ')': group OK, forget it
             parens_pos.pop()
             ok = True
-        elif token in TOKEN_GROUP_ or token in (Token.Anchor, Token.Or):
+        elif token in _REPEATABLE_TOKENS or token == Token.Or:
+            # The usual suspects
             ok = True
         elif token == Token.Kleene:
-            ok = prev_token in TOKEN_GROUP_ or prev_token in (Token.Anchor, Token.GroupEnd)
+            # (Yep, "$*" is valid)
+            ok = prev_token in _REPEATABLE_TOKENS
             if not ok:
                 token = Token.BadKleeneError
         elif token == Token.QMark:
-            ok = prev_token in TOKEN_GROUP_ or prev_token == Token.GroupEnd
+            # "?" has two distinct roles; as a quantifier ...
+            ok = prev_token in _REPEATABLE_TOKENS
             if not ok:
-                ok = prev_token in (Token.Anchor, Token.Kleene, Token.QMark, Token.Quantifier)
+                # ... or to modify a quantifier.
+                ok = prev_token in (Token.Kleene, Token.QMark, Token.Quantifier)
                 if ok:
+                    # As a modifier, it cannot be applied multiple time; "*??" will be detected as an error
                     token = Token.QMarkAlreadySeenError
             if not ok:
                 token = Token.BadQMarkError
         elif token == Token.Quantifier:
-            ok = prev_token in TOKEN_GROUP_ or prev_token == Token.GroupEnd
+            # Just like "*" and "+", but we also check the values
+            ok = prev_token in _REPEATABLE_TOKENS
             if ok:
                 if not isinstance(c, int):
                     c = c[-1]  # last value

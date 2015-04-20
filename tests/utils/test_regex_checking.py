@@ -303,6 +303,10 @@ class BasicTests(unittest.TestCase):
         with self.assertRaises(RegexError):
             check(s)
 
+    def test_quantifier_13(self):
+        s = r"${1}"
+        self.assertTrue(check(s))
+
     def test_non_capturing(self):
         s = r"(?:...)"
         self.assertTrue(check(s))
@@ -462,7 +466,9 @@ class ParserStateTests(unittest.TestCase):
                 self.assertEqual(Token.BadGroupError, tok)
 
     def test_parens_nc(self):
-        ps = ParserState(r"(?:a)")
+        ps = ParserState(r" (?:a)")
+        tok, e = ps.next()
+        self.assertEqual(Token.Normal, tok)
         tok, e = ps.next()
         self.assertEqual(Token.GroupStart, tok)
         self.assertEqual(':', e)
@@ -472,7 +478,9 @@ class ParserStateTests(unittest.TestCase):
         self.assertEqual(Token.GroupEnd, tok)
 
     def test_parens_named(self):
-        ps = ParserState(r"(?P<toto>a)")
+        ps = ParserState(r" (?P<toto>a)")
+        tok, e = ps.next()
+        self.assertEqual(Token.Normal, tok)
         tok, e = ps.next()
         self.assertEqual(Token.GroupStart, tok)
         self.assertEqual('toto', e)
@@ -493,8 +501,32 @@ class ParserStateTests(unittest.TestCase):
         self.assertEqual(Token.Kleene, tok)
         self.assertEqual('+', c)
 
-    def test_bracket_open(self):
+    def test_bracket_open_1(self):
         s = r"["
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.BadClassError, tok)
+
+    def test_bracket_open_2(self):
+        s = r"[^"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.BadClassError, tok)
+
+    def test_bracket_open_3(self):
+        s = "[\\"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.BadClassError, tok)
+
+    def test_bracket_open_4(self):
+        s = "[a-"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.BadClassError, tok)
+
+    def test_bracket_open_5(self):
+        s = "[a-\\"
         ps = ParserState(s)
         tok, c = ps.next()
         self.assertEqual(Token.BadClassError, tok)
@@ -536,6 +568,92 @@ class ParserStateTests(unittest.TestCase):
         self.assertIsInstance(c, CharClass)
         self.assertFalse(c.reverse)
         self.assertEqual("abc]", c.content)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_class_bracket_bs_2(self):
+        s = r"[\]abc]"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Class, tok)
+        self.assertIsInstance(c, CharClass)
+        self.assertFalse(c.reverse)
+        self.assertEqual("]abc", c.content)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_class_bracket_range_1(self):
+        s = r"[-abc]"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Class, tok)
+        self.assertIsInstance(c, CharClass)
+        self.assertFalse(c.reverse)
+        self.assertEqual("-abc", c.content)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_class_bracket_range_2(self):
+        s = r"[abc-]"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Class, tok)
+        self.assertIsInstance(c, CharClass)
+        self.assertFalse(c.reverse)
+        self.assertEqual("abc-", c.content)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_class_bracket_range_3(self):
+        s = r"[a-c]"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Class, tok)
+        self.assertIsInstance(c, CharClass)
+        self.assertFalse(c.reverse)
+        self.assertEqual("a-c", c.content)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_class_bracket_range_4(self):
+        s = r"[a-c-a]"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Class, tok)
+        self.assertIsInstance(c, CharClass)
+        self.assertFalse(c.reverse)
+        self.assertEqual("a-c-a", c.content)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_class_bracket_range_5(self):
+        s = r"[\[-\]]"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Class, tok)
+        self.assertIsInstance(c, CharClass)
+        self.assertFalse(c.reverse)
+        self.assertEqual("[-]", c.content)
+        with self.assertRaises(StopIteration):
+            ps.next()
+
+    def test_class_bracket_range_6(self):
+        s = r"[\C-\A]"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.BadClassError, tok)
+        # Rest of line not checked
+        # with self.assertRaises(StopIteration):
+        #     ps.next()
+
+    def test_class_bracket_range_7(self):
+        s = r"[---]"
+        ps = ParserState(s)
+        tok, c = ps.next()
+        self.assertEqual(Token.Class, tok)
+        self.assertIsInstance(c, CharClass)
+        self.assertFalse(c.reverse)
+        self.assertEqual("---", c.content)
         with self.assertRaises(StopIteration):
             ps.next()
 
