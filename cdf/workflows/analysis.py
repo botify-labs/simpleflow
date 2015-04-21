@@ -126,7 +126,7 @@ make_top_domains_files = optional_activity(
     'links',
 )
 make_inlinks_percentiles_file = as_activity(make_inlinks_percentiles_file)
-compute_page_rank = as_activity(page_rank)
+compute_page_rank = optional_activity(page_rank, 'document', 'links')
 
 from cdf.tasks.url_data import (
     generate_documents,
@@ -716,7 +716,6 @@ class AnalysisWorkflow(Workflow):
             pr_result = self.submit(
                 compute_page_rank,
                 s3_uri=s3_uri,
-                virtual_pages=False,
                 first_part_id_size=first_part_id_size,
                 part_id_size=part_id_size,
                 tmp_dir=tmp_dir
