@@ -6,6 +6,7 @@ import unittest
 from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.extract.streams import ExtractResultsStreamDef
+from cdf.query.datamodel import get_fields
 
 
 _stream1 = [
@@ -51,3 +52,21 @@ class TestExtractResultsStreamDef(unittest.TestCase):
         sd.process_document(doc, s)
         self.assertEqual(10, len(doc["extract"]["extract_s_0"]))
         self.assertEqual("thing", doc["extract"]["extract_s_0"][9])
+
+
+class TestExtractFields(unittest.TestCase):
+    def test(self):
+        features_options = {
+            "extract": [
+                {
+                    "name": "Product Prices",
+                    "agg": "list",  # should return a multiple flag
+                    "cast": "i",
+                    "es_field": "extract_i_0"
+                }
+            ]
+        }
+        fields = get_fields(features_options)
+        product_prices_field = filter(lambda f: f["value"].endswith("extract_i_0"), fields)[0]
+        self.assertTrue(product_prices_field["multiple"])
+        self.assertEquals(product_prices_field["name"], "Product Prices")

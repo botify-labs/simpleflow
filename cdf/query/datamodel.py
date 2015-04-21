@@ -174,6 +174,7 @@ def get_fields(feature_options, remove_private=True, remove_admin=True,
 
         if not is_exists and not is_private and not is_admin:
             fields.append((name, config))
+
     # sort on group, then order within group
     groups = get_all_groups()
     group_names = {g["id"]: g["name"] for g in groups}
@@ -182,6 +183,16 @@ def get_fields(feature_options, remove_private=True, remove_admin=True,
     # render data format to datamodel in place
     for i, (name, config) in enumerate(fields):
         fields[i] = _render_field(name, config)
+
+        # Override some fields if `render_field_modifier` key func
+        # is set on field config
+        # `render_field_modifier` should be a func with following arguments :
+        # * feature_options
+        # * field_name (Field name)
+        # * field_settings (Field config as defined on StreamDef classes
+        # * public_field_settings (Dict as returned by `cdf.query.datamodel.get_fields`
+        if "render_field_modifier" in config:
+            config["render_field_modifier"](feature_options, name, config, fields[i])
 
     return fields
 
