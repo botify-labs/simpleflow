@@ -1,10 +1,43 @@
 """Module for internal page rank computation
 
-*** PROTOTYPE NOT TO BE USED IN PRODUCTION ***
+For the algorithm and its meaning, please check
+    http://www.mmds.org/mmds/v2.1/ch05-linkanalysis1.pdf
+
+The module has the following abstractions/concepts:
+    - LinkGraph
+        A LinkGraph represents the input graph of the internal page rank
+        computation. We can iterate over a LinkGraph for all its nodes
+        with its outgoing edges.
+    - NodeIdMapping
+        In the dataset nodes can have arbitrary identifier. For example
+        in `urllinks`, node id starts from 1 and are not consecutive (with
+        jumps). A NodeIdMapping will be applied to maintain a set of
+        internal node ids that simplifies the algorithm implementation.
+    - Page Rank algorithm
+        The actual page rank algorithm takes an input LinkGraph and applies
+        the algorithm. The final result is a compact numpy vector.
+    - Pre-processing functions
+        Stream filters, predicate functions
+    - Post-processing functions
+    - Virtual links
+        Links that go to external pages, to non-crawled urls or blocked by
+        robots.txt are classed as virtual links. They do not participate
+        in the page rank computation. But we'll use the page rank result
+        and the virtual links data to 'interpret' the amount of page rank
+        that goes into these 3 categories of pages.
+
+Conceptually, the internal page rank computation is:
+  1. filter links dataset, keep only page rank eligible links
+  2. separate normal links with virtual links
+  3. use normal links to construct the LinkGraph
+  4. launch the algorithm on the LinkGraph
+  5. interpret the virtual links using page rank result
+  6. post-process page rank result
+  7. upload results
 """
 
 import abc
-from collections import namedtuple
+from collections import namedtuple, Iterable
 import itertools
 from operator import itemgetter
 import marshal
@@ -25,29 +58,41 @@ ROBOTS_VIR = 1
 NOT_CRAWLED_VIR = 2
 
 
+# Parameters for page rank
+#   - `damping`: the probability that we follow a link of the page,
+#       instead of teleporting.
+#   - `epsilon`: the convergence condition (error measure of two page
+#       rank vectors)
+#   - `nb_iterations`: max number of iterations.
 PageRankParams = namedtuple(
     'PageRankParams', ['damping', 'epsilon', 'nb_iterations'])
 DEFAULT_PR_PARAM = PageRankParams(0.85, 0.0001, 100)
 
 
 class NodeIdMapping(object):
+    """Interface for node id mapping"""
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def get_internal_id(self, ext_id):
+        """Get the internal id corresponding to the external id"""
         raise NotImplemented
 
     @abc.abstractmethod
     def get_external_id(self, int_id):
+        """Get the external id corresponding to the internal id"""
         raise NotImplemented
 
     @abc.abstractmethod
     def get_node_count(self):
+        """Get the node count"""
         raise NotImplemented
 
 
 class DictMapping(NodeIdMapping):
+    """Node id mapping backed by a dict and an numpy array"""
     def __init__(self, id_stream):
+        """Initialize this mapping by an external node id stream"""
         nodes = set()
         for n in id_stream:
             nodes.add(n)
@@ -70,6 +115,10 @@ class DictMapping(NodeIdMapping):
 
 
 class EdgeListStreamDef(StreamDefBase):
+    """A stream def for edge list file
+
+    **Not used for the moment**
+    """
     FILE = 'edgelist'
     HEADERS = (
         ('src', int),
@@ -77,11 +126,16 @@ class EdgeListStreamDef(StreamDefBase):
     )
 
 
-class LinkGraph(object):
+class LinkGraph(Iterable):
+    """Abstract graph representation"""
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def iter_adjacency_list(self):
+        """Returns a generator over the graph
+        :returns: (src, out-degree, dests list)
+        :rtype: iterator
+        """
         raise NotImplemented
 
     def __iter__(self):
@@ -89,12 +143,16 @@ class LinkGraph(object):
 
 
 class FileBackedLinkGraph(LinkGraph):
+    """A LinkGraph impl backed by a on-disk file"""
     @classmethod
     def from_edge_list_file(cls, edge_list_file, graph_path,
                             node_mapping_cls=DictMapping):
         """Parse an edge list file into graph
 
         Outgoing edges of the same node are supposed to be consecutive
+
+        **Not used for the moment, the graph file is directed constructed
+        in the page rank task to avoid generate a edge list file**
 
         :param edge_list_file: edge list file
         :type edge_list_file: file
@@ -133,10 +191,6 @@ class FileBackedLinkGraph(LinkGraph):
         self.node_mapping = node_mapping
 
     def iter_adjacency_list(self):
-        """Returns a generator over the graph
-        :returns: (src, out-degree, dests list)
-        :rtype: iterator
-        """
         with open(self.path, 'rb') as graph_file:
             while True:
                 try:
@@ -146,7 +200,7 @@ class FileBackedLinkGraph(LinkGraph):
 
 
 def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
-    """Compute the page rank vector for a given graph
+    """Compute the page rank vector for a given LinkGraph
 
     :param graph: the link graph
     :type graph: LinkGraph
@@ -212,8 +266,7 @@ def is_virtual_page(src, mask, dst, max_crawled_id):
 
 
 def pagerank_filter(link):
-    """Filter out the links that does not fall into the scope of
-    page rank computation
+    """Filter that allows only page rank eligible links to pass through
 
     :param link: a link tuple
     """
@@ -291,6 +344,15 @@ def get_bucket_size(num_pages):
 
 # TODO same pr value should have the same normalized pr
 def process_pr_result(pr_kv_list):
+    """Post process the raw page rank result
+        - assign a total rank for each page
+        - attribute a normalized page rank for each page
+        - sorted the final result by url id
+
+    :param pr_kv_list:
+    :return: final result list, (urlid, rank, pr_value, normalized_pr)
+    :rtype: list
+    """
     pr_sorted = sorted(pr_kv_list, key=itemgetter(1), reverse=True)
 
     with_ranks = []
@@ -320,6 +382,17 @@ def process_pr_result(pr_kv_list):
 
 
 def process_virtual_result(virtuals_file, pr):
+    """Helper function that process virtual links
+
+    Assume that the `virtuals_file` contains marshalled data.
+
+    :param virtuals_file: file containing virtual links data
+    :type virtuals_file: file
+    :param pr: raw page rank vector
+    :type pr: numpy.array | list
+    :returns: virtual page result
+    :rtype: dict
+    """
     virtuals_result = {
         EXT_VIR: 0.0,
         ROBOTS_VIR: 0.0,
@@ -328,7 +401,7 @@ def process_virtual_result(virtuals_file, pr):
 
     while True:
         try:
-            # not that `src` is internal id
+            # note that `src` is internal id
             src, od, virtuals = marshal.load(virtuals_file)
             contrib = pr[src] / od
 
