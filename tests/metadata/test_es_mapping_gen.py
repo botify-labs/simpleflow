@@ -1,7 +1,7 @@
 import unittest
 from cdf.metadata.url.es_backend_utils import (_parse_field_path,
                                                ElasticSearchBackend)
-from cdf.metadata.url.url_metadata import FAKE_FIELD
+from cdf.metadata.url.url_metadata import FAKE_FIELD, ES_LIST
 
 
 class TestMappingGeneration(unittest.TestCase):
