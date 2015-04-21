@@ -3,6 +3,7 @@ liblzo2-dev
 libbz2-dev
 libleveldb1
 libxslt1.1
+zlib1g-dev
 python-lockfile
 python-bql
 python-google-analytics
