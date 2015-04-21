@@ -7,9 +7,9 @@ from cdf.metadata.url.url_metadata import (
     ES_NO_INDEX, ES_DOC_VALUE,
     ES_LIST, AGG_CATEGORICAL, AGG_NUMERICAL,
     STRING_TYPE, STRING_NB_MAP_MAPPING,
-    FAKE_FIELD, URL_ID,
+    FAKE_FIELD, URL_ID, DOUBLE_TYPE,
     DIFF_QUALITATIVE, DIFF_QUANTITATIVE,
-    FLOAT_TYPE)
+)
 from cdf.core.streams.base import StreamDefBase
 from cdf.log import logger
 from cdf.features.links.helpers.masks import list_to_mask
@@ -1218,7 +1218,7 @@ class PageRankStreamDef(StreamDefBase):
 
     URL_DOCUMENT_MAPPING = {
         "internal_page_rank.value": {
-            "type": FLOAT_TYPE,
+            "type": DOUBLE_TYPE,
             "verbose_name": "Exact Page Rank Value",
             "default_value": None,
             "settings": {
