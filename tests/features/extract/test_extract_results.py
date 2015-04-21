@@ -70,3 +70,9 @@ class TestExtractFields(unittest.TestCase):
         product_prices_field = filter(lambda f: f["value"].endswith("extract_i_0"), fields)[0]
         self.assertTrue(product_prices_field["multiple"])
         self.assertEquals(product_prices_field["name"], "Product Prices")
+
+        # Test enabled fields
+        # As we generate 5 fields for each type (i, f, s, b) we hide all
+        # fields that are not reserved
+        filters = [f["value"] for f in filter(lambda f: f["value"].startswith("extract."), fields)]
+        self.assertEquals(filters, ["extract.extract_i_0"])

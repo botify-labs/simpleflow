@@ -48,6 +48,16 @@ def render_field_strategy(features_options, field_name, field_settings, public_f
             public_field_settings["name"] = field["name"]
 
 
+def check_enabled(field):
+    """
+    return True if extract field is enabled
+    All es_fields from
+    """
+    def _check_enabled_options(extract_options):
+        return any(f["es_field"] == field for f in extract_options)
+    return _check_enabled_options
+
+
 def _generate_ers_document_mapping():
     """
     ExtractResultsStreamDef's URL_DOCUMENT_MAPPING
@@ -61,7 +71,8 @@ def _generate_ers_document_mapping():
                 "settings": {
                     ES_NOT_ANALYZED,
                 },
-                "render_field_modifier": render_field_strategy
+                "render_field_modifier": render_field_strategy,
+                "enabled": check_enabled("extract_%s_%i" % (short_type_name, i))
             }
     return dm
 
