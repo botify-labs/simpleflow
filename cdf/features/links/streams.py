@@ -5,7 +5,7 @@ from cdf.core.metadata.dataformat import check_enabled
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, BOOLEAN_TYPE, STRUCT_TYPE,
     ES_NO_INDEX, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL,
+    ES_LIST, AGG_CATEGORICAL, AGG_NUMERICAL,
     STRING_TYPE, STRING_NB_MAP_MAPPING,
     FAKE_FIELD, URL_ID,
     DIFF_QUALITATIVE, DIFF_QUANTITATIVE,
@@ -191,7 +191,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_NO_INDEX,
-                LIST,
+                ES_LIST,
                 RENDERING.URL_LINK_STATUS,
                 FIELD_RIGHTS.SELECT
             },
@@ -351,7 +351,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_NO_INDEX,
-                LIST,
+                ES_LIST,
                 RENDERING.URL,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT,
@@ -405,7 +405,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_NO_INDEX,
-                LIST,
+                ES_LIST,
                 RENDERING.URL_HTTP_CODE,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT,
@@ -674,7 +674,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
             "type": INT_TYPE,
             "settings": {
                 ES_NO_INDEX,
-                LIST,
+                ES_LIST,
                 RENDERING.URL_LINK_STATUS,
                 FIELD_RIGHTS.SELECT,
                 URL_ID
@@ -951,7 +951,7 @@ class BadLinksStreamDef(StreamDefBase):
             "verbose_name": "Sample of error links in 3xx",
             "settings": {
                 ES_NO_INDEX,
-                LIST,
+                ES_LIST,
                 FIELD_RIGHTS.SELECT,
                 RENDERING.URL,
                 URL_ID,
@@ -967,7 +967,7 @@ class BadLinksStreamDef(StreamDefBase):
             "verbose_name": "Sample of error links in 4xx",
             "settings": {
                 ES_NO_INDEX,
-                LIST,
+                ES_LIST,
                 FIELD_RIGHTS.SELECT,
                 RENDERING.URL,
                 URL_ID
@@ -983,7 +983,7 @@ class BadLinksStreamDef(StreamDefBase):
             "verbose_name": "Sample of error links in 5xx",
             "settings": {
                 ES_NO_INDEX,
-                LIST,
+                ES_LIST,
                 FIELD_RIGHTS.SELECT,
                 RENDERING.URL,
                 URL_ID
@@ -1105,7 +1105,7 @@ class LinksToNonCompliantStreamDef(StreamDefBase):
             "verbose_name": "Sample of error links to not compliant urls.",
             "settings": {
                 ES_NO_INDEX,
-                LIST,
+                ES_LIST,
                 FIELD_RIGHTS.SELECT,
                 RENDERING.URL,
                 URL_ID

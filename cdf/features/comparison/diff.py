@@ -8,7 +8,7 @@ from cdf.utils.dict import (
     update_path_in_dict
 )
 from cdf.metadata.url.url_metadata import (
-    LIST,
+    ES_LIST,
     DIFF_QUALITATIVE,
     DIFF_QUANTITATIVE,
 )
@@ -117,7 +117,7 @@ def get_diff_strategy(data_format):
         if DIFF_QUANTITATIVE in settings:
             diff_strategy[field] = compute_quantitative_diff
         elif DIFF_QUALITATIVE in settings:
-            if LIST in settings:
+            if ES_LIST in settings:
                 # special case: list field
                 diff_strategy[field] = compute_qualitative_diff_list
             else:

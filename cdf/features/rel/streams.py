@@ -3,7 +3,7 @@ from cdf.compat import json
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
+    ES_LIST, LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
     DIFF_QUALITATIVE, DIFF_QUANTITATIVE
 )
 from cdf.core.streams.base import StreamDefBase
@@ -75,7 +75,7 @@ class RelCompliantStreamDef(StreamDefBase):
             "verbose_name": "Outgoing Valid Hreflang Langs",
             "type": STRING_TYPE,
             "settings": [
-                LIST,
+                ES_LIST,
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
                 RENDERING.NOT_SORTABLE
@@ -85,7 +85,7 @@ class RelCompliantStreamDef(StreamDefBase):
             "verbose_name": "Outgoing Valid Hreflang Langs+Regions",
             "type": STRING_TYPE,
             "settings": [
-                LIST,
+                ES_LIST,
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
                 RENDERING.NOT_SORTABLE
@@ -111,7 +111,7 @@ class RelCompliantStreamDef(StreamDefBase):
             "verbose_name": "Outgoing Hreflang Warning Reasons",
             "type": STRING_TYPE,
             "settings": [
-                LIST,
+                ES_LIST,
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
                 RENDERING.NOT_SORTABLE
@@ -122,6 +122,7 @@ class RelCompliantStreamDef(StreamDefBase):
             "type": STRING_TYPE,  # JSON encoded. Contains list of dict.
             "settings": [
                 ES_NO_INDEX,
+                LIST,
                 FIELD_RIGHTS.SELECT,
                 RENDERING.HREFLANG_VALID_VALUES,
                 RENDERING.NOT_SORTABLE
@@ -140,7 +141,7 @@ class RelCompliantStreamDef(StreamDefBase):
             "verbose_name": "Outgoing Not Valid Hreflang Errors",
             "type": STRING_TYPE,
             "settings": [
-                LIST,
+                ES_LIST,
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
                 RENDERING.NOT_SORTABLE
@@ -148,9 +149,10 @@ class RelCompliantStreamDef(StreamDefBase):
         },
         "rel.hreflang.out.not_valid.values": {
             "verbose_name": "Outgoing Not Valid Hreflang Values",
-            "type": STRING_TYPE,
+            "type": STRING_TYPE,  # JSON encoded. Contains list of dict.
             "settings": [
                 ES_NO_INDEX,
+                LIST,
                 FIELD_RIGHTS.SELECT,
                 RENDERING.HREFLANG_ERROR_VALUES,
                 RENDERING.NOT_SORTABLE
@@ -302,7 +304,7 @@ class InRelStreamDef(StreamDefBase):
             "help_text": "Format ISO 639-1 for langs",
             "type": STRING_TYPE,
             "settings": [
-                LIST,
+                ES_LIST,
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
                 RENDERING.NOT_SORTABLE
@@ -313,7 +315,7 @@ class InRelStreamDef(StreamDefBase):
             "help_text": "Format ISO 3166-1 Alpha 2 for regions",
             "type": STRING_TYPE,
             "settings": [
-                LIST,
+                ES_LIST,
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
                 RENDERING.NOT_SORTABLE
@@ -342,7 +344,7 @@ class InRelStreamDef(StreamDefBase):
             "verbose_name": "Incoming Not Valid Hreflang Errors",
             "type": STRING_TYPE,
             "settings": [
-                LIST,
+                ES_LIST,
                 ES_NOT_ANALYZED,
                 ES_DOC_VALUE,
                 RENDERING.NOT_SORTABLE

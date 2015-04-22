@@ -2,7 +2,7 @@ from cdf.utils.dict import get_subdict_from_path
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
     ES_NO_INDEX, ES_NOT_ANALYZED, ES_DOC_VALUE,
-    LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
+    ES_LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
     DIFF_QUALITATIVE, DIFF_QUANTITATIVE
 )
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_INDEX
@@ -40,7 +40,7 @@ class ContentsStreamDef(StreamDefBase):
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
-                LIST,
+                ES_LIST,
                 DIFF_QUALITATIVE
             }
         },
@@ -60,7 +60,7 @@ class ContentsStreamDef(StreamDefBase):
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
-                LIST,
+                ES_LIST,
                 DIFF_QUALITATIVE
             }
         },
@@ -80,7 +80,7 @@ class ContentsStreamDef(StreamDefBase):
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
-                LIST,
+                ES_LIST,
                 DIFF_QUALITATIVE
             }
         },
@@ -100,7 +100,7 @@ class ContentsStreamDef(StreamDefBase):
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
-                LIST,
+                ES_LIST,
                 DIFF_QUALITATIVE
             }
         },
@@ -121,7 +121,7 @@ class ContentsStreamDef(StreamDefBase):
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
-                LIST,
+                ES_LIST,
                 DIFF_QUALITATIVE
             }
         },
@@ -193,7 +193,7 @@ def _get_duplicate_document_mapping(metadata_list,
             "type": INT_TYPE,
             "settings": {
                 ES_NO_INDEX,
-                LIST,
+                ES_LIST,
                 RENDERING.URL_STATUS,
                 URL_ID,
                 FIELD_RIGHTS.SELECT

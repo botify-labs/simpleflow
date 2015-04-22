@@ -3,7 +3,7 @@ from copy import deepcopy
 from cdf.utils.dict import update_path_in_dict
 from cdf.core.metadata.dataformat import FIELD_RIGHTS
 from .url_metadata import (STRING_TYPE, BOOLEAN_TYPE,
-                           STRUCT_TYPE, MULTI_FIELD, LIST,
+                           STRUCT_TYPE, MULTI_FIELD, ES_LIST,
                            ES_NOT_ANALYZED, ES_NO_INDEX, LONG_TYPE,
                            INT_TYPE, ES_DOC_VALUE,
                            AGG_CATEGORICAL, AGG_NUMERICAL, FAKE_FIELD)
@@ -48,7 +48,7 @@ def _is_string_field(field_values):
 
 
 def _is_list_field(field_values):
-    return _SETTINGS in field_values and LIST in field_values[_SETTINGS]
+    return _SETTINGS in field_values and ES_LIST in field_values[_SETTINGS]
 
 
 def _is_multi_field(field_values):
