@@ -3,6 +3,8 @@ import json
 import shutil
 from moto import mock_s3
 import boto
+import mock
+import numpy as np
 
 from cdf.features.main.streams import (
     IdStreamDef
@@ -19,8 +21,8 @@ from cdf.features.links.streams import (
     LinksToNonCompliantCountersStreamDef,
     InlinksCountersStreamDef,
     InlinksPercentilesStreamDef,
-    InredirectCountersStreamDef
-)
+    InredirectCountersStreamDef,
+    PageRankStreamDef)
 from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
 from cdf.features.links.tasks import (
     make_bad_link_file as compute_bad_link,
@@ -29,7 +31,8 @@ from cdf.features.links.tasks import (
     make_top_domains_files as compute_top_domains,
     make_links_to_non_compliant_file,
     make_links_to_non_compliant_counter_file,
-    make_inlinks_percentiles_file
+    make_inlinks_percentiles_file,
+    page_rank
 )
 
 from cdf.features.main.reasons import encode_reason_mask, REASON_HTTP_CODE
@@ -586,3 +589,73 @@ class TestMakeInlinksPercentileFile(TaskTestCase):
         self.assertIn('max', content[0])
         self.assertIn('metric_total', content[0])
         self.assertIn('url_total', content[0])
+
+
+class TestPageRank(TaskTestCase):
+    def setUp(self):
+        self.s3_uri = "s3://test_bucket"
+        self.outlinks = [
+            [1, 'a', 0, 2, ''],
+            [1, 'a', 0, 6, ''],
+            [2, 'a', 0, 3, ''],
+            [2, 'a', 0, 4, ''],
+            [3, 'a', 0, 4, ''],
+            [3, 'a', 0, 5, ''],
+            [3, 'a', 0, 6, ''],
+            [4, 'a', 0, 1, ''],
+            [6, 'a', 0, 1, ''],
+        ]
+        self.tmp_dir = tempfile.mkdtemp()
+
+    @mock_s3
+    @mock.patch('cdf.features.links.tasks.get_crawl_info')
+    def test_task(self, mock_crawl_info):
+        mock_crawl_info.return_value = {'max_uid_we_crawled': 10}
+        s3 = boto.connect_s3()
+        bucket = s3.create_bucket('test_bucket')
+        first_part_size = 2
+        part_size = 10
+        OutlinksRawStreamDef.persist(
+            iter(self.outlinks), self.s3_uri,
+            first_part_size=first_part_size,
+            part_size=part_size
+        )
+
+        page_rank(
+            self.s3_uri,
+            first_part_id_size=first_part_size,
+            part_id_size=part_size,
+            tmp_dir=self.tmp_dir
+        )
+
+        result = self.get_files(
+            self.s3_uri, regexp='pagerank.txt.*.gz')
+
+        expected = [
+            "s3://test_bucket/pagerank.txt.0.gz",
+            "s3://test_bucket/pagerank.txt.1.gz",
+        ]
+        self.assertEqual(result, expected)
+
+        result = list(PageRankStreamDef.load(
+            self.s3_uri, tmp_dir=self.tmp_dir))
+
+        rank_result = [l[1] for l in result]
+        value_result = [l[2] for l in result]
+        normalized_result = [l[3] for l in result]
+
+        rank_expected = [1, 3, 5, 4, 6, 2]
+        normalized_expected = [10, 9, 8, 8, 8, 9]
+        value_expected = np.array([
+            0.3210154,
+            0.1705440,
+            0.1065908,
+            0.1367922,
+            0.0643121,
+            0.2007454
+        ])
+
+        self.assertEqual(rank_result, rank_expected)
+        self.assertEqual(normalized_result, normalized_expected)
+        self.assertTrue(
+            np.linalg.norm(value_result - value_expected) < 0.001)
