@@ -138,6 +138,10 @@ class LinkGraph(Iterable):
         """
         raise NotImplemented
 
+    @abc.abstractmethod
+    def get_node_count(self):
+        raise NotImplemented
+
     def __iter__(self):
         return self.iter_adjacency_list()
 
@@ -198,6 +202,9 @@ class FileBackedLinkGraph(LinkGraph):
                 except EOFError:
                     break
 
+    def get_node_count(self):
+        return self.node_count
+
 
 def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
     """Compute the page rank vector for a given LinkGraph
@@ -209,7 +216,7 @@ def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
     :return: page rank vector
     :rtype: numpy.array
     """
-    node_count = graph.node_count
+    node_count = graph.get_node_count()
 
     residual = float('inf')
     src = np.repeat(1.0 / node_count, node_count)

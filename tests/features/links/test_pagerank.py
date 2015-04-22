@@ -175,7 +175,8 @@ class MockGraph(object):
     3   0
     5   0
     """
-    node_count = 6
+    def get_node_count(self):
+        return 6
 
     def __iter__(self):
         return iter([
