@@ -3,7 +3,8 @@ import unittest
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
 from cdf.metadata.url.url_metadata import (
     DIFF_QUANTITATIVE,
-    DIFF_QUALITATIVE
+    DIFF_QUALITATIVE,
+    ES_LIST
 )
 from cdf.features.semantic_metadata.streams import (
     _get_duplicate_document_mapping
@@ -51,7 +52,7 @@ class TestGetDuplicateDocumentMapping(unittest.TestCase):
                 'settings': {
                     'es:no_index',
                     'url_id',
-                    'list',
+                    ES_LIST,
                     RENDERING.URL_STATUS,
                     FIELD_RIGHTS.SELECT
                 }

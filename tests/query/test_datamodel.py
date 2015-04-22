@@ -11,7 +11,7 @@ from cdf.query.datamodel import (
     _get_group_sort_key
 )
 from cdf.core.metadata.constants import RENDERING, FIELD_RIGHTS
-from cdf.metadata.url.url_metadata import ES_LIST, ES_NO_INDEX
+from cdf.metadata.url.url_metadata import ES_LIST, ES_NO_INDEX, LIST
 
 
 class CustomStreamDef(StreamDefBase):
@@ -297,6 +297,7 @@ class FieldsTestCase(unittest.TestCase):
         data_model = [k['value'] for k in data_model]
         # datamodel should be sorted within each field
         expected = [
+            'serialized_list',
             'content',
             'content_same_urls',
             'url',
