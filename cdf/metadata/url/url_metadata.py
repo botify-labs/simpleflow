@@ -38,6 +38,7 @@ from enum import Enum
 LONG_TYPE = 'long'
 INT_TYPE = 'integer'
 FLOAT_TYPE = 'float'
+DOUBLE_TYPE = 'double'
 STRING_TYPE = 'string'
 BOOLEAN_TYPE = 'boolean'
 STRUCT_TYPE = 'struct'

@@ -2,9 +2,10 @@ import gzip
 import os
 import itertools
 import logging
+import time
+import marshal
 
 from cdf.compat import json
-from cdf.features.links.pagerank import pagerank_filter, compute_page_rank, process_pr_result, virtuals_filter
 from cdf.utils.s3 import push_file, push_content
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils.remote_files import (
@@ -44,6 +45,15 @@ from cdf.features.links.top_domains import (
 from cdf.features.links.percentiles import (
     compute_quantiles,
     compute_percentile_stats
+)
+from cdf.features.links.pagerank import (
+    pagerank_filter,
+    compute_page_rank,
+    process_pr_result,
+    FileBackedLinkGraph,
+    group_links,
+    DictMapping,
+    process_virtual_result
 )
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
@@ -353,7 +363,6 @@ def make_inlinks_percentiles_file(s3_uri,
 
 @with_temporary_dir
 def page_rank(s3_uri,
-              virtual_pages=False,
               first_part_id_size=FIRST_PART_ID_SIZE,
               part_id_size=PART_ID_SIZE,
               tmp_dir=None,
@@ -362,38 +371,83 @@ def page_rank(s3_uri,
     crawler_metakeys = get_crawl_info(s3_uri, tmp_dir=tmp_dir)
     max_crawled_urlid = get_max_crawled_urlid(crawler_metakeys)
 
-    # first pass for page rank
+    def get_stream(grouped):
+        """Transform the grouped link stream"""
+        for src, _, normals, _ in grouped:
+            yield src
+            for n in normals:
+                yield n
+
     s = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
-    s = pagerank_filter(
-        s, virtual_pages=virtual_pages, max_crawled_id=max_crawled_urlid)
+    s = itertools.ifilter(pagerank_filter, s)
+    grouped = group_links(s, max_crawled_urlid)
 
-    pr, degrees = compute_page_rank(s)
+    # first pass over the links for node id resolution
+    # we manually construct a `LinkGraph` instead of using its
+    # static factory method for performance reason
+    start = time.time()
+    node_mapping = DictMapping(get_stream(grouped))
+    end = time.time()
+    logger.info("Node mapping: %s", str(end - start))
 
-    # second pass for virtual links
     s = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
-    s = virtuals_filter(s, max_crawled_urlid)
+    s = itertools.ifilter(pagerank_filter, s)
+    grouped = group_links(s, max_crawled_urlid)
 
-    result = process_pr_result(pr)
+    graph_path = os.path.join(tmp_dir, 'link_graph')
+    virtual_path = os.path.join(tmp_dir, 'virtuals')
+
+    # use gzip files
+    virtual_file = open(virtual_path, 'wb')
+    graph_file = open(graph_path, 'wb')
+
+    # second pass to separate graph datasets
+    #   - page rank graph (FileBackedLinkGraph format)
+    #   - virtual links
+    start = time.time()
+    for src, outdeg, normals, virtuals in grouped:
+        k = node_mapping.get_internal_id(src)
+        # write graph file
+        if len(normals) > 0:
+            g = [node_mapping.get_internal_id(d) for d in normals]
+            marshal.dump((k, len(g), g), graph_file)
+
+        # write virtual link files
+        if virtuals:
+            marshal.dump((k, outdeg, virtuals), virtual_file)
+
+    graph_file.close()
+    virtual_file.close()
+
+    end = time.time()
+    logger.info("Separate link files: %s", str(end - start))
+
+    # Page rank iteration
+    start = time.time()
+    graph = FileBackedLinkGraph(graph_path, node_mapping)
+    pr = compute_page_rank(graph)
+    mapping = graph.node_mapping
+    # TODO resolve node ids inside page rank computation logic
+    result = [(mapping.get_external_id(i), v) for i, v in enumerate(pr)]
+    end = time.time()
+    logger.info("Page rank: %s", str(end - start))
+
+    start = time.time()
+    with open(virtual_path, 'rb') as virtual_file:
+        virtuals_result = process_virtual_result(virtual_file, pr)
+        dest_uri = os.path.join(s3_uri, 'pagerank_virtuals.json')
+        push_content(dest_uri, json.dumps(virtuals_result))
+    pr = None
+    end = time.time()
+    logger.info("Virtuals processing: %s", str(end - start))
+
+    start = time.time()
+    result = process_pr_result(result)
+    end = time.time()
+    logger.info("Post-processing: %s", str(end - start))
+
     PageRankStreamDef.persist(
         iter(result), s3_uri,
-        first_part_size=FIRST_PART_ID_SIZE,
-        part_size=PART_ID_SIZE
+        first_part_size=first_part_id_size,
+        part_size=part_id_size
     )
-
-    # make result eligible for GC
-    result = None
-
-    virtuals_result = {}
-    for k, g in itertools.groupby(s, key=lambda x: x[0]):
-        g = list(g)
-        n = len(g)
-        final_outdegrees = n + degrees.get(k, 0)
-        contrib = pr[k] / final_outdegrees
-
-        for _, dst in g:
-            v = virtuals_result.setdefault(dst, 0.0)
-            v += contrib
-            virtuals_result[dst] = v
-
-    dest_uri = os.path.join(s3_uri, 'pagerank_virtuals.json')
-    push_content(dest_uri, json.dumps(virtuals_result))
