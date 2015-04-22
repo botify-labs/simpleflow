@@ -4,7 +4,7 @@ from cdf.features.main.reasons import (
 )
 from cdf.metadata.url.url_metadata import (
     LONG_TYPE, INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
-    DATE_TYPE, ES_NOT_ANALYZED, ES_DOC_VALUE,
+    DATE_TYPE, FLOAT_TYPE, ES_NOT_ANALYZED, ES_DOC_VALUE,
     ES_LIST, AGG_CATEGORICAL, AGG_NUMERICAL, URL_ID,
     DIFF_QUALITATIVE, DIFF_QUANTITATIVE
 )
@@ -424,3 +424,96 @@ class CompliantUrlStreamDef(StreamDefBase):
             reasons = decode_reason_mask(mask)
             for reason in Reasons:
                 reason_field[reason.name] = reason in reasons
+
+
+_EXTRACT_RESULT_COUNT = 5
+
+
+def _generate_ers_document_mapping():
+    """
+    ExtractResultsStreamDef's URL_DOCUMENT_MAPPING
+    """
+    dm = {}
+    for type_name in STRING_TYPE, INT_TYPE, BOOLEAN_TYPE, FLOAT_TYPE:
+        for i in range(_EXTRACT_RESULT_COUNT):
+            dm["extract.extract_%s_%i" % (type_name, i)] = {
+                "type": type_name,
+                "default_value": None,
+                "settings": {
+                    # LIST,
+                }
+            }
+    return dm
+
+
+class ExtractResultsStreamDef(StreamDefBase):
+    FILE = 'urlextract'
+    HEADERS = (
+        ('id', int),  # url_id
+        ('name', str),
+        ('label', str),
+        ('agg', str),
+        ('cast', str),
+        ('rank', int),
+        ('value', str)
+    )
+
+    URL_DOCUMENT_MAPPING = _generate_ers_document_mapping()
+
+    def process_document(self, document, stream):
+        url_id, name, label, agg, cast, rank, value = stream
+        if cast:
+            value = self._apply_cast(cast, value)
+
+        if agg != "list":
+            document["extract"][label] = value
+        else:
+            self._put_in_place(document["extract"], label, rank, value)
+
+    @staticmethod
+    def _apply_cast(cast, value):
+        """
+        Cast value according to cast.
+        :param cast: Expected type ("" == str)
+        :type cast: str
+        :param value: String input value
+        :type value: str
+        :return:Casted value
+        """
+        if not cast or cast[0] == 's':
+            return value
+        if cast[0] == 'i':
+            return int(value)
+        if cast[0] == 'b':
+            return value == '1' or value[0].lower() in 'typo'
+        if cast[0] == 'f':
+            return float(value)
+        raise AssertionError("{} not in 'sibf'".format(cast))
+
+    @staticmethod
+    def _put_in_place(extract, label, rank, value):
+        """
+        Put value in extract[label] at the specified rank.
+        If the array is too short, add some None.
+        :param extract: document["extract"]
+        :type extract: dict
+        :param label: value label
+        :type label: str
+        :param rank: position
+        :type rank: int
+        :param value: what to put
+        :type value:
+        """
+        if rank < 0:
+            return
+        if extract[label] is None:
+            tmp = []
+        elif not isinstance(extract[label], list):
+            tmp = [extract[label]]
+        else:
+            tmp = extract[label]
+        while len(tmp) <= rank:
+            tmp.append(None)
+        tmp[rank] = value
+        extract[label] = tmp
+
