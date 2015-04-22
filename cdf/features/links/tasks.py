@@ -405,7 +405,7 @@ def page_rank(s3_uri,
     #   - page rank graph (FileBackedLinkGraph format)
     #   - virtual links
     start = time.time()
-    for src, od, normals, virtuals in grouped:
+    for src, outdeg, normals, virtuals in grouped:
         k = node_mapping.get_internal_id(src)
         # write graph file
         if len(normals) > 0:
@@ -414,7 +414,7 @@ def page_rank(s3_uri,
 
         # write virtual link files
         if virtuals:
-            marshal.dump((k, od, virtuals), virtual_file)
+            marshal.dump((k, outdeg, virtuals), virtual_file)
 
     graph_file.close()
     virtual_file.close()

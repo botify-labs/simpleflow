@@ -227,8 +227,8 @@ def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
         # TODO reuse buffer ???
         dst = np.zeros(node_count)
 
-        for i, od, links in graph:
-            weight = src[i] / od
+        for i, outdeg, links in graph:
+            weight = src[i] / outdeg
             for j in links:
                 dst[j] = dst[j] + weight
 
@@ -302,11 +302,11 @@ def group_links(links_stream, max_crawled_id):
     :return: (src, out_degree, normals, virtuals)
     """
     for src, g in itertools.groupby(links_stream, key=itemgetter(0)):
-        od_count = 0
+        outdeg_count = 0
         virtuals = None
         normals = []
         for _, _, mask, dst, _ in g:
-            od_count += 1
+            outdeg_count += 1
             v = is_virtual_page(src, mask, dst, max_crawled_id)
             if v:
                 if not virtuals:
@@ -315,7 +315,7 @@ def group_links(links_stream, max_crawled_id):
                 virtuals[d] += 1
             else:
                 normals.append(dst)
-        yield (src, od_count, normals, virtuals)
+        yield (src, outdeg_count, normals, virtuals)
 
 
 def get_bucket_size(num_pages):
@@ -409,8 +409,8 @@ def process_virtual_result(virtuals_file, pr):
     while True:
         try:
             # note that `src` is internal id
-            src, od, virtuals = marshal.load(virtuals_file)
-            contrib = pr[src] / od
+            src, outdeg, virtuals = marshal.load(virtuals_file)
+            contrib = pr[src] / outdeg
 
             exts = virtuals[EXT_VIR]
             robots = virtuals[ROBOTS_VIR]
