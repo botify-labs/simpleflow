@@ -5,7 +5,7 @@ import itertools
 import codecs
 import re
 
-from cdf.analysis.urls.utils import get_part_id
+from cdf.utils.ids import  get_part_id
 from cdf.log import logger
 
 

@@ -11,7 +11,7 @@ from cdf.core.streams.utils import split_file
 from cdf.core.constants import FIRST_PART_ID_SIZE, PART_ID_SIZE
 from cdf.utils import s3
 from cdf.utils.path import list_files, partition_aware_sort
-from cdf.analysis.urls.utils import get_part_id
+from cdf.utils.ids import get_part_id
 
 
 class AbstractAttribute(object):

@@ -1,5 +1,4 @@
 import os
-import gzip
 
 from autotagging.exceptions import TooManyCombinationsError
 from autotagging.association_rules.algorithm import (discover_protocol_patterns,
@@ -18,7 +17,7 @@ from cdf.features.main.compliant_url import generate_compliant_stream
 from cdf.utils.path import makedirs
 from cdf.utils.remote_files import enumerate_partitions, get_crawl_info
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
-from cdf.analysis.urls.constants import CLUSTER_TYPE_TO_ID
+from cdf.features.main.constants import CLUSTER_TYPE_TO_ID
 from cdf.log import logger
 from cdf.utils.s3 import fetch_file, fetch_files, push_file
 from cdf.core.streams.stream_factory import (StreamFactoryCache,

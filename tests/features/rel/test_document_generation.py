@@ -2,20 +2,17 @@ import shutil
 import tempfile
 import unittest
 
-from cdf.compat import json
-from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
+import boto
+from moto import mock_s3
 
+from cdf.compat import json
+from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.main.streams import (
     CompliantUrlStreamDef,
     IdStreamDef, InfosStreamDef
 )
 from cdf.features.rel.streams import RelCompliantStreamDef, InRelStreamDef
 from cdf.features.rel import constants as rel_constants
-
-import boto
-from moto import mock_s3
-
-from bitarray import bitarray
 
 
 def _next_doc(generator):

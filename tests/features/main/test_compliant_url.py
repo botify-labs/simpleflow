@@ -1,9 +1,11 @@
 import shutil
 import tempfile
 import unittest
+
 from moto import mock_s3
 import boto
-from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
+
+from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.core.streams.base import Stream
 from cdf.features.links.streams import OutlinksStreamDef
 from cdf.features.main.compliant_url import (

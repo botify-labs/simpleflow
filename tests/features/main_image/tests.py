@@ -1,6 +1,6 @@
 import unittest
 
-from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
+from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.main_image.streams import ContentsExtendedStreamDef, _is_prioritary_field, MainImage
 

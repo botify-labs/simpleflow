@@ -2,7 +2,7 @@ import re
 import os
 import json
 
-from cdf.analysis.urls.utils import get_part_id
+from cdf.utils.ids import get_part_id
 from cdf.exceptions import MalformedFileNameError
 from cdf.utils import s3, path
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
