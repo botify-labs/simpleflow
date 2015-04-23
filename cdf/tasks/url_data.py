@@ -1,11 +1,10 @@
 import os
 import gzip
 import itertools
+import time
 
-from six.moves.urllib.parse import urlparse
 from elasticsearch import Elasticsearch
 from retrying import retry
-import time
 
 from cdf.compat import json
 from cdf.exceptions import ErrorRateLimitExceeded
@@ -14,7 +13,7 @@ from cdf.metadata.url.backend import ELASTICSEARCH_BACKEND
 from cdf.utils.es import EsHandler
 from cdf.utils.remote_files import enumerate_partitions
 from cdf.utils.s3 import fetch_files, push_file
-from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
+from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.core.streams.utils import get_data_streams_from_storage
 from cdf.core.features import Feature
 from cdf.utils.stream import chunk

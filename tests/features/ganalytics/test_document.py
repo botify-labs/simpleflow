@@ -1,7 +1,8 @@
 import unittest
+
 import mock
 
-from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
+from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.ganalytics.streams import VisitsStreamDef
 

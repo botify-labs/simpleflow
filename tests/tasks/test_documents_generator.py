@@ -15,7 +15,7 @@ import unittest
 import logging
 
 from cdf.log import logger
-from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
+from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.links.helpers.masks import list_to_mask
 from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.features.links.streams import (
@@ -28,6 +28,7 @@ from cdf.features.semantic_metadata.streams import (
     ContentsCountStreamDef
 )
 from cdf.features.sitemaps.streams import SitemapStreamDef
+
 
 logger.setLevel(logging.DEBUG)
 

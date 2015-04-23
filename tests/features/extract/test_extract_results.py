@@ -3,7 +3,7 @@ __author__ = 'zeb'
 
 import unittest
 
-from cdf.analysis.urls.generators.documents import UrlDocumentGenerator
+from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.extract.streams import ExtractResultsStreamDef
 from cdf.query.datamodel import get_fields
