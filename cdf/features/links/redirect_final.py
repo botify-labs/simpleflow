@@ -67,6 +67,7 @@ class _Result(collections.Iterable):
                 http_code = self.uid_to_http_code.get(dst, 200)
             else:
                 http_code = 0
+            in_loop = int(in_loop)
             yield RedirectFinal(
                 uid=uid, dst=dst, nb_hops=self.uid_nb_hops[uid], ext=ext, in_loop=in_loop, http_code=http_code
             )

@@ -1,23 +1,114 @@
+from cdf.features.main.streams import IdStreamDef
+from cdf.tasks.documents import UrlDocumentGenerator
+
 __author__ = 'zeb'
 
 import unittest
 
 from cdf.features.links.redirect_final import (
-    # FinalRedirectionStreamDef,
+    FinalRedirectionStreamDef,
     RedirectFinal,
     compute_final_redirects,
 )
 
-# Start of InfosStreamDef:
-# ('id', int),
-# ('infos_mask', int),
-# ('content_type', str),
-# ('depth', int),
-# ('date_crawled', int),
-# ('http_code', int),
+
+_ids1 = [
+    [1, 'http', 'www.site.com', '/path/name.html', ''],
+    [2, 'http', 'www.site.com', '/path/other_name.html', ''],
+    [3, 'http', 'www.site.com', '/path/real_page.html', ''],
+    [4, 'http', 'www.site.com', '/', ''],
+]
+
+_stream1 = [
+    (1, -1, 1, 'http://www.google.com/', False, 0),
+    (2, 4, 2, '', False, 200),
+    (3, 4, 1, '', False, 200),
+]
 
 
 class TestFinalRedirectionStreamDef(unittest.TestCase):
+    def test_1(self):
+        gen = UrlDocumentGenerator(
+            [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
+        documents = list(gen)
+        self.assertEqual(len(documents), 4)
+        doc = documents[0][1]
+        self.assertTrue("redirect" in doc)
+        self.assertTrue("to" in doc["redirect"])
+        redirects_to = doc['redirect']['to']
+        self.assertTrue("final_url" in redirects_to)
+        self.assertTrue("final_url_exists" in redirects_to)
+        self.assertTrue(redirects_to["final_url_exists"])
+        final_url = redirects_to["final_url"]
+        self.assertTrue("url_str" in final_url)
+        self.assertFalse("url_id" in final_url)
+        self.assertFalse("http_code" in final_url)
+        self.assertEqual("http://www.google.com/", final_url["url_str"])
+        self.assertTrue("nb_hops" in redirects_to)
+        self.assertEqual(1, redirects_to["nb_hops"])
+        self.assertTrue("in_loop" in redirects_to)
+        self.assertEqual(False, redirects_to["in_loop"])
+
+    def test_2(self):
+        gen = UrlDocumentGenerator(
+            [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
+        documents = list(gen)
+        self.assertEqual(len(documents), 4)
+        doc = documents[1][1]
+        self.assertTrue("redirect" in doc)
+        self.assertTrue("to" in doc["redirect"])
+        redirects_to = doc['redirect']['to']
+        self.assertTrue("final_url" in redirects_to)
+        self.assertTrue("final_url_exists" in redirects_to)
+        self.assertTrue(redirects_to["final_url_exists"])
+        final_url = redirects_to["final_url"]
+        self.assertFalse("url_str" in final_url)
+        self.assertTrue("url_id" in final_url)
+        self.assertTrue("http_code" in final_url)
+        self.assertEqual(4, final_url["url_id"])
+        self.assertEqual(200, final_url["http_code"])
+        self.assertTrue("nb_hops" in redirects_to)
+        self.assertEqual(2, redirects_to["nb_hops"])
+        self.assertTrue("in_loop" in redirects_to)
+        self.assertEqual(False, redirects_to["in_loop"])
+
+    def test_3(self):
+        gen = UrlDocumentGenerator(
+            [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
+        documents = list(gen)
+        self.assertEqual(len(documents), 4)
+        doc = documents[2][1]
+        self.assertTrue("redirect" in doc)
+        self.assertTrue("to" in doc["redirect"])
+        redirects_to = doc['redirect']['to']
+        self.assertTrue("final_url" in redirects_to)
+        self.assertTrue("final_url_exists" in redirects_to)
+        self.assertTrue(redirects_to["final_url_exists"])
+        final_url = redirects_to["final_url"]
+        self.assertFalse("url_str" in final_url)
+        self.assertTrue("url_id" in final_url)
+        self.assertTrue("http_code" in final_url)
+        self.assertEqual(4, final_url["url_id"])
+        self.assertEqual(200, final_url["http_code"])
+        self.assertTrue("nb_hops" in redirects_to)
+        self.assertEqual(1, redirects_to["nb_hops"])
+        self.assertTrue("in_loop" in redirects_to)
+        self.assertEqual(False, redirects_to["in_loop"])
+
+    def test_4(self):
+        gen = UrlDocumentGenerator(
+            [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
+        documents = list(gen)
+        self.assertEqual(len(documents), 4)
+        doc = documents[3][1]
+        self.assertTrue("redirect" in doc)
+        self.assertTrue("to" in doc["redirect"])
+        redirects_to = doc['redirect']['to']
+        self.assertFalse("final_url" in redirects_to)
+        self.assertFalse("final_url_exists" in redirects_to)
+
+
+class TestComputeFinalRedirects(unittest.TestCase):
     def test_no_links(self):
         infos = [
             (1, None, None, None, None, 301),
