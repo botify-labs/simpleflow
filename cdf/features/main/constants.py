@@ -1,9 +1,5 @@
 from cdf.features.semantic_metadata.settings import CONTENT_TYPE_NAME_TO_ID
 
-
-SUGGEST_CLUSTERS = ['mixed']
-
-
 CLUSTER_TYPE_TO_ID = {
     'pattern': {
         'host': 10,
