@@ -3,17 +3,19 @@ __author__ = 'zeb'
 import unittest
 
 from cdf.features.links.redirect_final import (
-    FinalRedirectionStreamDef,
+    # FinalRedirectionStreamDef,
     RedirectFinal,
+    compute_final_redirects,
 )
 
-# Start of InfoStreamDef:
+# Start of InfosStreamDef:
 # ('id', int),
 # ('infos_mask', int),
 # ('content_type', str),
 # ('depth', int),
 # ('date_crawled', int),
 # ('http_code', int),
+
 
 class TestFinalRedirectionStreamDef(unittest.TestCase):
     def test_no_links(self):
@@ -26,8 +28,8 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
             (1, 'a', 0, 2, ''),
             (1, 'a', 0, 5, '')
         ]
-        r = FinalRedirectionStreamDef.compute_final_redirections(infos, s)
-        #uid_to_dst, uid_to_ext, uid_nb_hops, uid_in_loop = FinalRedirectionStreamDef.compute_final_redirections(s)
+        r = compute_final_redirects(infos, s)
+        # uid_to_dst, uid_to_ext, uid_nb_hops, uid_in_loop = FinalRedirectionStreamDef.compute_final_redirections(s)
         self.assertEqual(len(r.uid_to_dst), 0)
         self.assertEqual(len(r.uid_to_ext), 0)
         self.assertEqual(len(r.uid_nb_hops), 0)
@@ -41,7 +43,7 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
         s = [
             (1, 'r301', 0, 2, ''),
         ]
-        r = FinalRedirectionStreamDef.compute_final_redirections(infos, s)
+        r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 1)
         self.assertEqual(len(r.uid_to_ext), 0)
         self.assertEqual(len(r.uid_nb_hops), 1)
@@ -61,7 +63,7 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
             (1, 'r301', 0, 2, ''),
             (2, 'r301', 0, 3, ''),
         ]
-        r = FinalRedirectionStreamDef.compute_final_redirections(infos, s)
+        r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
         self.assertEqual(len(r.uid_to_ext), 0)
         self.assertEqual(len(r.uid_nb_hops), 2)
@@ -83,7 +85,7 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
             (1, 'r301', 0, 3, ''),
             (2, 'r301', 0, 1, ''),
         ]
-        r = FinalRedirectionStreamDef.compute_final_redirections(infos, s)
+        r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
         self.assertEqual(len(r.uid_to_ext), 0)
         self.assertEqual(len(r.uid_nb_hops), 2)
@@ -104,7 +106,7 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
             (1, 'r301', 0, 2, ''),
             (2, 'r301', 8, -1, 'http://www.example.com/'),
         ]
-        r = FinalRedirectionStreamDef.compute_final_redirections(infos, s)
+        r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
         self.assertEqual(len(r.uid_to_ext), 2)
         self.assertEqual(len(r.uid_nb_hops), 2)
@@ -125,7 +127,7 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
             (1, 'r301', 0, 2, ''),
             (2, 'r301', 0, 1, ''),
         ]
-        r = FinalRedirectionStreamDef.compute_final_redirections(infos, s)
+        r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
         self.assertEqual(len(r.uid_to_ext), 0)
         self.assertEqual(len(r.uid_nb_hops), 2)
@@ -151,7 +153,7 @@ class TestRedirectFinal(unittest.TestCase):
             (1, 'a', 0, 2, ''),
             (1, 'a', 0, 5, '')
         ]
-        with FinalRedirectionStreamDef.compute_final_redirections(infos, s) as results:
+        with compute_final_redirects(infos, s) as results:
             self.assertEqual(len(list(results)), 0)
 
     def test_links_1(self):
@@ -162,7 +164,7 @@ class TestRedirectFinal(unittest.TestCase):
         s = [
             (1, 'r301', 0, 2, ''),
         ]
-        with FinalRedirectionStreamDef.compute_final_redirections(infos, s) as results:
+        with compute_final_redirects(infos, s) as results:
             results = iter(results)
             r = results.next()
             self.assertIsInstance(r, RedirectFinal)
@@ -184,7 +186,7 @@ class TestRedirectFinal(unittest.TestCase):
             (1, 'r301', 0, 2, ''),
             (2, 'r301', 0, 3, ''),
         ]
-        with FinalRedirectionStreamDef.compute_final_redirections(infos, s) as results:
+        with compute_final_redirects(infos, s) as results:
             results = iter(results)
             r = results.next()
             self.assertIsInstance(r, RedirectFinal)
@@ -213,7 +215,7 @@ class TestRedirectFinal(unittest.TestCase):
             (1, 'r301', 0, 3, ''),
             (2, 'r301', 0, 1, ''),
         ]
-        with FinalRedirectionStreamDef.compute_final_redirections(infos, s) as results:
+        with compute_final_redirects(infos, s) as results:
             results = iter(results)
             r = results.next()
             self.assertIsInstance(r, RedirectFinal)
@@ -241,21 +243,21 @@ class TestRedirectFinal(unittest.TestCase):
             (1, 'r301', 0, 2, ''),
             (2, 'r301', 8, -1, 'http://www.example.com/'),
         ]
-        with FinalRedirectionStreamDef.compute_final_redirections(infos, s) as results:
+        with compute_final_redirects(infos, s) as results:
             results = iter(results)
             r = results.next()
             self.assertIsInstance(r, RedirectFinal)
             self.assertEqual(r.uid, 1)
-            self.assertIsNone(r.dst)
+            self.assertEqual(r.dst, -1)
             self.assertEqual(r.ext, 'http://www.example.com/')
-            self.assertIsNone(r.http_code)
+            self.assertFalse(r.http_code)
             self.assertEqual(r.nb_hops, 2)
             r = results.next()
             self.assertIsInstance(r, RedirectFinal)
             self.assertEqual(r.uid, 2)
-            self.assertIsNone(r.dst)
+            self.assertEqual(r.dst, -1)
             self.assertEqual(r.ext, 'http://www.example.com/')
-            self.assertIsNone(r.http_code)
+            self.assertFalse(r.http_code)
             self.assertEqual(r.nb_hops, 1)
             with self.assertRaises(StopIteration):
                 results.next()
@@ -269,7 +271,7 @@ class TestRedirectFinal(unittest.TestCase):
             (1, 'r301', 0, 2, ''),
             (2, 'r301', 0, 1, ''),
         ]
-        with FinalRedirectionStreamDef.compute_final_redirections(infos, s) as results:
+        with compute_final_redirects(infos, s) as results:
             results = iter(results)
             r = results.next()
             self.assertIsInstance(r, RedirectFinal)

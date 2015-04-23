@@ -57,6 +57,7 @@ from cdf.features.links.pagerank import (
 )
 from cdf.features.links.redirect_final import (
     FinalRedirectionStreamDef,
+    compute_final_redirects,
 )
 
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
@@ -491,7 +492,7 @@ def get_final_redirects(s3_uri,
         'tmp_dir': tmp_dir,
         'force_fetch': force_fetch,
     }
-    with FinalRedirectionStreamDef.compute_final_redirections(
+    with compute_final_redirects(
             InfosStreamDef.load(**stream_kwargs),
             OutlinksRawStreamDef.load(**stream_kwargs)
     ) as result:
