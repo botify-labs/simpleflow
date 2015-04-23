@@ -5,6 +5,7 @@ Class/functions for computing redirects' final destinations.
 
 from collections import namedtuple
 import collections
+from cdf.utils.convert import _raw_to_bool
 
 try:
     import judyz
@@ -81,7 +82,7 @@ class FinalRedirectionStreamDef(StreamDefBase):
         ('dst', int),
         ('nb_hops', int),
         ('ext', str),
-        ('in_loop', bool),
+        ('in_loop', _raw_to_bool),
         ('http_code', int),
     )
 
