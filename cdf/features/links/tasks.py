@@ -482,9 +482,21 @@ def page_rank(s3_uri,
 
 @with_temporary_dir
 def get_final_redirects(s3_uri,
-              first_part_id_size=FIRST_PART_ID_SIZE,
-              part_id_size=PART_ID_SIZE,
-              tmp_dir=None,
-              force_fetch=DEFAULT_FORCE_FETCH):
-    s = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
-    FinalRedirectionStreamDef.compute_final_redirections(s)
+                        first_part_id_size=FIRST_PART_ID_SIZE,
+                        part_id_size=PART_ID_SIZE,
+                        tmp_dir=None,
+                        force_fetch=DEFAULT_FORCE_FETCH):
+    stream_kwargs = {
+        'uri': s3_uri,
+        'tmp_dir': tmp_dir,
+        'force_fetch': force_fetch,
+    }
+    with FinalRedirectionStreamDef.compute_final_redirections(
+            InfosStreamDef.load(**stream_kwargs),
+            OutlinksRawStreamDef.load(**stream_kwargs)
+    ) as result:
+        FinalRedirectionStreamDef.persist(
+            iter(result), s3_uri,
+            first_part_size=first_part_id_size,
+            part_size=part_id_size
+        )
