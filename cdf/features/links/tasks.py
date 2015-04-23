@@ -55,6 +55,10 @@ from cdf.features.links.pagerank import (
     DictMapping,
     process_virtual_result
 )
+from cdf.features.links.redirect_final import (
+    FinalRedirectionStreamDef,
+)
+
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 
@@ -474,3 +478,13 @@ def page_rank(s3_uri,
         first_part_size=first_part_id_size,
         part_size=part_id_size
     )
+
+
+@with_temporary_dir
+def get_final_redirects(s3_uri,
+              first_part_id_size=FIRST_PART_ID_SIZE,
+              part_id_size=PART_ID_SIZE,
+              tmp_dir=None,
+              force_fetch=DEFAULT_FORCE_FETCH):
+    s = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    FinalRedirectionStreamDef.compute_final_redirections(s)
