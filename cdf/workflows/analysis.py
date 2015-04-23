@@ -163,7 +163,7 @@ enumerate_partitions = as_activity(enumerate_partitions)
 from cdf.features.comparison.tasks import match_documents
 match_documents = as_activity(match_documents)
 
-from cdf.tasks.analysis import refresh_index
+from cdf.utils.es import refresh_index
 refresh_index = as_activity(refresh_index)
 
 push_documents_to_elastic_search = activity.with_attributes(

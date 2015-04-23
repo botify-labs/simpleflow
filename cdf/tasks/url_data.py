@@ -26,7 +26,7 @@ from .constants import (
     COMPARISON_DOCS_DIRPATH,
     COMPARISON_DOCS_NAME_PATTERN,
     ERROR_RATE_LIMIT
-    )
+)
 
 
 def _get_docs_filename(part_id, comparison=False):
