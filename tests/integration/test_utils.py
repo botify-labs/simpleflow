@@ -2,11 +2,10 @@ import gzip
 import os
 import re
 from cdf.log import logger
-from cdf.core.streams.caster import Caster
 from cdf.features.links.helpers.masks import follow_mask
 
 from cdf.core.streams.utils import split_file
-from cdf.analysis.urls.utils import get_part_id
+from cdf.utils.ids import get_part_id
 
 
 def split_partition(input_file,
