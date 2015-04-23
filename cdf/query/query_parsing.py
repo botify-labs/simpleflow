@@ -279,7 +279,7 @@ class AnyRe(PredicateFilter):
     def transform(self):
         return {
             'regexp': {
-                self.field_value: re.escape(self.value)
+                self.field_value: normalize_regexp(self.value)
             }
         }
 
