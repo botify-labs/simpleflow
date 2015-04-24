@@ -61,8 +61,10 @@ def check_enabled(enable_key):
     :return: if the field is enabled
     :rtype: bool
     """
+
     def _check(opt):
         return opt is not None and opt.get(enable_key, False)
+
     return _check
 
 
@@ -138,7 +140,6 @@ def generate_data_format(feature_options,
         del feature_options[comparison_key]
         previous_format = _generate_data_format(
             previous_options, available_features)
-        previous_format = get_previous_data_format(previous_format)
 
         # dataformat for current crawl
         data_format = _generate_data_format(feature_options, available_features)
@@ -149,8 +150,8 @@ def generate_data_format(feature_options,
         else:
             diff_format = get_diff_data_format(data_format)
 
-
         # merge the dataformats
+        previous_format = get_previous_data_format(previous_format)
         data_format.update(previous_format)
         data_format.update(diff_format)
         return data_format
@@ -170,5 +171,3 @@ def assemble_data_format():
             if hasattr(stream_def, 'URL_DOCUMENT_MAPPING'):
                 urls_def.update(stream_def.URL_DOCUMENT_MAPPING)
     return urls_def
-
-
