@@ -1,10 +1,12 @@
-from itertools import groupby
+from itertools import groupby, ifilter
+from cdf.features.links.helpers.predicates import is_follow_link
 
 from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
 from cdf.features.links.streams import (
     OutlinksStreamDef,
     BadLinksStreamDef,
-    LinksToNonCompliantStreamDef
+    LinksToNonCompliantStreamDef,
+    LinksToNonCanonicalStreamDef
 )
 
 
@@ -120,3 +122,43 @@ def get_link_to_non_compliant_urls_counters(stream_non_compliant_links):
             total += 1
 
         yield (src_url_id, len(dests), total)
+
+
+def get_links_to_non_canonical(stream_inlinks):
+    # First, get bad canonicals
+    bad_canonicals = (src_uid
+    for src_uid, link_type, follow_mask, dst_uid, dst_url in ifilter(
+        lambda src_uid, link_type, follow_mask, dst_uid,
+               dst_url: link_type == 'canonical' and src_uid != dst_uid,
+        stream_inlinks)
+    )
+
+    # Then get links to them
+    links_to_non_canonical = (src_uid, dst_uid, int(is_follow_link(follow_mask, True))
+                              for src_uid, link_type, follow_mask, dst_uid, dst_url in ifilter(
+        lambda src_uid, link_type, follow_mask, dst_uid,
+               dst_url: dst_uid in bad_canonicals,
+        stream_inlinks)
+                              )
+    return links_to_non_canonical
+
+
+def get_links_to_non_canonical_counters(stream_links_to_non_canonical):
+    # Cut-pasted from above.
+    # Resolve indexes
+    src_url_idx = LinksToNonCanonicalStreamDef.field_idx('id')
+
+    # Group by source url_id
+    for src_url_id, g in groupby(
+            stream_links_to_non_canonical, lambda x: x[src_url_idx]):
+        # total = 0
+        dests = set()
+        for _, follow, dest in g:
+            if not follow:
+                continue
+            dests.add(dest)
+            # total += 1
+
+        yield (
+            src_url_id, len(dests)  # , total
+        )

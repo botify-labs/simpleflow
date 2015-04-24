@@ -1266,3 +1266,73 @@ class PageRankStreamDef(StreamDefBase):
         document['internal_page_rank']['position'] = position
         document['internal_page_rank']['raw'] = raw
         document['internal_page_rank']['value'] = value
+
+
+class LinksToNonCanonicalStreamDef(StreamDefBase):
+    FILE = 'urllinkstononcan'
+    HEADERS = (
+        ('id', int),
+        ('dst_url_id', int),
+        ('follow', _raw_to_bool),
+    )
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
+    URL_DOCUMENT_MAPPING = {
+        # erroneous outgoing internal links
+        "outlinks_errors.bad_canonical.urls": {
+            "type": INT_TYPE,
+            "verbose_name": "Sample of error links to non-canonical",
+            "settings": {
+                ES_NO_INDEX,
+                ES_LIST,
+                FIELD_RIGHTS.SELECT,
+                RENDERING.URL,
+                URL_ID,
+            }
+        },
+        "outlinks_errors.bad_canonical.urls_exists": {
+            "type": "boolean",
+            "default_value": None
+        },
+    }
+
+    def process_document(self, document, stream_linkstononcan):
+        _, url_dest_id, follow = stream_linkstononcan
+
+        errors = document['outlinks_errors']
+        error_kind = 'bad_canonical'
+
+        error_urls = errors[error_kind]['urls']
+        # url list length bounded at 10, should not be a perf problem
+        # sample list contains follow, unique dest urls
+        if follow and len(error_urls) < 10 and url_dest_id not in error_urls:
+            error_urls.append(url_dest_id)
+
+        errors[error_kind]['urls_exists'] = True
+
+
+class LinksToNonCanonicalCountersStreamDef(StreamDefBase):
+    FILE = 'urllinkstononcan_counters'
+    URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
+    HEADERS = (
+        ('id', int),
+        ('count', int)
+    )
+    URL_DOCUMENT_MAPPING = {
+        "outlinks_errors.bad_canonical.nb": {
+            "type": INT_TYPE,
+            "verbose_name": "Number of error links to non-canonical",
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            }
+        },
+    }
+
+    def process_document(self, document, stream_linkstononcan_counters):
+        src_id, count = stream_linkstononcan_counters
+
+        errors = document['outlinks_errors']
+        error_kind = 'bad_canonical'
+
+        errors[error_kind]['nb'] += count
