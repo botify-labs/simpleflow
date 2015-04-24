@@ -69,7 +69,7 @@ class TestExtractFields(unittest.TestCase):
         fields = get_fields(features_options)
         product_prices_field = filter(lambda f: f["value"].endswith("extract_i_0"), fields)[0]
         self.assertTrue(product_prices_field["multiple"])
-        self.assertEquals(product_prices_field["name"], "Product Prices")
+        self.assertEquals(product_prices_field["verbose_name"], "Product Prices")
 
         # Test enabled fields
         # As we generate 5 fields for each type (i, f, s, b) we hide all
