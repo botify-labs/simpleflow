@@ -1,12 +1,9 @@
-from cdf.features.main.streams import IdStreamDef
-from cdf.tasks.documents import UrlDocumentGenerator
-
-__author__ = 'zeb'
-
 import unittest
 
+from cdf.features.links.streams import FinalRedirectionStreamDef
+from cdf.features.main.streams import IdStreamDef
+from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.links.redirect_final import (
-    FinalRedirectionStreamDef,
     RedirectFinal,
     compute_final_redirects,
 )
@@ -27,7 +24,7 @@ _stream1 = [
 
 
 class TestFinalRedirectionStreamDef(unittest.TestCase):
-    def test_1(self):
+    def test_doc_1(self):
         gen = UrlDocumentGenerator(
             [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
         documents = list(gen)
@@ -49,7 +46,7 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
         self.assertTrue("in_loop" in redirects_to)
         self.assertEqual(False, redirects_to["in_loop"])
 
-    def test_2(self):
+    def test_doc_2(self):
         gen = UrlDocumentGenerator(
             [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
         documents = list(gen)
@@ -72,7 +69,7 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
         self.assertTrue("in_loop" in redirects_to)
         self.assertEqual(False, redirects_to["in_loop"])
 
-    def test_3(self):
+    def test_doc_3(self):
         gen = UrlDocumentGenerator(
             [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
         documents = list(gen)
@@ -95,7 +92,7 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
         self.assertTrue("in_loop" in redirects_to)
         self.assertEqual(False, redirects_to["in_loop"])
 
-    def test_4(self):
+    def test_doc_4(self):
         gen = UrlDocumentGenerator(
             [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
         documents = list(gen)
@@ -126,7 +123,7 @@ class TestComputeFinalRedirects(unittest.TestCase):
         self.assertEqual(len(r.uid_nb_hops), 0)
         self.assertEqual(len(r.uid_in_loop), 0)
 
-    def test_links_1(self):
+    def test_links_1_to_2(self):
         infos = [
             (1, None, None, None, None, 301),
             (2, None, None, None, None, 200),
@@ -144,7 +141,7 @@ class TestComputeFinalRedirects(unittest.TestCase):
         self.assertEqual(r.uid_to_http_code.get(1, 200), 200)
         self.assertEqual(r.uid_nb_hops[1], 1)
 
-    def test_links_2(self):
+    def test_links_1_to_2_to_3(self):
         infos = [
             (1, None, None, None, None, 301),
             (2, None, None, None, None, 301),
@@ -166,10 +163,10 @@ class TestComputeFinalRedirects(unittest.TestCase):
         self.assertEqual(r.uid_to_dst[2], 3)
         self.assertEqual(r.uid_nb_hops[2], 1)
 
-    def test_links_3(self):
+    def test_links_2_to_1_to_3(self):
         infos = [
             (1, None, None, None, None, 301),
-            (2, None, None, None, None, 200),
+            (2, None, None, None, None, 301),
             (3, None, None, None, None, 503),
         ]
         s = [
@@ -188,7 +185,7 @@ class TestComputeFinalRedirects(unittest.TestCase):
         self.assertEqual(r.uid_to_dst[2], 3)
         self.assertEqual(r.uid_nb_hops[2], 2)
 
-    def test_links_ext_1(self):
+    def test_links_external(self):
         infos = [
             (1, None, None, None, None, 301),
             (2, None, None, None, None, 200),
@@ -209,7 +206,7 @@ class TestComputeFinalRedirects(unittest.TestCase):
         self.assertEqual(r.uid_to_dst[2], -1)
         self.assertEqual(r.uid_nb_hops[2], 1)
 
-    def test_links_loop_1(self):
+    def test_links_loop(self):
         infos = [
             (1, None, None, None, None, 301),
             (2, None, None, None, None, 200),
@@ -247,7 +244,7 @@ class TestRedirectFinal(unittest.TestCase):
         with compute_final_redirects(infos, s) as results:
             self.assertEqual(len(list(results)), 0)
 
-    def test_links_1(self):
+    def test_links_1_to_2(self):
         infos = [
             (1, None, None, None, None, 301),
             (2, None, None, None, None, 200),
@@ -267,7 +264,7 @@ class TestRedirectFinal(unittest.TestCase):
             with self.assertRaises(StopIteration):
                 results.next()
 
-    def test_links_2(self):
+    def test_links_1_to_2_to_3(self):
         infos = [
             (1, None, None, None, None, 301),
             (2, None, None, None, None, 301),
@@ -296,10 +293,10 @@ class TestRedirectFinal(unittest.TestCase):
             with self.assertRaises(StopIteration):
                 results.next()
 
-    def test_links_3(self):
+    def test_links_2_to_1_to_3(self):
         infos = [
             (1, None, None, None, None, 301),
-            (2, None, None, None, None, 200),
+            (2, None, None, None, None, 301),
             (3, None, None, None, None, 503),
         ]
         s = [
@@ -325,7 +322,7 @@ class TestRedirectFinal(unittest.TestCase):
             with self.assertRaises(StopIteration):
                 results.next()
 
-    def test_links_ext_1(self):
+    def test_links_external(self):
         infos = [
             (1, None, None, None, None, 301),
             (2, None, None, None, None, 200),
@@ -353,7 +350,7 @@ class TestRedirectFinal(unittest.TestCase):
             with self.assertRaises(StopIteration):
                 results.next()
 
-    def test_links_loop_1(self):
+    def test_links_loop(self):
         infos = [
             (1, None, None, None, None, 301),
             (2, None, None, None, None, 200),

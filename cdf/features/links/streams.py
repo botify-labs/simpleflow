@@ -1266,3 +1266,77 @@ class PageRankStreamDef(StreamDefBase):
         document['internal_page_rank']['position'] = position
         document['internal_page_rank']['raw'] = raw
         document['internal_page_rank']['value'] = value
+
+
+class FinalRedirectionStreamDef(StreamDefBase):
+    FILE = "final_redirection"
+
+    HEADERS = (
+        ('id', int),
+        ('dst', int),
+        ('nb_hops', int),
+        ('ext', str),
+        ('in_loop', _raw_to_bool),
+        ('http_code', int),
+    )
+
+    URL_DOCUMENT_MAPPING = {
+        # outgoing redirection: final destination
+        "redirect.to.final_url": {
+            "verbose_name": "Ultimate Redirection",
+            "group": GROUPS.redirects.name,
+            "type": STRUCT_TYPE,
+            "values": {
+                "url_str": {"type": "string"},
+                "url_id": {"type": "integer"},
+                "http_code": {"type": "integer"}
+            },
+            "settings": {
+                ES_NO_INDEX,
+                RENDERING.URL_STATUS,
+                FIELD_RIGHTS.FILTERS_EXIST,
+                FIELD_RIGHTS.SELECT,
+                URL_ID,
+                DIFF_QUALITATIVE
+            },
+            "enabled": check_enabled("chains")
+        },
+        "redirect.to.final_url_exists": {
+            "type": BOOLEAN_TYPE,
+            "default_value": None,
+            "enabled": check_enabled("chains")
+        },
+        "redirect.to.nb_hops": {
+            "verbose_name": "Number of Redirection Hops Until Final Destination",
+            "group": GROUPS.redirects.name,
+            "type": INT_TYPE,
+            "settings": {
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                DIFF_QUANTITATIVE
+            },
+            "enabled": check_enabled("chains")
+        },
+        "redirect.to.in_loop": {
+            "verbose_name": "Url is Part of Redirection Loop",
+            "group": GROUPS.redirects.name,
+            "type": BOOLEAN_TYPE,
+            "default_value": None,
+            "enabled": check_enabled("chains")
+        },
+    }
+
+    def process_document(self, document, stream):
+        uid, dst, nb_hops, external_url, in_loop, http_code = stream
+        redirects_to = document['redirect']['to']
+        redirects_to['final_url'] = {}
+        if dst != -1:
+            redirects_to['final_url']['url_id'] = dst
+        else:
+            redirects_to['final_url']['url_str'] = external_url
+        if http_code:
+            redirects_to['final_url']['http_code'] = http_code
+        redirects_to['final_url_exists'] = True
+        redirects_to['nb_hops'] = nb_hops
+        redirects_to['in_loop'] = in_loop

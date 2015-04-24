@@ -34,7 +34,8 @@ from cdf.features.links.streams import (
     LinksToNonCompliantCountersStreamDef,
     InlinksPercentilesStreamDef,
     InredirectCountersStreamDef,
-    PageRankStreamDef)
+    PageRankStreamDef,
+    FinalRedirectionStreamDef)
 from cdf.features.links.top_domains import (
     compute_top_domain,
     filter_external_outlinks,
@@ -56,7 +57,6 @@ from cdf.features.links.pagerank import (
     process_virtual_result
 )
 from cdf.features.links.redirect_final import (
-    FinalRedirectionStreamDef,
     compute_final_redirects,
 )
 
