@@ -55,7 +55,7 @@ RUN apt-get install -y $(cat /deps/botify-cdf/debian_build.deps)
 ENV C_INCLUDE_PATH /usr/lib/openmpi/include
 
 # python deps
-RUN pip install numpy==1.6.1 && pip install numexpr==2.1 Cython==0.19.1
+RUN pip install numpy==1.6.1 && pip install Cython==0.19.1
 ADD packaging/python.deps /deps/botify-cdf/
 RUN pip install -r /deps/botify-cdf/python.deps
 
