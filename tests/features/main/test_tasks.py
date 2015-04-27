@@ -1,25 +1,21 @@
-import unittest
 from moto import mock_s3
 import boto
 import tempfile
-import shutil
 from cdf.features.main.streams import (
     IdStreamDef,
     ZoneStreamDef,
     InfosStreamDef
 )
 from cdf.features.main.tasks import compute_zones
+from cdf.testing import TaskTestCase
 
 
-class TestComputeZones(unittest.TestCase):
+class TestComputeZones(TaskTestCase):
     def setUp(self):
         self.bucket_name = "app.foo.com"
         self.s3_uri = "s3://{}/crawl_result".format(self.bucket_name)
 
         self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
 
     @mock_s3
     def test_nominal_case(self):

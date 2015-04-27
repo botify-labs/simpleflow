@@ -1,6 +1,5 @@
 import tempfile
 import json
-import shutil
 from moto import mock_s3
 import boto
 import mock
@@ -59,9 +58,6 @@ class TestBadLinksTask(TaskTestCase):
         self.first_part_size = 2
         self.part_size = 1
 
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
-
     @mock_s3
     def test_harness(self):
         s3_uri = 's3://test_bucket'
@@ -108,9 +104,6 @@ class TestLinksCounterTask(TaskTestCase):
             [4, 'r301', 5, 5, ''],
         ]
         self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
 
     @mock_s3
     def test_outgoing_harness(self):
@@ -161,9 +154,6 @@ class TestBadLinkCounterTask(TaskTestCase):
         ]
         self.tmp_dir = tempfile.mkdtemp()
 
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
-
     @mock_s3
     def test_harness(self):
         s3 = boto.connect_s3()
@@ -198,9 +188,6 @@ class TestBadLinkCounterTask(TaskTestCase):
 class TestMakeLinksToNonCompliantFile(TaskTestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
 
     @mock_s3
     def test_nominal_case(self):
@@ -260,9 +247,6 @@ class TestMakeLinksToNonCompliantFile(TaskTestCase):
 class TestMakeLinksToNonCompliantCounterFile(TaskTestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
 
     @mock_s3
     def test_nominal_case(self):
@@ -509,9 +493,6 @@ class TestMakeInlinksPercentileFile(TaskTestCase):
         ]
 
         self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
 
     def _launch_task(self):
         s3 = boto.connect_s3()
