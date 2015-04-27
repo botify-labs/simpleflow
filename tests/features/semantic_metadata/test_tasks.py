@@ -1,6 +1,5 @@
 import os
 import tempfile
-import shutil
 
 from moto import mock_s3
 import boto
@@ -20,7 +19,6 @@ from cdf.features.semantic_metadata.tasks import (
     make_metadata_duplicates_file,
     make_context_aware_metadata_duplicates_file
 )
-from cdf.utils.s3 import list_files
 
 
 class TestComputeMetadataCount(TaskTestCase):
@@ -29,9 +27,6 @@ class TestComputeMetadataCount(TaskTestCase):
         self.s3_uri = "s3://{}/crawl_result".format(self.bucket_name)
 
         self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
 
     @mock_s3
     def test_nominal_case(self):
@@ -91,9 +86,6 @@ class TestComputeMetadataDuplicateFile(TaskTestCase):
         self.s3_uri = "s3://{}/crawl_result".format(self.bucket_name)
         self.crawl_id = 10
         self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
 
     @mock_s3
     def test_nominal_case(self):
@@ -156,9 +148,6 @@ class TestMakeContextAwareMetadataDuplicatesFile(TaskTestCase):
         self.s3_uri = "s3://{}/crawl_result".format(self.bucket_name)
         self.crawl_id = 10
         self.tmp_dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
 
     @mock_s3
     def test_nominal_case(self):

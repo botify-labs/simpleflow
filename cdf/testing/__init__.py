@@ -1,5 +1,7 @@
 import unittest
+import shutil
 import os
+
 from cdf.utils.path import partition_aware_sort
 from cdf.utils.s3 import list_files
 
@@ -15,3 +17,7 @@ class TaskTestCase(unittest.TestCase):
             cls.get_s3_filename(s3_uri, k) for k in
             list_files(s3_uri, regexp)
         ])
+
+    def tearDown(self):
+        if hasattr(self, 'tmp_dir'):
+            shutil.rmtree(self.tmp_dir)
