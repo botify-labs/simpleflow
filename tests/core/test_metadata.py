@@ -225,8 +225,13 @@ class TestComparisonMapping(unittest.TestCase):
         self.assertEqual(result['urls']['properties'], expected)
 
 
-class TestDiffMapping(unittest.TestCase):
-    mapping = {
+class TestDiffStreamDef(StreamDefBase):
+    FILE = 'test_two'
+    HEADERS = (
+        ('a', int),
+        ('b', str)
+    )
+    URL_DOCUMENT_MAPPING = {
         'a': {
             'type': 'boolean',
             'group': 'important',
@@ -246,6 +251,10 @@ class TestDiffMapping(unittest.TestCase):
             }
         },
     }
+
+
+class TestDiffMapping(unittest.TestCase):
+    mapping = TestDiffStreamDef.URL_DOCUMENT_MAPPING
 
     def test_harness(self):
         result = get_diff_data_format(self.mapping)
@@ -298,3 +307,25 @@ class TestDiffMapping(unittest.TestCase):
             }
         })
         self.assertEqual(result, {})
+
+    def test_field_keys(self):
+        feature = Feature('feature', 'feature', None, None)
+        # mock stream_def in feature
+        feature.get_streams_def = mock.Mock(
+            return_value=[TestDiffStreamDef])
+        features = [feature]
+
+        feature_option = {
+            'feature': None,
+            'comparison': {
+                'options': {'feature': None}
+            }
+        }
+
+        result = generate_data_format(feature_option, features).keys()
+        expected = [
+            'a', 'b', 'diff.a', 'diff.b',
+            'previous.a', 'previous.b',
+            'previous_exists', 'disappeared'
+        ]
+        self.assertItemsEqual(result, expected)
