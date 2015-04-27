@@ -1,6 +1,6 @@
 numpy
 Cython==0.19.1
-pyhash==0.5.0
+pyhash==0.6.2
 boto
 ujson==1.33
 elasticsearch==1.4.0
