@@ -97,7 +97,10 @@ class IdStreamDef(StreamDefBase):
         "query_string_keys": {
             "verbose_name": "Query String Keys",
             "type": STRING_TYPE,
-            "settings": {ES_NOT_ANALYZED}
+            "settings": {
+                ES_NOT_ANALYZED,
+                ES_LIST
+            }
         },
     }
 

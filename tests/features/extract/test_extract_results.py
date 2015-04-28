@@ -66,7 +66,7 @@ class TestExtractFields(unittest.TestCase):
                 }
             ]
         }
-        fields = get_fields(features_options)
+        fields = get_fields(features_options, remove_admin=False)
         product_prices_field = filter(lambda f: f["value"].endswith("extract_i_0"), fields)[0]
         self.assertTrue(product_prices_field["multiple"])
         self.assertEquals(product_prices_field["verbose_name"], "Product Prices")
