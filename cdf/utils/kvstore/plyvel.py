@@ -5,24 +5,13 @@ import logging
 import plyvel
 
 from . import base
-from . import exceptions
 from . import constants
 
 
 logger = logging.getLogger(__name__)
 
 
-class LevelDB(base.KVStore):
-    def __init__(self, path):
-        self.path = path
-        self.db = None
-
-    def _check(self):
-        """Check that the DB wrapper object is operational
-        """
-        if self.db is None:
-            raise exceptions.KVStoreException('DB not initiated ...')
-
+class LevelDB(base.LevelDBBase):
     def open(self, **configs):
         """Open the DB
         """
@@ -34,20 +23,6 @@ class LevelDB(base.KVStore):
         self._check()
         self.db.close()
         self.db = None
-
-    def destroy(self):
-        """Close and remove the whole DB (all data is lost)
-        """
-        self._check()
-        self.db.close()
-        plyvel.destroy_db(self.path)
-
-    def reopen(self, **configs):
-        """Close and then open the DB, potentially with other configurations
-        """
-        self._check()
-        self.close()
-        self.open(**configs)
 
     def batch_write(self, kv_stream, batch_size=constants.DEFAULT_BATCH_SIZE):
         """Batch write a key-value stream into the DB
