@@ -22,6 +22,10 @@ def _clean_document(doc):
     if len(doc.get('internal_page_rank', {})) == 0:
         doc.pop('internal_page_rank', None)
 
+    # FIXME special rule for extract prototype
+    if len(doc.get('extract', {})) == 0:
+        doc.pop('extract', None)
+
 
 def _pre_process_document(left_stream_def, pre_processors):
     def func(doc, stream):
