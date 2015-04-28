@@ -8,7 +8,8 @@ import collections
 from cdf.features.main.streams import InfosStreamDef
 
 try:
-    import judyz
+    from judyz_cffi import Judy1
+    from judyz_cffi import JudyL
 except Exception:
     pass
 
@@ -23,11 +24,11 @@ class _Result(collections.Iterable):
     """
     def __init__(self):
         try:
-            self.uid_to_dst = judyz.JudyL()
-            self.uid_to_http_code = judyz.JudyL()
-            self.uid_to_ext = judyz.JudyToObject()
-            self.uid_nb_hops = judyz.JudyL()
-            self.uid_in_loop = judyz.Judy1()
+            self.uid_to_dst = JudyL()
+            self.uid_to_http_code = JudyL()
+            self.uid_to_ext = {}  # TODO judyz.JudyToStr()
+            self.uid_nb_hops = JudyL()
+            self.uid_in_loop = Judy1()
         except (NameError, AttributeError):
             self.uid_to_dst = {}
             self.uid_to_http_code = {}
@@ -38,8 +39,6 @@ class _Result(collections.Iterable):
     def free(self):
         """
         Cleanup the results.
-        :return:
-        :rtype:
         """
         del self.uid_to_dst
         del self.uid_to_http_code
