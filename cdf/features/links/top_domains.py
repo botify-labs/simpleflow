@@ -4,7 +4,7 @@ import heapq
 import os
 import struct
 from collections import Counter
-from cdf.utils.kvstore import LevelDB
+from cdf.utils.kvstore import LevelDB, will_destroy
 
 from cdf.features.links.helpers.predicates import (
     is_link,
@@ -534,16 +534,17 @@ def compute_top_domain(external_outlinks, n, tmp_dir):
     db.open(write_buffer_size=_LEVELDB_WRITE_BUFFER,
             block_size=_LEVELDB_BLOCK_SIZE)
 
-    db.batch_write(db_stream, batch_size=50000)
+    with will_destroy(db) as db:
+        db.batch_write(db_stream, batch_size=50000)
 
-    decoded = _decode_leveldb_stream(db)
+        decoded = _decode_leveldb_stream(db)
 
-    for domain, link_group in groupby(decoded, lambda x: x[0]):
-        logger.debug("Processing {} ...".format(domain))
-        group_cache = _get_stream_cache(link_group)
+        for domain, link_group in groupby(decoded, lambda x: x[0]):
+            logger.debug("Processing {} ...".format(domain))
+            group_cache = _get_stream_cache(link_group)
 
-        top_level_domain.merge(domain, group_cache)
-        top_second_level_domain.merge(domain, group_cache)
+            top_level_domain.merge(domain, group_cache)
+            top_second_level_domain.merge(domain, group_cache)
 
     return top_level_domain.get_result(), top_second_level_domain.get_result()
 

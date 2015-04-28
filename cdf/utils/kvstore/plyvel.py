@@ -66,6 +66,3 @@ class LevelDB(base.LevelDBBase):
         """
         self._check()
         return self.db.get(key)
-
-    def __del__(self):
-        self.destroy()

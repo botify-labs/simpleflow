@@ -1,7 +1,14 @@
 import abc
 import shutil
+import contextlib
 
 from . import exceptions
+
+
+@contextlib.contextmanager
+def will_destroy(db):
+    yield db
+    db.destroy()
 
 
 class KVStoreManager(object):
