@@ -1,5 +1,6 @@
 import re
 
+from cdf.core.metadata.constants import FIELD_RIGHTS
 from cdf.features.extract.settings import GROUPS
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
@@ -70,6 +71,7 @@ def _generate_ers_document_mapping():
                 "default_value": None,
                 "settings": {
                     ES_NOT_ANALYZED,
+                    FIELD_RIGHTS.ADMIN
                 },
                 "render_field_modifier": render_field_strategy,
                 "enabled": check_enabled("extract_%s_%i" % (short_type_name, i))
