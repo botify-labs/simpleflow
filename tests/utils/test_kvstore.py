@@ -50,6 +50,19 @@ class Base(object):
             db.put('1', '1')
         self.assertFalse(os.path.exists(self.path))
 
+    def test_iterator(self):
+        for i in range(3):
+            self.db.put(str(i), '')
+        result = [(k, v) for k, v in self.db.iterator()]
+        expected = [('0', ''), ('1', ''), ('2', '')]
+        self.assertEquals(result, expected)
+
+    def test_write_batch(self):
+        s = iter([(str(i), '') for i in range(3)])
+        self.db.batch_write(s, batch_size=2)
+        result = [(k, v) for k, v in self.db.iterator()]
+        expected = [('0', ''), ('1', ''), ('2', '')]
+        self.assertEquals(result, expected)
 
 try:
     from cdf.utils.kvstore import plyvel
