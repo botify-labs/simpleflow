@@ -11,6 +11,16 @@ from . import constants
 logger = logging.getLogger(__name__)
 
 
+class RangeIter(object):
+    def __init__(self, iter):
+        self.iter = iter
+
+    def __iter__(self):
+        with self.iter as iter:
+            for i in iter:
+                yield i
+
+
 class LevelDB(base.LevelDBBase):
     def open(self, **configs):
         """Open the DB
@@ -53,7 +63,7 @@ class LevelDB(base.LevelDBBase):
         # iteration means we do a full pass on the data
         # but no random lookup, cache is not relevant in
         # this case
-        return self.db.iterator(fill_cache=False)
+        return RangeIter(self.db.iterator(fill_cache=False))
 
     def put(self, key, value):
         """Put a key-value pair
