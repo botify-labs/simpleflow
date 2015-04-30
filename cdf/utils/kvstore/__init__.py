@@ -7,3 +7,4 @@ except ImportError:
     from .leveldb import LevelDB
 
 from .exceptions import *
+from .base import will_destroy

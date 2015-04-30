@@ -45,15 +45,13 @@ def _get_max_crawled_id(s3_uri):
 
 
 def _key_stream_from_db(db):
-    with db.iterator() as db_iter:
-        for key, _ in db_iter:
-            yield key
+    for key, _ in db.iterator():
+        yield key
 
 
 def _doc_stream_from_db(db):
-    with db.iterator() as db_iter:
-        for _, doc_str in db_iter:
-            yield safe_json.loads(doc_str)
+    for _, doc_str in db.iterator():
+        yield safe_json.loads(doc_str)
 
 
 def _get_document_path(crawl_path):

@@ -4,10 +4,10 @@ import unittest
 import tempfile
 import os.path
 import logging
+import shutil
 import gc
 
-from cdf.utils.kvstore import leveldb
-from cdf.utils.kvstore import exceptions
+from cdf.utils.kvstore import leveldb, exceptions, will_destroy
 
 
 logger = logging.getLogger(__name__)
@@ -19,12 +19,15 @@ class Base(object):
         self.db = self.cls(self.path)
         self.db.open()
 
-    def test_open_del(self):
+    def tearDown(self):
+        shutil.rmtree(self.path, ignore_errors=True)
+
+    def test_no_auto_del(self):
         del self.db
         self.db = None
         gc.collect()
 
-        self.assertFalse(os.path.exists(self.path))
+        self.assertTrue(os.path.exists(self.path))
 
     def test_put_get(self):
         db = self.db
@@ -32,6 +35,7 @@ class Base(object):
         db.put('b', '2')
         self.assertEquals(db.get('a'), '1')
         self.assertEquals(db.get('b'), '2')
+        db.destroy()
 
     def test_cannot_destroy_wrong_path(self):
         with tempfile.NamedTemporaryFile() as tmp:
@@ -41,6 +45,24 @@ class Base(object):
                 db.destroy()
             self.assertTrue(os.path.exists(tmp.name))
 
+    def test_will_destroy(self):
+        with will_destroy(self.db) as db:
+            db.put('1', '1')
+        self.assertFalse(os.path.exists(self.path))
+
+    def test_iterator(self):
+        for i in range(3):
+            self.db.put(str(i), '')
+        result = [(k, v) for k, v in self.db.iterator()]
+        expected = [('0', ''), ('1', ''), ('2', '')]
+        self.assertEquals(result, expected)
+
+    def test_write_batch(self):
+        s = iter([(str(i), '') for i in range(3)])
+        self.db.batch_write(s, batch_size=2)
+        result = [(k, v) for k, v in self.db.iterator()]
+        expected = [('0', ''), ('1', ''), ('2', '')]
+        self.assertEquals(result, expected)
 
 try:
     from cdf.utils.kvstore import plyvel
