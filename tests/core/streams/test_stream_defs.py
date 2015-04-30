@@ -142,6 +142,23 @@ class TestStreamsDef(unittest.TestCase):
             self.data
         )
 
+    def test_load_raw_lines(self):
+        self._write_custom_parts()
+        self.assertEquals(
+            list(CustomStreamDef.load(self.s3_dir, part_id=0, raw_lines=True)),
+            [
+                '0\thttp://www.site.com/\n',
+                '1\thttp://www.site.com/1\n',
+            ]
+        )
+
+        # Test without part_id
+        d = ["{}\t{}\n".format(i, u) for i, u in self.data]
+        self.assertEquals(
+            list(CustomStreamDef.load(self.s3_dir, raw_lines=True)),
+            d
+        )
+
     @mock_s3
     def test_load_from_s3(self):
         self._write_custom_parts()

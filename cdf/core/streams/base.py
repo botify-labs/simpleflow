@@ -69,7 +69,7 @@ class StreamDefBase(object):
     # TODO(darkjh) load stream from s3 still need the caller to prepare a tmp_dir,
     #              use streaming s3 to resolve problem
     @classmethod
-    def load(cls, uri, tmp_dir=None, part_id=None, force_fetch=False):
+    def load(cls, uri, tmp_dir=None, part_id=None, force_fetch=False, raw_lines=False):
         """Load data stream from a data source location
 
         :param uri: uri to data source (local directory or s3 uri)
@@ -78,28 +78,32 @@ class StreamDefBase(object):
         :type tmp_dir: str
         :param part_id: partition id, `None` for all existing partitions
         :type part_id: int
+        :param raw_lines: True to not process lines
+        :type raw_lines: bool
         :return: stream
         :rtype: stream
         """
         if s3.is_s3_uri(uri):
             return cls._get_stream_from_s3(
                 uri,
-                tmp_dir=tmp_dir,
-                part_id=part_id,
-                force_fetch=force_fetch
+                tmp_dir,
+                part_id,
+                force_fetch,
+                raw_lines
             )
         else:
             if os.path.isdir(uri):
                 return cls._get_stream_from_directory(
                     uri,
-                    part_id=part_id
+                    part_id,
+                    raw_lines
                 )
             else:
                 raise Exception('Local path is not a '
                                 'directory: {}'.format(uri))
 
     @classmethod
-    def load_path(cls, path, tmp_dir=None, force_fetch=False):
+    def load_path(cls, path, tmp_dir=None, force_fetch=False, raw_lines=False):
         """Load data stream from a specific path, regardless of resource
         naming scheme
 
@@ -109,17 +113,20 @@ class StreamDefBase(object):
         :type path: str
         :param tmp_dir: local tmp dir path, needed for loading stream from s3
         :type tmp_dir: str
+        :param raw_lines: True to not process lines
+        :type raw_lines: bool
         :return: stream
         :rtype: stream
         """
         if s3.is_s3_uri(path):
             return cls._get_stream_from_s3_path(
                 path,
-                tmp_dir=tmp_dir,
-                force_fetch=force_fetch
+                tmp_dir,
+                force_fetch,
+                raw_lines
             )
         else:
-            return cls._get_stream_from_path(path)
+            return cls._get_stream_from_path(path, raw_lines)
 
     @classmethod
     def load_file(cls, file):
@@ -181,7 +188,7 @@ class StreamDefBase(object):
                 return cls._persist_part_id(stream, uri, part_id)
 
     @classmethod
-    def _get_stream_from_directory(cls, directory, part_id=None):
+    def _get_stream_from_directory(cls, directory, part_id, raw_lines):
         """Return a Stream instance from a directory
 
         It handles the case of partitions:
@@ -192,6 +199,8 @@ class StreamDefBase(object):
         :type directory: str
         :param part_id: partition id, `None` by default
         :type part_id: int
+        :param raw_lines: True to not process lines
+        :type raw_lines: bool
         """
         pattern = r'{}\.txt\.{}\.gz'
         # partition-aware sort the files
@@ -199,7 +208,7 @@ class StreamDefBase(object):
         regexp = pattern.format(cls.FILE, regexp)
 
         files = list_files(directory, regexp=regexp)
-        streams = [cls._get_stream_from_path(f)
+        streams = [cls._get_stream_from_path(f, raw_lines)
                    for f in partition_aware_sort(files)]
 
         return Stream(
@@ -208,22 +217,32 @@ class StreamDefBase(object):
         )
 
     @classmethod
-    def _get_stream_from_path(cls, path):
+    def _get_stream_from_path(cls, path, raw_lines):
         """
         Return a Stream instance from a file path (the file must be gzip encoded)
+        :param path: file path
+        :param raw_lines: True to not process lines
+        :type raw_lines: bool
         """
-        cast = Caster(cls.HEADERS).cast
-        if os.path.exists(path):
-            iterator = cast(split_file(gzip.open(path)))
+        if raw_lines:
+            if os.path.exists(path):
+                iterator = gzip.open(path)
+            else:
+                iterator = []
         else:
-            iterator = iter([])
+            cast = Caster(cls.HEADERS).cast
+            if os.path.exists(path):
+                iterator = cast(split_file(gzip.open(path)))
+            else:
+                iterator = iter([])
         return Stream(
             cls(),
             iterator
         )
 
     @classmethod
-    def _get_stream_from_s3(cls, s3_uri, tmp_dir, part_id=None, force_fetch=False):
+    def _get_stream_from_s3(cls, s3_uri, tmp_dir, part_id, force_fetch,
+                            raw_lines):
         """
         Return a Stream instance from a root storage uri.
         """
@@ -237,10 +256,11 @@ class StreamDefBase(object):
             regexp=regexp,
             force_fetch=force_fetch
         )
-        return cls._get_stream_from_directory(tmp_dir, part_id)
+        return cls._get_stream_from_directory(tmp_dir, part_id, raw_lines)
 
     @classmethod
-    def _get_stream_from_s3_path(cls, s3_uri_path, tmp_dir, force_fetch=False):
+    def _get_stream_from_s3_path(cls, s3_uri_path, tmp_dir, force_fetch,
+                                 raw_lines):
         """
         Return a Stream instance from a gzip file stored in S3
         """
@@ -249,7 +269,7 @@ class StreamDefBase(object):
             os.path.join(tmp_dir, os.path.basename(s3_uri_path)),
             force_fetch=force_fetch
         )
-        return cls._get_stream_from_path(path)
+        return cls._get_stream_from_path(path, raw_lines)
 
     @classmethod
     def _persist_all(cls, stream, directory,

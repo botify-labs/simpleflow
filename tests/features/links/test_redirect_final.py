@@ -1,6 +1,7 @@
 import unittest
 
 from cdf.features.links.streams import FinalRedirectionStreamDef
+from cdf.features.links.tasks import get_final_redirects, get_final_redirects_q
 from cdf.features.main.streams import IdStreamDef
 from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.links.redirect_final import (
@@ -371,3 +372,8 @@ class TestRedirectFinal(unittest.TestCase):
             self.assertTrue(r.in_loop)
             with self.assertRaises(StopIteration):
                 results.next()
+
+
+class TestToRemove(unittest.TestCase):
+    def test_big(self):
+        get_final_redirects_q("/tmp/hep/")
