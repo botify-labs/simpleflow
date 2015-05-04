@@ -85,6 +85,16 @@ class TestStreamsDef(unittest.TestCase):
         self.assertEquals(stream.next(), [1, 'http://www.site.com/'])
         self.assertEquals(stream.next(), [2, 'http://www.site.com/2'])
 
+    def test_iterator_raw(self):
+        iterator = iter([
+            '1\thttp://www.site.com/\n',
+            '2\thttp://www.site.com/2\n'
+        ])
+        stream = CustomStreamDef.load_iterator(iterator, raw_lines=True)
+        self.assertTrue(isinstance(stream.stream_def, CustomStreamDef))
+        self.assertEquals(stream.next(), '1\thttp://www.site.com/\n')
+        self.assertEquals(stream.next(), '2\thttp://www.site.com/2\n')
+
     def test_to_dict(self):
         entry = [1, 'http://www.site.com/']
         self.assertEquals(
