@@ -1,6 +1,17 @@
 #!/bin/bash
 
 # This script serves as an entrypoint for our docker container
+wait_elasticsearch() {
+  echo "Waiting for ES to boot: "
+  #max wait time
+  i=50
+  while ((i > 0 )); do
+    echo -n "."
+    sleep 1
+    curl -s -o /dev/null http://localhost:9200/_cluster/health|grep green && echo "ok." && break
+    i=$(( i - 1 ))
+  done
+}
 
 if [ "$1" == "bash" ]; then
   /bin/bash
@@ -17,6 +28,8 @@ elif [ "$1" == "test" ]; then
     echo "Elastic search already installed"
   fi
   sudo service elasticsearch start
+  #wait for ES to start
+  wait_elasticsearch
   #fail from now if tests fail
   set -e
   #run tests
