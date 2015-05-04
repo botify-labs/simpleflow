@@ -1285,6 +1285,7 @@ class LinksToNonCanonicalStreamDef(StreamDefBase):
                 ES_NO_INDEX,
                 ES_LIST,
                 FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.ADMIN,
                 RENDERING.URL,
                 URL_ID,
             }
@@ -1324,6 +1325,7 @@ class LinksToNonCanonicalCountersStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
+                FIELD_RIGHTS.ADMIN,
                 DIFF_QUANTITATIVE
             }
         },
