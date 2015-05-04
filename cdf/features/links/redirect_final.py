@@ -88,8 +88,8 @@ def compute_final_redirects(stream_infos, stream_links):
     The result is an context manager to turn into an iterable. Each iteration
     returns a RedirectFinal named tuple.
     (Either dst or ext is None)
-    :param stream_infos: iterator on QInfosStreamDef
-    :param stream_links: iterator on QOutlinksRawStreamDef
+    :param stream_infos: raw lines iterator on InfosStreamDef
+    :param stream_links: raw lines iterator on OutlinksRawStreamDef
     :return: 'Tuples' of RedirectFinal
     """
     r = _Result()
@@ -128,7 +128,6 @@ def compute_final_redirects(stream_infos, stream_links):
 
     logger.info('Read %d http codes', len(r.uid_to_http_code))
 
-    # del uid, link_type, mask, dst, ext_url
     for hop in r.uid_to_dst.keys():
         nb_hops = r.uid_nb_hops.get(hop, 0)
         if nb_hops > 0:
