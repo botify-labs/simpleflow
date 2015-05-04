@@ -153,8 +153,17 @@ def python(interpreter='python'):
                     excline = exclines[0]
                 else:
                     excline = exclines[1]
-                exception = pickle.loads(
-                    base64.b64decode(excline.rstrip()))
+
+                try:
+                    exception = pickle.loads(
+                        base64.b64decode(excline.rstrip()))
+                except TypeError:
+                    cls, msg = exclines[-1].split(':', 1)
+                    exception = eval('{}("{}")'.format(
+                        cls.strip(),
+                        msg.strip(),
+                    ))
+
                 raise exception
             return json.loads(output)
 
