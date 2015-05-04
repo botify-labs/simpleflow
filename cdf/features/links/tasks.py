@@ -57,8 +57,7 @@ from cdf.features.links.pagerank import (
     process_virtual_result
 )
 from cdf.features.links.redirect_final import (
-    compute_final_redirects,
-    compute_final_redirects_q)
+    compute_final_redirects)
 
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
@@ -491,6 +490,7 @@ def get_final_redirects(s3_uri,
         'uri': s3_uri,
         'tmp_dir': tmp_dir,
         'force_fetch': force_fetch,
+        'raw_lines': True
     }
     with compute_final_redirects(
             InfosStreamDef.load(**stream_kwargs),
@@ -501,37 +501,3 @@ def get_final_redirects(s3_uri,
             first_part_size=first_part_id_size,
             part_size=part_id_size
         )
-
-@with_temporary_dir
-def get_final_redirects_q(s3_uri,
-                        first_part_id_size=FIRST_PART_ID_SIZE,
-                        part_id_size=PART_ID_SIZE,
-                        tmp_dir=None,
-                        force_fetch=DEFAULT_FORCE_FETCH):
-    stream_kwargs = {
-        'uri': s3_uri,
-        'tmp_dir': tmp_dir,
-        'force_fetch': force_fetch,
-        'raw_lines': True
-    }
-    with compute_final_redirects_q(
-            QInfosStreamDef.load(**stream_kwargs),
-            QOutlinksRawStreamDef.load(**stream_kwargs)
-    ) as result:
-        FinalRedirectionStreamDef.persist(
-            iter(result), s3_uri,
-            first_part_size=first_part_id_size,
-            part_size=part_id_size
-        )
-
-
-class QInfosStreamDef(InfosStreamDef):
-    HEADERS = (
-        ('line', str ),
-    )
-
-
-class QOutlinksRawStreamDef(OutlinksRawStreamDef):
-    HEADERS = (
-        ('line', str ),
-    )

@@ -1,7 +1,6 @@
 import unittest
 
 from cdf.features.links.streams import FinalRedirectionStreamDef
-from cdf.features.links.tasks import get_final_redirects, get_final_redirects_q
 from cdf.features.main.streams import IdStreamDef
 from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.links.redirect_final import (
@@ -109,13 +108,13 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
 class TestComputeFinalRedirects(unittest.TestCase):
     def test_no_links(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 200),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t200\t\n",
         ]
         s = [
-            (1, 'a', 0, 2, ''),
-            (1, 'a', 0, 2, ''),
-            (1, 'a', 0, 5, '')
+            "1\ta\t0\t2\t\n",
+            "1\ta\t0\t2\t\n",
+            "1\ta\t0\t5\t\n"
         ]
         r = compute_final_redirects(infos, s)
         # uid_to_dst, uid_to_ext, uid_nb_hops, uid_in_loop = FinalRedirectionStreamDef.compute_final_redirections(s)
@@ -126,11 +125,11 @@ class TestComputeFinalRedirects(unittest.TestCase):
 
     def test_links_1_to_2(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 200),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t200\t\n",
         ]
         s = [
-            (1, 'r301', 0, 2, ''),
+            "1\tr301\t0\t2\t\n",
         ]
         r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 1)
@@ -144,13 +143,13 @@ class TestComputeFinalRedirects(unittest.TestCase):
 
     def test_links_1_to_2_to_3(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 301),
-            (3, None, None, None, None, 404),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t301\t\n",
+            "3\t\t\t\t\t404\t\n",
         ]
         s = [
-            (1, 'r301', 0, 2, ''),
-            (2, 'r301', 0, 3, ''),
+            "1\tr301\t0\t2\t\n",
+            "2\tr301\t0\t3\t\n",
         ]
         r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
@@ -166,13 +165,13 @@ class TestComputeFinalRedirects(unittest.TestCase):
 
     def test_links_2_to_1_to_3(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 301),
-            (3, None, None, None, None, 503),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t301\t\n",
+            "3\t\t\t\t\t503\t\n",
         ]
         s = [
-            (1, 'r301', 0, 3, ''),
-            (2, 'r301', 0, 1, ''),
+            "1\tr301\t0\t3\t\n",
+            "2\tr301\t0\t1\t\n",
         ]
         r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
@@ -188,12 +187,12 @@ class TestComputeFinalRedirects(unittest.TestCase):
 
     def test_links_external(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 200),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t200\t\n",
         ]
         s = [
-            (1, 'r301', 0, 2, ''),
-            (2, 'r301', 8, -1, 'http://www.example.com/'),
+            "1\tr301\t0\t2\t\n",
+            "2\tr301\t8\t-1\thttp://www.example.com/\n",
         ]
         r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
@@ -209,12 +208,12 @@ class TestComputeFinalRedirects(unittest.TestCase):
 
     def test_links_loop(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 200),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t200\t\n",
         ]
         s = [
-            (1, 'r301', 0, 2, ''),
-            (2, 'r301', 0, 1, ''),
+            "1\tr301\t0\t2\t\n",
+            "2\tr301\t0\t1\t\n",
         ]
         r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
@@ -234,24 +233,24 @@ class TestComputeFinalRedirects(unittest.TestCase):
 class TestRedirectFinal(unittest.TestCase):
     def test_no_links(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 200),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t200\t\n",
         ]
         s = [
-            (1, 'a', 0, 2, ''),
-            (1, 'a', 0, 2, ''),
-            (1, 'a', 0, 5, '')
+            "1\ta\t0\t2\t\n",
+            "1\ta\t0\t2\t\n",
+            "1\ta\t0\t5\t\n"
         ]
         with compute_final_redirects(infos, s) as results:
             self.assertEqual(len(list(results)), 0)
 
     def test_links_1_to_2(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 200),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t200\t\n",
         ]
         s = [
-            (1, 'r301', 0, 2, ''),
+            "1\tr301\t0\t2\t\n",
         ]
         with compute_final_redirects(infos, s) as results:
             results = iter(results)
@@ -267,13 +266,13 @@ class TestRedirectFinal(unittest.TestCase):
 
     def test_links_1_to_2_to_3(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 301),
-            (3, None, None, None, None, 404),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t301\t\n",
+            "3\t\t\t\t\t404\t\n",
         ]
         s = [
-            (1, 'r301', 0, 2, ''),
-            (2, 'r301', 0, 3, ''),
+            "1\tr301\t0\t2\t\n",
+            "2\tr301\t0\t3\t\n",
         ]
         with compute_final_redirects(infos, s) as results:
             results = iter(results)
@@ -296,13 +295,13 @@ class TestRedirectFinal(unittest.TestCase):
 
     def test_links_2_to_1_to_3(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 301),
-            (3, None, None, None, None, 503),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t301\t\n",
+            "3\t\t\t\t\t503\t\n",
         ]
         s = [
-            (1, 'r301', 0, 3, ''),
-            (2, 'r301', 0, 1, ''),
+            "1\tr301\t0\t3\t\n",
+            "2\tr301\t0\t1\t\n",
         ]
         with compute_final_redirects(infos, s) as results:
             results = iter(results)
@@ -325,12 +324,12 @@ class TestRedirectFinal(unittest.TestCase):
 
     def test_links_external(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 200),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t200\t\n",
         ]
         s = [
-            (1, 'r301', 0, 2, ''),
-            (2, 'r301', 8, -1, 'http://www.example.com/'),
+            "1\tr301\t0\t2\t\n",
+            "2\tr301\t8\t-1\thttp://www.example.com/\n",
         ]
         with compute_final_redirects(infos, s) as results:
             results = iter(results)
@@ -353,12 +352,12 @@ class TestRedirectFinal(unittest.TestCase):
 
     def test_links_loop(self):
         infos = [
-            (1, None, None, None, None, 301),
-            (2, None, None, None, None, 200),
+            "1\t\t\t\t\t301\t\n",
+            "2\t\t\t\t\t200\t\n",
         ]
         s = [
-            (1, 'r301', 0, 2, ''),
-            (2, 'r301', 0, 1, ''),
+            "1\tr301\t0\t2\t\n",
+            "2\tr301\t0\t1\t\n",
         ]
         with compute_final_redirects(infos, s) as results:
             results = iter(results)
@@ -372,8 +371,3 @@ class TestRedirectFinal(unittest.TestCase):
             self.assertTrue(r.in_loop)
             with self.assertRaises(StopIteration):
                 results.next()
-
-
-class TestToRemove(unittest.TestCase):
-    def test_big(self):
-        get_final_redirects_q("/tmp/hep/")

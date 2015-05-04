@@ -129,19 +129,21 @@ class StreamDefBase(object):
             return cls._get_stream_from_path(path, raw_lines)
 
     @classmethod
-    def load_file(cls, file):
+    def load_file(cls, file, raw_lines=False):
         """Load data stream from a file object
 
         :param file: file object to load from
         :type file: File
+        :param raw_lines: True to not process lines
+        :type raw_lines: bool
         :return: stream
         :rtype: stream
         """
         iterator = split_file(file)
-        return cls.load_iterator(iterator)
+        return cls.load_iterator(iterator, raw_lines)
 
     @classmethod
-    def load_iterator(cls, iterator):
+    def load_iterator(cls, iterator, raw_lines=False):
         """Load data stream from an iterator
 
         It's client code's responsibility to ensure the iterator conforms
@@ -150,8 +152,10 @@ class StreamDefBase(object):
         Warning: consider that the iterable object is already transformed
         It won't add missing/default values when necessary
         """
-        cast = Caster(cls.HEADERS).cast
-        return Stream(cls(), cast(iterator))
+        if not raw_lines:
+            cast = Caster(cls.HEADERS).cast
+            iterator = cast(iterator)
+        return Stream(cls(), iterator)
 
     # TODO(darkjh) use pure streaming persist (key.set_contents_from_stream)
     @classmethod
@@ -224,17 +228,13 @@ class StreamDefBase(object):
         :param raw_lines: True to not process lines
         :type raw_lines: bool
         """
-        if raw_lines:
-            if os.path.exists(path):
-                iterator = gzip.open(path)
-            else:
-                iterator = []
+        if os.path.exists(path):
+            iterator = gzip.open(path)
+            if not raw_lines:
+                cast = Caster(cls.HEADERS).cast
+                iterator = cast(split_file(iterator))
         else:
-            cast = Caster(cls.HEADERS).cast
-            if os.path.exists(path):
-                iterator = cast(split_file(gzip.open(path)))
-            else:
-                iterator = iter([])
+            iterator = []
         return Stream(
             cls(),
             iterator

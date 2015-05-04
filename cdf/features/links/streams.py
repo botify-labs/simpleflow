@@ -1297,13 +1297,17 @@ class FinalRedirectionStreamDef(StreamDefBase):
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT,
                 URL_ID,
-                DIFF_QUALITATIVE
+                DIFF_QUALITATIVE,
+                FIELD_RIGHTS.ADMIN
             },
             "enabled": check_enabled("chains")
         },
         "redirect.to.final_url_exists": {
             "type": BOOLEAN_TYPE,
             "default_value": None,
+            "settings": {
+                FIELD_RIGHTS.ADMIN
+            },
             "enabled": check_enabled("chains")
         },
         "redirect.to.nb_hops": {
@@ -1314,7 +1318,8 @@ class FinalRedirectionStreamDef(StreamDefBase):
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
                 AGG_NUMERICAL,
-                DIFF_QUANTITATIVE
+                DIFF_QUANTITATIVE,
+                FIELD_RIGHTS.ADMIN
             },
             "enabled": check_enabled("chains")
         },
@@ -1323,6 +1328,9 @@ class FinalRedirectionStreamDef(StreamDefBase):
             "group": GROUPS.redirects.name,
             "type": BOOLEAN_TYPE,
             "default_value": None,
+            "settings": {
+                FIELD_RIGHTS.ADMIN
+            },
             "enabled": check_enabled("chains")
         },
     }
