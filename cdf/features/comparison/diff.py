@@ -164,6 +164,8 @@ def document_diff(ref_doc, new_doc, diff_strategy=DIFF_STRATEGY):
         new_value = (get_subdict_from_path(field, new_doc)
                      if path_in_dict(field, new_doc) else None)
         try:
+            if ref_value is None and new_value is None:
+                continue
             diff_result = diff_func(ref_value, new_value)
         except Exception:
             logger.error(
