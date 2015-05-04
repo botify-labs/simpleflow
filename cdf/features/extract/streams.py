@@ -44,8 +44,8 @@ def render_field_strategy(features_options, field_name, field_settings,
             # it's always multiple=false by default
             if field["agg"] == "list":
                 public_field_settings["multiple"] = True
-            # Set verbose name created by user
-            public_field_settings["verbose_name"] = field["name"]
+            # Set name created by user
+            public_field_settings["name"] = field["name"]
 
 
 def check_enabled(field):
