@@ -8,7 +8,7 @@ wait_elasticsearch() {
   while ((i > 0 )); do
     echo -n "."
     sleep 1
-    curl -s -o /dev/null http://localhost:9200/_cluster/health|grep green && echo "ok." && break
+    curl -s http://localhost:9200/_cluster/health|grep green && echo "ok." && break
     i=$(( i - 1 ))
   done
 }
