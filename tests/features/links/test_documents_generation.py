@@ -295,7 +295,6 @@ class TestBadLinks(unittest.TestCase):
                 'urls': [5],
                 'urls_exists': True
             },
-            'bad_canonical': {'nb': 0},
             'non_strategic': {
                 'nb': {'follow': {'unique': 0, 'total': 0}}
             },
@@ -314,7 +313,6 @@ class TestBadLinks(unittest.TestCase):
             '5xx': {
                 'nb': 0
             },
-            'bad_canonical': {'nb': 0},
             'non_strategic': {
                 'nb': {'follow': {'unique': 0, 'total': 0}}
             },
@@ -486,12 +484,12 @@ class TestBadLinks(unittest.TestCase):
         self.assertEqual([2], err['urls'])
 
         document = _next_doc(gen)
-        err = document['outlinks_errors']['bad_canonical']
-        self.assertEqual(0, err['nb'])
+#        err = document['outlinks_errors']['bad_canonical']
+#        self.assertEqual(0, err['nb'])
 
         document = _next_doc(gen)
-        err = document['outlinks_errors']['bad_canonical']
-        self.assertEqual(0, err['nb'])
+#        err = document['outlinks_errors']['bad_canonical']
+#        self.assertEqual(0, err['nb'])
 
         document = _next_doc(gen)
         err = document['outlinks_errors']['bad_canonical']
@@ -500,8 +498,8 @@ class TestBadLinks(unittest.TestCase):
         self.assertEqual([2, 5], err['urls'])
 
         document = _next_doc(gen)
-        err = document['outlinks_errors']['bad_canonical']
-        self.assertEqual(0, err['nb'])
+#        err = document['outlinks_errors']['bad_canonical']
+#        self.assertEqual(0, err['nb'])
 
 
 class TestRedirects(unittest.TestCase):
