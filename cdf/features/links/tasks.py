@@ -490,11 +490,10 @@ def get_final_redirects(s3_uri,
         'uri': s3_uri,
         'tmp_dir': tmp_dir,
         'force_fetch': force_fetch,
-        'raw_lines': True
     }
     with compute_final_redirects(
-            InfosStreamDef.load(**stream_kwargs),
-            OutlinksRawStreamDef.load(**stream_kwargs)
+            InfosStreamDef.load(fields_to_use={'id', 'http_code'}, **stream_kwargs),
+            OutlinksRawStreamDef.load(fields_to_use=None, **stream_kwargs)
     ) as result:
         FinalRedirectionStreamDef.persist(
             iter(result), s3_uri,

@@ -1,7 +1,8 @@
 import unittest
+from cStringIO import StringIO
 
-from cdf.features.links.streams import FinalRedirectionStreamDef
-from cdf.features.main.streams import IdStreamDef
+from cdf.features.links.streams import FinalRedirectionStreamDef, OutlinksRawStreamDef
+from cdf.features.main.streams import IdStreamDef, InfosStreamDef
 from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.links.redirect_final import (
     RedirectFinal,
@@ -23,10 +24,23 @@ _stream1 = [
 ]
 
 
+def _cnv(infos, s):
+    """
+    Converts from "raw_lines" format.
+    """
+    infos = InfosStreamDef.load_file(StringIO(''.join(infos)),
+                                     fields_to_use={'id', 'http_code'})
+    s = OutlinksRawStreamDef.load_file(StringIO(''.join(s)))
+    return infos, s
+
+
 class TestFinalRedirectionStreamDef(unittest.TestCase):
     def test_doc_1(self):
         gen = UrlDocumentGenerator(
-            [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
+            [
+                IdStreamDef.load_iterator(_ids1),
+                FinalRedirectionStreamDef.load_iterator(_stream1)
+            ])
         documents = list(gen)
         self.assertEqual(len(documents), 4)
         doc = documents[0][1]
@@ -47,8 +61,10 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
         self.assertEqual(False, redirects_to["in_loop"])
 
     def test_doc_2(self):
-        gen = UrlDocumentGenerator(
-            [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(_ids1),
+            FinalRedirectionStreamDef.load_iterator(_stream1)
+        ])
         documents = list(gen)
         self.assertEqual(len(documents), 4)
         doc = documents[1][1]
@@ -70,8 +86,10 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
         self.assertEqual(False, redirects_to["in_loop"])
 
     def test_doc_3(self):
-        gen = UrlDocumentGenerator(
-            [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(_ids1),
+            FinalRedirectionStreamDef.load_iterator(_stream1)
+        ])
         documents = list(gen)
         self.assertEqual(len(documents), 4)
         doc = documents[2][1]
@@ -93,8 +111,10 @@ class TestFinalRedirectionStreamDef(unittest.TestCase):
         self.assertEqual(False, redirects_to["in_loop"])
 
     def test_doc_4(self):
-        gen = UrlDocumentGenerator(
-            [IdStreamDef.load_iterator(_ids1), FinalRedirectionStreamDef.load_iterator(_stream1)])
+        gen = UrlDocumentGenerator([
+            IdStreamDef.load_iterator(_ids1),
+            FinalRedirectionStreamDef.load_iterator(_stream1)
+        ])
         documents = list(gen)
         self.assertEqual(len(documents), 4)
         doc = documents[3][1]
@@ -116,6 +136,7 @@ class TestComputeFinalRedirects(unittest.TestCase):
             "1\ta\t0\t2\t\n",
             "1\ta\t0\t5\t\n"
         ]
+        infos, s = _cnv(infos, s)
         r = compute_final_redirects(infos, s)
         # uid_to_dst, uid_to_ext, uid_nb_hops, uid_in_loop = FinalRedirectionStreamDef.compute_final_redirections(s)
         self.assertEqual(len(r.uid_to_dst), 0)
@@ -131,6 +152,7 @@ class TestComputeFinalRedirects(unittest.TestCase):
         s = [
             "1\tr301\t0\t2\t\n",
         ]
+        infos, s = _cnv(infos, s)
         r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 1)
         self.assertEqual(len(r.uid_to_ext), 0)
@@ -151,6 +173,7 @@ class TestComputeFinalRedirects(unittest.TestCase):
             "1\tr301\t0\t2\t\n",
             "2\tr301\t0\t3\t\n",
         ]
+        infos, s = _cnv(infos, s)
         r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
         self.assertEqual(len(r.uid_to_ext), 0)
@@ -173,6 +196,7 @@ class TestComputeFinalRedirects(unittest.TestCase):
             "1\tr301\t0\t3\t\n",
             "2\tr301\t0\t1\t\n",
         ]
+        infos, s = _cnv(infos, s)
         r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
         self.assertEqual(len(r.uid_to_ext), 0)
@@ -194,6 +218,7 @@ class TestComputeFinalRedirects(unittest.TestCase):
             "1\tr301\t0\t2\t\n",
             "2\tr301\t8\t-1\thttp://www.example.com/\n",
         ]
+        infos, s = _cnv(infos, s)
         r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
         self.assertEqual(len(r.uid_to_ext), 2)
@@ -215,6 +240,7 @@ class TestComputeFinalRedirects(unittest.TestCase):
             "1\tr301\t0\t2\t\n",
             "2\tr301\t0\t1\t\n",
         ]
+        infos, s = _cnv(infos, s)
         r = compute_final_redirects(infos, s)
         self.assertEqual(len(r.uid_to_dst), 2)
         self.assertEqual(len(r.uid_to_ext), 0)
@@ -241,6 +267,7 @@ class TestRedirectFinal(unittest.TestCase):
             "1\ta\t0\t2\t\n",
             "1\ta\t0\t5\t\n"
         ]
+        infos, s = _cnv(infos, s)
         with compute_final_redirects(infos, s) as results:
             self.assertEqual(len(list(results)), 0)
 
@@ -252,6 +279,7 @@ class TestRedirectFinal(unittest.TestCase):
         s = [
             "1\tr301\t0\t2\t\n",
         ]
+        infos, s = _cnv(infos, s)
         with compute_final_redirects(infos, s) as results:
             results = iter(results)
             r = results.next()
@@ -274,6 +302,7 @@ class TestRedirectFinal(unittest.TestCase):
             "1\tr301\t0\t2\t\n",
             "2\tr301\t0\t3\t\n",
         ]
+        infos, s = _cnv(infos, s)
         with compute_final_redirects(infos, s) as results:
             results = iter(results)
             r = results.next()
@@ -303,6 +332,7 @@ class TestRedirectFinal(unittest.TestCase):
             "1\tr301\t0\t3\t\n",
             "2\tr301\t0\t1\t\n",
         ]
+        infos, s = _cnv(infos, s)
         with compute_final_redirects(infos, s) as results:
             results = iter(results)
             r = results.next()
@@ -331,6 +361,7 @@ class TestRedirectFinal(unittest.TestCase):
             "1\tr301\t0\t2\t\n",
             "2\tr301\t8\t-1\thttp://www.example.com/\n",
         ]
+        infos, s = _cnv(infos, s)
         with compute_final_redirects(infos, s) as results:
             results = iter(results)
             r = results.next()
@@ -359,6 +390,7 @@ class TestRedirectFinal(unittest.TestCase):
             "1\tr301\t0\t2\t\n",
             "2\tr301\t0\t1\t\n",
         ]
+        infos, s = _cnv(infos, s)
         with compute_final_redirects(infos, s) as results:
             results = iter(results)
             r = results.next()

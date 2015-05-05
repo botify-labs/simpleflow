@@ -85,15 +85,15 @@ class TestStreamsDef(unittest.TestCase):
         self.assertEquals(stream.next(), [1, 'http://www.site.com/'])
         self.assertEquals(stream.next(), [2, 'http://www.site.com/2'])
 
-    def test_iterator_raw(self):
+    def test_iterator_with_fields_to_use(self):
         iterator = iter([
-            '1\thttp://www.site.com/\n',
-            '2\thttp://www.site.com/2\n'
+            [1, 'http://www.site.com/'],
+            [2, 'http://www.site.com/2']
         ])
-        stream = CustomStreamDef.load_iterator(iterator, raw_lines=True)
+        stream = CustomStreamDef.load_iterator(iterator, {'id'})
         self.assertTrue(isinstance(stream.stream_def, CustomStreamDef))
-        self.assertEquals(stream.next(), '1\thttp://www.site.com/\n')
-        self.assertEquals(stream.next(), '2\thttp://www.site.com/2\n')
+        self.assertEquals(stream.next(), [1])
+        self.assertEquals(stream.next(), [2])
 
     def test_to_dict(self):
         entry = [1, 'http://www.site.com/']
@@ -150,23 +150,6 @@ class TestStreamsDef(unittest.TestCase):
         self.assertEquals(
             list(CustomStreamDef.load(self.s3_dir)),
             self.data
-        )
-
-    def test_load_raw_lines(self):
-        self._write_custom_parts()
-        self.assertEquals(
-            list(CustomStreamDef.load(self.s3_dir, part_id=0, raw_lines=True)),
-            [
-                '0\thttp://www.site.com/\n',
-                '1\thttp://www.site.com/1\n',
-            ]
-        )
-
-        # Test without part_id
-        d = ["{}\t{}\n".format(i, u) for i, u in self.data]
-        self.assertEquals(
-            list(CustomStreamDef.load(self.s3_dir, raw_lines=True)),
-            d
         )
 
     @mock_s3
