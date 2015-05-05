@@ -1,4 +1,3 @@
-# import logging
 from itertools import groupby, ifilter
 from cdf.features.links.helpers.predicates import is_follow_link
 
@@ -9,9 +8,6 @@ from cdf.features.links.streams import (
     LinksToNonCompliantStreamDef,
     LinksToNonCanonicalStreamDef
 )
-
-
-# logger = logging.getLogger(__name__)
 
 
 def get_bad_links(stream_infos, stream_outlinks):
@@ -130,8 +126,6 @@ def get_link_to_non_compliant_urls_counters(stream_non_compliant_links):
 
 def get_links_to_non_canonical(stream_urllinks):
     # First, get bad canonicals
-
-    # logger.info('Reading canonicals')
     bad_canonicals = set()
     read_canons = set()  # ignore 2nd+ canonical
     for src_uid, link_type, follow_mask, dst_uid, dst_url in stream_urllinks:
@@ -140,7 +134,6 @@ def get_links_to_non_canonical(stream_urllinks):
                 bad_canonicals.add(src_uid)
             read_canons.add(src_uid)
     del read_canons
-    # logger.info('Found %d non-self canonicals', len(bad_canonicals))
 
     # Then get links to them
     links_to_non_canonical = []
@@ -151,7 +144,6 @@ def get_links_to_non_canonical(stream_urllinks):
                  int(is_follow_link(follow_mask, True)),
                  dst_uid
                  ))
-    # logger.info('Found %d links to non-self canonicals', len(links_to_non_canonical))
 
     return links_to_non_canonical
 
