@@ -1272,8 +1272,8 @@ class LinksToNonCanonicalStreamDef(StreamDefBase):
     FILE = 'urllinkstononcan'
     HEADERS = (
         ('id', int),
-        ('dst_url_id', int),
         ('follow', _raw_to_bool),
+        ('dst_url_id', int),
     )
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.outlinks_internal.name
     URL_DOCUMENT_MAPPING = {
@@ -1297,7 +1297,7 @@ class LinksToNonCanonicalStreamDef(StreamDefBase):
     }
 
     def process_document(self, document, stream_linkstononcan):
-        _, url_dest_id, follow = stream_linkstononcan
+        _, follow, dst_url_id = stream_linkstononcan
 
         errors = document['outlinks_errors']
         error_kind = 'bad_canonical'
@@ -1305,8 +1305,8 @@ class LinksToNonCanonicalStreamDef(StreamDefBase):
         error_urls = errors[error_kind]['urls']
         # url list length bounded at 10, should not be a perf problem
         # sample list contains follow, unique dest urls
-        if follow and len(error_urls) < 10 and url_dest_id not in error_urls:
-            error_urls.append(url_dest_id)
+        if follow and len(error_urls) < 10 and dst_url_id not in error_urls:
+            error_urls.append(dst_url_id)
 
         errors[error_kind]['urls_exists'] = True
 

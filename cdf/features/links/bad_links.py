@@ -1,3 +1,4 @@
+# import logging
 from itertools import groupby, ifilter
 from cdf.features.links.helpers.predicates import is_follow_link
 
@@ -8,6 +9,9 @@ from cdf.features.links.streams import (
     LinksToNonCompliantStreamDef,
     LinksToNonCanonicalStreamDef
 )
+
+
+# logger = logging.getLogger(__name__)
 
 
 def get_bad_links(stream_infos, stream_outlinks):
@@ -124,25 +128,37 @@ def get_link_to_non_compliant_urls_counters(stream_non_compliant_links):
         yield (src_url_id, len(dests), total)
 
 
-def get_links_to_non_canonical(stream_inlinks):
+def get_links_to_non_canonical(stream_urllinks):
     # First, get bad canonicals
+
+    # logger.info('Reading canonicals')
     bad_canonicals = set()
-    for src_uid, link_type, follow_mask, dst_uid, dst_url in stream_inlinks:
-        if link_type == 'canonical' and src_uid != dst_uid:
-            bad_canonicals.add(src_uid)
+    read_canons = set()  # ignore 2nd+ canonical
+    for src_uid, link_type, follow_mask, dst_uid, dst_url in stream_urllinks:
+        if link_type == 'canonical' and src_uid not in read_canons:
+            if src_uid != dst_uid:
+                bad_canonicals.add(src_uid)
+            read_canons.add(src_uid)
+    del read_canons
+    # logger.info('Found %d non-self canonicals', len(bad_canonicals))
 
     # Then get links to them
     links_to_non_canonical = []
-    for src_uid, link_type, follow_mask, dst_uid, dst_url in stream_inlinks:
-        if dst_uid in bad_canonicals:
-            links_to_non_canonical.append((src_uid, dst_uid,
-                                           int(is_follow_link(follow_mask, True))))
+    for src_uid, link_type, follow_mask, dst_uid, dst_url in stream_urllinks:
+        if dst_uid in bad_canonicals and link_type != 'canonical':
+            links_to_non_canonical.append(
+                (src_uid,
+                 int(is_follow_link(follow_mask, True)),
+                 dst_uid
+                 ))
+    # logger.info('Found %d links to non-self canonicals', len(links_to_non_canonical))
 
     return links_to_non_canonical
 
 
 def get_links_to_non_canonical_counters(stream_links_to_non_canonical):
-    # Cut-pasted from above.
+    # Cut'n' pasted from get_link_to_non_compliant_urls_counters.
+
     # Resolve indexes
     src_url_idx = LinksToNonCanonicalStreamDef.field_idx('id')
 

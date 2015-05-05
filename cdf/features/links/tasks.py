@@ -505,7 +505,7 @@ def make_links_to_non_canonical_file(s3_uri,
 
 @with_temporary_dir
 def make_links_to_non_canonical_counter_file(s3_uri,
-                                             part_id,
+                                             part_id=None,
                                              tmp_dir=None,
                                              force_fetch=DEFAULT_FORCE_FETCH):
     stream = LinksToNonCanonicalStreamDef.load(
