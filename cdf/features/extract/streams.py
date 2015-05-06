@@ -3,9 +3,10 @@ import re
 from cdf.core.metadata.constants import FIELD_RIGHTS
 from cdf.features.extract.settings import GROUPS
 from cdf.metadata.url.url_metadata import (
-    INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
-    FLOAT_TYPE,
-    ES_NOT_ANALYZED
+    INT_TYPE, STRING_TYPE, BOOLEAN_TYPE, FLOAT_TYPE,
+    ES_NOT_ANALYZED, ES_DOC_VALUE,
+    AGG_NUMERICAL, AGG_CATEGORICAL,
+    DIFF_QUANTITATIVE, DIFF_QUALITATIVE
 )
 from cdf.core.streams.base import StreamDefBase
 
@@ -66,13 +67,32 @@ def _generate_ers_document_mapping():
     for type_name, short_type_name in (STRING_TYPE, 's'), (INT_TYPE, 'i'),\
                                       (BOOLEAN_TYPE, 'b'), (FLOAT_TYPE, 'f'):
         for i in range(_EXTRACT_RESULT_COUNT):
+            settings = {
+                ES_DOC_VALUE,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.ADMIN
+            }
+            if short_type_name in ('i', 'f'):
+                settings |= {
+                    AGG_NUMERICAL,
+                    DIFF_QUANTITATIVE,
+                }
+            elif short_type_name == 's':
+                settings |= {
+                    ES_NOT_ANALYZED,
+                    AGG_CATEGORICAL,
+                    DIFF_QUALITATIVE,
+                }
+            elif short_type_name == 'b':
+                settings |= {
+                    AGG_CATEGORICAL,
+                    DIFF_QUALITATIVE,
+                }
             dm["extract.extract_%s_%i" % (short_type_name, i)] = {
                 "type": type_name,
                 "default_value": None,
-                "settings": {
-                    ES_NOT_ANALYZED,
-                    FIELD_RIGHTS.ADMIN
-                },
+                "settings": settings,
                 "render_field_modifier": render_field_strategy,
                 "enabled": check_enabled("extract_%s_%i" % (short_type_name, i))
             }
@@ -125,7 +145,7 @@ class ExtractResultsStreamDef(StreamDefBase):
             except ValueError:
                 return None
         if cast == 'b':
-            return value == '1'  # or value[0].lower() in 'typo'
+            return value == '1'
         if cast == 'f':
             try:
                 return float(value)
