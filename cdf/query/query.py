@@ -21,8 +21,14 @@ _ALL_FIELDS = {
     'sitemaps': None,  # not sure
     'ganalytics': None,
     'rel': None,
+    'extract': {},
     'comparison': {}
 }
+# Add extract fields
+for typ in 'sibf':
+    for i in range(5):
+        _ALL_FIELDS['extract']['extract_%s_%i' % (typ, i)] = True
+
 _FEATURE_OPTION = copy.deepcopy(_ALL_FIELDS)
 _FEATURE_OPTION['comparison']['options'] = copy.deepcopy(_ALL_FIELDS)
 _DATA_FORMAT = generate_data_format(_FEATURE_OPTION)
