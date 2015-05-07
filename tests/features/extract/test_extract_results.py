@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-__author__ = 'zeb'
-
 import unittest
 
+from cdf.exceptions import BotifyQueryException
+from cdf.metadata.url.es_backend_utils import ElasticSearchBackend
+from cdf.query.query_parsing import QueryParser
 from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.extract.streams import ExtractResultsStreamDef
@@ -32,7 +33,7 @@ _ids1 = [
 
 
 class TestExtractResultsStreamDef(unittest.TestCase):
-    def test1(self):
+    def test_basic(self):
         gen = UrlDocumentGenerator(
             [IdStreamDef.load_iterator(iter(_ids1)), ExtractResultsStreamDef.load_iterator(iter(_stream1))])
         documents = list(gen)
@@ -77,3 +78,22 @@ class TestExtractFields(unittest.TestCase):
         # fields that are not reserved
         filters = [f["value"] for f in filter(lambda f: f["value"].startswith("extract."), fields)]
         self.assertEquals(filters, ["extract.extract_i_0"])
+
+
+class ParsingTestCase(unittest.TestCase):
+    def setUp(self):
+        self.parser = QueryParser(ElasticSearchBackend(ExtractResultsStreamDef.URL_DOCUMENT_MAPPING))
+
+    def assertParsingError(self, func, *args, **kwargs):
+        self.assertRaises(BotifyQueryException,
+                          func, *args, **kwargs)
+
+
+class TestExtractParsing(ParsingTestCase):
+    def test_predicate_filter(self):
+        f = self.parser.parse_predicate_filter({
+                'field': 'extract.extract_i_0',
+                'predicate': 'eq',
+                'value': '179'
+            })
+        f.validate()
