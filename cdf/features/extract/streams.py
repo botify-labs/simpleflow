@@ -54,8 +54,14 @@ def check_enabled(field):
     return True if extract field is enabled
     All es_fields from
     """
+    # Hack: understand both front's format (list of dicts) and query.query
     def _check_enabled_options(extract_options):
-        return any(f["es_field"] == field for f in extract_options)
+        if isinstance(extract_options, list):
+            return any(f["es_field"] == field for f in extract_options)
+        elif isinstance(extract_options, dict):
+            return extract_options.get(field, False)
+        else:
+            return False
     return _check_enabled_options
 
 
