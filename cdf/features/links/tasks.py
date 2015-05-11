@@ -371,22 +371,21 @@ def page_rank(s3_uri,
     crawler_metakeys = get_crawl_info(s3_uri, tmp_dir=tmp_dir)
     max_crawled_urlid = get_max_crawled_urlid(crawler_metakeys)
 
-    def get_stream(grouped):
-        """Transform the grouped link stream"""
-        for src, _, normals, _ in grouped:
-            yield src
-            for n in normals:
-                yield n
+    def get_id_stream(info_stream, max_uid):
+        for info in info_stream:
+            id = info[0]
+            if id > max_uid:
+                raise StopIteration
+            yield id
 
-    s = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
-    s = itertools.ifilter(pagerank_filter, s)
-    grouped = group_links(s, max_crawled_urlid)
+    info_stream = InfosStreamDef.load(s3_uri, tmp_dir=tmp_dir)
 
-    # first pass over the links for node id resolution
+    # first pass over the `urlinfo` dataset for node id resolution
     # we manually construct a `LinkGraph` instead of using its
     # static factory method for performance reason
     start = time.time()
-    node_mapping = DictMapping(get_stream(grouped))
+    node_mapping = DictMapping(
+        get_id_stream(info_stream, max_crawled_urlid))
     end = time.time()
     logger.info("Node mapping: %s", str(end - start))
 
