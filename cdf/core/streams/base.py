@@ -4,7 +4,7 @@ import os
 import gzip
 import tempfile
 import shutil
-from collections import Iterator
+from collections import Iterable
 
 from cdf.core.streams.caster import Caster
 from cdf.core.streams.utils import split_file
@@ -133,7 +133,6 @@ class StreamDefBase(object):
         iterator = split_file(file)
         return cls.load_iterator(iterator)
 
-
     @classmethod
     def load_iterator(cls, iterator):
         """Load data stream from an iterator
@@ -147,7 +146,7 @@ class StreamDefBase(object):
         cast = Caster(cls.HEADERS).cast
         return Stream(cls(), cast(iterator))
 
-    #TODO(darkjh) use pure streaming persist (key.set_contents_from_stream)
+    # TODO(darkjh) use pure streaming persist (key.set_contents_from_stream)
     @classmethod
     def persist(cls, stream, uri, part_id=None,
                 first_part_size=FIRST_PART_ID_SIZE,
@@ -340,7 +339,7 @@ class StreamDefBase(object):
         )
 
 
-class Stream(Iterator):
+class Stream(Iterable):
     """Stream represents a concret data stream of a certain stream def
     """
 
@@ -356,13 +355,13 @@ class Stream(Iterator):
         self._filtered = None
 
     def __iter__(self):
-        return self
-
-    def __repr__(self):
-        return '<Stream of %s>' % self.stream_def.__class__.__name__
+        return self.iterator
 
     def next(self):
         return self.iterator.next()
+
+    def __repr__(self):
+        return '<Stream of %s>' % self.stream_def.__class__.__name__
 
     def add_filter(self, fields, func):
         """Apply a filter function to the stream

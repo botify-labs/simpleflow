@@ -30,16 +30,14 @@ def group_with(left, final_func=None, **stream_defs):
             stream, key_idx, func = stream_def
             if not stream_name in id_:
                 try:
-                    right_line[stream_name] = stream.next()
+                    right_line[stream_name] = next(stream)
                 except StopIteration:
                     continue
                 id_[stream_name] = right_line[stream_name][key_idx]
 
             while id_[stream_name] == current_id:
-                """
-                If one of the function raises a GroupWithException,
-                the current id is ignored
-                """
+                # If one of the function raises a GroupWithException,
+                # the current id is ignored
                 if not move_to_next_id:
                     try:
                         func(attributes, right_line[stream_name])
@@ -47,7 +45,7 @@ def group_with(left, final_func=None, **stream_defs):
                         move_to_next_id = True
 
                 try:
-                    right_line[stream_name] = stream.next()
+                    right_line[stream_name] = next(stream)
                     id_[stream_name] = right_line[stream_name][key_idx]
                 except StopIteration:
                     break
