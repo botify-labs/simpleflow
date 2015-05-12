@@ -21,11 +21,12 @@ from cdf.features.links.pagerank import (
 
 class TestDataPreparation(unittest.TestCase):
     def test_virtual_predicate(self):
-        self.assertEqual(is_virtual_page(1, 0, 100, 50), (1, NOT_CRAWLED_VIR))
-        self.assertEqual(is_virtual_page(1, 8, 2, 50), (1, EXT_VIR))
-        self.assertEqual(is_virtual_page(1, 4, 2, 50), (1, ROBOTS_VIR))
+        self.assertEqual(is_virtual_page(0, 100, 50), NOT_CRAWLED_VIR)
+        self.assertEqual(is_virtual_page(8, 2, 50), EXT_VIR)
+        self.assertEqual(is_virtual_page(4, 2, 50), ROBOTS_VIR)
 
-        self.assertFalse(is_virtual_page(1, 0, 2, 50))
+        self.assertFalse(is_virtual_page(0, 2, 50))
+        self.assertFalse(is_virtual_page(15, 0, 50), {15, 32})
 
     def test_filtering_self_link(self):
         self.assertFalse(pagerank_filter((1, 'a', 0, 1, '')))
@@ -51,7 +52,8 @@ class TestDataPreparation(unittest.TestCase):
             (1, 'a', 0, 2, ''),
             (1, 'a', 0, 5, '')
         ])
-        result = list(group_links(s, max_crawled_id=15))
+        result = list(group_links(
+            s, max_crawled_id=15, extra_non_crawls=set()))
         expected = [
             (1, 3, [2, 2, 5], None)
         ]
@@ -65,7 +67,8 @@ class TestDataPreparation(unittest.TestCase):
             (1, 'a', 0, 200, ''),
             (1, 'a', 4, 5, '')
         ])
-        result = list(group_links(s, max_crawled_id=15))
+        result = list(group_links(
+            s, max_crawled_id=15, extra_non_crawls=set()))
         expected = [
             (1, 5, [], [3, 1, 1])
         ]
