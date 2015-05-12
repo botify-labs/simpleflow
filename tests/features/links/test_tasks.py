@@ -586,6 +586,15 @@ class TestPageRank(TaskTestCase):
             [4, 'a', 0, 1, ''],
             [6, 'a', 0, 1, ''],
         ]
+
+        self.infos = [
+            [1, 0, '', 0, 0, 200, 0, 0, 0, 'fr'],
+            [2, 0, '', 0, 0, 200, 0, 0, 0, 'fr'],
+            [3, 0, '', 0, 0, 200, 0, 0, 0, 'fr'],
+            [4, 0, '', 0, 0, 200, 0, 0, 0, 'fr'],
+            [5, 0, '', 0, 0, 200, 0, 0, 0, 'fr'],
+            [6, 0, '', 0, 0, 200, 0, 0, 0, 'fr'],
+        ]
         self.tmp_dir = tempfile.mkdtemp()
 
     @mock_s3
@@ -598,6 +607,11 @@ class TestPageRank(TaskTestCase):
         part_size = 10
         OutlinksRawStreamDef.persist(
             iter(self.outlinks), self.s3_uri,
+            first_part_size=first_part_size,
+            part_size=part_size
+        )
+        InfosStreamDef.persist(
+            iter(self.infos), self.s3_uri,
             first_part_size=first_part_size,
             part_size=part_size
         )

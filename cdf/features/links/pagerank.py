@@ -249,25 +249,25 @@ def compute_page_rank(graph, params=DEFAULT_PR_PARAM):
     return src
 
 
-def is_virtual_page(src, mask, dst, max_crawled_id):
+def is_virtual_page(mask, dst, max_crawled_id, extra_non_crawls=set()):
     """Predicate to check if a link is virtual
 
-    :param src: link src
-    :type src: int
     :param mask: link mask
     :type mask: int
     :param dst: link dest
     :type dst: int
     :param max_crawled_id: max crawled url id
     :type max_crawled_id: int
+    :param extra_non_crawls:
+    :type extra_non_crawls: set
     :return: a link tuple if it's a virtual page, otherwise False
     """
-    if dst > max_crawled_id:
-        return src, NOT_CRAWLED_VIR
+    if dst > max_crawled_id or dst in extra_non_crawls:
+        return NOT_CRAWLED_VIR
     if is_external_link(mask):
-        return src, EXT_VIR
+        return EXT_VIR
     if is_robots_blocked(mask):
-        return src, ROBOTS_VIR
+        return ROBOTS_VIR
 
     return False
 
@@ -288,7 +288,7 @@ def pagerank_filter(link):
     )
 
 
-def group_links(links_stream, max_crawled_id):
+def group_links(links_stream, max_crawled_id, extra_non_crawls):
     """Group links into page rank internal format for further processing
 
         - normal links are stored in a list: [1, 2, 5, 10, ...]
@@ -299,6 +299,8 @@ def group_links(links_stream, max_crawled_id):
     :type links_stream: iterator
     :param max_crawled_id: max crawled url id
     :type max_crawled_id: int
+    :param extra_non_crawls: non crawl urls with uid < max_crawled_id
+    :type extra_non_crawls: set
     :return: (src, out_degree, normals, virtuals)
     """
     for src, g in itertools.groupby(links_stream, key=itemgetter(0)):
@@ -307,12 +309,11 @@ def group_links(links_stream, max_crawled_id):
         normals = []
         for _, _, mask, dst, _ in g:
             outdeg_count += 1
-            v = is_virtual_page(src, mask, dst, max_crawled_id)
-            if v:
+            v = is_virtual_page(mask, dst, max_crawled_id, extra_non_crawls)
+            if v is not False:
                 if not virtuals:
                     virtuals = [0, 0, 0]
-                _, d = v
-                virtuals[d] += 1
+                virtuals[v] += 1
             else:
                 normals.append(dst)
         yield (src, outdeg_count, normals, virtuals)

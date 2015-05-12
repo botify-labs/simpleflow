@@ -361,6 +361,38 @@ def make_inlinks_percentiles_file(s3_uri,
     )
 
 
+def get_node_mapping_and_extra_non_crawls(info_stream, max_uid):
+    """Page rank task helper that returns a NodeIdMapping and extra
+    non crawled urls
+
+    :param info_stream: urlinfos stream
+    :type info_stream: Stream
+    :param max_uid: max url id
+    :type max_uid: int
+    """
+    extra_non_crawls = set()
+    def get_stream(info_stream, max_uid):
+        """Transform a urlinfo stream into urlid stream
+        It also finds extra non-crawled urls by side-effect.
+        """
+        http_code_idx = InfosStreamDef.field_idx('http_code')
+        for info in info_stream:
+            id = info[0]
+            http_code = info[http_code_idx]
+            if http_code == 0:
+                extra_non_crawls.add(id)
+            if id > max_uid:
+                raise StopIteration
+            yield id
+
+    start = time.time()
+    node_mapping = DictMapping(get_stream(info_stream, max_uid))
+    end = time.time()
+    logger.info("Node mapping: %s", str(end - start))
+
+    return node_mapping, extra_non_crawls
+
+
 @with_temporary_dir
 def page_rank(s3_uri,
               first_part_id_size=FIRST_PART_ID_SIZE,
@@ -371,28 +403,19 @@ def page_rank(s3_uri,
     crawler_metakeys = get_crawl_info(s3_uri, tmp_dir=tmp_dir)
     max_crawled_urlid = get_max_crawled_urlid(crawler_metakeys)
 
-    def get_stream(grouped):
-        """Transform the grouped link stream"""
-        for src, _, normals, _ in grouped:
-            yield src
-            for n in normals:
-                yield n
+    info_stream = InfosStreamDef.load(
+        s3_uri, tmp_dir=tmp_dir, force_fetch=force_fetch)
 
-    s = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
-    s = itertools.ifilter(pagerank_filter, s)
-    grouped = group_links(s, max_crawled_urlid)
-
-    # first pass over the links for node id resolution
+    # first pass over the `urlinfo` dataset for node id resolution
     # we manually construct a `LinkGraph` instead of using its
     # static factory method for performance reason
-    start = time.time()
-    node_mapping = DictMapping(get_stream(grouped))
-    end = time.time()
-    logger.info("Node mapping: %s", str(end - start))
+    node_mapping, extra_non_crawls = get_node_mapping_and_extra_non_crawls(
+        info_stream, max_crawled_urlid)
 
-    s = OutlinksRawStreamDef.load(s3_uri, tmp_dir=tmp_dir)
+    s = OutlinksRawStreamDef.load(
+        s3_uri, tmp_dir=tmp_dir, force_fetch=force_fetch)
     s = itertools.ifilter(pagerank_filter, s)
-    grouped = group_links(s, max_crawled_urlid)
+    grouped = group_links(s, max_crawled_urlid, extra_non_crawls)
 
     graph_path = os.path.join(tmp_dir, 'link_graph')
     virtual_path = os.path.join(tmp_dir, 'virtuals')
