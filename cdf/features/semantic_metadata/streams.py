@@ -1,3 +1,4 @@
+from cdf.core.metadata.dataformat import check_enabled
 from cdf.utils.dict import get_subdict_from_path
 from cdf.metadata.url.url_metadata import (
     INT_TYPE, STRING_TYPE, BOOLEAN_TYPE,
@@ -125,6 +126,51 @@ class ContentsStreamDef(StreamDefBase):
                 DIFF_QUALITATIVE
             }
         },
+        "metadata.h1.len": {
+            "verbose_name": "H1 Length",
+            "type": INT_TYPE,
+            "default_value": None,
+            "settings": {
+                FIELD_RIGHTS.ADMIN,
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
+            },
+            "enabled": check_enabled("length")
+        },
+        "metadata.title.len": {
+            "verbose_name": "Title Length",
+            "type": INT_TYPE,
+            "default_value": None,
+            "settings": {
+                FIELD_RIGHTS.ADMIN,
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
+            },
+            "enabled": check_enabled("length")
+        },
+        "metadata.description.len": {
+            "verbose_name": "Description Length",
+            "type": INT_TYPE,
+            "default_value": None,
+            "settings": {
+                FIELD_RIGHTS.ADMIN,
+                ES_DOC_VALUE,
+                AGG_CATEGORICAL,
+                AGG_NUMERICAL,
+                FIELD_RIGHTS.FILTERS,
+                FIELD_RIGHTS.SELECT,
+                DIFF_QUANTITATIVE
+            },
+            "enabled": check_enabled("length")
+        },
     }
 
     def process_document(self, document, stream):
@@ -132,6 +178,13 @@ class ContentsStreamDef(StreamDefBase):
         content_type = CONTENT_TYPE_INDEX[content_type_id]
         content = stream[self.field_idx('txt')]
         document['metadata'][content_type]['contents'].append(content)
+
+    def post_process_document(self, document):
+        for content_type in ('h1', 'title', 'description'):
+            if not document['metadata'][content_type]['contents']:
+                continue
+            content = document['metadata'][content_type]['contents'][0]
+            document['metadata'][content_type]['len'] = len(content)
 
 
 def _get_duplicate_document_mapping(metadata_list,
