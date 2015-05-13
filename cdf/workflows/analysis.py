@@ -65,6 +65,13 @@ def as_activity(func):
     )(func)
 
 
+def as_pypy_activity(func):
+    """Decorate a task to be executed by pypy
+    """
+    return as_activity(execute.with_pypy(
+        enable=cdf.settings.ENABLE_PYPY)(func))
+
+
 def optional_activity(func, task_name, feature):
     act = activity.with_attributes(
         version='2.7',
@@ -86,11 +93,21 @@ def optional_activity(func, task_name, feature):
     return act
 
 
+def optional_pypy_activity(func, task_name, feature):
+    """Decorate a task to be launched by pypy
+    """
+    return optional_activity(
+        execute.with_pypy(enable=cdf.settings.ENABLE_PYPY)(func),
+        task_name, feature
+    )
+
+
 from cdf.features.main.tasks import compute_suggested_patterns
 compute_suggested_patterns = optional_activity(
     compute_suggested_patterns, 'segment', 'main')
 
 from cdf.features.main.tasks import compute_zones, compute_compliant_urls
+# cannot pass to pypy because exceptions imported from `autotagging` in main's tasks
 compute_zones = as_activity(compute_zones)
 compute_compliant_urls = as_activity(compute_compliant_urls)
 
@@ -110,23 +127,23 @@ from cdf.features.links.tasks import (
     make_inlinks_percentiles_file,
     page_rank
 )
-compute_metadata_count = as_activity(compute_metadata_count)
-make_metadata_duplicates_file = as_activity(make_metadata_duplicates_file)
-make_context_aware_metadata_duplicates_file = as_activity(
+compute_metadata_count = as_pypy_activity(compute_metadata_count)
+make_metadata_duplicates_file = as_pypy_activity(make_metadata_duplicates_file)
+make_context_aware_metadata_duplicates_file = as_pypy_activity(
     make_context_aware_metadata_duplicates_file
 )
-make_links_counter_file = as_activity(make_links_counter_file)
-make_bad_link_file = as_activity(make_bad_link_file)
-make_bad_link_counter_file = as_activity(make_bad_link_counter_file)
-make_links_to_non_compliant_file = as_activity(make_links_to_non_compliant_file)
-make_links_to_non_compliant_counter_file = as_activity(make_links_to_non_compliant_counter_file)
+make_links_counter_file = as_pypy_activity(make_links_counter_file)
+make_bad_link_file = as_pypy_activity(make_bad_link_file)
+make_bad_link_counter_file = as_pypy_activity(make_bad_link_counter_file)
+make_links_to_non_compliant_file = as_pypy_activity(make_links_to_non_compliant_file)
+make_links_to_non_compliant_counter_file = as_pypy_activity(make_links_to_non_compliant_counter_file)
 make_top_domains_files = optional_activity(
     execute.with_pypy(enable=cdf.settings.ENABLE_PYPY)(make_top_domains_files),
     'top_domain',
     'links',
 )
-make_inlinks_percentiles_file = as_activity(make_inlinks_percentiles_file)
-compute_page_rank = optional_activity(page_rank, 'document', 'links')
+make_inlinks_percentiles_file = as_pypy_activity(make_inlinks_percentiles_file)
+compute_page_rank = optional_pypy_activity(page_rank, 'document', 'links')
 
 from cdf.tasks.url_data import (
     generate_documents,
@@ -155,7 +172,7 @@ match_sitemap_urls = optional_activity(
 from cdf.features.rel.tasks import (
     convert_rel_out_to_rel_compliant_out
 )
-convert_rel_out_to_rel_compliant_out = as_activity(convert_rel_out_to_rel_compliant_out)
+convert_rel_out_to_rel_compliant_out = as_pypy_activity(convert_rel_out_to_rel_compliant_out)
 
 from cdf.utils.remote_files import enumerate_partitions
 enumerate_partitions = as_activity(enumerate_partitions)
