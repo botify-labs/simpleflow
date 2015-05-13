@@ -86,6 +86,7 @@ def push_document_stream(doc_stream, es_handler,
     """
     oks = 0
     errs = 0
+    first_error_msg = None
 
     # Document push retry is handled for each bulk
     @retry(stop_max_attempt_number=1)
@@ -98,7 +99,9 @@ def push_document_stream(doc_stream, es_handler,
         bulk_start = time.time()
         bulk_size = sum(map(len, docs))
         total_size += bulk_size
-        o, e = push_chunk(docs)
+        o, e, an_error_msg = push_chunk(docs)
+        if an_error_msg is not None and first_error_msg is None:
+            first_error_msg = an_error_msg
         bulk_used = time.time() - bulk_start
         logger.info(
             'Bulked {} documents ({} chars) in {} secs, with '
@@ -123,7 +126,7 @@ def push_document_stream(doc_stream, es_handler,
     if error_rate > max_error_rate:
         raise ErrorRateLimitExceeded(
             'Push error rate exceeds '
-            'limit: {}'.format(error_rate))
+            'limit: {}. First error seen: {}'.format(error_rate, first_error_msg))
 
 
 @with_temporary_dir

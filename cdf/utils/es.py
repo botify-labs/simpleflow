@@ -55,7 +55,7 @@ class EsHandler(object):
 
     @classmethod
     def _parse_bulk_responses(cls, responses):
-        success, fail = 0, 0
+        successes, failures, an_error_msg = 0, 0, None
         # parse responses
         err = responses.get('errors')
         if err is False:
@@ -64,15 +64,17 @@ class EsHandler(object):
         for item in responses['items']:
             err = item['index' if 'index' in item else 'create'].get('error', False)
             if err:
-                fail += 1
+                failures += 1
+                if an_error_msg is None:
+                    an_error_msg = err
             else:
-                success += 1
+                successes += 1
 
-        return success, fail
+        return successes, failures, an_error_msg
 
     def raw_bulk_index(self, raw_docs, stats_only=True):
         bulks = []
-        loads_fails = 0
+        loads_failures = 0
         for d in raw_docs:
             try:
                 doc = json.loads(d)
@@ -81,7 +83,7 @@ class EsHandler(object):
                 # usually it's pdf, image or wrong-formatted html
                 logger.warn("Json decoding error for document: {} ... "
                             "Document skipped...".format(d))
-                loads_fails += 1
+                loads_failures += 1
                 continue
             bulks.append(self._get_index_action(doc['_id']))
             bulks.append(d)
@@ -96,8 +98,8 @@ class EsHandler(object):
         if not stats_only:
             return data_json
 
-        s, f = self._parse_bulk_responses(data_json)
-        return s, f + loads_fails
+        s, f, an_error_msg = self._parse_bulk_responses(data_json)
+        return s, f + loads_failures, an_error_msg
 
     def bulk(self, docs, bulk_type='index', stats_only=True, **kwargs):
         bulk_actions = []
