@@ -17,7 +17,7 @@ _ALL_FIELDS = {
     'main': {'lang': True},
     'main_image': None,
     'links': {'top_anchors': True, 'prev_next': True, 'page_rank': True},
-    'semantic_metadata': None,
+    'semantic_metadata': {'length': True},
     'sitemaps': None,  # not sure
     'ganalytics': None,
     'rel': None,
