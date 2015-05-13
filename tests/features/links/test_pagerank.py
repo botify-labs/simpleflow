@@ -76,32 +76,23 @@ class TestDataPreparation(unittest.TestCase):
 
 
 class TestPageRankPostProcessing(unittest.TestCase):
-    def test_compute_buckets(self):
-        result = get_bucket_size(10)
-        expected = [1, 2, 4]
-        self.assertEqual(result, expected)
-
-        result = get_bucket_size(1023)
-        expected = [1, 2, 4, 8, 16, 32, 64, 128, 256]
-        self.assertEqual(result, expected)
-
     def test_process_result_simple(self):
-        pr = [(1, 5), (2, 7), (5, 9), (6, 11),
+        pr = [(1, 5), (2, 7), (5, 8), (6, 100),
               (10, 1), (15, 2), (16, 4), (17, 3)]
-        result = process_pr_result(pr)
+        result = list(process_pr_result(pr))
         expected = [
-            [1, 4, 5, 8], [2, 3, 7, 9], [5, 2, 9, 9], [6, 1, 11, 10],
-            [10, 8, 1, 7], [15, 7, 2, 8], [16, 5, 4, 8], [17, 6, 3, 8]
+            (1, 4, 5, 3.5), (2, 3, 7, 4.3), (5, 2, 8, 4.6), (6, 1, 100, 10.0),
+            (10, 8, 1, 0.1), (15, 7, 2, 1.6), (16, 5, 4, 3.1), (17, 6, 3, 2.4)
         ]
         self.assertEqual(result, expected)
 
     def test_process_result_same_value(self):
         pr = [(1, 7), (2, 7), (5, 9), (6, 11),
               (10, 1), (15, 7), (16, 4), (17, 3)]
-        result = process_pr_result(pr)
+        result = list(process_pr_result(pr))
         expected = [
-            [1, 3, 7, 9], [2, 3, 7, 8], [5, 2, 9, 9], [6, 1, 11, 10],
-            [10, 8, 1, 7], [15, 3, 7, 8], [16, 6, 4, 8], [17, 7, 3, 8]
+            (1, 3, 7, 8.2), (2, 3, 7, 8.2), (5, 2, 9, 9.2), (6, 1, 11, 10.0),
+            (10, 8, 1, 0.1), (15, 3, 7, 8.2), (16, 6, 4, 5.8), (17, 7, 3, 4.6)
         ]
         self.assertEqual(result, expected)
 

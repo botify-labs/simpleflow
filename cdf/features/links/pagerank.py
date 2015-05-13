@@ -41,6 +41,7 @@ from collections import namedtuple, Iterable
 import itertools
 from operator import itemgetter
 import marshal
+import math
 import numpy as np
 import logging
 
@@ -350,7 +351,6 @@ def get_bucket_size(num_pages):
         return result[:-1]
 
 
-# TODO same pr value should have the same normalized pr
 def process_pr_result(pr_kv_list):
     """Post process the raw page rank result
         - assign a total rank for each page
@@ -362,31 +362,32 @@ def process_pr_result(pr_kv_list):
     :rtype: list
     """
     pr_sorted = sorted(pr_kv_list, key=itemgetter(1), reverse=True)
+    max_value = pr_sorted[0][1]
+    min_value = pr_sorted[len(pr_sorted)-1][1]
 
-    with_ranks = []
+    result = []
     r = 1
-    for k, g in itertools.groupby(pr_sorted, key=itemgetter(1)):
+    for _, g in itertools.groupby(pr_sorted, key=itemgetter(1)):
         c = 0
         for k, v in g:
             c += 1
-            with_ranks.append([k, r, v])
+            result.append([k, r, v])
         r += c
 
-    buckets = get_bucket_size(len(with_ranks))
-    i = 0
-    rank = 10
-    for s in buckets:
-        for _ in range(0, s):
-            with_ranks[i].append(rank)
-            i += 1
-        rank -= 1
-    # attribute the last rank for the rest of the urls
-    while i < len(with_ranks):
-        with_ranks[i].append(rank)
-        i += 1
+    # sort on url_id
+    result.sort(key=itemgetter(0))
 
-    # sorted on url_id
-    return sorted(with_ranks, key=lambda x: x[0])
+    # assign a normalized pr value
+    bucket_size = math.log10(max_value / min_value) / float(100)
+    for uid, r, v in result:
+        log_v = math.log10(v / min_value)
+        normalized = log_v / bucket_size
+        # eg. 46.2547 => 4.7
+        normalized = math.ceil(normalized) / 10
+        # normalized pr ranges from 0.1 to 10.0
+        if normalized == 0.0:
+            normalized = 0.1
+        yield uid, r, v, normalized
 
 
 def process_virtual_result(virtuals_file, pr):

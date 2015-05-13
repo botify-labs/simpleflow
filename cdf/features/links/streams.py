@@ -9,7 +9,7 @@ from cdf.metadata.url.url_metadata import (
     STRING_TYPE, STRING_NB_MAP_MAPPING,
     FAKE_FIELD, URL_ID, DOUBLE_TYPE,
     DIFF_QUALITATIVE, DIFF_QUANTITATIVE,
-)
+    FLOAT_TYPE)
 from cdf.core.streams.base import StreamDefBase
 from cdf.log import logger
 from cdf.features.links.helpers.masks import list_to_mask
@@ -1211,7 +1211,7 @@ class PageRankStreamDef(StreamDefBase):
         ('id', int),
         ('pr_rank', int),
         ('pr_value', float),
-        ('normalized', int)
+        ('normalized', float)
     )
 
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.page_rank.name
@@ -1244,7 +1244,7 @@ class PageRankStreamDef(StreamDefBase):
             "enabled": check_enabled('page_rank')
         },
         "internal_page_rank.normalized": {
-            "type": INT_TYPE,
+            "type": FLOAT_TYPE,
             "verbose_name": "Normalized Page Rank",
             "default_value": None,
             "settings": {

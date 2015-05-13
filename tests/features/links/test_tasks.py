@@ -640,7 +640,7 @@ class TestPageRank(TaskTestCase):
         normalized_result = [l[3] for l in result]
 
         rank_expected = [1, 3, 5, 4, 6, 2]
-        normalized_expected = [10, 9, 8, 8, 8, 9]
+        normalized_expected = [10, 6.1, 3.2, 4.7, 0.1, 7.1]
         value_expected = np.array([
             0.3210154,
             0.1705440,
