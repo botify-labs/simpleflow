@@ -1,5 +1,27 @@
 import unittest
 from cdf.features.links.bad_links import get_links_to_non_canonical, get_links_to_non_canonical_counters
+from cdf.query.datamodel import get_fields
+
+
+class TestFeature(unittest.TestCase):
+    def test_features_options_1(self):
+        features_options = {
+            'links': {
+            },
+        }
+        fields = get_fields(features_options, remove_admin=False)
+        bc = filter(lambda f: f['value'].startswith('outlinks_errors.bad_canonical.'), fields)
+        self.assertEqual(0, len(bc))
+
+    def test_features_options_2(self):
+        features_options = {
+            'links': {
+                'links_to_non_canonical': True,
+            },
+        }
+        fields = get_fields(features_options, remove_admin=False)
+        bc = filter(lambda f: f['value'].startswith('outlinks_errors.bad_canonical.'), fields)
+        self.assertEqual(2, len(bc))
 
 
 class TestLinkToNonCanonical(unittest.TestCase):

@@ -1288,11 +1288,13 @@ class LinksToNonCanonicalStreamDef(StreamDefBase):
                 FIELD_RIGHTS.ADMIN,
                 RENDERING.URL,
                 URL_ID,
-            }
+            },
+            'enabled': check_enabled('links_to_non_canonical')
         },
         "outlinks_errors.bad_canonical.urls_exists": {
             "type": "boolean",
-            "default_value": None
+            "default_value": None,
+            'enabled': check_enabled('links_to_non_canonical')
         },
     }
 
@@ -1327,7 +1329,8 @@ class LinksToNonCanonicalCountersStreamDef(StreamDefBase):
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.ADMIN,
                 DIFF_QUANTITATIVE
-            }
+            },
+            'enabled': check_enabled('links_to_non_canonical')
         },
     }
 
