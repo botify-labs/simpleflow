@@ -101,7 +101,7 @@ def push_document_stream(doc_stream, es_handler,
         total_size += bulk_size
         o, e, an_error_msg = push_chunk(docs)
         if an_error_msg is not None and first_error_msg is None:
-            first_error_msg = an_error_msg
+            first_error_msg = an_error_msg[:500]
         bulk_used = time.time() - bulk_start
         logger.info(
             'Bulked {} documents ({} chars) in {} secs, with '
