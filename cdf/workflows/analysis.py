@@ -189,6 +189,10 @@ enumerate_partitions = as_activity(enumerate_partitions)
 from cdf.features.comparison.tasks import match_documents
 match_documents = as_activity(match_documents)
 
+from cdf.features.duplicate_query_kvs.tasks import task_get_urls_with_same_kv
+task_get_urls_with_same_kv = optional_pypy_activity(task_get_urls_with_same_kv,
+                                                    'document', 'duplicate_query_kvs')
+
 from cdf.utils.es import refresh_index
 refresh_index = as_activity(refresh_index)
 
@@ -788,6 +792,16 @@ class AnalysisWorkflow(Workflow):
                                             tmp_dir=tmp_dir
                                             )
             intermediary_files.append(redirects_result)
+
+        if 'duplicate_query_kvs' in features_flags:
+            duplicate_query_kvs = self.submit(
+                task_get_urls_with_same_kv,
+                s3_uri=s3_uri,
+                first_part_id_size=first_part_id_size,
+                part_id_size=part_id_size,
+                tmp_dir=tmp_dir
+            )
+            intermediary_files.append(duplicate_query_kvs)
 
         if (all(r.finished for r in zone_results) and
             all(r.finished for r in compliant_urls_results)):

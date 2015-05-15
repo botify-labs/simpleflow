@@ -32,6 +32,10 @@ def _clean_document(doc):
         if bc == {'nb': 0}:
             del doc['outlinks_errors']['bad_canonical']
 
+    # FIXME special rule for duplicate_query_kvs prototype
+    if len(doc.get('duplicate_query_kvs', {})) == 0:
+        doc.pop('duplicate_query_kvs', None)
+
 
 def _pre_process_document(left_stream_def, pre_processors):
     def func(doc, stream):
