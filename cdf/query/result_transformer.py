@@ -712,12 +712,42 @@ class AggregationTransformer(ResultTransformer):
         return res
 
 
+class EmptyHtmlExtractTransformer(object):
+    """
+    Add empty (None) Extract fields when needed
+    """
+    def __init__(self, results, query, **kwargs):
+
+        self.extract_fields = []
+        if query is not None:
+            fields = query.fields
+        else:
+            fields = kwargs['fields']
+        for f in fields:
+            if f.startswith('extract.'):
+                self.extract_fields.append(f)
+                break
+        else:
+            self.results = None
+            return
+        self.results = results
+
+    def transform(self):
+        if self.results is None:
+            return
+        for result in self.results:
+            for field in self.extract_fields:
+                if not path_in_dict(field, result):
+                    update_path_in_dict(field, None, result)
+
+
 def transform_result(results, query, backend=ELASTICSEARCH_BACKEND):
     """Walk through every result and transform it"""
     transformers = [
         ExternalUrlNormalizer(results, query),
         IdToUrlTransformer(results, query, backend),
-        DefaultValueTransformer(results, query, backend)
+        DefaultValueTransformer(results, query, backend),
+        EmptyHtmlExtractTransformer(results, query)
     ]
     for trans in transformers:
         trans.transform()

@@ -13,7 +13,8 @@ from cdf.query.result_transformer import (
     DefaultValueTransformer,
     ExternalUrlNormalizer,
     AggregationTransformer,
-    RedirectToStrategy)
+    RedirectToStrategy,
+    EmptyHtmlExtractTransformer)
 from cdf.query.result_transformer import (
     ErrorLinkStrategy,
     LinksStrategy,
@@ -758,3 +759,50 @@ class TestAggregationResultTransformer(unittest.TestCase):
 
         d = AggregationTransformer(results)
         self.assertEqual(d.transform(), expected)
+
+class TestHtmlExtract(unittest.TestCase):
+    def test1(self):
+        # q = Query('http://elasticsearch.staging.saas.botify.com:9200', 'botify_analyses',
+        #           'urls', 2059, {
+        #               "fields": ["url", "id", "extract.extract_i_0"],
+        #               "sort": ["url"],
+        #           })
+        # c = q.count
+        # results = list(itertools.islice(q.results, 20))
+        fields = ['url', 'id', 'extract.extract_i_0']
+        results = [
+            {u'url': u'http://fr.ulule.com/', u'id': 1},
+            {u'url': u'http://fr.ulule.com/-leap-/', u'id': -2509},
+            {u'url': u'http://fr.ulule.com/1-dada-pour-2/', u'id': -2087},
+            {u'url': u'http://fr.ulule.com/1083/', u'extract': {u'extract_i_0': 134},
+             u'id': 454},
+            {u'url': u'http://fr.ulule.com/1083/comments/', u'id': -2147},
+            {u'url': u'http://fr.ulule.com/1083/news/', u'id': -2146},
+            {u'url': u'http://fr.ulule.com/1083/supporters/', u'id': -2148},
+            {u'url': u'http://fr.ulule.com/17ruedesarts/', u'id': 556},
+            {u'url': u'http://fr.ulule.com/30ansdevih/', u'extract': {u'extract_i_0': 8},
+             u'id': 1544},
+        ]
+        expected = [
+            {u'url': u'http://fr.ulule.com/', 'extract': {'extract_i_0': None}, u'id': 1},
+            {u'url': u'http://fr.ulule.com/-leap-/', 'extract': {'extract_i_0': None},
+             u'id': -2509},
+            {u'url': u'http://fr.ulule.com/1-dada-pour-2/',
+             'extract': {'extract_i_0': None},
+             u'id': -2087},
+            {u'url': u'http://fr.ulule.com/1083/', u'extract': {u'extract_i_0': 134},
+             u'id': 454},
+            {u'url': u'http://fr.ulule.com/1083/comments/',
+             'extract': {'extract_i_0': None},
+             u'id': -2147},
+            {u'url': u'http://fr.ulule.com/1083/news/', 'extract': {'extract_i_0': None},
+             u'id': -2146}, {u'url': u'http://fr.ulule.com/1083/supporters/',
+                             'extract': {'extract_i_0': None}, u'id': -2148},
+            {u'url': u'http://fr.ulule.com/17ruedesarts/',
+             'extract': {'extract_i_0': None},
+             u'id': 556},
+            {u'url': u'http://fr.ulule.com/30ansdevih/', u'extract': {u'extract_i_0': 8},
+             u'id': 1544}]
+        d = EmptyHtmlExtractTransformer(results, None, fields=fields)
+        d.transform()
+        self.assertEqual(expected, d.results)
