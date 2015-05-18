@@ -7,7 +7,7 @@ from cdf.tasks.url_data import push_document_stream
 
 def _get_mock_bulk(oks, errors):
     def _mock(*args, **kwargs):
-        return oks, errors
+        return oks, errors, 'This is the first error'
     return _mock
 
 # max 5% error rate in this test
@@ -36,10 +36,8 @@ class TestDocumentPushError(unittest.TestCase):
     def test_push_not_accept(self, es_handler):
         es_handler.raw_bulk_index = _get_mock_bulk(94, 6)
         # should raise exception
-        self.assertRaises(
-            ErrorRateLimitExceeded,
-            push_document_stream,
-            self.stream,  # mock stream
-            es_handler,
-            MAX_ERROR_RATE
-        )
+        with self.assertRaises(ErrorRateLimitExceeded) as cm:
+            push_document_stream(self.stream,  # mock stream
+                                 es_handler,
+                                 MAX_ERROR_RATE)
+        self.assertTrue('This is the first error' in cm.exception.message)
