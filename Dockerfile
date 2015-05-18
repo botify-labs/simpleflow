@@ -27,7 +27,7 @@ RUN apt-get install -y git curl wget sudo make autoconf python \
 # for subsequent calls to pip ; further layers don't have this problem, pip is
 # found in /usr/local/bin as it should be.
 ADD docker/pip.conf /root/.pip/pip.conf
-RUN pip install setuptools==9.1 && pip install -U pip
+RUN pip install setuptools==15.2 && pip install -U pip
 
 # Have to remove six, otherwise will have conflicts with pip installed six
 RUN apt-get remove python-six -y
