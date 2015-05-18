@@ -149,7 +149,7 @@ from cdf.tasks.url_data import (
     generate_documents,
     push_documents_to_elastic_search
 )
-generate_documents = as_activity(generate_documents)
+generate_documents = as_pypy_activity(generate_documents)
 
 from cdf.features.ganalytics.tasks import (
     import_data_from_ganalytics,
