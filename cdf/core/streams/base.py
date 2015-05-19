@@ -200,7 +200,7 @@ class StreamDefBase(object):
         """
         pattern = r'{}\.txt\.{}\.gz'
         # partition-aware sort the files
-        regexp = part_id if part_id is not None else '[0-9]+'
+        regexp = part_id if part_id is not None else r'\d+'
         regexp = pattern.format(cls.FILE, regexp)
 
         files = list_files(directory, regexp=regexp)
@@ -235,7 +235,7 @@ class StreamDefBase(object):
         if part_id is not None:
             regexp = r'{}\.txt\.{}\.gz'.format(cls.FILE, part_id)
         else:
-            regexp = r'{}\.txt\.([0-9]+)\.gz'.format(cls.FILE)
+            regexp = r'{}\.txt\.(\d+)\.gz'.format(cls.FILE)
         s3.fetch_files(
             s3_uri,
             tmp_dir,
@@ -342,38 +342,6 @@ class StreamDefBase(object):
         return TemporaryDataset(
             stream_def=cls
         )
-
-    @classmethod
-    def load2(cls, uri, tmp_dir=None, part_id=None, force_fetch=False,
-              fields_to_use=None):
-        """Load from a data source location
-
-        :param uri: uri to data source (local directory or s3 uri)
-        :type uri: str
-        :param tmp_dir: local tmp dir path, needed for loading stream from s3
-        :type tmp_dir: str
-        :param part_id: partition id, `None` for all existing partitions
-        :type part_id: int
-        :return: iterable
-        """
-        if s3.is_s3_uri(uri):
-            return cls._get_2_from_s3(
-                uri,
-                tmp_dir,
-                part_id,
-                force_fetch,
-                fields_to_use
-            )
-        else:
-            if os.path.isdir(uri):
-                return cls._get_2_from_directory(
-                    uri,
-                    part_id,
-                    fields_to_use
-                )
-            else:
-                raise Exception('Local path is not a '
-                                'directory: {}'.format(uri))
 
 
 class Stream(Iterable):

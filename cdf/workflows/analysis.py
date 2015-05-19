@@ -125,8 +125,8 @@ from cdf.features.links.tasks import (
     make_links_to_non_compliant_counter_file,
     make_top_domains_files,
     make_inlinks_percentiles_file,
-    page_rank
-)
+    page_rank,
+    get_final_redirects)
 compute_metadata_count = as_pypy_activity(compute_metadata_count)
 make_metadata_duplicates_file = as_pypy_activity(make_metadata_duplicates_file)
 make_context_aware_metadata_duplicates_file = as_pypy_activity(
@@ -144,6 +144,7 @@ make_top_domains_files = optional_activity(
 )
 make_inlinks_percentiles_file = as_pypy_activity(make_inlinks_percentiles_file)
 compute_page_rank = optional_pypy_activity(page_rank, 'document', 'links')
+get_final_redirects = optional_pypy_activity(get_final_redirects, 'document', 'links')
 
 from cdf.tasks.url_data import (
     generate_documents,
@@ -739,6 +740,15 @@ class AnalysisWorkflow(Workflow):
             )
             intermediary_files.append(pr_result)
 
+        if has_feature_option(context, 'links', 'chains'):
+            redirects_result = self.submit(get_final_redirects,
+                                            s3_uri=s3_uri,
+                                            first_part_id_size=first_part_id_size,
+                                            part_id_size=part_id_size,
+                                            tmp_dir=tmp_dir
+                                            )
+            intermediary_files.append(redirects_result)
+
         if (all(r.finished for r in zone_results) and
             all(r.finished for r in compliant_urls_results)):
             intermediary_files += self.compute_zone_compliant_dependent(crawled_partitions, **context)
@@ -853,3 +863,7 @@ class AnalysisWorkflow(Workflow):
                     reason))
         except:
             pass
+
+
+def has_feature_option(context, location, name, default=False):
+    return context['features_options'][location].get(name, default)
