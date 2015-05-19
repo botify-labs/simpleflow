@@ -19,3 +19,4 @@ cbor
 bitarray==0.8.1
 scipy==0.9.0
 botify-common
+judyz-cffi

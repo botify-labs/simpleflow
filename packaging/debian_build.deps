@@ -5,3 +5,4 @@ libxslt1-dev
 gfortran
 libopenblas-dev
 liblapack-dev
+libffi-dev
