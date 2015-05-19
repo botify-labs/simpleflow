@@ -1209,17 +1209,17 @@ class PageRankStreamDef(StreamDefBase):
     FILE = 'pagerank'
     HEADERS = (
         ('id', int),
-        ('pr_rank', int),
-        ('pr_value', float),
-        ('normalized', float)
+        ('pr_position', int),
+        ('pr_raw', float),
+        ('pr_value', float)
     )
 
     URL_DOCUMENT_DEFAULT_GROUP = GROUPS.page_rank.name
 
     URL_DOCUMENT_MAPPING = {
-        "internal_page_rank.value": {
+        "internal_page_rank.raw": {
             "type": DOUBLE_TYPE,
-            "verbose_name": "Exact Page Rank Value",
+            "verbose_name": "Raw Internal Pagerank",
             "default_value": None,
             "settings": {
                 ES_DOC_VALUE,
@@ -1230,9 +1230,9 @@ class PageRankStreamDef(StreamDefBase):
             },
             "enabled": check_enabled('page_rank')
         },
-        "internal_page_rank.rank": {
+        "internal_page_rank.position": {
             "type": INT_TYPE,
-            "verbose_name": "Total Rank of a Page",
+            "verbose_name": "Internal Pagerank Position",
             "default_value": None,
             "settings": {
                 ES_DOC_VALUE,
@@ -1243,9 +1243,9 @@ class PageRankStreamDef(StreamDefBase):
             },
             "enabled": check_enabled('page_rank')
         },
-        "internal_page_rank.normalized": {
+        "internal_page_rank.value": {
             "type": FLOAT_TYPE,
-            "verbose_name": "Normalized Page Rank",
+            "verbose_name": "Internal Pagerank",
             "default_value": None,
             "settings": {
                 ES_DOC_VALUE,
@@ -1259,8 +1259,8 @@ class PageRankStreamDef(StreamDefBase):
     }
 
     def process_document(self, document, input_stream):
-        _, rank, value, normalized = input_stream
+        _, position, raw, value = input_stream
         document['internal_page_rank'] = {}
+        document['internal_page_rank']['position'] = position
+        document['internal_page_rank']['raw'] = raw
         document['internal_page_rank']['value'] = value
-        document['internal_page_rank']['rank'] = rank
-        document['internal_page_rank']['normalized'] = normalized
