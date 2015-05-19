@@ -10,3 +10,5 @@ leveldb==0.193
 tld==0.7
 google-api-python-client==1.2
 cbor==0.1.18
+bitarray
+botify-common
