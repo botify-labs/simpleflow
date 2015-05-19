@@ -1239,6 +1239,7 @@ class PageRankStreamDef(StreamDefBase):
                 AGG_CATEGORICAL,
                 FIELD_RIGHTS.SELECT,
                 FIELD_RIGHTS.FILTERS,
+                DIFF_QUANTITATIVE,
                 FIELD_RIGHTS.ADMIN
             },
             "enabled": check_enabled('page_rank')
@@ -1252,6 +1253,7 @@ class PageRankStreamDef(StreamDefBase):
                 AGG_CATEGORICAL,
                 FIELD_RIGHTS.SELECT,
                 FIELD_RIGHTS.FILTERS,
+                DIFF_QUANTITATIVE,
                 FIELD_RIGHTS.ADMIN
             },
             "enabled": check_enabled('page_rank')
