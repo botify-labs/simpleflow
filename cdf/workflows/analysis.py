@@ -128,6 +128,7 @@ from cdf.features.links.tasks import (
     page_rank,
     make_links_to_non_canonical_file,
     make_links_to_non_canonical_counter_file,
+    get_final_redirects,
 )
 compute_metadata_count = as_pypy_activity(compute_metadata_count)
 make_metadata_duplicates_file = as_pypy_activity(make_metadata_duplicates_file)
@@ -151,6 +152,7 @@ make_links_to_non_canonical_file = optional_pypy_activity(make_links_to_non_cano
 make_links_to_non_canonical_counter_file = optional_pypy_activity(
     make_links_to_non_canonical_counter_file,
     'document', 'links')
+get_final_redirects = optional_pypy_activity(get_final_redirects, 'document', 'links')
 
 from cdf.tasks.url_data import (
     generate_documents,
@@ -778,6 +780,14 @@ class AnalysisWorkflow(Workflow):
             intermediary_files.extend(self.compute_links_to_non_canonical(
                 crawled_partitions, context))
 
+        if has_feature_option(context, 'links', 'chains'):
+            redirects_result = self.submit(get_final_redirects,
+                                            s3_uri=s3_uri,
+                                            first_part_id_size=first_part_id_size,
+                                            part_id_size=part_id_size,
+                                            tmp_dir=tmp_dir
+                                            )
+            intermediary_files.append(redirects_result)
 
         if (all(r.finished for r in zone_results) and
             all(r.finished for r in compliant_urls_results)):

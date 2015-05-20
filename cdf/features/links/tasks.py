@@ -38,6 +38,7 @@ from cdf.features.links.streams import (
     PageRankStreamDef,
     LinksToNonCanonicalStreamDef,
     LinksToNonCanonicalCountersStreamDef,
+    FinalRedirectionStreamDef,
 )
 from cdf.features.links.top_domains import (
     compute_top_domain,
@@ -59,6 +60,9 @@ from cdf.features.links.pagerank import (
     DictMapping,
     process_virtual_result
 )
+from cdf.features.links.redirect_final import (
+    compute_final_redirects)
+
 from cdf.tasks.decorators import TemporaryDirTask as with_temporary_dir
 from cdf.tasks.constants import DEFAULT_FORCE_FETCH
 
@@ -520,3 +524,25 @@ def make_links_to_non_canonical_counter_file(s3_uri,
         s3_uri,
         part_id=part_id
     )
+
+
+@with_temporary_dir
+def get_final_redirects(s3_uri,
+                        first_part_id_size=FIRST_PART_ID_SIZE,
+                        part_id_size=PART_ID_SIZE,
+                        tmp_dir=None,
+                        force_fetch=DEFAULT_FORCE_FETCH):
+    stream_kwargs = {
+        'uri': s3_uri,
+        'tmp_dir': tmp_dir,
+        'force_fetch': force_fetch,
+    }
+    with compute_final_redirects(
+            InfosStreamDef.load(fields_to_use={'id', 'http_code'}, **stream_kwargs),
+            OutlinksRawStreamDef.load(**stream_kwargs)
+    ) as result:
+        FinalRedirectionStreamDef.persist(
+            iter(result), s3_uri,
+            first_part_size=first_part_id_size,
+            part_size=part_id_size
+        )

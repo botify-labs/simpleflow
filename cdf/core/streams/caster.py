@@ -14,7 +14,7 @@ You can pass options when defining a field
 
 Example:
 
->>> import streams.utils
+>>> import cdf.core.streams.utils
 >>> INFOS_FIELDS = [('id', int),
 ...                 ('depth', int),
 ...                 ('date_crawled', None),
@@ -24,7 +24,7 @@ Example:
 ...                 ('delay2', bool),
 ...                 ('gzipped', bool, {'missing': True})]
 >>> cast = Caster(INFOS_FIELDS).cast
->>> inlinks = cast(streams.utils.split_file((open('test.data'))))
+>>> inlinks = cast(cdf.core.streams.utils.split_file((open('test.data'))), None)
 
 """
 
@@ -45,7 +45,7 @@ class FieldCaster(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def cast(value):
+    def cast(self, value):
         """Cast a value
         :param value: the input value
         :type value: str
@@ -109,6 +109,7 @@ class Caster(object):
     """
     def __init__(self, fields):
         self.casters = []
+        self.names = []
         for field in fields:
             if len(field) == 2:
                 #if the field has size 2, simply apply caster
@@ -120,12 +121,16 @@ class Caster(object):
                 #handle missing values
                 caster = MissingValueFieldCaster(cast, options)
                 self.casters.append(caster.cast)
+            self.names.append(name)
         self.no_missing_fields = all([len(f) == 2 for f in fields])
 
-    def cast_line_generator(self, casters):
+    @staticmethod
+    def cast_line_generator(casters, names, fields_to_use):
         """Generates a function that casts a line
         :param casters: the input list of casters
         :type casters: list
+        :param names: the names of these casters
+        :param fields_to_use: fields to use or None
         :returns: function - a function that takes a line of string as input
                              and cast each of its element
                              with the appropriate caster.
@@ -139,23 +144,29 @@ class Caster(object):
         # the use of metaprogramming removes :
         #  - costly list comprehension
         #  - the dereferencing of self.casters elements
+
+        if fields_to_use is None:
+            fields_to_use = set(names)
         lambda_code = "lambda x: ["
         lambda_code += ", ".join(
-            ["caster_{}(x[{}])".format(i, i) for i in range(len(casters))]
+            ["caster_{}(x[{}])".format(i, i)
+             for i in range(len(casters)) if names[i] in fields_to_use]
         )
         lambda_code += "]"
 
         globals_dict = {}
         for i, caster in enumerate(casters):
-            globals_dict["caster_{}".format(i)] = caster
+            if names[i] in fields_to_use:
+                globals_dict["caster_{}".format(i)] = caster
         return eval(lambda_code, globals_dict)
 
-    def cast(self, iterable):
+    def cast(self, iterable, fields_to_use=None):
         if not self.no_missing_fields:
             #pad MISSING_VALUE if some fields are missing
             iterable = imap(
                 lambda x:  pad_list(x, len(self.casters), MISSING_VALUE),
                 iterable
             )
-        cast_line = self.cast_line_generator(self.casters)
+        cast_line = self.cast_line_generator(self.casters, self.names,
+                                             fields_to_use)
         return imap(cast_line, iterable)

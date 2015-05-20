@@ -19,6 +19,7 @@ _ALL_FIELDS = {
     'links': {
         'top_anchors': True, 'prev_next': True, 'page_rank': True,
         'links_to_non_canonical': True,
+        'chains': True,
     },
     'semantic_metadata': {'length': True},
     'sitemaps': None,  # not sure

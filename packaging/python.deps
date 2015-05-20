@@ -1,4 +1,4 @@
-numpy
+numpy==1.6.1
 Cython==0.19.1
 pyhash==0.6.2
 boto
@@ -19,3 +19,5 @@ cbor
 bitarray==0.8.1
 scipy==0.9.0
 botify-common
+cffi==0.9.2
+judyz-cffi

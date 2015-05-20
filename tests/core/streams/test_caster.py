@@ -163,5 +163,7 @@ class TestCaster(unittest.TestCase):
     def test_cast_line_generator(self):
         fields = []
         caster = Caster(fields)
-        cast_line = caster.cast_line_generator([int, float, _raw_to_bool])
+        cast_line = caster.cast_line_generator([int, float, _raw_to_bool],
+                                               ['id', 'v', 'boo'],
+                                               None)
         self.assertEqual([10, 3.14, True], cast_line(["10", "3.14", 1]))

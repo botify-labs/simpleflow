@@ -85,6 +85,16 @@ class TestStreamsDef(unittest.TestCase):
         self.assertEquals(stream.next(), [1, 'http://www.site.com/'])
         self.assertEquals(stream.next(), [2, 'http://www.site.com/2'])
 
+    def test_iterator_with_fields_to_use(self):
+        iterator = iter([
+            [1, 'http://www.site.com/'],
+            [2, 'http://www.site.com/2']
+        ])
+        stream = CustomStreamDef.load_iterator(iterator, {'id'})
+        self.assertTrue(isinstance(stream.stream_def, CustomStreamDef))
+        self.assertEquals(stream.next(), [1])
+        self.assertEquals(stream.next(), [2])
+
     def test_to_dict(self):
         entry = [1, 'http://www.site.com/']
         self.assertEquals(

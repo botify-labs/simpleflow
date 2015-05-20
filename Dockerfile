@@ -54,9 +54,15 @@ RUN apt-get install -y $(cat /deps/botify-cdf/debian_build.deps)
 # For later so we can find mpi.h when installing packages
 ENV C_INCLUDE_PATH /usr/lib/openmpi/include
 
+# Judy
+# The version in Ubuntu 14.04 doesn't work
+RUN cd /tmp && wget http://ftp.fr.debian.org/debian/pool/main/j/judy/libjudydebian1_1.0.5-4_amd64.deb && dpkg -i libjudydebian1_1.0.5-4_amd64.deb
+
 # python deps
-RUN pip install numpy==1.6.1 && pip install Cython==0.19.1
+#RUN pip install numpy==1.6.1 && pip install Cython==0.19.1 && pip install cffi==0.9.2
 ADD packaging/python.deps /deps/botify-cdf/
+# Fetch versions in the deps file
+RUN bash -c 'set -eo pipefail; egrep "^(numpy|Cython|cffi)" /deps/botify-cdf/python.deps | xargs pip install'
 RUN pip install -r /deps/botify-cdf/python.deps
 
 # python test deps
@@ -74,7 +80,7 @@ RUN apt-get install -q -y python-virtualenv pypy-dev
 RUN virtualenv -p pypy ${VIRTUALENV_PATH}/pypy
 ADD packaging/pypy.deps /deps/botify-cdf/
 ADD packaging/pypy_test.deps /deps/botify-cdf/
-RUN ${VIRTUALENV_PATH}/pypy/bin/pip install -r /deps/botify-cdf/pypy.deps && ${VIRTUALENV_PATH}/pypy/bin/pip install -r /deps/botify-cdf/pypy_test.deps
+RUN ${VIRTUALENV_PATH}/pypy/bin/pip install cffi==0.9.2 && ${VIRTUALENV_PATH}/pypy/bin/pip install -r /deps/botify-cdf/pypy.deps && ${VIRTUALENV_PATH}/pypy/bin/pip install -r /deps/botify-cdf/pypy_test.deps
 
 # 4- INSTALL
 # -----------
