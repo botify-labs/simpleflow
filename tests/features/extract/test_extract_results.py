@@ -7,8 +7,7 @@ from cdf.query.query_parsing import QueryParser
 from cdf.tasks.documents import UrlDocumentGenerator
 from cdf.features.main.streams import IdStreamDef
 from cdf.features.extract.streams import ExtractResultsStreamDef
-from cdf.query.datamodel import get_fields
-
+from cdf.query.datamodel import get_fields, get_groups
 
 _stream1 = [
     # docid, name, label, agg, cast, rank, value
@@ -78,6 +77,20 @@ class TestExtractFields(unittest.TestCase):
         # fields that are not reserved
         filters = [f["value"] for f in filter(lambda f: f["value"].startswith("extract."), fields)]
         self.assertEquals(filters, ["extract.extract_i_0"])
+
+    def test_not_admin(self):
+        features_options = {
+            "extract": [
+                {
+                    "name": "Product Price",
+                    "agg": "first",
+                    "cast": "f",
+                    "es_field": "extract_f_0"
+                }
+            ]
+        }
+        g = get_groups(features_options)
+        self.assertEqual(1, len(g))
 
 
 class ParsingTestCase(unittest.TestCase):

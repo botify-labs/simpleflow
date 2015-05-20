@@ -77,7 +77,6 @@ def _generate_ers_document_mapping():
                 ES_DOC_VALUE,
                 FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.SELECT,
-                FIELD_RIGHTS.ADMIN
             }
             if short_type_name in ('i', 'f'):
                 settings |= {
