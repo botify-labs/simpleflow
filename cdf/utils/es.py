@@ -59,7 +59,7 @@ class EsHandler(object):
         # parse responses
         err = responses.get('errors')
         if err is False:
-            return len(responses['items']), 0
+            return len(responses['items']), 0, ''
 
         for item in responses['items']:
             err = item['index' if 'index' in item else 'create'].get('error', False)
