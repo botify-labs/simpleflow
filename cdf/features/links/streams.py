@@ -1296,6 +1296,7 @@ class FinalRedirectionStreamDef(StreamDefBase):
                 RENDERING.URL_STATUS,
                 FIELD_RIGHTS.FILTERS_EXIST,
                 FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS,
                 URL_ID,
                 DIFF_QUALITATIVE,
                 FIELD_RIGHTS.ADMIN
@@ -1319,6 +1320,8 @@ class FinalRedirectionStreamDef(StreamDefBase):
                 AGG_CATEGORICAL,
                 AGG_NUMERICAL,
                 DIFF_QUANTITATIVE,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.ADMIN
             },
             "enabled": check_enabled("chains")
