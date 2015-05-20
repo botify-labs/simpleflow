@@ -1327,6 +1327,8 @@ class LinksToNonCanonicalCountersStreamDef(StreamDefBase):
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
+                FIELD_RIGHTS.SELECT,
+                FIELD_RIGHTS.FILTERS,
                 FIELD_RIGHTS.ADMIN,
                 DIFF_QUANTITATIVE
             },
