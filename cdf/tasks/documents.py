@@ -26,6 +26,12 @@ def _clean_document(doc):
     if len(doc.get('extract', {})) == 0:
         doc.pop('extract', None)
 
+    # FIXME another special case
+    if doc.get('outlinks_errors', {}).get('bad_canonical', None):
+        bc = doc['outlinks_errors']['bad_canonical']
+        if bc == {'nb': 0}:
+            del doc['outlinks_errors']['bad_canonical']
+
 
 def _pre_process_document(left_stream_def, pre_processors):
     def func(doc, stream):

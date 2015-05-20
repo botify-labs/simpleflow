@@ -125,7 +125,9 @@ from cdf.features.links.tasks import (
     make_links_to_non_compliant_counter_file,
     make_top_domains_files,
     make_inlinks_percentiles_file,
-    page_rank
+    page_rank,
+    make_links_to_non_canonical_file,
+    make_links_to_non_canonical_counter_file,
 )
 compute_metadata_count = as_pypy_activity(compute_metadata_count)
 make_metadata_duplicates_file = as_pypy_activity(make_metadata_duplicates_file)
@@ -144,6 +146,11 @@ make_top_domains_files = optional_activity(
 )
 make_inlinks_percentiles_file = as_pypy_activity(make_inlinks_percentiles_file)
 compute_page_rank = optional_pypy_activity(page_rank, 'document', 'links')
+make_links_to_non_canonical_file = optional_pypy_activity(make_links_to_non_canonical_file,
+                                                          'document', 'links')
+make_links_to_non_canonical_counter_file = optional_pypy_activity(
+    make_links_to_non_canonical_counter_file,
+    'document', 'links')
 
 from cdf.tasks.url_data import (
     generate_documents,
@@ -515,6 +522,34 @@ class AnalysisWorkflow(Workflow):
             links_to_non_compliant_urls_counter_results
         )
 
+    def compute_links_to_non_canonical(self, crawled_partitions, context):
+        s3_uri = context["s3_uri"]
+        first_part_id_size = context["first_part_id_size"]
+        part_id_size = context["part_id_size"]
+        tmp_dir = context["tmp_dir"]
+
+        links_to_non_canonical_urls = self.submit(
+            make_links_to_non_canonical_file,
+            s3_uri,
+            first_part_id_size=first_part_id_size,
+            part_id_size=part_id_size,
+            tmp_dir=tmp_dir
+        )
+
+        links_to_non_canonical_urls_counter_results = [futures.Future()]
+        if links_to_non_canonical_urls.finished:
+            links_to_non_canonical_urls_counter_results = [
+                self.submit(
+                    make_links_to_non_canonical_counter_file,
+                    s3_uri=s3_uri,
+                    tmp_dir=tmp_dir,
+                    part_id=part_id,
+                )
+                for part_id in crawled_partitions.result
+                ]
+
+        return links_to_non_canonical_urls_counter_results
+
     def push_to_es(self, context):
         """
         Push already generated documents to elasticsearch.
@@ -739,6 +774,11 @@ class AnalysisWorkflow(Workflow):
             )
             intermediary_files.append(pr_result)
 
+        if has_feature_option(context, 'links', 'links_to_non_canonical'):
+            intermediary_files.extend(self.compute_links_to_non_canonical(
+                crawled_partitions, context))
+
+
         if (all(r.finished for r in zone_results) and
             all(r.finished for r in compliant_urls_results)):
             intermediary_files += self.compute_zone_compliant_dependent(crawled_partitions, **context)
@@ -853,3 +893,7 @@ class AnalysisWorkflow(Workflow):
                     reason))
         except:
             pass
+
+
+def has_feature_option(context, location, name, default=False):
+    return context['features_options'][location].get(name, default)

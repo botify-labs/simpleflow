@@ -17,12 +17,13 @@ from cdf.features.links.bad_links import (
     get_bad_links,
     get_bad_link_counters,
     get_links_to_non_compliant_urls,
-    get_link_to_non_compliant_urls_counters
+    get_link_to_non_compliant_urls_counters,
+    get_links_to_non_canonical, get_links_to_non_canonical_counters
 )
 from cdf.features.main.streams import (
     InfosStreamDef,
     CompliantUrlStreamDef,
-    IdStreamDef
+    IdStreamDef,
 )
 from cdf.features.links.streams import (
     OutlinksRawStreamDef, OutlinksStreamDef,
@@ -34,7 +35,10 @@ from cdf.features.links.streams import (
     LinksToNonCompliantCountersStreamDef,
     InlinksPercentilesStreamDef,
     InredirectCountersStreamDef,
-    PageRankStreamDef)
+    PageRankStreamDef,
+    LinksToNonCanonicalStreamDef,
+    LinksToNonCanonicalCountersStreamDef,
+)
 from cdf.features.links.top_domains import (
     compute_top_domain,
     filter_external_outlinks,
@@ -473,4 +477,46 @@ def page_rank(s3_uri,
         iter(result), s3_uri,
         first_part_size=first_part_id_size,
         part_size=part_id_size
+    )
+
+
+@with_temporary_dir
+def make_links_to_non_canonical_file(s3_uri,
+                                     first_part_id_size=500000,
+                                     part_id_size=500000,
+                                     tmp_dir=None,
+                                     force_fetch=DEFAULT_FORCE_FETCH):
+    stream_kwargs = {
+        'uri': s3_uri,
+        'tmp_dir': tmp_dir,
+        'force_fetch': force_fetch,
+    }
+
+    generator = get_links_to_non_canonical(
+        OutlinksRawStreamDef.load(**stream_kwargs)
+    )
+
+    LinksToNonCanonicalStreamDef.persist(
+        generator, s3_uri,
+        first_part_size=first_part_id_size,
+        part_size=part_id_size
+    )
+
+
+@with_temporary_dir
+def make_links_to_non_canonical_counter_file(s3_uri,
+                                             part_id=None,
+                                             tmp_dir=None,
+                                             force_fetch=DEFAULT_FORCE_FETCH):
+    stream = LinksToNonCanonicalStreamDef.load(
+        s3_uri,
+        tmp_dir=tmp_dir,
+        part_id=part_id,
+        force_fetch=force_fetch
+    )
+    generator = get_links_to_non_canonical_counters(stream)
+    LinksToNonCanonicalCountersStreamDef.persist(
+        generator,
+        s3_uri,
+        part_id=part_id
     )

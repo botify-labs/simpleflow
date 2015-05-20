@@ -1,10 +1,12 @@
-from itertools import groupby
+from itertools import groupby, ifilter
+from cdf.features.links.helpers.predicates import is_follow_link
 
 from cdf.features.main.streams import InfosStreamDef, CompliantUrlStreamDef
 from cdf.features.links.streams import (
     OutlinksStreamDef,
     BadLinksStreamDef,
-    LinksToNonCompliantStreamDef
+    LinksToNonCompliantStreamDef,
+    LinksToNonCanonicalStreamDef
 )
 
 
@@ -120,3 +122,49 @@ def get_link_to_non_compliant_urls_counters(stream_non_compliant_links):
             total += 1
 
         yield (src_url_id, len(dests), total)
+
+
+def get_links_to_non_canonical(stream_urllinks):
+    # First, get bad canonicals
+    bad_canonicals = set()
+    read_canons = set()  # ignore 2nd+ canonical
+    for src_uid, link_type, follow_mask, dst_uid, dst_url in stream_urllinks:
+        if link_type == 'canonical' and src_uid not in read_canons:
+            if src_uid != dst_uid:
+                bad_canonicals.add(src_uid)
+            read_canons.add(src_uid)
+    del read_canons
+
+    # Then get links to them
+    links_to_non_canonical = []
+    for src_uid, link_type, follow_mask, dst_uid, dst_url in stream_urllinks:
+        if dst_uid in bad_canonicals and link_type != 'canonical':
+            links_to_non_canonical.append(
+                (src_uid,
+                 int(is_follow_link(follow_mask, True)),
+                 dst_uid
+                 ))
+
+    return links_to_non_canonical
+
+
+def get_links_to_non_canonical_counters(stream_links_to_non_canonical):
+    # Cut'n' pasted from get_link_to_non_compliant_urls_counters.
+
+    # Resolve indexes
+    src_url_idx = LinksToNonCanonicalStreamDef.field_idx('id')
+
+    # Group by source url_id
+    for src_url_id, g in groupby(
+            stream_links_to_non_canonical, lambda x: x[src_url_idx]):
+        # total = 0
+        dests = set()
+        for _, follow, dest in g:
+            if not follow:
+                continue
+            dests.add(dest)
+            # total += 1
+
+        yield (
+            src_url_id, len(dests)  # , total
+        )
