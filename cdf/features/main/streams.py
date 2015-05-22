@@ -31,7 +31,7 @@ class IdStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = {
         # url property data
         "url": {
-            "verbose_name": "Url",
+            "verbose_name": "Full URL",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -39,7 +39,7 @@ class IdStreamDef(StreamDefBase):
             }
         },
         "url_hash": {
-            "verbose_name": "Url Hash",
+            "verbose_name": "URL Hash",
             "type": LONG_TYPE,
             "settings": {
                 FIELD_RIGHTS.PRIVATE,
@@ -76,7 +76,7 @@ class IdStreamDef(StreamDefBase):
             }
         },
         "path": {
-            "verbose_name": "Path",
+            "verbose_name": "URL Path",
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
@@ -90,12 +90,12 @@ class IdStreamDef(StreamDefBase):
             }
         },
         "query_string": {
-            "verbose_name": "Query String",
+            "verbose_name": "URL Query String",
             "type": STRING_TYPE,
             "settings": {ES_NOT_ANALYZED}
         },
         "query_string_keys": {
-            "verbose_name": "Query String Keys",
+            "verbose_name": "URL Query String Keys",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -138,7 +138,7 @@ class InfosStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "main"
     URL_DOCUMENT_MAPPING = {
         "byte_size": {
-            "verbose_name": "Byte Size",
+            "verbose_name": "Content Byte Size",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -147,7 +147,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "http_code": {
-            "verbose_name": "Http Code",
+            "verbose_name": "Http Status Code",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -158,12 +158,12 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "date_crawled": {
-            "verbose_name": "Date crawled",
+            "verbose_name": "Date Crawled",
             "type": DATE_TYPE,
             "settings": {ES_DOC_VALUE}
         },
         "delay_first_byte": {
-            "verbose_name": "Delay first byte received",
+            "verbose_name": "Delay First Byte Received",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -173,7 +173,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "delay_last_byte": {
-            "verbose_name": "Delay total",
+            "verbose_name": "Delay Total",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -194,7 +194,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "gzipped": {
-            "verbose_name": "Url compressed",
+            "verbose_name": "Is Compressed",
             "type": BOOLEAN_TYPE,
             "settings": {
                 AGG_CATEGORICAL,
@@ -202,7 +202,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "content_type": {
-            "verbose_name": "Content-type",
+            "verbose_name": "Content Type",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -213,7 +213,7 @@ class InfosStreamDef(StreamDefBase):
         },
         # meta tag related
         "metadata.robots.nofollow": {
-            "verbose_name": "Has robots anchors as `nofollow`",
+            "verbose_name": "Has Nofollow Meta Tag",
             "type": BOOLEAN_TYPE,
             "settings": {
                 AGG_CATEGORICAL,
@@ -221,7 +221,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "metadata.robots.noindex": {
-            "verbose_name": "Has robots anchors as `noindex`",
+            "verbose_name": "Has Noindex Meta Tag",
             "type": BOOLEAN_TYPE,
             "settings": {
                 AGG_CATEGORICAL,
@@ -229,7 +229,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "lang": {
-            "verbose_name": "Lang",
+            "verbose_name": "HTML Lang Attribute",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -361,7 +361,7 @@ class CompliantUrlStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "main"
     URL_DOCUMENT_MAPPING = {
         "strategic.is_strategic": {
-            "verbose_name": "Compliant url",
+            "verbose_name": "Is Compliant",
             "type": BOOLEAN_TYPE,
             "settings": {
                 AGG_CATEGORICAL,
@@ -371,7 +371,7 @@ class CompliantUrlStreamDef(StreamDefBase):
             }
         },
         "strategic.reason.http_code": {
-            "verbose_name": "Not compliant reason: bad http code",
+            "verbose_name": "Non-Compliance Reason is Non-200 HTTP Status Code",
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
@@ -382,7 +382,7 @@ class CompliantUrlStreamDef(StreamDefBase):
             }
         },
         "strategic.reason.content_type": {
-            "verbose_name": "Not compliant reason: bad content type",
+            "verbose_name": "Non-Compliance Reason is Bad Content Type",
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
@@ -393,7 +393,7 @@ class CompliantUrlStreamDef(StreamDefBase):
             }
         },
         "strategic.reason.noindex": {
-            "verbose_name": "Not compliant reason: url is of no-index",
+            "verbose_name": "Non-Compliance Reason is Noindex Status",
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
@@ -404,7 +404,7 @@ class CompliantUrlStreamDef(StreamDefBase):
             }
         },
         "strategic.reason.canonical": {
-            "verbose_name": "Not compliant reason: url has non self-canonical",
+            "verbose_name": "Non-Compliance Reason is Non-Self Canonical Tag",
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
