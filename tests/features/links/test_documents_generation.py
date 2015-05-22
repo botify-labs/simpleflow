@@ -468,7 +468,7 @@ class TestBadLinks(unittest.TestCase):
             [4, 'http', 'www.site.com', '/path/name4.html', ''],
             [5, 'http', 'www.site.com', '/path/name5.html', ''],
         ]
-        links = get_links_to_non_canonical(outlinks)
+        links = get_links_to_non_canonical(outlinks, outlinks)
         counters = get_links_to_non_canonical_counters(links)
         gen = UrlDocumentGenerator([
             IdStreamDef.load_iterator(iter(patterns)),
