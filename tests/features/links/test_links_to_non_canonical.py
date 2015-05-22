@@ -1,10 +1,20 @@
 import tempfile
 import unittest
 import shutil
-from cdf.features.links.bad_links import get_links_to_non_canonical, get_links_to_non_canonical_counters
+from cdf.features.links.bad_links import get_links_to_non_canonical_counters, \
+    gen_links_to_non_canonical, get_bad_canonicals
 from cdf.features.links.streams import OutlinksRawStreamDef, LinksToNonCanonicalStreamDef
 from cdf.features.links.tasks import make_links_to_non_canonical_file
 from cdf.query.datamodel import get_fields
+
+def get_links_to_non_canonical(g):
+    bad_canonicals = get_bad_canonicals(
+        g())
+    generator = gen_links_to_non_canonical(
+        g(False),
+        bad_canonicals
+    )
+    return list(generator)
 
 
 class TestFeature(unittest.TestCase):
@@ -43,7 +53,7 @@ class TestLinkToNonCanonical(unittest.TestCase):
             [4, 'canonical', 0, 4, ''],
             [6, 'r301', 4, -1, 'http://www.lemonde.com']  # internal
         ]
-        links = get_links_to_non_canonical(iter(stream_outlinks), iter(stream_outlinks))
+        links = get_links_to_non_canonical(lambda x=False: iter(stream_outlinks))
         self.assertEqual(0, len(links))
 
     def test_bad(self):
@@ -52,7 +62,7 @@ class TestLinkToNonCanonical(unittest.TestCase):
             (2, 'canonical', 0, 3, ''),
             (3, 'canonical', 0, 3, ''),
         ]
-        links = get_links_to_non_canonical(iter(stream_outlinks), iter(stream_outlinks))
+        links = get_links_to_non_canonical(lambda x=False: iter(stream_outlinks))
         self.assertEqual(1, len(links))
 
         self.assertEqual(1, links[0][0])
@@ -75,7 +85,7 @@ class TestLinkToNonCanonicalCounters(unittest.TestCase):
             [4, 'canonical', 0, 4, ''],
             [6, 'r301', 4, -1, 'http://www.lemonde.com']  # internal
         ]
-        links = get_links_to_non_canonical(iter(stream_outlinks), iter(stream_outlinks))
+        links = get_links_to_non_canonical(lambda x=False: iter(stream_outlinks))
         counters = list(get_links_to_non_canonical_counters(links))
         self.assertEqual(0, len(counters))
 
@@ -88,7 +98,7 @@ class TestLinkToNonCanonicalCounters(unittest.TestCase):
             (4, 'a', 0, 5, ''),
             (5, 'canonical', 0, 3, ''),
         ]
-        links = get_links_to_non_canonical(iter(iter(stream_outlinks)), iter(stream_outlinks))
+        links = get_links_to_non_canonical(lambda x=False: iter(stream_outlinks))
         counters = get_links_to_non_canonical_counters(links)
         c = counters.next()
         self.assertEqual((1, 1), c)

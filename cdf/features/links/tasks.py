@@ -18,8 +18,8 @@ from cdf.features.links.bad_links import (
     get_bad_link_counters,
     get_links_to_non_compliant_urls,
     get_link_to_non_compliant_urls_counters,
-    get_links_to_non_canonical, get_links_to_non_canonical_counters
-)
+    get_links_to_non_canonical_counters,
+    get_bad_canonicals, gen_links_to_non_canonical)
 from cdf.features.main.streams import (
     InfosStreamDef,
     CompliantUrlStreamDef,
@@ -495,16 +495,18 @@ def make_links_to_non_canonical_file(s3_uri,
         'tmp_dir': tmp_dir,
     }
 
-    links1 = OutlinksRawStreamDef.load(force_fetch=force_fetch, **stream_kwargs)
-    # Don't reload data files from S3
-    links2 = OutlinksRawStreamDef.load(force_fetch=False, **stream_kwargs)
-    generator = get_links_to_non_canonical(links1, links2)
+    with get_bad_canonicals(OutlinksRawStreamDef.load(
+            force_fetch=force_fetch, **stream_kwargs)) as bad_canonicals:
+        generator = gen_links_to_non_canonical(
+            OutlinksRawStreamDef.load(force_fetch=False, **stream_kwargs),
+            bad_canonicals
+        )
 
-    LinksToNonCanonicalStreamDef.persist(
-        generator, s3_uri,
-        first_part_size=first_part_id_size,
-        part_size=part_id_size
-    )
+        LinksToNonCanonicalStreamDef.persist(
+            generator, s3_uri,
+            first_part_size=first_part_id_size,
+            part_size=part_id_size
+        )
 
 
 @with_temporary_dir
