@@ -16,8 +16,6 @@ import logging
 
 from cdf.features.links.bad_links import (
     get_bad_link_counters,
-    get_links_to_non_canonical,
-    get_links_to_non_canonical_counters,
 )
 from cdf.log import logger
 from cdf.tasks.documents import UrlDocumentGenerator
@@ -451,55 +449,6 @@ class TestBadLinks(unittest.TestCase):
         # check url2
         document = _next_doc(gen)
         self.assertDictEqual(document[key][sub_key], expected_2)
-
-    def test_to_non_canonical(self):
-        outlinks = [
-            (1, 'a', 0, 2, ''),
-            (2, 'canonical', 0, 3, ''),
-            (3, 'canonical', 0, 3, ''),
-            (4, 'a', 0, 2, ''),
-            (4, 'a', 0, 5, ''),
-            (5, 'canonical', 0, 3, ''),
-        ]
-        patterns = [
-            [1, 'http', 'www.site.com', '/path/name.html', '?f1&f2=v2'],
-            [2, 'http', 'www.site.com', '/path/name2.html', '?f1&f2=v2'],
-            [3, 'http', 'www.site.com', '/path/name3.html', '?f1&f2=v2'],
-            [4, 'http', 'www.site.com', '/path/name4.html', ''],
-            [5, 'http', 'www.site.com', '/path/name5.html', ''],
-        ]
-        links = get_links_to_non_canonical(outlinks)
-        counters = get_links_to_non_canonical_counters(links)
-        gen = UrlDocumentGenerator([
-            IdStreamDef.load_iterator(iter(patterns)),
-            LinksToNonCanonicalStreamDef.load_iterator(iter(links)),
-            LinksToNonCanonicalCountersStreamDef.load_iterator(iter(counters)),
-            #InfosStreamDef.load_iterator(iter(infos))
-        ])
-
-        document = _next_doc(gen)
-        err = document['outlinks_errors']['bad_canonical']
-        self.assertEqual(1, err['nb'])
-        self.assertTrue(err['urls_exists'])
-        self.assertEqual([2], err['urls'])
-
-        document = _next_doc(gen)
-#        err = document['outlinks_errors']['bad_canonical']
-#        self.assertEqual(0, err['nb'])
-
-        document = _next_doc(gen)
-#        err = document['outlinks_errors']['bad_canonical']
-#        self.assertEqual(0, err['nb'])
-
-        document = _next_doc(gen)
-        err = document['outlinks_errors']['bad_canonical']
-        self.assertEqual(2, err['nb'])
-        self.assertTrue(err['urls_exists'])
-        self.assertEqual([2, 5], err['urls'])
-
-        document = _next_doc(gen)
-#        err = document['outlinks_errors']['bad_canonical']
-#        self.assertEqual(0, err['nb'])
 
 
 class TestRedirects(unittest.TestCase):
