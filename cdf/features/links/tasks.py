@@ -493,12 +493,12 @@ def make_links_to_non_canonical_file(s3_uri,
     stream_kwargs = {
         'uri': s3_uri,
         'tmp_dir': tmp_dir,
-        'force_fetch': force_fetch,
     }
 
-    generator = get_links_to_non_canonical(
-        OutlinksRawStreamDef.load(**stream_kwargs)
-    )
+    links1 = OutlinksRawStreamDef.load(force_fetch=force_fetch, **stream_kwargs)
+    # Don't reload data files from S3
+    links2 = OutlinksRawStreamDef.load(force_fetch=False, **stream_kwargs)
+    generator = get_links_to_non_canonical(links1, links2)
 
     LinksToNonCanonicalStreamDef.persist(
         generator, s3_uri,

@@ -124,7 +124,7 @@ def get_link_to_non_compliant_urls_counters(stream_non_compliant_links):
         yield (src_url_id, len(dests), total)
 
 
-def get_links_to_non_canonical(stream_urllinks):
+def get_links_to_non_canonical(stream_urllinks, stream_urllinks_bis):
     # First, get bad canonicals
     bad_canonicals = set()
     read_canons = set()  # ignore 2nd+ canonical
@@ -137,7 +137,7 @@ def get_links_to_non_canonical(stream_urllinks):
 
     # Then get links to them
     links_to_non_canonical = []
-    for src_uid, link_type, follow_mask, dst_uid, dst_url in stream_urllinks:
+    for src_uid, link_type, follow_mask, dst_uid, dst_url in stream_urllinks_bis:
         if dst_uid in bad_canonicals and link_type != 'canonical':
             links_to_non_canonical.append(
                 (src_uid,

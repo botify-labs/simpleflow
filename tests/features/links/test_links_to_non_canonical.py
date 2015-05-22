@@ -1,5 +1,9 @@
+import tempfile
 import unittest
+import shutil
 from cdf.features.links.bad_links import get_links_to_non_canonical, get_links_to_non_canonical_counters
+from cdf.features.links.streams import OutlinksRawStreamDef, LinksToNonCanonicalStreamDef
+from cdf.features.links.tasks import make_links_to_non_canonical_file
 from cdf.query.datamodel import get_fields
 
 
@@ -26,7 +30,7 @@ class TestFeature(unittest.TestCase):
 
 class TestLinkToNonCanonical(unittest.TestCase):
     def test_ok(self):
-        # Copied from another test
+        # Data copied from another test
         stream_outlinks = [
             [1, 'r301', 0, 5, ''],
             [2, 'canonical', 0, 4, ''],
@@ -39,7 +43,7 @@ class TestLinkToNonCanonical(unittest.TestCase):
             [4, 'canonical', 0, 4, ''],
             [6, 'r301', 4, -1, 'http://www.lemonde.com']  # internal
         ]
-        links = get_links_to_non_canonical(stream_outlinks)
+        links = get_links_to_non_canonical(iter(stream_outlinks), iter(stream_outlinks))
         self.assertEqual(0, len(links))
 
     def test_bad(self):
@@ -48,7 +52,7 @@ class TestLinkToNonCanonical(unittest.TestCase):
             (2, 'canonical', 0, 3, ''),
             (3, 'canonical', 0, 3, ''),
         ]
-        links = get_links_to_non_canonical(stream_outlinks)
+        links = get_links_to_non_canonical(iter(stream_outlinks), iter(stream_outlinks))
         self.assertEqual(1, len(links))
 
         self.assertEqual(1, links[0][0])
@@ -71,7 +75,7 @@ class TestLinkToNonCanonicalCounters(unittest.TestCase):
             [4, 'canonical', 0, 4, ''],
             [6, 'r301', 4, -1, 'http://www.lemonde.com']  # internal
         ]
-        links = get_links_to_non_canonical(stream_outlinks)
+        links = get_links_to_non_canonical(iter(stream_outlinks), iter(stream_outlinks))
         counters = list(get_links_to_non_canonical_counters(links))
         self.assertEqual(0, len(counters))
 
@@ -84,7 +88,7 @@ class TestLinkToNonCanonicalCounters(unittest.TestCase):
             (4, 'a', 0, 5, ''),
             (5, 'canonical', 0, 3, ''),
         ]
-        links = get_links_to_non_canonical(stream_outlinks)
+        links = get_links_to_non_canonical(iter(iter(stream_outlinks)), iter(stream_outlinks))
         counters = get_links_to_non_canonical_counters(links)
         c = counters.next()
         self.assertEqual((1, 1), c)
@@ -92,3 +96,34 @@ class TestLinkToNonCanonicalCounters(unittest.TestCase):
         self.assertEqual((4, 2), c)
         with self.assertRaises(StopIteration):
             counters.next()
+
+class TestWithFiles(unittest.TestCase):
+    tmp_dir = tempfile.mkdtemp()
+    @classmethod
+    def setUpClass(cls):
+        # tests use `tmp_dir`
+        stream_outlinks = [
+            (1, 'a', 0, 2, ''),
+            (2, 'canonical', 0, 3, ''),
+            (3, 'canonical', 0, 3, ''),
+            (4, 'a', 0, 2, ''),
+            (4, 'a', 0, 5, ''),
+            (5, 'canonical', 0, 3, ''),
+        ]
+        OutlinksRawStreamDef.persist(stream_outlinks, cls.tmp_dir)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp_dir)
+
+    def test_bad_with_stream(self):
+        make_links_to_non_canonical_file(self.tmp_dir)
+        links = LinksToNonCanonicalStreamDef.load(self.tmp_dir)
+        it = links.next()
+        self.assertEqual([1, True, 2], it)
+        it = links.next()
+        self.assertEqual([4, True, 2], it)
+        it = links.next()
+        self.assertEqual([4, True, 5], it)
+        with self.assertRaises(StopIteration):
+            links.next()
