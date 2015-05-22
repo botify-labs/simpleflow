@@ -93,10 +93,10 @@ def _update_document_mapping(mapping, medium, sources, metrics):
     for source in sources:
         # Id source == "all", the target is "organic" or "social"
         if source == "all":
-            source_target = medium
-        # Otherwise, the target is the plaform name (twitter, faceboook, google, etc..)
+            source_target = "All {} Traffic".format(medium.capitalize())
+        # Otherwise, the target is the platform name (twitter, faceboook, google, etc..)
         else:
-            source_target = source
+            source_target = source.capitalize()
 
         key_prefix = "visits.{}.{}".format(medium, source)
         for i, metric in enumerate(metrics):
@@ -109,7 +109,7 @@ def _update_document_mapping(mapping, medium, sources, metrics):
                     AGG_NUMERICAL,
                     DIFF_QUANTITATIVE
                 },
-                "verbose_name": verbose_name.format(source=source_target),
+                "verbose_name": verbose_name.format(source=source_target.title()),
                 "group": key_prefix,
             }
             if flag:
@@ -139,12 +139,12 @@ class VisitsStreamDef(StreamDefBase):
     # - if you don't need to set a specific rendering, set it to None
     # such that calculted metric = f(raw_metric, nb_sessions)
     _METRICS = [
-        ("nb", None, "nb", "Number of visits from {source}", INT_TYPE, None),
-        ("bounce_rate", compute_percentage, "bounces", "Bounce Rate on {source}", FLOAT_TYPE, RENDERING.PERCENT),
-        ("pages_per_session", compute_average_value, "page_views", "Pages per session on {source}", FLOAT_TYPE, None),
-        ("average_session_duration", compute_average_value, "session_duration", "Session duration on {source}", FLOAT_TYPE, RENDERING.TIME_SEC),
-        ("percentage_new_sessions", compute_percentage, "new_users", "Percentage of new sessions on {source}", FLOAT_TYPE, RENDERING.PERCENT),
-        ("goal_conversion_rate_all", compute_percentage, "goal_completions_all", "Goal conversion rate on {source}", FLOAT_TYPE, RENDERING.PERCENT)
+        ("nb", None, "nb", "No. of Visits from {source}", INT_TYPE, None),
+        ("bounce_rate", compute_percentage, "bounces", "Bounce Rate for {source}", FLOAT_TYPE, RENDERING.PERCENT),
+        ("pages_per_session", compute_average_value, "page_views", "Pages per Session for {source}", FLOAT_TYPE, None),
+        ("average_session_duration", compute_average_value, "session_duration", "Session Duration for {source}", FLOAT_TYPE, RENDERING.TIME_SEC),
+        ("percentage_new_sessions", compute_percentage, "new_users", "% of New sessions for {source}", FLOAT_TYPE, RENDERING.PERCENT),
+        ("goal_conversion_rate_all", compute_percentage, "goal_completions_all", "Goal Conversion Rate for {source}", FLOAT_TYPE, RENDERING.PERCENT)
     ]
 
     _RAW_METRICS = [
