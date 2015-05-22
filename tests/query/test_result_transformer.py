@@ -14,7 +14,7 @@ from cdf.query.result_transformer import (
     ExternalUrlNormalizer,
     AggregationTransformer,
     RedirectToStrategy,
-    EmptyHtmlExtractTransformer)
+    EmptyHtmlExtractTransformer, RedirectToFinalStrategy)
 from cdf.query.result_transformer import (
     ErrorLinkStrategy,
     LinksStrategy,
@@ -232,6 +232,34 @@ class TestUrlIdResolutionStrategies(unittest.TestCase):
             }
         }
 
+        self.assertEqual(strat.extract(es_result), expected_extract)
+        self.assertEqual(strat.transform(es_result, self.id_to_url),
+                         expected_transform)
+
+    def test_redirect_to_final(self):
+        strat = RedirectToFinalStrategy()
+        es_result = {
+                'redirect': {
+                    'to': {
+                        'final_url': {
+                            'http_code': 200,
+                            'url_id': 6
+                        }
+                    }
+                },
+            }
+        expected_transform = {
+                'redirect': {
+                    'to': {
+                        'final_url': {
+                            'url': 'url6',
+                            'crawled': True
+                        }
+                    }
+                },
+            }
+
+        expected_extract = [6]
         self.assertEqual(strat.extract(es_result), expected_extract)
         self.assertEqual(strat.transform(es_result, self.id_to_url),
                          expected_transform)
@@ -507,6 +535,32 @@ class TestExternalUrlNormalizer(unittest.TestCase):
 
         self.assertDictEqual(expected, es_result)
 
+    def test_redirect_to_final_external(self):
+        es_result = {
+            'redirect': {
+                'to': {
+                    'final_url': {
+                        'url_str': 'www.abc.com',
+                    }
+                }
+            }
+        }
+        trans = ExternalUrlNormalizer(fields=['redirect.to'],
+                                      es_result=[es_result])
+        trans.transform()
+        expected = {
+            'redirect': {
+                'to': {
+                    'final_url': {
+                        'url': 'www.abc.com',
+                        'crawled': False,
+                    }
+                }
+            }
+        }
+
+        self.assertDictEqual(expected, es_result)
+
 
 class TestDefaultValueTransformer(unittest.TestCase):
     def setUp(self):
@@ -759,6 +813,7 @@ class TestAggregationResultTransformer(unittest.TestCase):
 
         d = AggregationTransformer(results)
         self.assertEqual(d.transform(), expected)
+
 
 class TestHtmlExtract(unittest.TestCase):
     def test1(self):

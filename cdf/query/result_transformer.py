@@ -220,7 +220,10 @@ class RedirectToStrategy(IdResolutionStrategy):
         {'redirect.to.url': {'url': 'url5', 'crawled': True}}
     """
     def __init__(self, prefix=''):
-        self.field = prefix + 'redirect.to.url'
+        self.set_field_name(prefix, 'redirect.to.url')
+
+    def set_field_name(self, prefix, s):
+        self.field = prefix + s
         self.extract_field = self.field + '.url_id'
 
     def extract(self, result):
@@ -228,7 +231,7 @@ class RedirectToStrategy(IdResolutionStrategy):
 
     def transform(self, result, id_to_url):
         if path_in_dict(self.field, result):
-            target = get_subdict_from_path('redirect.to.url', result)
+            target = get_subdict_from_path(self.field, result)
             if target.get('url_id', 0) > 0:
                 # to an internal url
                 url_id = target['url_id']
@@ -245,6 +248,19 @@ class RedirectToStrategy(IdResolutionStrategy):
             target.pop('url_id', None)
 
         return result
+
+
+class RedirectToFinalStrategy(RedirectToStrategy):
+    """Strategy for `redirect.to.final_url` field
+
+    It's store as a url id:
+        {'redirect.to.final_url.url_id': 5}
+    Need to be transformed:
+        {'redirect.to.final_url': {'url': 'url5', 'crawled': True}}
+    """
+
+    def __init__(self, prefix=''):
+        self.set_field_name(prefix, 'redirect.to.final_url')
 
 
 class RedirectFromStrategy(IdResolutionStrategy):
@@ -431,6 +447,7 @@ class IdToUrlTransformer(ResultTransformer):
         'canonical.from.urls': (CanonicalFromStrategy, []),
 
         'redirect.to.url': (RedirectToStrategy, []),
+        'redirect.to.final_url': (RedirectToFinalStrategy, []),
         'redirect.from.urls': (RedirectFromStrategy, []),
 
         'metadata.title.duplicates.urls': (MetaDuplicateStrategy, ['title']),
@@ -586,6 +603,7 @@ class ExternalUrlNormalizer(ResultTransformer):
 
     _TARGET_FIELDS = {
         'redirect.to.url',
+        'redirect.to.final_url',
         'canonical.to.url'
     }
 
