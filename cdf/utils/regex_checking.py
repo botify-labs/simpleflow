@@ -365,3 +365,68 @@ def check(regex):
     if parser.nparens > 0:
         raise RegexError(Token.BadGroupError, '(', parens_pos[-1])
     return True
+
+
+def apply_regex_rule(content, options):
+    """
+    Check a pattern against the content. Maise raise.
+    :param content: string to match
+    :type content: unicode or str
+    :param options:
+    :type options: dict
+    :return: results
+    :rtype: list
+    """
+    regex = options['regex']
+    agg = options['agg']
+    ignore_case = options['ignore_case']
+    match = options.get('match', '')
+    cast = options.get('cast', 's')
+
+    check(regex)
+
+    flags = re.MULTILINE | re.DOTALL
+    if ignore_case:
+        flags |= re.IGNORECASE
+    pattern = re.compile(regex, flags)
+
+    # Cast
+    if not cast or cast == 's':
+        caster = None
+    elif cast == 'i':
+        caster = int
+    elif cast == 'f':
+        caster = float
+    elif cast == 'b':
+        caster = lambda value: value == '1'  # should not be of use
+    else:
+        raise ValueError("{} not in 'sibf'".format(cast))
+
+    if agg == 'list':
+        res = []
+        for m in pattern.finditer(content):
+            g = m.group(0)
+            s = pattern.sub(match, g)
+            if caster:
+                s = caster(s)
+            res.append(s)
+        return res
+    elif agg == 'first':
+        m = pattern.search(content)
+        if m:
+            g = m.group(0)
+            s = pattern.sub(match, g)
+            if caster:
+                s = caster(s)
+            res = s
+        else:
+            res = None
+        return res
+    elif agg in('exists', 'exist'):
+        m = pattern.search(content)
+        return m is not None
+    elif agg == 'count':
+        res = pattern.findall(content)
+        return len(res)
+    else:
+        raise ValueError("Unknown agg '{}'".format(agg))
