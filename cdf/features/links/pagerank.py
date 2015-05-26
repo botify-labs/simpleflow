@@ -377,16 +377,22 @@ def process_pr_result(pr_kv_list):
     # sort on url_id
     result.sort(key=itemgetter(0))
 
-    # assign a normalized pr value
-    bucket_size = math.log10(max_value / min_value) / float(100)
+    log_max = math.log10(max_value / min_value)
+    diff = 10.0 - log_max
+    if diff < 0:
+        logger.info("Log-valued pagerank exceeds 10.0, at %f", log_max)
     for uid, r, v in result:
         log_v = math.log10(v / min_value)
-        normalized = log_v / bucket_size
-        # eg. 46.2547 => 4.7
-        normalized = math.ceil(normalized) / 10
+        normalized = log_v + diff
+        # 4.75456 => 4.7
+        normalized = int(normalized * 10) / 10.0
         # normalized pr ranges from 0.1 to 10.0
         if normalized == 0.0:
             normalized = 0.1
+        # deal with negative normalized value
+        if normalized < 0:
+            normalized = 0.0
+
         yield uid, r, v, normalized
 
 

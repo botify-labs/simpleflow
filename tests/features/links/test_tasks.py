@@ -637,10 +637,8 @@ class TestPageRank(TaskTestCase):
 
         rank_result = [l[1] for l in result]
         value_result = [l[2] for l in result]
-        normalized_result = [l[3] for l in result]
 
         rank_expected = [1, 3, 5, 4, 6, 2]
-        normalized_expected = [10, 6.1, 3.2, 4.7, 0.1, 7.1]
         value_expected = np.array([
             0.3210154,
             0.1705440,
@@ -651,6 +649,5 @@ class TestPageRank(TaskTestCase):
         ])
 
         self.assertEqual(rank_result, rank_expected)
-        self.assertEqual(normalized_result, normalized_expected)
         self.assertTrue(
             np.linalg.norm(value_result - value_expected) < 0.001)
