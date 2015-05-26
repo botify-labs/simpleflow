@@ -13,7 +13,6 @@ from cdf.features.links.pagerank import (
     is_virtual_page,
     pagerank_filter,
     group_links,
-    get_bucket_size,
     process_pr_result,
     EXT_VIR, NOT_CRAWLED_VIR, ROBOTS_VIR
 )
