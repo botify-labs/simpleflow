@@ -11,7 +11,7 @@ class TestApply(unittest.TestCase):
 </body>''', {
 
                 'regex': r'<a class="home"[^>]*>(.*?)</a',
-                'match': r'Homy: \1',
+                'match': r'Homy: $1',
                 'agg': 'list',
                 'cast': 's',
                 'ignore_case': True,
@@ -25,7 +25,7 @@ class TestApply(unittest.TestCase):
             <a class="home" href="/home2.html">This is another Home</a>
             </body>''', {
                 'regex': r'<a class="home"[^>]*>(.*?)</a',
-                'match': r'Homy: \1',
+                'match': r'Homy: $1',
                 'agg': 'exists',
                 'cast': 'b',
                 'ignore_case': True,
@@ -39,7 +39,7 @@ class TestApply(unittest.TestCase):
             <a class="nohome" href="/home2.html">This is another Home</a>
             </body>''', {
                 'regex': r'<a class="home"[^>]*>(.*?)</a',
-                'match': r'Homy: \1',
+                'match': r'Homy: $1',
                 'agg': 'exists',
                 'cast': 'b',
                 'ignore_case': True,
@@ -52,7 +52,7 @@ class TestApply(unittest.TestCase):
             <a class="home" href="/home2.html">This is another Home</a>
             </body>''', {
                 'regex': r'<a class="home"[^>]*>(.*?)</a',
-                'match': r'Homy: \1',
+                'match': r'Homy: $1',
                 'agg': 'first',
                 'cast': 's',
                 'ignore_case': True,
@@ -65,7 +65,7 @@ class TestApply(unittest.TestCase):
             <a class="nohome" href="/home2.html">This is another Home</a>
             </body>''', {
                 'regex': r'<a class="home"[^>]*>(.*?)</a',
-                'match': r'Homy: \1',
+                'match': r'Homy: $1',
                 'agg': 'first',
                 'cast': 's',
                 'ignore_case': True,
@@ -78,7 +78,7 @@ class TestApply(unittest.TestCase):
             <a class="home" href="/home2.html">This is another Home</a>
             </body>''', {
                 'regex': r'<a class="home"[^>]*>(.*?)</a',
-                'match': r'Homy: \1',
+                'match': r'Homy: $1',
                 'agg': 'count',
                 'cast': 's',
                 'ignore_case': True,
@@ -91,7 +91,7 @@ class TestApply(unittest.TestCase):
             <a class="nohome" href="/home2.html">This is another Home</a>
             </body>''', {
                 'regex': r'<a class="home"[^>]*>(.*?)</a',
-                'match': r'Homy: \1',
+                'match': r'Homy: $1',
                 'agg': 'count',
                 'cast': 's',
                 'ignore_case': True,
@@ -102,7 +102,7 @@ class TestApply(unittest.TestCase):
         res = apply_regex_rule(
             '''<body><div>123</div><div>456</div></body>''', {
                 'regex': r'<div>(.*?)</div',
-                'match': r'\1',
+                'match': r'$1',
                 'agg': 'first',
                 'cast': 'i',
                 'ignore_case': True,
@@ -113,7 +113,7 @@ class TestApply(unittest.TestCase):
         res = apply_regex_rule(
             '''<body><div>123</div><div>456</div></body>''', {
                 'regex': r'<div>(.*?)</div',
-                'match': r'\1',
+                'match': r'$1',
                 'agg': 'first',
                 'cast': 'f',
                 'ignore_case': True,
@@ -124,7 +124,7 @@ class TestApply(unittest.TestCase):
         res = apply_regex_rule(
             '''<body><div>123</div><div>456</div></body>''', {
                 'regex': r'<div>(.*?)</div',
-                'match': r'\1',
+                'match': r'$1',
                 'agg': 'list',
                 'cast': 'i',
                 'ignore_case': True,
@@ -135,7 +135,7 @@ class TestApply(unittest.TestCase):
         res = apply_regex_rule(
             '''<body><div>123</div><div>456</div></body>''', {
                 'regex': r'<div>(.*?)</div',
-                'match': r'\1',
+                'match': r'$1',
                 'agg': 'list',
                 'cast': 'f',
                 'ignore_case': True,
@@ -180,3 +180,31 @@ class TestApply(unittest.TestCase):
         }
         res = apply_regex_rule(content, rule)
         self.assertEqual('$', res)
+
+    def test_too_long_in_list(self):
+        res = apply_regex_rule(
+            '''<body><a class="nohome" href="/home.html">This is Home</a>
+            <a class="nohome" href="/home2.html">This is another Home</a>
+            </body>''', {
+                'regex': r'(.*)',
+                'match': r'$1',
+                'agg': 'list',
+                'cast': 's',
+                'ignore_case': False,
+            })
+
+        self.assertEqual(100, len(res[0]))
+
+    def test_too_long_in_first(self):
+        res = apply_regex_rule(
+            '''<body><a class="nohome" href="/home.html">This is Home</a>
+            <a class="nohome" href="/home2.html">This is another Home</a>
+            </body>''', {
+                'regex': r'(.*)',
+                'match': r'$1',
+                'agg': 'first',
+                'cast': 's',
+                'ignore_case': False,
+            })
+
+        self.assertEqual(100, len(res))
