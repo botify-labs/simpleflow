@@ -15,18 +15,17 @@ class TestGetDuplicateDocumentMapping(unittest.TestCase):
     def test_nominal_case(self):
         metadata_list = ["title"]
         duplicate_type = "foo_duplicate"
-        verbose_prefix = "foo"
         order_seed = 100
         actual_result = _get_duplicate_document_mapping(
             metadata_list,
             duplicate_type,
-            verbose_prefix,
+            False,
             order_seed
         )
         expected_result = {
             'metadata.title.foo_duplicate.nb': {
                 'type': 'integer',
-                'verbose_name': 'Number of foo duplicate Title',
+                'verbose_name': 'No. of Duplicate Title (Among All URLs)',
                 'settings': {
                     'es:doc_values',
                     'agg:categorical',
@@ -39,7 +38,7 @@ class TestGetDuplicateDocumentMapping(unittest.TestCase):
             'metadata.title.foo_duplicate.is_first': {
                 'type': 'boolean',
                 'verbose_name':
-                'First foo duplicate Title found',
+                '1st Duplicate Title Found (Among All URLs)',
                 'settings': {
                     FIELD_RIGHTS.SELECT,
                     FIELD_RIGHTS.FILTERS,
@@ -48,7 +47,7 @@ class TestGetDuplicateDocumentMapping(unittest.TestCase):
             },
             'metadata.title.foo_duplicate.urls': {
                 'type': 'integer',
-                'verbose_name': 'Pages with the same foo Title',
+                'verbose_name': 'Sample of URLs with the Same Title (Among All URLs)',
                 'settings': {
                     'es:no_index',
                     'url_id',

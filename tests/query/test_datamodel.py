@@ -276,7 +276,7 @@ class FieldsTestCase(unittest.TestCase):
 
     def test_enabled(self):
         fields = get_fields({"main": {"lang": True}})
-        self.assertTrue('Lang' in [k["name"] for k in fields])
+        self.assertTrue('HTML Lang Attribute' in [k["name"] for k in fields])
 
         fields = get_fields({"main": {"lang": False}})
         self.assertFalse('lang' in [k["name"] for k in fields])
@@ -386,7 +386,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertNotIn('previous.main_image', fields_configs)
 
         fields_verbose = [f['name'] for f in fields]
-        self.assertIn('Previous Http Code', fields_verbose)
+        self.assertIn('Previous Http Status Code', fields_verbose)
 
     def test_groups(self):
         # current crawl : feature main, links and comparison are enabled
