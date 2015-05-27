@@ -429,6 +429,8 @@ def apply_regex_rule(content, options):
         for m in islice(pattern.finditer(content), 0, 3):
             g = m.group(0)
             s = pattern.sub(match, g)
+            if len(s) > 100:
+                s = s[:100]
             if caster:
                 s = caster(s)
             res.append(s)
@@ -438,6 +440,8 @@ def apply_regex_rule(content, options):
         if m:
             g = m.group(0)
             s = pattern.sub(match, g)
+            if len(s) > 100:
+                s = s[:100]
             if caster:
                 s = caster(s)
             res = s
