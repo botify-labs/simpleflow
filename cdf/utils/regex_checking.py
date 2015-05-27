@@ -5,6 +5,7 @@
 from enum import Enum
 import collections
 import re
+from itertools import islice
 
 _specials = set(r"^.*+?\|[(){$")
 
@@ -367,9 +368,27 @@ def check(regex):
     return True
 
 
+_re_reformat_match_num = re.compile(r'\$(\d+)')
+_re_reformat_match_name = re.compile(r'\$\{(\w+)\}')
+
+
+def _reformat_match(match):
+    """
+    Replace $n with \n, ${name} with \g<name>, $$ with $. The other substitutions are not supported.
+    :param match:
+    :type match:
+    :return:
+    :rtype:
+    """
+    match = _re_reformat_match_num.sub(r'\\\1', match)
+    match = _re_reformat_match_name.sub(r'\\g<\1>', match)
+    match = match.replace('$$', '$')
+    return match
+
+
 def apply_regex_rule(content, options):
     """
-    Check a pattern against the content. Maise raise.
+    Check a pattern against the content. May raise.
     :param content: string to match
     :type content: unicode or str
     :param options:
@@ -385,8 +404,11 @@ def apply_regex_rule(content, options):
 
     check(regex)
 
+    if match:
+        match = _reformat_match(match)
+
     flags = re.MULTILINE | re.DOTALL
-    if ignore_case:
+    if ignore_case and ignore_case != 'off':
         flags |= re.IGNORECASE
     pattern = re.compile(regex, flags)
 
@@ -404,7 +426,7 @@ def apply_regex_rule(content, options):
 
     if agg == 'list':
         res = []
-        for m in pattern.finditer(content):
+        for m in islice(pattern.finditer(content), 0, 3):
             g = m.group(0)
             s = pattern.sub(match, g)
             if caster:
