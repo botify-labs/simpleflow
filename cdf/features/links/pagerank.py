@@ -320,37 +320,6 @@ def group_links(links_stream, max_crawled_id, extra_non_crawls):
         yield (src, outdeg_count, normals, virtuals)
 
 
-def get_bucket_size(num_pages):
-    """Get the normalization bucket sizes, given the total
-    number of pages
-
-    :param num_pages: total number of pages in page rank computation
-    :type num_pages: int
-    :return: a list of n number indicating the bucket size of each
-        normalized page rank number
-        For > 1023 pages, there'll be 9 numbers
-        For < 1023 pages, the element number depends on page number
-    :rtype: list
-    """
-    result = []
-    if num_pages > 1023:
-        c = num_pages
-        for i in range(10, 0, -1):
-            c /= 2
-            result.append(c)
-        result.reverse()
-        return result[:9]
-    else:
-        c = 0
-        total = 0
-        while total < num_pages:
-            size = pow(2, c)
-            result.append(size)
-            total += size
-            c += 1
-        return result[:-1]
-
-
 def process_pr_result(pr_kv_list):
     """Post process the raw page rank result
         - assign a total rank for each page
@@ -377,16 +346,22 @@ def process_pr_result(pr_kv_list):
     # sort on url_id
     result.sort(key=itemgetter(0))
 
-    # assign a normalized pr value
-    bucket_size = math.log10(max_value / min_value) / float(100)
+    log_max = math.log10(max_value / min_value)
+    diff = 10.0 - log_max
+    if diff < 0:
+        logger.info("Log-valued pagerank exceeds 10.0, at %f", log_max)
     for uid, r, v in result:
         log_v = math.log10(v / min_value)
-        normalized = log_v / bucket_size
-        # eg. 46.2547 => 4.7
-        normalized = math.ceil(normalized) / 10
+        normalized = log_v + diff
+        # 4.75456 => 4.7
+        normalized = int(normalized * 10) / 10.0
         # normalized pr ranges from 0.1 to 10.0
         if normalized == 0.0:
             normalized = 0.1
+        # deal with negative normalized value
+        if normalized < 0:
+            normalized = 0.0
+
         yield uid, r, v, normalized
 
 
