@@ -242,7 +242,6 @@ class TestUrlIdResolutionStrategies(unittest.TestCase):
                 'redirect': {
                     'to': {
                         'final_url': {
-                            'http_code': 200,
                             'url_id': 6
                         }
                     }

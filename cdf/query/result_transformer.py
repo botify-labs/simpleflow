@@ -242,7 +242,8 @@ class RedirectToStrategy(IdResolutionStrategy):
                 url, http_code = id_to_url.get(url_id)
                 target['url'] = url
                 target['crawled'] = True if http_code > 0 else False
-                del target['http_code']
+                if 'http_code' in target:
+                    del target['http_code']
 
             # delete unused field
             target.pop('url_id', None)
