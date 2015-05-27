@@ -823,7 +823,7 @@ class TestHtmlExtract(unittest.TestCase):
         #           })
         # c = q.count
         # results = list(itertools.islice(q.results, 20))
-        fields = ['url', 'id', 'extract.extract_i_0']
+        fields = ['url', 'id', 'extract.extract_i_0', 'extract.extract_b_0']
         results = [
             {u'url': u'http://fr.ulule.com/', u'id': 1},
             {u'url': u'http://fr.ulule.com/-leap-/', u'id': -2509},
@@ -834,28 +834,33 @@ class TestHtmlExtract(unittest.TestCase):
             {u'url': u'http://fr.ulule.com/1083/news/', u'id': -2146},
             {u'url': u'http://fr.ulule.com/1083/supporters/', u'id': -2148},
             {u'url': u'http://fr.ulule.com/17ruedesarts/', u'id': 556},
-            {u'url': u'http://fr.ulule.com/30ansdevih/', u'extract': {u'extract_i_0': 8},
+            {u'url': u'http://fr.ulule.com/30ansdevih/', u'extract': {u'extract_i_0': 8,
+                                                                      u'extract_b_0': True},
              u'id': 1544},
         ]
         expected = [
-            {u'url': u'http://fr.ulule.com/', 'extract': {'extract_i_0': None}, u'id': 1},
-            {u'url': u'http://fr.ulule.com/-leap-/', 'extract': {'extract_i_0': None},
+            {u'url': u'http://fr.ulule.com/', 'extract': {'extract_i_0': None, 'extract_b_0': None}, u'id': 1},
+            {u'url': u'http://fr.ulule.com/-leap-/', 'extract': {'extract_i_0': None,
+                                                                 'extract_b_0': None},
              u'id': -2509},
             {u'url': u'http://fr.ulule.com/1-dada-pour-2/',
-             'extract': {'extract_i_0': None},
+             'extract': {'extract_i_0': None, 'extract_b_0': None},
              u'id': -2087},
-            {u'url': u'http://fr.ulule.com/1083/', u'extract': {u'extract_i_0': 134},
+            {u'url': u'http://fr.ulule.com/1083/', u'extract': {u'extract_i_0': 134,
+                                                                'extract_b_0': None},
              u'id': 454},
             {u'url': u'http://fr.ulule.com/1083/comments/',
-             'extract': {'extract_i_0': None},
+             'extract': {'extract_i_0': None, 'extract_b_0': None},
              u'id': -2147},
-            {u'url': u'http://fr.ulule.com/1083/news/', 'extract': {'extract_i_0': None},
+            {u'url': u'http://fr.ulule.com/1083/news/', 'extract': {'extract_i_0': None,
+                                                                    'extract_b_0': None},
              u'id': -2146}, {u'url': u'http://fr.ulule.com/1083/supporters/',
-                             'extract': {'extract_i_0': None}, u'id': -2148},
+                             'extract': {'extract_i_0': None, 'extract_b_0': None}, u'id': -2148},
             {u'url': u'http://fr.ulule.com/17ruedesarts/',
-             'extract': {'extract_i_0': None},
+             'extract': {'extract_i_0': None, 'extract_b_0': None},
              u'id': 556},
-            {u'url': u'http://fr.ulule.com/30ansdevih/', u'extract': {u'extract_i_0': 8},
+            {u'url': u'http://fr.ulule.com/30ansdevih/', u'extract': {u'extract_i_0': 8,
+                                                                      'extract_b_0': True},
              u'id': 1544}]
         d = EmptyHtmlExtractTransformer(results, None, fields=fields)
         d.transform()
