@@ -26,7 +26,8 @@ _ALL_FIELDS = {
     'ganalytics': None,
     'rel': None,
     'extract': {},
-    'comparison': {}
+    'comparison': {},
+    'duplicate_query_kvs': {},
 }
 # Add extract fields
 for typ in 'sibf':

@@ -444,6 +444,8 @@ class IdToUrlTransformer(ResultTransformer):
         'inlinks_internal.urls': (LinksStrategy, ['inlinks_internal']),
         'outlinks_internal.urls': (LinksStrategy, ['outlinks_internal']),
 
+        'duplicate_query_kvs.urls': (LinksStrategy, ['duplicate_query_kvs']),
+
         'canonical.to.url': (CanonicalToStrategy, []),
         'canonical.from.urls': (CanonicalFromStrategy, []),
 
