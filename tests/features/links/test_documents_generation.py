@@ -293,6 +293,9 @@ class TestBadLinks(unittest.TestCase):
                 'urls': [5],
                 'urls_exists': True
             },
+            'bad_canonical': {
+                'nb': 0
+            },
             'non_strategic': {
                 'nb': {'follow': {'unique': 0, 'total': 0}}
             },
@@ -309,6 +312,9 @@ class TestBadLinks(unittest.TestCase):
                 'urls_exists': True
             },
             '5xx': {
+                'nb': 0
+            },
+            'bad_canonical': {
                 'nb': 0
             },
             'non_strategic': {
