@@ -39,7 +39,7 @@ class TestDocument(unittest.TestCase):
         documents = list(gen)
         self.assertEqual(4, len(documents))
         d = documents[0][1]
-        self.assertNotIn('duplicate_query_kvs', d)
+        self.assertIn('duplicate_query_kvs', d)
         d = documents[1][1]
         self.assertIn('duplicate_query_kvs', d)
         self.assertIn('nb', d['duplicate_query_kvs'])
