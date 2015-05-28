@@ -386,7 +386,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertNotIn('previous.main_image', fields_configs)
 
         fields_verbose = [f['name'] for f in fields]
-        self.assertIn('Previous Http Status Code', fields_verbose)
+        self.assertIn('Previous HTTP Status Code', fields_verbose)
 
     def test_groups(self):
         # current crawl : feature main, links and comparison are enabled
