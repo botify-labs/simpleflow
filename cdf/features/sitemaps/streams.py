@@ -17,7 +17,7 @@ class SitemapStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = {
         # url property data
         "sitemaps.present": {
-            "verbose_name": "Present in sitemap",
+            "verbose_name": "In Sitemap",
             "type": BOOLEAN_TYPE,
             "settings": {
                 AGG_CATEGORICAL,

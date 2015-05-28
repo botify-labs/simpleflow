@@ -27,7 +27,7 @@ class ContentsStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = {
         # title tag
         "metadata.title.nb": {
-            "verbose_name": "Number of Page Titles",
+            "verbose_name": "No. of Titles",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -47,7 +47,7 @@ class ContentsStreamDef(StreamDefBase):
         },
         # h1 tag
         "metadata.h1.nb": {
-            "verbose_name": "Number of H1",
+            "verbose_name": "No. of H1",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -67,7 +67,7 @@ class ContentsStreamDef(StreamDefBase):
         },
         # description tag
         "metadata.description.nb": {
-            "verbose_name": "Number of Page Description",
+            "verbose_name": "No. of Meta Descriptions",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -77,7 +77,7 @@ class ContentsStreamDef(StreamDefBase):
             }
         },
         "metadata.description.contents": {
-            "verbose_name": "Page description",
+            "verbose_name": "Meta Description",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -87,7 +87,7 @@ class ContentsStreamDef(StreamDefBase):
         },
         # h2 tag
         "metadata.h2.nb": {
-            "verbose_name": "Number of H2",
+            "verbose_name": "No. of H2",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -108,7 +108,7 @@ class ContentsStreamDef(StreamDefBase):
 
         # h3 tag
         "metadata.h3.nb": {
-            "verbose_name": "Number of H3",
+            "verbose_name": "No. of H3",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -153,7 +153,7 @@ class ContentsStreamDef(StreamDefBase):
             "enabled": check_enabled("length")
         },
         "metadata.description.len": {
-            "verbose_name": "Description Length",
+            "verbose_name": "Meta Description Length",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -183,33 +183,29 @@ class ContentsStreamDef(StreamDefBase):
 
 def _get_duplicate_document_mapping(metadata_list,
                                     duplicate_type,
-                                    verbose_prefix,
+                                    is_context_aware,
                                     order_seed):
     """Generate mapping for duplicate documents
     :param duplicate_type: the kind of duplicate.
                            this string will be used to generate the field types
     :type duplicate_type: str
-    :type verbose_prefix: the prefix to apply to the verbose description
-                          of the duplicate type.
-                          This string will be used to generate the
-                          verbose names.
-    :type verbose_prefix: str
+    :param is_context_aware: generate for context-aware fields?
+    :type is_context_aware: bool
     :param order_seed: the base number to use to generate the "order" settings
     :type order_seed: int
-    :param private: if True, all the generated fields will be private
-    :type private: bool
     :returns: dict
     """
     result = {}
-    verbose_duplicate_type = "duplicate"
-    if len(verbose_prefix) > 0:
-        verbose_duplicate_type = "{} {}".format(verbose_prefix, verbose_duplicate_type)
-
     for i, metadata_type in enumerate(metadata_list):
         prefix = "metadata.{}.{}".format(metadata_type, duplicate_type)
+        if is_context_aware:
+            verbose_template = 'No. of Duplicate {} (Among Compliant URLs in Same Zone)'
+        else:
+            verbose_template = 'No. of Duplicate {} (Among All URLs)'
+
         result["{}.nb".format(prefix)] = {
-            "verbose_name": "Number of {} {}".format(
-                verbose_duplicate_type, metadata_type.capitalize()
+            "verbose_name": verbose_template.format(
+                metadata_type.title()
             ),
             "type": INT_TYPE,
             "settings": {
@@ -221,9 +217,14 @@ def _get_duplicate_document_mapping(metadata_list,
                 DIFF_QUANTITATIVE
             }
         }
+
+        if is_context_aware:
+            verbose_template = '1st Duplicate {} Found (Among Other Compliant URLs in Same Zone)'
+        else:
+            verbose_template = '1st Duplicate {} Found (Among All URLs)'
         result["{}.is_first".format(prefix)] = {
-            "verbose_name": "First {} {} found".format(
-                verbose_duplicate_type, metadata_type.capitalize()
+            "verbose_name": verbose_template.format(
+                 metadata_type.title()
             ),
             "type": BOOLEAN_TYPE,
             "settings": {
@@ -232,11 +233,13 @@ def _get_duplicate_document_mapping(metadata_list,
                 DIFF_QUALITATIVE
             }
         }
-        same_metadata_type = metadata_type.capitalize()
-        if len(verbose_prefix) > 0:
-            same_metadata_type = "{} {}".format(verbose_prefix, same_metadata_type)
+        # template for samples field
+        if is_context_aware:
+            verbose_template = 'Sample of URLs with the Same {} (Among Other Compliant URLs in Same Zone)'
+        else:
+            verbose_template = 'Sample of URLs with the Same {} (Among All URLs)'
         result["{}.urls".format(prefix)] = {
-            "verbose_name": "Pages with the same {}".format(same_metadata_type),
+            "verbose_name": verbose_template.format(metadata_type.title()),
             "type": INT_TYPE,
             "settings": {
                 ES_NO_INDEX,
@@ -255,7 +258,7 @@ def _get_duplicate_document_mapping(metadata_list,
     return result
 
 
-#the headers to use for duplicate stream defs
+# the headers to use for duplicate stream defs
 CONTENTSDUPLICATE_HEADERS = (
     ('id', int),
     ('content_type', int),
@@ -302,8 +305,8 @@ class ContentsDuplicateStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
         ["title", "description", "h1"],
         "duplicates",
-        "",
-        100
+        is_context_aware=False,
+        order_seed=100
     )
 
     def process_document(self, document, stream):
@@ -320,8 +323,8 @@ class ContentsContextAwareDuplicateStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = _get_duplicate_document_mapping(
         ["title", "description", "h1"],
         "duplicates.context_aware",
-        "context-aware",
-        200
+        is_context_aware=True,
+        order_seed=200
     )
 
     def process_document(self, document, stream):
@@ -341,7 +344,7 @@ class ContentsCountStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = {
         # title tag
         "metadata.title.nb": {
-            "verbose_name": "Number of Page Titles",
+            "verbose_name": "No. of Titles",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -352,7 +355,7 @@ class ContentsCountStreamDef(StreamDefBase):
         },
         # h1 tag
         "metadata.h1.nb": {
-            "verbose_name": "Number of H1",
+            "verbose_name": "No. of H1",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -363,7 +366,7 @@ class ContentsCountStreamDef(StreamDefBase):
         },
         # description tag
         "metadata.description.nb": {
-            "verbose_name": "Number of Page Description",
+            "verbose_name": "No. of Meta Descriptions",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -374,7 +377,7 @@ class ContentsCountStreamDef(StreamDefBase):
         },
         # h2 tag
         "metadata.h2.nb": {
-            "verbose_name": "Number of H2",
+            "verbose_name": "No. of H2",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -384,7 +387,7 @@ class ContentsCountStreamDef(StreamDefBase):
         },
         # h3 tag
         "metadata.h3.nb": {
-            "verbose_name": "Number of H3",
+            "verbose_name": "No. of H3",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,

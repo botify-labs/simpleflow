@@ -17,7 +17,7 @@ class DuplicateQueryKVsStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = {
         "duplicate_query_kvs.urls": {
             "type": INT_TYPE,
-            "verbose_name": "Sample of other Urls with the same key/values in a different order.",
+            "verbose_name": "Sample of URLs with Same Path and Query String in Different Order",
             "settings": {
                 ES_DOC_VALUE,
                 ES_NO_INDEX,
@@ -30,7 +30,7 @@ class DuplicateQueryKVsStreamDef(StreamDefBase):
         },
         "duplicate_query_kvs.nb": {
             "type": INT_TYPE,
-            "verbose_name": "Number of Urls with the same key/values in a different order.",
+            "verbose_name": "Number of URLs with Same Path and Query String in Different Order",
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,

@@ -54,7 +54,7 @@ class RelCompliantStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "hreflang_outgoing"
     URL_DOCUMENT_MAPPING = {
         "rel.hreflang.out.nb": {
-            "verbose_name": "Number of Outgoing Hreflang",
+            "verbose_name": "No. of Outgoing Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -63,7 +63,7 @@ class RelCompliantStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.out.valid.nb": {
-            "verbose_name": "Number of Outgoing Valid Hreflang",
+            "verbose_name": "No. of Valid Outgoing Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -72,7 +72,7 @@ class RelCompliantStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.out.valid.langs": {
-            "verbose_name": "Outgoing Valid Hreflang Langs",
+            "verbose_name": "Valid Outgoing Hreflang: Langs",
             "type": STRING_TYPE,
             "settings": [
                 ES_LIST,
@@ -82,7 +82,7 @@ class RelCompliantStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.out.valid.regions": {
-            "verbose_name": "Outgoing Valid Hreflang Langs+Regions",
+            "verbose_name": "Valid Outgoing Hreflang: Langs+Regions",
             "type": STRING_TYPE,
             "settings": [
                 ES_LIST,
@@ -118,7 +118,7 @@ class RelCompliantStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.out.valid.values": {
-            "verbose_name": "Outgoing Valid Hreflang Values",
+            "verbose_name": "Valid Outgoing Hreflang: Sources and Values",
             "type": STRING_TYPE,  # JSON encoded. Contains list of dict.
             "settings": [
                 ES_NO_INDEX,
@@ -129,7 +129,7 @@ class RelCompliantStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.out.not_valid.nb": {
-            "verbose_name": "Number of Outgoing Not Valid Hreflang",
+            "verbose_name": "No. of Invalid Outgoing Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -138,7 +138,7 @@ class RelCompliantStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.out.not_valid.errors": {
-            "verbose_name": "Outgoing Not Valid Hreflang Errors",
+            "verbose_name": "Invalid Outgoing Hreflang: Error Types",
             "type": STRING_TYPE,
             "settings": [
                 ES_LIST,
@@ -148,7 +148,7 @@ class RelCompliantStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.out.not_valid.values": {
-            "verbose_name": "Outgoing Not Valid Hreflang Values",
+            "verbose_name": "Invalid Outgoing Hreflang: Sources and Values",
             "type": STRING_TYPE,  # JSON encoded. Contains list of dict.
             "settings": [
                 ES_NO_INDEX,
@@ -274,7 +274,7 @@ class InRelStreamDef(StreamDefBase):
     URL_DOCUMENT_DEFAULT_GROUP = "hreflang_incoming"
     URL_DOCUMENT_MAPPING = {
         "rel.hreflang.in.nb": {
-            "verbose_name": "Number of Incoming Hreflang",
+            "verbose_name": "No. of Incoming Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -283,7 +283,7 @@ class InRelStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.in.valid.nb": {
-            "verbose_name": "Number of Incoming Valid Hreflang",
+            "verbose_name": "No. of Valid Incoming Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -292,7 +292,7 @@ class InRelStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.in.valid.receives_x-default": {
-            "verbose_name": "URL Receives x-default From Incoming Hreflang",
+            "verbose_name": "Receives x-default From Incoming Hreflang",
             "type": BOOLEAN_TYPE,
             "settings": {
                 DIFF_QUALITATIVE,
@@ -300,7 +300,7 @@ class InRelStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.in.valid.langs": {
-            "verbose_name": "Incoming Valid Hreflang Langs",
+            "verbose_name": "Valid Incoming Hreflang: Lang",
             "help_text": "Format ISO 639-1 for langs",
             "type": STRING_TYPE,
             "settings": [
@@ -311,7 +311,7 @@ class InRelStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.in.valid.regions": {
-            "verbose_name": "Incoming Valid Hreflang Lang+Region",
+            "verbose_name": "Valid Incoming Hreflang: Lang+Region",
             "help_text": "Format ISO 3166-1 Alpha 2 for regions",
             "type": STRING_TYPE,
             "settings": [
@@ -322,7 +322,7 @@ class InRelStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.in.valid.values": {
-            "verbose_name": "Incoming Valid Hreflang Values",
+            "verbose_name": "Valid Incoming Hreflang: Sources and Values",
             "type": STRING_TYPE,  # JSON encoded. Contains list of dict.
             "settings": [
                 ES_NO_INDEX,
@@ -332,7 +332,7 @@ class InRelStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.in.not_valid.nb": {
-            "verbose_name": "Number of Incoming Not Valid Hreflang",
+            "verbose_name": "No. of Invalid Incoming Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -341,7 +341,7 @@ class InRelStreamDef(StreamDefBase):
             }
         },
         "rel.hreflang.in.not_valid.errors": {
-            "verbose_name": "Incoming Not Valid Hreflang Errors",
+            "verbose_name": "Invalid Incoming Hreflang: Error Types",
             "type": STRING_TYPE,
             "settings": [
                 ES_LIST,
@@ -351,7 +351,7 @@ class InRelStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.in.not_valid.values": {
-            "verbose_name": "Incoming Not Valid Hreflang Values",
+            "verbose_name": "Invalid Incoming Hreflang: Sources and Values",
             "type": STRING_TYPE,
             "settings": [
                 ES_NO_INDEX,

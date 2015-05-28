@@ -30,7 +30,7 @@ SOCIAL_SOURCES = (
 GROUPS = Enum(
     'Groups',
     [('visits.organic.all', 'Organic Visits')] +
-    [('visits.organic.{}'.format(source), 'Organic visits from {}'.format(source)) for source in ORGANIC_SOURCES] +
+    [('visits.organic.{}'.format(source), 'Organic Visits from {}'.format(source.capitalize())) for source in ORGANIC_SOURCES] +
     [('visits.social.all', 'Social Visits')] +
-    [('visits.social.{}'.format(source), 'Social visits from {}'.format(source)) for source in SOCIAL_SOURCES]
+    [('visits.social.{}'.format(source), 'Social Visits from {}'.format(source.capitalize())) for source in SOCIAL_SOURCES]
 )

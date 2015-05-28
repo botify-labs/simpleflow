@@ -7,6 +7,6 @@ ORDER = 100
 GROUPS = Enum(
     'Groups',
     [
-        ("duplicate_query_kvs", "same-query-KVs URLs"),
+        ("duplicate_query_kvs", "Technical Duplicates"),
     ]
 )
