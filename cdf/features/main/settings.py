@@ -6,4 +6,4 @@ DESCRIPTION = "Retrieve main data from a given url : http code, delays, date cra
 ORDER = 0
 
 GROUPS = Enum('Groups',
-              [('scheme', 'Url Scheme'), ('main', 'Main Metrics')])
+              [('scheme', 'URL Scheme'), ('main', 'Main Metrics')])
