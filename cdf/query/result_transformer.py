@@ -440,6 +440,7 @@ class IdToUrlTransformer(ResultTransformer):
         'outlinks_errors.4xx.urls': (ErrorLinkStrategy, ['4xx']),
         'outlinks_errors.5xx.urls': (ErrorLinkStrategy, ['5xx']),
         'outlinks_errors.non_strategic.urls': (ErrorLinkStrategy, ['non_strategic']),
+        'outlinks_errors.bad_canonical.urls': (ErrorLinkStrategy, ['bad_canonical']),
 
         'inlinks_internal.urls': (LinksStrategy, ['inlinks_internal']),
         'outlinks_internal.urls': (LinksStrategy, ['outlinks_internal']),
