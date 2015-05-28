@@ -87,7 +87,7 @@ class ContentsStreamDef(StreamDefBase):
         },
         # h2 tag
         "metadata.h2.nb": {
-            "verbose_name": "No. of H2 in Page",
+            "verbose_name": "No. of H2",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,

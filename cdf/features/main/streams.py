@@ -147,7 +147,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "http_code": {
-            "verbose_name": "Http Status Code",
+            "verbose_name": "HTTP Status Code",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -202,7 +202,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "content_type": {
-            "verbose_name": "Content Type",
+            "verbose_name": "Content-Type",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -229,7 +229,7 @@ class InfosStreamDef(StreamDefBase):
             }
         },
         "lang": {
-            "verbose_name": "HTML Lang Attribute",
+            "verbose_name": "Lang",
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
@@ -382,7 +382,7 @@ class CompliantUrlStreamDef(StreamDefBase):
             }
         },
         "strategic.reason.content_type": {
-            "verbose_name": "Non-Compliance Reason is Bad Content Type",
+            "verbose_name": "Non-Compliance Reason is Bad Content-Type",
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {

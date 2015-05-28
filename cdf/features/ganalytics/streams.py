@@ -143,7 +143,7 @@ class VisitsStreamDef(StreamDefBase):
         ("bounce_rate", compute_percentage, "bounces", "Bounce Rate for {source}", FLOAT_TYPE, RENDERING.PERCENT),
         ("pages_per_session", compute_average_value, "page_views", "Pages per Session for {source}", FLOAT_TYPE, None),
         ("average_session_duration", compute_average_value, "session_duration", "Session Duration for {source}", FLOAT_TYPE, RENDERING.TIME_SEC),
-        ("percentage_new_sessions", compute_percentage, "new_users", "% of New sessions for {source}", FLOAT_TYPE, RENDERING.PERCENT),
+        ("percentage_new_sessions", compute_percentage, "new_users", "% of New Sessions for {source}", FLOAT_TYPE, RENDERING.PERCENT),
         ("goal_conversion_rate_all", compute_percentage, "goal_completions_all", "Goal Conversion Rate for {source}", FLOAT_TYPE, RENDERING.PERCENT)
     ]
 

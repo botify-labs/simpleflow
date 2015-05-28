@@ -129,7 +129,7 @@ class RelCompliantStreamDef(StreamDefBase):
             ]
         },
         "rel.hreflang.out.not_valid.nb": {
-            "verbose_name": "No. of Outgoing Invalid Hreflang",
+            "verbose_name": "No. of Invalid Outgoing Hreflang",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,

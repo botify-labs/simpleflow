@@ -54,7 +54,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
     URL_DOCUMENT_MAPPING = {
         # internal outgoing links (destination is a internal url)
         "outlinks_internal.nb.total": {
-            "verbose_name": "No. of Internal Outlinks",
+            "verbose_name": "No. of Internal Outlinks (Follow + Nofollow)",
             "group": GROUPS.outlinks_internal.name,
             "type": INT_TYPE,
             "settings": {
@@ -203,7 +203,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
 
         # external outgoing links (destination is a external url)
         "outlinks_external.nb.total": {
-            "verbose_name": "No. of External Outlinks",
+            "verbose_name": "No. of External Outlinks (Follow + Nofollow)",
             "group": GROUPS.outlinks_external.name,
             "type": INT_TYPE,
             "settings": {
@@ -235,7 +235,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_external.nb.follow.unique": {
-            "verbose_name": "No. of External Pages Follow Outlinks (to Distinct URLs)",
+            "verbose_name": "No. of External Follow Outlinks (to Distinct URLs)",
             "group": GROUPS.outlinks_external.name,
             "type": INT_TYPE,
             "settings": {
@@ -257,7 +257,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
             }
         },
         "outlinks_external.nb.nofollow.unique": {
-            "verbose_name": "No. of External Pages NoFollow Outlinks (to Distinct URLs)",
+            "verbose_name": "No. of External NoFollow Outlinks (to Distinct URLs)",
             "group": GROUPS.outlinks_external_nofollow.name,
             "type": INT_TYPE,
             "settings": {
@@ -365,7 +365,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
 
         # outgoing redirection
         "redirect.to.url": {
-            "verbose_name": "Redirects to URL",
+            "verbose_name": "Redirects To URL",
             "group": GROUPS.redirects.name,
             "type": STRUCT_TYPE,
             "values": {
@@ -389,7 +389,7 @@ class OutlinksStreamDef(OutlinksRawStreamDef):
 
         # incoming redirection
         "redirect.from.nb": {
-            "verbose_name": "Number of Incoming Redirects",
+            "verbose_name": "No. of Incoming Redirects",
             "group": GROUPS.redirects.name,
             "type": INT_TYPE,
             "settings": {
@@ -582,7 +582,7 @@ class InlinksStreamDef(InlinksRawStreamDef):
     URL_DOCUMENT_MAPPING = {
         # incoming links, must be internal
         "inlinks_internal.nb.total": {
-            "verbose_name": "No. of Internal Inlinks",
+            "verbose_name": "No. of Internal Inlinks (Follow + Nofollow)",
             "type": INT_TYPE,
             "settings": {
                 ES_DOC_VALUE,
@@ -1102,7 +1102,7 @@ class LinksToNonCompliantStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = {
         "outlinks_errors.non_strategic.urls": {
             "type": INT_TYPE,
-            "verbose_name": "Sample of Internal Outlinks to Non-Compliant URLs",
+            "verbose_name": "Sample of Non-Compliant Internal Outlinks",
             "settings": {
                 ES_NO_INDEX,
                 ES_LIST,
@@ -1143,7 +1143,7 @@ class LinksToNonCompliantCountersStreamDef(StreamDefBase):
         # erroneous outgoing internal links
         "outlinks_errors.non_strategic.nb.follow.unique": {
             "type": INT_TYPE,
-            "verbose_name": "No. of Distinct Internal Outlinks to Non-Compliant URLs",
+            "verbose_name": "No. of Non-Compliant Internal Outlinks (to Distinct URLs)",
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
@@ -1358,7 +1358,7 @@ class FinalRedirectionStreamDef(StreamDefBase):
     URL_DOCUMENT_MAPPING = {
         # outgoing redirection: final destination
         "redirect.to.final_url": {
-            "verbose_name": "Ultimate Redirection",
+            "verbose_name": "Ultimate Redirect Destination",
             "group": GROUPS.redirects.name,
             "type": STRUCT_TYPE,
             "values": {
@@ -1385,7 +1385,7 @@ class FinalRedirectionStreamDef(StreamDefBase):
             "enabled": check_enabled("chains")
         },
         "redirect.to.nb_hops": {
-            "verbose_name": "No. of Redirection Hops Until Final Destination",
+            "verbose_name": "No. of Redirection Hops To Ultimate Destination",
             "group": GROUPS.redirects.name,
             "type": INT_TYPE,
             "settings": {
@@ -1399,7 +1399,7 @@ class FinalRedirectionStreamDef(StreamDefBase):
             "enabled": check_enabled("chains")
         },
         "redirect.to.in_loop": {
-            "verbose_name": "Url is Part of Redirection Loop",
+            "verbose_name": "Url is Part of Redirect Loop",
             "group": GROUPS.redirects.name,
             "type": BOOLEAN_TYPE,
             "default_value": None,
