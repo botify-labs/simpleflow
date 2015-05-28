@@ -31,7 +31,6 @@ class DuplicateQueryKVsStreamDef(StreamDefBase):
         "duplicate_query_kvs.nb": {
             "type": INT_TYPE,
             "verbose_name": "Number of Urls with the same key/values in a different order.",
-            "default_value": None,
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
