@@ -129,9 +129,7 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.h1.len": {
             "verbose_name": "H1 Length",
             "type": INT_TYPE,
-            "default_value": None,
             "settings": {
-                FIELD_RIGHTS.ADMIN,
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
                 AGG_NUMERICAL,
@@ -144,9 +142,7 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.title.len": {
             "verbose_name": "Title Length",
             "type": INT_TYPE,
-            "default_value": None,
             "settings": {
-                FIELD_RIGHTS.ADMIN,
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
                 AGG_NUMERICAL,
@@ -159,9 +155,7 @@ class ContentsStreamDef(StreamDefBase):
         "metadata.description.len": {
             "verbose_name": "Description Length",
             "type": INT_TYPE,
-            "default_value": None,
             "settings": {
-                FIELD_RIGHTS.ADMIN,
                 ES_DOC_VALUE,
                 AGG_CATEGORICAL,
                 AGG_NUMERICAL,
