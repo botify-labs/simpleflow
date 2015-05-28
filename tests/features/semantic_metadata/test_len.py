@@ -9,7 +9,7 @@ class TestLen(unittest.TestCase):
     def test_features_options_1(self):
         features_options = {
         }
-        fields = get_fields(features_options, remove_admin=False)
+        fields = get_fields(features_options)
         lens = filter(lambda f:f['value'].endswith('.len'), fields)
         self.assertEqual(0, len(lens))
 
@@ -18,7 +18,7 @@ class TestLen(unittest.TestCase):
             'semantic_metadata': {
             },
         }
-        fields = get_fields(features_options, remove_admin=False)
+        fields = get_fields(features_options)
         lens = filter(lambda f:f['value'].endswith('.len'), fields)
         self.assertEqual(0, len(lens))
 
@@ -28,7 +28,7 @@ class TestLen(unittest.TestCase):
                 'length': False,
             },
         }
-        fields = get_fields(features_options, remove_admin=False)
+        fields = get_fields(features_options)
         lens = filter(lambda f:f['value'].endswith('.len'), fields)
         self.assertEqual(0, len(lens))
 
@@ -38,7 +38,7 @@ class TestLen(unittest.TestCase):
                 'length': True,
             },
         }
-        fields = get_fields(features_options, remove_admin=False)
+        fields = get_fields(features_options)
         lens = filter(lambda f:f['value'].endswith('.len'), fields)
         self.assertEqual(3, len(lens))
 
@@ -52,11 +52,6 @@ class TestLen(unittest.TestCase):
             [1, 2, 0, 'First H1'],
             [1, 2, 0, 'Next H1'],
         ]
-        features_options = {
-            'semantic_metadata': {
-                'length': True,
-            },
-        }
         gen = UrlDocumentGenerator(
             [IdStreamDef.load_iterator(iter(ids)),
              ContentsStreamDef.load_iterator(iter(urlcontents))])
@@ -64,6 +59,6 @@ class TestLen(unittest.TestCase):
         meta = documents[0][1]['metadata']
         self.assertIn('len', meta['title'])
         self.assertIn('len', meta['h1'])
-        self.assertNotIn('len', meta['description'])
+        self.assertIn('len', meta['description'])
         self.assertEqual(meta['title']['len'], 5)
         self.assertEqual(meta['h1']['len'], len('First H1'))
