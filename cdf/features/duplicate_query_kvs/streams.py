@@ -49,5 +49,5 @@ class DuplicateQueryKVsStreamDef(StreamDefBase):
         id1, ids = stream
         if ids:
             document['duplicate_query_kvs']['urls'] = sorted(ids)[:10]
-            document['duplicate_query_kvs']['nb'] = len(ids)
+            document['duplicate_query_kvs']['nb'] = len(ids) + 1
             document['duplicate_query_kvs']['urls_exists'] = True
