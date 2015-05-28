@@ -1285,7 +1285,6 @@ class LinksToNonCanonicalStreamDef(StreamDefBase):
                 ES_NO_INDEX,
                 ES_LIST,
                 FIELD_RIGHTS.SELECT,
-                FIELD_RIGHTS.ADMIN,
                 RENDERING.URL,
                 URL_ID,
             },
@@ -1329,7 +1328,6 @@ class LinksToNonCanonicalCountersStreamDef(StreamDefBase):
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.SELECT,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.ADMIN,
                 DIFF_QUANTITATIVE
             },
             'enabled': check_enabled('links_to_non_canonical')
@@ -1376,7 +1374,6 @@ class FinalRedirectionStreamDef(StreamDefBase):
                 FIELD_RIGHTS.FILTERS,
                 URL_ID,
                 DIFF_QUALITATIVE,
-                FIELD_RIGHTS.ADMIN
             },
             "enabled": check_enabled("chains")
         },
@@ -1384,7 +1381,6 @@ class FinalRedirectionStreamDef(StreamDefBase):
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
-                FIELD_RIGHTS.ADMIN
             },
             "enabled": check_enabled("chains")
         },
@@ -1399,7 +1395,6 @@ class FinalRedirectionStreamDef(StreamDefBase):
                 DIFF_QUANTITATIVE,
                 FIELD_RIGHTS.SELECT,
                 FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.ADMIN
             },
             "enabled": check_enabled("chains")
         },
@@ -1409,7 +1404,6 @@ class FinalRedirectionStreamDef(StreamDefBase):
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
-                FIELD_RIGHTS.ADMIN
             },
             "enabled": check_enabled("chains")
         },
