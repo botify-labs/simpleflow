@@ -747,11 +747,10 @@ class EmptyHtmlExtractTransformer(object):
         for f in fields:
             if f.startswith('extract.'):
                 self.extract_fields.append(f)
-                break
-        else:
+        if len(self.extract_fields) == 0:
             self.results = None
-            return
-        self.results = results
+        else:
+            self.results = results
 
     def transform(self):
         if self.results is None:
