@@ -306,7 +306,7 @@ class SuggestStreamDef(StreamDefBase):
     )
     URL_DOCUMENT_MAPPING = {
         "patterns": {
-            "verbose_name": "Suggested patterns",
+            "verbose_name": "Suggested Patterns",
             "type": LONG_TYPE,
             "settings": {
                 ES_LIST,
