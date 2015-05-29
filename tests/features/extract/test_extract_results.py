@@ -66,7 +66,7 @@ class TestExtractFields(unittest.TestCase):
                 }
             ]
         }
-        fields = get_fields(features_options, remove_admin=False)
+        fields = get_fields(features_options)
         product_prices_field = filter(lambda f: f["value"].endswith("extract_i_0"), fields)[0]
         self.assertTrue(product_prices_field["multiple"])
         self.assertEquals(product_prices_field["name"], "Product Prices")
@@ -91,6 +91,52 @@ class TestExtractFields(unittest.TestCase):
         }
         g = get_groups(features_options)
         self.assertEqual(1, len(g))
+
+    def test_with_previous(self):
+        features_options = {
+            "extract": [
+                {
+                    "name": "Product Prices",
+                    "agg": "list",  # should return a multiple flag
+                    "cast": "i",
+                    "es_field": "extract_i_0"
+                }
+            ],
+            'comparison': {
+                "options": {
+                "extract": [
+                    {
+                        "name": "Product Prices",
+                        "agg": "list",  # should return a multiple flag
+                        "cast": "i",
+                        "es_field": "extract_i_0"
+                    }
+                ],
+            }
+            }
+
+        }
+        fields = get_fields(features_options)
+        product_prices_field = filter(lambda f: f["value"].endswith("extract_i_0"), fields)[0]
+        self.assertTrue(product_prices_field["multiple"])
+        self.assertEquals(product_prices_field["name"], "Product Prices")
+        self.assertEquals(product_prices_field["group"], "extract")
+
+        product_prices_field = filter(lambda f: f["value"].endswith("extract_i_0"), fields)[1]
+        self.assertTrue(product_prices_field["multiple"])
+        self.assertEquals(product_prices_field["name"], "Previous Product Prices")
+        self.assertEquals(product_prices_field["group"], "previous.extract")
+
+        product_prices_field = filter(lambda f: f["value"].endswith("extract_i_0"), fields)[2]
+        self.assertTrue(product_prices_field["multiple"])
+        self.assertEquals(product_prices_field["name"], "Diff Product Prices")
+        self.assertEquals(product_prices_field["group"], "diff.extract")
+
+        # Test enabled fields
+        # As we generate 5 fields for each type (i, f, s, b) we hide all
+        # fields that are not reserved
+        filters = [f["value"] for f in filter(lambda f: f["value"].startswith("extract."), fields)]
+        self.assertEquals(filters, ["extract.extract_i_0"])
 
 
 class ParsingTestCase(unittest.TestCase):

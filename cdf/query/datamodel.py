@@ -180,8 +180,11 @@ def get_fields(feature_options, remove_private=True, remove_admin=True,
     group_names = {g["id"]: g["name"] for g in groups}
     fields.sort(key=lambda x: _data_model_sort_key(x, group_names))
 
+    fields_with_render_field_modifier = {}
+    field_name_to_id = {}
     # render data format to datamodel in place
     for i, (name, config) in enumerate(fields):
+        field_name_to_id[name] = i
         fields[i] = _render_field(name, config)
 
         # Override some fields if `render_field_modifier` key func
@@ -192,7 +195,24 @@ def get_fields(feature_options, remove_private=True, remove_admin=True,
         # * field_settings (Field config as defined on StreamDef classes
         # * public_field_settings (Dict as returned by `cdf.query.datamodel.get_fields`
         if "render_field_modifier" in config:
-            config["render_field_modifier"](feature_options, name, config, fields[i])
+            fields_with_render_field_modifier[name] = config, fields[i]
+
+    # Call the render_field_modifier, for the field and its possible diff. and previous. variants
+    # TODO signal the modifier whether it's the original field, the diff or the previous?
+    for name, (config, field) in fields_with_render_field_modifier.iteritems():
+        if not name.startswith("diff.") and not name.startswith("previous."):
+            config["render_field_modifier"](feature_options, name, config, field)
+        for prefix in "diff.", "previous.":
+            pname = prefix + name
+            fid = field_name_to_id.get(pname, None)
+            if fid is not None:
+                config["render_field_modifier"](
+                    feature_options,
+                    name,
+                    config,
+                    fields[fid],
+                    name_prefix=prefix.capitalize().replace('.', ' ')
+                )
 
     return fields
 
