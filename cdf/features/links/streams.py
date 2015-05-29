@@ -1225,8 +1225,7 @@ class PageRankStreamDef(StreamDefBase):
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
                 FIELD_RIGHTS.SELECT,
-                FIELD_RIGHTS.FILTERS,
-                FIELD_RIGHTS.ADMIN
+                FIELD_RIGHTS.FILTERS
             },
             "enabled": check_enabled('page_rank')
         },
@@ -1239,8 +1238,7 @@ class PageRankStreamDef(StreamDefBase):
                 AGG_CATEGORICAL,
                 FIELD_RIGHTS.SELECT,
                 FIELD_RIGHTS.FILTERS,
-                DIFF_QUANTITATIVE,
-                FIELD_RIGHTS.ADMIN
+                DIFF_QUANTITATIVE
             },
             "enabled": check_enabled('page_rank')
         },
@@ -1253,8 +1251,7 @@ class PageRankStreamDef(StreamDefBase):
                 AGG_CATEGORICAL,
                 FIELD_RIGHTS.SELECT,
                 FIELD_RIGHTS.FILTERS,
-                DIFF_QUANTITATIVE,
-                FIELD_RIGHTS.ADMIN
+                DIFF_QUANTITATIVE
             },
             "enabled": check_enabled('page_rank')
         }
