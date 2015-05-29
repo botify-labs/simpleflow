@@ -139,7 +139,7 @@ class VisitsStreamDef(StreamDefBase):
     # - if you don't need to set a specific rendering, set it to None
     # such that calculted metric = f(raw_metric, nb_sessions)
     _METRICS = [
-        ("nb", None, "nb", "No. of Visits from {source}", INT_TYPE, None),
+        ("nb", None, "nb", "No. of Visits for {source}", INT_TYPE, None),
         ("bounce_rate", compute_percentage, "bounces", "Bounce Rate for {source}", FLOAT_TYPE, RENDERING.PERCENT),
         ("pages_per_session", compute_average_value, "page_views", "Pages per Session for {source}", FLOAT_TYPE, None),
         ("average_session_duration", compute_average_value, "session_duration", "Session Duration for {source}", FLOAT_TYPE, RENDERING.TIME_SEC),

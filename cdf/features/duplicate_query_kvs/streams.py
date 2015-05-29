@@ -30,7 +30,7 @@ class DuplicateQueryKVsStreamDef(StreamDefBase):
         },
         "duplicate_query_kvs.nb": {
             "type": INT_TYPE,
-            "verbose_name": "Number of URLs with Same Path and Query String in Different Order",
+            "verbose_name": "No. of URLs with Same Path and Query String in Different Order",
             "settings": {
                 ES_DOC_VALUE,
                 AGG_NUMERICAL,
