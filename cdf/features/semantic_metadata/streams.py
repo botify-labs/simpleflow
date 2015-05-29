@@ -178,7 +178,8 @@ class ContentsStreamDef(StreamDefBase):
             if not document['metadata'][content_type]['contents']:
                 continue
             content = document['metadata'][content_type]['contents'][0]
-            document['metadata'][content_type]['len'] = len(content)
+            content_len = len(content.decode('utf-8', 'replace'))
+            document['metadata'][content_type]['len'] = content_len
 
 
 def _get_duplicate_document_mapping(metadata_list,
