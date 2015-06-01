@@ -19,7 +19,6 @@ class DuplicateQueryKVsStreamDef(StreamDefBase):
             "type": INT_TYPE,
             "verbose_name": "Sample of URLs with Same Path and Query String in Different Order",
             "settings": {
-                ES_DOC_VALUE,
                 ES_NO_INDEX,
                 ES_LIST,
                 FIELD_RIGHTS.SELECT,
