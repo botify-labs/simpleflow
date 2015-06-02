@@ -1396,11 +1396,12 @@ class FinalRedirectionStreamDef(StreamDefBase):
             "enabled": check_enabled("chains")
         },
         "redirect.to.in_loop": {
-            "verbose_name": "Url is Part of Redirect Loop",
+            "verbose_name": "URL is Part of Redirect Loop",
             "group": GROUPS.redirects.name,
             "type": BOOLEAN_TYPE,
             "default_value": None,
             "settings": {
+                DIFF_QUALITATIVE,
             },
             "enabled": check_enabled("chains")
         },
