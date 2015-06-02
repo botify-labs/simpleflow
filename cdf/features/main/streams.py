@@ -35,7 +35,8 @@ class IdStreamDef(StreamDefBase):
             "type": STRING_TYPE,
             "settings": {
                 ES_NOT_ANALYZED,
-                RENDERING.URL
+                RENDERING.URL,
+                ES_DOC_VALUE
             }
         },
         "url_hash": {
