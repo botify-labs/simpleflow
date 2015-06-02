@@ -42,7 +42,8 @@ class ContentsStreamDef(StreamDefBase):
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_LIST,
-                DIFF_QUALITATIVE
+                DIFF_QUALITATIVE,
+                ES_DOC_VALUE
             }
         },
         # h1 tag
@@ -62,7 +63,8 @@ class ContentsStreamDef(StreamDefBase):
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_LIST,
-                DIFF_QUALITATIVE
+                DIFF_QUALITATIVE,
+                ES_DOC_VALUE
             }
         },
         # description tag
@@ -82,7 +84,8 @@ class ContentsStreamDef(StreamDefBase):
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_LIST,
-                DIFF_QUALITATIVE
+                DIFF_QUALITATIVE,
+                ES_DOC_VALUE
             }
         },
         # h2 tag
@@ -102,7 +105,8 @@ class ContentsStreamDef(StreamDefBase):
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_LIST,
-                DIFF_QUALITATIVE
+                DIFF_QUALITATIVE,
+                ES_DOC_VALUE
             }
         },
 
@@ -123,7 +127,8 @@ class ContentsStreamDef(StreamDefBase):
             "settings": {
                 ES_NOT_ANALYZED,
                 ES_LIST,
-                DIFF_QUALITATIVE
+                DIFF_QUALITATIVE,
+                ES_DOC_VALUE
             }
         },
         "metadata.h1.len": {
