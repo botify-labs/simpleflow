@@ -60,8 +60,14 @@ class Workflow(object):
     def fail(self, reason, details=None):
         self._executor.fail(reason, details)
 
+    def before_run(self, history):
+        pass
+
     def run(self, *args, **kwargs):
         raise NotImplementedError
+
+    def after_run(self, history):
+        pass
 
     def on_failure(self, history, reason, details=None):
         """

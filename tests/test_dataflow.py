@@ -112,6 +112,59 @@ def test_workflow_with_input():
     assert decisions[0] == workflow_completed
 
 
+class TestDefinitionWithBeforeRun(TestWorkflow):
+    """
+    Execute a single task with an argument passed as the workflow's input.
+
+    """
+    def before_run(self, history):
+        self.a = history.events[0].input['args'][0]
+
+    def run(self, a):
+        b = self.submit(increment, a)
+        return b.result
+
+
+def test_workflow_with_before_run():
+    workflow = TestDefinitionWithBeforeRun
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow,
+                              input={'args': (4,)})
+
+    # The executor should only schedule the *increment* task.
+    assert not hasattr(executor._workflow, 'a')
+    decisions, _ = executor.replay(history)
+    assert executor._workflow.a == 4
+
+
+class TestDefinitionWithAfterRun(TestWorkflow):
+    """
+    Execute a single task with an argument passed as the workflow's input.
+
+    """
+    def before_run(self, history):
+        self.b = history.events[0].input['args'][0] + 1
+
+    def run(self, a):
+        b = self.submit(increment, a)
+        return b.result
+
+
+def test_workflow_with_after_run():
+    workflow = TestDefinitionWithAfterRun
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow,
+                              input={'args': (4,)})
+
+    # The executor should only schedule the *increment* task.
+    assert not hasattr(executor._workflow, 'b')
+    decisions, _ = executor.replay(history)
+    assert executor._workflow.b == 5
+
+
+
 class TestDefinition(TestWorkflow):
     """
     Executes two tasks. The second depends on the first.
