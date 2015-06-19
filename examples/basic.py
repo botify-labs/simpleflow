@@ -6,12 +6,12 @@ from simpleflow import (
 )
 
 
-@activity.with_attributes(task_list='quickstart')
+@activity.with_attributes(task_list='quickstart', version='example')
 def increment(x):
     return x + 1
 
 
-@activity.with_attributes(task_list='quickstart')
+@activity.with_attributes(task_list='quickstart', version='example')
 def double(x):
     return x * 2
 
@@ -25,6 +25,7 @@ def delay(t, x):
 class BasicWorkflow(Workflow):
     name = 'basic'
     version = 'example'
+    task_list = 'example'
 
     def run(self, x, t=30):
         y = self.submit(increment, x)

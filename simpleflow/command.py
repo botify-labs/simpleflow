@@ -11,6 +11,7 @@ import swf.querysets
 
 from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
+from simpleflow.swf.process import decider
 
 
 __all__ = ['start', 'info', 'profile', 'status', 'list']
@@ -144,6 +145,7 @@ def with_format(ctx):
         fmt=ctx.parent.params['format'] or pretty.DEFAULT_FORMAT,
     )
 
+
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
 @click.argument('domain')
@@ -203,3 +205,19 @@ def list_workflows(ctx, domain):
 @click.pass_context
 def task_info(ctx, domain, workflow_id, task_id):
     print(with_format(ctx)(helpers.get_task)(domain, workflow_id, task_id))
+
+
+@click.option('--nb-processes', '-N', type=int)
+@click.option('--log-level', '-l')
+@click.option('--task-list')
+@click.option('--domain', '-d', required=True, help='SWF Domain')
+@click.argument('workflows', nargs=-1, required=True)
+@cli.command('decider.start', help='start a decider process to manage workflow executions')
+def start_decider(workflows, domain, task_list, log_level, nb_processes):
+    decider.command.start(
+        workflows,
+        domain,
+        task_list,
+        log_level,
+        nb_processes,
+    )
