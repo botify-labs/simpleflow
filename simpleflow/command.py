@@ -1,35 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import argparse
 import json
 
+import click
 
-def get_argument_parser():
-    parser = argparse.ArgumentParser(
-        description='Command line tools to use simpleflow')
 
-    parser.add_argument(
-        '--local',
-        action='store_true',
-        default=False,
-        help='Run the workflow locally without calling Amazon SWF'
-    )
-
-    parser.add_argument(
-        '-w', '--workflow',
-        action='store',
-        required=True,
-        help='Module that contains the workflow to perform'
-    )
-
-    parser.add_argument(
-        '-i', '--input',
-        action='store',
-        help='Path to a JSON file that contains the input of the workflow'
-    )
-
-    return parser
+__all__ = ['start']
 
 
 def get_workflow(clspath):
@@ -39,15 +16,27 @@ def get_workflow(clspath):
     return cls
 
 
-def main():
-    arguments = get_argument_parser().parse_args(sys.argv[1:])
-    workflow = get_workflow(arguments.workflow)
-    if not arguments.input:
+@click.group()
+def cli():
+    pass
+
+
+@click.option('--local', default=False, is_flag=True,
+              required=False,
+              help='Run the workflow locally without calling Amazon SWF')
+@click.option('--input', '-i',
+              required=False,
+              help='Path to a JSON file that contains the input of the workflow')
+@click.argument('workflow')
+@cli.command(help='the workflow defined in the WORKFLOW module')
+def start(local, workflow, input):
+    workflow_definition = get_workflow(workflow)
+    if not input:
         input = json.loads(sys.stdin.read())
     else:
-        input = json.load(open(arguments.input, 'rb'))
+        input = json.load(open(input, 'rb'))
 
-    if arguments.local:
-        from . import local
+    if local:
+        from .local import Executor
 
-        local.Executor(workflow).run(input)
+        Executor(workflow_definition).run(input)

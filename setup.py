@@ -83,6 +83,7 @@ setup(
     install_requires=[
         'simple-workflow>=0.1.47',
         'tabulate==0.7.3',
+        'click',
     ],
     license=read("LICENSE"),
     zip_safe=False,
@@ -103,7 +104,7 @@ setup(
     cmdclass={'test': PyTest},
     entry_points={
         'console_scripts': [
-            'simpleflow = simpleflow.command:main',
+            'simpleflow = simpleflow.command:cli',
         ]
     }
 )

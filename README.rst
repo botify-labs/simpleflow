@@ -71,7 +71,7 @@ And then define the workflow itself in a ``example.py`` file:
 
 Now check that the workflow works locally: ::
 
-    $ simpleflow --local -w example.SimpleComputation -i example/input.json
+    $ simpleflow start --local -i example/input.json example.SimpleComputation
 
 The file ``example/input.json`` contains the input passed to the workflow. It
 should have the format:
