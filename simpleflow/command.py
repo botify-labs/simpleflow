@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
 import sys
 import json
@@ -6,7 +7,7 @@ import json
 import click
 
 
-__all__ = ['start']
+__all__ = ['start', 'profile']
 
 
 def get_workflow(clspath):
@@ -40,3 +41,15 @@ def start(local, workflow, input):
         from .local import Executor
 
         Executor(workflow_definition).run(input)
+
+
+@click.option('--nb-tasks', '-n', default=None, type=click.INT,
+              help='Maximum number of tasks to display')
+@click.argument('run_id')
+@click.argument('workflow_id')
+@click.argument('domain')
+@cli.command('profile', help='the tasks of a workflow')
+def profile(domain, workflow_id, run_id, nb_tasks):
+    from simpleflow.swf import stats
+
+    print(stats.helpers.show_workflow_stats(domain, workflow_id, run_id, nb_tasks))

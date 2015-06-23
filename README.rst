@@ -88,6 +88,24 @@ which is equivalent to:
 
     {"kwargs": {"x": 1}}
 
+You can profile the execution of the workflow with:
+
+    $ simpleflow profile DOMAIN WORKFLOW_ID RUN_ID --nb-tasks 3
+
+    Workflow Execution WORKFLOW_ID
+    Domain: DOMAIN
+    Workflow Type: WORKFLOW_TYPE
+
+    Total time = 100.599 seconds
+
+    Start to close timings
+    ----------------------
+    | Task  | Last State   | Scheduled        |    ->  | Start            |    ->  | End              |        % |
+    |:------|:-------------|:-----------------|-------:|:-----------------|-------:|:-----------------|---------:|
+    | task2 | completed    | 2015-06-23 22:27 |  0.09  | 2015-06-23 22:27 | 43.776 | 2015-06-23 22:28 | 43.5153  |
+    | task1 | completed    | 2015-06-23 22:27 |  0.118 | 2015-06-23 22:27 | 28.246 | 2015-06-23 22:27 | 28.0778  |
+    | task3 | completed    | 2015-06-23 22:26 |  0.068 | 2015-06-23 22:26 | 11.159 | 2015-06-23 22:26 | 11.0926  |
+
 Documentation
 -------------
 

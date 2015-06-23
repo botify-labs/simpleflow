@@ -38,7 +38,7 @@ def _to_timestamp(date):
     return (date - datetime(1970, 1, 1)).total_seconds()
 
 
-def show(workflow_execution):
+def show(workflow_execution, nb_tasks=None):
     stats = WorkflowStats(History(workflow_execution.history()))
 
     start_to_close_values = (
@@ -52,12 +52,16 @@ def show(workflow_execution):
          percent) for task, last_state, scheduled, start, end, timing, percent in
         stats.get_timings_with_percentage()
     )
+    start_to_close_values = sorted(
+        start_to_close_values,
+        key=operator.itemgetter(5),
+        reverse=True,
+    )
+    if nb_tasks:
+        start_to_close_values = start_to_close_values[:nb_tasks]
+
     start_to_close_contents = tabulate(
-        sorted(
-            start_to_close_values,
-            key=operator.itemgetter(5),
-            reverse=True,
-        ),
+        start_to_close_values,
         headers=(
             'Task',
             'Last State',
