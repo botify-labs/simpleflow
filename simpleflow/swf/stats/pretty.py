@@ -16,9 +16,9 @@ Workflow Type: {workflow_type.name}
 
 Total time = {total_time} seconds
 
-Start to close timings
-----------------------
-{start_to_close_timings}
+## {label}
+
+{values}
 
 '''
 
@@ -80,14 +80,55 @@ def show(workflow_execution, nb_tasks=None):
         workflow_type=workflow_execution.workflow_type,
         tag_list=_show_tag_list(workflow_execution.tag_list),
         total_time=stats.total_time(),
-        start_to_close_timings=start_to_close_contents,
+        label='Start to close timings',
+        values=start_to_close_contents,
     )
 
     return contents
 
 
-def chart(workflow_execution):
-    """
-    Charts like Developer Tools one http://stackoverflow.com/a/21323364
-    """
-    pass
+def get_timestamps(task):
+    last_state = task['state']
+    timestamp = task[last_state + '_timestamp']
+    scheduled_timestamp = task.get('scheduled_timestamp', '')
+
+    return last_state, timestamp, scheduled_timestamp
+
+
+def status(workflow_execution, nb_tasks=None):
+    history = History(workflow_execution.history())
+    history.parse()
+
+    values = [
+        (task['name'],) + get_timestamps(task) for task in
+        history._tasks[::-1]
+    ]
+    if nb_tasks:
+        values = values[:nb_tasks]
+
+    status_contents = tabulate(
+        values,
+        headers=(
+            'Tasks',
+            'Last State',
+            'at',
+            'Scheduled at',
+        ),
+        tablefmt='pipe',  # Markdown-compatible.
+    )
+    first_event = history._tasks[0]
+    last_event = history._tasks[-1]
+    total_time = (
+        last_event[last_event['state'] + '_timestamp'] -
+        first_event[first_event['state'] + '_timestamp']
+    ).total_seconds()
+    contents = TEMPLATE.format(
+        workflow_id=workflow_execution.workflow_id,
+        workflow_type=workflow_execution.workflow_type,
+        tag_list=_show_tag_list(workflow_execution.tag_list),
+        total_time=total_time,
+        label='Tasks Status',
+        values=status_contents,
+    )
+
+    return contents

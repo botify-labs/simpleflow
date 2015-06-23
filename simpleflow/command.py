@@ -52,4 +52,26 @@ def start(local, workflow, input):
 def profile(domain, workflow_id, run_id, nb_tasks):
     from simpleflow.swf import stats
 
-    print(stats.helpers.show_workflow_stats(domain, workflow_id, run_id, nb_tasks))
+    print(stats.helpers.show_workflow_stats(
+        domain,
+        workflow_id,
+        run_id,
+        nb_tasks,
+    ))
+
+
+@click.option('--nb-tasks', '-n', default=None, type=click.INT,
+              help='Maximum number of tasks to display')
+@click.argument('run_id')
+@click.argument('workflow_id')
+@click.argument('domain')
+@cli.command('status', help='show the status of a workflow execution')
+def status(domain, workflow_id, run_id, nb_tasks):
+    from simpleflow.swf import stats
+
+    print(stats.helpers.show_workflow_status(
+        domain,
+        workflow_id,
+        run_id,
+        nb_tasks,
+    ))
