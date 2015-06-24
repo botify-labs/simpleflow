@@ -40,7 +40,8 @@ Features
 Quickstart
 ----------
 
-Let's take a simple example that computes the result of ``(x + 1) * 2``.
+Let's take a simple example that computes the result of ``(x + 1) * 2``. You
+will find this example in ``examples/basic.py``.
 
 We need to declare the functions as activities to make them available:
 
@@ -61,20 +62,22 @@ And then define the workflow itself in a ``example.py`` file:
 
 .. code::
 
-    from simpleflow import Workflow
-
-    class SimpleComputation(Workflow):
+    class BasicWorkflow(Workflow):
         def run(self, x):
             y = self.submit(increment, x)
             z = self.submit(double, y)
+
+            print '({x} + 1) * 2 = {result}'.format(
+                x=x,
+                result=z.result)
             return z.result
 
 Now check that the workflow works locally: ::
 
-    $ simpleflow start --local -i example/input.json example.SimpleComputation
+    $ simpleflow start --local examples.basic.BasicWorkflow <<< '{"args": [1]}'
+    (1 + 1) * 2 = 4
 
-The file ``example/input.json`` contains the input passed to the workflow. It
-should have the format:
+The *input* can contain ``args`` or ``kwargs`` such as in:
 
 .. code::
 
@@ -88,11 +91,15 @@ which is equivalent to:
 
     {"kwargs": {"x": 1}}
 
-Then you can run the workflow on Amazon SWF by omitting the ``--local`` flag: ::
+You can, of course, pass values in both ``args`` and ``kwargs``.
 
-    $ simpleflow start --local -i example/input.json example.SimpleComputation
+Now that you are confident that the workflow should work, you can run it on
+Amazon SWF by omitting the ``--local`` flag: ::
 
-.. note:: It requires at least a *decider* and a *worker* processes which are not currently provided by the simpleflow package.
+   $ simpleflow --domain test start examples.basic.BasicWorkflow <<< '{"args": [1]}'
+
+.. note:: It requires at least a *decider* and a *worker* processes which are
+   not currently provided by the simpleflow package.
 
 You can check the status of the workflow execution with: ::
 
