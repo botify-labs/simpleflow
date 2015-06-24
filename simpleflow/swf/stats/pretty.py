@@ -73,6 +73,7 @@ def show(workflow_execution, nb_tasks=None):
             '%',
         ),
         tablefmt='pipe',  # Markdown-compatible.
+        floatfmt='.2f',
     )
 
     contents = TEMPLATE.format(
