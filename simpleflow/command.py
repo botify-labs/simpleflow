@@ -45,7 +45,7 @@ def start(local, workflow, input):
 
 @click.option('--nb-tasks', '-n', default=None, type=click.INT,
               help='Maximum number of tasks to display')
-@click.argument('run_id')
+@click.argument('run_id', required=False)
 @click.argument('workflow_id')
 @click.argument('domain')
 @cli.command('profile', help='the tasks of a workflow')
@@ -62,7 +62,7 @@ def profile(domain, workflow_id, run_id, nb_tasks):
 
 @click.option('--nb-tasks', '-n', default=None, type=click.INT,
               help='Maximum number of tasks to display')
-@click.argument('run_id')
+@click.argument('run_id', required=False)
 @click.argument('workflow_id')
 @click.argument('domain')
 @cli.command('status', help='show the status of a workflow execution')

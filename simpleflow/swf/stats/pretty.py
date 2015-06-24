@@ -50,7 +50,7 @@ def show(workflow_execution, nb_tasks=None):
          (end - start).total_seconds() if start else None,
          end.strftime(TIME_FORMAT) if end else None,
          percent) for task, last_state, scheduled, start, end, timing, percent in
-        stats.get_timings_with_percentage()
+        (row for row in stats.get_timings_with_percentage() if row is not None)
     )
     start_to_close_values = sorted(
         start_to_close_values,
