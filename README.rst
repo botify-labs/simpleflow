@@ -88,9 +88,32 @@ which is equivalent to:
 
     {"kwargs": {"x": 1}}
 
-You can profile the execution of the workflow with:
+Then you can run the workflow on Amazon SWF by omitting the ``--local`` flag: ::
 
-    $ simpleflow profile DOMAIN WORKFLOW_ID RUN_ID --nb-tasks 3
+    $ simpleflow start --local -i example/input.json example.SimpleComputation
+
+.. note:: It requires at least a *decider* and a *worker* processes which are not currently provided by the simpleflow package.
+
+You can check the status of the workflow execution with: ::
+
+    $ simpleflow status DOMAIN WORKFLOW_ID [RUN_ID] --nb-tasks 3
+    Workflow Execution WORKFLOW_ID
+    Domain: DOMAIN
+    Workflow Type: WORKFLOW_TYPE
+
+    Total time = 100.599 seconds
+
+    ## Tasks Status
+
+    | Tasks | Last State   | at                         | Scheduled at               |
+    |:------|:-------------|:---------------------------|:---------------------------|
+    | Task3 | completed    | 2015-06-24 12:06:03.397000 |                            |
+    | Task2 | completed    | 2015-06-24 12:05:24.103000 | 2015-06-24 12:05:23.459000 |
+    | Task1 | completed    | 2015-06-24 12:05:23.337000 | 2015-06-24 12:05:22.312000 |
+
+You can profile the execution of the workflow with: ::
+
+    $ simpleflow profile DOMAIN WORKFLOW_ID [RUN_ID] --nb-tasks 3
 
     Workflow Execution WORKFLOW_ID
     Domain: DOMAIN
@@ -98,8 +121,8 @@ You can profile the execution of the workflow with:
 
     Total time = 100.599 seconds
 
-    Start to close timings
-    ----------------------
+    ## Start to close timings
+
     | Task  | Last State   | Scheduled        |    ->  | Start            |    ->  | End              |        % |
     |:------|:-------------|:-----------------|-------:|:-----------------|-------:|:-----------------|---------:|
     | task2 | completed    | 2015-06-23 22:27 |  0.09  | 2015-06-23 22:27 | 43.776 | 2015-06-23 22:28 | 43.5153  |
