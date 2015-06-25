@@ -133,3 +133,24 @@ def status(workflow_execution, nb_tasks=None):
     )
 
     return contents
+
+
+def list(workflow_executions):
+    values = (
+        (
+            execution.workflow_id,
+            execution.workflow_type.name,
+            execution.status,
+        ) for execution in workflow_executions
+    )
+    list_contents = tabulate(
+        values,
+        headers=(
+            'Workflow ID',
+            'Workflow Type',
+            'Status',
+        ),
+        tablefmt='pipe',  # Markdown-compatible.
+    )
+
+    return list_contents

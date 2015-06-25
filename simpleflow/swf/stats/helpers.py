@@ -7,7 +7,11 @@ import swf.exceptions
 from . import pretty
 
 
-__all__ = ['show_workflow_stats', 'show_workflow_status']
+__all__ = [
+    'show_workflow_stats',
+    'show_workflow_status',
+    'list_workflow_executions',
+]
 
 
 def get_workflow_execution(domain_name, workflow_id, run_id=None):
@@ -53,3 +57,11 @@ def show_workflow_status(domain_name, workflow_id, run_id=None, nb_tasks=None):
         run_id,
     )
     return pretty.status(workflow_execution, nb_tasks)
+
+
+def list_workflow_executions(domain_name):
+    domain = swf.models.Domain(domain_name)
+    query = swf.querysets.WorkflowExecutionQuerySet(domain)
+    executions = query.all()
+
+    return pretty.list(executions)
