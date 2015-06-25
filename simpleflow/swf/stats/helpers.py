@@ -21,7 +21,7 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
 
     action = filter_execution
     keywords = {
-        'domain': domain,
+        'domain': domain.name,
         'workflow_id': workflow_id,
     }
     if run_id:
