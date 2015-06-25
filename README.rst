@@ -40,7 +40,8 @@ Features
 Quickstart
 ----------
 
-Let's take a simple example that computes the result of ``(x + 1) * 2``.
+Let's take a simple example that computes the result of ``(x + 1) * 2``. You
+will find this example in ``examples/basic.py``.
 
 We need to declare the functions as activities to make them available:
 
@@ -61,20 +62,22 @@ And then define the workflow itself in a ``example.py`` file:
 
 .. code::
 
-    from simpleflow import Workflow
-
-    class SimpleComputation(Workflow):
+    class BasicWorkflow(Workflow):
         def run(self, x):
             y = self.submit(increment, x)
             z = self.submit(double, y)
+
+            print '({x} + 1) * 2 = {result}'.format(
+                x=x,
+                result=z.result)
             return z.result
 
 Now check that the workflow works locally: ::
 
-    $ simpleflow --local -w example.SimpleComputation -i example/input.json
+    $ simpleflow start --local examples.basic.BasicWorkflow <<< '{"args": [1]}'
+    (1 + 1) * 2 = 4
 
-The file ``example/input.json`` contains the input passed to the workflow. It
-should have the format:
+The *input* can contain ``args`` or ``kwargs`` such as in:
 
 .. code::
 
@@ -87,6 +90,51 @@ which is equivalent to:
 .. code::
 
     {"kwargs": {"x": 1}}
+
+You can, of course, pass values in both ``args`` and ``kwargs``.
+
+Now that you are confident that the workflow should work, you can run it on
+Amazon SWF by omitting the ``--local`` flag: ::
+
+   $ simpleflow --domain test start examples.basic.BasicWorkflow <<< '{"args": [1]}'
+
+.. note:: It requires at least a *decider* and a *worker* processes which are
+   not currently provided by the simpleflow package.
+
+You can check the status of the workflow execution with: ::
+
+    $ simpleflow status DOMAIN WORKFLOW_ID [RUN_ID] --nb-tasks 3
+    Workflow Execution WORKFLOW_ID
+    Domain: DOMAIN
+    Workflow Type: WORKFLOW_TYPE
+
+    Total time = 100.599 seconds
+
+    ## Tasks Status
+
+    | Tasks | Last State   | at                         | Scheduled at               |
+    |:------|:-------------|:---------------------------|:---------------------------|
+    | Task3 | completed    | 2015-06-24 12:06:03.397000 |                            |
+    | Task2 | completed    | 2015-06-24 12:05:24.103000 | 2015-06-24 12:05:23.459000 |
+    | Task1 | completed    | 2015-06-24 12:05:23.337000 | 2015-06-24 12:05:22.312000 |
+
+You can profile the execution of the workflow with: ::
+
+    $ simpleflow profile DOMAIN WORKFLOW_ID [RUN_ID] --nb-tasks 3
+
+    Workflow Execution WORKFLOW_ID
+    Domain: DOMAIN
+    Workflow Type: WORKFLOW_TYPE
+
+    Total time = 100.599 seconds
+
+    ## Start to close timings
+
+    | Task  | Last State   | Scheduled        |    ->  | Start            |    ->  | End              |        % |
+    |:------|:-------------|:-----------------|-------:|:-----------------|-------:|:-----------------|---------:|
+    | task2 | completed    | 2015-06-23 22:27 |  0.09  | 2015-06-23 22:27 | 43.776 | 2015-06-23 22:28 | 43.5153  |
+    | task1 | completed    | 2015-06-23 22:27 |  0.118 | 2015-06-23 22:27 | 28.246 | 2015-06-23 22:27 | 28.0778  |
+    | task3 | completed    | 2015-06-23 22:26 |  0.068 | 2015-06-23 22:26 | 11.159 | 2015-06-23 22:26 | 11.0926  |
 
 Documentation
 -------------

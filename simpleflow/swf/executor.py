@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import json
 import logging
+import traceback
 
 import swf.format
 import swf.models
@@ -332,15 +333,22 @@ class Executor(executor.Executor):
             return [decision], {}
 
         except Exception, err:
-            reason = 'Cannot replay the workflow {}({})'.format(
+            reason = 'Cannot replay the workflow: {}({})'.format(
                 err.__class__.__name__,
-                err)
-            logger.exception(reason)
+                err,
+            )
+
+            tb = traceback.format_exc()
+            details = 'Traceback:\n{}'.format(tb)
+            logger.exception(reason + '\n' + details)
 
             self.on_failure(reason)
 
             decision = swf.models.decision.WorkflowExecutionDecision()
-            decision.fail(reason=swf.format.reason(reason))
+            decision.fail(
+                reason=swf.format.reason(reason),
+                details=swf.format.details(details),
+            )
 
             return [decision], {}
 
