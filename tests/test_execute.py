@@ -1,5 +1,6 @@
 import tempfile
 import os.path
+import platform
 
 import pytest
 
@@ -22,7 +23,6 @@ def test_execute_program_no_kwargs():
 
         assert (exc_info.value.message ==
                 'command does not take keyword arguments')
-
 
 @execute.program(path='ls')
 def ls_noargs(**kwargs):
@@ -61,6 +61,8 @@ def ls_optional_named_arguments(hide='', *args):
     pass
 
 
+@pytest.mark.skipif(platform.system() == 'Darwin',
+                    reason="ls doesn't have a --hide option on MacOSX")
 def test_execute_program_optional_named_arguments():
     with tempfile.NamedTemporaryFile() as f:
         assert ls_optional_named_arguments(f.name).strip() == f.name
@@ -77,6 +79,8 @@ def test_execute_program_with_positional_arguments():
         assert ls(f.name).strip() == f.name
 
 
+@pytest.mark.skipif(platform.system() == 'Darwin',
+                    reason="ls doesn't have a --hide option on MacOSX")
 def test_execute_program_with_named_arguments():
     with tempfile.NamedTemporaryFile() as f:
         assert f.name not in (ls(
