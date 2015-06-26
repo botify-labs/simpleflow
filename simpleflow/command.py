@@ -124,3 +124,13 @@ def status(domain, workflow_id, run_id, nb_tasks):
         run_id,
         nb_tasks,
     ))
+
+
+@click.argument('domain')
+@cli.command('list', help='list active workflow executions')
+def list(domain):
+    from simpleflow.swf import stats
+
+    print(stats.helpers.list_workflow_executions(
+        domain,
+    ))
