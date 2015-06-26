@@ -76,6 +76,8 @@ def start(workflow,
 
         Executor(workflow_definition).run(input)
 
+        return
+
     if not domain:
         raise ValueError('*domain* must be set when not running in local mode')
 
