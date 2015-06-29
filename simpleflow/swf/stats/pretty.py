@@ -1,7 +1,7 @@
+import sys
 import operator
+from functools import partial, wraps
 from datetime import datetime
-
-from tabulate import tabulate
 
 from . import WorkflowStats
 from simpleflow.history import History
@@ -15,11 +15,6 @@ Workflow Type: {workflow_type.name}
 {tag_list}
 
 Total time = {total_time} seconds
-
-## {label}
-
-{values}
-
 '''
 
 
@@ -38,54 +33,29 @@ def _to_timestamp(date):
     return (date - datetime(1970, 1, 1)).total_seconds()
 
 
-def show(workflow_execution, nb_tasks=None):
-    stats = WorkflowStats(History(workflow_execution.history()))
+def tabular(values, headers, tablefmt, floatfmt):
+    from tabulate import tabulate
 
-    start_to_close_values = (
-        (task,
-         last_state,
-         scheduled.strftime(TIME_FORMAT) if scheduled else None,
-         (start - scheduled).total_seconds() if scheduled else None,
-         start.strftime(TIME_FORMAT) if start else None,
-         (end - start).total_seconds() if start else None,
-         end.strftime(TIME_FORMAT) if end else None,
-         percent) for task, last_state, scheduled, start, end, timing, percent in
-        (row for row in stats.get_timings_with_percentage() if row is not None)
-    )
-    start_to_close_values = sorted(
-        start_to_close_values,
-        key=operator.itemgetter(5),
-        reverse=True,
-    )
-    if nb_tasks:
-        start_to_close_values = start_to_close_values[:nb_tasks]
-
-    start_to_close_contents = tabulate(
-        start_to_close_values,
-        headers=(
-            'Task',
-            'Last State',
-            'Scheduled',
-            ' -> ',
-            'Start',
-            ' -> ',
-            'End',
-            '%',
-        ),
-        tablefmt='pipe',  # Markdown-compatible.
-        floatfmt='.2f',
+    return tabulate(
+        values,
+        headers=headers,
+        tablefmt=tablefmt,
+        floatfmt=floatfmt,
     )
 
-    contents = TEMPLATE.format(
-        workflow_id=workflow_execution.workflow_id,
-        workflow_type=workflow_execution.workflow_type,
-        tag_list=_show_tag_list(workflow_execution.tag_list),
-        total_time=stats.total_time(),
-        label='Start to close timings',
-        values=start_to_close_contents,
-    )
 
-    return contents
+def csv(values, headers, delimiter=','):
+    import csv
+
+    return csv.writer(sys.stdout, delimiter=delimiter).writerows(values)
+
+
+DEFAULT_FORMAT = partial(tabular, tablefmt='plain', floatfmt='.2f')
+FORMATS = {
+    'csv': csv,
+    'tsv': partial(csv, delimiter='\t'),
+    'tabular': DEFAULT_FORMAT,
+}
 
 
 def get_timestamps(task):
@@ -96,61 +66,113 @@ def get_timestamps(task):
     return last_state, timestamp, scheduled_timestamp
 
 
+def info(workflow_execution):
+    history = History(workflow_execution.history())
+    history.parse()
+
+    first_event = history._tasks[0]
+    last_event = history._tasks[-1]
+    execution_time = (
+        last_event[last_event['state'] + '_timestamp'] -
+        first_event[first_event['state'] + '_timestamp']
+    ).total_seconds()
+
+    header = (
+        'domain',
+        'workflow_type.name',
+        'workflow_type.version',
+        'workflow_id',
+        'tag_list',
+        'execution_time',
+    )
+    ex = workflow_execution
+    rows = [(
+        ex.domain.name,
+        ex.workflow_type.name,
+        ex.workflow_type.version,
+        ex.workflow_id,
+        ','.join(ex.tag_list),
+        execution_time,
+    )]
+    return header, rows
+
+
+def profile(workflow_execution, nb_tasks=None):
+    stats = WorkflowStats(History(workflow_execution.history()))
+
+    header = (
+        'Task',
+        'Last State',
+        'Scheduled',
+        'Time Scheduled',
+        'Start',
+        'Time Running',
+        'End',
+        'Percentage of total time',
+    )
+
+    values = (
+        (task,
+         last_state,
+         scheduled.strftime(TIME_FORMAT) if scheduled else None,
+         (start - scheduled).total_seconds() if scheduled else None,
+         start.strftime(TIME_FORMAT) if start else None,
+         (end - start).total_seconds() if start else None,
+         end.strftime(TIME_FORMAT) if end else None,
+         percent) for task, last_state, scheduled, start, end, timing, percent in
+        (row for row in stats.get_timings_with_percentage() if row is not None)
+    )
+    rows = sorted(
+        values,
+        key=operator.itemgetter(5),
+        reverse=True,
+    )
+
+    if nb_tasks:
+        rows = rows[:nb_tasks]
+
+    return header, rows
+
+
 def status(workflow_execution, nb_tasks=None):
     history = History(workflow_execution.history())
     history.parse()
 
-    values = [
+    header = 'Tasks', 'Last State', 'Last State Time', 'Scheduled Time'
+    rows = [
         (task['name'],) + get_timestamps(task) for task in
         history._tasks[::-1]
     ]
     if nb_tasks:
-        values = values[:nb_tasks]
+        rows = rows[:nb_tasks]
 
-    status_contents = tabulate(
-        values,
-        headers=(
-            'Tasks',
-            'Last State',
-            'at',
-            'Scheduled at',
-        ),
-        tablefmt='pipe',  # Markdown-compatible.
-    )
-    first_event = history._tasks[0]
-    last_event = history._tasks[-1]
-    total_time = (
-        last_event[last_event['state'] + '_timestamp'] -
-        first_event[first_event['state'] + '_timestamp']
-    ).total_seconds()
-    contents = TEMPLATE.format(
-        workflow_id=workflow_execution.workflow_id,
-        workflow_type=workflow_execution.workflow_type,
-        tag_list=_show_tag_list(workflow_execution.tag_list),
-        total_time=total_time,
-        label='Tasks Status',
-        values=status_contents,
-    )
+    return header, rows
 
-    return contents
+
+def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
+    def formatter(func):
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            header, rows = func(*args, **kwargs)
+            return fmt(
+                rows,
+                headers=header if with_header else [],
+            )
+        wrapped.__wrapped__ = wrapped
+        return wrapped
+
+    if isinstance(fmt, basestring):
+        fmt = FORMATS[fmt]
+
+    return formatter
 
 
 def list(workflow_executions):
-    values = (
-        (
-            execution.workflow_id,
-            execution.workflow_type.name,
-            execution.status,
-        ) for execution in workflow_executions
-    )
-    list_contents = tabulate(
-        values,
-        headers=(
-            'Workflow ID',
-            'Workflow Type',
-            'Status',
-        ),
-        tablefmt='pipe',  # Markdown-compatible.
-    )
+    header = 'Workflow ID', 'Workflow Type', 'Status'
+    rows = ((
+        execution.workflow_id,
+        execution.workflow_type.name,
+        execution.status,
+    ) for execution in workflow_executions)
 
-    return list_contents
+    return header, rows
