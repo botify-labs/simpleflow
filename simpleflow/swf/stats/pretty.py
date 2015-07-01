@@ -184,3 +184,24 @@ def list(workflow_executions):
     ) for execution in workflow_executions)
 
     return header, rows
+
+
+def get_task(workflow_execution, task_id):
+    history = History(workflow_execution.history())
+    history.parse()
+    task = history._activities[task_id]
+    header = (
+        'type', 'id', 'name', 'version', 'state', 'timestamp', 'input', 'result'
+    )
+    state = task['state']
+    rows = [(
+        task['type'],
+        task['id'],
+        task['name'],
+        task['version'],
+        state,
+        task[state + '_timestamp'],
+        task['input'],
+        task['result'],
+    )]
+    return  header, rows

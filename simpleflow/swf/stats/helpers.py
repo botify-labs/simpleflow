@@ -5,6 +5,7 @@ import swf.querysets
 import swf.exceptions
 
 from . import pretty
+from simpleflow.history import History
 
 
 __all__ = [
@@ -73,3 +74,11 @@ def list_workflow_executions(domain_name):
     executions = query.all()
 
     return pretty.list(executions)
+
+
+def get_task(domain_name, workflow_id, task_id):
+    workflow_execution = get_workflow_execution(
+        domain_name,
+        workflow_id,
+    )
+    return pretty.get_task(workflow_execution, task_id)
