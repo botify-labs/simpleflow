@@ -29,6 +29,7 @@ class History(object):
                 'state': event.state,
                 'scheduled_id': event.id,
                 'scheduled_timestamp': event.timestamp,
+                'input': event.input,
             }
             if event.activity_id not in self._activities:
                 self._activities[event.activity_id] = activity
