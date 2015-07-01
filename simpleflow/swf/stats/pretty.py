@@ -92,6 +92,7 @@ def info(workflow_execution):
         'workflow_id',
         'tag_list',
         'execution_time',
+        'input',
     )
     ex = workflow_execution
     rows = [(
@@ -101,6 +102,7 @@ def info(workflow_execution):
         ex.workflow_id,
         ','.join(ex.tag_list),
         execution_time,
+        first_event['input'],
     )]
     return header, rows
 
