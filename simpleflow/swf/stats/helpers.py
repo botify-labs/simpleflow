@@ -8,7 +8,7 @@ from . import pretty
 
 
 __all__ = [
-    'show_workflow_stats',
+    'show_workflow_profile',
     'show_workflow_status',
     'list_workflow_executions',
 ]
@@ -40,13 +40,22 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
     return workflow_execution
 
 
-def show_workflow_stats(domain_name, workflow_id, run_id=None, nb_tasks=None):
+def show_workflow_info(domain_name, workflow_id, run_id=None):
     workflow_execution = get_workflow_execution(
         domain_name,
         workflow_id,
         run_id,
     )
-    return pretty.show(workflow_execution, nb_tasks)
+    return pretty.info(workflow_execution)
+
+
+def show_workflow_profile(domain_name, workflow_id, run_id=None, nb_tasks=None):
+    workflow_execution = get_workflow_execution(
+        domain_name,
+        workflow_id,
+        run_id,
+    )
+    return pretty.profile(workflow_execution, nb_tasks)
 
 
 def show_workflow_status(domain_name, workflow_id, run_id=None, nb_tasks=None):

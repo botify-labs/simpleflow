@@ -9,8 +9,11 @@ import click
 import swf.models
 import swf.querysets
 
+from simpleflow.swf.stats import pretty
+from simpleflow.swf import stats
 
-__all__ = ['start', 'profile']
+
+__all__ = ['start', 'info', 'profile', 'status', 'list']
 
 
 def get_workflow(clspath):
@@ -21,8 +24,12 @@ def get_workflow(clspath):
 
 
 @click.group()
-def cli():
-    pass
+@click.option('--format')
+@click.option('--header/--no-header', default=False)
+@click.pass_context
+def cli(ctx, header,  format):
+    ctx.params['format'] = format
+    ctx.params['header'] = header
 
 
 def get_workflow_type(domain_name, workflow):
@@ -92,16 +99,34 @@ def start(workflow,
     )
 
 
+def with_format(ctx):
+    return pretty.formatted(
+        with_header=ctx.parent.params['header'],
+        fmt=ctx.parent.params['format'] or stats.helpers.pretty.DEFAULT_FORMAT,
+    )
+
+@click.argument('run_id', required=False)
+@click.argument('workflow_id')
+@click.argument('domain')
+@cli.command(help='about a workflow execution')
+@click.pass_context
+def info(ctx, domain, workflow_id, run_id):
+    print(with_format(ctx)(stats.helpers.show_workflow_info)(
+        domain,
+        workflow_id,
+        run_id,
+    ))
+
+
 @click.option('--nb-tasks', '-n', default=None, type=click.INT,
               help='Maximum number of tasks to display')
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
 @click.argument('domain')
 @cli.command('profile', help='the tasks of a workflow')
-def profile(domain, workflow_id, run_id, nb_tasks):
-    from simpleflow.swf import stats
-
-    print(stats.helpers.show_workflow_stats(
+@click.pass_context
+def profile(ctx, domain, workflow_id, run_id, nb_tasks):
+    print(with_format(ctx)(stats.helpers.show_workflow_profile)(
         domain,
         workflow_id,
         run_id,
@@ -114,11 +139,10 @@ def profile(domain, workflow_id, run_id, nb_tasks):
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
 @click.argument('domain')
-@cli.command('status', help='show the status of a workflow execution')
-def status(domain, workflow_id, run_id, nb_tasks):
-    from simpleflow.swf import stats
-
-    print(stats.helpers.show_workflow_status(
+@cli.command('status', help='of a workflow execution')
+@click.pass_context
+def status(ctx, domain, workflow_id, run_id, nb_tasks):
+    print(with_format(ctx)(stats.helpers.show_workflow_status)(
         domain,
         workflow_id,
         run_id,
@@ -127,10 +151,7 @@ def status(domain, workflow_id, run_id, nb_tasks):
 
 
 @click.argument('domain')
-@cli.command('list', help='list active workflow executions')
-def list(domain):
-    from simpleflow.swf import stats
-
-    print(stats.helpers.list_workflow_executions(
-        domain,
-    ))
+@cli.command('list', help='active workflow executions')
+@click.pass_context
+def list(ctx, domain):
+    print(with_format(ctx)(stats.helpers.list_workflow_executions)(domain))
