@@ -3,6 +3,8 @@ import operator
 from functools import partial, wraps
 from datetime import datetime
 
+from tabulate import tabulate
+
 from . import WorkflowStats
 from simpleflow.history import History
 
@@ -34,8 +36,6 @@ def _to_timestamp(date):
 
 
 def tabular(values, headers, tablefmt, floatfmt):
-    from tabulate import tabulate
-
     return tabulate(
         values,
         headers=headers,
@@ -50,11 +50,19 @@ def csv(values, headers, delimiter=','):
     return csv.writer(sys.stdout, delimiter=delimiter).writerows(values)
 
 
+def human(values, headers):
+    return tabulate(
+        [(str(k), str(v)) for k, v in zip(headers, values[0])],
+        tablefmt='plain',
+    )
+
+
 DEFAULT_FORMAT = partial(tabular, tablefmt='plain', floatfmt='.2f')
 FORMATS = {
     'csv': csv,
     'tsv': partial(csv, delimiter='\t'),
     'tabular': DEFAULT_FORMAT,
+    'human': human,
 }
 
 
@@ -84,6 +92,7 @@ def info(workflow_execution):
         'workflow_id',
         'tag_list',
         'execution_time',
+        'input',
     )
     ex = workflow_execution
     rows = [(
@@ -93,6 +102,7 @@ def info(workflow_execution):
         ex.workflow_id,
         ','.join(ex.tag_list),
         execution_time,
+        first_event['input'],
     )]
     return header, rows
 
@@ -156,7 +166,7 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
             header, rows = func(*args, **kwargs)
             return fmt(
                 rows,
-                headers=header if with_header else [],
+                headers=header if (with_header or fmt == human) else [],
             )
         wrapped.__wrapped__ = wrapped
         return wrapped
@@ -176,3 +186,24 @@ def list(workflow_executions):
     ) for execution in workflow_executions)
 
     return header, rows
+
+
+def get_task(workflow_execution, task_id):
+    history = History(workflow_execution.history())
+    history.parse()
+    task = history._activities[task_id]
+    header = (
+        'type', 'id', 'name', 'version', 'state', 'timestamp', 'input', 'result'
+    )
+    state = task['state']
+    rows = [(
+        task['type'],
+        task['id'],
+        task['name'],
+        task['version'],
+        state,
+        task[state + '_timestamp'],
+        task['input'],
+        task['result'],
+    )]
+    return  header, rows

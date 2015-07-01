@@ -155,3 +155,12 @@ def status(ctx, domain, workflow_id, run_id, nb_tasks):
 @click.pass_context
 def list(ctx, domain):
     print(with_format(ctx)(stats.helpers.list_workflow_executions)(domain))
+
+
+@click.argument('task_id')
+@click.argument('workflow_id')
+@click.argument('domain')
+@cli.command('task.info')
+@click.pass_context
+def task_info(ctx, domain, workflow_id, task_id):
+    print(with_format(ctx)(stats.helpers.get_task)(domain, workflow_id, task_id))
