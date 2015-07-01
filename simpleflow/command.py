@@ -62,7 +62,7 @@ def get_workflow_type(domain_name, workflow):
               required=False,
               help='Amazon SWF Domain')
 @click.argument('workflow')
-@cli.command(help='the workflow defined in the WORKFLOW module')
+@cli.command('workflow.start', help='the workflow defined in the WORKFLOW module')
 def start(workflow,
           domain,
           workflow_id,
@@ -108,7 +108,7 @@ def with_format(ctx):
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
 @click.argument('domain')
-@cli.command(help='about a workflow execution')
+@cli.command('workflow.info', help='about a workflow execution')
 @click.pass_context
 def info(ctx, domain, workflow_id, run_id):
     print(with_format(ctx)(stats.helpers.show_workflow_info)(
@@ -123,7 +123,7 @@ def info(ctx, domain, workflow_id, run_id):
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
 @click.argument('domain')
-@cli.command('profile', help='the tasks of a workflow')
+@cli.command('workflow.profile', help='the tasks of a workflow')
 @click.pass_context
 def profile(ctx, domain, workflow_id, run_id, nb_tasks):
     print(with_format(ctx)(stats.helpers.show_workflow_profile)(
@@ -139,7 +139,7 @@ def profile(ctx, domain, workflow_id, run_id, nb_tasks):
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
 @click.argument('domain')
-@cli.command('status', help='of a workflow execution')
+@cli.command('workflow.tasks', help='of a workflow execution')
 @click.pass_context
 def status(ctx, domain, workflow_id, run_id, nb_tasks):
     print(with_format(ctx)(stats.helpers.show_workflow_status)(
@@ -151,7 +151,7 @@ def status(ctx, domain, workflow_id, run_id, nb_tasks):
 
 
 @click.argument('domain')
-@cli.command('list', help='active workflow executions')
+@cli.command('workflow.list', help='active workflow executions')
 @click.pass_context
 def list(ctx, domain):
     print(with_format(ctx)(stats.helpers.list_workflow_executions)(domain))
