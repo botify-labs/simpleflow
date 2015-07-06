@@ -192,7 +192,7 @@ def status(ctx, domain, workflow_id, run_id, nb_tasks):
 @click.argument('domain')
 @cli.command('workflow.list', help='active workflow executions')
 @click.pass_context
-def list(ctx, domain):
+def list_workflows(ctx, domain):
     print(with_format(ctx)(helpers.list_workflow_executions)(domain))
 
 
