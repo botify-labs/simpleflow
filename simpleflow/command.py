@@ -10,7 +10,7 @@ import swf.models
 import swf.querysets
 
 from simpleflow.swf.stats import pretty
-from simpleflow.swf import stats
+from simpleflow.swf import helpers
 
 
 __all__ = ['start', 'info', 'profile', 'status', 'list']
@@ -106,7 +106,7 @@ def start_workflow(workflow,
 def with_format(ctx):
     return pretty.formatted(
         with_header=ctx.parent.params['header'],
-        fmt=ctx.parent.params['format'] or stats.helpers.pretty.DEFAULT_FORMAT,
+        fmt=ctx.parent.params['format'] or pretty.DEFAULT_FORMAT,
     )
 
 @click.argument('run_id', required=False)
@@ -115,7 +115,7 @@ def with_format(ctx):
 @cli.command('workflow.info', help='about a workflow execution')
 @click.pass_context
 def info(ctx, domain, workflow_id, run_id):
-    print(with_format(ctx)(stats.helpers.show_workflow_info)(
+    print(with_format(ctx)(helpers.show_workflow_info)(
         domain,
         workflow_id,
         run_id,
@@ -130,7 +130,7 @@ def info(ctx, domain, workflow_id, run_id):
 @cli.command('workflow.profile', help='the tasks of a workflow')
 @click.pass_context
 def profile(ctx, domain, workflow_id, run_id, nb_tasks):
-    print(with_format(ctx)(stats.helpers.show_workflow_profile)(
+    print(with_format(ctx)(helpers.show_workflow_profile)(
         domain,
         workflow_id,
         run_id,
@@ -146,7 +146,7 @@ def profile(ctx, domain, workflow_id, run_id, nb_tasks):
 @cli.command('workflow.tasks', help='of a workflow execution')
 @click.pass_context
 def status(ctx, domain, workflow_id, run_id, nb_tasks):
-    print(with_format(ctx)(stats.helpers.show_workflow_status)(
+    print(with_format(ctx)(helpers.show_workflow_status)(
         domain,
         workflow_id,
         run_id,
@@ -158,7 +158,7 @@ def status(ctx, domain, workflow_id, run_id, nb_tasks):
 @cli.command('workflow.list', help='active workflow executions')
 @click.pass_context
 def list(ctx, domain):
-    print(with_format(ctx)(stats.helpers.list_workflow_executions)(domain))
+    print(with_format(ctx)(helpers.list_workflow_executions)(domain))
 
 
 @click.argument('task_id')
@@ -167,4 +167,4 @@ def list(ctx, domain):
 @cli.command('task.info')
 @click.pass_context
 def task_info(ctx, domain, workflow_id, task_id):
-    print(with_format(ctx)(stats.helpers.get_task)(domain, workflow_id, task_id))
+    print(with_format(ctx)(helpers.get_task)(domain, workflow_id, task_id))
