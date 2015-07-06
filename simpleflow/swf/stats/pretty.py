@@ -78,18 +78,28 @@ def info(workflow_execution):
     history = History(workflow_execution.history())
     history.parse()
 
-    first_event = history._tasks[0]
-    last_event = history._tasks[-1]
-    execution_time = (
-        last_event[last_event['state'] + '_timestamp'] -
-        first_event[first_event['state'] + '_timestamp']
-    ).total_seconds()
+    if history._tasks:
+        first_event = history._tasks[0]
+        first_timestamp = first_event[first_event['state'] + '_timestamp']
+        last_event = history._tasks[-1]
+        last_timestamp = last_event[last_event['state'] + '_timestamp']
+        workflow_input = first_event['input']
+    else:
+        first_event = history.events[0]
+        first_timestamp = first_event.timestamp
+        last_event = history.events[0]
+        last_timestamp = last_event.timestamp
+        workflow_input = first_event.input
+
+    execution_time = (last_timestamp - first_timestamp).total_seconds()
 
     header = (
         'domain',
         'workflow_type.name',
         'workflow_type.version',
+        'task_list',
         'workflow_id',
+        'run_id',
         'tag_list',
         'execution_time',
         'input',
@@ -99,10 +109,12 @@ def info(workflow_execution):
         ex.domain.name,
         ex.workflow_type.name,
         ex.workflow_type.version,
+        ex.task_list,
         ex.workflow_id,
+        ex.run_id,
         ','.join(ex.tag_list),
         execution_time,
-        first_event['input'],
+        workflow_input,
     )]
     return header, rows
 
