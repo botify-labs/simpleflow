@@ -103,6 +103,17 @@ def start_workflow(workflow,
     )
 
 
+@click.argument('run_id', required=False)
+@click.argument('workflow_id')
+@click.argument('domain')
+@cli.command(
+    'workflow.terminate',
+    help='the workflow associated with WORKFLOW and optionally RUN_ID')
+def terminate_workflow(domain, workflow_id, run_id):
+    ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    ex.terminate()
+
+
 def with_format(ctx):
     return pretty.formatted(
         with_header=ctx.parent.params['header'],
