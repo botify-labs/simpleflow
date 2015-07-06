@@ -114,6 +114,30 @@ def terminate_workflow(domain, workflow_id, run_id):
     ex.terminate()
 
 
+@click.argument('run_id', required=False)
+@click.argument('workflow_id')
+@click.argument('domain')
+@cli.command(
+    'workflow.restart',
+    help='the workflow associated with WORKFLOW_ID and optionally RUN_ID')
+def restart_workflow(domain, workflow_id, run_id):
+    ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    history = ex.history()
+    ex.terminate()
+    new_ex = ex.workflow_type.start_execution(
+        ex.workflow_id,
+        task_list=ex.task_list,
+        execution_timeout=ex.execution_timeout,
+        input=history.events[0].input,
+        tag_list=ex.tag_list,
+        decision_tasks_timeout=ex.decision_tasks_timeout,
+    )
+    print >> sys.stderr, '{workflow_id} {run_id}'.format(
+        workflow_id=new_ex.workflow_id,
+        run_id=new_ex.run_id,
+    )
+
+
 def with_format(ctx):
     return pretty.formatted(
         with_header=ctx.parent.params['header'],
