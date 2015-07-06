@@ -63,7 +63,7 @@ def get_workflow_type(domain_name, workflow):
               help='Amazon SWF Domain')
 @click.argument('workflow')
 @cli.command('workflow.start', help='the workflow defined in the WORKFLOW module')
-def start(workflow,
+def start_workflow(workflow,
           domain,
           workflow_id,
           task_list,
@@ -89,13 +89,17 @@ def start(workflow,
         raise ValueError('*domain* must be set when not running in local mode')
 
     workflow_type = get_workflow_type(domain, workflow_definition)
-    workflow_type.start_execution(
+    execution = workflow_type.start_execution(
         workflow_id=workflow_id,
         task_list=task_list,
         execution_timeout=execution_timeout,
         input=input,
         tag_list=tags,
         decision_tasks_timeout=decision_tasks_timeout,
+    )
+    print >> sys.stderr, '{workflow_id} {run_id}'.format(
+        workflow_id=execution.workflow_id,
+        run_id=execution.run_id,
     )
 
 
