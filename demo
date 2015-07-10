@@ -1,0 +1,106 @@
+#!/bin/bash
+
+INTERACTIVE=${INTERACTIVE:=0}
+
+LIGHT_GRAY="\033[0;37m"
+NO_COLOUR="\033[0m"
+
+wait_next() {
+	local text='<Press Enter>'
+
+	if [ $INTERACTIVE -ne 0 ]
+	then
+		tput sc; tput bold; echo -en "$text"
+		read
+		tput rc; tput el
+		echo -en "\n"
+	else
+		sleep 1
+
+	echo -en "\n"
+	fi
+}
+
+type_command() {
+	local cmd="$1"
+	echo -n '$ '
+	sleep 1
+	human_type "$cmd"
+	wait_next
+	$cmd
+	wait_next
+}
+
+human_type() {
+	local length=$( expr ${#1} )
+	i=0
+	while [[ i -le length ]]
+	do
+		echo -en "${1:i:1}"
+		sleep 0.02
+		i=$i+1
+	done
+}
+
+comment() {
+	echo -en ${LIGHT_GRAY}
+	echo -en "$1"
+	echo -en ${NO_COLOUR}
+	sleep 1
+}
+
+typing_comment() {
+	echo -en ${LIGHT_GRAY}
+	human_type "$1"
+	echo -en ${NO_COLOUR}
+	sleep 1
+	echo
+}
+
+start_workflow() {
+	sleep 1
+	comment '# OK. '
+	typing_comment "So, now let's start a workflow."
+	# Have an issue with the --input argument. Let's write boilerplate.
+	echo -n '$ '
+	cmd="simpleflow workflow.start --domain TestDomain --task-list test --input '{\"args\": [1, 120]}' examples.basic.BasicWorkflow"
+	human_type "$cmd"
+	wait_next
+	
+	output=$( simpleflow workflow.start --domain TestDomain --task-list test --input '{"args": [1, 120]}' examples.basic.BasicWorkflow )
+	echo -n $output
+	workflow_id=$( echo $output | cut -d' ' -f1 )
+	echo; echo
+	wait_next
+}
+
+sleep 1
+
+comment '# Euh... '
+typing_comment 'What do I do???'
+comment 'HELP!\n'
+type_command 'simpleflow --help'
+
+start_workflow
+
+typing_comment '# How is it running?'
+type_command "simpleflow workflow.tasks TestDomain ${workflow_id}"
+
+typing_comment '# Oh! So, increment is finished. What did it return?'
+type_command "simpleflow --header task.info TestDomain ${workflow_id} activity-examples.basic.increment-1"
+
+typing_comment '# Are there any other workflow running?'
+type_command 'simpleflow workflow.list TestDomain'
+
+typing_comment '# Is my workflow running well?'
+type_command "simpleflow --header workflow.tasks TestDomain ${workflow_id}"
+
+typing_comment "# Let's profile the execution!"
+type_command "simpleflow --header workflow.profile TestDomain ${workflow_id}"
+
+typing_comment '# What about the workflow?'
+type_command "simpleflow --header workflow.info TestDomain ${workflow_id}"
+
+typing_comment '# I want to parse the profile output as a CSV file'
+typing_comment '# No problem!'
+type_command "simpleflow --format csv workflow.profile TestDomain ${workflow_id}"
