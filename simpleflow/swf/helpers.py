@@ -4,8 +4,7 @@ import swf.models
 import swf.querysets
 import swf.exceptions
 
-from . import pretty
-from simpleflow.history import History
+from .stats import pretty
 
 
 __all__ = [
