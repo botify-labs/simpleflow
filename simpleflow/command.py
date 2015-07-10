@@ -76,7 +76,7 @@ def start_workflow(workflow,
     if not input:
         input = json.loads(sys.stdin.read())
     else:
-        input = json.load(open(input, 'rb'))
+        input = json.loads(input)
 
     if local:
         from .local import Executor
