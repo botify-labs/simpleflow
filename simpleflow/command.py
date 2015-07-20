@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-import sys
 import json
+import multiprocessing
+import os
+import signal
+import sys
+import time
 
 import click
 
@@ -103,6 +107,7 @@ def start_workflow(workflow,
         workflow_id=execution.workflow_id,
         run_id=execution.run_id,
     )
+    return execution
 
 
 @click.argument('run_id', required=False)
@@ -237,3 +242,77 @@ def start_worker(workflow, domain, task_list, log_level, nb_processes):
         task_list,
         nb_processes,
     )
+
+
+@click.option('--input', '-i',
+              required=False,
+              help='Path to a JSON file that contains the input of the workflow')
+@click.option('--tags',
+              required=False,
+              help='that identifies the workflow execution')
+@click.option('--decision-tasks-timeout',
+              required=False,)
+@click.option('--execution-timeout',
+              required=False,
+              help='for the whole workflow execution')
+@click.option('--workflow-id',
+              required=False,
+              help='of the workflow execution')
+@click.option('--task-list')
+@click.option('--domain', '-d', required=True, help='SWF Domain')
+@click.argument('workflow')
+@cli.command('standalone', help='execute a workflow with a single process')
+@click.pass_context
+def standalone(context,
+        workflow,
+        domain,
+        workflow_id,
+        task_list,
+        execution_timeout,
+        tags,
+        decision_tasks_timeout,
+        input):
+    """
+    This command spawn a decider and an activity worker to execute a workflow
+    with a single main process.
+
+    """
+    decider_proc = multiprocessing.Process(
+        target=decider.command.start,
+        args=(
+            [workflow],
+            domain,
+            task_list,
+        )
+    )
+    decider_proc.start()
+
+    worker_proc = multiprocessing.Process(
+        target=worker.command.start,
+        args=(
+            workflow,
+            domain,
+            task_list,
+        )
+    )
+    worker_proc.start()
+
+    print >> sys.stderr, 'starting workflow {}'.format(workflow)
+    ex = context.forward(start_workflow, local=False)
+    while True:
+        time.sleep(2)
+        ex = helpers.get_workflow_execution(
+            domain,
+            ex.workflow_id,
+            ex.run_id,
+        )
+        if ex.status == ex.STATUS_CLOSED:
+            print >> sys.stderr, 'execution {} finished'.format(
+                ex.workflow_id,
+            )
+            break
+
+    os.kill(worker_proc.pid, signal.SIGTERM)
+    worker_proc.join()
+    os.kill(decider_proc.pid, signal.SIGTERM)
+    decider_proc.join()
