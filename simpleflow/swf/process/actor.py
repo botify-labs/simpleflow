@@ -290,6 +290,9 @@ class Poller(NamedMixin, swf.actors.Actor):
                 task_list,
                 identity=identity,
             )
+        except swf.exceptions.PollTimeout:
+            logger.debug('{}: PollTimeout'.format(self))
+            raise
         except Exception as err:
             logger.error(
                 "exception %s when polling on %s",
