@@ -83,6 +83,9 @@ setup(
     install_requires=[
         'simple-workflow>=0.1.49',
         'tabulate==0.7.3',
+        'subprocess32',
+        'faulthandler',
+        'setproctitle',
         'click',
     ],
     license=read("LICENSE"),
