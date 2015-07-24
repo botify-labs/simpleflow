@@ -112,8 +112,16 @@ class DeciderPoller(swf.actors.Decider, Poller):
     def process(self, task):
         token, history = task
 
-        decisions = self.decide(history)
-        self._complete(token, decisions)
+        try:
+            decisions = self.decide(history)
+        except Exception as err:
+            logger.error('cannot take decision: {}'.format(err))
+            return
+
+        try:
+            self._complete(token, decisions)
+        except Exception as err:
+            logger.error('cannot complete decision: {}'.format(err))
 
     @with_state('deciding')
     def decide(self, history):
