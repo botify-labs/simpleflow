@@ -1,13 +1,16 @@
-import os
-import multiprocessing
-import signal
-import logging
+import abc
 import functools
 import getpass
 import json
-import abc
+import logging
+import multiprocessing
+import os
+import platform
+import signal
+import sys
 
-import faulthandler
+if platform.python_implementation().lower() != 'pypy':
+    import faulthandler
 from setproctitle import setproctitle
 
 import swf.actors
@@ -118,7 +121,8 @@ class Supervisor(object):
             self.is_alive = False
             self.stop(graceful=True)
 
-        faulthandler.enable()
+        if 'faulthandler' in sys.modules:
+            faulthandler.enable()
         signal.signal(signal.SIGTERM, signal_graceful_shutdown)
         signal.signal(signal.SIGINT, signal_graceful_shutdown)
 
