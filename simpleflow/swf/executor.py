@@ -57,10 +57,11 @@ class Executor(executor.Executor):
     on the execution of the workflow.
 
     """
-    def __init__(self, domain, workflow):
+    def __init__(self, domain, workflow, task_list=None):
         super(Executor, self).__init__(workflow)
         self._tasks = TaskRegistry()
         self.domain = domain
+        self.task_list = task_list
 
     def reset(self):
         """
@@ -206,8 +207,12 @@ class Executor(executor.Executor):
     def resume_child_workflow(self, task, event):
         return self._get_future_from_child_workflow_event(event)
 
-    def schedule_task(self, task):
-        decisions = task.schedule(self.domain)
+    def schedule_task(self, task, task_list=None):
+        logger.debug('executor is scheduling task {} on task_list {}'.format(
+            task.name,
+            task_list,
+        ))
+        decisions = task.schedule(self.domain, task_list)
         # ``decisions`` contains a single decision.
         self._decisions.extend(decisions)
         self._open_activity_count += 1
@@ -241,7 +246,7 @@ class Executor(executor.Executor):
                 future = self.resume_child_workflow(task, event)
 
         if not future:
-            self.schedule_task(task)
+            self.schedule_task(task, task_list=self.task_list)
             future = futures.Future()  # return a pending future.
 
         if self._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT:

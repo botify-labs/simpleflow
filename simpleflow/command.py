@@ -2,11 +2,13 @@
 from __future__ import absolute_import
 
 import json
+import logging
 import multiprocessing
 import os
 import signal
 import sys
 import time
+from uuid import uuid4
 
 import click
 
@@ -20,6 +22,9 @@ from simpleflow.swf.process import worker
 
 
 __all__ = ['start', 'info', 'profile', 'status', 'list']
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_workflow(clspath):
@@ -244,6 +249,17 @@ def start_worker(workflow, domain, task_list, log_level, nb_processes):
     )
 
 
+def get_task_list(workflow_id=''):
+    task_list_id = '-' + uuid4().hex
+    overflow = 256 - len(task_list_id) - len(workflow_id)
+    if overflow < 0:
+        truncated = workflow_id[:overflow]
+        task_list = truncated + task_list_id
+    else:
+        task_list = workflow_id + task_list_id
+    return task_list
+
+
 @click.option('--input', '-i',
               required=False,
               help='Path to a JSON file that contains the input of the workflow')
@@ -258,7 +274,6 @@ def start_worker(workflow, domain, task_list, log_level, nb_processes):
 @click.option('--workflow-id',
               required=False,
               help='of the workflow execution')
-@click.option('--task-list')
 @click.option('--domain', '-d', required=True, help='SWF Domain')
 @click.argument('workflow')
 @cli.command('standalone', help='execute a workflow with a single process')
@@ -267,7 +282,6 @@ def standalone(context,
         workflow,
         domain,
         workflow_id,
-        task_list,
         execution_timeout,
         tags,
         decision_tasks_timeout,
@@ -277,6 +291,11 @@ def standalone(context,
     with a single main process.
 
     """
+    if not workflow_id:
+        workflow_id = get_workflow(workflow).name
+
+    task_list = get_task_list(workflow_id)
+    logger.info('using task list {}'.format(task_list))
     decider_proc = multiprocessing.Process(
         target=decider.command.start,
         args=(
@@ -298,7 +317,7 @@ def standalone(context,
     worker_proc.start()
 
     print >> sys.stderr, 'starting workflow {}'.format(workflow)
-    ex = context.forward(start_workflow, local=False)
+    ex = context.forward(start_workflow, local=False, task_list=task_list)
     while True:
         time.sleep(2)
         ex = helpers.get_workflow_execution(

@@ -106,7 +106,7 @@ class ActivityWorker(object):
     def __init__(self, task_list, workflow):
         self._dispatcher = from_task_registry.RegistryDispatcher(
             simpleflow.task.registry,
-            task_list,
+            None,
             workflow,
         )
 

@@ -7,12 +7,12 @@ from . import (
 )
 
 
-def load_workflow(domain, workflow_name):
+def load_workflow(domain, workflow_name, task_list=None):
     module_name, object_name = workflow_name.rsplit('.', 1)
     module = __import__(module_name, fromlist=['*'])
 
     workflow = getattr(module, object_name)
-    return Executor(swf.models.Domain(domain), workflow)
+    return Executor(swf.models.Domain(domain), workflow, task_list)
 
 
 def make_decider_poller(workflows, domain, task_list):
@@ -21,7 +21,7 @@ def make_decider_poller(workflows, domain, task_list):
 
     """
     executors = [
-        load_workflow(domain, workflow) for workflow in workflows
+        load_workflow(domain, workflow, task_list) for workflow in workflows
     ]
     domain = swf.models.Domain(domain)
     return DeciderPoller(executors, domain, task_list)

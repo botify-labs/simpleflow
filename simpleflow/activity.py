@@ -61,7 +61,7 @@ class Activity(object):
         self.register()
 
     def register(self):
-        task.registry.register(self, self.task_list)
+        task.registry.register(self)
 
     @property
     def name(self):
