@@ -633,11 +633,17 @@ def test_workflow_retry_activity_failed_again():
     # complete the workflow as there is no further task.
     decisions, _ = executor.replay(history)
 
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    # ``a.result`` is ``None`` because it was not set.
-    workflow_completed.complete(result=json.dumps(None))
+    reason = (
+        "Cannot replay the workflow: TaskFailed("
+        "('activity-tests.test_dataflow.increment_retry-1', 'REASON', 'DETAILS'))"
+    )
 
-    assert decisions[0] == workflow_completed
+    workflow_failed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_failed.fail(reason=reason)
+
+    decision = decisions[0]
+    assert decision.type == 'FailWorkflowExecution'
+    assert decision['failWorkflowExecutionDecisionAttributes']['reason'] == reason
 
 
 class TestDefinitionChildWorkflow(TestWorkflow):
@@ -959,7 +965,17 @@ def test_activity_task_timeout():
     decisions, _ = executor.replay(history)
     # The task timed out and there is no retry.
     assert len(decisions) == 1
-    check_task_scheduled_decision(decisions[0], double)
+
+    reason = (
+        "Cannot replay the workflow: MultipleExceptions("
+        "('futures failed', [TimeoutError(START_TO_CLOSE)]))"
+    )
+    workflow_failed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_failed.fail(reason=reason)
+
+    decision = decisions[0]
+    assert decision.type == 'FailWorkflowExecution'
+    assert decision['failWorkflowExecutionDecisionAttributes']['reason'] == reason
 
 
 def test_activity_task_timeout_retry():
