@@ -2,6 +2,8 @@ import json
 import logging
 import multiprocessing
 import os
+import psutil
+import signal
 import traceback
 
 import swf.actors
@@ -126,11 +128,59 @@ def process_task(poller, token, task):
     worker.process(poller, token, task)
 
 
-def spawn(poller, token, task):
+def monitor_child(pid, info):
+    def _handle_child_exit(signum, frame):
+        if signum == signal.SIGCHLD:
+            # Only fill the info dict. The spawn() function calls
+            # ``worker.join()`` to collect the subprocess when it exits.
+            _, status = os.waitpid(pid, 0)
+            sig = status & 0xff
+            exit_code = (status & 0xff00) >> 8
+            info['signal'] = sig
+            info['exit_code'] = exit_code
+
+    signal.signal(signal.SIGCHLD, _handle_child_exit)
+
+
+def spawn(poller, token, task, heartbeat=60):
     logger.debug('spawn() pid={}'.format(os.getpid()))
     worker = multiprocessing.Process(
         target=process_task,
         args=(poller, token, task),
     )
     worker.start()
-    worker.join()
+
+    info = {}
+    monitor_child(worker.pid, info)
+    def worker_alive(): psutil.pid_exists(worker.pid)
+    while worker_alive():
+        worker.join(timeout=heartbeat)
+        if not worker_alive():
+            if worker.exitcode != 0:
+                poller.fail(
+                    token,
+                    task,
+                    reason='process died: signal {}, exit code{}'.format(
+                        info['signal'],
+                        info['exit_code'],
+                    ))
+            return
+        try:
+            response = poller.heartbeat(token)
+        except swf.exceptions.DoesNotExistError:
+            # The subprocess is responsible for completing the task.
+            # Either the task or the workflow execution no longer exists.
+            return
+        except Exception as error:
+            # Let's crash if it cannot notify the heartbeat failed.  The
+            # subprocess will become orphan and the heartbeat timeout may
+            # eventually trigger on Amazon SWF side.
+            logger.error('cannot send heartbeat for task {}: {}'.format(
+                task.activity_type.name,
+                error))
+            raise
+
+        if response and response.get('cancelRequested'):
+            # Task cancelled.
+            worker.terminate()  # SIGTERM
+            return
