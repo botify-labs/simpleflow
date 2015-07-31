@@ -1,7 +1,8 @@
-import logging
 import json
-import traceback
+import logging
 import multiprocessing
+import os
+import traceback
 
 import swf.actors
 import swf.format
@@ -61,26 +62,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     @with_state('processing task')
     def process(self, request):
         token, task = request
-        worker = ActivityWorker(
-            self.task_list,
-            self._workflow,
-        )
-        try:
-            result = worker.process(task)
-        except Exception as err:
-            tb = traceback.format_exc()
-            logger.exception(err)
-            return self.fail(token, task, reason=str(err), details=tb)
-
-        try:
-            self._complete(token, json.dumps(result))
-        except Exception as err:
-            logger.exception(err)
-            reason = 'cannot complete task {}: {}'.format(
-                task.activity_id,
-                err,
-            )
-            self.fail(token, task, reason)
+        spawn(self, token, task)
 
     @with_state('completing')
     def complete(self, token, result):
@@ -103,7 +85,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 
 
 class ActivityWorker(object):
-    def __init__(self, task_list, workflow):
+    def __init__(self, workflow):
         self._dispatcher = from_task_registry.RegistryDispatcher(
             simpleflow.task.registry,
             None,
@@ -114,9 +96,41 @@ class ActivityWorker(object):
         name = task.activity_type.name
         return self._dispatcher.dispatch(name)
 
-    def process(self, task):
+    def process(self, poller, token, task):
+        logger.debug('ActivityWorker.porcess() pid={}'.format(os.getpid()))
         handler = self.dispatch(task)
         input = json.loads(task.input)
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
-        return handler(*args, **kwargs)
+        try:
+            result = handler(*args, **kwargs)
+        except Exception as err:
+            tb = traceback.format_exc()
+            logger.exception(err)
+            return poller.fail(token, task, reason=str(err), details=tb)
+
+        try:
+            poller._complete(token, json.dumps(result))
+        except Exception as err:
+            logger.exception(err)
+            reason = 'cannot complete task {}: {}'.format(
+                task.activity_id,
+                err,
+            )
+            poller.fail(token, task, reason)
+
+
+def process_task(poller, token, task):
+    logger.debug('process_task() pid={}'.format(os.getpid()))
+    worker = ActivityWorker(poller._workflow)
+    worker.process(poller, token, task)
+
+
+def spawn(poller, token, task):
+    logger.debug('spawn() pid={}'.format(os.getpid()))
+    worker = multiprocessing.Process(
+        target=process_task,
+        args=(poller, token, task),
+    )
+    worker.start()
+    worker.join()

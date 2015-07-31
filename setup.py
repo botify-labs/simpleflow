@@ -75,6 +75,7 @@ DEPS = [
     'subprocess32',
     'setproctitle',
     'click',
+    'psutil',
 ]
 if platform.python_implementation().lower() != 'pypy':
     DEPS.append('faulthandler')
