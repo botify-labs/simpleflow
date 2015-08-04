@@ -1,16 +1,21 @@
+from . import settings
 from . import task
 
 
 __all__ = ['with_attributes', 'Activity']
 
 
-def with_attributes(name=None, version=None, task_list=None,
-                    retry=0,
-                    raises_on_failure=False,
-                    start_to_close_timeout=None,
-                    schedule_to_close_timeout=None,
-                    schedule_to_start_timeout=None,
-                    heartbeat_timeout=None):
+def with_attributes(
+        name=None,
+        version=settings.ACTIVITY_DEFAULT_VERSION,
+        task_list=settings.ACTIVITY_DEFAULT_TASK_LIST,
+        retry=0,
+        raises_on_failure=False,
+        start_to_close_timeout=settings.ACTIVITY_START_TO_CLOSE_TIMEOUT,
+        schedule_to_close_timeout=settings.ACTIVITY_SCHEDULE_TO_CLOSE_TIMEOUT,
+        schedule_to_start_timeout=settings.ACTIVITY_SCHEDULE_TO_START_TIMEOUT,
+        heartbeat_timeout=settings.ACTIVITY_HEARTBEAT_TIMEOUT,
+):
     """
     :param name: of the activity type.
     :type  name: str.
@@ -56,7 +61,7 @@ class Activity(object):
         self.register()
 
     def register(self):
-        task.registry.register(self, self.task_list)
+        task.registry.register(self)
 
     @property
     def name(self):

@@ -1,0 +1,2 @@
+class DispatchError(Exception):
+    pass

@@ -57,10 +57,11 @@ class Executor(executor.Executor):
     on the execution of the workflow.
 
     """
-    def __init__(self, domain, workflow):
+    def __init__(self, domain, workflow, task_list=None):
         super(Executor, self).__init__(workflow)
         self._tasks = TaskRegistry()
         self.domain = domain
+        self.task_list = task_list
 
     def reset(self):
         """
@@ -132,8 +133,10 @@ class Executor(executor.Executor):
         elif state == 'failed':
             future._state = futures.FINISHED
             future._exception = exceptions.TaskFailed(
+                name=event['id'],
                 reason=event['reason'],
-                details=event['details'])
+                details=event.get('details'),
+            )
         elif state == 'timed_out':
             future._state = futures.FINISHED
             future._exception = exceptions.TimeoutError(
@@ -206,8 +209,12 @@ class Executor(executor.Executor):
     def resume_child_workflow(self, task, event):
         return self._get_future_from_child_workflow_event(event)
 
-    def schedule_task(self, task):
-        decisions = task.schedule(self.domain)
+    def schedule_task(self, task, task_list=None):
+        logger.debug('executor is scheduling task {} on task_list {}'.format(
+            task.name,
+            task_list,
+        ))
+        decisions = task.schedule(self.domain, task_list)
         # ``decisions`` contains a single decision.
         self._decisions.extend(decisions)
         self._open_activity_count += 1
@@ -241,7 +248,7 @@ class Executor(executor.Executor):
                 future = self.resume_child_workflow(task, event)
 
         if not future:
-            self.schedule_task(task)
+            self.schedule_task(task, task_list=self.task_list)
             future = futures.Future()  # return a pending future.
 
         if self._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT:
@@ -257,25 +264,57 @@ class Executor(executor.Executor):
         ``*args`` and ``**kwargs`` must be serializable in JSON.
 
         """
+        errors = []
+        arguments = []
+        keyword_arguments = {}
+        result = None
         try:
-            args = [executor.get_actual_value(arg) for arg in args]
-            kwargs = {key: executor.get_actual_value(val) for
-                      key, val in kwargs.iteritems()}
+            for arg in args:
+                if isinstance(arg, futures.Future) and arg.failed:
+                    exc = arg._exception
+                    if isinstance(exc, exceptions.MultipleExceptions):
+                        errors.extend(exc.exceptions)
+                    else:
+                        errors.append(exc)
+                else:
+                    arguments.append(executor.get_actual_value(arg))
+
+            for key, val in kwargs.iteritems():
+                if isinstance(val, futures.Future) and val.failed:
+                    exc = val._exception
+                    if isinstance(exc, exceptions.MultipleExceptions):
+                        errors.extend(exc.exceptions)
+                    else:
+                        errors.append(val._exception)
+                else:
+                    keyword_arguments[key] = executor.get_actual_value(val)
+
         except exceptions.ExecutionBlocked:
-            return futures.Future()
+            result = futures.Future()
+        finally:
+            if errors:
+                result = futures.Future()
+                result._state = futures.FINISHED
+                result._exception = exceptions.MultipleExceptions(
+                    'futures failed',
+                    errors,
+                )
+            if result is not None:
+                return result
 
         try:
             if isinstance(func, Activity):
-                task = self.make_activity_task(func, *args, **kwargs)
+                make_task = self.make_activity_task
             elif issubclass(func, Workflow):
-                task = self.make_workflow_task(func, *args, **kwargs)
+                make_task = self.make_workflow_task
             else:
                 raise TypeError
+            task = make_task(func, *arguments, **keyword_arguments)
         except TypeError:
             raise TypeError('invalid type {} for {}'.format(
                 type(func), func))
 
-        return self.resume(task, *args, **kwargs)
+        return self.resume(task, *arguments, **keyword_arguments)
 
     def map(self, callable, iterable):
         """Submit *callable* with each of the items in ``*iterables``.

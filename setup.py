@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import platform
 import re
 import sys
 import subprocess
@@ -68,6 +69,17 @@ def read(fname):
         content = fp.read()
     return content
 
+DEPS = [
+    'simple-workflow>=0.1.49',
+    'tabulate==0.7.3',
+    'subprocess32',
+    'setproctitle',
+    'click',
+    'psutil',
+]
+if platform.python_implementation().lower() != 'pypy':
+    DEPS.append('faulthandler')
+
 setup(
     name='simpleflow',
     version=__version__,
@@ -80,11 +92,7 @@ setup(
     packages=find_packages(exclude=("test*", )),
     package_dir={'simpleflow': 'simpleflow'},
     include_package_data=True,
-    install_requires=[
-        'simple-workflow>=0.1.49',
-        'tabulate==0.7.3',
-        'click',
-    ],
+    install_requires=DEPS,
     license=read("LICENSE"),
     zip_safe=False,
     keywords='simpleflow',
