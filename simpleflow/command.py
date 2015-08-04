@@ -49,6 +49,20 @@ def get_workflow_type(domain_name, workflow):
     return query.get_or_create(workflow.name, workflow.version)
 
 
+def get_input(input=None):
+    if not input:
+        input = json.loads(sys.stdin.read())
+    else:
+        input = json.loads(input)
+
+    if isinstance(input, list):
+        input = {
+            'args': input,
+            'kwargs': {},
+        }
+    return input
+
+
 @click.option('--local', default=False, is_flag=True,
               required=False,
               help='Run the workflow locally without calling Amazon SWF')
@@ -84,11 +98,8 @@ def start_workflow(workflow,
           input,
           local):
     workflow_definition = get_workflow(workflow)
-    if not input:
-        input = json.loads(sys.stdin.read())
-    else:
-        input = json.loads(input)
 
+    input = get_input(input)
     if local:
         from .local import Executor
 
