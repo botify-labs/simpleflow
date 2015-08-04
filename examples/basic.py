@@ -3,6 +3,7 @@ import time
 from simpleflow import (
     activity,
     Workflow,
+    futures,
 )
 
 
@@ -35,11 +36,12 @@ class BasicWorkflow(Workflow):
     def run(self, x, t=30):
         y = self.submit(increment, x)
         yy = self.submit(delay, t, y)
-        z = self.submit(double, yy)
+        z = self.submit(double, y)
 
         print '({x} + 1) * 2 = {result}'.format(
             x=x,
             result=z.result)
+        futures.wait(yy, z)
         return z.result
 
 
