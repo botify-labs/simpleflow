@@ -1,10 +1,7 @@
 import swf.models
 
 from simpleflow.swf.executor import Executor
-from . import (
-    Decider,
-    DeciderPoller,
-)
+from . import Decider, DeciderPoller
 
 
 def load_workflow(domain, workflow_name, task_list=None, repair_with=None,
