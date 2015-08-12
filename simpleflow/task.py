@@ -62,7 +62,7 @@ class WorkflowTask(Task):
     def __repr__(self):
         return '{}(workflow={}, args={}, kwargs={}, id={})'.format(
             self.__class__.__name__,
-            self.activity,
+            self.workflow.__module__ + '.' + self.workflow.__name__,
             self.args,
             self.kwargs,
             self.id)

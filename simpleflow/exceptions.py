@@ -58,6 +58,15 @@ class TimeoutError(Exception):
             self.timeout_type)
 
 
+class TaskCanceled(Exception):
+    def __init__(self, details=None):
+        self.details = details
+
+
+class TaskTerminated(Exception):
+    pass
+
+
 class MultipleExceptions(Exception):
     def __init__(self, msg, exceptions):
         super(MultipleExceptions, self).__init__(msg, exceptions)

@@ -702,6 +702,114 @@ def test_workflow_with_child_workflow():
     assert decisions[0] == workflow_completed
 
 
+def test_workflow_with_child_workflow_failed():
+    workflow = TestDefinitionChildWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={'args': (1,)})
+
+    decisions, _ = executor.replay(history)
+     # Let's add the child workflow to the history to simulate its completion.
+    (history
+        .add_child_workflow(
+            workflow,
+            last_state='failed',
+            workflow_id='workflow-test_workflow-1',
+            task_list=TestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+        ))
+    # The child workflow fails and the executor should fail the
+    # main workflow.
+    decisions, _ = executor.replay(history)
+    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow.fail(reason='FAIL')
+
+    decision = decisions[0]
+    assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert reason == "Cannot replay the workflow: TaskFailed(('workflow-test_workflow-1', None, None))"
+
+
+def test_workflow_with_child_workflow_timed_out():
+    workflow = TestDefinitionChildWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={'args': (1,)})
+
+    decisions, _ = executor.replay(history)
+     # Let's add the child workflow to the history to simulate its completion.
+    (history
+        .add_child_workflow(
+            workflow,
+            last_state='timed_out',
+            workflow_id='workflow-test_workflow-1',
+            task_list=TestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+        ))
+    # The child workflow fails and the executor should fail the
+    # main workflow.
+    decisions, _ = executor.replay(history)
+    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow.fail(reason='timed out')
+
+    decision = decisions[0]
+    assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert reason == 'Cannot replay the workflow: TimeoutError()'
+
+
+def test_workflow_with_child_workflow_canceled():
+    workflow = TestDefinitionChildWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={'args': (1,)})
+
+    decisions, _ = executor.replay(history)
+     # Let's add the child workflow to the history to simulate its completion.
+    (history
+        .add_child_workflow(
+            workflow,
+            last_state='canceled',
+            workflow_id='workflow-test_workflow-1',
+            task_list=TestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+        ))
+    # The child workflow fails and the executor should fail the
+    # main workflow.
+    decisions, _ = executor.replay(history)
+    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow.cancel()
+
+    decision = decisions[0]
+    assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert reason == "Cannot replay the workflow: TaskCanceled()"
+
+
+def test_workflow_with_child_workflow_terminated():
+    workflow = TestDefinitionChildWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={'args': (1,)})
+
+    decisions, _ = executor.replay(history)
+     # Let's add the child workflow to the history to simulate its completion.
+    (history
+        .add_child_workflow(
+            workflow,
+            last_state='terminated',
+            workflow_id='workflow-test_workflow-1',
+            task_list=TestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+        ))
+    # The child workflow fails and the executor should fail the
+    # main workflow.
+    decisions, _ = executor.replay(history)
+    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow.terminate()
+
+    decision = decisions[0]
+    assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert reason == "Cannot replay the workflow: TaskTerminated()"
+
+
 class TestDefinitionMoreThanMaxDecisions(TestWorkflow):
     """
     This workflow executes more tasks than the maximum number of decisions a

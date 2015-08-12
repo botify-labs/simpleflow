@@ -61,7 +61,7 @@ class WorkflowTask(task.WorkflowTask):
         # latency if the WorkflowType already exists.
         model = swf.models.WorkflowType(
             domain,
-            workflow.name,
+            workflow.__module__ + '.' + workflow.__name__,
             version=workflow.version,
         )
 
@@ -76,8 +76,8 @@ class WorkflowTask(task.WorkflowTask):
             workflow_type=model,
             task_list=workflow.task_list,
             input=input,
-            tag_list=workflow.tag_list,
-            child_policy=workflow.child_policy,
+            tag_list=getattr(workflow, 'tag_list', None),
+            child_policy=getattr(workflow, 'child_policy', None),
             execution_timeout=str(workflow.execution_timeout))
 
         return [decision]

@@ -10,6 +10,7 @@ from simpleflow.swf.process.actor import (
     Poller,
     with_state,
 )
+from . import helpers
 
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,11 @@ class Decider(Supervisor):
             payload=self._poller.start,
             nb_children=nb_children,
         )
+
+    @classmethod
+    def make(cls, workflows, domain, task_list, nb_children=None):
+        poller = DeciderPoller.make(workflows, domain, task_list)
+        return Decider(poller, nb_children=nb_children)
 
 
 class DeciderPoller(swf.actors.Decider, Poller):
@@ -88,6 +94,16 @@ class DeciderPoller(swf.actors.Decider, Poller):
             workflows=','.join(self._workflows),
         )
 
+    @classmethod
+    def make(cls, workflows, domain, task_list):
+        """Factory to build a decider."""
+        executors = [
+            helpers.load_workflow(domain, workflow, task_list) for
+            workflow in workflows
+        ]
+        domain = swf.models.Domain(domain)
+        return cls(executors, domain, task_list)
+
     @property
     def name(self):
         """
@@ -124,13 +140,14 @@ class DeciderPoller(swf.actors.Decider, Poller):
 
     @with_state('deciding')
     def decide(self, history):
-        worker = DeciderWorker(self._workflows)
+        worker = DeciderWorker(self.domain, self._workflows)
         decisions = worker.decide(history)
         return decisions
 
 
 class DeciderWorker(object):
-    def __init__(self, workflows):
+    def __init__(self, domain, workflows):
+        self._domain = domain
         self._workflow_name = None
         self._workflows = workflows
 
@@ -144,8 +161,15 @@ class DeciderWorker(object):
             :rtype: (str, [swf.models.decision.base.Decision])
 
         """
-        self._workflow_name = history[0].workflow_type['name']
-        workflow_executor = self._workflows[self._workflow_name]
+        workflow_name = history[0].workflow_type['name']
+        workflow_executor = self._workflows.get(workflow_name)
+        if not workflow_executor:
+            workflow_executor = helpers.load_workflow(
+                self._domain,
+                workflow_name,
+            )
+            self._workflows[workflow_name] = workflow_executor
+        self._workflow_name = workflow_name
         try:
             decisions = workflow_executor.replay(history)
             if isinstance(decisions, tuple) and len(decisions) == 2:  # (decisions, context)
