@@ -271,6 +271,10 @@ def get_task_list(workflow_id=''):
     return task_list
 
 
+@click.option('--nb-workers',
+              type=int,
+              required=False,
+              help='Set the number of parallel processes handling activity tasks')
 @click.option('--input', '-i',
               required=False,
               help='Path to a JSON file that contains the input of the workflow')
@@ -296,7 +300,8 @@ def standalone(context,
         execution_timeout,
         tags,
         decision_tasks_timeout,
-        input):
+        input,
+        nb_workers):
     """
     This command spawn a decider and an activity worker to execute a workflow
     with a single main process.
@@ -323,12 +328,23 @@ def standalone(context,
             workflow,
             domain,
             task_list,
+            nb_workers,
         )
     )
     worker_proc.start()
 
     print >> sys.stderr, 'starting workflow {}'.format(workflow)
-    ex = context.forward(start_workflow, local=False, task_list=task_list)
+    ex = start_workflow.callback(
+        workflow,
+        domain,
+        workflow_id,
+        task_list,
+        execution_timeout,
+        tags,
+        decision_tasks_timeout,
+        input,
+        local=False,
+    )
     while True:
         time.sleep(2)
         ex = helpers.get_workflow_execution(

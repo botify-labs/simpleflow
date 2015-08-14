@@ -20,6 +20,6 @@ def make_worker_poller(workflow, domain, task_list):
 
 def start(workflow, domain, task_list, nb_processes=None):
     poller = make_worker_poller(workflow, domain, task_list)
-    worker = Worker(poller)
+    worker = Worker(poller, nb_processes)
     worker.is_alive = True
     worker.start()
