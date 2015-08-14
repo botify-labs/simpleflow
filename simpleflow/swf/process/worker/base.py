@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import psutil
 import signal
+import sys
 import traceback
 
 import swf.actors
@@ -134,7 +135,13 @@ def monitor_child(pid, info):
         if signum == signal.SIGCHLD:
             # Only fill the info dict. The spawn() function calls
             # ``worker.join()`` to collect the subprocess when it exits.
-            _, status = os.waitpid(pid, 0)
+            try:
+                _, status = os.waitpid(pid, 0)
+            except OSError:
+                # Beware of the race between this handler and
+                # :meth:`Process.join`. This is the main reason to raise a
+                # ``errno 10: No child processe``.
+                return
             sig = status & 0xff
             exit_code = (status & 0xff00) >> 8
             info['signal'] = sig
@@ -153,6 +160,7 @@ def spawn(poller, token, task, heartbeat=60):
 
     info = {}
     monitor_child(worker.pid, info)
+
     def worker_alive(): psutil.pid_exists(worker.pid)
     while worker_alive():
         worker.join(timeout=heartbeat)
@@ -162,8 +170,8 @@ def spawn(poller, token, task, heartbeat=60):
                     token,
                     task,
                     reason='process died: signal {}, exit code{}'.format(
-                        info['signal'],
-                        info['exit_code'],
+                        info.get('signal'),
+                        info.get('exit_code', worker.exitcode),
                     ))
             return
         try:
