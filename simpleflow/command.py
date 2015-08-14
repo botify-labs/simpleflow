@@ -244,19 +244,23 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
         nb_processes,
     )
 
-
+@click.option('--heartbeat',
+              type=int,
+              required=False,
+              help='interval in seconds')
 @click.option('--nb-processes', '-N', type=int)
 @click.option('--log-level', '-l')
 @click.option('--task-list')
 @click.option('--domain', '-d', required=True, help='SWF Domain')
 @click.argument('workflow')
 @cli.command('worker.start', help='a worker process to handle activity tasks')
-def start_worker(workflow, domain, task_list, log_level, nb_processes):
+def start_worker(workflow, domain, task_list, log_level, nb_processes, heartbeat):
     worker.command.start(
         workflow,
         domain,
         task_list,
         nb_processes,
+        heartbeat,
     )
 
 
@@ -271,6 +275,10 @@ def get_task_list(workflow_id=''):
     return task_list
 
 
+@click.option('--heartbeat',
+              type=int,
+              required=False,
+              help='interval in seconds')
 @click.option('--nb-workers',
               type=int,
               required=False,
@@ -301,7 +309,8 @@ def standalone(context,
         tags,
         decision_tasks_timeout,
         input,
-        nb_workers):
+        nb_workers,
+        heartbeat):
     """
     This command spawn a decider and an activity worker to execute a workflow
     with a single main process.
@@ -329,6 +338,7 @@ def standalone(context,
             domain,
             task_list,
             nb_workers,
+            heartbeat,
         )
     )
     worker_proc.start()

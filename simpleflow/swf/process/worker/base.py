@@ -37,10 +37,11 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     Polls an activity and handles it in the worker.
 
     """
-    def __init__(self, domain, task_list, workflow,
+    def __init__(self, domain, task_list, workflow, heartbeat=60,
                  *args, **kwargs):
         self._workflow = workflow
         self.nb_retries = 3
+        self._heartbeat = heartbeat
 
         swf.actors.ActivityWorker.__init__(
             self,
@@ -64,7 +65,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     @with_state('processing task')
     def process(self, request):
         token, task = request
-        spawn(self, token, task)
+        spawn(self, token, task, self._heartbeat)
 
     @with_state('completing')
     def complete(self, token, result):

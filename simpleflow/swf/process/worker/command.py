@@ -9,17 +9,18 @@ from .base import (
 )
 
 
-def make_worker_poller(workflow, domain, task_list):
+def make_worker_poller(workflow, domain, task_list, heartbeat):
     domain = swf.models.Domain(domain)
     return ActivityPoller(
         domain,
         task_list,
         helpers.load_workflow(domain, workflow),
+        heartbeat,
     )
 
 
-def start(workflow, domain, task_list, nb_processes=None):
-    poller = make_worker_poller(workflow, domain, task_list)
+def start(workflow, domain, task_list, nb_processes=None, heartbeat=60):
+    poller = make_worker_poller(workflow, domain, task_list, heartbeat)
     worker = Worker(poller, nb_processes)
     worker.is_alive = True
     worker.start()
