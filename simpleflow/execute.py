@@ -1,3 +1,4 @@
+import re
 import sys
 import subprocess
 import functools
@@ -158,14 +159,24 @@ def python(interpreter='python'):
                     exception = pickle.loads(
                         base64.b64decode(excline.rstrip()))
                 except TypeError:
-                    cls, msg = exclines[-1].split(':', 1)
-                    exception = eval('{}("{}")'.format(
-                        cls.strip(),
-                        msg.strip(),
-                    ))
+                    excline = exclines[-1]
+                    exception = Exception(excline)
+                    if ':' in excline:
+                        cls, msg = excline.split(':', 1)
+                        if re.match(r'\s*[\w.]+\s*', cls):
+                            try:
+                                exception = eval('{}("{}")'.format(
+                                    cls.strip(),
+                                    msg.strip(),
+                                ))
+                            except:
+                                pass
 
                 raise exception
-            return json.loads(output)
+            try:
+                return json.loads(output)
+            except:
+                pass
 
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func

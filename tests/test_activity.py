@@ -125,6 +125,15 @@ def test_function_as_program_raises_builtin_exception():
         add('1')
 
 
+@execute.python()
+def print_string():
+    print "This isn't part of the return value"
+
+
+def test_function_with_print():
+    assert print_string() is None
+
+
 class DummyException(Exception):
     pass
 
