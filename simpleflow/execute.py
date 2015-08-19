@@ -11,7 +11,7 @@ import logging
 __all__ = ['program', 'python']
 
 
-logger = logging.getLogger('simpleflow')
+logger = logging.getLogger(__name__)
 
 
 class RequiredArgument(object):
