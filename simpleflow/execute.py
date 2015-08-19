@@ -5,9 +5,13 @@ import functools
 import json
 import cPickle as pickle
 import base64
+import logging
 
 
 __all__ = ['program', 'python']
+
+
+logger = logging.getLogger('simpleflow')
 
 
 class RequiredArgument(object):
@@ -169,14 +173,14 @@ def python(interpreter='python'):
                                     cls.strip(),
                                     msg.strip(),
                                 ))
-                            except:
-                                pass
+                            except BaseException as ex:
+                                logger.warning(ex.message)
 
                 raise exception
             try:
                 return json.loads(output)
-            except:
-                pass
+            except BaseException as ex:
+                logger.warning(ex.message)
 
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
