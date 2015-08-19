@@ -19,6 +19,7 @@ from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
+from simpleflow import __version__
 
 
 __all__ = ['start', 'info', 'profile', 'status', 'list']
@@ -37,6 +38,7 @@ def get_workflow(clspath):
 @click.group()
 @click.option('--format')
 @click.option('--header/--no-header', default=False)
+@click.version_option(version=__version__)
 @click.pass_context
 def cli(ctx, header,  format):
     ctx.params['format'] = format
