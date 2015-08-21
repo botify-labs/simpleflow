@@ -89,20 +89,20 @@ And then define the workflow itself in a ``example.py`` file:
             futures.wait(yy, z)
             return z.result
 
-Now check that the workflow works locally: ::
+Now check that the workflow works locally with an integer "x" and a wait value "t": ::
 
-    $ simpleflow start --local examples.basic.BasicWorkflow --input '[1, 1]'
+    $ simpleflow workflow.start --local examples.basic.BasicWorkflow --input '[1, 5]'
     (1 + 1) * 2 = 4
 
 *input* is encoded in JSON format and can contain the list of *positional*
 arguments such as ``'[1, 1]`` or a *dict* with the ``args`` and ``kwargs`` keys
 such as ``{"args": [1], "kwargs": {}}``, ``{"kwargs": {"x": 1}}``, or
-``'{"args": [1], "kwargs": {"t": 1}}'```.
+``'{"args": [1], "kwargs": {"t": 5}}'```.
 
 Now that you are confident that the workflow should work, you can run it on
 Amazon SWF with the ``standalone`` command : ::
 
-   $ simpleflow standalone --domain TestDomain examples.basic.BasicWorkflow --input '[1, 1]'
+   $ simpleflow standalone --domain TestDomain examples.basic.BasicWorkflow --input '[1, 5]'
 
 The *standalone* command sets an unique task list and manage all the processes
 that are needed to execute the workflow: decider, activity worker, and a client
@@ -156,7 +156,7 @@ future in state ``PENDING``. Execution reaches the line with the ``print``. It
 blocks here because ``z.result`` is not available. The decider schedules the
 task backs by the *z* future: ``double(y)``. The workflow execution continues
 so forth by evaluating the :meth:`BasicWorkflow.run` again from the start until
-the it finishes.
+it finishes.
 
 Commands
 --------
@@ -164,7 +164,7 @@ Commands
 Overview
 ~~~~~~~~
 
-Please read and even run the `demo` script to have a quick glances of
+Please read and even run the `demo` script to have a quick glance of
 `simpleflow` commands. To run the `demo` you will need to start decider and
 activity worker processes.
 
