@@ -3,7 +3,6 @@ import os.path
 
 import pytest
 
-from simpleflow import activity
 from simpleflow import execute
 
 
@@ -126,12 +125,21 @@ def test_function_as_program_raises_builtin_exception():
 
 
 @execute.python()
-def print_string():
-    print "This isn't part of the return value"
+def print_string(s, retval):
+    print s
+    return retval
 
 
 def test_function_with_print():
-    assert print_string() is None
+    assert print_string("This isn't part of the return value", None) is None
+
+
+def test_function_with_print_and_return():
+    assert print_string("This isn't part of the return value", 42) == 42
+
+
+def test_function_returning_lf():
+    assert print_string("This isn't part of the return value", "a\nb") == "a\nb"
 
 
 class DummyException(Exception):

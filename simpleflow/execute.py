@@ -178,9 +178,10 @@ def python(interpreter='python'):
 
                 raise exception
             try:
-                return json.loads(output)
+                return json.loads(output.rstrip().rsplit("\n", 1)[-1])
             except BaseException as ex:
                 logger.warning(ex.message)
+                logger.warning(repr(output))
 
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
