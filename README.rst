@@ -91,7 +91,7 @@ And then define the workflow itself in a ``example.py`` file:
 
 Now check that the workflow works locally: ::
 
-    $ simpleflow start --local examples.basic.BasicWorkflow --input '[1, 1]'
+    $ simpleflow workflow.start --local examples.basic.BasicWorkflow --input '[1, 1]'
     (1 + 1) * 2 = 4
 
 *input* is encoded in JSON format and can contain the list of *positional*
