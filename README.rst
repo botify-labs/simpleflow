@@ -156,7 +156,7 @@ future in state ``PENDING``. Execution reaches the line with the ``print``. It
 blocks here because ``z.result`` is not available. The decider schedules the
 task backs by the *z* future: ``double(y)``. The workflow execution continues
 so forth by evaluating the :meth:`BasicWorkflow.run` again from the start until
-the it finishes.
+it finishes.
 
 Commands
 --------
@@ -164,7 +164,7 @@ Commands
 Overview
 ~~~~~~~~
 
-Please read and even run the `demo` script to have a quick glances of
+Please read and even run the `demo` script to have a quick glance of
 `simpleflow` commands. To run the `demo` you will need to start decider and
 activity worker processes.
 
