@@ -16,6 +16,7 @@ ACTIVITY_HEARTBEAT_TIMEOUT = ACTIVITY_DEFAULT_TIMEOUT
 
 LOGGING = {
     'version': 1,
+    'disable_existing_loggers': False,
     'loggers': {
         'simpleflow': {
             'level': 'INFO',
