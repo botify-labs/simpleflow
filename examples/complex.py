@@ -1,9 +1,5 @@
-import time
-
 from simpleflow import (
-    activity,
     Workflow,
-    futures,
 )
 
 from . import basic
