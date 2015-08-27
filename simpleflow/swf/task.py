@@ -57,6 +57,9 @@ class ActivityTask(task.ActivityTask):
 class WorkflowTask(task.WorkflowTask):
     def schedule(self, domain, task_list=None):
         workflow = self.workflow
+        if task_list is None:
+            task_list = workflow.task_list
+
         # Always involve a GET call to the SWF API which introduces useless
         # latency if the WorkflowType already exists.
         model = swf.models.WorkflowType(
@@ -74,7 +77,7 @@ class WorkflowTask(task.WorkflowTask):
             'start',
             workflow_id=self.id,
             workflow_type=model,
-            task_list=workflow.task_list,
+            task_list=task_list,
             input=input,
             tag_list=getattr(workflow, 'tag_list', None),
             child_policy=getattr(workflow, 'child_policy', None),

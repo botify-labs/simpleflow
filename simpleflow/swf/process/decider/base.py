@@ -5,6 +5,7 @@ import logging
 import swf.actors
 import swf.exceptions
 
+from simpleflow.swf.executor import OverrideWith
 from simpleflow.swf.process.actor import (
     Supervisor,
     Poller,
@@ -55,6 +56,22 @@ class DeciderPoller(swf.actors.Decider, Poller):
         :type  workflows: [simpleflow.swf.Executor].
 
         """
+        if isinstance(task_list, OverrideWith):
+            self.override_task_list = task_list
+        else:
+            self.override_task_list = None
+
+        if self.override_task_list:
+            task_list = self.override_task_list.value
+
+        Poller.__init__(
+            self,
+            domain,
+            task_list,
+            *args,    # directly forward them.
+            **kwargs  # directly forward them.
+        )
+
         self._workflow_name = '{}'.format(','.join([
             ex._workflow.name for ex in workflows
         ]))
@@ -65,26 +82,23 @@ class DeciderPoller(swf.actors.Decider, Poller):
             executor._workflow.name: executor for executor in workflows
         }
 
+        if self.override_task_list:
+            task_list = self.override_task_list
+
         # All executors must have the same domain and task list.
-        for ex in workflows[1:]:
+        for ex in workflows:
             if ex.domain.name != domain.name:
                 raise ValueError(
                     'all workflows must be in the same domain "{}"'.format(
                         domain.name))
+            elif self.override_task_list:
+                ex.task_list = task_list
             elif ex._workflow.task_list != task_list:
                 raise ValueError(
                     'all workflows must have the same task list "{}"'.format(
                         task_list))
 
         self.nb_retries = nb_retries
-
-        Poller.__init__(
-            self,
-            domain,
-            task_list,
-            *args,    # directly forward them.
-            **kwargs  # directly forward them.
-        )
 
     def __repr__(self):
         return '{cls}({domain}, {task_list}, {workflows})'.format(
@@ -140,16 +154,21 @@ class DeciderPoller(swf.actors.Decider, Poller):
 
     @with_state('deciding')
     def decide(self, history):
-        worker = DeciderWorker(self.domain, self._workflows)
+        if self.override_task_list:
+            task_list = self.override_task_list
+        else:
+            task_list = self.task_list
+        worker = DeciderWorker(self.domain, self._workflows, task_list)
         decisions = worker.decide(history)
         return decisions
 
 
 class DeciderWorker(object):
-    def __init__(self, domain, workflows):
+    def __init__(self, domain, workflows, task_list=None):
         self._domain = domain
         self._workflow_name = None
         self._workflows = workflows
+        self._task_list = task_list
 
     def decide(self, history):
         """
@@ -168,6 +187,9 @@ class DeciderWorker(object):
                 self._domain,
                 workflow_name,
             )
+            if isinstance(self._task_list, OverrideWith):
+                workflow_executor.task_list = self._task_list
+
             self._workflows[workflow_name] = workflow_executor
         self._workflow_name = workflow_name
         try:

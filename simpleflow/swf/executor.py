@@ -45,6 +45,11 @@ class TaskRegistry(dict):
         return self[name]
 
 
+class OverrideWith(object):
+    def __init__(self, value):
+        self.value = value
+
+
 class Executor(executor.Executor):
     """
     Manage a workflow's execution with Amazon SWF. It replays the workflow's
@@ -267,7 +272,7 @@ class Executor(executor.Executor):
             self._decisions.append(timer)
             raise exceptions.ExecutionBlocked()
 
-    def resume(self, task, *args, **kwargs):
+    def resume(self, task, version=None, task_list=None):
         """Resume the execution of a task.
 
         If the task was scheduled, returns a future that wraps its state,
@@ -287,7 +292,9 @@ class Executor(executor.Executor):
                 future = self.resume_child_workflow(task, event)
 
         if not future:
-            self.schedule_task(task, task_list=self.task_list)
+            if task_list is None and self.task_list:
+                task_list = self.task_list
+            self.schedule_task(task, task_list=task_list)
             future = futures.Future()  # return a pending future.
 
         if self._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT:
@@ -297,63 +304,79 @@ class Executor(executor.Executor):
 
         return future
 
-    def submit(self, func, *args, **kwargs):
-        """Register a function and its arguments for asynchronous execution.
+    def submit_with(self, version=None, task_list=None):
+        def _submit(func, *args, **kwargs):
+            """Register a function and its arguments for asynchronous
+            execution.
 
-        ``*args`` and ``**kwargs`` must be serializable in JSON.
+            ``*args`` and ``**kwargs`` must be serializable in JSON.
 
-        """
-        errors = []
-        arguments = []
-        keyword_arguments = {}
-        result = None
-        try:
-            for arg in args:
-                if isinstance(arg, futures.Future) and arg.failed:
-                    exc = arg._exception
-                    if isinstance(exc, exceptions.MultipleExceptions):
-                        errors.extend(exc.exceptions)
+            """
+            errors = []
+            arguments = []
+            keyword_arguments = {}
+            result = None
+            try:
+                for arg in args:
+                    if isinstance(arg, futures.Future) and arg.failed:
+                        exc = arg._exception
+                        if isinstance(exc, exceptions.MultipleExceptions):
+                            errors.extend(exc.exceptions)
+                        else:
+                            errors.append(exc)
                     else:
-                        errors.append(exc)
-                else:
-                    arguments.append(executor.get_actual_value(arg))
+                        arguments.append(executor.get_actual_value(arg))
 
-            for key, val in kwargs.iteritems():
-                if isinstance(val, futures.Future) and val.failed:
-                    exc = val._exception
-                    if isinstance(exc, exceptions.MultipleExceptions):
-                        errors.extend(exc.exceptions)
+                for key, val in kwargs.iteritems():
+                    if isinstance(val, futures.Future) and val.failed:
+                        exc = val._exception
+                        if isinstance(exc, exceptions.MultipleExceptions):
+                            errors.extend(exc.exceptions)
+                        else:
+                            errors.append(val._exception)
                     else:
-                        errors.append(val._exception)
-                else:
-                    keyword_arguments[key] = executor.get_actual_value(val)
+                        keyword_arguments[key] = executor.get_actual_value(val)
 
-        except exceptions.ExecutionBlocked:
-            result = futures.Future()
-        finally:
-            if errors:
+            except exceptions.ExecutionBlocked:
                 result = futures.Future()
-                result._state = futures.FINISHED
-                result._exception = exceptions.MultipleExceptions(
-                    'futures failed',
-                    errors,
-                )
-            if result is not None:
-                return result
+            finally:
+                if errors:
+                    result = futures.Future()
+                    result._state = futures.FINISHED
+                    result._exception = exceptions.MultipleExceptions(
+                        'futures failed',
+                        errors,
+                    )
+                if result is not None:
+                    return result
 
-        try:
-            if isinstance(func, Activity):
-                make_task = self.make_activity_task
-            elif issubclass(func, Workflow):
-                make_task = self.make_workflow_task
+            try:
+                if isinstance(func, Activity):
+                    make_task = self.make_activity_task
+                elif issubclass(func, Workflow):
+                    make_task = self.make_workflow_task
+                else:
+                    raise TypeError
+                task = make_task(func, *arguments, **keyword_arguments)
+            except TypeError:
+                raise TypeError('invalid type {} for {}'.format(
+                    type(func), func))
+
+            # Setting the value of a variable from outter scope leads Python to
+            # create a new local value in the current scope.
+            # Hence we set another variable ``task_list_``.
+            if isinstance(self.task_list, OverrideWith):
+                task_list_ = self.task_list.value
+            elif task_list is None:
+                task_list_ = self.task_list
             else:
-                raise TypeError
-            task = make_task(func, *arguments, **keyword_arguments)
-        except TypeError:
-            raise TypeError('invalid type {} for {}'.format(
-                type(func), func))
+                task_list_ = task_list
 
-        return self.resume(task, *arguments, **keyword_arguments)
+            return self.resume(task, version=version, task_list=task_list_)
+        return _submit
+
+    def submit(self, func, *args, **kwargs):
+        return self.submit_with()(func, *args, **kwargs)
 
     def map(self, callable, iterable):
         """Submit *callable* with each of the items in ``*iterables``.
