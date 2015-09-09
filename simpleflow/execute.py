@@ -1,12 +1,17 @@
+import re
 import sys
 import subprocess
 import functools
 import json
 import cPickle as pickle
 import base64
+import logging
 
 
 __all__ = ['program', 'python']
+
+
+logger = logging.getLogger(__name__)
 
 
 class RequiredArgument(object):
@@ -158,11 +163,18 @@ def python(interpreter='python'):
                     exception = pickle.loads(
                         base64.b64decode(excline.rstrip()))
                 except TypeError:
-                    cls, msg = exclines[-1].split(':', 1)
-                    exception = eval('{}("{}")'.format(
-                        cls.strip(),
-                        msg.strip(),
-                    ))
+                    excline = exclines[-1]
+                    exception = Exception(excline)
+                    if ':' in excline:
+                        cls, msg = excline.split(':', 1)
+                        if re.match(r'\s*[\w.]+\s*', cls):
+                            try:
+                                exception = eval('{}("{}")'.format(
+                                    cls.strip(),
+                                    msg.strip(),
+                                ))
+                            except BaseException as ex:
+                                logger.warning(ex.message)
 
                 raise exception
             try:
