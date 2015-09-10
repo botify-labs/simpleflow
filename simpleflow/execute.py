@@ -162,7 +162,7 @@ def python(interpreter='python'):
                 try:
                     exception = pickle.loads(
                         base64.b64decode(excline.rstrip()))
-                except TypeError:
+                except (TypeError, pickle.UnpicklingError):
                     excline = exclines[-1]
                     exception = Exception(excline)
                     if ':' in excline:
