@@ -1,4 +1,5 @@
 import sys
+import types
 import operator
 from functools import partial, wraps
 from datetime import datetime
@@ -57,12 +58,38 @@ def human(values, headers):
     )
 
 
+def _serialize_complex_object(obj):
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    if isinstance(obj, types.GeneratorType):
+        return [i for i in obj]
+    raise TypeError(
+        "Type %s couldn't be serialized. This is a bug in simpleflow," \
+        " please file a new issue on GitHub!" % type(obj))
+
+
+def jsonify(values, headers):
+    import json
+
+    if headers:
+        return json.dumps(
+            [dict(zip(headers, value)) for value in values],
+            default=_serialize_complex_object,
+        )
+    else:
+        return json.dumps(
+            values,
+            default=_serialize_complex_object,
+        )
+
+
 DEFAULT_FORMAT = partial(tabular, tablefmt='plain', floatfmt='.2f')
 FORMATS = {
     'csv': csv,
     'tsv': partial(csv, delimiter='\t'),
     'tabular': DEFAULT_FORMAT,
     'human': human,
+    'json': jsonify,
 }
 
 
