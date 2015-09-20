@@ -70,7 +70,7 @@ def read(fname):
     return content
 
 DEPS = [
-    'simple-workflow>=0.1.49',
+    'simple-workflow>=0.1.51',
     'tabulate==0.7.3',
     'subprocess32',
     'setproctitle',
