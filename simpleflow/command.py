@@ -17,6 +17,7 @@ import swf.querysets
 
 from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
+from simpleflow.swf.executor import OverrideWith
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
 from simpleflow import __version__
@@ -328,7 +329,7 @@ def standalone(context,
         args=(
             [workflow],
             domain,
-            task_list,
+            OverrideWith(task_list),
         )
     )
     decider_proc.start()
