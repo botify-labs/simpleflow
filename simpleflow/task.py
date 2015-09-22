@@ -31,6 +31,7 @@ class Task(object):
 class ActivityTask(Task):
     def __init__(self, activity, *args, **kwargs):
         self.activity = activity
+        self.idempotent = activity.idempotent
         self.args = args
         self.kwargs = kwargs
         self.id = None
@@ -51,6 +52,8 @@ class ActivityTask(Task):
 class WorkflowTask(Task):
     def __init__(self, workflow, *args, **kwargs):
         self.workflow = workflow
+        # TODO: handle idempotence at workflow level
+        self.idempotent = False
         self.args = args
         self.kwargs = kwargs
         self.id = None

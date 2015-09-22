@@ -15,6 +15,7 @@ def with_attributes(
         schedule_to_close_timeout=settings.ACTIVITY_SCHEDULE_TO_CLOSE_TIMEOUT,
         schedule_to_start_timeout=settings.ACTIVITY_SCHEDULE_TO_START_TIMEOUT,
         heartbeat_timeout=settings.ACTIVITY_HEARTBEAT_TIMEOUT,
+        idempotent=None,
 ):
     """
     :param name: of the activity type.
@@ -29,7 +30,8 @@ def with_attributes(
             start_to_close_timeout,
             schedule_to_close_timeout,
             schedule_to_start_timeout,
-            heartbeat_timeout
+            heartbeat_timeout,
+            idempotent=idempotent,
         )
 
     return wrap
@@ -45,7 +47,8 @@ class Activity(object):
                  start_to_close_timeout=None,
                  schedule_to_close_timeout=None,
                  schedule_to_start_timeout=None,
-                 heartbeat_timeout=None):
+                 heartbeat_timeout=None,
+                 idempotent=None):
         self._callable = callable
 
         self._name = name
@@ -53,6 +56,7 @@ class Activity(object):
         self.task_list = task_list
         self.retry = retry
         self.raises_on_failure = raises_on_failure
+        self.idempotent = idempotent
         self.task_start_to_close_timeout = start_to_close_timeout
         self.task_schedule_to_close_timeout = schedule_to_close_timeout
         self.task_schedule_to_start_timeout = schedule_to_start_timeout

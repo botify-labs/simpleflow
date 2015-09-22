@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import hashlib
 import json
 import logging
 import traceback
@@ -75,7 +76,7 @@ class Executor(executor.Executor):
         self._decisions = []
         self._tasks = TaskRegistry()
 
-    def _make_task_id(self, task):
+    def _make_task_id(self, task, *args, **kwargs):
         """
         Assign a new ID to *task*.
 
@@ -83,9 +84,19 @@ class Executor(executor.Executor):
             String with at most 256 characters.
 
         """
-        index = self._tasks.add(task)
-        task_id = '{name}-{idx}'.format(name=task.name, idx=index)
+        if not task.idempotent:
+            # If idempotency is False or unknown, let's generate a task id by
+            # incrementing and id after the task name.
+            # (default strategy, backwards compatible with previous versions)
+            suffix = self._tasks.add(task)
+        else:
+            # If task is idempotent, we can do better and hash arguments.
+            # It makes the workflow resistant to retries or variations on the
+            # same task name (see #11).
+            arguments = json.dumps({"args": args, "kwargs": kwargs})
+            suffix = hashlib.md5(arguments).hexdigest()
 
+        task_id = '{name}-{idx}'.format(name=task.name, idx=suffix)
         return task_id
 
     def _get_future_from_activity_event(self, event):
@@ -235,7 +246,7 @@ class Executor(executor.Executor):
         otherwise schedules it.
 
         """
-        task.id = self._make_task_id(task)
+        task.id = self._make_task_id(task, *args, **kwargs)
         event = self.find_event(task, self._history)
 
         future = None
