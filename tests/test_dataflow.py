@@ -45,6 +45,11 @@ def double(x):
     return x * 2
 
 
+@activity.with_attributes(version=DEFAULT_VERSION, idempotent=True)
+def triple(x):
+    return x * 3
+
+
 class TestWorkflow(Workflow):
     name = 'test_workflow'
     version = 'test_version'
@@ -1215,3 +1220,43 @@ def test_more_than_1000_open_activities_partial_max():
     # 2 already scheduled + 20 to schedule now
     assert executor._open_activity_count == 22
     assert len(decisions) == 20
+
+
+
+class TestTaskNaming(TestWorkflow):
+    """
+    This workflow executes a few tasks and tests the naming (task ID
+    assignation) depending on their idempotence.
+
+    """
+    def run(self):
+        results = []
+        results.append(self.submit(increment, 0))
+        results.append(self.submit(increment, 0))
+        results.append(self.submit(triple, 1))
+        results.append(self.submit(triple, 2))
+        results.append(self.submit(triple, 2))
+        futures.wait(*results)
+
+def test_task_naming():
+    workflow = TestTaskNaming
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow, input={})
+
+    decisions, _ = executor.replay(history)
+    expected = [
+        # non idempotent task, should increment
+        "activity-tests.test_dataflow.increment-1",
+        # non idempotent task, should increment again
+        "activity-tests.test_dataflow.increment-2",
+        # idempotent task, with arg 1
+        "activity-tests.test_dataflow.triple-deb8adb88b687c0df408628aa69b1377",
+        # idempotent task, with arg 2
+        "activity-tests.test_dataflow.triple-d269dc325a06c6ad32888f450ee8dd30",
+        # idempotent task, with arg 2 too => same task id
+        "activity-tests.test_dataflow.triple-d269dc325a06c6ad32888f450ee8dd30",
+    ]
+    for i in range(0, len(expected)):
+        decision = decisions[i]['scheduleActivityTaskDecisionAttributes']
+        assert decision['activityId'] == expected[i]
