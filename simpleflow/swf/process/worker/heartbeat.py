@@ -6,7 +6,7 @@ import multiprocessing
 
 import swf.exceptions
 
-from botify.saas.utils import retry
+from simpleflow.utils import retry
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class HeartbeatProcess(object):
         self._interval = interval
         self._heartbeat = heartbeat_callable
 
-    @retry.with_retry(nb_times=10,
+    @retry.with_delay(nb_times=10,
                       delay=retry.exponential,
                       on_exceptions=swf.exceptions.ResponseError)
     def send_heartbeat(self, token):

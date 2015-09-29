@@ -41,7 +41,7 @@ def format_arguments(*args, **kwargs):
     Examples:
 
         >>> format_arguments('a', 'b', c=1, val=2)
-        ['-c=1', '--val=2', 'a', 'b']
+        ['-c="1"', '--val="2"', 'a', 'b']
 
     """
     def arg(key):
@@ -190,7 +190,7 @@ def python(interpreter='python'):
 
 
 def program(path=None, argument_format=format_arguments):
-    """
+    r"""
     Decorate a callable to execute it as an external program.
 
     :param path: of the program to execute. If it is ``None`` the name of the
@@ -256,7 +256,7 @@ def make_callable(funcname):
 
     >>> func = make_callable('itertools.imap')
     >>> func
-    itertools.imap
+    <type 'itertools.imap'>
     >>> list(func(lambda x: x + 1, range(4)))
     [1, 2, 3, 4]
 
@@ -264,7 +264,7 @@ def make_callable(funcname):
 
     >>> func = make_callable('map')
     >>> func
-    <function map>
+    <built-in function map>
     >>> func(lambda x: x + 1, range(4))
     [1, 2, 3, 4]
 
