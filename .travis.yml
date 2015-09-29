@@ -6,6 +6,11 @@ python:
   - "2.7"
   - "pypy"
 
-install: pip install -U .
+install:
+  - pip install .
+  - rm -rf build/
 
 script: ./script/test -vv
+
+# setting sudo to 'false' allows running on travis-ci new infra (docker)
+sudo: false
