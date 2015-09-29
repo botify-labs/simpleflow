@@ -8,4 +8,4 @@ python:
 
 install: pip install -U .
 
-script: py.test -vv
+script: ./script/test -vv
