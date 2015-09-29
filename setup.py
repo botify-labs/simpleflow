@@ -72,13 +72,13 @@ def read(fname):
 DEPS = [
     'simple-workflow>=0.1.49',
     'tabulate==0.7.3',
-    'subprocess32',
     'setproctitle',
     'click',
     'psutil',
 ]
 if platform.python_implementation().lower() != 'pypy':
     DEPS.append('faulthandler')
+    DEPS.append('subprocess32')
 
 setup(
     name='simpleflow',
