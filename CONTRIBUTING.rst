@@ -68,12 +68,17 @@ Running tests
 
 To run all the tests in your current virtual environment: ::
 
-    $ py.test
+    $ ./script/test
 
-To run tests on Python 2.7 and Pypy virtual environents: ::
+This is what Travis CI does on each environment.
+
+To run tests on Python 2.7 and Pypy virtual environments: ::
 
     $ tox
 
+This can help you simulate locally what Travis CI would do. Be aware though that tests may fail
+depending on your OS, so Travis CI is the reference gate for the project. For instance, installing
+``subprocess32`` in a Pypy environment doesn't work on Mac OSX.
 
 Documentation
 +++++++++++++
