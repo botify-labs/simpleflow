@@ -27,6 +27,8 @@ class TaskFailed(Exception):
     """
     Wrap the error's *reason* and *details* for an task that failed.
 
+    :param name: of the task that failed.
+    :type name: str.
     :param reason: of the failure.
     :type  reason: str.
     :param details: of the failure.
@@ -40,7 +42,7 @@ class TaskFailed(Exception):
         self.details = None
 
     def __repr__(self):
-        return '{}({}, "{}")'.format(
+        return '{} ({}, "{}")'.format(
             self.__class__.__name__,
             self.name,
             self.reason,
@@ -56,19 +58,3 @@ class TimeoutError(Exception):
         return '{}({})'.format(
             self.__class__.__name__,
             self.timeout_type)
-
-
-class MultipleExceptions(Exception):
-    def __init__(self, msg, exceptions):
-        super(MultipleExceptions, self).__init__(msg, exceptions)
-        self.exceptions = exceptions
-
-    def __repr__(self):
-        return '{}({}, {})'.format(
-            self.__class__.__name__,
-            self.msg,
-            ', '.join(str(exc) for exc in self.exceptions),
-        )
-
-    def __unicode__(self):
-        return self.__repr__()
