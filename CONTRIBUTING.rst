@@ -41,13 +41,8 @@ Setting Up for Local Development
 Git Branch Structure
 ++++++++++++++++++++
 
-simpleflow follows Vincent Driessen's `Successful Git Branching Model <http://http://nvie.com/posts/a-successful-git-branching-model/>`_ . In practice, the following branch conventions are used:
-
-``devel``
-    The next release branch.
-
-``master``
-    Current production release on PyPI.
+simpleflow used to have a separated ``devel`` branch but is now using only one, main branch ``master``,
+that contains what will be released in the next version. This branch is (hopefully) always stable.
 
 Pull Requests
 ++++++++++++++
@@ -56,7 +51,7 @@ Pull Requests
 
     $ git checkout -b name-of-feature
 
-2. Commit your changes. Write `good commit messages <http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
+2. Commit your changes. Write `good commit messages <http://chris.beams.io/posts/git-commit/>`_.
 
     $ git commit -m "Detailed commit message"
     $ git push origin name-of-feature
@@ -64,25 +59,26 @@ Pull Requests
 2. Before submitting a pull request, check the following:
 
 - If the pull request adds functionality, it should be tested and the docs should be updated.
-- The pull request should work on Python 2.6, 2.7, 3.3, and PyPy. Use ``tox`` to verify that it does.
+- The pull request should work on Python 2.7 and PyPy. Use ``tox`` to verify that it does.
 
-3. Submit a pull request to the ``dev`` branch.
+3. Submit a pull request to the ``master`` branch.
 
 Running tests
 +++++++++++++
 
-To run all the tests: ::
+To run all the tests in your current virtual environment: ::
 
-    $ python run_tests.py
+    $ ./script/test
 
-To skip slow tests: ::
+This is what Travis CI does on each environment.
 
-    $ python run_tests fast
-
-To run tests on Python 2.6, 2.7, and 3.3 virtual environents: ::
+To run tests on Python 2.7 and Pypy virtual environments: ::
 
     $ tox
 
+This can help you simulate locally what Travis CI would do. Be aware though that tests may fail
+depending on your OS, so Travis CI is the reference gate for the project. For instance, installing
+``subprocess32`` in a Pypy environment doesn't work on Mac OSX.
 
 Documentation
 +++++++++++++

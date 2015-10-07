@@ -72,8 +72,8 @@ def read(fname):
 DEPS = [
     'simple-workflow>=0.1.49',
     'tabulate==0.7.3',
-    'subprocess32',
     'setproctitle',
+    'subprocess32',
     'click',
     'psutil',
 ]
