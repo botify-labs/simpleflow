@@ -1,6 +1,7 @@
 import logging
 
 from simpleflow import (
+    exceptions,
     executor,
     futures,
 )
@@ -27,7 +28,7 @@ class Executor(executor.Executor):
         except Exception as err:
             future._exception = err
             if func.raises_on_failure:
-                raise
+                raise exceptions.TaskFailed(func.name, err.message)
         finally:
             future._state = futures.FINISHED
 

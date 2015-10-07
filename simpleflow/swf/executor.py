@@ -144,8 +144,9 @@ class Executor(executor.Executor):
         elif state == 'failed':
             future._state = futures.FINISHED
             future._exception = exceptions.TaskFailed(
+                name=event['id'],
                 reason=event['reason'],
-                details=event['details'])
+                details=event.get('details'))
         elif state == 'timed_out':
             future._state = futures.FINISHED
             future._exception = exceptions.TimeoutError(
