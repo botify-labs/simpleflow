@@ -81,9 +81,6 @@ class Future(object):
         if self._state != FINISHED:
             return self.wait()
 
-        if self._exception is not None:
-            raise self._exception
-
         return self._result
 
     def cancel(self):
@@ -129,10 +126,6 @@ class Future(object):
     @property
     def finished(self):
         return self._state == FINISHED
-
-    @property
-    def failed(self):
-        return self._state == FINISHED and self._exception is not None
 
     @property
     def done(self):

@@ -33,18 +33,16 @@ class TaskFailed(Exception):
     :type  details: str.
 
     """
-    def __init__(self, name, reason, details=None):
-        super(TaskFailed, self).__init__(name, reason, details)
-        self.name = name
+    def __init__(self, reason, details=None):
+        super(TaskFailed, self).__init__(self, reason, details)
         self.reason = reason
         self.details = None
 
     def __repr__(self):
-        return '{}({}, "{}")'.format(
+        return '{}(reason="{}")'.format(
             self.__class__.__name__,
-            self.name,
             self.reason,
-        )
+            self.details)
 
 
 class TimeoutError(Exception):
@@ -56,19 +54,3 @@ class TimeoutError(Exception):
         return '{}({})'.format(
             self.__class__.__name__,
             self.timeout_type)
-
-
-class MultipleExceptions(Exception):
-    def __init__(self, msg, exceptions):
-        super(MultipleExceptions, self).__init__(msg, exceptions)
-        self.exceptions = exceptions
-
-    def __repr__(self):
-        return '{}({}, {})'.format(
-            self.__class__.__name__,
-            self.msg,
-            ', '.join(str(exc) for exc in self.exceptions),
-        )
-
-    def __unicode__(self):
-        return self.__repr__()

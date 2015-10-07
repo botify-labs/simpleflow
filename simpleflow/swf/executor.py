@@ -144,10 +144,8 @@ class Executor(executor.Executor):
         elif state == 'failed':
             future._state = futures.FINISHED
             future._exception = exceptions.TaskFailed(
-                name=event['id'],
                 reason=event['reason'],
-                details=event.get('details'),
-            )
+                details=event['details'])
         elif state == 'timed_out':
             future._state = futures.FINISHED
             future._exception = exceptions.TimeoutError(
@@ -275,57 +273,25 @@ class Executor(executor.Executor):
         ``*args`` and ``**kwargs`` must be serializable in JSON.
 
         """
-        errors = []
-        arguments = []
-        keyword_arguments = {}
-        result = None
         try:
-            for arg in args:
-                if isinstance(arg, futures.Future) and arg.failed:
-                    exc = arg._exception
-                    if isinstance(exc, exceptions.MultipleExceptions):
-                        errors.extend(exc.exceptions)
-                    else:
-                        errors.append(exc)
-                else:
-                    arguments.append(executor.get_actual_value(arg))
-
-            for key, val in kwargs.iteritems():
-                if isinstance(val, futures.Future) and val.failed:
-                    exc = val._exception
-                    if isinstance(exc, exceptions.MultipleExceptions):
-                        errors.extend(exc.exceptions)
-                    else:
-                        errors.append(val._exception)
-                else:
-                    keyword_arguments[key] = executor.get_actual_value(val)
-
+            args = [executor.get_actual_value(arg) for arg in args]
+            kwargs = {key: executor.get_actual_value(val) for
+                      key, val in kwargs.iteritems()}
         except exceptions.ExecutionBlocked:
-            result = futures.Future()
-        finally:
-            if errors:
-                result = futures.Future()
-                result._state = futures.FINISHED
-                result._exception = exceptions.MultipleExceptions(
-                    'futures failed',
-                    errors,
-                )
-            if result is not None:
-                return result
+            return futures.Future()
 
         try:
             if isinstance(func, Activity):
-                make_task = self.make_activity_task
+                task = self.make_activity_task(func, *args, **kwargs)
             elif issubclass(func, Workflow):
-                make_task = self.make_workflow_task
+                task = self.make_workflow_task(func, *args, **kwargs)
             else:
                 raise TypeError
-            task = make_task(func, *arguments, **keyword_arguments)
         except TypeError:
             raise TypeError('invalid type {} for {}'.format(
                 type(func), func))
 
-        return self.resume(task, *arguments, **keyword_arguments)
+        return self.resume(task, *args, **kwargs)
 
     def map(self, callable, iterable):
         """Submit *callable* with each of the items in ``*iterables``.
