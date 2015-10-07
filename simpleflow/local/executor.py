@@ -26,7 +26,8 @@ class Executor(executor.Executor):
             future._result = func._callable(*args, **kwargs)
         except Exception as err:
             future._exception = err
-            raise
+            if func.raises_on_failure:
+                raise
         finally:
             future._state = futures.FINISHED
 
