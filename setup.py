@@ -77,8 +77,6 @@ DEPS = [
     'click',
     'psutil',
 ]
-if platform.python_implementation().lower() != 'pypy':
-    DEPS.append('faulthandler')
 
 setup(
     name='simpleflow',
