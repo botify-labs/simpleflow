@@ -123,7 +123,7 @@ class Supervisor(object):
         try:
             import faulthandler
             faulthandler.enable()
-        except:
+        except ImportError:
             pass
 
         signal.signal(signal.SIGTERM, signal_graceful_shutdown)
