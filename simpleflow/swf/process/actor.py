@@ -9,8 +9,6 @@ import platform
 import signal
 import sys
 
-if platform.python_implementation().lower() != 'pypy':
-    import faulthandler
 from setproctitle import setproctitle
 
 import swf.actors
@@ -102,7 +100,7 @@ class Supervisor(object):
 
         - SIGTERM and SIGINT lead to a graceful shutdown.
         - SIGSEGV, SIGFPE, SIGABRT, SIGBUS and SIGILL displays a traceback
-          using the faulthandler library.
+          using the faulthandler library if available.
 
         """
         def signal_graceful_shutdown(signum, frame):
@@ -121,8 +119,13 @@ class Supervisor(object):
             self.is_alive = False
             self.stop(graceful=True)
 
-        if 'faulthandler' in sys.modules:
+        # optionnally use faulthandler if available
+        try:
+            import faulthandler
             faulthandler.enable()
+        except:
+            pass
+
         signal.signal(signal.SIGTERM, signal_graceful_shutdown)
         signal.signal(signal.SIGINT, signal_graceful_shutdown)
 
