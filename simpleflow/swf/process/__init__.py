@@ -1,4 +1,4 @@
 from __future__ import absolute_import
 
-from .actor import Poller
-from .decider import Decider
+from .actor import Poller  # NOQA
+from .decider import Decider  # NOQA

@@ -4,7 +4,6 @@ import multiprocessing
 import os
 import psutil
 import signal
-import sys
 import traceback
 
 import swf.actors

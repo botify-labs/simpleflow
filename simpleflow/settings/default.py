@@ -1,4 +1,4 @@
-import logging
+import logging  # NOQA
 
 
 WORKFLOW_DEFAULT_TASK_LIST = 'default'
