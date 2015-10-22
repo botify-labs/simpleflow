@@ -145,15 +145,21 @@ def python(interpreter='python'):
         def execute(*args, **kwargs):
             command = 'simpleflow.execute'  # name of a module.
             try:
-                output = subprocess.check_output([
+                full_command = [
                     interpreter, '-m', command,  # execute module a script.
                     get_name(func), format_arguments_json(*args, **kwargs),
-                ],
+                ]
+                output = subprocess.check_output(
+                    full_command,
                     # Redirect stderr to stdout to get traceback on error.
                     stderr=subprocess.STDOUT,
                 )
             except subprocess.CalledProcessError as err:
-                logger.info("got a subprocess.CalledProcessError: {}".format(err.output))
+                logger.info(
+                    "got a subprocess.CalledProcessError on command: {}\noriginal error output: {}".format(
+                        full_command, err.output
+                    )
+                )
                 exclines = err.output.rstrip().rsplit('\n', 2)
                 if len(exclines) == 1:
                     excline = exclines[0]
