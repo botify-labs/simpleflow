@@ -1,2 +1,2 @@
-from base import *
-import pretty
+from base import *  # NOQA
+import pretty  # NOQA

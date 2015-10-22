@@ -6,7 +6,6 @@ import swf.exceptions
 
 from .stats import pretty
 
-
 __all__ = [
     'show_workflow_profile',
     'show_workflow_status',
@@ -67,17 +66,29 @@ def show_workflow_status(domain_name, workflow_id, run_id=None, nb_tasks=None):
     return pretty.status(workflow_execution, nb_tasks)
 
 
-def list_workflow_executions(domain_name):
+def list_workflow_executions(domain_name, *args, **kwargs):
     domain = swf.models.Domain(domain_name)
     query = swf.querysets.WorkflowExecutionQuerySet(domain)
-    executions = query.all()
+    executions = query.all(*args, **kwargs)
 
     return pretty.list(executions)
 
 
-def get_task(domain_name, workflow_id, task_id):
+def filter_workflow_executions(domain_name, status, tag,
+                               workflow_id, workflow_type_name,
+                               workflow_type_version, *args, **kwargs):
+    domain = swf.models.Domain(domain_name)
+    query = swf.querysets.WorkflowExecutionQuerySet(domain)
+    executions = query.filter(status, tag,
+                              workflow_id, workflow_type_name,
+                              workflow_type_version, *args, **kwargs)
+
+    return pretty.list_details(executions)
+
+
+def get_task(domain_name, workflow_id, task_id, details):
     workflow_execution = get_workflow_execution(
         domain_name,
         workflow_id,
     )
-    return pretty.get_task(workflow_execution, task_id)
+    return pretty.get_task(workflow_execution, task_id, details)

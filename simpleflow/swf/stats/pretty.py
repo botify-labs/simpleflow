@@ -9,7 +9,6 @@ from tabulate import tabulate
 from . import WorkflowStats
 from simpleflow.history import History
 
-
 TEMPLATE = '''
 Workflow Execution {workflow_id}
 Domain: {workflow_type.domain.name}
@@ -19,7 +18,6 @@ Workflow Type: {workflow_type.name}
 
 Total time = {total_time} seconds
 '''
-
 
 TIME_FORMAT = '%Y-%m-%d %H:%M'
 
@@ -64,7 +62,7 @@ def _serialize_complex_object(obj):
     if isinstance(obj, types.GeneratorType):
         return [i for i in obj]
     raise TypeError(
-        "Type %s couldn't be serialized. This is a bug in simpleflow," \
+        "Type %s couldn't be serialized. This is a bug in simpleflow,"
         " please file a new issue on GitHub!" % type(obj))
 
 
@@ -191,7 +189,7 @@ def status(workflow_execution, nb_tasks=None):
     rows = [
         (task['name'],) + get_timestamps(task) for task in
         history._tasks[::-1]
-    ]
+        ]
     if nb_tasks:
         rows = rows[:nb_tasks]
 
@@ -207,6 +205,7 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
                 rows,
                 headers=header if (with_header or fmt == human) else [],
             )
+
         wrapped.__wrapped__ = wrapped
         return wrapped
 
@@ -219,30 +218,61 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
 def list(workflow_executions):
     header = 'Workflow ID', 'Workflow Type', 'Status'
     rows = ((
-        execution.workflow_id,
-        execution.workflow_type.name,
-        execution.status,
-    ) for execution in workflow_executions)
+                execution.workflow_id,
+                execution.workflow_type.name,
+                execution.status,
+            ) for execution in workflow_executions)
 
     return header, rows
 
 
-def get_task(workflow_execution, task_id):
+def list_details(workflow_executions):
+    header = (
+        'Workflow ID', 'Workflow Type', 'Workflow Version', 'Run ID', 'Status', 'Task List', 'Child Policy',
+        'Close Status', 'Execution Timeout', 'Input', 'Tags', 'Decision Tasks Timeout'
+    )
+    rows = ((
+                execution.workflow_id,
+                execution.workflow_type.name,
+                execution.workflow_type.version,
+                execution.run_id,
+                execution.status,
+                execution.task_list,
+                execution.child_policy,
+                execution.close_status,
+                execution.execution_timeout,
+                execution.input,
+                execution.tag_list,
+                execution.decision_tasks_timeout,
+
+            ) for execution in workflow_executions)
+
+    return header, rows
+
+
+def get_task(workflow_execution, task_id, details=False):
     history = History(workflow_execution.history())
     history.parse()
     task = history._activities[task_id]
-    header = (
-        'type', 'id', 'name', 'version', 'state', 'timestamp', 'input', 'result'
-    )
+    header = ['type', 'id', 'name', 'version', 'state', 'timestamp', 'input', 'result', 'reason']
+    # TODO...
+    if details:
+        header.append('details')
+    # print >>sys.stderr, task
     state = task['state']
-    rows = [(
-        task['type'],
-        task['id'],
-        task['name'],
-        task['version'],
-        state,
-        task[state + '_timestamp'],
-        task['input'],
-        task['result'],
-    )]
-    return  header, rows
+    rows = \
+        [
+            [
+                task['type'],
+                task['id'],
+                task['name'],
+                task['version'],
+                state,
+                task[state + '_timestamp'],
+                task['input'],
+                task.get('result'),  # Absent for failed tasks
+                task.get('reason'),
+            ]]
+    if details:
+        rows[0].append(task.get('details'))
+    return header, rows

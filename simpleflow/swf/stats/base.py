@@ -13,7 +13,7 @@ def get_start_to_close_timing(event):
         end = event['{}_timestamp'.format(last_state)]
         duration = (end - start).total_seconds()
 
-    return (last_state, scheduled, start, end, duration)
+    return last_state, scheduled, start, end, duration
 
 
 class WorkflowStats(object):
@@ -74,11 +74,10 @@ class WorkflowStats(object):
              ('activity-module.otherfunc-1', 'completed', scheduled, start, end, 13.37, 3.8)]
 
         """
-        TIMING = -1
+        timing = -1
         total_time = self.total_time()
 
         return [
-            (vals + ((vals[TIMING] / total_time) * 100.,) if
-             vals[TIMING] else None) for
-            vals in self.get_timings()
+            (vals + ((vals[timing] / total_time) * 100.,) if vals[timing] else None)
+            for vals in self.get_timings()
         ]
