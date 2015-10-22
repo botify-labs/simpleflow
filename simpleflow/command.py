@@ -272,10 +272,14 @@ def filter_workflows(ctx, domain, status, tag,
 @click.argument('task_id')
 @click.argument('workflow_id')
 @click.argument('domain')
+@click.option('--details/--no-details',
+              default=False,
+              help='Display details.'
+              )
 @cli.command('task.info', help='Informations on a task.')
 @click.pass_context
-def task_info(ctx, domain, workflow_id, task_id):
-    print(with_format(ctx)(helpers.get_task)(domain, workflow_id, task_id))
+def task_info(ctx, domain, workflow_id, task_id, details):
+    print(with_format(ctx)(helpers.get_task)(domain, workflow_id, task_id, details))
 
 
 @click.option('--nb-processes', '-N', type=int)

@@ -86,9 +86,9 @@ def filter_workflow_executions(domain_name, status, tag,
     return pretty.list_details(executions)
 
 
-def get_task(domain_name, workflow_id, task_id):
+def get_task(domain_name, workflow_id, task_id, details):
     workflow_execution = get_workflow_execution(
         domain_name,
         workflow_id,
     )
-    return pretty.get_task(workflow_execution, task_id)
+    return pretty.get_task(workflow_execution, task_id, details)

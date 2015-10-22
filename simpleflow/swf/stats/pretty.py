@@ -260,16 +260,19 @@ def get_task(workflow_execution, task_id, details=False):
         header.append('details')
     # print >>sys.stderr, task
     state = task['state']
-    rows = [(
-        task['type'],
-        task['id'],
-        task['name'],
-        task['version'],
-        state,
-        task[state + '_timestamp'],
-        task['input'],
-        task.get('result'),  # Absent for failed tasks
-        task.get('reason'),
-        # task.get('details'),
-    )]
+    rows = \
+        [
+            [
+                task['type'],
+                task['id'],
+                task['name'],
+                task['version'],
+                state,
+                task[state + '_timestamp'],
+                task['input'],
+                task.get('result'),  # Absent for failed tasks
+                task.get('reason'),
+            ]]
+    if details:
+        rows[0].append(task.get('details'))
     return header, rows
