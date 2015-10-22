@@ -153,6 +153,7 @@ def python(interpreter='python'):
                     stderr=subprocess.STDOUT,
                 )
             except subprocess.CalledProcessError as err:
+                logger.info("got a subprocess.CalledProcessError: {}".format(err.output))
                 exclines = err.output.rstrip().rsplit('\n', 2)
                 if len(exclines) == 1:
                     excline = exclines[0]
