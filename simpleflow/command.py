@@ -244,7 +244,7 @@ def list_workflows(ctx, domain, status, started_since):
 @cli.command('workflow.filter', help='Filter workflow executions.')
 @click.option('--status', '-s', default='open', show_default=True, type=click.Choice(['open', 'closed']),
               help='Open/Closed')
-@click.option('--tag', default=None, help='Tag (multiple option).'  # , multiple=True
+@click.option('--tag', default=None, help='Tag.'
               )
 @click.option('--workflow-id', default=None, help='Workflow ID.')
 @click.option('--workflow-type-name', default=None, help='Workflow Name.')

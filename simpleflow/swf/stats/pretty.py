@@ -187,7 +187,7 @@ def status(workflow_execution, nb_tasks=None):
 
     header = 'Tasks', 'Last State', 'Last State Time', 'Scheduled Time'
     rows = [
-        (task['name'],) + get_timestamps(task) for task in
+        (task.get('name', '(no name)'),) + get_timestamps(task) for task in
         history._tasks[::-1]
         ]
     if nb_tasks:
