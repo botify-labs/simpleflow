@@ -161,16 +161,12 @@ def python(interpreter='python'):
                     )
                 )
                 exclines = err.output.rstrip().rsplit('\n', 2)
-                if len(exclines) == 1:
-                    excline = exclines[0]
-                else:
-                    excline = exclines[1]
+                excline = exclines[-1]
 
                 try:
                     exception = pickle.loads(
                         base64.b64decode(excline.rstrip()))
                 except (TypeError, pickle.UnpicklingError):
-                    excline = exclines[-1]
                     exception = Exception(excline)
                     if ':' in excline:
                         cls, msg = excline.split(':', 1)

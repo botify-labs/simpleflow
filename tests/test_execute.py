@@ -179,3 +179,21 @@ def test_function_as_program_raises_module_exception():
         assert False
 
     assert isinstance(err, TimeoutError)
+
+
+@execute.python()
+def warn():
+    import warnings
+    warnings.warn("The _posixsubprocess module is not being used. "
+                  "Child process reliability may suffer if your "
+                  "program uses threads.", RuntimeWarning)
+    raise StandardError('Fake Standard Error')
+
+
+def test_function_with_warning():
+    try:
+        warn()
+    except StandardError:
+        pass
+    else:
+        assert False
