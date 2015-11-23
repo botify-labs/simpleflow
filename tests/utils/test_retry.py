@@ -5,8 +5,7 @@ from time import time
 from simpleflow.utils.retry import with_delay, constant, exponential
 
 
-# TODO: fix this definition, this is not accurate (probably a number of seconds actually)
-error_epsilon = 0.01  # tolerate an error of 1%
+error_epsilon = 0.01  # tolerate an error of 0.01%
 
 
 class DummyCallable(object):
@@ -49,7 +48,7 @@ class TestRetry(unittest.TestCase):
         self.assertEquals(callable.count, max_count)
 
         total_time = time() - t0
-        self.assertTrue(abs(total_time - max_count) <= error_epsilon)
+        self.assertTrue(abs(total_time - max_count) <= error_epsilon * max_count)
 
     def test_with_delay_multiple_exceptions(self):
         callable = DummyCallableRaises(ValueError('test'))
@@ -64,7 +63,7 @@ class TestRetry(unittest.TestCase):
 
         self.assertEquals(callable.count, max_count)
         total_time = time() - t0
-        self.assertTrue(abs(total_time - max_count) <= error_epsilon)
+        self.assertTrue(abs(total_time - max_count) <= error_epsilon * max_count)
 
     def test_with_delay_exponential_backoff(self):
         callable = DummyCallableRaises(ValueError('test'))
