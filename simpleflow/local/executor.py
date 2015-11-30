@@ -23,8 +23,12 @@ class Executor(executor.Executor):
                   key, val in kwargs.iteritems()}
 
         future = futures.Future()
+        handler = func._callable
         try:
-            future._result = func._callable(*args, **kwargs)
+            if hasattr(handler, 'execute'):
+                future._result = handler(*args, **kwargs).execute()
+            else:
+                future._result = handler(*args, **kwargs)
         except Exception as err:
             future._exception = err
             if func.raises_on_failure:

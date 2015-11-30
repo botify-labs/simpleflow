@@ -17,10 +17,18 @@ def double(x):
     return x * 2
 
 
+# simpleflow activities can be classes ; in that case the class is instantiated
+# with the params passed via submit, then the `execute()` method is called and
+# the result is returned.
 @activity.with_attributes(task_list='quickstart', version='example')
-def delay(t, x):
-    time.sleep(t)
-    return x
+class Delay(object):
+    def __init__(self, t, x):
+        self.t = t
+        self.x = x
+
+    def execute(self):
+        time.sleep(self.t)
+        return self.x
 
 
 class BasicWorkflow(Workflow):
@@ -30,7 +38,7 @@ class BasicWorkflow(Workflow):
 
     def run(self, x, t=30):
         y = self.submit(increment, x)
-        yy = self.submit(delay, t, y)
+        yy = self.submit(Delay, t, y)
         z = self.submit(double, y)
 
         print '({x} + 1) * 2 = {result}'.format(

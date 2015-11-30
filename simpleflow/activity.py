@@ -79,6 +79,8 @@ class Activity(object):
 
         if hasattr(callable, 'name'):
             name = callable.name
+        elif hasattr(callable, '__name__'):
+            name = callable.__name__
         elif isinstance(callable, types.FunctionType):
             name = callable.func_name
         else:

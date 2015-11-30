@@ -106,7 +106,10 @@ class ActivityWorker(object):
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
         try:
-            result = handler(*args, **kwargs)
+            if hasattr(handler, 'execute'):
+                result = handler(*args, **kwargs).execute()
+            else:
+                result = handler(*args, **kwargs)
         except Exception as err:
             tb = traceback.format_exc()
             logger.exception(err)
