@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+from . import activity
+from . import canvas
+
+import inspect
 
 
 class Workflow(object):
@@ -17,7 +21,7 @@ class Workflow(object):
         Submit a function for asynchronous execution.
 
         :param func: callable registered as an task.
-        :type  func: task.ActivityTask | task.WorkflowTask.
+        :type  func: activity.ActivityType | activity.Activity | canvas.Group | canvas.Chain | workflow.Workflow
         :param *args: arguments passed to the task.
         :type  *args: Sequence.
         :param **kwargs: keyword-arguments passed to the task.
@@ -27,7 +31,21 @@ class Workflow(object):
             :rtype: Future.
 
         """
-        return self._executor.submit(func, *args, **kwargs)
+        # If the func is a child workflow, call directly
+        # the executor
+        if inspect.isclass(func) and issubclass(func, Workflow):
+            return self._executor.submit(func, *args, **kwargs)
+        elif isinstance(func, activity.Activity):
+            return self._executor.submit(func.activity_type, *func.args, **func.kwargs)
+        elif isinstance(func, activity.ActivityType):
+            return self._executor.submit(func, *args, **kwargs)
+        elif isinstance(func, (canvas.Group, canvas.Chain)):
+            return func.submit(self._executor)
+        else:
+            raise TypeError('Bad type for {} func ({})'.format(
+                func,
+                type(func)
+            ))
 
     def map(self, func, iterable):
         """
@@ -40,7 +58,8 @@ class Workflow(object):
         :type  iterable: Iterable.
 
         """
-        return self._executor.map(func, iterable)
+        group = canvas.Group(*[activity.Activity(func, i) for i in iterable])
+        return self.submit(group).futures
 
     def starmap(self, func, iterable):
         """
@@ -55,7 +74,8 @@ class Workflow(object):
         :type  iterable: Iterable.
 
         """
-        return self._executor.starmap(func, iterable)
+        group = canvas.Group(*[activity.Activity(func, *i) for i in iterable])
+        return self.submit(group).futures
 
     def fail(self, reason, details=None):
         self._executor.fail(reason, details)
