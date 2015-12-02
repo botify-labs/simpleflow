@@ -1,6 +1,7 @@
 import logging
 
 from simpleflow import (
+    Applier,
     exceptions,
     executor,
     futures,
@@ -25,10 +26,7 @@ class Executor(executor.Executor):
         future = futures.Future()
         handler = func._callable
         try:
-            if hasattr(handler, 'execute'):
-                future._result = handler(*args, **kwargs).execute()
-            else:
-                future._result = handler(*args, **kwargs)
+            future._result = Applier(handler, *args, **kwargs).call()
         except Exception as err:
             future._exception = err
             if func.raises_on_failure:

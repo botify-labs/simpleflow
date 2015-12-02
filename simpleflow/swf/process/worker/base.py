@@ -106,10 +106,7 @@ class ActivityWorker(object):
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
         try:
-            if hasattr(handler, 'execute'):
-                result = handler(*args, **kwargs).execute()
-            else:
-                result = handler(*args, **kwargs)
+            result = simpleflow.Applier(handler, *args, **kwargs).call()
         except Exception as err:
             tb = traceback.format_exc()
             logger.exception(err)
