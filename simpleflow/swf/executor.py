@@ -11,6 +11,7 @@ import swf.models.decision
 import swf.exceptions
 
 from simpleflow import (
+    applier,
     executor,
     futures,
     exceptions,
@@ -275,9 +276,9 @@ class Executor(executor.Executor):
 
         """
         try:
-            args = [executor.get_actual_value(arg) for arg in args]
-            kwargs = {key: executor.get_actual_value(val) for
-                      key, val in kwargs.iteritems()}
+            _applier = applier.Applier(func, *args, **kwargs)
+            args = _applier.args
+            kwargs = _applier.kwargs
         except exceptions.ExecutionBlocked:
             return futures.Future()
 
@@ -294,17 +295,19 @@ class Executor(executor.Executor):
 
         return self.resume(task, *args, **kwargs)
 
+    # TODO: check if really used or remove it
     def map(self, callable, iterable):
         """Submit *callable* with each of the items in ``*iterables``.
 
         All items in ``*iterables`` must be serializable in JSON.
 
         """
-        iterable = executor.get_actual_value(iterable)
+        iterable = applier.get_actual_value(iterable)
         return super(Executor, self).map(callable, iterable)
 
+    # TODO: check if really used or remove it
     def starmap(self, callable, iterable):
-        iterable = executor.get_actual_value(iterable)
+        iterable = applier.get_actual_value(iterable)
         return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, history):

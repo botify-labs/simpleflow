@@ -19,14 +19,16 @@ class Executor(executor.Executor):
     def submit(self, func, *args, **kwargs):
         logger.info('executing task {}(args={}, kwargs={})'.format(
             func, args, kwargs))
-        args = [executor.get_actual_value(arg) for arg in args]
-        kwargs = {key: executor.get_actual_value(val) for
-                  key, val in kwargs.iteritems()}
 
         future = futures.Future()
         handler = func._callable
+
+        _applier = Applier(handler, *args, **kwargs)
+        args = _applier.args
+        kwargs = _applier.kwargs
+
         try:
-            future._result = Applier(handler, *args, **kwargs).call()
+            future._result = _applier.call()
         except Exception as err:
             future._exception = err
             if func.raises_on_failure:
