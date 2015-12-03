@@ -192,12 +192,6 @@ class Executor(executor.Executor):
 
         return None
 
-    def make_activity_task(self, func, *args, **kwargs):
-        return ActivityTask(func, *args, **kwargs)
-
-    def make_workflow_task(self, func, *args, **kwargs):
-        return WorkflowTask(func, *args, **kwargs)
-
     def resume_activity(self, task, event):
         future = self._get_future_from_activity_event(event)
         if not future:  # Task in history does not count.
@@ -284,9 +278,9 @@ class Executor(executor.Executor):
 
         try:
             if isinstance(func, Activity):
-                task = self.make_activity_task(func, *args, **kwargs)
+                task = ActivityTask(func, *args, **kwargs)
             elif issubclass(func, Workflow):
-                task = self.make_workflow_task(func, *args, **kwargs)
+                task = WorkflowTask(func, *args, **kwargs)
             else:
                 raise TypeError
         except TypeError:
