@@ -270,13 +270,6 @@ class Executor(executor.Executor):
 
         """
         try:
-            _applier = applier.Applier(func, *args, **kwargs)
-            args = _applier.args
-            kwargs = _applier.kwargs
-        except exceptions.ExecutionBlocked:
-            return futures.Future()
-
-        try:
             if isinstance(func, Activity):
                 task = ActivityTask(func, *args, **kwargs)
             elif issubclass(func, Workflow):
@@ -289,11 +282,13 @@ class Executor(executor.Executor):
                 # tasks creation, which is annoying, because the re-raised
                 # exception can be misleading in that case.
                 raise TypeError
+        except exceptions.ExecutionBlocked:
+            return futures.Future()
         except TypeError:
             raise TypeError('invalid type {} for {}'.format(
                 type(func), func))
 
-        return self.resume(task, *args, **kwargs)
+        return self.resume(task, *task.args, **task.kwargs)
 
     # TODO: check if really used or remove it
     def map(self, callable, iterable):

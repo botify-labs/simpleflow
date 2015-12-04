@@ -4,6 +4,8 @@ import json
 import abc
 import collections
 
+from .applier import get_actual_value
+
 
 class Task(object):
     """A Task represents a work that can be scheduled for execution.
@@ -18,13 +20,20 @@ class Task(object):
     def serialize(self, value):
         return json.dumps(value)
 
+    def resolve_args(self, *args):
+        return [get_actual_value(arg) for arg in args]
+
+    def resolve_kwargs(self, **kwargs):
+        return {key: get_actual_value(val) for
+                key, val in kwargs.iteritems()}
+
 
 class ActivityTask(Task):
     def __init__(self, activity, *args, **kwargs):
         self.activity = activity
         self.idempotent = activity.idempotent
-        self.args = args
-        self.kwargs = kwargs
+        self.args = self.resolve_args(*args)
+        self.kwargs = self.resolve_kwargs(**kwargs)
         self.id = None
 
     @property
@@ -45,8 +54,8 @@ class WorkflowTask(Task):
         self.workflow = workflow
         # TODO: handle idempotence at workflow level
         self.idempotent = False
-        self.args = args
-        self.kwargs = kwargs
+        self.args = self.resolve_args(*args)
+        self.kwargs = self.resolve_kwargs(**kwargs)
         self.id = None
 
     @property
