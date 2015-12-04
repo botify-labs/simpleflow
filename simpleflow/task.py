@@ -15,15 +15,6 @@ class Task(object):
     def name(self):
         raise NotImplementedError()
 
-    @abc.abstractmethod
-    def schedule(self, domain):
-        """
-        :param domain: where the workflow is running.
-        :type  domain: swf.models.Domain.
-
-        """
-        raise NotImplementedError()
-
     def serialize(self, value):
         return json.dumps(value)
 
