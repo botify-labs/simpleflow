@@ -15,6 +15,7 @@ from simpleflow.swf.process.actor import (
     Poller,
     with_state,
 )
+from simpleflow.swf.task import ActivityTask
 from .dispatch import from_task_registry
 
 
@@ -97,16 +98,16 @@ class ActivityWorker(object):
 
     def dispatch(self, task):
         name = task.activity_type.name
-        return self._dispatcher.dispatch(name)
+        return self._dispatcher.dispatch_activity(name)
 
     def process(self, poller, token, task):
         logger.debug('ActivityWorker.porcess() pid={}'.format(os.getpid()))
-        handler = self.dispatch(task)
+        activity = self.dispatch(task)
         input = json.loads(task.input)
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
         try:
-            result = simpleflow.Applier(handler, *args, **kwargs).call()
+            result = ActivityTask(activity, *args, **kwargs).execute()
         except Exception as err:
             tb = traceback.format_exc()
             logger.exception(err)

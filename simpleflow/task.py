@@ -4,7 +4,16 @@ import json
 import abc
 import collections
 
-from .applier import get_actual_value
+from . import futures
+
+
+def get_actual_value(value):
+    """
+    Unwrap the result of a Future or return the value.
+    """
+    if isinstance(value, futures.Future):
+        return futures.get_result_or_raise(value)
+    return value
 
 
 class Task(object):
@@ -30,6 +39,7 @@ class Task(object):
 
 class ActivityTask(Task):
     def __init__(self, activity, *args, **kwargs):
+        # TODO: check that given activity is a decorated Activity, not a raw callable
         self.activity = activity
         self.idempotent = activity.idempotent
         self.args = self.resolve_args(*args)
@@ -47,6 +57,13 @@ class ActivityTask(Task):
             self.args,
             self.kwargs,
             self.id)
+
+    def execute(self):
+        method = self.activity._callable
+        if hasattr(method, 'execute'):
+            return method(*self.args, **self.kwargs).execute()
+        else:
+            return method(*self.args, **self.kwargs)
 
 
 class WorkflowTask(Task):
@@ -81,5 +98,7 @@ class Registry(object):
     def register(self, task, label=None):
         self._tasks[label][task.name] = task
 
+    def execute(self):
+        raise NotImplementedError()
 
 registry = Registry()

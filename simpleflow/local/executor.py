@@ -1,11 +1,11 @@
 import logging
 
 from simpleflow import (
-    Applier,
     exceptions,
     executor,
     futures,
 )
+from ..task import ActivityTask
 
 
 logger = logging.getLogger(__name__)
@@ -21,14 +21,11 @@ class Executor(executor.Executor):
             func, args, kwargs))
 
         future = futures.Future()
-        handler = func._callable
 
-        _applier = Applier(handler, *args, **kwargs)
-        args = _applier.args
-        kwargs = _applier.kwargs
+        task = ActivityTask(func, *args, **kwargs)
 
         try:
-            future._result = _applier.call()
+            future._result = task.execute()
         except Exception as err:
             future._exception = err
             if func.raises_on_failure:

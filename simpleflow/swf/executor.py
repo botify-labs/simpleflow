@@ -11,10 +11,10 @@ import swf.models.decision
 import swf.exceptions
 
 from simpleflow import (
-    applier,
+    exceptions,
     executor,
     futures,
-    exceptions,
+    task,
 )
 from simpleflow.activity import Activity
 from simpleflow.workflow import Workflow
@@ -297,12 +297,12 @@ class Executor(executor.Executor):
         All items in ``*iterables`` must be serializable in JSON.
 
         """
-        iterable = applier.get_actual_value(iterable)
+        iterable = task.get_actual_value(iterable)
         return super(Executor, self).map(callable, iterable)
 
     # TODO: check if really used or remove it
     def starmap(self, callable, iterable):
-        iterable = applier.get_actual_value(iterable)
+        iterable = task.get_actual_value(iterable)
         return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, history):

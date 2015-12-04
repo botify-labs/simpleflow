@@ -29,3 +29,14 @@ class RegistryDispatcher(object):
 
         """
         return self._registry[self._label][name]._callable
+
+    def dispatch_activity(self, name):
+        """
+        :param name: of the task to dispatch.
+        :type  name: str.
+
+        :returns:
+            :rtype: Activity
+
+        """
+        return self._registry[self._label][name]
