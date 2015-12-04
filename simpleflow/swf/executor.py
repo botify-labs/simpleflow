@@ -282,6 +282,12 @@ class Executor(executor.Executor):
             elif issubclass(func, Workflow):
                 task = WorkflowTask(func, *args, **kwargs)
             else:
+                # NB: isinstance() and issubclass() may raise a TypeError too
+                # hence the try/except reraising a TypeError. Found reason in
+                # commit 8faa8636.
+                # TODO: see if we can avoid that, that hides TypeError's in
+                # tasks creation, which is annoying, because the re-raised
+                # exception can be misleading in that case.
                 raise TypeError
         except TypeError:
             raise TypeError('invalid type {} for {}'.format(
