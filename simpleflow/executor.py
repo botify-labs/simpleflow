@@ -1,22 +1,11 @@
 import abc
 import logging
 
-from . import futures
 
-
-__all__ = ['Executor', 'get_actual_value']
+__all__ = ['Executor']
 
 
 logger = logging.getLogger(__name__)
-
-
-def get_actual_value(value):
-    """Unwrap the result of a Future or return the value.
-
-    """
-    if isinstance(value, futures.Future):
-        return futures.get_result_or_raise(value)
-    return value
 
 
 class Executor(object):

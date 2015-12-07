@@ -11,9 +11,10 @@ import swf.models.decision
 import swf.exceptions
 
 from simpleflow import (
+    exceptions,
     executor,
     futures,
-    exceptions,
+    task,
 )
 from simpleflow.activity import Activity
 from simpleflow.workflow import Workflow
@@ -191,12 +192,6 @@ class Executor(executor.Executor):
 
         return None
 
-    def make_activity_task(self, func, *args, **kwargs):
-        return ActivityTask(func, *args, **kwargs)
-
-    def make_workflow_task(self, func, *args, **kwargs):
-        return WorkflowTask(func, *args, **kwargs)
-
     def resume_activity(self, task, event):
         future = self._get_future_from_activity_event(event)
         if not future:  # Task in history does not count.
@@ -275,36 +270,39 @@ class Executor(executor.Executor):
 
         """
         try:
-            args = [executor.get_actual_value(arg) for arg in args]
-            kwargs = {key: executor.get_actual_value(val) for
-                      key, val in kwargs.iteritems()}
+            if isinstance(func, Activity):
+                task = ActivityTask(func, *args, **kwargs)
+            elif issubclass(func, Workflow):
+                task = WorkflowTask(func, *args, **kwargs)
+            else:
+                # NB: isinstance() and issubclass() may raise a TypeError too
+                # hence the try/except reraising a TypeError. Found reason in
+                # commit 8faa8636.
+                # TODO: see if we can avoid that, that hides TypeError's in
+                # tasks creation, which is annoying, because the re-raised
+                # exception can be misleading in that case.
+                raise TypeError
         except exceptions.ExecutionBlocked:
             return futures.Future()
-
-        try:
-            if isinstance(func, Activity):
-                task = self.make_activity_task(func, *args, **kwargs)
-            elif issubclass(func, Workflow):
-                task = self.make_workflow_task(func, *args, **kwargs)
-            else:
-                raise TypeError
         except TypeError:
             raise TypeError('invalid type {} for {}'.format(
                 type(func), func))
 
-        return self.resume(task, *args, **kwargs)
+        return self.resume(task, *task.args, **task.kwargs)
 
+    # TODO: check if really used or remove it
     def map(self, callable, iterable):
         """Submit *callable* with each of the items in ``*iterables``.
 
         All items in ``*iterables`` must be serializable in JSON.
 
         """
-        iterable = executor.get_actual_value(iterable)
+        iterable = task.get_actual_value(iterable)
         return super(Executor, self).map(callable, iterable)
 
+    # TODO: check if really used or remove it
     def starmap(self, callable, iterable):
-        iterable = executor.get_actual_value(iterable)
+        iterable = task.get_actual_value(iterable)
         return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, history):

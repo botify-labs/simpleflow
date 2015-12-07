@@ -5,6 +5,7 @@ from simpleflow import (
     executor,
     futures,
 )
+from ..task import ActivityTask
 
 
 logger = logging.getLogger(__name__)
@@ -18,13 +19,13 @@ class Executor(executor.Executor):
     def submit(self, func, *args, **kwargs):
         logger.info('executing task {}(args={}, kwargs={})'.format(
             func, args, kwargs))
-        args = [executor.get_actual_value(arg) for arg in args]
-        kwargs = {key: executor.get_actual_value(val) for
-                  key, val in kwargs.iteritems()}
 
         future = futures.Future()
+
+        task = ActivityTask(func, *args, **kwargs)
+
         try:
-            future._result = func._callable(*args, **kwargs)
+            future._result = task.execute()
         except Exception as err:
             future._exception = err
             if func.raises_on_failure:

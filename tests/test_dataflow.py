@@ -50,6 +50,15 @@ def triple(x):
     return x * 3
 
 
+@activity.with_attributes(version=DEFAULT_VERSION, idempotent=False)
+class Tetra(object):
+    def __init__(self, x):
+        self.x = x
+
+    def execute(self):
+        return self.x * 4
+
+
 class TestWorkflow(Workflow):
     name = 'test_workflow'
     version = 'test_version'
@@ -1220,6 +1229,7 @@ class TestTaskNaming(TestWorkflow):
         results.append(self.submit(triple, 1))
         results.append(self.submit(triple, 2))
         results.append(self.submit(triple, 2))
+        results.append(self.submit(Tetra, 1))
         futures.wait(*results)
 
 def test_task_naming():
@@ -1240,6 +1250,8 @@ def test_task_naming():
         "activity-tests.test_dataflow.triple-d269dc325a06c6ad32888f450ee8dd30",
         # idempotent task, with arg 2 too => same task id
         "activity-tests.test_dataflow.triple-d269dc325a06c6ad32888f450ee8dd30",
+        # class-based task, non idempotent
+        "activity-tests.test_dataflow.Tetra-1",
     ]
     for i in range(0, len(expected)):
         decision = decisions[i]['scheduleActivityTaskDecisionAttributes']
