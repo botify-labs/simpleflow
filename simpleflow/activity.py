@@ -2,7 +2,7 @@ from . import settings
 from . import task
 
 
-__all__ = ['with_attributes', 'Activity', 'ActivityInstance']
+__all__ = ['with_attributes', 'Activity']
 
 
 def with_attributes(
@@ -93,21 +93,3 @@ class Activity(object):
             self.name,
             self.version,
             self.task_list)
-
-
-class ActivityInstance(object):
-
-    def __init__(self, activity, *args, **kwargs):
-        if not isinstance(activity, Activity):
-            raise TypeError('Wrong value for `activity`, got {} instead'.format(type(activity)))
-        self.activity = activity
-        self.args = list(args)
-        self.kwargs = kwargs
-
-    def __repr__(self):
-        return 'ActivityInstance(name={}, version={}, task_list={}, args={}, kwargs={})'.format(
-            self.activity.name,
-            self.activity.version,
-            self.activity.task_list,
-            self.args,
-            self.kwargs)

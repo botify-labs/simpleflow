@@ -1,10 +1,11 @@
 from . import futures
-from . import activity
+from .activity import Activity
+from .task import ActivityTask
 
 
 class FuncGroup(object):
     """
-    Class calling a function returning an ActivityInstance, a group or a chain
+    Class calling a function returning an ActivityTask, a group or a chain
     activities : Group, Chain...
     """
     def __init__(self, func, *args, **kwargs):
@@ -13,7 +14,7 @@ class FuncGroup(object):
 
     def submit(self, executor):
         inst = self.func(*self.args, **self.kwargs)
-        if not isinstance(inst, (activity.ActivityInstance, activity.Group)):
+        if not isinstance(inst, (ActivityTask, activity.Group)):
             raise TypeError('FuncFroup submission should return a Group, Got {} instead'.format(type(inst)))
         return inst.submit(executor)
 
@@ -29,12 +30,12 @@ class Group(object):
         self.activities = list(activities)
 
     def append(self, *args, **kwargs):
-        if isinstance(args[0], (activity.ActivityInstance, Group)):
+        if isinstance(args[0], (ActivityTask, Group)):
             self.activities.append(args[0])
-        elif isinstance(args[0], activity.Activity):
-            self.activities.append(activity.ActivityInstance(*args, **kwargs))
+        elif isinstance(args[0], Activity):
+            self.activities.append(ActivityTask(*args, **kwargs))
         else:
-            raise ValueError('{} should be an ActivityInstance or an Activity'.format(args[0]))
+            raise ValueError('{} should be an ActivityTask or an Activity'.format(args[0]))
 
     def submit(self, executor):
         return GroupFuture(self.activities, executor)
@@ -53,11 +54,11 @@ class GroupFuture(futures.Future):
         self.sync_result()
 
     def _submit_activity(self, act):
-        if isinstance(act, activity.ActivityInstance):
+        if isinstance(act, ActivityTask):
             return self.executor.submit(act.activity, *act.args, **act.kwargs)
         elif isinstance(act, Group):
             return act.submit(self.executor)
-        raise TypeError('Bad type for `act` ({}). Waiting for `ActivityInstance` or `Group` instead'.format(type(act)))
+        raise TypeError('Bad type for `act` ({}). Waiting for `ActivityTask` or `Group` instead'.format(type(act)))
 
     def sync_state(self):
         if all(a.finished for a in self.futures):
@@ -81,7 +82,7 @@ class GroupFuture(futures.Future):
 
 class Chain(Group):
     """
-    Chain a list of `ActivityInstance` or callables returning Group/Chain
+    Chain a list of `ActivityTask` or callables returning Group/Chain
     Ex :
     >> chain = Chain(Task(int, 2), Task(sum, [1, 2]))
     >> chain = Chain(Task(int, 2), custom_func, Task(sum, [1, 2]))
