@@ -16,7 +16,7 @@ from simpleflow import (
     futures,
     task,
 )
-from simpleflow.activity import ActivityType
+from simpleflow.activity import Activity
 from simpleflow.workflow import Workflow
 from simpleflow.history import History
 from simpleflow.swf.task import ActivityTask, WorkflowTask
@@ -270,7 +270,7 @@ class Executor(executor.Executor):
 
         """
         try:
-            if isinstance(func, ActivityType):
+            if isinstance(func, Activity):
                 task = ActivityTask(func, *args, **kwargs)
             elif issubclass(func, Workflow):
                 task = WorkflowTask(func, *args, **kwargs)

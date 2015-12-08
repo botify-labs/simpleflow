@@ -2,7 +2,7 @@ from . import settings
 from . import task
 
 
-__all__ = ['with_attributes', 'ActivityType', 'Activity']
+__all__ = ['with_attributes', 'Activity', 'ActivityInstance']
 
 
 def with_attributes(
@@ -23,7 +23,7 @@ def with_attributes(
 
     """
     def wrap(func):
-        return ActivityType(
+        return Activity(
             func, name, version, task_list,
             retry,
             raises_on_failure,
@@ -37,7 +37,7 @@ def with_attributes(
     return wrap
 
 
-class ActivityType(object):
+class Activity(object):
     def __init__(self, callable,
                  name=None,
                  version=None,
@@ -89,25 +89,25 @@ class ActivityType(object):
         return '.'.join([prefix, name])
 
     def __repr__(self):
-        return 'ActivityType(name={}, version={}, task_list={})'.format(
+        return 'Activity(name={}, version={}, task_list={})'.format(
             self.name,
             self.version,
             self.task_list)
 
 
-class Activity(object):
+class ActivityInstance(object):
 
-    def __init__(self, activity_type, *args, **kwargs):
-        if not isinstance(activity_type, ActivityType):
-            raise TypeError('Wrong value for `activity_type`, got {} instead'.format(type(activity_type)))
-        self.activity_type = activity_type
+    def __init__(self, activity, *args, **kwargs):
+        if not isinstance(activity, Activity):
+            raise TypeError('Wrong value for `activity`, got {} instead'.format(type(activity)))
+        self.activity = activity
         self.args = list(args)
         self.kwargs = kwargs
 
     def __repr__(self):
-        return 'Activity(name={}, version={}, task_list={}, args={}, kwargs={})'.format(
-            self.activity_type.name,
-            self.activity_type.version,
-            self.activity_type.task_list,
+        return 'ActivityInstance(name={}, version={}, task_list={}, args={}, kwargs={})'.format(
+            self.activity.name,
+            self.activity.version,
+            self.activity.task_list,
             self.args,
             self.kwargs)

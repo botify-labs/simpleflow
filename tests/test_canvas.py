@@ -9,10 +9,10 @@ from simpleflow.canvas import (
 from simpleflow.local.executor import Executor
 from simpleflow.activity import (
     with_attributes,
-    Activity)
+    ActivityInstance)
 
 
-class RunningActivity(Activity):
+class RunningActivity(ActivityInstance):
     def submit(self, executor):
         f = super(RunningActivity, self).submit(executor)
         f._state = futures.RUNNING
@@ -67,15 +67,15 @@ executor = CustomExecutor(workflow.Workflow)
 class TestGroup(unittest.TestCase):
     def test(self):
         future = Group(
-            Activity(to_string, 1),
-            Activity(to_string, 2)
+            ActivityInstance(to_string, 1),
+            ActivityInstance(to_string, 2)
         ).submit(executor)
         self.assertTrue(future.finished)
 
         future = Group(
-            Activity(to_string, "test1"),
-            Activity(running_task, "test2"),
-            Activity(sum_values, [1, 2])
+            ActivityInstance(to_string, "test1"),
+            ActivityInstance(running_task, "test2"),
+            ActivityInstance(sum_values, [1, 2])
         ).submit(executor)
         self.assertTrue(future.running)
         self.assertEquals(future.nb_activities_done, 2)
@@ -88,25 +88,25 @@ class TestChain(unittest.TestCase):
 
     def test(self):
         future = Chain(
-            Activity(to_string, "test"),
-            Activity(to_string, "test")
+            ActivityInstance(to_string, "test"),
+            ActivityInstance(to_string, "test")
         ).submit(executor)
         self.assertTrue(future.finished)
         self.assertEquals(future.nb_activities_done, 2)
 
         future = Chain(
-            Activity(to_string, "test"),
-            Activity(running_task, "test"),
-            Activity(to_string, "test")
+            ActivityInstance(to_string, "test"),
+            ActivityInstance(running_task, "test"),
+            ActivityInstance(to_string, "test")
         ).submit(executor)
         self.assertTrue(future.running)
         self.assertEquals(future.nb_activities_done, 1)
 
     def test_previous_value(self):
         future = Chain(
-            Activity(sum_values, [1, 2]),
-            Activity(sum_previous, [2, 3]),
-            Activity(sum_previous, [4, 5]),
+            ActivityInstance(sum_values, [1, 2]),
+            ActivityInstance(sum_previous, [2, 3]),
+            ActivityInstance(sum_previous, [4, 5]),
             send_result=True
         ).submit(executor)
         self.assertTrue(future.finished)
@@ -116,11 +116,11 @@ class TestChain(unittest.TestCase):
         def custom_func(previous_value):
             group = Group()
             for i in xrange(0, previous_value):
-                group.append(Activity(to_int, i))
+                group.append(ActivityInstance(to_int, i))
             return group
 
         chain = Chain(
-            Activity(sum, [1, 2]),
+            ActivityInstance(sum, [1, 2]),
             FuncGroup(custom_func),
             send_result=True).submit(workflow)
         self.assertEquals(chain.result, [3, [0, 1, 2]])
@@ -130,17 +130,17 @@ class TestComplexCanvas(unittest.TestCase):
 
     def test(self):
         complex_canvas = Chain(
-            Activity(sum_values, [1, 2]),
-            Activity(sum_values, [1, 2]),
+            ActivityInstance(sum_values, [1, 2]),
+            ActivityInstance(sum_values, [1, 2]),
             Group(
-                Activity(to_int, 1),
-                Activity(to_int, 2),
+                ActivityInstance(to_int, 1),
+                ActivityInstance(to_int, 2),
             ),
             Chain(
-                Activity(sum_values, [1, 2]),
-                Activity(running_task, 1)
+                ActivityInstance(sum_values, [1, 2]),
+                ActivityInstance(running_task, 1)
             ),
-            Activity(sum_values, [1, 2])
+            ActivityInstance(sum_values, [1, 2])
         )
         result = complex_canvas.submit(executor)
 
@@ -156,7 +156,7 @@ class TestComplexCanvas(unittest.TestCase):
 
         # Change the state of the n-1 chain to make the whole
         # canvas done
-        complex_canvas.activities[3].activities[1] = Activity(to_int, 1)
+        complex_canvas.activities[3].activities[1] = ActivityInstance(to_int, 1)
         result = complex_canvas.submit(executor)
         self.assertTrue(result.finished)
         self.assertEquals(len(result.futures), 5)

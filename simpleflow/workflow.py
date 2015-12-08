@@ -21,7 +21,7 @@ class Workflow(object):
         Submit a function for asynchronous execution.
 
         :param func: callable registered as an task.
-        :type  func: activity.ActivityType | activity.Activity | canvas.Group | canvas.Chain | workflow.Workflow
+        :type  func: activity.Activity | activity.ActivityInstance | canvas.Group | canvas.Chain | workflow.Workflow
         :param *args: arguments passed to the task.
         :type  *args: Sequence.
         :param **kwargs: keyword-arguments passed to the task.
@@ -35,9 +35,9 @@ class Workflow(object):
         # the executor
         if inspect.isclass(func) and issubclass(func, Workflow):
             return self._executor.submit(func, *args, **kwargs)
+        elif isinstance(func, activity.ActivityInstance):
+            return self._executor.submit(func.activity, *func.args, **func.kwargs)
         elif isinstance(func, activity.Activity):
-            return self._executor.submit(func.activity_type, *func.args, **func.kwargs)
-        elif isinstance(func, activity.ActivityType):
             return self._executor.submit(func, *args, **kwargs)
         elif isinstance(func, (canvas.Group, canvas.Chain)):
             return func.submit(self._executor)
@@ -58,7 +58,7 @@ class Workflow(object):
         :type  iterable: Iterable.
 
         """
-        group = canvas.Group(*[activity.Activity(func, i) for i in iterable])
+        group = canvas.Group(*[activity.ActivityInstance(func, i) for i in iterable])
         return self.submit(group).futures
 
     def starmap(self, func, iterable):
@@ -74,7 +74,7 @@ class Workflow(object):
         :type  iterable: Iterable.
 
         """
-        group = canvas.Group(*[activity.Activity(func, *i) for i in iterable])
+        group = canvas.Group(*[activity.ActivityInstance(func, *i) for i in iterable])
         return self.submit(group).futures
 
     def fail(self, reason, details=None):
