@@ -5,6 +5,7 @@ import abc
 import collections
 
 from . import futures
+from .activity import Activity
 
 
 def get_actual_value(value):
@@ -39,7 +40,8 @@ class Task(object):
 
 class ActivityTask(Task):
     def __init__(self, activity, *args, **kwargs):
-        # TODO: check that given activity is a decorated Activity, not a raw callable
+        if not isinstance(activity, Activity):
+            raise TypeError('Wrong value for `activity`, got {} instead'.format(type(activity)))
         self.activity = activity
         self.idempotent = activity.idempotent
         self.args = self.resolve_args(*args)
@@ -86,19 +88,3 @@ class WorkflowTask(Task):
             self.args,
             self.kwargs,
             self.id)
-
-
-class Registry(object):
-    def __init__(self):
-        self._tasks = collections.defaultdict(dict)
-
-    def __getitem__(self, label):
-        return self._tasks[label]
-
-    def register(self, task, label=None):
-        self._tasks[label][task.name] = task
-
-    def execute(self):
-        raise NotImplementedError()
-
-registry = Registry()

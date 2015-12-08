@@ -91,7 +91,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 class ActivityWorker(object):
     def __init__(self, workflow):
         self._dispatcher = from_task_registry.RegistryDispatcher(
-            simpleflow.task.registry,
+            simpleflow.registry.registry,
             None,
             workflow,
         )

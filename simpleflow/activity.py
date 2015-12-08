@@ -1,5 +1,5 @@
 from . import settings
-from . import task
+from . import registry
 
 
 __all__ = ['with_attributes', 'Activity']
@@ -65,7 +65,7 @@ class Activity(object):
         self.register()
 
     def register(self):
-        task.registry.register(self)
+        registry.registry.register(self)
 
     @property
     def name(self):
