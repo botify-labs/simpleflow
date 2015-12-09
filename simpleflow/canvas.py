@@ -10,12 +10,13 @@ class FuncGroup(object):
     """
     def __init__(self, func, *args, **kwargs):
         self.func = func
-        super(FuncGroup, self).__init__(*args, **kwargs)
+        self.args = list(args)
+        self.kwargs = kwargs
 
     def submit(self, executor):
         inst = self.func(*self.args, **self.kwargs)
-        if not isinstance(inst, (ActivityTask, activity.Group)):
-            raise TypeError('FuncFroup submission should return a Group, Got {} instead'.format(type(inst)))
+        if not isinstance(inst, (ActivityTask, Group)):
+            raise TypeError('FuncGroup submission should return a Group or an ActivityTask, Got {} instead'.format(type(inst)))
         return inst.submit(executor)
 
 
@@ -56,9 +57,9 @@ class GroupFuture(futures.Future):
     def _submit_activity(self, act):
         if isinstance(act, ActivityTask):
             return self.executor.submit(act.activity, *act.args, **act.kwargs)
-        elif isinstance(act, Group):
+        elif isinstance(act, (Group, FuncGroup)):
             return act.submit(self.executor)
-        raise TypeError('Bad type for `act` ({}). Waiting for `ActivityTask` or `Group` instead'.format(type(act)))
+        raise TypeError('Bad type for `act` ({}). Waiting for `ActivityTask`, `Group` or `FuncGroup` instead'.format(type(act)))
 
     def sync_state(self):
         if all(a.finished for a in self.futures):

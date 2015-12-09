@@ -111,18 +111,21 @@ class TestChain(unittest.TestCase):
         self.assertTrue(future.finished)
         self.assertEquals(future.result, [3, 8, 17])
 
-    def _test_previous_value_with_func(self):
+
+class TestFuncGroup(unittest.TestCase):
+    def test_previous_value_with_func(self):
         def custom_func(previous_value):
             group = Group()
             for i in xrange(0, previous_value):
-                group.append(ActivityTask(to_int, i))
+                group.append(ActivityTask(to_int, i * 2))
             return group
 
         chain = Chain(
-            ActivityTask(sum, [1, 2]),
+            ActivityTask(sum_values, [1, 2]),
             FuncGroup(custom_func),
-            send_result=True).submit(workflow)
-        self.assertEquals(chain.result, [3, [0, 1, 2]])
+            ActivityTask(sum_values),
+            send_result=True).submit(executor)
+        self.assertEquals(chain.result, [3, [0, 2, 4], 6])
 
 
 class TestComplexCanvas(unittest.TestCase):
