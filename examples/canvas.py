@@ -54,7 +54,7 @@ class CanvasWorkflow(Workflow):
         )
         futures.wait(future)
 
-        res = future._result[-1]
+        res = future.result[-1]
 
         print '({}+1)*({}+1)*({}+1) = {}'.format(x, y, z, res)
 
