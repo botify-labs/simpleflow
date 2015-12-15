@@ -11,13 +11,6 @@ from simpleflow.activity import with_attributes
 from simpleflow.task import ActivityTask
 
 
-class RunningActivity(ActivityTask):
-    def submit(self, executor):
-        f = super(RunningActivity, self).submit(executor)
-        f._state = futures.RUNNING
-        return f
-
-
 @with_attributes()
 def to_string(arg):
     return str(arg)
@@ -41,10 +34,6 @@ def sum_previous(values, previous_value):
 @with_attributes()
 def running_task():
     return True
-
-
-class LocalWorkflow(workflow.Workflow):
-    pass
 
 
 class CustomExecutor(Executor):
@@ -77,7 +66,7 @@ class TestGroup(unittest.TestCase):
             ActivityTask(sum_values, [1, 2])
         ).submit(executor)
         self.assertTrue(future.running)
-        self.assertEquals(future.nb_activities_done, 2)
+        self.assertEquals(future.count_finished_activities, 2)
         self.assertEquals(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
             future.result
@@ -91,7 +80,7 @@ class TestChain(unittest.TestCase):
             ActivityTask(to_string, "test")
         ).submit(executor)
         self.assertTrue(future.finished)
-        self.assertEquals(future.nb_activities_done, 2)
+        self.assertEquals(future.count_finished_activities, 2)
 
         future = Chain(
             ActivityTask(to_string, "test"),
@@ -99,7 +88,7 @@ class TestChain(unittest.TestCase):
             ActivityTask(to_string, "test")
         ).submit(executor)
         self.assertTrue(future.running)
-        self.assertEquals(future.nb_activities_done, 1)
+        self.assertEquals(future.count_finished_activities, 1)
 
     def test_previous_value(self):
         future = Chain(

@@ -45,10 +45,10 @@ class Group(object):
 class GroupFuture(futures.Future):
 
     def __init__(self, activities, executor):
+        super(GroupFuture, self).__init__()
         self.activities = activities
         self.futures = []
         self.executor = executor
-        self._state = futures.PENDING
         for a in self.activities:
             self.futures.append(self._submit_activity(a))
         self.sync_state()
@@ -64,6 +64,8 @@ class GroupFuture(futures.Future):
     def sync_state(self):
         if all(a.finished for a in self.futures):
             self._state = futures.FINISHED
+        elif any(a.cancelled for a in self.futures):
+            self._state = futures.CANCELLED
         elif any(a.running for a in self.futures):
             self._state = futures.RUNNING
 
@@ -76,7 +78,7 @@ class GroupFuture(futures.Future):
                 self._result.append(None)
 
     @property
-    def nb_activities_done(self):
+    def count_finished_activities(self):
         return sum(1 if a.finished else 0
                    for a in self.futures)
 
