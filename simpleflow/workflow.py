@@ -40,7 +40,7 @@ class Workflow(object):
             return self._executor.submit(func.activity, *func.args, **func.kwargs)
         elif isinstance(func, activity.Activity):
             return self._executor.submit(func, *args, **kwargs)
-        elif isinstance(func, (canvas.Group, canvas.Chain)):
+        elif isinstance(func, canvas.Group):
             return func.submit(self._executor)
         else:
             raise TypeError('Bad type for {} func ({})'.format(
