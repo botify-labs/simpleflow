@@ -22,7 +22,7 @@ class Workflow(object):
         Submit a function for asynchronous execution.
 
         :param activity: callable registered as an task.
-        :type  activity: activity.Activity | task.ActivityTask | canvas.Group | canvas.Chain | workflow.Workflow
+        :type  activity: activity.Activity | task.ActivityTask | task.WorkflowTask | canvas.Group | canvas.Chain | workflow.Workflow
         :param *args: arguments passed to the task.
         :type  *args: Sequence.
         :param **kwargs: keyword-arguments passed to the task.
@@ -36,7 +36,7 @@ class Workflow(object):
         # the executor
         if inspect.isclass(activity) and issubclass(activity, Workflow):
             return self._executor.submit(activity, *args, **kwargs)
-        elif isinstance(activity, task.ActivityTask):
+        elif isinstance(activity, (task.ActivityTask, task.WorkflowTask)):
             return self._executor.submit(activity.activity, *activity.args, **activity.kwargs)
         elif isinstance(activity, Activity):
             return self._executor.submit(activity, *args, **kwargs)
