@@ -1,4 +1,4 @@
-from simpleflow import activity, task
+from simpleflow import activity, registry, task
 
 
 @activity.with_attributes(task_list='test')
@@ -23,6 +23,6 @@ def test_task_applies_class_correctly():
 
 
 def test_task_register():
-    registry = task.registry[None]
-    assert registry['tests.test_task.double'] == double
-    assert registry['tests.test_task.Double'] == Double
+    _registry = registry.registry[None]
+    assert _registry['tests.test_task.double'] == double
+    assert _registry['tests.test_task.Double'] == Double

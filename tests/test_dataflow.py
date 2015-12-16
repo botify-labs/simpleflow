@@ -72,7 +72,6 @@ class TestWorkflow(Workflow):
 def check_task_scheduled_decision(decision, task):
     """
     Asserts that *decision* schedules *task*.
-
     """
     assert decision['decisionType'] == 'ScheduleActivityTask'
 
@@ -86,7 +85,6 @@ def check_task_scheduled_decision(decision, task):
 class TestDefinitionWithInput(TestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
-
     """
     def run(self, a):
         b = self.submit(increment, a)
@@ -129,7 +127,6 @@ def test_workflow_with_input():
 class TestDefinitionWithBeforeRun(TestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
-
     """
     def before_run(self, history):
         self.a = history.events[0].input['args'][0]
@@ -155,7 +152,6 @@ def test_workflow_with_before_run():
 class TestDefinitionWithAfterRun(TestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
-
     """
     def before_run(self, history):
         self.b = history.events[0].input['args'][0] + 1
@@ -182,7 +178,6 @@ def test_workflow_with_after_run():
 class TestDefinition(TestWorkflow):
     """
     Executes two tasks. The second depends on the first.
-
     """
     def run(self):
         a = self.submit(increment, 1)
@@ -246,7 +241,6 @@ def test_workflow_with_two_tasks():
 def test_workflow_with_two_tasks_not_completed():
     """
     This test checks how the executor behaves when a task is still running.
-
     """
     workflow = TestDefinitionWithInput
     executor = Executor(DOMAIN, workflow)
@@ -299,7 +293,6 @@ def test_workflow_with_two_tasks_not_completed():
 class TestDefinitionSameTask(TestWorkflow):
     """
     This workflow executes the same task with a different argument.
-
     """
     def run(self, *args, **kwargs):
         a = self.submit(increment, 1)
@@ -312,7 +305,6 @@ def test_workflow_with_same_task_called_two_times():
     """
     This test checks how the executor behaves when the same task is executed
     two times with a different argument.
-
     """
     workflow = TestDefinitionSameTask
     executor = Executor(DOMAIN, workflow)
@@ -365,7 +357,6 @@ class TestDefinitionSameFuture(TestWorkflow):
     """
     This workflow uses a single variable to hold the future of two different
     tasks.
-
     """
     def run(self, *args, **kwargs):
         a = self.submit(increment, 1)
@@ -425,7 +416,6 @@ class TestDefinitionTwoTasksSameFuture(TestWorkflow):
     """
     This test checks how the executor behaves when two tasks depends on the
     same task.
-
     """
     def run(self, *args, **kwargs):
         a = self.submit(increment, 1)
@@ -495,7 +485,6 @@ class TestDefinitionMap(TestWorkflow):
     """
     This workflow only maps a task on several values, they wait for the
     availability of their result.
-
     """
     nb_parts = 3
 
@@ -553,7 +542,6 @@ def increment_retry(x):
 class TestDefinitionRetryActivity(TestWorkflow):
     """
     This workflow executes a task that is retried on failure.
-
     """
     def run(self, *args, **kwargs):
         a = self.submit(increment_retry, 7)
@@ -657,7 +645,6 @@ def test_workflow_retry_activity_failed_again():
 class TestDefinitionChildWorkflow(TestWorkflow):
     """
     This workflow executes a child workflow.
-
     """
     def run(self, x):
         y = self.submit(TestDefinition, x)
@@ -714,7 +701,6 @@ class TestDefinitionMoreThanMaxDecisions(TestWorkflow):
     """
     This workflow executes more tasks than the maximum number of decisions a
     decider can take once.
-
     """
     def run(self):
         results = self.map(increment, xrange(constants.MAX_DECISIONS + 20))
@@ -786,7 +772,6 @@ class TestDefinitionFailWorkflow(OnFailureMixin, TestWorkflow):
     """
     This workflow executes a single task that fails, then it explicitly fails
     the whole workflow.
-
     """
     def run(self):
         result = self.submit(raise_error)
@@ -836,7 +821,6 @@ class TestDefinitionActivityRaisesOnFailure(OnFailureMixin, TestWorkflow):
     This workflow executes a task that fails and has the ``raises_on_failure``
     flag set to ``True``. It means it will raise an exception in addition to
     filling the ``Future.exception``'s attribute.
-
     """
     def run(self):
         return self.submit(raise_on_failure).result
@@ -923,13 +907,10 @@ def test_multiple_scheduled_activities():
     :py:meth:`swf.executor.Executor.resume` did not check ``future.finished``
     before ``future.exception is None``. It mades the call to ``.resume()`` to
     block for the first scheduled task it encountered instead of returning it.
-
     This issue was fixed in commit 6398aa8.
-
     With the wrong behaviour, the call to ``executor.replay()`` would not
     schedule the ``double`` task even after the task represented by *b*
     (``self.submit(increment, 2)``) has completed.
-
     """
     workflow = TestMultipleScheduledActivitiesDefinition
     executor = Executor(DOMAIN, workflow)
@@ -1080,7 +1061,6 @@ class TestDefinitionMoreThanMaxOpenActivities(TestWorkflow):
     """
     This workflow executes more tasks than the maximum number of decisions a
     decider can take once.
-
     """
     def run(self):
         results = self.map(
@@ -1220,7 +1200,6 @@ class TestTaskNaming(TestWorkflow):
     """
     This workflow executes a few tasks and tests the naming (task ID
     assignation) depending on their idempotence.
-
     """
     def run(self):
         results = []
