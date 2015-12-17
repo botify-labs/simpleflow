@@ -422,6 +422,9 @@ class Executor(executor.Executor):
         """
         future = self._get_future_from_child_workflow_event(event)
 
+        if not future:  # Happens, not sure what it means ; TODO: clarify that
+            return None
+
         if future.state == "FINISHED" and future.exception:
             raise future.exception
 
@@ -557,7 +560,7 @@ class Executor(executor.Executor):
             if isinstance(func, Activity):
                 a_task = ActivityTask(func, *args, **kwargs)
             elif issubclass_(func, Workflow):
-                a_task = WorkflowTask(func, *args, **kwargs)
+                a_task = WorkflowTask(func, *args, __executor=self, **kwargs)
             else:
                 raise TypeError('invalid type {} for {}'.format(
                     type(func), func))

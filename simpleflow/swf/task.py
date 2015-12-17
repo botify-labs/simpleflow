@@ -68,7 +68,7 @@ class WorkflowTask(task.WorkflowTask):
         # latency if the WorkflowType already exists.
         model = swf.models.WorkflowType(
             domain,
-            workflow.name,
+            workflow.__module__ + '.' + workflow.__name__,
             version=workflow.version,
         )
 
