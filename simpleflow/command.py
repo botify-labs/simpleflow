@@ -283,17 +283,15 @@ def task_info(ctx, domain, workflow_id, task_id, details):
 
 
 @click.option('--nb-processes', '-N', type=int)
-@click.option('--log-level', '-l')
 @click.option('--task-list')
 @click.option('--domain', '-d', required=True, help='SWF Domain')
 @click.argument('workflows', nargs=-1, required=True)
 @cli.command('decider.start', help='Start a decider process to manage workflow executions.')
-def start_decider(workflows, domain, task_list, log_level, nb_processes):
+def start_decider(workflows, domain, task_list, nb_processes):
     decider.command.start(
         workflows,
         domain,
         task_list,
-        log_level,
         nb_processes,
     )
 
@@ -303,12 +301,11 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
               required=False,
               help='interval in seconds')
 @click.option('--nb-processes', '-N', type=int)
-@click.option('--log-level', '-l')
 @click.option('--task-list')
 @click.option('--domain', '-d', required=True, help='SWF Domain')
 @click.argument('workflow')
 @cli.command('worker.start', help='Start a worker process to handle activity tasks.')
-def start_worker(workflow, domain, task_list, log_level, nb_processes, heartbeat):
+def start_worker(workflow, domain, task_list, nb_processes, heartbeat):
     worker.command.start(
         workflow,
         domain,

@@ -170,7 +170,7 @@ activity worker processes.
 
 Start a decider with: ::
 
-    $ simpleflow decider.start --log-level 1 --domain TestDomain --task-list test examples.basic.BasicWorkflow
+    $ simpleflow decider.start --domain TestDomain --task-list test examples.basic.BasicWorkflow
 
 Start an activity worker with: ::
 
