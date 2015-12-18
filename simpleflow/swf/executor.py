@@ -118,14 +118,14 @@ class Executor(executor.Executor):
                     self.domain,
                     name=event['activity_type']['name'],
                     version=event['activity_type']['version'])
-                logger.info('Creating activity type {} in domain {}'.format(
+                logger.info('creating activity type {} in domain {}'.format(
                     activity_type.name,
                     self.domain.name))
                 try:
                     activity_type.save()
                 except swf.exceptions.AlreadyExistsError:
                     logger.info(
-                        'Activity type {} in domain {} already exists'.format(
+                        'oops: Activity type {} in domain {} already exists, creation failed, continuing...'.format(
                             activity_type.name,
                             self.domain.name))
                 return None
