@@ -297,6 +297,7 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
         workflows,
         domain,
         task_list,
+        None,
         nb_processes,
     )
 
