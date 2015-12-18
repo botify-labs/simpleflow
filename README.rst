@@ -216,6 +216,16 @@ You can profile the execution of the workflow with: ::
     activity-examples.basic.double-1     completed     2015-08-04 23:06              0.07  2015-08-04 23:06            1.39  2015-08-04 23:06                        1.15
     activity-examples.basic.increment-1  completed     2015-08-04 23:04            102.20  2015-08-04 23:06            0.79  2015-08-04 23:06                        0.65
 
+
+Controlling log verbosity
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can control log verbosity via the `LOG_LEVEL` environment variable. Default is `INFO`. For instance,
+the following command will start a decider with `DEBUG` logs:
+
+    $ LOG_LEVEL=DEBUG simpleflow decider.start --domain TestDomain --task-list test examples.basic.BasicWorkflow
+
+
 Documentation
 -------------
 
