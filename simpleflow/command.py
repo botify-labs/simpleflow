@@ -283,11 +283,16 @@ def task_info(ctx, domain, workflow_id, task_id, details):
 
 
 @click.option('--nb-processes', '-N', type=int)
+@click.option('--log-level', '-l')
 @click.option('--task-list')
 @click.option('--domain', '-d', required=True, help='SWF Domain')
 @click.argument('workflows', nargs=-1, required=True)
 @cli.command('decider.start', help='Start a decider process to manage workflow executions.')
-def start_decider(workflows, domain, task_list, nb_processes):
+def start_decider(workflows, domain, task_list, log_level, nb_processes):
+    if log_level:
+        logger.warning(
+            "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
+        )
     decider.command.start(
         workflows,
         domain,
@@ -301,11 +306,16 @@ def start_decider(workflows, domain, task_list, nb_processes):
               required=False,
               help='interval in seconds')
 @click.option('--nb-processes', '-N', type=int)
+@click.option('--log-level', '-l')
 @click.option('--task-list')
 @click.option('--domain', '-d', required=True, help='SWF Domain')
 @click.argument('workflow')
 @cli.command('worker.start', help='Start a worker process to handle activity tasks.')
-def start_worker(workflow, domain, task_list, nb_processes, heartbeat):
+def start_worker(workflow, domain, task_list, log_level, nb_processes, heartbeat):
+    if log_level:
+        logger.warning(
+            "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
+        )
     worker.command.start(
         workflow,
         domain,
