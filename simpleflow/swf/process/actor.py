@@ -43,6 +43,8 @@ def with_state(state):
     def wrapper(method):
         @functools.wraps(method)
         def wrapped(self, *args, **kwargs):
+            logger.debug('entering state {}: {}(args={}, kwargs={})'.format(
+                state, method.__name__, args, kwargs))
             self.state = state
             return method(self, *args, **kwargs)
 
