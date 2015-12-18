@@ -1,4 +1,7 @@
 import logging  # NOQA
+import os
+
+from .logging_formatter import SimpleflowFormatter
 
 
 WORKFLOW_DEFAULT_TASK_LIST = 'default'
@@ -19,7 +22,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'loggers': {
         'simpleflow': {
-            'level': 'INFO',
+            'level': os.getenv('LOG_LEVEL', 'INFO'),
             'handlers': ['console'],
         },
     },
@@ -28,6 +31,13 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'level': 'DEBUG',
             'stream': 'ext://sys.stderr',
+            'formatter': 'simpleflow_formatter',
         },
     },
+    'formatters': {
+        'simpleflow_formatter': {
+            '()': SimpleflowFormatter,
+            'format': '%(asctime)s %(message)s',
+        },
+    }
 }
