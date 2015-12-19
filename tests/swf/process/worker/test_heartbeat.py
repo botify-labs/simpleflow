@@ -100,7 +100,7 @@ class TestHeartbeatProcess(unittest.TestCase):
 
     def test_heartbeat_ok(self):
         heartbeat = FakeHeartbeat(max_count=1)
-        heartbeater = HeartbeatProcess(heartbeat, interval=1)
+        heartbeater = HeartbeatProcess(heartbeat, interval=0.1)
         token = uuid4()
         try:
             heartbeater.run(token, FakeTask('test_task'))
@@ -111,7 +111,7 @@ class TestHeartbeatProcess(unittest.TestCase):
 
     def test_heartbeat_cancel(self):
         heartbeat = FakeHeartbeatCancel(max_count=10)
-        heartbeater = HeartbeatProcess(heartbeat, interval=1)
+        heartbeater = HeartbeatProcess(heartbeat, interval=0.1)
         token = uuid4()
 
         heartbeater.run(token, FakeTask('test_task'))
@@ -123,7 +123,7 @@ class TestHeartbeatProcess(unittest.TestCase):
         heartbeat = FakeHeartbeatRaises(
             swf.exceptions.DoesNotExistError('error', error_type),
             10)
-        heartbeater = HeartbeatProcess(heartbeat, interval=1)
+        heartbeater = HeartbeatProcess(heartbeat, interval=0.1)
         token = uuid4()
 
         heartbeater.run(token, FakeTask('test_task'))
@@ -133,7 +133,7 @@ class TestHeartbeatProcess(unittest.TestCase):
     def test_heartbeat_running(self):
         max_count = 3
         heartbeat = FakeHeartbeat(max_count)
-        heartbeater = HeartbeatProcess(heartbeat, interval=1)
+        heartbeater = HeartbeatProcess(heartbeat, interval=0.1)
         token = uuid4()
         try:
             heartbeater.run(token, FakeTask('test_task'))
@@ -147,7 +147,7 @@ class TestHeartbeatProcess(unittest.TestCase):
     @unittest.skip("Doesn't work in containers for now")
     def test_heartbeat_process_kill_parent(self):
         heartbeat = FakeHeartbeat(1000)
-        heartbeater = HeartbeatProcess(heartbeat, interval=1)
+        heartbeater = HeartbeatProcess(heartbeat, interval=0.1)
 
         token = uuid4()
         task = FakeTask('test_task')
@@ -181,7 +181,7 @@ class Toggler(object):
 
 class TestHeartbeater(unittest.TestCase):
     def test_heartbeater_start(self):
-        heartbeater = Heartbeater(lambda *args: None, interval=1)
+        heartbeater = Heartbeater(lambda *args: None, interval=0.1)
         heartbeater.start(uuid4(), FakeTask('test_task'))
         heartbeater.stop()
         heartbeater._heartbeater.join()
@@ -190,7 +190,7 @@ class TestHeartbeater(unittest.TestCase):
     def test_heartbeater_stop(self):
         toggler = Toggler(True)
         heartbeater = Heartbeater(lambda *args: None,
-                                  interval=1,
+                                  interval=0.1,
                                   on_exit=toggler)
         heartbeater.start(uuid4(), FakeTask('test_task'))
         heartbeater.stop()

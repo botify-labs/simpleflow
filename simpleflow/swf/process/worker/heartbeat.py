@@ -16,7 +16,9 @@ __all__ = ['Heartbeater', 'HeartbeatProcess']
 
 class HeartbeatProcess(object):
     def __init__(self, heartbeat_callable, interval):
-        if not isinstance(interval, int) or interval <= 0:
+        if not isinstance(interval, int) and not isinstance(interval, float):
+            raise ValueError('heartbeat interval must be an integer or a float')
+        if interval <= 0:
             raise ValueError('heartbeat interval must be > 0')
         self._interval = interval
         self._heartbeat = heartbeat_callable

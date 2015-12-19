@@ -1,5 +1,5 @@
+import mock
 import unittest
-import random
 from time import time
 
 from simpleflow.utils.retry import with_delay, constant, exponential
@@ -34,13 +34,13 @@ class TestRetry(unittest.TestCase):
         callable = DummyCallableRaises(ValueError('test'))
 
         with self.assertRaises(ValueError):
-            with_delay()(callable)()
+            with_delay(delay=constant(RETRY_WAIT_TIME))(callable)()
 
         self.assertEquals(callable.count, 1)
 
     def test_with_delay(self):
         callable = DummyCallableRaises(ValueError('test'))
-        max_count = random.randint(2, 7)
+        max_count = 2
 
         t0 = time()
         with self.assertRaises(ValueError):
@@ -53,7 +53,7 @@ class TestRetry(unittest.TestCase):
 
     def test_with_delay_multiple_exceptions(self):
         callable = DummyCallableRaises(ValueError('test'))
-        max_count = random.randint(2, 7)
+        max_count = 3
         func = with_delay(nb_times=max_count,
                           delay=constant(RETRY_WAIT_TIME),
                           on_exceptions=[KeyError, ValueError])(callable)
@@ -68,11 +68,12 @@ class TestRetry(unittest.TestCase):
 
     def test_with_delay_exponential_backoff(self):
         callable = DummyCallableRaises(ValueError('test'))
-        max_count = 3
+        max_count = 2
         func = with_delay(nb_times=max_count,
                           delay=exponential,
                           on_exceptions=[KeyError, ValueError])(callable)
         with self.assertRaises(ValueError):
-            func()
+            with mock.patch('random.random', lambda: 0.01):
+                func()
 
         self.assertEquals(callable.count, max_count)
