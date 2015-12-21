@@ -3,5 +3,5 @@
 
 
 def test_basic():
-    import simpleflow
+    import simpleflow  # NOQA
     assert True

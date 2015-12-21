@@ -24,39 +24,22 @@ from swf.models.history import builder
 
 from simpleflow import (
     Workflow,
-    activity,
     futures,
 )
 from simpleflow.swf import constants
 from simpleflow.swf.executor import Executor
 
 
-DOMAIN = swf.models.Domain('TestDomain')
-DEFAULT_VERSION = 'test'
-
-
-@activity.with_attributes(version=DEFAULT_VERSION)
-def increment(x):
-    return x + 1
-
-
-@activity.with_attributes(version=DEFAULT_VERSION)
-def double(x):
-    return x * 2
-
-
-@activity.with_attributes(version=DEFAULT_VERSION, idempotent=True)
-def triple(x):
-    return x * 3
-
-
-@activity.with_attributes(version=DEFAULT_VERSION, idempotent=False)
-class Tetra(object):
-    def __init__(self, x):
-        self.x = x
-
-    def execute(self):
-        return self.x * 4
+from .data import (
+    DOMAIN,
+    double,
+    increment,
+    increment_retry,
+    raise_error,
+    raise_on_failure,
+    triple,
+    Tetra,
+)
 
 
 class TestWorkflow(Workflow):
@@ -109,7 +92,7 @@ def test_workflow_with_input():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-tests.test_dataflow.increment-1',
+                           activity_id='activity-tests.data.activities.increment-1',
                            input={'args': 1},
                            result=result)
         .add_decision_task_scheduled()
@@ -205,7 +188,7 @@ def test_workflow_with_two_tasks():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-tests.test_dataflow.increment-1',
+                           activity_id='activity-tests.data.activities.increment-1',
                            input={'args': 1},
                            result=2)
         .add_decision_task_scheduled()
@@ -223,7 +206,7 @@ def test_workflow_with_two_tasks():
         .add_activity_task(double,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-tests.test_dataflow.double-1',
+                           activity_id='activity-tests.data.activities.double-1',
                            input={'args': 2},
                            result=4)
         .add_decision_task_scheduled()
@@ -261,7 +244,7 @@ def test_workflow_with_two_tasks_not_completed():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='started',
-                           activity_id='activity-tests.test_dataflow.increment-1',
+                           activity_id='activity-tests.data.activities.increment-1',
                            input={'args': 1},
                            result=5)
         .add_decision_task_scheduled()
@@ -322,7 +305,7 @@ def test_workflow_with_same_task_called_two_times():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-tests.test_dataflow.increment-1',
+                           activity_id='activity-tests.data.activities.increment-1',
                            input={'args': 1},
                            result=2)
         .add_decision_task_scheduled()
@@ -339,7 +322,7 @@ def test_workflow_with_same_task_called_two_times():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-tests.test_dataflow.increment-2',
+                           activity_id='activity-tests.data.activities.increment-2',
                            input={'args': 2},
                            result=3)
         .add_decision_task_scheduled()
@@ -383,7 +366,7 @@ def test_workflow_reuse_same_future():
                            decision_id=decision_id,
                            last_state='completed',
                            input={'args': 1},
-                           activity_id='activity-tests.test_dataflow.increment-1',
+                           activity_id='activity-tests.data.activities.increment-1',
                            result=2)
         .add_decision_task_scheduled()
         .add_decision_task_started())
@@ -398,7 +381,7 @@ def test_workflow_reuse_same_future():
         .add_activity_task(double,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-tests.test_dataflow.double-1',
+                           activity_id='activity-tests.data.activities.double-1',
                            input={'args': 2},
                            result=4)
         .add_decision_task_scheduled()
@@ -443,7 +426,7 @@ def test_workflow_with_two_tasks_same_future():
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-tests.test_dataflow.increment-1',
+                           activity_id='activity-tests.data.activities.increment-1',
                            input={'args': 1},
                            result=2)
         .add_decision_task_scheduled()
@@ -461,13 +444,13 @@ def test_workflow_with_two_tasks_same_future():
         .add_activity_task(double,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-tests.test_dataflow.double-1',
+                           activity_id='activity-tests.data.activities.double-1',
                            input={'args': 2},
                            result=4)
         .add_activity_task(increment,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-tests.test_dataflow.increment-2',
+                           activity_id='activity-tests.data.activities.increment-2',
                            input={'args': 2},
                            result=3)
         .add_decision_task_scheduled()
@@ -516,7 +499,7 @@ def test_workflow_map():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+            activity_id='activity-tests.data.activities.increment-{}'.format(
                 i + 1),
             last_state='completed',
             input={'args': i},
@@ -532,11 +515,6 @@ def test_workflow_map():
         result=json.dumps([i + 1 for i in xrange(nb_parts)]))
 
     assert decisions[0] == workflow_completed
-
-
-@activity.with_attributes(version=DEFAULT_VERSION, retry=1)
-def increment_retry(x):
-    return x + 1
 
 
 class TestDefinitionRetryActivity(TestWorkflow):
@@ -565,7 +543,7 @@ def test_workflow_retry_activity():
         .add_activity_task(increment_retry,
                            decision_id=decision_id,
                            last_state='failed',
-                           activity_id='activity-tests.test_dataflow.increment_retry-1')
+                           activity_id='activity-tests.data.activities.increment_retry-1')
         .add_decision_task_scheduled()
         .add_decision_task_started())
 
@@ -580,7 +558,7 @@ def test_workflow_retry_activity():
         .add_activity_task(increment_retry,
                            decision_id=decision_id,
                            last_state='completed',
-                           activity_id='activity-tests.test_dataflow.increment_retry-1',
+                           activity_id='activity-tests.data.activities.increment_retry-1',
                            input={'args': 7},
                            result=8)
         .add_decision_task_scheduled()
@@ -611,7 +589,7 @@ def test_workflow_retry_activity_failed_again():
             increment_retry,
             decision_id=decision_id,
             last_state='failed',
-            activity_id='activity-tests.test_dataflow.increment_retry-1')
+            activity_id='activity-tests.data.activities.increment_retry-1')
         .add_decision_task_scheduled()
         .add_decision_task_started())
 
@@ -627,7 +605,7 @@ def test_workflow_retry_activity_failed_again():
             increment_retry,
             decision_id=decision_id,
             last_state='failed',
-            activity_id='activity-tests.test_dataflow.increment_retry-1')
+            activity_id='activity-tests.data.activities.increment_retry-1')
         .add_decision_task_scheduled()
         .add_decision_task_started())
 
@@ -723,7 +701,7 @@ def test_workflow_with_more_than_max_decisions():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+            activity_id='activity-tests.data.activities.increment-{}'.format(
                 i + 1),
             last_state='completed',
             result=i + 1)
@@ -740,7 +718,7 @@ def test_workflow_with_more_than_max_decisions():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+            activity_id='activity-tests.data.activities.increment-{}'.format(
                 i + 1),
             last_state='completed',
             result=i + 1)
@@ -761,11 +739,6 @@ class OnFailureMixin(object):
 
     def on_failure(self, history, reason, details=None):
         self.failed = True
-
-
-@activity.with_attributes(version=DEFAULT_VERSION)
-def raise_error():
-    raise Exception('error')
 
 
 class TestDefinitionFailWorkflow(OnFailureMixin, TestWorkflow):
@@ -791,7 +764,7 @@ def test_workflow_failed_from_definition():
     history.add_activity_task(
         raise_error,
         decision_id=history.last_id,
-        activity_id='activity-tests.test_dataflow.raise_error-1',
+        activity_id='activity-tests.data.activities.raise_error-1',
         last_state='failed',
         result=json.dumps(None))
 
@@ -809,11 +782,6 @@ def test_workflow_failed_from_definition():
     workflow_failed.fail(reason='Workflow execution failed: error')
 
     assert decisions[0] == workflow_failed
-
-
-@activity.with_attributes(version=DEFAULT_VERSION, raises_on_failure=True)
-def raise_on_failure():
-    raise Exception('error')
 
 
 class TestDefinitionActivityRaisesOnFailure(OnFailureMixin, TestWorkflow):
@@ -834,7 +802,7 @@ def test_workflow_activity_raises_on_failure():
     history.add_activity_task(
         raise_on_failure,
         decision_id=history.last_id,
-        activity_id='activity-tests.test_dataflow.raise_on_failure-1',
+        activity_id='activity-tests.data.activities.raise_on_failure-1',
         last_state='failed',
         reason='error')
 
@@ -851,7 +819,7 @@ def test_workflow_activity_raises_on_failure():
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
         reason='Workflow execution error in task '
-               'activity-tests.test_dataflow.raise_on_failure: '
+               'activity-tests.data.activities.raise_on_failure: '
                '"error"')
 
     assert decisions[0] == workflow_failed
@@ -871,7 +839,7 @@ def test_on_failure_callback():
     history.add_activity_task(
         raise_error,
         decision_id=history.last_id,
-        activity_id='activity-tests.test_dataflow.raise_error-1',
+        activity_id='activity-tests.data.activities.raise_error-1',
         last_state='failed',
         reason='error')
 
@@ -921,14 +889,14 @@ def test_multiple_scheduled_activities():
         .add_activity_task_scheduled(
             increment,
             decision_id=decision_id,
-            activity_id='activity-tests.test_dataflow.increment-1',
+            activity_id='activity-tests.data.activities.increment-1',
             input={'args': 1})
         # The right behaviour is to schedule the ``double`` task when *b* is in
         # state finished.
         .add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id='activity-tests.test_dataflow.increment-2',
+            activity_id='activity-tests.data.activities.increment-2',
             last_state='completed',
             input={'args': 2},
             result='3'))
@@ -946,7 +914,7 @@ def test_activity_task_timeout():
     (history
         .add_activity_task(
             increment,
-            activity_id='activity-tests.test_dataflow.increment-1',
+            activity_id='activity-tests.data.activities.increment-1',
             decision_id=decision_id,
             last_state='timed_out',
             timeout_type='START_TO_CLOSE'))
@@ -966,7 +934,7 @@ def test_activity_task_timeout_retry():
     (history
         .add_activity_task(
             increment_retry,
-            activity_id='activity-tests.test_dataflow.increment_retry-1',
+            activity_id='activity-tests.data.activities.increment_retry-1',
             decision_id=decision_id,
             last_state='timed_out',
             timeout_type='START_TO_CLOSE'))
@@ -985,7 +953,7 @@ def test_activity_task_timeout_raises():
     (history
         .add_activity_task(
             raise_on_failure,
-            activity_id='activity-tests.test_dataflow.raise_on_failure-1',
+            activity_id='activity-tests.data.activities.raise_on_failure-1',
             decision_id=decision_id,
             last_state='timed_out',
             timeout_type='START_TO_CLOSE'))
@@ -994,7 +962,7 @@ def test_activity_task_timeout_raises():
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
         reason='Workflow execution error in task '
-               'activity-tests.test_dataflow.raise_on_failure: '
+               'activity-tests.data.activities.raise_on_failure: '
                '"TimeoutError(START_TO_CLOSE)"')
 
     assert decisions[0] == workflow_failed
@@ -1008,7 +976,7 @@ def test_activity_not_found_schedule_failed():
     decision_id = history.last_id
     (history
         .add_activity_task_schedule_failed(
-            activity_id='activity-tests.test_dataflow.increment-1',
+            activity_id='activity-tests.data.activities.increment-1',
             decision_id=decision_id,
             activity_type={
                 'name': increment.name,
@@ -1041,7 +1009,7 @@ def test_activity_not_found_schedule_failed_already_exists():
     decision_id = history.last_id
     (history
         .add_activity_task_schedule_failed(
-            activity_id='activity-tests.test_dataflow.increment-1',
+            activity_id='activity-tests.data.activities.increment-1',
             decision_id=decision_id,
             activity_type={
                 'name': increment.name,
@@ -1086,7 +1054,7 @@ def test_more_than_1000_open_activities_scheduled():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+            activity_id='activity-tests.data.activities.increment-{}'.format(
                 i + 1),
             last_state='scheduled',
             result=i + 1)
@@ -1120,7 +1088,7 @@ def test_more_than_1000_open_activities_scheduled_and_running():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+            activity_id='activity-tests.data.activities.increment-{}'.format(
                 i + 1),
             last_state=get_random_state(),
             result=i + 1)
@@ -1143,7 +1111,7 @@ def test_more_than_1000_open_activities_partial_max():
         history.add_activity_task(
             increment,
             decision_id=first_decision_id,
-            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+            activity_id='activity-tests.data.activities.increment-{}'.format(
                 i + 1),
             last_state='scheduled',
             result=i + 1)
@@ -1161,7 +1129,7 @@ def test_more_than_1000_open_activities_partial_max():
         history.add_activity_task(
             increment,
             decision_id=history.last_id,
-            activity_id='activity-tests.test_dataflow.increment-{}'.format(
+            activity_id='activity-tests.data.activities.increment-{}'.format(
                 id_),
             last_state='scheduled',
             result=id_,
@@ -1220,17 +1188,17 @@ def test_task_naming():
     decisions, _ = executor.replay(history)
     expected = [
         # non idempotent task, should increment
-        "activity-tests.test_dataflow.increment-1",
+        "activity-tests.data.activities.increment-1",
         # non idempotent task, should increment again
-        "activity-tests.test_dataflow.increment-2",
+        "activity-tests.data.activities.increment-2",
         # idempotent task, with arg 1
-        "activity-tests.test_dataflow.triple-deb8adb88b687c0df408628aa69b1377",
+        "activity-tests.data.activities.triple-deb8adb88b687c0df408628aa69b1377",
         # idempotent task, with arg 2
-        "activity-tests.test_dataflow.triple-d269dc325a06c6ad32888f450ee8dd30",
+        "activity-tests.data.activities.triple-d269dc325a06c6ad32888f450ee8dd30",
         # idempotent task, with arg 2 too => same task id
-        "activity-tests.test_dataflow.triple-d269dc325a06c6ad32888f450ee8dd30",
+        "activity-tests.data.activities.triple-d269dc325a06c6ad32888f450ee8dd30",
         # class-based task, non idempotent
-        "activity-tests.test_dataflow.Tetra-1",
+        "activity-tests.data.activities.Tetra-1",
     ]
     for i in range(0, len(expected)):
         decision = decisions[i]['scheduleActivityTaskDecisionAttributes']
