@@ -95,11 +95,11 @@ def test_workflow_with_input(mocked_swf_connection):
     assert decisions[0] == workflow_completed
 
 
-class TestDefinitionWithBeforeRun(TestWorkflow):
+class TestDefinitionWithBeforeReplay(TestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
-    def before_run(self, history):
+    def before_replay(self, history):
         self.a = history.events[0].input['args'][0]
 
     def run(self, a):
@@ -108,8 +108,8 @@ class TestDefinitionWithBeforeRun(TestWorkflow):
 
 
 @patch('boto.swf.connect_to_region')
-def test_workflow_with_before_run(mocked_swf_connection):
-    workflow = TestDefinitionWithBeforeRun
+def test_workflow_with_before_replay():
+    workflow = TestDefinitionWithBeforeReplay
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow,
@@ -121,11 +121,11 @@ def test_workflow_with_before_run(mocked_swf_connection):
     assert executor._workflow.a == 4
 
 
-class TestDefinitionWithAfterRun(TestWorkflow):
+class TestDefinitionWithAfterReplay(TestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
-    def before_run(self, history):
+    def after_replay(self, history):
         self.b = history.events[0].input['args'][0] + 1
 
     def run(self, a):
@@ -134,8 +134,8 @@ class TestDefinitionWithAfterRun(TestWorkflow):
 
 
 @patch('boto.swf.connect_to_region')
-def test_workflow_with_after_run(mocked_swf_connection):
-    workflow = TestDefinitionWithAfterRun
+def test_workflow_with_after_replay():
+    workflow = TestDefinitionWithAfterReplay
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow,
@@ -146,6 +146,52 @@ def test_workflow_with_after_run(mocked_swf_connection):
     decisions, _ = executor.replay(history)
     assert executor._workflow.b == 5
 
+
+class TestDefinitionWithAfterFinished(TestWorkflow):
+    """
+    Execute a single task with an argument passed as the workflow's input.
+    """
+    def after_finished(self, history):
+        self.b = history.events[0].input['args'][0] + 1
+
+    def run(self, a):
+        b = self.submit(increment, a)
+        return b.result
+
+
+def test_workflow_with_after_finished():
+    workflow = TestDefinitionWithAfterFinished
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow,
+                              input={'args': (4,)})
+
+    # The executor should only schedule the *increment* task.
+    assert not hasattr(executor._workflow, 'b')
+    decisions, _ = executor.replay(history)
+    check_task_scheduled_decision(decisions[0], increment)
+
+    # Let's add the task to the history to simulate its completion.
+    decision_id = history.last_id
+    (history
+        .add_activity_task(increment,
+                           decision_id=decision_id,
+                           last_state='completed',
+                           activity_id='activity-tests.data.activities.increment-1',
+                           input={'args': 4},
+                           result=5)
+        .add_decision_task_scheduled()
+        .add_decision_task_started())
+
+    # *double* has completed and the ``b.result``is now available. The executor
+    # should complete the workflow and its result to ``b.result``.
+    assert not hasattr(executor._workflow, 'b')
+    decisions, _ = executor.replay(history)
+    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed.complete(result=json.dumps(5))
+
+    assert decisions[0] == workflow_completed
+    assert executor._workflow.b == 5
 
 
 class TestDefinition(TestWorkflow):

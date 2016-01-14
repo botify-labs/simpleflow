@@ -81,14 +81,29 @@ class Workflow(object):
     def fail(self, reason, details=None):
         self._executor.fail(reason, details)
 
-    def before_run(self, history):
+    def before_replay(self, history):
         pass
+
+    def after_replay(self, history):
+        pass
+
+    def after_finished(self, history):
+        pass
+
+    def before_run(self, history):
+        """
+        Will be deprecated soon
+        """
+        return self.before_replay(history)
+
+    def after_run(self, history):
+        """
+        Will be deprecated soon
+        """
+        return self.after_finished(history)
 
     def run(self, *args, **kwargs):
         raise NotImplementedError
-
-    def after_run(self, history):
-        pass
 
     def on_failure(self, history, reason, details=None):
         """

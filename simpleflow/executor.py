@@ -46,11 +46,7 @@ class Executor(object):
 
         """
         workflow = self._workflow
-
-        self.before_run()
         result = workflow.run(*args, **kwargs)
-        self.after_run()
-
         return result
 
     @abc.abstractmethod
@@ -92,9 +88,6 @@ class Executor(object):
         """
         raise NotImplementedError()
 
-    def after_run(self):
-        pass
-
     def on_failure(self, reason, details=None):
         """
         Method called when the workflow fails.
@@ -118,3 +111,24 @@ class Executor(object):
 
         """
         pass
+
+    def before_replay(self):
+        return self._workflow.before_replay(self._history)
+
+    def after_replay(self):
+        return self._workflow.after_replay(self._history)
+
+    def after_finished(self):
+        return self._workflow.after_finished(self._history)
+
+    def after_run(self):
+        """
+        Will be deprecated soon
+        """
+        return self.after_finished()
+
+    def before_run(self):
+        """
+        Will be deprecated soon
+        """
+        return self.before_replay()

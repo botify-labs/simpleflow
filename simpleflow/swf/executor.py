@@ -323,6 +323,7 @@ class Executor(executor.Executor):
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
 
+        self.before_replay()
         try:
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
@@ -330,6 +331,7 @@ class Executor(executor.Executor):
                 self._open_activity_count,
                 len(self._decisions),
             ))
+            self.after_replay()
             return self._decisions, {}
         except exceptions.TaskException, err:
             reason = 'Workflow execution error in task {}: "{}"'.format(
@@ -369,6 +371,7 @@ class Executor(executor.Executor):
 
         decision = swf.models.decision.WorkflowExecutionDecision()
         decision.complete(result=swf.format.result(json.dumps(result)))
+        self.after_finished()
 
         return [decision], {}
 
@@ -391,11 +394,5 @@ class Executor(executor.Executor):
         self._decisions.append(decision)
         raise exceptions.ExecutionBlocked('workflow execution failed')
 
-    def before_run(self):
-        return self._workflow.before_run(self._history)
-
     def run(self, history):
         return self.replay(history)
-
-    def after_run(self):
-        return self._workflow.after_run(self._history)
