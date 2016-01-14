@@ -369,6 +369,7 @@ class Executor(executor.Executor):
 
             return [decision], {}
 
+        self.after_replay()
         decision = swf.models.decision.WorkflowExecutionDecision()
         decision.complete(result=swf.format.result(json.dumps(result)))
         self.after_finished()
