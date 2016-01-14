@@ -6,7 +6,7 @@ import json
 import cPickle as pickle
 import base64
 import logging
-
+import types
 
 __all__ = ['program', 'python']
 
@@ -124,6 +124,8 @@ def get_name(func):
         name = func.name
     elif isinstance(func, types.FunctionType):
         name = func.func_name
+    elif isinstance(func, (type, types.ClassType)):
+        name = func.__name__
     else:
         name = func.__class__.__name__
 
@@ -355,7 +357,10 @@ if __name__ == '__main__':
     args = arguments.get('args', ())
     kwargs = arguments.get('kwargs', {})
     try:
-        result = callable_(*args, **kwargs)
+        if isinstance(callable_, (type, types.ClassType)):
+            result = callable_(*args, **kwargs).execute()
+        else:
+            result = callable_(*args, **kwargs)
     except Exception as err:
         # Use base64 encoding to avoid carriage returns and special characters.
         print(base64.b64encode(
