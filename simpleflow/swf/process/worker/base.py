@@ -17,7 +17,7 @@ from simpleflow.swf.process.actor import (
 )
 from simpleflow.swf.task import ActivityTask
 from .dispatch import from_task_registry
-
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     @with_state('processing task')
     def process(self, request):
         token, task = request
-        spawn(self, token, task, self._heartbeat)
+        spawn2(self, token, task, self._heartbeat)
 
     @with_state('completing')
     def complete(self, token, result):
@@ -148,6 +148,37 @@ def monitor_child(pid, info):
             info['exit_code'] = exit_code
 
     signal.signal(signal.SIGCHLD, _handle_child_exit)
+
+
+def spawn2(poller, token, task, heartbeat=60):
+    worker_t = threading.Thread(target=process_task, args=(poller, token, task))
+    worker_t.start()
+
+    while worker_t.is_alive():
+        worker_t.join(timeout=heartbeat)
+        if not worker_t.is_alive():
+            # if the worker thread is not alive, terminate.
+            # The worker thread should already report any error back
+            break;
+
+        try:
+            response = poller.heartbeat(token)
+        except swf.exceptions.DoesNotExistError:
+            # The subprocess is responsible for completing the task.
+            # Either the task or the workflow execution no longer exists.
+            return
+        except Exception as error:
+            # Ignore if we failed to send heartbeat. The
+            # subprocess will become orphan and the heartbeat timeout may
+            # eventually trigger on Amazon SWF side.
+            logger.error('cannot send heartbeat for task {}: {}'.format(
+                task.activity_type.name,
+                error))
+
+        if response and response.get('cancelRequested'):
+            # Task cancelled.
+            # worker.terminate()  # SIGTERM
+            return
 
 
 def spawn(poller, token, task, heartbeat=60):
