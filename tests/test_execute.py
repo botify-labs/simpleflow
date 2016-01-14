@@ -115,17 +115,31 @@ def add(a, b=1):
     return a + b
 
 
+@execute.python()
+class Add(object):
+    def __init__(self, a, b=1):
+        self.a = a
+        self.b = b
+
+    def execute(self):
+        return self.a + self.b
+
+
 def test_function_as_program_with_default_kwarg():
     assert add(4) == 5
+    assert Add(4) == 5
 
 
 def test_function_as_program_with_kwargs():
     assert add(3, 7) == 10
+    assert Add(3, 7) == 10
 
 
 def test_function_as_program_raises_builtin_exception():
     with pytest.raises(TypeError):
         add('1')
+    with pytest.raises(TypeError):
+        Add('1')
 
 
 @execute.python()
@@ -169,9 +183,21 @@ def raise_dummy_exception():
     raise DummyException
 
 
+@execute.python()
+class RaiseDummyException(object):
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def execute():
+        raise DummyException
+
+
 def test_function_as_program_raises_custom_exception():
     with pytest.raises(DummyException):
         raise_dummy_exception()
+    with pytest.raises(DummyException):
+        RaiseDummyException()
 
 
 @execute.python()
