@@ -128,6 +128,9 @@ class TestDefinitionWithAfterReplay(TestWorkflow):
     def after_replay(self, history):
         self.b = history.events[0].input['args'][0] + 1
 
+    def after_finished(self, history):
+        self.c = history.events[0].input['args'][0] + 1
+
     def run(self, a):
         b = self.submit(increment, a)
         return b.result
@@ -145,6 +148,8 @@ def test_workflow_with_after_replay():
     assert not hasattr(executor._workflow, 'b')
     decisions, _ = executor.replay(history)
     assert executor._workflow.b == 5
+    # Check that workflow is not marked as finished
+    assert not hasattr(executor._workflow, 'c')
 
 
 class TestDefinitionWithAfterFinished(TestWorkflow):
