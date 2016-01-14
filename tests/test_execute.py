@@ -115,17 +115,31 @@ def add(a, b=1):
     return a + b
 
 
+@execute.python()
+class Add(object):
+    def __init__(self, a, b=1):
+        self.a = a
+        self.b = b
+
+    def execute(self):
+        return self.a + self.b
+
+
 def test_function_as_program_with_default_kwarg():
     assert add(4) == 5
+    assert Add(4) == 5
 
 
 def test_function_as_program_with_kwargs():
     assert add(3, 7) == 10
+    assert Add(3, 7) == 10
 
 
 def test_function_as_program_raises_builtin_exception():
     with pytest.raises(TypeError):
         add('1')
+    with pytest.raises(TypeError):
+        Add('1')
 
 
 @execute.python()
@@ -134,16 +148,30 @@ def print_string(s, retval):
     return retval
 
 
+@execute.python()
+class PrintString(object):
+    def __init__(self, s, retval):
+        self.s = s
+        self.retval = retval
+
+    def execute(self):
+        print self.s
+        return self.retval
+
+
 def test_function_with_print():
     assert print_string("This isn't part of the return value", None) is None
+    assert PrintString("This isn't part of the return value", None) is None
 
 
 def test_function_with_print_and_return():
     assert print_string("This isn't part of the return value", 42) == 42
+    assert PrintString("This isn't part of the return value", 42) == 42
 
 
 def test_function_returning_lf():
     assert print_string("This isn't part of the return value", "a\nb") == "a\nb"
+    assert PrintString("This isn't part of the return value", "a\nb") == "a\nb"
 
 
 class DummyException(Exception):
@@ -155,9 +183,21 @@ def raise_dummy_exception():
     raise DummyException
 
 
+@execute.python()
+class RaiseDummyException(object):
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def execute():
+        raise DummyException
+
+
 def test_function_as_program_raises_custom_exception():
     with pytest.raises(DummyException):
         raise_dummy_exception()
+    with pytest.raises(DummyException):
+        RaiseDummyException()
 
 
 @execute.python()
