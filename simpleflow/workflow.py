@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from .activity import Activity
 from . import canvas
 from . import task
+from ._decorators import deprecated
 
 import inspect
 
@@ -90,16 +91,12 @@ class Workflow(object):
     def after_finished(self, history):
         pass
 
+    @deprecated
     def before_run(self, history):
-        """
-        Will be deprecated soon
-        """
         return self.before_replay(history)
 
+    @deprecated
     def after_run(self, history):
-        """
-        Will be deprecated soon
-        """
         return self.after_finished(history)
 
     def run(self, *args, **kwargs):

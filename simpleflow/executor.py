@@ -1,6 +1,7 @@
 import abc
 import logging
 
+from ._decorators import deprecated
 
 __all__ = ['Executor']
 
@@ -77,9 +78,6 @@ class Executor(object):
         return [self.submit(callable, *arguments) for
                 arguments in iterable]
 
-    def before_run(self):
-        pass
-
     @abc.abstractmethod
     def run(self, *args, **kwargs):
         """
@@ -121,14 +119,10 @@ class Executor(object):
     def after_finished(self):
         return self._workflow.after_finished(self._history)
 
+    @deprecated
     def after_run(self):
-        """
-        Will be deprecated soon
-        """
         return self.after_finished()
 
+    @deprecated
     def before_run(self):
-        """
-        Will be deprecated soon
-        """
         return self.before_replay()
