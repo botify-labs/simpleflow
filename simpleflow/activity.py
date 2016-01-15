@@ -96,23 +96,23 @@ class Activity(object):
             self.version,
             self.task_list)
 
-    def before_scheduling(*args, *kwargs):
+    def before_scheduling(*args, **kwargs):
         pass
 
-    def after_scheduling(*args, *kwargs):
+    def after_scheduling(*args, **kwargs):
         pass
 
-    def activity_started(*args, *kwargs):
+    def activity_started(*args, **kwargs):
         pass
 
-    def activity_completed(*args, *kwargs):
+    def activity_completed(*args, **kwargs):
         pass
 
-    def activity_canceled(*args, *kwargs):
+    def activity_canceled(*args, **kwargs):
         pass
 
-    def activity_failed(*args, *kwargs):
+    def activity_failed(*args, **kwargs):
         pass
 
-    def activity_timedout(*args, *kwargs):
+    def activity_timedout(*args, **kwargs):
         pass

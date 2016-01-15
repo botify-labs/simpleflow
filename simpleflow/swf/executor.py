@@ -225,9 +225,9 @@ class Executor(executor.Executor):
             task_list,
         ))
 
-        task.before_schedule()
+        task.before_scheduling()
         decisions = task.schedule(self.domain, task_list)
-        task.after_schedule()
+        task.after_scheduling()
 
         # ``decisions`` contains a single decision.
         self._decisions.extend(decisions)
@@ -332,6 +332,30 @@ class Executor(executor.Executor):
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
 
+        # check if there is a workflow cancellation request
+        if self._history.is_cancel_requested():
+            # list all the running activities
+            cancellable_activities = self._history.list_cancellable_activities()
+
+            if len(cancellable_activities) == 0:
+                # nothing to cancel, completing the workflow as cancelled
+                cancel_decision = swf.models.decision.WorkflowExecutionDecision()
+                cancel_decision.cancel()
+                return [cancel_decision], {}
+
+            cancel_activities_decisions = []
+            for activity in cancellable_activities:
+                # send cancel request to each of them
+                decision = swf.models.decision.ActivityTaskDecision(
+                    'request_cancel',
+                    activity_id=activity.id,
+                )
+
+                cancel_activities_decisions.append(decision)
+
+            return cancel_activities_decisions, {}
+
+        # workflow not cancelled
         try:
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:

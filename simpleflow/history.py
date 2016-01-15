@@ -7,10 +7,22 @@ class History(object):
         self._activities = collections.OrderedDict()
         self._child_workflows = collections.OrderedDict()
         self._tasks = []
+        self._isCancelRequested = False
+
+    @property
+    def is_cancel_requested(self):
+        return self._isCancelRequested
 
     @property
     def events(self):
         return self._history.events
+
+    def list_cancellable_activities(self):
+        """
+        List all the activities that are cancellable
+        """
+        return filter(lambda x: x.state in ['scheduled', 'started', 'request_cancel_failed'] ,self._activities)
+
 
     def parse_activity_event(self, events, event):
         """Aggregate all the attributes of an activity in a single entry.
@@ -162,5 +174,7 @@ class History(object):
                 self.parse_activity_event(events, event)
             elif event.type == 'ChildWorkflowExecution':
                 self.parse_child_workflow_event(events, event)
+            elif event.type == 'WorkflowExecution' and event['state'] == 'cancel_requested':
+                self._isCancelRequested = True
             else:
                 pass

@@ -14,7 +14,7 @@ from setproctitle import setproctitle
 import swf.actors
 
 from simpleflow import utils
-from simpleflow.swf.exceptions import TaskCancelled
+from simpleflow.exceptions import TaskCancelled
 
 logger = logging.getLogger(__name__)
 
@@ -198,10 +198,11 @@ class Poller(NamedMixin, swf.actors.Actor):
         })[:256]  # May truncate value to fit with SWF limits.
 
     def stop_gracefully(self, join_timeout=60):
-        self._worker.join(join_timeout)
+        # run task in process. No need to join
+        pass
 
     def stop_forcefully(self):
-        self._worker.terminate()
+        sys.exit(-1)
 
     def bind_signal_handlers(self):
         """Binds signals for graceful shutdown.
@@ -227,15 +228,6 @@ class Poller(NamedMixin, swf.actors.Actor):
             self.is_alive = False
             self.stop(graceful=True)
 
-        def signal_task_cancellation(signum, frame):
-            logger.info(
-                'signal %d caught. Sending TaskCancelled exception from %s',
-                signum,
-                self.identity,
-            )
-
-            raise TaskCancelled()
-
         # optionnally use faulthandler if available
         try:
             import faulthandler
@@ -243,9 +235,13 @@ class Poller(NamedMixin, swf.actors.Actor):
         except ImportError:
             pass
 
+        def NoopSigusr1(signum, frame):
+            # before a task is actually run, SIGUSR1 signal will do nothing
+            pass
+
         signal.signal(signal.SIGTERM, signal_graceful_shutdown)
         signal.signal(signal.SIGINT, signal_graceful_shutdown)
-        signal.signal(signal.SIGUSR1, signal_task_cancellation)
+        signal.signal(signal.SIGUSR1, NoopSigusr1)
 
     @with_state('running')
     def start(self):
@@ -256,7 +252,7 @@ class Poller(NamedMixin, swf.actors.Actor):
         """
         logger.info("starting %s on domain %s", self.name, self.domain.name)
         self.set_process_name()
-        bind_signal_handlers()
+        self.bind_signal_handlers()
 
         while self.is_alive:
             try:

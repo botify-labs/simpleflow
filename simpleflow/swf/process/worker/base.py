@@ -18,7 +18,7 @@ from simpleflow.swf.process.actor import (
 from simpleflow.swf.task import ActivityTask
 from .dispatch import from_task_registry
 import threading
-from simpleflow.swf.exceptions import TaskCancelled
+from simpleflow.exceptions import TaskCancelled
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +88,10 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
                 err,
             ))
 
+    @with_state('cancelling')
+    def cancel(self, token, details=None):
+        swf.actors.ActivityWorker.cancel(self, token, details)
+
 
 class ActivityWorker(object):
     def __init__(self, workflow):
@@ -150,17 +154,32 @@ def monitor_child(pid, info):
 
     signal.signal(signal.SIGCHLD, _handle_child_exit)
 
+def registerTaskCancelHandler(isTaskFinished, poller):
+    def signal_task_cancellation(signum, frame):
+        logger.info(
+            'signal %d caught. Sending TaskCancelled exception from %s',
+            signum,
+            poller.identity,
+        )
+
+        if not isTaskFinished.is_set():
+            raise TaskCancelled()
+
+    signal.signal(signal.SIGUSR1, signal_task_cancellation)
+
 def spawn2(poller, token, task, heartbeat=60):
     pid = os.getpid()
     isTaskFinished = threading.Event()
+
+    registerTaskCancelHandler(isTaskFinished, poller)
 
     # start the heartbeat thread
     heartbeat_thread = threading.Thread(target=start_heartbeat, args=(poller, token, task, isTaskFinished, heartbeat, pid))
     heartbeat_thread.setDaemon(True)
     heartbeat_thread.start()
 
+    isTaskCancelled = False
     # start processing the task
-
     try:
         try:
             logger.info('Start processing task...')
@@ -168,22 +187,26 @@ def spawn2(poller, token, task, heartbeat=60):
             logger.info('Finished processing task.')
         except TaskCancelled as ex:
             # task is cancelled by the heartbeat thread from swf
-            pass
+            isTaskCancelled = True
 
         finally:
             # task finished. Let's finish the heartbeat thread
-            isTashFinished.set()
+            isTaskFinished.set()
             # let's wait for the heartbeat thread to die
-            isTaskFinished.join()
+            heartbeat_thread.join()
     except TaskCancelled as ex2:
         # race condition to prevent TaskCancelled exception raised in the finally block above
-        pass
+        isTaskCancelled = True
 
     finally:
         # task finished. Let's finish the heartbeat thread
-        isTashFinished.set()
+        isTaskFinished.set()
         # let's wait for the heartbeat thread to die
-        isTaskFinished.join()
+        heartbeat_thread.join()
+
+    if isTaskCancelled:
+        logger.info('Reporting task is cancelled to swf...')
+        poller.cancel(token)
 
     logger.info('Heartbeat thread stopped.')
 
