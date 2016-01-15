@@ -86,6 +86,13 @@ class History(object):
                 activity['retry'] = 0
             else:
                 activity['retry'] += 1
+
+            if event.timeout_type == 'HEARTBEAT':
+                if 'retry_heartbeat' not in activity:
+                    activity['retry_heartbeat'] = 0
+                else:
+                    activity['retry_heartbeat'] += 1
+
         elif event.state == 'failed':
             activity = get_activity(event)
             activity['state'] = event.state

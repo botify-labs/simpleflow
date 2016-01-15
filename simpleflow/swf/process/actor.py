@@ -14,7 +14,7 @@ from setproctitle import setproctitle
 import swf.actors
 
 from simpleflow import utils
-
+from simpleflow.swf.exceptions import TaskCancelled
 
 logger = logging.getLogger(__name__)
 
@@ -203,6 +203,50 @@ class Poller(NamedMixin, swf.actors.Actor):
     def stop_forcefully(self):
         self._worker.terminate()
 
+    def bind_signal_handlers(self):
+        """Binds signals for graceful shutdown.
+
+        - SIGTERM and SIGINT lead to a graceful shutdown.
+        - SIGSEGV, SIGFPE, SIGABRT, SIGBUS and SIGILL displays a traceback
+          using the faulthandler library if available.
+
+        """
+        def signal_graceful_shutdown(signum, frame):
+            """
+            Note: Function is nested to have a reference to *self*.
+
+            """
+            if not self.is_alive:
+                return
+
+            logger.info(
+                'signal %d caught. Shutting down %s',
+                signum,
+                self.identity,
+            )
+            self.is_alive = False
+            self.stop(graceful=True)
+
+        def signal_task_cancellation(signum, frame):
+            logger.info(
+                'signal %d caught. Sending TaskCancelled exception from %s',
+                signum,
+                self.identity,
+            )
+
+            raise TaskCancelled()
+
+        # optionnally use faulthandler if available
+        try:
+            import faulthandler
+            faulthandler.enable()
+        except ImportError:
+            pass
+
+        signal.signal(signal.SIGTERM, signal_graceful_shutdown)
+        signal.signal(signal.SIGINT, signal_graceful_shutdown)
+        signal.signal(signal.SIGUSR1, signal_task_cancellation)
+
     @with_state('running')
     def start(self):
         """
@@ -212,6 +256,8 @@ class Poller(NamedMixin, swf.actors.Actor):
         """
         logger.info("starting %s on domain %s", self.name, self.domain.name)
         self.set_process_name()
+        bind_signal_handlers()
+
         while self.is_alive:
             try:
                 task = self._poll(self.task_list, self.identity)
