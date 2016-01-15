@@ -1,4 +1,5 @@
 import warnings
+import functools
 
 
 def deprecated(func):
@@ -6,13 +7,12 @@ def deprecated(func):
     as deprecated. It will result in a warning being emmitted
     when the function is used."""
 
+    @functools.wraps(func)
     def new_func(*args, **kwargs):
-        warnings.simplefilter('always', DeprecationWarning) #turn off filter
-        warnings.warn("Call to deprecated function {}.".format(func.__name__), category=DeprecationWarning, stacklevel=2)
-        warnings.simplefilter('default', DeprecationWarning) #reset filter
+        warnings.simplefilter('always', DeprecationWarning)  # turn off filter
+        warnings.warn("Call to deprecated function {}.".format(func.__name__),
+                      category=DeprecationWarning,
+                      stacklevel=2)
+        warnings.simplefilter('default', DeprecationWarning)  # reset filter
         return func(*args, **kwargs)
-
-    new_func.__name__ = func.__name__
-    new_func.__doc__ = func.__doc__
-    new_func.__dict__.update(func.__dict__)
     return new_func
