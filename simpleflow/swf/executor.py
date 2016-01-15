@@ -333,22 +333,22 @@ class Executor(executor.Executor):
         kwargs = input.get('kwargs', {})
 
         # check if there is a workflow cancellation request
-        if self._history.is_cancel_requested():
+        if self._history.is_cancel_requested:
             # list all the running activities
-            cancellable_activities = self._history.list_cancellable_activities()
+            cancellable_activities_id = self._history.list_cancellable_activities()
 
-            if len(cancellable_activities) == 0:
+            if len(cancellable_activities_id) == 0:
                 # nothing to cancel, completing the workflow as cancelled
                 cancel_decision = swf.models.decision.WorkflowExecutionDecision()
                 cancel_decision.cancel()
                 return [cancel_decision], {}
 
             cancel_activities_decisions = []
-            for activity in cancellable_activities:
+            for activity_id in cancellable_activities_id:
                 # send cancel request to each of them
                 decision = swf.models.decision.ActivityTaskDecision(
                     'request_cancel',
-                    activity_id=activity.id,
+                    activity_id=activity_id,
                 )
 
                 cancel_activities_decisions.append(decision)

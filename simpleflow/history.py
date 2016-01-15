@@ -21,7 +21,7 @@ class History(object):
         """
         List all the activities that are cancellable
         """
-        return filter(lambda x: x.state in ['scheduled', 'started', 'request_cancel_failed'] ,self._activities)
+        return [k for k,v in self._activities.iteritems() if v.state in ['scheduled', 'started', 'request_cancel_failed']]
 
 
     def parse_activity_event(self, events, event):
@@ -174,7 +174,7 @@ class History(object):
                 self.parse_activity_event(events, event)
             elif event.type == 'ChildWorkflowExecution':
                 self.parse_child_workflow_event(events, event)
-            elif event.type == 'WorkflowExecution' and event['state'] == 'cancel_requested':
+            elif event.type == 'WorkflowExecution' and event.state == 'cancel_requested':
                 self._isCancelRequested = True
             else:
                 pass
