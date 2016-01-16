@@ -113,6 +113,8 @@ class ActivityWorker(object):
         kwargs = input.get('kwargs', {})
         try:
             result = ActivityTask(activity, *args, **kwargs).execute()
+        except TaskCancelled:
+            raise
         except Exception as err:
             tb = traceback.format_exc()
             logger.exception(err)
@@ -206,8 +208,13 @@ def spawn2(poller, token, task, heartbeat=60):
         heartbeat_thread.join()
 
     if isTaskCancelled:
-        logger.info('[SWF][Worker][Heartbeat] Reporting task is cancelled. Task: [%s].', task.activity_type.name)
-        poller.cancel(token)
+        logger.info('[SWF][Worker][Worker] Reporting task is cancelled. Task: [%s].', task.activity_type.name)
+
+        try:
+            poller.cancel(token)
+        except:
+            logger.info('[SWF][Worker][Worker] Failed to send task cancel confirmation to swf. Ignore. Task: [%s].', task.activity_type.name)
+            pass
 
     logger.info('[SWF][Worker][Heartbeat] Heartbeat thread stopped. Task: [%s]', task.activity_type.name)
 
