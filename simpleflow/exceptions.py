@@ -60,17 +60,12 @@ class TimeoutError(Exception):
             self.timeout_type)
 
 class TaskCancelled(Exception):
-    def __init__(self, task, exception):
-        """
-        :param exception: raised by a task.
-        :type  exception: TaskFailed.
-
-        """
+    def __init__(self, task, details=None):
         self.task = task
-        self.exception = exception
+        self.details = details
 
     def __repr__(self):
-        return '{}(task={} exception={})'.format(
+        return '{}(task={} details={})'.format(
             self.__class__.__name__,
             self.task,
-            self.exception)
+            self.details)

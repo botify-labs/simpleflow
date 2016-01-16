@@ -4,6 +4,7 @@ import logging
 
 import swf.actors
 import swf.exceptions
+import traceback
 
 from simpleflow.swf.process.actor import (
     Supervisor,

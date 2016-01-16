@@ -154,7 +154,7 @@ def monitor_child(pid, info):
 
     signal.signal(signal.SIGCHLD, _handle_child_exit)
 
-def registerTaskCancelHandler(isTaskFinished, poller):
+def registerTaskCancelHandler(isTaskFinished, poller, task):
     def signal_task_cancellation(signum, frame):
         logger.info(
             'signal %d caught. Sending TaskCancelled exception from %s',
@@ -163,7 +163,7 @@ def registerTaskCancelHandler(isTaskFinished, poller):
         )
 
         if not isTaskFinished.is_set():
-            raise TaskCancelled()
+            raise TaskCancelled(task)
 
     signal.signal(signal.SIGUSR1, signal_task_cancellation)
 
@@ -171,10 +171,10 @@ def spawn2(poller, token, task, heartbeat=60):
     pid = os.getpid()
     isTaskFinished = threading.Event()
 
-    registerTaskCancelHandler(isTaskFinished, poller)
+    registerTaskCancelHandler(isTaskFinished, poller, task)
 
     # start the heartbeat thread
-    heartbeat_thread = threading.Thread(target=start_heartbeat, args=(poller, token, task, isTaskFinished, heartbeat, pid))
+    heartbeat_thread = threading.Thread(target=start_heartbeat, args=(poller, token, task, isTaskFinished, heartbeat, pid,))
     heartbeat_thread.setDaemon(True)
     heartbeat_thread.start()
 
@@ -237,8 +237,6 @@ def start_heartbeat(poller, token, task, isTaskFinished, heartbeat, pid):
                 os.kill(int(pid), signal.SIGUSR1)
 
                 return
-
-
 
 def spawn(poller, token, task, heartbeat=60):
     logger.debug('spawn() pid={}'.format(os.getpid()))

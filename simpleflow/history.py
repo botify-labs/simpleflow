@@ -21,7 +21,7 @@ class History(object):
         """
         List all the activities that are cancellable
         """
-        return [k for k,v in self._activities.iteritems() if v.state in ['scheduled', 'started', 'request_cancel_failed']]
+        return [k for k,v in self._activities.iteritems() if v['state'] in ['scheduled', 'started', 'request_cancel_failed']]
 
 
     def parse_activity_event(self, events, event):
