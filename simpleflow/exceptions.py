@@ -39,7 +39,7 @@ class TaskFailed(Exception):
         super(TaskFailed, self).__init__(name, reason, details)
         self.name = name
         self.reason = reason
-        self.details = None
+        self.details = details
 
     def __repr__(self):
         return '{} ({}, "{}")'.format(

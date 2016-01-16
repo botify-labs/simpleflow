@@ -1,5 +1,6 @@
 import collections
 
+logger = logging.getLogger(__name__)
 
 class History(object):
     def __init__(self, history):
@@ -21,7 +22,7 @@ class History(object):
         """
         List all the activities that are cancellable
         """
-        return [k for k,v in self._activities.iteritems() if v['state'] in ['scheduled', 'started', 'request_cancel_failed']]
+        return [k for k,v in self._activities.iteritems() if v['state'] in ['scheduled', 'started']]
 
 
     def parse_activity_event(self, events, event):
@@ -121,6 +122,18 @@ class History(object):
             if hasattr(event, 'details'):
                 activity['details'] = event.details
             activity['cancelled_timestamp'] = event.timestamp
+        elif event.state == 'request_cancel_failed':
+            activity = get_activity(event)
+            activity['state'] = event.state
+            if hasattr(event, 'details'):
+                activity['details'] = event.details
+            if hasattr(event, 'cause'):
+                activity['cause'] = event.cause
+            activity['cancel_failed_timestamp'] = event.timestamp
+        else:
+            logger.error('Cannot parse activity event state in history. ActivityId: %s. State: %s. ',
+                getattr(event, 'activity_id', None),
+                getattr(event, 'state', None))
 
     def parse_child_workflow_event(self, events, event):
         """Aggregate all the attributes of a workflow in a single entry.
