@@ -17,7 +17,8 @@ from simpleflow.swf.process.actor import (
 )
 from simpleflow.swf.task import ActivityTask
 from .dispatch import from_task_registry
-
+import threading
+from simpleflow.exceptions import TaskCancelled
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     @with_state('processing task')
     def process(self, request):
         token, task = request
-        spawn(self, token, task, self._heartbeat)
+        spawn2(self, token, task, self._heartbeat)
 
     @with_state('completing')
     def complete(self, token, result):
@@ -86,6 +87,10 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
                 task.activity_type.name,
                 err,
             ))
+
+    @with_state('cancelling')
+    def cancel(self, token, details=None):
+        swf.actors.ActivityWorker.cancel(self, token, details)
 
 
 class ActivityWorker(object):
@@ -108,6 +113,8 @@ class ActivityWorker(object):
         kwargs = input.get('kwargs', {})
         try:
             result = ActivityTask(activity, *args, **kwargs).execute()
+        except TaskCancelled:
+            raise
         except Exception as err:
             tb = traceback.format_exc()
             logger.exception(err)
@@ -149,6 +156,99 @@ def monitor_child(pid, info):
 
     signal.signal(signal.SIGCHLD, _handle_child_exit)
 
+def registerTaskCancelHandler(isTaskFinished, poller, task):
+    def signal_task_cancellation(signum, frame):
+        logger.info(
+            '[SWF][Worker] Signal %d caught. Sending TaskCancelled exception from %s. Task: [%s]',
+            signum,
+            poller.identity,
+            task.activity_type.name
+        )
+
+        if not isTaskFinished.is_set():
+            raise TaskCancelled(task)
+
+    signal.signal(signal.SIGUSR1, signal_task_cancellation)
+
+def spawn2(poller, token, task, heartbeat=60):
+    pid = os.getpid()
+    isTaskFinished = threading.Event()
+
+    registerTaskCancelHandler(isTaskFinished, poller, task)
+
+    # start the heartbeat thread
+    heartbeat_thread = threading.Thread(target=start_heartbeat, args=(poller, token, task, isTaskFinished, heartbeat, pid,))
+    heartbeat_thread.setDaemon(True)
+    heartbeat_thread.start()
+
+    isTaskCancelled = False
+    # start processing the task
+    try:
+        try:
+            logger.info('[SWF][Worker] Start processing task. Task: [%s].', task.activity_type.name)
+            process_task(poller, token, task)
+            logger.info('[SWF][Worker] Finished processing task. Task: [%s].', task.activity_type.name)
+        except TaskCancelled as ex:
+            # task is cancelled by the heartbeat thread from swf
+            isTaskCancelled = True
+
+        finally:
+            # task finished. Let's finish the heartbeat thread
+            isTaskFinished.set()
+            # let's wait for the heartbeat thread to die
+            heartbeat_thread.join()
+    except TaskCancelled as ex2:
+        # race condition to prevent TaskCancelled exception raised in the finally block above
+        isTaskCancelled = True
+
+    finally:
+        # task finished. Let's finish the heartbeat thread
+        isTaskFinished.set()
+        # let's wait for the heartbeat thread to die
+        heartbeat_thread.join()
+
+    if isTaskCancelled:
+        logger.info('[SWF][Worker][Worker] Reporting task is cancelled. Task: [%s].', task.activity_type.name)
+
+        try:
+            poller.cancel(token)
+        except:
+            logger.info('[SWF][Worker][Worker] Failed to send task cancel confirmation to swf. Ignore. Task: [%s].', task.activity_type.name)
+            pass
+
+    logger.info('[SWF][Worker][Heartbeat] Heartbeat thread stopped. Task: [%s]', task.activity_type.name)
+
+
+def start_heartbeat(poller, token, task, isTaskFinished, heartbeat, pid):
+    while (not isTaskFinished.is_set()):
+        isTaskFinished.wait(heartbeat)
+        if (not isTaskFinished.is_set()):
+            # task is still running
+            logger.info('[SWF][Worker][Heartbeat] Sending heartbeat. Task: [%s].', task.activity_type.name)
+
+            try:
+                response = poller.heartbeat(token)
+            except swf.exceptions.DoesNotExistError:
+                # The workflow no long exist. It may timed out. Kill the process.
+
+                logger.info('[SWF][Worker][Heartbeat] Activity DoesNotExistError when sending heartbeat. Stopping the task. Task: [%s].', task.activity_type.name)
+                os.kill(int(pid), signal.SIGUSR1)
+
+                return
+            except Exception as error:
+                # Ignore if we failed to send heartbeat. The
+                # subprocess will become orphan and the heartbeat timeout may
+                # eventually trigger on Amazon SWF side.
+                logger.error('[SWF][Worker][Heartbeat] Cannot send heartbeat for task {}: {}'.format(
+                    task.activity_type.name,
+                    error))
+
+            if response and response.get('cancelRequested'):
+                # Task cancelled.
+                logger.info('[SWF][Worker][Heartbeat] Activity received cancallaton request. Stopping the task. Task: [%s].', task.activity_type.name)
+                os.kill(int(pid), signal.SIGUSR1)
+
+                return
 
 def spawn(poller, token, task, heartbeat=60):
     logger.debug('spawn() pid={}'.format(os.getpid()))

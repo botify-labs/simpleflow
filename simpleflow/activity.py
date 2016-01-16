@@ -48,7 +48,8 @@ class Activity(object):
                  schedule_to_close_timeout=None,
                  schedule_to_start_timeout=None,
                  heartbeat_timeout=None,
-                 idempotent=None):
+                 idempotent=None,
+                 activity_completed=None):
         self._callable = callable
 
         self._name = name
@@ -61,6 +62,7 @@ class Activity(object):
         self.task_schedule_to_close_timeout = schedule_to_close_timeout
         self.task_schedule_to_start_timeout = schedule_to_start_timeout
         self.task_heartbeat_timeout = heartbeat_timeout
+        self.activity_completed = self.activity_completed if activity_completed is None else activity_completed
 
         self.register()
 
@@ -93,3 +95,24 @@ class Activity(object):
             self.name,
             self.version,
             self.task_list)
+
+    def before_scheduling(*args, **kwargs):
+        pass
+
+    def after_scheduling(*args, **kwargs):
+        pass
+
+    def activity_started(*args, **kwargs):
+        pass
+
+    def activity_completed(*args, **kwargs):
+        pass
+
+    def activity_canceled(*args, **kwargs):
+        pass
+
+    def activity_failed(*args, **kwargs):
+        pass
+
+    def activity_timedout(*args, **kwargs):
+        pass

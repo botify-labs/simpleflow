@@ -54,6 +54,7 @@ class ActivityTask(task.ActivityTask):
         return [decision]
 
 
+
 class WorkflowTask(task.WorkflowTask):
     def schedule(self, domain, task_list=None):
         workflow = self.workflow

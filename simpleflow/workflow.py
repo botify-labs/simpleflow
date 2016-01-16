@@ -96,3 +96,9 @@ class Workflow(object):
 
         """
         raise NotImplementedError
+
+    def before_scheduling(*args, **kwargs):
+        pass
+
+    def after_scheduling(*args, **kwargs):
+        pass

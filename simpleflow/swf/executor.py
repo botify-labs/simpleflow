@@ -100,7 +100,7 @@ class Executor(executor.Executor):
         task_id = '{name}-{idx}'.format(name=task.name, idx=suffix)
         return task_id
 
-    def _get_future_from_activity_event(self, event):
+    def _get_future_from_activity_event(self, event, task):
         """Maps an activity event to a Future with the corresponding state.
 
         :param event: workflow event.
@@ -135,20 +135,25 @@ class Executor(executor.Executor):
             ))
             return None
         elif state == 'started':
+            task.activity_started(event, self._history)
             future._state = futures.RUNNING
         elif state == 'completed':
+            task.activity_completed(event, self._history)
             future._state = futures.FINISHED
             result = event['result']
             future._result = json.loads(result) if result else None
         elif state == 'canceled':
+            task.activity_canceled(event, self._history)
             future._state = futures.CANCELLED
         elif state == 'failed':
+            task.activity_failed(event, self._history)
             future._state = futures.FINISHED
             future._exception = exceptions.TaskFailed(
                 name=event['id'],
                 reason=event['reason'],
                 details=event.get('details'))
         elif state == 'timed_out':
+            task.activity_timedout(event, self._history)
             future._state = futures.FINISHED
             future._exception = exceptions.TimeoutError(
                 event['timeout_type'],
@@ -193,7 +198,7 @@ class Executor(executor.Executor):
         return None
 
     def resume_activity(self, task, event):
-        future = self._get_future_from_activity_event(event)
+        future = self._get_future_from_activity_event(event, task)
         if not future:  # Task in history does not count.
             return None
 
@@ -219,7 +224,11 @@ class Executor(executor.Executor):
             task.name,
             task_list,
         ))
+
+        task.before_scheduling()
         decisions = task.schedule(self.domain, task_list)
+        task.after_scheduling()
+
         # ``decisions`` contains a single decision.
         self._decisions.extend(decisions)
         self._open_activity_count += 1
@@ -323,6 +332,30 @@ class Executor(executor.Executor):
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
 
+        # check if there is a workflow cancellation request
+        if self._history.is_cancel_requested:
+            # list all the running activities
+            cancellable_activities_id = self._history.list_cancellable_activities()
+
+            if len(cancellable_activities_id) == 0:
+                # nothing to cancel, completing the workflow as cancelled
+                cancel_decision = swf.models.decision.WorkflowExecutionDecision()
+                cancel_decision.cancel()
+                return [cancel_decision], {}
+
+            cancel_activities_decisions = []
+            for activity_id in cancellable_activities_id:
+                # send cancel request to each of them
+                decision = swf.models.decision.ActivityTaskDecision(
+                    'request_cancel',
+                    activity_id=activity_id,
+                )
+
+                cancel_activities_decisions.append(decision)
+
+            return cancel_activities_decisions, {}
+
+        # workflow not cancelled
         try:
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:

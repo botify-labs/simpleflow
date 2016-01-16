@@ -1,5 +1,7 @@
 import collections
+import logging
 
+logger = logging.getLogger(__name__)
 
 class History(object):
     def __init__(self, history):
@@ -7,10 +9,22 @@ class History(object):
         self._activities = collections.OrderedDict()
         self._child_workflows = collections.OrderedDict()
         self._tasks = []
+        self._isCancelRequested = False
+
+    @property
+    def is_cancel_requested(self):
+        return self._isCancelRequested
 
     @property
     def events(self):
         return self._history.events
+
+    def list_cancellable_activities(self):
+        """
+        List all the activities that are cancellable
+        """
+        return [k for k,v in self._activities.iteritems() if v['state'] in ['scheduled', 'started']]
+
 
     def parse_activity_event(self, events, event):
         """Aggregate all the attributes of an activity in a single entry.
@@ -86,6 +100,13 @@ class History(object):
                 activity['retry'] = 0
             else:
                 activity['retry'] += 1
+
+            if event.timeout_type == 'HEARTBEAT':
+                if 'retry_heartbeat' not in activity:
+                    activity['retry_heartbeat'] = 0
+                else:
+                    activity['retry_heartbeat'] += 1
+
         elif event.state == 'failed':
             activity = get_activity(event)
             activity['state'] = event.state
@@ -96,12 +117,24 @@ class History(object):
                 activity['retry'] = 0
             else:
                 activity['retry'] += 1
-        elif event.state == 'cancelled':
+        elif event.state == 'canceled':
             activity = get_activity(event)
             activity['state'] = event.state
             if hasattr(event, 'details'):
                 activity['details'] = event.details
             activity['cancelled_timestamp'] = event.timestamp
+        elif event.state == 'request_cancel_failed':
+            activity = self._activities[event.activity_id]
+            activity['state'] = event.state
+            if hasattr(event, 'details'):
+                activity['details'] = event.details
+            if hasattr(event, 'cause'):
+                activity['cause'] = event.cause
+            activity['cancel_failed_timestamp'] = event.timestamp
+        else:
+            logger.error('Cannot parse activity event state in history. ActivityId: %s. State: %s. ',
+                getattr(event, 'activity_id', None),
+                getattr(event, 'state', None))
 
     def parse_child_workflow_event(self, events, event):
         """Aggregate all the attributes of a workflow in a single entry.
@@ -155,5 +188,7 @@ class History(object):
                 self.parse_activity_event(events, event)
             elif event.type == 'ChildWorkflowExecution':
                 self.parse_child_workflow_event(events, event)
+            elif event.type == 'WorkflowExecution' and event.state == 'cancel_requested':
+                self._isCancelRequested = True
             else:
                 pass
