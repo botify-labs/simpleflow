@@ -293,6 +293,7 @@ def raises(exception, when, extract=str):
     >>> raises(DoesNotExistError,
     ...        when=is_unknown_resource_raised,
     ...        extract=extract_resource)(err)
+    ... # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     SWFResponseError: SWFResponseError: 400 Bad Request
