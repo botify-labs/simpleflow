@@ -72,9 +72,11 @@ To run all the tests in your current virtual environment: ::
 
 This is what Travis CI does on each environment.
 
-To run tests on Python 2.7 and Pypy virtual environments: ::
+If you want to simulate what Travis CI does, you can approach that by running a container
+from them: ::
 
-    $ tox
+    $ ./script/test-travis python2.7
+    $ ./script/test-travis pypy
 
 This can help you simulate locally what Travis CI would do. Be aware though that tests may fail
 depending on your OS, so Travis CI is the reference gate for the project. For instance, installing
