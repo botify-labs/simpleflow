@@ -19,8 +19,17 @@ Guide
    license
    install
    quickstart
-   execute
-   api_reference
+   swf_quickstart
+   simpleflow_execute
+
+API Reference
+-------------
+
+.. toctree::
+   :maxdepth: 3
+
+   api/swf
+   api/simpleflow
 
 Project info
 ------------

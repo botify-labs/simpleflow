@@ -3,5 +3,6 @@ mock==1.0.1
 moto>=0.4.19
 pytest
 sphinx
+sphinx_rtd_theme
 tox>=1.5.0
 wheel

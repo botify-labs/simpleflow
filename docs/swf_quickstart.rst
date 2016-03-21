@@ -1,23 +1,12 @@
-.. _quickstart:
+.. _swf_quickstart:
 
-==========
-Quickstart
-==========
+==============
+SWF Quickstart
+==============
 
-*Still under heavy development*
-
-python-simple-workflow is a wrapper for `Amazon Simple Workflow <http://aws.amazon.com/swf>`_ service. It aims to provide some abstractions over `Boto <http://boto.readthedocs.org>`_ library SWF API implementation, like querysets and objects over commonly used concepts: ``Domains``, ``Workflows``, ``Activities``, and so on.
+swf is a wrapper for `Amazon Simple Workflow <http://aws.amazon.com/swf>`_ service. It aims to provide some abstractions over `Boto <http://boto.readthedocs.org>`_ library SWF API implementation, like querysets and objects over commonly used concepts: ``Domains``, ``Workflows``, ``Activities``, and so on.
 
 .. _installation:
-
-Installation
-============
-
-.. code-block:: bash
-
-	pip install simple-workflow
-
-.. _authentication:
 
 
 Settings
@@ -74,7 +63,7 @@ Batteries Included
 Models
 ------
 
-Simple Workflow entities such as domains, workflow types, workflow executions and activity types are to be manipulated through python-simple-workflow using ``models``. They are immutable ``swf`` objects representations providing an interface to objects attributes, local/remote objects synchronization and changes watch between these local and remote objects.
+Simple Workflow entities such as domains, workflow types, workflow executions and activity types are to be manipulated through swf using ``models``. They are immutable ``swf`` objects representations providing an interface to objects attributes, local/remote objects synchronization and changes watch between these local and remote objects.
 
 .. code-block:: python
 
@@ -180,7 +169,7 @@ Decisions
 Actors
 ------
 
-Swf workflows are based on a worker-decider pattern. Every actions in the flow is executed by a worker which runs supplied activity tasks. And every actions is the result of a decision taken by the decider reading the workflow events history and deciding what to do next. In order to ease the development of such workers and decider, python-simple-workflow exposes base classes for them located in ``swf.actors`` submodule.
+Swf workflows are based on a worker-decider pattern. Every actions in the flow is executed by a worker which runs supplied activity tasks. And every actions is the result of a decision taken by the decider reading the workflow events history and deciding what to do next. In order to ease the development of such workers and decider, swf exposes base classes for them located in ``swf.actors`` submodule.
 
 * An ``Actor`` must basically implement a ``start`` and ``stop`` method and can actually inherits from whatever runtime implementation you need: thread, gevent, multiprocess...
 
