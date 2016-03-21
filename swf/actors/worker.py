@@ -56,7 +56,7 @@ class ActivityWorker(Actor):
                 raise ResponseError(e.body['message'])
 
     def complete(self, task_token, result=None):
-        """Responds to ``swf` that the activity task is completed
+        """Responds to ``swf`` that the activity task is completed
 
         :param  task_token: completed activity task token
         :type   task_token: string

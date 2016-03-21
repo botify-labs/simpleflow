@@ -45,7 +45,7 @@ Event
 Execution History
 -----------------
 
-.. autoclass:: swf.models.event.History
+.. autoclass:: swf.models.history.History
     :members:
     :inherited-members:
 

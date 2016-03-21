@@ -253,7 +253,7 @@ class History(object):
         :type   data: dict
 
         :returns: History model instance built upon data description
-        :rtype : swf.model.event.History
+        :rtype: swf.model.history.History
         """
         events_history = []
 

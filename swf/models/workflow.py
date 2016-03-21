@@ -237,7 +237,7 @@ class WorkflowType(BaseModel):
                               of this workflow execution.
         :type   child_policy: CHILD_POLICIES.{TERMINATE |
                                               REQUEST_CANCEL |
-                                        ABANDON}
+                                              ABANDON}
 
         :param  execution_timeout: maximum duration for the workflow execution
         :type   execution_timeout: String
