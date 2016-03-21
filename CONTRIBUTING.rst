@@ -33,7 +33,7 @@ Setting Up for Local Development
 
     $ mkvirtualenv simpleflow
     $ cd simpleflow
-    $ pip install -r dev-requirements.txt
+    $ pip install -r requirements-dev.txt
 
 - If you don't have virtualenv and virtualenvwrapper, you can install both using `virtualenv-burrito`_.
 

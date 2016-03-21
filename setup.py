@@ -70,7 +70,7 @@ def read(fname):
     return content
 
 DEPS = [
-    'simple-workflow>=0.1.60',
+    'boto>=2.38.0',
     'tabulate==0.7.3',
     'setproctitle',
     'subprocess32',
@@ -83,17 +83,21 @@ setup(
     version=__version__,
     description='Python library for dataflow programming with Amazon SWF',
     long_description=(read("README.rst") + '\n\n' +
+                      read("README_SWF.rst") + '\n\n' +
                       read("HISTORY.rst")),
     author='Greg Leclercq',
     author_email='greg@botify.com',
     url='https://github.com/botify-labs/simpleflow',
     packages=find_packages(exclude=("test*", )),
-    package_dir={'simpleflow': 'simpleflow'},
+    package_dir={
+        'simpleflow': 'simpleflow',
+        'swf': 'swf',
+    },
     include_package_data=True,
     install_requires=DEPS,
     license=read("LICENSE"),
     zip_safe=False,
-    keywords='simpleflow',
+    keywords='simpleflow amazon swf simple workflow',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -106,7 +110,10 @@ setup(
         'Programming Language :: Python :: 3.3',
     ],
     test_suite='tests',
-    tests_require=['pytest'],
+    tests_require=[
+        'pytest',
+        'moto>=0.4.19',
+    ],
     cmdclass={'test': PyTest},
     entry_points={
         'console_scripts': [

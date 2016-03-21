@@ -10,9 +10,10 @@ from simpleflow import (
     futures,
 )
 
-
-DOMAIN = swf.models.Domain('TestDomain')
-DEFAULT_VERSION = 'test'
+from .data import (
+    DOMAIN,
+    DEFAULT_VERSION,
+)
 
 
 @activity.with_attributes(version=DEFAULT_VERSION)
