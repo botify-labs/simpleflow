@@ -23,7 +23,6 @@ pip-log.txt
 
 # Unit test / coverage reports
 .coverage
-.tox
 nosetests.xml
 
 # Translations
@@ -40,3 +39,4 @@ output/*/index.html
 
 # Sphinx
 docs/_build
+docs/api/*

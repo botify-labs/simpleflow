@@ -1,7 +1,4 @@
 Changelog
 ---------
 
-0.1.0 (2014-02-19)
-++++++++++++++++++
-
-* First release.
+(sorry changes were not documented before 0.10.x)
