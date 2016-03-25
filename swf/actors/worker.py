@@ -45,7 +45,7 @@ class ActivityWorker(Actor):
         :type   details: string
         """
         try:
-            return self.connection.respond_activity_task_canceled(task_token)
+            return self.connection.respond_activity_task_canceled(task_token, details)
         except boto.exception.SWFResponseError as e:
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
@@ -53,7 +53,7 @@ class ActivityWorker(Actor):
                     e.body['message']
                 )
 
-                raise ResponseError(e.body['message'])
+            raise ResponseError(e.body['message'])
 
     def complete(self, task_token, result=None):
         """Responds to ``swf`` that the activity task is completed
@@ -168,7 +168,7 @@ class ActivityWorker(Actor):
 
             raise ResponseError(e.body['message'])
 
-        if not 'taskToken' in polled_activity_data:
+        if 'taskToken' not in polled_activity_data:
             raise PollTimeout("Activity Worker poll timed out")
 
         activity_task = ActivityTask.from_poll(
