@@ -101,7 +101,7 @@ class ActivityWorker(object):
         return self._dispatcher.dispatch_activity(name)
 
     def process(self, poller, token, task):
-        logger.debug('ActivityWorker.porcess() pid={}'.format(os.getpid()))
+        logger.debug('ActivityWorker.process() pid={}'.format(os.getpid()))
         activity = self.dispatch(task)
         input = json.loads(task.input)
         args = input.get('args', ())
@@ -109,14 +109,14 @@ class ActivityWorker(object):
         try:
             result = ActivityTask(activity, *args, **kwargs).execute()
         except Exception as err:
+            logger.exception("process error")
             tb = traceback.format_exc()
-            logger.exception(err)
             return poller.fail(token, task, reason=str(err), details=tb)
 
         try:
             poller._complete(token, json.dumps(result))
         except Exception as err:
-            logger.exception(err)
+            logger.exception("complete error")
             reason = 'cannot complete task {}: {}'.format(
                 task.activity_id,
                 err,
