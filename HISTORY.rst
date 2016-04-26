@@ -1,6 +1,10 @@
 Changelog
 ---------
 
+0.11.2
+~~~~~~
+
+- Add new workflow hooks (#79)
 0.11.1
 ~~~~~~
 
