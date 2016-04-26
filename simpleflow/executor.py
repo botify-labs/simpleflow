@@ -117,13 +117,13 @@ class Executor(object):
         pass
 
     def before_replay(self):
-        return self._workflow.before_replay(self._history)
+        pass
 
     def after_replay(self):
-        return self._workflow.after_replay(self._history)
+        pass
 
     def after_closed(self):
-        return self._workflow.after_closed(self._history)
+        pass
 
     @deprecated
     def after_run(self):
