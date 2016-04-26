@@ -347,6 +347,7 @@ class Executor(executor.Executor):
                 reason=swf.format.reason(reason),
                 details=swf.format.details(details),
             )
+            self.after_closed()
             return [decision], {}
 
         except Exception, err:
@@ -366,19 +367,25 @@ class Executor(executor.Executor):
                 reason=swf.format.reason(reason),
                 details=swf.format.details(details),
             )
-
+            self.after_closed()
             return [decision], {}
 
         self.after_replay()
         decision = swf.models.decision.WorkflowExecutionDecision()
         decision.complete(result=swf.format.result(json.dumps(result)))
-        self.after_finished()
-
+        self.on_completed()
+        self.after_closed()
         return [decision], {}
 
     def on_failure(self, reason, details=None):
         try:
             self._workflow.on_failure(self._history, reason, details)
+        except NotImplementedError:
+            pass
+
+    def on_completed(self):
+        try:
+            self._workflow.on_completed(self._history)
         except NotImplementedError:
             pass
 

@@ -88,7 +88,7 @@ class Workflow(object):
     def after_replay(self, history):
         pass
 
-    def after_finished(self, history):
+    def after_closed(self, history):
         pass
 
     @deprecated
@@ -97,7 +97,7 @@ class Workflow(object):
 
     @deprecated
     def after_run(self, history):
-        return self.after_finished(history)
+        return self.after_closed(history)
 
     def run(self, *args, **kwargs):
         raise NotImplementedError
@@ -106,5 +106,11 @@ class Workflow(object):
         """
         The executor calls this method when the workflow fails.
 
+        """
+        raise NotImplementedError
+
+    def on_completed(self, history):
+        """
+        The executor calls this method when the workflow is completed.
         """
         raise NotImplementedError

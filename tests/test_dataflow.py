@@ -128,7 +128,7 @@ class TestDefinitionWithAfterReplay(TestWorkflow):
     def after_replay(self, history):
         self.b = history.events[0].input['args'][0] + 1
 
-    def after_finished(self, history):
+    def after_closed(self, history):
         self.c = history.events[0].input['args'][0] + 1
 
     def run(self, a):
@@ -152,11 +152,11 @@ def test_workflow_with_after_replay():
     assert not hasattr(executor._workflow, 'c')
 
 
-class TestDefinitionWithAfterFinished(TestWorkflow):
+class TestDefinitionWithAfterClosed(TestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
-    def after_finished(self, history):
+    def after_closed(self, history):
         self.b = history.events[0].input['args'][0] + 1
 
     def run(self, a):
@@ -164,8 +164,8 @@ class TestDefinitionWithAfterFinished(TestWorkflow):
         return b.result
 
 
-def test_workflow_with_after_finished():
-    workflow = TestDefinitionWithAfterFinished
+def test_workflow_with_after_closed():
+    workflow = TestDefinitionWithAfterClosed
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow,

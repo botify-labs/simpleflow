@@ -98,6 +98,12 @@ class Executor(object):
         """
         pass
 
+    def on_completed(self):
+        """
+        Method called when the workflow completes.
+        """
+        pass
+
     def fail(self, reason, details=None):
         """
         Explicitly fails the workflow.
@@ -116,8 +122,8 @@ class Executor(object):
     def after_replay(self):
         return self._workflow.after_replay(self._history)
 
-    def after_finished(self):
-        return self._workflow.after_finished(self._history)
+    def after_closed(self):
+        return self._workflow.after_closed(self._history)
 
     @deprecated
     def after_run(self):
