@@ -1,10 +1,17 @@
 Changelog
 ---------
 
+0.11.3
+~~~~~~
+
+- Fix replay hooks introduced in 0.11.2 (#86)
+- Remove python3 compatibility from README (which was not working for a long time)
+
 0.11.2
 ~~~~~~
 
 - Add new workflow hooks (#79)
+
 0.11.1
 ~~~~~~
 
