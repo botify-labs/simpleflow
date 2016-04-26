@@ -44,5 +44,6 @@ class Executor(executor.Executor):
         self.before_replay()
         result = self.run_workflow(*args, **kwargs)
         self.after_replay()
-        self.after_finished()
+        self.on_completed()
+        self.after_closed()
         return result

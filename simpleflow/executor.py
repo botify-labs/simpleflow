@@ -127,7 +127,7 @@ class Executor(object):
 
     @deprecated
     def after_run(self):
-        return self.after_finished()
+        return self.after_closed()
 
     @deprecated
     def before_run(self):
