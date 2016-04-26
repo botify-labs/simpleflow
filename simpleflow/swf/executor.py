@@ -323,6 +323,7 @@ class Executor(executor.Executor):
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
 
+        self.before_replay()
         try:
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
@@ -330,6 +331,7 @@ class Executor(executor.Executor):
                 self._open_activity_count,
                 len(self._decisions),
             ))
+            self.after_replay()
             return self._decisions, {}
         except exceptions.TaskException, err:
             reason = 'Workflow execution error in task {}: "{}"'.format(
@@ -345,6 +347,7 @@ class Executor(executor.Executor):
                 reason=swf.format.reason(reason),
                 details=swf.format.details(details),
             )
+            self.after_closed()
             return [decision], {}
 
         except Exception, err:
@@ -364,17 +367,25 @@ class Executor(executor.Executor):
                 reason=swf.format.reason(reason),
                 details=swf.format.details(details),
             )
-
+            self.after_closed()
             return [decision], {}
 
+        self.after_replay()
         decision = swf.models.decision.WorkflowExecutionDecision()
         decision.complete(result=swf.format.result(json.dumps(result)))
-
+        self.on_completed()
+        self.after_closed()
         return [decision], {}
 
     def on_failure(self, reason, details=None):
         try:
             self._workflow.on_failure(self._history, reason, details)
+        except NotImplementedError:
+            pass
+
+    def on_completed(self):
+        try:
+            self._workflow.on_completed(self._history)
         except NotImplementedError:
             pass
 
@@ -391,11 +402,5 @@ class Executor(executor.Executor):
         self._decisions.append(decision)
         raise exceptions.ExecutionBlocked('workflow execution failed')
 
-    def before_run(self):
-        return self._workflow.before_run(self._history)
-
     def run(self, history):
         return self.replay(history)
-
-    def after_run(self):
-        return self._workflow.after_run(self._history)

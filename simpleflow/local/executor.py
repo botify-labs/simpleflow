@@ -41,4 +41,9 @@ class Executor(executor.Executor):
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
 
-        return self.run_workflow(*args, **kwargs)
+        self.before_replay()
+        result = self.run_workflow(*args, **kwargs)
+        self.after_replay()
+        self.on_completed()
+        self.after_closed()
+        return result

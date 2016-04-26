@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from .activity import Activity
 from . import canvas
 from . import task
+from ._decorators import deprecated
 
 import inspect
 
@@ -81,18 +82,35 @@ class Workflow(object):
     def fail(self, reason, details=None):
         self._executor.fail(reason, details)
 
-    def before_run(self, history):
+    def before_replay(self, history):
         pass
+
+    def after_replay(self, history):
+        pass
+
+    def after_closed(self, history):
+        pass
+
+    @deprecated
+    def before_run(self, history):
+        return self.before_replay(history)
+
+    @deprecated
+    def after_run(self, history):
+        return self.after_closed(history)
 
     def run(self, *args, **kwargs):
         raise NotImplementedError
-
-    def after_run(self, history):
-        pass
 
     def on_failure(self, history, reason, details=None):
         """
         The executor calls this method when the workflow fails.
 
+        """
+        raise NotImplementedError
+
+    def on_completed(self, history):
+        """
+        The executor calls this method when the workflow is completed.
         """
         raise NotImplementedError

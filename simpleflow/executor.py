@@ -1,6 +1,7 @@
 import abc
 import logging
 
+from ._decorators import deprecated
 
 __all__ = ['Executor']
 
@@ -46,11 +47,7 @@ class Executor(object):
 
         """
         workflow = self._workflow
-
-        self.before_run()
         result = workflow.run(*args, **kwargs)
-        self.after_run()
-
         return result
 
     @abc.abstractmethod
@@ -81,9 +78,6 @@ class Executor(object):
         return [self.submit(callable, *arguments) for
                 arguments in iterable]
 
-    def before_run(self):
-        pass
-
     @abc.abstractmethod
     def run(self, *args, **kwargs):
         """
@@ -91,9 +85,6 @@ class Executor(object):
 
         """
         raise NotImplementedError()
-
-    def after_run(self):
-        pass
 
     def on_failure(self, reason, details=None):
         """
@@ -104,6 +95,12 @@ class Executor(object):
         :param details: optional longer error description.
         :type  details: str.
 
+        """
+        pass
+
+    def on_completed(self):
+        """
+        Method called when the workflow completes.
         """
         pass
 
@@ -118,3 +115,20 @@ class Executor(object):
 
         """
         pass
+
+    def before_replay(self):
+        return self._workflow.before_replay(self._history)
+
+    def after_replay(self):
+        return self._workflow.after_replay(self._history)
+
+    def after_closed(self):
+        return self._workflow.after_closed(self._history)
+
+    @deprecated
+    def after_run(self):
+        return self.after_closed()
+
+    @deprecated
+    def before_run(self):
+        return self.before_replay()
