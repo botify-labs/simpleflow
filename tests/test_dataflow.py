@@ -108,7 +108,7 @@ class TestDefinitionWithBeforeReplay(TestWorkflow):
 
 
 @patch('boto.swf.connect_to_region')
-def test_workflow_with_before_replay():
+def test_workflow_with_before_replay(mocked_swf_connection):
     workflow = TestDefinitionWithBeforeReplay
     executor = Executor(DOMAIN, workflow)
 
@@ -137,7 +137,7 @@ class TestDefinitionWithAfterReplay(TestWorkflow):
 
 
 @patch('boto.swf.connect_to_region')
-def test_workflow_with_after_replay():
+def test_workflow_with_after_replay(mocked_swf_connection):
     workflow = TestDefinitionWithAfterReplay
     executor = Executor(DOMAIN, workflow)
 
