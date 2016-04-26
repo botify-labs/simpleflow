@@ -377,6 +377,15 @@ class Executor(executor.Executor):
         self.after_closed()
         return [decision], {}
 
+    def before_replay(self):
+        return self._workflow.before_replay(self._history)
+
+    def after_replay(self):
+        return self._workflow.after_replay(self._history)
+
+    def after_closed(self):
+        return self._workflow.after_closed(self._history)
+
     def on_failure(self, reason, details=None):
         try:
             self._workflow.on_failure(self._history, reason, details)
