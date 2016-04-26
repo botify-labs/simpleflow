@@ -235,7 +235,8 @@ https://simpleflow.readthedocs.org/.
 Requirements
 ------------
 
-- Python >= 2.6 or >= 3.3
+- Python 2.6.x or 2.7.x
+- Python 3.x compatibility is NOT guaranteed for now: https://github.com/botify-labs/simpleflow/issues/87
 
 
 Release
