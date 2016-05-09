@@ -8,6 +8,7 @@
 import json
 
 from datetime import datetime
+import pytz
 
 from swf.utils import camel_to_underscore, cached_property
 
@@ -84,7 +85,7 @@ class Event(object):
 
     @cached_property
     def timestamp(self):
-        return datetime.fromtimestamp(self._timestamp)
+        return datetime.fromtimestamp(self._timestamp, tz=pytz.UTC)
 
     @property
     def input(self):
