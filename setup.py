@@ -76,6 +76,7 @@ DEPS = [
     'subprocess32',
     'click',
     'psutil',
+    'pytz',
 ]
 
 setup(

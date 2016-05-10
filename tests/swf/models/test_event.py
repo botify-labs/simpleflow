@@ -2,6 +2,10 @@
 
 import unittest
 
+from datetime import datetime
+
+import pytz
+
 from swf.models.event import Event
 from swf.models.history import History
 import swf.constants
@@ -26,6 +30,10 @@ class TestEvent(unittest.TestCase):
             ev = Event('WorkflowExecutionStarted', swf.contants.REGISTERED, 0, None)
             delattr(ev, 'id')
             ev.__repr__()
+
+    def test_iso_date(self):
+        ev = Event('WorkflowExecutionStarted', 'REGISTERED', 0, {None: {}})
+        self.assertEqual(datetime(1970, 1, 1, 0, 0, tzinfo=pytz.UTC), ev.timestamp)
 
 
 class TestHistory(unittest.TestCase):
