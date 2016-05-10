@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.11.4
+~~~~~~
+
+- ISO dates in workflow history #91
+- Fix potential infinite retry loop #90
+
 0.11.3
 ~~~~~~
 
