@@ -203,7 +203,12 @@ class Executor(executor.Executor):
         if future.exception is None:  # Result available!
             return future
 
-        if event.get('retry', 0) == task.activity.retry:  # No more retry!
+        # Compare number of retries in history with configured max retries
+        # NB: we used to do a strict comparison (==), but that can lead to
+        # inifinite retries in case the code is redeployed with a decreased
+        # retry limit and a workflow has a already crossed the new limit. So
+        # ">=" is better there.
+        if event.get('retry', 0) >= task.activity.retry:
             if task.activity.raises_on_failure:
                 raise exceptions.TaskException(task, future.exception)
             return future  # with future.exception set.
