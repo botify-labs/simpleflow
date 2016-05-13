@@ -4,8 +4,8 @@ from simpleflow import futures, workflow, exceptions
 from simpleflow.canvas import (
     FuncGroup,
     Group,
-    Chain
-)
+    Chain,
+    AggregateException)
 from simpleflow.local.executor import Executor
 from simpleflow.activity import with_attributes
 from simpleflow.task import ActivityTask
@@ -36,11 +36,17 @@ def running_task():
     return True
 
 
+@with_attributes()
+def zero_division():
+    return 1 / 0
+
+
 class CustomExecutor(Executor):
     """
     This executor returns a running state when
     `running_task` is called
     """
+
     def submit(self, func, *args, **kwargs):
         if func == running_task:
             f = futures.Future()
@@ -71,9 +77,23 @@ class TestGroup(unittest.TestCase):
         with self.assertRaises(exceptions.ExecutionBlocked):
             future.result
 
+    def test_exceptions(self):
+        future = Group(
+            ActivityTask(to_string, 1),
+            ActivityTask(to_string, 2)
+        ).submit(executor)
+        self.assertIsNone(future.exception)
+
+        future = Group(
+            ActivityTask(zero_division)
+        ).submit(executor)
+        self.assertTrue(future.finished)
+        self.assertIsInstance(future.exception, AggregateException)
+        self.assertEqual(1, len(future.exception.exceptions))
+        self.assertIsInstance(future.exception.exceptions[0], ZeroDivisionError)
+
 
 class TestChain(unittest.TestCase):
-
     def test(self):
         future = Chain(
             ActivityTask(to_string, "test"),
@@ -100,6 +120,22 @@ class TestChain(unittest.TestCase):
         self.assertTrue(future.finished)
         self.assertEquals(future.result, [3, 8, 17])
 
+    def test_exceptions(self):
+        future = Group(
+            ActivityTask(to_string, 1),
+            ActivityTask(to_string, 2)
+        ).submit(executor)
+        self.assertIsNone(future.exception)
+
+        future = Group(
+            ActivityTask(zero_division)
+        ).submit(executor)
+        self.assertTrue(future.finished)
+        self.assertIsInstance(future.exception, AggregateException)
+        self.assertEqual(1, len(future.exception.exceptions))
+        self.assertIsInstance(future.exception.exceptions[0], ZeroDivisionError)
+
+
 
 class TestFuncGroup(unittest.TestCase):
     def test_previous_value_with_func(self):
@@ -118,7 +154,6 @@ class TestFuncGroup(unittest.TestCase):
 
 
 class TestComplexCanvas(unittest.TestCase):
-
     def test(self):
         complex_canvas = Chain(
             ActivityTask(sum_values, [1, 2]),
@@ -151,3 +186,17 @@ class TestComplexCanvas(unittest.TestCase):
         result = complex_canvas.submit(executor)
         self.assertTrue(result.finished)
         self.assertEquals(len(result.futures), 5)
+
+
+class TestAggregateException(unittest.TestCase):
+    def test_handle_all(self):
+        agg_ex = AggregateException([ZeroDivisionError(), None, MemoryError()])
+        agg_ex.handle(lambda ex: bool(ex))
+
+    def test_handle_not_all(self):
+        memory_error = MemoryError()
+        agg_ex = AggregateException([ZeroDivisionError(), None, memory_error])
+        with self.assertRaises(AggregateException) as new_agg_ex:
+            agg_ex.handle(lambda ex: type(ex) == ZeroDivisionError)
+        self.assertIsInstance(new_agg_ex.exception, AggregateException)
+        self.assertEqual([memory_error], new_agg_ex.exception.exceptions)

@@ -21,6 +21,43 @@ class FuncGroup(object):
         return inst.submit(executor)
 
 
+class AggregateException(Exception):
+    """
+    Class containing a list of exceptions.
+
+    :type exceptions: list[Exception]
+    """
+    def __init__(self, exceptions):
+        self.exceptions = exceptions
+
+    def append(self, ex):
+        self.exceptions.append(ex)
+
+    def handle(self, handler):
+        """
+        Invoke a handler on each exception.
+        :param handler: Predicate accepting an exception and returning True if it's been handled
+        :type handler:
+        :return: raises a new AggregateException with the unhandled exceptions if any
+        :rtype:
+        """
+        unhandled_exceptions = []
+        for ex in self.exceptions:
+            if ex and not handler(ex):
+                unhandled_exceptions.append(ex)
+        if unhandled_exceptions:
+            raise AggregateException(unhandled_exceptions)
+
+    def __repr__(self):
+        return repr([repr(ex) for ex in self.exceptions])
+
+    def __str__(self):
+        return str([str(ex) for ex in self.exceptions])
+
+    def __eq__(self, other):
+        return self.exceptions == other.exceptions
+
+
 class Group(object):
     """
     List of activities running in parallel.
@@ -72,11 +109,20 @@ class GroupFuture(futures.Future):
 
     def sync_result(self):
         self._result = []
+        exceptions = []
+        have_exceptions = False
         for future in self.futures:
             if future.finished:
                 self._result.append(future.result)
+                exception = future.exception
+                exceptions.append(exception)
+                if exception:
+                    have_exceptions = True
             else:
                 self._result.append(None)
+                exceptions.append(None)
+        if have_exceptions:
+            self._exception = AggregateException(exceptions)
 
     @property
     def count_finished_activities(self):
@@ -112,6 +158,8 @@ class ChainFuture(GroupFuture):
         self.activities = activities
         self.executor = executor
         self._state = futures.PENDING
+        self._result = None
+        self._exception = None
         self.futures = []
 
         previous_result = None
