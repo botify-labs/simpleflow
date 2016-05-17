@@ -417,5 +417,5 @@ class Executor(executor.Executor):
         self._decisions.append(decision)
         raise exceptions.ExecutionBlocked('workflow execution failed')
 
-    def run(self, history):
-        return self.replay(history)
+    def run(self, decision_response):
+        return self.replay(decision_response)
