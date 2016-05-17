@@ -187,7 +187,7 @@ class Executor(executor.Executor):
         elif isinstance(task, WorkflowTask):
             return self.find_child_workflow_event(task, history)
         else:
-            return TypeError('invalid type {} for task {}'.format(
+            raise TypeError('invalid type {} for task {}'.format(
                 type(task), task))
 
         return None
