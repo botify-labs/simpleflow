@@ -310,12 +310,13 @@ class Executor(executor.Executor):
         iterable = task.get_actual_value(iterable)
         return super(Executor, self).starmap(callable, iterable)
 
-    def replay(self, history):
+    def replay(self, decision_response):
         """Executes the workflow from the start until it blocks.
 
         """
         self.reset()
 
+        history = decision_response.history
         self._history = History(history)
         self._history.parse()
 

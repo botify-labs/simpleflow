@@ -214,10 +214,10 @@ class Poller(NamedMixin, swf.actors.Actor):
         self.set_process_name()
         while self.is_alive:
             try:
-                task = self._poll(self.task_list, self.identity)
+                response = self._poll(self.task_list, self.identity)
             except swf.exceptions.PollTimeout:
                 continue
-            self.process(task)
+            self.process(response)
 
     @with_state('stopping')
     def stop(self, graceful=True, join_timeout=60):
@@ -295,7 +295,7 @@ class Poller(NamedMixin, swf.actors.Actor):
 
         logger.debug("polling decision task on %s", task_list)
         try:
-            task = self.poll(
+            response = self.poll(
                 task_list,
                 identity=identity,
             )
@@ -309,4 +309,4 @@ class Poller(NamedMixin, swf.actors.Actor):
                 task_list,
             )
             raise
-        return task
+        return response
