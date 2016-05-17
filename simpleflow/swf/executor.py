@@ -313,6 +313,11 @@ class Executor(executor.Executor):
     def replay(self, decision_response):
         """Executes the workflow from the start until it blocks.
 
+        :param decision_response: an object wrapping the PollForDecisionTask response
+        :type  decision_response: swf.responses.Response
+
+        :returns: a list of decision and a context dict
+        :rtype: ([swf.models.decision.base.Decision], dict)
         """
         self.reset()
 

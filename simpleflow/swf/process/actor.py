@@ -284,8 +284,7 @@ class Poller(NamedMixin, swf.actors.Actor):
         See also http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html#API_PollForDecisionTask_RequestSyntax
 
         :returns:
-            :rtype: (str, swf.models.History)
-
+        :rtype: swf.responses.Response
         """
         if task_list is None and self.task_list:
             task_list = self.task_list

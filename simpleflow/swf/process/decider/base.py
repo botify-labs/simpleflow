@@ -110,6 +110,16 @@ class DeciderPoller(swf.actors.Decider, Poller):
         return swf.actors.Decider.complete(self, token, decisions)
 
     def process(self, decision_response):
+        """
+        Takes a PollForDecisionTask response object and tries to complete the
+        decision task, by calling self._complete() with the response token and
+        a set of decisions.
+
+        :param decision_response: an object wrapping the PollForDecisionTask response
+        :type  decision_response: swf.responses.Response
+
+        :returns: None
+        """
         logger.info('taking decision for workflow {}'.format(
             self._workflow_name))
         decisions = self.decide(decision_response)
@@ -122,6 +132,16 @@ class DeciderPoller(swf.actors.Decider, Poller):
 
     @with_state('deciding')
     def decide(self, decision_response):
+        """
+        Delegate the decision to the decider worker (which itself delegates to
+        the executor).
+
+        :param decision_response: an object wrapping the PollForDecisionTask response
+        :type  decision_response: swf.responses.Response
+
+        :returns:
+        :rtype: [swf.models.decision.base.Decision]
+        """
         worker = DeciderWorker(self._workflows)
         decisions = worker.decide(decision_response)
         return decisions
@@ -136,11 +156,11 @@ class DeciderWorker(object):
         """
         Delegate the decision to the executor.
 
-        :param history: of the workflow execution.
-        :type  history: swf.models.History.
-        :returns:
-            :rtype: (str, [swf.models.decision.base.Decision])
+        :param decision_response: an object wrapping the PollForDecisionTask response
+        :type  decision_response: swf.responses.Response
 
+        :returns:
+        :rtype: [swf.models.decision.base.Decision]
         """
         history = decision_response.history
         self._workflow_name = history[0].workflow_type['name']
