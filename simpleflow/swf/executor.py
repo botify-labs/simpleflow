@@ -190,8 +190,6 @@ class Executor(executor.Executor):
             raise TypeError('invalid type {} for task {}'.format(
                 type(task), task))
 
-        return None
-
     def resume_activity(self, task, event):
         future = self._get_future_from_activity_event(event)
         if not future:  # Task in history does not count.
