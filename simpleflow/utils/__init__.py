@@ -1,4 +1,4 @@
-from . import retry
+from . import retry  # NOQA
 
 
 def issubclass_(arg1, arg2):
