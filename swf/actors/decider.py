@@ -53,7 +53,7 @@ class Decider(Actor):
 
             raise ResponseError(e.body['message'])
 
-    def poll_for_task(self, task_list=None,
+    def poll(self, task_list=None,
              identity=None,
              **kwargs):
         """
@@ -128,8 +128,3 @@ class Decider(Actor):
 
         # TODO: move history into execution (needs refactoring on WorkflowExecution.history())
         return Response(token=token, history=history, execution=execution)
-
-
-    def poll(self, *args, **kwargs):
-        response = self.poll_for_task(*args, **kwargs)
-        return response.token, response.history

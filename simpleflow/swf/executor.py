@@ -187,10 +187,8 @@ class Executor(executor.Executor):
         elif isinstance(task, WorkflowTask):
             return self.find_child_workflow_event(task, history)
         else:
-            return TypeError('invalid type {} for task {}'.format(
+            raise TypeError('invalid type {} for task {}'.format(
                 type(task), task))
-
-        return None
 
     def resume_activity(self, task, event):
         future = self._get_future_from_activity_event(event)
@@ -310,12 +308,18 @@ class Executor(executor.Executor):
         iterable = task.get_actual_value(iterable)
         return super(Executor, self).starmap(callable, iterable)
 
-    def replay(self, history):
+    def replay(self, decision_response):
         """Executes the workflow from the start until it blocks.
 
+        :param decision_response: an object wrapping the PollForDecisionTask response
+        :type  decision_response: swf.responses.Response
+
+        :returns: a list of decision and a context dict
+        :rtype: ([swf.models.decision.base.Decision], dict)
         """
         self.reset()
 
+        history = decision_response.history
         self._history = History(history)
         self._history.parse()
 
@@ -416,5 +420,5 @@ class Executor(executor.Executor):
         self._decisions.append(decision)
         raise exceptions.ExecutionBlocked('workflow execution failed')
 
-    def run(self, history):
-        return self.replay(history)
+    def run(self, decision_response):
+        return self.replay(decision_response)

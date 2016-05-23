@@ -214,10 +214,10 @@ class Poller(NamedMixin, swf.actors.Actor):
         self.set_process_name()
         while self.is_alive:
             try:
-                task = self._poll(self.task_list, self.identity)
+                response = self._poll(self.task_list, self.identity)
             except swf.exceptions.PollTimeout:
                 continue
-            self.process(task)
+            self.process(response)
 
     @with_state('stopping')
     def stop(self, graceful=True, join_timeout=60):
@@ -284,8 +284,7 @@ class Poller(NamedMixin, swf.actors.Actor):
         See also http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html#API_PollForDecisionTask_RequestSyntax
 
         :returns:
-            :rtype: (str, swf.models.History)
-
+        :rtype: swf.responses.Response
         """
         if task_list is None and self.task_list:
             task_list = self.task_list
@@ -295,7 +294,7 @@ class Poller(NamedMixin, swf.actors.Actor):
 
         logger.debug("polling decision task on %s", task_list)
         try:
-            task = self.poll(
+            response = self.poll(
                 task_list,
                 identity=identity,
             )
@@ -309,4 +308,4 @@ class Poller(NamedMixin, swf.actors.Actor):
                 task_list,
             )
             raise
-        return task
+        return response
