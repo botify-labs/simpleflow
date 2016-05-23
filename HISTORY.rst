@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.11.5
+~~~~~~
+
+- Don't mask activity cancel exception (#84)
+- Propagate all decision response attributes up to Executor.replay() (#76, #94)
+
 0.11.4
 ~~~~~~
 
