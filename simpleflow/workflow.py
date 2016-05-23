@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+from simpleflow.utils import issubclass_
 from .activity import Activity
 from . import canvas
 from . import task
@@ -35,7 +37,7 @@ class Workflow(object):
         """
         # If the activity is a child workflow, call directly
         # the executor
-        if inspect.isclass(activity) and issubclass(activity, Workflow):
+        if issubclass_(activity, Workflow):
             return self._executor.submit(activity, *args, **kwargs)
         elif isinstance(activity, (task.ActivityTask, task.WorkflowTask)):
             return self._executor.submit(activity.activity, *activity.args, **activity.kwargs)
