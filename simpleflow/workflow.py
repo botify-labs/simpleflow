@@ -1,10 +1,10 @@
 from __future__ import absolute_import
-from .activity import Activity
+
+from simpleflow.utils import issubclass_
 from . import canvas
 from . import task
 from ._decorators import deprecated
-
-import inspect
+from .activity import Activity
 
 
 class Workflow(object):
@@ -23,11 +23,11 @@ class Workflow(object):
         Submit a function for asynchronous execution.
 
         :param activity: callable registered as an task.
-        :type  activity: activity.Activity | task.ActivityTask | task.WorkflowTask | canvas.Group | canvas.Chain | workflow.Workflow
-        :param *args: arguments passed to the task.
-        :type  *args: Sequence.
-        :param **kwargs: keyword-arguments passed to the task.
-        :type  **kwargs: Mapping (dict).
+        :type  activity: Activity | task.ActivityTask | task.WorkflowTask | canvas.Group | canvas.Chain | Workflow
+        :param args: arguments passed to the task.
+        :type  args: Sequence.
+        :param kwargs: keyword-arguments passed to the task.
+        :type  kwargs: Mapping (dict).
 
         :returns:
             :rtype: Future.
@@ -35,7 +35,7 @@ class Workflow(object):
         """
         # If the activity is a child workflow, call directly
         # the executor
-        if inspect.isclass(activity) and issubclass(activity, Workflow):
+        if issubclass_(activity, Workflow):
             return self._executor.submit(activity, *args, **kwargs)
         elif isinstance(activity, (task.ActivityTask, task.WorkflowTask)):
             return self._executor.submit(activity.activity, *activity.args, **activity.kwargs)

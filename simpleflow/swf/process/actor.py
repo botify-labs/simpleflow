@@ -5,16 +5,11 @@ import json
 import logging
 import multiprocessing
 import os
-import platform
 import signal
-import sys
-
 from setproctitle import setproctitle
 
 import swf.actors
-
 from simpleflow import utils
-
 
 logger = logging.getLogger(__name__)
 
@@ -281,7 +276,8 @@ class Poller(NamedMixin, swf.actors.Actor):
                          defined. Minimum length of 0. Maximum length of 256.
         :type  identity: str.
 
-        See also http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html#API_PollForDecisionTask_RequestSyntax
+        See also
+        http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html#API_PollForDecisionTask_RequestSyntax
 
         :returns:
         :rtype: swf.responses.Response

@@ -17,6 +17,7 @@ from simpleflow import (
     task,
 )
 from simpleflow.activity import Activity
+from simpleflow.utils import issubclass_
 from simpleflow.workflow import Workflow
 from simpleflow.history import History
 from simpleflow.swf.task import ActivityTask, WorkflowTask
@@ -32,16 +33,17 @@ class TaskRegistry(dict):
     """This registry tracks tasks and assign them an integer identifier.
 
     """
-    def add(self, task):
+    def add(self, a_task):
         """
         ID's are assigned sequentially by incrementing an integer. They start
         from 0.
 
+        :type a_task: ActivityTask | WorkflowTask
         :returns:
             :rtype: int.
 
         """
-        name = task.name
+        name = a_task.name
         self[name] = self.setdefault(name, 0) + 1
 
         return self[name]
@@ -61,9 +63,9 @@ class Executor(executor.Executor):
     """
     def __init__(self, domain, workflow, task_list=None):
         super(Executor, self).__init__(workflow)
-        self._tasks = TaskRegistry()
         self.domain = domain
         self.task_list = task_list
+        self.reset()
 
     def reset(self):
         """
@@ -77,27 +79,28 @@ class Executor(executor.Executor):
         self._decisions = []
         self._tasks = TaskRegistry()
 
-    def _make_task_id(self, task, *args, **kwargs):
+    def _make_task_id(self, a_task, *args, **kwargs):
         """
-        Assign a new ID to *task*.
+        Assign a new ID to *a_task*.
 
+        :type a_task: ActivityTask | WorkflowTask
         :returns:
             String with at most 256 characters.
 
         """
-        if not task.idempotent:
+        if not a_task.idempotent:
             # If idempotency is False or unknown, let's generate a task id by
-            # incrementing and id after the task name.
+            # incrementing and id after the a_task name.
             # (default strategy, backwards compatible with previous versions)
-            suffix = self._tasks.add(task)
+            suffix = self._tasks.add(a_task)
         else:
-            # If task is idempotent, we can do better and hash arguments.
+            # If a_task is idempotent, we can do better and hash arguments.
             # It makes the workflow resistant to retries or variations on the
             # same task name (see #11).
             arguments = json.dumps({"args": args, "kwargs": kwargs})
             suffix = hashlib.md5(arguments).hexdigest()
 
-        task_id = '{name}-{idx}'.format(name=task.name, idx=suffix)
+        task_id = '{name}-{idx}'.format(name=a_task.name, idx=suffix)
         return task_id
 
     def _get_future_from_activity_event(self, event):
@@ -156,7 +159,8 @@ class Executor(executor.Executor):
 
         return future
 
-    def _get_future_from_child_workflow_event(self, event):
+    @staticmethod
+    def _get_future_from_child_workflow_event(event):
         """Maps a child workflow event to a Future with the corresponding
         state.
 
@@ -174,23 +178,25 @@ class Executor(executor.Executor):
 
         return future
 
-    def find_activity_event(self, task, history):
-        activity = history._activities.get(task.id)
+    @staticmethod
+    def find_activity_event(a_task, history):
+        activity = history._activities.get(a_task.id)
         return activity
 
-    def find_child_workflow_event(self, task, history):
-        return history._child_workflows.get(task.id)
+    @staticmethod
+    def find_child_workflow_event(a_task, history):
+        return history._child_workflows.get(a_task.id)
 
-    def find_event(self, task, history):
-        if isinstance(task, ActivityTask):
-            return self.find_activity_event(task, history)
-        elif isinstance(task, WorkflowTask):
-            return self.find_child_workflow_event(task, history)
+    def find_event(self, a_task, history):
+        if isinstance(a_task, ActivityTask):
+            return self.find_activity_event(a_task, history)
+        elif isinstance(a_task, WorkflowTask):
+            return self.find_child_workflow_event(a_task, history)
         else:
             raise TypeError('invalid type {} for task {}'.format(
-                type(task), task))
+                type(a_task), a_task))
 
-    def resume_activity(self, task, event):
+    def resume_activity(self, a_task, event):
         future = self._get_future_from_activity_event(event)
         if not future:  # Task in history does not count.
             return None
@@ -203,26 +209,26 @@ class Executor(executor.Executor):
 
         # Compare number of retries in history with configured max retries
         # NB: we used to do a strict comparison (==), but that can lead to
-        # inifinite retries in case the code is redeployed with a decreased
+        # infinite retries in case the code is redeployed with a decreased
         # retry limit and a workflow has a already crossed the new limit. So
         # ">=" is better there.
-        if event.get('retry', 0) >= task.activity.retry:
-            if task.activity.raises_on_failure:
-                raise exceptions.TaskException(task, future.exception)
+        if event.get('retry', 0) >= a_task.activity.retry:
+            if a_task.activity.raises_on_failure:
+                raise exceptions.TaskException(a_task, future.exception)
             return future  # with future.exception set.
 
         # Otherwise retry the task by scheduling it again.
-        return None  # means the is not in SWF.
+        return None  # means the task is not in SWF.
 
-    def resume_child_workflow(self, task, event):
+    def resume_child_workflow(self, a_task, event):
         return self._get_future_from_child_workflow_event(event)
 
-    def schedule_task(self, task, task_list=None):
+    def schedule_task(self, a_task, task_list=None):
         logger.debug('executor is scheduling task {} on task_list {}'.format(
-            task.name,
+            a_task.name,
             task_list,
         ))
-        decisions = task.schedule(self.domain, task_list)
+        decisions = a_task.schedule(self.domain, task_list)
         # ``decisions`` contains a single decision.
         self._decisions.extend(decisions)
         self._open_activity_count += 1
@@ -231,32 +237,32 @@ class Executor(executor.Executor):
             # completing these decisions.
             timer = swf.models.decision.TimerDecision(
                 'start',
-                id='resume-after-{}'.format(task.id),
+                id='resume-after-{}'.format(a_task.id),
                 start_to_fire_timeout='0')
             self._decisions.append(timer)
             raise exceptions.ExecutionBlocked()
 
-    def resume(self, task, *args, **kwargs):
+    def resume(self, a_task, *args, **kwargs):
         """Resume the execution of a task.
 
         If the task was scheduled, returns a future that wraps its state,
         otherwise schedules it.
 
         """
-        task.id = self._make_task_id(task, *args, **kwargs)
-        event = self.find_event(task, self._history)
+        a_task.id = self._make_task_id(a_task, *args, **kwargs)
+        event = self.find_event(a_task, self._history)
 
         future = None
         if event:
             if event['type'] == 'activity':
-                future = self.resume_activity(task, event)
+                future = self.resume_activity(a_task, event)
                 if future and future._state in (futures.PENDING, futures.RUNNING):
                     self._open_activity_count += 1
             elif event['type'] == 'child_workflow':
-                future = self.resume_child_workflow(task, event)
+                future = self.resume_child_workflow(a_task, event)
 
         if not future:
-            self.schedule_task(task, task_list=self.task_list)
+            self.schedule_task(a_task, task_list=self.task_list)
             future = futures.Future()  # return a pending future.
 
         if self._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT:
@@ -274,24 +280,16 @@ class Executor(executor.Executor):
         """
         try:
             if isinstance(func, Activity):
-                task = ActivityTask(func, *args, **kwargs)
-            elif issubclass(func, Workflow):
-                task = WorkflowTask(func, *args, **kwargs)
+                a_task = ActivityTask(func, *args, **kwargs)
+            elif issubclass_(func, Workflow):
+                a_task = WorkflowTask(func, *args, **kwargs)
             else:
-                # NB: isinstance() and issubclass() may raise a TypeError too
-                # hence the try/except reraising a TypeError. Found reason in
-                # commit 8faa8636.
-                # TODO: see if we can avoid that, that hides TypeError's in
-                # tasks creation, which is annoying, because the re-raised
-                # exception can be misleading in that case.
-                raise TypeError
+                raise TypeError('invalid type {} for {}'.format(
+                                type(func), func))
         except exceptions.ExecutionBlocked:
             return futures.Future()
-        except TypeError:
-            raise TypeError('invalid type {} for {}'.format(
-                type(func), func))
 
-        return self.resume(task, *task.args, **task.kwargs)
+        return self.resume(a_task, *a_task.args, **a_task.kwargs)
 
     # TODO: check if really used or remove it
     def map(self, callable, iterable):
@@ -324,8 +322,6 @@ class Executor(executor.Executor):
         self._history.parse()
 
         workflow_started_event = history[0]
-        args = ()
-        kwargs = {}
         input = workflow_started_event.input
         if input is None:
             input = {}
@@ -342,7 +338,7 @@ class Executor(executor.Executor):
             ))
             self.after_replay()
             return self._decisions, {}
-        except exceptions.TaskException, err:
+        except exceptions.TaskException as err:
             reason = 'Workflow execution error in task {}: "{}"'.format(
                 err.task.name,
                 getattr(err.exception, 'reason', repr(err.exception)))
@@ -359,7 +355,7 @@ class Executor(executor.Executor):
             self.after_closed()
             return [decision], {}
 
-        except Exception, err:
+        except Exception as err:
             reason = 'Cannot replay the workflow: {}({})'.format(
                 err.__class__.__name__,
                 err,

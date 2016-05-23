@@ -1,8 +1,7 @@
 from __future__ import absolute_import
 
-import json
 import abc
-import collections
+import json
 
 from . import futures
 from .activity import Activity

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
+
 import swf.models
 import swf.querysets
-
 from simpleflow.history import History
 
 

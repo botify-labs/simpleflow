@@ -1,11 +1,9 @@
+import logging
+import multiprocessing
 import os
 import time
-import logging
-import signal
-import multiprocessing
 
 import swf.exceptions
-
 from simpleflow.utils import retry
 
 logger = logging.getLogger(__name__)
@@ -31,7 +29,6 @@ class HeartbeatProcess(object):
 
     def run(self, token, task):
         ppid = os.getppid()
-        response = {}
 
         while True:
             time.sleep(self._interval)
@@ -43,7 +40,7 @@ class HeartbeatProcess(object):
                 logger.info('heartbeat {} for task {}'.format(
                     time.time(),
                     task.activity_type.name))
-            except:
+            except Exception:
                 # Do not crash for debug
                 pass
 
