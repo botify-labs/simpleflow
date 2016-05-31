@@ -178,6 +178,20 @@ Start an activity worker with: ::
 
 Then execute ``./demo``.
 
+Controlling SWF region and domain
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The SWF region is controlled by the environment variable ``AWS_DEFAULT_REGION``. This variable
+comes from the legacy "simple-workflow" project. The option might be exposed through a
+``--region`` option in the future (if you want that, please open an issue).
+
+The SWF domain is controlled by the ``--domain`` on most simpleflow commands. It can also
+be set via the ``SWF_DOMAIN`` environment variable. In case both are supplied, the
+command-line value takes precedence over the environment variable.
+
+Note that some simpleflow commands expect the domain to be passed as a positionnal argument.
+In that case the environment variable has no effect for now.
+
 List Workflow Executions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
