@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.11.6
+~~~~~~
+
+- Add issubclass_ method (#96)
+- Avoid duplicate logs if root logger has an handler (#97)
+- Allow passing SWF domain via the SWF_DOMAIN environment variable (#98)
+
 0.11.5
 ~~~~~~
 
