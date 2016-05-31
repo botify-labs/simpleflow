@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.11.7
+~~~~~~
+
+Same as 0.11.6 but the 0.11.6 on pypi is broken (pushed something similar to 0.11.5 by mistake)
+
 0.11.6
 ~~~~~~
 
