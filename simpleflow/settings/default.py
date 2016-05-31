@@ -25,6 +25,7 @@ LOGGING = {
             'level': os.getenv('LOG_LEVEL', 'INFO'),
             'handlers': ['console'],
             # avoid duplicate logs if loggers up are defined (e.g. root)
+            # + higher-level loggers tend to have worse/lame formatters
             'propagate': False,
         },
     },
