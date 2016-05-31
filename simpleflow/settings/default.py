@@ -24,6 +24,8 @@ LOGGING = {
         'simpleflow': {
             'level': os.getenv('LOG_LEVEL', 'INFO'),
             'handlers': ['console'],
+            # avoid duplicate logs if loggers up are defined (e.g. root)
+            'propagate': False,
         },
     },
     'handlers': {
