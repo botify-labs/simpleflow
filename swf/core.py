@@ -5,7 +5,10 @@
 #
 # See the file LICENSE for copying permission.
 
+from boto.exception import NoAuthHandlerFound
 import boto.swf
+
+from simpleflow.utils import retry
 
 from . import settings
 
@@ -27,6 +30,9 @@ class ConnectedSWFObject(object):
         'connection'
     ]
 
+    @retry.with_delay(nb_times=5,
+                      delay=retry.exponential,
+                      on_exceptions=(TypeError, NoAuthHandlerFound))
     def __init__(self, *args, **kwargs):
         settings_ = {key: SETTINGS.get(key, kwargs.get(key)) for key in
                      ('aws_access_key_id',
