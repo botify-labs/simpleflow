@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.11.8
+~~~~~~
+
+- Retry boto.swf connection to avoid frequent errors when using IAM roles (#99)
+
 0.11.7
 ~~~~~~
 
