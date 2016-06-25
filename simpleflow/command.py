@@ -19,6 +19,7 @@ from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
+from simpleflow.swf.utils import get_workflow_history
 from simpleflow import __version__
 
 
@@ -60,6 +61,13 @@ def get_input(wf_input):
         wf_input = sys.stdin.read()
     wf_input = json.loads(wf_input)
     return transform_input(wf_input)
+
+
+def get_or_load_input(input_file, input):
+    if input_file:
+        return load_input(input_file)
+    else:
+        return get_input(input)
 
 
 def transform_input(wf_input):
@@ -113,10 +121,8 @@ def start_workflow(workflow,
                    local):
     workflow_definition = get_workflow(workflow)
 
-    if input_file:
-        wf_input = load_input(input_file)
-    else:
-        wf_input = get_input(input)
+    wf_input = get_or_load_input(input_file, input)
+
     if local:
         from .local import Executor
 
@@ -408,7 +414,20 @@ def standalone(context,
         workflow_id = get_workflow(workflow).name
 
     if repair:
-        pass #TODO
+        # get the previous execution history, it will serve as "default history"
+        # for activities that succeeded in the previous execution
+        logger.info(
+            'retrieving history of previous execution: domain={} ' \
+            'workflow_id={}'.format(domain, repair)
+        )
+        previous_history = get_workflow_history(domain, repair)
+        previous_history.parse()
+        # get the previous execution input if none passed
+        # NB: this takes precedence over an input passed via stdin!!!
+        if not input and not input_file:
+            wf_input = previous_history.events[0].input
+        else:
+            wf_input = get_or_load_input(input_file, input)
 
     task_list = get_task_list(workflow_id)
     logger.info('using task list {}'.format(task_list))
@@ -420,7 +439,7 @@ def standalone(context,
             task_list,
         ),
         kwargs={
-            'repair_with': None,
+            'repair_with': previous_history,
         },
     )
     decider_proc.start()
@@ -446,8 +465,8 @@ def standalone(context,
         execution_timeout,
         tags,
         decision_tasks_timeout,
-        input,
-        input_file,
+        json.dumps(wf_input),
+        None,
         local=False,
     )
     while True:

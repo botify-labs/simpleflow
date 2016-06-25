@@ -256,7 +256,14 @@ class Executor(executor.Executor):
         # try to fill in the blanks with the workflow we're trying to repair if any
         # TODO: maybe only do that for idempotent tasks??
         if not event and self.repair_with:
-            pass # TODO
+            former_event = self.find_event(a_task, self.repair_with)
+            # ... but only keep the event if the task was successful
+            if former_event and former_event['state'] == 'completed':
+                event = former_event
+                logger.info(
+                    'not replaying task completed successfully in previous ' \
+                    'workflow: {}'.format(event['id'])
+                )
 
         future = None
         if event:
