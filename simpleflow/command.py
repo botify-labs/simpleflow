@@ -378,6 +378,10 @@ def get_task_list(workflow_id=''):
               type=bool, required=False,
               help='Display execution status.'
               )
+@click.option('--repair',
+              type=str, required=False,
+              help='Repair a failed workflow execution.'
+              )
 @click.argument('workflow')
 @cli.command('standalone', help='Execute a workflow with a single process.')
 @click.pass_context
@@ -393,6 +397,7 @@ def standalone(context,
                nb_workers,
                heartbeat,
                display_status,
+               repair,
                ):
     """
     This command spawn a decider and an activity worker to execute a workflow
@@ -402,6 +407,9 @@ def standalone(context,
     if not workflow_id:
         workflow_id = get_workflow(workflow).name
 
+    if repair:
+        pass #TODO
+
     task_list = get_task_list(workflow_id)
     logger.info('using task list {}'.format(task_list))
     decider_proc = multiprocessing.Process(
@@ -410,7 +418,10 @@ def standalone(context,
             [workflow],
             domain,
             task_list,
-        )
+        ),
+        kwargs={
+            'repair_with': None,
+        },
     )
     decider_proc.start()
 

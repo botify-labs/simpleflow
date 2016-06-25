@@ -61,10 +61,11 @@ class Executor(executor.Executor):
     on the execution of the workflow.
 
     """
-    def __init__(self, domain, workflow, task_list=None):
+    def __init__(self, domain, workflow, task_list=None, repair_with=None):
         super(Executor, self).__init__(workflow)
         self.domain = domain
         self.task_list = task_list
+        self.repair_with = repair_with
         self.reset()
 
     def reset(self):
@@ -251,6 +252,11 @@ class Executor(executor.Executor):
         """
         a_task.id = self._make_task_id(a_task, *args, **kwargs)
         event = self.find_event(a_task, self._history)
+
+        # try to fill in the blanks with the workflow we're trying to repair if any
+        # TODO: maybe only do that for idempotent tasks??
+        if not event and self.repair_with:
+            pass # TODO
 
         future = None
         if event:
