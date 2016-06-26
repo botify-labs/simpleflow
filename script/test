@@ -1,4 +1,10 @@
 #!/bin/bash
 set -x
 
+# The AWS_DEFAULT_REGION parameter determines the region used for SWF
+# Leaving it to a value different than "us-east-1" would break moto,
+# because moto.swf only mocks calls to us-east-1 region for now.
+unset AWS_DEFAULT_REGION
+
+# run tests
 py.test -q $*
