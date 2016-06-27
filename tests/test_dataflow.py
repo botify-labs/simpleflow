@@ -14,6 +14,7 @@ from simpleflow import (
     Workflow,
     futures,
 )
+from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.executor import Executor
 
@@ -94,6 +95,59 @@ def test_workflow_with_input(mocked_swf_connection):
     workflow_completed.complete(result=json.dumps(result))
 
     assert decisions[0] == workflow_completed
+
+
+@patch('boto.swf.connect_to_region')
+def test_workflow_with_repair_if_task_successful(mocked_swf_connection):
+    workflow = TestDefinitionWithInput
+    history = builder.History(workflow, input={'args': [4]})
+
+    # Now let's build the history to repair
+    previous_history = builder.History(workflow, input={'args': [4]})
+    decision_id = previous_history.last_id
+    (previous_history
+        .add_activity_task(increment,
+                           decision_id=decision_id,
+                           last_state='completed',
+                           activity_id='activity-tests.data.activities.increment-1',
+                           input={'args': 4},
+                           result=57) # obviously wrong but helps see if things work
+    )
+    to_repair = History(previous_history)
+    to_repair.parse()
+
+    executor = Executor(DOMAIN, workflow, repair_with=to_repair)
+
+    # The executor should not schedule anything, it should use previous history
+    decisions, _ = executor.replay(Response(history=history))
+    assert decisions[0]['decisionType'] == 'CompleteWorkflowExecution'
+    assert decisions[0]['completeWorkflowExecutionDecisionAttributes']['result'] == '57'
+
+
+@patch('boto.swf.connect_to_region')
+def test_workflow_with_repair_if_task_failed(mocked_swf_connection):
+    workflow = TestDefinitionWithInput
+    history = builder.History(workflow, input={'args': [4]})
+
+    # Now let's build the history to repair
+    previous_history = builder.History(workflow, input={'args': [4]})
+    decision_id = previous_history.last_id
+    (previous_history
+        .add_activity_task(increment,
+                           decision_id=decision_id,
+                           last_state='failed',
+                           activity_id='activity-tests.data.activities.increment-1',
+                           input={'args': 4},
+                           result=57) # obviously wrong but helps see if things work
+    )
+    to_repair = History(previous_history)
+    to_repair.parse()
+
+    executor = Executor(DOMAIN, workflow, repair_with=to_repair)
+
+    # The executor should not schedule anything, it should use previous history
+    decisions, _ = executor.replay(Response(history=history))
+    check_task_scheduled_decision(decisions[0], increment)
 
 
 class TestDefinitionWithBeforeReplay(TestWorkflow):
