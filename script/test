@@ -6,5 +6,8 @@ set -x
 # because moto.swf only mocks calls to us-east-1 region for now.
 unset AWS_DEFAULT_REGION
 
+# Simple variable to control the number of connection retries
+export SWF_CONNECTION_RETRIES=1
+
 # run tests
 py.test -q $*
