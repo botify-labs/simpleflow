@@ -4,7 +4,9 @@ from __future__ import absolute_import
 import functools
 from mock import patch
 
+import boto
 import json
+from moto import mock_swf
 
 import swf.models
 from swf.models.history import builder
@@ -63,8 +65,8 @@ class TestDefinitionWithInput(TestWorkflow):
         return b.result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_input(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_input():
     workflow = TestDefinitionWithInput
     executor = Executor(DOMAIN, workflow)
 
@@ -97,8 +99,8 @@ def test_workflow_with_input(mocked_swf_connection):
     assert decisions[0] == workflow_completed
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_repair_if_task_successful(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_repair_if_task_successful():
     workflow = TestDefinitionWithInput
     history = builder.History(workflow, input={'args': [4]})
 
@@ -124,8 +126,8 @@ def test_workflow_with_repair_if_task_successful(mocked_swf_connection):
     assert decisions[0]['completeWorkflowExecutionDecisionAttributes']['result'] == '57'
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_repair_if_task_failed(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_repair_if_task_failed():
     workflow = TestDefinitionWithInput
     history = builder.History(workflow, input={'args': [4]})
 
@@ -162,8 +164,8 @@ class TestDefinitionWithBeforeReplay(TestWorkflow):
         return b.result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_before_replay(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_before_replay():
     workflow = TestDefinitionWithBeforeReplay
     executor = Executor(DOMAIN, workflow)
 
@@ -191,8 +193,8 @@ class TestDefinitionWithAfterReplay(TestWorkflow):
         return b.result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_after_replay(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_after_replay():
     workflow = TestDefinitionWithAfterReplay
     executor = Executor(DOMAIN, workflow)
 
@@ -219,8 +221,8 @@ class TestDefinitionWithAfterClosed(TestWorkflow):
         return b.result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_after_closed(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_after_closed():
     workflow = TestDefinitionWithAfterClosed
     executor = Executor(DOMAIN, workflow)
 
@@ -268,8 +270,8 @@ class TestDefinition(TestWorkflow):
         return b.result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_two_tasks(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_two_tasks():
     workflow = TestDefinition
     executor = Executor(DOMAIN, workflow)
 
@@ -319,8 +321,8 @@ def test_workflow_with_two_tasks(mocked_swf_connection):
     assert decisions[0] == workflow_completed
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_two_tasks_not_completed(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_two_tasks_not_completed():
     """
     This test checks how the executor behaves when a task is still running.
     """
@@ -383,8 +385,8 @@ class TestDefinitionSameTask(TestWorkflow):
         return b.result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_same_task_called_two_times(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_same_task_called_two_times():
     """
     This test checks how the executor behaves when the same task is executed
     two times with a different argument.
@@ -448,8 +450,8 @@ class TestDefinitionSameFuture(TestWorkflow):
         return a.result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_reuse_same_future(mocked_swf_connection):
+@mock_swf
+def test_workflow_reuse_same_future():
     workflow = TestDefinitionSameFuture
     executor = Executor(DOMAIN, workflow)
 
@@ -509,8 +511,8 @@ class TestDefinitionTwoTasksSameFuture(TestWorkflow):
         return (b.result, c.result)
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_two_tasks_same_future(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_two_tasks_same_future():
     workflow = TestDefinitionTwoTasksSameFuture
     executor = Executor(DOMAIN, workflow)
 
@@ -580,8 +582,8 @@ class TestDefinitionMap(TestWorkflow):
         return values
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_map(mocked_swf_connection):
+@mock_swf
+def test_workflow_map():
     workflow = TestDefinitionMap
     executor = Executor(DOMAIN, workflow)
 
@@ -630,8 +632,8 @@ class TestDefinitionRetryActivity(TestWorkflow):
         return a.result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_retry_activity(mocked_swf_connection):
+@mock_swf
+def test_workflow_retry_activity():
     workflow = TestDefinitionRetryActivity
     executor = Executor(DOMAIN, workflow)
 
@@ -676,8 +678,8 @@ def test_workflow_retry_activity(mocked_swf_connection):
     assert decisions[0] == workflow_completed
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_retry_activity_failed_again(mocked_swf_connection):
+@mock_swf
+def test_workflow_retry_activity_failed_again():
     workflow = TestDefinitionRetryActivity
     executor = Executor(DOMAIN, workflow)
 
@@ -734,8 +736,8 @@ class TestDefinitionChildWorkflow(TestWorkflow):
         return y.result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_child_workflow(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_child_workflow():
     workflow = TestDefinitionChildWorkflow
     executor = Executor(DOMAIN, workflow)
 
@@ -791,8 +793,8 @@ class TestDefinitionMoreThanMaxDecisions(TestWorkflow):
         futures.wait(*results)
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_with_more_than_max_decisions(mocked_swf_connection):
+@mock_swf
+def test_workflow_with_more_than_max_decisions():
     workflow = TestDefinitionMoreThanMaxDecisions
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
@@ -861,8 +863,8 @@ class TestDefinitionFailWorkflow(OnFailureMixin, TestWorkflow):
         return result.result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_failed_from_definition(mocked_swf_connection):
+@mock_swf
+def test_workflow_failed_from_definition():
     workflow = TestDefinitionFailWorkflow
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
@@ -902,8 +904,8 @@ class TestDefinitionActivityRaisesOnFailure(OnFailureMixin, TestWorkflow):
         return self.submit(raise_on_failure).result
 
 
-@patch('boto.swf.connect_to_region')
-def test_workflow_activity_raises_on_failure(mocked_swf_connection):
+@mock_swf
+def test_workflow_activity_raises_on_failure():
     workflow = TestDefinitionActivityRaisesOnFailure
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
@@ -940,8 +942,8 @@ class TestOnFailureDefinition(OnFailureMixin, TestWorkflow):
             self.fail('FAIL')
 
 
-@patch('boto.swf.connect_to_region')
-def test_on_failure_callback(mocked_swf_connection):
+@mock_swf
+def test_on_failure_callback():
     workflow = TestOnFailureDefinition
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
@@ -979,8 +981,8 @@ class TestMultipleScheduledActivitiesDefinition(TestWorkflow):
         return [a.result, b.result, c.result]
 
 
-@patch('boto.swf.connect_to_region')
-def test_multiple_scheduled_activities(mocked_swf_connection):
+@mock_swf
+def test_multiple_scheduled_activities():
     """
     When ``Future.exception`` was made blocking if the future is not finished,
     :py:meth:`swf.executor.Executor.resume` did not check ``future.finished``
@@ -1016,8 +1018,8 @@ def test_multiple_scheduled_activities(mocked_swf_connection):
     check_task_scheduled_decision(decisions[0], double)
 
 
-@patch('boto.swf.connect_to_region')
-def test_activity_task_timeout(mocked_swf_connection):
+@mock_swf
+def test_activity_task_timeout():
     workflow = TestDefinition
     executor = Executor(DOMAIN, workflow)
 
@@ -1037,8 +1039,8 @@ def test_activity_task_timeout(mocked_swf_connection):
     check_task_scheduled_decision(decisions[0], double)
 
 
-@patch('boto.swf.connect_to_region')
-def test_activity_task_timeout_retry(mocked_swf_connection):
+@mock_swf
+def test_activity_task_timeout_retry():
     workflow = TestDefinitionRetryActivity
     executor = Executor(DOMAIN, workflow)
 
@@ -1057,8 +1059,8 @@ def test_activity_task_timeout_retry(mocked_swf_connection):
     check_task_scheduled_decision(decisions[0], increment_retry)
 
 
-@patch('boto.swf.connect_to_region')
-def test_activity_task_timeout_raises(mocked_swf_connection):
+@mock_swf
+def test_activity_task_timeout_raises():
     workflow = TestDefinitionActivityRaisesOnFailure
     executor = Executor(DOMAIN, workflow)
 
@@ -1082,8 +1084,11 @@ def test_activity_task_timeout_raises(mocked_swf_connection):
     assert decisions[0] == workflow_failed
 
 
-@patch('boto.swf.connect_to_region')
-def test_activity_not_found_schedule_failed(mocked_swf_connection):
+@mock_swf
+def test_activity_not_found_schedule_failed():
+    conn = boto.connect_swf()
+    conn.register_domain("TestDomain", "50")
+
     workflow = TestDefinition
     executor = Executor(DOMAIN, workflow)
 
@@ -1116,8 +1121,8 @@ def raise_already_exists(activity):
     return wrapped
 
 
-@patch('boto.swf.connect_to_region')
-def test_activity_not_found_schedule_failed_already_exists(mocked_swf_connection):
+@mock_swf
+def test_activity_not_found_schedule_failed_already_exists():
     workflow = TestDefinition
     executor = Executor(DOMAIN, workflow)
 
@@ -1153,8 +1158,8 @@ class TestDefinitionMoreThanMaxOpenActivities(TestWorkflow):
         futures.wait(*results)
 
 
-@patch('boto.swf.connect_to_region')
-def test_more_than_1000_open_activities_scheduled(mocked_swf_connection):
+@mock_swf
+def test_more_than_1000_open_activities_scheduled():
     workflow = TestDefinitionMoreThanMaxOpenActivities
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
@@ -1184,8 +1189,8 @@ def test_more_than_1000_open_activities_scheduled(mocked_swf_connection):
     assert len(decisions) == 0
 
 
-@patch('boto.swf.connect_to_region')
-def test_more_than_1000_open_activities_scheduled_and_running(mocked_swf_connection):
+@mock_swf
+def test_more_than_1000_open_activities_scheduled_and_running():
     def get_random_state():
         import random
         return random.choice(['scheduled', 'started'])
@@ -1218,8 +1223,8 @@ def test_more_than_1000_open_activities_scheduled_and_running(mocked_swf_connect
     assert len(decisions) == 0
 
 
-@patch('boto.swf.connect_to_region')
-def test_more_than_1000_open_activities_partial_max(mocked_swf_connection):
+@mock_swf
+def test_more_than_1000_open_activities_partial_max():
     workflow = TestDefinitionMoreThanMaxOpenActivities
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
@@ -1298,8 +1303,8 @@ class TestTaskNaming(TestWorkflow):
         results.append(self.submit(Tetra, 1))
         futures.wait(*results)
 
-@patch('boto.swf.connect_to_region')
-def test_task_naming(mocked_swf_connection):
+@mock_swf
+def test_task_naming():
     workflow = TestTaskNaming
     executor = Executor(DOMAIN, workflow)
 
