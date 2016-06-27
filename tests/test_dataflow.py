@@ -219,7 +219,8 @@ class TestDefinitionWithAfterClosed(TestWorkflow):
         return b.result
 
 
-def test_workflow_with_after_closed():
+@patch('boto.swf.connect_to_region')
+def test_workflow_with_after_closed(mocked_swf_connection):
     workflow = TestDefinitionWithAfterClosed
     executor = Executor(DOMAIN, workflow)
 
