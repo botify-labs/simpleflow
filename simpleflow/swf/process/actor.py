@@ -60,6 +60,14 @@ def get_payload_name(payload):
     raise TypeError('invalid payload type {}'.format(type(payload)))
 
 
+def swf_identity():
+    return json.dumps({
+        'user': getpass.getuser(),   # system's user.
+        'hostname': get_hostname(),  # Main hostname.
+        'pid': os.getpid(),          # Current pid.
+    })[:256]  # May truncate value to fit with SWF limits.
+
+
 class Supervisor(object):
     def __init__(self, payload, arguments=None, nb_children=None):
         self._nb_children = nb_children or multiprocessing.cpu_count()
@@ -186,11 +194,7 @@ class Poller(NamedMixin, swf.actors.Actor):
         user defined. Minimum length of 0. Maximum length of 256.
 
         """
-        return json.dumps({
-            'user': getpass.getuser(),   # system's user.
-            'hostname': get_hostname(),  # Main hostname.
-            'pid': os.getpid(),          # Current pid.
-        })[:256]  # May truncate value to fit with SWF limits.
+        return swf_identity()
 
     def stop_gracefully(self, join_timeout=60):
         self._worker.join(join_timeout)
