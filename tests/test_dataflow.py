@@ -122,8 +122,10 @@ def test_workflow_with_repair_if_task_successful():
 
     # The executor should not schedule anything, it should use previous history
     decisions, _ = executor.replay(Response(history=history))
-    assert decisions[0]['decisionType'] == 'CompleteWorkflowExecution'
-    assert decisions[0]['completeWorkflowExecutionDecisionAttributes']['result'] == '57'
+    assert len(decisions) == 1
+    assert decisions[0]['decisionType'] == 'ScheduleActivityTask'
+    attrs = decisions[0]['scheduleActivityTaskDecisionAttributes']
+    assert attrs['taskList']['name'].startswith("FAKE-")
 
 
 @mock_swf
