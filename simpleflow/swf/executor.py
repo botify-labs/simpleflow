@@ -44,6 +44,36 @@ def run_fake_activity_task(domain, task_list, result):
         result,
     )
 
+# TODO: test that correctly! At the time of writing this I don't have any real
+# world crawl containing child workflows, so this is not guaranteed to work the
+# first time, and it's a bit hard to test end-to-end even with moto.mock_swf
+# (child workflows are not really well supported there too).
+def run_fake_child_workflow_task(domain, task_list, workflow_type_name,
+        workflow_type_version, workflow_id, input=None, result=None,
+        child_policy=None, control=None, tag_list=None):
+    conn = ConnectedSWFObject().connection
+    conn.start_child_workflow_execution(
+        workflow_type_name, workflow_type_version, workflow_id,
+        child_policy=child_policy, control=control,
+        tag_list=tag_list, task_list=task_list
+    )
+    resp = conn.poll_for_decision_task(
+        domain,
+        task_list,
+        identity=swf_identity(),
+    )
+    conn.respond_decision_task_completed(
+        resp['taskToken'],
+        decisions=[
+            {
+                'decisionType': 'CompleteWorkflowExecution',
+                'completeWorkflowExecutionDecisionAttributes': {
+                    'result': result,
+                },
+            }
+        ]
+    )
+
 
 class TaskRegistry(dict):
     """This registry tracks tasks and assign them an integer identifier.
@@ -289,14 +319,35 @@ class Executor(executor.Executor):
                 future = futures.Future()
 
                 # start a dedicated process to handle the fake activity
-                worker_proc = multiprocessing.Process(
-                    target=run_fake_activity_task,
-                    args=(
-                        self.domain.name,
-                        fake_task_list,
-                        former_event['result'],
-                    ),
-                )
+                if event['type'] == 'activity':
+                    worker_proc = multiprocessing.Process(
+                        target=run_fake_activity_task,
+                        args=(
+                            self.domain.name,
+                            fake_task_list,
+                            former_event['result'],
+                        ),
+                    )
+                elif event['type'] == 'child_workflow':
+                    worker_proc = multiprocessing.Process(
+                        target=run_fake_child_workflow_task,
+                        args=(
+                            self.domain.name,
+                            fake_task_list,
+                            former_event['result'],
+                            former_event['name'],     # workflow_type_name
+                            former_event['version'],  # workflow_type_version
+                            former_event['id'],       # workflow_id
+                        ),
+                        kwargs={
+                            'input': former_event['raw_input'],
+                            'result': former_event['result'],
+                            'child_policy': former_event['child_policy'],
+                            'control': former_event['control'],
+                            'tag_list': former_event['tag_list'],
+                        },
+                    )
+
                 worker_proc.start()
 
         # back to normal execution flow
