@@ -75,6 +75,38 @@ def run_fake_child_workflow_task(domain, task_list, workflow_type_name,
     )
 
 
+def run_fake_task_worker(domain, task_list, former_event):
+    if former_event['type'] == 'activity':
+        worker_proc = multiprocessing.Process(
+            target=run_fake_activity_task,
+            args=(
+                domain,
+                task_list,
+                former_event['result'],
+            ),
+        )
+    elif former_event['type'] == 'child_workflow':
+        worker_proc = multiprocessing.Process(
+            target=run_fake_child_workflow_task,
+            args=(
+                domain,
+                task_list,
+                former_event['result'],
+                former_event['name'],     # workflow_type_name
+                former_event['version'],  # workflow_type_version
+                former_event['id'],       # workflow_id
+            ),
+            kwargs={
+                'input': former_event['raw_input'],
+                'result': former_event['result'],
+                'child_policy': former_event['child_policy'],
+                'control': former_event['control'],
+                'tag_list': former_event['tag_list'],
+            },
+        )
+    worker_proc.start()
+
+
 class TaskRegistry(dict):
     """This registry tracks tasks and assign them an integer identifier.
 
@@ -319,36 +351,7 @@ class Executor(executor.Executor):
                 future = futures.Future()
 
                 # start a dedicated process to handle the fake activity
-                if event['type'] == 'activity':
-                    worker_proc = multiprocessing.Process(
-                        target=run_fake_activity_task,
-                        args=(
-                            self.domain.name,
-                            fake_task_list,
-                            former_event['result'],
-                        ),
-                    )
-                elif event['type'] == 'child_workflow':
-                    worker_proc = multiprocessing.Process(
-                        target=run_fake_child_workflow_task,
-                        args=(
-                            self.domain.name,
-                            fake_task_list,
-                            former_event['result'],
-                            former_event['name'],     # workflow_type_name
-                            former_event['version'],  # workflow_type_version
-                            former_event['id'],       # workflow_id
-                        ),
-                        kwargs={
-                            'input': former_event['raw_input'],
-                            'result': former_event['result'],
-                            'child_policy': former_event['child_policy'],
-                            'control': former_event['control'],
-                            'tag_list': former_event['tag_list'],
-                        },
-                    )
-
-                worker_proc.start()
+                run_fake_task_worker(self.domain.name, fake_task_list, former_event)
 
         # back to normal execution flow
         if event:
