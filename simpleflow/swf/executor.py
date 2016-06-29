@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import hashlib
 import json
 import logging
+import multiprocessing
 import traceback
 
 import swf.format
@@ -17,16 +18,31 @@ from simpleflow import (
     task,
 )
 from simpleflow.activity import Activity
-from simpleflow.utils import issubclass_
+from simpleflow.utils import issubclass_, json_dumps
 from simpleflow.workflow import Workflow
 from simpleflow.history import History
+from simpleflow.swf.process.actor import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask
 from simpleflow.swf import constants
+from swf.core import ConnectedSWFObject
 
 logger = logging.getLogger(__name__)
 
 
 __all__ = ['Executor']
+
+
+def run_fake_activity_task(domain, task_list, result):
+    conn = ConnectedSWFObject().connection
+    resp = conn.poll_for_activity_task(
+        domain,
+        task_list,
+        identity=swf_identity(),
+    )
+    conn.respond_activity_task_completed(
+        resp['taskToken'],
+        result,
+    )
 
 
 class TaskRegistry(dict):
@@ -98,7 +114,7 @@ class Executor(executor.Executor):
             # If a_task is idempotent, we can do better and hash arguments.
             # It makes the workflow resistant to retries or variations on the
             # same task name (see #11).
-            arguments = json.dumps({"args": args, "kwargs": kwargs})
+            arguments = json_dumps({"args": args, "kwargs": kwargs})
             suffix = hashlib.md5(arguments).hexdigest()
 
         task_id = '{name}-{idx}'.format(name=a_task.name, idx=suffix)
@@ -252,20 +268,38 @@ class Executor(executor.Executor):
         """
         a_task.id = self._make_task_id(a_task, *args, **kwargs)
         event = self.find_event(a_task, self._history)
+        future = None
 
         # try to fill in the blanks with the workflow we're trying to repair if any
         # TODO: maybe only do that for idempotent tasks??
         if not event and self.repair_with:
+            # try to find a former event matching this task
             former_event = self.find_event(a_task, self.repair_with)
             # ... but only keep the event if the task was successful
             if former_event and former_event['state'] == 'completed':
-                event = former_event
                 logger.info(
-                    'not replaying task completed successfully in previous ' \
-                    'workflow: {}'.format(event['id'])
+                    'faking task completed successfully in previous ' \
+                    'workflow: {}'.format(former_event['id'])
                 )
+                json_hash = hashlib.md5(json_dumps(former_event)).hexdigest()
+                fake_task_list = "FAKE-" + json_hash
 
-        future = None
+                # schedule task on a fake task list
+                self.schedule_task(a_task, task_list=fake_task_list)
+                future = futures.Future()
+
+                # start a dedicated process to handle the fake activity
+                worker_proc = multiprocessing.Process(
+                    target=run_fake_activity_task,
+                    args=(
+                        self.domain.name,
+                        fake_task_list,
+                        former_event['result'],
+                    ),
+                )
+                worker_proc.start()
+
+        # back to normal execution flow
         if event:
             if event['type'] == 'activity':
                 future = self.resume_activity(a_task, event)
