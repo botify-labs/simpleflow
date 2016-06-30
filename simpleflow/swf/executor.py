@@ -24,6 +24,7 @@ from simpleflow.history import History
 from simpleflow.swf.process.actor import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask
 from simpleflow.swf import constants
+from simpleflow.utils import retry
 from swf.core import ConnectedSWFObject
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,12 @@ logger = logging.getLogger(__name__)
 __all__ = ['Executor']
 
 
+# if "poll_for_activity_task" doesn't contain a "taskToken"
+# key, then retry ; it happens (not often) that the decider
+# doesn't get the scheduled task while it should...
+@retry.with_delay(nb_times=3,
+                  delay=retry.exponential,
+                  on_exceptions=KeyError)
 def run_fake_activity_task(domain, task_list, result):
     conn = ConnectedSWFObject().connection
     resp = conn.poll_for_activity_task(
@@ -48,6 +55,13 @@ def run_fake_activity_task(domain, task_list, result):
 # world crawl containing child workflows, so this is not guaranteed to work the
 # first time, and it's a bit hard to test end-to-end even with moto.mock_swf
 # (child workflows are not really well supported there too).
+# ---
+# if "poll_for_decision_task" doesn't contain a "taskToken"
+# key, then retry ; it happens (not often) that the decider
+# doesn't get the scheduled task while it should...
+@retry.with_delay(nb_times=3,
+                  delay=retry.exponential,
+                  on_exceptions=KeyError)
 def run_fake_child_workflow_task(domain, task_list, workflow_type_name,
         workflow_type_version, workflow_id, input=None, result=None,
         child_policy=None, control=None, tag_list=None):
