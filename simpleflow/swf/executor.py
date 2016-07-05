@@ -352,9 +352,13 @@ class Executor(executor.Executor):
         event = self.find_event(a_task, self._history)
         future = None
 
+        # check if we absolutely want to execute this task in repair mode
+        force_execution = self.force_activities and \
+            self.force_activities.search(a_task.id)
+
         # try to fill in the blanks with the workflow we're trying to repair if any
         # TODO: maybe only do that for idempotent tasks??
-        if not event and self.repair_with:
+        if not event and self.repair_with and not force_execution:
             # try to find a former event matching this task
             former_event = self.find_event(a_task, self.repair_with)
             # ... but only keep the event if the task was successful

@@ -154,6 +154,37 @@ def test_workflow_with_repair_if_task_failed():
     check_task_scheduled_decision(decisions[0], increment)
 
 
+@mock_swf
+def test_workflow_with_repair_and_force_activities():
+    workflow = TestDefinitionWithInput
+    history = builder.History(workflow, input={'args': [4]})
+
+    # Now let's build the history to repair
+    previous_history = builder.History(workflow, input={'args': [4]})
+    decision_id = previous_history.last_id
+    (previous_history
+        .add_activity_task(increment,
+                           decision_id=decision_id,
+                           last_state='completed',
+                           activity_id='activity-tests.data.activities.increment-1',
+                           input={'args': 4},
+                           result=57) # obviously wrong but helps see if things work
+    )
+    to_repair = History(previous_history)
+    to_repair.parse()
+
+    executor = Executor(DOMAIN, workflow, repair_with=to_repair,
+                        force_activities="increment|something_else")
+
+    # The executor should not schedule anything, it should use previous history
+    decisions, _ = executor.replay(Response(history=history))
+    assert len(decisions) == 1
+    assert decisions[0]['decisionType'] == 'ScheduleActivityTask'
+    attrs = decisions[0]['scheduleActivityTaskDecisionAttributes']
+    assert not attrs['taskList']['name'].startswith("FAKE-")
+    check_task_scheduled_decision(decisions[0], increment)
+
+
 class TestDefinitionWithBeforeReplay(TestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
