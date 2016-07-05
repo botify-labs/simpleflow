@@ -7,15 +7,18 @@ from . import (
 )
 
 
-def load_workflow(domain, workflow_name, task_list=None, repair_with=None):
+def load_workflow(domain, workflow_name, task_list=None, repair_with=None,
+        force_activities=None):
     module_name, object_name = workflow_name.rsplit('.', 1)
     module = __import__(module_name, fromlist=['*'])
 
     workflow = getattr(module, object_name)
-    return Executor(swf.models.Domain(domain), workflow, task_list, repair_with=repair_with)
+    return Executor(swf.models.Domain(domain), workflow, task_list,
+                    repair_with=repair_with, force_activities=force_activities)
 
 
-def make_decider_poller(workflows, domain, task_list, repair_with=None):
+def make_decider_poller(workflows, domain, task_list, repair_with=None,
+                        force_activities=None):
     """
     Factory to build a decider.
 
@@ -27,13 +30,18 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None):
         raise ValueError("Sorry you can't repair more than 1 workflow at once!")
 
     executors = [
-        load_workflow(domain, workflow, task_list, repair_with=repair_with)
+        load_workflow(domain, workflow, task_list, repair_with=repair_with,
+                      force_activities=force_activities)
         for workflow in workflows
     ]
     domain = swf.models.Domain(domain)
     return DeciderPoller(executors, domain, task_list)
 
 
-def make_decider(workflows, domain, task_list, nb_children=None, repair_with=None):
-    poller = make_decider_poller(workflows, domain, task_list, repair_with=repair_with)
+def make_decider(workflows, domain, task_list, nb_children=None,
+                 repair_with=None, force_activities=None):
+    poller = make_decider_poller(workflows, domain, task_list,
+                                 repair_with=repair_with,
+                                 force_activities=force_activities,
+                                 )
     return Decider(poller, nb_children=nb_children)

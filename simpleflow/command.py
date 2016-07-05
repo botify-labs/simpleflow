@@ -406,6 +406,10 @@ def get_task_list(workflow_id=''):
               type=str, required=False,
               help='Repair a failed workflow execution.'
               )
+@click.option('--force-activities',
+              type=str, required=False,
+              help='Force the re-execution of some activities in when --repair is enabled.'
+              )
 @click.argument('workflow')
 @cli.command('standalone', help='Execute a workflow with a single process.')
 @click.pass_context
@@ -422,6 +426,7 @@ def standalone(context,
                heartbeat,
                display_status,
                repair,
+               force_activities,
                ):
     """
     This command spawn a decider and an activity worker to execute a workflow
@@ -429,6 +434,11 @@ def standalone(context,
 
     """
     disable_boto_connection_pooling()
+
+    if force_activities and not repair:
+        raise ValueError(
+            "You should only use --force-activities with --repair."
+        )
 
     if not workflow_id:
         workflow_id = get_workflow(workflow).name
@@ -460,6 +470,7 @@ def standalone(context,
         ),
         kwargs={
             'repair_with': previous_history,
+            'force_activities': force_activities,
         },
     )
     decider_proc.start()

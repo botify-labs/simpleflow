@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import multiprocessing
+import re
 import traceback
 
 import swf.format
@@ -153,11 +154,16 @@ class Executor(executor.Executor):
     on the execution of the workflow.
 
     """
-    def __init__(self, domain, workflow, task_list=None, repair_with=None):
+    def __init__(self, domain, workflow, task_list=None, repair_with=None,
+                 force_activities=None):
         super(Executor, self).__init__(workflow)
         self.domain = domain
         self.task_list = task_list
         self.repair_with = repair_with
+        if force_activities:
+            self.force_activities = re.compile(force_activities)
+        else:
+            self.force_activities = None
         self.reset()
 
     def reset(self):
