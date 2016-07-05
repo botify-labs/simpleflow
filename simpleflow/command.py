@@ -10,6 +10,7 @@ import sys
 import time
 from uuid import uuid4
 
+import boto.connection
 import click
 
 import swf.models
@@ -31,6 +32,23 @@ def get_workflow(clspath):
     module = __import__(modname, fromlist=['*'])
     cls = getattr(module, clsname)
     return cls
+
+
+def disable_boto_connection_pooling():
+    # boto connection pooling doesn't work very well with multiprocessing, it
+    # provokes some errors like this:
+    #
+    #    [Errno 1] _ssl.c:1429: error:1408F119:SSL routines:SSL3_GET_RECORD:decryption failed or bad record mac when polling on analysis-testjbb-repair-a61ff96e854344748e308fefc9ddff61
+    #
+    # It's because when forking, file handles are copied and sockets are shared.
+    # Even sockets that handle SSL conections to AWS services, but SSL
+    # connections are stateful! So with multiple workers, it collides.
+    #
+    # To disable boto's connection pooling (which in practice makes boto open a
+    # *NEW* connection for each call), we make make boto believe we run on
+    # Google App Engine, where it disables connection pooling. There's no
+    # "direct" setting, so that's a hack but that works.
+    boto.connection.ON_APP_ENGINE = True
 
 
 @click.group()
@@ -410,6 +428,8 @@ def standalone(context,
     with a single main process.
 
     """
+    disable_boto_connection_pooling()
+
     if not workflow_id:
         workflow_id = get_workflow(workflow).name
 
