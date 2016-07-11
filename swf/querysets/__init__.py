@@ -1,4 +1,4 @@
-#! -*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
 from swf.querysets.activity import ActivityTypeQuerySet
 from swf.querysets.domain import DomainQuerySet

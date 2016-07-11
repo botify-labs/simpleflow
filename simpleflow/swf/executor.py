@@ -3,6 +3,8 @@ from __future__ import absolute_import
 import hashlib
 import json
 import logging
+import multiprocessing
+import re
 import traceback
 
 import swf.format
@@ -17,16 +19,107 @@ from simpleflow import (
     task,
 )
 from simpleflow.activity import Activity
-from simpleflow.utils import issubclass_
+from simpleflow.utils import issubclass_, json_dumps
 from simpleflow.workflow import Workflow
 from simpleflow.history import History
+from simpleflow.swf.process.actor import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask
 from simpleflow.swf import constants
+from simpleflow.utils import retry
+from swf.core import ConnectedSWFObject
 
 logger = logging.getLogger(__name__)
 
 
 __all__ = ['Executor']
+
+
+# if "poll_for_activity_task" doesn't contain a "taskToken"
+# key, then retry ; it happens (not often) that the decider
+# doesn't get the scheduled task while it should...
+@retry.with_delay(nb_times=3,
+                  delay=retry.exponential,
+                  on_exceptions=KeyError)
+def run_fake_activity_task(domain, task_list, result):
+    conn = ConnectedSWFObject().connection
+    resp = conn.poll_for_activity_task(
+        domain,
+        task_list,
+        identity=swf_identity(),
+    )
+    conn.respond_activity_task_completed(
+        resp['taskToken'],
+        result,
+    )
+
+# TODO: test that correctly! At the time of writing this I don't have any real
+# world crawl containing child workflows, so this is not guaranteed to work the
+# first time, and it's a bit hard to test end-to-end even with moto.mock_swf
+# (child workflows are not really well supported there too).
+# ---
+# if "poll_for_decision_task" doesn't contain a "taskToken"
+# key, then retry ; it happens (not often) that the decider
+# doesn't get the scheduled task while it should...
+@retry.with_delay(nb_times=3,
+                  delay=retry.exponential,
+                  on_exceptions=KeyError)
+def run_fake_child_workflow_task(domain, task_list, workflow_type_name,
+        workflow_type_version, workflow_id, input=None, result=None,
+        child_policy=None, control=None, tag_list=None):
+    conn = ConnectedSWFObject().connection
+    conn.start_child_workflow_execution(
+        workflow_type_name, workflow_type_version, workflow_id,
+        child_policy=child_policy, control=control,
+        tag_list=tag_list, task_list=task_list
+    )
+    resp = conn.poll_for_decision_task(
+        domain,
+        task_list,
+        identity=swf_identity(),
+    )
+    conn.respond_decision_task_completed(
+        resp['taskToken'],
+        decisions=[
+            {
+                'decisionType': 'CompleteWorkflowExecution',
+                'completeWorkflowExecutionDecisionAttributes': {
+                    'result': result,
+                },
+            }
+        ]
+    )
+
+
+def run_fake_task_worker(domain, task_list, former_event):
+    if former_event['type'] == 'activity':
+        worker_proc = multiprocessing.Process(
+            target=run_fake_activity_task,
+            args=(
+                domain,
+                task_list,
+                former_event['result'],
+            ),
+        )
+    elif former_event['type'] == 'child_workflow':
+        worker_proc = multiprocessing.Process(
+            target=run_fake_child_workflow_task,
+            args=(
+                domain,
+                task_list,
+                former_event['result'],
+                former_event['name'],     # workflow_type_name
+                former_event['version'],  # workflow_type_version
+                former_event['id'],       # workflow_id
+            ),
+            kwargs={
+                'input': former_event['raw_input'],
+                'result': former_event['result'],
+                'child_policy': former_event['child_policy'],
+                'control': former_event['control'],
+                'tag_list': former_event['tag_list'],
+            },
+        )
+    worker_proc.start()
 
 
 class TaskRegistry(dict):
@@ -61,10 +154,16 @@ class Executor(executor.Executor):
     on the execution of the workflow.
 
     """
-    def __init__(self, domain, workflow, task_list=None):
+    def __init__(self, domain, workflow, task_list=None, repair_with=None,
+                 force_activities=None):
         super(Executor, self).__init__(workflow)
         self.domain = domain
         self.task_list = task_list
+        self.repair_with = repair_with
+        if force_activities:
+            self.force_activities = re.compile(force_activities)
+        else:
+            self.force_activities = None
         self.reset()
 
     def reset(self):
@@ -97,7 +196,7 @@ class Executor(executor.Executor):
             # If a_task is idempotent, we can do better and hash arguments.
             # It makes the workflow resistant to retries or variations on the
             # same task name (see #11).
-            arguments = json.dumps({"args": args, "kwargs": kwargs})
+            arguments = json_dumps({"args": args, "kwargs": kwargs})
             suffix = hashlib.md5(arguments).hexdigest()
 
         task_id = '{name}-{idx}'.format(name=a_task.name, idx=suffix)
@@ -251,8 +350,34 @@ class Executor(executor.Executor):
         """
         a_task.id = self._make_task_id(a_task, *args, **kwargs)
         event = self.find_event(a_task, self._history)
-
         future = None
+
+        # check if we absolutely want to execute this task in repair mode
+        force_execution = self.force_activities and \
+            self.force_activities.search(a_task.id)
+
+        # try to fill in the blanks with the workflow we're trying to repair if any
+        # TODO: maybe only do that for idempotent tasks??
+        if not event and self.repair_with and not force_execution:
+            # try to find a former event matching this task
+            former_event = self.find_event(a_task, self.repair_with)
+            # ... but only keep the event if the task was successful
+            if former_event and former_event['state'] == 'completed':
+                logger.info(
+                    'faking task completed successfully in previous ' \
+                    'workflow: {}'.format(former_event['id'])
+                )
+                json_hash = hashlib.md5(json_dumps(former_event)).hexdigest()
+                fake_task_list = "FAKE-" + json_hash
+
+                # schedule task on a fake task list
+                self.schedule_task(a_task, task_list=fake_task_list)
+                future = futures.Future()
+
+                # start a dedicated process to handle the fake activity
+                run_fake_task_worker(self.domain.name, fake_task_list, former_event)
+
+        # back to normal execution flow
         if event:
             if event['type'] == 'activity':
                 future = self.resume_activity(a_task, event)

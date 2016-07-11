@@ -10,6 +10,7 @@ import sys
 import time
 from uuid import uuid4
 
+import boto.connection
 import click
 
 import swf.models
@@ -19,6 +20,7 @@ from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
+from simpleflow.swf.utils import get_workflow_history
 from simpleflow import __version__
 
 
@@ -30,6 +32,23 @@ def get_workflow(clspath):
     module = __import__(modname, fromlist=['*'])
     cls = getattr(module, clsname)
     return cls
+
+
+def disable_boto_connection_pooling():
+    # boto connection pooling doesn't work very well with multiprocessing, it
+    # provokes some errors like this:
+    #
+    #    [Errno 1] _ssl.c:1429: error:1408F119:SSL routines:SSL3_GET_RECORD:decryption failed or bad record mac when polling on analysis-testjbb-repair-a61ff96e854344748e308fefc9ddff61
+    #
+    # It's because when forking, file handles are copied and sockets are shared.
+    # Even sockets that handle SSL conections to AWS services, but SSL
+    # connections are stateful! So with multiple workers, it collides.
+    #
+    # To disable boto's connection pooling (which in practice makes boto open a
+    # *NEW* connection for each call), we make make boto believe we run on
+    # Google App Engine, where it disables connection pooling. There's no
+    # "direct" setting, so that's a hack but that works.
+    boto.connection.ON_APP_ENGINE = True
 
 
 @click.group()
@@ -60,6 +79,13 @@ def get_input(wf_input):
         wf_input = sys.stdin.read()
     wf_input = json.loads(wf_input)
     return transform_input(wf_input)
+
+
+def get_or_load_input(input_file, input):
+    if input_file:
+        return load_input(input_file)
+    else:
+        return get_input(input)
 
 
 def transform_input(wf_input):
@@ -113,10 +139,8 @@ def start_workflow(workflow,
                    local):
     workflow_definition = get_workflow(workflow)
 
-    if input_file:
-        wf_input = load_input(input_file)
-    else:
-        wf_input = get_input(input)
+    wf_input = get_or_load_input(input_file, input)
+
     if local:
         from .local import Executor
 
@@ -378,6 +402,14 @@ def get_task_list(workflow_id=''):
               type=bool, required=False,
               help='Display execution status.'
               )
+@click.option('--repair',
+              type=str, required=False,
+              help='Repair a failed workflow execution.'
+              )
+@click.option('--force-activities',
+              type=str, required=False,
+              help='Force the re-execution of some activities in when --repair is enabled.'
+              )
 @click.argument('workflow')
 @cli.command('standalone', help='Execute a workflow with a single process.')
 @click.pass_context
@@ -393,14 +425,39 @@ def standalone(context,
                nb_workers,
                heartbeat,
                display_status,
+               repair,
+               force_activities,
                ):
     """
     This command spawn a decider and an activity worker to execute a workflow
     with a single main process.
 
     """
+    disable_boto_connection_pooling()
+
+    if force_activities and not repair:
+        raise ValueError(
+            "You should only use --force-activities with --repair."
+        )
+
     if not workflow_id:
         workflow_id = get_workflow(workflow).name
+
+    if repair:
+        # get the previous execution history, it will serve as "default history"
+        # for activities that succeeded in the previous execution
+        logger.info(
+            'retrieving history of previous execution: domain={} ' \
+            'workflow_id={}'.format(domain, repair)
+        )
+        previous_history = get_workflow_history(domain, repair)
+        previous_history.parse()
+        # get the previous execution input if none passed
+        # NB: this takes precedence over an input passed via stdin!!!
+        if not input and not input_file:
+            wf_input = previous_history.events[0].input
+        else:
+            wf_input = get_or_load_input(input_file, input)
 
     task_list = get_task_list(workflow_id)
     logger.info('using task list {}'.format(task_list))
@@ -410,7 +467,11 @@ def standalone(context,
             [workflow],
             domain,
             task_list,
-        )
+        ),
+        kwargs={
+            'repair_with': previous_history,
+            'force_activities': force_activities,
+        },
     )
     decider_proc.start()
 
@@ -435,8 +496,8 @@ def standalone(context,
         execution_timeout,
         tags,
         decision_tasks_timeout,
-        input,
-        input_file,
+        json.dumps(wf_input),
+        None,
         local=False,
     )
     while True:

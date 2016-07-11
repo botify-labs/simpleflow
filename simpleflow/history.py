@@ -30,6 +30,7 @@ class History(object):
                 'scheduled_id': event.id,
                 'scheduled_timestamp': event.timestamp,
                 'input': event.input,
+                'task_list': event.task_list['name'],
             }
             if event.activity_id not in self._activities:
                 self._activities[event.activity_id] = activity
@@ -127,6 +128,11 @@ class History(object):
                 'version': event.workflow_type['version'],
                 'state': event.state,
                 'initiated_event_id': event.id,
+                'raw_input': event.raw.get('input'),
+                'child_policy': event.child_policy,
+                'control': event.control,
+                'tag_list': event.tag_list,
+                'task_list': event.task_list,
             }
             workflow['initiated_event_timestamp'] = event.timestamp
             if event.workflow_id not in self._child_workflows:

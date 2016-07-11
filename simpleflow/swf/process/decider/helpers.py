@@ -7,26 +7,41 @@ from . import (
 )
 
 
-def load_workflow(domain, workflow_name, task_list=None):
+def load_workflow(domain, workflow_name, task_list=None, repair_with=None,
+        force_activities=None):
     module_name, object_name = workflow_name.rsplit('.', 1)
     module = __import__(module_name, fromlist=['*'])
 
     workflow = getattr(module, object_name)
-    return Executor(swf.models.Domain(domain), workflow, task_list)
+    return Executor(swf.models.Domain(domain), workflow, task_list,
+                    repair_with=repair_with, force_activities=force_activities)
 
 
-def make_decider_poller(workflows, domain, task_list):
+def make_decider_poller(workflows, domain, task_list, repair_with=None,
+                        force_activities=None):
     """
     Factory to build a decider.
 
     """
+    if repair_with and len(workflows) != 1:
+        # too complicated ; I even wonder why passing multiple workflows here is
+        # useful, a domain+task_list is typically handled in a single workflow
+        # definition, seems like good practice (?)
+        raise ValueError("Sorry you can't repair more than 1 workflow at once!")
+
     executors = [
-        load_workflow(domain, workflow, task_list) for workflow in workflows
+        load_workflow(domain, workflow, task_list, repair_with=repair_with,
+                      force_activities=force_activities)
+        for workflow in workflows
     ]
     domain = swf.models.Domain(domain)
     return DeciderPoller(executors, domain, task_list)
 
 
-def make_decider(workflows, domain, task_list, nb_children=None):
-    poller = make_decider_poller(workflows, domain, task_list)
+def make_decider(workflows, domain, task_list, nb_children=None,
+                 repair_with=None, force_activities=None):
+    poller = make_decider_poller(workflows, domain, task_list,
+                                 repair_with=repair_with,
+                                 force_activities=force_activities,
+                                 )
     return Decider(poller, nb_children=nb_children)

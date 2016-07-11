@@ -95,6 +95,8 @@ class TestWorkflowType(unittest.TestCase):
 
             self.assertFalse(self.wt.exists)
 
+    # TODO: this test blocks badly if no network connection, I suspect it reaches
+    # the real SWF endpoints in some way.
     def test_workflow_type_exists_with_whatever_error(self):
         with patch.object(self.wt.connection, 'describe_workflow_type') as mock:
             with self.assertRaises(ResponseError):

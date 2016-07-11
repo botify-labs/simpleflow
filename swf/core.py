@@ -4,6 +4,7 @@
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
+import os
 
 from boto.exception import NoAuthHandlerFound
 import boto.swf
@@ -14,6 +15,7 @@ from . import settings
 
 
 SETTINGS = settings.get()
+RETRIES = int(os.environ.get('SWF_CONNECTION_RETRIES', '5'))
 
 
 class ConnectedSWFObject(object):
@@ -30,7 +32,7 @@ class ConnectedSWFObject(object):
         'connection'
     ]
 
-    @retry.with_delay(nb_times=5,
+    @retry.with_delay(nb_times=RETRIES,
                       delay=retry.exponential,
                       on_exceptions=(TypeError, NoAuthHandlerFound))
     def __init__(self, *args, **kwargs):
