@@ -4,6 +4,7 @@ import logging
 import multiprocessing
 import os
 import signal
+import sys
 import traceback
 
 import psutil
@@ -12,6 +13,8 @@ import swf.exceptions
 import swf.format
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
+from simpleflow.swf.constants import TRACEBACK_SIZE
+
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
 from simpleflow.utils import json_dumps, format_exc
@@ -141,10 +144,23 @@ class ActivityWorker(object):
             kwargs = input.get('kwargs', {})
             context = sanitize_activity_context(task.context)
             result = ActivityTask(activity, *args, context=context, **kwargs).execute()
-        except Exception as err:
-            logger.exception("process error: {}".format(str(err)))
-            tb = traceback.format_exc()
-            return poller.fail_with_retry(token, task, reason=format_exc(err), details=tb)
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logger.exception("process error: {}".format(str(exc_value)))
+            tb = traceback.format_tb(exc_traceback, limit=TRACEBACK_SIZE)
+            return poller.fail(
+                token,
+                task,
+                reason=format_exc(exc_value),
+                details=json_dumps(
+                    {
+                        'error': exc_type.__name__,
+                        'message': str(exc_value),
+                        'traceback': tb,
+                    },
+                    default=repr
+                )
+            )
 
         try:
             poller.complete_with_retry(token, json_dumps(result))
