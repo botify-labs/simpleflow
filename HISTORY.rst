@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.11.9
+~~~~~~
+
+- Add a --repair option to simpleflow standalone (#100)
+
 0.11.8
 ~~~~~~
 
