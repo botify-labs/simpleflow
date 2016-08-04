@@ -443,21 +443,22 @@ def standalone(context,
     if not workflow_id:
         workflow_id = get_workflow(workflow).name
 
+    if input or input_file:
+        wf_input = get_or_load_input(input_file, input)
     if repair:
         # get the previous execution history, it will serve as "default history"
         # for activities that succeeded in the previous execution
         logger.info(
-            'retrieving history of previous execution: domain={} ' \
+            'retrieving history of previous execution: domain={} '
             'workflow_id={}'.format(domain, repair)
         )
         previous_history = get_workflow_history(domain, repair)
         previous_history.parse()
         # get the previous execution input if none passed
-        # NB: this takes precedence over an input passed via stdin!!!
         if not input and not input_file:
             wf_input = previous_history.events[0].input
-        else:
-            wf_input = get_or_load_input(input_file, input)
+    else:
+        previous_history = None
 
     task_list = get_task_list(workflow_id)
     logger.info('using task list {}'.format(task_list))
