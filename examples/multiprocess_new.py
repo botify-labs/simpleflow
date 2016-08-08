@@ -114,6 +114,7 @@ class Decider(object):
         log("loop ended")
 
 # Let's go now
-decider = Decider()
-supervisor = Supervisor(decider.poll)
-supervisor.start()
+if __name__ == "__main__":
+    decider = Decider()
+    supervisor = Supervisor(decider.poll)
+    supervisor.start()

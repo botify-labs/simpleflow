@@ -144,6 +144,7 @@ class Decider(MultiProcessActor):
         log("loop ended")
 
 
-log("starting supervisor")
-d = Decider()
-d.start()
+if __name__ == "__main__":
+    log("starting supervisor")
+    d = Decider()
+    d.start()
