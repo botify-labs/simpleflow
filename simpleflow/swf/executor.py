@@ -22,7 +22,7 @@ from simpleflow.activity import Activity
 from simpleflow.utils import issubclass_, json_dumps
 from simpleflow.workflow import Workflow
 from simpleflow.history import History
-from simpleflow.swf.process.actor import swf_identity
+from simpleflow.swf.helpers import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask
 from simpleflow.swf import constants
 from simpleflow.utils import retry

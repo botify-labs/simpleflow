@@ -1,26 +1,19 @@
 import abc
 import functools
-import getpass
-import json
 import logging
 import multiprocessing
-import os
 import signal
 from setproctitle import setproctitle
 
 import swf.actors
 from simpleflow import utils
+from simpleflow.swf.helpers import swf_identity
+
 
 logger = logging.getLogger(__name__)
 
 
 __all__ = ['Supervisor', 'Poller']
-
-
-def get_hostname():
-    import socket
-
-    return socket.gethostname()
 
 
 def reset_signal_handlers(func):
@@ -58,14 +51,6 @@ def get_payload_name(payload):
         return payload.func_name
 
     raise TypeError('invalid payload type {}'.format(type(payload)))
-
-
-def swf_identity():
-    return json.dumps({
-        'user': getpass.getuser(),   # system's user.
-        'hostname': get_hostname(),  # Main hostname.
-        'pid': os.getpid(),          # Current pid.
-    })[:256]  # May truncate value to fit with SWF limits.
 
 
 class Supervisor(object):
