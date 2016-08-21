@@ -1,10 +1,16 @@
 #!/bin/bash
-set -x
 
 # The AWS_DEFAULT_REGION parameter determines the region used for SWF
 # Leaving it to a value different than "us-east-1" would break moto,
 # because moto.swf only mocks calls to us-east-1 region for now.
 unset AWS_DEFAULT_REGION
+
+# Disable AWS credentials
+unset AWS_ACCESS_KEY_ID
+unset AWS_SECRET_ACCESS_KEY
+
+# Enable various test optimizations
+export SIMPLEFLOW_ENV=test
 
 # Simple variable to control the number of connection retries
 export SWF_CONNECTION_RETRIES=1

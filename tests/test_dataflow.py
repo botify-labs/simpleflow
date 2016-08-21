@@ -822,7 +822,7 @@ class TestDefinitionMoreThanMaxDecisions(TestWorkflow):
     decider can take once.
     """
     def run(self):
-        results = self.map(increment, xrange(constants.MAX_DECISIONS + 20))
+        results = self.map(increment, xrange(constants.MAX_DECISIONS + 5))
         futures.wait(*results)
 
 
@@ -852,11 +852,11 @@ def test_workflow_with_more_than_max_decisions():
         .add_decision_task_started())
 
     # Once the first batch of ``constants.MAX_DECISIONS`` tasks is finished,
-    # the executor should schedule the 20 remaining ones.
+    # the executor should schedule the 5 remaining ones.
     decisions, _ = executor.replay(Response(history=history))
-    assert len(decisions) == 20
+    assert len(decisions) == 5
 
-    for i in xrange(constants.MAX_DECISIONS - 1, constants.MAX_DECISIONS + 20):
+    for i in xrange(constants.MAX_DECISIONS - 1, constants.MAX_DECISIONS + 5):
         history.add_activity_task(
             increment,
             decision_id=decision_id,
@@ -1187,7 +1187,7 @@ class TestDefinitionMoreThanMaxOpenActivities(TestWorkflow):
     def run(self):
         results = self.map(
             increment,
-            xrange(constants.MAX_OPEN_ACTIVITY_COUNT + 20))
+            xrange(constants.MAX_OPEN_ACTIVITY_COUNT + 5))
         futures.wait(*results)
 
 
@@ -1315,9 +1315,9 @@ def test_more_than_1000_open_activities_partial_max():
         .add_decision_task_started())
 
     decisions, _ = executor.replay(Response(history=history))
-    # 2 already scheduled + 20 to schedule now
-    assert executor._open_activity_count == 22
-    assert len(decisions) == 20
+    # 2 already scheduled + 5 to schedule now
+    assert executor._open_activity_count == 7
+    assert len(decisions) == 5
 
 
 
