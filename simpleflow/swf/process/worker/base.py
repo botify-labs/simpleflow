@@ -175,10 +175,15 @@ def spawn(poller, token, task, heartbeat=60):
                     ))
             return
         try:
+            logger.debug(
+                'heartbeating for pid={} (token={})'.format(worker.pid, token)
+            )
             response = poller.heartbeat(token)
-        except swf.exceptions.DoesNotExistError:
+        except swf.exceptions.DoesNotExistError as error:
             # The subprocess is responsible for completing the task.
             # Either the task or the workflow execution no longer exists.
+            logger.debug('heartbeat failed: {}'.format(error))
+            # TODO: kill the worker at this point but make it configurable.
             return
         except Exception as error:
             # Let's crash if it cannot notify the heartbeat failed.  The
