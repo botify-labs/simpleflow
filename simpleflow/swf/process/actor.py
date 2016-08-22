@@ -145,7 +145,9 @@ class NamedMixin(object):
 
     def set_process_name(self, name=None):
         if name is None:
-            name = self._name
+            klass = self.__class__.__name__
+            task_list = self.task_list
+            name = '{}(task_list={})'.format(klass, task_list)
 
         setproctitle('simpleflow {}[{}]'.format(name, self.state))
 
