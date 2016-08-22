@@ -233,6 +233,7 @@ class Poller(NamedMixin, swf.actors.Actor):
                 nb_times=self.nb_retries,
                 delay=utils.retry.exponential,
                 log_with=logger.exception,
+                except_on=swf.exceptions.DoesNotExistError,
             )(self.complete)  # Exponential backoff on errors.
             complete(token, response)
         except Exception as err:

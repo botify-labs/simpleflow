@@ -23,7 +23,8 @@ class HeartbeatProcess(object):
 
     @retry.with_delay(nb_times=10,
                       delay=retry.exponential,
-                      on_exceptions=swf.exceptions.ResponseError)
+                      on_exceptions=swf.exceptions.ResponseError,
+                      except_on=swf.exceptions.DoesNotExistError)
     def send_heartbeat(self, token):
         return self._heartbeat(token)
 
