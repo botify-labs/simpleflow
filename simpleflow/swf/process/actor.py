@@ -62,7 +62,7 @@ class Supervisor(object):
 
     def start(self):
         logger.info('starting {}'.format(self._payload))
-        setproctitle('{}(payload={})'.format(
+        setproctitle('simpleflow {}(payload={})'.format(
             self.__class__.__name__,
             get_payload_name(self._payload),
         ))
@@ -147,7 +147,7 @@ class NamedMixin(object):
         if name is None:
             name = self._name
 
-        setproctitle('{}[{}]'.format(name, self.state))
+        setproctitle('simpleflow {}[{}]'.format(name, self.state))
 
 
 class Poller(NamedMixin, swf.actors.Actor):
