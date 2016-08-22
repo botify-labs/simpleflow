@@ -49,8 +49,8 @@ class ActivityWorker(Actor):
         except boto.exception.SWFResponseError as e:
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
-                    "Unable to cancel activity task with token: {}.\n".format(task_token),
-                    e.body['message']
+                    "Unable to cancel activity task with token={}".format(task_token),
+                    e.body['message'],
                 )
 
             raise ResponseError(e.body['message'])
@@ -72,8 +72,8 @@ class ActivityWorker(Actor):
         except boto.exception.SWFResponseError as e:
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
-                    "Unable to complete activity task with token: {}.\n".format(task_token),
-                    e.body['message']
+                    "Unable to complete activity task with token={}".format(task_token),
+                    e.body['message'],
                 )
 
             raise ResponseError(e.body['message'])
@@ -99,8 +99,8 @@ class ActivityWorker(Actor):
         except boto.exception.SWFResponseError as e:
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
-                    "Unable to fail activity task with token: {}.\n".format(task_token),
-                    e.body['message']
+                    "Unable to fail activity task with token={}".format(task_token),
+                    e.body['message'],
                 )
 
             raise ResponseError(e.body['message'])
@@ -122,8 +122,8 @@ class ActivityWorker(Actor):
         except boto.exception.SWFResponseError as e:
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
-                    "Unable to send activity task {} heartbeat.\n".format(task_token),
-                    e.body['message']
+                    "Unable to send heartbeat with token={}".format(task_token),
+                    e.body['message'],
                 )
 
             raise ResponseError(e.body['message'])
@@ -162,8 +162,8 @@ class ActivityWorker(Actor):
         except boto.exception.SWFResponseError as e:
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
-                    "Unable to poll activity task.\n",
-                    e.body['message']
+                    "Unable to poll activity task",
+                    e.body['message'],
                 )
 
             raise ResponseError(e.body['message'])
