@@ -161,7 +161,8 @@ def spawn(poller, token, task, heartbeat=60):
     info = {}
     monitor_child(worker.pid, info)
 
-    def worker_alive(): psutil.pid_exists(worker.pid)
+    def worker_alive(): return psutil.pid_exists(worker.pid)
+
     while worker_alive():
         worker.join(timeout=heartbeat)
         if not worker_alive():
