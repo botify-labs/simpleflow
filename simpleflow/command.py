@@ -387,6 +387,10 @@ def get_task_list(workflow_id=''):
               type=int,
               required=False,
               help='Number of parallel processes handling activity tasks.')
+@click.option('--nb-deciders',
+              type=int,
+              required=False,
+              help='Number of parallel processes handling decision tasks.')
 @click.option('--input', '-i',
               required=False,
               help='JSON input of the workflow.')
@@ -435,6 +439,7 @@ def standalone(context,
                input,
                input_file,
                nb_workers,
+               nb_deciders,
                heartbeat,
                display_status,
                repair,
@@ -487,6 +492,7 @@ def standalone(context,
             task_list,
         ),
         kwargs={
+            'nb_processes': nb_deciders,
             'repair_with': previous_history,
             'force_activities': force_activities,
         },
