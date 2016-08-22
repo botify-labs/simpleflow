@@ -499,9 +499,11 @@ def standalone(context,
             workflow,
             domain,
             task_list,
-            nb_workers,
-            heartbeat,
-        )
+        ),
+        kwargs={
+            'nb_processes': nb_workers,
+            'heartbeat': heartbeat,
+        },
     )
     worker_proc.start()
 
