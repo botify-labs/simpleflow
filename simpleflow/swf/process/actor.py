@@ -55,7 +55,11 @@ def get_payload_name(payload):
 
 class Supervisor(object):
     def __init__(self, payload, arguments=None, nb_children=None):
-        self._nb_children = nb_children or multiprocessing.cpu_count()
+        # compare explicitly to "None" there because nb_children could be 0
+        if nb_children is None:
+            self._nb_children = multiprocessing.cpu_count()
+        else:
+            self._nb_children = nb_children
         self._processes = []
         self._payload = payload
         self._args = arguments if arguments is not None else ()
