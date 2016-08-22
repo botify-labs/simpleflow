@@ -455,8 +455,10 @@ def standalone(context,
     if not workflow_id:
         workflow_id = get_workflow(workflow).name
 
+    wf_input = None
     if input or input_file:
         wf_input = get_or_load_input(input_file, input)
+
     if repair:
         repair_run_id = None
         if " " in repair:
