@@ -226,7 +226,6 @@ class Poller(NamedMixin, swf.actors.Actor):
         else:
             self.stop_forcefully()
 
-    @with_state('completing task')
     def _complete(self, token, response):
         try:
             complete = utils.retry.with_delay(
@@ -250,7 +249,6 @@ class Poller(NamedMixin, swf.actors.Actor):
     def complete(self, token, task):
         raise NotImplementedError
 
-    @with_state('polling')
     def _poll(self, task_list=None, identity=None):
         """
         Polls a task represented by its token and data. It uses long-polling

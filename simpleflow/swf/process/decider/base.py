@@ -105,7 +105,7 @@ class DeciderPoller(swf.actors.Decider, Poller):
     def poll(self, task_list, identity):
         return swf.actors.Decider.poll(self, task_list, identity)
 
-    @with_state('completing decision task')
+    @with_state('completing')
     def complete(self, token, decisions):
         return swf.actors.Decider.complete(self, token, decisions)
 

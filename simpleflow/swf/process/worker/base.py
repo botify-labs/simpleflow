@@ -63,7 +63,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     def poll(self, task_list, identity):
         return swf.actors.ActivityWorker.poll(self, task_list, identity)
 
-    @with_state('processing task')
+    @with_state('processing')
     def process(self, request):
         token, task = request
         spawn(self, token, task, self._heartbeat)
