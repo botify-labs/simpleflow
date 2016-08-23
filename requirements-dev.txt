@@ -4,4 +4,6 @@ moto>=0.4.19
 pytest==3.0.1
 sphinx
 sphinx_rtd_theme
+sure==1.4.0
+vcrpy==1.10.0
 wheel

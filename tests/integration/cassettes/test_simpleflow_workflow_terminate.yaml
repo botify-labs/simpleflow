@@ -1,0 +1,88 @@
+interactions:
+- request:
+    body: !!python/unicode '{"domain": "TestDomain", "workflowType": {"version": "example",
+      "name": "basic"}}'
+    headers:
+      Authorization: ['AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar']
+      Content-Encoding: [amz-1.0]
+      Content-Length: ['81']
+      Content-Type: [application/json; charset=UTF-8]
+      Host: [swf.us-east-1.amazonaws.com]
+      User-Agent: [Boto/2.38.0 Python/2.7.10 Darwin/14.5.0]
+      X-Amz-Date: [20160824T003116Z]
+      X-Amz-Target: [com.amazonaws.swf.service.model.SimpleWorkflowService.DescribeWorkflowType]
+    method: POST
+    uri: https://swf.us-east-1.amazonaws.com/
+  response:
+    body: {string: !!python/unicode '{"configuration":{"defaultChildPolicy":"TERMINATE","defaultExecutionStartToCloseTimeout":"300","defaultTaskList":{"name":"None"},"defaultTaskStartToCloseTimeout":"300"},"typeInfo":{"creationDate":1.435159034741E9,"status":"REGISTERED","workflowType":{"name":"basic","version":"example"}}}'}
+    headers:
+      content-length: ['288']
+      content-type: [application/json]
+      x-amzn-requestid: [11ca48da-6992-11e6-b609-b16989579c3e]
+    status: {code: 200, message: OK}
+- request:
+    body: !!python/unicode '{"domain": "TestDomain", "taskList": {"name": "test"},
+      "childPolicy": "TERMINATE", "executionStartToCloseTimeout": "300", "input":
+      "null", "workflowType": {"version": "example", "name": "basic"}, "taskStartToCloseTimeout":
+      "30", "workflowId": "test-simpleflow-workflow"}'
+    headers:
+      Authorization: ['AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar']
+      Content-Encoding: [amz-1.0]
+      Content-Length: ['270']
+      Content-Type: [application/json; charset=UTF-8]
+      Host: [swf.us-east-1.amazonaws.com]
+      User-Agent: [Boto/2.38.0 Python/2.7.10 Darwin/14.5.0]
+      X-Amz-Date: [20160824T003116Z]
+      X-Amz-Target: [com.amazonaws.swf.service.model.SimpleWorkflowService.StartWorkflowExecution]
+    method: POST
+    uri: https://swf.us-east-1.amazonaws.com/
+  response:
+    body: {string: !!python/unicode '{"runId":"22yHsprtmgzTx4tPK3+2bdpN3BYZkk5ff+lUc0Khkupcg="}'}
+    headers:
+      content-length: ['58']
+      content-type: [application/json]
+      x-amzn-requestid: [120a383c-6992-11e6-9a56-dd21d5d7fedf]
+    status: {code: 200, message: OK}
+- request:
+    body: !!python/unicode '{"domain": "TestDomain", "startTimeFilter": {"oldestDate":
+      1469406677}, "executionFilter": {"workflowId": "test-simpleflow-workflow"}}'
+    headers:
+      Authorization: ['AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar']
+      Content-Encoding: [amz-1.0]
+      Content-Length: ['134']
+      Content-Type: [application/json; charset=UTF-8]
+      Host: [swf.us-east-1.amazonaws.com]
+      User-Agent: [Boto/2.38.0 Python/2.7.10 Darwin/14.5.0]
+      X-Amz-Date: [20160824T003117Z]
+      X-Amz-Target: [com.amazonaws.swf.service.model.SimpleWorkflowService.ListOpenWorkflowExecutions]
+    method: POST
+    uri: https://swf.us-east-1.amazonaws.com/
+  response:
+    body: {string: !!python/unicode '{"executionInfos":[{"cancelRequested":false,"execution":{"runId":"22yHsprtmgzTx4tPK3+2bdpN3BYZkk5ff+lUc0Khkupcg=","workflowId":"test-simpleflow-workflow"},"executionStatus":"OPEN","startTimestamp":1.471998677044E9,"workflowType":{"name":"basic","version":"example"}}]}'}
+    headers:
+      content-length: ['268']
+      content-type: [application/json]
+      x-amzn-requestid: [12599103-6992-11e6-9e4e-552b95b37287]
+    status: {code: 200, message: OK}
+- request:
+    body: !!python/unicode '{"domain": "TestDomain", "workflowId": "test-simpleflow-workflow",
+      "runId": "22yHsprtmgzTx4tPK3+2bdpN3BYZkk5ff+lUc0Khkupcg="}'
+    headers:
+      Authorization: ['AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar']
+      Content-Encoding: [amz-1.0]
+      Content-Length: ['125']
+      Content-Type: [application/json; charset=UTF-8]
+      Host: [swf.us-east-1.amazonaws.com]
+      User-Agent: [Boto/2.38.0 Python/2.7.10 Darwin/14.5.0]
+      X-Amz-Date: [20160824T003117Z]
+      X-Amz-Target: [com.amazonaws.swf.service.model.SimpleWorkflowService.TerminateWorkflowExecution]
+    method: POST
+    uri: https://swf.us-east-1.amazonaws.com/
+  response:
+    body: {string: !!python/unicode ''}
+    headers:
+      content-length: ['0']
+      content-type: [application/json]
+      x-amzn-requestid: [1297d29f-6992-11e6-a168-e31eaef39470]
+    status: {code: 200, message: OK}
+version: 1
