@@ -375,9 +375,6 @@ def catch(exceptions, handle_with=None, log=False):
     return wrap
 
 
-when = catch
-
-
 is_not = partial(catch, handle_with=always(False))
 is_not.__doc__ = """
     Return ``False`` if it catches an exception among *exceptions*.

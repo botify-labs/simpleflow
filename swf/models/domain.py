@@ -105,10 +105,10 @@ class Domain(BaseModel):
     @property
     @exceptions.translate(SWFResponseError, to=ResponseError)
     @exceptions.is_not(DomainDoesNotExist)
-    @exceptions.when(SWFResponseError,
-                     raises(DomainDoesNotExist,
-                            when=exceptions.is_unknown('domain'),
-                            extract=exceptions.extract_resource))
+    @exceptions.catch(SWFResponseError,
+                      raises(DomainDoesNotExist,
+                             when=exceptions.is_unknown('domain'),
+                             extract=exceptions.extract_resource))
     def exists(self):
         """Checks if the Domain exists amazon-side
 
@@ -128,10 +128,10 @@ class Domain(BaseModel):
 
     @exceptions.translate(SWFResponseError,
                           to=ResponseError)
-    @exceptions.when(SWFResponseError,
-                     raises(DomainDoesNotExist,
-                            when=exceptions.is_unknown('domain'),
-                            extract=exceptions.extract_resource))
+    @exceptions.catch(SWFResponseError,
+                      raises(DomainDoesNotExist,
+                             when=exceptions.is_unknown('domain'),
+                             extract=exceptions.extract_resource))
     def delete(self):
         """Deprecates the domain amazon side"""
         self.connection.deprecate_domain(self.name)

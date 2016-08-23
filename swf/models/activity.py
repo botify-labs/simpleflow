@@ -159,10 +159,10 @@ class ActivityType(BaseModel):
 
     @property
     @exceptions.is_not(ActivityTypeDoesNotExist)
-    @exceptions.when(SWFResponseError,
-                     raises(ActivityTypeDoesNotExist,
-                            when=exceptions.is_unknown('ActivityType'),
-                            extract=exceptions.extract_resource))
+    @exceptions.catch(SWFResponseError,
+                      raises(ActivityTypeDoesNotExist,
+                             when=exceptions.is_unknown('ActivityType'),
+                             extract=exceptions.extract_resource))
     def exists(self):
         """Checks if the ActivityType exists amazon-side
 
@@ -195,10 +195,10 @@ class ActivityType(BaseModel):
                 raise DoesNotExistError(err.body['message'])
             raise
 
-    @exceptions.when(SWFResponseError,
-                     raises(ActivityTypeDoesNotExist,
-                            when=exceptions.is_unknown('ActivityType'),
-                            extract=exceptions.extract_resource))
+    @exceptions.catch(SWFResponseError,
+                      raises(ActivityTypeDoesNotExist,
+                             when=exceptions.is_unknown('ActivityType'),
+                             extract=exceptions.extract_resource))
     def delete(self):
         """Deprecates the domain amazon side"""
         self.connection.deprecate_activity_type(

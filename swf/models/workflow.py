@@ -173,10 +173,10 @@ class WorkflowType(BaseModel):
     @property
     @exceptions.translate(SWFResponseError, to=ResponseError)
     @exceptions.is_not(WorkflowTypeDoesNotExist)
-    @exceptions.when(SWFResponseError,
-                     raises(WorkflowTypeDoesNotExist,
-                            when=exceptions.is_unknown('WorkflowType'),
-                            extract=exceptions.extract_resource))
+    @exceptions.catch(SWFResponseError,
+                      raises(WorkflowTypeDoesNotExist,
+                             when=exceptions.is_unknown('WorkflowType'),
+                             extract=exceptions.extract_resource))
     def exists(self):
         """Checks if the WorkflowType exists amazon-side
 
@@ -425,10 +425,10 @@ class WorkflowExecution(BaseModel):
     @property
     @exceptions.translate(SWFResponseError, to=ResponseError)
     @exceptions.is_not(WorkflowExecutionDoesNotExist)
-    @exceptions.when(SWFResponseError,
-                     raises(WorkflowExecutionDoesNotExist,
-                            when=exceptions.is_unknown('WorkflowExecution'),
-                            extract=exceptions.extract_resource))
+    @exceptions.catch(SWFResponseError,
+                      raises(WorkflowExecutionDoesNotExist,
+                             when=exceptions.is_unknown('WorkflowExecution'),
+                             extract=exceptions.extract_resource))
     def exists(self):
         """Checks if the WorkflowExecution exists amazon-side
 
@@ -481,10 +481,10 @@ class WorkflowExecution(BaseModel):
 
     @exceptions.translate(SWFResponseError,
                           to=ResponseError)
-    @exceptions.when(SWFResponseError,
-                     raises(WorkflowExecutionDoesNotExist,
-                            when=exceptions.is_unknown('WorkflowExecution'),
-                            extract=exceptions.extract_resource))
+    @exceptions.catch(SWFResponseError,
+                      raises(WorkflowExecutionDoesNotExist,
+                             when=exceptions.is_unknown('WorkflowExecution'),
+                             extract=exceptions.extract_resource))
     def signal(self, signal_name, input=None, *args, **kwargs):
         """Records a signal event in the workflow execution history and
         creates a decision task.
@@ -511,10 +511,10 @@ class WorkflowExecution(BaseModel):
 
     @exceptions.translate(SWFResponseError,
                           to=ResponseError)
-    @exceptions.when(SWFResponseError,
-                     raises(WorkflowExecutionDoesNotExist,
-                            when=exceptions.is_unknown('domain'),
-                            extract=exceptions.extract_resource))
+    @exceptions.catch(SWFResponseError,
+                      raises(WorkflowExecutionDoesNotExist,
+                             when=exceptions.is_unknown('domain'),
+                             extract=exceptions.extract_resource))
     def request_cancel(self, *args, **kwargs):
         """Requests the workflow execution cancel"""
         self.connection.request_cancel_workflow_execution(
@@ -524,10 +524,10 @@ class WorkflowExecution(BaseModel):
 
     @exceptions.translate(SWFResponseError,
                           to=ResponseError)
-    @exceptions.when(SWFResponseError,
-                     raises(WorkflowExecutionDoesNotExist,
-                            when=exceptions.is_unknown('domain'),
-                            extract=exceptions.extract_resource))
+    @exceptions.catch(SWFResponseError,
+                      raises(WorkflowExecutionDoesNotExist,
+                             when=exceptions.is_unknown('domain'),
+                             extract=exceptions.extract_resource))
     def terminate(self, *args, **kwargs):
         """Terminates the workflow execution"""
         self.connection.terminate_workflow_execution(
