@@ -1,7 +1,7 @@
 invoke
 mock==1.0.1
 moto>=0.4.19
-pytest
+pytest==3.0.1
 sphinx
 sphinx_rtd_theme
 wheel
