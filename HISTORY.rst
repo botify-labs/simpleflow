@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.11.10
+~~~~~~~
+
+- Fix previous_history initialization (#106)
+- Improve WorkflowExecutionQueryset default date values (#111)
+
 0.11.9
 ~~~~~~
 
