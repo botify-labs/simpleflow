@@ -7,7 +7,7 @@
 
 from boto.swf.exceptions import SWFResponseError
 
-from swf.constants import REGISTERED
+from swf.constants import REGISTERED, MAX_WORKFLOW_AGE
 from swf.querysets.base import BaseQuerySet
 from swf.models import Domain
 from swf.models.workflow import (WorkflowType, WorkflowExecution,
@@ -566,7 +566,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             raise InvalidKeywordArgumentError(err_msg)
 
         if status == WorkflowExecution.STATUS_OPEN:
-            oldest_date = kwargs.pop('oldest_date', 30)
+            oldest_date = kwargs.pop('oldest_date', MAX_WORKFLOW_AGE)
         else:
             # The SWF docs on ListClosedWorkflowExecutions state that:
             #
@@ -577,7 +577,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             if "close_latest_date" in kwargs or "close_oldest_date" in kwargs:
                 default_oldest_date = None
             else:
-                default_oldest_date = 30
+                default_oldest_date = MAX_WORKFLOW_AGE
             oldest_date = kwargs.pop('start_oldest_date', default_oldest_date)
 
         # Compute a timestamp from the delta in days we got from params
@@ -606,7 +606,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         return self.list_workflow_executions(*args, **kwargs)
 
     def all(self, status=WorkflowExecution.STATUS_OPEN,
-            start_oldest_date=30,
+            start_oldest_date=MAX_WORKFLOW_AGE,
             *args, **kwargs):
         """Fetch every workflow executions during the last `start_oldest_date`
         days, with `status`
