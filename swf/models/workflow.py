@@ -246,7 +246,7 @@ class WorkflowType(BaseModel):
         :type   input: dict
 
         :param  tag_list: Tags associated with the workflow execution
-        :type   tag_list: String
+        :type   tag_list: String or list of strings
 
         :param  decision_tasks_timeout: maximum duration of decision tasks
                                         for this workflow execution
@@ -256,6 +256,7 @@ class WorkflowType(BaseModel):
         task_list = task_list or self.task_list
         child_policy = child_policy or self.child_policy
         input = json.dumps(input) or None
+        tag_list = tag_list if isinstance(tag_list, list) else [tag_list]
 
         run_id = self.connection.start_workflow_execution(
             self.domain.name,

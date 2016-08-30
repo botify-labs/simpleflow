@@ -51,6 +51,13 @@ def disable_boto_connection_pooling():
     boto.connection.ON_APP_ENGINE = True
 
 
+def comma_separated_list(value):
+    """
+    Transforms a comma-separated list into a list of strigns.
+    """
+    return value.split(",")
+
+
 @click.group()
 @click.option('--format')
 @click.option('--header/--no-header', default=False)
@@ -107,6 +114,7 @@ def transform_input(wf_input):
               required=False, type=click.File(),
               help='JSON file with the input of the workflow.')
 @click.option('--tags',
+              type=comma_separated_list,
               required=False,
               help='Tags for the workflow execution.')
 @click.option('--decision-tasks-timeout',
@@ -383,6 +391,7 @@ def get_task_list(workflow_id=''):
               required=False, type=click.File(),
               help='JSON file with the input of the workflow.')
 @click.option('--tags',
+              type=comma_separated_list,
               required=False,
               help='Tags identifying the workflow execution.')
 @click.option('--decision-tasks-timeout',
