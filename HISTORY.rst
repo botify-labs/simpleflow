@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.11.11
+~~~~~~~
+
+- Fix a circular import on simpleflow.swf.executor
+
 0.11.10
 ~~~~~~~
 
