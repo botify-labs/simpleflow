@@ -258,6 +258,10 @@ class WorkflowType(BaseModel):
         input = json.dumps(input) or None
         tag_list = tag_list if isinstance(tag_list, list) else [tag_list]
 
+        # checks
+        if len(tag_list) > 5:
+            raise ValueError("You cannot have more than 5 tags in StartWorkflowExecution.")
+
         run_id = self.connection.start_workflow_execution(
             self.domain.name,
             workflow_id,
