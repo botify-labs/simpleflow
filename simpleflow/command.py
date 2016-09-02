@@ -13,6 +13,7 @@ from uuid import uuid4
 import boto.connection
 import click
 
+import swf.exceptions
 import swf.models
 import swf.querysets
 
@@ -21,6 +22,7 @@ from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
 from simpleflow.swf.utils import get_workflow_history
+from simpleflow.utils import json_dumps
 from simpleflow import __version__
 
 
@@ -527,3 +529,41 @@ def standalone(context,
     worker_proc.join()
     os.kill(decider_proc.pid, signal.SIGTERM)
     decider_proc.join()
+
+
+@click.option('--domain',
+              envvar='SWF_DOMAIN',
+              required=False,
+              help='Amazon SWF Domain.')
+@click.option('--workflow-id',
+              required=True,
+              help='ID of the workflow execution.')
+@click.option('--run-id',
+              required=False,
+              help='Run ID of the workflow execution.')
+@click.option('--scheduled-id',
+              required=True,
+              type=int,
+              help='Event ID when the activity has been scheduled.')
+@cli.command('activity.rerun', help='Rerun an activity task locally.')
+def activity_rerun(domain,
+                   workflow_id,
+                   run_id,
+                   scheduled_id):
+    # find workflow execution
+    try:
+        wfe = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    except (swf.exceptions.DoesNotExistError, IndexError):
+        logger.error("Couldn't find execution, exiting.")
+        sys.exit(1)
+    logger.info("Found execution: workflowId={} runId={}".format(wfe.workflow_id, wfe.run_id))
+
+    # now rerun the specified activity
+    func, args, kwargs, params = helpers.find_activity(wfe, scheduled_id=scheduled_id)
+    logger.debug("Found activity. Last execution:")
+    for line in json_dumps(params, pretty=True).split("\n"):
+        logger.debug(line)
+    logger.info("Will re-run: {}(*{}, **{})".format(func.__name__, args, kwargs))
+
+    # finally replay the function with the correct arguments
+    func(*args, **kwargs)

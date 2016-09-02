@@ -90,6 +90,36 @@ class TestSimpleflowCommand(unittest.TestCase):
         expect(result.exit_code).to.equal(0)
         expect(result.output).to.equal("")
 
+
+    @vcr.use_cassette
+    def test_simpleflow_activity_rerun(self):
+        """
+        Tests simpleflow activity.rerun
+        """
+        # run a very short workflow
+        result = self.invoke(
+            simpleflow.command.cli,
+            "standalone --workflow-id %s --input {\"args\":[0]} --nb-workers 1 " \
+            "tests.integration.workflow.SleepWorkflow" % WORKFLOW_ID
+        )
+        expect(result.exit_code).to.equal(0)
+        lines = result.output.split("\n")
+        start_line = [line for line in lines if line.startswith("test-simpleflow-workflow")][0]
+        _, run_id = start_line.split(" ", 1)
+
+        # this workflow has executed a single activity, activity-tests.integration.workflow.sleep-1
+        # for which scheduledEventId is 5
+        # => let's rerun it locally and check the result
+        result = self.invoke(
+            simpleflow.command.cli,
+            "activity.rerun --workflow-id %s --run-id %s --scheduled-id 5" % (
+                WORKFLOW_ID, run_id
+            )
+        )
+        expect(result.exit_code).to.equal(0)
+        expect(result.output).to.contain("will sleep 0s")
+
+
     # TODO: simpleflow decider.start
     # TODO: simpleflow standalone
     # TODO: simpleflow task.info
