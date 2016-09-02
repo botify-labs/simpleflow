@@ -539,6 +539,9 @@ def standalone(context,
 @click.option('--workflow-id',
               required=True,
               help='ID of the workflow execution.')
+@click.option('--input', '-i',
+              required=False,
+              help='JSON input of the workflow.')
 @click.option('--run-id',
               required=False,
               help='Run ID of the workflow execution.')
@@ -553,12 +556,17 @@ def standalone(context,
 def activity_rerun(domain,
                    workflow_id,
                    run_id,
+                   input,
                    scheduled_id,
                    activity_id):
-    # check params
+    # handle params
     if not activity_id and not scheduled_id:
         logger.error("Please supply --scheduled-id or --activity-id.")
         sys.exit(1)
+
+    input_override = None
+    if input:
+        input_override = json.loads(input)
 
     # find workflow execution
     try:
@@ -572,11 +580,13 @@ def activity_rerun(domain,
     history = History(wfe.history())
     history.parse()
     func, args, kwargs, params = helpers.find_activity(
-        history, scheduled_id=scheduled_id, activity_id=activity_id
+        history, scheduled_id=scheduled_id, activity_id=activity_id, input=input_override,
     )
     logger.debug("Found activity. Last execution:")
     for line in json_dumps(params, pretty=True).split("\n"):
         logger.debug(line)
+    if input_override:
+        logger.info("NB: input will be overriden with the passed one!")
     logger.info("Will re-run: {}(*{}, **{})".format(func.__name__, args, kwargs))
 
     # finally replay the function with the correct arguments

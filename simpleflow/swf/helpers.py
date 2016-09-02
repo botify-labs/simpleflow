@@ -93,7 +93,7 @@ def filter_workflow_executions(domain_name, status, tag,
     return pretty.list_details(executions)
 
 
-def find_activity(history, scheduled_id=None, activity_id=None):
+def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     """
     Finds an activity in a given workflow execution and returns a callable,
     some args and some kwargs so we can re-execute it.
@@ -116,7 +116,7 @@ def find_activity(history, scheduled_id=None, activity_id=None):
         func = func._callable
 
     # get the input
-    input_ = found_activity["input"]
+    input_ = input or found_activity["input"]
     if input_ is None:
         input_ = {}
     args = input_.get('args', ())
