@@ -580,4 +580,5 @@ def activity_rerun(domain,
     logger.info("Will re-run: {}(*{}, **{})".format(func.__name__, args, kwargs))
 
     # finally replay the function with the correct arguments
-    func(*args, **kwargs)
+    result = func(*args, **kwargs)
+    logger.info("Result (JSON): {}".format(json_dumps(result)))

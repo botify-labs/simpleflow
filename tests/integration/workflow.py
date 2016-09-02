@@ -14,7 +14,10 @@ def sleep(seconds):
     print "will sleep {}s".format(seconds)
     time.sleep(seconds)
     print "good sleep"
-    return "slept {}s".format(seconds)
+    # return a complex object so we can visually test the json-ified version of
+    # it is displayed in "simpleflow activity.rerun" ; unfortunately hard to
+    # include in a unit or integration test...
+    return {"result": "slept {}s".format(seconds)}
 
 class SleepWorkflow(Workflow):
     name = 'basic'
