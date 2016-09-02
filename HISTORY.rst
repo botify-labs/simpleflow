@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.11.12
+~~~~~~~
+
+- Fix --tags argument for simpleflow standalone (#114)
+- Improve tests and add integration tests (#116)
+- Add 'simpleflow activity.rerun' command (#117)
+
 0.11.11
 ~~~~~~~
 
