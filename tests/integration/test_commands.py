@@ -1,4 +1,4 @@
-# See README for more informations about integration testsimport sys
+# See README for more informations about integration tests
 import os
 import unittest
 
