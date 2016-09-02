@@ -13,14 +13,17 @@ from uuid import uuid4
 import boto.connection
 import click
 
+import swf.exceptions
 import swf.models
 import swf.querysets
 
+from simpleflow.history import History
 from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
 from simpleflow.swf.utils import get_workflow_history
+from simpleflow.utils import json_dumps
 from simpleflow import __version__
 
 
@@ -527,3 +530,65 @@ def standalone(context,
     worker_proc.join()
     os.kill(decider_proc.pid, signal.SIGTERM)
     decider_proc.join()
+
+
+@click.option('--domain',
+              envvar='SWF_DOMAIN',
+              required=False,
+              help='Amazon SWF Domain.')
+@click.option('--workflow-id',
+              required=True,
+              help='ID of the workflow execution.')
+@click.option('--input', '-i',
+              required=False,
+              help='JSON input of the workflow.')
+@click.option('--run-id',
+              required=False,
+              help='Run ID of the workflow execution.')
+@click.option('--scheduled-id',
+              required=False,
+              type=int,
+              help='Event ID when the activity has been scheduled.')
+@click.option('--activity-id',
+              required=False,
+              help='Activity ID of the activity you want to replay.')
+@cli.command('activity.rerun', help='Rerun an activity task locally.')
+def activity_rerun(domain,
+                   workflow_id,
+                   run_id,
+                   input,
+                   scheduled_id,
+                   activity_id):
+    # handle params
+    if not activity_id and not scheduled_id:
+        logger.error("Please supply --scheduled-id or --activity-id.")
+        sys.exit(1)
+
+    input_override = None
+    if input:
+        input_override = json.loads(input)
+
+    # find workflow execution
+    try:
+        wfe = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    except (swf.exceptions.DoesNotExistError, IndexError):
+        logger.error("Couldn't find execution, exiting.")
+        sys.exit(1)
+    logger.info("Found execution: workflowId={} runId={}".format(wfe.workflow_id, wfe.run_id))
+
+    # now rerun the specified activity
+    history = History(wfe.history())
+    history.parse()
+    func, args, kwargs, params = helpers.find_activity(
+        history, scheduled_id=scheduled_id, activity_id=activity_id, input=input_override,
+    )
+    logger.debug("Found activity. Last execution:")
+    for line in json_dumps(params, pretty=True).split("\n"):
+        logger.debug(line)
+    if input_override:
+        logger.info("NB: input will be overriden with the passed one!")
+    logger.info("Will re-run: {}(*{}, **{})".format(func.__name__, args, kwargs))
+
+    # finally replay the function with the correct arguments
+    result = func(*args, **kwargs)
+    logger.info("Result (JSON): {}".format(json_dumps(result)))

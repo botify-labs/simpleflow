@@ -13,5 +13,12 @@ def _serialize_complex_object(obj):
         " please file a new issue on GitHub!" % type(obj))
 
 
-def json_dumps(obj):
-    return json.dumps(obj, default=_serialize_complex_object)
+def json_dumps(obj, pretty=False):
+    kwargs = {
+        "default": _serialize_complex_object
+    }
+    if pretty:
+        kwargs["indent"] = 4
+        kwargs["sort_keys"] = True
+        kwargs["separators"] = (",", ": ")
+    return json.dumps(obj, **kwargs)

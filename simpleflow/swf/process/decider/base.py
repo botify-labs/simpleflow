@@ -170,10 +170,12 @@ class DeciderWorker(object):
             if isinstance(decisions, tuple) and len(decisions) == 2:  # (decisions, context)
                 decisions = decisions[0]
         except Exception as err:
+            import traceback
+            details = traceback.format_exc()
             message = "workflow decision failed: {}".format(err)
             logger.error(message)
             decision = swf.models.decision.WorkflowExecutionDecision()
-            decision.fail(reason=swf.format.reason(message))
+            decision.fail(reason=swf.format.reason(message), details=swf.format.details(details))
             decisions = [decision]
 
         return decisions

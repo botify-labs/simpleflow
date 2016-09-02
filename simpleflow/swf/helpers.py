@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import getpass
+from importlib import import_module
 import json
 import os
 import socket
@@ -8,6 +9,7 @@ import socket
 import swf.models
 import swf.querysets
 import swf.exceptions
+from simpleflow.activity import Activity
 
 from .stats import pretty
 
@@ -89,6 +91,39 @@ def filter_workflow_executions(domain_name, status, tag,
                               workflow_type_version, *args, **kwargs)
 
     return pretty.list_details(executions)
+
+
+def find_activity(history, scheduled_id=None, activity_id=None, input=None):
+    """
+    Finds an activity in a given workflow execution and returns a callable,
+    some args and some kwargs so we can re-execute it.
+    """
+    found_activity = None
+    for _, params in history._activities.items():
+        if params["scheduled_id"] == scheduled_id:
+            found_activity = params
+        if params["id"] == activity_id:
+            found_activity = params
+
+    if not found_activity:
+        raise ValueError("Couldn't find activity.")
+
+    # get the callable
+    module_name, method_name = params["name"].rsplit('.', 1)
+    module = import_module(module_name)
+    func = getattr(module, method_name)
+    if isinstance(func, Activity):
+        func = func._callable
+
+    # get the input
+    input_ = input or found_activity["input"]
+    if input_ is None:
+        input_ = {}
+    args = input_.get('args', ())
+    kwargs = input_.get('kwargs', {})
+
+    # return everything
+    return func, args, kwargs, found_activity
 
 
 def get_task(domain_name, workflow_id, task_id, details):
