@@ -22,7 +22,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'loggers': {
         'simpleflow': {
-            'level': os.getenv('LOG_LEVEL', 'INFO'),
+            'level': os.getenv('LOG_LEVEL', 'INFO').upper(),
             'handlers': ['console'],
             # avoid duplicate logs if loggers up are defined (e.g. root)
             # + higher-level loggers tend to have worse/lame formatters
