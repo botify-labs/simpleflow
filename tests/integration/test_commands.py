@@ -7,36 +7,19 @@ from click.testing import CliRunner
 from sure import expect
 
 import simpleflow.command
-from . import vcr
+from . import vcr, IntegrationTest
 
 
-WORKFLOW_ID = "test-simpleflow-workflow"
-
-
-class TestSimpleflowCommand(unittest.TestCase):
-    @property
-    def region(self):
-        return os.environ["AWS_DEFAULT_REGION"]
-
-    @property
-    def domain(self):
-        return os.environ["SWF_DOMAIN"]
-
+class TestSimpleflowCommand(IntegrationTest):
     def invoke(self, command, arguments):
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
         return self.runner.invoke(command, arguments.split(" "))
 
-    @property
-    def conn(self):
-        if not hasattr(self, "_conn"):
-            self._conn = boto.swf.connect_to_region(self.region)
-        return self._conn
-
-    def cleanup(self):
+    def cleanup_sleep_workflow(self):
         # ideally this should be in a tearDown() or setUp() call, but those
         # calls play badly with VCR since they only happen "sometimes"... :-/
-        self.conn.terminate_workflow_execution(self.domain, WORKFLOW_ID)
+        self.conn.terminate_workflow_execution(self.domain, self.workflow_id)
 
     @vcr.use_cassette
     def test_simpleflow_workflow_start(self):
@@ -48,42 +31,42 @@ class TestSimpleflowCommand(unittest.TestCase):
             simpleflow.command.cli,
             "workflow.start --workflow-id {} --task-list test --input null "
             "--execution-timeout 300 --decision-tasks-timeout 30 "
-            "tests.integration.workflow.SleepWorkflow".format(WORKFLOW_ID)
+            "tests.integration.workflow.SleepWorkflow".format(self.workflow_id)
         )
 
         # check response form: "<workflow id> <run-id>"
         expect(result.exit_code).to.equal(0)
         wf_id, run_id = result.output.split()
-        expect(wf_id).to.equal(WORKFLOW_ID)
+        expect(wf_id).to.equal(self.workflow_id)
 
         # check against SWF that execution is launched
         executions = self.conn.list_open_workflow_executions(
-            self.domain, 0, workflow_id=WORKFLOW_ID
+            self.domain, 0, workflow_id=self.workflow_id
         )
         items = executions["executionInfos"]
         expect(len(items)).to.equal(1)
         expect(items[0]["execution"]["runId"]).to.equal(run_id)
 
         # kill the workflow now
-        self.cleanup()
+        self.cleanup_sleep_workflow()
 
     @vcr.use_cassette
     def test_simpleflow_workflow_terminate(self):
         """
         Tests simpleflow workflow.terminate
         """
-        # start a workflow (easier with simpleflow command)
+        # start a workflow
         self.invoke(
             simpleflow.command.cli,
             "workflow.start --workflow-id {} --task-list test --input null "
             "--execution-timeout 300 --decision-tasks-timeout 30 "
-            "tests.integration.workflow.SleepWorkflow".format(WORKFLOW_ID)
+            "tests.integration.workflow.SleepWorkflow".format(self.workflow_id)
         )
 
         # now try to terminate it
         result = self.invoke(
             simpleflow.command.cli,
-            "workflow.terminate {} {}".format(self.domain, WORKFLOW_ID),
+            "workflow.terminate {} {}".format(self.domain, self.workflow_id),
         )
 
         # check response form (empty)
@@ -100,7 +83,7 @@ class TestSimpleflowCommand(unittest.TestCase):
         result = self.invoke(
             simpleflow.command.cli,
             "standalone --workflow-id %s --input {\"args\":[0]} --nb-workers 1 " \
-            "tests.integration.workflow.SleepWorkflow" % WORKFLOW_ID
+            "tests.integration.workflow.SleepWorkflow" % self.workflow_id
         )
         expect(result.exit_code).to.equal(0)
         lines = result.output.split("\n")
@@ -113,7 +96,7 @@ class TestSimpleflowCommand(unittest.TestCase):
         result = self.invoke(
             simpleflow.command.cli,
             "activity.rerun --workflow-id %s --run-id %s --scheduled-id 5" % (
-                WORKFLOW_ID, run_id
+                self.workflow_id, run_id
             )
         )
         expect(result.exit_code).to.equal(0)
