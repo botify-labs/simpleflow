@@ -17,6 +17,7 @@ import swf.exceptions
 import swf.models
 import swf.querysets
 
+from simpleflow.history import History
 from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
@@ -568,8 +569,10 @@ def activity_rerun(domain,
     logger.info("Found execution: workflowId={} runId={}".format(wfe.workflow_id, wfe.run_id))
 
     # now rerun the specified activity
+    history = History(wfe.history())
+    history.parse()
     func, args, kwargs, params = helpers.find_activity(
-        wfe, scheduled_id=scheduled_id, activity_id=activity_id
+        history, scheduled_id=scheduled_id, activity_id=activity_id
     )
     logger.debug("Found activity. Last execution:")
     for line in json_dumps(params, pretty=True).split("\n"):

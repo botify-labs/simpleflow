@@ -10,7 +10,6 @@ import swf.models
 import swf.querysets
 import swf.exceptions
 from simpleflow.activity import Activity
-from simpleflow.history import History
 
 from .stats import pretty
 
@@ -94,14 +93,11 @@ def filter_workflow_executions(domain_name, status, tag,
     return pretty.list_details(executions)
 
 
-def find_activity(execution, scheduled_id=None, activity_id=None):
+def find_activity(history, scheduled_id=None, activity_id=None):
     """
     Finds an activity in a given workflow execution and returns a callable,
     some args and some kwargs so we can re-execute it.
     """
-    history = History(execution.history())
-    history.parse()
-
     found_activity = None
     for _, params in history._activities.items():
         if params["scheduled_id"] == scheduled_id:
