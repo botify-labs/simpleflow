@@ -19,3 +19,9 @@ class TestJsonDumps(unittest.TestCase):
                 json_dumps(case[0]),
                 case[1],
             )
+
+    def test_json_dumps_pretty(self):
+        self.assertEquals(
+                json_dumps({"abc": "def"}, pretty=True),
+                '{\n    "abc": "def"\n}',
+        )
