@@ -20,4 +20,5 @@ def json_dumps(obj, pretty=False):
     if pretty:
         kwargs["indent"] = 4
         kwargs["sort_keys"] = True
+        kwargs["separators"] = (",", ": ")
     return json.dumps(obj, **kwargs)
