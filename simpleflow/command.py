@@ -542,14 +542,23 @@ def standalone(context,
               required=False,
               help='Run ID of the workflow execution.')
 @click.option('--scheduled-id',
-              required=True,
+              required=False,
               type=int,
               help='Event ID when the activity has been scheduled.')
+@click.option('--activity-id',
+              required=False,
+              help='Activity ID of the activity you want to replay.')
 @cli.command('activity.rerun', help='Rerun an activity task locally.')
 def activity_rerun(domain,
                    workflow_id,
                    run_id,
-                   scheduled_id):
+                   scheduled_id,
+                   activity_id):
+    # check params
+    if not activity_id and not scheduled_id:
+        logger.error("Please supply --scheduled-id or --activity-id.")
+        sys.exit(1)
+
     # find workflow execution
     try:
         wfe = helpers.get_workflow_execution(domain, workflow_id, run_id)
@@ -559,7 +568,9 @@ def activity_rerun(domain,
     logger.info("Found execution: workflowId={} runId={}".format(wfe.workflow_id, wfe.run_id))
 
     # now rerun the specified activity
-    func, args, kwargs, params = helpers.find_activity(wfe, scheduled_id=scheduled_id)
+    func, args, kwargs, params = helpers.find_activity(
+        wfe, scheduled_id=scheduled_id, activity_id=activity_id
+    )
     logger.debug("Found activity. Last execution:")
     for line in json_dumps(params, pretty=True).split("\n"):
         logger.debug(line)
