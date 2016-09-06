@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.11.13
+~~~~~~~
+
+- Add ability to provide a 'run ID' with 'simpleflow standalone --repair'
+
 0.11.12
 ~~~~~~~
 
