@@ -416,7 +416,7 @@ def get_task_list(workflow_id=''):
               )
 @click.option('--repair',
               type=str, required=False,
-              help='Repair a failed workflow execution.'
+              help='Repair a failed workflow execution ("<workflow id>" or "<workflow id> <run id>").'
               )
 @click.option('--force-activities',
               type=str, required=False,
@@ -458,13 +458,16 @@ def standalone(context,
     if input or input_file:
         wf_input = get_or_load_input(input_file, input)
     if repair:
+        repair_run_id = None
+        if " " in repair:
+            repair, repair_run_id = repair.split(" ", 1)
         # get the previous execution history, it will serve as "default history"
         # for activities that succeeded in the previous execution
         logger.info(
             'retrieving history of previous execution: domain={} '
-            'workflow_id={}'.format(domain, repair)
+            'workflow_id={} run_id={}'.format(domain, repair, repair_run_id)
         )
-        previous_history = get_workflow_history(domain, repair)
+        previous_history = get_workflow_history(domain, repair, run_id=repair_run_id)
         previous_history.parse()
         # get the previous execution input if none passed
         if not input and not input_file:
