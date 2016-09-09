@@ -18,3 +18,6 @@ MAX_RESULT_LENGTH = 32000
 # Hence this value is an upper limit to retrieve *all* open/closed workflow
 # executions on a given region+domain.
 MAX_WORKFLOW_AGE = 366 + 90 + 1
+
+# TODO: move it to a real object model in swf.models.event.task
+OK_TASK_STATUSES = ('scheduled', 'started', 'completed')

@@ -7,6 +7,7 @@ import multiprocessing
 import re
 import traceback
 
+import swf.constants
 import swf.format
 import swf.models
 import swf.models.decision
@@ -155,7 +156,7 @@ class Executor(executor.Executor):
 
     """
     def __init__(self, domain, workflow, task_list=None, repair_with=None,
-                 force_activities=None):
+                 force_activities=None, fake_before_failure_only=False):
         super(Executor, self).__init__(workflow)
         self.domain = domain
         self.task_list = task_list
@@ -164,6 +165,8 @@ class Executor(executor.Executor):
             self.force_activities = re.compile(force_activities)
         else:
             self.force_activities = None
+        self.fake_before_failure_only = fake_before_failure_only
+        self.allow_faking = bool(self.repair_with)
         self.reset()
 
     def reset(self):
@@ -358,7 +361,7 @@ class Executor(executor.Executor):
 
         # try to fill in the blanks with the workflow we're trying to repair if any
         # TODO: maybe only do that for idempotent tasks??
-        if not event and self.repair_with and not force_execution:
+        if not event and self.allow_faking and not force_execution:
             # try to find a former event matching this task
             former_event = self.find_event(a_task, self.repair_with)
             # ... but only keep the event if the task was successful
@@ -376,6 +379,11 @@ class Executor(executor.Executor):
 
                 # start a dedicated process to handle the fake activity
                 run_fake_task_worker(self.domain.name, fake_task_list, former_event)
+
+            # check if we allow later tasks to be faked
+            if self.fake_before_failure_only and former_event \
+                    and event['state'] not in swf.constants.OK_TASK_STATUSES:
+                self.allow_faking = False
 
         # back to normal execution flow
         if event:

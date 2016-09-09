@@ -422,6 +422,10 @@ def get_task_list(workflow_id=''):
               type=str, required=False,
               help='Force the re-execution of some activities in when --repair is enabled.'
               )
+@click.option('--fake-before-failure-only',
+              type=bool, required=False,
+              help='Repair with fake tasks only before encoutering the first failure (--repair mode only).'
+              )
 @click.argument('workflow')
 @cli.command('standalone', help='Execute a workflow with a single process.')
 @click.pass_context
@@ -439,6 +443,7 @@ def standalone(context,
                display_status,
                repair,
                force_activities,
+               fake_before_failure_only,
                ):
     """
     This command spawn a decider and an activity worker to execute a workflow
@@ -448,9 +453,10 @@ def standalone(context,
     disable_boto_connection_pooling()
 
     if force_activities and not repair:
-        raise ValueError(
-            "You should only use --force-activities with --repair."
-        )
+        raise ValueError("You should only use --force-activities with --repair.")
+
+    if fake_before_failure_only and not repair:
+        raise ValueError("You should only use --fake-before-failure-only with --repair.")
 
     if not workflow_id:
         workflow_id = get_workflow(workflow).name
@@ -487,6 +493,7 @@ def standalone(context,
         kwargs={
             'repair_with': previous_history,
             'force_activities': force_activities,
+            'fake_before_failure_only': fake_before_failure_only,
         },
     )
     decider_proc.start()
