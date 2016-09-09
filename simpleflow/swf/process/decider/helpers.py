@@ -15,7 +15,7 @@ def load_workflow(domain, workflow_name, task_list=None, **kwargs):
     return Executor(swf.models.Domain(domain), workflow, task_list, **kwargs)
 
 
-def make_decider_poller(workflows, domain, task_list, **kwargs):
+def make_decider_poller(workflows, domain, task_list, repair_with=None, **kwargs):
     """
     Factory to build a decider.
 
@@ -27,7 +27,7 @@ def make_decider_poller(workflows, domain, task_list, **kwargs):
         raise ValueError("Sorry you can't repair more than 1 workflow at once!")
 
     executors = [
-        load_workflow(domain, workflow, task_list, **kwargs)
+        load_workflow(domain, workflow, task_list, repair_with=repair_with, **kwargs)
         for workflow in workflows
     ]
     domain = swf.models.Domain(domain)
