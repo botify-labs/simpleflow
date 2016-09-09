@@ -382,7 +382,7 @@ class Executor(executor.Executor):
 
             # check if we allow later tasks to be faked
             if self.fake_before_failure_only and former_event \
-                    and event['state'] not in swf.constants.OK_TASK_STATUSES:
+                    and former_event['state'] not in swf.constants.OK_TASK_STATUSES:
                 self.allow_faking = False
 
         # back to normal execution flow
