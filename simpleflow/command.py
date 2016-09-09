@@ -422,8 +422,7 @@ def get_task_list(workflow_id=''):
               type=str, required=False,
               help='Force the re-execution of some activities in when --repair is enabled.'
               )
-@click.option('--fake-before-failure-only',
-              type=bool, required=False,
+@click.option('--fake-before-failure-only', is_flag=True,
               help='Repair with fake tasks only before encoutering the first failure (--repair mode only).'
               )
 @click.argument('workflow')
