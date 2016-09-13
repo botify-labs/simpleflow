@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.11.14
+~~~~~~~
+
+- Various little fixes around process management, heartbeat, logging (#110)
+
 0.11.13
 ~~~~~~~
 
