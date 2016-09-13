@@ -66,6 +66,27 @@ class TestRetry(unittest.TestCase):
         total_time = time() - t0
         self.assertTrue(abs(total_time - max_count * RETRY_WAIT_TIME) <= error_epsilon * max_count)
 
+    def test_with_delay_wrong_exception(self):
+        callable = DummyCallableRaises(ValueError('test'))
+        with self.assertRaises(ValueError):
+            with_delay(nb_times=3,
+                       delay=constant(RETRY_WAIT_TIME),
+                       on_exceptions=[KeyError])(callable)()
+
+        # 1 == no retry
+        self.assertEquals(1, callable.count)
+
+    def test_with_delay_except(self):
+        callable = DummyCallableRaises(ValueError('test'))
+        with self.assertRaises(ValueError):
+            with_delay(nb_times=3,
+                       delay=constant(RETRY_WAIT_TIME),
+                       except_on=Exception,
+                       on_exceptions=[ValueError])(callable)()
+
+        # 1 == no retry
+        self.assertEquals(1, callable.count)
+
     def test_with_delay_exponential_backoff(self):
         callable = DummyCallableRaises(ValueError('test'))
         max_count = 2

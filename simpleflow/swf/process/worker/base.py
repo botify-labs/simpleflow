@@ -63,7 +63,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     def poll(self, task_list, identity):
         return swf.actors.ActivityWorker.poll(self, task_list, identity)
 
-    @with_state('processing task')
+    @with_state('processing')
     def process(self, request):
         token, task = request
         spawn(self, token, task, self._heartbeat)
@@ -161,7 +161,8 @@ def spawn(poller, token, task, heartbeat=60):
     info = {}
     monitor_child(worker.pid, info)
 
-    def worker_alive(): psutil.pid_exists(worker.pid)
+    def worker_alive(): return psutil.pid_exists(worker.pid)
+
     while worker_alive():
         worker.join(timeout=heartbeat)
         if not worker_alive():
@@ -175,10 +176,15 @@ def spawn(poller, token, task, heartbeat=60):
                     ))
             return
         try:
+            logger.debug(
+                'heartbeating for pid={} (token={})'.format(worker.pid, token)
+            )
             response = poller.heartbeat(token)
-        except swf.exceptions.DoesNotExistError:
+        except swf.exceptions.DoesNotExistError as error:
             # The subprocess is responsible for completing the task.
             # Either the task or the workflow execution no longer exists.
+            logger.debug('heartbeat failed: {}'.format(error))
+            # TODO: kill the worker at this point but make it configurable.
             return
         except Exception as error:
             # Let's crash if it cannot notify the heartbeat failed.  The

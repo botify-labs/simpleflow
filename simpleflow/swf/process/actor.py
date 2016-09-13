@@ -55,14 +55,18 @@ def get_payload_name(payload):
 
 class Supervisor(object):
     def __init__(self, payload, arguments=None, nb_children=None):
-        self._nb_children = nb_children or multiprocessing.cpu_count()
+        # compare explicitly to "None" there because nb_children could be 0
+        if nb_children is None:
+            self._nb_children = multiprocessing.cpu_count()
+        else:
+            self._nb_children = nb_children
         self._processes = []
         self._payload = payload
         self._args = arguments if arguments is not None else ()
 
     def start(self):
         logger.info('starting {}'.format(self._payload))
-        setproctitle('{}(payload={})'.format(
+        setproctitle('simpleflow {}(payload={})'.format(
             self.__class__.__name__,
             get_payload_name(self._payload),
         ))
@@ -145,9 +149,11 @@ class NamedMixin(object):
 
     def set_process_name(self, name=None):
         if name is None:
-            name = self.name
+            klass = self.__class__.__name__
+            task_list = self.task_list
+            name = '{}(task_list={})'.format(klass, task_list)
 
-        setproctitle('{}[{}]'.format(name, self.state))
+        setproctitle('simpleflow {}[{}]'.format(name, self.state))
 
 
 class Poller(NamedMixin, swf.actors.Actor):
@@ -220,13 +226,13 @@ class Poller(NamedMixin, swf.actors.Actor):
         else:
             self.stop_forcefully()
 
-    @with_state('completing task')
     def _complete(self, token, response):
         try:
             complete = utils.retry.with_delay(
                 nb_times=self.nb_retries,
                 delay=utils.retry.exponential,
                 log_with=logger.exception,
+                except_on=swf.exceptions.DoesNotExistError,
             )(self.complete)  # Exponential backoff on errors.
             complete(token, response)
         except Exception as err:
@@ -243,7 +249,6 @@ class Poller(NamedMixin, swf.actors.Actor):
     def complete(self, token, task):
         raise NotImplementedError
 
-    @with_state('polling')
     def _poll(self, task_list=None, identity=None):
         """
         Polls a task represented by its token and data. It uses long-polling

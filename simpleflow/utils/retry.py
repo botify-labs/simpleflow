@@ -4,6 +4,14 @@ import functools
 import logging
 
 
+def _to_tuple(exceptions):
+    if not isinstance(exceptions, collections.Sequence):
+        return tuple([exceptions])
+    elif not isinstance(exceptions, tuple):
+        return tuple(exceptions)
+    return exceptions
+
+
 def constant(value):
     @functools.wraps(constant)
     def call(*args, **kwargs):
@@ -22,6 +30,7 @@ def with_delay(
         nb_times=1,
         delay=constant(1),
         on_exceptions=Exception,
+        except_on=None,
         log_with=None):
     """
     Retry the *decorated* function *nb_times* with a *delay*.
@@ -35,6 +44,8 @@ def with_delay(
     :param on_exceptions: retry only when these exceptions raise.
     :type  on_exceptions: Sequence([Exception])
 
+    :param except_on: don't retry on these exceptions.
+    :type  except_on: Sequence([Exception])
     """
     if log_with is None:
         log_with = logging.getLogger(__name__).info
@@ -46,6 +57,8 @@ def with_delay(
             while nb_times - nb_retries:
                 try:
                     return func(*args, **kwargs)
+                except except_on as error:
+                    raise
                 except on_exceptions as error:
                     wait_delay = delay(nb_retries)
                     log_with(
@@ -58,9 +71,7 @@ def with_delay(
             raise
         return decorated
 
-    if not isinstance(on_exceptions, collections.Sequence):
-        on_exceptions = tuple([on_exceptions])
-    elif not isinstance(on_exceptions, tuple):
-        on_exceptions = tuple(on_exceptions)
+    on_exceptions = _to_tuple(on_exceptions)
+    except_on = _to_tuple(except_on)
 
     return decorate

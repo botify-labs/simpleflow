@@ -67,7 +67,7 @@ class SWFError(Exception):
                       self.kind else None)
 
     def __repr__(self):
-        msg = self.message
+        msg = self.message.strip()
 
         if self.kind and self.details:
             msg += '\nReason: {}, {}'.format(self.kind, self.details)
