@@ -4,12 +4,11 @@ from itertools import chain
 def get_start_to_close_timing(event):
     last_state = event['state']
     scheduled = event.get('scheduled_timestamp')
-    if scheduled is None:
-        start = None
+    start = event.get('started_timestamp')
+    if start is None:
         end = None
         duration = None
     else:
-        start = event['started_timestamp']
         end = event['{}_timestamp'.format(last_state)]
         duration = (end - start).total_seconds()
 
