@@ -109,7 +109,7 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
         raise ValueError("Couldn't find activity.")
 
     # get the callable
-    module_name, method_name = params["name"].rsplit('.', 1)
+    module_name, method_name = found_activity["name"].rsplit('.', 1)
     module = import_module(module_name)
     func = getattr(module, method_name)
     if isinstance(func, Activity):
