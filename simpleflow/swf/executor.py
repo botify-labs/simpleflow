@@ -30,7 +30,6 @@ from swf.core import ConnectedSWFObject
 
 logger = logging.getLogger(__name__)
 
-
 __all__ = ['Executor']
 
 
@@ -52,6 +51,7 @@ def run_fake_activity_task(domain, task_list, result):
         result,
     )
 
+
 # TODO: test that correctly! At the time of writing this I don't have any real
 # world crawl containing child workflows, so this is not guaranteed to work the
 # first time, and it's a bit hard to test end-to-end even with moto.mock_swf
@@ -64,8 +64,8 @@ def run_fake_activity_task(domain, task_list, result):
                   delay=retry.exponential,
                   on_exceptions=KeyError)
 def run_fake_child_workflow_task(domain, task_list, workflow_type_name,
-        workflow_type_version, workflow_id, input=None, result=None,
-        child_policy=None, control=None, tag_list=None):
+                                 workflow_type_version, workflow_id, input=None, result=None,
+                                 child_policy=None, control=None, tag_list=None):
     conn = ConnectedSWFObject().connection
     conn.start_child_workflow_execution(
         workflow_type_name, workflow_type_version, workflow_id,
@@ -107,9 +107,9 @@ def run_fake_task_worker(domain, task_list, former_event):
                 domain,
                 task_list,
                 former_event['result'],
-                former_event['name'],     # workflow_type_name
+                former_event['name'],  # workflow_type_name
                 former_event['version'],  # workflow_type_version
-                former_event['id'],       # workflow_id
+                former_event['id'],  # workflow_id
             ),
             kwargs={
                 'input': former_event['raw_input'],
@@ -126,6 +126,7 @@ class TaskRegistry(dict):
     """This registry tracks tasks and assign them an integer identifier.
 
     """
+
     def add(self, a_task):
         """
         ID's are assigned sequentially by incrementing an integer. They start
@@ -154,6 +155,7 @@ class Executor(executor.Executor):
     on the execution of the workflow.
 
     """
+
     def __init__(self, domain, workflow, task_list=None, repair_with=None,
                  force_activities=None):
         super(Executor, self).__init__(workflow)
@@ -353,8 +355,8 @@ class Executor(executor.Executor):
         future = None
 
         # check if we absolutely want to execute this task in repair mode
-        force_execution = self.force_activities and \
-            self.force_activities.search(a_task.id)
+        force_execution = (self.force_activities and
+                           self.force_activities.search(a_task.id))
 
         # try to fill in the blanks with the workflow we're trying to repair if any
         # TODO: maybe only do that for idempotent tasks??
@@ -364,7 +366,7 @@ class Executor(executor.Executor):
             # ... but only keep the event if the task was successful
             if former_event and former_event['state'] == 'completed':
                 logger.info(
-                    'faking task completed successfully in previous ' \
+                    'faking task completed successfully in previous '
                     'workflow: {}'.format(former_event['id'])
                 )
                 json_hash = hashlib.md5(json_dumps(former_event)).hexdigest()
@@ -410,7 +412,7 @@ class Executor(executor.Executor):
                 a_task = WorkflowTask(func, *args, **kwargs)
             else:
                 raise TypeError('invalid type {} for {}'.format(
-                                type(func), func))
+                    type(func), func))
         except exceptions.ExecutionBlocked:
             return futures.Future()
 
@@ -502,7 +504,7 @@ class Executor(executor.Executor):
 
         self.after_replay()
         decision = swf.models.decision.WorkflowExecutionDecision()
-        decision.complete(result=swf.format.result(json.dumps(result)))
+        decision.complete(result=swf.format.result(json_dumps(result)))
         self.on_completed()
         self.after_closed()
         return [decision], {}

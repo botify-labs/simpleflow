@@ -7,6 +7,7 @@
 
 import json
 
+from simpleflow.utils import json_dumps
 from swf.models.decision.base import Decision, decision_action
 
 
@@ -59,7 +60,7 @@ class ActivityTaskDecision(Decision):
         :param  : Specifies the name of the task list in which to schedule the activity task
         :type   :str
         """
-        input = json.dumps(input) or None
+        input = json_dumps(input) or None
 
         self.update_attributes({
             'activityId': activity_id,

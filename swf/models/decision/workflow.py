@@ -7,6 +7,7 @@
 
 import json
 
+from simpleflow.utils import json_dumps
 from swf.models.workflow import CHILD_POLICIES
 from swf.models.decision.base import Decision, decision_action
 
@@ -82,7 +83,7 @@ class WorkflowExecutionDecision(Decision):
         :param  workflow_type_version: workflow type version the execution shold belong to
         :type   workflow_type_version: str
         """
-        input = json.dumps(input) or None
+        input = json_dumps(input) or None
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -130,7 +131,7 @@ class ChildWorkflowExecutionDecision(Decision):
         :type   task_timeout: str
 
         """
-        input = json.dumps(input) or None
+        input = json_dumps(input) or None
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -195,7 +196,7 @@ class ExternalWorkflowExecutionDecision(Decision):
         :param  run_id: run id of the workflow execution to be signaled
         :type   run_id: str
         """
-        input = json.dumps(input) or None
+        input = json_dumps(input) or None
 
         self.update_attributes({
             'signalName': signal_name,

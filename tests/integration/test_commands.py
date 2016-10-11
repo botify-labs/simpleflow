@@ -1,12 +1,9 @@
 # See README for more informations about integration tests
-import os
-import unittest
 
-import boto.swf
+import simpleflow.command
 from click.testing import CliRunner
 from sure import expect
 
-import simpleflow.command
 from . import vcr, IntegrationTest
 
 

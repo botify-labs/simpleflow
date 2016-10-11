@@ -10,6 +10,7 @@ import json
 import collections
 
 from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError
+from simpleflow.utils import json_dumps
 
 from swf.constants import REGISTERED
 from swf.utils import immutable
@@ -255,7 +256,7 @@ class WorkflowType(BaseModel):
         workflow_id = workflow_id or '%s-%s-%i' % (self.name, self.version, time.time())
         task_list = task_list or self.task_list
         child_policy = child_policy or self.child_policy
-        input = json.dumps(input) or None
+        input = json_dumps(input) or None
         if tag_list is not None and not isinstance(tag_list, list):
             tag_list = [tag_list]
 
@@ -507,7 +508,7 @@ class WorkflowExecution(BaseModel):
             self.domain.name,
             signal_name,
             self.workflow_id,
-            input=json.dumps(input),
+            input=json_dumps(input),
             run_id=self.run_id)
 
     @exceptions.translate(SWFResponseError,

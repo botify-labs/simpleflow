@@ -1,13 +1,12 @@
-import sys
 import operator
-from functools import partial, wraps
 from datetime import datetime
+from functools import partial, wraps
 
+from simpleflow.history import History
+from simpleflow.utils import json_dumps
 from tabulate import tabulate
 
 from . import WorkflowStats
-from simpleflow.history import History
-from simpleflow.utils import json_dumps
 
 TEMPLATE = '''
 Workflow Execution {workflow_id}

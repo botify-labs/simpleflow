@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 
 import abc
-import json
+
+from simpleflow.utils import json_dumps
 
 from . import futures
 from .activity import Activity
@@ -27,7 +28,7 @@ class Task(object):
         raise NotImplementedError()
 
     def serialize(self, value):
-        return json.dumps(value)
+        return json_dumps(value)
 
     def resolve_args(self, *args):
         return [get_actual_value(arg) for arg in args]

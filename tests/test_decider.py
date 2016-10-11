@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-import swf.models
-
 from simpleflow import (
     activity,
     Workflow,
@@ -10,7 +8,6 @@ from simpleflow import (
 )
 
 from .data import (
-    DOMAIN,
     DEFAULT_VERSION,
 )
 

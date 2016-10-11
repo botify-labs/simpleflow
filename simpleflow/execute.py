@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 import sys
 import subprocess
@@ -7,6 +8,8 @@ import cPickle as pickle
 import base64
 import logging
 import types
+
+from simpleflow.utils import json_dumps
 
 __all__ = ['program', 'python']
 
@@ -93,7 +96,7 @@ def check_keyword_arguments(argspec, kwargs):
 
 
 def format_arguments_json(*args, **kwargs):
-    return json.dumps({
+    return json_dumps({
         'args': args,
         'kwargs': kwargs,
     })
@@ -367,4 +370,4 @@ if __name__ == '__main__':
             pickle.dumps(err)))
         sys.exit(1)
     else:
-        print(json.dumps(result))
+        print(json_dumps(result))
