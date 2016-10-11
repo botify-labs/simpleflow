@@ -8,7 +8,7 @@ from . import (
 
 
 def load_workflow(domain, workflow_name, task_list=None, repair_with=None,
-        force_activities=None):
+                  force_activities=None):
     module_name, object_name = workflow_name.rsplit('.', 1)
     module = __import__(module_name, fromlist=['*'])
 
@@ -33,7 +33,7 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None,
         load_workflow(domain, workflow, task_list, repair_with=repair_with,
                       force_activities=force_activities)
         for workflow in workflows
-    ]
+        ]
     domain = swf.models.Domain(domain)
     return DeciderPoller(executors, domain, task_list)
 

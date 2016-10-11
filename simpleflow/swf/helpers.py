@@ -1,14 +1,13 @@
 from __future__ import absolute_import
 
 import getpass
-from importlib import import_module
-import json
 import os
 import socket
+from importlib import import_module
 
+import swf.exceptions
 import swf.models
 import swf.querysets
-import swf.exceptions
 from simpleflow.activity import Activity
 from simpleflow.utils import json_dumps
 

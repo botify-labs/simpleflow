@@ -41,7 +41,8 @@ def disable_boto_connection_pooling():
     # boto connection pooling doesn't work very well with multiprocessing, it
     # provokes some errors like this:
     #
-    #    [Errno 1] _ssl.c:1429: error:1408F119:SSL routines:SSL3_GET_RECORD:decryption failed or bad record mac when polling on analysis-testjbb-repair-a61ff96e854344748e308fefc9ddff61
+    #    [Errno 1] _ssl.c:1429: error:1408F119:SSL routines:SSL3_GET_RECORD:decryption failed or bad record mac
+    # when polling on analysis-testjbb-repair-a61ff96e854344748e308fefc9ddff61
     #
     # It's because when forking, file handles are copied and sockets are shared.
     # Even sockets that handle SSL conections to AWS services, but SSL

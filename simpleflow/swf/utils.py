@@ -16,8 +16,8 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
     if not run_id:
         found_run_id = None
         qs = swf.querysets.WorkflowExecutionQuerySet(domain)
-        wfe = qs.filter(workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_OPEN) or \
-                qs.filter(workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_CLOSED)
+        wfe = (qs.filter(workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_OPEN) or
+               qs.filter(workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_CLOSED))
         if wfe:
             # by default, workflow executions are returned in descending start time order
             # so the first returned is the last that has run
@@ -30,6 +30,7 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
         workflow_id=workflow_id,
         run_id=run_id or found_run_id,
     )
+
 
 # TODO: move this function inside a QuerySet object when we merge the
 # "simpleflow" and "swf" namespaces

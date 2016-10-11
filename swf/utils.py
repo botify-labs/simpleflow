@@ -43,6 +43,7 @@ class Enum(object):
     http://stackoverflow.com/questions/36932/whats-the-best-way-to-implement-an-enum-in-python
 
     """
+
     def __init__(self, *sequential, **named):
         self.enums = dict(zip(sequential, range(len(sequential))), **named)
 
@@ -123,6 +124,7 @@ class _CachedProperty(property):
             value = fget(obj)
             setattr(obj, self._cache_name, value)
             return value
+
         return do_fget
 
     def _wrap_fset(self, fset):
@@ -130,6 +132,7 @@ class _CachedProperty(property):
         def do_fset(obj, value):
             fset(obj, value)
             setattr(obj, self._cache_name, value)
+
         return do_fset
 
     def _wrap_fdel(self, fdel):
@@ -137,7 +140,10 @@ class _CachedProperty(property):
         def do_fdel(obj):
             fdel(obj)
             delattr(obj, self._cache_name)
+
         return do_fdel
+
+
 cached_property = _CachedProperty
 
 
@@ -153,14 +159,14 @@ def immutable(mutableclass):
         raise TypeError('@immutable: class must have __slots__')
 
     class immutableclass(mutableclass):
-        __slots__ = ()                      # No __dict__, please
+        __slots__ = ()  # No __dict__, please
 
         def __new__(cls, *args, **kw):
-            new = mutableclass(*args, **kw) # __init__ gets called while still mutable
+            new = mutableclass(*args, **kw)  # __init__ gets called while still mutable
             new.__class__ = immutableclass  # locked for writing now
             return new
 
-        def __init__(self, *args, **kw):    # Prevent re-init after __new__
+        def __init__(self, *args, **kw):  # Prevent re-init after __new__
             pass
 
     # Copy class identity:
