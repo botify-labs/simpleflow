@@ -24,6 +24,7 @@ def test_execute_program_no_kwargs():
         assert (exc_info.value.message ==
                 'command does not take keyword arguments')
 
+
 @execute.program(path='ls')
 def ls_noargs(**kwargs):
     """
