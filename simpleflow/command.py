@@ -605,4 +605,4 @@ def activity_rerun(domain,
 
     # finally replay the function with the correct arguments
     result = func(*args, **kwargs)
-    logger.info("Result (JSON): {}".format(json_dumps(result, pretty=True)))
+    logger.info("Result (JSON): {}".format(json_dumps(result, compact=False)))
