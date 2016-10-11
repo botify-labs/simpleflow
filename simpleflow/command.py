@@ -522,7 +522,7 @@ def standalone(context,
         execution_timeout,
         tags,
         decision_tasks_timeout,
-        json.dumps(wf_input),
+        json_dumps(wf_input),
         None,
         local=False,
     )
@@ -604,4 +604,4 @@ def activity_rerun(domain,
 
     # finally replay the function with the correct arguments
     result = func(*args, **kwargs)
-    logger.info("Result (JSON): {}".format(json_dumps(result)))
+    logger.info("Result (JSON): {}".format(json_dumps(result, pretty=True)))

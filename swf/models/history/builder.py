@@ -2,6 +2,7 @@ import json
 
 import swf.models
 import swf.models.event.workflow
+from simpleflow.utils import json_dumps
 from swf.models.event.factory import EventFactory
 
 DEFAULT_DECIDER_IDENTITY = 'test_decider'
@@ -73,7 +74,7 @@ class History(swf.models.History):
                     "childPolicy": "TERMINATE",
                     "executionStartToCloseTimeout":
                         workflow.execution_timeout,
-                    "input": json.dumps(input if input else {}),
+                    "input": json_dumps(input if input else {}),
                     "workflowType": {
                         "name": workflow.name,
                         "version": workflow.version
@@ -153,7 +154,7 @@ class History(swf.models.History):
             "decisionTaskCompletedEventAttributes": {
                 "startedEventId": started,
                 "scheduledEventId": scheduled,
-                "executionContext": (json.dumps(execution_context) if
+                "executionContext": (json_dumps(execution_context) if
                                      execution_context is not None else None),
             }
         }))
@@ -214,7 +215,7 @@ class History(swf.models.History):
             "eventType": "ActivityTaskScheduled",
             "eventTimestamp": new_timestamp_string(),
             "activityTaskScheduledEventAttributes": {
-                'control': (json.dumps(control) if
+                'control': (json_dumps(control) if
                             control is not None else None),
                 "taskList": {
                     "name": activity.task_list,
@@ -230,7 +231,7 @@ class History(swf.models.History):
                                    activity.name, hash(activity.name))),
                 "scheduleToStartTimeout": activity.task_schedule_to_start_timeout,
                 "decisionTaskCompletedEventId": decision_id,
-                "input": json.dumps(input if input is not None else {}),
+                "input": json_dumps(input if input is not None else {}),
                 "startToCloseTimeout": activity.task_start_to_close_timeout,
             }
         }))
@@ -259,7 +260,7 @@ class History(swf.models.History):
             "activityTaskCompletedEventAttributes": {
                 "startedEventId": started,
                 "scheduledEventId": scheduled,
-                "result": json.dumps(result) if result is not None else None,
+                "result": json_dumps(result) if result is not None else None,
             }
         }))
 
@@ -381,12 +382,12 @@ class History(swf.models.History):
             'eventType': 'StartChildWorkflowExecutionInitiated',
             'eventTimestamp': new_timestamp_string(),
             'startChildWorkflowExecutionInitiatedEventAttributes': {
-                'control': (json.dumps(control) if
+                'control': (json_dumps(control) if
                             control is not None else None),
                 'childPolicy': 'TERMINATE',
                 'decisionTaskCompletedEventId': 76,
                 'executionStartToCloseTimeout': '432000',
-                'input': (json.dumps(input) if
+                'input': (json_dumps(input) if
                           input is not None else '{}'),
                 'tagList': tag_list,
                 'taskList': task_list,
@@ -663,7 +664,7 @@ class History(swf.models.History):
             'eventType': 'WorkflowExecutionSignaled',
             'workflowExecutionSignaledEventAttributes': {
                 'externalInitiatedEventId': external_event_id,
-                'input': json.dumps(input) if input is not None else '{}',
+                'input': json_dumps(input) if input is not None else '{}',
                 'signalName': name,
             }
         }))

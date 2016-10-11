@@ -10,6 +10,7 @@ import swf.models
 import swf.querysets
 import swf.exceptions
 from simpleflow.activity import Activity
+from simpleflow.utils import json_dumps
 
 from .stats import pretty
 
@@ -135,7 +136,7 @@ def get_task(domain_name, workflow_id, task_id, details):
 
 
 def swf_identity():
-    return json.dumps({
+    return json_dumps({
         'user': getpass.getuser(),          # system's user
         'hostname': socket.gethostname(),   # main hostname
         'pid': os.getpid(),                 # current pid

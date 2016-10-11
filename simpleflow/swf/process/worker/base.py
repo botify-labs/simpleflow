@@ -16,6 +16,8 @@ from simpleflow.swf.process.actor import (
     with_state,
 )
 from simpleflow.swf.task import ActivityTask
+from simpleflow.utils import json_dumps
+
 from .dispatch import from_task_registry
 
 
@@ -114,7 +116,7 @@ class ActivityWorker(object):
             return poller.fail(token, task, reason=str(err), details=tb)
 
         try:
-            poller._complete(token, json.dumps(result))
+            poller._complete(token, json_dumps(result))
         except Exception as err:
             logger.exception("complete error")
             reason = 'cannot complete task {}: {}'.format(
