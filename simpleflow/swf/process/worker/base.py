@@ -6,17 +6,16 @@ import signal
 import traceback
 
 import psutil
-import simpleflow.registry
 import swf.actors
 import swf.exceptions
 import swf.format
-import simpleflow.registry
 from simpleflow.swf.process.actor import (
     Supervisor,
     Poller,
     with_state,
 )
-from .dispatch import from_task_registry
+
+from .dispatch import dynamic_dispatcher
 
 from simpleflow.swf.task import ActivityTask
 from simpleflow.utils import json_dumps
@@ -40,11 +39,12 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     Polls an activity and handles it in the worker.
 
     """
-
-    def __init__(self, domain, task_list, workflow, heartbeat=60,
+    def __init__(self, workflow_id, domain, task_list, heartbeat=60,
                  *args, **kwargs):
         """
 
+        :param workflow_id:
+        :type workflow_id:
         :param domain:
         :type domain:
         :param task_list:
@@ -56,7 +56,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         :param kwargs:
         :type kwargs:
         """
-        self._workflow = workflow
+        self._workflow_id = workflow_id
         self.nb_retries = 3
         # heartbeat=0 is a special value to disable heartbeating. We want to
         # replace it by None because multiprocessing.Process.join() treats
@@ -75,7 +75,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     def name(self):
         return '{}({})'.format(
             self.__class__.__name__,
-            self._workflow._workflow.name,
+            self._workflow_id,
         )
 
     @with_state('polling')
@@ -127,12 +127,8 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 
 
 class ActivityWorker(object):
-    def __init__(self, workflow):
-        self._dispatcher = from_task_registry.RegistryDispatcher(
-            simpleflow.registry.registry,
-            None,
-            workflow,
-        )
+    def __init__(self):
+        self._dispatcher = dynamic_dispatcher.Dispatcher()
 
     def dispatch(self, task):
         """
@@ -143,7 +139,7 @@ class ActivityWorker(object):
         :rtype: simpleflow.activity.Activity
         """
         name = task.activity_type.name
-        return self._dispatcher.dispatch_activity(name)
+        return self._dispatcher.dispatch(name)
 
     def process(self, poller, token, task):
         """
@@ -189,7 +185,7 @@ def process_task(poller, token, task):
     :type task: swf.models.ActivityTask
     """
     logger.debug('process_task() pid={}'.format(os.getpid()))
-    worker = ActivityWorker(poller._workflow)
+    worker = ActivityWorker()
     worker.process(poller, token, task)
 
 

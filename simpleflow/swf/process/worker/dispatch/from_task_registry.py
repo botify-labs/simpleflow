@@ -5,7 +5,7 @@ class RegistryDispatcher(object):
     The registry has the format ``{label: {name: task}}``.
 
     """
-    def __init__(self, registry, label, workflow):
+    def __init__(self, registry, label, workflow=None):
         """
 
         :param registry: of tasks.
