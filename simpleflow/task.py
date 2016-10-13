@@ -39,6 +39,15 @@ class Task(object):
 
 
 class ActivityTask(Task):
+    """
+    Activity task.
+
+    :type activity: Activity
+    :type idempotent: Optional[bool]
+    :type args: list[Any]
+    :type kwargs: dict[Any, Any]
+    :type id: str
+    """
     def __init__(self, activity, *args, **kwargs):
         if not isinstance(activity, Activity):
             raise TypeError('Wrong value for `activity`, got {} instead'.format(type(activity)))
@@ -69,9 +78,18 @@ class ActivityTask(Task):
 
 
 class WorkflowTask(Task):
+    """
+    Child workflow.
+
+    :type workflow: simpleflow.workflow.Workflow
+    :type idempotent: bool
+    :type args: list[Any]
+    :type kwargs: dict[Any, Any]
+    :type id: str
+    """
     def __init__(self, workflow, *args, **kwargs):
         self.workflow = workflow
-        # TODO: handle idempotence at workflow level
+        # TODO: handle idempotency at workflow level
         self.idempotent = False
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
@@ -84,7 +102,7 @@ class WorkflowTask(Task):
     def __repr__(self):
         return '{}(workflow={}, args={}, kwargs={}, id={})'.format(
             self.__class__.__name__,
-            self.activity,
+            self.workflow,
             self.args,
             self.kwargs,
             self.id)

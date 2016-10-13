@@ -48,6 +48,7 @@ def meanwhile(calling_this, call_that, *args, **kwargs):
     """
     calling_this()
     error_happened = False
+    result = None
     try:
         result = call_that(*args, **kwargs)
     except:

@@ -197,7 +197,7 @@ class Poller(NamedMixin, swf.actors.Actor):
     def start(self):
         """
         Start the main decider process. There is no daemonization. The process
-        is intented to be run inside a supervisor process.
+        is intended to be run inside a supervisor process.
 
         """
         logger.info("starting %s on domain %s", self.name, self.domain.name)
@@ -227,6 +227,15 @@ class Poller(NamedMixin, swf.actors.Actor):
             self.stop_forcefully()
 
     def _complete(self, token, response):
+        """
+        Complete with retry.
+        :param token:
+        :type token: str
+        :param response: response: decision list, JSON result, ...
+        :type response: Any
+        :return:
+        :rtype:
+        """
         try:
             complete = utils.retry.with_delay(
                 nb_times=self.nb_retries,
@@ -246,7 +255,7 @@ class Poller(NamedMixin, swf.actors.Actor):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def complete(self, token, task):
+    def complete(self, token, response):
         raise NotImplementedError
 
     def _poll(self, task_list=None, identity=None):
@@ -261,14 +270,14 @@ class Poller(NamedMixin, swf.actors.Actor):
                           (\u0000-\u001f | \u007f - \u009f). Also, it must not
                           contain the literal string "arn".
 
-        :type  task_list: str.
+        :type  task_list: str
         :param identity: when set, it overrides the default decider's identity.
                          Identity of the decider making the request, which is
                          recorded in the DecisionTaskStarted event in the
                          workflow history. This enables diagnostic tracing when
                          problems arise. The form of this identity is user
                          defined. Minimum length of 0. Maximum length of 256.
-        :type  identity: str.
+        :type  identity: str
 
         See also
         http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html#API_PollForDecisionTask_RequestSyntax

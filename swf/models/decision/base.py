@@ -62,7 +62,7 @@ class Decision(dict):
         """
         if not hasattr(self, 'attributes_key'):
             raise AttributeError("Can't update unset attributes_key"
-                                 "decision attritute")
+                                 "decision attribute")
 
         for key, value in data.iteritems():
             if value:

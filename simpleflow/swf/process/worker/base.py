@@ -2,14 +2,12 @@ import json
 import logging
 import multiprocessing
 import os
-import psutil
 import signal
 import traceback
 
+import psutil
 import swf.actors
 import swf.format
-
-import simpleflow
 from simpleflow.swf.process.actor import (
     Supervisor,
     Poller,
@@ -19,7 +17,6 @@ from simpleflow.swf.task import ActivityTask
 from simpleflow.utils import json_dumps
 
 from .dispatch import dynamic_dispatcher
-
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +75,11 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 
     @with_state('processing')
     def process(self, request):
+        """
+        Process a request.
+        :param request:
+        :type request: (str, swf.models.ActivityTask)
+        """
         token, task = request
         spawn(self, token, task, self._heartbeat)
 
@@ -109,14 +111,23 @@ class ActivityWorker(object):
         """
 
         :param task:
-        :type task:
+        :type task: swf.models.ActivityTask
         :return:
-        :rtype:
+        :rtype: simpleflow.activity.Activity
         """
         name = task.activity_type.name
         return self._dispatcher.dispatch_activity(name)
 
     def process(self, poller, token, task):
+        """
+
+    :param poller:
+    :type poller: ActivityPoller
+    :param token:
+    :type token: str
+    :param task:
+    :type task: swf.models.ActivityTask
+        """
         logger.debug('ActivityWorker.process() pid={}'.format(os.getpid()))
         activity = self.dispatch(task)
         input = json.loads(task.input)
@@ -141,12 +152,28 @@ class ActivityWorker(object):
 
 
 def process_task(poller, token, task):
+    """
+
+    :param poller:
+    :type poller: ActivityPoller
+    :param token:
+    :type token: str
+    :param task:
+    :type task: swf.models.ActivityTask
+    """
     logger.debug('process_task() pid={}'.format(os.getpid()))
     worker = ActivityWorker()
     worker.process(poller, token, task)
 
 
 def monitor_child(pid, info):
+    """
+    Fill the info dict at child's exit.
+    :param pid:
+    :type pid: int
+    :param info:
+    :type info: dict
+    """
     def _handle_child_exit(signum, frame):
         if signum == signal.SIGCHLD:
             # Only fill the info dict. The spawn() function calls
@@ -156,7 +183,7 @@ def monitor_child(pid, info):
             except OSError:
                 # Beware of the race between this handler and
                 # :meth:`Process.join`. This is the main reason to raise a
-                # ``errno 10: No child processe``.
+                # ``errno 10: No child process``.
                 return
             sig = status & 0xff
             exit_code = (status & 0xff00) >> 8
@@ -167,6 +194,17 @@ def monitor_child(pid, info):
 
 
 def spawn(poller, token, task, heartbeat=60):
+    """
+    Spawn a process and wait for it to end, sending heartbeats to SWF.
+    :param poller:
+    :type poller: ActivityPoller
+    :param token:
+    :type token: str
+    :param task:
+    :type task: swf.models.ActivityTask
+    :param heartbeat: heartbeat delay (seconds)
+    :type heartbeat: int
+    """
     logger.debug('spawn() pid={}'.format(os.getpid()))
     worker = multiprocessing.Process(
         target=process_task,

@@ -31,6 +31,13 @@ logger = logging.getLogger(__name__)
 
 
 def get_workflow(clspath):
+    """
+    Import a workflow class.
+    :param clspath: class path
+    :type clspath: str
+    :return:
+    :rtype: simpleflow.workflow.Workflow
+    """
     modname, clsname = clspath.rsplit('.', 1)
     module = __import__(modname, fromlist=['*'])
     cls = getattr(module, clsname)

@@ -5,32 +5,29 @@
 #
 # See the file LICENSE for copying permission.
 
-import time
-import json
 import collections
+import time
 
 from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError
 from simpleflow.utils import json_dumps
-
-from swf.constants import REGISTERED
-from swf.utils import immutable
-from swf.models import BaseModel, Domain
-from swf.models.history import History
-from swf.models.base import ModelDiff
 from swf import exceptions
+from swf.constants import REGISTERED
 from swf.exceptions import (
     DoesNotExistError,
     AlreadyExistsError,
     ResponseError,
     raises,
 )
-
+from swf.models import BaseModel, Domain
+from swf.models.base import ModelDiff
+from swf.models.history import History
+from swf.utils import immutable
 
 _POLICIES = (
-    'TERMINATE',       # child executions will be terminated
+    'TERMINATE',  # child executions will be terminated
     'REQUEST_CANCEL',  # a request to cancel will be attempted for
-                       # each child execution
-    'ABANDON',         # no action will be taken
+    # each child execution
+    'ABANDON',  # no action will be taken
 )
 
 CHILD_POLICIES = collections.namedtuple('CHILD_POLICY',
@@ -130,7 +127,7 @@ class WorkflowType(BaseModel):
         super(self.__class__, self).__init__(*args, **kwargs)
 
     def set_child_policy(self, policy):
-        if not policy in CHILD_POLICIES:
+        if policy not in CHILD_POLICIES:
             raise ValueError("invalid child policy value: {}".format(policy))
 
         self.child_policy = policy
@@ -139,9 +136,9 @@ class WorkflowType(BaseModel):
         """Checks for differences between WorkflowType instance
         and upstream version
 
-        :returns: A list of swf.models.base.ModelDiff namedtuple describing
+        :returns: A list (swf.models.base.ModelDiff) namedtuple describing
                   differences
-        :rtype: list
+        :rtype: ModelDiff
         """
         try:
             description = self.connection.describe_workflow_type(
@@ -281,11 +278,11 @@ class WorkflowType(BaseModel):
 
     def __repr__(self):
         return '<{} domain={} name={} version={} status={}>'.format(
-               self.__class__.__name__,
-               self.domain.name,
-               self.name,
-               self.version,
-               self.status)
+            self.__class__.__name__,
+            self.domain.name,
+            self.name,
+            self.version,
+            self.status)
 
 
 @immutable
@@ -383,8 +380,8 @@ class WorkflowExecution(BaseModel):
         self.cancel_requested = cancel_requested
         self.latest_execution_context = latest_execution_context
         self.latest_activity_task_timestamp = latest_activity_task_timestamp
-        self.open_counts = open_counts or {} # so we can query keys in any case
-        self.parent = parent or {} # so we can query keys in any case
+        self.open_counts = open_counts or {}  # so we can query keys in any case
+        self.parent = parent or {}  # so we can query keys in any case
 
         # immutable decorator rebinds class name,
         # so have to use generice self.__class__
@@ -396,7 +393,7 @@ class WorkflowExecution(BaseModel):
 
         :returns: A list of swf.models.base.Diff namedtuple describing
                   differences
-        :rtype: list
+        :rtype: ModelDiff
         """
         try:
             description = self.connection.describe_workflow_execution(

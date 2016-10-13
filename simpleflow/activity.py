@@ -20,6 +20,7 @@ def with_attributes(
     """
     :param name: of the activity type.
     :type  name: str.
+    :rtype: () -> Activity[()]
 
     """
     def wrap(func):

@@ -366,6 +366,7 @@ if __name__ == '__main__':
             result = callable_(*args, **kwargs)
     except Exception as err:
         # Use base64 encoding to avoid carriage returns and special characters.
+        # FIXME change this: brittle, missing traceback
         print(base64.b64encode(
             pickle.dumps(err)))
         sys.exit(1)
