@@ -123,8 +123,8 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 
 
 class ActivityWorker(object):
-    def __init__(self):
-        self._dispatcher = dynamic_dispatcher.Dispatcher()
+    def __init__(self, dispatcher=None):
+        self._dispatcher = dispatcher or dynamic_dispatcher.Dispatcher()
 
     def dispatch(self, task):
         """
