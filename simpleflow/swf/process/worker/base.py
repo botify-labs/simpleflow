@@ -114,7 +114,7 @@ class ActivityWorker(object):
         :rtype:
         """
         name = task.activity_type.name
-        return self._dispatcher.dispatch(name)
+        return self._dispatcher.dispatch_activity(name)
 
     def process(self, poller, token, task):
         logger.debug('ActivityWorker.process() pid={}'.format(os.getpid()))
