@@ -8,7 +8,7 @@ from .base import (
 )
 
 
-def make_worker_poller(workflow_id, domain, task_list, heartbeat):
+def make_worker_poller(domain, task_list, heartbeat):
     """
     Make a worker poller for the domain and task list.
     :param domain:
@@ -21,15 +21,10 @@ def make_worker_poller(workflow_id, domain, task_list, heartbeat):
     :rtype: ActivityPoller
     """
     domain = swf.models.Domain(domain)
-    return ActivityPoller(
-        workflow_id,
-        domain,
-        task_list,
-        heartbeat,
-    )
+    return ActivityPoller(domain, task_list, heartbeat)
 
 
-def start(workflow_id, domain, task_list, nb_processes=None, heartbeat=60):
+def start(domain, task_list, nb_processes=None, heartbeat=60):
     """
     Start a worker for the given domain and task_list.
     :param domain:
@@ -41,7 +36,7 @@ def start(workflow_id, domain, task_list, nb_processes=None, heartbeat=60):
     :param heartbeat: heartbeat frequency in seconds
     :type heartbeat: int
     """
-    poller = make_worker_poller(workflow_id, domain, task_list, heartbeat)
+    poller = make_worker_poller(domain, task_list, heartbeat)
     worker = Worker(poller, nb_processes)
     worker.is_alive = True
     worker.start()

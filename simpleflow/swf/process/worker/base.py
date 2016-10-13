@@ -39,12 +39,9 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     Polls an activity and handles it in the worker.
 
     """
-    def __init__(self, workflow_id, domain, task_list, heartbeat=60,
-                 *args, **kwargs):
+    def __init__(self, domain, task_list, heartbeat=60, *args, **kwargs):
         """
 
-        :param workflow_id:
-        :type workflow_id:
         :param domain:
         :type domain:
         :param task_list:
@@ -56,7 +53,6 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         :param kwargs:
         :type kwargs:
         """
-        self._workflow_id = workflow_id
         self.nb_retries = 3
         # heartbeat=0 is a special value to disable heartbeating. We want to
         # replace it by None because multiprocessing.Process.join() treats
@@ -73,9 +69,9 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 
     @property
     def name(self):
-        return '{}({})'.format(
+        return '{}(task_list={})'.format(
             self.__class__.__name__,
-            self._workflow_id,
+            self.task_list,
         )
 
     @with_state('polling')
