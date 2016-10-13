@@ -3,7 +3,18 @@ import importlib
 
 
 class Dispatcher(object):
-    def dispatch(self, name):
-        submodule_name, func_name = name.rsplit('.', 1)
-        submodule = importlib.import_module(submodule_name)
-        return getattr(submodule, func_name)
+    """
+    Dispatch by name, like simpleflow.swf.process.worker.dispatch.by_module.ModuleDispatcher
+    but without a hierarchy.
+    """
+    def dispatch_activity(self, name):
+        """
+
+        :param name:
+        :type name: str
+        :return:
+        :rtype: simpleflow.activity.Activity
+        """
+        module_name, activity_name = name.rsplit('.', 1)
+        module = importlib.import_module(module_name)
+        return getattr(module, activity_name)

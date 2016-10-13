@@ -135,7 +135,7 @@ class ActivityWorker(object):
         :rtype: simpleflow.activity.Activity
         """
         name = task.activity_type.name
-        return self._dispatcher.dispatch(name)
+        return self._dispatcher.dispatch_activity(name)
 
     def process(self, poller, token, task):
         """
