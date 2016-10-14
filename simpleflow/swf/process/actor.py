@@ -3,9 +3,14 @@ import functools
 import logging
 import multiprocessing
 import signal
+try:
+    from builtins import range
+except ImportError:
+    pass
 from setproctitle import setproctitle
 
 import swf.actors
+import swf.exceptions
 from simpleflow import utils
 from simpleflow.swf.helpers import swf_identity
 
@@ -46,9 +51,9 @@ def get_payload_name(payload):
 
     if isinstance(payload, types.MethodType):
         instance = payload.im_self
-        return '{}.{}'.format(instance.__class__.__name__, payload.func_name)
+        return '{}.{}'.format(instance.__class__.__name__, payload.__name__)
     elif isinstance(payload, types.FunctionType):
-        return payload.func_name
+        return payload.__name__
 
     raise TypeError('invalid payload type {}'.format(type(payload)))
 
@@ -71,7 +76,7 @@ class Supervisor(object):
             get_payload_name(self._payload),
         ))
         assert len(self._processes) == 0
-        for _ in xrange(self._nb_children):
+        for _ in range(self._nb_children):
             child = multiprocessing.Process(
                 target=self._payload,
                 args=self._args,
@@ -141,11 +146,6 @@ class NamedMixin(object):
     @property
     def name(self):
         return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-        self.set_process_name()
 
     def set_process_name(self, name=None):
         if name is None:
@@ -236,6 +236,7 @@ class Poller(NamedMixin, swf.actors.Actor):
         :return:
         :rtype:
         """
+        # FIXME this is a public member
         try:
             complete = utils.retry.with_delay(
                 nb_times=self.nb_retries,
@@ -245,7 +246,7 @@ class Poller(NamedMixin, swf.actors.Actor):
             )(self.complete)  # Exponential backoff on errors.
             complete(token, response)
         except Exception as err:
-            # This embarasing because the decider cannot notify SWF of the
+            # This is embarrassing because the decider cannot notify SWF of the
             # task completion. As it will not try again, the task will
             # timeout (start_to_complete).
             logger.exception("cannot complete task: %s", str(err))

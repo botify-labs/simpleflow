@@ -11,12 +11,13 @@ import multiprocessing
 import os
 import random
 import signal
-import time
+from builtins import range
+
 
 # Utility
 def log(msg):
     now = datetime.datetime.now().isoformat()
-    print "{} pid={} {}".format(now, os.getpid(), msg)
+    print("{} pid={} {}".format(now, os.getpid(), msg))
 
 
 # Model for multi process
@@ -27,6 +28,7 @@ class MultiProcessActor(object):
     actions. Binds signal handlers to expected behaviors. Adds
     a stop() method to inheriting actors.
     """
+
     def __init__(self):
         self._is_alive = False
         self._nb_children = 4
@@ -67,6 +69,7 @@ class MultiProcessActor(object):
         Binds SIGTERM and SIGINT to actors graceful shutdown action, and SIGUSR1 to
         a debug action to display process hierarchy + some useful informations.
         """
+
         def sigtermhandler(signum, frame):
             if self.is_alive:
                 log(
@@ -101,6 +104,7 @@ class MultiProcessActor(object):
         log("all processes shut down, exiting...")
         self._is_alive = False
 
+
 # A dummy decider process
 class Decider(MultiProcessActor):
     def __init__(self):
@@ -110,7 +114,7 @@ class Decider(MultiProcessActor):
     def spawn_handler(self):
         try:
             self._semaphore.acquire()
-        except OSError, err:
+        except OSError as err:
             log('Error: cannot acquire semaphore: {}'.format(err))
             return
 
@@ -128,13 +132,13 @@ class Decider(MultiProcessActor):
             # "time.sleep()" gets interrupted when receiving a SIGINT it seems,
             # so let's spend time in a different way
             i = 0
-            for _ in xrange(0, sec * 10000000):
+            for _ in range(0, sec * 10000000):
                 i = i + 1
-            # </end of dumb section>
+                # </end of dumb section>
         finally:
             try:
                 self._semaphore.release()
-            except Exception, err:
+            except Exception as err:
                 log('Error: cannot release semaphore: {}'.format(err))
 
     def start(self):

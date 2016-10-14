@@ -77,5 +77,5 @@ def test_last_state_times():
     timings = stats.get_timings_with_percentage()[0]
     TIMING_TOTAL_TIME = -2
     TIMING_PERCENTAGE = -1
-    percentage = (timings[TIMING_TOTAL_TIME] / total_time) * 100.
+    percentage = (timings[TIMING_TOTAL_TIME] // total_time) * 100.
     assert percentage == timings[TIMING_PERCENTAGE]

@@ -2,8 +2,6 @@ from __future__ import absolute_import
 
 import abc
 
-from simpleflow.utils import json_dumps
-
 from . import futures
 from .activity import Activity
 
@@ -27,15 +25,14 @@ class Task(object):
     def name(self):
         raise NotImplementedError()
 
-    def serialize(self, value):
-        return json_dumps(value)
-
-    def resolve_args(self, *args):
+    @staticmethod
+    def resolve_args(*args):
         return [get_actual_value(arg) for arg in args]
 
-    def resolve_kwargs(self, **kwargs):
+    @staticmethod
+    def resolve_kwargs(**kwargs):
         return {key: get_actual_value(val) for
-                key, val in kwargs.iteritems()}
+                key, val in kwargs.items()}
 
 
 class ActivityTask(Task):
@@ -70,7 +67,7 @@ class ActivityTask(Task):
             self.id)
 
     def execute(self):
-        method = self.activity._callable
+        method = self.activity.callable
         if hasattr(method, 'execute'):
             return method(*self.args, **self.kwargs).execute()
         else:

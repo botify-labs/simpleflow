@@ -7,6 +7,7 @@ import traceback
 
 import psutil
 import swf.actors
+import swf.exceptions
 import swf.format
 from simpleflow.swf.process.actor import (
     Supervisor,
@@ -70,7 +71,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         )
 
     @with_state('polling')
-    def poll(self, task_list, identity):
+    def poll(self, task_list=None, identity=None):
         return swf.actors.ActivityWorker.poll(self, task_list, identity)
 
     @with_state('processing')
@@ -84,11 +85,25 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         spawn(self, token, task, self._heartbeat)
 
     @with_state('completing')
-    def complete(self, token, result):
+    def complete(self, token, result=None):
         swf.actors.ActivityWorker.complete(self, token, result)
 
+    # noinspection PyMethodOverriding
     @with_state('failing')
     def fail(self, token, task, reason=None, details=None):
+        """
+        Fail the activity, log and ignore exceptions.
+        :param token:
+        :type token:
+        :param task:
+        :type task:
+        :param reason:
+        :type reason:
+        :param details:
+        :type details:
+        :return:
+        :rtype:
+        """
         try:
             return swf.actors.ActivityWorker.fail(
                 self,
@@ -121,12 +136,12 @@ class ActivityWorker(object):
     def process(self, poller, token, task):
         """
 
-    :param poller:
-    :type poller: ActivityPoller
-    :param token:
-    :type token: str
-    :param task:
-    :type task: swf.models.ActivityTask
+        :param poller:
+        :type poller: ActivityPoller
+        :param token:
+        :type token: str
+        :param task:
+        :type task: swf.models.ActivityTask
         """
         logger.debug('ActivityWorker.process() pid={}'.format(os.getpid()))
         activity = self.dispatch(task)

@@ -21,6 +21,26 @@ class History(object):
         self._tasks = []
 
     @property
+    def activities(self):
+        """
+        :return: activities
+        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        """
+        return self._activities
+
+    @property
+    def child_workflows(self):
+        """
+        :return: activities
+        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        """
+        return self._child_workflows
+
+    @property
+    def tasks(self):
+        return self._tasks
+
+    @property
     def events(self):
         """
 

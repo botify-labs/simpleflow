@@ -9,6 +9,7 @@ import json
 
 from datetime import datetime
 import pytz
+from future.utils import iteritems
 
 from swf.utils import camel_to_underscore, cached_property
 
@@ -98,5 +99,5 @@ class Event(object):
     def process_attributes(self):
         """Processes the event raw_data attributes_key elements
         and sets current instance attributes accordingly"""
-        for key, value in self.raw[self._attributes_key].iteritems():
+        for key, value in iteritems(self.raw[self._attributes_key]):
             setattr(self, camel_to_underscore(key), value)

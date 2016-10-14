@@ -4,6 +4,8 @@ import logging
 
 import swf.actors
 import swf.exceptions
+import swf.format
+import swf.models.decision
 
 from simpleflow.swf.process.actor import (
     Supervisor,
@@ -27,7 +29,7 @@ class Decider(Supervisor):
 
 
 class DeciderPoller(swf.actors.Decider, Poller):
-    def __init__(self, workflows, domain, task_list, nb_retries=3,
+    def __init__(self, executors, domain, task_list, nb_retries=3,
                  *args, **kwargs):
         """
         The decider is an actor that reads the full history of the workflow
@@ -45,27 +47,28 @@ class DeciderPoller(swf.actors.Decider, Poller):
         behind this is to limit operational burden by having a single service
         handling multiple workflows.
 
-        :param workflows: that handles workflow executions.
-        :type  workflows: [simpleflow.swf.Executor].
+        :param executors: that handles workflow executions.
+        :type  executors: list[simpleflow.swf.executor.Executor]
 
         """
-        self._workflow_name = '{}'.format(','.join([
-            ex._workflow.name for ex in workflows
-        ]))
+        self._workflow_name = '{}'.format(','.join(
+            [
+                ex.workflow.name for ex in executors
+                ]))
 
         # Maps a workflow's name to its definition.
         # Used to dispatch a decision task to the corresponding workflow.
         self._workflows = {
-            executor._workflow.name: executor for executor in workflows
-        }
+            executor.workflow.name: executor for executor in executors
+            }
 
         # All executors must have the same domain and task list.
-        for ex in workflows[1:]:
+        for ex in executors[1:]:
             if ex.domain.name != domain.name:
                 raise ValueError(
                     'all workflows must be in the same domain "{}"'.format(
                         domain.name))
-            elif ex._workflow.task_list != task_list:
+            if ex.workflow.task_list != task_list:
                 raise ValueError(
                     'all workflows must have the same task list "{}"'.format(
                         task_list))
@@ -102,12 +105,12 @@ class DeciderPoller(swf.actors.Decider, Poller):
         return '{}{}'.format(self.__class__.__name__, suffix)
 
     @with_state('polling')
-    def poll(self, task_list, identity):
-        return swf.actors.Decider.poll(self, task_list, identity)
+    def poll(self, task_list=None, identity=None, **kwargs):
+        return swf.actors.Decider.poll(self, task_list, identity, **kwargs)
 
     @with_state('completing')
-    def complete(self, token, decisions):
-        return swf.actors.Decider.complete(self, token, decisions)
+    def complete(self, token, decisions=None, execution_context=None):
+        return swf.actors.Decider.complete(self, token, decisions, execution_context)
 
     def process(self, decision_response):
         """

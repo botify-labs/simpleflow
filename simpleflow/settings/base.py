@@ -22,8 +22,7 @@ def get_settings(module):
 
 def load_settings(module, env, conf, defaults):
     settings = {}
-    value = None
-    for name, typ in get_settings(module).iteritems():
+    for name, typ in get_settings(module).items():
         if name in env:
             value = env[name]
         elif name in conf:

@@ -1,4 +1,5 @@
 import swf.models
+import swf.models.decision
 
 from simpleflow import task
 

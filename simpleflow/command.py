@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import json
 import logging
@@ -25,7 +25,6 @@ from simpleflow.swf.process import worker
 from simpleflow.swf.utils import get_workflow_history
 from simpleflow.utils import json_dumps
 from simpleflow import __version__
-
 
 logger = logging.getLogger(__name__)
 
@@ -179,10 +178,10 @@ def start_workflow(workflow,
         tag_list=tags,
         decision_tasks_timeout=decision_tasks_timeout,
     )
-    print '{workflow_id} {run_id}'.format(
+    print('{workflow_id} {run_id}'.format(
         workflow_id=execution.workflow_id,
         run_id=execution.run_id,
-    )
+    ))
     return execution
 
 
@@ -215,10 +214,10 @@ def restart_workflow(domain, workflow_id, run_id):
         tag_list=ex.tag_list,
         decision_tasks_timeout=ex.decision_tasks_timeout,
     )
-    print '{workflow_id} {run_id}'.format(
+    print('{workflow_id} {run_id}'.format(
         workflow_id=new_ex.workflow_id,
         run_id=new_ex.run_id,
-    )
+    ))
 
 
 def with_format(ctx):
@@ -518,7 +517,7 @@ def standalone(context,
     )
     worker_proc.start()
 
-    print >> sys.stderr, 'starting workflow {}'.format(workflow)
+    print('starting workflow {}'.format(workflow), file=sys.stderr)
     ex = start_workflow.callback(
         workflow,
         domain,
@@ -539,9 +538,9 @@ def standalone(context,
             ex.run_id,
         )
         if display_status:
-            print >> sys.stderr, 'status: {}'.format(ex.status)
+            print('status: {}'.format(ex.status), file=sys.stderr)
         if ex.status == ex.STATUS_CLOSED:
-            print >> sys.stderr, 'execution {} finished'.format(ex.workflow_id)
+            print('execution {} finished'.format(ex.workflow_id), file=sys.stderr)
             break
 
     os.kill(worker_proc.pid, signal.SIGTERM)

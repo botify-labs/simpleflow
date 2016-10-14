@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 
-from simpleflow.utils import issubclass_
 from . import canvas
 from . import task
 from ._decorators import deprecated
 from .activity import Activity
+from .utils import issubclass_
 
 
 class Workflow(object):
@@ -14,11 +14,24 @@ class Workflow(object):
 
     The actual behavior depends on the executor backend.
 
-    :type _executor: simpleflow.executor.Executor
+    :type executor: simpleflow.executor.Executor
 
     """
+
+    # These are needed for workflow on SWF
+    name = None
+    version = None
+    task_list = None
+    tag_list = None
+    child_policy = None
+    execution_timeout = None
+
     def __init__(self, executor):
         self._executor = executor
+
+    @property
+    def executor(self):
+        return self.executor
 
     def submit(self, activity, *args, **kwargs):
         """
@@ -53,13 +66,14 @@ class Workflow(object):
 
     def map(self, activity, iterable):
         """
-        Submit a function for asynchronous execution for each value of
+        Submit an activity for asynchronous execution for each value of
         *iterable*.
 
-        :param activity: callable registered as an task.
-        :type  activity: task.ActivityTask | task.WorkflowTask.
+        :param activity: activity.
+        :type  activity: Activity
         :param iterable: collections of arguments passed to the task.
-        :type  iterable: Iterable.
+        :type  iterable: collection.Iterable[Any]
+        :rtype: list[simpleflow.futures.Future]
 
         """
         group = canvas.Group(*[task.ActivityTask(activity, i) for i in iterable])
@@ -67,15 +81,16 @@ class Workflow(object):
 
     def starmap(self, activity, iterable):
         """
-        Submit a function for asynchronous execution for each value of
+        Submit an activity for asynchronous execution for each value of
         *iterable*.
 
-        :param activity: callable registered as an task.
-        :type  activity: task.ActivityTask | task.WorkflowTask.
+        :param activity: activity.
+        :type  activity: Activity
         :param iterable: collections of multiple-arguments passed to the task
                          as positional arguments. They are destructured using
                          the ``*`` operator.
-        :type  iterable: Iterable.
+        :type  iterable: collection.Iterable[Any]
+        :rtype: list[simpleflow.futures.Future]
 
         """
         group = canvas.Group(*[task.ActivityTask(activity, *i) for i in iterable])
@@ -130,6 +145,10 @@ class Workflow(object):
 
         :param history:
         :type history: simpleflow.history.History
+        :param reason: failure reason
+        :type reason: str
+        :param details:
+        :type details: Optional[str]
         """
         raise NotImplementedError
 

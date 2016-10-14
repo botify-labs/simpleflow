@@ -50,8 +50,8 @@ class WorkflowStats(object):
         history.parse()
 
         events = chain(
-            history._activities.iteritems(),
-            history._child_workflows.iteritems(),
+            history.activities.items(),
+            history.child_workflows.items(),
         )
         return [
             (name,) + get_start_to_close_timing(attributes) for
@@ -77,6 +77,6 @@ class WorkflowStats(object):
         total_time = self.total_time()
 
         return [
-            (vals + ((vals[timing] / total_time) * 100.,) if vals[timing] else None)
+            (vals + ((vals[timing] // total_time) * 100.,) if vals[timing] else None)
             for vals in self.get_timings()
         ]

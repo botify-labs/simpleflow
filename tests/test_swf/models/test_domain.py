@@ -2,13 +2,12 @@
 
 import unittest
 
-from mock import Mock, patch
-from boto.swf.layer1 import Layer1
+import swf.settings
 from boto.exception import SWFResponseError
 from boto.swf.exceptions import SWFDomainAlreadyExistsError
-
-import swf.settings
-from swf.constants import REGISTERED, DEPRECATED
+from boto.swf.layer1 import Layer1
+from mock import Mock, patch
+from swf.constants import DEPRECATED
 from swf.exceptions import AlreadyExistsError, ResponseError
 from swf.models.domain import Domain, DomainDoesNotExist
 from swf.querysets.domain import DomainQuerySet
@@ -20,6 +19,11 @@ from ..mocks.domain import mock_describe_domain
 
 swf.settings.set(aws_access_key_id='fakeaccesskey',
                  aws_secret_access_key='fakesecret')
+
+
+if 0:
+    # for PyCharm
+    patch.object = patch.object
 
 
 class TestDomain(unittest.TestCase):
@@ -111,7 +115,7 @@ class TestDomain(unittest.TestCase):
                             'message': 'Whatever'
                         }
                 )
-                self.domain.exists
+                dummy = self.domain.exists
 
     def test_domain_is_synced_with_unsynced_domain(self):
         pass
@@ -167,7 +171,7 @@ class TestDomain(unittest.TestCase):
             self.assertEqual(len(diffs), 0)
 
     def test_domain_save_valid_domain(self):
-        with patch.object(self.domain.connection, 'register_domain') as mock:
+        with patch.object(self.domain.connection, 'register_domain'):
             self.domain.save()
 
     def test_domain_save_already_existing_domain(self):

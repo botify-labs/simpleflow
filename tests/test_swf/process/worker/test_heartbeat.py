@@ -82,7 +82,7 @@ class TestHeartbeatProcess(unittest.TestCase):
     def test_fake_heartbeat_count(self):
         heartbeat = FakeHeartbeat(max_count=10)
         count = 3
-        for i in xrange(count):
+        for _ in range(count):
             heartbeat(None)
 
         self.assertEquals(heartbeat._count, count)
@@ -90,7 +90,7 @@ class TestHeartbeatProcess(unittest.TestCase):
     def test_fake_heartbeat_max_count(self):
         max_count = 7
         heartbeat = FakeHeartbeat(max_count)
-        for i in xrange(max_count - 1):
+        for _ in range(max_count - 1):
             heartbeat(None)
 
         with self.assertRaises(StopIteration):
@@ -143,7 +143,7 @@ class TestHeartbeatProcess(unittest.TestCase):
         self.assertEquals(heartbeat._token,
                           token)
 
-    #TODO: fix test not working in containers
+    # TODO: fix test not working in containers
     @unittest.skip("Doesn't work in containers for now")
     def test_heartbeat_process_kill_parent(self):
         heartbeat = FakeHeartbeat(1000)

@@ -44,6 +44,14 @@ class Executor(object):
         """
         self._workflow = workflow(self)
 
+    @property
+    def workflow(self):
+        """
+        :return:
+        :rtype: simpleflow.workflow.Workflow
+        """
+        return self._workflow
+
     def run_workflow(self, *args, **kwargs):
         """
         Runs the workflow definition.

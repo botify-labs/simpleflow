@@ -17,8 +17,8 @@ def from_stream(stream):
 
     Example:
 
-    >>> from StringIO import StringIO
-    >>> stream = StringIO('''
+    >>> from io import StringIO
+    >>> stream = StringIO(u'''
     ...
     ... [credentials]
     ... aws_access_key_id=KEY_ID
@@ -35,7 +35,7 @@ def from_stream(stream):
     True
     >>> settings['region'] == 'eu-west-1'
     True
-    >>> stream = StringIO('''
+    >>> stream = StringIO(u'''
     ...
     ... [credentials]
     ... aws_access_key_id=KEY_ID
@@ -57,7 +57,10 @@ def from_stream(stream):
 
     """
     config = ConfigParser(allow_no_value=True)
-    config.readfp(stream)
+    if hasattr(config, 'read_file'):
+        config.read_file(stream)
+    else:
+        config.readfp(stream)
 
     settings = {}
 

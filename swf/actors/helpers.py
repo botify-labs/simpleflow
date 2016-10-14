@@ -47,16 +47,16 @@ def meanwhile(calling_this, call_that, *args, **kwargs):
 
     """
     calling_this()
-    error_happened = False
+    exception = None
     result = None
     try:
         result = call_that(*args, **kwargs)
-    except:
-        error_happened = True
+    except Exception as exception:
+        pass
     finally:
         calling_this.stop()
 
-    if error_happened:
-        raise
+    if exception:
+        raise exception
 
     return result

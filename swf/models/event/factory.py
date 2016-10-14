@@ -141,7 +141,7 @@ class EventFactory(object):
             'ChildWorkflowExecution'
 
         """
-        for name in klass.events.iterkeys():
+        for name in klass.events:
             if name in event_name:
                 return name
         return

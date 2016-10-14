@@ -1,3 +1,4 @@
+from __future__ import print_function
 import tempfile
 import os.path
 import platform
@@ -21,7 +22,7 @@ def test_execute_program_no_kwargs():
         with pytest.raises(TypeError) as exc_info:
             ls_nokwargs(hide=f.name)
 
-        assert (exc_info.value.message ==
+        assert (exc_info.value.args[0] ==
                 'command does not take keyword arguments')
 
 
@@ -39,7 +40,7 @@ def test_execute_program_no_args():
         with pytest.raises(TypeError) as exc_info:
             ls_noargs(f.name)
 
-        assert (exc_info.value.message ==
+        assert (exc_info.value.args[0] ==
                 'command does not take varargs')
 
 
@@ -53,7 +54,7 @@ def test_execute_program_restrict_named_arguments():
         with pytest.raises(TypeError) as exc_info:
             ls_restrict_named_arguments(f.name)
 
-        assert (exc_info.value.message ==
+        assert (exc_info.value.args[0] ==
                 'argument "hide" not found')
 
 
@@ -98,7 +99,7 @@ def test_ls_2args():
     with pytest.raises(TypeError) as exc_info:
         ls_2args(1, 2, 3)
 
-    assert (exc_info.value.message ==
+    assert (exc_info.value.args[0] ==
             'command takes 2 arguments: 3 passed')
 
 
@@ -145,7 +146,7 @@ def test_function_as_program_raises_builtin_exception():
 
 @execute.python()
 def print_string(s, retval):
-    print s
+    print(s)
     return retval
 
 
@@ -156,7 +157,7 @@ class PrintString(object):
         self.retval = retval
 
     def execute(self):
-        print self.s
+        print (self.s)
         return self.retval
 
 
@@ -228,13 +229,13 @@ def warn():
     warnings.warn("The _posixsubprocess module is not being used. "
                   "Child process reliability may suffer if your "
                   "program uses threads.", RuntimeWarning)
-    raise StandardError('Fake Standard Error')
+    raise Exception('Fake Standard Error')
 
 
 def test_function_with_warning():
     try:
         warn()
-    except StandardError:
+    except Exception:
         pass
     else:
         assert False

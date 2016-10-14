@@ -70,6 +70,7 @@ def run_fake_child_workflow_task(domain, task_list, workflow_type_name,
     conn.start_child_workflow_execution(
         workflow_type_name, workflow_type_version, workflow_id,
         child_policy=child_policy, control=control,
+        input=input,
         tag_list=tag_list, task_list=task_list
     )
     resp = conn.poll_for_decision_task(
@@ -119,6 +120,9 @@ def run_fake_task_worker(domain, task_list, former_event):
                 'tag_list': former_event['tag_list'],
             },
         )
+    else:
+        raise Exception('Wrong event type {}'.format(former_event['type']))
+
     worker_proc.start()
 
 
@@ -168,6 +172,7 @@ class Executor(executor.Executor):
     def __init__(self, domain, workflow, task_list=None, repair_with=None,
                  force_activities=None):
         super(Executor, self).__init__(workflow)
+        self._history = None
         self.domain = domain
         self.task_list = task_list
         self.repair_with = repair_with
@@ -196,18 +201,19 @@ class Executor(executor.Executor):
         :type a_task: ActivityTask | WorkflowTask
         :returns:
             String with at most 256 characters.
+        :rtype: str
 
         """
         if not a_task.idempotent:
             # If idempotency is False or unknown, let's generate a task id by
-            # incrementing and id after the a_task name.
+            # incrementing an id after the a_task name.
             # (default strategy, backwards compatible with previous versions)
             suffix = self._tasks.add(a_task)
         else:
             # If a_task is idempotent, we can do better and hash arguments.
             # It makes the workflow resistant to retries or variations on the
             # same task name (see #11).
-            arguments = json_dumps({"args": args, "kwargs": kwargs})
+            arguments = json_dumps({"args": args, "kwargs": kwargs}).encode('utf-8')
             suffix = hashlib.md5(arguments).hexdigest()
 
         task_id = '{name}-{idx}'.format(name=a_task.name, idx=suffix)
@@ -301,9 +307,9 @@ class Executor(executor.Executor):
         :param history:
         :type history: simpleflow.history.History
         :return:
-        :rtype: Optional[dict]
+        :rtype: Optional[dict[str, Any]]
         """
-        activity = history._activities.get(a_task.id)
+        activity = history.activities.get(a_task.id)
         return activity
 
     @staticmethod
@@ -318,7 +324,7 @@ class Executor(executor.Executor):
         :return:
         :rtype: Optional[dict]
         """
-        return history._child_workflows.get(a_task.id)
+        return history.child_workflows.get(a_task.id)
 
     def find_event(self, a_task, history):
         """
@@ -346,10 +352,10 @@ class Executor(executor.Executor):
         :param event:
         :type event: dict
         :return:
-        :rtype: Optional[futures.Future]
+        :rtype: futures.Future | None
         """
         future = self._get_future_from_activity_event(event)
-        if not future:  # Task in history does not count.
+        if not future:  # schedule failed, maybe OK later.
             return None
 
         if not future.finished:  # Still pending or running...
@@ -386,7 +392,8 @@ class Executor(executor.Executor):
 
     def schedule_task(self, a_task, task_list=None):
         """
-        Schedule a task.
+        Let a task schedule itself.
+        If too many decisions are in flight, add a timer decision and raise ExecutionBlocked.
         :param a_task:
         :type a_task: ActivityTask
         :param task_list:
@@ -415,6 +422,7 @@ class Executor(executor.Executor):
 
     def resume(self, a_task, *args, **kwargs):
         """Resume the execution of a task.
+        Called by `submit`.
 
         If the task was scheduled, returns a future that wraps its state,
         otherwise schedules it.
@@ -448,7 +456,7 @@ class Executor(executor.Executor):
                     'faking task completed successfully in previous '
                     'workflow: {}'.format(former_event['id'])
                 )
-                json_hash = hashlib.md5(json_dumps(former_event)).hexdigest()
+                json_hash = hashlib.md5(json_dumps(former_event).encode('utf-8')).hexdigest()
                 fake_task_list = "FAKE-" + json_hash
 
                 # schedule task on a fake task list
@@ -462,7 +470,7 @@ class Executor(executor.Executor):
         if event:
             if event['type'] == 'activity':
                 future = self.resume_activity(a_task, event)
-                if future and future._state in (futures.PENDING, futures.RUNNING):
+                if future and future.state in (futures.PENDING, futures.RUNNING):
                     self._open_activity_count += 1
             elif event['type'] == 'child_workflow':
                 future = self.resume_child_workflow(a_task, event)

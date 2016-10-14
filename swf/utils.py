@@ -5,9 +5,11 @@
 #
 # See the file LICENSE for copying permission.
 
+from builtins import zip, dict
+from future.utils import viewitems
 from datetime import datetime, timedelta
 from time import mktime
-from itertools import chain, izip, islice
+from itertools import chain, islice
 
 from functools import wraps
 
@@ -47,14 +49,14 @@ class Enum(object):
     def __init__(self, *sequential, **named):
         self.enums = dict(zip(sequential, range(len(sequential))), **named)
 
-        for key, value in self.enums.viewitems():
+        for key, value in viewitems(self.enums):
             setattr(self, key, value)
 
     def __contains__(self, key):
         return key in self.enums
 
     def has_member(self, member):
-        return any(value == member for value in self.enums.itervalues())
+        return any(value == member for value in self.enums.values())
 
 
 def get_subkey(d, key_path):
@@ -220,5 +222,5 @@ def underscore_to_camel(string):
     return ''.join(chain([string[0].upper()],
                          ((c.upper() if p == '_' else c) if
                           c != '_' else '' for p, c in
-                          izip(islice(string, 0, None),
-                               islice(string, 1, None)))))
+                          zip(islice(string, 0, None),
+                              islice(string, 1, None)))))

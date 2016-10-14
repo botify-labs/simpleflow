@@ -1,12 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import platform
 import re
-import sys
 import subprocess
+import sys
+
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
-
 
 REQUIRES = [
 
@@ -72,6 +71,7 @@ def read(fname):
 
 DEPS = [
     'boto>=2.38.0',
+    'future',
     'tabulate==0.7.3',
     'setproctitle',
     'subprocess32',

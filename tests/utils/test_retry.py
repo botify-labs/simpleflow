@@ -56,7 +56,7 @@ class TestRetry(unittest.TestCase):
         max_count = 3
         func = with_delay(nb_times=max_count,
                           delay=constant(RETRY_WAIT_TIME),
-                          on_exceptions=[KeyError, ValueError])(callable)
+                          on_exceptions=(KeyError, ValueError))(callable)
 
         t0 = time()
         with self.assertRaises(ValueError):

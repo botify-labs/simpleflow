@@ -5,6 +5,8 @@
 #
 # See the file LICENSE for copying permission.
 
+from builtins import str
+
 import logging
 import collections
 from functools import wraps, partial
@@ -65,6 +67,10 @@ class SWFError(Exception):
         self.kind = values[0].strip()
         self.type_ = (self.kind.lower().strip().replace(' ', '_') if
                       self.kind else None)
+
+    @property
+    def message(self):
+        return self.args[0] if self.args else ''
 
     def __repr__(self):
         msg = self.message.strip()
@@ -136,8 +142,7 @@ def match_equals(regex, string, values):
     if not matched:
         return False
 
-    if (isinstance(values, basestring) and
-        not isinstance(values, collections.Sequence)):
+    if isinstance(values, str) and not isinstance(values, collections.Sequence):
         values = (values,)
     return matched[0] in values
 
@@ -176,7 +181,7 @@ def is_unknown(resource):
     def wrapped(error, *args, **kwargs):
         """
         :param error: is the exception to check.
-        :type  error: Exception
+        :type  error: BotoServerError
 
         """
         if not is_unknown_resource_raised(error, *args, **kwargs):
@@ -236,7 +241,7 @@ def extract_resource(error):
 def raises(exception, when, extract=str):
     """
     :param exception: to raise when the predicate is True.
-    :type  exception: Exception
+    :type  exception: type(Exception)
 
     :param when: predicate to apply.
     :type  when: (error, *args, **kwargs) -> bool
@@ -323,7 +328,7 @@ def catch(exceptions, handle_with=None, log=False):
     Catch *exceptions*, then eventually handle and log them.
 
     :param exceptions: sequence of exceptions to catch.
-    :type  exceptions: tuple
+    :type  exceptions: Exception | (Exception, )
 
     :param handle_with: handle the exceptions (if handle_with is not None) or
                         raise them again.

@@ -4,7 +4,14 @@ import sys
 import subprocess
 import functools
 import json
-import cPickle as pickle
+
+from simpleflow import compat
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+from builtins import map
 import base64
 import logging
 import types
@@ -53,7 +60,7 @@ def format_arguments(*args, **kwargs):
         return '--' + str(key)     # long option --val
 
     return ['{}="{}"'.format(arg(key), value) for key, value in
-            kwargs.iteritems()] + map(str, args)
+            kwargs.items()] + list(map(str, args))
 
 
 def zip_arguments_defaults(argspec):
@@ -126,8 +133,8 @@ def get_name(func):
     if hasattr(func, 'name'):
         name = func.name
     elif isinstance(func, types.FunctionType):
-        name = func.func_name
-    elif isinstance(func, (type, types.ClassType)):
+        name = func.__name__
+    elif compat.PY2 and isinstance(func, (type, types.ClassType)):
         name = func.__name__
     else:
         name = func.__class__.__name__
@@ -149,11 +156,11 @@ def python(interpreter='python'):
         @functools.wraps(func)
         def execute(*args, **kwargs):
             command = 'simpleflow.execute'  # name of a module.
+            full_command = [
+                interpreter, '-m', command,  # execute module a script.
+                get_name(func), format_arguments_json(*args, **kwargs),
+            ]
             try:
-                full_command = [
-                    interpreter, '-m', command,  # execute module a script.
-                    get_name(func), format_arguments_json(*args, **kwargs),
-                ]
                 output = subprocess.check_output(
                     full_command,
                     # Redirect stderr to stdout to get traceback on error.
@@ -165,7 +172,7 @@ def python(interpreter='python'):
                         full_command, err.output
                     )
                 )
-                exclines = err.output.rstrip().rsplit('\n', 2)
+                exclines = err.output.rstrip().rsplit(b'\n', 2)
                 excline = exclines[-1]
 
                 try:
@@ -173,8 +180,8 @@ def python(interpreter='python'):
                         base64.b64decode(excline.rstrip()))
                 except (TypeError, pickle.UnpicklingError):
                     exception = Exception(excline)
-                    if ':' in excline:
-                        cls, msg = excline.split(':', 1)
+                    if b':' in excline:
+                        cls, msg = excline.split(b':', 1)
                         if re.match(r'\s*[\w.]+\s*', cls):
                             try:
                                 exception = eval('{}("{}")'.format(
@@ -182,13 +189,15 @@ def python(interpreter='python'):
                                     msg.strip(),
                                 ))
                             except BaseException as ex:
-                                logger.warning(ex.message)
+                                message = ex.args[0] if ex.args else ''
+                                logger.warning(message)
 
                 raise exception
             try:
-                return json.loads(output.rstrip().rsplit("\n", 1)[-1])
+                return json.loads(output.rstrip().rsplit(b"\n", 1)[-1])
             except BaseException as ex:
-                logger.warning(ex.message)
+                message = ex.args[0] if ex.args else ''
+                logger.warning(message)
                 logger.warning(repr(output))
 
         # Not automatically assigned in python < 3.2.
@@ -232,7 +241,7 @@ def program(path=None, argument_format=format_arguments):
             check_arguments(argspec, args)
             check_keyword_arguments(argspec, kwargs)
 
-            command = path or func.func_name
+            command = path or func.__name__
             return subprocess.check_output(
                 [command] + argument_format(*args, **kwargs))
 
@@ -262,11 +271,11 @@ def make_callable(funcname):
 
     Loading a function from a library:
 
-    >>> func = make_callable('itertools.imap')
+    >>> func = make_callable('itertools.chain')
     >>> func
-    <type 'itertools.imap'>
-    >>> list(func(lambda x: x + 1, range(4)))
-    [1, 2, 3, 4]
+    <type 'itertools.chain'>
+    >>> list(func(range(3), range(4)))
+    [0, 1, 2, 0, 1, 2, 3]
 
     Loading a builtin:
 
@@ -360,7 +369,7 @@ if __name__ == '__main__':
     args = arguments.get('args', ())
     kwargs = arguments.get('kwargs', {})
     try:
-        if isinstance(callable_, (type, types.ClassType)):
+        if hasattr(callable_, 'execute'):
             result = callable_(*args, **kwargs).execute()
         else:
             result = callable_(*args, **kwargs)

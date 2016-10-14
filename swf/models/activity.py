@@ -152,8 +152,10 @@ class ActivityType(BaseModel):
             ('deprecation_date', self.deprecation_date, info['deprecationDate']),
             ('task_list', self.task_list, config['defaultTaskList']['name']),
             ('task_heartbeat_timeout', self.task_heartbeat_timeout, config['defaultTaskHeartbeatTimeout']),
-            ('task_schedule_to_close_timeout', self.task_schedule_to_close_timeout, config['defaultTaskScheduleToCloseTimeout']),
-            ('task_schedule_to_start_timeout', self.task_schedule_to_start_timeout, config['defaultTaskScheduleToStartTimeout']),
+            ('task_schedule_to_close_timeout', self.task_schedule_to_close_timeout,
+             config['defaultTaskScheduleToCloseTimeout']),
+            ('task_schedule_to_start_timeout', self.task_schedule_to_start_timeout,
+             config['defaultTaskScheduleToStartTimeout']),
             ('task_start_to_close_timeout', self.task_start_to_close_timeout, config['defaultTaskStartToCloseTimeout']),
         )
 

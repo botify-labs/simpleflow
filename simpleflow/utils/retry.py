@@ -49,6 +49,8 @@ def with_delay(
     """
     if log_with is None:
         log_with = logging.getLogger(__name__).info
+    if not except_on:
+        except_on = ()
 
     def decorate(func):
         @functools.wraps(func)
@@ -68,7 +70,8 @@ def with_delay(
                     )
                     time.sleep(wait_delay)
                     nb_retries += 1
-            raise
+                    if nb_times - nb_retries == 0:
+                        raise
         return decorated
 
     on_exceptions = _to_tuple(on_exceptions)

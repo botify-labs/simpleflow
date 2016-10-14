@@ -7,6 +7,7 @@
 
 from itertools import groupby
 
+from future.utils import iteritems
 from swf.models.event import EventFactory, CompiledEventFactory
 from swf.models.event.workflow import WorkflowExecutionEvent
 from swf.utils import cached_property
@@ -144,8 +145,7 @@ class History(object):
             'terminated'
         )
 
-        if (isinstance(self.last, WorkflowExecutionEvent) and
-                    self.last.state in completion_states):
+        if isinstance(self.last, WorkflowExecutionEvent) and self.last.state in completion_states:
             return True
 
         return False
@@ -182,13 +182,13 @@ class History(object):
         :rtype: swf.models.history.History
         """
         return filter(
-            lambda e: all(getattr(e, k) == v for k, v in kwargs.iteritems()),
+            lambda e: all(getattr(e, k) == v for k, v in iteritems(kwargs)),
             self.events
         )
 
     @property
     def reversed(self):
-        for i in xrange(len(self.events) - 1, -1, -1):
+        for i in range(len(self.events) - 1, -1, -1):
             yield self.events[i]
 
     @property

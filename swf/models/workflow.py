@@ -5,6 +5,8 @@
 #
 # See the file LICENSE for copying permission.
 
+from builtins import str
+
 import collections
 import time
 
@@ -452,7 +454,7 @@ class WorkflowExecution(BaseModel):
         :rtype: swf.models.event.History
         """
         domain = kwargs.pop('domain', self.domain)
-        if not isinstance(domain, basestring):
+        if not isinstance(domain, str):
             domain = domain.name
 
         response = self.connection.get_workflow_execution_history(

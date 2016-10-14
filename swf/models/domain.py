@@ -5,7 +5,10 @@
 #
 # See the file LICENSE for copying permission.
 
+from builtins import str
+
 from boto.swf.exceptions import SWFResponseError, SWFDomainAlreadyExistsError
+from simpleflow import compat
 
 from swf.constants import REGISTERED
 from swf.models import BaseModel
@@ -44,13 +47,6 @@ class Domain(BaseModel):
     :type       description: string
     """
 
-    __slots__ = [
-        'name',
-        'status',
-        'description',
-        'retention_period',
-    ]
-
     def __init__(self, name,
                  status=REGISTERED,
                  description=None,
@@ -71,10 +67,11 @@ class Domain(BaseModel):
         as a string.
 
         """
-        if (not isinstance(domain, cls) or
-                not hasattr(domain, 'name') or
-                not isinstance(domain.name, basestring)):
-            raise TypeError('invalid type {} for domain'.format(type(domain)))
+        if isinstance(domain, cls):
+            if hasattr(domain, 'name') and isinstance(domain.name, compat.basestring):
+                return
+            raise TypeError('domain has no name')
+        raise TypeError('invalid type {} for domain'.format(type(domain)))
 
     def _diff(self):
         """Checks for differences between Domain instance
