@@ -63,7 +63,7 @@ def disable_boto_connection_pooling():
 
 def comma_separated_list(value):
     """
-    Transforms a comma-separated list into a list of strigns.
+    Transforms a comma-separated list into a list of strings.
     """
     return value.split(",")
 

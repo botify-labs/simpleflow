@@ -205,7 +205,7 @@ class Executor(executor.Executor):
         """
         if not a_task.idempotent:
             # If idempotency is False or unknown, let's generate a task id by
-            # incrementing and id after the a_task name.
+            # incrementing an id after the a_task name.
             # (default strategy, backwards compatible with previous versions)
             suffix = self._tasks.add(a_task)
         else:
@@ -354,7 +354,7 @@ class Executor(executor.Executor):
         :rtype: futures.Future | None
         """
         future = self._get_future_from_activity_event(event)
-        if not future:  # Task in history does not count.
+        if not future:  # schedule failed, maybe OK later.
             return None
 
         if not future.finished:  # Still pending or running...
@@ -425,6 +425,7 @@ class Executor(executor.Executor):
 
         If the task was scheduled, returns a future that wraps its state,
         otherwise schedules it.
+        If in repair mode, we may fake the task to repair from the previous history.
 
         :param a_task:
         :type a_task: ActivityTask | WorkflowTask
@@ -439,12 +440,12 @@ class Executor(executor.Executor):
         event = self.find_event(a_task, self._history)
         future = None
 
-        # check if we absolutely want to execute this task in repair mode
+        # in repair mode, check if we absolutely want to re-execute this task
         force_execution = (self.force_activities and
                            self.force_activities.search(a_task.id))
 
         # try to fill in the blanks with the workflow we're trying to repair if any
-        # TODO: maybe only do that for idempotent tasks??
+        # TODO: maybe only do that for idempotent tasks?? (not enough information to decide?)
         if not event and self.repair_with and not force_execution:
             # try to find a former event matching this task
             former_event = self.find_event(a_task, self.repair_with)

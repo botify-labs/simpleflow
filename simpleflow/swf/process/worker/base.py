@@ -206,7 +206,7 @@ def monitor_child(pid, info):
             except OSError:
                 # Beware of the race between this handler and
                 # :meth:`Process.join`. This is the main reason to raise a
-                # ``errno 10: No child processe``.
+                # ``errno 10: No child process``.
                 return
             sig = status & 0xff
             exit_code = (status & 0xff00) >> 8

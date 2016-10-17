@@ -27,7 +27,7 @@ class CompiledEvent(Event, Stateful):
 
     Amazon service history events comes with a type and
     a state. swf.models.eventEvent class already implements
-    these specifities.
+    these specificities.
 
     But history manipulation and analysis in order to take
     decisions calls for state-aware events.
@@ -39,9 +39,9 @@ class CompiledEvent(Event, Stateful):
     validate the state transition is attended and valid.
 
     compiled events inherits from swf.models.compiled.event.Stateful and should
-    should implement
+    implement
 
-    * ``initial_state`` class attribute: constructor supplied event attended state
+    * ``initial_state`` class attribute: constructor-supplied event attended state
     * ``states`` (tuple) class attribute: every event type possible states should
     be listed
     * ``transitions`` (dictionary) class attribute: every initial state to possible

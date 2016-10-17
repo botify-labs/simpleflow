@@ -198,7 +198,7 @@ class Poller(NamedMixin, swf.actors.Actor):
     def start(self):
         """
         Start the main decider process. There is no daemonization. The process
-        is intented to be run inside a supervisor process.
+        is intended to be run inside a supervisor process.
 
         """
         logger.info("starting %s on domain %s", self.name, self.domain.name)
@@ -247,7 +247,7 @@ class Poller(NamedMixin, swf.actors.Actor):
             )(self.complete)  # Exponential backoff on errors.
             complete(token, response)
         except Exception as err:
-            # This embarasing because the decider cannot notify SWF of the
+            # This is embarrassing because the decider cannot notify SWF of the
             # task completion. As it will not try again, the task will
             # timeout (start_to_complete).
             logger.exception("cannot complete task: %s", str(err))
@@ -257,7 +257,7 @@ class Poller(NamedMixin, swf.actors.Actor):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def complete(self, token, task):
+    def complete(self, token, response):
         raise NotImplementedError
 
     def _poll(self, task_list=None, identity=None):
@@ -283,6 +283,7 @@ class Poller(NamedMixin, swf.actors.Actor):
 
         See also
         http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html#API_PollForDecisionTask_RequestSyntax
+        http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForActivityTask.html#API_PollForActivityTask_RequestSyntax
 
         :returns:
         :rtype: swf.responses.Response
@@ -293,7 +294,7 @@ class Poller(NamedMixin, swf.actors.Actor):
         if identity is None and self.identity:
             identity = self.identity
 
-        logger.debug("polling decision task on %s", task_list)
+        logger.debug("polling task on %s", task_list)
         try:
             response = self.poll(
                 task_list,

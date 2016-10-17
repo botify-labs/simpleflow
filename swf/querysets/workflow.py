@@ -175,7 +175,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
                       decision_tasks_timeout='300',
                       description=None,
                       *args, **kwargs):
-        """Fetches, or creates the ActivityType with ``name`` and ``version``
+        """Fetches, or creates the WorkflowType with ``name`` and ``version``
 
         When fetching trying to fetch a matching workflow type, only
         name and version parameters are taken in account.

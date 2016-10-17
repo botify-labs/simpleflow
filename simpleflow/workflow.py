@@ -17,6 +17,15 @@ class Workflow(object):
     :type executor: simpleflow.executor.Executor
 
     """
+
+    # These are needed for workflow on SWF
+    name = None
+    version = None
+    task_list = None
+    tag_list = None
+    child_policy = None
+    execution_timeout = None
+
     def __init__(self, executor):
         self._executor = executor
 

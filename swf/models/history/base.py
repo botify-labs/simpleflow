@@ -17,7 +17,7 @@ class History(object):
 
     History object is an Event subclass objects container
     which can be built directly against an amazon json response
-    using it's from_event_list method.
+    using its from_event_list method.
 
     It is iterable and exposes a list-like __getitem__ for easier
     manipulation.
