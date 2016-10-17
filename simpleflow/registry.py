@@ -23,7 +23,4 @@ class Registry(object):
         """
         self._tasks[label][task.name] = task
 
-    def execute(self):
-        raise NotImplementedError()
-
 registry = Registry()

@@ -200,7 +200,7 @@ class Poller(NamedMixin, swf.actors.Actor):
         self.set_process_name()
         while self.is_alive:
             try:
-                response = self._poll(self.task_list, self.identity)
+                response = self._poll()
             except swf.exceptions.PollTimeout:
                 continue
             self.process(response)
@@ -255,26 +255,14 @@ class Poller(NamedMixin, swf.actors.Actor):
     def complete(self, token, response):
         raise NotImplementedError
 
-    def _poll(self, task_list=None, identity=None):
+    @abc.abstractmethod
+    def process(self, request):
+        pass
+
+    def _poll(self):
         """
         Polls a task represented by its token and data. It uses long-polling
         with a timeout of one minute.
-
-        :param task_list: when set, it overrides the workflow's default task
-                          list. The specified string must not start or end with
-                          whitespace. It must not contain a : (colon), /
-                          (slash), | (vertical bar), or any control characters
-                          (\u0000-\u001f | \u007f - \u009f). Also, it must not
-                          contain the literal string "arn".
-
-        :type  task_list: str
-        :param identity: when set, it overrides the default decider's identity.
-                         Identity of the decider making the request, which is
-                         recorded in the DecisionTaskStarted event in the
-                         workflow history. This enables diagnostic tracing when
-                         problems arise. The form of this identity is user
-                         defined. Minimum length of 0. Maximum length of 256.
-        :type  identity: str
 
         See also
         http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html#API_PollForDecisionTask_RequestSyntax
@@ -283,11 +271,8 @@ class Poller(NamedMixin, swf.actors.Actor):
         :returns:
         :rtype: swf.responses.Response
         """
-        if task_list is None and self.task_list:
-            task_list = self.task_list
-
-        if identity is None and self.identity:
-            identity = self.identity
+        task_list = self.task_list
+        identity = self.identity
 
         logger.debug("polling task on %s", task_list)
         try:

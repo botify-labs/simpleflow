@@ -253,7 +253,11 @@ class WorkflowType(BaseModel):
         workflow_id = workflow_id or '%s-%s-%i' % (self.name, self.version, time.time())
         task_list = task_list or self.task_list
         child_policy = child_policy or self.child_policy
-        input = json_dumps(input) or None
+        if child_policy not in CHILD_POLICIES:
+            raise ValueError("invalid child policy value: {}".format(child_policy))
+        if input is None:
+            input = {}
+        input = json_dumps(input)
         if tag_list is not None and not isinstance(tag_list, list):
             tag_list = [tag_list]
 

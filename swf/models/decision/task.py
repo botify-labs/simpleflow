@@ -59,7 +59,8 @@ class ActivityTaskDecision(Decision):
         :param  task_list: Specifies the name of the task list in which to schedule the activity task
         :type   :str
         """
-        input = json_dumps(input) or None
+        if input is not None:
+            input = json_dumps(input)
 
         self.update_attributes({
             'activityId': activity_id,

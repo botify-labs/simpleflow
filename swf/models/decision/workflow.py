@@ -81,7 +81,8 @@ class WorkflowExecutionDecision(Decision):
         :param  workflow_type_version: workflow type version the execution shold belong to
         :type   workflow_type_version: str
         """
-        input = json_dumps(input) or None
+        if input is not None:
+            input = json_dumps(input)
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -129,7 +130,8 @@ class ChildWorkflowExecutionDecision(Decision):
         :type   task_timeout: str
 
         """
-        input = json_dumps(input) or None
+        if input is not None:
+            input = json_dumps(input)
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -194,7 +196,8 @@ class ExternalWorkflowExecutionDecision(Decision):
         :param  run_id: run id of the workflow execution to be signaled
         :type   run_id: str
         """
-        input = json_dumps(input) or None
+        if input is not None:
+            input = json_dumps(input)
 
         self.update_attributes({
             'signalName': signal_name,

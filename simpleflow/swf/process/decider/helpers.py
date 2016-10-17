@@ -40,6 +40,23 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None,
 
 def make_decider(workflows, domain, task_list, nb_children=None,
                  repair_with=None, force_activities=None):
+    """
+    Instanciate a Decider.
+    :param workflows:
+    :type workflows: list[str]
+    :param domain:
+    :type domain: str
+    :param task_list:
+    :type task_list: str
+    :param nb_children:
+    :type nb_children: Optional[int]
+    :param repair_with:
+    :type repair_with:
+    :param force_activities:
+    :type force_activities:
+    :return:
+    :rtype: Decider
+    """
     poller = make_decider_poller(workflows, domain, task_list,
                                  repair_with=repair_with,
                                  force_activities=force_activities,

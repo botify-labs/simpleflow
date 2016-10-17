@@ -379,13 +379,11 @@ class History(swf.models.History):
             'eventType': 'StartChildWorkflowExecutionInitiated',
             'eventTimestamp': new_timestamp_string(),
             'startChildWorkflowExecutionInitiatedEventAttributes': {
-                'control': (json_dumps(control) if
-                            control is not None else None),
+                'control': json_dumps(control),
                 'childPolicy': 'TERMINATE',
                 'decisionTaskCompletedEventId': 76,
                 'executionStartToCloseTimeout': '432000',
-                'input': (json_dumps(input) if
-                          input is not None else '{}'),
+                'input': json_dumps(input) if input is not None else '{}',
                 'tagList': tag_list,
                 'taskList': task_list,
                 'taskStartToCloseTimeout': task_start_to_close_timeout,
@@ -400,9 +398,7 @@ class History(swf.models.History):
         return self
 
     def add_child_workflow_started(self,
-                                   initiated_id,
-                                   name=None,
-                                   version=None):
+                                   initiated_id):
         initiated_event = self.events[initiated_id - 1]
         workflow_id = initiated_event.workflow_id
         workflow_type = initiated_event.workflow_type
