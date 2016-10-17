@@ -35,5 +35,16 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
 # TODO: move this function inside a QuerySet object when we merge the
 # "simpleflow" and "swf" namespaces
 def get_workflow_history(domain_name, workflow_id, run_id=None):
+    """
+    Get workflow history.
+    :param domain_name:
+    :type domain_name: str
+    :param workflow_id:
+    :type workflow_id: str
+    :param run_id:
+    :type run_id: str
+    :return:
+    :rtype: History
+    """
     workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id=run_id)
     return History(workflow_execution.history())

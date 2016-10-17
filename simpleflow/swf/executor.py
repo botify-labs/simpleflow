@@ -157,6 +157,15 @@ class Executor(executor.Executor):
     It means the history is consistent and there is no concurrent modifications
     on the execution of the workflow.
 
+    :ivar domain: domain
+    :type domain: swf.models.domain.Domain
+    :ivar workflow: workflow
+    :ivar task_list: task list
+    :type task_list: Optional[str]
+    :ivar repair_with: previous history to use for repairing
+    :type repair_with: Optional[simpleflow.history.History]
+    :ivar force_activities: regex with activities to force
+
     """
 
     def __init__(self, domain, workflow, task_list=None, repair_with=None,
@@ -191,6 +200,7 @@ class Executor(executor.Executor):
         :type a_task: ActivityTask | WorkflowTask
         :returns:
             String with at most 256 characters.
+        :rtype: str
 
         """
         if not a_task.idempotent:
@@ -211,8 +221,9 @@ class Executor(executor.Executor):
     def _get_future_from_activity_event(self, event):
         """Maps an activity event to a Future with the corresponding state.
 
-        :param event: workflow event.
-        :type  event: swf.event.Event.
+        :param event: activity event
+        :type  event: dict[str, Any]
+        :rtype: futures.Future
 
         """
         future = futures.Future()  # state is PENDING.
@@ -269,6 +280,8 @@ class Executor(executor.Executor):
         """Maps a child workflow event to a Future with the corresponding
         state.
 
+        :param event: child workflow event
+        :type  event: dict[str, Any]
         """
         future = futures.Future()
         state = event['state']
@@ -313,6 +326,15 @@ class Executor(executor.Executor):
         return history.child_workflows.get(a_task.id)
 
     def find_event(self, a_task, history):
+        """
+        Get the event corresponding to an activity or child workflow, if any
+        :param a_task:
+        :type a_task: ActivityTask | WorkflowTask
+        :param history:
+        :type history: simpleflow.history.History
+        :return:
+        :rtype: Optional[dict]
+        """
         if isinstance(a_task, ActivityTask):
             return self.find_activity_event(a_task, history)
         elif isinstance(a_task, WorkflowTask):
@@ -322,6 +344,15 @@ class Executor(executor.Executor):
                 type(a_task), a_task))
 
     def resume_activity(self, a_task, event):
+        """
+        Resume an activity task.
+        :param a_task:
+        :type a_task: ActivityTask
+        :param event:
+        :type event: dict
+        :return:
+        :rtype: futures.Future | None
+        """
         future = self._get_future_from_activity_event(event)
         if not future:  # Task in history does not count.
             return None
@@ -346,9 +377,30 @@ class Executor(executor.Executor):
         return None  # means the task is not in SWF.
 
     def resume_child_workflow(self, a_task, event):
+        """
+        Resume a child workflow.
+
+        :param a_task:
+        :type a_task: WorkflowTask
+        :param event:
+        :type event: dict
+        :return:
+        :rtype: Optional[futures.Future]
+        """
         return self._get_future_from_child_workflow_event(event)
 
     def schedule_task(self, a_task, task_list=None):
+        """
+        Let a task schedule itself.
+        If too many decisions are in flight, add a timer decision and raise ExecutionBlocked.
+        :param a_task:
+        :type a_task: ActivityTask
+        :param task_list:
+        :type task_list: Optional[str]
+        :return:
+        :rtype:
+        :raise: exceptions.ExecutionBlocked if too many decisions waiting
+        """
         logger.debug('executor is scheduling task {} on task_list {}'.format(
             a_task.name,
             task_list,
@@ -369,10 +421,19 @@ class Executor(executor.Executor):
 
     def resume(self, a_task, *args, **kwargs):
         """Resume the execution of a task.
+        Called by `submit`.
 
         If the task was scheduled, returns a future that wraps its state,
         otherwise schedules it.
 
+        :param a_task:
+        :type a_task: ActivityTask | WorkflowTask
+        :param args:
+        :param args: list
+        :type kwargs:
+        :type kwargs: dict
+        :rtype: futures.Future
+        :raise: exceptions.ExecutionBlocked if open activities limit reached
         """
         a_task.id = self._make_task_id(a_task, *args, **kwargs)
         event = self.find_event(a_task, self._history)
@@ -463,7 +524,7 @@ class Executor(executor.Executor):
         :param decision_response: an object wrapping the PollForDecisionTask response
         :type  decision_response: swf.responses.Response
 
-        :returns: a list of decision and a context dict
+        :returns: a list of decision and a context dict (empty?)
         :rtype: ([swf.models.decision.base.Decision], dict)
         """
         self.reset()

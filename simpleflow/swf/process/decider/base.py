@@ -142,7 +142,7 @@ class DeciderPoller(swf.actors.Decider, Poller):
         :type  decision_response: swf.responses.Response
 
         :returns:
-        :rtype: [swf.models.decision.base.Decision]
+        :rtype: list[swf.models.decision.base.Decision]
         """
         worker = DeciderWorker(self._workflows)
         decisions = worker.decide(decision_response)
@@ -161,8 +161,8 @@ class DeciderWorker(object):
         :param decision_response: an object wrapping the PollForDecisionTask response
         :type  decision_response: swf.responses.Response
 
-        :returns:
-        :rtype: [swf.models.decision.base.Decision]
+        :returns: the decisions
+        :rtype: list[swf.models.decision.base.Decision]
         """
         history = decision_response.history
         self._workflow_name = history[0].workflow_type['name']

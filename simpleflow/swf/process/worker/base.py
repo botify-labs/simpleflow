@@ -6,6 +6,7 @@ import signal
 import traceback
 
 import psutil
+import simpleflow.registry
 import swf.actors
 import swf.exceptions
 import swf.format
@@ -41,6 +42,19 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     """
     def __init__(self, domain, task_list, workflow, heartbeat=60,
                  *args, **kwargs):
+        """
+
+        :param domain:
+        :type domain:
+        :param task_list:
+        :type task_list:
+        :param heartbeat:
+        :type heartbeat:
+        :param args:
+        :type args:
+        :param kwargs:
+        :type kwargs:
+        """
         self._workflow = workflow
         self.nb_retries = 3
         self._heartbeat = heartbeat
@@ -61,20 +75,39 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         )
 
     @with_state('polling')
-    def poll(self, task_list, identity):
+    def poll(self, task_list=None, identity=None):
         return swf.actors.ActivityWorker.poll(self, task_list, identity)
 
     @with_state('processing')
     def process(self, request):
+        """
+        Process a request.
+        :param request:
+        :type request: (str, swf.models.ActivityTask)
+        """
         token, task = request
         spawn(self, token, task, self._heartbeat)
 
     @with_state('completing')
-    def complete(self, token, result):
+    def complete(self, token, result=None):
         swf.actors.ActivityWorker.complete(self, token, result)
 
+    # noinspection PyMethodOverriding
     @with_state('failing')
     def fail(self, token, task, reason=None, details=None):
+        """
+        Fail the activity, log and ignore exceptions.
+        :param token:
+        :type token:
+        :param task:
+        :type task:
+        :param reason:
+        :type reason:
+        :param details:
+        :type details:
+        :return:
+        :rtype:
+        """
         try:
             return swf.actors.ActivityWorker.fail(
                 self,
@@ -98,10 +131,26 @@ class ActivityWorker(object):
         )
 
     def dispatch(self, task):
+        """
+
+        :param task:
+        :type task: swf.models.ActivityTask
+        :return:
+        :rtype: simpleflow.activity.Activity
+        """
         name = task.activity_type.name
         return self._dispatcher.dispatch_activity(name)
 
     def process(self, poller, token, task):
+        """
+
+        :param poller:
+        :type poller: ActivityPoller
+        :param token:
+        :type token: str
+        :param task:
+        :type task: swf.models.ActivityTask
+        """
         logger.debug('ActivityWorker.process() pid={}'.format(os.getpid()))
         activity = self.dispatch(task)
         input = json.loads(task.input)
@@ -126,12 +175,28 @@ class ActivityWorker(object):
 
 
 def process_task(poller, token, task):
+    """
+
+    :param poller:
+    :type poller: ActivityPoller
+    :param token:
+    :type token: str
+    :param task:
+    :type task: swf.models.ActivityTask
+    """
     logger.debug('process_task() pid={}'.format(os.getpid()))
     worker = ActivityWorker(poller._workflow)
     worker.process(poller, token, task)
 
 
 def monitor_child(pid, info):
+    """
+    Fill the info dict at child's exit.
+    :param pid:
+    :type pid: int
+    :param info:
+    :type info: dict
+    """
     def _handle_child_exit(signum, frame):
         if signum == signal.SIGCHLD:
             # Only fill the info dict. The spawn() function calls
@@ -152,6 +217,17 @@ def monitor_child(pid, info):
 
 
 def spawn(poller, token, task, heartbeat=60):
+    """
+    Spawn a process and wait for it to end, sending heartbeats to SWF.
+    :param poller:
+    :type poller: ActivityPoller
+    :param token:
+    :type token: str
+    :param task:
+    :type task: swf.models.ActivityTask
+    :param heartbeat: heartbeat delay (seconds)
+    :type heartbeat: int
+    """
     logger.debug('spawn() pid={}'.format(os.getpid()))
     worker = multiprocessing.Process(
         target=process_task,

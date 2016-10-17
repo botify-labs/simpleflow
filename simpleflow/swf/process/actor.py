@@ -228,6 +228,16 @@ class Poller(NamedMixin, swf.actors.Actor):
             self.stop_forcefully()
 
     def _complete(self, token, response):
+        """
+        Complete with retry.
+        :param token:
+        :type token: str
+        :param response: response: decision list, JSON result, ...
+        :type response: Any
+        :return:
+        :rtype:
+        """
+        # FIXME this is a public member
         try:
             complete = utils.retry.with_delay(
                 nb_times=self.nb_retries,
@@ -262,14 +272,14 @@ class Poller(NamedMixin, swf.actors.Actor):
                           (\u0000-\u001f | \u007f - \u009f). Also, it must not
                           contain the literal string "arn".
 
-        :type  task_list: str.
+        :type  task_list: str
         :param identity: when set, it overrides the default decider's identity.
                          Identity of the decider making the request, which is
                          recorded in the DecisionTaskStarted event in the
                          workflow history. This enables diagnostic tracing when
                          problems arise. The form of this identity is user
                          defined. Minimum length of 0. Maximum length of 256.
-        :type  identity: str.
+        :type  identity: str
 
         See also
         http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html#API_PollForDecisionTask_RequestSyntax

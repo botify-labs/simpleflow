@@ -26,11 +26,17 @@ from simpleflow.swf.utils import get_workflow_history
 from simpleflow.utils import json_dumps
 from simpleflow import __version__
 
-
 logger = logging.getLogger(__name__)
 
 
 def get_workflow(clspath):
+    """
+    Import a workflow class.
+    :param clspath: class path
+    :type clspath: str
+    :return:
+    :rtype: simpleflow.workflow.Workflow
+    """
     modname, clsname = clspath.rsplit('.', 1)
     module = __import__(modname, fromlist=['*'])
     cls = getattr(module, clsname)
@@ -73,6 +79,15 @@ def cli(ctx, header, format):
 
 
 def get_workflow_type(domain_name, workflow):
+    """
+    Get or create the given workflow.
+    :param domain_name:
+    :type domain_name: str
+    :param workflow:
+    :type workflow: simpleflow.workflow.Workflow
+    :return:
+    :rtype: swf.models.WorkflowType
+    """
     domain = swf.models.Domain(domain_name)
     query = swf.querysets.WorkflowTypeQuerySet(domain)
     return query.get_or_create(workflow.name, workflow.version)

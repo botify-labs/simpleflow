@@ -23,8 +23,10 @@ class ConnectedSWFObject(object):
 
     Provides the instance attributes:
 
-    - `region`: name of the AWS region
-    - `connection`: to the SWF endpoint (`boto.swf.layer1.Layer1` object):
+    :ivar region: name of the AWS region
+    :type region: str
+    :ivar connection: connection to the SWF endpoint
+    :type connection: boto.swf.layer1.Layer1
 
     """
     __slots__ = [

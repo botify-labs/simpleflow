@@ -183,23 +183,23 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
         has to be created it is made with specific values, just provide it.
 
         :param  name: name of the workflow type
-        :type   name: String
+        :type   name: str
 
         :param  version: workflow type version
-        :type   version: String
+        :type   version: str
 
         :param  status: workflow type status
         :type   status: swf.core.ConnectedSWFObject.{REGISTERED, DEPRECATED}
 
-        :param   creation_date: creation date of the current WorkflowType
-        :type    creation_date: float (timestamp)
+        :param   creation_date: creation date of the current WorkflowType (timestamp)
+        :type    creation_date: float
 
-        :param   deprecation_date: deprecation date of WorkflowType
-        :type    deprecation_date: float (timestamp)
+        :param   deprecation_date: deprecation date of WorkflowType (timestamp)
+        :type    deprecation_date: float
 
         :param  task_list: task list to use for scheduling decision tasks for executions
                            of this workflow type
-        :type   task_list: String
+        :type   task_list: str
 
         :param  child_policy: policy to use for the child workflow executions
                               when a workflow execution of this type is terminated

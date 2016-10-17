@@ -27,6 +27,9 @@ class Executor(object):
     - asynchronous
     - asynchronous with full replay
 
+     :ivar _workflow: the workflow
+     :type _workflow: simpleflow.workflow.Workflow
+
     """
     __metaclass__ = abc.ABCMeta
 

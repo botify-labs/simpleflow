@@ -23,7 +23,7 @@ class History(object):
     manipulation.
 
     :param  events: Events list to build History upon
-    :type   events: list
+    :type   events: list[swf.models.event.Event]
 
     Typical amazon response looks like:
 
@@ -92,6 +92,10 @@ class History(object):
         return self
 
     def next(self):
+        """
+        Iterate.
+        :rtype: swf.models.event.base.Event
+        """
         try:
             next_event = self.events[self.it_pos]
             self.it_pos += 1
@@ -190,7 +194,7 @@ class History(object):
     def distinct(self):
         """Extracts distinct history events based on their types
 
-        :rtype: list of swf.models.event.Event
+        :rtype: list[list[swf.models.event.Event]]
         """
         distinct_events = []
 
@@ -213,7 +217,8 @@ class History(object):
         Every events stored in the resulting history are stateful
         CompiledEvent subclasses instances then.
 
-        :rtype: swf.models.history.History made of swf.models.event.CompiledEvent
+        :return: swf.models.history.History made of swf.models.event.CompiledEvent
+        :rtype: swf.models.history.History
         """
         distinct_events = self.distinct
         compiled_history = []
@@ -233,7 +238,8 @@ class History(object):
     def compiled(self):
         """Compiled history version
 
-        :rtype: swf.models.history.History made of swf.models.event.CompiledEvent
+        :return: swf.models.history.History made of swf.models.event.CompiledEvent
+        :rtype: swf.models.history.History
         """
         return self.compile()
 
@@ -247,7 +253,7 @@ class History(object):
         facilitate decisions according to the history.
 
         :param  data: event history description (typically, an amazon response)
-        :type   data: dict
+        :type   data: dict[str, Any]
 
         :returns: History model instance built upon data description
         :rtype: swf.model.history.History

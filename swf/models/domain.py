@@ -80,9 +80,9 @@ class Domain(BaseModel):
         """Checks for differences between Domain instance
         and upstream version
 
-        :returns: A list of swf.models.base.ModelDiff namedtuple describing
+        :returns: A swf.models.base.ModelDiff describing
                   differences
-        :rtype: list
+        :rtype: ModelDiff
         """
         try:
             description = self.connection.describe_domain(self.name)

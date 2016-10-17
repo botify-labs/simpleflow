@@ -40,7 +40,7 @@ CHILD_WORKFLOW_STATES = set(
 
 class History(swf.models.History):
     """
-    Help to build a history to simulate the execution of a workflow.
+    Helper class to build a history to simulate the execution of a workflow.
 
     """
     def __init__(self, workflow, input=None, tag_list=None):

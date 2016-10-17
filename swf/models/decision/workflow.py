@@ -104,7 +104,7 @@ class ChildWorkflowExecutionDecision(Decision):
         """Child workflow execution decision builder
 
         :param  workflow_type: workflow type to start
-        :type   workflow_type: str
+        :type   workflow_type: swf.models.workflow.WorkflowType
 
         :param  workflow_id: unique id to recognize the workflow execution
         :type   workflow_id: str

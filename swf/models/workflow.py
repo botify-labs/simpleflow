@@ -49,23 +49,23 @@ class WorkflowType(BaseModel):
     :type   domain: swf.models.Domain
 
     :param  name: name of the workflow type
-    :type   name: String
+    :type   name: str
 
     :param  version: workflow type version
-    :type   version: String
+    :type   version: str
 
     :param  status: workflow type status
     :type   status: swf.core.ConnectedSWFObject.{REGISTERED, DEPRECATED}
 
-    :param   creation_date: creation date of the current WorkflowType
-    :type    creation_date: float (timestamp)
+    :param   creation_date: creation date of the current WorkflowType (timestamp)
+    :type    creation_date: float
 
-    :param   deprecation_date: deprecation date of WorkflowType
-    :type    deprecation_date: float (timestamp)
+    :param   deprecation_date: deprecation date of WorkflowType (timestamp)
+    :type    deprecation_date: float
 
     :param  task_list: task list to use for scheduling decision tasks for executions
                        of this workflow type
-    :type   task_list: String
+    :type   task_list: str
 
     :param  child_policy: policy to use for the child workflow executions
                           when a workflow execution of this type is terminated
@@ -74,13 +74,13 @@ class WorkflowType(BaseModel):
                                           ABANDON}
 
     :param  execution_timeout: maximum duration for executions of this workflow type
-    :type   execution_timeout: String
+    :type   execution_timeout: str
 
     :param  decision_tasks_timeout: maximum duration of decision tasks for this workflow type
-    :type   decision_tasks_timeout: String
+    :type   decision_tasks_timeout: str
 
     :param  description: Textual description of the workflow type
-    :type   description: String
+    :type   description: str
     """
     __slots__ = [
         'domain',
@@ -135,9 +135,9 @@ class WorkflowType(BaseModel):
         """Checks for differences between WorkflowType instance
         and upstream version
 
-        :returns: A list of swf.models.base.ModelDiff namedtuple describing
+        :returns: A swf.models.base.ModelDiff describing
                   differences
-        :rtype: list
+        :rtype: ModelDiff
         """
         try:
             description = self.connection.describe_workflow_type(
@@ -390,9 +390,9 @@ class WorkflowExecution(BaseModel):
         """Checks for differences between WorkflowExecution instance
         and upstream version
 
-        :returns: A list of swf.models.base.Diff namedtuple describing
+        :returns: A swf.models.base.ModelDiff describing
                   differences
-        :rtype: list
+        :rtype: ModelDiff
         """
         try:
             description = self.connection.describe_workflow_execution(

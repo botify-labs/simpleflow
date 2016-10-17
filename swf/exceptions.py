@@ -176,7 +176,7 @@ def is_unknown(resource):
     def wrapped(error, *args, **kwargs):
         """
         :param error: is the exception to check.
-        :type  error: Exception
+        :type  error: BotoServerError
 
         """
         if not is_unknown_resource_raised(error, *args, **kwargs):
@@ -236,7 +236,7 @@ def extract_resource(error):
 def raises(exception, when, extract=str):
     """
     :param exception: to raise when the predicate is True.
-    :type  exception: Exception
+    :type  exception: type(Exception)
 
     :param when: predicate to apply.
     :type  when: (error, *args, **kwargs) -> bool
@@ -323,7 +323,7 @@ def catch(exceptions, handle_with=None, log=False):
     Catch *exceptions*, then eventually handle and log them.
 
     :param exceptions: sequence of exceptions to catch.
-    :type  exceptions: tuple
+    :type  exceptions: Exception | (Exception, )
 
     :param handle_with: handle the exceptions (if handle_with is not None) or
                         raise them again.

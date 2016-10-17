@@ -5,6 +5,9 @@ from simpleflow import task
 
 
 class ActivityTask(task.ActivityTask):
+    """
+    Activity task managed on SWF.
+    """
     def schedule(self, domain, task_list=None, **kwargs):
         activity = self.activity
         # Always involve a GET call to the SWF API which introduces useless
@@ -56,6 +59,9 @@ class ActivityTask(task.ActivityTask):
 
 
 class WorkflowTask(task.WorkflowTask):
+    """
+    WorkflowTask managed on SWF.
+    """
     def schedule(self, domain, task_list=None):
         workflow = self.workflow
         # Always involve a GET call to the SWF API which introduces useless

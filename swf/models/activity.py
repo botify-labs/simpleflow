@@ -117,16 +117,16 @@ class ActivityType(BaseModel):
         self.task_start_to_close_timeout = task_start_to_close_timeout
 
         # immutable decorator rebinds class name,
-        # so have to use generice self.__class__
+        # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
     def _diff(self):
         """Checks for differences between ActivityType instance
         and upstream version
 
-        :returns: A list of swf.models.base.ModelDiff namedtuple describing
+        :returns: A list (swf.models.base.ModelDiff) namedtuple describing
                   differences
-        :rtype: list
+        :rtype: ModelDiff
         """
         try:
             description = self.connection.describe_activity_type(

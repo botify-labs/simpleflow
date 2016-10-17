@@ -14,6 +14,8 @@ class Workflow(object):
 
     The actual behavior depends on the executor backend.
 
+    :type executor: simpleflow.executor.Executor
+
     """
     def __init__(self, executor):
         self._executor = executor
@@ -34,7 +36,7 @@ class Workflow(object):
         :type  kwargs: Mapping (dict).
 
         :returns:
-            :rtype: Future.
+            :rtype: simpleflow.futures.Future | simpleflow.canvas.GroupFuture
 
         """
         # If the activity is a child workflow, call directly
@@ -55,13 +57,14 @@ class Workflow(object):
 
     def map(self, activity, iterable):
         """
-        Submit a function for asynchronous execution for each value of
+        Submit an activity for asynchronous execution for each value of
         *iterable*.
 
-        :param activity: callable registered as an task.
-        :type  activity: task.ActivityTask | task.WorkflowTask.
+        :param activity: activity.
+        :type  activity: Activity
         :param iterable: collections of arguments passed to the task.
-        :type  iterable: Iterable.
+        :type  iterable: collection.Iterable[Any]
+        :rtype: list[simpleflow.futures.Future]
 
         """
         group = canvas.Group(*[task.ActivityTask(activity, i) for i in iterable])
@@ -69,15 +72,16 @@ class Workflow(object):
 
     def starmap(self, activity, iterable):
         """
-        Submit a function for asynchronous execution for each value of
+        Submit an activity for asynchronous execution for each value of
         *iterable*.
 
-        :param activity: callable registered as an task.
-        :type  activity: task.ActivityTask | task.WorkflowTask.
+        :param activity: activity.
+        :type  activity: Activity
         :param iterable: collections of multiple-arguments passed to the task
                          as positional arguments. They are destructured using
                          the ``*`` operator.
-        :type  iterable: Iterable.
+        :type  iterable: collection.Iterable[Any]
+        :rtype: list[simpleflow.futures.Future]
 
         """
         group = canvas.Group(*[task.ActivityTask(activity, *i) for i in iterable])
@@ -87,12 +91,32 @@ class Workflow(object):
         self._executor.fail(reason, details)
 
     def before_replay(self, history):
+        """
+        Method called before playing the execution.
+
+        :param history:
+        :type history: simpleflow.history.History
+        """
         pass
 
     def after_replay(self, history):
+        """
+        Method called after playing the execution.
+        Either the replay is finished or the execution is blocked.
+
+        :param history:
+        :type history: simpleflow.history.History
+        """
         pass
 
     def after_closed(self, history):
+        """
+        Method called after closing the execution.
+        Either the replay is finished or it failed.
+
+        :param history:
+        :type history: simpleflow.history.History
+        """
         pass
 
     @deprecated
@@ -108,13 +132,22 @@ class Workflow(object):
 
     def on_failure(self, history, reason, details=None):
         """
-        The executor calls this method when the workflow fails.
+        Method called after the workflow failed.
 
+        :param history:
+        :type history: simpleflow.history.History
+        :param reason: failure reason
+        :type reason: str
+        :param details:
+        :type details: Optional[str]
         """
         raise NotImplementedError
 
     def on_completed(self, history):
         """
-        The executor calls this method when the workflow is completed.
+        Method called after successfully completing the execution.
+
+        :param history:
+        :type history: simpleflow.history.History
         """
         raise NotImplementedError

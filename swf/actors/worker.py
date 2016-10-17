@@ -84,7 +84,7 @@ class ActivityWorker(Actor):
         :param  task_token: canceled activity task token
         :type   task_token: string
 
-        :param  details: provided details about cancel
+        :param  details: provided details about the failure
         :type   details: string
 
         :param  reason: Description of the error that may assist in diagnostics
@@ -109,9 +109,9 @@ class ActivityWorker(Actor):
         """Records activity task heartbeat
 
         :param  task_token: canceled activity task token
-        :type   task_token: string
+        :type   task_token: str
 
-        :param  details: provided details about cancel
+        :param  details: provided details about task progress
         :type   details: string
         """
         try:
@@ -147,8 +147,8 @@ class ActivityWorker(Actor):
 
         :raises: PollTimeout
 
-        :returns: polled activity task
-        :type: swf.models.ActivityTask
+        :returns: task token, polled activity task
+        :rtype: (str, ActivityTask)
         """
         task_list = task_list or self.task_list
         identity = identity or self._identity
