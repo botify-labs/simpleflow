@@ -33,7 +33,7 @@ from .data import (
 )
 
 
-class TestWorkflow(Workflow):
+class ATestWorkflow(Workflow):
     name = 'test_workflow'
     version = 'test_version'
     task_list = 'test_task_list'
@@ -56,7 +56,7 @@ def check_task_scheduled_decision(decision, task):
     }
 
 
-class TestDefinitionWithInput(TestWorkflow):
+class ATestDefinitionWithInput(ATestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
@@ -68,7 +68,7 @@ class TestDefinitionWithInput(TestWorkflow):
 
 @mock_swf
 def test_workflow_with_input():
-    workflow = TestDefinitionWithInput
+    workflow = ATestDefinitionWithInput
     executor = Executor(DOMAIN, workflow)
 
     result = 5
@@ -102,7 +102,7 @@ def test_workflow_with_input():
 
 @mock_swf
 def test_workflow_with_repair_if_task_successful():
-    workflow = TestDefinitionWithInput
+    workflow = ATestDefinitionWithInput
     history = builder.History(workflow, input={'args': [4]})
 
     # Now let's build the history to repair
@@ -131,7 +131,7 @@ def test_workflow_with_repair_if_task_successful():
 
 @mock_swf
 def test_workflow_with_repair_if_task_failed():
-    workflow = TestDefinitionWithInput
+    workflow = ATestDefinitionWithInput
     history = builder.History(workflow, input={'args': [4]})
 
     # Now let's build the history to repair
@@ -157,7 +157,7 @@ def test_workflow_with_repair_if_task_failed():
 
 @mock_swf
 def test_workflow_with_repair_and_force_activities():
-    workflow = TestDefinitionWithInput
+    workflow = ATestDefinitionWithInput
     history = builder.History(workflow, input={'args': [4]})
 
     # Now let's build the history to repair
@@ -186,7 +186,7 @@ def test_workflow_with_repair_and_force_activities():
     check_task_scheduled_decision(decisions[0], increment)
 
 
-class TestDefinitionWithBeforeReplay(TestWorkflow):
+class ATestDefinitionWithBeforeReplay(ATestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
@@ -201,7 +201,7 @@ class TestDefinitionWithBeforeReplay(TestWorkflow):
 
 @mock_swf
 def test_workflow_with_before_replay():
-    workflow = TestDefinitionWithBeforeReplay
+    workflow = ATestDefinitionWithBeforeReplay
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow,
@@ -213,7 +213,7 @@ def test_workflow_with_before_replay():
     assert executor.workflow.a == 4
 
 
-class TestDefinitionWithAfterReplay(TestWorkflow):
+class ATestDefinitionWithAfterReplay(ATestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
@@ -231,7 +231,7 @@ class TestDefinitionWithAfterReplay(TestWorkflow):
 
 @mock_swf
 def test_workflow_with_after_replay():
-    workflow = TestDefinitionWithAfterReplay
+    workflow = ATestDefinitionWithAfterReplay
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow,
@@ -245,7 +245,7 @@ def test_workflow_with_after_replay():
     assert not hasattr(executor.workflow, 'c')
 
 
-class TestDefinitionWithAfterClosed(TestWorkflow):
+class ATestDefinitionWithAfterClosed(ATestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
@@ -260,7 +260,7 @@ class TestDefinitionWithAfterClosed(TestWorkflow):
 
 @mock_swf
 def test_workflow_with_after_closed():
-    workflow = TestDefinitionWithAfterClosed
+    workflow = ATestDefinitionWithAfterClosed
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow,
@@ -294,7 +294,7 @@ def test_workflow_with_after_closed():
     assert executor.workflow.b == 5
 
 
-class TestDefinition(TestWorkflow):
+class ATestDefinition(ATestWorkflow):
     """
     Executes two tasks. The second depends on the first.
     """
@@ -310,7 +310,7 @@ class TestDefinition(TestWorkflow):
 
 @mock_swf
 def test_workflow_with_two_tasks():
-    workflow = TestDefinition
+    workflow = ATestDefinition
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -364,7 +364,7 @@ def test_workflow_with_two_tasks_not_completed():
     """
     This test checks how the executor behaves when a task is still running.
     """
-    workflow = TestDefinitionWithInput
+    workflow = ATestDefinitionWithInput
     executor = Executor(DOMAIN, workflow)
 
     arg = 4
@@ -412,7 +412,7 @@ def test_workflow_with_two_tasks_not_completed():
     assert decisions[0] == workflow_completed
 
 
-class TestDefinitionSameTask(TestWorkflow):
+class ATestDefinitionSameTask(ATestWorkflow):
     """
     This workflow executes the same task with a different argument.
     """
@@ -430,7 +430,7 @@ def test_workflow_with_same_task_called_two_times():
     This test checks how the executor behaves when the same task is executed
     two times with a different argument.
     """
-    workflow = TestDefinitionSameTask
+    workflow = ATestDefinitionSameTask
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -477,7 +477,7 @@ def test_workflow_with_same_task_called_two_times():
     assert decisions[0] == workflow_completed
 
 
-class TestDefinitionSameFuture(TestWorkflow):
+class ATestDefinitionSameFuture(ATestWorkflow):
     """
     This workflow uses a single variable to hold the future of two different
     tasks.
@@ -492,7 +492,7 @@ class TestDefinitionSameFuture(TestWorkflow):
 
 @mock_swf
 def test_workflow_reuse_same_future():
-    workflow = TestDefinitionSameFuture
+    workflow = ATestDefinitionSameFuture
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -538,7 +538,7 @@ def test_workflow_reuse_same_future():
     assert decisions[0] == workflow_completed
 
 
-class TestDefinitionTwoTasksSameFuture(TestWorkflow):
+class ATestDefinitionTwoTasksSameFuture(ATestWorkflow):
     """
     This test checks how the executor behaves when two tasks depends on the
     same task.
@@ -554,7 +554,7 @@ class TestDefinitionTwoTasksSameFuture(TestWorkflow):
 
 @mock_swf
 def test_workflow_with_two_tasks_same_future():
-    workflow = TestDefinitionTwoTasksSameFuture
+    workflow = ATestDefinitionTwoTasksSameFuture
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -609,7 +609,7 @@ def test_workflow_with_two_tasks_same_future():
     assert decisions[0] == workflow_completed
 
 
-class TestDefinitionMap(TestWorkflow):
+class ATestDefinitionMap(ATestWorkflow):
     """
     This workflow only maps a task on several values, they wait for the
     availability of their result.
@@ -625,12 +625,12 @@ class TestDefinitionMap(TestWorkflow):
 
 @mock_swf
 def test_workflow_map():
-    workflow = TestDefinitionMap
+    workflow = ATestDefinitionMap
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
 
-    nb_parts = TestDefinitionMap.nb_parts
+    nb_parts = ATestDefinitionMap.nb_parts
 
     # All the futures returned by the map are passed to wait().
     # The executor should then schedule all of them.
@@ -663,7 +663,7 @@ def test_workflow_map():
     assert decisions[0] == workflow_completed
 
 
-class TestDefinitionRetryActivity(TestWorkflow):
+class ATestDefinitionRetryActivity(ATestWorkflow):
     """
     This workflow executes a task that is retried on failure.
     """
@@ -676,7 +676,7 @@ class TestDefinitionRetryActivity(TestWorkflow):
 
 @mock_swf
 def test_workflow_retry_activity():
-    workflow = TestDefinitionRetryActivity
+    workflow = ATestDefinitionRetryActivity
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -722,7 +722,7 @@ def test_workflow_retry_activity():
 
 @mock_swf
 def test_workflow_retry_activity_failed_again():
-    workflow = TestDefinitionRetryActivity
+    workflow = ATestDefinitionRetryActivity
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -769,19 +769,19 @@ def test_workflow_retry_activity_failed_again():
     assert decisions[0] == workflow_completed
 
 
-class TestDefinitionChildWorkflow(TestWorkflow):
+class ATestDefinitionChildWorkflow(ATestWorkflow):
     """
     This workflow executes a child workflow.
     """
 
     def run(self, x):
-        y = self.submit(TestDefinition, x)
+        y = self.submit(ATestDefinition, x)
         return y.result
 
 
 @mock_swf
 def test_workflow_with_child_workflow():
-    workflow = TestDefinitionChildWorkflow
+    workflow = ATestDefinitionChildWorkflow
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow,
@@ -813,9 +813,10 @@ def test_workflow_with_child_workflow():
         .add_child_workflow(
         workflow,
         workflow_id='workflow-test_workflow-1',
-        task_list=TestWorkflow.task_list,
+        task_list=ATestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-        result='4'))
+        result='4'
+    ))
 
     # Now the child workflow is finished and the executor should complete the
     # workflow.
@@ -826,7 +827,7 @@ def test_workflow_with_child_workflow():
     assert decisions[0] == workflow_completed
 
 
-class TestDefinitionMoreThanMaxDecisions(TestWorkflow):
+class ATestDefinitionMoreThanMaxDecisions(ATestWorkflow):
     """
     This workflow executes more tasks than the maximum number of decisions a
     decider can take once.
@@ -839,7 +840,7 @@ class TestDefinitionMoreThanMaxDecisions(TestWorkflow):
 
 @mock_swf
 def test_workflow_with_more_than_max_decisions():
-    workflow = TestDefinitionMoreThanMaxDecisions
+    workflow = ATestDefinitionMoreThanMaxDecisions
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
 
@@ -894,7 +895,7 @@ class OnFailureMixin(object):
         self.failed = True
 
 
-class TestDefinitionFailWorkflow(OnFailureMixin, TestWorkflow):
+class ATestDefinitionFailWorkflow(OnFailureMixin, ATestWorkflow):
     """
     This workflow executes a single task that fails, then it explicitly fails
     the whole workflow.
@@ -910,7 +911,7 @@ class TestDefinitionFailWorkflow(OnFailureMixin, TestWorkflow):
 
 @mock_swf
 def test_workflow_failed_from_definition():
-    workflow = TestDefinitionFailWorkflow
+    workflow = ATestDefinitionFailWorkflow
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
 
@@ -939,7 +940,7 @@ def test_workflow_failed_from_definition():
     assert decisions[0] == workflow_failed
 
 
-class TestDefinitionActivityRaisesOnFailure(OnFailureMixin, TestWorkflow):
+class ATestDefinitionActivityRaisesOnFailure(OnFailureMixin, ATestWorkflow):
     """
     This workflow executes a task that fails and has the ``raises_on_failure``
     flag set to ``True``. It means it will raise an exception in addition to
@@ -952,7 +953,7 @@ class TestDefinitionActivityRaisesOnFailure(OnFailureMixin, TestWorkflow):
 
 @mock_swf
 def test_workflow_activity_raises_on_failure():
-    workflow = TestDefinitionActivityRaisesOnFailure
+    workflow = ATestDefinitionActivityRaisesOnFailure
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
 
@@ -982,7 +983,7 @@ def test_workflow_activity_raises_on_failure():
     assert decisions[0] == workflow_failed
 
 
-class TestOnFailureDefinition(OnFailureMixin, TestWorkflow):
+class ATestOnFailureDefinition(OnFailureMixin, ATestWorkflow):
     def run(self):
         if self.submit(raise_error).exception:
             self.fail('FAIL')
@@ -990,7 +991,7 @@ class TestOnFailureDefinition(OnFailureMixin, TestWorkflow):
 
 @mock_swf
 def test_on_failure_callback():
-    workflow = TestOnFailureDefinition
+    workflow = ATestOnFailureDefinition
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
 
@@ -1018,7 +1019,7 @@ def test_on_failure_callback():
     assert decisions[0] == workflow_failed
 
 
-class TestMultipleScheduledActivitiesDefinition(TestWorkflow):
+class ATestMultipleScheduledActivitiesDefinition(ATestWorkflow):
     def run(self):
         a = self.submit(increment, 1)
         b = self.submit(increment, 2)
@@ -1039,7 +1040,7 @@ def test_multiple_scheduled_activities():
     schedule the ``double`` task even after the task represented by *b*
     (``self.submit(increment, 2)``) has completed.
     """
-    workflow = TestMultipleScheduledActivitiesDefinition
+    workflow = ATestMultipleScheduledActivitiesDefinition
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
 
@@ -1066,7 +1067,7 @@ def test_multiple_scheduled_activities():
 
 @mock_swf
 def test_activity_task_timeout():
-    workflow = TestDefinition
+    workflow = ATestDefinition
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -1087,7 +1088,7 @@ def test_activity_task_timeout():
 
 @mock_swf
 def test_activity_task_timeout_retry():
-    workflow = TestDefinitionRetryActivity
+    workflow = ATestDefinitionRetryActivity
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -1107,7 +1108,7 @@ def test_activity_task_timeout_retry():
 
 @mock_swf
 def test_activity_task_timeout_raises():
-    workflow = TestDefinitionActivityRaisesOnFailure
+    workflow = ATestDefinitionActivityRaisesOnFailure
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -1135,7 +1136,7 @@ def test_activity_not_found_schedule_failed():
     conn = boto.connect_swf()
     conn.register_domain("TestDomain", "50")
 
-    workflow = TestDefinition
+    workflow = ATestDefinition
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -1169,7 +1170,7 @@ def raise_already_exists(activity):
 
 @mock_swf
 def test_activity_not_found_schedule_failed_already_exists():
-    workflow = TestDefinition
+    workflow = ATestDefinition
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow)
@@ -1192,7 +1193,7 @@ def test_activity_not_found_schedule_failed_already_exists():
     check_task_scheduled_decision(decisions[0], increment)
 
 
-class TestDefinitionMoreThanMaxOpenActivities(TestWorkflow):
+class ATestDefinitionMoreThanMaxOpenActivities(ATestWorkflow):
     """
     This workflow executes more tasks than the maximum number of decisions a
     decider can take once.
@@ -1207,7 +1208,7 @@ class TestDefinitionMoreThanMaxOpenActivities(TestWorkflow):
 
 @mock_swf
 def test_more_than_1000_open_activities_scheduled():
-    workflow = TestDefinitionMoreThanMaxOpenActivities
+    workflow = ATestDefinitionMoreThanMaxOpenActivities
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
 
@@ -1242,7 +1243,7 @@ def test_more_than_1000_open_activities_scheduled_and_running():
         import random
         return random.choice(['scheduled', 'started'])
 
-    workflow = TestDefinitionMoreThanMaxOpenActivities
+    workflow = ATestDefinitionMoreThanMaxOpenActivities
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
 
@@ -1272,7 +1273,7 @@ def test_more_than_1000_open_activities_scheduled_and_running():
 
 @mock_swf
 def test_more_than_1000_open_activities_partial_max():
-    workflow = TestDefinitionMoreThanMaxOpenActivities
+    workflow = ATestDefinitionMoreThanMaxOpenActivities
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
     decisions, _ = executor.replay(Response(history=history))
@@ -1334,7 +1335,7 @@ def test_more_than_1000_open_activities_partial_max():
     assert len(decisions) == 5
 
 
-class TestTaskNaming(TestWorkflow):
+class ATestTaskNaming(ATestWorkflow):
     """
     This workflow executes a few tasks and tests the naming (task ID
     assignation) depending on their idempotence.
@@ -1353,7 +1354,7 @@ class TestTaskNaming(TestWorkflow):
 
 @mock_swf
 def test_task_naming():
-    workflow = TestTaskNaming
+    workflow = ATestTaskNaming
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow, input={})

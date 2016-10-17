@@ -22,7 +22,7 @@ def double(x):
     return x * 2
 
 
-class TestWorkflow(Workflow):
+class ATestWorkflow(Workflow):
     name = 'test_workflow'
     version = 'test_version'
     task_list = 'test_task_list'
@@ -32,7 +32,7 @@ class TestWorkflow(Workflow):
     child_policy = None  # FIXME should be optional
 
 
-class TestDefinition(TestWorkflow):
+class ATestDefinition(ATestWorkflow):
     """
     Executes two tasks. The second depends on the first.
 

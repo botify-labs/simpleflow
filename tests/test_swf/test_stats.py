@@ -15,7 +15,7 @@ def increment(x):
     return x + 1
 
 
-class TestWorkflow(Workflow):
+class ATestWorkflow(Workflow):
     name = 'test_workflow'
     version = 'test_version'
     task_list = 'test_task_list'
@@ -33,7 +33,7 @@ def test_last_state_times():
     This test checks an execution with a single activity tasks.
 
     """
-    history_builder = builder.History(TestWorkflow)
+    history_builder = builder.History(ATestWorkflow)
 
     last_state = 'completed'
     activity_id = 'activity-tests.test_dataflow.increment-1'
