@@ -143,11 +143,6 @@ class NamedMixin(object):
     def name(self):
         return self._name
 
-    @name.setter
-    def name(self, value):
-        self._name = value
-        self.set_process_name()
-
     def set_process_name(self, name=None):
         if name is None:
             klass = self.__class__.__name__
