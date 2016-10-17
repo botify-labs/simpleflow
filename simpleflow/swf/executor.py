@@ -285,12 +285,32 @@ class Executor(executor.Executor):
 
     @staticmethod
     def find_activity_event(a_task, history):
-        activity = history._activities.get(a_task.id)
+        """
+        Get the event corresponding to a activity task, if any
+
+        :param a_task:
+        :type a_task: ActivityTask
+        :param history:
+        :type history: simpleflow.history.History
+        :return:
+        :rtype: Optional[dict[str, Any]]
+        """
+        activity = history.activities.get(a_task.id)
         return activity
 
     @staticmethod
     def find_child_workflow_event(a_task, history):
-        return history._child_workflows.get(a_task.id)
+        """
+        Get the event corresponding to a child workflow, if any
+
+        :param a_task:
+        :type a_task: WorkflowTask
+        :param history:
+        :type history: simpleflow.history.History
+        :return:
+        :rtype: Optional[dict]
+        """
+        return history.child_workflows.get(a_task.id)
 
     def find_event(self, a_task, history):
         if isinstance(a_task, ActivityTask):
@@ -387,7 +407,7 @@ class Executor(executor.Executor):
         if event:
             if event['type'] == 'activity':
                 future = self.resume_activity(a_task, event)
-                if future and future._state in (futures.PENDING, futures.RUNNING):
+                if future and future.state in (futures.PENDING, futures.RUNNING):
                     self._open_activity_count += 1
             elif event['type'] == 'child_workflow':
                 future = self.resume_child_workflow(a_task, event)

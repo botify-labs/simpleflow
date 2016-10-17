@@ -18,6 +18,10 @@ class Workflow(object):
     def __init__(self, executor):
         self._executor = executor
 
+    @property
+    def executor(self):
+        return self._executor
+
     def submit(self, activity, *args, **kwargs):
         """
         Submit a function for asynchronous execution.

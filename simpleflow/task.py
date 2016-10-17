@@ -59,7 +59,7 @@ class ActivityTask(Task):
             self.id)
 
     def execute(self):
-        method = self.activity._callable
+        method = self.activity.callable
         if hasattr(method, 'execute'):
             return method(*self.args, **self.kwargs).execute()
         else:

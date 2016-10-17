@@ -90,10 +90,10 @@ def info(workflow_execution):
     history = History(workflow_execution.history())
     history.parse()
 
-    if history._tasks:
-        first_event = history._tasks[0]
+    if history.tasks:
+        first_event = history.tasks[0]
         first_timestamp = first_event[first_event['state'] + '_timestamp']
-        last_event = history._tasks[-1]
+        last_event = history.tasks[-1]
         last_timestamp = last_event[last_event['state'] + '_timestamp']
         workflow_input = first_event['input']
     else:
@@ -175,7 +175,7 @@ def status(workflow_execution, nb_tasks=None):
     header = 'Tasks', 'Last State', 'Last State Time', 'Scheduled Time'
     rows = [
         (task['name'],) + get_timestamps(task) for task in
-        history._tasks[::-1]
+        history.tasks[::-1]
         ]
     if nb_tasks:
         rows = rows[:nb_tasks]
@@ -240,7 +240,7 @@ def list_details(workflow_executions):
 def get_task(workflow_execution, task_id, details=False):
     history = History(workflow_execution.history())
     history.parse()
-    task = history._activities[task_id]
+    task = history.activities[task_id]
     header = ['type', 'id', 'name', 'version', 'state', 'timestamp', 'input', 'result', 'reason']
     # TODO...
     if details:

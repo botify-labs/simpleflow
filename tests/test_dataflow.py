@@ -208,9 +208,9 @@ def test_workflow_with_before_replay():
                               input={'args': (4,)})
 
     # The executor should only schedule the *increment* task.
-    assert not hasattr(executor._workflow, 'a')
+    assert not hasattr(executor.workflow, 'a')
     decisions, _ = executor.replay(Response(history=history))
-    assert executor._workflow.a == 4
+    assert executor.workflow.a == 4
 
 
 class TestDefinitionWithAfterReplay(TestWorkflow):
@@ -238,11 +238,11 @@ def test_workflow_with_after_replay():
                               input={'args': (4,)})
 
     # The executor should only schedule the *increment* task.
-    assert not hasattr(executor._workflow, 'b')
+    assert not hasattr(executor.workflow, 'b')
     decisions, _ = executor.replay(Response(history=history))
-    assert executor._workflow.b == 5
+    assert executor.workflow.b == 5
     # Check that workflow is not marked as finished
-    assert not hasattr(executor._workflow, 'c')
+    assert not hasattr(executor.workflow, 'c')
 
 
 class TestDefinitionWithAfterClosed(TestWorkflow):
@@ -267,7 +267,7 @@ def test_workflow_with_after_closed():
                               input={'args': (4,)})
 
     # The executor should only schedule the *increment* task.
-    assert not hasattr(executor._workflow, 'b')
+    assert not hasattr(executor.workflow, 'b')
     decisions, _ = executor.replay(Response(history=history))
     check_task_scheduled_decision(decisions[0], increment)
 
@@ -285,13 +285,13 @@ def test_workflow_with_after_closed():
 
     # *double* has completed and the ``b.result``is now available. The executor
     # should complete the workflow and its result to ``b.result``.
-    assert not hasattr(executor._workflow, 'b')
+    assert not hasattr(executor.workflow, 'b')
     decisions, _ = executor.replay(Response(history=history))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=json_dumps(5))
 
     assert decisions[0] == workflow_completed
-    assert executor._workflow.b == 5
+    assert executor.workflow.b == 5
 
 
 class TestDefinition(TestWorkflow):
@@ -931,7 +931,7 @@ def test_workflow_failed_from_definition():
     # fail the whole workflow.
     decisions, _ = executor.replay(Response(history=history))
 
-    assert executor._workflow.failed is True
+    assert executor.workflow.failed is True
 
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(reason='Workflow execution failed: error')
@@ -971,7 +971,7 @@ def test_workflow_activity_raises_on_failure():
     # exception raised in the workflow definition.
     decisions, _ = executor.replay(Response(history=history))
 
-    assert executor._workflow.failed is True
+    assert executor.workflow.failed is True
 
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
@@ -1009,7 +1009,7 @@ def test_on_failure_callback():
     # exception raised in the workflow definition.
     decisions, _ = executor.replay(Response(history=history))
 
-    assert executor._workflow.failed is True
+    assert executor.workflow.failed is True
 
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(

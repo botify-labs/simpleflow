@@ -28,7 +28,7 @@ class RegistryDispatcher(object):
             :rtype: callable.
 
         """
-        return self._registry[self._label][name]._callable
+        return self._registry[self._label][name].callable
 
     def dispatch_activity(self, name):
         """

@@ -68,6 +68,10 @@ class Activity(object):
         registry.registry.register(self)
 
     @property
+    def callable(self):
+        return self._callable
+
+    @property
     def name(self):
         import types
 
