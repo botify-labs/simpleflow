@@ -2,6 +2,9 @@ from . import exceptions
 
 
 class ModuleDispatcher(object):
+    """
+    Dispatch in a given namespace.
+    """
     def __init__(self, mod, mapping=None):
         self._module = mod
         self._mapping = mapping

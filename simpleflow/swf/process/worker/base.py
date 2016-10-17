@@ -18,7 +18,7 @@ from simpleflow.swf.process.actor import (
 from simpleflow.swf.task import ActivityTask
 from simpleflow.utils import json_dumps
 
-from .dispatch import from_task_registry
+from .dispatch import dynamic_dispatcher
 
 
 logger = logging.getLogger(__name__)
@@ -40,9 +40,20 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     Polls an activity and handles it in the worker.
 
     """
-    def __init__(self, domain, task_list, workflow, heartbeat=60,
-                 *args, **kwargs):
-        self._workflow = workflow
+    def __init__(self, domain, task_list, heartbeat=60, *args, **kwargs):
+        """
+
+        :param domain:
+        :type domain:
+        :param task_list:
+        :type task_list:
+        :param heartbeat:
+        :type heartbeat:
+        :param args:
+        :type args:
+        :param kwargs:
+        :type kwargs:
+        """
         self.nb_retries = 3
         self._heartbeat = heartbeat
 
@@ -56,9 +67,9 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 
     @property
     def name(self):
-        return '{}({})'.format(
+        return '{}(task_list={})'.format(
             self.__class__.__name__,
-            self._workflow._workflow.name,
+            self.task_list,
         )
 
     @with_state('polling')
@@ -91,14 +102,17 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 
 
 class ActivityWorker(object):
-    def __init__(self, workflow):
-        self._dispatcher = from_task_registry.RegistryDispatcher(
-            simpleflow.registry.registry,
-            None,
-            workflow,
-        )
+    def __init__(self, dispatcher=None):
+        self._dispatcher = dispatcher or dynamic_dispatcher.Dispatcher()
 
     def dispatch(self, task):
+        """
+
+        :param task:
+        :type task:
+        :return:
+        :rtype:
+        """
         name = task.activity_type.name
         return self._dispatcher.dispatch_activity(name)
 
@@ -128,7 +142,7 @@ class ActivityWorker(object):
 
 def process_task(poller, token, task):
     logger.debug('process_task() pid={}'.format(os.getpid()))
-    worker = ActivityWorker(poller._workflow)
+    worker = ActivityWorker()
     worker.process(poller, token, task)
 
 
