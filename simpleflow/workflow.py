@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 
-from simpleflow.utils import issubclass_
 from . import canvas
 from . import task
 from ._decorators import deprecated
 from .activity import Activity
+from .utils import issubclass_
 
 
 class Workflow(object):

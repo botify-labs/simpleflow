@@ -5,11 +5,9 @@
 #
 # See the file LICENSE for copying permission.
 
-import json
-
 from simpleflow.utils import json_dumps
-from swf.models.workflow import CHILD_POLICIES
 from swf.models.decision.base import Decision, decision_action
+from swf.models.workflow import CHILD_POLICIES
 
 
 class WorkflowExecutionDecision(Decision):

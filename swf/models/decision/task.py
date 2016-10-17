@@ -5,8 +5,6 @@
 #
 # See the file LICENSE for copying permission.
 
-import json
-
 from simpleflow.utils import json_dumps
 from swf.models.decision.base import Decision, decision_action
 

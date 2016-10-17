@@ -5,6 +5,7 @@ from simpleflow import activity, registry, task
 def double(x):
     return x * 2
 
+
 @activity.with_attributes(task_list='test')
 class Double(object):
     def __init__(self, val):

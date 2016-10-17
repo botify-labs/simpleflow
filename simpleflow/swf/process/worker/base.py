@@ -2,24 +2,23 @@ import json
 import logging
 import multiprocessing
 import os
-import psutil
 import signal
 import traceback
 
+import psutil
 import swf.actors
+import swf.exceptions
 import swf.format
-
-import simpleflow
+import simpleflow.registry
 from simpleflow.swf.process.actor import (
     Supervisor,
     Poller,
     with_state,
 )
-from simpleflow.swf.task import ActivityTask
-from simpleflow.utils import json_dumps
-
 from .dispatch import from_task_registry
 
+from simpleflow.swf.task import ActivityTask
+from simpleflow.utils import json_dumps
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ import unittest
 import boto.swf
 from vcr import VCR
 
-import simpleflow.command
+import simpleflow.command  # NOQA
 
 # Default SWF parameters
 os.environ["AWS_DEFAULT_REGION"] = "us-east-1"

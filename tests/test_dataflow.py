@@ -8,6 +8,7 @@ import boto
 from moto import mock_swf
 
 import swf.models
+import swf.models.decision
 from simpleflow.utils import json_dumps
 from swf.models.history import builder
 from swf.responses import Response

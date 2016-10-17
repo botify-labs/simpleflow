@@ -143,7 +143,7 @@ class TestHeartbeatProcess(unittest.TestCase):
         self.assertEquals(heartbeat._token,
                           token)
 
-    #TODO: fix test not working in containers
+    # TODO: fix test not working in containers
     @unittest.skip("Doesn't work in containers for now")
     def test_heartbeat_process_kill_parent(self):
         heartbeat = FakeHeartbeat(1000)

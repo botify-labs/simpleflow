@@ -27,6 +27,7 @@ class MultiProcessActor(object):
     actions. Binds signal handlers to expected behaviors. Adds
     a stop() method to inheriting actors.
     """
+
     def __init__(self):
         self._is_alive = False
         self._nb_children = 4
@@ -67,6 +68,7 @@ class MultiProcessActor(object):
         Binds SIGTERM and SIGINT to actors graceful shutdown action, and SIGUSR1 to
         a debug action to display process hierarchy + some useful informations.
         """
+
         def sigtermhandler(signum, frame):
             if self.is_alive:
                 log(
@@ -100,6 +102,7 @@ class MultiProcessActor(object):
                 p.terminate()
         log("all processes shut down, exiting...")
         self._is_alive = False
+
 
 # A dummy decider process
 class Decider(MultiProcessActor):

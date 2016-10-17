@@ -11,12 +11,16 @@ from swf.models import Domain, ActivityType
 from ..mocks.activity import mock_describe_activity_type
 
 
+if 0:
+    # for PyCharm
+    patch.object = patch.object
+
+
 def throw(exception):
     raise exception
 
 
 class TestActivityType(unittest.TestCase):
-
     def setUp(self):
         self.domain = Domain("test-domain")
         self.activity_type = ActivityType(
@@ -30,9 +34,9 @@ class TestActivityType(unittest.TestCase):
 
     def test_activity_type__diff_with_different_activity_type(self):
         with patch.object(
-            Layer1,
-            'describe_activity_type',
-            mock_describe_activity_type,
+                Layer1,
+                'describe_activity_type',
+                mock_describe_activity_type,
         ):
             activity = ActivityType(
                 self.domain,
@@ -50,9 +54,9 @@ class TestActivityType(unittest.TestCase):
 
     def test_activity_type__diff_with_identical_activity_type(self):
         with patch.object(
-            Layer1,
-            'describe_activity_type',
-            mock_describe_activity_type,
+                Layer1,
+                'describe_activity_type',
+                mock_describe_activity_type,
         ):
             mocked = mock_describe_activity_type()
             activity = ActivityType(
@@ -82,20 +86,20 @@ class TestActivityType(unittest.TestCase):
         with patch.object(self.activity_type.connection,
                           'describe_activity_type') as mock:
             mock.side_effect = (lambda *_, **__:
-                throw(boto.swf.exceptions.SWFResponseError(
-                    400,
-                    "Bad Request:",
-                    {'__type': 'com.amazonaws.swf.base.model#UnknownResourceFault',
-                     'message': 'Unknown type: ActivityType=[name=blah, version=test]'},
-                    'UnknownResourceFault',
-                )))
+                                throw(boto.swf.exceptions.SWFResponseError(
+                                    400,
+                                    "Bad Request:",
+                                    {'__type': 'com.amazonaws.swf.base.model#UnknownResourceFault',
+                                     'message': 'Unknown type: ActivityType=[name=blah, version=test]'},
+                                    'UnknownResourceFault',
+                                )))
             self.assertFalse(self.activity_type.exists)
 
     def test_is_synced_over_non_existent_activity_type(self):
         with patch.object(
-            Layer1,
-            'describe_activity_type',
-            mock_describe_activity_type
+                Layer1,
+                'describe_activity_type',
+                mock_describe_activity_type
         ):
             domain = ActivityType(
                 self.domain,
@@ -106,9 +110,9 @@ class TestActivityType(unittest.TestCase):
 
     def test_changes_with_different_activity_type(self):
         with patch.object(
-            Layer1,
-            'describe_activity_type',
-            mock_describe_activity_type,
+                Layer1,
+                'describe_activity_type',
+                mock_describe_activity_type,
         ):
             activity_type = ActivityType(
                 self.domain,
@@ -126,9 +130,9 @@ class TestActivityType(unittest.TestCase):
 
     def test_activity_type_changes_with_identical_activity_type(self):
         with patch.object(
-            Layer1,
-            'describe_activity_type',
-            mock_describe_activity_type,
+                Layer1,
+                'describe_activity_type',
+                mock_describe_activity_type,
         ):
             mocked = mock_describe_activity_type()
             activity_type = ActivityType(

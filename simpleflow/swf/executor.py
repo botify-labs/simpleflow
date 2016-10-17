@@ -119,6 +119,9 @@ def run_fake_task_worker(domain, task_list, former_event):
                 'tag_list': former_event['tag_list'],
             },
         )
+    else:
+        raise Exception('Wrong event type {}'.format(former_event['type']))
+
     worker_proc.start()
 
 
@@ -159,6 +162,7 @@ class Executor(executor.Executor):
     def __init__(self, domain, workflow, task_list=None, repair_with=None,
                  force_activities=None):
         super(Executor, self).__init__(workflow)
+        self._history = None
         self.domain = domain
         self.task_list = task_list
         self.repair_with = repair_with

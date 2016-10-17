@@ -140,12 +140,10 @@ class History(object):
             'terminated'
         )
 
-        if (isinstance(self.last, WorkflowExecutionEvent) and
-            self.last.state in completion_states):
+        if isinstance(self.last, WorkflowExecutionEvent) and self.last.state in completion_states:
             return True
 
         return False
-
 
     def filter(self, **kwargs):
         """Filters the history based on kwargs events attributes
@@ -159,6 +157,7 @@ class History(object):
 
         .. code-block:: python
 
+            >>> history_obj = History()
             >>> history_obj.filter(type='ActivityTask', state='completed')  # doctest: +SKIP
             <History
                 <Event 23 ActivityTask : completed>
@@ -199,10 +198,8 @@ class History(object):
             g = list(group)
 
             # Merge every WorkflowExecution events into same group
-            if (len(g) == 1 and
-                len(distinct_events) >= 1 and
-                    g[0].type == "WorkflowExecution"):
-                # WorfklowExecution group will always be in first position
+            if len(g) == 1 and len(distinct_events) >= 1 and g[0].type == "WorkflowExecution":
+                # WorkflowExecution group will always be in first position
                 distinct_events[0].extend(g)
             else:
                 distinct_events.append(list(g))

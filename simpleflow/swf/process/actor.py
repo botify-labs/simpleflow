@@ -6,6 +6,7 @@ import signal
 from setproctitle import setproctitle
 
 import swf.actors
+import swf.exceptions
 from simpleflow import utils
 from simpleflow.swf.helpers import swf_identity
 

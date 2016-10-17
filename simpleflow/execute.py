@@ -149,11 +149,11 @@ def python(interpreter='python'):
         @functools.wraps(func)
         def execute(*args, **kwargs):
             command = 'simpleflow.execute'  # name of a module.
+            full_command = [
+                interpreter, '-m', command,  # execute module a script.
+                get_name(func), format_arguments_json(*args, **kwargs),
+            ]
             try:
-                full_command = [
-                    interpreter, '-m', command,  # execute module a script.
-                    get_name(func), format_arguments_json(*args, **kwargs),
-                ]
                 output = subprocess.check_output(
                     full_command,
                     # Redirect stderr to stdout to get traceback on error.

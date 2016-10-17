@@ -61,5 +61,4 @@ class TestUtils(unittest.TestCase):
             }
         }
 
-
         self.assertIsNone(get_subkey(base_dict, ['b', '1']))

@@ -1,6 +1,3 @@
-import json
-
-import swf.models
 import swf.models.event.workflow
 from simpleflow.utils import json_dumps
 from swf.models.event.factory import EventFactory
@@ -190,14 +187,14 @@ class History(swf.models.History):
                                           activity_type,
                                           cause):
         self.events.append(EventFactory({
-            u'eventId': self.next_id,
-            u'eventTimestamp': 1386947268.527,
-            u'eventType': u'ScheduleActivityTaskFailed',
-            u'scheduleActivityTaskFailedEventAttributes': {
-                u'activityId': activity_id,
-                u'activityType': activity_type.copy(),
-                u'cause': cause,
-                u'decisionTaskCompletedEventId': decision_id,
+            "eventId": self.next_id,
+            "eventTimestamp": 1386947268.527,
+            "eventType": "ScheduleActivityTaskFailed",
+            "scheduleActivityTaskFailedEventAttributes": {
+                "activityId": activity_id,
+                "activityType": activity_type.copy(),
+                "cause": cause,
+                "decisionTaskCompletedEventId": decision_id,
             }
         }))
 

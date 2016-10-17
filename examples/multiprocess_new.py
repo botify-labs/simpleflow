@@ -7,19 +7,21 @@ so this example tries to be as simple as possible and only demonstrate the way
 things work.
 """
 import datetime
-from multiprocessing import Process, Value
 import os
 import random
 import signal
-import time
+from multiprocessing import Process, Value
+
 
 # Utility
 def log(msg):
     now = datetime.datetime.now().isoformat()
     print "{} pid={} {}".format(now, os.getpid(), msg)
 
+
 # Shared value
 shared_alive_value = Value('b', True)
+
 
 # This is the supervisor process
 class Supervisor(object):
@@ -56,10 +58,11 @@ class Supervisor(object):
     def bind_signal_handlers(self):
         # NB: the function below is nested to have a reference to *self*
         def signal_graceful_shutdown(signum, frame):
-            if not self.is_alive: # children
+            if not self.is_alive:  # children
                 return
             log("received signal={}, will shutdown".format(signum))
             self.stop()
+
         signal.signal(signal.SIGTERM, signal_graceful_shutdown)
         signal.signal(signal.SIGINT, signal_graceful_shutdown)
 
@@ -90,6 +93,7 @@ class Supervisor(object):
             p.join()
         log("all processes shut down, exiting...")
 
+
 # A dummy decider process
 class Decider(object):
     def __init__(self):
@@ -112,6 +116,7 @@ class Decider(object):
                 i = i + 1
             # </end of dumb section>
         log("loop ended")
+
 
 # Let's go now
 if __name__ == "__main__":

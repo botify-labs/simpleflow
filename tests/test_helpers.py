@@ -20,6 +20,7 @@ class FakeHistory(object):
             },
         }
 
+
 class TestSimpleflowSwfHelpers(unittest.TestCase):
     def test_find_activity(self):
         func, args, kwargs, params = find_activity(FakeHistory(), scheduled_id=5)

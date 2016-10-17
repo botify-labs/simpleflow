@@ -69,7 +69,7 @@ class TestGroup(unittest.TestCase):
         self.assertEquals(future.count_finished_activities, 2)
         self.assertEquals(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
-            future.result
+            dummy = future.result
 
 
 class TestChain(unittest.TestCase):

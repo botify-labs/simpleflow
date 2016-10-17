@@ -1,12 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-import platform
 import re
-import sys
 import subprocess
+import sys
+
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
-
 
 REQUIRES = [
 

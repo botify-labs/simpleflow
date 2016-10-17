@@ -2,8 +2,6 @@ from __future__ import absolute_import
 
 import abc
 
-from simpleflow.utils import json_dumps
-
 from . import futures
 from .activity import Activity
 

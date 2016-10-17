@@ -13,8 +13,8 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
 
     # if no run_id provided, we assume that the requester wanted the last
     # execution with that workflow_id
+    found_run_id = None
     if not run_id:
-        found_run_id = None
         qs = swf.querysets.WorkflowExecutionQuerySet(domain)
         wfe = (qs.filter(workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_OPEN) or
                qs.filter(workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_CLOSED))

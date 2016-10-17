@@ -4,6 +4,8 @@ import logging
 
 import swf.actors
 import swf.exceptions
+import swf.format
+import swf.models.decision
 
 from simpleflow.swf.process.actor import (
     Supervisor,
