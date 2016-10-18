@@ -50,8 +50,8 @@ def format_arguments(*args, **kwargs):
 
     Examples:
 
-        >>> format_arguments('a', 'b', c=1, val=2)
-        ['-c="1"', '--val="2"', 'a', 'b']
+        >>> sorted(format_arguments('a', 'b', c=1, val=2))
+        ['--val="2"', '-c="1"', 'a', 'b']
 
     """
     def arg(key):
@@ -265,18 +265,14 @@ def make_callable(funcname):
 
     Loading a function from a library:
 
-    >>> func = make_callable('itertools.imap')
-    >>> func
-    <type 'itertools.imap'>
-    >>> list(func(lambda x: x + 1, range(4)))
-    [1, 2, 3, 4]
+    >>> func = make_callable('itertools.chain')
+    >>> list(func(range(3), range(4)))
+    [0, 1, 2, 0, 1, 2, 3]
 
     Loading a builtin:
 
     >>> func = make_callable('map')
-    >>> func
-    <built-in function map>
-    >>> func(lambda x: x + 1, range(4))
+    >>> list(func(lambda x: x + 1, range(4)))
     [1, 2, 3, 4]
 
     """
