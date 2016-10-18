@@ -6,6 +6,7 @@
 # See the file LICENSE for copying permission.
 
 from itertools import groupby
+from builtins import range
 
 from future.utils import iteritems
 from swf.models.event import EventFactory, CompiledEventFactory
@@ -188,7 +189,7 @@ class History(object):
 
     @property
     def reversed(self):
-        for i in xrange(len(self.events) - 1, -1, -1):
+        for i in range(len(self.events) - 1, -1, -1):
             yield self.events[i]
 
     @property

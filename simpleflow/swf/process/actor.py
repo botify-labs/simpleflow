@@ -3,6 +3,8 @@ import functools
 import logging
 import multiprocessing
 import signal
+from builtins import range
+
 from setproctitle import setproctitle
 
 import swf.actors
@@ -72,7 +74,7 @@ class Supervisor(object):
             get_payload_name(self._payload),
         ))
         assert len(self._processes) == 0
-        for _ in xrange(self._nb_children):
+        for _ in range(self._nb_children):
             child = multiprocessing.Process(
                 target=self._payload,
                 args=self._args,

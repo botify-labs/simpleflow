@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from builtins import range
 
 import functools
 from mock import patch
@@ -617,7 +618,7 @@ class ATestDefinitionMap(ATestWorkflow):
     nb_parts = 3
 
     def run(self, *args, **kwargs):
-        xs = self.map(increment, xrange(self.nb_parts))
+        xs = self.map(increment, range(self.nb_parts))
         values = futures.wait(*xs)
 
         return values
@@ -635,13 +636,13 @@ def test_workflow_map():
     # All the futures returned by the map are passed to wait().
     # The executor should then schedule all of them.
     decisions, _ = executor.replay(Response(history=history))
-    for i in xrange(nb_parts):
+    for i in range(nb_parts):
         check_task_scheduled_decision(decisions[i], increment)
 
     # Let's add all tasks of the map to the history to simulate their
     # completion.
     decision_id = history.last_id
-    for i in xrange(nb_parts):
+    for i in range(nb_parts):
         history.add_activity_task(
             increment,
             decision_id=decision_id,
@@ -658,7 +659,7 @@ def test_workflow_map():
     decisions, _ = executor.replay(Response(history=history))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(
-        result=json_dumps([i + 1 for i in xrange(nb_parts)]))
+        result=json_dumps([i + 1 for i in range(nb_parts)]))
 
     assert decisions[0] == workflow_completed
 
@@ -834,7 +835,7 @@ class ATestDefinitionMoreThanMaxDecisions(ATestWorkflow):
     """
 
     def run(self):
-        results = self.map(increment, xrange(constants.MAX_DECISIONS + 5))
+        results = self.map(increment, range(constants.MAX_DECISIONS + 5))
         futures.wait(*results)
 
 
@@ -851,7 +852,7 @@ def test_workflow_with_more_than_max_decisions():
     assert decisions[-1].type == 'StartTimer'
 
     decision_id = history.last_id
-    for i in xrange(constants.MAX_DECISIONS):
+    for i in range(constants.MAX_DECISIONS):
         history.add_activity_task(
             increment,
             decision_id=decision_id,
@@ -868,7 +869,7 @@ def test_workflow_with_more_than_max_decisions():
     decisions, _ = executor.replay(Response(history=history))
     assert len(decisions) == 5
 
-    for i in xrange(constants.MAX_DECISIONS - 1, constants.MAX_DECISIONS + 5):
+    for i in range(constants.MAX_DECISIONS - 1, constants.MAX_DECISIONS + 5):
         history.add_activity_task(
             increment,
             decision_id=decision_id,
@@ -1202,7 +1203,7 @@ class ATestDefinitionMoreThanMaxOpenActivities(ATestWorkflow):
     def run(self):
         results = self.map(
             increment,
-            xrange(constants.MAX_OPEN_ACTIVITY_COUNT + 5))
+            range(constants.MAX_OPEN_ACTIVITY_COUNT + 5))
         futures.wait(*results)
 
 
@@ -1215,12 +1216,12 @@ def test_more_than_1000_open_activities_scheduled():
     # The first time, the executor should schedule
     # ``constants.MAX_OPEN_ACTIVITY_COUNT`` decisions.
     # No timer because we wait for at least an activity to complete.
-    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT / constants.MAX_DECISIONS):
+    for i in range(constants.MAX_OPEN_ACTIVITY_COUNT / constants.MAX_DECISIONS):
         decisions, _ = executor.replay(Response(history=history))
         assert len(decisions) == constants.MAX_DECISIONS
 
     decision_id = history.last_id
-    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT):
+    for i in range(constants.MAX_OPEN_ACTIVITY_COUNT):
         history.add_activity_task(
             increment,
             decision_id=decision_id,
@@ -1250,12 +1251,12 @@ def test_more_than_1000_open_activities_scheduled_and_running():
     # The first time, the executor should schedule
     # ``constants.MAX_OPEN_ACTIVITY_COUNT`` decisions.
     # No timer because we wait for at least an activity to complete.
-    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT / constants.MAX_DECISIONS):
+    for i in range(constants.MAX_OPEN_ACTIVITY_COUNT / constants.MAX_DECISIONS):
         decisions, _ = executor.replay(Response(history=history))
         assert len(decisions) == constants.MAX_DECISIONS
 
     decision_id = history.last_id
-    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT):
+    for i in range(constants.MAX_OPEN_ACTIVITY_COUNT):
         history.add_activity_task(
             increment,
             decision_id=decision_id,
@@ -1279,7 +1280,7 @@ def test_more_than_1000_open_activities_partial_max():
     decisions, _ = executor.replay(Response(history=history))
 
     first_decision_id = history.last_id
-    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT - 2):
+    for i in range(constants.MAX_OPEN_ACTIVITY_COUNT - 2):
         history.add_activity_task(
             increment,
             decision_id=first_decision_id,
@@ -1296,7 +1297,7 @@ def test_more_than_1000_open_activities_partial_max():
     assert len(decisions) == 2
 
     history.add_decision_task_completed()
-    for i in xrange(2):
+    for i in range(2):
         id_ = constants.MAX_OPEN_ACTIVITY_COUNT - 2 + i + 1
         history.add_activity_task(
             increment,
@@ -1317,7 +1318,7 @@ def test_more_than_1000_open_activities_partial_max():
 
     history.add_decision_task_completed()
 
-    for i in xrange(constants.MAX_OPEN_ACTIVITY_COUNT - 2):
+    for i in range(constants.MAX_OPEN_ACTIVITY_COUNT - 2):
         scheduled_id = first_decision_id + i + 1
         history.add_activity_task_started(scheduled_id)
         history.add_activity_task_completed(

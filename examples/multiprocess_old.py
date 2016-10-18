@@ -12,6 +12,7 @@ import multiprocessing
 import os
 import random
 import signal
+from builtins import range
 
 
 # Utility
@@ -132,7 +133,7 @@ class Decider(MultiProcessActor):
             # "time.sleep()" gets interrupted when receiving a SIGINT it seems,
             # so let's spend time in a different way
             i = 0
-            for _ in xrange(0, sec * 10000000):
+            for _ in range(0, sec * 10000000):
                 i = i + 1
             # </end of dumb section>
         finally:
