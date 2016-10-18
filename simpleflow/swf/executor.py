@@ -67,12 +67,6 @@ def run_fake_child_workflow_task(domain, task_list, workflow_type_name,
                                  workflow_type_version, workflow_id, input=None, result=None,
                                  child_policy=None, control=None, tag_list=None):
     conn = ConnectedSWFObject().connection
-    conn.start_workflow_execution(
-        domain, workflow_id, workflow_type_name, workflow_type_version,
-        child_policy=child_policy, control=control,
-        input=input,
-        tag_list=tag_list, task_list=task_list
-    )
     resp = conn.poll_for_decision_task(
         domain,
         task_list,
