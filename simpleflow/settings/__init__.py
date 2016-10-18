@@ -1,6 +1,6 @@
 import sys
 
-import base
+from . import base
 
 
 for k, v in base.load().iteritems():

@@ -1,1 +1,1 @@
-from base import History
+from .base import History  # NOQA
