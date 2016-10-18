@@ -4,6 +4,10 @@ import sys
 import subprocess
 import functools
 import json
+
+from builtins import map
+from future.utils import iteritems
+
 try:
     import cPickle as pickle
 except ImportError:
@@ -55,7 +59,7 @@ def format_arguments(*args, **kwargs):
         return '--' + str(key)     # long option --val
 
     return ['{}="{}"'.format(arg(key), value) for key, value in
-            kwargs.iteritems()] + map(str, args)
+            iteritems(kwargs)] + list(map(str, args))
 
 
 def zip_arguments_defaults(argspec):

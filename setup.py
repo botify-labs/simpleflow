@@ -70,6 +70,7 @@ def read(fname):
     return content
 
 DEPS = [
+    'future',
     'boto>=2.38.0',
     'tabulate==0.7.3',
     'setproctitle',

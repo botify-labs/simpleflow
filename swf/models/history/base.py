@@ -7,6 +7,7 @@
 
 from itertools import groupby
 
+from future.utils import iteritems
 from swf.models.event import EventFactory, CompiledEventFactory
 from swf.models.event.workflow import WorkflowExecutionEvent
 from swf.utils import cached_property
@@ -181,7 +182,7 @@ class History(object):
         :rtype: swf.models.history.History
         """
         return filter(
-            lambda e: all(getattr(e, k) == v for k, v in kwargs.iteritems()),
+            lambda e: all(getattr(e, k) == v for k, v in iteritems(kwargs)),
             self.events
         )
 

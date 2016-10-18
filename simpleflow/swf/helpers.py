@@ -8,6 +8,7 @@ from importlib import import_module
 import swf.exceptions
 import swf.models
 import swf.querysets
+from future.utils import iteritems
 from simpleflow.activity import Activity
 from simpleflow.utils import json_dumps
 
@@ -104,7 +105,7 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     :type input: Optional[dict[str, Any]]
     """
     found_activity = None
-    for _, params in history.activities.iteritems():
+    for _, params in iteritems(history.activities):
         if params["scheduled_id"] == scheduled_id:
             found_activity = params
         if params["id"] == activity_id:
