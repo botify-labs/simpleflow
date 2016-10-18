@@ -45,9 +45,14 @@ def tabular(values, headers, tablefmt, floatfmt):
 
 def csv(values, headers, delimiter=','):
     import csv
-    from io import StringIO
+    if compat.PY2:
+        # Need to convert the values to unicode otherwise...
+        from cStringIO import StringIO
+    else:
+        from io import StringIO
 
     data = StringIO()
+
     csv.writer(data, delimiter=delimiter).writerows(values)
 
     return data.getvalue()

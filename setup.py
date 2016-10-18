@@ -6,6 +6,7 @@ import sys
 
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
+from simpleflow import compat
 
 REQUIRES = [
 
@@ -74,11 +75,14 @@ DEPS = [
     'boto>=2.38.0',
     'tabulate==0.7.3',
     'setproctitle',
-    'subprocess32',
     'click',
     'psutil',
     'pytz',
 ]
+if compat.PY2:
+    DEPS += [
+        'subprocess32',
+    ]
 
 setup(
     name='simpleflow',
