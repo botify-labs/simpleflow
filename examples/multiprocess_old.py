@@ -113,7 +113,7 @@ class Decider(MultiProcessActor):
     def spawn_handler(self):
         try:
             self._semaphore.acquire()
-        except OSError, err:
+        except OSError as err:
             log('Error: cannot acquire semaphore: {}'.format(err))
             return
 
@@ -137,7 +137,7 @@ class Decider(MultiProcessActor):
         finally:
             try:
                 self._semaphore.release()
-            except Exception, err:
+            except Exception as err:
                 log('Error: cannot release semaphore: {}'.format(err))
 
     def start(self):

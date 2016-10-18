@@ -210,7 +210,6 @@ def raise_timeout_error():
 def test_function_as_program_raises_module_exception():
     from simpleflow.exceptions import TimeoutError
 
-    err = None
     try:
         raise_timeout_error()
     except TimeoutError as err:
@@ -228,13 +227,13 @@ def warn():
     warnings.warn("The _posixsubprocess module is not being used. "
                   "Child process reliability may suffer if your "
                   "program uses threads.", RuntimeWarning)
-    raise StandardError('Fake Standard Error')
+    raise Exception('Fake Exception')
 
 
 def test_function_with_warning():
     try:
         warn()
-    except StandardError:
+    except Exception:
         pass
     else:
         assert False

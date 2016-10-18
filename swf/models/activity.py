@@ -190,7 +190,7 @@ class ActivityType(BaseModel):
                 default_task_schedule_to_start_timeout=str(self.task_schedule_to_start_timeout),
                 default_task_start_to_close_timeout=str(self.task_start_to_close_timeout),
                 description=self.description)
-        except SWFTypeAlreadyExistsError, err:
+        except SWFTypeAlreadyExistsError as err:
             raise AlreadyExistsError('{} already exists'.format(self))
         except SWFResponseError as err:
             if err.error_code in ['UnknownResourceFault', 'TypeDeprecatedFault']:
