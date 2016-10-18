@@ -214,7 +214,7 @@ class Executor(executor.Executor):
             # It makes the workflow resistant to retries or variations on the
             # same task name (see #11).
             arguments = json_dumps({"args": args, "kwargs": kwargs})
-            suffix = hashlib.md5(arguments).hexdigest()
+            suffix = hashlib.md5(arguments.encode('utf-8')).hexdigest()
 
         task_id = '{name}-{idx}'.format(name=a_task.name, idx=suffix)
         return task_id
@@ -456,7 +456,7 @@ class Executor(executor.Executor):
                     'faking task completed successfully in previous '
                     'workflow: {}'.format(former_event['id'])
                 )
-                json_hash = hashlib.md5(json_dumps(former_event)).hexdigest()
+                json_hash = hashlib.md5(json_dumps(former_event).encode('utf-8')).hexdigest()
                 fake_task_list = "FAKE-" + json_hash
 
                 # schedule task on a fake task list

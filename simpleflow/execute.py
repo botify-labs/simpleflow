@@ -8,6 +8,7 @@ import json
 from builtins import map
 
 from future.utils import iteritems
+from simpleflow import compat
 
 try:
     import cPickle as pickle
@@ -190,7 +191,10 @@ def python(interpreter='python'):
 
                 raise exception
             try:
-                return json.loads(output.rstrip().rsplit(b"\n", 1)[-1])
+                last_line = output.rstrip().rsplit(b"\n", 1)[-1]
+                if not compat.PY2:
+                    last_line = last_line.decode('utf-8', errors='replace')
+                return json.loads(last_line)
             except BaseException as ex:
                 message = ex.args[0] if ex.args else ''
                 logger.warning(message)
