@@ -47,9 +47,9 @@ def get_payload_name(payload):
 
     if isinstance(payload, types.MethodType):
         instance = payload.im_self
-        return '{}.{}'.format(instance.__class__.__name__, payload.func_name)
+        return '{}.{}'.format(instance.__class__.__name__, payload.__name__)
     elif isinstance(payload, types.FunctionType):
-        return payload.func_name
+        return payload.__name__
 
     raise TypeError('invalid payload type {}'.format(type(payload)))
 

@@ -6,6 +6,7 @@ import functools
 import json
 
 from builtins import map
+
 from future.utils import iteritems
 
 try:
@@ -121,8 +122,6 @@ def get_name(func):
         :rtype: str.
 
     """
-    import types
-
     prefix = func.__module__
 
     if not callable(func):
@@ -131,9 +130,7 @@ def get_name(func):
 
     if hasattr(func, 'name'):
         name = func.name
-    elif isinstance(func, types.FunctionType):
-        name = func.func_name
-    elif isinstance(func, (type, types.ClassType)):
+    elif hasattr(func, '__name__'):
         name = func.__name__
     else:
         name = func.__class__.__name__
@@ -238,7 +235,7 @@ def program(path=None, argument_format=format_arguments):
             check_arguments(argspec, args)
             check_keyword_arguments(argspec, kwargs)
 
-            command = path or func.func_name
+            command = path or func.__name__
             return subprocess.check_output(
                 [command] + argument_format(*args, **kwargs))
 
