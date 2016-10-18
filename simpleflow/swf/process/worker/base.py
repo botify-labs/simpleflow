@@ -228,7 +228,7 @@ def spawn(poller, token, task, heartbeat=60):
     :param heartbeat: heartbeat delay (seconds)
     :type heartbeat: int
     """
-    logger.debug('spawn() pid={}'.format(os.getpid()))
+    logger.debug('spawn() pid={} heartbeat={}'.format(os.getpid(), heartbeat))
     worker = multiprocessing.Process(
         target=process_task,
         args=(poller, token, task),
