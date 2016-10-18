@@ -14,7 +14,7 @@ class TestFormat(unittest.TestCase):
 
     def test_wrap_smaller(self):
         MAX_LENGTH = random.randint(10, 1000)
-        message = 'A' * (MAX_LENGTH / 2)
+        message = 'A' * (MAX_LENGTH // 2)
         self.assertEquals(
             swf.format.wrap(message, MAX_LENGTH),
             message,

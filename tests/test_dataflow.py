@@ -1216,7 +1216,7 @@ def test_more_than_1000_open_activities_scheduled():
     # The first time, the executor should schedule
     # ``constants.MAX_OPEN_ACTIVITY_COUNT`` decisions.
     # No timer because we wait for at least an activity to complete.
-    for i in range(constants.MAX_OPEN_ACTIVITY_COUNT / constants.MAX_DECISIONS):
+    for i in range(constants.MAX_OPEN_ACTIVITY_COUNT // constants.MAX_DECISIONS):
         decisions, _ = executor.replay(Response(history=history))
         assert len(decisions) == constants.MAX_DECISIONS
 
@@ -1251,7 +1251,7 @@ def test_more_than_1000_open_activities_scheduled_and_running():
     # The first time, the executor should schedule
     # ``constants.MAX_OPEN_ACTIVITY_COUNT`` decisions.
     # No timer because we wait for at least an activity to complete.
-    for i in range(constants.MAX_OPEN_ACTIVITY_COUNT / constants.MAX_DECISIONS):
+    for i in range(constants.MAX_OPEN_ACTIVITY_COUNT // constants.MAX_DECISIONS):
         decisions, _ = executor.replay(Response(history=history))
         assert len(decisions) == constants.MAX_DECISIONS
 
