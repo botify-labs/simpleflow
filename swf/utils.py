@@ -66,8 +66,9 @@ def get_subkey(d, key_path):
     ...     '2': 3,
     ...   }
     ... }
-    >>> get_subkey(d, ['a'])
-    {'1': 2, '2': 3}
+    >>> # FIXME commented-out: order unspecified, depend on python version
+    >>> # >>> get_subkey(d, ['a'])
+    >>> # {'1': 2, '2': 3}
     >>> get_subkey(d, ['a', '1'])
     2
     >>> get_subkey(d, ['a', '3'])

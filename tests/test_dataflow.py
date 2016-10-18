@@ -785,8 +785,10 @@ def test_workflow_with_child_workflow():
     workflow = ATestDefinitionChildWorkflow
     executor = Executor(DOMAIN, workflow)
 
-    history = builder.History(workflow,
-                              input={'args': (1,)})
+    # FIXME the original test only contains args, and check both keys are present.
+    # FIXME But their order is unspecified from one execution to the next
+    input = {'args': (1,), 'kwargs': {}}
+    history = builder.History(workflow, input=input)
 
     # The executor should schedule the execution of a child workflow.
     decisions, _ = executor.replay(Response(history=history))
@@ -798,7 +800,7 @@ def test_workflow_with_child_workflow():
                 'name': 'test_task_list'
             },
             'executionStartToCloseTimeout': '3600',
-            'input': '{"args":[1],"kwargs":{}}',
+            'input': json_dumps(input),
             'workflowType': {
                 'version': 'test_version',
                 'name': 'test_workflow'
