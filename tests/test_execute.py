@@ -1,3 +1,4 @@
+from __future__ import print_function
 import tempfile
 import os.path
 import platform
@@ -145,7 +146,7 @@ def test_function_as_program_raises_builtin_exception():
 
 @execute.python()
 def print_string(s, retval):
-    print s
+    print(s)
     return retval
 
 
@@ -156,7 +157,7 @@ class PrintString(object):
         self.retval = retval
 
     def execute(self):
-        print self.s
+        print(self.s)
         return self.retval
 
 

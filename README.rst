@@ -83,9 +83,9 @@ And then define the workflow itself in a ``example.py`` file:
             yy = self.submit(delay, t, y)
             z = self.submit(double, y)
 
-            print '({x} + 1) * 2 = {result}'.format(
+            print('({x} + 1) * 2 = {result}'.format(
                 x=x,
-                result=z.result)
+                result=z.result))
             futures.wait(yy, z)
             return z.result
 

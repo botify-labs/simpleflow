@@ -6,6 +6,7 @@ bit hard to think of process management inside the current simpleflow codebase,
 so this example tries to be as simple as possible and only demonstrate the way
 things work.
 """
+from __future__ import print_function
 import datetime
 import os
 import random
@@ -16,7 +17,7 @@ from multiprocessing import Process, Value
 # Utility
 def log(msg):
     now = datetime.datetime.now().isoformat()
-    print "{} pid={} {}".format(now, os.getpid(), msg)
+    print("{} pid={} {}".format(now, os.getpid(), msg))
 
 
 # Shared value

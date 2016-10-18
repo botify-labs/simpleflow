@@ -1,3 +1,4 @@
+from __future__ import print_function
 import time
 
 from simpleflow import (
@@ -56,5 +57,4 @@ class CanvasWorkflow(Workflow):
 
         res = future.result[-1]
 
-        print '({}+1)*({}+1)*({}+1) = {}'.format(x, y, z, res)
-
+        print('({}+1)*({}+1)*({}+1) = {}'.format(x, y, z, res))
