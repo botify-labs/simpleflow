@@ -13,7 +13,7 @@ def _serialize_complex_object(obj):
         " please file a new issue on GitHub!" % type(obj))
 
 
-def json_dumps(obj, pretty=False, compact=True):
+def json_dumps(obj, pretty=False, compact=True, **kwargs):
     """
     JSON dump to string.
     :param obj:
@@ -25,9 +25,7 @@ def json_dumps(obj, pretty=False, compact=True):
     :return:
     :rtype: str
     """
-    kwargs = {
-        "default": _serialize_complex_object
-    }
+    kwargs["default"] = _serialize_complex_object
     if pretty:
         kwargs["indent"] = 4
         kwargs["sort_keys"] = True
