@@ -1,3 +1,4 @@
+# coding: utf-8
 from __future__ import print_function
 import tempfile
 import os.path
@@ -66,7 +67,7 @@ def ls_optional_named_arguments(hide='', *args):
 @pytest.mark.skipif(platform.system() == 'Darwin',
                     reason="ls doesn't have a --hide option on MacOSX")
 def test_execute_program_optional_named_arguments():
-    with tempfile.NamedTemporaryFile() as f:
+    with tempfile.NamedTemporaryFile(suffix='\xe9') as f:
         assert ls_optional_named_arguments(f.name).strip() == f.name
         assert f.name not in ls_optional_named_arguments(hide=f.name)
 
@@ -211,15 +212,10 @@ def raise_timeout_error():
 def test_function_as_program_raises_module_exception():
     from simpleflow.exceptions import TimeoutError
 
-    try:
+    with pytest.raises(TimeoutError) as err:
         raise_timeout_error()
-    except TimeoutError as err:
         assert err.timeout_type == 'timeout'
         assert err.timeout_value == 1
-    else:
-        assert False
-
-    assert isinstance(err, TimeoutError)
 
 
 @execute.python()
@@ -238,3 +234,18 @@ def test_function_with_warning():
         pass
     else:
         assert False
+
+
+def test_function_returning_unicode():
+    assert print_string('', 'ʘ‿ʘ') == u'ʘ‿ʘ'
+
+
+@execute.python()
+def raise_dummy_exception_with_unicode():
+    raise DummyException('ʘ‿ʘ')
+
+
+def test_exception_with_unicode():
+    with pytest.raises(DummyException) as err:
+        raise_dummy_exception_with_unicode()
+        assert err.args[0] == u'ʘ‿ʘ'

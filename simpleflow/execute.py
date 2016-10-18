@@ -164,12 +164,16 @@ def python(interpreter='python'):
                     stderr=subprocess.STDOUT,
                 )
             except subprocess.CalledProcessError as err:
+                err_output = err.output
+                if not compat.PY2:
+                    err_output = err_output.decode('utf-8', errors='replace')
                 logger.info(
-                    "got a subprocess.CalledProcessError on command: {}\noriginal error output: {}".format(
-                        full_command, err.output
+                    "Got a subprocess.CalledProcessError on command: {}\n"
+                    "Original error output: '{}'".format(
+                        full_command, err_output, type(err_output)
                     )
                 )
-                exclines = err.output.rstrip().rsplit(b'\n', 2)
+                exclines = err_output.rstrip().rsplit('\n', 2)
                 excline = exclines[-1]
 
                 try:
@@ -177,8 +181,8 @@ def python(interpreter='python'):
                         base64.b64decode(excline.rstrip()))
                 except (TypeError, pickle.UnpicklingError):
                     exception = Exception(excline)
-                    if b':' in excline:
-                        cls, msg = excline.split(b':', 1)
+                    if ':' in excline:
+                        cls, msg = excline.split(':', 1)
                         if re.match(r'\s*[\w.]+\s*', cls):
                             try:
                                 exception = eval('{}("{}")'.format(
@@ -186,23 +190,23 @@ def python(interpreter='python'):
                                     msg.strip(),
                                 ))
                             except BaseException as ex:
-                                message = ex.args[0] if ex.args else ''
-                                logger.warning(message)
+                                logger.warning('{}'.format(ex))
 
                 raise exception
             try:
-                last_line = output.rstrip().rsplit(b"\n", 1)[-1]
                 if not compat.PY2:
-                    last_line = last_line.decode('utf-8', errors='replace')
-                return json.loads(last_line)
+                    output = output.decode('utf-8', errors='replace')
+                last_line = output.rstrip().rsplit('\n', 1)[-1]
+                d = json.loads(last_line)
+                return d
             except BaseException as ex:
-                message = ex.args[0] if ex.args else ''
-                logger.warning(message)
+                logger.warning('Exception in python.execute: {}'.format(ex))
                 logger.warning(repr(output))
 
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
         return execute
+
     return wrap_callable
 
 
@@ -243,12 +247,14 @@ def program(path=None, argument_format=format_arguments):
 
             command = path or func.__name__
             return subprocess.check_output(
-                [command] + argument_format(*args, **kwargs))
+                [command] + argument_format(*args, **kwargs),
+                universal_newlines=True)
 
         argspec = inspect.getargspec(func)
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
         return execute
+
     return wrap_callable
 
 
@@ -370,10 +376,14 @@ if __name__ == '__main__':
         else:
             result = callable_(*args, **kwargs)
     except Exception as err:
+        logger.error('Exception: {}'.format(err))
         # Use base64 encoding to avoid carriage returns and special characters.
         # FIXME change this: brittle, missing traceback
-        print(base64.b64encode(
-            pickle.dumps(err)))
+        encoded_err = base64.b64encode(pickle.dumps(err))
+        if not compat.PY2:
+            # Convert bytes to string
+            encoded_err = encoded_err.decode('utf-8', errors='replace')
+        print(encoded_err)
         sys.exit(1)
     else:
         print(json_dumps(result))
