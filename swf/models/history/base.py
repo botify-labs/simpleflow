@@ -6,7 +6,7 @@
 # See the file LICENSE for copying permission.
 
 from itertools import groupby
-from builtins import range
+from builtins import object, range
 
 from future.utils import iteritems
 from swf.models.event import EventFactory, CompiledEventFactory
@@ -96,7 +96,7 @@ class History(object):
     def next(self):
         """
         Iterate.
-        :rtype: swf.models.event.base.Event
+        :rtype: swf.models.event.Event
         """
         try:
             next_event = self.events[self.it_pos]
@@ -105,6 +105,14 @@ class History(object):
             self.it_pos = 0
             raise StopIteration
         return next_event
+
+    def __next__(self):
+        """
+        Py3 iterator.
+        :return:
+        :rtype: swf.models.event.Event
+        """
+        return self.next()
 
     @property
     def last(self):
