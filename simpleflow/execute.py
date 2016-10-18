@@ -21,7 +21,6 @@ from simpleflow.utils import json_dumps
 
 __all__ = ['program', 'python']
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -55,10 +54,11 @@ def format_arguments(*args, **kwargs):
         ['--val="2"', '-c="1"', 'a', 'b']
 
     """
+
     def arg(key):
         if len(key) == 1:
             return '-' + str(key)  # short option -c
-        return '--' + str(key)     # long option --val
+        return '--' + str(key)  # long option --val
 
     return ['{}="{}"'.format(arg(key), value) for key, value in
             iteritems(kwargs)] + list(map(str, args))
@@ -81,7 +81,7 @@ def check_arguments(argspec, args):
 
     # Calling func(a, b) with func(1, 2, 3)
     if (not argspec.varargs and argspec.args and
-            len(args) != len(argspec.args)):
+                len(args) != len(argspec.args)):
         raise TypeError('command takes {} arguments: {} passed'.format(
             len(argspec.args),
             len(args)))
@@ -149,6 +149,7 @@ def python(interpreter='python'):
     Arguments of the decorated callable must be serializable in JSON.
 
     """
+
     def wrap_callable(func):
         @functools.wraps(func)
         def execute(*args, **kwargs):
