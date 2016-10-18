@@ -63,12 +63,6 @@ class ModelDiff(object):
 
 
 class BaseModel(ConnectedSWFObject):
-    __slots__ = [
-        'exists',
-        'is_synced',
-        'changes',
-    ]
-
     def _diff(self):
         """Checks for differences between current model instance
         and upstream version"""
