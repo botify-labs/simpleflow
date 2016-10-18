@@ -168,7 +168,7 @@ def python(interpreter='python'):
                         full_command, err.output
                     )
                 )
-                exclines = err.output.rstrip().rsplit('\n', 2)
+                exclines = err.output.rstrip().rsplit(b'\n', 2)
                 excline = exclines[-1]
 
                 try:
@@ -176,8 +176,8 @@ def python(interpreter='python'):
                         base64.b64decode(excline.rstrip()))
                 except (TypeError, pickle.UnpicklingError):
                     exception = Exception(excline)
-                    if ':' in excline:
-                        cls, msg = excline.split(':', 1)
+                    if b':' in excline:
+                        cls, msg = excline.split(b':', 1)
                         if re.match(r'\s*[\w.]+\s*', cls):
                             try:
                                 exception = eval('{}("{}")'.format(
@@ -190,7 +190,7 @@ def python(interpreter='python'):
 
                 raise exception
             try:
-                return json.loads(output.rstrip().rsplit("\n", 1)[-1])
+                return json.loads(output.rstrip().rsplit(b"\n", 1)[-1])
             except BaseException as ex:
                 message = ex.args[0] if ex.args else ''
                 logger.warning(message)
