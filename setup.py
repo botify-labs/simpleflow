@@ -6,13 +6,14 @@ import sys
 
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
-from simpleflow import compat
 
 REQUIRES = [
 
 ]
 PUBLISH_CMD = "python setup.py register sdist bdist_wheel upload"
 TEST_PUBLISH_CMD = 'python setup.py register -r test sdist bdist_wheel upload -r test'
+
+PY2 = int(sys.version[0]) == 2
 
 
 class PyTest(TestCommand):
@@ -79,7 +80,7 @@ DEPS = [
     'psutil',
     'pytz',
 ]
-if compat.PY2:
+if PY2:
     DEPS += [
         'subprocess32',
     ]
