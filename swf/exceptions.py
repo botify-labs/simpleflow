@@ -11,6 +11,7 @@ from functools import wraps, partial
 import re
 
 import boto.swf.exceptions
+from simpleflow import compat
 
 
 class SWFError(Exception):
@@ -136,7 +137,7 @@ def match_equals(regex, string, values):
     if not matched:
         return False
 
-    if (isinstance(values, basestring) and
+    if (isinstance(values, compat.basestring) and
         not isinstance(values, collections.Sequence)):
         values = (values,)
     return matched[0] in values

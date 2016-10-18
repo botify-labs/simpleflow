@@ -2,6 +2,7 @@ import operator
 from datetime import datetime
 from functools import partial, wraps
 
+from simpleflow import compat
 from simpleflow.history import History
 from simpleflow.utils import json_dumps
 from tabulate import tabulate
@@ -196,7 +197,7 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
         wrapped.__wrapped__ = wrapped
         return wrapped
 
-    if isinstance(fmt, basestring):
+    if isinstance(fmt, compat.basestring):
         fmt = FORMATS[fmt]
 
     return formatter
