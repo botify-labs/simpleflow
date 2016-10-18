@@ -185,13 +185,15 @@ def python(interpreter='python'):
                                     msg.strip(),
                                 ))
                             except BaseException as ex:
-                                logger.warning(ex.message)
+                                message = ex.args[0] if ex.args else ''
+                                logger.warning(message)
 
                 raise exception
             try:
                 return json.loads(output.rstrip().rsplit("\n", 1)[-1])
             except BaseException as ex:
-                logger.warning(ex.message)
+                message = ex.args[0] if ex.args else ''
+                logger.warning(message)
                 logger.warning(repr(output))
 
         # Not automatically assigned in python < 3.2.

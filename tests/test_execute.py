@@ -22,7 +22,7 @@ def test_execute_program_no_kwargs():
         with pytest.raises(TypeError) as exc_info:
             ls_nokwargs(hide=f.name)
 
-        assert (exc_info.value.message ==
+        assert (exc_info.value.args[0] ==
                 'command does not take keyword arguments')
 
 
@@ -40,7 +40,7 @@ def test_execute_program_no_args():
         with pytest.raises(TypeError) as exc_info:
             ls_noargs(f.name)
 
-        assert (exc_info.value.message ==
+        assert (exc_info.value.args[0] ==
                 'command does not take varargs')
 
 
@@ -54,7 +54,7 @@ def test_execute_program_restrict_named_arguments():
         with pytest.raises(TypeError) as exc_info:
             ls_restrict_named_arguments(f.name)
 
-        assert (exc_info.value.message ==
+        assert (exc_info.value.args[0] ==
                 'argument "hide" not found')
 
 
@@ -99,7 +99,7 @@ def test_ls_2args():
     with pytest.raises(TypeError) as exc_info:
         ls_2args(1, 2, 3)
 
-    assert (exc_info.value.message ==
+    assert (exc_info.value.args[0] ==
             'command takes 2 arguments: 3 passed')
 
 

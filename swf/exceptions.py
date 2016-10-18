@@ -67,6 +67,10 @@ class SWFError(Exception):
         self.type_ = (self.kind.lower().strip().replace(' ', '_') if
                       self.kind else None)
 
+    @property
+    def message(self):
+        return self.args[0] if self.args else ''
+
     def __repr__(self):
         msg = self.message.strip()
 
