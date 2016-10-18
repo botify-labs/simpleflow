@@ -44,7 +44,7 @@ def tabular(values, headers, tablefmt, floatfmt):
 
 def csv(values, headers, delimiter=','):
     import csv
-    from cStringIO import StringIO
+    from io import StringIO
 
     data = StringIO()
     csv.writer(data, delimiter=delimiter).writerows(values)

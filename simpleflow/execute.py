@@ -4,10 +4,12 @@ import sys
 import subprocess
 import functools
 import json
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 import base64
 import logging
-import types
 
 from simpleflow.utils import json_dumps
 
@@ -278,7 +280,7 @@ def make_callable(funcname):
 
     """
     if '.' not in funcname:
-        module_name = '__builtin__'
+        module_name = 'builtins'
         object_name = funcname
     else:
         module_name, object_name = funcname.rsplit('.', 1)
