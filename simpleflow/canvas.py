@@ -35,11 +35,10 @@ class AggregateException(Exception):
 
     def handle(self, handler):
         """
-        Invoke a handler on each exception.
-        :param handler: Predicate accepting an exception and returning True if it's been handled
-        :type handler:
-        :return: raises a new AggregateException with the unhandled exceptions if any
-        :rtype:
+        Invoke a user-defined handler on each exception.
+        :param handler: Predicate accepting an exception and returning True if it's been handled.
+        :type handler: (Exception) -> bool
+        :raise: new AggregateException with the unhandled exceptions, if any
         """
         unhandled_exceptions = []
         for ex in self.exceptions:

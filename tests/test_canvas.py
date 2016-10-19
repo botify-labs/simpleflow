@@ -5,7 +5,8 @@ from simpleflow.canvas import (
     FuncGroup,
     Group,
     Chain,
-    AggregateException)
+    AggregateException,
+)
 from simpleflow.local.executor import Executor
 from simpleflow.activity import with_attributes
 from simpleflow.task import ActivityTask
@@ -75,7 +76,7 @@ class TestGroup(unittest.TestCase):
         self.assertEquals(future.count_finished_activities, 2)
         self.assertEquals(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
-            future.result
+            dummy = future.result
 
     def test_exceptions(self):
         future = Group(
@@ -85,12 +86,14 @@ class TestGroup(unittest.TestCase):
         self.assertIsNone(future.exception)
 
         future = Group(
-            ActivityTask(zero_division)
+            ActivityTask(zero_division),
+            ActivityTask(zero_division),
         ).submit(executor)
         self.assertTrue(future.finished)
         self.assertIsInstance(future.exception, AggregateException)
-        self.assertEqual(1, len(future.exception.exceptions))
+        self.assertEqual(2, len(future.exception.exceptions))
         self.assertIsInstance(future.exception.exceptions[0], ZeroDivisionError)
+        self.assertIsInstance(future.exception.exceptions[1], ZeroDivisionError)
 
 
 class TestChain(unittest.TestCase):
@@ -121,20 +124,22 @@ class TestChain(unittest.TestCase):
         self.assertEquals(future.result, [3, 8, 17])
 
     def test_exceptions(self):
-        future = Group(
+        future = Chain(
             ActivityTask(to_string, 1),
             ActivityTask(to_string, 2)
         ).submit(executor)
         self.assertIsNone(future.exception)
 
-        future = Group(
-            ActivityTask(zero_division)
+        future = Chain(
+            ActivityTask(zero_division),
+            ActivityTask(zero_division),
         ).submit(executor)
         self.assertTrue(future.finished)
         self.assertIsInstance(future.exception, AggregateException)
-        self.assertEqual(1, len(future.exception.exceptions))
+        # Both tasks were tried and failed (being in a chain doesn't change this)
+        self.assertEqual(2, len(future.exception.exceptions))
         self.assertIsInstance(future.exception.exceptions[0], ZeroDivisionError)
-
+        self.assertIsInstance(future.exception.exceptions[1], ZeroDivisionError)
 
 
 class TestFuncGroup(unittest.TestCase):
