@@ -197,11 +197,8 @@ class History(object):
                 'initiated_event_id': event.id,
                 'raw_input': event.raw.get('input'),
                 'child_policy': event.child_policy,
-                'control': event.control,
-                'tag_list': event.tag_list,
-                'task_list': event.task_list,
+                'initiated_event_timestamp': event.timestamp,
             }
-            workflow['initiated_event_timestamp'] = event.timestamp
             if event.workflow_id not in self._child_workflows:
                 self._child_workflows[event.workflow_id] = workflow
                 self._tasks.append(workflow)
