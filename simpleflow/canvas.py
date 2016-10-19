@@ -33,16 +33,18 @@ class AggregateException(Exception):
     def append(self, ex):
         self.exceptions.append(ex)
 
-    def handle(self, handler):
+    def handle(self, handler, *args, **kwargs):
         """
         Invoke a user-defined handler on each exception.
         :param handler: Predicate accepting an exception and returning True if it's been handled.
         :type handler: (Exception) -> bool
+        :param args: args for the handler
+        :param kwargs: kwargs for the handler
         :raise: new AggregateException with the unhandled exceptions, if any
         """
         unhandled_exceptions = []
         for ex in self.exceptions:
-            if ex and not handler(ex):
+            if ex and not handler(ex, *args, **kwargs):
                 unhandled_exceptions.append(ex)
         if unhandled_exceptions:
             raise AggregateException(unhandled_exceptions)

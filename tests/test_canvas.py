@@ -201,8 +201,12 @@ class TestAggregateException(unittest.TestCase):
     def test_handle_not_all(self):
         memory_error = MemoryError()
         agg_ex = AggregateException([ZeroDivisionError(), None, memory_error])
+
+        def my_handler(ex, a, b=None):
+            return type(ex) == ZeroDivisionError
+
         with self.assertRaises(AggregateException) as new_agg_ex:
-            agg_ex.handle(lambda ex: type(ex) == ZeroDivisionError)
+            agg_ex.handle(my_handler, 1, b=True)
         self.assertIsInstance(new_agg_ex.exception, AggregateException)
         self.assertEqual([memory_error], new_agg_ex.exception.exceptions)
 
