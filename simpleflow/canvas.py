@@ -48,6 +48,25 @@ class AggregateException(Exception):
         if unhandled_exceptions:
             raise AggregateException(unhandled_exceptions)
 
+    def flatten(self):
+        """
+        Flatten the AggregateException. Return a new instance without inner AggregateException.
+        :return:
+        :rtype: AggregateException
+        """
+        flattened_exceptions = []
+        self._flatten(self, flattened_exceptions)
+        return AggregateException(flattened_exceptions)
+
+    @staticmethod
+    def _flatten(exception, exceptions):
+        if isinstance(exception, AggregateException):
+            for ex in exception.exceptions:
+                if ex:
+                    AggregateException._flatten(ex, exceptions)
+        else:
+            exceptions.append(exception)
+
     def __repr__(self):
         return repr([repr(ex) for ex in self.exceptions])
 

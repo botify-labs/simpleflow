@@ -200,3 +200,27 @@ class TestAggregateException(unittest.TestCase):
             agg_ex.handle(lambda ex: type(ex) == ZeroDivisionError)
         self.assertIsInstance(new_agg_ex.exception, AggregateException)
         self.assertEqual([memory_error], new_agg_ex.exception.exceptions)
+
+    def test_flatten(self):
+        agg_ex = AggregateException(
+            [
+                ZeroDivisionError(), None, MemoryError(),
+                AggregateException(
+                    [
+                        AttributeError(),
+                        AggregateException(
+                            [
+                                ImportError(),
+                            ]
+                        ),
+                        None,
+                    ]
+                ),
+                AggregateException([]),
+            ]
+        )
+        flatten_ex = agg_ex.flatten()
+        self.assertEqual(
+            [ZeroDivisionError, MemoryError, AttributeError, ImportError],
+            [type(ex) for ex in flatten_ex.exceptions]
+        )
