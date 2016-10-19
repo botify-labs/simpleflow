@@ -1,3 +1,4 @@
+# Development Dockerfile; see README.rst
 FROM python:2.7
 MAINTAINER labs@botify.com
 
