@@ -361,7 +361,7 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
               type=int,
               required=False,
               default=60,
-              help='interval in seconds')
+              help='Heartbeat interval in seconds (0 to disable heartbeating).')
 @click.option('--nb-processes', '-N', type=int)
 @click.option('--log-level', '-l')
 @click.option('--task-list')
@@ -400,7 +400,7 @@ def get_task_list(workflow_id=''):
               type=int,
               required=False,
               default=60,
-              help='Heartbeat interval in seconds.')
+              help='Heartbeat interval in seconds (0 to disable heartbeating).')
 @click.option('--nb-workers',
               type=int,
               required=False,
