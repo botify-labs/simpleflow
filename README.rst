@@ -256,6 +256,23 @@ Requirements
 - Python 3.x compatibility is NOT guaranteed for now: https://github.com/botify-labs/simpleflow/issues/87
 
 
+Development
+-----------
+
+A ``Dockerfile`` is provided to help development on non-Linux machines.
+
+You can build a ``simpleflow`` image with:
+
+    ./script/docker-build
+
+And use it with:
+
+    ./script/docker-run
+
+It will then mount your current directory inside the container and pass the
+most relevant variables (your AWS_* credentials for instance).
+
+
 Release
 -------
 
