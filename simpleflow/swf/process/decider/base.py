@@ -9,7 +9,6 @@ import swf.models.decision
 
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
-from . import helpers
 
 
 logger = logging.getLogger(__name__)
@@ -92,6 +91,8 @@ class DeciderPoller(Poller, swf.actors.Decider):
     @classmethod
     def make(cls, workflows, domain, task_list):
         """Factory to build a decider."""
+        from . import helpers
+
         executors = [
             helpers.load_workflow(domain, workflow, task_list) for
             workflow in workflows
@@ -178,6 +179,7 @@ class DeciderWorker(object):
         workflow_name = history[0].workflow_type['name']
         workflow_executor = self._workflows.get(workflow_name)
         if not workflow_executor:
+            from . import helpers
             workflow_executor = helpers.load_workflow(
                 self._domain,
                 workflow_name,
@@ -192,7 +194,7 @@ class DeciderWorker(object):
             import traceback
             details = traceback.format_exc()
             message = "workflow decision failed: {}".format(err)
-            logger.error(message)
+            logger.exception(message)
             decision = swf.models.decision.WorkflowExecutionDecision()
             decision.fail(reason=swf.format.reason(message), details=swf.format.details(details))
             decisions = [decision]
