@@ -33,6 +33,9 @@ nosetests.xml
 .project
 .pydevproject
 
+# Vim swap files
+*.swp
+
 # Complexity
 output/*.html
 output/*/index.html
@@ -40,3 +43,10 @@ output/*/index.html
 # Sphinx
 docs/_build
 docs/api/*
+
+# Coverage
+htmlcov/
+
+# Temporary files
+.cache/
+tmp/
