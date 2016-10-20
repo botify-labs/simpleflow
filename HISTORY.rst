@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.11.16
+~~~~~~~
+
+- Refactor: cleanups and many python 3 compatibility issues fixed (#135)
+- Introduce AggregationException to inspect exceptions inside canvas.Group/Chain (#92)
+- Improve heartbeating, now enabled by default on activity workers (#136)
+
 0.11.15
 ~~~~~~~
 
