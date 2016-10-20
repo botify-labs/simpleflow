@@ -1,4 +1,4 @@
-import constants
+from . import constants
 import logging
 
 

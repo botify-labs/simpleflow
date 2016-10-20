@@ -1,5 +1,7 @@
 from itertools import chain
 
+from future.utils import iteritems
+
 
 def get_start_to_close_timing(event):
     last_state = event['state']
@@ -50,8 +52,8 @@ class WorkflowStats(object):
         history.parse()
 
         events = chain(
-            history._activities.iteritems(),
-            history._child_workflows.iteritems(),
+            iteritems(history._activities),
+            iteritems(history._child_workflows),
         )
         return [
             (name,) + get_start_to_close_timing(attributes) for

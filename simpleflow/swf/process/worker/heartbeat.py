@@ -4,6 +4,7 @@ import os
 import time
 
 import swf.exceptions
+from simpleflow._decorators import deprecated
 from simpleflow.utils import retry
 
 logger = logging.getLogger(__name__)
@@ -12,7 +13,8 @@ logger = logging.getLogger(__name__)
 __all__ = ['Heartbeater', 'HeartbeatProcess']
 
 
-class HeartbeatProcess(object):
+@deprecated
+class HeartbeatProcess(object):  # Are people using it?
     def __init__(self, heartbeat_callable, interval):
         if not isinstance(interval, int) and not isinstance(interval, float):
             raise ValueError('heartbeat interval must be an integer or a float')
@@ -64,7 +66,8 @@ class HeartbeatProcess(object):
                 return
 
 
-class Heartbeater(object):
+@deprecated
+class Heartbeater(object):  # Are people using it?
     """Manages the heartbeat in a subprocess.
 
     """

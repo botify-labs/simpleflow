@@ -49,8 +49,8 @@ class BaseWorkflowQuerySet(BaseQuerySet):
         from swf.models.domain import Domain
 
         if not isinstance(value, Domain):
-            err = "domain property has to be of"\
-                  "swf.model.domain.Domain type, not %r"\
+            err = "domain property has to be of" \
+                  "swf.model.domain.Domain type, not %r" \
                   % type(value)
             raise TypeError(err)
         self._domain = value
@@ -72,7 +72,6 @@ class BaseWorkflowQuerySet(BaseQuerySet):
 
 
 class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
-
     # Explicit is better than implicit, keep zen
     _infos = 'typeInfo'
     _infos_plural = 'typeInfos'
@@ -176,7 +175,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
                       decision_tasks_timeout='300',
                       description=None,
                       *args, **kwargs):
-        """Fetches, or creates the ActivityType with ``name`` and ``version``
+        """Fetches, or creates the WorkflowType with ``name`` and ``version``
 
         When fetching trying to fetch a matching workflow type, only
         name and version parameters are taken in account.
@@ -184,23 +183,23 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
         has to be created it is made with specific values, just provide it.
 
         :param  name: name of the workflow type
-        :type   name: String
+        :type   name: str
 
         :param  version: workflow type version
-        :type   version: String
+        :type   version: str
 
         :param  status: workflow type status
         :type   status: swf.core.ConnectedSWFObject.{REGISTERED, DEPRECATED}
 
-        :param   creation_date: creation date of the current WorkflowType
-        :type    creation_date: float (timestamp)
+        :param   creation_date: creation date of the current WorkflowType (timestamp)
+        :type    creation_date: float
 
-        :param   deprecation_date: deprecation date of WorkflowType
-        :type    deprecation_date: float (timestamp)
+        :param   deprecation_date: deprecation date of WorkflowType (timestamp)
+        :type    deprecation_date: float
 
         :param  task_list: task list to use for scheduling decision tasks for executions
                            of this workflow type
-        :type   task_list: String
+        :type   task_list: str
 
         :param  child_policy: policy to use for the child workflow executions
                               when a workflow execution of this type is terminated
@@ -242,14 +241,14 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
                     decision_tasks_timeout=decision_tasks_timeout,
                     description=description,
                 )
-            # race conditon could happen if two workflows trying to register the same type
+            # race condition could happen if two workflows trying to register the same type
             except AlreadyExistsError:
                 return self.get(name,
-                            version,
-                            task_list=task_list,
-                            child_policy=child_policy,
-                            execution_timeout=execution_timeout,
-                            decision_tasks_timeout=decision_tasks_timeout)
+                                version,
+                                task_list=task_list,
+                                child_policy=child_policy,
+                                execution_timeout=execution_timeout,
+                                decision_tasks_timeout=decision_tasks_timeout)
 
     def _list(self, *args, **kwargs):
         return self.connection.list_workflow_types(*args, **kwargs)
@@ -394,17 +393,17 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
 
     def _is_valid_status_param(self, status, param):
         statuses = {
-            WorkflowExecution.STATUS_OPEN: set([
+            WorkflowExecution.STATUS_OPEN: {
                 'oldest_date',
-                'latest_date'],
-            ),
-            WorkflowExecution.STATUS_CLOSED: set([
+                'latest_date'
+            },
+            WorkflowExecution.STATUS_CLOSED: {
                 'start_latest_date',
                 'start_oldest_date',
                 'close_latest_date',
                 'close_oldest_date',
                 'close_status'
-            ]),
+            },
         }
         return param in statuses.get(status, set())
 
@@ -562,7 +561,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
 
         if invalid_kwargs:
             err_msg = 'Invalid keyword arguments supplied: {}'.format(
-                      ', '.join(invalid_kwargs))
+                ', '.join(invalid_kwargs))
             raise InvalidKeywordArgumentError(err_msg)
 
         if status == WorkflowExecution.STATUS_OPEN:
@@ -656,6 +655,6 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
 
         return [self.to_WorkflowExecution(self.domain, wfe) for wfe
                 in self._list_items(
-                    status,
-                    self.domain.name,
-                    start_oldest_date=int(start_oldest_date))]
+                status,
+                self.domain.name,
+                start_oldest_date=int(start_oldest_date))]

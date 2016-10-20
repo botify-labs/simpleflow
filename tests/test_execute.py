@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import print_function
 import tempfile
 import os.path
 import platform
@@ -21,7 +23,7 @@ def test_execute_program_no_kwargs():
         with pytest.raises(TypeError) as exc_info:
             ls_nokwargs(hide=f.name)
 
-        assert (exc_info.value.message ==
+        assert (exc_info.value.args[0] ==
                 'command does not take keyword arguments')
 
 
@@ -39,7 +41,7 @@ def test_execute_program_no_args():
         with pytest.raises(TypeError) as exc_info:
             ls_noargs(f.name)
 
-        assert (exc_info.value.message ==
+        assert (exc_info.value.args[0] ==
                 'command does not take varargs')
 
 
@@ -53,7 +55,7 @@ def test_execute_program_restrict_named_arguments():
         with pytest.raises(TypeError) as exc_info:
             ls_restrict_named_arguments(f.name)
 
-        assert (exc_info.value.message ==
+        assert (exc_info.value.args[0] ==
                 'argument "hide" not found')
 
 
@@ -65,7 +67,7 @@ def ls_optional_named_arguments(hide='', *args):
 @pytest.mark.skipif(platform.system() == 'Darwin',
                     reason="ls doesn't have a --hide option on MacOSX")
 def test_execute_program_optional_named_arguments():
-    with tempfile.NamedTemporaryFile() as f:
+    with tempfile.NamedTemporaryFile(suffix='\xe9') as f:
         assert ls_optional_named_arguments(f.name).strip() == f.name
         assert f.name not in ls_optional_named_arguments(hide=f.name)
 
@@ -98,7 +100,7 @@ def test_ls_2args():
     with pytest.raises(TypeError) as exc_info:
         ls_2args(1, 2, 3)
 
-    assert (exc_info.value.message ==
+    assert (exc_info.value.args[0] ==
             'command takes 2 arguments: 3 passed')
 
 
@@ -145,7 +147,7 @@ def test_function_as_program_raises_builtin_exception():
 
 @execute.python()
 def print_string(s, retval):
-    print s
+    print(s)
     return retval
 
 
@@ -156,7 +158,7 @@ class PrintString(object):
         self.retval = retval
 
     def execute(self):
-        print self.s
+        print(self.s)
         return self.retval
 
 
@@ -210,16 +212,10 @@ def raise_timeout_error():
 def test_function_as_program_raises_module_exception():
     from simpleflow.exceptions import TimeoutError
 
-    err = None
-    try:
+    with pytest.raises(TimeoutError) as err:
         raise_timeout_error()
-    except TimeoutError as err:
         assert err.timeout_type == 'timeout'
         assert err.timeout_value == 1
-    else:
-        assert False
-
-    assert isinstance(err, TimeoutError)
 
 
 @execute.python()
@@ -228,13 +224,28 @@ def warn():
     warnings.warn("The _posixsubprocess module is not being used. "
                   "Child process reliability may suffer if your "
                   "program uses threads.", RuntimeWarning)
-    raise StandardError('Fake Standard Error')
+    raise Exception('Fake Exception')
 
 
 def test_function_with_warning():
     try:
         warn()
-    except StandardError:
+    except Exception:
         pass
     else:
         assert False
+
+
+def test_function_returning_unicode():
+    assert print_string('', 'ʘ‿ʘ') == u'ʘ‿ʘ'
+
+
+@execute.python()
+def raise_dummy_exception_with_unicode():
+    raise DummyException('ʘ‿ʘ')
+
+
+def test_exception_with_unicode():
+    with pytest.raises(DummyException) as err:
+        raise_dummy_exception_with_unicode()
+        assert err.args[0] == u'ʘ‿ʘ'

@@ -2,6 +2,18 @@ import collections
 
 
 class History(object):
+    """
+    History data.
+
+    :ivar _history: history events
+    :type _history: swf.models.history.History
+    :ivar _activities: activity events
+    :type _activities: collections.OrderedDict[str, dict[str, Any]]
+    :ivar _child_workflows: child workflow events
+    :type _child_workflows: collections.OrderedDict[str, dict[str, Any]]
+    :ivar _tasks: list[dict[str, Any]]
+    :type _tasks: list[dict[str, Any]]
+    """
     def __init__(self, history):
         self._history = history
         self._activities = collections.OrderedDict()
@@ -9,14 +21,51 @@ class History(object):
         self._tasks = []
 
     @property
+    def activities(self):
+        """
+        :return: activities
+        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        """
+        return self._activities
+
+    @property
+    def child_workflows(self):
+        """
+        :return: activities
+        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        """
+        return self._child_workflows
+
+    @property
+    def tasks(self):
+        return self._tasks
+
+    @property
     def events(self):
+        """
+
+        :return:
+        :rtype: list[swf.models.event.Event]
+        """
         return self._history.events
 
     def parse_activity_event(self, events, event):
-        """Aggregate all the attributes of an activity in a single entry.
+        """
+        Aggregate all the attributes of an activity in a single entry.
 
+        :param events:
+        :type events: list[swf.models.event.Event]
+        :param event:
+        :type event: swf.models.event.Event
         """
         def get_activity(event):
+            """
+            Return a reference to the corresponding activity.
+            :param event:
+            :type event: swf.models.event.Event
+            :return: (updatable) activity
+            :rtype: dict[str, Any]
+            """
             scheduled_event = events[event.scheduled_event_id - 1]
             return self._activities[scheduled_event.activity_id]
 
@@ -115,6 +164,10 @@ class History(object):
             - canceled
             - terminated
 
+        :param events:
+        :type events: list[swf.models.event.Event]
+        :param event:
+        :type event: swf.models.event.Event
         """
         def get_workflow(event):
             initiated_event = events[event.initiated_event_id - 1]
@@ -155,6 +208,10 @@ class History(object):
             workflow['completed_timestamp'] = event.timestamp
 
     def parse(self):
+        """
+        Parse the events.
+        Update _activities, _workflow_events and _tasks.
+        """
         events = self.events
         for event in events:
             if event.type == 'ActivityTask':

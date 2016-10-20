@@ -1,6 +1,3 @@
-import json
-
-import swf.models
 import swf.models.event.workflow
 from simpleflow.utils import json_dumps
 from swf.models.event.factory import EventFactory
@@ -43,7 +40,7 @@ CHILD_WORKFLOW_STATES = set(
 
 class History(swf.models.History):
     """
-    Help to build a history to simulate the execution of a workflow.
+    Helper class to build a history to simulate the execution of a workflow.
 
     """
     def __init__(self, workflow, input=None, tag_list=None):
@@ -190,14 +187,14 @@ class History(swf.models.History):
                                           activity_type,
                                           cause):
         self.events.append(EventFactory({
-            u'eventId': self.next_id,
-            u'eventTimestamp': 1386947268.527,
-            u'eventType': u'ScheduleActivityTaskFailed',
-            u'scheduleActivityTaskFailedEventAttributes': {
-                u'activityId': activity_id,
-                u'activityType': activity_type.copy(),
-                u'cause': cause,
-                u'decisionTaskCompletedEventId': decision_id,
+            "eventId": self.next_id,
+            "eventTimestamp": 1386947268.527,
+            "eventType": "ScheduleActivityTaskFailed",
+            "scheduleActivityTaskFailedEventAttributes": {
+                "activityId": activity_id,
+                "activityType": activity_type.copy(),
+                "cause": cause,
+                "decisionTaskCompletedEventId": decision_id,
             }
         }))
 
@@ -382,13 +379,11 @@ class History(swf.models.History):
             'eventType': 'StartChildWorkflowExecutionInitiated',
             'eventTimestamp': new_timestamp_string(),
             'startChildWorkflowExecutionInitiatedEventAttributes': {
-                'control': (json_dumps(control) if
-                            control is not None else None),
+                'control': json_dumps(control),
                 'childPolicy': 'TERMINATE',
                 'decisionTaskCompletedEventId': 76,
                 'executionStartToCloseTimeout': '432000',
-                'input': (json_dumps(input) if
-                          input is not None else '{}'),
+                'input': json_dumps(input) if input is not None else '{}',
                 'tagList': tag_list,
                 'taskList': task_list,
                 'taskStartToCloseTimeout': task_start_to_close_timeout,
@@ -403,9 +398,7 @@ class History(swf.models.History):
         return self
 
     def add_child_workflow_started(self,
-                                   initiated_id,
-                                   name=None,
-                                   version=None):
+                                   initiated_id):
         initiated_event = self.events[initiated_id - 1]
         workflow_id = initiated_event.workflow_id
         workflow_type = initiated_event.workflow_type

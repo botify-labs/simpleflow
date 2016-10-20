@@ -7,54 +7,44 @@
 
 from datetime import datetime, timedelta
 from time import mktime
-from itertools import chain, izip, islice
+from itertools import chain, islice
 
 from functools import wraps
 
-# De-capitalize a string (lower first character)
-decapitalize = lambda s: s[:1].lower() + s[1:] if s else ''
-
-# Get a past day datetime
-past_day = lambda d: datetime.now() - timedelta(days=d)
-
-# Get a datetime timestamp
-datetime_timestamp = lambda datetime: mktime(datetime.timetuple())
+from simpleflow import compat
 
 
-class Enum(object):
-    """Enumeration type
-
-    Examples
-    --------
-
-    >>> Numbers = Enum('ZERO', 'ONE', 'TWO')
-    >>> Numbers.ZERO
-    0
-    >>> Numbers.ONE
-    1
-
-    or
-
-    >>> Numbers = Enum(zero="ZERO", one="ONE")
-    >>> Numbers.zero
-    'ZERO'
-
-    Inspired from:
-    http://stackoverflow.com/questions/36932/whats-the-best-way-to-implement-an-enum-in-python
-
+def decapitalize(s):
     """
+    De-capitalize a string (lower first character)
+    :param s:
+    :type s:
+    :return:
+    :rtype:
+    """
+    return s[:1].lower() + s[1:] if s else ''
 
-    def __init__(self, *sequential, **named):
-        self.enums = dict(zip(sequential, range(len(sequential))), **named)
 
-        for key, value in self.enums.viewitems():
-            setattr(self, key, value)
+def past_day(days):
+    """
+    Get a datetime in the past
+    :param days: how many days in the past
+    :type days: int
+    :return:
+    :rtype: datetime
+    """
+    return datetime.now() - timedelta(days=days)
 
-    def __contains__(self, key):
-        return key in self.enums
 
-    def has_member(self, member):
-        return any(value == member for value in self.enums.itervalues())
+def datetime_timestamp(dt):
+    """
+    Get a datetime timestamp
+    :param dt:
+    :type dt: datetime
+    :return:
+    :rtype: int
+    """
+    return mktime(dt.timetuple())
 
 
 def get_subkey(d, key_path):
@@ -76,8 +66,9 @@ def get_subkey(d, key_path):
     ...     '2': 3,
     ...   }
     ... }
-    >>> get_subkey(d, ['a'])
-    {'1': 2, '2': 3}
+    >>> # FIXME commented-out: order unspecified, depend on python version
+    >>> # >>> get_subkey(d, ['a'])
+    >>> # {'1': 2, '2': 3}
     >>> get_subkey(d, ['a', '1'])
     2
     >>> get_subkey(d, ['a', '3'])
@@ -220,5 +211,5 @@ def underscore_to_camel(string):
     return ''.join(chain([string[0].upper()],
                          ((c.upper() if p == '_' else c) if
                           c != '_' else '' for p, c in
-                          izip(islice(string, 0, None),
-                               islice(string, 1, None)))))
+                          compat.izip(islice(string, 0, None),
+                                      islice(string, 1, None)))))

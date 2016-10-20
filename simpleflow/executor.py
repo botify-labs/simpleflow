@@ -27,6 +27,9 @@ class Executor(object):
     - asynchronous
     - asynchronous with full replay
 
+     :ivar _workflow: the workflow
+     :type _workflow: simpleflow.workflow.Workflow
+
     """
     __metaclass__ = abc.ABCMeta
 
@@ -40,6 +43,14 @@ class Executor(object):
 
         """
         self._workflow = workflow(self)
+
+    @property
+    def workflow(self):
+        """
+        :return:
+        :rtype: simpleflow.workflow.Workflow
+        """
+        return self._workflow
 
     def run_workflow(self, *args, **kwargs):
         """

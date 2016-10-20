@@ -7,6 +7,7 @@
 
 from collections import namedtuple, OrderedDict
 
+from future.utils import iteritems, listitems
 from swf.core import ConnectedSWFObject
 from swf.exceptions import DoesNotExistError
 
@@ -31,7 +32,7 @@ class ModelDiff(object):
         return len(self.container)
 
     def __getitem__(self, index):
-        attr, (local, upstream) = self.container.items()[index]
+        attr, (local, upstream) = listitems(self.container)[index]
         return Difference(attr, local, upstream)
 
     def _process_input(self, input):
@@ -49,7 +50,7 @@ class ModelDiff(object):
 
     def differing_fields(self):
         """Returns the name of fields differing from upstream"""
-        return self.container.keys()
+        return list(self.container)
 
     def as_list(self):
         """Outputs models differences as a list of
@@ -57,17 +58,11 @@ class ModelDiff(object):
         """
         return [
             Difference(k, v[0], v[1]) for k, v
-            in self.container.iteritems()
+            in iteritems(self.container)
         ]
 
 
 class BaseModel(ConnectedSWFObject):
-    __slots__ = [
-        'exists',
-        'is_synced',
-        'changes',
-    ]
-
     def _diff(self):
         """Checks for differences between current model instance
         and upstream version"""

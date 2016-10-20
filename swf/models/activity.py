@@ -117,16 +117,16 @@ class ActivityType(BaseModel):
         self.task_start_to_close_timeout = task_start_to_close_timeout
 
         # immutable decorator rebinds class name,
-        # so have to use generice self.__class__
+        # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
     def _diff(self):
         """Checks for differences between ActivityType instance
         and upstream version
 
-        :returns: A list of swf.models.base.ModelDiff namedtuple describing
+        :returns: A list (swf.models.base.ModelDiff) namedtuple describing
                   differences
-        :rtype: list
+        :rtype: ModelDiff
         """
         try:
             description = self.connection.describe_activity_type(
@@ -152,8 +152,10 @@ class ActivityType(BaseModel):
             ('deprecation_date', self.deprecation_date, info['deprecationDate']),
             ('task_list', self.task_list, config['defaultTaskList']['name']),
             ('task_heartbeat_timeout', self.task_heartbeat_timeout, config['defaultTaskHeartbeatTimeout']),
-            ('task_schedule_to_close_timeout', self.task_schedule_to_close_timeout, config['defaultTaskScheduleToCloseTimeout']),
-            ('task_schedule_to_start_timeout', self.task_schedule_to_start_timeout, config['defaultTaskScheduleToStartTimeout']),
+            ('task_schedule_to_close_timeout', self.task_schedule_to_close_timeout,
+             config['defaultTaskScheduleToCloseTimeout']),
+            ('task_schedule_to_start_timeout', self.task_schedule_to_start_timeout,
+             config['defaultTaskScheduleToStartTimeout']),
             ('task_start_to_close_timeout', self.task_start_to_close_timeout, config['defaultTaskStartToCloseTimeout']),
         )
 
@@ -188,7 +190,7 @@ class ActivityType(BaseModel):
                 default_task_schedule_to_start_timeout=str(self.task_schedule_to_start_timeout),
                 default_task_start_to_close_timeout=str(self.task_start_to_close_timeout),
                 description=self.description)
-        except SWFTypeAlreadyExistsError, err:
+        except SWFTypeAlreadyExistsError as err:
             raise AlreadyExistsError('{} already exists'.format(self))
         except SWFResponseError as err:
             if err.error_code in ['UnknownResourceFault', 'TypeDeprecatedFault']:

@@ -1,1 +1,1 @@
-import command  # NOQA
+from . import command  # NOQA

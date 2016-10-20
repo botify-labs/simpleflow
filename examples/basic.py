@@ -1,3 +1,4 @@
+from __future__ import print_function
 import time
 
 from simpleflow import (
@@ -41,8 +42,8 @@ class BasicWorkflow(Workflow):
         yy = self.submit(Delay, t, y)
         z = self.submit(double, y)
 
-        print '({x} + 1) * 2 = {result}'.format(
+        print('({x} + 1) * 2 = {result}'.format(
             x=x,
-            result=z.result)
+            result=z.result))
         futures.wait(yy, z)
         return z.result

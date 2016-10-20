@@ -15,10 +15,7 @@ class Decider(Actor):
     :type   domain: swf.models.Domain
 
     :param  task_list: task list the Actor should watch for tasks on
-    :type   task_list: string
-
-    :param  last_token: last seen task token
-    :type   last_token: string
+    :type   task_list: str
     """
     def __init__(self, domain, task_list):
         super(Decider, self).__init__(
@@ -32,11 +29,13 @@ class Decider(Actor):
         the task with `task_token``
 
         :param  task_token: completed decision task token
-        :type   task_token: string
+        :type   task_token: str
 
         :param  decisions: The list of decisions (possibly empty)
                            made by the decider while processing this decision task
-        :type   decisions: list (of swf.models.decision.Decision)
+        :type   decisions: list[swf.models.decision.base.Decision]
+        :param execution_context: User-defined context to add to workflow execution.
+        :type execution_context: str
         """
         try:
             self.connection.respond_decision_task_completed(
@@ -61,15 +60,15 @@ class Decider(Actor):
         workflow's events.
 
         :param task_list: task list to poll for decision tasks from.
-        :type task_list: string
+        :type task_list: str
 
         :param identity: Identity of the decider making the request,
         which is recorded in the DecisionTaskStarted event in the
         workflow history.
-        :type identity: string
+        :type identity: str
 
         :returns: a Response object with history, token, and execution set
-        :rtype: swf.responses.Response(token, history, execution)
+        :rtype: swf.responses.Response
 
         """
         task_list = task_list or self.task_list

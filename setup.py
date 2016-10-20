@@ -1,18 +1,19 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-import platform
 import re
-import sys
 import subprocess
+import sys
+
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
-
 
 REQUIRES = [
 
 ]
 PUBLISH_CMD = "python setup.py register sdist bdist_wheel upload"
 TEST_PUBLISH_CMD = 'python setup.py register -r test sdist bdist_wheel upload -r test'
+
+PY2 = int(sys.version[0]) == 2
 
 
 class PyTest(TestCommand):
@@ -71,14 +72,18 @@ def read(fname):
     return content
 
 DEPS = [
+    'future',
     'boto>=2.38.0',
     'tabulate==0.7.3',
     'setproctitle',
-    'subprocess32',
     'click',
     'psutil',
     'pytz',
 ]
+if PY2:
+    DEPS += [
+        'subprocess32',
+    ]
 
 setup(
     name='simpleflow',

@@ -30,7 +30,6 @@ class HistoryQuerySet(BaseQuerySet):
         :param  reverse: Should the history events be retrieved in reverse order.
         :type   reverse: bool
         """
-        events = []
         max_results = max_results or page_size
 
         if max_results < page_size:

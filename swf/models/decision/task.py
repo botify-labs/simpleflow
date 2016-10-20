@@ -5,8 +5,6 @@
 #
 # See the file LICENSE for copying permission.
 
-import json
-
 from simpleflow.utils import json_dumps
 from swf.models.decision.base import Decision, decision_action
 
@@ -42,7 +40,8 @@ class ActivityTaskDecision(Decision):
         :param  control: data attached to the event that can be used by the decider in subsequent workflow tasks
         :type   control: String
 
-        :param  heartbeat_timeout: Specifies the maximum time before which a worker processing a task of this type must report progress
+        :param  heartbeat_timeout: Specifies the maximum time before which a worker processing a task of this type must
+                report progress
         :type   heartbeat_timeout: String
 
         :param  input: input provided to the activity task
@@ -57,10 +56,11 @@ class ActivityTaskDecision(Decision):
         :param  task_timeout: Specifies the maximum duration a worker may take to process this activity task
         :type   task_timeout: String
 
-        :param  : Specifies the name of the task list in which to schedule the activity task
+        :param  task_list: Specifies the name of the task list in which to schedule the activity task
         :type   :str
         """
-        input = json_dumps(input) or None
+        if input is not None:
+            input = json_dumps(input)
 
         self.update_attributes({
             'activityId': activity_id,

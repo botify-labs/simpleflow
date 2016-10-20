@@ -21,6 +21,11 @@ swf.settings.set(aws_access_key_id='fakeaccesskey',
                  aws_secret_access_key='fakesecret')
 
 
+if 0:
+    # for PyCharm
+    patch.object = patch.object
+
+
 class TestActivityTypeQuerySet(unittest.TestCase):
 
     def setUp(self):
@@ -34,7 +39,7 @@ class TestActivityTypeQuerySet(unittest.TestCase):
         """Assert .__init__() instantiate _domain private attr"""
         bw = ActivityTypeQuerySet(self.domain)
         delattr(bw, '_domain')
-        bw.domain
+        dummy = bw.domain
 
         self.assertTrue(hasattr(bw, '_domain'))
 
@@ -63,6 +68,7 @@ class TestActivityTypeQuerySet(unittest.TestCase):
     def test_instantiation_with_invalid_domain(self):
         """Assert instantiation with invalid domain raises"""
         with self.assertRaises(TypeError):
+            # noinspection PyTypeChecker
             ActivityTypeQuerySet("WrongType")
 
     def test_all(self):

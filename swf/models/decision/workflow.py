@@ -5,11 +5,9 @@
 #
 # See the file LICENSE for copying permission.
 
-import json
-
 from simpleflow.utils import json_dumps
-from swf.models.workflow import CHILD_POLICIES
 from swf.models.decision.base import Decision, decision_action
+from swf.models.workflow import CHILD_POLICIES
 
 
 class WorkflowExecutionDecision(Decision):
@@ -83,7 +81,8 @@ class WorkflowExecutionDecision(Decision):
         :param  workflow_type_version: workflow type version the execution shold belong to
         :type   workflow_type_version: str
         """
-        input = json_dumps(input) or None
+        if input is not None:
+            input = json_dumps(input)
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -106,7 +105,7 @@ class ChildWorkflowExecutionDecision(Decision):
         """Child workflow execution decision builder
 
         :param  workflow_type: workflow type to start
-        :type   workflow_type: str
+        :type   workflow_type: swf.models.workflow.WorkflowType
 
         :param  workflow_id: unique id to recognize the workflow execution
         :type   workflow_id: str
@@ -131,7 +130,8 @@ class ChildWorkflowExecutionDecision(Decision):
         :type   task_timeout: str
 
         """
-        input = json_dumps(input) or None
+        if input is not None:
+            input = json_dumps(input)
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -196,7 +196,8 @@ class ExternalWorkflowExecutionDecision(Decision):
         :param  run_id: run id of the workflow execution to be signaled
         :type   run_id: str
         """
-        input = json_dumps(input) or None
+        if input is not None:
+            input = json_dumps(input)
 
         self.update_attributes({
             'signalName': signal_name,

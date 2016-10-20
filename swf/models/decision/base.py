@@ -7,6 +7,7 @@
 
 from functools import wraps
 
+from future.utils import iteritems
 from swf.utils import decapitalize, underscore_to_camel
 
 
@@ -62,8 +63,8 @@ class Decision(dict):
         """
         if not hasattr(self, 'attributes_key'):
             raise AttributeError("Can't update unset attributes_key"
-                                 "decision attritute")
+                                 "decision attribute")
 
-        for key, value in data.iteritems():
+        for key, value in iteritems(data):
             if value:
                 self[self.attributes_key].update({key: value})

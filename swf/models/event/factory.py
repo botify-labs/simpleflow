@@ -141,7 +141,7 @@ class EventFactory(object):
             'ChildWorkflowExecution'
 
         """
-        for name in klass.events.iterkeys():
+        for name in klass.events:
             if name in event_name:
                 return name
         return
@@ -166,6 +166,10 @@ class EventFactory(object):
 
 
 class CompiledEventFactory(object):
+    """
+    Process an Event object and instantiates the corresponding
+    swf.models.event.compiler.CompiledEvent.
+    """
     events = EVENTS
 
     def __new__(cls, event):

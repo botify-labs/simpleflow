@@ -1,18 +1,25 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 import re
 import sys
 import subprocess
 import functools
 import json
-import cPickle as pickle
+
+from builtins import map
+
+from future.utils import iteritems
+from simpleflow import compat
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 import base64
 import logging
-import types
 
 from simpleflow.utils import json_dumps
 
 __all__ = ['program', 'python']
-
 
 logger = logging.getLogger(__name__)
 
@@ -43,17 +50,18 @@ def format_arguments(*args, **kwargs):
 
     Examples:
 
-        >>> format_arguments('a', 'b', c=1, val=2)
-        ['-c="1"', '--val="2"', 'a', 'b']
+        >>> sorted(format_arguments('a', 'b', c=1, val=2))
+        ['--val="2"', '-c="1"', 'a', 'b']
 
     """
+
     def arg(key):
         if len(key) == 1:
             return '-' + str(key)  # short option -c
-        return '--' + str(key)     # long option --val
+        return '--' + str(key)  # long option --val
 
     return ['{}="{}"'.format(arg(key), value) for key, value in
-            kwargs.iteritems()] + map(str, args)
+            iteritems(kwargs)] + list(map(str, args))
 
 
 def zip_arguments_defaults(argspec):
@@ -73,7 +81,7 @@ def check_arguments(argspec, args):
 
     # Calling func(a, b) with func(1, 2, 3)
     if (not argspec.varargs and argspec.args and
-            len(args) != len(argspec.args)):
+                len(args) != len(argspec.args)):
         raise TypeError('command takes {} arguments: {} passed'.format(
             len(argspec.args),
             len(args)))
@@ -115,8 +123,6 @@ def get_name(func):
         :rtype: str.
 
     """
-    import types
-
     prefix = func.__module__
 
     if not callable(func):
@@ -125,9 +131,7 @@ def get_name(func):
 
     if hasattr(func, 'name'):
         name = func.name
-    elif isinstance(func, types.FunctionType):
-        name = func.func_name
-    elif isinstance(func, (type, types.ClassType)):
+    elif hasattr(func, '__name__'):
         name = func.__name__
     else:
         name = func.__class__.__name__
@@ -145,27 +149,32 @@ def python(interpreter='python'):
     Arguments of the decorated callable must be serializable in JSON.
 
     """
+
     def wrap_callable(func):
         @functools.wraps(func)
         def execute(*args, **kwargs):
             command = 'simpleflow.execute'  # name of a module.
+            full_command = [
+                interpreter, '-m', command,  # execute module a script.
+                get_name(func), format_arguments_json(*args, **kwargs),
+            ]
             try:
-                full_command = [
-                    interpreter, '-m', command,  # execute module a script.
-                    get_name(func), format_arguments_json(*args, **kwargs),
-                ]
                 output = subprocess.check_output(
                     full_command,
                     # Redirect stderr to stdout to get traceback on error.
                     stderr=subprocess.STDOUT,
                 )
             except subprocess.CalledProcessError as err:
+                err_output = err.output
+                if not compat.PY2:
+                    err_output = err_output.decode('utf-8', errors='replace')
                 logger.info(
-                    "got a subprocess.CalledProcessError on command: {}\noriginal error output: {}".format(
-                        full_command, err.output
+                    "Got a subprocess.CalledProcessError on command: {}\n"
+                    "Original error output: '{}'".format(
+                        full_command, err_output, type(err_output)
                     )
                 )
-                exclines = err.output.rstrip().rsplit('\n', 2)
+                exclines = err_output.rstrip().rsplit('\n', 2)
                 excline = exclines[-1]
 
                 try:
@@ -182,18 +191,23 @@ def python(interpreter='python'):
                                     msg.strip(),
                                 ))
                             except BaseException as ex:
-                                logger.warning(ex.message)
+                                logger.warning('{}'.format(ex))
 
                 raise exception
             try:
-                return json.loads(output.rstrip().rsplit("\n", 1)[-1])
+                if not compat.PY2:
+                    output = output.decode('utf-8', errors='replace')
+                last_line = output.rstrip().rsplit('\n', 1)[-1]
+                d = json.loads(last_line)
+                return d
             except BaseException as ex:
-                logger.warning(ex.message)
+                logger.warning('Exception in python.execute: {}'.format(ex))
                 logger.warning(repr(output))
 
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
         return execute
+
     return wrap_callable
 
 
@@ -232,14 +246,16 @@ def program(path=None, argument_format=format_arguments):
             check_arguments(argspec, args)
             check_keyword_arguments(argspec, kwargs)
 
-            command = path or func.func_name
+            command = path or func.__name__
             return subprocess.check_output(
-                [command] + argument_format(*args, **kwargs))
+                [command] + argument_format(*args, **kwargs),
+                universal_newlines=True)
 
         argspec = inspect.getargspec(func)
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
         return execute
+
     return wrap_callable
 
 
@@ -262,23 +278,19 @@ def make_callable(funcname):
 
     Loading a function from a library:
 
-    >>> func = make_callable('itertools.imap')
-    >>> func
-    <type 'itertools.imap'>
-    >>> list(func(lambda x: x + 1, range(4)))
-    [1, 2, 3, 4]
+    >>> func = make_callable('itertools.chain')
+    >>> list(func(range(3), range(4)))
+    [0, 1, 2, 0, 1, 2, 3]
 
     Loading a builtin:
 
     >>> func = make_callable('map')
-    >>> func
-    <built-in function map>
-    >>> func(lambda x: x + 1, range(4))
+    >>> list(func(lambda x: x + 1, range(4)))
     [1, 2, 3, 4]
 
     """
     if '.' not in funcname:
-        module_name = '__builtin__'
+        module_name = 'builtins'
         object_name = funcname
     else:
         module_name, object_name = funcname.rsplit('.', 1)
@@ -360,14 +372,19 @@ if __name__ == '__main__':
     args = arguments.get('args', ())
     kwargs = arguments.get('kwargs', {})
     try:
-        if isinstance(callable_, (type, types.ClassType)):
+        if hasattr(callable_, 'execute'):
             result = callable_(*args, **kwargs).execute()
         else:
             result = callable_(*args, **kwargs)
     except Exception as err:
+        logger.error('Exception: {}'.format(err))
         # Use base64 encoding to avoid carriage returns and special characters.
-        print(base64.b64encode(
-            pickle.dumps(err)))
+        # FIXME change this: brittle, missing traceback
+        encoded_err = base64.b64encode(pickle.dumps(err))
+        if not compat.PY2:
+            # Convert bytes to string
+            encoded_err = encoded_err.decode('utf-8', errors='replace')
+        print(encoded_err)
         sys.exit(1)
     else:
         print(json_dumps(result))

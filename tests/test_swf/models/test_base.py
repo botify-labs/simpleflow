@@ -2,10 +2,6 @@
 
 import unittest
 
-from boto.swf.layer1 import Layer1
-
-from mock import patch
-
 from swf.models import BaseModel
 
 
@@ -23,7 +19,7 @@ class TestBaseModel(unittest.TestCase):
 
     def test_exists_not_implemented(self):
         with self.assertRaises(NotImplementedError):
-            self.obj.exists
+            dummy = self.obj.exists
 
     def test_save_not_implemented(self):
         with self.assertRaises(NotImplementedError):

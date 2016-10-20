@@ -1,3 +1,4 @@
+from builtins import range
 import unittest
 
 from simpleflow import futures, workflow, exceptions
@@ -69,7 +70,7 @@ class TestGroup(unittest.TestCase):
         self.assertEquals(future.count_finished_activities, 2)
         self.assertEquals(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
-            future.result
+            dummy = future.result
 
 
 class TestChain(unittest.TestCase):
@@ -105,7 +106,7 @@ class TestFuncGroup(unittest.TestCase):
     def test_previous_value_with_func(self):
         def custom_func(previous_value):
             group = Group()
-            for i in xrange(0, previous_value):
+            for i in range(0, previous_value):
                 group.append(ActivityTask(to_int, i * 2))
             return group
 

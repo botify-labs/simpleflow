@@ -1,5 +1,3 @@
-import time
-
 from simpleflow import (
     activity,
     Workflow,
@@ -11,6 +9,7 @@ from simpleflow import (
                           raises_on_failure=False)
 def fail_but_dont_raise():
     raise ValueError("This task had a problem but it's okay, YOU SHOULD NOT SEE THIS")
+
 
 @activity.with_attributes(task_list='quickstart', version='example',
                           raises_on_failure=True)

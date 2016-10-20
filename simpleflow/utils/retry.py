@@ -49,15 +49,17 @@ def with_delay(
     """
     if log_with is None:
         log_with = logging.getLogger(__name__).info
+    if except_on is None:
+        except_on = ()  # Can't "except None" in py3
 
     def decorate(func):
         @functools.wraps(func)
         def decorated(*args, **kwargs):
             nb_retries = 0
-            while nb_times - nb_retries:
+            while True:
                 try:
                     return func(*args, **kwargs)
-                except except_on as error:
+                except except_on:
                     raise
                 except on_exceptions as error:
                     wait_delay = delay(nb_retries)
@@ -68,7 +70,8 @@ def with_delay(
                     )
                     time.sleep(wait_delay)
                     nb_retries += 1
-            raise
+                    if nb_times - nb_retries <= 0:
+                        raise
         return decorated
 
     on_exceptions = _to_tuple(on_exceptions)

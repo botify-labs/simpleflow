@@ -6,6 +6,7 @@
 # See the file LICENSE for copying permission.
 
 from boto.swf.exceptions import SWFResponseError, SWFDomainAlreadyExistsError
+from simpleflow import compat
 
 from swf.constants import REGISTERED
 from swf.models import BaseModel
@@ -73,16 +74,16 @@ class Domain(BaseModel):
         """
         if (not isinstance(domain, cls) or
                 not hasattr(domain, 'name') or
-                not isinstance(domain.name, basestring)):
+                not isinstance(domain.name, compat.basestring)):
             raise TypeError('invalid type {} for domain'.format(type(domain)))
 
     def _diff(self):
         """Checks for differences between Domain instance
         and upstream version
 
-        :returns: A list of swf.models.base.ModelDiff namedtuple describing
+        :returns: A swf.models.base.ModelDiff describing
                   differences
-        :rtype: list
+        :rtype: ModelDiff
         """
         try:
             description = self.connection.describe_domain(self.name)

@@ -3,9 +3,12 @@ import functools
 import logging
 import multiprocessing
 import signal
+from builtins import range
+
 from setproctitle import setproctitle
 
 import swf.actors
+import swf.exceptions
 from simpleflow import utils
 from simpleflow.swf.helpers import swf_identity
 
@@ -46,9 +49,9 @@ def get_payload_name(payload):
 
     if isinstance(payload, types.MethodType):
         instance = payload.im_self
-        return '{}.{}'.format(instance.__class__.__name__, payload.func_name)
+        return '{}.{}'.format(instance.__class__.__name__, payload.__name__)
     elif isinstance(payload, types.FunctionType):
-        return payload.func_name
+        return payload.__name__
 
     raise TypeError('invalid payload type {}'.format(type(payload)))
 
@@ -71,7 +74,7 @@ class Supervisor(object):
             get_payload_name(self._payload),
         ))
         assert len(self._processes) == 0
-        for _ in xrange(self._nb_children):
+        for _ in range(self._nb_children):
             child = multiprocessing.Process(
                 target=self._payload,
                 args=self._args,
@@ -142,11 +145,6 @@ class NamedMixin(object):
     def name(self):
         return self._name
 
-    @name.setter
-    def name(self, value):
-        self._name = value
-        self.set_process_name()
-
     def set_process_name(self, name=None):
         if name is None:
             klass = self.__class__.__name__
@@ -197,14 +195,14 @@ class Poller(NamedMixin, swf.actors.Actor):
     def start(self):
         """
         Start the main decider process. There is no daemonization. The process
-        is intented to be run inside a supervisor process.
+        is intended to be run inside a supervisor process.
 
         """
         logger.info("starting %s on domain %s", self.name, self.domain.name)
         self.set_process_name()
         while self.is_alive:
             try:
-                response = self._poll(self.task_list, self.identity)
+                response = self._poll()
             except swf.exceptions.PollTimeout:
                 continue
             self.process(response)
@@ -227,6 +225,16 @@ class Poller(NamedMixin, swf.actors.Actor):
             self.stop_forcefully()
 
     def _complete(self, token, response):
+        """
+        Complete with retry.
+        :param token:
+        :type token: str
+        :param response: response: decision list, JSON result, ...
+        :type response: Any
+        :return:
+        :rtype:
+        """
+        # FIXME this is a public member
         try:
             complete = utils.retry.with_delay(
                 nb_times=self.nb_retries,
@@ -236,7 +244,7 @@ class Poller(NamedMixin, swf.actors.Actor):
             )(self.complete)  # Exponential backoff on errors.
             complete(token, response)
         except Exception as err:
-            # This embarasing because the decider cannot notify SWF of the
+            # This is embarrassing because the decider cannot notify SWF of the
             # task completion. As it will not try again, the task will
             # timeout (start_to_complete).
             logger.exception("cannot complete task: %s", str(err))
@@ -246,43 +254,29 @@ class Poller(NamedMixin, swf.actors.Actor):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def complete(self, token, task):
+    def complete(self, token, response):
         raise NotImplementedError
 
-    def _poll(self, task_list=None, identity=None):
+    @abc.abstractmethod
+    def process(self, request):
+        pass
+
+    def _poll(self):
         """
         Polls a task represented by its token and data. It uses long-polling
         with a timeout of one minute.
 
-        :param task_list: when set, it overrides the workflow's default task
-                          list. The specified string must not start or end with
-                          whitespace. It must not contain a : (colon), /
-                          (slash), | (vertical bar), or any control characters
-                          (\u0000-\u001f | \u007f - \u009f). Also, it must not
-                          contain the literal string "arn".
-
-        :type  task_list: str.
-        :param identity: when set, it overrides the default decider's identity.
-                         Identity of the decider making the request, which is
-                         recorded in the DecisionTaskStarted event in the
-                         workflow history. This enables diagnostic tracing when
-                         problems arise. The form of this identity is user
-                         defined. Minimum length of 0. Maximum length of 256.
-        :type  identity: str.
-
         See also
         http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html#API_PollForDecisionTask_RequestSyntax
+        http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForActivityTask.html#API_PollForActivityTask_RequestSyntax
 
         :returns:
         :rtype: swf.responses.Response
         """
-        if task_list is None and self.task_list:
-            task_list = self.task_list
+        task_list = self.task_list
+        identity = self.identity
 
-        if identity is None and self.identity:
-            identity = self.identity
-
-        logger.debug("polling decision task on %s", task_list)
+        logger.debug("polling task on %s", task_list)
         try:
             response = self.poll(
                 task_list,

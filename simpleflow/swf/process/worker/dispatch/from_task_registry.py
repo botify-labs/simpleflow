@@ -9,12 +9,11 @@ class RegistryDispatcher(object):
         """
 
         :param registry: of tasks.
-        :type  registry: {str: {str: Task}}
+        :type  registry: dict[str, dict[str, simpleflow.activity.Activity]]
         :param label: name of the task list.
-        :type  label: str.
-        :param workflow: definition.
+        :type  label: Optional[str]
+        :param workflow: definition. Unused, kept for compatibility.
         :type workflow: Workflow.
-
         """
         self._registry = registry
         self._label = label
@@ -28,7 +27,7 @@ class RegistryDispatcher(object):
             :rtype: callable.
 
         """
-        return self._registry[self._label][name]._callable
+        return self._registry[self._label][name].callable
 
     def dispatch_activity(self, name):
         """
@@ -36,7 +35,7 @@ class RegistryDispatcher(object):
         :type  name: str.
 
         :returns:
-            :rtype: Activity
+            :rtype: simpleflow.activity.Activity
 
         """
         return self._registry[self._label][name]

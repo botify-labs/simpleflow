@@ -4,6 +4,7 @@
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
+from __future__ import unicode_literals
 
 import os
 try:
@@ -17,7 +18,7 @@ def from_stream(stream):
 
     Example:
 
-    >>> from StringIO import StringIO
+    >>> from io import StringIO
     >>> stream = StringIO('''
     ...
     ... [credentials]
@@ -57,7 +58,10 @@ def from_stream(stream):
 
     """
     config = ConfigParser(allow_no_value=True)
-    config.readfp(stream)
+    if hasattr(config, 'read_file'):
+        config.read_file(stream)
+    else:
+        config.readfp(stream)  # deprecated name
 
     settings = {}
 

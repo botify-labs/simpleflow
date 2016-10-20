@@ -1,5 +1,7 @@
 import sys
 
+from future.utils import iteritems
+
 from . import default
 
 
@@ -22,8 +24,7 @@ def get_settings(module):
 
 def load_settings(module, env, conf, defaults):
     settings = {}
-    value = None
-    for name, typ in get_settings(module).iteritems():
+    for name, typ in iteritems(get_settings(module)):
         if name in env:
             value = env[name]
         elif name in conf:

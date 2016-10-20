@@ -8,6 +8,7 @@ from importlib import import_module
 import swf.exceptions
 import swf.models
 import swf.querysets
+from future.utils import iteritems
 from simpleflow.activity import Activity
 from simpleflow.utils import json_dumps
 
@@ -97,9 +98,14 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     """
     Finds an activity in a given workflow execution and returns a callable,
     some args and some kwargs so we can re-execute it.
+
+    :type history: simpleflow.history.History
+    :type scheduled_id: str
+    :type activity_id: str
+    :type input: Optional[dict[str, Any]]
     """
     found_activity = None
-    for _, params in history._activities.items():
+    for _, params in iteritems(history.activities):
         if params["scheduled_id"] == scheduled_id:
             found_activity = params
         if params["id"] == activity_id:
@@ -113,7 +119,7 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     module = import_module(module_name)
     func = getattr(module, method_name)
     if isinstance(func, Activity):
-        func = func._callable
+        func = func.callable
 
     # get the input
     input_ = input or found_activity["input"]

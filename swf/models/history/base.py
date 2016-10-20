@@ -6,7 +6,9 @@
 # See the file LICENSE for copying permission.
 
 from itertools import groupby
+from builtins import object, range
 
+from future.utils import iteritems
 from swf.models.event import EventFactory, CompiledEventFactory
 from swf.models.event.workflow import WorkflowExecutionEvent
 from swf.utils import cached_property
@@ -17,13 +19,13 @@ class History(object):
 
     History object is an Event subclass objects container
     which can be built directly against an amazon json response
-    using it's from_event_list method.
+    using its from_event_list method.
 
     It is iterable and exposes a list-like __getitem__ for easier
     manipulation.
 
     :param  events: Events list to build History upon
-    :type   events: list
+    :type   events: list[swf.models.event.Event]
 
     Typical amazon response looks like:
 
@@ -92,6 +94,10 @@ class History(object):
         return self
 
     def next(self):
+        """
+        Iterate.
+        :rtype: swf.models.event.Event
+        """
         try:
             next_event = self.events[self.it_pos]
             self.it_pos += 1
@@ -99,6 +105,14 @@ class History(object):
             self.it_pos = 0
             raise StopIteration
         return next_event
+
+    def __next__(self):
+        """
+        Py3 iterator.
+        :return:
+        :rtype: swf.models.event.Event
+        """
+        return self.next()
 
     @property
     def last(self):
@@ -140,12 +154,10 @@ class History(object):
             'terminated'
         )
 
-        if (isinstance(self.last, WorkflowExecutionEvent) and
-            self.last.state in completion_states):
+        if isinstance(self.last, WorkflowExecutionEvent) and self.last.state in completion_states:
             return True
 
         return False
-
 
     def filter(self, **kwargs):
         """Filters the history based on kwargs events attributes
@@ -159,6 +171,7 @@ class History(object):
 
         .. code-block:: python
 
+            >>> history_obj = History()
             >>> history_obj.filter(type='ActivityTask', state='completed')  # doctest: +SKIP
             <History
                 <Event 23 ActivityTask : completed>
@@ -178,20 +191,20 @@ class History(object):
         :rtype: swf.models.history.History
         """
         return filter(
-            lambda e: all(getattr(e, k) == v for k, v in kwargs.iteritems()),
+            lambda e: all(getattr(e, k) == v for k, v in iteritems(kwargs)),
             self.events
         )
 
     @property
     def reversed(self):
-        for i in xrange(len(self.events) - 1, -1, -1):
+        for i in range(len(self.events) - 1, -1, -1):
             yield self.events[i]
 
     @property
     def distinct(self):
         """Extracts distinct history events based on their types
 
-        :rtype: list of swf.models.event.Event
+        :rtype: list[list[swf.models.event.Event]]
         """
         distinct_events = []
 
@@ -199,10 +212,8 @@ class History(object):
             g = list(group)
 
             # Merge every WorkflowExecution events into same group
-            if (len(g) == 1 and
-                len(distinct_events) >= 1 and
-                    g[0].type == "WorkflowExecution"):
-                # WorfklowExecution group will always be in first position
+            if len(g) == 1 and len(distinct_events) >= 1 and g[0].type == "WorkflowExecution":
+                # WorkflowExecution group will always be in first position
                 distinct_events[0].extend(g)
             else:
                 distinct_events.append(list(g))
@@ -216,7 +227,8 @@ class History(object):
         Every events stored in the resulting history are stateful
         CompiledEvent subclasses instances then.
 
-        :rtype: swf.models.history.History made of swf.models.event.CompiledEvent
+        :return: swf.models.history.History made of swf.models.event.CompiledEvent
+        :rtype: swf.models.history.History
         """
         distinct_events = self.distinct
         compiled_history = []
@@ -236,7 +248,8 @@ class History(object):
     def compiled(self):
         """Compiled history version
 
-        :rtype: swf.models.history.History made of swf.models.event.CompiledEvent
+        :return: swf.models.history.History made of swf.models.event.CompiledEvent
+        :rtype: swf.models.history.History
         """
         return self.compile()
 
@@ -250,7 +263,7 @@ class History(object):
         facilitate decisions according to the history.
 
         :param  data: event history description (typically, an amazon response)
-        :type   data: dict
+        :type   data: dict[str, Any]
 
         :returns: History model instance built upon data description
         :rtype: swf.model.history.History

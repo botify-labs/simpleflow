@@ -20,6 +20,7 @@ def with_attributes(
     """
     :param name: of the activity type.
     :type  name: str.
+    :rtype: () -> Activity[()]
 
     """
     def wrap(func):
@@ -68,6 +69,10 @@ class Activity(object):
         registry.registry.register(self)
 
     @property
+    def callable(self):
+        return self._callable
+
+    @property
     def name(self):
         import types
 
@@ -81,8 +86,6 @@ class Activity(object):
             name = callable.name
         elif hasattr(callable, '__name__'):
             name = callable.__name__
-        elif isinstance(callable, types.FunctionType):
-            name = callable.func_name
         else:
             name = callable.__class__.__name__
 

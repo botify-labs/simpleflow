@@ -2,8 +2,6 @@ from __future__ import absolute_import
 
 import abc
 
-from simpleflow.utils import json_dumps
-
 from . import futures
 from .activity import Activity
 
@@ -27,18 +25,26 @@ class Task(object):
     def name(self):
         raise NotImplementedError()
 
-    def serialize(self, value):
-        return json_dumps(value)
-
-    def resolve_args(self, *args):
+    @staticmethod
+    def resolve_args(*args):
         return [get_actual_value(arg) for arg in args]
 
-    def resolve_kwargs(self, **kwargs):
+    @staticmethod
+    def resolve_kwargs(**kwargs):
         return {key: get_actual_value(val) for
-                key, val in kwargs.iteritems()}
+                key, val in kwargs.items()}
 
 
 class ActivityTask(Task):
+    """
+    Activity task.
+
+    :type activity: Activity
+    :type idempotent: Optional[bool]
+    :type args: list[Any]
+    :type kwargs: dict[Any, Any]
+    :type id: str
+    """
     def __init__(self, activity, *args, **kwargs):
         if not isinstance(activity, Activity):
             raise TypeError('Wrong value for `activity`, got {} instead'.format(type(activity)))
@@ -61,7 +67,7 @@ class ActivityTask(Task):
             self.id)
 
     def execute(self):
-        method = self.activity._callable
+        method = self.activity.callable
         if hasattr(method, 'execute'):
             return method(*self.args, **self.kwargs).execute()
         else:
@@ -69,9 +75,18 @@ class ActivityTask(Task):
 
 
 class WorkflowTask(Task):
+    """
+    Child workflow.
+
+    :type workflow: simpleflow.workflow.Workflow
+    :type idempotent: bool
+    :type args: list[Any]
+    :type kwargs: dict[Any, Any]
+    :type id: str
+    """
     def __init__(self, workflow, *args, **kwargs):
         self.workflow = workflow
-        # TODO: handle idempotence at workflow level
+        # TODO: handle idempotency at workflow level
         self.idempotent = False
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
@@ -84,7 +99,7 @@ class WorkflowTask(Task):
     def __repr__(self):
         return '{}(workflow={}, args={}, kwargs={}, id={})'.format(
             self.__class__.__name__,
-            self.activity,
+            self.workflow,
             self.args,
             self.kwargs,
             self.id)
