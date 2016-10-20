@@ -57,7 +57,10 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         """
         self._workflow = workflow
         self.nb_retries = 3
-        self._heartbeat = heartbeat
+        # heartbeat=0 is a special value to disable heartbeating. We want to
+        # replace it by None because multiprocessing.Process.join() treats
+        # this as "no timeout"
+        self._heartbeat = heartbeat or None
 
         swf.actors.ActivityWorker.__init__(
             self,
@@ -228,7 +231,7 @@ def spawn(poller, token, task, heartbeat=60):
     :param heartbeat: heartbeat delay (seconds)
     :type heartbeat: int
     """
-    logger.debug('spawn() pid={}'.format(os.getpid()))
+    logger.debug('spawn() pid={} heartbeat={}'.format(os.getpid(), heartbeat))
     worker = multiprocessing.Process(
         target=process_task,
         args=(poller, token, task),
