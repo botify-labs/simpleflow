@@ -130,18 +130,15 @@ class GroupFuture(futures.Future):
     def sync_result(self):
         self._result = []
         exceptions = []
-        have_exceptions = False
         for future in self.futures:
             if future.finished:
                 self._result.append(future.result)
                 exception = future.exception
                 exceptions.append(exception)
-                if exception:
-                    have_exceptions = True
             else:
                 self._result.append(None)
                 exceptions.append(None)
-        if have_exceptions:
+        if any(ex for ex in exceptions):
             self._exception = AggregateException(exceptions)
 
     @property
