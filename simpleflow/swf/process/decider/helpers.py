@@ -34,7 +34,7 @@ def load_workflow(domain, workflow_name, task_list=None, repair_with=None,
 
 def make_decider_poller(workflows, domain, task_list, repair_with=None,
                         force_activities=None,
-                        executor_use_task_list=False):
+                        is_standalone=False):
     """
     Factory building a decider poller.
     :param workflows:
@@ -47,8 +47,8 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None,
     :type repair_with: Optional[simpleflow.history.History]
     :param force_activities:
     :type force_activities: Optional[str]
-    :param executor_use_task_list: Whether the executor use this task list (and pass it to the workers)
-    :type executor_use_task_list: bool
+    :param is_standalone: Whether the executor use this task list (and pass it to the workers)
+    :type is_standalone: bool
     :return:
     :rtype: DeciderPoller
     """
@@ -59,7 +59,7 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None,
         raise ValueError("Sorry you can't repair more than 1 workflow at once!")
 
     executors = [
-        load_workflow(domain, workflow, task_list if executor_use_task_list else None,
+        load_workflow(domain, workflow, task_list if is_standalone else None,
                       repair_with=repair_with,
                       force_activities=force_activities,
                       )
@@ -71,7 +71,7 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None,
 
 def make_decider(workflows, domain, task_list, nb_children=None,
                  repair_with=None, force_activities=None,
-                 executor_use_task_list=False):
+                 is_standalone=False):
     """
     Instantiate a Decider.
     :param workflows:
@@ -86,14 +86,14 @@ def make_decider(workflows, domain, task_list, nb_children=None,
     :type repair_with: Optional[simpleflow.history.History]
     :param force_activities: Regex matching the activities to force
     :type force_activities: Optional[str]
-    :param executor_use_task_list: Whether the executor use this task list (and pass it to the workers)
-    :type executor_use_task_list: bool
+    :param is_standalone: Whether the executor use this task list (and pass it to the workers)
+    :type is_standalone: bool
     :return:
     :rtype: Decider
     """
     poller = make_decider_poller(workflows, domain, task_list,
                                  repair_with=repair_with,
                                  force_activities=force_activities,
-                                 executor_use_task_list=executor_use_task_list,
+                                 is_standalone=is_standalone,
                                  )
     return Decider(poller, nb_children=nb_children)

@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def start(workflows, domain, task_list, log_level=None, nb_processes=None,
-          repair_with=None, force_activities=None, executor_use_task_list=False):
+          repair_with=None, force_activities=None, is_standalone=False):
     """
     Start a decider.
     :param workflows:
@@ -25,8 +25,8 @@ def start(workflows, domain, task_list, log_level=None, nb_processes=None,
     :type repair_with: Optional[simpleflow.history.History]
     :param force_activities:
     :type force_activities:
-    :param executor_use_task_list: Whether the executor use this task list (and pass it to the workers)
-    :type executor_use_task_list: bool
+    :param is_standalone: Whether the executor use this task list (and pass it to the workers)
+    :type is_standalone: bool
     """
     if log_level:
         logger.warning(
@@ -36,7 +36,7 @@ def start(workflows, domain, task_list, log_level=None, nb_processes=None,
         workflows, domain, task_list, nb_processes,
         repair_with=repair_with,
         force_activities=force_activities,
-        executor_use_task_list=executor_use_task_list,
+        is_standalone=is_standalone,
     )
     decider.is_alive = True
     decider.start()
