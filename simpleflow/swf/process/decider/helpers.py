@@ -9,6 +9,21 @@ from . import (
 
 def load_workflow(domain, workflow_name, task_list=None, repair_with=None,
                   force_activities=None):
+    """
+    Load a workflow.
+    :param domain:
+    :type domain: str
+    :param workflow_name:
+    :type workflow_name: str
+    :param task_list:
+    :type task_list: Optional[str]
+    :param repair_with:
+    :type repair_with: Optional[simpleflow.history.History]
+    :param force_activities:
+    :type force_activities: Optional[str]
+    :return: Executor for this workflow
+    :rtype: Executor
+    """
     module_name, object_name = workflow_name.rsplit('.', 1)
     module = __import__(module_name, fromlist=['*'])
 
@@ -18,10 +33,24 @@ def load_workflow(domain, workflow_name, task_list=None, repair_with=None,
 
 
 def make_decider_poller(workflows, domain, task_list, repair_with=None,
-                        force_activities=None):
+                        force_activities=None,
+                        executor_use_task_list=False):
     """
-    Factory to build a decider poller.
-
+    Factory building a decider poller.
+    :param workflows:
+    :type workflows:
+    :param domain:
+    :type domain:
+    :param task_list:
+    :type task_list:
+    :param repair_with:
+    :type repair_with: Optional[simpleflow.history.History]
+    :param force_activities:
+    :type force_activities: Optional[str]
+    :param executor_use_task_list: Whether the executor use this task list (and pass it to the workers)
+    :type executor_use_task_list: bool
+    :return:
+    :rtype: DeciderPoller
     """
     if repair_with and len(workflows) != 1:
         # too complicated ; I even wonder why passing multiple workflows here is
@@ -30,8 +59,10 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None,
         raise ValueError("Sorry you can't repair more than 1 workflow at once!")
 
     executors = [
-        load_workflow(domain, workflow, task_list, repair_with=repair_with,
-                      force_activities=force_activities)
+        load_workflow(domain, workflow, task_list if executor_use_task_list else None,
+                      repair_with=repair_with,
+                      force_activities=force_activities,
+                      )
         for workflow in workflows
         ]
     domain = swf.models.Domain(domain)
@@ -39,9 +70,10 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None,
 
 
 def make_decider(workflows, domain, task_list, nb_children=None,
-                 repair_with=None, force_activities=None):
+                 repair_with=None, force_activities=None,
+                 executor_use_task_list=False):
     """
-    Instanciate a Decider.
+    Instantiate a Decider.
     :param workflows:
     :type workflows: list[str]
     :param domain:
@@ -50,15 +82,18 @@ def make_decider(workflows, domain, task_list, nb_children=None,
     :type task_list: str
     :param nb_children:
     :type nb_children: Optional[int]
-    :param repair_with:
-    :type repair_with:
-    :param force_activities:
-    :type force_activities:
+    :param repair_with: previous history
+    :type repair_with: Optional[simpleflow.history.History]
+    :param force_activities: Regex matching the activities to force
+    :type force_activities: Optional[str]
+    :param executor_use_task_list: Whether the executor use this task list (and pass it to the workers)
+    :type executor_use_task_list: bool
     :return:
     :rtype: Decider
     """
     poller = make_decider_poller(workflows, domain, task_list,
                                  repair_with=repair_with,
                                  force_activities=force_activities,
+                                 executor_use_task_list=executor_use_task_list,
                                  )
     return Decider(poller, nb_children=nb_children)
