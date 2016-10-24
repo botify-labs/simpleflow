@@ -14,6 +14,7 @@ export AWS_SECRET_ACCESS_KEY=1234
 
 # Enable various test optimizations
 export SIMPLEFLOW_ENV=test
+export SIMPLEFLOW_CLEANUP_PROCESSES=yes
 
 # Simple variable to control the number of connection retries
 export SWF_CONNECTION_RETRIES=1

@@ -1,3 +1,4 @@
+import os
 import re
 import time
 import unittest
@@ -13,10 +14,11 @@ class TestSupervisor(unittest.TestCase):
 
     def tearDown(self):
         # cleanup all child processes
-        process = Process()
-        for child in process.children(recursive=True):
-            # TODO: have a warning here? normal?
-            child.kill()
+        if os.getenv("SIMPLEFLOW_CLEANUP_PROCESSES"):
+            process = Process()
+            for child in process.children(recursive=True):
+                # TODO: have a warning here? normal?
+                child.kill()
 
     def assertProcess(self, regex, count=1):
         children = Process().children(recursive=True)
