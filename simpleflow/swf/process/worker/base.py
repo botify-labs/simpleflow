@@ -40,6 +40,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     Polls an activity and handles it in the worker.
 
     """
+
     def __init__(self, domain, task_list, workflow, heartbeat=60,
                  *args, **kwargs):
         """
@@ -66,7 +67,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
             self,
             domain,
             task_list,
-            *args,    # directly forward them.
+            *args,  # directly forward them.
             **kwargs  # directly forward them.
         )
 
@@ -192,29 +193,22 @@ def process_task(poller, token, task):
     worker.process(poller, token, task)
 
 
-def monitor_child(pid, info):
+def monitor_child(worker):
     """
     Fill the info dict at child's exit.
-    :param pid:
-    :type pid: int
-    :param info:
-    :type info: dict
+    :param worker:
+    :type worker: multiprocessing.Process
     """
+
     def _handle_child_exit(signum, frame):
         if signum == signal.SIGCHLD:
-            # Only fill the info dict. The spawn() function calls
-            # ``worker.join()`` to collect the subprocess when it exits.
+            # call worker.join() to update multiprocessing's view of the process
+            # (exit code, list of our children, etc.)
             try:
-                _, status = os.waitpid(pid, 0)
-            except OSError:
-                # Beware of the race between this handler and
-                # :meth:`Process.join`. This is the main reason to raise a
-                # ``errno 10: No child process``.
-                return
-            sig = status & 0xff
-            exit_code = (status & 0xff00) >> 8
-            info['signal'] = sig
-            info['exit_code'] = exit_code
+                worker.join(timeout=0)
+            except Exception:
+                # Must have been some race, ignore it
+                pass
 
     signal.signal(signal.SIGCHLD, _handle_child_exit)
 
@@ -238,22 +232,30 @@ def spawn(poller, token, task, heartbeat=60):
     )
     worker.start()
 
-    info = {}
-    monitor_child(worker.pid, info)
+    monitor_child(worker)
 
-    def worker_alive(): return psutil.pid_exists(worker.pid)
+    def worker_alive():
+        return psutil.pid_exists(worker.pid)
 
     while worker_alive():
         worker.join(timeout=heartbeat)
         if not worker_alive():
+            # Most certainly unneeded: we'll see
+            if worker.exitcode is None:
+                # race condition, try and re-join
+                worker.join(timeout=0)
+                if worker.exitcode is None:
+                    logger.warning("process {} is dead but multiprocessing doesn't know it (simpleflow bug)".format(
+                        worker.pid
+                    ))
             if worker.exitcode != 0:
                 poller.fail(
                     token,
                     task,
-                    reason='process died: signal {}, exit code{}'.format(
-                        info.get('signal'),
-                        info.get('exit_code', worker.exitcode),
-                    ))
+                    reason='process {} died: exit code {}'.format(
+                        worker.pid,
+                        worker.exitcode)
+                )
             return
         try:
             logger.debug(
