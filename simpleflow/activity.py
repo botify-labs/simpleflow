@@ -18,8 +18,28 @@ def with_attributes(
         idempotent=None,
 ):
     """
-    :param name: of the activity type.
+    Decorator: wrap a function/class into an Activity.
+
+    :param name: name of the activity.
     :type  name: str.
+    :param version: optional version.
+    :type version: str
+    :param task_list: optional task list.
+    :type task_list: str
+    :param retry: retry count.
+    :type retry: int
+    :param raises_on_failure: whether to raise on failuer.
+    :type raises_on_failure: bool
+    :param start_to_close_timeout:
+    :type start_to_close_timeout: str
+    :param schedule_to_close_timeout:
+    :type schedule_to_close_timeout: str
+    :param schedule_to_start_timeout:
+    :type schedule_to_start_timeout: str
+    :param heartbeat_timeout:
+    :type heartbeat_timeout: str
+    :param idempotent: True if the activity is idempotent.
+    :type idempotent: Optional[bool]
     :rtype: () -> Activity[()]
 
     """
@@ -74,8 +94,6 @@ class Activity(object):
 
     @property
     def name(self):
-        import types
-
         if self._name is not None:
             return self._name
 
