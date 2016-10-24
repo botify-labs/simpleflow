@@ -4,8 +4,15 @@ import time
 import unittest
 
 from psutil import Process
+from setproctitle import setproctitle
 
 from simpleflow.process import Supervisor
+
+
+# Dummy function used in worker tests
+def sleep_long(seconds):
+    setproctitle("simpleflow Worker(sleep_long, {})".format(seconds))
+    time.sleep(seconds)
 
 
 class TestSupervisor(unittest.TestCase):
@@ -30,10 +37,11 @@ class TestSupervisor(unittest.TestCase):
             )
         )
 
-    def test_init(self):
-        manager = Supervisor()
-        manager.boot()
+    def test_boot(self):
+        supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=2)
+        supervisor.boot()
         # we need to wait a little here so the process starts and gets its name set
         # TODO: find a non-sleep approach to this
-        time.sleep(0.2)
-        self.assertProcess(r'simpleflow Supervisor\(\)')
+        time.sleep(0.5)
+        self.assertProcess(r'simpleflow Supervisor\(nb_children=2\)')
+        self.assertProcess(r'simpleflow Worker\(sleep_long, 30\)', count=2)
