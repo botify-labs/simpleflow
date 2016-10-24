@@ -1,4 +1,5 @@
 import re
+import time
 import unittest
 
 from psutil import Process
@@ -30,4 +31,7 @@ class TestSupervisor(unittest.TestCase):
     def test_init(self):
         manager = Supervisor()
         manager.boot()
-        self.assertProcess(r'python')
+        # we need to wait a little here so the process starts and gets its name set
+        # TODO: find a non-sleep approach to this
+        time.sleep(0.2)
+        self.assertProcess(r'simpleflow Supervisor\(\)')

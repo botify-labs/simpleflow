@@ -1,4 +1,5 @@
 import multiprocessing
+from setproctitle import setproctitle
 
 
 class Supervisor(object):
@@ -29,5 +30,6 @@ class Supervisor(object):
         Supervisor's main "target", as defined in the `multiprocessing` API. It's the
         code that the manager will execute once booted.
         """
+        setproctitle('simpleflow Supervisor()')
         import time
         time.sleep(60)
