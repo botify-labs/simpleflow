@@ -77,7 +77,7 @@ DEPS = [
     'tabulate==0.7.3',
     'setproctitle',
     'click',
-    'psutil',
+    'psutil>=3.2.1',
     'pytz',
 ]
 if PY2:
