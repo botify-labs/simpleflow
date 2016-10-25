@@ -38,7 +38,7 @@ class Supervisor(object):
 
         self._processes = []
 
-    def boot(self):
+    def start(self):
         """
         Used to start the Supervisor process once it's configured. Has to be called
         explicitly on a Supervisor instance so it starts (no auto-start from __init__()).
@@ -49,7 +49,7 @@ class Supervisor(object):
     def target(self):
         """
         Supervisor's main "target", as defined in the `multiprocessing` API. It's the
-        code that the manager will execute once booted.
+        code that the manager will execute once started.
         """
         # setup supervisor name
         setproctitle('simpleflow Supervisor(nb_children={})'.format(self._nb_children))

@@ -37,9 +37,9 @@ class TestSupervisor(unittest.TestCase):
             )
         )
 
-    def test_boot(self):
+    def test_start(self):
         supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=2)
-        supervisor.boot()
+        supervisor.start()
         # we need to wait a little here so the process starts and gets its name set
         # TODO: find a non-sleep approach to this
         time.sleep(0.5)
