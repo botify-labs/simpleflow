@@ -49,7 +49,7 @@ class TestSupervisor(unittest.TestCase):
         # we need to wait a little here so the process starts and gets its name set
         # TODO: find a non-sleep approach to this
         time.sleep(0.5)
-        self.assertProcess(r'simpleflow Supervisor\(nb_children=2\)')
+        self.assertProcess(r'simpleflow Supervisor\(payload=sleep_long, nb_children=2\)')
         self.assertProcess(r'simpleflow Worker\(sleep_long, 30\)', count=2)
 
     def test_terminate(self):
@@ -78,3 +78,15 @@ class TestSupervisor(unittest.TestCase):
         # TODO: find a non-sleep approach
         time.sleep(1)
         self.assertProcess(r'worker: shutting down')
+
+    def test_payload_friendly_name(self):
+        def foo():
+            pass
+        supervisor = Supervisor(foo)
+        self.assertEqual(supervisor._payload_friendly_name, "foo")
+
+        class Foo(object):
+            def bar(self):
+                pass
+        supervisor = Supervisor(Foo().bar)
+        self.assertEqual(supervisor._payload_friendly_name, "Foo.bar")

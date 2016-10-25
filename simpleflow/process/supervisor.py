@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import os
 import signal
+import types
 
 from setproctitle import setproctitle
 
@@ -41,6 +42,7 @@ class Supervisor(object):
         else:
             self._nb_children = nb_children
         self._payload = payload
+        self._payload_friendly_name = self.payload_friendly_name()
         self._args = arguments if arguments is not None else ()
 
         self._processes = []
@@ -67,7 +69,11 @@ class Supervisor(object):
         self.bind_signal_handlers()
 
         # setup supervisor name
-        setproctitle('simpleflow Supervisor(nb_children={})'.format(self._nb_children))
+        setproctitle(
+            "simpleflow Supervisor(payload={}, nb_children={})".format(
+                self._payload_friendly_name, self._nb_children
+            )
+        )
 
         # protection against double use of ".start()"
         if len(self._processes) != 0:
@@ -126,3 +132,12 @@ class Supervisor(object):
         for child in self._processes:
             logger.info("process: sending SIGTERM to pid={}".format(child.pid))
             os.kill(child.pid, signal.SIGTERM)
+
+    def payload_friendly_name(self):
+        payload = self._payload
+        if isinstance(payload, types.MethodType):
+            instance = payload.__self__
+            return "{}.{}".format(instance.__class__.__name__, payload.__name__)
+        elif isinstance(payload, types.FunctionType):
+            return payload.__name__
+        raise TypeError('invalid payload type {}'.format(type(payload)))
