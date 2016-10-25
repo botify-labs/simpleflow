@@ -43,6 +43,8 @@ class Supervisor(object):
         Used to start the Supervisor process once it's configured. Has to be called
         explicitly on a Supervisor instance so it starts (no auto-start from __init__()).
         """
+        # TODO: question if necessary to use a subprocess here ; it eases tests but not
+        # sure it won't make things more complex down the road
         p = multiprocessing.Process(target=self.target)
         p.start()
 
