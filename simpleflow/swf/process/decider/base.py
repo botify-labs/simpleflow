@@ -7,11 +7,8 @@ import swf.exceptions
 import swf.format
 import swf.models.decision
 
-from simpleflow.swf.process.actor import (
-    Supervisor,
-    Poller,
-    with_state,
-)
+from simpleflow.process import Supervisor, with_state
+from simpleflow.swf.process.actor import Poller
 
 
 logger = logging.getLogger(__name__)

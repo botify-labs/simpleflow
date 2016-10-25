@@ -9,11 +9,8 @@ import psutil
 import swf.actors
 import swf.exceptions
 import swf.format
-from simpleflow.swf.process.actor import (
-    Supervisor,
-    Poller,
-    with_state,
-)
+from simpleflow.process import Supervisor, with_state
+from simpleflow.swf.process.actor import Poller
 
 from .dispatch import dynamic_dispatcher
 

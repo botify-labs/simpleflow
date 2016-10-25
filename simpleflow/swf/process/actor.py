@@ -10,13 +10,14 @@ from setproctitle import setproctitle
 import swf.actors
 import swf.exceptions
 from simpleflow import utils
+from simpleflow.process import NamedMixin, with_state
 from simpleflow.swf.helpers import swf_identity
 
 
 logger = logging.getLogger(__name__)
 
 
-__all__ = ['Supervisor', 'Poller']
+__all__ = ['Poller']
 
 
 def reset_signal_handlers(func):
@@ -30,130 +31,6 @@ def reset_signal_handlers(func):
     return wrapped
 
 
-def with_state(state):
-    def wrapper(method):
-        @functools.wraps(method)
-        def wrapped(self, *args, **kwargs):
-            logger.debug('entering state {}: {}(args={}, kwargs={})'.format(
-                state, method.__name__, args, kwargs))
-            self.state = state
-            return method(self, *args, **kwargs)
-
-        wrapped.__wrapped__ = method
-        return wrapped
-    return wrapper
-
-
-def get_payload_name(payload):
-    import types
-
-    if isinstance(payload, types.MethodType):
-        instance = payload.im_self
-        return '{}.{}'.format(instance.__class__.__name__, payload.__name__)
-    elif isinstance(payload, types.FunctionType):
-        return payload.__name__
-
-    raise TypeError('invalid payload type {}'.format(type(payload)))
-
-
-class Supervisor(object):
-    def __init__(self, payload, arguments=None, nb_children=None):
-        # compare explicitly to "None" there because nb_children could be 0
-        if nb_children is None:
-            self._nb_children = multiprocessing.cpu_count()
-        else:
-            self._nb_children = nb_children
-        self._processes = []
-        self._payload = payload
-        self._args = arguments if arguments is not None else ()
-
-    def start(self):
-        logger.info('starting {}'.format(self._payload))
-        setproctitle('simpleflow {}(payload={})'.format(
-            self.__class__.__name__,
-            get_payload_name(self._payload),
-        ))
-        assert len(self._processes) == 0
-        for _ in range(self._nb_children):
-            child = multiprocessing.Process(
-                target=self._payload,
-                args=self._args,
-            )
-            child.start()
-            self._processes.append(child)
-        for proc in self._processes:
-            proc.join()
-
-    def stop(self):
-        assert len(self._processes) > 0
-        self._processes = []
-
-    def restart(self):
-        self.stop()
-        self.start()
-
-    def bind_signal_handlers(self):
-        """Binds signals for graceful shutdown.
-
-        - SIGTERM and SIGINT lead to a graceful shutdown.
-        - SIGSEGV, SIGFPE, SIGABRT, SIGBUS and SIGILL displays a traceback
-          using the faulthandler library if available.
-
-        """
-        def signal_graceful_shutdown(signum, frame):
-            """
-            Note: Function is nested to have a reference to *self*.
-
-            """
-            if not self.is_alive:
-                return
-
-            logger.info(
-                'signal %d caught. Shutting down %s',
-                signum,
-                self.name,
-            )
-            self.is_alive = False
-            self.stop(graceful=True)
-
-        # optionnally use faulthandler if available
-        try:
-            import faulthandler
-            faulthandler.enable()
-        except ImportError:
-            pass
-
-        signal.signal(signal.SIGTERM, signal_graceful_shutdown)
-        signal.signal(signal.SIGINT, signal_graceful_shutdown)
-
-
-class NamedMixin(object):
-    def __init__(self, name='', state='initializing'):
-        self._name = name
-        self._state = state
-
-    @property
-    def state(self):
-        return self._state
-
-    @state.setter
-    def state(self, value):
-        self._state = value
-        self.set_process_name()
-
-    @property
-    def name(self):
-        return self._name
-
-    def set_process_name(self, name=None):
-        if name is None:
-            klass = self.__class__.__name__
-            task_list = self.task_list
-            name = '{}(task_list={})'.format(klass, task_list)
-
-        setproctitle('simpleflow {}[{}]'.format(name, self.state))
-
-
 class Poller(NamedMixin, swf.actors.Actor):
     """Multi-processing implementation of a SWF actor.
 
@@ -163,13 +40,10 @@ class Poller(NamedMixin, swf.actors.Actor):
                  task_list=None,
                  *args, **kwargs):
         self.is_alive = False
+        self._named_mixin_properties = ["task_list"]
+
         swf.actors.Actor.__init__(self, domain, task_list)
-        super(Poller, self).__init__(
-            domain,
-            task_list,
-            *args,
-            **kwargs
-        )
+        NamedMixin.__init__(self)
 
     @property
     def identity(self):
