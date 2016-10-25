@@ -1,5 +1,12 @@
+import logging
 import multiprocessing
+import os
+import signal
+
 from setproctitle import setproctitle
+
+
+logger = logging.getLogger(__name__)
 
 
 class Supervisor(object):
@@ -38,6 +45,8 @@ class Supervisor(object):
 
         self._processes = []
 
+        self._terminating = False
+
     def start(self):
         """
         Used to start the Supervisor process once it's configured. Has to be called
@@ -53,6 +62,9 @@ class Supervisor(object):
         Supervisor's main "target", as defined in the `multiprocessing` API. It's the
         code that the manager will execute once started.
         """
+        # handle signals
+        self.bind_signal_handlers()
+
         # setup supervisor name
         setproctitle('simpleflow Supervisor(nb_children={})'.format(self._nb_children))
 
@@ -68,5 +80,48 @@ class Supervisor(object):
             )
             child.start()
             self._processes.append(child)
+
+        # wait for all processes to finish
         for proc in self._processes:
             proc.join()
+
+    def bind_signal_handlers(self):
+        """
+        Binds signals for graceful shutdown:
+        - SIGTERM and SIGINT lead to a graceful shutdown
+        - other signals are ignored for now
+        """
+        # NB: Function is nested to have a reference to *self*.
+        def _handle_graceful_shutdown(signum, frame):
+            signals_map = { 2: "SIGINT", 15: "SIGTERM" }
+            signal_name = signals_map.get(signum, signum)
+            logger.info("process: caught signal signal={} pid={}".format(
+                signal_name, os.getpid()))
+            self.terminate()
+
+        # bind SIGTERM and SIGINT
+        signal.signal(signal.SIGTERM, _handle_graceful_shutdown)
+        signal.signal(signal.SIGINT, _handle_graceful_shutdown)
+
+    def terminate(self):
+        """
+        Terminate all worker processes managed by this Supervisor.
+        """
+        logger.error("processes: {}".format(self._processes))
+        if self._terminating:
+            logger.info("process: already shutting down...")
+            return
+        self._terminating = True
+        logger.info(
+            "process: will stop workers, this might take up several minutes. "
+            "Please, be patient."
+        )
+        self._killall()
+
+    def _killall(self):
+        """
+        Sends a stop (SIGTERM) signal to all worker processes.
+        """
+        for child in self._processes:
+            logger.info("process: sending SIGTERM to pid={}".format(child.pid))
+            os.kill(child.pid, signal.SIGTERM)
