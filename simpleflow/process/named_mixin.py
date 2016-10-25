@@ -35,6 +35,17 @@ class NamedMixin(object):
     1- include the "NamedMixin" as a parent class (and call its __init__()
         method explicitly if not the first parent)
     2- decorate your methods with "@with_state("my_state")"
+
+    You can optionnally expose some other attributes of your worker by defining
+    the "_named_mixin_properties" attribute to a list or tuple of fields you want
+    to include in your process title. For instance:
+
+        self._named_mixin_properties = ["task_list"]
+
+    ... will resul in a process named like this:
+
+        simpleflow YourClass(task_list=<value>)[running]
+
     """
     def __init__(self, state="initializing"):
         self.state = state
@@ -50,5 +61,8 @@ class NamedMixin(object):
 
     def set_process_name(self):
         klass = self.__class__.__name__
-        name = klass # for now
+        properties = []
+        for prop in getattr(self, "_named_mixin_properties", []):
+            properties.append("{}={}".format(prop, getattr(self, prop)))
+        name = "{}({})".format(klass, ", ".join(properties))
         setproctitle("simpleflow {}[{}]".format(name, self.state))
