@@ -7,7 +7,8 @@ import time
 import types
 
 import psutil
-from setproctitle import setproctitle
+
+from .named_mixin import NamedMixin, with_state
 
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ def reset_signal_handlers(func):
     return wrapped
 
 
-class Supervisor(object):
+class Supervisor(NamedMixin):
     """
     The `Supervisor` class is responsible for managing one or many worker processes
     in parallel. Those processes can be "deciders" or "activity workers" in the
@@ -63,12 +64,15 @@ class Supervisor(object):
             self._nb_children = nb_children
         self._payload = payload
         self._payload_friendly_name = self.payload_friendly_name()
+        self._named_mixin_properties = ["_payload_friendly_name", "_nb_children"]
         self._args = arguments if arguments is not None else ()
 
         self._processes = []
-
         self._terminating = False
 
+        super(Supervisor, self).__init__()
+
+    @with_state("running")
     def start(self):
         """
         Used to start the Supervisor process once it's configured. Has to be called
@@ -102,13 +106,6 @@ class Supervisor(object):
         """
         # handle signals
         self.bind_signal_handlers()
-
-        # setup supervisor name
-        setproctitle(
-            "simpleflow Supervisor(payload={}, nb_children={})".format(
-                self._payload_friendly_name, self._nb_children
-            )
-        )
 
         # protection against double use of ".start()"
         if len(self._processes) != 0:
@@ -178,6 +175,7 @@ class Supervisor(object):
         # bind SIGCHLD
         signal.signal(signal.SIGCHLD, _handle_sigchld)
 
+    @with_state("stopping")
     def terminate(self):
         """
         Terminate all worker processes managed by this Supervisor.
