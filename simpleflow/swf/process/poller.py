@@ -1,11 +1,5 @@
 import abc
-import functools
 import logging
-import multiprocessing
-import signal
-from builtins import range
-
-from setproctitle import setproctitle
 
 import swf.actors
 import swf.exceptions
