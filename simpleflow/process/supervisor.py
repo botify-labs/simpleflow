@@ -180,7 +180,6 @@ class Supervisor(object):
         """
         Terminate all worker processes managed by this Supervisor.
         """
-        logger.error("processes: {}".format(self._processes))
         if self._terminating:
             logger.info("process: already shutting down...")
             return
