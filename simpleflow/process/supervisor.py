@@ -134,7 +134,7 @@ class Supervisor(object):
         Binds signals for graceful shutdown:
         - SIGTERM and SIGINT lead to a graceful shutdown
         - SIGCHLD is used to maintain the workers pool to the desired number
-        - other signals are ignored for now
+        - other signals are not modified for now
         """
         # NB: Function is nested to have a reference to *self*.
         def _handle_graceful_shutdown(signum, frame):

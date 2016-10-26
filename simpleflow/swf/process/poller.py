@@ -1,5 +1,7 @@
 import abc
 import logging
+import os
+import signal
 
 import swf.actors
 import swf.exceptions
@@ -22,6 +24,7 @@ class Poller(NamedMixin, swf.actors.Actor):
                  domain,
                  task_list=None,
                  *args, **kwargs):
+        self.bind_signal_handlers()
         self.is_alive = False
         self._named_mixin_properties = ["task_list"]
 
@@ -42,11 +45,20 @@ class Poller(NamedMixin, swf.actors.Actor):
         """
         return swf_identity()
 
-    def stop_gracefully(self, join_timeout=60):
-        self._worker.join(join_timeout)
+    def bind_signal_handlers(self):
+        """
+        Binds signals for graceful shutdown:
+        - SIGTERM and SIGINT lead to a graceful shutdown
+        - other signals are not modified for now
+        """
+        # NB: Function is nested to have a reference to *self*.
+        def _handle_graceful_shutdown(signum, frame):
+            logger.info("process: caught signal signal=SIGTERM pid={}".format(os.getpid()))
+            self.stop_gracefully()
 
-    def stop_forcefully(self):
-        self._worker.terminate()
+        # bind SIGTERM and SIGINT
+        signal.signal(signal.SIGTERM, _handle_graceful_shutdown)
+        signal.signal(signal.SIGINT, _handle_graceful_shutdown)
 
     @with_state('running')
     def start(self):
@@ -65,21 +77,12 @@ class Poller(NamedMixin, swf.actors.Actor):
             self.process(response)
 
     @with_state('stopping')
-    def stop(self, graceful=True, join_timeout=60):
-        """Stop the actor processes and subprocesses.
-
-        :param graceful: wait for children processes?
-        :type  graceful: bool.
-        :param join_timeout: maximum time to wait for children.
-        :type  join_timeout: int.
+    def stop_gracefully(self):
+        """
+        Stop the actor processes and subprocesses.
         """
         logger.info('stopping %s', self.name)
         self.is_alive = False  # No longer take requests.
-
-        if graceful:
-            self.stop_gracefully(join_timeout)
-        else:
-            self.stop_forcefully()
 
     def _complete(self, token, response):
         """
