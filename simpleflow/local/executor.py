@@ -28,6 +28,8 @@ class Executor(executor.Executor):
             task = ActivityTask(func, *args, **kwargs)
         elif issubclass(func, Workflow):
             task = WorkflowTask(func, *args, __executor=self, **kwargs)
+        else:
+            raise Exception('Unexpected type {} for func'.format(type(func)))
 
         try:
             future._result = task.execute()

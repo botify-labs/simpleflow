@@ -805,7 +805,7 @@ def test_workflow_with_child_workflow():
             'input': json_dumps(input),
             'workflowType': {
                 'version': 'test_version',
-                'name': 'tests.test_dataflow.TestDefinition'
+                'name': 'tests.test_dataflow.ATestDefinition'
             },
             'taskStartToCloseTimeout': '300'
         },
