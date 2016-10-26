@@ -20,17 +20,6 @@ logger = logging.getLogger(__name__)
 __all__ = ['Poller']
 
 
-def reset_signal_handlers(func):
-    @functools.wraps(func)
-    def wrapped(*args, **kwargs):
-        signal.signal(signal.SIGTERM, signal.SIG_DFL)
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
-        return func(*args, **kwargs)
-
-    wrapped.__wrapped__ = func
-    return wrapped
-
-
 class Poller(NamedMixin, swf.actors.Actor):
     """Multi-processing implementation of a SWF actor.
 

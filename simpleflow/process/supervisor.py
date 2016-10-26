@@ -1,3 +1,4 @@
+import functools
 import logging
 import multiprocessing
 import os
@@ -10,6 +11,23 @@ from setproctitle import setproctitle
 
 
 logger = logging.getLogger(__name__)
+
+
+def reset_signal_handlers(func):
+    """
+    Decorator that resets signal handlers from the decorated function. Useful
+    for workers where we actively want handlers defined on the supervisor to be
+    removed, because they wouldn't work on the worker process.
+    """
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+        return func(*args, **kwargs)
+
+    wrapped.__wrapped__ = func
+    return wrapped
 
 
 class Supervisor(object):
@@ -69,7 +87,7 @@ class Supervisor(object):
         """
         for _ in range(len(self._processes), self._nb_children):
             child = multiprocessing.Process(
-                target=self._payload,
+                target=reset_signal_handlers(self._payload),
                 args=self._args
             )
             child.start()

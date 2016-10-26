@@ -9,7 +9,7 @@ from psutil import Process, NoSuchProcess
 from setproctitle import setproctitle
 from sure import expect
 
-from simpleflow.process import Supervisor
+from simpleflow.process import Supervisor, reset_signal_handlers
 
 
 class TestSupervisor(unittest.TestCase):
@@ -26,6 +26,8 @@ class TestSupervisor(unittest.TestCase):
                     child.kill()
                 except NoSuchProcess:
                     pass
+        # reset SIGTERM handler
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
     def assertProcess(self, regex, count=1):
         children = Process().children(recursive=True)
@@ -123,3 +125,28 @@ class TestSupervisor(unittest.TestCase):
         new_workers = workers()
         expect(len(new_workers)).to.equal(1)
         expect(new_workers[0].pid).to.not_be.equal(old_workers[0].pid)
+
+    # NB: not in the Supervisor class but we want to benefit from the tearDown()
+    def test_reset_signal_handlers(self):
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        def foo():
+            time.sleep(1)
+
+        # check it ignores SIGTERM normally
+        p = multiprocessing.Process(target=foo)
+        p.start()
+        # TODO: find a non-sleep approach to this
+        time.sleep(0.5)
+        os.kill(p.pid, signal.SIGTERM)
+        p.join()
+        expect(p.exitcode).to.equal(0)
+
+        # check it fails with the decorator (meaning that SIGTERM is not ignored
+        # anymore)
+        p = multiprocessing.Process(target=reset_signal_handlers(foo))
+        p.start()
+        # TODO: find a non-sleep approach to this
+        time.sleep(0.5)
+        os.kill(p.pid, signal.SIGTERM)
+        p.join()
+        expect(p.exitcode).to.equal(-15)
