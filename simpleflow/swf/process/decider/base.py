@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 class Decider(Supervisor):
     def __init__(self, poller, nb_children=None):
         self._poller = poller
-        self._poller.is_alive = True
         Supervisor.__init__(
             self,
             payload=self._poller.start,

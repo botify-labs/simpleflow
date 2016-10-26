@@ -68,6 +68,7 @@ class Poller(NamedMixin, swf.actors.Actor):
 
         """
         logger.info("starting %s on domain %s", self.name, self.domain.name)
+        self.is_alive = True
         self.set_process_name()
         while self.is_alive:
             try:
