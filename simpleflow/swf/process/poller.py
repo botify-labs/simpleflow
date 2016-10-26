@@ -24,7 +24,6 @@ class Poller(NamedMixin, swf.actors.Actor):
                  domain,
                  task_list=None,
                  *args, **kwargs):
-        self.bind_signal_handlers()
         self.is_alive = False
         self._named_mixin_properties = ["task_list"]
 
@@ -68,6 +67,7 @@ class Poller(NamedMixin, swf.actors.Actor):
 
         """
         logger.info("starting %s on domain %s", self.name, self.domain.name)
+        self.bind_signal_handlers()
         self.is_alive = True
         self.set_process_name()
         while self.is_alive:
