@@ -85,6 +85,8 @@ class Supervisor(object):
         Start missing worker processes depending on self._nb_children and the current
         processes stored in self._processes.
         """
+        if self._terminating:
+            return
         for _ in range(len(self._processes), self._nb_children):
             child = multiprocessing.Process(
                 target=reset_signal_handlers(self._payload),
