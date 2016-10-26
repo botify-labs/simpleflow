@@ -10,12 +10,11 @@ import swf.actors
 import swf.exceptions
 import swf.format
 from simpleflow.process import Supervisor, with_state
-from simpleflow.swf.process.actor import Poller
-
-from .dispatch import dynamic_dispatcher
-
+from simpleflow.swf.process import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.utils import json_dumps
+
+from .dispatch import dynamic_dispatcher
 
 logger = logging.getLogger(__name__)
 
