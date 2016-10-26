@@ -55,13 +55,11 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         # this as "no timeout"
         self._heartbeat = heartbeat or None
 
-        swf.actors.ActivityWorker.__init__(
-            self,
-            domain,
-            task_list,
-            *args,  # directly forward them.
-            **kwargs  # directly forward them.
-        )
+        # Call super()'s methods: as this class uses multiple inheritance, the
+        # call is written directly so it's easier to understand.
+        # TODO: see if *args/**kwargs forwarding is really useful
+        Poller.__init__(self, domain, task_list, *args, **kwargs)
+        swf.actors.ActivityWorker.__init__(self, domain, task_list, identity=kwargs.get("identity", None))
 
     @property
     def name(self):
