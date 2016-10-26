@@ -48,8 +48,7 @@ class TestSupervisor(IntegrationTestCase):
         self.assertProcess(r'worker: running')
 
         supervisor_process = Process().children()[0]
-        print supervisor_process.pid
-        print os.kill(supervisor_process.pid, signal.SIGTERM)
+        os.kill(supervisor_process.pid, signal.SIGTERM)
 
         # TODO: find a non-sleep approach
         time.sleep(1)
