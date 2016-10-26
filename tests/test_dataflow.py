@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+
+import re
 from builtins import range
 
 import functools
@@ -838,15 +840,15 @@ def test_workflow_with_child_workflow_failed():
     history = builder.History(workflow, input={'args': (1,)})
 
     decisions, _ = executor.replay(Response(history=history))
-     # Let's add the child workflow to the history to simulate its completion.
+    # Let's add the child workflow to the history to simulate its completion.
     (history
         .add_child_workflow(
-            workflow,
-            last_state='failed',
-            workflow_id='workflow-test_workflow-1',
-            task_list=ATestWorkflow.task_list,
-            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-        ))
+        workflow,
+        last_state='failed',
+        workflow_id='workflow-test_workflow-1',
+        task_list=ATestWorkflow.task_list,
+        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+    ))
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions, _ = executor.replay(Response(history=history))
@@ -865,15 +867,15 @@ def test_workflow_with_child_workflow_timed_out():
     history = builder.History(workflow, input={'args': (1,)})
 
     decisions, _ = executor.replay(Response(history=history))
-     # Let's add the child workflow to the history to simulate its completion.
+    # Let's add the child workflow to the history to simulate its completion.
     (history
         .add_child_workflow(
-            workflow,
-            last_state='timed_out',
-            workflow_id='workflow-test_workflow-1',
-            task_list=ATestWorkflow.task_list,
-            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-        ))
+        workflow,
+        last_state='timed_out',
+        workflow_id='workflow-test_workflow-1',
+        task_list=ATestWorkflow.task_list,
+        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+    ))
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions, _ = executor.replay(Response(history=history))
@@ -883,7 +885,7 @@ def test_workflow_with_child_workflow_timed_out():
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
     reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
-    assert reason == 'Cannot replay the workflow: TimeoutError()'
+    assert re.match(r'Cannot replay the workflow: TimeoutError\(.*\)', reason)
 
 
 def test_workflow_with_child_workflow_canceled():
@@ -892,15 +894,15 @@ def test_workflow_with_child_workflow_canceled():
     history = builder.History(workflow, input={'args': (1,)})
 
     decisions, _ = executor.replay(Response(history=history))
-     # Let's add the child workflow to the history to simulate its completion.
+    # Let's add the child workflow to the history to simulate its completion.
     (history
         .add_child_workflow(
-            workflow,
-            last_state='canceled',
-            workflow_id='workflow-test_workflow-1',
-            task_list=ATestWorkflow.task_list,
-            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-        ))
+        workflow,
+        last_state='canceled',
+        workflow_id='workflow-test_workflow-1',
+        task_list=ATestWorkflow.task_list,
+        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+    ))
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions, _ = executor.replay(Response(history=history))
@@ -910,7 +912,7 @@ def test_workflow_with_child_workflow_canceled():
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
     reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
-    assert reason == "Cannot replay the workflow: TaskCanceled()"
+    assert re.match(r"Cannot replay the workflow: TaskCanceled\(.*\)", reason)
 
 
 def test_workflow_with_child_workflow_terminated():
@@ -919,15 +921,15 @@ def test_workflow_with_child_workflow_terminated():
     history = builder.History(workflow, input={'args': (1,)})
 
     decisions, _ = executor.replay(Response(history=history))
-     # Let's add the child workflow to the history to simulate its completion.
+    # Let's add the child workflow to the history to simulate its completion.
     (history
         .add_child_workflow(
-            workflow,
-            last_state='terminated',
-            workflow_id='workflow-test_workflow-1',
-            task_list=ATestWorkflow.task_list,
-            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-        ))
+        workflow,
+        last_state='terminated',
+        workflow_id='workflow-test_workflow-1',
+        task_list=ATestWorkflow.task_list,
+        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+    ))
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions, _ = executor.replay(Response(history=history))
