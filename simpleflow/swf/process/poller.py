@@ -121,6 +121,13 @@ class Poller(NamedMixin, swf.actors.Actor):
     def process(self, request):
         pass
 
+    @abc.abstractproperty
+    def name(self):
+        """
+        Name of the poller, can be overriden in subclasses.
+        """
+        return '{}()'.format(self.__class__.__name__)
+
     def _poll(self):
         """
         Polls a task represented by its token and data. It uses long-polling
