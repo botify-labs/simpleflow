@@ -7,6 +7,7 @@ import unittest
 
 from psutil import Process, NoSuchProcess
 from setproctitle import setproctitle
+from sure import expect
 
 from simpleflow.process import Supervisor
 
@@ -90,3 +91,35 @@ class TestSupervisor(unittest.TestCase):
                 pass
         supervisor = Supervisor(Foo().bar)
         self.assertEqual(supervisor._payload_friendly_name, "Foo.bar")
+
+    def test_maintain_the_pool_of_workers_if_not_terminating(self):
+        # dummy function used in following tests
+        def sleep_long(seconds):
+            setproctitle("simpleflow Worker(sleep_long, {})".format(seconds))
+            time.sleep(seconds)
+
+        # retrieve workers (not great; TODO: move it to Supervisor class)
+        def workers():
+            return [
+                p for p in Process().children(recursive=True)
+                if "Worker(sleep_long" in p.name()
+            ]
+
+        # create a supervisor sub-process
+        supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=1)
+        supervisor.start()
+
+        # we need to wait a little here so the workers start
+        time.sleep(0.5)
+        old_workers = workers()
+        expect(len(old_workers)).to.equal(1)
+
+        # now kill the worker
+        worker_pid = old_workers[0].pid
+        os.kill(workers()[0].pid, signal.SIGKILL)
+        time.sleep(0.5)
+
+        # ... and check that the process has been replaced
+        new_workers = workers()
+        expect(len(new_workers)).to.equal(1)
+        expect(new_workers[0].pid).to.not_be.equal(old_workers[0].pid)
