@@ -45,7 +45,7 @@ class Supervisor(NamedMixin):
     private code which wasn't really well tested, and was re-written in a TDD-y
     style.
     """
-    def __init__(self, payload, arguments=None, nb_children=None):
+    def __init__(self, payload, arguments=None, nb_children=None, background=False):
         """
         Initializes a Manager() instance, with a payload (a callable that will be
         executed on worker processes), some arguments (a list or tuple of arguments
@@ -58,6 +58,8 @@ class Supervisor(NamedMixin):
         :type arguments: tuple, list
         :param nb_children:
         :type nb_children: int
+        :param background: wether the supervisor process should launch in background
+        :type background: bool
         """
         # NB: below, compare explicitly to "None" there because nb_children could be 0
         if nb_children is None:
@@ -68,6 +70,7 @@ class Supervisor(NamedMixin):
         self._payload_friendly_name = self.payload_friendly_name()
         self._named_mixin_properties = ["_payload_friendly_name", "_nb_children"]
         self._args = arguments if arguments is not None else ()
+        self._background = background
 
         self._processes = []
         self._terminating = False
@@ -81,7 +84,7 @@ class Supervisor(NamedMixin):
         explicitly on a Supervisor instance so it starts (no auto-start from __init__()).
         """
         logger.info('starting {}'.format(self._payload))
-        if SIMPLEFLOW_ENV == "test":
+        if self._background:
             p = multiprocessing.Process(target=self.target)
             p.start()
         else:

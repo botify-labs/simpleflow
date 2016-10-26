@@ -19,7 +19,7 @@ class TestSupervisor(IntegrationTestCase):
             time.sleep(seconds)
 
         # create a supervisor sub-process
-        supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=2)
+        supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=2, background=True)
         supervisor.start()
 
         # we need to wait a little here so the process starts and gets its name set
@@ -40,7 +40,7 @@ class TestSupervisor(IntegrationTestCase):
             setproctitle("simpleflow worker: running")
             time.sleep(60)
 
-        supervisor = Supervisor(sigterm_receiver, nb_children=1)
+        supervisor = Supervisor(sigterm_receiver, nb_children=1, background=True)
         supervisor.start()
 
         # TODO: find a non-sleep approach
@@ -58,13 +58,13 @@ class TestSupervisor(IntegrationTestCase):
     def test_payload_friendly_name(self):
         def foo():
             pass
-        supervisor = Supervisor(foo)
+        supervisor = Supervisor(foo, background=True)
         self.assertEqual(supervisor._payload_friendly_name, "foo")
 
         class Foo(object):
             def bar(self):
                 pass
-        supervisor = Supervisor(Foo().bar)
+        supervisor = Supervisor(Foo().bar, background=True)
         self.assertEqual(supervisor._payload_friendly_name, "Foo.bar")
 
     def test_maintain_the_pool_of_workers_if_not_terminating(self):
@@ -81,7 +81,7 @@ class TestSupervisor(IntegrationTestCase):
             ]
 
         # create a supervisor sub-process
-        supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=1)
+        supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=1, background=True)
         supervisor.start()
 
         # we need to wait a little here so the workers start
