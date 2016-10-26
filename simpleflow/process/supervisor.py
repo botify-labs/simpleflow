@@ -8,6 +8,8 @@ import types
 
 import psutil
 
+from simpleflow.constants import SIMPLEFLOW_ENV
+
 from .named_mixin import NamedMixin, with_state
 
 
@@ -79,10 +81,11 @@ class Supervisor(NamedMixin):
         explicitly on a Supervisor instance so it starts (no auto-start from __init__()).
         """
         logger.info('starting {}'.format(self._payload))
-        # TODO: question if necessary to use a subprocess here ; it eases tests but not
-        # sure it won't make things more complex down the road
-        p = multiprocessing.Process(target=self.target)
-        p.start()
+        if SIMPLEFLOW_ENV == "test":
+            p = multiprocessing.Process(target=self.target)
+            p.start()
+        else:
+            self.target()
 
     def _start_worker_processes(self):
         """

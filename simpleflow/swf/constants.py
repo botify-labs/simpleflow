@@ -1,6 +1,7 @@
 import os
 
-SIMPLEFLOW_ENV = os.getenv("SIMPLEFLOW_ENV", "production")
+from simpleflow.constants import SIMPLEFLOW_ENV
+
 
 # We lower some constants in test environment so tests run faster
 if SIMPLEFLOW_ENV == "test":
