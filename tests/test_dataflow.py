@@ -1601,3 +1601,50 @@ def test_workflow_task_naming():
             }
         }
     ]
+
+
+class ATestDefinitionIdempotentChildWithIdWorkflow(ATestWorkflow):
+    name = 'test_child_workflow'
+    idempotent = True
+
+    def run(self, *args, **kwargs):
+        return 42
+
+
+class ATestDefinitionIdempotentParentWorkflow(ATestWorkflow):
+    name = 'test_parent_workflow'
+
+    def run(self):
+        future = self.submit(ATestDefinitionIdempotentChildWithIdWorkflow, workflow_name='child-one')
+        print(future.result)
+
+
+@mock_swf
+def test_workflow_idempotent_task_naming():
+    workflow = ATestDefinitionIdempotentParentWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={})
+    decisions, _ = executor.replay(Response(history=history))
+    assert decisions == [
+        {
+            'decisionType': 'StartChildWorkflowExecution',
+            'startChildWorkflowExecutionDecisionAttributes': {
+                'taskList': {
+                    'name': 'test_task_list'
+                },
+                'workflowId': 'workflow-child-one-4ccae08f0a3b53d01d52c5ea05afb731',
+                'taskStartToCloseTimeout': '300',
+                'executionStartToCloseTimeout': '3600',
+                'workflowType': {
+                    'name': 'tests.test_dataflow.ATestDefinitionIdempotentChildWithIdWorkflow',
+                    'version': 'test_version'
+                },
+                'input': json_dumps(
+                    {
+                        "args": [],
+                        "kwargs": {"workflow_name": "child-one"},
+                    }
+                )
+            }
+        }
+    ]

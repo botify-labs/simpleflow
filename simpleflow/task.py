@@ -94,8 +94,9 @@ class WorkflowTask(Task):
     def __init__(self, executor, workflow, *args, **kwargs):
         self.executor = executor
         self.workflow = workflow
-        # TODO: handle idempotency at workflow level
-        self.idempotent = False
+        # TODO: handle idempotency at workflow level?
+        # (Needed for naming the task, which happens well before workflow instantiation)
+        self.idempotent = getattr(workflow, 'idempotent', False)
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
         self.id = None
