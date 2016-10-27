@@ -22,25 +22,6 @@ class Decider(Supervisor):
             nb_children=nb_children,
         )
 
-    @classmethod
-    def make(cls, workflows, domain, task_list, nb_children=None):
-        """
-        Factory method.
-
-        :param workflows:
-        :type workflows: list[str]
-        :param domain:
-        :type domain: str
-        :param task_list:
-        :type task_list: str
-        :param nb_children:
-        :type nb_children: int
-        :return:
-        :rtype: Decider
-        """
-        poller = DeciderPoller.make(workflows, domain, task_list)
-        return Decider(poller, nb_children=nb_children)
-
 
 class DeciderPoller(Poller, swf.actors.Decider):
     """
