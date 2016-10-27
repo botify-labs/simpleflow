@@ -128,7 +128,7 @@ class TaskRegistry(dict):
     def add(self, a_task):
         """
         ID's are assigned sequentially by incrementing an integer. They start
-        from 0.
+        from 1.
 
         :type a_task: ActivityTask | WorkflowTask
         :returns:
@@ -211,7 +211,7 @@ class Executor(executor.Executor):
             arguments = json_dumps({"args": args, "kwargs": kwargs}, sort_keys=True)
             suffix = hashlib.md5(arguments.encode('utf-8')).hexdigest()
 
-        task_id = '{name}-{idx}'.format(name=a_task.name, idx=suffix)
+        task_id = '{name}-{suffix}'.format(name=a_task.name, suffix=suffix)
         return task_id
 
     def _get_future_from_activity_event(self, event):
@@ -422,7 +422,8 @@ class Executor(executor.Executor):
         """
         future = self._get_future_from_child_workflow_event(event)
 
-        if not future:  # Happens, not sure what it means ; TODO: clarify that
+        if not future:  # Happens, not sure what it means; TODO: clarify that
+            logger.warning('FIXME: No future! event={}'.format(event))
             return None
 
         if future.state == "FINISHED" and future.exception:
@@ -435,7 +436,7 @@ class Executor(executor.Executor):
         Let a task schedule itself.
         If too many decisions are in flight, add a timer decision and raise ExecutionBlocked.
         :param a_task:
-        :type a_task: ActivityTask
+        :type a_task: ActivityTask | WorkflowTask
         :param task_list:
         :type task_list: Optional[str]
         :return:

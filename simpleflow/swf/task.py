@@ -9,8 +9,20 @@ class ActivityTask(task.ActivityTask):
     Activity task managed on SWF.
     """
     def schedule(self, domain, task_list=None, **kwargs):
+        """
+        Schedule an activity.
+
+        :param domain:
+        :type domain: swf.models.Domain
+        :param task_list:
+        :type task_list: Optional[str]
+        :param kwargs:
+        :type kwargs: dict
+        :return:
+        :rtype: list[swf.models.decision.Decision]
+        """
         activity = self.activity
-        # Always involve a GET call to the SWF API which introduces useless
+        # FIXME Always involve a GET call to the SWF API which introduces useless
         # latency if the ActivityType already exists.
         model = swf.models.ActivityType(
             domain,
@@ -27,19 +39,19 @@ class ActivityTask(task.ActivityTask):
             task_list = activity.task_list
         task_timeout = kwargs.get(
             'task_timeout',
-            str(activity.task_start_to_close_timeout),
+            activity.task_start_to_close_timeout,
         )
         duration_timeout = kwargs.get(
             'duration_timeout',
-            str(activity.task_schedule_to_close_timeout),
+            activity.task_schedule_to_close_timeout,
         )
         schedule_timeout = kwargs.get(
             'schedule_timeout',
-            str(activity.task_schedule_to_start_timeout),
+            activity.task_schedule_to_start_timeout,
         )
         heartbeat_timeout = kwargs.get(
             'heartbeat_timeout',
-            str(activity.task_heartbeat_timeout),
+            activity.task_heartbeat_timeout,
         )
 
         decision = swf.models.decision.ActivityTaskDecision(
@@ -49,10 +61,10 @@ class ActivityTask(task.ActivityTask):
             control=None,
             task_list=task_list,
             input=input,
-            task_timeout=task_timeout,
-            duration_timeout=duration_timeout,
-            schedule_timeout=schedule_timeout,
-            heartbeat_timeout=heartbeat_timeout,
+            task_timeout=str(task_timeout),
+            duration_timeout=str(duration_timeout),
+            schedule_timeout=str(schedule_timeout),
+            heartbeat_timeout=str(heartbeat_timeout),
         )
 
         return [decision]
@@ -72,8 +84,18 @@ class WorkflowTask(task.WorkflowTask):
         return 'workflow-{}'.format(self._workflow_name or self.workflow.name)
 
     def schedule(self, domain, task_list=None):
+        """
+        Schedule a child workflow.
+
+        :param domain:
+        :type domain: swf.models.Domain
+        :param task_list:
+        :type task_list: Optional[str]
+        :return:
+        :rtype: list[swf.models.decision.Decision]
+        """
         workflow = self.workflow
-        # Always involve a GET call to the SWF API which introduces useless
+        # FIXME Always involve a GET call to the SWF API which introduces useless
         # latency if the WorkflowType already exists.
         model = swf.models.WorkflowType(
             domain,

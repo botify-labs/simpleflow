@@ -44,8 +44,6 @@ class ATestWorkflow(Workflow):
     task_list = 'test_task_list'
     decision_tasks_timeout = '300'
     execution_timeout = '3600'
-    tag_list = None  # FIXME should be optional
-    child_policy = None  # FIXME should be optional
 
 
 def check_task_scheduled_decision(decision, task):
@@ -789,8 +787,8 @@ def test_workflow_with_child_workflow():
     workflow = ATestDefinitionChildWorkflow
     executor = Executor(DOMAIN, workflow)
 
-    # FIXME the original test only contains args, and check both keys are present.
-    # FIXME But their order is unspecified from one execution to the next
+    # FIXME Py3 the original test only contains args, and check both keys are present.
+    # FIXME Py3 But dict order is unspecified from one execution to the next
     input = {'args': (1,), 'kwargs': {}}
     history = builder.History(workflow, input=input)
 
