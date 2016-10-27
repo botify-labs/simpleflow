@@ -24,12 +24,36 @@ class Decider(Supervisor):
 
     @classmethod
     def make(cls, workflows, domain, task_list, nb_children=None):
+        """
+        Factory method.
+
+        :param workflows:
+        :type workflows: list[str]
+        :param domain:
+        :type domain: str
+        :param task_list:
+        :type task_list: str
+        :param nb_children:
+        :type nb_children: int
+        :return:
+        :rtype: Decider
+        """
         poller = DeciderPoller.make(workflows, domain, task_list)
         return Decider(poller, nb_children=nb_children)
 
 
 class DeciderPoller(Poller, swf.actors.Decider):
-    def __init__(self, executors, domain, task_list, nb_retries=3,
+    """
+    Decider poller.
+
+    :ivar _workflow_name: concatenated workflows names.
+    :type _workflow_name: str
+    :ivar _workflow_executors: executors dict: workflow name -> executor
+    :type _workflow_executors: dict[str, simpleflow.swf.executor.Executor]
+    :ivar nb_retries: # of retries allowed
+    :type nb_retries: int
+    """
+    def __init__(self, workflow_executors, domain, task_list, nb_retries=3,
                  *args, **kwargs):
         """
         The decider is an actor that reads the full history of the workflow
@@ -47,33 +71,34 @@ class DeciderPoller(Poller, swf.actors.Decider):
         behind this is to limit operational burden by having a single service
         handling multiple workflows.
 
-        :param executors: executors handling workflow executions.
-        :type  executors: list[simpleflow.swf.executor.Executor]
+        :param workflow_executors: executors handling workflow executions.
+        :type  workflow_executors: list[simpleflow.swf.executor.Executor]
 
         """
         self._workflow_name = '{}'.format(','.join(
             [
-                ex.workflow.name for ex in executors
+                ex.workflow.name for ex in workflow_executors
                 ]))
 
         # Maps a workflow's name to its definition.
         # Used to dispatch a decision task to the corresponding workflow.
-        self._workflows = {
-            executor.workflow.name: executor for executor in executors
+        self._workflow_executors = {
+            executor.workflow.name: executor for executor in workflow_executors
             }
 
         if not task_list:
-            task_list = executors[0].workflow.task_list
+            task_list = workflow_executors[0].workflow.task_list
 
         # All executors must have the same domain and task list.
-        for ex in executors[1:]:
+        for ex in workflow_executors:
             if ex.domain.name != domain.name:
                 raise ValueError(
                     'all workflows must be in the same domain "{}"'.format(
                         domain.name))
             if ex.workflow.task_list != task_list:
-                raise ValueError(
-                    'all workflows must have the same task list "{}"'.format(
+                # FIXME really needed?
+                logger.warning(
+                    'all workflows should have the same task list "{}"'.format(
                         task_list))
 
         self.nb_retries = nb_retries
@@ -85,20 +110,8 @@ class DeciderPoller(Poller, swf.actors.Decider):
             cls=self.__class__.__name__,
             domain=self.domain.name,
             task_list=self.task_list,
-            workflows=','.join(self._workflows),
+            workflows=','.join(self._workflow_executors),
         )
-
-    @classmethod
-    def make(cls, workflows, domain, task_list):
-        """Factory to build a decider."""
-        from . import helpers
-
-        executors = [
-            helpers.load_workflow(domain, workflow, task_list) for
-            workflow in workflows
-        ]
-        domain = swf.models.Domain(domain)
-        return cls(executors, domain, task_list)
 
     @property
     def name(self):
@@ -154,16 +167,26 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :returns:
         :rtype: list[swf.models.decision.base.Decision]
         """
-        worker = DeciderWorker(self.domain, self._workflows)
+        worker = DeciderWorker(self.domain, self._workflow_executors)
         decisions = worker.decide(decision_response)
         return decisions
 
 
 class DeciderWorker(object):
-    def __init__(self, domain, workflows):
+    """
+    Decider worker.
+    :ivar _domain: SWF domain.
+    :type _domain: swf.models.Domain
+    :ivar _workflow_name: current workflow name. For debugging and such?
+    :type _workflow_name: str
+    :ivar _workflow_executors: executors.
+    :type _workflow_executors: dict[str, simpleflow.swf.executor.Executor]
+    """
+
+    def __init__(self, domain, workflow_executors):
         self._domain = domain
         self._workflow_name = None
-        self._workflows = workflows
+        self._workflow_executors = workflow_executors
 
     def decide(self, decision_response):
         """
@@ -177,14 +200,14 @@ class DeciderWorker(object):
         """
         history = decision_response.history
         workflow_name = history[0].workflow_type['name']
-        workflow_executor = self._workflows.get(workflow_name)
+        workflow_executor = self._workflow_executors.get(workflow_name)
         if not workflow_executor:
             from . import helpers
-            workflow_executor = helpers.load_workflow(
+            workflow_executor = helpers.load_workflow_executor(
                 self._domain,
                 workflow_name,
             )
-            self._workflows[workflow_name] = workflow_executor
+            self._workflow_executors[workflow_name] = workflow_executor
         self._workflow_name = workflow_name
         try:
             decisions = workflow_executor.replay(decision_response)

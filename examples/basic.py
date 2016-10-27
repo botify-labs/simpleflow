@@ -40,7 +40,7 @@ class Delay(object):
 class BasicWorkflow(Workflow):
     name = 'basic'
     version = 'example'
-    task_list = 'example'
+    task_list = 'test'
     execution_timeout = 60 * 5
 
     def run(self, x, t=30):

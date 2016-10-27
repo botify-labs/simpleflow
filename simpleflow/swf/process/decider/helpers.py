@@ -7,12 +7,13 @@ from . import (
 )
 
 
-def load_workflow(domain, workflow_name, task_list=None, repair_with=None,
-                  force_activities=None):
+def load_workflow_executor(domain, workflow_name, task_list=None, repair_with=None,
+                           force_activities=None):
     """
-    Load a workflow.
+    Load a workflow executor.
+
     :param domain:
-    :type domain: str
+    :type domain: str | swf.models.Domain
     :param workflow_name:
     :type workflow_name: str
     :param task_list:
@@ -64,10 +65,9 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None,
         raise ValueError("Sorry you can't repair more than 1 workflow at once!")
 
     executors = [
-        load_workflow(domain, workflow, task_list if is_standalone else None,
-                      repair_with=repair_with,
-                      force_activities=force_activities,
-                      )
+        load_workflow_executor(domain, workflow, task_list if is_standalone else None,
+                               repair_with=repair_with,
+                               force_activities=force_activities)
         for workflow in workflows
         ]
     domain = swf.models.Domain(domain)
