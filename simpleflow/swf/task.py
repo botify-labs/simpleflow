@@ -112,7 +112,7 @@ class WorkflowTask(task.WorkflowTask):
             'start',
             workflow_id=self.id,
             workflow_type=model,
-            task_list=workflow.task_list,
+            task_list=task_list or workflow.task_list,
             input=input,
             tag_list=getattr(workflow, 'tag_list', None),
             child_policy=getattr(workflow, 'child_policy', None),
