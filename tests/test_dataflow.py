@@ -1555,3 +1555,49 @@ def test_execution_context():
         'tag_list': [],
     }
     assert expected == context
+
+
+class ATestDefinitionChildWithIdWorkflow(ATestWorkflow):
+    name = 'test_child_workflow'
+
+    def run(self, *args, **kwargs):
+        return 42
+
+
+class ATestDefinitionParentWorkflow(ATestWorkflow):
+    name = 'test_parent_workflow'
+
+    def run(self):
+        future = self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name='child-one')
+        print(future.result)
+
+
+@mock_swf
+def test_workflow_task_naming():
+    workflow = ATestDefinitionParentWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={})
+    decisions, _ = executor.replay(Response(history=history))
+    assert decisions == [
+        {
+            'decisionType': 'StartChildWorkflowExecution',
+            'startChildWorkflowExecutionDecisionAttributes': {
+                'taskList': {
+                    'name': 'test_task_list'
+                },
+                'workflowId': 'workflow-child-one-1',
+                'taskStartToCloseTimeout': '300',
+                'executionStartToCloseTimeout': '3600',
+                'workflowType': {
+                    'name': 'tests.test_dataflow.ATestDefinitionChildWithIdWorkflow',
+                    'version': 'test_version'
+                },
+                'input': json_dumps(
+                    {
+                        "args": [],
+                        "kwargs": {"workflow_name": "child-one"},
+                    }
+                )
+            }
+        }
+    ]

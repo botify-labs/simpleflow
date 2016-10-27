@@ -62,6 +62,15 @@ class WorkflowTask(task.WorkflowTask):
     """
     WorkflowTask managed on SWF.
     """
+
+    def __init__(self, executor, workflow, *args, **kwargs):
+        super(WorkflowTask, self).__init__(executor, workflow, *args, **kwargs)
+        self._workflow_name = kwargs.pop('workflow_name', None)
+
+    @property
+    def name(self):
+        return 'workflow-{}'.format(self._workflow_name or self.workflow.name)
+
     def schedule(self, domain, task_list=None):
         workflow = self.workflow
         # Always involve a GET call to the SWF API which introduces useless
