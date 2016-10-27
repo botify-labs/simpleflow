@@ -85,14 +85,14 @@ class WorkflowTask(Task):
     """
     Child workflow.
 
+    :type executor: simpleflow.executor.Executor
     :type workflow: type(simpleflow.workflow.Workflow)
-    :type idempotent: bool
     :type args: list[Any]
     :type kwargs: dict[Any, Any]
     :type id: str
     """
-    def __init__(self, workflow, *args, **kwargs):
-        self.executor = kwargs.pop('__executor')
+    def __init__(self, executor, workflow, *args, **kwargs):
+        self.executor = executor
         self.workflow = workflow
         # TODO: handle idempotency at workflow level
         self.idempotent = False

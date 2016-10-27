@@ -27,7 +27,7 @@ class Executor(executor.Executor):
         if isinstance(func, Activity):
             task = ActivityTask(func, *args, **kwargs)
         elif issubclass(func, Workflow):
-            task = WorkflowTask(func, *args, __executor=self, **kwargs)
+            task = WorkflowTask(self, func, *args, **kwargs)
         else:
             raise Exception('Unexpected type {} for func'.format(type(func)))
 

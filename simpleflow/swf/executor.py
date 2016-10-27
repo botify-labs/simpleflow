@@ -560,7 +560,7 @@ class Executor(executor.Executor):
             if isinstance(func, Activity):
                 a_task = ActivityTask(func, *args, **kwargs)
             elif issubclass_(func, Workflow):
-                a_task = WorkflowTask(func, *args, __executor=self, **kwargs)
+                a_task = WorkflowTask(self, func, *args, **kwargs)
             else:
                 raise TypeError('invalid type {} for {}'.format(
                     type(func), func))
