@@ -517,6 +517,7 @@ def standalone(context,
             'nb_processes': nb_deciders,
             'repair_with': previous_history,
             'force_activities': force_activities,
+            'is_standalone': True,
         },
     )
     decider_proc.start()
