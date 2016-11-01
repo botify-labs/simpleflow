@@ -55,7 +55,7 @@ class Supervisor(NamedMixin):
         :param payload:
         :type payload: callable
         :param arguments:
-        :type arguments: tuple, list
+        :type arguments: tuple | list
         :param nb_children:
         :type nb_children: int
         :param background: wether the supervisor process should launch in background
