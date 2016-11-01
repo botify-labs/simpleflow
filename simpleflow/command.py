@@ -369,15 +369,19 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
               envvar='SWF_DOMAIN',
               required=True,
               help='SWF Domain')
-@click.argument('workflow')
+@click.argument('unused_workflow',
+                required=False)
 @cli.command('worker.start', help='Start a worker process to handle activity tasks.')
-def start_worker(workflow, domain, task_list, log_level, nb_processes, heartbeat):
+def start_worker(unused_workflow, domain, task_list, log_level, nb_processes, heartbeat):
     if log_level:
         logger.warning(
             "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
         )
+    if unused_workflow:
+        logger.warning(
+            "Deprecated: workflow is not used anymore and will be removed in the future"
+        )
     worker.command.start(
-        workflow,
         domain,
         task_list,
         nb_processes,
@@ -520,7 +524,6 @@ def standalone(context,
     worker_proc = multiprocessing.Process(
         target=worker.command.start,
         args=(
-            workflow,
             domain,
             task_list,
         ),

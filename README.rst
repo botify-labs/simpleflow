@@ -1,6 +1,6 @@
-===============================
+==========
 simpleflow
-===============================
+==========
 
 .. image:: https://badge.fury.io/py/simpleflow.png
     :target: http://badge.fury.io/py/simpleflow
@@ -174,9 +174,9 @@ Start a decider with: ::
 
 Start an activity worker with: ::
 
-    $ simpleflow worker.start --domain TestDomain --task-list quickstart examples.basic.BasicWorkflow
+    $ simpleflow worker.start --domain TestDomain --task-list quickstart
 
-Then execute ``./demo``.
+Then execute ``./extras/demo``.
 
 Controlling SWF access
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -224,7 +224,7 @@ You can check the status of the workflow execution with: ::
     examples.basic.increment  completed     2015-08-04 23:06:17.503000  2015-08-04 23:04:34.510000
 
 Profiling
-~~~~~~~~~~~~
+~~~~~~~~~
 
 You can profile the execution of the workflow with: ::
 
