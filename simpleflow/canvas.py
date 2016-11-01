@@ -14,11 +14,15 @@ class FuncGroup(object):
         self.kwargs = kwargs
 
     def submit(self, executor):
+        inst = self.instantiate_task()
+        return inst.submit(executor)
+
+    def instantiate_task(self):
         inst = self.func(*self.args, **self.kwargs)
         if not isinstance(inst, (ActivityTask, Group)):
             raise TypeError('FuncGroup submission should return a Group or an ActivityTask,'
                             ' got {} instead'.format(type(inst)))
-        return inst.submit(executor)
+        return inst
 
 
 class AggregateException(Exception):
