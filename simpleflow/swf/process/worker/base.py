@@ -54,9 +54,10 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         # this as "no timeout"
         self._heartbeat = heartbeat or None
 
-        # Call super()'s methods: as this class uses multiple inheritance, the
-        # call is written directly so it's easier to understand.
-        Poller.__init__(self, domain, task_list)
+        # The following will call Poller's __init__() method.
+        super(ActivityPoller, self).__init__(domain, task_list)
+        # We need to *also* call ActivityWorker's __init__() method because it
+        # contains a property initialization and won't be called otherwise.
         swf.actors.ActivityWorker.__init__(self, domain, task_list, identity=kwargs.get("identity", None))
 
     @property

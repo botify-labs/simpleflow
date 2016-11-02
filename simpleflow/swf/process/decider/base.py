@@ -24,7 +24,7 @@ class Decider(Supervisor):
         )
 
 
-class DeciderPoller(swf.actors.Decider, Poller):
+class DeciderPoller(Poller, swf.actors.Decider):
     def __init__(self, executors, domain, task_list, nb_retries=3,
                  *args, **kwargs):
         """
@@ -74,9 +74,12 @@ class DeciderPoller(swf.actors.Decider, Poller):
 
         self.nb_retries = nb_retries
 
-        # Call super()'s methods: as this class uses multiple inheritance, the
-        # call is written directly so it's easier to understand.
-        Poller.__init__(self, domain, task_list)
+        # The following will call Poller's __init__() method.
+        super(DeciderPoller, self).__init__(domain, task_list)
+        # We need to *also* call swf.actors.Decider's __init__() method because
+        # it may contains other initializations (not the case as of 02/11/2016,
+        # it only triggers Actor.__init__() which is already called via Poller
+        # above).
         swf.actors.Decider.__init__(self, domain, task_list)
 
     def __repr__(self):
