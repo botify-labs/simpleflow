@@ -4,8 +4,8 @@ set -e
 ENV=$1
 shift || true
 
-if [[ $ENV != python2.7 && $ENV != pypy ]]; then
-  echo "Usage: $0 <python2.7|pypy> [args passed to ./script/test]" >&2
+if [[ $ENV != python2.7 && $ENV != pypy && $ENV != python3.5 ]]; then
+  echo "Usage: $0 <python2.7|pypy|python3.5> [args passed to ./script/test]" >&2
   exit 1
 fi
 
