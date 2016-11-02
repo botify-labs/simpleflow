@@ -76,8 +76,7 @@ class DeciderPoller(swf.actors.Decider, Poller):
 
         # Call super()'s methods: as this class uses multiple inheritance, the
         # call is written directly so it's easier to understand.
-        # TODO: see if *args/**kwargs forwarding is really useful
-        Poller.__init__(self, domain, task_list, *args, **kwargs)
+        Poller.__init__(self, domain, task_list)
         swf.actors.Decider.__init__(self, domain, task_list)
 
     def __repr__(self):

@@ -56,8 +56,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 
         # Call super()'s methods: as this class uses multiple inheritance, the
         # call is written directly so it's easier to understand.
-        # TODO: see if *args/**kwargs forwarding is really useful
-        Poller.__init__(self, domain, task_list, *args, **kwargs)
+        Poller.__init__(self, domain, task_list)
         swf.actors.ActivityWorker.__init__(self, domain, task_list, identity=kwargs.get("identity", None))
 
     @property

@@ -20,10 +20,7 @@ class Poller(NamedMixin, swf.actors.Actor):
     """Multi-processing implementation of a SWF actor.
 
     """
-    def __init__(self,
-                 domain,
-                 task_list=None,
-                 *args, **kwargs):
+    def __init__(self, domain, task_list=None):
         self.is_alive = False
         self._named_mixin_properties = ["task_list"]
 
