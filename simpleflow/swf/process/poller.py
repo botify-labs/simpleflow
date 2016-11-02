@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 __all__ = ['Poller']
 
 
-class Poller(NamedMixin, swf.actors.Actor):
+class Poller(swf.actors.Actor, NamedMixin):
     """Multi-processing implementation of a SWF actor.
 
     """
@@ -24,12 +24,13 @@ class Poller(NamedMixin, swf.actors.Actor):
         self.is_alive = False
         self._named_mixin_properties = ["task_list"]
 
-        # The following will call NamedMixin's __init__() method.
-        super(Poller, self).__init__()
-        # We then call swf.actors.Actor's __init__() method manually in case
-        # instance (or the instance of a derived class) doesn't inherit from
-        # Actor itself.
-        swf.actors.Actor.__init__(self, domain, task_list)
+        # The following will call swf.actors.Actor's __init__() method.
+        super(Poller, self).__init__(domain, task_list)
+        # We then call NamedMixin's __init__() method manually because it
+        # contains other initialization steps. The order is important because
+        # NamedMixin relies on some attributes initialized in Actor.__init__(),
+        # namely "self.task_list" (see self._named_mixin_properties above).
+        NamedMixin.__init__(self)
 
     @property
     def identity(self):
