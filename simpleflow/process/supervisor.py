@@ -166,10 +166,13 @@ class Supervisor(NamedMixin):
                 logger.debug("  child: name=%s pid=%d status=%s" % (child.name(), child.pid, child.status()))
                 if child.status() == psutil.STATUS_ZOMBIE:
                     logger.debug("  process {} is zombie, will cleanup".format(child.pid))
-                    process = [p for p in self._processes if p.pid == child.pid][0]
-                    process.join()
-                    # remove the process from self._processes so it will be replaced later
-                    self._processes.remove(process)
+                    for process in self._processes:
+                        if process.pid != child.pid:
+                            continue
+                        # join process to clean it up
+                        process.join()
+                        # remove the process from self._processes so it will be replaced later
+                        self._processes.remove(process)
 
             # compensate lost children here
             self._start_worker_processes()
