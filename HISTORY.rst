@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+0.11.17
+~~~~~~~
+
+- Don't reap children in the back of multiprocessing (#141)
+- Don't force to pass a workflow to activity workers (#133)
+- Don't override the task list if not standalone (#139)
+- Split FuncGroup submit (#146)
+- CI: Test on python 3 (#144)
+- Decider: use workflow's task list if unset (#148)
+
 0.11.16
 ~~~~~~~
 
