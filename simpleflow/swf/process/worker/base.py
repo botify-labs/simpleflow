@@ -22,8 +22,7 @@ logger = logging.getLogger(__name__)
 class Worker(Supervisor):
     def __init__(self, poller, nb_children=None):
         self._poller = poller
-        Supervisor.__init__(
-            self,
+        super(Worker, self).__init__(
             payload=self._poller.start,
             nb_children=nb_children,
         )
@@ -54,11 +53,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         # this as "no timeout"
         self._heartbeat = heartbeat or None
 
-        # The following will call Poller's __init__() method.
         super(ActivityPoller, self).__init__(domain, task_list)
-        # We need to *also* call ActivityWorker's __init__() method because it
-        # contains a property initialization and won't be called otherwise.
-        swf.actors.ActivityWorker.__init__(self, domain, task_list, identity=kwargs.get("identity", None))
 
     @property
     def name(self):

@@ -24,13 +24,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         self.is_alive = False
         self._named_mixin_properties = ["task_list"]
 
-        # The following will call swf.actors.Actor's __init__() method.
         super(Poller, self).__init__(domain, task_list)
-        # We then call NamedMixin's __init__() method manually because it
-        # contains other initialization steps. The order is important because
-        # NamedMixin relies on some attributes initialized in Actor.__init__(),
-        # namely "self.task_list" (see self._named_mixin_properties above).
-        NamedMixin.__init__(self)
 
     @property
     def identity(self):

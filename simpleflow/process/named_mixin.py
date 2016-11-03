@@ -47,8 +47,8 @@ class NamedMixin(object):
         simpleflow YourClass(task_list=<value>)[running]
 
     """
-    def __init__(self, state="initializing"):
-        self.state = state
+    def __init__(self, *args, **kwargs):
+        self.state = kwargs.get("state", "initializing")
 
     @property
     def state(self):
