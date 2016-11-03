@@ -27,3 +27,7 @@ To sum up:
     # if you need to refresh cassettes (a good idea from time to time):
     rm -rf tests/integration/cassettes/*.yaml
     AWS_DEFAULT_REGION=us-east-1 py.test -v tests/integration/
+
+Note that `./script/test` positions a specific environment variable that totally DISABLES
+the recording of new cassette files, e.g. it disables HTTP requests to the outside world.
+If a HTTP request doesn't match anything in its cassette file, it will then raise an error.

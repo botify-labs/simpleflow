@@ -290,7 +290,9 @@ simpleflow during tests:
   speed up tests.
 - ``SWF_CONNECTION_RETRIES``: set to ``"1"`` in tests, which avoids having too many retries
   on the SWF API calls (5 by default in production).
-
+- ``SIMPLEFLOW_VCR_RECORD_MODE``: set to ``"none"`` in tests, which avoids running requests
+  against the real SWF endpoints in tests. If you need to update cassettes, see
+  ``tests/integration/README.md``
 
 
 Release
