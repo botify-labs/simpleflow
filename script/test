@@ -20,4 +20,4 @@ export SIMPLEFLOW_CLEANUP_PROCESSES=yes
 export SWF_CONNECTION_RETRIES=1
 
 # run tests
-py.test -q $*
+py.test -q $PYTEST_OPTIONS $*
