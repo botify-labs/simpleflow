@@ -62,6 +62,9 @@ class DeciderPoller(swf.actors.Decider, Poller):
             executor.workflow.name: executor for executor in executors
             }
 
+        if not task_list:
+            task_list = executors[0].workflow.task_list
+
         # All executors must have the same domain and task list.
         for ex in executors[1:]:
             if ex.domain.name != domain.name:
