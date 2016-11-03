@@ -21,7 +21,15 @@ if 0:
     patch.object = patch.object
 
 
-class TestWorkflowType(unittest.TestCase):
+class CustomAssertions(object):
+    def assertLength(self, a_list, count):
+        self.assertEqual(
+            len(a_list), count,
+            "Expected length to be {}, got {}. Object: {}".format(count, len(a_list), a_list)
+        )
+
+
+class TestWorkflowType(unittest.TestCase, CustomAssertions):
     def setUp(self):
         self.domain = Domain("test-domain")
         self.wt = WorkflowType(self.domain, "TestType", "1.0")
@@ -52,7 +60,7 @@ class TestWorkflowType(unittest.TestCase):
             diffs = workflow_type._diff()
 
             self.assertIsNotNone(diffs)
-            self.assertEqual(len(diffs), 6)
+            self.assertLength(diffs, 6)
 
             self.assertTrue(hasattr(diffs[0], 'attr'))
             self.assertTrue(hasattr(diffs[0], 'local'))
@@ -81,7 +89,7 @@ class TestWorkflowType(unittest.TestCase):
 
             diffs = workflow_type._diff()
 
-            self.assertEqual(len(diffs), 0)
+            self.assertLength(diffs, 0)
 
     def test_exists_with_existing_workflow_type(self):
         with patch.object(Layer1, 'describe_workflow_type'):
@@ -147,7 +155,7 @@ class TestWorkflowType(unittest.TestCase):
             diffs = workflow_type.changes
 
             self.assertIsNotNone(diffs)
-            self.assertEqual(len(diffs), 6)
+            self.assertLength(diffs, 6)
 
             self.assertTrue(hasattr(diffs[0], 'attr'))
             self.assertTrue(hasattr(diffs[0], 'local'))
@@ -176,7 +184,7 @@ class TestWorkflowType(unittest.TestCase):
 
             diffs = workflow_type.changes
 
-            self.assertEqual(len(diffs), 0)
+            self.assertLength(diffs, 0)
 
     def test_save_already_existing_type(self):
         with patch.object(self.wt.connection, 'register_workflow_type') as mock:
@@ -224,7 +232,7 @@ class TestWorkflowType(unittest.TestCase):
                 self.wt.delete()
 
 
-class TestWorkflowExecution(unittest.TestCase):
+class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
     def setUp(self):
         self.domain = Domain("TestDomain")
         self.wt = WorkflowType(self.domain, "TestType", "1.0")
@@ -264,7 +272,7 @@ class TestWorkflowExecution(unittest.TestCase):
             diffs = workflow_execution._diff()
 
             self.assertIsNotNone(diffs)
-            self.assertEqual(len(diffs), 7)
+            self.assertLength(diffs, 7)
 
             self.assertTrue(hasattr(diffs[0], 'attr'))
             self.assertTrue(hasattr(diffs[0], 'local'))
@@ -291,7 +299,7 @@ class TestWorkflowExecution(unittest.TestCase):
 
             diffs = workflow_execution._diff()
 
-            self.assertEqual(len(diffs), 0)
+            self.assertLength(diffs, 0)
 
     def test_exists_with_existing_workflow_execution(self):
         with patch.object(Layer1, 'describe_workflow_execution'):
@@ -357,7 +365,7 @@ class TestWorkflowExecution(unittest.TestCase):
             diffs = workflow_execution.changes
 
             self.assertIsNotNone(diffs)
-            self.assertEqual(len(diffs), 7)
+            self.assertLength(diffs, 7)
 
             self.assertTrue(hasattr(diffs[0], 'attr'))
             self.assertTrue(hasattr(diffs[0], 'local'))
@@ -384,7 +392,7 @@ class TestWorkflowExecution(unittest.TestCase):
 
             diffs = workflow_execution.changes
 
-            self.assertEqual(len(diffs), 0)
+            self.assertLength(diffs, 0)
 
     def test_history(self):
         with patch.object(
