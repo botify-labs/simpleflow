@@ -26,6 +26,12 @@ class Poller(swf.actors.Actor, NamedMixin):
 
         super(Poller, self).__init__(domain, task_list)
 
+    def __repr__(self):
+        return '{}(domain={}, task_list={})'.format(
+            self.__class__.__name__,
+            self.domain.name,
+            self.task_list)
+
     @property
     def identity(self):
         """Identity when polling decision task.
