@@ -1,8 +1,10 @@
 # See README for more informations about integration tests
 
-import simpleflow.command
 from click.testing import CliRunner
+from flaky import flaky
 from sure import expect
+
+import simpleflow.command
 
 from . import vcr, VCRIntegrationTest
 
@@ -71,6 +73,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         expect(result.output).to.equal("")
 
 
+    @flaky(max_runs=2)
     @vcr.use_cassette
     def test_simpleflow_activity_rerun(self):
         """

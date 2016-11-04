@@ -2,6 +2,8 @@ import mock
 import unittest
 from time import time
 
+from flaky import flaky
+
 from simpleflow.utils.retry import with_delay, constant, exponential
 
 
@@ -29,6 +31,7 @@ class DummyCallableRaises(DummyCallable):
         raise self._exception
 
 
+@flaky(max_runs=3)
 class TestRetry(unittest.TestCase):
     def test_with_delay_default(self):
         callable = DummyCallableRaises(ValueError('test'))

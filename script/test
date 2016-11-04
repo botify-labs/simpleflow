@@ -24,4 +24,4 @@ export SWF_CONNECTION_RETRIES=1
 export SIMPLEFLOW_VCR_RECORD_MODE=none
 
 # run tests
-py.test -q $PYTEST_OPTIONS $*
+py.test --no-success-flaky-report -q $PYTEST_OPTIONS $*
