@@ -1,11 +1,11 @@
 import inspect
 import os
-import unittest
 
 import boto.swf
 from vcr import VCR
 
 import simpleflow.command  # NOQA
+from tests.utils import IntegrationTestCase
 
 # Default SWF parameters
 os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
@@ -32,7 +32,7 @@ vcr = VCR(
 WORKFLOW_ID = "test-simpleflow-workflow"
 
 
-class IntegrationTest(unittest.TestCase):
+class VCRIntegrationTest(IntegrationTestCase):
     @property
     def region(self):
         return os.environ["AWS_DEFAULT_REGION"]

@@ -4,10 +4,10 @@ import simpleflow.command
 from click.testing import CliRunner
 from sure import expect
 
-from . import vcr, IntegrationTest
+from . import vcr, VCRIntegrationTest
 
 
-class TestSimpleflowCommand(IntegrationTest):
+class TestSimpleflowCommand(VCRIntegrationTest):
     def invoke(self, command, arguments):
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
