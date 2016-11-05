@@ -1,23 +1,26 @@
 from __future__ import absolute_import, print_function
-import re
+
+import os
 import sys
-import subprocess
 import functools
 import json
+
+from simpleflow.utils.subprocess_utils import communicate_with_limits
 
 from builtins import map
 
 from future.utils import iteritems
-from simpleflow import compat
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-import base64
 import logging
 
 from simpleflow.utils import json_dumps
+
+if os.name == 'posix' and sys.version_info[0] < 3:
+    try:
+        import subprocess32 as subprocess
+    except ImportError:
+        import subprocess
+else:
+    import subprocess
 
 __all__ = ['program', 'python']
 
@@ -26,6 +29,16 @@ logger = logging.getLogger(__name__)
 
 class RequiredArgument(object):
     pass
+
+
+class ExecuteError(Exception):
+    """
+    Exception raised by `python`.
+    """
+    def __init__(self, exc_type, traceback, *args, **kwargs):
+        super(ExecuteError, self).__init__(*args, **kwargs)
+        self.exc_type = exc_type
+        self.traceback = traceback
 
 
 def format_arguments(*args, **kwargs):
@@ -80,8 +93,7 @@ def check_arguments(argspec, args):
         raise TypeError('command does not take varargs')
 
     # Calling func(a, b) with func(1, 2, 3)
-    if (not argspec.varargs and argspec.args and
-                len(args) != len(argspec.args)):
+    if (not argspec.varargs and argspec.args and len(args) != len(argspec.args)):
         raise TypeError('command takes {} arguments: {} passed'.format(
             len(argspec.args),
             len(args)))
@@ -159,50 +171,34 @@ def python(interpreter='python'):
                 get_name(func), format_arguments_json(*args, **kwargs),
             ]
             try:
-                output = subprocess.check_output(
-                    full_command,
-                    # Redirect stderr to stdout to get traceback on error.
-                    stderr=subprocess.STDOUT,
-                )
-            except subprocess.CalledProcessError as err:
-                err_output = err.output
-                if not compat.PY2:
-                    err_output = err_output.decode('utf-8', errors='replace')
-                logger.info(
-                    "Got a subprocess.CalledProcessError on command: {}\n"
-                    "Original error output: '{}'".format(
-                        full_command, err_output, type(err_output)
-                    )
-                )
-                exclines = err_output.rstrip().rsplit('\n', 2)
-                excline = exclines[-1]
-
-                try:
-                    exception = pickle.loads(
-                        base64.b64decode(excline.rstrip()))
-                except (TypeError, pickle.UnpicklingError):
-                    exception = Exception(excline)
-                    if ':' in excline:
-                        cls, msg = excline.split(':', 1)
-                        if re.match(r'\s*[\w.]+\s*', cls):
-                            try:
-                                exception = eval('{}("{}")'.format(
-                                    cls.strip(),
-                                    msg.strip(),
-                                ))
-                            except BaseException as ex:
-                                logger.warning('{}'.format(ex))
-
-                raise exception
+                proc = subprocess.Popen(full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+            except Exception:
+                logger.exception('Exception on Popen({})'.format(full_command))
+                raise
             try:
-                if not compat.PY2:
-                    output = output.decode('utf-8', errors='replace')
-                last_line = output.rstrip().rsplit('\n', 1)[-1]
-                d = json.loads(last_line)
-                return d
-            except BaseException as ex:
-                logger.warning('Exception in python.execute: {}'.format(ex))
-                logger.warning(repr(output))
+                stdout, stderr = communicate_with_limits(proc, stdout_limit=32768, stderr_limit=32768)
+            except Exception:
+                logger.exception('Exception on communicate({})'.format(full_command))
+                raise
+            if proc.returncode != 0:
+                logger.warning('Non-zero return code {}; output:\n{}\n'.format(proc.returncode, stderr))
+                last_line = stderr.rstrip().rsplit('\n', 1)[-1]
+                try:
+                    err_dict = json.loads(last_line)
+                except Exception:
+                    logger.warning('No JSON object on last line?', exc_info=True)
+                    err_dict = {}
+                raise ExecuteError(
+                    exc_type=err_dict.get('exc_type'), traceback=err_dict.get('traceback'),
+                    args=err_dict.get('args')
+                )
+            last_line = stdout.rstrip().rsplit('\n', 1)[-1]
+            try:
+                rc = json.load(last_line)
+            except Exception:
+                logger.warning('No JSON object on last line?', exc_info=True)
+                rc = None
+            return rc
 
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
@@ -212,6 +208,7 @@ def python(interpreter='python'):
 
 
 def program(path=None, argument_format=format_arguments):
+    # FIXME use communicate?
     r"""
     Decorate a callable to execute it as an external program.
 
@@ -376,15 +373,16 @@ if __name__ == '__main__':
             result = callable_(*args, **kwargs).execute()
         else:
             result = callable_(*args, **kwargs)
-    except Exception as err:
-        logger.error('Exception: {}'.format(err))
-        # Use base64 encoding to avoid carriage returns and special characters.
-        # FIXME change this: brittle, missing traceback
-        encoded_err = base64.b64encode(pickle.dumps(err))
-        if not compat.PY2:
-            # Convert bytes to string
-            encoded_err = encoded_err.decode('utf-8', errors='replace')
-        print(encoded_err)
+    except Exception as exc:
+        import traceback
+        tb = traceback.format_exc()
+        logger.exception('Error calling {}'.format(funcname))
+        err_dict = dict(
+            exc_type=exc.__class__.__name__,
+            traceback=tb,
+            args=exc.args,
+        )
+        print(json_dumps(err_dict), file=sys.stderr)
         sys.exit(1)
     else:
         print(json_dumps(result))
