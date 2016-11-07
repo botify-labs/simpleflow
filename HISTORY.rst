@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.12.0
+~~~~~~
+
+- Improve process management (#142)
+
 0.11.17
 ~~~~~~~
 
