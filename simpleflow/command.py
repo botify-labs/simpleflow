@@ -181,7 +181,7 @@ def start_workflow(workflow,
     workflow_type = get_workflow_type(domain, workflow_definition)
     execution = workflow_type.start_execution(
         workflow_id=workflow_id,
-        task_list=task_list,
+        task_list=task_list or workflow_definition.task_list,
         execution_timeout=execution_timeout,
         input=wf_input,
         tag_list=tags,
