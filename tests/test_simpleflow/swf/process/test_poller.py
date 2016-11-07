@@ -1,9 +1,11 @@
 import multiprocessing
 import os
+import platform
 import signal
 import time
 
 from psutil import Process
+from pytest import mark
 from sure import expect
 
 from swf.models import Domain
@@ -23,6 +25,7 @@ class FakePoller(Poller):
 
 
 class TestSupervisor(IntegrationTestCase):
+    @mark.skipif(platform.system() == 'Darwin', reason="psutil process statuses are buggy on OSX")
     def test_sigterm_handling(self):
         """
         Tests that SIGTERM is correctly ignored by the poller.

@@ -1,11 +1,13 @@
 import multiprocessing
 import os
+import platform
 import signal
 import sys
 import time
 
 from flaky import flaky
 from psutil import Process
+from pytest import mark
 from setproctitle import setproctitle
 from sure import expect
 
@@ -32,6 +34,7 @@ class TestSupervisor(IntegrationTestCase):
         wait_offset = TIME_STORE.get(caller, 0)
         time.sleep(seconds + wait_offset)
 
+    @mark.skipif(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_start(self):
         # dummy function used in following tests
         def sleep_long(seconds):
@@ -48,6 +51,7 @@ class TestSupervisor(IntegrationTestCase):
         self.assertProcess(r'simpleflow Supervisor\(_payload_friendly_name=sleep_long, _nb_children=2\)')
         self.assertProcess(r'simpleflow Worker\(sleep_long, 30\)', count=2)
 
+    @mark.skipif(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_terminate(self):
         # custom function that handles sigterm by changing its name, so we can
         # test it effectively received a SIGTERM (maybe there's a better way?)
@@ -74,6 +78,7 @@ class TestSupervisor(IntegrationTestCase):
         self.wait(1)
         self.assertProcess(r'worker: shutting down')
 
+    @mark.skipif(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_payload_friendly_name(self):
         def foo():
             pass
@@ -86,6 +91,7 @@ class TestSupervisor(IntegrationTestCase):
         supervisor = Supervisor(Foo().bar, background=True)
         self.assertEqual(supervisor._payload_friendly_name, "Foo.bar")
 
+    @mark.skipif(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_maintain_the_pool_of_workers_if_not_terminating(self):
         # dummy function used in following tests
         def sleep_long(seconds):
@@ -119,6 +125,7 @@ class TestSupervisor(IntegrationTestCase):
         expect(new_workers[0].pid).to.not_be.equal(old_workers[0].pid)
 
     # NB: not in the Supervisor class but we want to benefit from the tearDown()
+    @mark.skipif(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_reset_signal_handlers(self):
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
