@@ -148,7 +148,7 @@ def transform_input(wf_input):
 @click.option('--workflow-id',
               required=False,
               help='ID of the workflow execution.')
-@click.option('--domain',
+@click.option('--domain', '-d',
               envvar='SWF_DOMAIN',
               required=False,
               help='Amazon SWF Domain.')
@@ -196,7 +196,9 @@ def start_workflow(workflow,
 
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
-@click.argument('domain')
+@click.argument('domain',
+                envvar='SWF_DOMAIN',
+                )
 @cli.command(
     'workflow.terminate',
     help='Workflow associated with WORKFLOW and optionally RUN_ID.')
@@ -207,7 +209,9 @@ def terminate_workflow(domain, workflow_id, run_id):
 
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
-@click.argument('domain')
+@click.argument('domain',
+                envvar='SWF_DOMAIN',
+                )
 @cli.command(
     'workflow.restart',
     help='Workflow associated with WORKFLOW_ID and optionally RUN_ID.')
@@ -238,7 +242,9 @@ def with_format(ctx):
 
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
-@click.argument('domain')
+@click.argument('domain',
+                envvar='SWF_DOMAIN',
+                )
 @cli.command('workflow.info', help='Info about a workflow execution.')
 @click.pass_context
 def info(ctx, domain, workflow_id, run_id):
@@ -253,7 +259,9 @@ def info(ctx, domain, workflow_id, run_id):
               help='Maximum number of tasks to display.')
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
-@click.argument('domain')
+@click.argument('domain',
+                envvar='SWF_DOMAIN',
+                )
 @cli.command('workflow.profile', help='Profile of a workflow.')
 @click.pass_context
 def profile(ctx, domain, workflow_id, run_id, nb_tasks):
@@ -269,7 +277,9 @@ def profile(ctx, domain, workflow_id, run_id, nb_tasks):
               help='Maximum number of tasks to display.')
 @click.argument('run_id', required=False)
 @click.argument('workflow_id')
-@click.argument('domain')
+@click.argument('domain',
+                envvar='SWF_DOMAIN',
+                )
 @cli.command('workflow.tasks', help='Tasks of a workflow execution.')
 @click.pass_context
 def status(ctx, domain, workflow_id, run_id, nb_tasks):
@@ -281,7 +291,9 @@ def status(ctx, domain, workflow_id, run_id, nb_tasks):
     ))
 
 
-@click.argument('domain')
+@click.argument('domain',
+                envvar='SWF_DOMAIN',
+                )
 @cli.command('workflow.list', help='Active workflow executions.')
 @click.option('--status', '-s', default='open', show_default=True, type=click.Choice(['open', 'closed']),
               help='Open/Closed')
@@ -292,7 +304,9 @@ def list_workflows(ctx, domain, status, started_since):
                                                              start_oldest_date=started_since))
 
 
-@click.argument('domain')
+@click.argument('domain',
+                envvar='SWF_DOMAIN',
+                )
 @cli.command('workflow.filter', help='Filter workflow executions.')
 @click.option('--status', '-s', default='open', show_default=True, type=click.Choice(['open', 'closed']),
               help='Open/Closed')
@@ -323,7 +337,9 @@ def filter_workflows(ctx, domain, status, tag,
 
 @click.argument('task_id')
 @click.argument('workflow_id')
-@click.argument('domain')
+@click.argument('domain',
+                envvar='SWF_DOMAIN',
+                )
 @click.option('--details/--no-details',
               default=False,
               help='Display details.'
