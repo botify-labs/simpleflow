@@ -1,13 +1,15 @@
 # See README for more informations about integration tests
 
-import simpleflow.command
 from click.testing import CliRunner
+from flaky import flaky
 from sure import expect
 
-from . import vcr, IntegrationTest
+import simpleflow.command
+
+from . import vcr, VCRIntegrationTest
 
 
-class TestSimpleflowCommand(IntegrationTest):
+class TestSimpleflowCommand(VCRIntegrationTest):
     def invoke(self, command, arguments):
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
@@ -71,6 +73,7 @@ class TestSimpleflowCommand(IntegrationTest):
         expect(result.output).to.equal("")
 
 
+    @flaky(max_runs=2)
     @vcr.use_cassette
     def test_simpleflow_activity_rerun(self):
         """
@@ -80,7 +83,7 @@ class TestSimpleflowCommand(IntegrationTest):
         result = self.invoke(
             simpleflow.command.cli,
             "standalone --workflow-id %s --input {\"args\":[0]} --nb-workers 1 " \
-            "tests.integration.workflow.SleepWorkflow" % self.workflow_id
+            "--nb-deciders 1 tests.integration.workflow.SleepWorkflow" % self.workflow_id
         )
         expect(result.exit_code).to.equal(0)
         lines = result.output.split("\n")

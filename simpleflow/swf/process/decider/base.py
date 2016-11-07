@@ -7,11 +7,8 @@ import swf.exceptions
 import swf.format
 import swf.models.decision
 
-from simpleflow.swf.process.actor import (
-    Supervisor,
-    Poller,
-    with_state,
-)
+from simpleflow.process import Supervisor, with_state
+from simpleflow.swf.process import Poller
 
 
 logger = logging.getLogger(__name__)
@@ -20,15 +17,13 @@ logger = logging.getLogger(__name__)
 class Decider(Supervisor):
     def __init__(self, poller, nb_children=None):
         self._poller = poller
-        self._poller.is_alive = True
-        Supervisor.__init__(
-            self,
+        super(Decider, self).__init__(
             payload=self._poller.start,
             nb_children=nb_children,
         )
 
 
-class DeciderPoller(swf.actors.Decider, Poller):
+class DeciderPoller(Poller, swf.actors.Decider):
     def __init__(self, executors, domain, task_list, nb_retries=3,
                  *args, **kwargs):
         """
@@ -78,13 +73,7 @@ class DeciderPoller(swf.actors.Decider, Poller):
 
         self.nb_retries = nb_retries
 
-        Poller.__init__(
-            self,
-            domain,
-            task_list,
-            *args,    # directly forward them.
-            **kwargs  # directly forward them.
-        )
+        super(DeciderPoller, self).__init__(domain, task_list)
 
     def __repr__(self):
         return '{cls}({domain}, {task_list}, {workflows})'.format(

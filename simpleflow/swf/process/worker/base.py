@@ -9,16 +9,12 @@ import psutil
 import swf.actors
 import swf.exceptions
 import swf.format
-from simpleflow.swf.process.actor import (
-    Supervisor,
-    Poller,
-    with_state,
-)
-
-from .dispatch import dynamic_dispatcher
-
+from simpleflow.process import Supervisor, with_state
+from simpleflow.swf.process import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.utils import json_dumps
+
+from .dispatch import dynamic_dispatcher
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +22,7 @@ logger = logging.getLogger(__name__)
 class Worker(Supervisor):
     def __init__(self, poller, nb_children=None):
         self._poller = poller
-        self._poller.is_alive = True
-        Supervisor.__init__(
-            self,
+        super(Worker, self).__init__(
             payload=self._poller.start,
             nb_children=nb_children,
         )
@@ -59,13 +53,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         # this as "no timeout"
         self._heartbeat = heartbeat or None
 
-        swf.actors.ActivityWorker.__init__(
-            self,
-            domain,
-            task_list,
-            *args,  # directly forward them.
-            **kwargs  # directly forward them.
-        )
+        super(ActivityPoller, self).__init__(domain, task_list)
 
     @property
     def name(self):

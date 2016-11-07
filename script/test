@@ -14,9 +14,14 @@ export AWS_SECRET_ACCESS_KEY=1234
 
 # Enable various test optimizations
 export SIMPLEFLOW_ENV=test
+export SIMPLEFLOW_CLEANUP_PROCESSES=yes
 
 # Simple variable to control the number of connection retries
 export SWF_CONNECTION_RETRIES=1
 
+# Don't run real SWF requests if a cassette doesn't match
+# See tests/integration/README.md for instructions about cassettes updating
+export SIMPLEFLOW_VCR_RECORD_MODE=none
+
 # run tests
-py.test -q $*
+py.test --no-success-flaky-report -q $PYTEST_OPTIONS $*

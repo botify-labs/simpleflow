@@ -18,12 +18,16 @@ To sum up:
 
     # first run: hits SWF APIs, populate the ./cassettes/ directory with
     # serialized resquests/responses
-    py.test -v tests/integration/
+    AWS_DEFAULT_REGION=us-east-1 py.test -v tests/integration/
 
     # second run (and next): no hit to the SWF APIs are made, requests
     # are replayed from what has been recorded in the first run
-    py.test -v tests/integration/
+    AWS_DEFAULT_REGION=us-east-1 py.test -v tests/integration/
 
     # if you need to refresh cassettes (a good idea from time to time):
     rm -rf tests/integration/cassettes/*.yaml
-    py.test -v tests/integration/
+    AWS_DEFAULT_REGION=us-east-1 py.test -v tests/integration/
+
+Note that `./script/test` positions a specific environment variable that totally DISABLES
+the recording of new cassette files, e.g. it disables HTTP requests to the outside world.
+If a HTTP request doesn't match anything in its cassette file, it will then raise an error.
