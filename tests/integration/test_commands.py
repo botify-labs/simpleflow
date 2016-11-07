@@ -83,7 +83,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         result = self.invoke(
             simpleflow.command.cli,
             "standalone --workflow-id %s --input {\"args\":[0]} --nb-workers 1 " \
-            "tests.integration.workflow.SleepWorkflow" % self.workflow_id
+            "--nb-deciders 1 tests.integration.workflow.SleepWorkflow" % self.workflow_id
         )
         expect(result.exit_code).to.equal(0)
         lines = result.output.split("\n")
