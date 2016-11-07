@@ -1,8 +1,10 @@
 import multiprocessing
 import os
 import signal
+import sys
 import time
 
+from flaky import flaky
 from psutil import Process
 from setproctitle import setproctitle
 from sure import expect
@@ -11,7 +13,25 @@ from simpleflow.process import Supervisor, reset_signal_handlers
 from tests.utils import IntegrationTestCase
 
 
+TIME_STORE = {}
+def increase_wait_time(err, func_name, func, plugin):
+    """
+    This function is used as a "rerun_filter" for "flaky". It increases an offset
+    time in TIME_STORE that can be used later inside tests, and is actually used
+    in TestSupervisor.wait() to wait more and more in case we run tests on a slow
+    machine.
+    """
+    # offset time starts at 0 on first invocation
+    TIME_STORE[func_name] = TIME_STORE.get(func_name, -1) + 1
+    return True
+
+@flaky(max_runs=4, rerun_filter=increase_wait_time)
 class TestSupervisor(IntegrationTestCase):
+    def wait(self, seconds=0.5):
+        caller = sys._getframe(1).f_code.co_name
+        wait_offset = TIME_STORE.get(caller, 0)
+        time.sleep(seconds + wait_offset)
+
     def test_start(self):
         # dummy function used in following tests
         def sleep_long(seconds):
@@ -24,7 +44,7 @@ class TestSupervisor(IntegrationTestCase):
 
         # we need to wait a little here so the process starts and gets its name set
         # TODO: find a non-sleep approach to this
-        time.sleep(0.5)
+        self.wait(0.5)
         self.assertProcess(r'simpleflow Supervisor\(_payload_friendly_name=sleep_long, _nb_children=2\)')
         self.assertProcess(r'simpleflow Worker\(sleep_long, 30\)', count=2)
 
@@ -44,14 +64,14 @@ class TestSupervisor(IntegrationTestCase):
         supervisor.start()
 
         # TODO: find a non-sleep approach
-        time.sleep(1)
+        self.wait(1)
         self.assertProcess(r'worker: running')
 
         supervisor_process = Process().children()[0]
         os.kill(supervisor_process.pid, signal.SIGTERM)
 
         # TODO: find a non-sleep approach
-        time.sleep(1)
+        self.wait(1)
         self.assertProcess(r'worker: shutting down')
 
     def test_payload_friendly_name(self):
@@ -84,14 +104,14 @@ class TestSupervisor(IntegrationTestCase):
         supervisor.start()
 
         # we need to wait a little here so the workers start
-        time.sleep(0.5)
+        self.wait(0.5)
         old_workers = workers()
         expect(len(old_workers)).to.equal(1)
 
         # now kill the worker
         old_workers[0].pid
         os.kill(workers()[0].pid, signal.SIGKILL)
-        time.sleep(0.5)
+        self.wait(0.5)
 
         # ... and check that the process has been replaced
         new_workers = workers()
@@ -103,13 +123,13 @@ class TestSupervisor(IntegrationTestCase):
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
         def foo():
-            time.sleep(1)
+            self.wait(1)
 
         # check it ignores SIGTERM normally
         p = multiprocessing.Process(target=foo)
         p.start()
         # TODO: find a non-sleep approach to this
-        time.sleep(0.5)
+        self.wait(0.5)
         os.kill(p.pid, signal.SIGTERM)
         p.join()
         expect(p.exitcode).to.equal(0)
@@ -119,7 +139,7 @@ class TestSupervisor(IntegrationTestCase):
         p = multiprocessing.Process(target=reset_signal_handlers(foo))
         p.start()
         # TODO: find a non-sleep approach to this
-        time.sleep(0.5)
+        self.wait(0.5)
         os.kill(p.pid, signal.SIGTERM)
         p.join()
         expect(p.exitcode).to.equal(-15)
