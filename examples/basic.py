@@ -10,6 +10,10 @@ from simpleflow import (
 
 @activity.with_attributes(task_list='quickstart', version='example')
 def increment(x):
+    # Here's how you can access the raw context of the activity task if you need
+    # it. It gives you access to the response of the PollForActivityTask call to
+    # the SWF API. See docs for more info: http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForActivityTask.html#API_PollForActivityTask_ResponseSyntax  # NOQA
+    print("DEBUG: activity context: {}".format(increment.context))
     return x + 1
 
 

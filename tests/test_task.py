@@ -23,6 +23,10 @@ def test_task_applies_class_correctly():
     assert task.ActivityTask(Double, 4).execute() == 8
 
 
+def test_context_is_empty_for_non_swf_tasks():
+    assert task.ActivityTask(Double, 3).context == None
+
+
 def test_task_register():
     _registry = registry.registry[None]
     assert _registry['tests.test_task.double'] == double

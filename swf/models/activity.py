@@ -239,7 +239,8 @@ class ActivityTask(BaseModel):
     def __init__(self, domain, task_list,
                  task_token=None, activity_type=None,
                  workflow_execution=None, input=None,
-                 activity_id=None, started_event_id=None):
+                 activity_id=None, started_event_id=None,
+                 context=None):
         self.domain = domain
         self.task_list = task_list
 
@@ -249,6 +250,8 @@ class ActivityTask(BaseModel):
         self.input = input
         self.activity_id = activity_id
         self.started_event_id = started_event_id
+
+        self.context = context
 
     @classmethod
     def from_poll(cls, domain, task_list, data):
@@ -272,5 +275,6 @@ class ActivityTask(BaseModel):
             workflow_execution=workflow_execution,
             input=data.get('input'),
             activity_id=data['activityId'],
-            started_event_id=data['startedEventId']
+            started_event_id=data['startedEventId'],
+            context=data,
         )
