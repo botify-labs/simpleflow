@@ -13,3 +13,4 @@ __author__ = 'Greg Leclercq'
 __license__ = "MIT"
 
 logging.config.dictConfig(settings.base.load()['LOGGING'])
+logger = logging.getLogger(__name__)
