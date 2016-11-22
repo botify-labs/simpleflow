@@ -398,7 +398,7 @@ class Executor(executor.Executor):
         """
         logger.debug('executor is scheduling task {} on task_list {}'.format(
             a_task.name,
-            task_list or a_task.activity.task_list,  # FIXME to be adjusted with child WF
+            task_list,
         ))
         decisions = a_task.schedule(self.domain, task_list)
         # ``decisions`` contains a single decision.
