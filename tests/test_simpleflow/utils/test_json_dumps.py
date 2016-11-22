@@ -43,3 +43,17 @@ class TestJsonDumps(unittest.TestCase):
                 json_dumps(case[0], compact=False),
                 case[1],
             )
+
+    def test_bugfix_154_default(self):
+        actual = json_dumps(datetime.datetime(1970, 1, 1), default=lambda _: 'foo')
+        expected = '"foo"'
+        self.assertEqual(expected, actual)
+
+    def test_default(self):
+        actual = json_dumps(datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC))
+        expected = '"1970-01-01T00:00:00+00:00"'
+        self.assertEqual(expected, actual)
+
+
+if __name__ == '__main__':
+    unittest.main()
