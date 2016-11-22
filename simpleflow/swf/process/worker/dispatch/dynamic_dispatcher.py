@@ -24,6 +24,8 @@ class Dispatcher(object):
         module_name, activity_name = name.rsplit('.', 1)
         module = importlib.import_module(module_name)
         activity = getattr(module, activity_name, None)
+        if not activity:
+            raise DispatchError("unable to import '{}'".format(name))
         if not isinstance(activity, Activity):
-            raise DispatchError("dispatching '{}' resulted in: {}".format(name, activity))
+            activity = Activity(activity, activity_name)
         return activity
