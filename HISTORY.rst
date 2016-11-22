@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.12.1
+~~~~~~
+
+- Don't override passed "default" in json_dumps() (#155)
+- Expose activity context (#156)
+
 0.12.0
 ~~~~~~
 
