@@ -1,4 +1,5 @@
 from __future__ import print_function
+import uuid
 
 from simpleflow import activity
 from .constants import DEFAULT_VERSION
@@ -17,6 +18,11 @@ def double(x):
 @activity.with_attributes(version=DEFAULT_VERSION, idempotent=True)
 def triple(x):
     return x * 3
+
+
+@activity.with_attributes(version=DEFAULT_VERSION, idempotent=True)
+def get_uuid(unused=None):
+    return str(uuid.uuid4())
 
 
 @activity.with_attributes(version=DEFAULT_VERSION, idempotent=False)
