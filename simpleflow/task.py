@@ -50,6 +50,7 @@ class ActivityTask(Task):
             raise TypeError('Wrong value for `activity`, got {} instead'.format(type(activity)))
         self.activity = activity
         self.idempotent = activity.idempotent
+        self.context = kwargs.pop("context", None)
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
         self.id = None
@@ -69,8 +70,14 @@ class ActivityTask(Task):
     def execute(self):
         method = self.activity.callable
         if hasattr(method, 'execute'):
-            return method(*self.args, **self.kwargs).execute()
+            task = method(*self.args, **self.kwargs)
+            task.context = self.context
+            return task.execute()
         else:
+            # NB: the following line attaches some *state* to the callable, so it
+            # can be used directly for advanced usage. This works well because we
+            # don't do multithreading, but if we ever do, DANGER!
+            method.context = self.context
             return method(*self.args, **self.kwargs)
 
 

@@ -93,6 +93,10 @@ class Activity(object):
         return self._callable
 
     @property
+    def context(self):
+        return getattr(self.callable, "context", None)
+
+    @property
     def name(self):
         if self._name is not None:
             return self._name

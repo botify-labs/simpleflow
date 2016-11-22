@@ -141,9 +141,9 @@ class ActivityWorker(object):
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
         try:
-            result = ActivityTask(activity, *args, **kwargs).execute()
+            result = ActivityTask(activity, *args, context=task.context, **kwargs).execute()
         except Exception as err:
-            logger.exception("process error")
+            logger.exception("process error: {}".format(str(err)))
             tb = traceback.format_exc()
             return poller.fail(token, task, reason=str(err), details=tb)
 
