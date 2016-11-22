@@ -56,7 +56,7 @@ class History(object):
 
     def parse_activity_event(self, events, event):
         """
-        Aggregate all the attributes of an activity in a single entry.
+        Aggregate all the attributes of an activity in a single entry matching its latest state.
 
         :param events:
         :type events: list[swf.models.event.Event]
@@ -113,7 +113,13 @@ class History(object):
                 # previous execution of the task such as the number of retries
                 # in ``retry``.  As the state of the event mutates, it
                 # corresponds to the last execution.
-                self._activities[event.activity_id].update(activity)
+
+                # ACTIVITY_ID_ALREADY_IN_USE happens for idempotent activities:
+                # in this case, don't change the activity state.
+                if event.cause == 'ACTIVITY_ID_ALREADY_IN_USE':
+                    pass
+                else:
+                    self._activities[event.activity_id].update(activity)
 
         elif event.state == 'started':
             activity = get_activity()
