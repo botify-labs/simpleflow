@@ -37,7 +37,7 @@ Features
 - Provides a local executor to check a workflow without Amazon SWF (see
   ``simpleflow --local`` command).
 - Provides decider and activity worker process for execution with Amazon SWF.
-- Ships with the `simpleflow` command. `simpleflow --help` for more information
+- Ships with the ``simpleflow`` command. ``simpleflow --help`` for more information
   about the commands it supports.
 
 Quickstart
@@ -89,7 +89,7 @@ And then define the workflow itself in a ``example.py`` file:
             futures.wait(yy, z)
             return z.result
 
-Now check that the workflow works locally with an integer "x" and a wait value "t": ::
+Now check that the workflow works locally with an integer "x" and a wait value "t"::
 
     $ simpleflow workflow.start --local examples.basic.BasicWorkflow --input '[1, 5]'
     (1 + 1) * 2 = 4
@@ -100,7 +100,7 @@ such as ``{"args": [1], "kwargs": {}}``, ``{"kwargs": {"x": 1}}``, or
 ``'{"args": [1], "kwargs": {"t": 5}}'```.
 
 Now that you are confident that the workflow should work, you can run it on
-Amazon SWF with the ``standalone`` command : ::
+Amazon SWF with the ``standalone`` command::
 
    $ simpleflow standalone --domain TestDomain examples.basic.BasicWorkflow --input '[1, 5]'
 
@@ -111,9 +111,9 @@ executing it with SWF during the development steps or integration tests.
 
 Let's take a closer look to the workflow definition.
 
-It is a *class* that inherits from :class:`simpleflow.Workflow`:
+It is a *class* that inherits from ``simpleflow.Workflow``:
 
-    .. code:: python
+.. code:: python
 
     class BasicWorkflow(Workflow):
 
@@ -127,26 +127,26 @@ It defines 3 class attributes:
   listens on this task list can handle this workflow. This value can be
   overrided by the simpleflow commands and objects.
 
-It also implements the :meth:`run` method that takes two arguments: ``x`` and
+It also implements the ``run`` method that takes two arguments: ``x`` and
 ``t=30`` (i.e. ``t`` is optional and has the default value ``30``). These
-arguments are passed with the ``--input`` option. The :meth:`run` method
+arguments are passed with the ``--input`` option. The ``run`` method
 describes the workflow and how its tasks should execute.
 
-Each time a decider takes a decision task, it executes again the :meth:`run`
+Each time a decider takes a decision task, it executes again the ``run``
 from the start. When the workflow execution starts, it evaluates ``y =
 self.submit(increment, x)`` for the first time. *y* holds a future in state
 ``PENDING``. The execution continues with the line ``yy = self.submit(delay, t,
 y)``. *yy* holds another future in state ``PENDING``. This state means the task
-has not been scheduled. Now execution still continue in the :meth:`run` method
+has not been scheduled. Now execution still continue in the ``run`` method
 with the line ``z = self.submit(double, y)``. Here it needs the value of the
-*y* future to evaluate the :func:`double` activity. As the execution cannot
-continues, the decider schedules the task :func:`increment`. *yy* is not a
+*y* future to evaluate the ``double`` activity. As the execution cannot
+continues, the decider schedules the task ``increment``. *yy* is not a
 dependency for any task so it is not scheduled.
 
 Once the decider has scheduled the task for *y*, it sleeps and waits for an
-event to be waken up. This happens when the :func:`increment` task completes.
+event to be waken up. This happens when the ``increment`` task completes.
 SWF schedules a decision task. A decider takes it and executes the
-:meth:`BasicWorkflow.run` method again from the start. It evalues the line ``y
+``BasicWorkflow.run`` method again from the start. It evalues the line ``y
 = self.submit(increment, x)``. The task associated with the *y* future has
 completed. Hence *y* is in state ``FINISHED`` and contains the value ``2`` in
 ``y.result``. The execution continues until it blocks. It goes by ``yy =
@@ -155,7 +155,7 @@ self.submit(double, y)``. It gets the value of ``y.result`` and *z* now holds a
 future in state ``PENDING``. Execution reaches the line with the ``print``. It
 blocks here because ``z.result`` is not available. The decider schedules the
 task backs by the *z* future: ``double(y)``. The workflow execution continues
-so forth by evaluating the :meth:`BasicWorkflow.run` again from the start until
+so forth by evaluating the ``BasicWorkflow.run`` again from the start until
 it finishes.
 
 Commands
@@ -164,15 +164,15 @@ Commands
 Overview
 ~~~~~~~~
 
-Please read and even run the `demo` script to have a quick glance of
-`simpleflow` commands. To run the `demo` you will need to start decider and
-activity worker processes.
+Please read and even run the ``demo`` script to have a quick glance of
+``simpleflow`` commands. To run the ``demo``  you will need to start decider
+and activity worker processes.
 
-Start a decider with: ::
+Start a decider with::
 
     $ simpleflow decider.start --domain TestDomain --task-list test examples.basic.BasicWorkflow
 
-Start an activity worker with: ::
+Start an activity worker with::
 
     $ simpleflow worker.start --domain TestDomain --task-list quickstart
 
@@ -211,7 +211,7 @@ Workflow Execution Status
 Tasks Status
 ~~~~~~~~~~~~
 
-You can check the status of the workflow execution with: ::
+You can check the status of the workflow execution with::
 
     $ simpleflow --header workflow.tasks DOMAIN WORKFLOW_ID [RUN_ID] --nb-tasks 3
     $ simpleflow --header workflow.tasks TestDomain basic-example-1438722273
@@ -226,7 +226,7 @@ You can check the status of the workflow execution with: ::
 Profiling
 ~~~~~~~~~
 
-You can profile the execution of the workflow with: ::
+You can profile the execution of the workflow with::
 
     $ simpleflow --header workflow.profile TestDomain basic-example-1438722273
     Task                                 Last State    Scheduled           Time Scheduled  Start               Time Running  End                 Percentage of total time
@@ -237,8 +237,8 @@ You can profile the execution of the workflow with: ::
 Controlling log verbosity
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can control log verbosity via the `LOG_LEVEL` environment variable. Default is `INFO`. For instance,
-the following command will start a decider with `DEBUG` logs:
+You can control log verbosity via the ``LOG_LEVEL`` environment variable. Default is ``INFO``. For instance,
+the following command will start a decider with ``DEBUG`` logs:
 
     $ LOG_LEVEL=DEBUG simpleflow decider.start --domain TestDomain --task-list test examples.basic.BasicWorkflow
 
@@ -283,6 +283,7 @@ You can run tests with:
 Any parameter passed to this script is propagated to the underlying call to ``py.test``.
 This wrapper script sets some environment variables which control the behavior of
 simpleflow during tests:
+
 - ``SIMPLEFLOW_CLEANUP_PROCESSES``: set to ``"yes"`` in tests, so tests will clean up child
   processes after each test case. You can set it to an empty string (``""``) or omit it if
   outside ``script/test`` if you want to debug things and take care of it yourself.
@@ -315,4 +316,4 @@ Rough process:
 License
 -------
 
-MIT licensed. See the bundled `LICENSE <https://github.com/botify-labs/simpleflow/blob/master/LICENSE>`_ file for more details.
+MIT licensed. See the bundled `LICENSE <https://github.com/botify-labs/simpleflow/blob/master/LICENSE>`__ file for more details.

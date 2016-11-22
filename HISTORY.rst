@@ -83,7 +83,7 @@ Same as 0.11.6 but the 0.11.6 on pypi is broken (pushed something similar to 0.1
 0.11.6
 ~~~~~~
 
-- Add issubclass_ method (#96)
+- Add ``issubclass_`` method (#96)
 - Avoid duplicate logs if root logger has an handler (#97)
 - Allow passing SWF domain via the SWF_DOMAIN environment variable (#98)
 
