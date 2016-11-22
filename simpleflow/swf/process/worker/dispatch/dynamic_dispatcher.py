@@ -25,5 +25,5 @@ class Dispatcher(object):
         module = importlib.import_module(module_name)
         activity = getattr(module, activity_name, None)
         if not isinstance(activity, Activity):
-            raise DispatchError()
+            raise DispatchError("dispatching '{}' resulted in: {}".format(name, activity))
         return activity
