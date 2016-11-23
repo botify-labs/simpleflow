@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.12.2
+~~~~~~
+
+- Make the dynamic dispatcher more flexible (#161)
+- Fix README.rst format (#160)
+- Tiny command-line usability fixes (#158)
+
 0.12.1
 ~~~~~~
 
