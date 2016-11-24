@@ -96,6 +96,36 @@ class TestGroup(unittest.TestCase):
         self.assertIsInstance(future.exception.exceptions[0], ZeroDivisionError)
         self.assertIsInstance(future.exception.exceptions[1], ZeroDivisionError)
 
+    def test_max_parallel(self):
+        future = Group(
+            ActivityTask(running_task, "test1"),
+            ActivityTask(running_task, "test2"),
+            ActivityTask(running_task, "test3"),
+            max_parallel=2
+        ).submit(executor)
+        self.assertTrue(future.running)
+        self.assertEquals(len(future.futures), 2)
+
+        future = Group(
+            ActivityTask(to_string, "test1"),
+            ActivityTask(running_task, "test2"),
+            ActivityTask(running_task, "test3"),
+            ActivityTask(running_task, "test4"),
+            max_parallel=2
+        ).submit(executor)
+        self.assertTrue(future.running)
+        self.assertEquals(len(future.futures), 3)
+        self.assertEquals([f.state for f in future.futures],
+                          [futures.FINISHED, futures.RUNNING, futures.RUNNING])
+
+        future = Group(
+            ActivityTask(to_string, "test1"),
+            ActivityTask(to_string, "test2"),
+            ActivityTask(to_string, "test3"),
+            max_parallel=2
+        ).submit(executor)
+        self.assertTrue(future.finished)
+
 
 class TestChain(unittest.TestCase):
     def test(self):
