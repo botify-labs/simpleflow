@@ -128,6 +128,10 @@ class Future(object):
         return self._state == FINISHED
 
     @property
+    def pending(self):
+        return self._state == PENDING
+
+    @property
     def done(self):
         return self._state in [
             CANCELLED,

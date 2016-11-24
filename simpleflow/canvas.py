@@ -91,6 +91,7 @@ class Group(object):
                  *activities,
                  **options):
         self.activities = list(activities)
+        self.max_parallel = options.pop('max_parallel', None)
 
     def append(self, *args, **kwargs):
         if isinstance(args[0], (ActivityTask, Group)):
@@ -101,18 +102,24 @@ class Group(object):
             raise ValueError('{} should be an ActivityTask or an Activity'.format(args[0]))
 
     def submit(self, executor):
-        return GroupFuture(self.activities, executor)
+        return GroupFuture(self.activities, executor, self.max_parallel)
 
 
 class GroupFuture(futures.Future):
 
-    def __init__(self, activities, executor):
+    def __init__(self, activities, executor, max_parallel=None):
         super(GroupFuture, self).__init__()
         self.activities = activities
         self.futures = []
         self.executor = executor
+        self.max_parallel = max_parallel
+
         for a in self.activities:
-            self.futures.append(self._submit_activity(a))
+            if not self.max_parallel or self._count_pending_or_running < self.max_parallel:
+                self.futures.append(self._submit_activity(a))
+                if self._count_pending_or_running == self.max_parallel:
+                    break
+
         self.sync_state()
         self.sync_result()
 
@@ -121,15 +128,25 @@ class GroupFuture(futures.Future):
             return self.executor.submit(act.activity, *act.args, **act.kwargs)
         elif isinstance(act, (Group, FuncGroup)):
             return act.submit(self.executor)
+
         raise TypeError('Wrong type for `act` ({}). Expecting `ActivityTask`, `Group` or `FuncGroup`'.format(type(act)))
 
     def sync_state(self):
-        if all(a.finished for a in self.futures):
+        if (all(a.finished for a in self.futures) and
+            self._futures_contain_all_activities):
             self._state = futures.FINISHED
         elif any(a.cancelled for a in self.futures):
             self._state = futures.CANCELLED
         elif any(a.running for a in self.futures):
             self._state = futures.RUNNING
+
+    @property
+    def _count_pending_or_running(self):
+        return len([True for f in self.futures if f.pending or f.running])
+
+    @property
+    def _futures_contain_all_activities(self):
+        return len(self.futures) == len(self.activities)
 
     def sync_result(self):
         self._result = []
