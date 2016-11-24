@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.12.3
+~~~~~~
+
+- Add max_parallel option in Group (#164)
+
 0.12.2
 ~~~~~~
 
