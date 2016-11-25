@@ -94,12 +94,17 @@ class WorkflowTask(Task):
     def __init__(self, executor, workflow, *args, **kwargs):
         self.executor = executor
         self.workflow = workflow
-        # TODO: handle idempotency at workflow level?
-        # (Needed for naming the task, which happens well before workflow instantiation)
         self.idempotent = getattr(workflow, 'idempotent', False)
+        get_workflow_id = getattr(workflow, 'get_workflow_id', None)
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
-        self.id = None
+
+        if get_workflow_id:
+            if self.idempotent:
+                raise Exception('"get_workflow_id" and "idempotent" are mutually exclusive')
+            self.id = str(get_workflow_id(workflow, *self.args, **self.kwargs))
+        else:
+            self.id = None
 
     @property
     def name(self):
