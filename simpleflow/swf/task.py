@@ -8,6 +8,11 @@ class ActivityTask(task.ActivityTask):
     """
     Activity task managed on SWF.
     """
+
+    @property
+    def task_list(self):
+        return self.activity.task_list
+
     def schedule(self, domain, task_list=None, **kwargs):
         """
         Schedule an activity.
@@ -76,12 +81,17 @@ class WorkflowTask(task.WorkflowTask):
     """
 
     def __init__(self, executor, workflow, *args, **kwargs):
-        super(WorkflowTask, self).__init__(executor, workflow, *args, **kwargs)
         self._workflow_name = kwargs.pop('workflow_name', None)
+
+        super(WorkflowTask, self).__init__(executor, workflow, *args, **kwargs)
 
     @property
     def name(self):
         return 'workflow-{}'.format(self._workflow_name or self.workflow.name)
+
+    @property
+    def task_list(self):
+        return getattr(self.workflow, 'task_list', None)
 
     def schedule(self, domain, task_list=None):
         """
@@ -112,10 +122,10 @@ class WorkflowTask(task.WorkflowTask):
             'start',
             workflow_id=self.id,
             workflow_type=model,
-            task_list=task_list or workflow.task_list,
+            task_list=task_list or self.task_list,
             input=input,
             tag_list=getattr(workflow, 'tag_list', None),
             child_policy=getattr(workflow, 'child_policy', None),
-            execution_timeout=str(workflow.execution_timeout))
+            execution_timeout=str(getattr(workflow, 'execution_timeout', None)))
 
         return [decision]
