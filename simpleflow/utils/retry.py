@@ -64,7 +64,7 @@ def with_delay(
                 except on_exceptions as error:
                     wait_delay = delay(nb_retries)
                     log_with(
-                        'error "%s": retrying in %.2f seconds',
+                        'error "%r": retrying in %.2f seconds',
                         error,
                         wait_delay,
                     )

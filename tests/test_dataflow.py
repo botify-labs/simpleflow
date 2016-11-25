@@ -1512,8 +1512,9 @@ def test_task_naming():
         "activity-tests.data.activities.triple-bdc09455c37471e0ba7397350413a5e6",
         # idempotent task, with arg 2
         "activity-tests.data.activities.triple-12036b25db61ae6cadf7a003ff523029",
-        # idempotent task, with arg 2 too => same task id
-        "activity-tests.data.activities.triple-12036b25db61ae6cadf7a003ff523029",
+        # idempotent, not rescheduled
+        # # idempotent task, with arg 2 too => same task id
+        # "activity-tests.data.activities.triple-12036b25db61ae6cadf7a003ff523029",
         # class-based task, non idempotent
         "activity-tests.data.activities.Tetra-1",
     ]
@@ -1593,7 +1594,7 @@ def test_workflow_task_naming():
                 'input': json_dumps(
                     {
                         "args": [],
-                        "kwargs": {"workflow_name": "child-one"},
+                        "kwargs": {},  # workflow_name removed from the input
                     }
                 )
             }
@@ -1613,7 +1614,7 @@ class ATestDefinitionIdempotentParentWorkflow(ATestWorkflow):
     name = 'test_parent_workflow'
 
     def run(self):
-        future = self.submit(ATestDefinitionIdempotentChildWithIdWorkflow, workflow_name='child-one')
+        future = self.submit(ATestDefinitionIdempotentChildWithIdWorkflow, a=1, workflow_name='child-one')
         print(future.result)
 
 
@@ -1630,7 +1631,7 @@ def test_workflow_idempotent_task_naming():
                 'taskList': {
                     'name': 'test_task_list'
                 },
-                'workflowId': 'workflow-child-one-4ccae08f0a3b53d01d52c5ea05afb731',
+                'workflowId': 'workflow-child-one-adb86b0326491007eae44a0a692bfc53',
                 'taskStartToCloseTimeout': '300',
                 'executionStartToCloseTimeout': '3600',
                 'workflowType': {
@@ -1640,7 +1641,7 @@ def test_workflow_idempotent_task_naming():
                 'input': json_dumps(
                     {
                         "args": [],
-                        "kwargs": {"workflow_name": "child-one"},
+                        "kwargs": {"a": 1},
                     }
                 )
             }
