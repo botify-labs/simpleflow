@@ -63,9 +63,7 @@ def run_fake_activity_task(domain, task_list, result):
 @retry.with_delay(nb_times=3,
                   delay=retry.exponential,
                   on_exceptions=KeyError)
-def run_fake_child_workflow_task(domain, task_list, workflow_type_name,
-                                 workflow_type_version, workflow_id, input=None, result=None,
-                                 child_policy=None, control=None, tag_list=None):
+def run_fake_child_workflow_task(domain, task_list, result=None):
     conn = ConnectedSWFObject().connection
     resp = conn.poll_for_decision_task(
         domain,
@@ -101,17 +99,9 @@ def run_fake_task_worker(domain, task_list, former_event):
             args=(
                 domain,
                 task_list,
-                former_event['result'],
-                former_event['name'],  # workflow_type_name
-                former_event['version'],  # workflow_type_version
-                former_event['id'],  # workflow_id
             ),
             kwargs={
-                'input': former_event['raw_input'],
                 'result': former_event['result'],
-                'child_policy': former_event['child_policy'],
-                'control': former_event['control'],
-                'tag_list': former_event['tag_list'],
             },
         )
     else:
