@@ -194,6 +194,7 @@ class Executor(executor.Executor):
             # If idempotency is False or unknown, let's generate a task id by
             # incrementing an id after the a_task name.
             # (default strategy, backwards compatible with previous versions)
+            # This doesn't always work well for workflows; use get_workflow_id if needed.
             suffix = self._tasks.add(a_task)
         else:
             # If a_task is idempotent, we can do better and hash arguments.
@@ -413,8 +414,8 @@ class Executor(executor.Executor):
         """
         future = self._get_future_from_child_workflow_event(event)
 
-        if not future:  # Happens, not sure what it means; TODO: clarify that
-            logger.warning('FIXME: No future! event={}'.format(event))
+        if not future:
+            # WORKFLOW_TYPE_DOES_NOT_EXIST, will be created
             return None
 
         if future.state == "FINISHED" and future.exception:
@@ -500,7 +501,7 @@ class Executor(executor.Executor):
         :raise: exceptions.ExecutionBlocked if open activities limit reached
         """
 
-        if not a_task.id:  # Could be set by a subclass
+        if not a_task.id:  # Can be already set (WorkflowTask)
             a_task.id = self._make_task_id(a_task, *args, **kwargs)
         event = self.find_event(a_task, self._history)
         logger.debug('executor: resume {}, event={}'.format(a_task, event))
@@ -586,12 +587,13 @@ class Executor(executor.Executor):
         return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, decision_response):
-        """Executes the workflow from the start until it blocks.
+        """Replay the workflow from the start until it blocks.
+        Called by the DeciderWorker.
 
         :param decision_response: an object wrapping the PollForDecisionTask response
         :type  decision_response: swf.responses.Response
 
-        :returns: a list of decision and a context dict (empty?)
+        :returns: a list of decision and a context dict (obsolete, empty)
         :rtype: ([swf.models.decision.base.Decision], dict)
         """
         self.reset()
