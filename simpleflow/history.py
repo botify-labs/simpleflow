@@ -1,4 +1,7 @@
 import collections
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class History(object):
@@ -197,27 +200,27 @@ class History(object):
                 'initiated_event_id': event.id,
                 'raw_input': event.raw.get('input'),
                 'child_policy': event.child_policy,
+                'control': getattr(event, 'control', None),
+                'tag_list': getattr(event, 'tag_list', None),
+                'task_list': event.task_list['name'],
                 'initiated_event_timestamp': event.timestamp,
             }
             if event.workflow_id not in self._child_workflows:
                 self._child_workflows[event.workflow_id] = workflow
                 self._tasks.append(workflow)
             else:
+                logger.warning("start_initiated again for workflow {} (initiated @{}, we're @{})".format(
+                    event.workflow_id,
+                    self._child_workflows[event.workflow_id]['initiated_event_id'],
+                    event.id
+                ))
                 self._child_workflows[event.workflow_id].update(workflow)
         elif event.state == 'start_failed':
-            workflow = {
-                'type': 'child_workflow',
-                'state': event.state,
-                'cause': event.cause,
-                'workflow_type': event.workflow_type.copy(),
-                'start_failed_timestamp': event.timestamp,
-            }
-            if event.workflow_id not in self._child_workflows:
-                self._child_workflows[event.workflow_id] = workflow
-                self._tasks.append(workflow)
-            else:
-                self._child_workflows[event.workflow_id].update(workflow)
-
+            workflow = get_workflow(event)
+            workflow['state'] = event.state
+            workflow['cause'] = event.cause
+            workflow['control'] = getattr(event, 'control', None)
+            workflow['start_failed_timestamp'] = event.timestamp
         elif event.state == 'started':
             workflow = get_workflow(event)
             workflow['state'] = event.state
@@ -234,8 +237,8 @@ class History(object):
         elif event.state == 'failed':
             workflow = get_workflow(event)
             workflow['state'] = event.state
-            workflow['reason'] = event.reason
-            workflow['details'] = event.details
+            workflow['reason'] = getattr(event, 'reason', None)
+            workflow['details'] = getattr(event, 'details', None)
             workflow['failed_id'] = event.id
             workflow['failed_timestamp'] = event.timestamp
         elif event.state == 'timed_out':
