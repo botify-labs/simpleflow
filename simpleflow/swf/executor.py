@@ -178,6 +178,7 @@ class Executor(executor.Executor):
         self._open_activity_count = 0
         self._decisions = []
         self._tasks = TaskRegistry()
+        self._idempotent_tasks_to_submit = set()
 
     def _make_task_id(self, a_task, *args, **kwargs):
         """
@@ -433,6 +434,13 @@ class Executor(executor.Executor):
         :rtype:
         :raise: exceptions.ExecutionBlocked if too many decisions waiting
         """
+        if a_task.idempotent:
+            task_identifier = (type(a_task), self.domain, a_task.id)
+            if task_identifier in self._idempotent_tasks_to_submit:
+                logger.debug('Not resubmitting task {}'.format(a_task.name))
+                return
+            self._idempotent_tasks_to_submit.add(task_identifier)
+
         # NB: ``decisions`` contains a single decision.
         decisions = a_task.schedule(self.domain, task_list)
 
