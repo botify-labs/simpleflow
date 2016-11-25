@@ -273,13 +273,13 @@ class Executor(executor.Executor):
         state = event['state']
 
         if state == 'start_initiated':
-            future._state = futures.PENDING
+            pass  # future._state = futures.PENDING
         elif state == 'start_failed':
             if event['cause'] == 'WORKFLOW_TYPE_DOES_NOT_EXIST':
                 workflow_type = swf.models.WorkflowType(
                     self.domain,
-                    name=event['workflow_type']['name'],
-                    version=event['workflow_type']['version'],
+                    name=event['name'],
+                    version=event['version'],
                 )
                 logger.info('Creating workflow type {} in domain {}'.format(
                     workflow_type.name,
@@ -291,32 +291,32 @@ class Executor(executor.Executor):
                     # Could have be created by a concurrent workflow execution.
                     pass
                 return None
+            future.set_exception(exceptions.TaskFailed(
+                name=event['id'],
+                reason=event['cause'],
+                details=event.get('details'),
+            ))
         elif state == 'started':
-            future._state = futures.RUNNING
+            future.set_running()
         elif state == 'completed':
-            future._state = futures.FINISHED
-            future._result = json.loads(event['result'])
+            future.set_finished(json.loads(event['result']))
         elif state == 'failed':
-            future._state = futures.FINISHED
-            future._exception = exceptions.TaskFailed(
+            future.set_exception(exceptions.TaskFailed(
                 name=event['id'],
                 reason=event['reason'],
                 details=event.get('details'),
-            )
+            ))
         elif state == 'timed_out':
-            future._state = futures.FINISHED
-            future._exception = exceptions.TimeoutError(
+            future.set_exception(exceptions.TimeoutError(
                 event['timeout_type'],
                 None,
-            )
+            ))
         elif state == 'canceled':
-            future._state = futures.FINISHED
-            future._exception = exceptions.TaskCanceled(
+            future.set_exception(exceptions.TaskCanceled(
                 event.get('details'),
-            )
+            ))
         elif state == 'terminated':
-            future._state = futures.FINISHED
-            future._exception = exceptions.TaskTerminated()
+            future.set_exception(exceptions.TaskTerminated())
 
         return future
 
