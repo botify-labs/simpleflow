@@ -113,13 +113,7 @@ class History(object):
                 # previous execution of the task such as the number of retries
                 # in ``retry``.  As the state of the event mutates, it
                 # corresponds to the last execution.
-
-                # ACTIVITY_ID_ALREADY_IN_USE happens for idempotent activities:
-                # in this case, don't change the activity state.
-                if event.cause == 'ACTIVITY_ID_ALREADY_IN_USE':
-                    pass
-                else:
-                    self._activities[event.activity_id].update(activity)
+                self._activities[event.activity_id].update(activity)
 
         elif event.state == 'started':
             activity = get_activity()

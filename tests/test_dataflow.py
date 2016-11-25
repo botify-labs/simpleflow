@@ -2,22 +2,15 @@
 from __future__ import absolute_import
 
 import re
-import uuid
-
-from builtins import range
-
 import functools
-from mock import patch
 
 import boto
+from mock import patch
 from moto import mock_swf
 
 import swf.models
 import swf.models.decision
 import swf.models.workflow
-from simpleflow.utils import json_dumps
-from swf.models.history import builder
-from swf.responses import Response
 
 from simpleflow import (
     Workflow,
@@ -26,7 +19,9 @@ from simpleflow import (
 from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.executor import Executor
-
+from simpleflow.utils import json_dumps
+from swf.models.history import builder
+from swf.responses import Response
 from .data import (
     DOMAIN,
     double,
@@ -37,7 +32,6 @@ from .data import (
     raise_on_failure,
     triple,
     Tetra,
-    get_uuid,
 )
 
 
@@ -819,12 +813,12 @@ def test_workflow_with_child_workflow():
     (history
         .add_decision_task()
         .add_child_workflow(
-        workflow,
-        workflow_id='workflow-test_workflow-None--0--1',
-        task_list=ATestWorkflow.task_list,
-        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-        result='4'
-    ))
+            workflow_id='workflow-test_workflow-None--0--1',
+            task_list=ATestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+            result='4'
+        )
+    )
 
     # Now the child workflow is finished and the executor should complete the
     # workflow.
@@ -1657,47 +1651,3 @@ def test_workflow_idempotent_task_naming():
             }
         }
     ]
-
-
-class ATestDefinitionWithIdempotentTask(ATestWorkflow):
-    def run(self):
-        results = [
-            self.submit(get_uuid),
-            self.submit(get_uuid),
-        ]
-        results.append(
-            self.submit(get_uuid, results[0].result)
-        )
-        futures.wait(*results)
-        assert all(r.result == results[0].result for r in results[1:])
-
-
-@mock_swf
-def test_idempotent_called_once():
-    workflow = ATestDefinitionWithIdempotentTask
-    executor = Executor(DOMAIN, workflow)
-
-    history = builder.History(workflow, input={})
-    history.add_decision_task_completed()
-    decision_id = history.last_id
-    history.add_activity_task_scheduled(
-        activity=get_uuid,
-        decision_id=decision_id,
-        activity_id='activity-tests.data.activities.get_uuid-1c819d1df3ad46e07eced4ec93147ce9',
-    )
-    scheduled_id = history.last_id
-    history.add_activity_task_schedule_failed(
-        activity_id='activity-tests.data.activities.get_uuid-1c819d1df3ad46e07eced4ec93147ce9',
-        decision_id=decision_id,
-        activity_type={
-            'name': get_uuid.name,
-            'version': get_uuid.version,
-        },
-        cause='ACTIVITY_ID_ALREADY_IN_USE',
-    )
-    history.add_decision_task()
-    history.add_activity_task_started(scheduled_id)
-    history.add_activity_task_completed(scheduled_id, history.last_id, str(uuid.uuid4()))
-    history.add_decision_task()
-
-    decisions, _ = executor.replay(Response(history=history))
