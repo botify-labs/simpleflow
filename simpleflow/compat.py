@@ -8,11 +8,11 @@ if PY2:
     from itertools import imap, izip
     import urllib2 as request  # NOQA
     from urllib import quote as urlquote  # NOQA
-    text_type = unicode
+    text_type = unicode  # NOQA
     binary_type = str
-    string_types = (str, unicode)
-    unicode = unicode
-    basestring = basestring
+    string_types = (str, unicode)  # NOQA
+    unicode = unicode  # NOQA
+    basestring = basestring  # NOQA
     imap = imap
     izip = izip
 else:

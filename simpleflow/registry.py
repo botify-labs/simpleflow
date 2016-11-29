@@ -23,4 +23,5 @@ class Registry(object):
         """
         self._tasks[label][task.name] = task
 
+
 registry = Registry()

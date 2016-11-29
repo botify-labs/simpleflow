@@ -80,8 +80,7 @@ def check_arguments(argspec, args):
         raise TypeError('command does not take varargs')
 
     # Calling func(a, b) with func(1, 2, 3)
-    if (not argspec.varargs and argspec.args and
-                len(args) != len(argspec.args)):
+    if not argspec.varargs and argspec.args and len(args) != len(argspec.args):
         raise TypeError('command takes {} arguments: {} passed'.format(
             len(argspec.args),
             len(args)))

@@ -8,10 +8,7 @@ import types
 
 import psutil
 
-from simpleflow.constants import SIMPLEFLOW_ENV
-
 from .named_mixin import NamedMixin, with_state
-
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +19,7 @@ def reset_signal_handlers(func):
     for workers where we actively want handlers defined on the supervisor to be
     removed, because they wouldn't work on the worker process.
     """
+
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
@@ -45,6 +43,7 @@ class Supervisor(NamedMixin):
     private code which wasn't really well tested, and was re-written in a TDD-y
     style.
     """
+
     def __init__(self, payload, arguments=None, nb_children=None, background=False):
         """
         Initializes a Manager() instance, with a payload (a callable that will be
@@ -133,7 +132,6 @@ class Supervisor(NamedMixin):
             # TODO: evaluate if it has a performance impact ; a priori no, but ?
             time.sleep(0.1)
 
-
     def bind_signal_handlers(self):
         """
         Binds signals for graceful shutdown:
@@ -141,9 +139,10 @@ class Supervisor(NamedMixin):
         - SIGCHLD is used to maintain the workers pool to the desired number
         - other signals are not modified for now
         """
+
         # NB: Function is nested to have a reference to *self*.
         def _handle_graceful_shutdown(signum, frame):
-            signals_map = { 2: "SIGINT", 15: "SIGTERM" }
+            signals_map = {2: "SIGINT", 15: "SIGTERM"}
             signal_name = signals_map.get(signum, signum)
             logger.info("process: caught signal signal={} pid={}".format(
                 signal_name, os.getpid()))
