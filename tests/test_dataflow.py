@@ -895,7 +895,9 @@ def test_workflow_with_more_than_max_decisions():
 class ATestDefinitionWithBigDecisionResponse(ATestWorkflow):
     """
     This workflow will schedule 2 enormous tasks so the response cannot be
-    handled by SWF directly. NB: the constant is lowered to 50kB in test env.
+    handled by SWF directly. NB: the constant is lowered to 82kB in test env,
+    but 32kB are reserved for the context, so the true limit is 50kB, hence the
+    test below (cannot schedule 2 * 30kB decisions).
     """
     def run(self):
         msg = "*" * 30000  # 30kB input at least

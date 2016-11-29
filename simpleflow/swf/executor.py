@@ -405,8 +405,8 @@ class Executor(executor.Executor):
         # See: http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-limits.html
         request_size = len(json.dumps(self._decisions + decisions))
         # We keep a 5kB of error margin for headers, json structure, and the
-        # timer decision.
-        if request_size > constants.MAX_REQUEST_SIZE - 5000:
+        # timer decision, and 32kB for the context, even if we don't use it now.
+        if request_size > constants.MAX_REQUEST_SIZE - 5000 - 32000:
             # TODO: at this point we may check that self._decisions is not empty
             # If it's the case, it means that a single decision was weighting
             # more than 900kB, so we have bigger problems.
