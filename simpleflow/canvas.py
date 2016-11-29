@@ -132,8 +132,7 @@ class GroupFuture(futures.Future):
         raise TypeError('Wrong type for `act` ({}). Expecting `ActivityTask`, `Group` or `FuncGroup`'.format(type(act)))
 
     def sync_state(self):
-        if (all(a.finished for a in self.futures) and
-            self._futures_contain_all_activities):
+        if all(a.finished for a in self.futures) and self._futures_contain_all_activities:
             self._state = futures.FINISHED
         elif any(a.cancelled for a in self.futures):
             self._state = futures.CANCELLED
