@@ -18,6 +18,7 @@ from simpleflow import (
 # * defining workflow ids is automatic for idempotent workflows and handled to the class otherwise:
 #    a `get_workflow_id(*args, **kwargs)` class method returning the full workflow id
 #
+# * similarly, the WF can define a `get_tag_list(*args, **kwargs)` class method
 
 
 @activity.with_attributes(task_list='quickstart', version='example')
@@ -38,6 +39,10 @@ class ChildWorkflow(Workflow):
     def get_workflow_id(cls, *args, **kwargs):
         return kwargs.get('workflow_name', None)
 
+    @classmethod
+    def get_tag_list(cls, *args, **kwargs):
+        return kwargs.get('tag_list', None)
+
     def run(self, x, name="CHILD", **kwargs):
         y = self.submit(loudly_increment, x, name)
         z = self.submit(loudly_increment, y, name)
@@ -53,7 +58,7 @@ class IdempotentChildWorkflow(Workflow):
 
     def run(self, x):
         # A different workflow name or id is necessary
-        y = self.submit(ChildWorkflow, x, name='SUB-CHILD', workflow_name='sub_child')
+        y = self.submit(ChildWorkflow, x, name='SUB-CHILD', workflow_name='sub_child', tag_list=['abc', 'def=3'])
         return y.result + randrange(1000000)
 
 

@@ -113,13 +113,19 @@ class WorkflowTask(task.WorkflowTask):
             'kwargs': self.kwargs,
         }
 
+        get_tag_list = getattr(workflow, 'get_tag_list', None)
+        if get_tag_list:
+            tag_list = get_tag_list(workflow, *self.args, **self.kwargs)
+        else:
+            tag_list = getattr(workflow, 'tag_list', None)
+
         decision = swf.models.decision.ChildWorkflowExecutionDecision(
             'start',
             workflow_id=self.id,
             workflow_type=model,
             task_list=task_list or self.task_list,
             input=input,
-            tag_list=getattr(workflow, 'tag_list', None),
+            tag_list=tag_list,
             child_policy=getattr(workflow, 'child_policy', None),
             execution_timeout=str(getattr(workflow, 'execution_timeout', None)))
 
