@@ -15,12 +15,9 @@ from simpleflow import (
 
 # Notes:
 #
-# * handling workflow ids is awkward. Two ways currently exist as shown here:
-#    1. a `get_workflow_id` class method returning the full workflow id
-#    2. a `workflow_name` argument to submit (not passed to the workflow), used
-#       as "workflow-{workflow_name}-N"
+# * defining workflow ids is automatic for idempotent workflows and handled to the class otherwise:
+#    a `get_workflow_id(*args, **kwargs)` class method returning the full workflow id
 #
-# * the N above is too fragile to be useful, unlike for activity tasks
 
 
 @activity.with_attributes(task_list='quickstart', version='example')
@@ -37,7 +34,11 @@ class ChildWorkflow(Workflow):
     task_list = 'example'
     execution_timeout = 60 * 5
 
-    def run(self, x, name="CHILD"):
+    @classmethod
+    def get_workflow_id(cls, *args, **kwargs):
+        return kwargs.get('workflow_name', None)
+
+    def run(self, x, name="CHILD", **kwargs):
         y = self.submit(loudly_increment, x, name)
         z = self.submit(loudly_increment, y, name)
         return z.result

@@ -80,15 +80,9 @@ class WorkflowTask(task.WorkflowTask):
     WorkflowTask managed on SWF.
     """
 
-    def __init__(self, executor, workflow, *args, **kwargs):
-        # TODO: optionally get the tag_list from the input or a workflow method
-        self._workflow_name = kwargs.pop('workflow_name', None)
-
-        super(WorkflowTask, self).__init__(executor, workflow, *args, **kwargs)
-
     @property
     def name(self):
-        return 'workflow-{}'.format(self._workflow_name or self.workflow.name)
+        return 'workflow-{}'.format(self.workflow.name)
 
     @property
     def task_list(self):

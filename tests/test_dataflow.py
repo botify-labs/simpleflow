@@ -1559,6 +1559,10 @@ def test_execution_context():
 class ATestDefinitionChildWithIdWorkflow(ATestWorkflow):
     name = 'test_child_workflow'
 
+    @classmethod
+    def get_workflow_id(cls, *args, **kwargs):
+        return kwargs.get('workflow_name', None)
+
     def run(self, *args, **kwargs):
         return 42
 
@@ -1567,7 +1571,7 @@ class ATestDefinitionParentWorkflow(ATestWorkflow):
     name = 'test_parent_workflow'
 
     def run(self):
-        future = self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name='child-one')
+        future = self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name='workflow-child-one-1')
         print(future.result)
 
 
@@ -1594,7 +1598,7 @@ def test_workflow_task_naming():
                 'input': json_dumps(
                     {
                         "args": [],
-                        "kwargs": {},  # workflow_name removed from the input
+                        "kwargs": {'workflow_name': 'workflow-child-one-1'},
                     }
                 )
             }
@@ -1614,7 +1618,7 @@ class ATestDefinitionIdempotentParentWorkflow(ATestWorkflow):
     name = 'test_parent_workflow'
 
     def run(self):
-        future = self.submit(ATestDefinitionIdempotentChildWithIdWorkflow, a=1, workflow_name='child-one')
+        future = self.submit(ATestDefinitionIdempotentChildWithIdWorkflow, a=1)
         print(future.result)
 
 
@@ -1631,7 +1635,7 @@ def test_workflow_idempotent_task_naming():
                 'taskList': {
                     'name': 'test_task_list'
                 },
-                'workflowId': 'workflow-child-one-adb86b0326491007eae44a0a692bfc53',
+                'workflowId': 'workflow-test_child_workflow-adb86b0326491007eae44a0a692bfc53',
                 'taskStartToCloseTimeout': '300',
                 'executionStartToCloseTimeout': '3600',
                 'workflowType': {

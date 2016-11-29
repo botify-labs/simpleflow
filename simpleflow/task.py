@@ -102,7 +102,7 @@ class WorkflowTask(Task):
         if get_workflow_id:
             if self.idempotent:
                 raise Exception('"get_workflow_id" and "idempotent" are mutually exclusive')
-            self.id = str(get_workflow_id(workflow, *self.args, **self.kwargs))
+            self.id = get_workflow_id(workflow, *self.args, **self.kwargs)
         else:
             self.id = None
 
