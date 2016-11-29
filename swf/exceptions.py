@@ -142,7 +142,7 @@ def match_equals(regex, string, values):
         return False
 
     if (isinstance(values, compat.basestring) and
-        not isinstance(values, collections.Sequence)):
+            not isinstance(values, collections.Sequence)):
         values = (values,)
     return matched[0] in values
 
@@ -177,6 +177,7 @@ def is_unknown(resource):
     Return a function that checks if *error* is an unknown *resource* fault.
 
     """
+
     @wraps(is_unknown)
     def wrapped(error, *args, **kwargs):
         """
@@ -188,7 +189,7 @@ def is_unknown(resource):
             return False
         if getattr(error, 'error_code', None) != 'UnknownResourceFault':
             raise ValueError('cannot extract resource from {}'.format(
-                             error))
+                error))
 
         message = error.body.get('message')
         if match_equals(REGEX_UNKNOWN_RESOURCE,
@@ -223,19 +224,20 @@ def always(value):
         if isinstance(value, types.FunctionType):
             return value()
         return value
+
     return wrapped
 
 
 def extract_resource(error):
     if getattr(error, 'error_code', None) != 'UnknownResourceFault':
         raise ValueError('cannot extract resource from {}'.format(
-                         error))
+            error))
 
     message = error.body.get('message')
     resource = (REGEX_UNKNOWN_RESOURCE.findall(message) if
                 message else None)
     return "Resource {} does not exist".format(
-           resource[0] if resource else 'unknown')
+        resource[0] if resource else 'unknown')
 
 
 def raises(exception, when, extract=str):
@@ -317,11 +319,13 @@ def raises(exception, when, extract=str):
     # Exception: boom!
 
     """
+
     @wraps(raises)
     def raises_closure(error, *args, **kwargs):
         if when(error, *args, **kwargs) is True:
             raise exception(extract(error))
         raise error
+
     return raises_closure
 
 
@@ -354,6 +358,7 @@ def catch(exceptions, handle_with=None, log=False):
     >>> func()
 
     """
+
     def wrap(func):
         @wraps(func)
         def decorated(*args, **kwargs):
@@ -364,8 +369,8 @@ def catch(exceptions, handle_with=None, log=False):
                     logger = logging.getLogger(__name__)
 
                     logger.error('call to {} raised: {}'.format(
-                                 func.__name__,
-                                 err))
+                        func.__name__,
+                        err))
 
                 if handle_with is None:
                     raise
@@ -393,6 +398,7 @@ def translate(exceptions, to):
     Catches an exception among *exceptions* and raise *to* instead.
 
     """
+
     def throw(err, *args, **kwargs):
         raise to(err.message)
 

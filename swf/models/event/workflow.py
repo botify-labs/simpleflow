@@ -23,7 +23,8 @@ class CompiledWorkflowExecutionEvent(CompiledEvent):
         'timed_out',  # The workflow execution was closed because a time out was exceeded
         'canceled',  # The workflow execution was successfully canceled and closed
         'terminated',  # The workflow execution was terminated
-        'continued_as_new',  # The workflow execution was closed and a new execution of the same type was created with the same workflowId
+        'continued_as_new',  # The workflow execution was closed and a new execution of the same type was created
+        # with the same workflowId
         'cancel_requested',  # A request to cancel this workflow execution was made
     )
 
@@ -86,10 +87,12 @@ class CompiledExternalWorkflowExecutionEvent(CompiledEvent):
 
     states = (
         'signal_initiated',  # A request to signal an external workflow was made
-        'signaled',  # A signal, requested by this workflow execution, was successfully delivered to the target external workflow execution
+        'signaled',  # A signal, requested by this workflow execution, was successfully delivered to the target
+        # external workflow execution
         'signal_failed',  # The request to signal an external workflow execution failed
         'request_cancel_initiated',  # A request was made to request the cancellation of an external workflow execution
-        'cancel_requested',  # Request to cancel an external workflow execution was successfully delivered to the target execution
+        'cancel_requested',  # Request to cancel an external workflow execution was successfully delivered to the
+        # target execution
         'request_cancel_failed',  # Request to cancel an external workflow execution failed
     )
 

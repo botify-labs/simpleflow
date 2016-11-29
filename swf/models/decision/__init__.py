@@ -5,9 +5,11 @@
 #
 # See the file LICENSE for copying permission.
 
-from swf.models.decision.marker import MarkerDecision
-from swf.models.decision.task import ActivityTaskDecision
-from swf.models.decision.timer import TimerDecision
-from swf.models.decision.workflow import (WorkflowExecutionDecision,
-                                          ChildWorkflowExecutionDecision,
-                                          ExternalWorkflowExecutionDecision)
+from swf.models.decision.marker import MarkerDecision  # NOQA
+from swf.models.decision.task import ActivityTaskDecision  # NOQA
+from swf.models.decision.timer import TimerDecision  # NOQA
+from swf.models.decision.workflow import (  # NOQA
+    WorkflowExecutionDecision,
+    ChildWorkflowExecutionDecision,
+    ExternalWorkflowExecutionDecision,
+)

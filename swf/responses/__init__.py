@@ -1,1 +1,1 @@
-from .base import Response
+from .base import Response  # NOQA
