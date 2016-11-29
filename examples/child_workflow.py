@@ -23,7 +23,6 @@ from simpleflow import (
 
 @activity.with_attributes(task_list='quickstart', version='example')
 def loudly_increment(x, whoami):
-    # WARNING? PARENT executed on example, CHILD on quickstart
     result = x + 1
     print("I am {} and I'll increment x={} : result={}".format(whoami, x, result))
     return result
