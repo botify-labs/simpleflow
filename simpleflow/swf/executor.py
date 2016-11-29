@@ -396,23 +396,46 @@ class Executor(executor.Executor):
         :rtype:
         :raise: exceptions.ExecutionBlocked if too many decisions waiting
         """
+        # NB: ``decisions`` contains a single decision.
+        decisions = a_task.schedule(self.domain, task_list)
+
+        # Check if we won't violate the 1MB limit on API requests ; if so, do NOT
+        # schedule the requested task and block execution instead, with a timer
+        # to wake up the workflow immediately after completing these decisions.
+        # See: http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-limits.html
+        request_size = len(json.dumps(self._decisions + decisions))
+        # We keep a 5kB of error margin for headers, json structure, and the
+        # timer decision.
+        if request_size > constants.MAX_REQUEST_SIZE - 5000:
+            # TODO: at this point we may check that self._decisions is not empty
+            # If it's the case, it means that a single decision was weighting
+            # more than 900kB, so we have bigger problems.
+            self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
+            raise exceptions.ExecutionBlocked()
+
+        # Ready to schedule
         logger.debug('executor is scheduling task {} on task_list {}'.format(
             a_task.name,
             task_list,
         ))
-        decisions = a_task.schedule(self.domain, task_list)
-        # ``decisions`` contains a single decision.
         self._decisions.extend(decisions)
         self._open_activity_count += 1
+
+        # Check if we won't exceed max decisions -1
+        # TODO: if we had exactly MAX_DECISIONS - 1 to take, this will wake up
+        # the workflow for no reason. Evaluate if we can do better.
         if len(self._decisions) == constants.MAX_DECISIONS - 1:
             # We add a timer to wake up the workflow immediately after
             # completing these decisions.
-            timer = swf.models.decision.TimerDecision(
-                'start',
-                id='resume-after-{}'.format(a_task.id),
-                start_to_fire_timeout='0')
-            self._decisions.append(timer)
+            self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
             raise exceptions.ExecutionBlocked()
+
+    def _add_start_timer_decision(self, id):
+        timer = swf.models.decision.TimerDecision(
+            'start',
+            id=id,
+            start_to_fire_timeout='0')
+        self._decisions.append(timer)
 
     def resume(self, a_task, *args, **kwargs):
         """Resume the execution of a task.

@@ -27,6 +27,7 @@ from .data import (
     double,
     increment,
     increment_retry,
+    print_message,
     raise_error,
     raise_on_failure,
     triple,
@@ -889,6 +890,32 @@ def test_workflow_with_more_than_max_decisions():
     workflow_completed.complete(result='null')
 
     assert decisions[0] == workflow_completed
+
+
+class ATestDefinitionWithBigDecisionResponse(ATestWorkflow):
+    """
+    This workflow will schedule 2 enormous tasks so the response cannot be
+    handled by SWF directly. NB: the constant is lowered to 50kB in test env.
+    """
+    def run(self):
+        msg = "*" * 30000  # 30kB input at least
+        results = []
+        results.append(self.submit(print_message, msg))
+        results.append(self.submit(print_message, msg))
+        futures.wait(*results)
+
+@mock_swf
+def test_workflow_with_big_decision_response():
+    workflow = ATestDefinitionWithBigDecisionResponse
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow)
+
+    # The first time, the executor should schedule ``constants.MAX_DECISIONS``
+    # decisions and a timer to force the scheduling of the remaining tasks.
+    decisions, _ = executor.replay(Response(history=history))
+    assert len(decisions) == 2
+    assert decisions[0].type == 'ScheduleActivityTask'
+    assert decisions[1].type == 'StartTimer'
 
 
 class OnFailureMixin(object):
