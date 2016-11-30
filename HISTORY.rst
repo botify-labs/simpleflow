@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.12.4
+~~~~~~
+
+- Avoid returning too big responses to RespondDecisionTaskCompleted endpoint (#166)
+- Worker: remove useless monitor_child (#168)
+
 0.12.3
 ~~~~~~
 
