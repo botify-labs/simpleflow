@@ -173,26 +173,6 @@ def process_task(poller, token, task):
     worker.process(poller, token, task)
 
 
-def monitor_child(worker):
-    """
-    Fill the info dict at child's exit.
-    :param worker:
-    :type worker: multiprocessing.Process
-    """
-
-    def _handle_child_exit(signum, frame):
-        if signum == signal.SIGCHLD:
-            # call worker.join() to update multiprocessing's view of the process
-            # (exit code, list of our children, etc.)
-            try:
-                worker.join(timeout=0)
-            except Exception:
-                # Must have been some race, ignore it
-                pass
-
-    signal.signal(signal.SIGCHLD, _handle_child_exit)
-
-
 def spawn(poller, token, task, heartbeat=60):
     """
     Spawn a process and wait for it to end, sending heartbeats to SWF.
@@ -211,8 +191,6 @@ def spawn(poller, token, task, heartbeat=60):
         args=(poller, token, task),
     )
     worker.start()
-
-    monitor_child(worker)
 
     def worker_alive():
         return psutil.pid_exists(worker.pid)
