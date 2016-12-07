@@ -19,7 +19,7 @@ It provides querysets and model objects over commonly used concepts: domains, wo
 It is under MIT license, and any ideas, features requests, patches, pull requests to improve it are of course welcome.
 
 Installation
-============
+------------
 
 .. code-block:: shell
 
@@ -27,13 +27,13 @@ Installation
 
 
 Usage and all the rest
-======================
+----------------------
 
 Please, refer to `Documentation <http://python-simple-workflow.readthedocs.org>`_
 
 
 What's left?
-============
+------------
 
 Amazon interface models implementation:
  ✔ Domain @done (13-04-02 10:01)
