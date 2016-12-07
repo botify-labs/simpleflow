@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.12.5
+~~~~~~
+
+- Executor: expose workflow execution (#172)
+
 0.12.4
 ~~~~~~
 
