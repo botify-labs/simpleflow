@@ -25,6 +25,7 @@ class Workflow(object):
     tag_list = None
     child_policy = None
     execution_timeout = None
+    execution = None
 
     def __init__(self, executor):
         self._executor = executor

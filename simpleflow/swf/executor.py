@@ -167,6 +167,7 @@ class Executor(executor.Executor):
                  force_activities=None):
         super(Executor, self).__init__(workflow)
         self._history = None
+        self._execution = None
         self.domain = domain
         self.task_list = task_list
         self.repair_with = repair_with
@@ -552,6 +553,8 @@ class Executor(executor.Executor):
         history = decision_response.history
         self._history = History(history)
         self._history.parse()
+        self._execution = decision_response.execution
+        self._workflow.execution = self._execution
 
         workflow_started_event = history[0]
         input = workflow_started_event.input
