@@ -42,6 +42,7 @@ class BasicWorkflow(Workflow):
     task_list = 'example'
 
     def run(self, x, t=30):
+        print('DEBUG: workflow_id={} run_id={}'.format(self.execution.workflow_id, self.execution.run_id))
         y = self.submit(increment, x)
         yy = self.submit(Delay, t, y)
         z = self.submit(double, y)
