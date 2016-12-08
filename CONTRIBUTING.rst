@@ -56,12 +56,12 @@ Pull Requests
     $ git commit -m "Detailed commit message"
     $ git push origin name-of-feature
 
-2. Before submitting a pull request, check the following:
+3. Before submitting a pull request, check the following:
 
-- If the pull request adds functionality, it should be tested and the docs should be updated.
-- The pull request should work on Python 2.7 and PyPy. Use ``tox`` to verify that it does.
+   - If the pull request adds functionality, it should be tested and the docs should be updated.
+   - The pull request should work on Python 2.7 and PyPy. Use ``tox`` to verify that it does.
 
-3. Submit a pull request to the ``master`` branch.
+4. Submit a pull request to the ``master`` branch.
 
 Running tests
 +++++++++++++
