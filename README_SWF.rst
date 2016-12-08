@@ -2,6 +2,8 @@
 Python Simple Workflow
 ======================
 
+(This README was included with python-simple-workflow, now merged here as ``workflow.swf``.)
+
 .. image:: https://travis-ci.org/botify-labs/python-simple-workflow.png?branch=develop
 
 python-simple-workflow is a wrapper for `Amazon Simple Workflow <http://aws.amazon.com/en/swf/>`_ service.
