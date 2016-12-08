@@ -167,7 +167,7 @@ class Executor(executor.Executor):
                  force_activities=None):
         super(Executor, self).__init__(workflow)
         self._history = None
-        self._execution = None
+        self._execution_context = None
         self.domain = domain
         self.task_list = task_list
         self.repair_with = repair_with
@@ -553,8 +553,7 @@ class Executor(executor.Executor):
         history = decision_response.history
         self._history = History(history)
         self._history.parse()
-        self._execution = decision_response.execution
-        self._workflow.execution = self._execution
+        self.build_execution_context(decision_response)
 
         workflow_started_event = history[0]
         input = workflow_started_event.input
@@ -653,3 +652,24 @@ class Executor(executor.Executor):
 
     def run(self, decision_response):
         return self.replay(decision_response)
+
+    def get_execution_context(self):
+        return self._execution_context
+
+    def build_execution_context(self, decision_response):
+        """
+        Extract data from the execution and history.
+        :param decision_response:
+        :type  decision_response: swf.responses.Response
+        """
+        execution = decision_response.execution
+        history = decision_response.history
+        workflow_started_event = history[0]
+        # The "if execution else None" are for tests that don't provide an execution object
+        self._execution_context = dict(
+            name=execution.workflow_type.name if execution else None,
+            version=execution.workflow_type.version if execution else None,
+            workflow_id=execution.workflow_id if execution else None,
+            run_id=execution.run_id if execution else None,
+            tag_list=getattr(workflow_started_event, 'tag_list', []),
+        )

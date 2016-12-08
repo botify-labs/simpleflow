@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import time
 
 from simpleflow import (
@@ -42,7 +43,8 @@ class BasicWorkflow(Workflow):
     task_list = 'example'
 
     def run(self, x, t=30):
-        print('DEBUG: workflow_id={} run_id={}'.format(self.execution.workflow_id, self.execution.run_id))
+        execution = self.get_execution_context()
+        print('DEBUG: execution context: {}'.format(execution))
         y = self.submit(increment, x)
         yy = self.submit(Delay, t, y)
         z = self.submit(double, y)

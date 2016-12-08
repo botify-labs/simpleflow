@@ -143,3 +143,12 @@ class Executor(object):
     @deprecated
     def before_run(self):
         return self.before_replay()
+
+    def get_execution_context(self):
+        """
+        Get an execution context.
+        The content is specific to each executor.
+        :return: context
+        :rtype: dict
+        """
+        return {}
