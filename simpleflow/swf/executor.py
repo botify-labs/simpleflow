@@ -167,7 +167,7 @@ class Executor(executor.Executor):
                  force_activities=None):
         super(Executor, self).__init__(workflow)
         self._history = None
-        self._execution = None
+        self._execution_context = {}
         self.domain = domain
         self.task_list = task_list
         self.repair_with = repair_with
@@ -553,8 +553,7 @@ class Executor(executor.Executor):
         history = decision_response.history
         self._history = History(history)
         self._history.parse()
-        self._execution = decision_response.execution
-        self._workflow.execution = self._execution
+        self.build_execution_context(decision_response)
 
         workflow_started_event = history[0]
         input = workflow_started_event.input
@@ -653,3 +652,27 @@ class Executor(executor.Executor):
 
     def run(self, decision_response):
         return self.replay(decision_response)
+
+    def get_execution_context(self):
+        return self._execution_context
+
+    def build_execution_context(self, decision_response):
+        """
+        Extract data from the execution and history.
+        :param decision_response:
+        :type  decision_response: swf.responses.Response
+        """
+        execution = decision_response.execution
+        if not execution:
+            # For tests that don't provide an execution object.
+            return
+
+        history = decision_response.history
+        workflow_started_event = history[0]
+        self._execution_context = dict(
+            name=execution.workflow_type.name,
+            version=execution.workflow_type.version,
+            workflow_id=execution.workflow_id,
+            run_id=execution.run_id,
+            tag_list=getattr(workflow_started_event, 'tag_list', None) or [],  # attribute is absent if no tagList
+        )

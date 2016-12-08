@@ -25,7 +25,6 @@ class Workflow(object):
     tag_list = None
     child_policy = None
     execution_timeout = None
-    execution = None
 
     def __init__(self, executor):
         self._executor = executor
@@ -161,3 +160,12 @@ class Workflow(object):
         :type history: simpleflow.history.History
         """
         raise NotImplementedError
+
+    def get_execution_context(self):
+        """
+        Get an execution context from the executor.
+        The content is specific to each executor.
+        :return: context
+        :rtype: dict
+        """
+        return self.executor.get_execution_context()
