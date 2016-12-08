@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+0.12.6
+~~~~~~
+
+- Replace ``execution`` object with a more flexible ``get_execution_method()`` (#177)
+- Fix README_SWF.rst format (#175)
+- Fix CONTRIBUTING.rst format
+- docs/conf.py: remove relative import
+
 0.12.5
 ~~~~~~
 
