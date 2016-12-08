@@ -10,6 +10,7 @@ from moto import mock_swf
 
 import swf.models
 import swf.models.decision
+import swf.models.workflow
 from simpleflow.utils import json_dumps
 from swf.models.history import builder
 from swf.responses import Response
@@ -899,12 +900,14 @@ class ATestDefinitionWithBigDecisionResponse(ATestWorkflow):
     but 32kB are reserved for the context, so the true limit is 50kB, hence the
     test below (cannot schedule 2 * 30kB decisions).
     """
+
     def run(self):
         msg = "*" * 30000  # 30kB input at least
         results = []
         results.append(self.submit(print_message, msg))
         results.append(self.submit(print_message, msg))
         futures.wait(*results)
+
 
 @mock_swf
 def test_workflow_with_big_decision_response():
@@ -916,7 +919,6 @@ def test_workflow_with_big_decision_response():
     # decisions and a timer to force the scheduling of the remaining tasks.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     assert len(decisions) == 2
-    print(decisions)
     assert decisions[0].type == 'ScheduleActivityTask'
     assert decisions[1].type == 'StartTimer'
 
@@ -1410,3 +1412,36 @@ def test_task_naming():
     for i in range(0, len(expected)):
         decision = decisions[i]['scheduleActivityTaskDecisionAttributes']
         assert decision['activityId'] == expected[i]
+
+
+@mock_swf
+def test_execution_context():
+    workflow = ATestTaskNaming
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow, input={})
+
+    decisions, _ = executor.replay(
+        Response(
+            history=history,
+            execution=swf.models.workflow.WorkflowExecution(
+                domain=DOMAIN,
+                workflow_id='a_workflow_id',
+                run_id='a_run_id',
+                workflow_type=swf.models.workflow.WorkflowType(
+                    domain=DOMAIN,
+                    name='the_workflow_name',
+                    version='the_workflow_version',
+                ),
+            )
+        )
+    )
+    context = executor.get_execution_context()
+    expected = {
+        'name': 'the_workflow_name',
+        'version': 'the_workflow_version',
+        'workflow_id': 'a_workflow_id',
+        'run_id': 'a_run_id',
+        'tag_list': [],
+    }
+    assert expected == context

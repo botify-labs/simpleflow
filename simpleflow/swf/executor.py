@@ -167,7 +167,7 @@ class Executor(executor.Executor):
                  force_activities=None):
         super(Executor, self).__init__(workflow)
         self._history = None
-        self._execution_context = None
+        self._execution_context = {}
         self.domain = domain
         self.task_list = task_list
         self.repair_with = repair_with
@@ -663,13 +663,16 @@ class Executor(executor.Executor):
         :type  decision_response: swf.responses.Response
         """
         execution = decision_response.execution
+        if not execution:
+            # For tests that don't provide an execution object.
+            return
+
         history = decision_response.history
         workflow_started_event = history[0]
-        # The "if execution else None" are for tests that don't provide an execution object
         self._execution_context = dict(
-            name=execution.workflow_type.name if execution else None,
-            version=execution.workflow_type.version if execution else None,
-            workflow_id=execution.workflow_id if execution else None,
-            run_id=execution.run_id if execution else None,
-            tag_list=getattr(workflow_started_event, 'tag_list', []),
+            name=execution.workflow_type.name,
+            version=execution.workflow_type.version,
+            workflow_id=execution.workflow_id,
+            run_id=execution.run_id,
+            tag_list=getattr(workflow_started_event, 'tag_list', None) or [],  # attribute is absent if no tagList
         )
