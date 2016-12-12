@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import abc
 
+from simpleflow.base import Submittable
 from . import futures
 from .activity import Activity
 
@@ -15,7 +16,7 @@ def get_actual_value(value):
     return value
 
 
-class Task(object):
+class Task(Submittable):
     """A Task represents a work that can be scheduled for execution.
 
     """

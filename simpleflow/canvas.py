@@ -1,5 +1,6 @@
 from . import futures
 from .activity import Activity
+from .base import Submittable
 from .task import ActivityTask
 
 
@@ -19,8 +20,8 @@ class FuncGroup(object):
 
     def instantiate_task(self):
         inst = self.func(*self.args, **self.kwargs)
-        if not isinstance(inst, (ActivityTask, Group)):
-            raise TypeError('FuncGroup submission should return a Group or an ActivityTask,'
+        if not isinstance(inst, (Submittable, Group)):
+            raise TypeError('FuncGroup submission should return a Group or a Submittable,'
                             ' got {} instead'.format(type(inst)))
         return inst
 
@@ -94,12 +95,12 @@ class Group(object):
         self.max_parallel = options.pop('max_parallel', None)
 
     def append(self, *args, **kwargs):
-        if isinstance(args[0], (ActivityTask, Group)):
+        if isinstance(args[0], (Submittable, Group)):
             self.activities.append(args[0])
         elif isinstance(args[0], Activity):
             self.activities.append(ActivityTask(*args, **kwargs))
         else:
-            raise ValueError('{} should be an ActivityTask or an Activity'.format(args[0]))
+            raise ValueError('{} should be a Submittable or an Activity'.format(args[0]))
 
     def submit(self, executor):
         return GroupFuture(self.activities, executor, self.max_parallel)
@@ -125,11 +126,14 @@ class GroupFuture(futures.Future):
 
     def _submit_activity(self, act):
         if isinstance(act, ActivityTask):
+            # Need to unwrap the ActivityTask since the SWF executor will build a swf.ActivityTask
             return self.executor.submit(act.activity, *act.args, **act.kwargs)
         elif isinstance(act, (Group, FuncGroup)):
             return act.submit(self.executor)
+        elif isinstance(act, Submittable):
+            return self.executor.submit(act)
 
-        raise TypeError('Wrong type for `act` ({}). Expecting `ActivityTask`, `Group` or `FuncGroup`'.format(type(act)))
+        raise TypeError('Wrong type for `act` ({}). Expecting `Submittable`, `Group` or `FuncGroup`'.format(type(act)))
 
     def sync_state(self):
         if all(a.finished for a in self.futures) and self._futures_contain_all_activities:

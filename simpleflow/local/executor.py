@@ -1,11 +1,13 @@
 import logging
 
 from simpleflow import (
+    Activity,
     exceptions,
     executor,
     futures,
 )
-from ..task import ActivityTask
+from simpleflow.base import Submittable
+from simpleflow.task import ActivityTask
 
 
 logger = logging.getLogger(__name__)
@@ -22,7 +24,14 @@ class Executor(executor.Executor):
 
         future = futures.Future()
 
-        task = ActivityTask(func, *args, **kwargs)
+        if isinstance(func, Submittable):
+            task = func  # *args, **kwargs already resolved.
+            func = task.activity  # TODO
+        elif isinstance(func, Activity):
+            task = ActivityTask(func, *args, **kwargs)
+        else:
+            raise TypeError('invalid type {} for {}'.format(
+                type(func), func))
 
         try:
             future._result = task.execute()
