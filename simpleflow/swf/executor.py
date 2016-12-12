@@ -226,7 +226,7 @@ class Executor(executor.Executor):
         state = event['state']
 
         if state == 'scheduled':
-            future._state = futures.PENDING
+            pass
         elif state == 'schedule_failed':
             if event['cause'] == 'ACTIVITY_TYPE_DOES_NOT_EXIST':
                 activity_type = swf.models.ActivityType(
@@ -250,24 +250,23 @@ class Executor(executor.Executor):
             ))
             return None
         elif state == 'started':
-            future._state = futures.RUNNING
+            future.set_running()
         elif state == 'completed':
-            future._state = futures.FINISHED
             result = event['result']
-            future._result = json.loads(result) if result else None
+            future.set_finished(json.loads(result) if result else None)
         elif state == 'canceled':
-            future._state = futures.CANCELLED
+            future.set_cancelled()
         elif state == 'failed':
-            future._state = futures.FINISHED
-            future._exception = exceptions.TaskFailed(
+            exception = exceptions.TaskFailed(
                 name=event['id'],
                 reason=event['reason'],
                 details=event.get('details'))
+            future.set_exception(exception)
         elif state == 'timed_out':
-            future._state = futures.FINISHED
-            future._exception = exceptions.TimeoutError(
+            exception = exceptions.TimeoutError(
                 event['timeout_type'],
                 event['timeout_value'])
+            future.set_exception(exception)
 
         return future
 
