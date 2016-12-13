@@ -158,6 +158,9 @@ def swf_identity():
         for key, value in extra_keys.items():
             identity[key] = value
 
+    # remove null values
+    identity = { k: v for k, v in identity.items() if v is not None }
+
     # serialize the result
     result = json_dumps(identity)
 

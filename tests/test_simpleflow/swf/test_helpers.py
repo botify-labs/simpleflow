@@ -68,3 +68,19 @@ class TestSwfHelpers(unittest.TestCase):
 
         expect(identity["hostname"]).to.equal("foo.example.com")
         expect(identity).to_not.have.key("version")
+
+    def test_swf_identity_with_null_values_in_environment(self, mock_pid, mock_user, mock_host):
+        """
+        SIMPLEFLOW_IDENTITY null values can remove default keys.
+        """
+        mock_host.return_value = "foo.example.com"
+        mock_user.return_value = "root"
+        mock_pid.return_value = 1234
+        os.environ["SIMPLEFLOW_IDENTITY"] = '{"foo":null,"user":null}'
+
+        identity = json.loads(swf_identity())
+
+        # key removed
+        expect(identity).to_not.have.key("user")
+        # key ignored
+        expect(identity).to_not.have.key("foo")
