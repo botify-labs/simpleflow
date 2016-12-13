@@ -1,5 +1,6 @@
 import json
 from mock import patch
+import os
 import unittest
 
 from sure import expect
@@ -11,6 +12,10 @@ from simpleflow.swf.helpers import swf_identity
 @patch("getpass.getuser")
 @patch("os.getpid")
 class TestSwfHelpers(unittest.TestCase):
+    def tearDown(self):
+        if "SIMPLEFLOW_IDENTITY" in os.environ:
+            del os.environ["SIMPLEFLOW_IDENTITY"]
+
     def test_swf_identity_standard_case(self, mock_pid, mock_user, mock_host):
         mock_host.return_value = "foo.example.com"
         mock_user.return_value = "root"
@@ -35,3 +40,17 @@ class TestSwfHelpers(unittest.TestCase):
         mock_pid.return_value = 1234
 
         expect(swf_identity()).to.have.length_of(256)
+
+    def test_swf_identity_with_extra_environment(self, mock_pid, mock_user, mock_host):
+        """
+        SIMPLEFLOW_IDENTITY environment variable can provide extra keys.
+        """
+        mock_host.return_value = "foo.example.com"
+        mock_user.return_value = "root"
+        mock_pid.return_value = 1234
+        os.environ["SIMPLEFLOW_IDENTITY"] = '{"version":"1.2.3","hostname":"bar.example.com"}'
+
+        identity = json.loads(swf_identity())
+
+        expect(identity["hostname"]).to.equal("bar.example.com")
+        expect(identity).to.have.key("version").being.equal("1.2.3")

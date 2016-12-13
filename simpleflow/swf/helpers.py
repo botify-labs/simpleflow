@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import getpass
+import json
 import os
 import socket
 from importlib import import_module
@@ -141,8 +142,23 @@ def get_task(domain_name, workflow_id, task_id, details):
 
 
 def swf_identity():
-    return json_dumps({
+    # basic identity
+    identity = {
         'user': getpass.getuser(),          # system's user
         'hostname': socket.gethostname(),   # main hostname
         'pid': os.getpid(),                 # current pid
-    })[:256]  # May truncate value to fit with SWF limits
+    }
+
+    # adapt with extra keys from env
+    if "SIMPLEFLOW_IDENTITY" in os.environ:
+        extra_keys = json.loads(os.environ["SIMPLEFLOW_IDENTITY"])
+        for key, value in extra_keys.items():
+            identity[key] = value
+
+    # serialize the result
+    result = json_dumps(identity)
+
+    # truncate value to fit with SWF limits
+    truncated = result[:256]
+
+    return truncated
