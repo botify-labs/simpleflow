@@ -151,7 +151,10 @@ def swf_identity():
 
     # adapt with extra keys from env
     if "SIMPLEFLOW_IDENTITY" in os.environ:
-        extra_keys = json.loads(os.environ["SIMPLEFLOW_IDENTITY"])
+        try:
+            extra_keys = json.loads(os.environ["SIMPLEFLOW_IDENTITY"])
+        except:
+            extra_keys = {}
         for key, value in extra_keys.items():
             identity[key] = value
 
