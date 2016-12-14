@@ -155,11 +155,11 @@ def swf_identity():
             extra_keys = json.loads(os.environ["SIMPLEFLOW_IDENTITY"])
         except:
             extra_keys = {}
-        for key, value in extra_keys.items():
+        for key, value in iteritems(extra_keys):
             identity[key] = value
 
     # remove null values
-    identity = {k: v for k, v in identity.items() if v is not None}
+    identity = {k: v for k, v in iteritems(identity) if v is not None}
 
     # serialize the result
     result = json_dumps(identity)
