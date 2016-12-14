@@ -20,11 +20,20 @@ class Executor(executor.Executor):
     Executes all tasks synchronously in a single local process.
 
     """
+    def __init__(self, workflow):
+        super(Executor, self).__init__(workflow)
+        self.nb_activities = 0
+        self._history = []
+
     def submit(self, func, *args, **kwargs):
         logger.info('executing task {}(args={}, kwargs={})'.format(
             func, args, kwargs))
 
         future = futures.Future()
+
+        context = self.get_execution_context()
+        context["activity_id"] = str(self.nb_activities)
+        self.nb_activities += 1
 
         if isinstance(func, Submittable):
             task = func  # *args, **kwargs already resolved.
@@ -39,6 +48,9 @@ class Executor(executor.Executor):
 
         try:
             future._result = task.execute()
+            self._history.append([
+                context["activity_id"],
+                {}])
         except Exception as err:
             future._exception = err
             logger.info('rescuing exception: {}'.format(err))
@@ -62,3 +74,15 @@ class Executor(executor.Executor):
         self.on_completed()
         self.after_closed()
         return result
+
+    def after_closed(self):
+        return self._workflow.after_closed(self._history)
+
+    def get_execution_context(self):
+        return {
+            "name": "local",
+            "version": "1.0",
+            "run_id": "local",
+            "workflow_id": "local",
+            "tag_list": []
+        }

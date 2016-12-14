@@ -269,3 +269,12 @@ def get_task(workflow_execution, task_id, details=False):
     if details:
         rows[0].append(task.get('details'))
     return header, rows
+
+
+def dump_history_to_json(history):
+    history.parse()
+    events = list(chain(
+        history._activities.iteritems(),
+        history._child_workflows.iteritems(),
+    ))
+    return jsonify(events, headers=None)

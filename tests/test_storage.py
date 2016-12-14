@@ -57,3 +57,10 @@ class TestGroup(unittest.TestCase):
         self.assertEquals(
             storage.pull_content(self.bucket, "mykey.txt"),
             "42")
+
+    @mock_s3
+    def test_list(self):
+        self.create()
+        storage.push(self.bucket, "mykey.txt", self.tmp_filename)
+        keys = [k for k in storage.list(self.bucket, None)]
+        self.assertEquals(keys[0].key, "mykey.txt")

@@ -28,6 +28,8 @@ from simpleflow.task import (
     WorkflowTask as BaseWorkflowTask,
 )
 from simpleflow.utils import issubclass_, json_dumps, hex_hash
+from simpleflow.swf import constants
+from simpleflow.swf.stats.pretty import dump_history_to_json
 from simpleflow.utils import retry
 from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
@@ -736,24 +738,30 @@ class Executor(executor.Executor):
         self.after_closed()
         return [decision], {}
 
+    def history_json(self):
+        if not hasattr(self, '_history_json'):
+            history_dumped = dump_history_to_json(history)
+            self._history_json = json.loads(history_dumped)
+        return self._history_json
+
     def before_replay(self):
-        return self._workflow.before_replay(self._history)
+        return self._workflow.before_replay(self._history_json)
 
     def after_replay(self):
-        return self._workflow.after_replay(self._history)
+        return self._workflow.after_replay(self._history_json)
 
     def after_closed(self):
-        return self._workflow.after_closed(self._history)
+        return self._workflow.after_closed(self._history_json)
 
     def on_failure(self, reason, details=None):
         try:
-            self._workflow.on_failure(self._history, reason, details)
+            self._workflow.on_failure(self._history_json, reason, details)
         except NotImplementedError:
             pass
 
     def on_completed(self):
         try:
-            self._workflow.on_completed(self._history)
+            self._workflow.on_completed(self._history_json)
         except NotImplementedError:
             pass
 

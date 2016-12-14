@@ -54,6 +54,9 @@ def load(conf_module_name=None):
         default,
     )
 
+def str_or_none(val):
+    return val or None
+
 
 WORKFLOW_DEFAULT_TASK_LIST = str
 WORKFLOW_DEFAULT_VERSION = str
@@ -69,3 +72,7 @@ ACTIVITY_SCHEDULE_TO_START_TIMEOUT = str
 ACTIVITY_HEARTBEAT_TIMEOUT = str
 
 LOGGING = dict
+
+METROLOGY_REGION = str
+METROLOGY_BUCKET = str
+METROLOGY_PATH_PREFIX = str_or_none
