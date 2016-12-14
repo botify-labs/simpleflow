@@ -203,7 +203,13 @@ class Executor(executor.Executor):
             arguments = json_dumps({"args": args, "kwargs": kwargs}, sort_keys=True)
             suffix = hashlib.md5(arguments.encode('utf-8')).hexdigest()
 
-        task_id = '{name}-{idx}'.format(name=a_task.name, idx=suffix)
+        if isinstance(a_task, (WorkflowTask, )):
+            # Some task types must have globally unique names.
+            suffix = '{}-{}-{}'.format(self._workflow_id, self._run_id, suffix)
+
+        task_id = '{name}-{suffix}'.format(name=a_task.name, suffix=suffix)
+        if len(task_id) > 256:  # Better safe than sorry...
+            task_id = hashlib.md5(task_id.encode('utf-8')).hexdigest()
         return task_id
 
     def _get_future_from_activity_event(self, event):
@@ -731,4 +737,15 @@ class Executor(executor.Executor):
             workflow_id=execution.workflow_id,
             run_id=execution.run_id,
             tag_list=getattr(workflow_started_event, 'tag_list', None) or [],  # attribute is absent if no tagList
+            continued_execution_run_id=getattr(workflow_started_event, 'continued_execution_run_id', None),
+            parent_workflow_id=getattr(workflow_started_event, 'parent_workflow_execution', {}).get('workflowId'),
+            parent_run_id=getattr(workflow_started_event, 'parent_workflow_execution', {}).get('runId'),
         )
+
+    @property
+    def _workflow_id(self):
+        return self._execution_context.get('workflow_id')
+
+    @property
+    def _run_id(self):
+        return self._execution_context.get('run_id')
