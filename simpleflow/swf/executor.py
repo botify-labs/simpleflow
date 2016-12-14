@@ -20,9 +20,10 @@ from simpleflow import (
 from simpleflow.activity import Activity, PRIORITY_NOT_SET
 from simpleflow.base import Submittable
 from simpleflow.history import History
+from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
-from simpleflow.swf.task import ActivityTask, WorkflowTask
+from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask
 from simpleflow.task import (
     ActivityTask as BaseActivityTask,
     WorkflowTask as BaseWorkflowTask,
@@ -332,6 +333,35 @@ class Executor(executor.Executor):
 
         return future
 
+    def get_future_from_signal_event(self, a_task, event):
+        """Maps a signal event to a Future with the corresponding
+        state.
+
+        :param a_task: currently unused
+        :param event: child workflow event
+        :type  event: dict[str, Any]
+        """
+        future = futures.Future()
+        if not event:
+            return future
+        state = event['state']
+        if state == 'signaled':
+            future.set_finished(event['input'])
+
+        logger.debug('signal {} is signaled (future: {})'.format(event['signal_name'], future))
+        return future
+
+    def get_future_from_signal(self, signal_name):
+        """
+
+        :param signal_name:
+        :type signal_name: str
+        :return:
+         :rtype: futures.Future
+        """
+        event = self._history.signals.get(signal_name)
+        return self.get_future_from_signal_event(None, event)
+
     @staticmethod
     def find_activity_event(a_task, history):
         """
@@ -361,11 +391,25 @@ class Executor(executor.Executor):
         """
         return history.child_workflows.get(a_task.id)
 
+    @staticmethod
+    def find_signal_event(a_task, history):
+        """
+        Get the event corresponding to a signal, if any.
+
+        :param a_task:
+        :type a_task: SignalTask
+        :param history:
+        :type history: simpleflow.history.History
+        :return:
+        :rtype: Optional[dict]
+        """
+        return history.signals.get(a_task.name)
+
     def find_event(self, a_task, history):
         """
         Get the event corresponding to an activity or child workflow, if any
         :param a_task:
-        :type a_task: ActivityTask | WorkflowTask
+        :type a_task: ActivityTask | WorkflowTask | SignalTask
         :param history:
         :type history: simpleflow.history.History
         :return:
@@ -375,6 +419,7 @@ class Executor(executor.Executor):
         event_type_to_finder = {
             ActivityTask: self.find_activity_event,
             WorkflowTask: self.find_child_workflow_event,
+            SignalTask: self.find_signal_event,
         }
         finder = event_type_to_finder.get(type(a_task))
         if finder:
@@ -442,7 +487,7 @@ class Executor(executor.Executor):
         Let a task schedule itself.
         If too many decisions are in flight, add a timer decision and raise ExecutionBlocked.
         :param a_task:
-        :type a_task: ActivityTask | WorkflowTask
+        :type a_task: ActivityTask | WorkflowTask | SignalTask
         :param task_list:
         :type task_list: Optional[str]
         :return:
@@ -456,6 +501,12 @@ class Executor(executor.Executor):
                 logger.debug('Not resubmitting task {}'.format(a_task.name))
                 return
             self._idempotent_tasks_to_submit.add(task_identifier)
+
+        # if isinstance(a_task, SignalTask):
+        #     if a_task.workflow_id is None:
+        #         a_task.workflow_id = self._execution_context['workflow_id']
+        #         if a_task.run_id is None:
+        #             a_task.run_id = self._execution_context['run_id']
 
         # NB: ``decisions`` contains a single decision.
         decisions = a_task.schedule(self.domain, task_list, priority=self.current_priority)
@@ -507,7 +558,7 @@ class Executor(executor.Executor):
         If in repair mode, we may fake the task to repair from the previous history.
 
         :param a_task:
-        :type a_task: ActivityTask | WorkflowTask
+        :type a_task: ActivityTask | WorkflowTask | SignalTask
         :param args:
         :param args: list
         :type kwargs:
@@ -552,6 +603,7 @@ class Executor(executor.Executor):
             event_type_to_future = {  # TODO move elsewhere
                 'activity': self.resume_activity,
                 'child_workflow': self.resume_child_workflow,
+                'signal': self.get_future_from_signal_event,
             }
             ttf = event_type_to_future.get(event['type'])
             if ttf:
@@ -632,6 +684,10 @@ class Executor(executor.Executor):
                 a_task = ActivityTask(func, *args, **kwargs)
             elif issubclass_(func, Workflow):
                 a_task = WorkflowTask(self, func, *args, **kwargs)
+            elif isinstance(func, WaitForSignal):
+                future = self.get_future_from_signal(func.signal_name)
+                logger.debug('submitted WaitForSignalTask({}): future={}'.format(func.signal_name, future))
+                return future
             else:
                 raise TypeError('invalid type {} for {}'.format(
                     type(func), func))
@@ -808,3 +864,23 @@ class Executor(executor.Executor):
     @property
     def _run_id(self):
         return self._execution_context.get('run_id')
+
+    def signal(self, name, *args, **kwargs):
+        """
+        Send a signal.
+        :param name:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        return SignalTask(
+                name,
+                workflow_id=self._workflow_id,
+                run_id=self._run_id,
+                *args,
+                **kwargs
+            )
+
+    def wait_signal(self, name):
+        logger.debug('wait_signal({})'.format(name))
+        return WaitForSignal(name)

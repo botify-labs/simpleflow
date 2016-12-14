@@ -151,3 +151,12 @@ class Executor(object):
         :rtype: dict
         """
         return {}
+
+    def signal(self, name, *args, **kwargs):
+        raise NotImplementedError
+
+    def wait_signal(self, name):
+        raise NotImplementedError
+
+    def get_future_from_signal(self, name):
+        raise NotImplementedError

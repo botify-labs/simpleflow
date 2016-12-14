@@ -15,6 +15,8 @@ class History(object):
     :type _activities: collections.OrderedDict[str, dict[str, Any]]
     :ivar _child_workflows: child workflow events
     :type _child_workflows: collections.OrderedDict[str, dict[str, Any]]
+    :ivar _signals: activity events
+    :type _signals: collections.OrderedDict[str, dict[str, Any]]
     :ivar _tasks: ordered list of tasks/etc
     :type _tasks: list[dict[str, Any]]
     """
@@ -23,6 +25,7 @@ class History(object):
         self._history = history
         self._activities = collections.OrderedDict()
         self._child_workflows = collections.OrderedDict()
+        self._signals = collections.OrderedDict()
         self._tasks = []
 
     @property
@@ -36,10 +39,19 @@ class History(object):
     @property
     def child_workflows(self):
         """
-        :return: activities
+        :return: child WFs
         :rtype: collections.OrderedDict[str, dict[str, Any]]
         """
         return self._child_workflows
+
+    @property
+    @property
+    def signals(self):
+        """
+        :return: signals
+        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        """
+        return self._signals
 
     @property
     def tasks(self):
@@ -285,9 +297,30 @@ class History(object):
             workflow['terminated_id'] = event.id
             workflow['terminated_timestamp'] = event.timestamp
 
+    def parse_workflow_event(self, events, event):
+        """
+        Parse a workflow event.
+        :param events:
+        :param event:
+        """
+        if event.state == 'signaled':
+            signal = {
+                'type': 'signal',
+                'signal_name': event.signal_name,
+                'state': event.state,
+                'external_initiated_event_id': getattr(event, 'external_initiated_event_id', None),
+                'external_run_id': getattr(event, 'external_workflow_execution', {}).get('runId'),
+                'external_workflow_id': getattr(event, 'external_workflow_execution', {}).get('workflowId'),
+                'input': event.input,
+                'timestamp': event.timestamp,
+            }
+            self._signals[event.signal_name] = signal
+            self._tasks.append(signal)
+
     TYPE_TO_PARSER = {
         'ActivityTask': parse_activity_event,
         'ChildWorkflowExecution': parse_child_workflow_event,
+        'WorkflowExecution': parse_workflow_event,
     }
 
     def parse(self):

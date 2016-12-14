@@ -152,3 +152,30 @@ class WorkflowTask(task.WorkflowTask):
         )
 
         return [decision]
+
+
+class SignalTask(task.SignalTask):
+    """
+    Signal "task" on SWF.
+    """
+    def __init__(self, name, workflow_id=None, run_id=None, *args, **kwargs):
+        super(SignalTask, self).__init__(name, *args, **kwargs)
+        self.workflow_id = workflow_id
+        self.run_id = run_id
+
+    def schedule(self, domain, task_list):
+        input = {
+            'args': self.args,
+            'kwargs': self.kwargs,
+        }
+        logger.debug('scheduling signal {}'.format(self.name))
+
+        decision = swf.models.decision.ExternalWorkflowExecutionDecision()
+        decision.signal(
+            signal_name=self.name,
+            input=input,
+            workflow_id=self.workflow_id,
+            run_id=self.run_id,
+        )
+
+        return [decision]

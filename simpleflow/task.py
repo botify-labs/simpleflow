@@ -131,3 +131,23 @@ class WorkflowTask(Task):
     def execute(self):
         workflow = self.workflow(self.executor)
         return workflow.run(*self.args, **self.kwargs)
+
+
+class SignalTask(Task):
+    """
+    Signal.
+    """
+
+    def __init__(self, name, *args, **kwargs):
+        self._name = name
+        self.args = self.resolve_args(*args)
+        self.kwargs = self.resolve_kwargs(**kwargs)
+
+    @property
+    def name(self):
+        """
+
+        :return:
+        :rtype: str
+        """
+        return self._name
