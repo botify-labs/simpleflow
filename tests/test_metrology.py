@@ -9,7 +9,7 @@ import boto
 from moto import mock_s3
 
 
-@with_attributes()
+@with_attributes(task_list='test_task_list')
 class MyMetrologyTask(metrology.MetrologyTask):
 
     def __init__(self, num):
@@ -22,6 +22,13 @@ class MyMetrologyTask(metrology.MetrologyTask):
 
 
 class MyWorkflow(metrology.MetrologyWorkflow):
+    name = 'test_workflow'
+    version = 'test_version'
+    task_list = 'test_task_list'
+    decision_tasks_timeout = '300'
+    execution_timeout = '3600'
+    tag_list = None  # FIXME should be optional
+    child_policy = None  # FIXME should be optional
 
     def run(self, num):
         self.submit(MyMetrologyTask, num)

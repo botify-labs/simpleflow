@@ -10,6 +10,8 @@ from simpleflow.base import Submittable
 from simpleflow.task import ActivityTask, WorkflowTask
 from simpleflow.activity import Activity
 from simpleflow.workflow import Workflow
+from swf.models.history import builder
+from simpleflow.history import History
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +25,6 @@ class Executor(executor.Executor):
     def __init__(self, workflow):
         super(Executor, self).__init__(workflow)
         self.nb_activities = 0
-        self._history = []
 
     def submit(self, func, *args, **kwargs):
         logger.info('executing task {}(args={}, kwargs={})'.format(
@@ -48,18 +49,24 @@ class Executor(executor.Executor):
 
         try:
             future._result = task.execute()
-            self._history.append([
-                context["activity_id"],
-                {}])
+            state = 'completed'
         except Exception as err:
             future._exception = err
             logger.info('rescuing exception: {}'.format(err))
             if isinstance(func, Activity) and func.raises_on_failure:
                 message = err.args[0] if err.args else ''
                 raise exceptions.TaskFailed(func.name, message)
+            state = 'failed'
         finally:
             future._state = futures.FINISHED
 
+        self._history.add_activity_task(
+            func,
+            decision_id=None,
+            last_state=state,
+            activity_id=context["activity_id"],
+            input={'args': args, 'kwargs': kwargs},
+            result=future._result)
         return future
 
     def run(self, input=None):
@@ -68,8 +75,15 @@ class Executor(executor.Executor):
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
 
+        self._history = builder.History(
+            self._workflow.__class__,
+            input=input)
+
         self.before_replay()
         result = self.run_workflow(*args, **kwargs)
+
+        self._history = History(self._history)
+        self._history.parse()
         self.after_replay()
         self.on_completed()
         self.after_closed()

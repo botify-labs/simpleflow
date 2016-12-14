@@ -11,6 +11,7 @@ from importlib import import_module
 from .workflow import Workflow
 from .task import Task
 from . import storage, settings
+from .swf.stats.pretty import dump_history_to_json
 
 ACTIVITY_KEY_RE = re.compile(r'activity\.(.+)\.json')
 
@@ -147,6 +148,11 @@ class MetrologyWorkflow(Workflow):
         activity_keys = [obj for obj in storage.list(
             settings.METROLOGY_BUCKET,
             self.metrology_path)]
+
+        print history
+        history_dumped = dump_history_to_json(history)
+        history = json.loads(history_dumped)
+
         for key in activity_keys:
             if not key.key.startswith(os.path.join(self.metrology_path, 'activity.')):
                 continue

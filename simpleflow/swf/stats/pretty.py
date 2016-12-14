@@ -1,6 +1,7 @@
 import operator
 from datetime import datetime
 from functools import partial, wraps
+from itertools import chain
 
 from simpleflow import compat
 from simpleflow.history import History
@@ -269,7 +270,6 @@ def get_task(workflow_execution, task_id, details=False):
     if details:
         rows[0].append(task.get('details'))
     return header, rows
-
 
 def dump_history_to_json(history):
     history.parse()
