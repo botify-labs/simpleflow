@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+
+import re
 from builtins import range
 
 import functools
@@ -42,8 +44,6 @@ class ATestWorkflow(Workflow):
     task_list = 'test_task_list'
     decision_tasks_timeout = '300'
     execution_timeout = '3600'
-    tag_list = None  # FIXME should be optional
-    child_policy = None  # FIXME should be optional
 
 
 def check_task_scheduled_decision(decision, task):
@@ -787,8 +787,8 @@ def test_workflow_with_child_workflow():
     workflow = ATestDefinitionChildWorkflow
     executor = Executor(DOMAIN, workflow)
 
-    # FIXME the original test only contains args, and check both keys are present.
-    # FIXME But their order is unspecified from one execution to the next
+    # FIXME Py3 the original test only contains args, and check both keys are present.
+    # FIXME Py3 But dict order is unspecified from one execution to the next
     input = {'args': (1,), 'kwargs': {}}
     history = builder.History(workflow, input=input)
 
@@ -805,7 +805,7 @@ def test_workflow_with_child_workflow():
             'input': json_dumps(input),
             'workflowType': {
                 'version': 'test_version',
-                'name': 'test_workflow'
+                'name': 'tests.test_dataflow.ATestDefinition'
             },
             'taskStartToCloseTimeout': '300'
         },
@@ -830,6 +830,114 @@ def test_workflow_with_child_workflow():
     workflow_completed.complete(result=json_dumps(4))
 
     assert decisions[0] == workflow_completed
+
+
+def test_workflow_with_child_workflow_failed():
+    workflow = ATestDefinitionChildWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={'args': (1,)})
+
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    # Let's add the child workflow to the history to simulate its completion.
+    (history
+        .add_child_workflow(
+        workflow,
+        last_state='failed',
+        workflow_id='workflow-test_workflow-1',
+        task_list=ATestWorkflow.task_list,
+        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+    ))
+    # The child workflow fails and the executor should fail the
+    # main workflow.
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow.fail(reason='FAIL')
+
+    decision = decisions[0]
+    assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert reason == "Cannot replay the workflow: TaskFailed(('workflow-test_workflow-1', None, None))"
+
+
+def test_workflow_with_child_workflow_timed_out():
+    workflow = ATestDefinitionChildWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={'args': (1,)})
+
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    # Let's add the child workflow to the history to simulate its completion.
+    (history
+        .add_child_workflow(
+        workflow,
+        last_state='timed_out',
+        workflow_id='workflow-test_workflow-1',
+        task_list=ATestWorkflow.task_list,
+        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+    ))
+    # The child workflow fails and the executor should fail the
+    # main workflow.
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow.fail(reason='timed out')
+
+    decision = decisions[0]
+    assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert re.match(r'Cannot replay the workflow: TimeoutError\(.*\)', reason)
+
+
+def test_workflow_with_child_workflow_canceled():
+    workflow = ATestDefinitionChildWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={'args': (1,)})
+
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    # Let's add the child workflow to the history to simulate its completion.
+    (history
+        .add_child_workflow(
+        workflow,
+        last_state='canceled',
+        workflow_id='workflow-test_workflow-1',
+        task_list=ATestWorkflow.task_list,
+        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+    ))
+    # The child workflow fails and the executor should fail the
+    # main workflow.
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow.cancel()
+
+    decision = decisions[0]
+    assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert re.match(r"Cannot replay the workflow: TaskCanceled\(.*\)", reason)
+
+
+def test_workflow_with_child_workflow_terminated():
+    workflow = ATestDefinitionChildWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={'args': (1,)})
+
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    # Let's add the child workflow to the history to simulate its completion.
+    (history
+        .add_child_workflow(
+        workflow,
+        last_state='terminated',
+        workflow_id='workflow-test_workflow-1',
+        task_list=ATestWorkflow.task_list,
+        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+    ))
+    # The child workflow fails and the executor should fail the
+    # main workflow.
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow.terminate()
+
+    decision = decisions[0]
+    assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert reason == "Cannot replay the workflow: TaskTerminated()"
 
 
 class ATestDefinitionMoreThanMaxDecisions(ATestWorkflow):
@@ -1404,8 +1512,9 @@ def test_task_naming():
         "activity-tests.data.activities.triple-bdc09455c37471e0ba7397350413a5e6",
         # idempotent task, with arg 2
         "activity-tests.data.activities.triple-12036b25db61ae6cadf7a003ff523029",
-        # idempotent task, with arg 2 too => same task id
-        "activity-tests.data.activities.triple-12036b25db61ae6cadf7a003ff523029",
+        # idempotent, not rescheduled
+        # # idempotent task, with arg 2 too => same task id
+        # "activity-tests.data.activities.triple-12036b25db61ae6cadf7a003ff523029",
         # class-based task, non idempotent
         "activity-tests.data.activities.Tetra-1",
     ]
@@ -1445,3 +1554,53 @@ def test_execution_context():
         'tag_list': [],
     }
     assert expected == context
+
+
+class ATestDefinitionChildWithIdWorkflow(ATestWorkflow):
+    name = 'test_child_workflow'
+
+    @classmethod
+    def get_workflow_id(cls, *args, **kwargs):
+        return kwargs.get('workflow_name', None)
+
+    def run(self, *args, **kwargs):
+        return 42
+
+
+class ATestDefinitionParentWorkflow(ATestWorkflow):
+    name = 'test_parent_workflow'
+
+    def run(self):
+        future = self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name='workflow-child-one-1')
+        print(future.result)
+
+
+@mock_swf
+def test_workflow_task_naming():
+    workflow = ATestDefinitionParentWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={})
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    assert decisions == [
+        {
+            'decisionType': 'StartChildWorkflowExecution',
+            'startChildWorkflowExecutionDecisionAttributes': {
+                'taskList': {
+                    'name': 'test_task_list'
+                },
+                'workflowId': 'workflow-child-one-1',
+                'taskStartToCloseTimeout': '300',
+                'executionStartToCloseTimeout': '3600',
+                'workflowType': {
+                    'name': 'tests.test_dataflow.ATestDefinitionChildWithIdWorkflow',
+                    'version': 'test_version'
+                },
+                'input': json_dumps(
+                    {
+                        "args": [],
+                        "kwargs": {'workflow_name': 'workflow-child-one-1'},
+                    }
+                )
+            }
+        }
+    ]

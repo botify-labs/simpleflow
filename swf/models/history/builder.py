@@ -385,7 +385,7 @@ class History(swf.models.History):
                 'executionStartToCloseTimeout': '432000',
                 'input': json_dumps(input) if input is not None else '{}',
                 'tagList': tag_list,
-                'taskList': task_list,
+                'taskList': {'name': task_list},
                 'taskStartToCloseTimeout': task_start_to_close_timeout,
                 'workflowId': workflow_id,
                 'workflowType': {
