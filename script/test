@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # The AWS_DEFAULT_REGION parameter determines the region used for SWF
 # Leaving it to a value different than "us-east-1" would break moto,
@@ -22,6 +23,13 @@ export SWF_CONNECTION_RETRIES=1
 # Don't run real SWF requests if a cassette doesn't match
 # See tests/integration/README.md for instructions about cassettes updating
 export SIMPLEFLOW_VCR_RECORD_MODE=none
+
+# check code style
+# TODO: add flake8 or something better (and check if it overlaps)
+if grep -r -F -e ".items()" -e ".iteritems()" swf/ simpleflow/; then
+  echo "Error: please use future.utils' iteritems(dict) on the files above!" >&2
+  exit 1
+fi
 
 # run tests
 py.test --no-success-flaky-report -q $PYTEST_OPTIONS $*
