@@ -24,6 +24,8 @@ class Task(Submittable):
 
     id = None
     idempotent = False
+    args = []
+    kwargs = {}
 
     @abc.abstractproperty
     def name(self):

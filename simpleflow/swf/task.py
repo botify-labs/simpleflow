@@ -48,19 +48,19 @@ class ActivityTask(task.ActivityTask):
             task_list = activity.task_list
         task_timeout = kwargs.get(
             'task_timeout',
-            str(activity.task_start_to_close_timeout),
+            activity.task_start_to_close_timeout,
         )
         duration_timeout = kwargs.get(
             'duration_timeout',
-            str(activity.task_schedule_to_close_timeout),
+            activity.task_schedule_to_close_timeout,
         )
         schedule_timeout = kwargs.get(
             'schedule_timeout',
-            str(activity.task_schedule_to_start_timeout),
+            activity.task_schedule_to_start_timeout,
         )
         heartbeat_timeout = kwargs.get(
             'heartbeat_timeout',
-            str(activity.task_heartbeat_timeout),
+            activity.task_heartbeat_timeout,
         )
 
         decision = swf.models.decision.ActivityTaskDecision(
@@ -70,10 +70,10 @@ class ActivityTask(task.ActivityTask):
             control=None,
             task_list=task_list,
             input=input,
-            task_timeout=task_timeout,
-            duration_timeout=duration_timeout,
-            schedule_timeout=schedule_timeout,
-            heartbeat_timeout=heartbeat_timeout,
+            task_timeout=str(task_timeout) if task_timeout else None,
+            duration_timeout=str(duration_timeout) if duration_timeout else None,
+            schedule_timeout=str(schedule_timeout) if schedule_timeout else None,
+            heartbeat_timeout=str(heartbeat_timeout) if heartbeat_timeout else None,
         )
 
         return [decision]

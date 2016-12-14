@@ -147,7 +147,7 @@ class Workflow(Submittable):
         :param details:
         :type details: Optional[str]
         """
-        raise NotImplementedError
+        pass
 
     def on_completed(self, history):
         """
@@ -156,7 +156,7 @@ class Workflow(Submittable):
         :param history:
         :type history: simpleflow.history.History
         """
-        raise NotImplementedError
+        pass
 
     def get_execution_context(self):
         """
