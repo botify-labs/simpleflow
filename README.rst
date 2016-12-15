@@ -195,6 +195,12 @@ In that case the environment variable has no effect for now.
 The number of retries for accessing SWF can be controlled via ``SWF_CONNECTION_RETRIES``
 (defaults to 5).
 
+The identity of SWF activity workers and deciders can be controlled via ``SIMPLEFLOW_IDENTITY``
+which should be a JSON-serialized string representing ``{ "key": "value" }`` pairs that
+adds up (or override) the basic identity provided by simpleflow. If some value is null in
+this JSON map, then the key is removed from the final SWF identity.
+
+
 List Workflow Executions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
