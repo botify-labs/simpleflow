@@ -58,3 +58,12 @@ class TimeoutError(Exception):
         return '{}({})'.format(
             self.__class__.__name__,
             self.timeout_type)
+
+
+class TaskCanceled(Exception):
+    def __init__(self, details=None):
+        self.details = details
+
+
+class TaskTerminated(Exception):
+    pass

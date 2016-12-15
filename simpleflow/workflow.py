@@ -21,10 +21,6 @@ class Workflow(object):
     # These are needed for workflow on SWF
     name = None
     version = None
-    task_list = None
-    tag_list = None
-    child_policy = None
-    execution_timeout = None
 
     def __init__(self, executor):
         self._executor = executor
@@ -150,7 +146,7 @@ class Workflow(object):
         :param details:
         :type details: Optional[str]
         """
-        raise NotImplementedError
+        pass
 
     def on_completed(self, history):
         """
@@ -159,7 +155,7 @@ class Workflow(object):
         :param history:
         :type history: simpleflow.history.History
         """
-        raise NotImplementedError
+        pass
 
     def get_execution_context(self):
         """

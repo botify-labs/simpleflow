@@ -137,3 +137,15 @@ class Future(object):
             CANCELLED,
             FINISHED
         ]
+
+    # Internal methods
+    def set_running(self):
+        self._state = RUNNING
+
+    def set_exception(self, exception):
+        self._state = FINISHED
+        self._exception = exception
+
+    def set_finished(self, result):
+        self._state = FINISHED
+        self._result = result

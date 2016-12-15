@@ -1,4 +1,7 @@
 import collections
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class History(object):
@@ -156,13 +159,27 @@ class History(object):
     def parse_child_workflow_event(self, events, event):
         """Aggregate all the attributes of a workflow in a single entry.
 
-        Missing event state are:
+        See http://docs.aws.amazon.com/amazonswf/latest/apireference/API_HistoryEvent.html
 
-            - start_failed
-            - failed
-            - timed_out
-            - canceled
-            - terminated
+        - StartChildWorkflowExecutionInitiated: A request was made to start a
+          child workflow execution.
+        - StartChildWorkflowExecutionFailed: Failed to process
+          StartChildWorkflowExecution decision. This happens when the decision
+          is not configured properly, for example the workflow type specified
+          is not registered.
+        - ChildWorkflowExecutionStarted: A child workflow execution was
+          successfully started.
+        - ChildWorkflowExecutionCompleted: A child workflow execution, started
+          by this workflow execution, completed successfully and was closed.
+        - ChildWorkflowExecutionFailed: A child workflow execution, started by
+          this workflow execution, failed to complete successfully and was
+          closed.
+        - ChildWorkflowExecutionTimedOut: A child workflow execution, started
+          by this workflow execution, timed out and was closed.
+        - ChildWorkflowExecutionCanceled: A child workflow execution, started
+          by this workflow execution, was canceled and closed.
+        - ChildWorkflowExecutionTerminated: A child workflow execution, started
+          by this workflow execution, was terminated.
 
         :param events:
         :type events: list[swf.models.event.Event]
@@ -183,16 +200,27 @@ class History(object):
                 'initiated_event_id': event.id,
                 'raw_input': event.raw.get('input'),
                 'child_policy': event.child_policy,
-                'control': event.control,
-                'tag_list': event.tag_list,
-                'task_list': event.task_list,
+                'control': getattr(event, 'control', None),
+                'tag_list': getattr(event, 'tag_list', None),
+                'task_list': event.task_list['name'],
+                'initiated_event_timestamp': event.timestamp,
             }
-            workflow['initiated_event_timestamp'] = event.timestamp
             if event.workflow_id not in self._child_workflows:
                 self._child_workflows[event.workflow_id] = workflow
                 self._tasks.append(workflow)
             else:
+                logger.warning("start_initiated again for workflow {} (initiated @{}, we're @{})".format(
+                    event.workflow_id,
+                    self._child_workflows[event.workflow_id]['initiated_event_id'],
+                    event.id
+                ))
                 self._child_workflows[event.workflow_id].update(workflow)
+        elif event.state == 'start_failed':
+            workflow = get_workflow(event)
+            workflow['state'] = event.state
+            workflow['cause'] = event.cause
+            workflow['control'] = getattr(event, 'control', None)
+            workflow['start_failed_timestamp'] = event.timestamp
         elif event.state == 'started':
             workflow = get_workflow(event)
             workflow['state'] = event.state
@@ -206,6 +234,39 @@ class History(object):
             workflow['result'] = event.result
             workflow['completed_id'] = event.id
             workflow['completed_timestamp'] = event.timestamp
+        elif event.state == 'failed':
+            workflow = get_workflow(event)
+            workflow['state'] = event.state
+            workflow['reason'] = getattr(event, 'reason', None)
+            workflow['details'] = getattr(event, 'details', None)
+            workflow['failed_id'] = event.id
+            workflow['failed_timestamp'] = event.timestamp
+        elif event.state == 'timed_out':
+            workflow = get_workflow(event)
+            workflow['state'] = event.state
+            workflow['timeout_type'] = event.timeout_type
+            workflow['timeout_value'] = getattr(
+                events[workflow['initiated_event_id'] - 1],
+                '{}_timeout'.format(event.timeout_type.lower()),
+                None,
+            )
+            workflow['timed_out_id'] = event.id
+            workflow['timed_out_timestamp'] = event.timestamp
+            if 'retry' not in workflow:
+                workflow['retry'] = 0
+            else:
+                workflow['retry'] += 1
+        elif event.state == 'canceled':
+            workflow = get_workflow(event)
+            workflow['state'] = event.state
+            workflow['details'] = getattr(event, 'details', None)
+            workflow['canceled_id'] = event.id
+            workflow['canceled_timestamp'] = event.timestamp
+        elif event.state == 'terminated':
+            workflow = get_workflow(event)
+            workflow['state'] = event.state
+            workflow['terminated_id'] = event.id
+            workflow['terminated_timestamp'] = event.timestamp
 
     def parse(self):
         """

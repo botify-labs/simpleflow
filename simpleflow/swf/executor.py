@@ -63,9 +63,7 @@ def run_fake_activity_task(domain, task_list, result):
 @retry.with_delay(nb_times=3,
                   delay=retry.exponential,
                   on_exceptions=KeyError)
-def run_fake_child_workflow_task(domain, task_list, workflow_type_name,
-                                 workflow_type_version, workflow_id, input=None, result=None,
-                                 child_policy=None, control=None, tag_list=None):
+def run_fake_child_workflow_task(domain, task_list, result=None):
     conn = ConnectedSWFObject().connection
     resp = conn.poll_for_decision_task(
         domain,
@@ -101,17 +99,9 @@ def run_fake_task_worker(domain, task_list, former_event):
             args=(
                 domain,
                 task_list,
-                former_event['result'],
-                former_event['name'],  # workflow_type_name
-                former_event['version'],  # workflow_type_version
-                former_event['id'],  # workflow_id
             ),
             kwargs={
-                'input': former_event['raw_input'],
                 'result': former_event['result'],
-                'child_policy': former_event['child_policy'],
-                'control': former_event['control'],
-                'tag_list': former_event['tag_list'],
             },
         )
     else:
@@ -128,7 +118,7 @@ class TaskRegistry(dict):
     def add(self, a_task):
         """
         ID's are assigned sequentially by incrementing an integer. They start
-        from 0.
+        from 1.
 
         :type a_task: ActivityTask | WorkflowTask
         :returns:
@@ -188,6 +178,7 @@ class Executor(executor.Executor):
         self._open_activity_count = 0
         self._decisions = []
         self._tasks = TaskRegistry()
+        self._idempotent_tasks_to_submit = set()
 
     def _make_task_id(self, a_task, *args, **kwargs):
         """
@@ -203,6 +194,7 @@ class Executor(executor.Executor):
             # If idempotency is False or unknown, let's generate a task id by
             # incrementing an id after the a_task name.
             # (default strategy, backwards compatible with previous versions)
+            # This doesn't always work well for workflows; use get_workflow_id if needed.
             suffix = self._tasks.add(a_task)
         else:
             # If a_task is idempotent, we can do better and hash arguments.
@@ -211,7 +203,7 @@ class Executor(executor.Executor):
             arguments = json_dumps({"args": args, "kwargs": kwargs}, sort_keys=True)
             suffix = hashlib.md5(arguments.encode('utf-8')).hexdigest()
 
-        task_id = '{name}-{idx}'.format(name=a_task.name, idx=suffix)
+        task_id = '{name}-{suffix}'.format(name=a_task.name, suffix=suffix)
         return task_id
 
     def _get_future_from_activity_event(self, event):
@@ -271,8 +263,7 @@ class Executor(executor.Executor):
 
         return future
 
-    @staticmethod
-    def _get_future_from_child_workflow_event(event):
+    def _get_future_from_child_workflow_event(self, event):
         """Maps a child workflow event to a Future with the corresponding
         state.
 
@@ -283,12 +274,50 @@ class Executor(executor.Executor):
         state = event['state']
 
         if state == 'start_initiated':
-            future._state = futures.PENDING
+            pass  # future._state = futures.PENDING
+        elif state == 'start_failed':
+            if event['cause'] == 'WORKFLOW_TYPE_DOES_NOT_EXIST':
+                workflow_type = swf.models.WorkflowType(
+                    self.domain,
+                    name=event['name'],
+                    version=event['version'],
+                )
+                logger.info('Creating workflow type {} in domain {}'.format(
+                    workflow_type.name,
+                    self.domain.name,
+                ))
+                try:
+                    workflow_type.save()
+                except swf.exceptions.AlreadyExistsError:
+                    # Could have be created by a concurrent workflow execution.
+                    pass
+                return None
+            future.set_exception(exceptions.TaskFailed(
+                name=event['id'],
+                reason=event['cause'],
+                details=event.get('details'),
+            ))
         elif state == 'started':
-            future._state = futures.RUNNING
+            future.set_running()
         elif state == 'completed':
-            future._state = futures.FINISHED
-            future._result = json.loads(event['result'])
+            future.set_finished(json.loads(event['result']))
+        elif state == 'failed':
+            future.set_exception(exceptions.TaskFailed(
+                name=event['id'],
+                reason=event['reason'],
+                details=event.get('details'),
+            ))
+        elif state == 'timed_out':
+            future.set_exception(exceptions.TimeoutError(
+                event['timeout_type'],
+                None,
+            ))
+        elif state == 'canceled':
+            future.set_exception(exceptions.TaskCanceled(
+                event.get('details'),
+            ))
+        elif state == 'terminated':
+            future.set_exception(exceptions.TaskTerminated())
 
         return future
 
@@ -383,20 +412,36 @@ class Executor(executor.Executor):
         :return:
         :rtype: Optional[futures.Future]
         """
-        return self._get_future_from_child_workflow_event(event)
+        future = self._get_future_from_child_workflow_event(event)
+
+        if not future:
+            # WORKFLOW_TYPE_DOES_NOT_EXIST, will be created
+            return None
+
+        if future.state == "FINISHED" and future.exception:
+            raise future.exception
+
+        return future
 
     def schedule_task(self, a_task, task_list=None):
         """
         Let a task schedule itself.
         If too many decisions are in flight, add a timer decision and raise ExecutionBlocked.
         :param a_task:
-        :type a_task: ActivityTask
+        :type a_task: ActivityTask | WorkflowTask
         :param task_list:
         :type task_list: Optional[str]
         :return:
         :rtype:
         :raise: exceptions.ExecutionBlocked if too many decisions waiting
         """
+        if a_task.idempotent:
+            task_identifier = (type(a_task), self.domain, a_task.id)
+            if task_identifier in self._idempotent_tasks_to_submit:
+                logger.debug('Not resubmitting task {}'.format(a_task.name))
+                return
+            self._idempotent_tasks_to_submit.add(task_identifier)
+
         # NB: ``decisions`` contains a single decision.
         decisions = a_task.schedule(self.domain, task_list)
 
@@ -455,7 +500,9 @@ class Executor(executor.Executor):
         :rtype: futures.Future
         :raise: exceptions.ExecutionBlocked if open activities limit reached
         """
-        a_task.id = self._make_task_id(a_task, *args, **kwargs)
+
+        if not a_task.id:  # Can be already set (WorkflowTask)
+            a_task.id = self._make_task_id(a_task, *args, **kwargs)
         event = self.find_event(a_task, self._history)
         logger.debug('executor: resume {}, event={}'.format(a_task, event))
         future = None
@@ -515,7 +562,7 @@ class Executor(executor.Executor):
             if isinstance(func, Activity):
                 a_task = ActivityTask(func, *args, **kwargs)
             elif issubclass_(func, Workflow):
-                a_task = WorkflowTask(func, *args, **kwargs)
+                a_task = WorkflowTask(self, func, *args, **kwargs)
             else:
                 raise TypeError('invalid type {} for {}'.format(
                     type(func), func))
@@ -540,12 +587,13 @@ class Executor(executor.Executor):
         return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, decision_response):
-        """Executes the workflow from the start until it blocks.
+        """Replay the workflow from the start until it blocks.
+        Called by the DeciderWorker.
 
         :param decision_response: an object wrapping the PollForDecisionTask response
         :type  decision_response: swf.responses.Response
 
-        :returns: a list of decision and a context dict (empty?)
+        :returns: a list of decision and a context dict (obsolete, empty)
         :rtype: ([swf.models.decision.base.Decision], dict)
         """
         self.reset()
