@@ -211,18 +211,32 @@ class History(object):
                 self._child_workflows[event.workflow_id] = workflow
                 self._tasks.append(workflow)
             else:
-                logger.warning("start_initiated again for workflow {} (initiated @{}, we're @{})".format(
-                    event.workflow_id,
-                    self._child_workflows[event.workflow_id]['initiated_event_id'],
-                    event.id
-                ))
+                # May have gotten a start_failed before (or retrying?)
+                if self._child_workflows[event.workflow_id]['state'] == 'start_initiated':
+                    # Should not happen anymore
+                    logger.warning("start_initiated again for workflow {} (initiated @{}, we're @{})".format(
+                        event.workflow_id,
+                        self._child_workflows[event.workflow_id]['initiated_event_id'],
+                        event.id
+                    ))
                 self._child_workflows[event.workflow_id].update(workflow)
         elif event.state == 'start_failed':
-            workflow = get_workflow()
-            workflow['state'] = event.state
-            workflow['cause'] = event.cause
-            workflow['control'] = getattr(event, 'control', None)
-            workflow['start_failed_timestamp'] = event.timestamp
+            workflow = {
+                'type': 'child_workflow',
+                'id': event.workflow_id,
+                'state': event.state,
+                'cause': event.cause,
+                'name': event.workflow_type['name'],
+                'version': event.workflow_type['version'],
+                'control': getattr(event, 'control', None),
+                'start_failed_id': event.id,
+                'start_failed_timestamp': event.timestamp,
+            }
+            if event.workflow_id not in self._child_workflows:
+                self._child_workflows[event.workflow_id] = workflow
+                self._tasks.append(workflow)
+            else:
+                self._child_workflows[event.workflow_id].update(workflow)
         elif event.state == 'started':
             workflow = get_workflow()
             workflow['state'] = event.state
