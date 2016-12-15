@@ -488,12 +488,14 @@ class WorkflowExecution(BaseModel):
                       raises(WorkflowExecutionDoesNotExist,
                              when=exceptions.is_unknown('WorkflowExecution'),
                              extract=exceptions.extract_resource))
-    def signal(self, signal_name, input=None, *args, **kwargs):
+    def signal(self, signal_name, input=None, workflow_id=None, run_id=None, *args, **kwargs):
         """Records a signal event in the workflow execution history and
         creates a decision task.
 
         The signal event is recorded with the specified user defined
         ``signal_name`` and ``input`` (if provided).
+
+        Default to send to oneself (for compatibility with the previous versions).
 
         :param  signal_name: The name of the signal. This name must be
                              meaningful to the target workflow.
@@ -502,15 +504,20 @@ class WorkflowExecution(BaseModel):
         :param  input: Data to attach to the WorkflowExecutionSignaled
                        event in the target workflow execution’s history.
         :type   input: dict
+        :param  workflow_id: Workflow ID to send the signal to.
+        :type  workflow_id: str
+        :param  run_id: Run ID to send the signal to.
+        :type  run_id: str
         """
         if input is None:
             input = {}
         self.connection.signal_workflow_execution(
             self.domain.name,
             signal_name,
-            self.workflow_id,
+            workflow_id or self.workflow_id,
             input=json_dumps(input),
-            run_id=self.run_id)
+            run_id=run_id if workflow_id else self.run_id,
+        )
 
     @exceptions.translate(SWFResponseError,
                           to=ResponseError)
