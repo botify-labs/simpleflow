@@ -3,6 +3,8 @@ from datetime import datetime
 from functools import partial, wraps
 from itertools import chain
 
+from future.utils import iteritems
+
 from simpleflow import compat
 from simpleflow.history import History
 from simpleflow.utils import json_dumps
@@ -46,13 +48,9 @@ def tabular(values, headers, tablefmt, floatfmt):
 
 def csv(values, headers, delimiter=','):
     import csv
-    if compat.PY2:
-        # Need to convert the values to unicode otherwise...
-        from cStringIO import StringIO
-    else:
-        from io import StringIO
+    from io import BytesIO
 
-    data = StringIO()
+    data = BytesIO()
 
     csv.writer(data, delimiter=delimiter).writerows(values)
 
@@ -271,10 +269,11 @@ def get_task(workflow_execution, task_id, details=False):
         rows[0].append(task.get('details'))
     return header, rows
 
+
 def dump_history_to_json(history):
     history.parse()
     events = list(chain(
-        history._activities.iteritems(),
-        history._child_workflows.iteritems(),
+        iteritems(history.activities),
+        iteritems(history.child_workflows),
     ))
     return jsonify(events, headers=None)

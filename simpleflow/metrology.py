@@ -1,17 +1,17 @@
+from future.standard_library import install_aliases
+install_aliases()
+
 import abc
 import json
 import os
-import time
-import urllib
 import re
-from cStringIO import StringIO
+import time
+import urllib.parse
 from collections import OrderedDict
-from importlib import import_module
 
-from .workflow import Workflow
-from .task import Task
 from . import storage, settings
 from .swf.stats.pretty import dump_history_to_json
+from .workflow import Workflow
 
 ACTIVITY_KEY_RE = re.compile(r'activity\.(.+)\.json')
 
@@ -138,7 +138,7 @@ class MetrologyWorkflow(Workflow):
 
         context = self.get_execution_context()
         path.append(context["workflow_id"])
-        path.append(urllib.quote_plus(context["run_id"]))
+        path.append(urllib.parse.quote_plus(context["run_id"]))
         return os.path.join(*path)
 
     def push_metrology(self, history):
@@ -149,14 +149,15 @@ class MetrologyWorkflow(Workflow):
             settings.METROLOGY_BUCKET,
             self.metrology_path)]
 
-        print history
+        print(history)
         history_dumped = dump_history_to_json(history)
         history = json.loads(history_dumped)
 
         for key in activity_keys:
             if not key.key.startswith(os.path.join(self.metrology_path, 'activity.')):
                 continue
-            result = json.loads(key.get_contents_as_string())
+            contents = key.get_contents_as_string(encoding='utf-8')
+            result = json.loads(contents)
             search = ACTIVITY_KEY_RE.search(key.name)
             name = search.group(1)
             for h in history:

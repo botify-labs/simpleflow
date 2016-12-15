@@ -26,7 +26,7 @@ def pull(bucket, path, dest_file):
 def pull_content(bucket, path):
     bucket = get_bucket(bucket)
     key = bucket.get_key(path)
-    return key.get_contents_as_string()
+    return key.get_contents_as_string(encoding='utf-8')
 
 
 def push(bucket, path, src_file, content_type=None):
