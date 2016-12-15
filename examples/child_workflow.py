@@ -90,6 +90,7 @@ class ParentWorkflow(Workflow):
         futures.wait(*self._futures)
 
     def run(self, x=1):
+        self._futures = []
         y = self.submit(loudly_increment, x, "PARENT")
         z = self.submit(ChildWorkflow, y)
         self.submit(ChildWorkflow, y)
