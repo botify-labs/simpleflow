@@ -47,6 +47,6 @@ def push_content(bucket, path, content, content_type=None):
     key.set_contents_from_string(content, headers=headers)
 
 
-def list(bucket, path=None):
+def list_keys(bucket, path=None):
     bucket = get_bucket(bucket)
     return bucket.list(path)

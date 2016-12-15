@@ -62,5 +62,5 @@ class TestGroup(unittest.TestCase):
     def test_list(self):
         self.create()
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
-        keys = [k for k in storage.list(self.bucket, None)]
+        keys = [k for k in storage.list_keys(self.bucket, None)]
         self.assertEquals(keys[0].key, "mykey.txt")

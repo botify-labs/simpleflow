@@ -209,7 +209,7 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
     return formatter
 
 
-def list(workflow_executions):
+def list_executions(workflow_executions):
     header = 'Workflow ID', 'Workflow Type', 'Status'
     rows = ((
                 execution.workflow_id,

@@ -145,7 +145,7 @@ class MetrologyWorkflow(Workflow):
         """
         Fetch workflow history and merge it with metrology
         """
-        activity_keys = [obj for obj in storage.list(
+        activity_keys = [obj for obj in storage.list_keys(
             settings.METROLOGY_BUCKET,
             self.metrology_path)]
 
