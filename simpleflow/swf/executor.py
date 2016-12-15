@@ -347,8 +347,13 @@ class Executor(executor.Executor):
         state = event['state']
         if state == 'signaled':
             future.set_finished(event['input'])
+        # elif state == 'signal_failed':
+        #     future.set_exception(exceptions.SignalFailed(
+        #         name=event['name'],
+        #         reason=event['cause'],
+        #     ))
 
-        logger.debug('signal {} is signaled (future: {})'.format(event['signal_name'], future))
+        logger.debug('{} - signal {} is signaled (future: {})'.format(self._workflow_id, event['name'], future))
         return future
 
     def get_future_from_signal(self, signal_name):
@@ -490,8 +495,6 @@ class Executor(executor.Executor):
         :type a_task: ActivityTask | WorkflowTask | SignalTask
         :param task_list:
         :type task_list: Optional[str]
-        :return:
-        :rtype:
         :raise: exceptions.ExecutionBlocked if too many decisions waiting
         """
 
@@ -511,6 +514,10 @@ class Executor(executor.Executor):
         # NB: ``decisions`` contains a single decision.
         decisions = a_task.schedule(self.domain, task_list, priority=self.current_priority)
 
+        # Ready to schedule
+        if isinstance(a_task, ActivityTask):
+            self._open_activity_count += 1
+
         # Check if we won't violate the 1MB limit on API requests ; if so, do NOT
         # schedule the requested task and block execution instead, with a timer
         # to wake up the workflow immediately after completing these decisions.
@@ -525,18 +532,13 @@ class Executor(executor.Executor):
             self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
             raise exceptions.ExecutionBlocked()
 
-        # Ready to schedule
-        logger.debug('executor is scheduling task {} on task_list {}'.format(
-            a_task.name,
-            task_list,
-        ))
+        # logger.debug('{}: adding decision(s) {}'.format(self._workflow_id, decisions))
         self._decisions.extend(decisions)
-        self._open_activity_count += 1
 
         # Check if we won't exceed max decisions -1
         # TODO: if we had exactly MAX_DECISIONS - 1 to take, this will wake up
         # the workflow for no reason. Evaluate if we can do better.
-        if len(self._decisions) == constants.MAX_DECISIONS - 1:
+        if len(self._decisions) >= constants.MAX_DECISIONS - 1:
             # We add a timer to wake up the workflow immediately after
             # completing these decisions.
             self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
@@ -548,6 +550,12 @@ class Executor(executor.Executor):
             id=id,
             start_to_fire_timeout='0')
         self._decisions.append(timer)
+
+    EVENT_TYPE_TO_FUTURE = {
+        'activity': resume_activity,
+        'child_workflow': resume_child_workflow,
+        'signal': get_future_from_signal_event,
+    }
 
     def resume(self, a_task, *args, **kwargs):
         """Resume the execution of a task.
@@ -600,14 +608,9 @@ class Executor(executor.Executor):
 
         # back to normal execution flow
         if event:
-            event_type_to_future = {  # TODO move elsewhere
-                'activity': self.resume_activity,
-                'child_workflow': self.resume_child_workflow,
-                'signal': self.get_future_from_signal_event,
-            }
-            ttf = event_type_to_future.get(event['type'])
+            ttf = self.EVENT_TYPE_TO_FUTURE.get(event['type'])
             if ttf:
-                future = ttf(a_task, event)
+                future = ttf(self, a_task, event)
             if event['type'] == 'activity':
                 if future and future.state in (futures.PENDING, futures.RUNNING):
                     self._open_activity_count += 1
@@ -731,6 +734,7 @@ class Executor(executor.Executor):
         self._history = History(history)
         self._history.parse()
         self.build_execution_context(decision_response)
+        self._execution = decision_response.execution
 
         workflow_started_event = history[0]
         input = workflow_started_event.input
@@ -741,6 +745,7 @@ class Executor(executor.Executor):
 
         self.before_replay()
         try:
+            self.process_signals()
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
             logger.info('{} open activities ({} decisions)'.format(
@@ -882,5 +887,55 @@ class Executor(executor.Executor):
             )
 
     def wait_signal(self, name):
-        logger.debug('wait_signal({})'.format(name))
+        logger.debug('{} - wait_signal({})'.format(self._workflow_id, name))
         return WaitForSignal(name)
+
+    def process_signals(self):
+        """
+        Send every signals we got to our parent and children.
+        :raise exceptions.ExecutionBlocked: too many decisions already in flight
+        """
+        history = self._history
+        if not history.signals:
+            return
+
+        known_workflows_ids = [
+            # No need to check whether we were signaled...
+            # (self._execution_context['workflow_id'], self._execution_context['run_id'])
+        ]
+        if self._execution_context['parent_workflow_id']:
+            known_workflows_ids.append(
+                (self._execution_context['parent_workflow_id'], self._execution_context['parent_run_id'])
+            )
+        known_workflows_ids.extend(
+            (w['workflow_id'], w['run_id']) for w in history.child_workflows.values() if w['state'] == 'started'
+        )
+
+        # logger.debug('{} - Known WF ids: {}'.format(self._workflow_id, [w for (w, r) in known_workflows_ids]))
+        known_workflows_ids = frozenset(known_workflows_ids)
+
+        for signal in history.signals.values():
+            # logger.warning('{} - signal: {}'.format(self._workflow_id, signal))
+            name = signal['name']
+            sender = (signal['external_workflow_id'], signal['external_run_id'])
+            signaled_workflows_ids = set(
+                (w['workflow_id'], w['run_id']) for w in history.signaled_workflows[name]
+            )
+            # logger.debug('{} - Signal {}: signaled: {}'.format(
+            #     self._workflow_id, name, [w for (w, r) in signaled_workflows_ids])
+            # )
+            not_signaled_workflows_ids = list(known_workflows_ids - signaled_workflows_ids - {sender})
+            # logger.warning('{} - Signal {}: NOT signaled: {}'.format(
+            #     self._workflow_id, name, not_signaled_workflows_ids)
+            # )
+            # task_id = 'signal-{}'.format(signal['event_id'])
+            for workflow_id, run_id in not_signaled_workflows_ids:
+                # logger.debug('{} - Signal {}: SIGNALING: {}'.format(
+                #     self._workflow_id, name, workflow_id, run_id)
+                # )
+                self._execution.signal(
+                    signal_name=name,
+                    input=signal['input'],
+                    workflow_id=workflow_id,
+                    run_id=run_id,
+                )
