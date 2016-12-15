@@ -139,7 +139,7 @@ class MetrologyWorkflow(Workflow):
         context = self.get_execution_context()
         path.append(context["workflow_id"])
         path.append(urllib.parse.quote_plus(context["run_id"]))
-        return os.path.join(*path)
+        return str(os.path.join(*path))
 
     def push_metrology(self, history):
         """
@@ -148,8 +148,6 @@ class MetrologyWorkflow(Workflow):
         activity_keys = [obj for obj in storage.list_keys(
             settings.METROLOGY_BUCKET,
             self.metrology_path)]
-
-        print(history)
         history_dumped = dump_history_to_json(history)
         history = json.loads(history_dumped)
 

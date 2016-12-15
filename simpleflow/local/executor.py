@@ -26,6 +26,11 @@ class Executor(executor.Executor):
         super(Executor, self).__init__(workflow)
         self.nb_activities = 0
 
+    def initialize_history(self, input):
+        self._history = builder.History(
+            self._workflow.__class__,
+            input=input)
+
     def submit(self, func, *args, **kwargs):
         logger.info('executing task {}(args={}, kwargs={})'.format(
             func, args, kwargs))
@@ -75,9 +80,7 @@ class Executor(executor.Executor):
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
 
-        self._history = builder.History(
-            self._workflow.__class__,
-            input=input)
+        self.initialize_history(input)
 
         self.before_replay()
         result = self.run_workflow(*args, **kwargs)
