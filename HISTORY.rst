@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.12.7
+~~~~~~
+
+- Control SWF processes identity via environment (#184)
+
 0.12.6
 ~~~~~~
 
