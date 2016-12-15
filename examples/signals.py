@@ -121,70 +121,71 @@ class CanvasSignalsWorkflow(Workflow):
         my_group = Group(chain1, chain2)
         fut = self.submit(my_group)
         futures.wait(fut)
-#
-#
-# class ChildWaitSignalsWorkflow(Workflow):
-#     name = 'signals-child-receiver'
-#     version = 'example'
-#     task_list = 'example'
-#
-#     def run(self):
-#         all = [
-#             self.submit(self.wait_signal('signal1')),
-#             self.submit(func_a_1_1),
-#         ]
-#         futures.wait(*all)
-#
-#
-# class ChildSendSignalsWorkflow(Workflow):
-#     name = 'signals-child-sender'
-#     version = 'example'
-#     task_list = 'example'
-#
-#     def run(self):
-#         all = [
-#             self.submit(self.signal('signal1')),
-#         ]
-#         futures.wait(*all)
-#
-#
-# # Sending a signal that a child workflow waits on.
-# class ParentSignalsWorkflow(Workflow):
-#     name = 'signals-parent'
-#     version = 'example'
-#     task_list = 'example'
-#
-#     def run(self):
-#         all = [
-#             self.submit(ChildWaitSignalsWorkflow),
-#             self.submit(self.signal('signal1')),
-#         ]
-#         futures.wait(*all)
-#
-#
-# # One child sends a signal, the other one waits on it.
-# class ParentSignalsWorkflow2(Workflow):
-#     name = 'signals-parent-2'
-#     version = 'example'
-#     task_list = 'example'
-#
-#     def run(self):
-#         all = [
-#             self.submit(ChildWaitSignalsWorkflow),
-#             self.submit(ChildSendSignalsWorkflow),
-#         ]
-#         futures.wait(*all)
-#
-#
-# # The child sends a signal, the parent waits on it.
-# class ParentSignalsWorkflow3(Workflow):
-#     name = 'signals-parent-3'
-#     version = 'example'
-#     task_list = 'example'
-#
-#     def run(self):
-#         all = [
-#             self.submit(ChildSendSignalsWorkflow),
-#             self.submit(self.wait_signal('signal1')),
-#         ]
-#         futures.wait(*all)
+
+
+class ChildWaitSignalsWorkflow(Workflow):
+    name = 'signals-child-receiver'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self):
+        all = [
+            self.submit(self.wait_signal('signal1')),
+            self.submit(func_a_1_1),
+        ]
+        futures.wait(*all)
+
+
+class ChildSendSignalsWorkflow(Workflow):
+    name = 'signals-child-sender'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self):
+        all = [
+            self.submit(self.signal('signal1')),
+            self.submit(self.wait_signal('signal1')),
+        ]
+        futures.wait(*all)
+
+
+# Sending a signal that a child workflow waits on.
+class ParentSignalsWorkflow(Workflow):
+    name = 'signals-parent'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self):
+        all = [
+            self.submit(ChildWaitSignalsWorkflow),
+            self.submit(self.signal('signal1')),
+        ]
+        futures.wait(*all)
+
+
+# One child sends a signal, the other one waits on it.
+class ParentSignalsWorkflow2(Workflow):
+    name = 'signals-parent-2'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self):
+        all = [
+            self.submit(ChildWaitSignalsWorkflow),
+            self.submit(ChildSendSignalsWorkflow),
+        ]
+        futures.wait(*all)
+
+
+# The child sends a signal, the parent waits on it.
+class ParentSignalsWorkflow3(Workflow):
+    name = 'signals-parent-3'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self):
+        all = [
+            self.submit(ChildSendSignalsWorkflow),
+            self.submit(self.wait_signal('signal1')),
+        ]
+        futures.wait(*all)
