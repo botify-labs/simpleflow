@@ -29,7 +29,8 @@ class TestGroup(unittest.TestCase):
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
         bucket = self.conn.get_bucket(self.bucket)
         self.assertEquals(
-            bucket.get_key("mykey.txt").get_contents_as_string(),
+            bucket.get_key("mykey.txt").get_contents_as_string(
+                encoding='utf-8'),
             "42")
 
     @mock_s3
@@ -38,7 +39,8 @@ class TestGroup(unittest.TestCase):
         storage.push_content(self.bucket, "mykey.txt", "Hey Jude")
         bucket = self.conn.get_bucket(self.bucket)
         self.assertEquals(
-            bucket.get_key("mykey.txt").get_contents_as_string(),
+            bucket.get_key("mykey.txt").get_contents_as_string(
+                encoding='utf-8'),
             "Hey Jude")
 
     @mock_s3
