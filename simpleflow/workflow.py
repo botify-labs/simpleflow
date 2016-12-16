@@ -22,6 +22,7 @@ class Workflow(Submittable):
     # These are needed for workflow on SWF
     name = None
     version = None
+    task_list = None
 
     def __init__(self, executor):
         self._executor = executor

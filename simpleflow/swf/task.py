@@ -135,5 +135,4 @@ class WorkflowTask(task.WorkflowTask):
             execution_timeout=str(execution_timeout) if execution_timeout else None,
         )
 
-
         return [decision]

@@ -22,11 +22,6 @@ class Task(Submittable):
     """
     __metaclass__ = abc.ABCMeta
 
-    id = None
-    idempotent = False
-    args = []
-    kwargs = {}
-
     @abc.abstractproperty
     def name(self):
         raise NotImplementedError()

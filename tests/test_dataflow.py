@@ -797,7 +797,7 @@ def test_workflow_with_child_workflow():
     assert len(decisions) == 1
     assert decisions == [{
         'startChildWorkflowExecutionDecisionAttributes': {
-            'workflowId': 'workflow-test_workflow-None-None-1',
+            'workflowId': 'workflow-test_workflow-None--0--1',
             'taskList': {
                 'name': 'test_task_list'
             },
@@ -817,7 +817,7 @@ def test_workflow_with_child_workflow():
         .add_decision_task()
         .add_child_workflow(
         workflow,
-        workflow_id='workflow-test_workflow-None-None-1',
+        workflow_id='workflow-test_workflow-None--0--1',
         task_list=ATestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
         result='4'
@@ -843,7 +843,7 @@ def test_workflow_with_child_workflow_failed():
         .add_child_workflow(
         workflow,
         last_state='failed',
-        workflow_id='workflow-test_workflow-None-None-1',
+        workflow_id='workflow-test_workflow-None--0--1',
         task_list=ATestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
     ))
@@ -856,7 +856,7 @@ def test_workflow_with_child_workflow_failed():
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
     reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
-    assert reason == "Cannot replay the workflow: TaskFailed(('workflow-test_workflow-None-None-1', None, None))"
+    assert reason == "Cannot replay the workflow: TaskFailed(('workflow-test_workflow-None--0--1', None, None))"
 
 
 def test_workflow_with_child_workflow_timed_out():
@@ -870,7 +870,7 @@ def test_workflow_with_child_workflow_timed_out():
         .add_child_workflow(
         workflow,
         last_state='timed_out',
-        workflow_id='workflow-test_workflow-None-None-1',
+        workflow_id='workflow-test_workflow-None--0--1',
         task_list=ATestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
     ))
@@ -897,7 +897,7 @@ def test_workflow_with_child_workflow_canceled():
         .add_child_workflow(
         workflow,
         last_state='canceled',
-        workflow_id='workflow-test_workflow-None-None-1',
+        workflow_id='workflow-test_workflow-None--0--1',
         task_list=ATestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
     ))
@@ -924,7 +924,7 @@ def test_workflow_with_child_workflow_terminated():
         .add_child_workflow(
         workflow,
         last_state='terminated',
-        workflow_id='workflow-test_workflow-None-None-1',
+        workflow_id='workflow-test_workflow-None--0--1',
         task_list=ATestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
     ))
@@ -1638,7 +1638,7 @@ def test_workflow_idempotent_task_naming():
                 'taskList': {
                     'name': 'test_task_list'
                 },
-                'workflowId': 'workflow-test_child_workflow-None-None-adb86b0326491007eae44a0a692bfc53',
+                'workflowId': 'workflow-test_child_workflow-None--0--adb86b0326491007eae44a0a692bfc53',
                 'taskStartToCloseTimeout': '300',
                 'executionStartToCloseTimeout': '3600',
                 'workflowType': {

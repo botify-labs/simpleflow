@@ -22,8 +22,7 @@ from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask
-from simpleflow.task import Task
-from simpleflow.utils import issubclass_, json_dumps
+from simpleflow.utils import issubclass_, json_dumps, hex_hash
 from simpleflow.utils import retry
 from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
@@ -203,13 +202,14 @@ class Executor(executor.Executor):
             arguments = json_dumps({"args": args, "kwargs": kwargs}, sort_keys=True)
             suffix = hashlib.md5(arguments.encode('utf-8')).hexdigest()
 
-        if isinstance(a_task, (WorkflowTask, )):
+        if isinstance(a_task, (WorkflowTask,)):
             # Some task types must have globally unique names.
-            suffix = '{}-{}-{}'.format(self._workflow_id, self._run_id, suffix)
+            suffix = '{}--{}--{}'.format(self._workflow_id, hex_hash(self._run_id), suffix)
 
         task_id = '{name}-{suffix}'.format(name=a_task.name, suffix=suffix)
         if len(task_id) > 256:  # Better safe than sorry...
-            task_id = hashlib.md5(task_id.encode('utf-8')).hexdigest()
+            task_id = task_id[0:223] + "-" + hashlib.md5(task_id.encode('utf-8')).hexdigest()
+
         return task_id
 
     def _get_future_from_activity_event(self, event):
@@ -418,7 +418,7 @@ class Executor(executor.Executor):
         :param event:
         :type event: dict
         :return:
-        :rtype: Optional[futures.Future]
+        :rtype: Optional[simpleflow.futures.Future]
         """
         future = self._get_future_from_child_workflow_event(event)
 
@@ -426,7 +426,7 @@ class Executor(executor.Executor):
             # WORKFLOW_TYPE_DOES_NOT_EXIST, will be created
             return None
 
-        if future.state == "FINISHED" and future.exception:
+        if future.finished and future.exception:
             raise future.exception
 
         return future

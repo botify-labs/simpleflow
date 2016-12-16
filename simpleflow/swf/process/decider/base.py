@@ -83,9 +83,8 @@ class DeciderPoller(Poller, swf.actors.Decider):
                     'all workflows must be in the same domain "{}"'.format(
                         domain.name))
             if ex.workflow.task_list != task_list:
-                # FIXME really needed?
-                logger.warning(
-                    'all workflows should have the same task list "{}"'.format(
+                raise ValueError(
+                    'all workflows must have the same task list "{}"'.format(
                         task_list))
 
         self.nb_retries = nb_retries
