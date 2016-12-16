@@ -7,7 +7,8 @@ from simpleflow import (
     futures,
 )
 from simpleflow.base import Submittable
-from simpleflow.task import ActivityTask, WorkflowTask
+from simpleflow.signal import WaitForSignal
+from simpleflow.task import ActivityTask, WorkflowTask, SignalTask
 from simpleflow.activity import Activity
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
@@ -58,7 +59,7 @@ class Executor(executor.Executor):
         if isinstance(func, Submittable):
             task = func  # *args, **kwargs already resolved.
             task.context = context
-            func = task.activity  # TODO
+            func = getattr(task, 'activity', None)
         elif isinstance(func, Activity):
             task = ActivityTask(func, context=context, *args, **kwargs)
         elif issubclass(func, Workflow):
@@ -118,3 +119,9 @@ class Executor(executor.Executor):
             "workflow_id": "local",
             "tag_list": []
         }
+
+    def signal(self, name, *args, **kwargs):
+        return SignalTask(name, *args, **kwargs)
+
+    def wait_signal(self, name):
+        return WaitForSignal(name)

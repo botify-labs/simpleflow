@@ -151,3 +151,6 @@ class SignalTask(Task):
         :rtype: str
         """
         return self._name
+
+    def execute(self):
+        pass
