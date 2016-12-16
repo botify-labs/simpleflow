@@ -1,7 +1,6 @@
 import logging
 
 from simpleflow import (
-    Activity,
     exceptions,
     executor,
     futures,
