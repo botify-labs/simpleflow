@@ -893,7 +893,6 @@ class Executor(executor.Executor):
     def process_signals(self):
         """
         Send every signals we got to our parent and children.
-        :raise exceptions.ExecutionBlocked: too many decisions already in flight
         """
         history = self._history
         if not history.signals:

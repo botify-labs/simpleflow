@@ -382,6 +382,7 @@ class History(object):
             if control:
                 workflow['control'] = control
             workflow['signal_failed_timestamp'] = event.timestamp
+            logger.warning('{}'.format(workflow))
         elif event.state == 'execution_signaled':
             workflow = get_workflow(self._external_workflows_signaling)
             workflow['run_id'] = event.workflow_execution['runId']
@@ -389,7 +390,6 @@ class History(object):
             workflow['signaled_event_id'] = event.id
             workflow['signaled_timestamp'] = event.timestamp
             self._signaled_workflows[workflow['name']].append(workflow)
-            logger.warning('{}'.format(workflow))
         elif event.state == 'request_cancel_execution_initiated':
             workflow = {
                 'type': 'external_workflow',
