@@ -6,13 +6,13 @@ from . import settings
 BUCKET_CACHE = {}
 
 
-def get_connection(region):
-    return connection.S3Connection(region)
+def get_connection(host):
+    return connection.S3Connection(host)
 
 
 def get_bucket(bucket):
     if not bucket in BUCKET_CACHE:
-        connection = get_connection(settings.METROLOGY_REGION)
+        connection = get_connection(settings.SIMPLEFLOW_S3_HOST)
         BUCKET_CACHE[bucket] = connection.get_bucket(bucket)
     return BUCKET_CACHE[bucket]
 
