@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+
+0.13.0
+~~~~~~
+
+- Implement child workflow (#74)
+- Don't schedule idempotent tasks multiple times (#107)
+- Child workflow ID: use parent's id to generate
+
 0.12.7
 ~~~~~~
 
