@@ -92,7 +92,7 @@ class MetrologyTask(object):
         path.append(self.context["workflow_id"])
         path.append(urllib.parse.quote_plus(self.context["run_id"]))
         path.append("activity.{}.json".format(self.context["activity_id"]))
-        return os.path.join(*path)
+        return str(os.path.join(*path))
 
     def step(self, name):
         """
