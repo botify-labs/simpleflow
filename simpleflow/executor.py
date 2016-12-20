@@ -62,16 +62,15 @@ class Executor(object):
         return result
 
     @abc.abstractmethod
-    def submit(self, task, *args, **kwargs):
+    def submit(self, submittable, *args, **kwargs):
         """
         Submit a task for execution.
 
         :param task: activity or workflow.
-        :type  task: :py:class:`simpleflow.Activity`
-                   | :py:class:`simpleflow.Workflow`.
+        :type  task: base.Submittable | simpleflow.Activity | simpleflow.Workflow
 
         :returns:
-            :rtype: :py:class:`simpleflow.futures.Future`
+        :rtype: :py:class:`simpleflow.futures.Future`
 
         """
         raise NotImplementedError

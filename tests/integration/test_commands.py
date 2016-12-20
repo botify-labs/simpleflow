@@ -72,7 +72,6 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         expect(result.exit_code).to.equal(0)
         expect(result.output).to.equal("")
 
-
     @flaky(max_runs=2)
     @vcr.use_cassette
     def test_simpleflow_activity_rerun(self):
@@ -102,14 +101,63 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         expect(result.exit_code).to.equal(0)
         expect(result.output).to.contain("will sleep 0s")
 
+    @flaky(max_runs=2)
+    @vcr.use_cassette
+    def test_simpleflow_idempotent(self):
+        result = self.invoke(
+            simpleflow.command.cli,
+            "standalone --workflow-id %s --input {}"
+            " --nb-deciders 2 --nb-workers 2"
+            " tests.integration.workflow.ATestDefinitionWithIdempotentTask" % self.workflow_id
+        )
+        expect(result.exit_code).to.equal(0)
+        lines = result.output.split("\n")
+        start_line = [line for line in lines if line.startswith(self.workflow_id)][0]
+        _, run_id = start_line.split(" ", 1)
 
-    # TODO: simpleflow decider.start
-    # TODO: simpleflow standalone
-    # TODO: simpleflow task.info
-    # TODO: simpleflow worker.start
-    # TODO: simpleflow workflow.filter
-    # TODO: simpleflow workflow.info
-    # TODO: simpleflow workflow.list
-    # TODO: simpleflow workflow.profile
-    # TODO: simpleflow workflow.restart
-    # TODO: simpleflow workflow.tasks
+        response = self.conn.get_workflow_execution_history(
+            self.domain,
+            run_id,
+            self.workflow_id,
+        )
+
+        events = response['events']
+        next_page = response.get('nextPageToken')
+        while next_page is not None:
+            response = self.conn.get_workflow_execution_history(
+                self.domain,
+                run_id,
+                self.workflow_id,
+                next_page_token=next_page,
+            )
+
+            events.extend(response['events'])
+            next_page = response.get('nextPageToken')
+
+        activities = [
+            e['activityTaskScheduledEventAttributes']['activityId']
+            for e in events
+            if (
+                e['eventType'] == 'ActivityTaskScheduled' and
+                e['activityTaskScheduledEventAttributes']['activityType']['name'] == 'tests.integration.workflow'
+                                                                                     '.get_uuid')
+        ]
+        expect(activities).should.have.length_of(2)
+        expect(activities[0]).should.be.different_of(activities[1])
+
+        failures = [
+            e['scheduleActivityTaskFailedEventAttributes']['cause'] for e in events if
+            e['eventType'] == 'ScheduleActivityTaskFailed'
+        ]
+        expect(failures).should_not.contain('ACTIVITY_ID_ALREADY_IN_USE')
+
+# TODO: simpleflow decider.start
+# TODO: simpleflow standalone
+# TODO: simpleflow task.info
+# TODO: simpleflow worker.start
+# TODO: simpleflow workflow.filter
+# TODO: simpleflow workflow.info
+# TODO: simpleflow workflow.list
+# TODO: simpleflow workflow.profile
+# TODO: simpleflow workflow.restart
+# TODO: simpleflow workflow.tasks

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import abc
 
+from simpleflow.base import Submittable
 from . import futures
 from .activity import Activity
 
@@ -15,7 +16,7 @@ def get_actual_value(value):
     return value
 
 
-class Task(object):
+class Task(Submittable):
     """A Task represents a work that can be scheduled for execution.
 
     """
@@ -85,19 +86,26 @@ class WorkflowTask(Task):
     """
     Child workflow.
 
-    :type workflow: simpleflow.workflow.Workflow
-    :type idempotent: bool
+    :type executor: type(simpleflow.executor.Executor)
+    :type workflow: type(simpleflow.workflow.Workflow)
     :type args: list[Any]
     :type kwargs: dict[Any, Any]
     :type id: str
     """
-    def __init__(self, workflow, *args, **kwargs):
+    def __init__(self, executor, workflow, *args, **kwargs):
+        self.executor = executor
         self.workflow = workflow
-        # TODO: handle idempotency at workflow level
-        self.idempotent = False
+        self.idempotent = getattr(workflow, 'idempotent', False)
+        get_workflow_id = getattr(workflow, 'get_workflow_id', None)
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
-        self.id = None
+
+        if get_workflow_id:
+            if self.idempotent:
+                raise Exception('"get_workflow_id" and "idempotent" are mutually exclusive')
+            self.id = get_workflow_id(workflow, *self.args, **self.kwargs)
+        else:
+            self.id = None
 
     @property
     def name(self):
@@ -106,7 +114,11 @@ class WorkflowTask(Task):
     def __repr__(self):
         return '{}(workflow={}, args={}, kwargs={}, id={})'.format(
             self.__class__.__name__,
-            self.workflow,
+            self.workflow.__module__ + '.' + self.workflow.__name__,
             self.args,
             self.kwargs,
             self.id)
+
+    def execute(self):
+        workflow = self.workflow(self.executor)
+        return workflow.run(*self.args, **self.kwargs)

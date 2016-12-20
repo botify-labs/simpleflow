@@ -1,11 +1,15 @@
 import logging
 
 from simpleflow import (
+    Activity,
     exceptions,
     executor,
     futures,
 )
-from ..task import ActivityTask
+from simpleflow.base import Submittable
+from simpleflow.task import ActivityTask, WorkflowTask
+from simpleflow.activity import Activity
+from simpleflow.workflow import Workflow
 
 
 logger = logging.getLogger(__name__)
@@ -22,13 +26,23 @@ class Executor(executor.Executor):
 
         future = futures.Future()
 
-        task = ActivityTask(func, *args, **kwargs)
+        if isinstance(func, Submittable):
+            task = func  # *args, **kwargs already resolved.
+            func = task.activity  # TODO
+        elif isinstance(func, Activity):
+            task = ActivityTask(func, *args, **kwargs)
+        elif issubclass(func, Workflow):
+            task = WorkflowTask(self, func, *args, **kwargs)
+        else:
+            raise TypeError('invalid type {} for {}'.format(
+                type(func), func))
 
         try:
             future._result = task.execute()
         except Exception as err:
             future._exception = err
-            if func.raises_on_failure:
+            logger.info('rescuing exception: {}'.format(err))
+            if isinstance(func, Activity) and func.raises_on_failure:
                 message = err.args[0] if err.args else ''
                 raise exceptions.TaskFailed(func.name, message)
         finally:

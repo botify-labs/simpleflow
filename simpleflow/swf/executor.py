@@ -7,11 +7,10 @@ import multiprocessing
 import re
 import traceback
 
+import swf.exceptions
 import swf.format
 import swf.models
 import swf.models.decision
-import swf.exceptions
-
 from simpleflow import (
     exceptions,
     executor,
@@ -19,13 +18,13 @@ from simpleflow import (
     task,
 )
 from simpleflow.activity import Activity
-from simpleflow.utils import issubclass_, json_dumps
-from simpleflow.workflow import Workflow
 from simpleflow.history import History
+from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask
-from simpleflow.swf import constants
+from simpleflow.utils import issubclass_, json_dumps, hex_hash
 from simpleflow.utils import retry
+from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
 
 logger = logging.getLogger(__name__)
@@ -63,9 +62,7 @@ def run_fake_activity_task(domain, task_list, result):
 @retry.with_delay(nb_times=3,
                   delay=retry.exponential,
                   on_exceptions=KeyError)
-def run_fake_child_workflow_task(domain, task_list, workflow_type_name,
-                                 workflow_type_version, workflow_id, input=None, result=None,
-                                 child_policy=None, control=None, tag_list=None):
+def run_fake_child_workflow_task(domain, task_list, result=None):
     conn = ConnectedSWFObject().connection
     resp = conn.poll_for_decision_task(
         domain,
@@ -101,17 +98,9 @@ def run_fake_task_worker(domain, task_list, former_event):
             args=(
                 domain,
                 task_list,
-                former_event['result'],
-                former_event['name'],  # workflow_type_name
-                former_event['version'],  # workflow_type_version
-                former_event['id'],  # workflow_id
             ),
             kwargs={
-                'input': former_event['raw_input'],
                 'result': former_event['result'],
-                'child_policy': former_event['child_policy'],
-                'control': former_event['control'],
-                'tag_list': former_event['tag_list'],
             },
         )
     else:
@@ -128,7 +117,7 @@ class TaskRegistry(dict):
     def add(self, a_task):
         """
         ID's are assigned sequentially by incrementing an integer. They start
-        from 0.
+        from 1.
 
         :type a_task: ActivityTask | WorkflowTask
         :returns:
@@ -160,6 +149,7 @@ class Executor(executor.Executor):
     :ivar repair_with: previous history to use for repairing
     :type repair_with: Optional[simpleflow.history.History]
     :ivar force_activities: regex with activities to force
+    :type _history: History
 
     """
 
@@ -188,6 +178,7 @@ class Executor(executor.Executor):
         self._open_activity_count = 0
         self._decisions = []
         self._tasks = TaskRegistry()
+        self._idempotent_tasks_to_submit = set()
 
     def _make_task_id(self, a_task, *args, **kwargs):
         """
@@ -211,7 +202,14 @@ class Executor(executor.Executor):
             arguments = json_dumps({"args": args, "kwargs": kwargs}, sort_keys=True)
             suffix = hashlib.md5(arguments.encode('utf-8')).hexdigest()
 
-        task_id = '{name}-{idx}'.format(name=a_task.name, idx=suffix)
+        if isinstance(a_task, (WorkflowTask,)):
+            # Some task types must have globally unique names.
+            suffix = '{}--{}--{}'.format(self._workflow_id, hex_hash(self._run_id), suffix)
+
+        task_id = '{name}-{suffix}'.format(name=a_task.name, suffix=suffix)
+        if len(task_id) > 256:  # Better safe than sorry...
+            task_id = task_id[0:223] + "-" + hashlib.md5(task_id.encode('utf-8')).hexdigest()
+
         return task_id
 
     def _get_future_from_activity_event(self, event):
@@ -226,7 +224,7 @@ class Executor(executor.Executor):
         state = event['state']
 
         if state == 'scheduled':
-            future._state = futures.PENDING
+            pass
         elif state == 'schedule_failed':
             if event['cause'] == 'ACTIVITY_TYPE_DOES_NOT_EXIST':
                 activity_type = swf.models.ActivityType(
@@ -250,29 +248,27 @@ class Executor(executor.Executor):
             ))
             return None
         elif state == 'started':
-            future._state = futures.RUNNING
+            future.set_running()
         elif state == 'completed':
-            future._state = futures.FINISHED
             result = event['result']
-            future._result = json.loads(result) if result else None
+            future.set_finished(json.loads(result) if result else None)
         elif state == 'canceled':
-            future._state = futures.CANCELLED
+            future.set_cancelled()
         elif state == 'failed':
-            future._state = futures.FINISHED
-            future._exception = exceptions.TaskFailed(
+            exception = exceptions.TaskFailed(
                 name=event['id'],
                 reason=event['reason'],
                 details=event.get('details'))
+            future.set_exception(exception)
         elif state == 'timed_out':
-            future._state = futures.FINISHED
-            future._exception = exceptions.TimeoutError(
+            exception = exceptions.TimeoutError(
                 event['timeout_type'],
                 event['timeout_value'])
+            future.set_exception(exception)
 
         return future
 
-    @staticmethod
-    def _get_future_from_child_workflow_event(event):
+    def _get_future_from_child_workflow_event(self, event):
         """Maps a child workflow event to a Future with the corresponding
         state.
 
@@ -283,19 +279,57 @@ class Executor(executor.Executor):
         state = event['state']
 
         if state == 'start_initiated':
-            future._state = futures.PENDING
+            pass  # future._state = futures.PENDING
+        elif state == 'start_failed':
+            if event['cause'] == 'WORKFLOW_TYPE_DOES_NOT_EXIST':
+                workflow_type = swf.models.WorkflowType(
+                    self.domain,
+                    name=event['name'],
+                    version=event['version'],
+                )
+                logger.info('Creating workflow type {} in domain {}'.format(
+                    workflow_type.name,
+                    self.domain.name,
+                ))
+                try:
+                    workflow_type.save()
+                except swf.exceptions.AlreadyExistsError:
+                    # Could have be created by a concurrent workflow execution.
+                    pass
+                return None
+            future.set_exception(exceptions.TaskFailed(
+                name=event['id'],
+                reason=event['cause'],
+                details=event.get('details'),
+            ))
         elif state == 'started':
-            future._state = futures.RUNNING
+            future.set_running()
         elif state == 'completed':
-            future._state = futures.FINISHED
-            future._result = json.loads(event['result'])
+            future.set_finished(json.loads(event['result']))
+        elif state == 'failed':
+            future.set_exception(exceptions.TaskFailed(
+                name=event['id'],
+                reason=event['reason'],
+                details=event.get('details'),
+            ))
+        elif state == 'timed_out':
+            future.set_exception(exceptions.TimeoutError(
+                event['timeout_type'],
+                None,
+            ))
+        elif state == 'canceled':
+            future.set_exception(exceptions.TaskCanceled(
+                event.get('details'),
+            ))
+        elif state == 'terminated':
+            future.set_exception(exceptions.TaskTerminated())
 
         return future
 
     @staticmethod
     def find_activity_event(a_task, history):
         """
-        Get the event corresponding to a activity task, if any
+        Get the event corresponding to a activity task, if any.
 
         :param a_task:
         :type a_task: ActivityTask
@@ -310,7 +344,7 @@ class Executor(executor.Executor):
     @staticmethod
     def find_child_workflow_event(a_task, history):
         """
-        Get the event corresponding to a child workflow, if any
+        Get the event corresponding to a child workflow, if any.
 
         :param a_task:
         :type a_task: WorkflowTask
@@ -331,13 +365,16 @@ class Executor(executor.Executor):
         :return:
         :rtype: Optional[dict]
         """
-        if isinstance(a_task, ActivityTask):
-            return self.find_activity_event(a_task, history)
-        elif isinstance(a_task, WorkflowTask):
-            return self.find_child_workflow_event(a_task, history)
-        else:
-            raise TypeError('invalid type {} for task {}'.format(
-                type(a_task), a_task))
+        # FIXME move this
+        event_type_to_finder = {
+            ActivityTask: self.find_activity_event,
+            WorkflowTask: self.find_child_workflow_event,
+        }
+        finder = event_type_to_finder.get(type(a_task))
+        if finder:
+            return finder(a_task, history)
+        raise TypeError('invalid type {} for task {}'.format(
+            type(a_task), a_task))
 
     def resume_activity(self, a_task, event):
         """
@@ -381,22 +418,39 @@ class Executor(executor.Executor):
         :param event:
         :type event: dict
         :return:
-        :rtype: Optional[futures.Future]
+        :rtype: Optional[simpleflow.futures.Future]
         """
-        return self._get_future_from_child_workflow_event(event)
+        future = self._get_future_from_child_workflow_event(event)
+
+        if not future:
+            # WORKFLOW_TYPE_DOES_NOT_EXIST, will be created
+            return None
+
+        if future.finished and future.exception:
+            raise future.exception
+
+        return future
 
     def schedule_task(self, a_task, task_list=None):
         """
         Let a task schedule itself.
         If too many decisions are in flight, add a timer decision and raise ExecutionBlocked.
         :param a_task:
-        :type a_task: ActivityTask
+        :type a_task: ActivityTask | WorkflowTask
         :param task_list:
         :type task_list: Optional[str]
         :return:
         :rtype:
         :raise: exceptions.ExecutionBlocked if too many decisions waiting
         """
+
+        if a_task.idempotent:
+            task_identifier = (type(a_task), self.domain, a_task.id)
+            if task_identifier in self._idempotent_tasks_to_submit:
+                logger.debug('Not resubmitting task {}'.format(a_task.name))
+                return
+            self._idempotent_tasks_to_submit.add(task_identifier)
+
         # NB: ``decisions`` contains a single decision.
         decisions = a_task.schedule(self.domain, task_list)
 
@@ -455,7 +509,9 @@ class Executor(executor.Executor):
         :rtype: futures.Future
         :raise: exceptions.ExecutionBlocked if open activities limit reached
         """
-        a_task.id = self._make_task_id(a_task, *args, **kwargs)
+
+        if not a_task.id:  # Can be already set (WorkflowTask)
+            a_task.id = self._make_task_id(a_task, *args, **kwargs)
         event = self.find_event(a_task, self._history)
         logger.debug('executor: resume {}, event={}'.format(a_task, event))
         future = None
@@ -487,12 +543,16 @@ class Executor(executor.Executor):
 
         # back to normal execution flow
         if event:
+            event_type_to_future = {  # TODO move elsewhere
+                'activity': self.resume_activity,
+                'child_workflow': self.resume_child_workflow,
+            }
+            ttf = event_type_to_future.get(event['type'])
+            if ttf:
+                future = ttf(a_task, event)
             if event['type'] == 'activity':
-                future = self.resume_activity(a_task, event)
                 if future and future.state in (futures.PENDING, futures.RUNNING):
                     self._open_activity_count += 1
-            elif event['type'] == 'child_workflow':
-                future = self.resume_child_workflow(a_task, event)
 
         if not future:
             self.schedule_task(a_task, task_list=self.task_list)
@@ -509,13 +569,14 @@ class Executor(executor.Executor):
         """Register a function and its arguments for asynchronous execution.
 
         ``*args`` and ``**kwargs`` must be serializable in JSON.
+        :type func: simpleflow.base.Submittable | Activity | Workflow
 
         """
         try:
             if isinstance(func, Activity):
                 a_task = ActivityTask(func, *args, **kwargs)
             elif issubclass_(func, Workflow):
-                a_task = WorkflowTask(func, *args, **kwargs)
+                a_task = WorkflowTask(self, func, *args, **kwargs)
             else:
                 raise TypeError('invalid type {} for {}'.format(
                     type(func), func))
@@ -540,12 +601,13 @@ class Executor(executor.Executor):
         return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, decision_response):
-        """Executes the workflow from the start until it blocks.
+        """Replay the workflow from the start until it blocks.
+        Called by the DeciderWorker.
 
         :param decision_response: an object wrapping the PollForDecisionTask response
         :type  decision_response: swf.responses.Response
 
-        :returns: a list of decision and a context dict (empty?)
+        :returns: a list of decision and a context dict (obsolete, empty)
         :rtype: ([swf.models.decision.base.Decision], dict)
         """
         self.reset()
@@ -675,4 +737,15 @@ class Executor(executor.Executor):
             workflow_id=execution.workflow_id,
             run_id=execution.run_id,
             tag_list=getattr(workflow_started_event, 'tag_list', None) or [],  # attribute is absent if no tagList
+            continued_execution_run_id=getattr(workflow_started_event, 'continued_execution_run_id', None),
+            parent_workflow_id=getattr(workflow_started_event, 'parent_workflow_execution', {}).get('workflowId'),
+            parent_run_id=getattr(workflow_started_event, 'parent_workflow_execution', {}).get('runId'),
         )
+
+    @property
+    def _workflow_id(self):
+        return self._execution_context.get('workflow_id')
+
+    @property
+    def _run_id(self):
+        return self._execution_context.get('run_id')

@@ -105,7 +105,7 @@ def info(workflow_execution):
     else:
         first_event = history.events[0]
         first_timestamp = first_event.timestamp
-        last_event = history.events[0]
+        last_event = history.events[-1]
         last_timestamp = last_event.timestamp
         workflow_input = first_event.input
 

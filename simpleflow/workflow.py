@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from simpleflow.base import Submittable
 from . import canvas
 from . import task
 from ._decorators import deprecated
@@ -7,7 +8,7 @@ from .activity import Activity
 from .utils import issubclass_
 
 
-class Workflow(object):
+class Workflow(Submittable):
     """
     Main interface to define a workflow by submitting tasks for asynchronous
     execution.
@@ -22,9 +23,6 @@ class Workflow(object):
     name = None
     version = None
     task_list = None
-    tag_list = None
-    child_policy = None
-    execution_timeout = None
 
     def __init__(self, executor):
         self._executor = executor
@@ -33,12 +31,12 @@ class Workflow(object):
     def executor(self):
         return self._executor
 
-    def submit(self, activity, *args, **kwargs):
+    def submit(self, submittable, *args, **kwargs):
         """
         Submit a function for asynchronous execution.
 
-        :param activity: callable registered as an task.
-        :type  activity: Activity | task.ActivityTask | task.WorkflowTask | canvas.Group | canvas.Chain | Workflow
+        :param submittable: callable registered as an task.
+        :type  submittable: base.Submittable
         :param args: arguments passed to the task.
         :type  args: Sequence.
         :param kwargs: keyword-arguments passed to the task.
@@ -50,18 +48,18 @@ class Workflow(object):
         """
         # If the activity is a child workflow, call directly
         # the executor
-        if issubclass_(activity, Workflow):
-            return self._executor.submit(activity, *args, **kwargs)
-        elif isinstance(activity, (task.ActivityTask, task.WorkflowTask)):
-            return self._executor.submit(activity.activity, *activity.args, **activity.kwargs)
-        elif isinstance(activity, Activity):
-            return self._executor.submit(activity, *args, **kwargs)
-        elif isinstance(activity, canvas.Group):
-            return activity.submit(self._executor)
+        if issubclass_(submittable, Workflow):
+            return self._executor.submit(submittable, *args, **kwargs)
+        elif isinstance(submittable, (Activity, Workflow)):
+            return self._executor.submit(submittable, *args, **kwargs)
+        elif isinstance(submittable, (task.Task, )):
+            return self._executor.submit(submittable)
+        elif isinstance(submittable, canvas.Group):
+            return submittable.submit(self._executor)
         else:
             raise TypeError('Bad type for {} activity ({})'.format(
-                activity,
-                type(activity)
+                submittable,
+                type(submittable)
             ))
 
     def map(self, activity, iterable):
@@ -150,7 +148,7 @@ class Workflow(object):
         :param details:
         :type details: Optional[str]
         """
-        raise NotImplementedError
+        pass
 
     def on_completed(self, history):
         """
@@ -159,7 +157,7 @@ class Workflow(object):
         :param history:
         :type history: simpleflow.history.History
         """
-        raise NotImplementedError
+        pass
 
     def get_execution_context(self):
         """

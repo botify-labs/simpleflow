@@ -191,7 +191,7 @@ class ExternalWorkflowExecutionDecision(Decision):
         :type   control: str
 
         :param  input: input to be provided with the signal
-        :type   input: str
+        :type   input: Optional[dict]
 
         :param  run_id: run id of the workflow execution to be signaled
         :type   run_id: str

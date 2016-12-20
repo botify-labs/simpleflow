@@ -380,7 +380,9 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
               help='Heartbeat interval in seconds (0 to disable heartbeating).')
 @click.option('--nb-processes', '-N', type=int)
 @click.option('--log-level', '-l')
-@click.option('--task-list')
+@click.option('--task-list',
+              required=True,
+              )
 @click.option('--domain', '-d',
               envvar='SWF_DOMAIN',
               required=True,
