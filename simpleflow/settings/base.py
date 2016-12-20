@@ -27,8 +27,8 @@ def load_settings(module, env, conf, defaults):
     for name, typ in iteritems(get_settings(module)):
         if name in env:
             value = env[name]
-        elif name in conf:
-            value = conf[name]
+        elif conf and hasattr(conf, name):
+            value = getattr(conf, name)
         else:
             value = getattr(defaults, name)
 
@@ -45,7 +45,7 @@ def load(conf_module_name=None):
     if conf_module_name:
         conf = __import__(conf_module_name, fromlist=['*'])
     else:
-        conf = {}
+        conf = None
 
     return load_settings(
         sys.modules[__name__],
