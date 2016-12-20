@@ -7,7 +7,7 @@ BUCKET_CACHE = {}
 
 
 def get_connection(host):
-    return connection.S3Connection(host)
+    return connection.S3Connection(host=host)
 
 
 def get_bucket(bucket):
