@@ -208,6 +208,31 @@ class TestFuncGroup(unittest.TestCase):
             send_result=True).submit(executor)
         self.assertEquals(chain.result, [3, [0, 2, 4], 6])
 
+    def test_raises_on_failure(self):
+        def custom_func():
+            group = Group()
+            for i in range(0, 2):
+                group.append(ActivityTask(zero_division))
+            return group
+
+        fngrp = FuncGroup(custom_func, raises_on_failure=False)
+        # We have to submit the funcgroup to create
+        # the activities
+        fngrp.submit(executor)
+        self.assertFalse(fngrp.activities.activities[0].activity.raises_on_failure)
+
+        def custom_func():
+            group = Group()
+            for i in range(0, 2):
+                group.append(ActivityTask(zero_division))
+            return group
+
+        fngrp = FuncGroup(custom_func, raises_on_failure=True)
+        # We have to submit the funcgroup to create
+        # the activities
+        with self.assertRaises(exceptions.TaskFailed):
+            fngrp.submit(executor)
+
 
 class TestComplexCanvas(unittest.TestCase):
     def test(self):

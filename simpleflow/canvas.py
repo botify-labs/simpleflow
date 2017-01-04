@@ -9,9 +9,11 @@ def propagate_attribute(obj, attr, val):
         setattr(obj, attr, val)
     elif isinstance(obj, ActivityTask):
         setattr(obj.activity, attr, val)
-    elif isinstance(act, (Group, FuncGroup)):
-        for activities in act.activities:
+    elif isinstance(obj, Group):
+        for activities in obj.activities:
             propagate_attribute(activities, attr, val)
+    elif isinstance(obj, FuncGroup):
+        setattr(obj, attr, val)
     else:
         raise Exception('Object not found {}'.format(type(obj)))
 
@@ -25,17 +27,19 @@ class FuncGroup(object):
         self.func = func
         self.args = list(args)
         self.kwargs = kwargs
+        self.raises_on_failure = kwargs.pop('raises_on_failure', None)
 
     def submit(self, executor):
         inst = self.instantiate_task()
         return inst.submit(executor)
 
     def instantiate_task(self):
-        inst = self.func(*self.args, **self.kwargs)
-        if not isinstance(inst, (Submittable, Group)):
-            raise TypeError('FuncGroup submission should return a Group or a Submittable,'
+        self.activities = self.func(*self.args, **self.kwargs)
+        propagate_attribute(self.activities, 'raises_on_failure', self.raises_on_failure)
+        if not isinstance(self.activities, (Submittable, Group)):
+            raise TypeError('FuncGroup submission should return a Group or an ActivityTask,'
                             ' got {} instead'.format(type(inst)))
-        return inst
+        return self.activities
 
 
 class AggregateException(Exception):
