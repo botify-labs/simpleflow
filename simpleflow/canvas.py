@@ -4,6 +4,18 @@ from .base import Submittable
 from .task import ActivityTask
 
 
+def propagate_attribute(obj, attr, val):
+    if isinstance(obj, Activity):
+        setattr(obj, attr, val)
+    elif isinstance(obj, ActivityTask):
+        setattr(obj.activity, attr, val)
+    elif isinstance(act, (Group, FuncGroup)):
+        for activities in act.activities:
+            propagate_attribute(activities, attr, val)
+    else:
+        raise Exception('Object not found {}'.format(type(obj)))
+
+
 class FuncGroup(object):
     """
     Class calling a function returning an ActivityTask, a group or a chain
@@ -93,11 +105,17 @@ class Group(object):
                  **options):
         self.activities = list(activities)
         self.max_parallel = options.pop('max_parallel', None)
+        self.raises_on_failure = options.pop('raises_on_failure', None)
+        if self.raises_on_failure is not None:
+            for act in activities:
+                propagate_attribute(act, 'raises_on_failure', self.raises_on_failure)
 
     def append(self, *args, **kwargs):
         if isinstance(args[0], (Submittable, Group)):
+            propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
             self.activities.append(args[0])
         elif isinstance(args[0], Activity):
+            propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
             self.activities.append(ActivityTask(*args, **kwargs))
         else:
             raise ValueError('{} should be a Submittable or an Activity'.format(args[0]))
@@ -117,7 +135,8 @@ class GroupFuture(futures.Future):
 
         for a in self.activities:
             if not self.max_parallel or self._count_pending_or_running < self.max_parallel:
-                self.futures.append(self._submit_activity(a))
+                future = self._submit_activity(a)
+                self.futures.append(future)
                 if self._count_pending_or_running == self.max_parallel:
                     break
 
@@ -171,6 +190,7 @@ class GroupFuture(futures.Future):
                    for a in self.futures)
 
 
+
 class Chain(Group):
     """
     Chain a list of `ActivityTask` or callables returning Group/Chain
@@ -188,10 +208,10 @@ class Chain(Group):
 
     def submit(self, executor):
         return ChainFuture(
-            self.activities,
-            executor,
-            self.send_result
-        )
+                self.activities,
+                executor,
+                self.send_result
+            )
 
 
 class ChainFuture(GroupFuture):
@@ -202,6 +222,7 @@ class ChainFuture(GroupFuture):
         self._result = None
         self._exception = None
         self.futures = []
+        self._has_failed = False
 
         previous_result = None
         for i, a in enumerate(self.activities):
@@ -211,7 +232,18 @@ class ChainFuture(GroupFuture):
             self.futures.append(future)
             if not future.finished:
                 break
+            if future.finished and future.exception:
+                self._has_failed = True
+                break
             previous_result = future.result
 
         self.sync_state()
         self.sync_result()
+
+    def sync_state(self):
+        if all(a.finished for a in self.futures) and (self._futures_contain_all_activities or self._has_failed):
+            self._state = futures.FINISHED
+        elif any(a.cancelled for a in self.futures):
+            self._state = futures.CANCELLED
+        elif any(a.running for a in self.futures):
+            self._state = futures.RUNNING
