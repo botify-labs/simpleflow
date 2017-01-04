@@ -35,7 +35,8 @@ class FuncGroup(object):
 
     def instantiate_task(self):
         self.activities = self.func(*self.args, **self.kwargs)
-        propagate_attribute(self.activities, 'raises_on_failure', self.raises_on_failure)
+        if self.raises_on_failure is not None:
+            propagate_attribute(self.activities, 'raises_on_failure', self.raises_on_failure)
         if not isinstance(self.activities, (Submittable, Group)):
             raise TypeError('FuncGroup submission should return a Group or an ActivityTask,'
                             ' got {} instead'.format(type(inst)))
@@ -116,10 +117,12 @@ class Group(object):
 
     def append(self, *args, **kwargs):
         if isinstance(args[0], (Submittable, Group)):
-            propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
+            if self.raises_on_failure is not None:
+                propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
             self.activities.append(args[0])
         elif isinstance(args[0], Activity):
-            propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
+            if self.raises_on_failure is not None:
+                propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
             self.activities.append(ActivityTask(*args, **kwargs))
         else:
             raise ValueError('{} should be a Submittable or an Activity'.format(args[0]))
@@ -212,10 +215,10 @@ class Chain(Group):
 
     def submit(self, executor):
         return ChainFuture(
-                self.activities,
-                executor,
-                self.send_result
-            )
+            self.activities,
+            executor,
+            self.send_result
+        )
 
 
 class ChainFuture(GroupFuture):
