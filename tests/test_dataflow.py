@@ -813,6 +813,7 @@ def test_workflow_with_child_workflow():
     (history
         .add_decision_task()
         .add_child_workflow(
+            workflow,
             workflow_id='workflow-test_workflow-None--0--1',
             task_list=ATestWorkflow.task_list,
             input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
