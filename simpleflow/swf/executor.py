@@ -18,11 +18,11 @@ from simpleflow import (
     task,
 )
 from simpleflow.activity import Activity
-from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask
+from simpleflow.task import ActivityTask as BaseActivityTask
 from simpleflow.utils import issubclass_, json_dumps, hex_hash
 from simpleflow.utils import retry
 from simpleflow.workflow import Workflow
@@ -574,9 +574,12 @@ class Executor(executor.Executor):
 
         """
         try:
-            if isinstance(func, Submittable):
-                # no need to wrap it, already wrapped in the correct format
-                a_task = func
+            # TODO: support WorkflowTask here!
+            if isinstance(func, BaseActivityTask):
+                # casts a BaseActivityTask to an swf's ActivityTask
+                # TODO: separate both names more cleanly and move cast on a method
+                # TODO: avoid double args/kwargs resolution
+                a_task = ActivityTask(func.activity, *func.args, **func.kwargs)
             elif isinstance(func, Activity):
                 a_task = ActivityTask(func, *args, **kwargs)
             elif issubclass_(func, Workflow):
