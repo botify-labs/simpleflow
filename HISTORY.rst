@@ -1,6 +1,10 @@
 Changelog
 ---------
 
+0.13.1
+~~~~~~
+
+- Fix SWF executor not accepting ActivityTask's in submit() method (#196)
 
 0.13.0
 ~~~~~~
