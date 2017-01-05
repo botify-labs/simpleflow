@@ -12,6 +12,12 @@ class ActivityTask(task.ActivityTask):
     """
     Activity task managed on SWF.
     """
+    @classmethod
+    def from_generic_task(cls, task):
+        """
+        Casts a generic simpleflow.task.ActivityTask into a SWF one.
+        """
+        return cls(task.activity, *task._args, **task._kwargs)
 
     @property
     def task_list(self):
@@ -83,6 +89,12 @@ class WorkflowTask(task.WorkflowTask):
     """
     WorkflowTask managed on SWF.
     """
+    @classmethod
+    def from_generic_task(cls, task):
+        """
+        Casts a generic simpleflow.task.WorkflowTask into a SWF one.
+        """
+        return cls(task.executor, task.workflow, *task._args, **task._kwargs)
 
     @property
     def name(self):

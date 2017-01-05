@@ -49,6 +49,12 @@ class ActivityTask(Task):
     def __init__(self, activity, *args, **kwargs):
         if not isinstance(activity, Activity):
             raise TypeError('Wrong value for `activity`, got {} instead'.format(type(activity)))
+        # Keep original arguments for use in subclasses
+        # For instance this helps casting a generic class to a simpleflow.swf.task,
+        # see simpleflow.swf.task.ActivityTask.from_generic_task() factory
+        self._args = args
+        self._kwargs = kwargs
+
         self.activity = activity
         self.idempotent = activity.idempotent
         self.context = kwargs.pop("context", None)
@@ -93,6 +99,12 @@ class WorkflowTask(Task):
     :type id: str
     """
     def __init__(self, executor, workflow, *args, **kwargs):
+        # Keep original arguments for use in subclasses
+        # For instance this helps casting a generic class to a simpleflow.swf.task,
+        # see simpleflow.swf.task.WorkflowTask.from_generic_task() factory
+        self._args = args
+        self._kwargs = kwargs
+
         self.executor = executor
         self.workflow = workflow
         self.idempotent = getattr(workflow, 'idempotent', False)
