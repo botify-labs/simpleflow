@@ -18,10 +18,15 @@ from simpleflow import (
     task,
 )
 from simpleflow.activity import Activity
+from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask
+from simpleflow.task import (
+    ActivityTask as BaseActivityTask,
+    WorkflowTask as BaseWorkflowTask,
+)
 from simpleflow.utils import issubclass_, json_dumps, hex_hash
 from simpleflow.utils import retry
 from simpleflow.workflow import Workflow
@@ -572,8 +577,24 @@ class Executor(executor.Executor):
         :type func: simpleflow.base.Submittable | Activity | Workflow
 
         """
+        # casts simpleflow.task.*Task to their equivalent in simpleflow.swf.task
+        if isinstance(func, BaseActivityTask):
+            func = ActivityTask.from_generic_task(func)
+        elif isinstance(func, BaseWorkflowTask):
+            func = WorkflowTask.from_generic_task(func)
+
         try:
-            if isinstance(func, Activity):
+            # do not use directly "Submittable" here because we want to catch if
+            # we don't have an instance from a class known to work under simpleflow.swf
+            if isinstance(func, (ActivityTask, WorkflowTask)):
+                # no need to wrap it, already wrapped in the correct format
+                a_task = func
+            elif isinstance(func, Submittable):
+                raise TypeError(
+                    'invalid type Submittable {} for {} (you probably wanted a simpleflow.swf.task.*Task)'.format(
+                        type(func), func))
+
+            elif isinstance(func, Activity):
                 a_task = ActivityTask(func, *args, **kwargs)
             elif issubclass_(func, Workflow):
                 a_task = WorkflowTask(self, func, *args, **kwargs)

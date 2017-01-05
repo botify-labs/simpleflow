@@ -21,6 +21,7 @@ from simpleflow import (
     Workflow,
     futures,
 )
+from simpleflow.task import ActivityTask
 from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.executor import Executor
@@ -101,6 +102,27 @@ def test_workflow_with_input():
     workflow_completed.complete(result=json_dumps(result))
 
     assert decisions[0] == workflow_completed
+
+
+class ATestDefinitionThatSubmitsAnActivityTask(ATestWorkflow):
+    """
+    Execute a single task already wrapped as a simpleflow.task.ActivityTask.
+    """
+    def run(self):
+        b = self.submit(ActivityTask(increment, 4))
+        return b.result
+
+
+@mock_swf
+def test_workflow_that_submits_an_activity_task():
+    workflow = ATestDefinitionThatSubmitsAnActivityTask
+    executor = Executor(DOMAIN, workflow)
+
+    history = builder.History(workflow)
+
+    # The executor should only schedule the *increment* task.
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    check_task_scheduled_decision(decisions[0], increment)
 
 
 @mock_swf
