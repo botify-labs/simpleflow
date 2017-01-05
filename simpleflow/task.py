@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import abc
+from copy import deepcopy
 
 from simpleflow.base import Submittable
 from . import futures
@@ -52,8 +53,8 @@ class ActivityTask(Task):
         # Keep original arguments for use in subclasses
         # For instance this helps casting a generic class to a simpleflow.swf.task,
         # see simpleflow.swf.task.ActivityTask.from_generic_task() factory
-        self._args = args
-        self._kwargs = kwargs
+        self._args = deepcopy(args)
+        self._kwargs = deepcopy(kwargs)
 
         self.activity = activity
         self.idempotent = activity.idempotent
@@ -102,8 +103,8 @@ class WorkflowTask(Task):
         # Keep original arguments for use in subclasses
         # For instance this helps casting a generic class to a simpleflow.swf.task,
         # see simpleflow.swf.task.WorkflowTask.from_generic_task() factory
-        self._args = args
-        self._kwargs = kwargs
+        self._args = deepcopy(args)
+        self._kwargs = deepcopy(kwargs)
 
         self.executor = executor
         self.workflow = workflow
