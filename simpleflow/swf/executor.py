@@ -18,6 +18,7 @@ from simpleflow import (
     task,
 )
 from simpleflow.activity import Activity
+from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
@@ -573,7 +574,10 @@ class Executor(executor.Executor):
 
         """
         try:
-            if isinstance(func, Activity):
+            if isinstance(func, Submittable):
+                # no need to wrap it, already wrapped in the correct format
+                a_task = func
+            elif isinstance(func, Activity):
                 a_task = ActivityTask(func, *args, **kwargs)
             elif issubclass_(func, Workflow):
                 a_task = WorkflowTask(self, func, *args, **kwargs)
