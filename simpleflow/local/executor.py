@@ -43,9 +43,10 @@ class Executor(executor.Executor):
 
         if isinstance(func, Submittable):
             task = func  # *args, **kwargs already resolved.
+            task.context = context
             func = task.activity  # TODO
         elif isinstance(func, Activity):
-            task = ActivityTask(func, *args, **kwargs)
+            task = ActivityTask(func, context=context, *args, **kwargs)
         elif issubclass(func, Workflow):
             task = WorkflowTask(self, func, *args, **kwargs)
         else:
