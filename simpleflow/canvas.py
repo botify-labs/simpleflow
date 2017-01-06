@@ -15,7 +15,7 @@ def propagate_attribute(obj, attr, val):
     elif isinstance(obj, FuncGroup):
         setattr(obj, attr, val)
     else:
-        raise Exception('Object not found {}'.format(type(obj)))
+        raise Exception('Cannot propagate attribute for unknown type: {}'.format(type(obj)))
 
 
 class FuncGroup(object):
@@ -38,7 +38,7 @@ class FuncGroup(object):
         if self.raises_on_failure is not None:
             propagate_attribute(self.activities, 'raises_on_failure', self.raises_on_failure)
         if not isinstance(self.activities, (Submittable, Group)):
-            raise TypeError('FuncGroup submission should return a Group or an ActivityTask,'
+            raise TypeError('FuncGroup submission should return a Group or Submittable,'
                             ' got {} instead'.format(type(inst)))
         return self.activities
 
@@ -125,7 +125,7 @@ class Group(object):
                 propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
             self.activities.append(ActivityTask(*args, **kwargs))
         else:
-            raise ValueError('{} should be a Submittable or an Activity'.format(args[0]))
+            raise ValueError('{} should be a Submittable, Group, or Activity'.format(args[0]))
 
     def submit(self, executor):
         return GroupFuture(self.activities, executor, self.max_parallel)
