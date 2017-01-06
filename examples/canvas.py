@@ -24,6 +24,11 @@ def multiply(numbers):
     return val
 
 
+@activity.with_attributes(task_list='example', version='example')
+def fail_incrementing(x):
+    raise ValueError("Failure on CPU intensive operation '+'")
+
+
 # This workflow demonstrates the use of simpleflow's Chains and Groups
 #
 # A `Group` wraps a list of tasks that can be executed in parallel. It
@@ -55,6 +60,20 @@ class CanvasWorkflow(Workflow):
         )
         futures.wait(future)
 
+
         res = future.result[-1]
 
         print('({}+1)*({}+1)*({}+1) = {}'.format(x, y, z, res))
+
+        # Canva's and Group's can also be "optional"
+        future = self.submit(
+            Chain(
+                ActivityTask(fail_incrementing, x),
+                ActivityTask(increment_slowly, 1),  # never executed
+                raises_on_failure=False,
+            )
+        )
+
+        futures.wait(future)
+
+        print('SUCCESS!')
