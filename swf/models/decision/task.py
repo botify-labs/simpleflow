@@ -28,7 +28,7 @@ class ActivityTaskDecision(Decision):
                  control=None, heartbeat_timeout=None,
                  input=None, duration_timeout=None,
                  schedule_timeout=None, task_timeout=None,
-                 task_list=None):
+                 task_list=None, task_priority=None):
         """Schedule activity task decision builder
 
         :param  activity_id: activity id of the activity task
@@ -58,9 +58,17 @@ class ActivityTaskDecision(Decision):
 
         :param  task_list: Specifies the name of the task list in which to schedule the activity task
         :type   :str
+
+        :param  task_priority: Specifies the numeric priority of the task to pass to SWF (defaults to None).
+        :type   task_priority: int|String
         """
         if input is not None:
             input = json_dumps(input)
+
+        if task_priority is not None:
+            # NB: here we call int() so we raise early if a wrong task priority
+            # is passed to this function.
+            task_priority = str(int(task_priority))
 
         self.update_attributes({
             'activityId': activity_id,
@@ -75,4 +83,5 @@ class ActivityTaskDecision(Decision):
             'scheduleToStartTimeout': schedule_timeout,
             'startToCloseTimeout': task_timeout,
             'taskList': {'name': task_list},
+            'taskPriority': task_priority,
         })
