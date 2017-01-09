@@ -36,7 +36,7 @@ def test_last_state_times():
     history_builder = builder.History(ATestWorkflow)
 
     last_state = 'completed'
-    activity_id = 'activity-tests.test_dataflow.increment-1'
+    activity_id = 'activity-tests.test_simpleflow.test_dataflow.increment-1'
 
     history_builder.add_activity_task(
         increment,

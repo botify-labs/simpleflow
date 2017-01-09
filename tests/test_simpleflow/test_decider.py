@@ -7,7 +7,7 @@ from simpleflow import (
     futures,
 )
 
-from .data import (
+from tests.data import (
     DEFAULT_VERSION,
 )
 

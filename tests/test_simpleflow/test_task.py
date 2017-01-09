@@ -29,5 +29,5 @@ def test_context_is_empty_for_non_swf_tasks():
 
 def test_task_register():
     _registry = registry.registry[None]
-    assert _registry['tests.test_task.double'] == double
-    assert _registry['tests.test_task.Double'] == Double
+    assert _registry['tests.test_simpleflow.test_task.double'] == double
+    assert _registry['tests.test_simpleflow.test_task.Double'] == Double

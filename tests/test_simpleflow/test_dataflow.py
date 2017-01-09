@@ -26,7 +26,7 @@ from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.executor import Executor
 
-from .data import (
+from tests.data import (
     DOMAIN,
     double,
     increment,
@@ -827,7 +827,7 @@ def test_workflow_with_child_workflow():
             'input': json_dumps(input),
             'workflowType': {
                 'version': 'test_version',
-                'name': 'tests.test_dataflow.ATestDefinition'
+                'name': 'tests.test_simpleflow.test_dataflow.ATestDefinition'
             },
             'taskStartToCloseTimeout': '300'
         },
@@ -1617,7 +1617,7 @@ def test_workflow_task_naming():
                 'taskStartToCloseTimeout': '300',
                 'executionStartToCloseTimeout': '3600',
                 'workflowType': {
-                    'name': 'tests.test_dataflow.ATestDefinitionChildWithIdWorkflow',
+                    'name': 'tests.test_simpleflow.test_dataflow.ATestDefinitionChildWithIdWorkflow',
                     'version': 'test_version'
                 },
                 'input': json_dumps(
@@ -1664,7 +1664,7 @@ def test_workflow_idempotent_task_naming():
                 'taskStartToCloseTimeout': '300',
                 'executionStartToCloseTimeout': '3600',
                 'workflowType': {
-                    'name': 'tests.test_dataflow.ATestDefinitionIdempotentChildWithIdWorkflow',
+                    'name': 'tests.test_simpleflow.test_dataflow.ATestDefinitionIdempotentChildWithIdWorkflow',
                     'version': 'test_version'
                 },
                 'input': json_dumps(
