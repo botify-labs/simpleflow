@@ -27,6 +27,7 @@ from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask
 from simpleflow.task import (
     ActivityTask as BaseActivityTask,
     WorkflowTask as BaseWorkflowTask,
+    SignalTask as BaseSignalTask,
 )
 from simpleflow.utils import issubclass_, json_dumps, hex_hash
 from simpleflow.swf import constants
@@ -338,22 +339,57 @@ class Executor(executor.Executor):
         state.
 
         :param a_task: currently unused
-        :param event: child workflow event
+        :type a_task: Optional[SignalTask]
+        :param event: signal event
         :type  event: dict[str, Any]
         """
         future = futures.Future()
         if not event:
+            # logger.warning('{} - signal {} - No event, returning'.format(
+            #     self._workflow_id,
+            #     a_task.name if a_task else '??',
+            # ))
             return future
         state = event['state']
         if state == 'signaled':
             future.set_finished(event['input'])
-        # elif state == 'signal_failed':
-        #     future.set_exception(exceptions.SignalFailed(
-        #         name=event['name'],
-        #         reason=event['cause'],
-        #     ))
 
-        logger.debug('{} - signal {} is signaled (future: {})'.format(self._workflow_id, event['name'], future))
+        # logger.warning('{} - signal {} is signaling/ed (state={}, future: {})'.format(
+        #     self._workflow_id, event['name'], state, future
+        # ))
+        return future
+
+    def get_future_from_external_workflow_event(self, a_task, event):
+        """Maps an external workflow event to a Future with the corresponding
+        state.
+
+        :param a_task: currently unused
+        :type a_task:
+        :param event: external workflow event
+        :type  event: dict[str, Any]
+        """
+        future = futures.Future()
+        if not event:
+            # logger.warning('{} - external_workflow {} - No event, returning'.format(
+            #     self._workflow_id,
+            #     a_task.name if a_task else '??',
+            # ))
+            return future
+        state = event['state']
+        if state == 'signal_execution_initiated':
+            # Don't re-initiate signal sending
+            future.set_running()
+        elif state == 'execution_signaled':
+            future.set_finished(event['input'])
+        elif state == 'signal_execution_failed':
+            future.set_exception(exceptions.TaskFailed(
+                name=event['name'],
+                reason=event['cause'],
+            ))
+
+        # logger.warning('{} - signal {} is signaling/ed (state={}, future: {})'.format(
+        #     self._workflow_id, event['name'], state, future
+        # ))
         return future
 
     def get_future_from_signal(self, signal_name):
@@ -364,11 +400,13 @@ class Executor(executor.Executor):
         :return:
          :rtype: futures.Future
         """
+        # logger.warning('get_future_from_signal({})'.format(signal_name))
         event = self._history.signals.get(signal_name)
+        # if not event:
+        #     signaled_workflows = self._history.signaled_workflows.get(signal_name)
         return self.get_future_from_signal_event(None, event)
 
-    @staticmethod
-    def find_activity_event(a_task, history):
+    def find_activity_event(self, a_task, history):
         """
         Get the event corresponding to a activity task, if any.
 
@@ -382,8 +420,7 @@ class Executor(executor.Executor):
         activity = history.activities.get(a_task.id)
         return activity
 
-    @staticmethod
-    def find_child_workflow_event(a_task, history):
+    def find_child_workflow_event(self, a_task, history):
         """
         Get the event corresponding to a child workflow, if any.
 
@@ -396,8 +433,7 @@ class Executor(executor.Executor):
         """
         return history.child_workflows.get(a_task.id)
 
-    @staticmethod
-    def find_signal_event(a_task, history):
+    def find_signal_event(self, a_task, history):
         """
         Get the event corresponding to a signal, if any.
 
@@ -408,7 +444,30 @@ class Executor(executor.Executor):
         :return:
         :rtype: Optional[dict]
         """
-        return history.signals.get(a_task.name)
+        # FIXME could look directly in signaled_workflows?
+        # logger.warning('{} - find_signal_event: a_task={}'.format(
+        #     self._workflow_id,
+        #     a_task))
+        event = history.signals.get(a_task.name)
+        if not event:
+            if a_task.workflow_id is None:  # Broadcast, should be in signals
+                # logger.warning('{} - find_signal_event: was broadcast, not found'.format(
+                #     self._workflow_id, ))
+                return None
+            signaled_workflows = history.signaled_workflows.get(a_task.name, [])
+            for w in signaled_workflows:
+                # logger.warning('W={}'.format(w))
+                if w['workflow_id'] == a_task.workflow_id and (a_task.run_id is None or w['run_id'] == a_task.run_id):
+                    event = w
+                    break
+        # logger.warning('{} - find_signal_event: event={}'.format(self._workflow_id, event))
+        return event
+
+    TASK_TYPE_TO_EVENT_FINDER = {
+        ActivityTask: find_activity_event,
+        WorkflowTask: find_child_workflow_event,
+        SignalTask: find_signal_event,
+    }
 
     def find_event(self, a_task, history):
         """
@@ -420,15 +479,9 @@ class Executor(executor.Executor):
         :return:
         :rtype: Optional[dict]
         """
-        # FIXME move this
-        event_type_to_finder = {
-            ActivityTask: self.find_activity_event,
-            WorkflowTask: self.find_child_workflow_event,
-            SignalTask: self.find_signal_event,
-        }
-        finder = event_type_to_finder.get(type(a_task))
+        finder = self.TASK_TYPE_TO_EVENT_FINDER.get(type(a_task))
         if finder:
-            return finder(a_task, history)
+            return finder(self, a_task, history)
         raise TypeError('invalid type {} for task {}'.format(
             type(a_task), a_task))
 
@@ -538,7 +591,7 @@ class Executor(executor.Executor):
         # Check if we won't exceed max decisions -1
         # TODO: if we had exactly MAX_DECISIONS - 1 to take, this will wake up
         # the workflow for no reason. Evaluate if we can do better.
-        if len(self._decisions) >= constants.MAX_DECISIONS - 1:
+        if len(self._decisions) == constants.MAX_DECISIONS - 1:
             # We add a timer to wake up the workflow immediately after
             # completing these decisions.
             self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
@@ -555,6 +608,7 @@ class Executor(executor.Executor):
         'activity': resume_activity,
         'child_workflow': resume_child_workflow,
         'signal': get_future_from_signal_event,
+        'external_workflow': get_future_from_external_workflow_event,
     }
 
     def resume(self, a_task, *args, **kwargs):
@@ -611,6 +665,9 @@ class Executor(executor.Executor):
             ttf = self.EVENT_TYPE_TO_FUTURE.get(event['type'])
             if ttf:
                 future = ttf(self, a_task, event)
+                # logger.warning('{} - event=(type={}, state={}), future={} (task={})'.format(
+                #     self._workflow_id, event['type'], event['state'], future, a_task
+                # ))
             if event['type'] == 'activity':
                 if future and future.state in (futures.PENDING, futures.RUNNING):
                     self._open_activity_count += 1
@@ -667,22 +724,19 @@ class Executor(executor.Executor):
         priority_set_on_submit = kwargs.pop("__priority", PRIORITY_NOT_SET)
 
         # casts simpleflow.task.*Task to their equivalent in simpleflow.swf.task
-        if isinstance(func, BaseActivityTask):
+        if isinstance(func, BaseActivityTask) and not isinstance(func, ActivityTask):
             func = ActivityTask.from_generic_task(func)
-        elif isinstance(func, BaseWorkflowTask):
+        elif isinstance(func, BaseWorkflowTask) and not isinstance(func, WorkflowTask):
             func = WorkflowTask.from_generic_task(func)
+        elif isinstance(func, BaseSignalTask) and not isinstance(func, SignalTask):
+            func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None)
 
         try:
             # do not use directly "Submittable" here because we want to catch if
             # we don't have an instance from a class known to work under simpleflow.swf
-            if isinstance(func, (ActivityTask, WorkflowTask)):
+            if isinstance(func, (ActivityTask, WorkflowTask, SignalTask)):
                 # no need to wrap it, already wrapped in the correct format
                 a_task = func
-            elif isinstance(func, Submittable):
-                raise TypeError(
-                    'invalid type Submittable {} for {} (you probably wanted a simpleflow.swf.task.*Task)'.format(
-                        type(func), func))
-
             elif isinstance(func, Activity):
                 a_task = ActivityTask(func, *args, **kwargs)
             elif issubclass_(func, Workflow):
@@ -691,6 +745,10 @@ class Executor(executor.Executor):
                 future = self.get_future_from_signal(func.signal_name)
                 logger.debug('submitted WaitForSignalTask({}): future={}'.format(func.signal_name, future))
                 return future
+            elif isinstance(func, Submittable):
+                raise TypeError(
+                    'invalid type Submittable {} for {} (you probably wanted a simpleflow.swf.task.*Task)'.format(
+                        type(func), func))
             else:
                 raise TypeError('invalid type {} for {}'.format(
                     type(func), func))
@@ -870,7 +928,7 @@ class Executor(executor.Executor):
     def _run_id(self):
         return self._execution_context.get('run_id')
 
-    def signal(self, name, *args, **kwargs):
+    def signal(self, name, workflow_id=None, run_id=None, *args, **kwargs):
         """
         Send a signal.
         :param name:
@@ -878,13 +936,18 @@ class Executor(executor.Executor):
         :param kwargs:
         :return:
         """
+        logger.debug('signal: name={name}, workflow_id={workflow_id}, run_id={run_id}'.format(
+            name=name,
+            workflow_id=workflow_id if workflow_id else self._workflow_id,
+            run_id=run_id if workflow_id else self._run_id,
+        ))
         return SignalTask(
-                name,
-                workflow_id=self._workflow_id,
-                run_id=self._run_id,
-                *args,
-                **kwargs
-            )
+            name,
+            workflow_id=workflow_id if workflow_id else self._workflow_id,
+            run_id=run_id if workflow_id else self._run_id,
+            *args,
+            **kwargs
+        )
 
     def wait_signal(self, name):
         logger.debug('{} - wait_signal({})'.format(self._workflow_id, name))
@@ -893,14 +956,14 @@ class Executor(executor.Executor):
     def process_signals(self):
         """
         Send every signals we got to our parent and children.
+        Don't send to workflows present in history.signaled_workflows.
         """
+        # TODO: don't send if control == "Single"... Except that as the target, we don't have control
         history = self._history
         if not history.signals:
             return
 
         known_workflows_ids = [
-            # No need to check whether we were signaled...
-            # (self._execution_context['workflow_id'], self._execution_context['run_id'])
         ]
         if self._execution_context['parent_workflow_id']:
             known_workflows_ids.append(
@@ -914,27 +977,51 @@ class Executor(executor.Executor):
         known_workflows_ids = frozenset(known_workflows_ids)
 
         for signal in history.signals.values():
-            # logger.warning('{} - signal: {}'.format(self._workflow_id, signal))
             name = signal['name']
-            sender = (signal['external_workflow_id'], signal['external_run_id'])
+            input = signal['input']
+            orig_workflow_id = input.get('__workflow_id')
+            orig_run_id = input.get('__run_id')
+            input = {
+                'args': input.get('args'),
+                'kwargs': input.get('kwargs'),
+                '__workflow_id': self._workflow_id,
+                '__run_id': self._run_id,
+            }
+            # logger.warning('{} - signal: {}'.format(self._workflow_id, signal))
+            # logger.warning('External Signal Events:')
+            # for k, v in self._history.external_workflows_signaling.items():
+            #     logger.warning('{}: {}'.format(k, v))
+            # logger.warning('---------')
+            # logger.warning('Children:')
+            # for k, v in self._history.child_workflows.items():
+            #     logger.warning('{}: {}'.format(k, v))
+            # logger.warning('---------')
+            sender = (
+                signal['external_workflow_id'] or orig_workflow_id,
+                signal['external_run_id'] or orig_run_id
+            )
             signaled_workflows_ids = set(
                 (w['workflow_id'], w['run_id']) for w in history.signaled_workflows[name]
             )
-            # logger.debug('{} - Signal {}: signaled: {}'.format(
+            signaled_workflows_ids.add((orig_workflow_id, orig_run_id))
+            # logger.warning('{} - Signal {}: signaled: {}'.format(
             #     self._workflow_id, name, [w for (w, r) in signaled_workflows_ids])
             # )
             not_signaled_workflows_ids = list(known_workflows_ids - signaled_workflows_ids - {sender})
-            # logger.warning('{} - Signal {}: NOT signaled: {}'.format(
+            # logger.warning('{} - Signal {}: NOT YET signaled: {}'.format(
             #     self._workflow_id, name, not_signaled_workflows_ids)
             # )
-            # task_id = 'signal-{}'.format(signal['event_id'])
             for workflow_id, run_id in not_signaled_workflows_ids:
-                # logger.debug('{} - Signal {}: SIGNALING: {}'.format(
+                # logger.warning('{} - Signal {}: SIGNALING: {}'.format(
                 #     self._workflow_id, name, workflow_id, run_id)
                 # )
-                self._execution.signal(
-                    signal_name=name,
-                    input=signal['input'],
-                    workflow_id=workflow_id,
-                    run_id=run_id,
-                )
+                try:
+                    self._execution.signal(
+                        signal_name=name,
+                        input=input,
+                        workflow_id=workflow_id,
+                        run_id=run_id,
+                    )
+                except swf.models.workflow.WorkflowExecutionDoesNotExist:
+                    logger.info('Workflow {} {} disappeared'.format(workflow_id, run_id))
+                    pass

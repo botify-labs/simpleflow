@@ -158,17 +158,50 @@ class SignalTask(task.SignalTask):
     """
     Signal "task" on SWF.
     """
-    def __init__(self, name, workflow_id=None, run_id=None, *args, **kwargs):
+    @classmethod
+    def from_generic_task(cls, a_task, workflow_id, run_id, control):
+        return cls(a_task.name, workflow_id, run_id, control, *a_task.args, **a_task.kwargs)
+
+    def __init__(self, name, workflow_id, run_id, control=None, *args, **kwargs):
         super(SignalTask, self).__init__(name, *args, **kwargs)
         self.workflow_id = workflow_id
         self.run_id = run_id
+        self.control = control
+
+    @property
+    def id(self):
+        return self._name
+
+    @property
+    def idempotent(self):
+        return None
+
+    def __repr__(self):
+        return '{}(name={}, workflow_id={}, run_id={}, control={}, args={}, kwargs={})'.format(
+            self.__class__.__name__,
+            self.name,
+            self.workflow_id,
+            self.run_id,
+            self.control,
+            self.args,
+            self.kwargs,
+        )
 
     def schedule(self, domain, task_list):
         input = {
             'args': self.args,
             'kwargs': self.kwargs,
+            '__workflow_id': self.workflow_id,
+            '__run_id': self.run_id,
         }
-        logger.debug('scheduling signal {}'.format(self.name))
+        logger.debug(
+            'scheduling signal name={name}, workflow_id={workflow_id}, run_id={run_id}, control={control}'.format(
+                name=self.name,
+                workflow_id=self.workflow_id,
+                run_id=self.run_id,
+                control=self.control,
+            )
+        )
 
         decision = swf.models.decision.ExternalWorkflowExecutionDecision()
         decision.signal(
@@ -176,6 +209,7 @@ class SignalTask(task.SignalTask):
             input=input,
             workflow_id=self.workflow_id,
             run_id=self.run_id,
+            control=self.control,
         )
 
         return [decision]

@@ -76,12 +76,15 @@ def func_b_2_2(*args, **kwargs):
     return 'func_b_2_2'
 
 
-# This workflow demonstrates a basic use of signals inside a single workflow.
-# Not really useful, I guess :-)
-class SignalsWorkflow(Workflow):
-    name = 'signals-simple'
+class BaseWorkflow(Workflow):
     version = 'example'
     task_list = 'example'
+
+
+# This workflow demonstrates a basic use of signals inside a single workflow.
+# Not really useful, I guess :-)
+class SignalsWorkflow(BaseWorkflow):
+    name = 'signals-simple'
 
     def run(self):
         all = [
@@ -102,10 +105,8 @@ class SignalsWorkflow(Workflow):
 # A `Chain` wraps a list of tasks that need to be executed sequentially.
 # As groups, it returns a future that is considered "finished" only
 # when all the tasks inside the Chain are finished.
-class CanvasSignalsWorkflow(Workflow):
+class CanvasSignalsWorkflow(BaseWorkflow):
     name = 'signals-canvas'
-    version = 'example'
-    task_list = 'example'
 
     def run(self):
         chain1 = Chain(
@@ -123,10 +124,11 @@ class CanvasSignalsWorkflow(Workflow):
         futures.wait(fut)
 
 
-class ChildWaitSignalsWorkflow(Workflow):
+class ChildWaitSignalsWorkflow(BaseWorkflow):
+    """
+    Wait for a signal then execute an activity.
+    """
     name = 'signals-child-receiver'
-    version = 'example'
-    task_list = 'example'
 
     def run(self):
         all = [
@@ -136,24 +138,38 @@ class ChildWaitSignalsWorkflow(Workflow):
         futures.wait(*all)
 
 
-class ChildSendSignalsWorkflow(Workflow):
+class ChildSendSignalsWorkflow(BaseWorkflow):
+    """
+    Send a signal.
+    """
     name = 'signals-child-sender'
-    version = 'example'
-    task_list = 'example'
 
     def run(self):
         all = [
             self.submit(self.signal('signal1')),
-            self.submit(self.wait_signal('signal1')),
+            # self.submit(self.wait_signal('signal1')),
         ]
         futures.wait(*all)
+
+
+class ChildWorkUntilSignalWorkflow(BaseWorkflow):
+    """
+    Work until receiving a signal.
+    """
+    name = 'signals-child-worker'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self):
+        signal_waiter = self.submit(self.wait_signal('signal1'))
+        while not signal_waiter.finished:
+            fut = self.submit(func_a_1_1)
+            futures.wait(fut)
 
 
 # Sending a signal that a child workflow waits on.
 class ParentSignalsWorkflow(Workflow):
     name = 'signals-parent'
-    version = 'example'
-    task_list = 'example'
 
     def run(self):
         all = [
@@ -178,10 +194,8 @@ class ParentSignalsWorkflow2(Workflow):
 
 
 # The child sends a signal, the parent waits on it.
-class ParentSignalsWorkflow3(Workflow):
+class ParentSignalsWorkflow3(BaseWorkflow):
     name = 'signals-parent-3'
-    version = 'example'
-    task_list = 'example'
 
     def run(self):
         all = [
@@ -189,3 +203,55 @@ class ParentSignalsWorkflow3(Workflow):
             self.submit(self.wait_signal('signal1')),
         ]
         futures.wait(*all)
+
+
+# The child works until it receives a signal.
+class ParentSignalsWorkflow4(BaseWorkflow):
+    name = 'signals-parent-4'
+
+    def run(self):
+        all = [
+            self.submit(ChildWorkUntilSignalWorkflow),
+            self.submit(
+                Chain(
+                    ActivityTask(func_a_1_2),
+                    self.signal('signal1'),
+                )
+            ),
+        ]
+        futures.wait(*all)
+
+
+class ChildSignalsParentWorkflow(BaseWorkflow):
+    name = 'child-workflow'
+
+    def run(self):
+        execution_context = self.get_execution_context()
+        parent_workflow_id = execution_context.get('parent_workflow_id')
+        parent_run_id = execution_context.get('parent_run_id')
+        print(execution_context)
+        f = self.submit(
+            self.signal(
+                'ChildReady',
+                workflow_id=parent_workflow_id, run_id=parent_run_id,
+                me={
+                    'workflow_id': execution_context.get('workflow_id'),
+                    'run_id': execution_context.get('run_id'),
+                }
+            )
+        )
+        futures.wait(f)
+        print('C1: end')
+
+
+class ParentSignalsWorkflow5(BaseWorkflow):
+    name = 'signals-parent-5'
+
+    def run(self):
+        f = self.submit(ChildSignalsParentWorkflow)
+        futures.wait(f)
+        child_signal = self.submit(self.wait_signal('ChildReady'))
+        futures.wait(child_signal)
+        print('Parent: ended wait on ChildReady')
+        print(child_signal.result)
+        print('Parent: end')
