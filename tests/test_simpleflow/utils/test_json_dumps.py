@@ -2,6 +2,8 @@ import datetime
 import unittest
 
 import pytz
+from simpleflow.exceptions import ExecutionBlocked
+from simpleflow.futures import Future
 from simpleflow.utils import json_dumps
 
 
@@ -22,6 +24,15 @@ class TestJsonDumps(unittest.TestCase):
                 json_dumps(case[0]),
                 case[1],
             )
+
+    def test_json_dumps_futures(self):
+        resolved = Future()
+        resolved.set_finished("foo")
+        self.assertEquals(json_dumps(resolved), '"foo"')
+
+        pending = Future()
+        with self.assertRaises(ExecutionBlocked):
+            json_dumps(pending)
 
     def test_json_dumps_pretty(self):
         self.assertEquals(

@@ -2,12 +2,16 @@ from datetime import datetime
 import json
 import types
 
+from simpleflow.futures import Future
+
 
 def _serialize_complex_object(obj):
     if isinstance(obj, datetime):
         return obj.isoformat()
     if isinstance(obj, types.GeneratorType):
         return [i for i in obj]
+    if isinstance(obj, Future):
+        return obj.result
     raise TypeError(
         "Type %s couldn't be serialized. This is a bug in simpleflow,"
         " please file a new issue on GitHub!" % type(obj))
