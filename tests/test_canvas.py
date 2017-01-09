@@ -161,16 +161,36 @@ class TestChain(unittest.TestCase):
         ).submit(executor)
         self.assertIsNone(future.exception)
 
+        # Do not execute the 3rd step is the 2nd is failing on chains
         future = Chain(
+            ActivityTask(to_string, "test1"),
             ActivityTask(zero_division),
-            ActivityTask(zero_division),
+            ActivityTask(to_string, "test2"),
         ).submit(executor)
         self.assertTrue(future.finished)
         self.assertIsInstance(future.exception, AggregateException)
         # Both tasks were tried and failed (being in a chain doesn't change this)
         self.assertEqual(2, len(future.exception.exceptions))
-        self.assertIsInstance(future.exception.exceptions[0], ZeroDivisionError)
+        self.assertIsNone(future.exception.exceptions[0])
         self.assertIsInstance(future.exception.exceptions[1], ZeroDivisionError)
+
+    def test_raises_on_failure(self):
+        chain = Chain(
+            ActivityTask(to_string, "test1"),
+            ActivityTask(zero_division),
+            raises_on_failure=False
+        )
+        self.assertFalse(chain.activities[0].activity.raises_on_failure)
+        self.assertFalse(chain.activities[1].activity.raises_on_failure)
+
+        chain = Chain(
+            ActivityTask(to_string, "test1"),
+            ActivityTask(zero_division),
+            raises_on_failure=True
+        )
+        self.assertTrue(chain.activities[0].activity.raises_on_failure)
+        self.assertTrue(chain.activities[1].activity.raises_on_failure)
+
 
 
 class TestFuncGroup(unittest.TestCase):
@@ -187,6 +207,31 @@ class TestFuncGroup(unittest.TestCase):
             ActivityTask(sum_values),
             send_result=True).submit(executor)
         self.assertEquals(chain.result, [3, [0, 2, 4], 6])
+
+    def test_raises_on_failure(self):
+        def custom_func():
+            group = Group()
+            for i in range(0, 2):
+                group.append(ActivityTask(zero_division))
+            return group
+
+        fngrp = FuncGroup(custom_func, raises_on_failure=False)
+        # We have to submit the funcgroup to create
+        # the activities
+        fngrp.submit(executor)
+        self.assertFalse(fngrp.activities.activities[0].activity.raises_on_failure)
+
+        def custom_func():
+            group = Group()
+            for i in range(0, 2):
+                group.append(ActivityTask(zero_division))
+            return group
+
+        fngrp = FuncGroup(custom_func, raises_on_failure=True)
+        # We have to submit the funcgroup to create
+        # the activities
+        with self.assertRaises(exceptions.TaskFailed):
+            fngrp.submit(executor)
 
 
 class TestComplexCanvas(unittest.TestCase):

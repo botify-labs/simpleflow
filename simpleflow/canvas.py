@@ -4,6 +4,20 @@ from .base import Submittable
 from .task import ActivityTask
 
 
+def propagate_attribute(obj, attr, val):
+    if isinstance(obj, Activity):
+        setattr(obj, attr, val)
+    elif isinstance(obj, ActivityTask):
+        setattr(obj.activity, attr, val)
+    elif isinstance(obj, Group):
+        for activities in obj.activities:
+            propagate_attribute(activities, attr, val)
+    elif isinstance(obj, FuncGroup):
+        setattr(obj, attr, val)
+    else:
+        raise Exception('Cannot propagate attribute for unknown type: {}'.format(type(obj)))
+
+
 class FuncGroup(object):
     """
     Class calling a function returning an ActivityTask, a group or a chain
@@ -13,17 +27,20 @@ class FuncGroup(object):
         self.func = func
         self.args = list(args)
         self.kwargs = kwargs
+        self.raises_on_failure = kwargs.pop('raises_on_failure', None)
 
     def submit(self, executor):
         inst = self.instantiate_task()
         return inst.submit(executor)
 
     def instantiate_task(self):
-        inst = self.func(*self.args, **self.kwargs)
-        if not isinstance(inst, (Submittable, Group)):
-            raise TypeError('FuncGroup submission should return a Group or a Submittable,'
+        self.activities = self.func(*self.args, **self.kwargs)
+        if self.raises_on_failure is not None:
+            propagate_attribute(self.activities, 'raises_on_failure', self.raises_on_failure)
+        if not isinstance(self.activities, (Submittable, Group)):
+            raise TypeError('FuncGroup submission should return a Group or Submittable,'
                             ' got {} instead'.format(type(inst)))
-        return inst
+        return self.activities
 
 
 class AggregateException(Exception):
@@ -93,14 +110,22 @@ class Group(object):
                  **options):
         self.activities = list(activities)
         self.max_parallel = options.pop('max_parallel', None)
+        self.raises_on_failure = options.pop('raises_on_failure', None)
+        if self.raises_on_failure is not None:
+            for act in activities:
+                propagate_attribute(act, 'raises_on_failure', self.raises_on_failure)
 
     def append(self, *args, **kwargs):
         if isinstance(args[0], (Submittable, Group)):
+            if self.raises_on_failure is not None:
+                propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
             self.activities.append(args[0])
         elif isinstance(args[0], Activity):
+            if self.raises_on_failure is not None:
+                propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
             self.activities.append(ActivityTask(*args, **kwargs))
         else:
-            raise ValueError('{} should be a Submittable or an Activity'.format(args[0]))
+            raise ValueError('{} should be a Submittable, Group, or Activity'.format(args[0]))
 
     def submit(self, executor):
         return GroupFuture(self.activities, executor, self.max_parallel)
@@ -117,7 +142,8 @@ class GroupFuture(futures.Future):
 
         for a in self.activities:
             if not self.max_parallel or self._count_pending_or_running < self.max_parallel:
-                self.futures.append(self._submit_activity(a))
+                future = self._submit_activity(a)
+                self.futures.append(future)
                 if self._count_pending_or_running == self.max_parallel:
                     break
 
@@ -171,6 +197,7 @@ class GroupFuture(futures.Future):
                    for a in self.futures)
 
 
+
 class Chain(Group):
     """
     Chain a list of `ActivityTask` or callables returning Group/Chain
@@ -202,6 +229,7 @@ class ChainFuture(GroupFuture):
         self._result = None
         self._exception = None
         self.futures = []
+        self._has_failed = False
 
         previous_result = None
         for i, a in enumerate(self.activities):
@@ -211,7 +239,18 @@ class ChainFuture(GroupFuture):
             self.futures.append(future)
             if not future.finished:
                 break
+            if future.finished and future.exception:
+                self._has_failed = True
+                break
             previous_result = future.result
 
         self.sync_state()
         self.sync_result()
+
+    def sync_state(self):
+        if all(a.finished for a in self.futures) and (self._futures_contain_all_activities or self._has_failed):
+            self._state = futures.FINISHED
+        elif any(a.cancelled for a in self.futures):
+            self._state = futures.CANCELLED
+        elif any(a.running for a in self.futures):
+            self._state = futures.RUNNING
