@@ -448,7 +448,7 @@ class Executor(executor.Executor):
         :rtype:
         :raise: exceptions.ExecutionBlocked if too many decisions waiting
         """
-
+        # Don't re-schedule idempotent tasks
         if a_task.idempotent:
             task_identifier = (type(a_task), self.domain, a_task.id)
             if task_identifier in self._idempotent_tasks_to_submit:

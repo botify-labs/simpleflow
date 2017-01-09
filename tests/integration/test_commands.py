@@ -1,5 +1,4 @@
-# See README for more informations about integration tests
-
+# See README for more information about integration tests
 from click.testing import CliRunner
 from flaky import flaky
 from sure import expect

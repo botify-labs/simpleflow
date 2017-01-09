@@ -2,20 +2,15 @@
 from __future__ import absolute_import
 
 import re
-from builtins import range
-
 import functools
-from mock import patch
 
 import boto
+from mock import patch
 from moto import mock_swf
 
 import swf.models
 import swf.models.decision
 import swf.models.workflow
-from simpleflow.utils import json_dumps
-from swf.models.history import builder
-from swf.responses import Response
 
 from simpleflow import (
     Workflow,
@@ -25,7 +20,9 @@ from simpleflow.task import ActivityTask
 from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.executor import Executor
-
+from simpleflow.utils import json_dumps
+from swf.models.history import builder
+from swf.responses import Response
 from .data import (
     DOMAIN,
     double,
@@ -838,12 +835,13 @@ def test_workflow_with_child_workflow():
     (history
         .add_decision_task()
         .add_child_workflow(
-        workflow,
-        workflow_id='workflow-test_workflow-None--0--1',
-        task_list=ATestWorkflow.task_list,
-        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-        result='4'
-    ))
+            workflow,
+            workflow_id='workflow-test_workflow-None--0--1',
+            task_list=ATestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+            result='4'
+        )
+    )
 
     # Now the child workflow is finished and the executor should complete the
     # workflow.

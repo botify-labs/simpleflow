@@ -56,7 +56,7 @@ class History(object):
 
     def parse_activity_event(self, events, event):
         """
-        Aggregate all the attributes of an activity in a single entry.
+        Aggregate all the attributes of an activity in a single entry matching its latest state.
 
         :param events:
         :type events: list[swf.models.event.Event]
