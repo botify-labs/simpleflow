@@ -26,9 +26,23 @@ class Executor(executor.Executor):
         super(Executor, self).__init__(workflow)
         self.nb_activities = 0
 
+    @property
+    def _workflow_class(self):
+        """
+        Returns the workflow class with all the needed attributes for
+        swf.models.history.builder.History()
+        This allows to get a SWF-compatible history in local executions so that
+        the metrology feature works correctly.
+        """
+        cls = self._workflow.__class__
+        for attr in ("decision_tasks_timeout", "execution_timeout", ):
+            if not hasattr(cls, attr):
+                setattr(cls, attr, None)
+        return cls
+
     def initialize_history(self, input):
         self._history = builder.History(
-            self._workflow.__class__,
+            self._workflow_class,
             input=input)
 
     def submit(self, func, *args, **kwargs):
