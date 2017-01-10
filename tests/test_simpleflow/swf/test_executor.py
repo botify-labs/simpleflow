@@ -4,7 +4,7 @@ import boto
 from moto import mock_swf
 from sure import expect
 
-from simpleflow import futures
+from simpleflow import activity, futures
 from simpleflow.swf.executor import Executor
 from swf.actors import Decider
 from tests.data import (
@@ -12,6 +12,11 @@ from tests.data import (
     DOMAIN,
     increment,
 )
+
+
+@activity.with_attributes(task_priority=32)
+def increment_high_priority(self, x):
+    return x + 1
 
 
 class ExampleWorkflow(BaseTestWorkflow):
@@ -30,7 +35,9 @@ class ExampleWorkflow(BaseTestWorkflow):
         a = self.submit(increment, 3)
         b = self.submit(increment, 3, __priority=5)
         c = self.submit(increment, 3, __priority=None)
-        futures.wait(a, b, c)
+        d = self.submit(increment_high_priority, 3)
+        e = self.submit(increment_high_priority, 3, __priority=30)
+        futures.wait(a, b, c, d, e)
 
 
 @mock_swf
@@ -55,7 +62,7 @@ class TestSimpleflowSwfExecutor(unittest.TestCase):
         executor = Executor(DOMAIN, ExampleWorkflow)
         decisions, _ = executor.replay(response)
 
-        expect(decisions).to.have.length_of(3)
+        expect(decisions).to.have.length_of(5)
 
         def get_task_priority(decision):
             return decision["scheduleActivityTaskDecisionAttributes"].get("taskPriority")
@@ -68,3 +75,9 @@ class TestSimpleflowSwfExecutor(unittest.TestCase):
 
         # priority == None
         expect(get_task_priority(decisions[2])).to.be.none
+
+        # priority set at decorator level
+        expect(get_task_priority(decisions[3])).to.equal("32")
+
+        # priority set at decorator level but overridden in self.submit()
+        expect(get_task_priority(decisions[4])).to.equal("30")

@@ -68,3 +68,32 @@ class WorkflowPriority4(BaseWorkflow):
         self._prio = x
         # taskPriority will be set to the value of "x"
         return self.submit(increment, x).result
+
+
+# EXAMPLE 5: setting a default priority via the @activity.with_attributes() decorator
+# Command: simpleflow standalone examples.priorities.WorkflowPriority5 --input '[1]'
+#
+# This has a higher precedence than the priority set at the workflow level, but
+# lower than a "__priority" set in self.submit().
+#
+# Setting the priority to `None` at a given point removes results in the activity
+# being scheduled without a specific priority (so it takes the default if you
+# configured something on SWF, see the docs).
+# Setting the priority to `False` fallbacks to the next priority definition in
+# the precedence list (equivalent to NOT having it in the first place).
+@activity.with_attributes(task_list='quickstart', version='example', task_priority=12)
+def increment_prio(x):
+    return x + 1
+
+class WorkflowPriority5(BaseWorkflow):
+    name = "priority-5"
+    task_priority = 5
+
+    def run(self, x):
+        # priorty will be: 12
+        a = self.submit(increment_prio, x)
+        # priorty will be: 13
+        b = self.submit(increment_prio, a, __priority=13)
+        # priorty will not be set
+        c = self.submit(increment_prio, b, __priority=None)
+        return c.result

@@ -9,6 +9,7 @@ def with_attributes(
         name=None,
         version=settings.ACTIVITY_DEFAULT_VERSION,
         task_list=settings.ACTIVITY_DEFAULT_TASK_LIST,
+        task_priority=False,
         retry=0,
         raises_on_failure=False,
         start_to_close_timeout=settings.ACTIVITY_START_TO_CLOSE_TIMEOUT,
@@ -52,6 +53,7 @@ def with_attributes(
             schedule_to_close_timeout,
             schedule_to_start_timeout,
             heartbeat_timeout,
+            task_priority=task_priority,
             idempotent=idempotent,
         )
 
@@ -69,12 +71,14 @@ class Activity(object):
                  schedule_to_close_timeout=None,
                  schedule_to_start_timeout=None,
                  heartbeat_timeout=None,
+                 task_priority=False,
                  idempotent=None):
         self._callable = callable
 
         self._name = name
         self.version = version
         self.task_list = task_list
+        self.task_priority = task_priority
         self.retry = retry
         self.raises_on_failure = raises_on_failure
         self.idempotent = idempotent

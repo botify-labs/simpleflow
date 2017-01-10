@@ -570,6 +570,34 @@ class Executor(executor.Executor):
 
         return future
 
+    def _compute_priority(self, priority_set_on_submit, a_task):
+        """
+        Computes the correct task priority, with the following precedence (first
+        is better/preferred):
+        - priority set with self.submit(..., __priority=<N>)
+            (encoded as False if wasn't set)
+        - priority set on the activity task decorator if any
+        - priority set on the workflow execution
+        - None otherwise
+
+        :param priority_set_on_submit:
+        :type  priority_set_on_submit: str|int|False
+
+        :param a_task:
+        :type  a_task: ActivityTask|WorkflowTask
+
+        :returns: the priority for this task
+        :rtype: str|int|None
+        """
+        if priority_set_on_submit is not False:
+            return priority_set_on_submit
+        elif isinstance(a_task, ActivityTask) and \
+            a_task.activity.task_priority is not False:
+            return a_task.activity.task_priority
+        elif self._workflow.task_priority is not False:
+            return self._workflow.task_priority
+        return None
+
     def submit(self, func, *args, **kwargs):
         """Register a function and its arguments for asynchronous execution.
 
@@ -577,7 +605,11 @@ class Executor(executor.Executor):
         :type func: simpleflow.base.Submittable | Activity | Workflow
 
         """
-        self.current_priority = kwargs.pop("__priority", self._workflow.task_priority)
+        # NB: we don't set self.current_priority here directly, because we need
+        # to extract it from the underlying Activity() if it's not passed to
+        # self.submit() ; we DO need to pop the "__priority" kwarg though, so it
+        # doesn't pollute the rest of the code.
+        priority_set_on_submit = kwargs.pop("__priority", False)
 
         # casts simpleflow.task.*Task to their equivalent in simpleflow.swf.task
         if isinstance(func, BaseActivityTask):
@@ -606,6 +638,10 @@ class Executor(executor.Executor):
         except exceptions.ExecutionBlocked:
             return futures.Future()
 
+        # extract priority now that we have a *Task
+        self.current_priority = self._compute_priority(priority_set_on_submit, a_task)
+
+        # finally resume task
         return self.resume(a_task, *a_task.args, **a_task.kwargs)
 
     # TODO: check if really used or remove it
