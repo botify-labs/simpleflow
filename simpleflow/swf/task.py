@@ -68,6 +68,7 @@ class ActivityTask(task.ActivityTask):
             'heartbeat_timeout',
             activity.task_heartbeat_timeout,
         )
+        task_priority = kwargs.get('priority')
 
         decision = swf.models.decision.ActivityTaskDecision(
             'schedule',
@@ -80,6 +81,7 @@ class ActivityTask(task.ActivityTask):
             duration_timeout=str(duration_timeout) if duration_timeout else None,
             schedule_timeout=str(schedule_timeout) if schedule_timeout else None,
             heartbeat_timeout=str(heartbeat_timeout) if heartbeat_timeout else None,
+            task_priority=task_priority,
         )
 
         return [decision]
@@ -104,7 +106,7 @@ class WorkflowTask(task.WorkflowTask):
     def task_list(self):
         return getattr(self.workflow, 'task_list', None)
 
-    def schedule(self, domain, task_list=None):
+    def schedule(self, domain, task_list=None, priority=None):
         """
         Schedule a child workflow.
 
@@ -112,6 +114,8 @@ class WorkflowTask(task.WorkflowTask):
         :type domain: swf.models.Domain
         :param task_list:
         :type task_list: Optional[str]
+        :param priority: ignored (only there for compatibility reasons with ActivityTask)
+        :type priority: Optional[str|int]
         :return:
         :rtype: list[swf.models.decision.Decision]
         """

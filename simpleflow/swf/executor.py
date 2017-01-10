@@ -457,7 +457,7 @@ class Executor(executor.Executor):
             self._idempotent_tasks_to_submit.add(task_identifier)
 
         # NB: ``decisions`` contains a single decision.
-        decisions = a_task.schedule(self.domain, task_list)
+        decisions = a_task.schedule(self.domain, task_list, priority=self.current_priority)
 
         # Check if we won't violate the 1MB limit on API requests ; if so, do NOT
         # schedule the requested task and block execution instead, with a timer
@@ -577,6 +577,8 @@ class Executor(executor.Executor):
         :type func: simpleflow.base.Submittable | Activity | Workflow
 
         """
+        self.current_priority = kwargs.pop("__priority", self._workflow.task_priority)
+
         # casts simpleflow.task.*Task to their equivalent in simpleflow.swf.task
         if isinstance(func, BaseActivityTask):
             func = ActivityTask.from_generic_task(func)
