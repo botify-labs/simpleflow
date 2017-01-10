@@ -76,13 +76,13 @@ class WorkflowPriority4(BaseWorkflow):
 # This has a higher precedence than the priority set at the workflow level, but
 # lower than a "__priority" set in self.submit().
 #
-# Setting the priority to `None` at a given point removes results in the activity
-# being scheduled without a specific priority (so it takes the default if you
+# Setting the priority to `None` at a given point results in the activity being
+# scheduled without a specific priority (so it takes the default if you
 # configured something on SWF, see the docs).
 # Setting the priority to `False` fallbacks to the next priority definition in
 # the precedence list (equivalent to NOT having it in the first place).
 @activity.with_attributes(task_list='quickstart', version='example', task_priority=12)
-def increment_prio(x):
+def increment_with_high_prio(x):
     return x + 1
 
 class WorkflowPriority5(BaseWorkflow):
@@ -91,9 +91,9 @@ class WorkflowPriority5(BaseWorkflow):
 
     def run(self, x):
         # priorty will be: 12
-        a = self.submit(increment_prio, x)
+        a = self.submit(increment_with_high_prio, x)
         # priorty will be: 13
-        b = self.submit(increment_prio, a, __priority=13)
+        b = self.submit(increment_with_high_prio, a, __priority=13)
         # priorty will not be set
-        c = self.submit(increment_prio, b, __priority=None)
+        c = self.submit(increment_with_high_prio, b, __priority=None)
         return c.result
