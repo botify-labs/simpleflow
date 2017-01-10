@@ -5,7 +5,11 @@ from . import registry
 __all__ = ['with_attributes', 'Activity']
 
 
-PRIORITY_NOT_SET = object()
+class NotSet(object):
+    def __repr__(self):
+        return "<Priority Not Set>"
+
+PRIORITY_NOT_SET = NotSet()
 
 
 def with_attributes(
