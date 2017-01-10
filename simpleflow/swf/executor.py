@@ -17,7 +17,7 @@ from simpleflow import (
     futures,
     task,
 )
-from simpleflow.activity import Activity
+from simpleflow.activity import Activity, PRIORITY_NOT_SET
 from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.swf import constants
@@ -575,13 +575,12 @@ class Executor(executor.Executor):
         Computes the correct task priority, with the following precedence (first
         is better/preferred):
         - priority set with self.submit(..., __priority=<N>)
-            (encoded as False if wasn't set)
         - priority set on the activity task decorator if any
         - priority set on the workflow execution
         - None otherwise
 
         :param priority_set_on_submit:
-        :type  priority_set_on_submit: str|int|False
+        :type  priority_set_on_submit: str|int|PRIORITY_NOT_SET
 
         :param a_task:
         :type  a_task: ActivityTask|WorkflowTask
@@ -589,12 +588,12 @@ class Executor(executor.Executor):
         :returns: the priority for this task
         :rtype: str|int|None
         """
-        if priority_set_on_submit is not False:
+        if priority_set_on_submit != PRIORITY_NOT_SET:
             return priority_set_on_submit
         elif isinstance(a_task, ActivityTask) and \
-            a_task.activity.task_priority is not False:
+            a_task.activity.task_priority != PRIORITY_NOT_SET:
             return a_task.activity.task_priority
-        elif self._workflow.task_priority is not False:
+        elif self._workflow.task_priority != PRIORITY_NOT_SET:
             return self._workflow.task_priority
         return None
 
@@ -609,7 +608,7 @@ class Executor(executor.Executor):
         # to extract it from the underlying Activity() if it's not passed to
         # self.submit() ; we DO need to pop the "__priority" kwarg though, so it
         # doesn't pollute the rest of the code.
-        priority_set_on_submit = kwargs.pop("__priority", False)
+        priority_set_on_submit = kwargs.pop("__priority", PRIORITY_NOT_SET)
 
         # casts simpleflow.task.*Task to their equivalent in simpleflow.swf.task
         if isinstance(func, BaseActivityTask):

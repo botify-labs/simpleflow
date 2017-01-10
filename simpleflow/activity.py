@@ -5,11 +5,14 @@ from . import registry
 __all__ = ['with_attributes', 'Activity']
 
 
+PRIORITY_NOT_SET = object()
+
+
 def with_attributes(
         name=None,
         version=settings.ACTIVITY_DEFAULT_VERSION,
         task_list=settings.ACTIVITY_DEFAULT_TASK_LIST,
-        task_priority=False,
+        task_priority=PRIORITY_NOT_SET,
         retry=0,
         raises_on_failure=False,
         start_to_close_timeout=settings.ACTIVITY_START_TO_CLOSE_TIMEOUT,
@@ -71,7 +74,7 @@ class Activity(object):
                  schedule_to_close_timeout=None,
                  schedule_to_start_timeout=None,
                  heartbeat_timeout=None,
-                 task_priority=False,
+                 task_priority=PRIORITY_NOT_SET,
                  idempotent=None):
         self._callable = callable
 

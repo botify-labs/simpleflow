@@ -79,8 +79,11 @@ class WorkflowPriority4(BaseWorkflow):
 # Setting the priority to `None` at a given point results in the activity being
 # scheduled without a specific priority (so it takes the default if you
 # configured something on SWF, see the docs).
-# Setting the priority to `False` fallbacks to the next priority definition in
-# the precedence list (equivalent to NOT having it in the first place).
+#
+# Setting the priority to `simpleflow.activity.PRIORITY_NOT_SET` fallbacks to
+# the next priority definition in the precedence list (equivalent to NOT having
+# it in the first place). This is advanced usage and you probably don't need
+# that.
 @activity.with_attributes(task_list='quickstart', version='example', task_priority=12)
 def increment_with_high_prio(x):
     return x + 1
