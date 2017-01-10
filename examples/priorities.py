@@ -7,11 +7,8 @@
 # dependent on arguments on a boto call, but rather passed as data in decisions.
 from __future__ import print_function
 
-from simpleflow import (
-    activity,
-    Workflow,
-    futures,
-)
+from simpleflow import activity, Workflow
+
 
 @activity.with_attributes(task_list='quickstart', version='example')
 def increment(x):
