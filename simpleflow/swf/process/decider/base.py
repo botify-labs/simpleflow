@@ -73,18 +73,21 @@ class DeciderPoller(Poller, swf.actors.Decider):
             executor.workflow.name: executor for executor in workflow_executors
         }
 
-        if not task_list:
-            task_list = workflow_executors[0].workflow.task_list
+        if task_list:
+            self.task_list = task_list
+        else:
+            self.task_list = workflow_executors[0].workflow.task_list
+            # If not passed explicitly, all executors must use the same task list
+            # else it's probably a mistake so we raise an error.
+            self._check_all_task_lists_identical()
 
         self.nb_retries = nb_retries
         self.domain = domain
-        self.task_list = task_list
 
-        # All executors must have the same domain and task list.
+        # All executors must have the same domain.
         self._check_all_domains_identical()
-        self._check_all_task_lists_identical()
 
-        super(DeciderPoller, self).__init__(domain, task_list)
+        super(DeciderPoller, self).__init__(domain, self.task_list)
 
     def __repr__(self):
         return '{cls}({domain}, {task_list}, {workflows})'.format(
@@ -105,7 +108,8 @@ class DeciderPoller(Poller, swf.actors.Decider):
         for ex in self._workflow_executors.values():
             if ex.workflow.task_list != self.task_list:
                 raise ValueError(
-                    'all workflows must have the same task list "{}"'.format(
+                    'all workflows must have the same task list ' \
+                    '"{}" unless you specify it explicitly'.format(
                         self.task_list))
 
     @property
