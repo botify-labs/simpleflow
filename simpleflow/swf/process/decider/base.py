@@ -71,23 +71,18 @@ class DeciderPoller(Poller, swf.actors.Decider):
         # Used to dispatch a decision task to the corresponding workflow.
         self._workflow_executors = {
             executor.workflow.name: executor for executor in workflow_executors
-            }
+        }
 
         if not task_list:
             task_list = workflow_executors[0].workflow.task_list
 
-        # All executors must have the same domain and task list.
-        for ex in workflow_executors:
-            if ex.domain.name != domain.name:
-                raise ValueError(
-                    'all workflows must be in the same domain "{}"'.format(
-                        domain.name))
-            if ex.workflow.task_list != task_list:
-                raise ValueError(
-                    'all workflows must have the same task list "{}"'.format(
-                        task_list))
-
         self.nb_retries = nb_retries
+        self.domain = domain
+        self.task_list = task_list
+
+        # All executors must have the same domain and task list.
+        self._check_all_domains_identical()
+        self._check_all_task_lists_identical()
 
         super(DeciderPoller, self).__init__(domain, task_list)
 
@@ -98,6 +93,20 @@ class DeciderPoller(Poller, swf.actors.Decider):
             task_list=self.task_list,
             workflows=','.join(self._workflow_executors),
         )
+
+    def _check_all_domains_identical(self):
+        for ex in self._workflow_executors.values():
+            if ex.domain.name != self.domain.name:
+                raise ValueError(
+                    'all workflows must be in the same domain "{}"'.format(
+                        self.domain.name))
+
+    def _check_all_task_lists_identical(self):
+        for ex in self._workflow_executors.values():
+            if ex.workflow.task_list != self.task_list:
+                raise ValueError(
+                    'all workflows must have the same task list "{}"'.format(
+                        self.task_list))
 
     @property
     def name(self):
