@@ -17,7 +17,7 @@ from simpleflow import (
     futures,
     task,
 )
-from simpleflow.activity import Activity
+from simpleflow.activity import Activity, PRIORITY_NOT_SET
 from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.swf import constants
@@ -457,7 +457,7 @@ class Executor(executor.Executor):
             self._idempotent_tasks_to_submit.add(task_identifier)
 
         # NB: ``decisions`` contains a single decision.
-        decisions = a_task.schedule(self.domain, task_list)
+        decisions = a_task.schedule(self.domain, task_list, priority=self.current_priority)
 
         # Check if we won't violate the 1MB limit on API requests ; if so, do NOT
         # schedule the requested task and block execution instead, with a timer
@@ -570,6 +570,33 @@ class Executor(executor.Executor):
 
         return future
 
+    def _compute_priority(self, priority_set_on_submit, a_task):
+        """
+        Computes the correct task priority, with the following precedence (first
+        is better/preferred):
+        - priority set with self.submit(..., __priority=<N>)
+        - priority set on the activity task decorator if any
+        - priority set on the workflow execution
+        - None otherwise
+
+        :param priority_set_on_submit:
+        :type  priority_set_on_submit: str|int|PRIORITY_NOT_SET
+
+        :param a_task:
+        :type  a_task: ActivityTask|WorkflowTask
+
+        :returns: the priority for this task
+        :rtype: str|int|None
+        """
+        if priority_set_on_submit is not PRIORITY_NOT_SET:
+            return priority_set_on_submit
+        elif isinstance(a_task, ActivityTask) and \
+            a_task.activity.task_priority is not PRIORITY_NOT_SET:
+            return a_task.activity.task_priority
+        elif self._workflow.task_priority is not PRIORITY_NOT_SET:
+            return self._workflow.task_priority
+        return None
+
     def submit(self, func, *args, **kwargs):
         """Register a function and its arguments for asynchronous execution.
 
@@ -577,6 +604,12 @@ class Executor(executor.Executor):
         :type func: simpleflow.base.Submittable | Activity | Workflow
 
         """
+        # NB: we don't set self.current_priority here directly, because we need
+        # to extract it from the underlying Activity() if it's not passed to
+        # self.submit() ; we DO need to pop the "__priority" kwarg though, so it
+        # doesn't pollute the rest of the code.
+        priority_set_on_submit = kwargs.pop("__priority", PRIORITY_NOT_SET)
+
         # casts simpleflow.task.*Task to their equivalent in simpleflow.swf.task
         if isinstance(func, BaseActivityTask):
             func = ActivityTask.from_generic_task(func)
@@ -604,6 +637,10 @@ class Executor(executor.Executor):
         except exceptions.ExecutionBlocked:
             return futures.Future()
 
+        # extract priority now that we have a *Task
+        self.current_priority = self._compute_priority(priority_set_on_submit, a_task)
+
+        # finally resume task
         return self.resume(a_task, *a_task.args, **a_task.kwargs)
 
     # TODO: check if really used or remove it

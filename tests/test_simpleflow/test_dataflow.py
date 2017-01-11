@@ -27,6 +27,7 @@ from simpleflow.swf import constants
 from simpleflow.swf.executor import Executor
 
 from tests.data import (
+    BaseTestWorkflow,
     DOMAIN,
     double,
     increment,
@@ -37,14 +38,6 @@ from tests.data import (
     triple,
     Tetra,
 )
-
-
-class ATestWorkflow(Workflow):
-    name = 'test_workflow'
-    version = 'test_version'
-    task_list = 'test_task_list'
-    decision_tasks_timeout = '300'
-    execution_timeout = '3600'
 
 
 def check_task_scheduled_decision(decision, task):
@@ -60,7 +53,7 @@ def check_task_scheduled_decision(decision, task):
     }
 
 
-class ATestDefinitionWithInput(ATestWorkflow):
+class ATestDefinitionWithInput(BaseTestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
@@ -104,7 +97,7 @@ def test_workflow_with_input():
     assert decisions[0] == workflow_completed
 
 
-class ATestDefinitionThatSubmitsAnActivityTask(ATestWorkflow):
+class ATestDefinitionThatSubmitsAnActivityTask(BaseTestWorkflow):
     """
     Execute a single task already wrapped as a simpleflow.task.ActivityTask.
     """
@@ -211,7 +204,7 @@ def test_workflow_with_repair_and_force_activities():
     check_task_scheduled_decision(decisions[0], increment)
 
 
-class ATestDefinitionWithBeforeReplay(ATestWorkflow):
+class ATestDefinitionWithBeforeReplay(BaseTestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
@@ -238,7 +231,7 @@ def test_workflow_with_before_replay():
     assert executor.workflow.a == 4
 
 
-class ATestDefinitionWithAfterReplay(ATestWorkflow):
+class ATestDefinitionWithAfterReplay(BaseTestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
@@ -270,7 +263,7 @@ def test_workflow_with_after_replay():
     assert not hasattr(executor.workflow, 'c')
 
 
-class ATestDefinitionWithAfterClosed(ATestWorkflow):
+class ATestDefinitionWithAfterClosed(BaseTestWorkflow):
     """
     Execute a single task with an argument passed as the workflow's input.
     """
@@ -319,7 +312,7 @@ def test_workflow_with_after_closed():
     assert executor.workflow.b == 5
 
 
-class ATestDefinition(ATestWorkflow):
+class ATestDefinition(BaseTestWorkflow):
     """
     Executes two tasks. The second depends on the first.
     """
@@ -437,7 +430,7 @@ def test_workflow_with_two_tasks_not_completed():
     assert decisions[0] == workflow_completed
 
 
-class ATestDefinitionSameTask(ATestWorkflow):
+class ATestDefinitionSameTask(BaseTestWorkflow):
     """
     This workflow executes the same task with a different argument.
     """
@@ -502,7 +495,7 @@ def test_workflow_with_same_task_called_two_times():
     assert decisions[0] == workflow_completed
 
 
-class ATestDefinitionSameFuture(ATestWorkflow):
+class ATestDefinitionSameFuture(BaseTestWorkflow):
     """
     This workflow uses a single variable to hold the future of two different
     tasks.
@@ -563,7 +556,7 @@ def test_workflow_reuse_same_future():
     assert decisions[0] == workflow_completed
 
 
-class ATestDefinitionTwoTasksSameFuture(ATestWorkflow):
+class ATestDefinitionTwoTasksSameFuture(BaseTestWorkflow):
     """
     This test checks how the executor behaves when two tasks depends on the
     same task.
@@ -634,7 +627,7 @@ def test_workflow_with_two_tasks_same_future():
     assert decisions[0] == workflow_completed
 
 
-class ATestDefinitionMap(ATestWorkflow):
+class ATestDefinitionMap(BaseTestWorkflow):
     """
     This workflow only maps a task on several values, they wait for the
     availability of their result.
@@ -688,7 +681,7 @@ def test_workflow_map():
     assert decisions[0] == workflow_completed
 
 
-class ATestDefinitionRetryActivity(ATestWorkflow):
+class ATestDefinitionRetryActivity(BaseTestWorkflow):
     """
     This workflow executes a task that is retried on failure.
     """
@@ -794,7 +787,7 @@ def test_workflow_retry_activity_failed_again():
     assert decisions[0] == workflow_completed
 
 
-class ATestDefinitionChildWorkflow(ATestWorkflow):
+class ATestDefinitionChildWorkflow(BaseTestWorkflow):
     """
     This workflow executes a child workflow.
     """
@@ -840,7 +833,7 @@ def test_workflow_with_child_workflow():
         .add_child_workflow(
         workflow,
         workflow_id='workflow-test_workflow-None--0--1',
-        task_list=ATestWorkflow.task_list,
+        task_list=BaseTestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
         result='4'
     ))
@@ -866,7 +859,7 @@ def test_workflow_with_child_workflow_failed():
         workflow,
         last_state='failed',
         workflow_id='workflow-test_workflow-None--0--1',
-        task_list=ATestWorkflow.task_list,
+        task_list=BaseTestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
     ))
     # The child workflow fails and the executor should fail the
@@ -893,7 +886,7 @@ def test_workflow_with_child_workflow_timed_out():
         workflow,
         last_state='timed_out',
         workflow_id='workflow-test_workflow-None--0--1',
-        task_list=ATestWorkflow.task_list,
+        task_list=BaseTestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
     ))
     # The child workflow fails and the executor should fail the
@@ -920,7 +913,7 @@ def test_workflow_with_child_workflow_canceled():
         workflow,
         last_state='canceled',
         workflow_id='workflow-test_workflow-None--0--1',
-        task_list=ATestWorkflow.task_list,
+        task_list=BaseTestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
     ))
     # The child workflow fails and the executor should fail the
@@ -947,7 +940,7 @@ def test_workflow_with_child_workflow_terminated():
         workflow,
         last_state='terminated',
         workflow_id='workflow-test_workflow-None--0--1',
-        task_list=ATestWorkflow.task_list,
+        task_list=BaseTestWorkflow.task_list,
         input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
     ))
     # The child workflow fails and the executor should fail the
@@ -962,7 +955,7 @@ def test_workflow_with_child_workflow_terminated():
     assert reason == "Cannot replay the workflow: TaskTerminated()"
 
 
-class ATestDefinitionMoreThanMaxDecisions(ATestWorkflow):
+class ATestDefinitionMoreThanMaxDecisions(BaseTestWorkflow):
     """
     This workflow executes more tasks than the maximum number of decisions a
     decider can take once.
@@ -1023,7 +1016,7 @@ def test_workflow_with_more_than_max_decisions():
     assert decisions[0] == workflow_completed
 
 
-class ATestDefinitionWithBigDecisionResponse(ATestWorkflow):
+class ATestDefinitionWithBigDecisionResponse(BaseTestWorkflow):
     """
     This workflow will schedule 2 enormous tasks so the response cannot be
     handled by SWF directly. NB: the constant is lowered to 82kB in test env,
@@ -1060,7 +1053,7 @@ class OnFailureMixin(object):
         self.failed = True
 
 
-class ATestDefinitionFailWorkflow(OnFailureMixin, ATestWorkflow):
+class ATestDefinitionFailWorkflow(OnFailureMixin, BaseTestWorkflow):
     """
     This workflow executes a single task that fails, then it explicitly fails
     the whole workflow.
@@ -1105,7 +1098,7 @@ def test_workflow_failed_from_definition():
     assert decisions[0] == workflow_failed
 
 
-class ATestDefinitionActivityRaisesOnFailure(OnFailureMixin, ATestWorkflow):
+class ATestDefinitionActivityRaisesOnFailure(OnFailureMixin, BaseTestWorkflow):
     """
     This workflow executes a task that fails and has the ``raises_on_failure``
     flag set to ``True``. It means it will raise an exception in addition to
@@ -1148,7 +1141,7 @@ def test_workflow_activity_raises_on_failure():
     assert decisions[0] == workflow_failed
 
 
-class ATestOnFailureDefinition(OnFailureMixin, ATestWorkflow):
+class ATestOnFailureDefinition(OnFailureMixin, BaseTestWorkflow):
     def run(self):
         if self.submit(raise_error).exception:
             self.fail('FAIL')
@@ -1184,7 +1177,7 @@ def test_on_failure_callback():
     assert decisions[0] == workflow_failed
 
 
-class ATestMultipleScheduledActivitiesDefinition(ATestWorkflow):
+class ATestMultipleScheduledActivitiesDefinition(BaseTestWorkflow):
     def run(self):
         a = self.submit(increment, 1)
         b = self.submit(increment, 2)
@@ -1358,7 +1351,7 @@ def test_activity_not_found_schedule_failed_already_exists():
     check_task_scheduled_decision(decisions[0], increment)
 
 
-class ATestDefinitionMoreThanMaxOpenActivities(ATestWorkflow):
+class ATestDefinitionMoreThanMaxOpenActivities(BaseTestWorkflow):
     """
     This workflow executes more tasks than the maximum number of decisions a
     decider can take once.
@@ -1500,7 +1493,7 @@ def test_more_than_1000_open_activities_partial_max():
     assert len(decisions) == 5
 
 
-class ATestTaskNaming(ATestWorkflow):
+class ATestTaskNaming(BaseTestWorkflow):
     """
     This workflow executes a few tasks and tests the naming (task ID
     assignation) depending on their idempotence.
@@ -1581,7 +1574,7 @@ def test_execution_context():
     assert expected == context
 
 
-class ATestDefinitionChildWithIdWorkflow(ATestWorkflow):
+class ATestDefinitionChildWithIdWorkflow(BaseTestWorkflow):
     name = 'test_child_workflow'
 
     @classmethod
@@ -1592,7 +1585,7 @@ class ATestDefinitionChildWithIdWorkflow(ATestWorkflow):
         return 42
 
 
-class ATestDefinitionParentWorkflow(ATestWorkflow):
+class ATestDefinitionParentWorkflow(BaseTestWorkflow):
     name = 'test_parent_workflow'
 
     def run(self):
@@ -1631,7 +1624,7 @@ def test_workflow_task_naming():
     ]
 
 
-class ATestDefinitionIdempotentChildWithIdWorkflow(ATestWorkflow):
+class ATestDefinitionIdempotentChildWithIdWorkflow(BaseTestWorkflow):
     name = 'test_child_workflow'
     idempotent = True
 
@@ -1639,7 +1632,7 @@ class ATestDefinitionIdempotentChildWithIdWorkflow(ATestWorkflow):
         return 42
 
 
-class ATestDefinitionIdempotentParentWorkflow(ATestWorkflow):
+class ATestDefinitionIdempotentParentWorkflow(BaseTestWorkflow):
     name = 'test_parent_workflow'
 
     def run(self):
