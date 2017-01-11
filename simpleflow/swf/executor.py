@@ -588,12 +588,12 @@ class Executor(executor.Executor):
         :returns: the priority for this task
         :rtype: str|int|None
         """
-        if priority_set_on_submit != PRIORITY_NOT_SET:
+        if priority_set_on_submit is not PRIORITY_NOT_SET:
             return priority_set_on_submit
         elif isinstance(a_task, ActivityTask) and \
-            a_task.activity.task_priority != PRIORITY_NOT_SET:
+            a_task.activity.task_priority is not PRIORITY_NOT_SET:
             return a_task.activity.task_priority
-        elif self._workflow.task_priority != PRIORITY_NOT_SET:
+        elif self._workflow.task_priority is not PRIORITY_NOT_SET:
             return self._workflow.task_priority
         return None
 
