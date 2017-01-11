@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+0.13.2
+~~~~~~
+
+- Add optional canvas (#193)
+- Reorganize tests/ directory (#198)
+- Relax DeciderPoller task list check (#201)
+- Implement priorities on SWF tasks (#199)
+
 0.13.1
 ~~~~~~
 
