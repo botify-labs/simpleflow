@@ -187,7 +187,7 @@ class SignalTask(task.SignalTask):
             self.kwargs,
         )
 
-    def schedule(self, domain, task_list):
+    def schedule(self, domain, task_list, priority=None):
         input = {
             'args': self.args,
             'kwargs': self.kwargs,
