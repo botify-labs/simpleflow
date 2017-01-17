@@ -162,8 +162,12 @@ class Supervisor(NamedMixin):
             # reliably and determining their state ; we could list children via self._processes
             # but identifying if they're alive is more tricky (???????)
             for child in psutil.Process().children():
-                logger.debug("  child: name=%s pid=%d status=%s" % (child.name(), child.pid, child.status()))
-                if child.status() == psutil.STATUS_ZOMBIE:
+                try:
+                    name, status = child.name(), child.status()
+                except psutil.NoSuchProcess:  # May be untimely deceased
+                    name, status = "unknown", "unknown"
+                logger.debug("  child: name=%s pid=%d status=%s" % (name, child.pid, status))
+                if status in (psutil.STATUS_ZOMBIE, "unknown"):
                     logger.debug("  process {} is zombie, will cleanup".format(child.pid))
                     to_clean = [p for p in self._processes if p.pid == child.pid]
                     for process in to_clean:
