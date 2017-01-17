@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.13.3
+~~~~~~
+
+- Try..except pass for NoSuchProcess (#182)
+
 0.13.2
 ~~~~~~
 
