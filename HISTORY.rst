@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.13.4
+~~~~~~
+
+- Implement metrology on SWF and local workflows (#186)
+
 0.13.3
 ~~~~~~
 
