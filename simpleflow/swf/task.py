@@ -159,14 +159,15 @@ class SignalTask(task.SignalTask):
     Signal "task" on SWF.
     """
     @classmethod
-    def from_generic_task(cls, a_task, workflow_id, run_id, control):
-        return cls(a_task.name, workflow_id, run_id, control, *a_task.args, **a_task.kwargs)
+    def from_generic_task(cls, a_task, workflow_id, run_id, control, extra_input):
+        return cls(a_task.name, workflow_id, run_id, control, extra_input, *a_task.args, **a_task.kwargs)
 
-    def __init__(self, name, workflow_id, run_id, control=None, *args, **kwargs):
+    def __init__(self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs):
         super(SignalTask, self).__init__(name, *args, **kwargs)
         self.workflow_id = workflow_id
         self.run_id = run_id
         self.control = control
+        self.extra_input = extra_input
 
     @property
     def id(self):
@@ -194,6 +195,8 @@ class SignalTask(task.SignalTask):
             '__workflow_id': self.workflow_id,
             '__run_id': self.run_id,
         }
+        if self.extra_input:
+            input.update(self.extra_input)
         logger.debug(
             'scheduling signal name={name}, workflow_id={workflow_id}, run_id={run_id}, control={control}'.format(
                 name=self.name,

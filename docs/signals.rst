@@ -67,8 +67,8 @@ This decision results in a ``SignalExternalWorkflowExecutionInitiated`` followed
 then a completed future. (It can also fail, for instance if the workflow doesn't exist.)
 
 The receiver gets a ``WorkflowExecutionSignaled`` with the signal name, input and external (i.e. sender) information.
-In this implementation, we want every known workflow to be signaled too, so the signal is propagated to the potential
-parent and children of the workflow.
+In this implementation, we want every known workflow to be signaled too, so the signal is propagated by default to the
+parent and children of the workflow. This can be disabled by passing ``propagate=False`` to signal.
 
 One limit here is that we propagate using ``SignalWorkflowExecution``, not a decision; this means the target doesn't
 have the ``externalWorkflowExecution`` information. We try and fix this by passing ``__workflow_id`` and ``__run_id``

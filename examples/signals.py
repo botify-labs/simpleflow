@@ -245,6 +245,9 @@ class ChildSignalsParentWorkflow(BaseWorkflow):
 
 
 class ParentSignalsWorkflow5(BaseWorkflow):
+    """
+    Wait for signal emitted by the child.
+    """
     name = 'signals-parent-5'
 
     def run(self):
@@ -254,4 +257,37 @@ class ParentSignalsWorkflow5(BaseWorkflow):
         futures.wait(child_signal)
         print('Parent: ended wait on ChildReady')
         print(child_signal.result)
+        print('Parent: end')
+
+
+class ChildSignalsSelfWorkflow(BaseWorkflow):
+    name = 'child-workflow'
+
+    def run(self):
+        execution_context = self.get_execution_context()
+        print(execution_context)
+        f1 = self.submit(
+            self.signal(
+                'IAmReady',
+                # workflow_id=execution_context.get('workflow_id'),
+                # run_id=execution_context.get('run_id'),
+                propagate=False,
+            )
+        )
+        f2 = self.submit(self.wait_signal('IAmReady'))
+        futures.wait(f1, f2)
+        print('C1: end')
+
+
+class ParentSignalsWorkflow6(BaseWorkflow):
+    """
+    Assert we don't receive the child signal.
+    """
+    name = 'signals-parent-6'
+
+    def run(self):
+        f = self.submit(ChildSignalsSelfWorkflow)
+        futures.wait(f)
+        child_signal = self.submit(self.wait_signal('IAmReady'))
+        assert child_signal.finished is False
         print('Parent: end')

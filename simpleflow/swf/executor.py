@@ -703,8 +703,8 @@ class Executor(executor.Executor):
         """
         if priority_set_on_submit is not PRIORITY_NOT_SET:
             return priority_set_on_submit
-        elif isinstance(a_task, ActivityTask) and \
-            a_task.activity.task_priority is not PRIORITY_NOT_SET:
+        elif (isinstance(a_task, ActivityTask) and
+              a_task.activity.task_priority is not PRIORITY_NOT_SET):
             return a_task.activity.task_priority
         elif self._workflow.task_priority is not PRIORITY_NOT_SET:
             return self._workflow.task_priority
@@ -729,7 +729,7 @@ class Executor(executor.Executor):
         elif isinstance(func, BaseWorkflowTask) and not isinstance(func, WorkflowTask):
             func = WorkflowTask.from_generic_task(func)
         elif isinstance(func, BaseSignalTask) and not isinstance(func, SignalTask):
-            func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None)
+            func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
 
         try:
             # do not use directly "Submittable" here because we want to catch if
@@ -928,23 +928,30 @@ class Executor(executor.Executor):
     def _run_id(self):
         return self._execution_context.get('run_id')
 
-    def signal(self, name, workflow_id=None, run_id=None, *args, **kwargs):
+    def signal(self, name, workflow_id=None, run_id=None, propagate=True, *args, **kwargs):
         """
         Send a signal.
         :param name:
+        :param workflow_id:
+        :param run_id:
+        :param propagate:
         :param args:
         :param kwargs:
         :return:
         """
-        logger.debug('signal: name={name}, workflow_id={workflow_id}, run_id={run_id}'.format(
+        logger.debug('signal: name={name}, workflow_id={workflow_id}, run_id={run_id}, propagate={propagate}'.format(
             name=name,
             workflow_id=workflow_id if workflow_id else self._workflow_id,
             run_id=run_id if workflow_id else self._run_id,
+            propagate=propagate,
         ))
+
+        extra_input = {'__propagate': False} if not propagate else None
         return SignalTask(
             name,
             workflow_id=workflow_id if workflow_id else self._workflow_id,
             run_id=run_id if workflow_id else self._run_id,
+            extra_input=extra_input,
             *args,
             **kwargs
         )
@@ -958,7 +965,6 @@ class Executor(executor.Executor):
         Send every signals we got to our parent and children.
         Don't send to workflows present in history.signaled_workflows.
         """
-        # TODO: don't send if control == "Single"... Except that as the target, we don't have control
         history = self._history
         if not history.signals:
             return
@@ -981,6 +987,12 @@ class Executor(executor.Executor):
             input = signal['input']
             orig_workflow_id = input.get('__workflow_id')
             orig_run_id = input.get('__run_id')
+            propagate = input.get('__propagate', True)
+            if not propagate:
+                # logger.warning('{} - Signal {}: __single, no processing'.format(
+                #     self._workflow_id, name)
+                # )
+                continue
             input = {
                 'args': input.get('args'),
                 'kwargs': input.get('kwargs'),
