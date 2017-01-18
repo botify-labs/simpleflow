@@ -1,0 +1,268 @@
+{
+    "events": [
+        {
+            "eventId": 1,
+            "eventTimestamp": 1484676354.156,
+            "eventType": "WorkflowExecutionStarted",
+            "workflowExecutionStartedEventAttributes": {
+                "childPolicy": "TERMINATE",
+                "executionStartToCloseTimeout": "300",
+                "input": "{\"args\":[1],\"kwargs\":{}}",
+                "parentInitiatedEventId": 0,
+                "taskList": {
+                    "name": "basic-aef04ec6c186474da93e2ad2eec6d1c6"
+                },
+                "taskStartToCloseTimeout": "300",
+                "workflowType": {
+                    "name": "basic",
+                    "version": "example"
+                }
+            }
+        },
+        {
+            "decisionTaskScheduledEventAttributes": {
+                "startToCloseTimeout": "300",
+                "taskList": {
+                    "name": "basic-aef04ec6c186474da93e2ad2eec6d1c6"
+                }
+            },
+            "eventId": 2,
+            "eventTimestamp": 1484676354.156,
+            "eventType": "DecisionTaskScheduled"
+        },
+        {
+            "decisionTaskStartedEventAttributes": {
+                "identity": "{\"hostname\":\"workstation.local\",\"pid\":95587,\"user\":\"root\"}",
+                "scheduledEventId": 2
+            },
+            "eventId": 3,
+            "eventTimestamp": 1484676354.21,
+            "eventType": "DecisionTaskStarted"
+        },
+        {
+            "decisionTaskCompletedEventAttributes": {
+                "scheduledEventId": 2,
+                "startedEventId": 3
+            },
+            "eventId": 4,
+            "eventTimestamp": 1484676354.469,
+            "eventType": "DecisionTaskCompleted"
+        },
+        {
+            "activityTaskScheduledEventAttributes": {
+                "activityId": "activity-examples.basic.increment-1",
+                "activityType": {
+                    "name": "examples.basic.increment",
+                    "version": "example"
+                },
+                "decisionTaskCompletedEventId": 4,
+                "heartbeatTimeout": "300",
+                "input": "{\"args\":[1],\"kwargs\":{}}",
+                "scheduleToCloseTimeout": "300",
+                "scheduleToStartTimeout": "300",
+                "startToCloseTimeout": "300",
+                "taskList": {
+                    "name": "basic-aef04ec6c186474da93e2ad2eec6d1c6"
+                }
+            },
+            "eventId": 5,
+            "eventTimestamp": 1484676354.469,
+            "eventType": "ActivityTaskScheduled"
+        },
+        {
+            "activityTaskStartedEventAttributes": {
+                "identity": "{\"hostname\":\"workstation.local\",\"pid\":95588,\"user\":\"root\"}",
+                "scheduledEventId": 5
+            },
+            "eventId": 6,
+            "eventTimestamp": 1484676354.524,
+            "eventType": "ActivityTaskStarted"
+        },
+        {
+            "activityTaskCompletedEventAttributes": {
+                "result": "2",
+                "scheduledEventId": 5,
+                "startedEventId": 6
+            },
+            "eventId": 7,
+            "eventTimestamp": 1484676354.794,
+            "eventType": "ActivityTaskCompleted"
+        },
+        {
+            "decisionTaskScheduledEventAttributes": {
+                "startToCloseTimeout": "300",
+                "taskList": {
+                    "name": "basic-aef04ec6c186474da93e2ad2eec6d1c6"
+                }
+            },
+            "eventId": 8,
+            "eventTimestamp": 1484676354.794,
+            "eventType": "DecisionTaskScheduled"
+        },
+        {
+            "decisionTaskStartedEventAttributes": {
+                "identity": "{\"hostname\":\"workstation.local\",\"pid\":95587,\"user\":\"root\"}",
+                "scheduledEventId": 8
+            },
+            "eventId": 9,
+            "eventTimestamp": 1484676354.824,
+            "eventType": "DecisionTaskStarted"
+        },
+        {
+            "decisionTaskCompletedEventAttributes": {
+                "scheduledEventId": 8,
+                "startedEventId": 9
+            },
+            "eventId": 10,
+            "eventTimestamp": 1484676355.434,
+            "eventType": "DecisionTaskCompleted"
+        },
+        {
+            "activityTaskScheduledEventAttributes": {
+                "activityId": "activity-examples.basic.Delay-1",
+                "activityType": {
+                    "name": "examples.basic.Delay",
+                    "version": "example"
+                },
+                "decisionTaskCompletedEventId": 10,
+                "heartbeatTimeout": "300",
+                "input": "{\"args\":[30,2],\"kwargs\":{}}",
+                "scheduleToCloseTimeout": "300",
+                "scheduleToStartTimeout": "300",
+                "startToCloseTimeout": "300",
+                "taskList": {
+                    "name": "basic-aef04ec6c186474da93e2ad2eec6d1c6"
+                }
+            },
+            "eventId": 11,
+            "eventTimestamp": 1484676355.434,
+            "eventType": "ActivityTaskScheduled"
+        },
+        {
+            "activityTaskScheduledEventAttributes": {
+                "activityId": "activity-examples.basic.double-1",
+                "activityType": {
+                    "name": "examples.basic.double",
+                    "version": "example"
+                },
+                "decisionTaskCompletedEventId": 10,
+                "heartbeatTimeout": "300",
+                "input": "{\"args\":[2],\"kwargs\":{}}",
+                "scheduleToCloseTimeout": "300",
+                "scheduleToStartTimeout": "300",
+                "startToCloseTimeout": "300",
+                "taskList": {
+                    "name": "basic-aef04ec6c186474da93e2ad2eec6d1c6"
+                }
+            },
+            "eventId": 12,
+            "eventTimestamp": 1484676355.434,
+            "eventType": "ActivityTaskScheduled"
+        },
+        {
+            "activityTaskStartedEventAttributes": {
+                "identity": "{\"hostname\":\"workstation.local\",\"pid\":95588,\"user\":\"root\"}",
+                "scheduledEventId": 11
+            },
+            "eventId": 13,
+            "eventTimestamp": 1484676355.476,
+            "eventType": "ActivityTaskStarted"
+        },
+        {
+            "activityTaskCompletedEventAttributes": {
+                "result": "2",
+                "scheduledEventId": 11,
+                "startedEventId": 13
+            },
+            "eventId": 14,
+            "eventTimestamp": 1484676385.716,
+            "eventType": "ActivityTaskCompleted"
+        },
+        {
+            "decisionTaskScheduledEventAttributes": {
+                "startToCloseTimeout": "300",
+                "taskList": {
+                    "name": "basic-aef04ec6c186474da93e2ad2eec6d1c6"
+                }
+            },
+            "eventId": 15,
+            "eventTimestamp": 1484676385.716,
+            "eventType": "DecisionTaskScheduled"
+        },
+        {
+            "decisionTaskStartedEventAttributes": {
+                "identity": "{\"hostname\":\"workstation.local\",\"pid\":95587,\"user\":\"root\"}",
+                "scheduledEventId": 15
+            },
+            "eventId": 16,
+            "eventTimestamp": 1484676385.766,
+            "eventType": "DecisionTaskStarted"
+        },
+        {
+            "decisionTaskCompletedEventAttributes": {
+                "scheduledEventId": 15,
+                "startedEventId": 16
+            },
+            "eventId": 17,
+            "eventTimestamp": 1484676385.999,
+            "eventType": "DecisionTaskCompleted"
+        },
+        {
+            "activityTaskStartedEventAttributes": {
+                "identity": "{\"hostname\":\"workstation.local\",\"pid\":95588,\"user\":\"root\"}",
+                "scheduledEventId": 12
+            },
+            "eventId": 18,
+            "eventTimestamp": 1484676386.138,
+            "eventType": "ActivityTaskStarted"
+        },
+        {
+            "activityTaskCompletedEventAttributes": {
+                "result": "4",
+                "scheduledEventId": 12,
+                "startedEventId": 18
+            },
+            "eventId": 19,
+            "eventTimestamp": 1484676386.374,
+            "eventType": "ActivityTaskCompleted"
+        },
+        {
+            "decisionTaskScheduledEventAttributes": {
+                "startToCloseTimeout": "300",
+                "taskList": {
+                    "name": "basic-aef04ec6c186474da93e2ad2eec6d1c6"
+                }
+            },
+            "eventId": 20,
+            "eventTimestamp": 1484676386.374,
+            "eventType": "DecisionTaskScheduled"
+        },
+        {
+            "decisionTaskStartedEventAttributes": {
+                "identity": "{\"hostname\":\"workstation.local\",\"pid\":95587,\"user\":\"root\"}",
+                "scheduledEventId": 20
+            },
+            "eventId": 21,
+            "eventTimestamp": 1484676386.412,
+            "eventType": "DecisionTaskStarted"
+        },
+        {
+            "decisionTaskCompletedEventAttributes": {
+                "scheduledEventId": 20,
+                "startedEventId": 21
+            },
+            "eventId": 22,
+            "eventTimestamp": 1484676386.663,
+            "eventType": "DecisionTaskCompleted"
+        },
+        {
+            "eventId": 23,
+            "eventTimestamp": 1484676386.663,
+            "eventType": "WorkflowExecutionCompleted",
+            "workflowExecutionCompletedEventAttributes": {
+                "decisionTaskCompletedEventId": 22,
+                "result": "4"
+            }
+        }
+    ]
+}
