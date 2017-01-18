@@ -28,6 +28,7 @@ from simpleflow.task import (
     WorkflowTask as BaseWorkflowTask,
 )
 from simpleflow.utils import issubclass_, json_dumps, hex_hash
+from simpleflow.swf import constants
 from simpleflow.utils import retry
 from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject

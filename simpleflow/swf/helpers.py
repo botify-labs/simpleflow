@@ -80,7 +80,7 @@ def list_workflow_executions(domain_name, *args, **kwargs):
     query = swf.querysets.WorkflowExecutionQuerySet(domain)
     executions = query.all(*args, **kwargs)
 
-    return pretty.list(executions)
+    return pretty.list_executions(executions)
 
 
 def filter_workflow_executions(domain_name, status, tag,

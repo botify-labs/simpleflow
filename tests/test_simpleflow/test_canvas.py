@@ -57,7 +57,18 @@ class CustomExecutor(Executor):
         return super(CustomExecutor, self).submit(func, *args, **kwargs)
 
 
-executor = CustomExecutor(workflow.Workflow)
+class MyWorkflow(workflow.Workflow):
+    name = 'test_workflow'
+    version = 'test_version'
+    task_list = 'test_task_list'
+    decision_tasks_timeout = '300'
+    execution_timeout = '3600'
+    tag_list = None  # FIXME should be optional
+    child_policy = None  # FIXME should be optional
+
+
+executor = CustomExecutor(MyWorkflow)
+executor.initialize_history({})
 
 
 class TestGroup(unittest.TestCase):
