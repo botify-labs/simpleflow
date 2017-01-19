@@ -39,7 +39,7 @@ class FuncGroup(object):
             propagate_attribute(self.activities, 'raises_on_failure', self.raises_on_failure)
         if not isinstance(self.activities, (Submittable, Group)):
             raise TypeError('FuncGroup submission should return a Group or Submittable,'
-                            ' got {} instead'.format(type(inst)))
+                            ' got {} instead'.format(type(self.activities)))
         return self.activities
 
 
