@@ -25,6 +25,7 @@ class Executor(executor.Executor):
     def __init__(self, workflow):
         super(Executor, self).__init__(workflow)
         self.nb_activities = 0
+        self.signals_sent = set()
 
     @property
     def _workflow_class(self):
@@ -54,6 +55,16 @@ class Executor(executor.Executor):
         context = self.get_execution_context()
         context["activity_id"] = str(self.nb_activities)
         self.nb_activities += 1
+
+        # Ensure signals ordering
+        if isinstance(func, SignalTask):
+            self.signals_sent.add(func.name)
+        elif isinstance(func, WaitForSignal):
+            signal_name = func.signal_name
+            if signal_name not in self.signals_sent:
+                raise NotImplementedError(
+                    'wait_signal({}) before signal was sent: unsupported by the local executor'.format(signal_name)
+                )
 
         if isinstance(func, Submittable):
             task = func  # *args, **kwargs already resolved.

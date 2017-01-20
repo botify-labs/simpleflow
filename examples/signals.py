@@ -82,7 +82,7 @@ class BaseWorkflow(Workflow):
 
 
 # This workflow demonstrates a basic use of signals inside a single workflow.
-# Not really useful, I guess :-)
+# Not really useful, I guess, and not working with the local executor :-)
 class SignalsWorkflow(BaseWorkflow):
     name = 'signals-simple'
 
