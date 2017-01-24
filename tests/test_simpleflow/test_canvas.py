@@ -88,7 +88,27 @@ class TestGroup(unittest.TestCase):
         self.assertEquals(future.count_finished_activities, 2)
         self.assertEquals(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
-            dummy = future.result
+            future.result
+
+    def test_simplified_declaration(self):
+        future = Group(
+            (to_string, 1),
+            (to_string, 2)
+        ).submit(executor)
+        self.assertTrue(future.finished)
+
+        group = Group()
+        group += [
+            ActivityTask(to_string, "test1"),
+            running_task,
+            (sum_values, [1, 2]),
+        ]
+        future = group.submit(executor)
+        self.assertTrue(future.running)
+        self.assertEquals(future.count_finished_activities, 2)
+        self.assertEquals(future._result, ["test1", None, 3])
+        with self.assertRaises(exceptions.ExecutionBlocked):
+            future.result
 
     def test_exceptions(self):
         future = Group(
@@ -203,7 +223,6 @@ class TestChain(unittest.TestCase):
         self.assertTrue(chain.activities[1].activity.raises_on_failure)
 
 
-
 class TestFuncGroup(unittest.TestCase):
     def test_previous_value_with_func(self):
         def custom_func(previous_value):
@@ -259,6 +278,41 @@ class TestComplexCanvas(unittest.TestCase):
                 ActivityTask(running_task, 1)
             ),
             ActivityTask(sum_values, [1, 2])
+        )
+        result = complex_canvas.submit(executor)
+
+        self.assertFalse(result.finished)
+        self.assertTrue(result.futures[0].finished)
+        self.assertTrue(result.futures[1].finished)
+        self.assertTrue(result.futures[2].finished)
+        self.assertFalse(result.futures[3].finished)
+        self.assertTrue(result.futures[3].futures[0].finished)
+        self.assertFalse(result.futures[3].futures[1].finished)
+        # As result.futures[3] is not finished, we shouldn't find other future
+        self.assertEquals(len(result.futures), 4)
+
+        # Change the state of the n-1 chain to make the whole
+        # canvas done
+        complex_canvas.activities[3].activities[1] = ActivityTask(to_int, 1)
+        result = complex_canvas.submit(executor)
+        self.assertTrue(result.finished)
+        self.assertEquals(len(result.futures), 5)
+
+
+class TestComplexCanvasSimplifiedDeclaration(unittest.TestCase):
+    def test(self):
+        complex_canvas = Chain(
+            (sum_values, [1, 2]),
+            (sum_values, [1, 2]),
+            Group(
+                (to_int, 1),
+                (to_int, 2),
+            ),
+            Chain(
+                (sum_values, [1, 2]),
+                running_task,
+            ),
+            (sum_values, [1, 2])
         )
         result = complex_canvas.submit(executor)
 
