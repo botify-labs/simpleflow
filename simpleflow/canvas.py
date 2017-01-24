@@ -109,12 +109,10 @@ class Group(object):
     def __init__(self,
                  *activities,
                  **options):
-        self.activities = list(activities)
+        self.activities = []
         self.max_parallel = options.pop('max_parallel', None)
         self.raises_on_failure = options.pop('raises_on_failure', None)
-        if self.raises_on_failure is not None:
-            for act in activities:
-                propagate_attribute(act, 'raises_on_failure', self.raises_on_failure)
+        self.extend(activities)
 
     def append(self, submittable, *args, **kwargs):
         if isinstance(submittable, (Submittable, Group)):
