@@ -116,17 +116,17 @@ class Group(object):
             for act in activities:
                 propagate_attribute(act, 'raises_on_failure', self.raises_on_failure)
 
-    def append(self, *args, **kwargs):
-        if isinstance(args[0], (Submittable, Group)):
+    def append(self, submittable, *args, **kwargs):
+        if isinstance(submittable, (Submittable, Group)):
             if self.raises_on_failure is not None:
-                propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
-            self.activities.append(args[0])
-        elif isinstance(args[0], Activity):
+                propagate_attribute(submittable, 'raises_on_failure', self.raises_on_failure)
+            self.activities.append(submittable)
+        elif isinstance(submittable, Activity):
             if self.raises_on_failure is not None:
-                propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
-            self.activities.append(ActivityTask(*args, **kwargs))
+                propagate_attribute(submittable, 'raises_on_failure', self.raises_on_failure)
+            self.activities.append(ActivityTask(submittable, *args, **kwargs))
         else:
-            raise ValueError('{} should be a Submittable, Group, or Activity'.format(args[0]))
+            raise ValueError('{} should be a Submittable, Group, or Activity'.format(submittable))
 
     def submit(self, executor):
         return GroupFuture(self.activities, executor, self.max_parallel)
