@@ -130,6 +130,32 @@ class Group(object):
         else:
             raise ValueError('{} should be a Submittable, Group, or Activity'.format(submittable))
 
+    def extend(self, iterable):
+        """
+        Append the specified activities.
+        :param iterable: list of Submittables/Groups/tuples
+        Tuples are (activity, [args, [kwargs]]).
+        """
+        for it in iterable:
+            if isinstance(it, (Submittable, Group)):
+                self.append(it)
+            elif isinstance(it, tuple):
+                submittable = it[0]
+                args = it[1] if len(it) > 1 else ()
+                kwargs = it[2] if len(it) > 2 else {}
+                self.append(submittable, *args, **kwargs)
+            else:
+                raise ValueError('{} should be a Submittable, Group, or tuple'.format(it))
+
+    def __iadd__(self, iterable):
+        """
+        += shortcut for self.extend.
+        :param iterable:
+        :return: self
+        """
+        self.extend(iterable)
+        return self
+
     def submit(self, executor):
         return GroupFuture(self.activities, executor, self.max_parallel)
 
