@@ -197,7 +197,6 @@ class GroupFuture(futures.Future):
                    for a in self.futures)
 
 
-
 class Chain(Group):
     """
     Chain a list of `ActivityTask` or callables returning Group/Chain
