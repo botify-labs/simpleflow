@@ -68,7 +68,7 @@ class CanvasWorkflow(Workflow):
         future = self.submit(
             Chain(
                 (fail_incrementing, x),
-                (increment_slowly, (), dict(x=1)),  # never executed
+                (increment_slowly, 1),  # never executed
                 raises_on_failure=False,
             )
         )

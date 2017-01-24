@@ -135,23 +135,10 @@ class Group(object):
         Tuples are (activity, [args, [kwargs]]).
         """
         for it in iterable:
-            if isinstance(it, (Submittable, Group)):
+            if not isinstance(it, tuple):
                 self.append(it)
-            elif isinstance(it, Activity):
-                self.append(it)
-            elif isinstance(it, tuple):
-                if len(it) < 1 or len(it) > 3:
-                    raise ValueError('Expected a tuple with 1-3 values, got {!r}'.format(it))
-                submittable = it[0]
-                args = it[1] if len(it) > 1 else ()
-                if not isinstance(args, tuple):
-                    args = (args, )
-                kwargs = it[2] if len(it) > 2 else {}
-                assert isinstance(args, tuple), 'Expected a tuple, got {}'.format(type(args))
-                assert isinstance(kwargs, dict), 'Expected a dict, got {}'.format(type(kwargs))
-                self.append(submittable, *args, **kwargs)
             else:
-                raise ValueError('{} should be a Submittable, Group, Activity, or tuple'.format(it))
+                self.append(*it)
 
     def __iadd__(self, iterable):
         """
