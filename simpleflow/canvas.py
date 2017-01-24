@@ -27,6 +27,7 @@ class FuncGroup(object):
         self.func = func
         self.args = list(args)
         self.kwargs = kwargs
+        self.activities = None
         self.raises_on_failure = kwargs.pop('raises_on_failure', None)
 
     def submit(self, executor):
