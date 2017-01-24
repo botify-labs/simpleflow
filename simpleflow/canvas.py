@@ -18,7 +18,7 @@ def propagate_attribute(obj, attr, val):
         raise Exception('Cannot propagate attribute for unknown type: {}'.format(type(obj)))
 
 
-class FuncGroup(object):
+class FuncGroup(Submittable):
     """
     Class calling a function returning an ActivityTask, a group or a chain
     activities : Group, Chain...
