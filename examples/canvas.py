@@ -50,16 +50,15 @@ class CanvasWorkflow(Workflow):
         future = self.submit(
             Chain(
                 Group(
-                    ActivityTask(increment_slowly, x),
-                    ActivityTask(increment_slowly, y),
-                    ActivityTask(increment_slowly, z),
+                    (increment_slowly, x),
+                    (increment_slowly, y),
+                    (increment_slowly, z),
                 ),
-                ActivityTask(multiply),
+                multiply,
                 send_result=True
             )
         )
         futures.wait(future)
-
 
         res = future.result[-1]
 
@@ -68,8 +67,8 @@ class CanvasWorkflow(Workflow):
         # Canva's and Group's can also be "optional"
         future = self.submit(
             Chain(
-                ActivityTask(fail_incrementing, x),
-                ActivityTask(increment_slowly, 1),  # never executed
+                (fail_incrementing, x),
+                (increment_slowly, (), dict(x=1)),  # never executed
                 raises_on_failure=False,
             )
         )
