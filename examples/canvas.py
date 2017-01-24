@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import time
 
 from simpleflow import (
@@ -7,7 +8,6 @@ from simpleflow import (
     Workflow,
 )
 from simpleflow.canvas import Group, Chain
-from simpleflow.task import ActivityTask
 
 
 @activity.with_attributes(task_list='example', version='example')
@@ -25,7 +25,7 @@ def multiply(numbers):
 
 
 @activity.with_attributes(task_list='example', version='example')
-def fail_incrementing(x):
+def fail_incrementing(_):
     raise ValueError("Failure on CPU intensive operation '+'")
 
 
@@ -64,7 +64,7 @@ class CanvasWorkflow(Workflow):
 
         print('({}+1)*({}+1)*({}+1) = {}'.format(x, y, z, res))
 
-        # Canva's and Group's can also be "optional"
+        # Canvas's and Group's can also be "optional"
         future = self.submit(
             Chain(
                 (fail_incrementing, x),
