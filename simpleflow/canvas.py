@@ -118,6 +118,8 @@ class Group(object):
 
     def append(self, submittable, *args, **kwargs):
         if isinstance(submittable, (Submittable, Group)):
+            if args or kwargs:
+                raise ValueError('args, kwargs not supported for Submittable or Group')
             if self.raises_on_failure is not None:
                 propagate_attribute(submittable, 'raises_on_failure', self.raises_on_failure)
             self.activities.append(submittable)
