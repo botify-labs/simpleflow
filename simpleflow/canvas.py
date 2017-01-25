@@ -18,7 +18,7 @@ def propagate_attribute(obj, attr, val):
         raise Exception('Cannot propagate attribute for unknown type: {}'.format(type(obj)))
 
 
-class FuncGroup(object):
+class FuncGroup(Submittable):
     """
     Class calling a function returning an ActivityTask, a group or a chain
     activities : Group, Chain...
@@ -27,6 +27,7 @@ class FuncGroup(object):
         self.func = func
         self.args = list(args)
         self.kwargs = kwargs
+        self.activities = None
         self.raises_on_failure = kwargs.pop('raises_on_failure', None)
 
     def submit(self, executor):
@@ -39,7 +40,7 @@ class FuncGroup(object):
             propagate_attribute(self.activities, 'raises_on_failure', self.raises_on_failure)
         if not isinstance(self.activities, (Submittable, Group)):
             raise TypeError('FuncGroup submission should return a Group or Submittable,'
-                            ' got {} instead'.format(type(inst)))
+                            ' got {} instead'.format(type(self.activities)))
         return self.activities
 
 
@@ -108,24 +109,45 @@ class Group(object):
     def __init__(self,
                  *activities,
                  **options):
-        self.activities = list(activities)
+        self.activities = []
         self.max_parallel = options.pop('max_parallel', None)
         self.raises_on_failure = options.pop('raises_on_failure', None)
-        if self.raises_on_failure is not None:
-            for act in activities:
-                propagate_attribute(act, 'raises_on_failure', self.raises_on_failure)
+        self.extend(activities)
 
-    def append(self, *args, **kwargs):
-        if isinstance(args[0], (Submittable, Group)):
+    def append(self, submittable, *args, **kwargs):
+        if isinstance(submittable, (Submittable, Group)):
+            if args or kwargs:
+                raise ValueError('args, kwargs not supported for Submittable or Group')
             if self.raises_on_failure is not None:
-                propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
-            self.activities.append(args[0])
-        elif isinstance(args[0], Activity):
+                propagate_attribute(submittable, 'raises_on_failure', self.raises_on_failure)
+            self.activities.append(submittable)
+        elif isinstance(submittable, Activity):
             if self.raises_on_failure is not None:
-                propagate_attribute(args[0], 'raises_on_failure', self.raises_on_failure)
-            self.activities.append(ActivityTask(*args, **kwargs))
+                propagate_attribute(submittable, 'raises_on_failure', self.raises_on_failure)
+            self.activities.append(ActivityTask(submittable, *args, **kwargs))
         else:
-            raise ValueError('{} should be a Submittable, Group, or Activity'.format(args[0]))
+            raise ValueError('{} should be a Submittable, Group, or Activity'.format(submittable))
+
+    def extend(self, iterable):
+        """
+        Append the specified activities.
+        :param iterable: list of Submittables/Groups/tuples
+        Tuples are (activity, [args, [kwargs]]).
+        """
+        for it in iterable:
+            if not isinstance(it, tuple):
+                self.append(it)
+            else:
+                self.append(*it)
+
+    def __iadd__(self, iterable):
+        """
+        += shortcut for self.extend.
+        :param iterable:
+        :return: self
+        """
+        self.extend(iterable)
+        return self
 
     def submit(self, executor):
         return GroupFuture(self.activities, executor, self.max_parallel)
@@ -195,7 +217,6 @@ class GroupFuture(futures.Future):
     def count_finished_activities(self):
         return sum(1 if a.finished else 0
                    for a in self.futures)
-
 
 
 class Chain(Group):

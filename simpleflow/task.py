@@ -43,8 +43,6 @@ class ActivityTask(Task):
 
     :type activity: Activity
     :type idempotent: Optional[bool]
-    :type args: list[Any]
-    :type kwargs: dict[Any, Any]
     :type id: str
     """
     def __init__(self, activity, *args, **kwargs):
@@ -95,8 +93,6 @@ class WorkflowTask(Task):
 
     :type executor: type(simpleflow.executor.Executor)
     :type workflow: type(simpleflow.workflow.Workflow)
-    :type args: list[Any]
-    :type kwargs: dict[Any, Any]
     :type id: str
     """
     def __init__(self, executor, workflow, *args, **kwargs):
