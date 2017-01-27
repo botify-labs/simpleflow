@@ -173,9 +173,5 @@ class Workflow(Submittable):
     def signal(self, name, *args, **kwargs):
         return self.executor.signal(name, *args, **kwargs)
 
-    def get_future_from_signal(self, name):
-        # FIXME useless?
-        return self.executor.get_future_from_signal(name)
-
     def wait_signal(self, name):
         return self.executor.wait_signal(name)
