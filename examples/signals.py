@@ -8,7 +8,6 @@ from simpleflow import (
     Workflow,
 )
 from simpleflow.canvas import Group, Chain
-# from simpleflow.signal import Signal
 from simpleflow.task import ActivityTask
 
 
@@ -147,7 +146,6 @@ class ChildSendSignalsWorkflow(BaseWorkflow):
     def run(self):
         all = [
             self.submit(self.signal('signal1')),
-            # self.submit(self.wait_signal('signal1')),
         ]
         futures.wait(*all)
 

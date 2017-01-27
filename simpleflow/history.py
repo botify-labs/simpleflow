@@ -337,7 +337,6 @@ class History(object):
                 'event_id': event.id,
                 'timestamp': event.timestamp,
             }
-            # logger.warning('parse_workflow_event: {}'.format(signal))
             self._signals[event.signal_name] = signal
             self._tasks.append(signal)
 
@@ -361,11 +360,9 @@ class History(object):
                 'state': event.state,
                 'initiated_event_id': event.id,
                 'input': event.input,
-                # 'raw_input': event.raw.get('input'),
                 'control': control,
                 'initiated_event_timestamp': event.timestamp,
             }
-            # logger.warning('parse_external_workflow_event: {}'.format(workflow))
             if event.workflow_id not in self._external_workflows_signaling:
                 self._external_workflows_signaling[event.workflow_id] = workflow
                 self._tasks.append(workflow)
@@ -384,7 +381,6 @@ class History(object):
             if control:
                 workflow['control'] = control
             workflow['signal_failed_timestamp'] = event.timestamp
-            # logger.warning('parse_external_workflow_event: {}'.format(workflow))
         elif event.state == 'execution_signaled':
             workflow = get_workflow(self._external_workflows_signaling)
             workflow['state'] = event.state
@@ -393,7 +389,6 @@ class History(object):
             workflow['signaled_event_id'] = event.id
             workflow['signaled_timestamp'] = event.timestamp
             self._signaled_workflows[workflow['name']].append(workflow)
-            # logger.warning('parse_external_workflow_event: {}'.format(workflow))
         elif event.state == 'request_cancel_execution_initiated':
             workflow = {
                 'type': 'external_workflow',
