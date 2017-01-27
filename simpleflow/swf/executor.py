@@ -775,7 +775,7 @@ class Executor(executor.Executor):
 
         self.before_replay()
         try:
-            self.process_signals()
+            self.propagate_signals()
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
             logger.info('{} open activities ({} decisions)'.format(
@@ -932,7 +932,7 @@ class Executor(executor.Executor):
         logger.debug('{} - wait_signal({})'.format(self._workflow_id, name))
         return WaitForSignal(name)
 
-    def process_signals(self):
+    def propagate_signals(self):
         """
         Send every signals we got to our parent and children.
         Don't send to workflows present in history.signaled_workflows.
