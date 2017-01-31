@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.14.0
+~~~~~~
+
+- Fix workers not stopping in case they start during a shutdown (#205)
+- Add support for SWF signals (#188)
+- Improvements on canvas.Group (#204)
+
 0.13.4
 ~~~~~~
 
