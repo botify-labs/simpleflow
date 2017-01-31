@@ -191,9 +191,6 @@ class Supervisor(NamedMixin):
         """
         Terminate all worker processes managed by this Supervisor.
         """
-        if self._terminating:
-            logger.info("process: already shutting down...")
-            return
         self._terminating = True
         logger.info(
             "process: will stop workers, this might take up several minutes. "
