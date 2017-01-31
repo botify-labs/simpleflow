@@ -15,6 +15,12 @@ class History(object):
     :type _activities: collections.OrderedDict[str, dict[str, Any]]
     :ivar _child_workflows: child workflow events
     :type _child_workflows: collections.OrderedDict[str, dict[str, Any]]
+    :ivar _external_workflows_signaling: external workflow signaling events
+    :type _external_workflows_signaling: collections.OrderedDict[str, dict[str, Any]]
+    :ivar _external_workflows_canceling: external workflow canceling events
+    :type _external_workflows_canceling: collections.OrderedDict[str, dict[str, Any]]
+    :ivar _signals: activity events
+    :type _signals: collections.OrderedDict[str, dict[str, Any]]
     :ivar _tasks: ordered list of tasks/etc
     :type _tasks: list[dict[str, Any]]
     """
@@ -23,6 +29,10 @@ class History(object):
         self._history = history
         self._activities = collections.OrderedDict()
         self._child_workflows = collections.OrderedDict()
+        self._external_workflows_signaling = collections.OrderedDict()
+        self._external_workflows_canceling = collections.OrderedDict()
+        self._signals = collections.OrderedDict()
+        self._signaled_workflows = collections.defaultdict(list)
         self._tasks = []
 
     @property
@@ -36,10 +46,34 @@ class History(object):
     @property
     def child_workflows(self):
         """
-        :return: activities
+        :return: child WFs
         :rtype: collections.OrderedDict[str, dict[str, Any]]
         """
         return self._child_workflows
+
+    @property
+    def external_workflows_signaling(self):
+        """
+        :return: external WFs
+        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        """
+        return self._external_workflows_signaling
+
+    @property
+    def signals(self):
+        """
+        :return: signals
+        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        """
+        return self._signals
+
+    @property
+    def signaled_workflows(self):
+        """
+        :return: signaled workflows
+        :rtype: defaultdict(list)
+        """
+        return self._signaled_workflows
 
     @property
     def tasks(self):
@@ -285,9 +319,114 @@ class History(object):
             workflow['terminated_id'] = event.id
             workflow['terminated_timestamp'] = event.timestamp
 
+    def parse_workflow_event(self, events, event):
+        """
+        Parse a workflow event.
+        :param events:
+        :param event:
+        """
+        if event.state == 'signaled':
+            signal = {
+                'type': 'signal',
+                'name': event.signal_name,
+                'state': event.state,
+                'external_initiated_event_id': getattr(event, 'external_initiated_event_id', None),
+                'external_run_id': getattr(event, 'external_workflow_execution', {}).get('runId'),
+                'external_workflow_id': getattr(event, 'external_workflow_execution', {}).get('workflowId'),
+                'input': event.input,
+                'event_id': event.id,
+                'timestamp': event.timestamp,
+            }
+            self._signals[event.signal_name] = signal
+            self._tasks.append(signal)
+
+    def parse_external_workflow_event(self, events, event):
+        """
+        Parse an external workflow event.
+        :param events:
+        :param event:
+        """
+        def get_workflow(workflows):
+            initiated_event = events[event.initiated_event_id - 1]
+            return workflows[initiated_event.workflow_id]
+
+        control = getattr(event, 'control', None)
+        if event.state == 'signal_execution_initiated':
+            workflow = {
+                'type': 'external_workflow',
+                'id': event.workflow_id,
+                'run_id': getattr(event, 'run_id', None),
+                'name': event.signal_name,
+                'state': event.state,
+                'initiated_event_id': event.id,
+                'input': event.input,
+                'control': control,
+                'initiated_event_timestamp': event.timestamp,
+            }
+            if event.workflow_id not in self._external_workflows_signaling:
+                self._external_workflows_signaling[event.workflow_id] = workflow
+                self._tasks.append(workflow)
+            else:
+                if self._external_workflows_signaling[event.workflow_id]['state'] == 'signal_initiated':
+                    logger.warning("signal_initiated again for workflow {} (initiated @{}, we're @{})".format(
+                        event.workflow_id,
+                        self._external_workflows_signaling[event.workflow_id]['initiated_event_id'],
+                        event.id
+                    ))
+                self._external_workflows_signaling[event.workflow_id].update(workflow)
+        elif event.state == 'signal_execution_failed':
+            workflow = get_workflow(self._external_workflows_signaling)
+            workflow['state'] = event.state
+            workflow['cause'] = event.cause
+            if control:
+                workflow['control'] = control
+            workflow['signal_failed_timestamp'] = event.timestamp
+        elif event.state == 'execution_signaled':
+            workflow = get_workflow(self._external_workflows_signaling)
+            workflow['state'] = event.state
+            workflow['run_id'] = event.workflow_execution['runId']
+            workflow['workflow_id'] = event.workflow_execution['workflowId']
+            workflow['signaled_event_id'] = event.id
+            workflow['signaled_timestamp'] = event.timestamp
+            self._signaled_workflows[workflow['name']].append(workflow)
+        elif event.state == 'request_cancel_execution_initiated':
+            workflow = {
+                'type': 'external_workflow',
+                'id': event.workflow_id,
+                'run_id': getattr(event, 'run_id', None),
+                'state': event.state,
+                'control': control,
+                'initiated_event_id': event.id,
+                'initiated_event_timestamp': event.timestamp,
+            }
+            if event.workflow_id not in self._external_workflows_canceling:
+                self._external_workflows_canceling[event.workflow_id] = workflow
+                self._tasks.append(workflow)
+            else:
+                logger.warning("request_cancel_initiated again for workflow {} (initiated @{}, we're @{})".format(
+                    event.workflow_id,
+                    self._external_workflows_canceling[event.workflow_id]['initiated_event_id'],
+                    event.id
+                ))
+                self._external_workflows_canceling[event.workflow_id].update(workflow)
+        elif event.state == 'request_cancel_execution_failed':
+            workflow = get_workflow(self._external_workflows_canceling)
+            workflow['state'] = event.state
+            workflow['cause'] = event.cause
+            if control:
+                workflow['control'] = control
+            workflow['request_cancel_failed_timestamp'] = event.timestamp
+        elif event.state == 'execution_cancel_requested':
+            workflow = get_workflow(self._external_workflows_canceling)
+            workflow['run_id'] = event.workflow_execution['runId']
+            workflow['workflow_id'] = event.workflow_execution['workflowId']
+            workflow['cancel_requested_timestamp'] = event.timestamp
+
     TYPE_TO_PARSER = {
         'ActivityTask': parse_activity_event,
         'ChildWorkflowExecution': parse_child_workflow_event,
+        'WorkflowExecution': parse_workflow_event,
+        'ExternalWorkflowExecution': parse_external_workflow_event,
     }
 
     def parse(self):

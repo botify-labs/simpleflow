@@ -2,7 +2,6 @@ import json
 import logging
 import multiprocessing
 import os
-import signal
 import traceback
 
 import psutil

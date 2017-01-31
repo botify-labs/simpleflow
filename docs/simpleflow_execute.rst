@@ -4,7 +4,7 @@ Execution of Tasks as Programs
 ==============================
 
 Introduction
--------------
+------------
 
 The :py:mod:`simpleflow.execute` module allows to define functions that will be
 executed as a program.

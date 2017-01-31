@@ -1,13 +1,13 @@
 import logging
 
 from simpleflow import (
-    Activity,
     exceptions,
     executor,
     futures,
 )
 from simpleflow.base import Submittable
-from simpleflow.task import ActivityTask, WorkflowTask
+from simpleflow.signal import WaitForSignal
+from simpleflow.task import ActivityTask, WorkflowTask, SignalTask
 from simpleflow.activity import Activity
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
@@ -25,6 +25,7 @@ class Executor(executor.Executor):
     def __init__(self, workflow):
         super(Executor, self).__init__(workflow)
         self.nb_activities = 0
+        self.signals_sent = set()
 
     @property
     def _workflow_class(self):
@@ -55,10 +56,20 @@ class Executor(executor.Executor):
         context["activity_id"] = str(self.nb_activities)
         self.nb_activities += 1
 
+        # Ensure signals ordering
+        if isinstance(func, SignalTask):
+            self.signals_sent.add(func.name)
+        elif isinstance(func, WaitForSignal):
+            signal_name = func.signal_name
+            if signal_name not in self.signals_sent:
+                raise NotImplementedError(
+                    'wait_signal({}) before signal was sent: unsupported by the local executor'.format(signal_name)
+                )
+
         if isinstance(func, Submittable):
             task = func  # *args, **kwargs already resolved.
             task.context = context
-            func = task.activity  # TODO
+            func = getattr(task, 'activity', None)
         elif isinstance(func, Activity):
             task = ActivityTask(func, context=context, *args, **kwargs)
         elif issubclass(func, Workflow):
@@ -118,3 +129,9 @@ class Executor(executor.Executor):
             "workflow_id": "local",
             "tag_list": []
         }
+
+    def signal(self, name, *args, **kwargs):
+        return SignalTask(name, *args, **kwargs)
+
+    def wait_signal(self, name):
+        return WaitForSignal(name)

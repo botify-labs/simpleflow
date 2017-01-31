@@ -152,3 +152,67 @@ class WorkflowTask(task.WorkflowTask):
         )
 
         return [decision]
+
+
+class SignalTask(task.SignalTask):
+    """
+    Signal "task" on SWF.
+    """
+    @classmethod
+    def from_generic_task(cls, a_task, workflow_id, run_id, control, extra_input):
+        return cls(a_task.name, workflow_id, run_id, control, extra_input, *a_task.args, **a_task.kwargs)
+
+    def __init__(self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs):
+        super(SignalTask, self).__init__(name, *args, **kwargs)
+        self.workflow_id = workflow_id
+        self.run_id = run_id
+        self.control = control
+        self.extra_input = extra_input
+
+    @property
+    def id(self):
+        return self._name
+
+    @property
+    def idempotent(self):
+        return None
+
+    def __repr__(self):
+        return '{}(name={}, workflow_id={}, run_id={}, control={}, args={}, kwargs={})'.format(
+            self.__class__.__name__,
+            self.name,
+            self.workflow_id,
+            self.run_id,
+            self.control,
+            self.args,
+            self.kwargs,
+        )
+
+    def schedule(self, domain, task_list, priority=None):
+        input = {
+            'args': self.args,
+            'kwargs': self.kwargs,
+            '__workflow_id': self.workflow_id,
+            '__run_id': self.run_id,
+        }
+        if self.extra_input:
+            input.update(self.extra_input)
+        logger.debug(
+            'scheduling signal name={name}, workflow_id={workflow_id}, run_id={run_id}, control={control}'.format(
+                name=self.name,
+                workflow_id=self.workflow_id,
+                run_id=self.run_id,
+                control=self.control,
+            )
+        )
+
+        decision = swf.models.decision.ExternalWorkflowExecutionDecision()
+        decision.signal(
+            signal_name=self.name,
+            input=input,
+            workflow_id=self.workflow_id,
+            run_id=self.run_id,
+            control=self.control,
+        )
+
+        return [decision]

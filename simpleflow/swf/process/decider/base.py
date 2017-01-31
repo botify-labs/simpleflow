@@ -108,7 +108,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         for ex in self._workflow_executors.values():
             if ex.workflow.task_list != self.task_list:
                 raise ValueError(
-                    'all workflows must have the same task list ' \
+                    'all workflows must have the same task list '
                     '"{}" unless you specify it explicitly'.format(
                         self.task_list))
 
