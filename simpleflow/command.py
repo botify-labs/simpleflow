@@ -407,7 +407,7 @@ def start_worker(unused_workflow, domain, task_list, log_level, nb_processes, he
     )
 
 
-def get_task_list(workflow_id=''):
+def create_unique_task_list(workflow_id=''):
     task_list_id = '-' + uuid4().hex
     overflow = 256 - len(task_list_id) - len(workflow_id)
     if overflow < 0:
@@ -522,7 +522,7 @@ def standalone(context,
     else:
         previous_history = None
 
-    task_list = get_task_list(workflow_id)
+    task_list = create_unique_task_list(workflow_id)
     logger.info('using task list {}'.format(task_list))
     decider_proc = multiprocessing.Process(
         target=decider.command.start,
