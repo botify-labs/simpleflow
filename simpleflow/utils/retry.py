@@ -42,10 +42,12 @@ def with_delay(
     :type  delay: callable(value: int) -> int
 
     :param on_exceptions: retry only when these exceptions raise.
-    :type  on_exceptions: Sequence([Exception])
+    :type  on_exceptions: Exception | Sequence([Exception])
 
     :param except_on: don't retry on these exceptions.
     :type  except_on: Sequence([Exception])
+
+    :param log_with: logger instance to use.
     """
     if log_with is None:
         log_with = logging.getLogger(__name__).info
