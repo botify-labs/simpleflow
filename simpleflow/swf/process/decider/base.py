@@ -166,7 +166,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :rtype: list[swf.models.decision.base.Decision]
         """
         worker = DeciderWorker(self.domain, self._workflow_executors)
-        decisions = worker.decide(decision_response)
+        decisions = worker.decide(decision_response, self.task_list)
         return decisions
 
 
@@ -183,12 +183,14 @@ class DeciderWorker(object):
         self._domain = domain
         self._workflow_executors = workflow_executors
 
-    def decide(self, decision_response):
+    def decide(self, decision_response, task_list):
         """
         Delegate the decision to the executor, loading it if needed.
 
         :param decision_response: an object wrapping the PollForDecisionTask response.
         :type  decision_response: swf.responses.Response
+        :param task_list:
+        :type task_list: Optional[str]
 
         :returns: the decisions.
         :rtype: list[swf.models.decision.base.Decision]
@@ -202,6 +204,7 @@ class DeciderWorker(object):
             workflow_executor = helpers.load_workflow_executor(
                 self._domain,
                 workflow_name,
+                task_list=task_list,
             )
             self._workflow_executors[workflow_name] = workflow_executor
         try:

@@ -33,7 +33,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     Polls an activity and handles it in the worker.
 
     """
-    def __init__(self, domain, task_list, heartbeat=60, *args, **kwargs):
+    def __init__(self, domain, task_list, heartbeat=60):
         """
 
         :param domain:
@@ -42,10 +42,6 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         :type task_list:
         :param heartbeat:
         :type heartbeat:
-        :param args:
-        :type args:
-        :param kwargs:
-        :type kwargs:
         """
         self.nb_retries = 3
         # heartbeat=0 is a special value to disable heartbeating. We want to
