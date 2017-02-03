@@ -149,7 +149,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         try:
             logger.info('completing decision for workflow {}'.format(
                 self._workflow_name))
-            self._complete(decision_response.token, decisions)
+            self.complete_with_retry(decision_response.token, decisions)
         except Exception as err:
             logger.error('cannot complete decision: {}'.format(err))
 

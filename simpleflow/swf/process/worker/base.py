@@ -145,7 +145,7 @@ class ActivityWorker(object):
             return poller.fail(token, task, reason=str(err), details=tb)
 
         try:
-            poller._complete(token, json_dumps(result))
+            poller.complete_with_retry(token, json_dumps(result))
         except Exception as err:
             logger.exception("complete error")
             reason = 'cannot complete task {}: {}'.format(
