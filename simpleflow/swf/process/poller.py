@@ -154,3 +154,18 @@ class Poller(swf.actors.Actor, NamedMixin):
         )(self.poll)
         response = poll(task_list, identity=identity)
         return response
+
+    @abc.abstractmethod
+    def fail(self, *args, **kwargs):
+        """fail; only relevant for activity workers."""
+        raise NotImplementedError
+
+    def fail_with_retry(self, *args, **kwargs):
+        fail = utils.retry.with_delay(
+            nb_times=self.nb_retries,
+            delay=utils.retry.exponential,
+            log_with=logger.exception,
+            on_exceptions=swf.exceptions.ResponseError,
+        )(self.fail)
+        response = fail(*args, **kwargs)
+        return response

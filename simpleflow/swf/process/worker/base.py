@@ -142,7 +142,7 @@ class ActivityWorker(object):
         except Exception as err:
             logger.exception("process error: {}".format(str(err)))
             tb = traceback.format_exc()
-            return poller.fail(token, task, reason=str(err), details=tb)
+            return poller.fail_with_retry(token, task, reason=str(err), details=tb)
 
         try:
             poller.complete_with_retry(token, json_dumps(result))
@@ -152,7 +152,7 @@ class ActivityWorker(object):
                 task.activity_id,
                 err,
             )
-            poller.fail(token, task, reason)
+            poller.fail_with_retry(token, task, reason)
 
 
 def process_task(poller, token, task):
@@ -204,7 +204,7 @@ def spawn(poller, token, task, heartbeat=60):
                         worker.pid
                     ))
             if worker.exitcode != 0:
-                poller.fail(
+                poller.fail_with_retry(
                     token,
                     task,
                     reason='process {} died: exit code {}'.format(
