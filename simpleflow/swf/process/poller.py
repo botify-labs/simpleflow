@@ -97,7 +97,6 @@ class Poller(swf.actors.Actor, NamedMixin):
         :return:
         :rtype:
         """
-        # FIXME this is a public member
         try:
             complete = utils.retry.with_delay(
                 nb_times=self.nb_retries,
