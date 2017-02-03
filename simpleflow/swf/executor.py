@@ -21,7 +21,6 @@ from simpleflow.activity import Activity, PRIORITY_NOT_SET
 from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.signal import WaitForSignal
-from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask
 from simpleflow.task import (
@@ -151,7 +150,6 @@ class Executor(executor.Executor):
 
     :ivar domain: domain
     :type domain: swf.models.domain.Domain
-    :ivar workflow: workflow
     :ivar task_list: task list
     :type task_list: Optional[str]
     :ivar repair_with: previous history to use for repairing
@@ -175,6 +173,7 @@ class Executor(executor.Executor):
             self.force_activities = None
         self.reset()
 
+    # noinspection PyAttributeOutsideInit
     def reset(self):
         """
         Clears the state of the execution.
@@ -187,6 +186,8 @@ class Executor(executor.Executor):
         self._decisions = []
         self._tasks = TaskRegistry()
         self._idempotent_tasks_to_submit = set()
+        self._execution = None
+        self.current_priority = None
 
     def _make_task_id(self, a_task, *args, **kwargs):
         """
