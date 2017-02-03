@@ -147,19 +147,11 @@ class Poller(swf.actors.Actor, NamedMixin):
         identity = self.identity
 
         logger.debug("polling task on %s", task_list)
-        try:
-            response = self.poll(
-                task_list,
-                identity=identity,
-            )
-        except swf.exceptions.PollTimeout:
-            logger.debug('{}: PollTimeout'.format(self))
-            raise
-        except Exception as err:
-            logger.error(
-                "exception %s when polling on %s",
-                str(err),
-                task_list,
-            )
-            raise
+        poll = utils.retry.with_delay(
+            nb_times=self.nb_retries,
+            delay=utils.retry.exponential,
+            log_with=logger.exception,
+            on_exceptions=swf.exceptions.ResponseError,
+        )(self.poll)
+        response = poll(task_list, identity=identity)
         return response
