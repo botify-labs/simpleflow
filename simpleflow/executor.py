@@ -3,6 +3,11 @@ import logging
 
 from ._decorators import deprecated
 
+
+if False:
+    from typing import Text, Type
+    from simpleflow import Workflow
+
 __all__ = ['Executor']
 
 
@@ -33,7 +38,8 @@ class Executor(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, workflow):
+    def __init__(self, workflow_class):
+        # type: (Type[Workflow]) -> None
         """
         Binds the workflow's definition.
 
@@ -42,7 +48,7 @@ class Executor(object):
         as a program, the workflow, and an interpreter, the executor.
 
         """
-        self._workflow = workflow(self)
+        self._workflow = workflow_class(self)
 
     @property
     def workflow(self):

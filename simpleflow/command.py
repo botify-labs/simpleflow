@@ -26,16 +26,21 @@ from simpleflow.swf.utils import get_workflow_history
 from simpleflow.utils import json_dumps
 from simpleflow import __version__
 
+if False:
+    from typing import Text, Type
+    from simpleflow import Workflow
+    from swf.models import WorkflowType
+
+
 logger = logging.getLogger(__name__)
 
 
 def get_workflow(clspath):
+    # type: (Text) -> Type[Workflow]
     """
     Import a workflow class.
     :param clspath: class path
-    :type clspath: str
     :return:
-    :rtype: simpleflow.workflow.Workflow
     """
     modname, clsname = clspath.rsplit('.', 1)
     module = __import__(modname, fromlist=['*'])
@@ -78,19 +83,17 @@ def cli(ctx, header, format):
     ctx.params['header'] = header
 
 
-def get_workflow_type(domain_name, workflow):
+def get_workflow_type(domain_name, workflow_class):
+    # type: (Text, Type[Workflow]) -> WorkflowType
     """
-    Get or create the given workflow.
+    Get or create the given workflow on SWF.
     :param domain_name:
-    :type domain_name: str
-    :param workflow:
-    :type workflow: simpleflow.workflow.Workflow
+    :param workflow_class:
     :return:
-    :rtype: swf.models.WorkflowType
     """
     domain = swf.models.Domain(domain_name)
     query = swf.querysets.WorkflowTypeQuerySet(domain)
-    return query.get_or_create(workflow.name, workflow.version)
+    return query.get_or_create(workflow_class.name, workflow_class.version)
 
 
 def load_input(input_fp):
@@ -164,24 +167,24 @@ def start_workflow(workflow,
                    input,
                    input_file,
                    local):
-    workflow_definition = get_workflow(workflow)
+    workflow_class = get_workflow(workflow)
 
     wf_input = get_or_load_input(input_file, input)
 
     if local:
         from .local import Executor
 
-        Executor(workflow_definition).run(wf_input)
+        Executor(workflow_class).run(wf_input)
 
         return
 
     if not domain:
         raise ValueError('*domain* must be set when not running in local mode')
 
-    workflow_type = get_workflow_type(domain, workflow_definition)
+    workflow_type = get_workflow_type(domain, workflow_class)
     execution = workflow_type.start_execution(
         workflow_id=workflow_id,
-        task_list=task_list or workflow_definition.task_list,
+        task_list=task_list or workflow_class.task_list,
         execution_timeout=execution_timeout,
         input=wf_input,
         tag_list=tags,

@@ -22,8 +22,8 @@ class Executor(executor.Executor):
     Executes all tasks synchronously in a single local process.
 
     """
-    def __init__(self, workflow):
-        super(Executor, self).__init__(workflow)
+    def __init__(self, workflow_class):
+        super(Executor, self).__init__(workflow_class)
         self.nb_activities = 0
         self.signals_sent = set()
 
@@ -111,6 +111,8 @@ class Executor(executor.Executor):
         self.before_replay()
         result = self.run_workflow(*args, **kwargs)
 
+        # Hack: self._history must be available to the callback as a
+        # simpleflow.history.History, not a swf.models.history.builder.History
         self._history = History(self._history)
         self._history.parse()
         self.after_replay()

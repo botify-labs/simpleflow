@@ -161,9 +161,9 @@ class Executor(executor.Executor):
 
     """
 
-    def __init__(self, domain, workflow, task_list=None, repair_with=None,
+    def __init__(self, domain, workflow_class, task_list=None, repair_with=None,
                  force_activities=None):
-        super(Executor, self).__init__(workflow)
+        super(Executor, self).__init__(workflow_class)
         self._history = None
         self._execution_context = {}
         self.domain = domain
