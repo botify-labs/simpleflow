@@ -154,3 +154,26 @@ class SignalTask(Task):
 
     def execute(self):
         pass
+
+
+class LambdaFunctionTask(Task):
+    """
+    Signal.
+    """
+
+    def __init__(self, name, *args, **kwargs):
+        self._name = name
+        self.args = self.resolve_args(*args)
+        self.kwargs = self.resolve_kwargs(**kwargs)
+
+    @property
+    def name(self):
+        """
+
+        :return:
+        :rtype: str
+        """
+        return self._name
+
+    def execute(self):
+        pass

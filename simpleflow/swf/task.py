@@ -32,7 +32,6 @@ class ActivityTask(task.ActivityTask):
         :param task_list:
         :type task_list: Optional[str]
         :param kwargs:
-        :type kwargs: dict
         :return:
         :rtype: list[swf.models.decision.Decision]
         """
@@ -160,7 +159,7 @@ class SignalTask(task.SignalTask):
     """
     @classmethod
     def from_generic_task(cls, a_task, workflow_id, run_id, control, extra_input):
-        return cls(a_task.name, workflow_id, run_id, control, extra_input, *a_task.args, **a_task.kwargs)
+        return cls(a_task.name, workflow_id, run_id, control, extra_input, *a_task._args, **a_task._kwargs)
 
     def __init__(self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs):
         super(SignalTask, self).__init__(name, *args, **kwargs)
@@ -213,6 +212,37 @@ class SignalTask(task.SignalTask):
             workflow_id=self.workflow_id,
             run_id=self.run_id,
             control=self.control,
+        )
+
+        return [decision]
+
+
+class LambdaFunctionTask(task.LambdaFunctionTask):
+    @classmethod
+    def from_generic_task(cls, a_task, start_to_close_timeout=None):
+        return cls(a_task.name, start_to_close_timeout, *a_task._args, **a_task._kwargs)
+
+    def __init__(self, name, start_to_close_timeout=None, *args, **kwargs):
+        super(LambdaFunctionTask, self).__init__(name, *args, **kwargs)
+        self.start_to_close_timeout = str(start_to_close_timeout) if start_to_close_timeout else None
+        self.id = None
+
+    @property
+    def name(self):
+        return self._name
+
+    def schedule(self, *args, **kwargs):
+        input = {
+            'args': self.args,
+            'kwargs': self.kwargs,
+        }
+
+        decision = swf.models.decision.LambdaFunctionDecision(
+            'schedule',
+            id=self.id,
+            name=self.name,
+            input=input,
+            start_to_close_timeout=self.start_to_close_timeout,
         )
 
         return [decision]
