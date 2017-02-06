@@ -32,7 +32,6 @@ class ActivityTask(task.ActivityTask):
         :param task_list:
         :type task_list: Optional[str]
         :param kwargs:
-        :type kwargs: dict
         :return:
         :rtype: list[swf.models.decision.Decision]
         """

@@ -105,6 +105,7 @@ class Executor(executor.Executor):
             input = {}
         args = input.get('args', ())
         kwargs = input.get('kwargs', {})
+        self.create_workflow()
 
         self.initialize_history(input)
 

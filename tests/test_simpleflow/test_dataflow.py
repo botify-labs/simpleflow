@@ -18,7 +18,6 @@ from swf.models.history import builder
 from swf.responses import Response
 
 from simpleflow import (
-    Workflow,
     futures,
 )
 from simpleflow.task import ActivityTask
@@ -38,6 +37,9 @@ from tests.data import (
     triple,
     Tetra,
 )
+
+
+Executor.decref_workflow = lambda _: None  # FIXME use @patch?
 
 
 def check_task_scheduled_decision(decision, task):

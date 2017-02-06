@@ -51,16 +51,23 @@ class Executor(object):
     def workflow_class(self):
         return self._workflow_class
 
+    @property
+    def workflow(self):
+        return self._workflow
+
+    def create_workflow(self):
+        if self._workflow is None:
+            workflow = self._workflow_class(self)
+            if False:
+                assert isinstance(workflow, Workflow)
+            self._workflow = workflow
+
     def run_workflow(self, *args, **kwargs):
         """
         Runs the workflow definition.
 
         """
-        workflow = self.workflow_class(self)
-        if False:
-            assert isinstance(workflow, Workflow)
-        self._workflow = workflow
-        result = workflow.run(*args, **kwargs)
+        result = self._workflow.run(*args, **kwargs)
         return result
 
     @abc.abstractmethod

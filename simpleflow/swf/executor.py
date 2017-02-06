@@ -188,6 +188,7 @@ class Executor(executor.Executor):
         self._idempotent_tasks_to_submit = set()
         self._execution = None
         self.current_priority = None
+        self.create_workflow()
 
     def _make_task_id(self, a_task, *args, **kwargs):
         """
@@ -784,6 +785,7 @@ class Executor(executor.Executor):
                 len(self._decisions),
             ))
             self.after_replay()
+            self.decref_workflow()
             return self._decisions, {}
         except exceptions.TaskException as err:
             reason = 'Workflow execution error in task {}: "{}"'.format(
@@ -800,6 +802,7 @@ class Executor(executor.Executor):
                 details=swf.format.details(details),
             )
             self.after_closed()
+            self.decref_workflow()
             return [decision], {}
 
         except Exception as err:
@@ -820,6 +823,7 @@ class Executor(executor.Executor):
                 details=swf.format.details(details),
             )
             self.after_closed()
+            self.decref_workflow()
             return [decision], {}
 
         self.after_replay()
@@ -827,7 +831,11 @@ class Executor(executor.Executor):
         decision.complete(result=swf.format.result(json_dumps(result)))
         self.on_completed()
         self.after_closed()
+        self.decref_workflow()
         return [decision], {}
+
+    def decref_workflow(self):
+        self._workflow = None
 
     def before_replay(self):
         return self._workflow.before_replay(self._history)
