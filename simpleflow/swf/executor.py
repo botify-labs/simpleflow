@@ -23,7 +23,7 @@ from simpleflow.history import History
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
-from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask
+from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask, LambdaFunctionTask
 from simpleflow.task import (
     ActivityTask as BaseActivityTask,
     WorkflowTask as BaseWorkflowTask,
@@ -334,6 +334,37 @@ class Executor(executor.Executor):
 
         return future
 
+    def _get_future_from_lambda_function_event(self, event):
+        future = futures.Future()
+        state = event['state']
+
+        if state == 'start_initiated':
+            pass  # future._state = futures.PENDING
+        elif state == 'schedule_failed':
+            logger.info('failed to schedule {}: {}'.format(
+                event['name'],
+                event['cause'],
+            ))
+            return None
+        elif state == 'started':
+            future.set_running()
+        elif state == 'completed':
+            result = event['result']
+            future.set_finished(json.loads(result) if result else None)
+        elif state == 'failed':
+            exception = exceptions.TaskFailed(
+                name=event['id'],
+                reason=event['reason'],
+                details=event.get('details'))
+            future.set_exception(exception)
+        elif state == 'timed_out':
+            exception = exceptions.TimeoutError(
+                event['timeout_type'],
+                event['timeout_value'])
+            future.set_exception(exception)
+
+        return future
+
     def get_future_from_signal_event(self, a_task, event):
         """Maps a signal event to a Future with the corresponding
         state.
@@ -439,10 +470,24 @@ class Executor(executor.Executor):
                     break
         return event
 
+    def find_lambda_event(self, a_task, history):
+        """
+        Get the event corresponding to a child workflow, if any.
+
+        :param a_task:
+        :type a_task: LambdaFunctionTask
+        :param history:
+        :type history: simpleflow.history.History
+        :return:
+        :rtype: Optional[dict]
+        """
+        return history.lambda_functions.get(a_task.id)
+
     TASK_TYPE_TO_EVENT_FINDER = {
         ActivityTask: find_activity_event,
         WorkflowTask: find_child_workflow_event,
         SignalTask: find_signal_event,
+        LambdaFunctionTask: find_lambda_event,
     }
 
     def find_event(self, a_task, history):
@@ -509,6 +554,16 @@ class Executor(executor.Executor):
 
         if not future:
             # WORKFLOW_TYPE_DOES_NOT_EXIST, will be created
+            return None
+
+        if future.finished and future.exception:
+            raise future.exception
+
+        return future
+
+    def resume_lambda_function(self, a_task, event):
+        future = self._get_future_from_lambda_function_event(event)
+        if not future:
             return None
 
         if future.finished and future.exception:
@@ -584,6 +639,7 @@ class Executor(executor.Executor):
         'child_workflow': resume_child_workflow,
         'signal': get_future_from_signal_event,
         'external_workflow': get_future_from_external_workflow_event,
+        'lambda_function': resume_lambda_function,
     }
 
     def resume(self, a_task, *args, **kwargs):
