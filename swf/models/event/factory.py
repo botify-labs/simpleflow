@@ -23,6 +23,11 @@ from swf.models.event.task import (
     CompiledActivityTaskEvent
 )
 
+from swf.models.event.lambda_function import (
+    LambdaFunctionEvent,
+    CompiledLambdaFunctionEvent
+)
+
 from swf.models.event.timer import (
     TimerEvent,
     CompiledTimerEvent
@@ -57,6 +62,10 @@ EVENTS = collections.OrderedDict([
     ('ActivityTask', {
         'event': ActivityTaskEvent,
         'compiled_event': CompiledActivityTaskEvent,
+    }),
+    ('LambdaFunction', {
+        'event': LambdaFunctionEvent,
+        'compiled': CompiledLambdaFunctionEvent,
     }),
     ('Marker', {
         'event': MarkerEvent,

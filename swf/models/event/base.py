@@ -47,6 +47,7 @@ class Event(object):
     _name = None
     _attributes_key = None
     _attributes = None
+    _attribute_mapping = {}  # dict for remapping Attributes items colliding with id, name...
 
     excluded_attributes = (
         'eventId',
@@ -100,4 +101,6 @@ class Event(object):
         """Processes the event raw_data attributes_key elements
         and sets current instance attributes accordingly"""
         for key, value in iteritems(self.raw[self._attributes_key]):
-            setattr(self, camel_to_underscore(key), value)
+            name = camel_to_underscore(key)
+            name = self._attribute_mapping.get(name) or name
+            setattr(self, name, value)
