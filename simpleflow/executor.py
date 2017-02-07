@@ -162,10 +162,19 @@ class Executor(object):
         return {}
 
     def signal(self, name, *args, **kwargs):
+        """
+        Create a submittable instance corresponding to a signal.
+        :param name:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         raise NotImplementedError
 
     def wait_signal(self, name):
-        raise NotImplementedError
-
-    def get_future_from_signal(self, name):
+        """
+        Create a submittable instance for waiting on a signal.
+        :param name:
+        :return:
+        """
         raise NotImplementedError

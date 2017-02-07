@@ -9,9 +9,11 @@ class NotSet(object):
     def __repr__(self):
         return "<Priority Not Set>"
 
+
 PRIORITY_NOT_SET = NotSet()
 
 
+# noinspection PyUnresolvedReferences
 def with_attributes(
         name=None,
         version=settings.ACTIVITY_DEFAULT_VERSION,
@@ -29,14 +31,16 @@ def with_attributes(
     Decorator: wrap a function/class into an Activity.
 
     :param name: name of the activity.
-    :type  name: str.
+    :type  name: str
     :param version: optional version.
     :type version: str
     :param task_list: optional task list.
     :type task_list: str
+    :param task_priority: optional task priority.
+    :type task_priority: int | PRIORITY_NOT_SET
     :param retry: retry count.
     :type retry: int
-    :param raises_on_failure: whether to raise on failuer.
+    :param raises_on_failure: whether to raise on failure.
     :type raises_on_failure: bool
     :param start_to_close_timeout:
     :type start_to_close_timeout: str
