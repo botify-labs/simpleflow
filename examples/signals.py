@@ -289,3 +289,35 @@ class ParentSignalsWorkflow6(BaseWorkflow):
         child_signal = self.submit(self.wait_signal('IAmReady'))
         assert child_signal.finished is False
         print('Parent: end')
+
+
+class ChildSignalWithInput(BaseWorkflow):
+    """
+    Child showing signals content.
+    """
+    name = 'child-workflow'
+
+    def run(self):
+        f = self.submit(self.wait_signal('ASignal'))
+        res = f.result
+        print('Children - ASignal: result = {}'.format(res))
+        f = self.submit(self.wait_signal('AnotherSignal'))
+        res = f.result
+        print('Children - AnotherSignal: result = {}'.format(res))
+
+
+class ParentSignalsWorkflow7(BaseWorkflow):
+    name = 'signals-parent'
+
+    def run(self):
+        child = self.submit(ChildSignalWithInput)
+        args = [1, 2, 3]
+        kwargs = {'x': 42, 'foo': 'bar'}
+        f = self.submit(
+            Group(
+                self.signal('ASignal', workflow_id=None, *args, **kwargs),
+                self.signal('AnotherSignal'),
+            )
+        )
+        futures.wait(f, child)
+        print('Parent - Signals: {}'.format(f.result))
