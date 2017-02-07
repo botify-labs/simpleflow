@@ -703,7 +703,7 @@ class Executor(executor.Executor):
         elif isinstance(func, BaseWorkflowTask) and not isinstance(func, WorkflowTask):
             func = WorkflowTask.from_generic_task(func)
         elif isinstance(func, BaseSignalTask) and not isinstance(func, SignalTask):
-            func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
+            func = SignalTask.from_generic_task(func)
 
         try:
             # do not use directly "Submittable" here because we want to catch if
