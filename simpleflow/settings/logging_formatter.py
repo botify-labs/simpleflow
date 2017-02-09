@@ -10,9 +10,17 @@ BLUE = '\033[94m'
 END = '\033[0m'
 
 
+class ColorModes(object):
+    AUTO = 'auto'
+    ALWAYS = 'always'
+    NEVER = 'never'
+
+color_mode = 'auto'
+
+
 def colorize(level, message):
     # if not in a tty, we're likely redirected or piped
-    if not sys.stdout.isatty():
+    if color_mode == ColorModes.NEVER or (color_mode == ColorModes.AUTO and not sys.stdout.isatty()):
         return message
 
     # color mappings
