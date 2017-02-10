@@ -21,7 +21,6 @@ from simpleflow.activity import Activity, PRIORITY_NOT_SET
 from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.signal import WaitForSignal
-from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask
 from simpleflow.task import (
@@ -151,7 +150,6 @@ class Executor(executor.Executor):
 
     :ivar domain: domain
     :type domain: swf.models.domain.Domain
-    :ivar workflow: workflow
     :ivar task_list: task list
     :type task_list: Optional[str]
     :ivar repair_with: previous history to use for repairing
@@ -161,9 +159,9 @@ class Executor(executor.Executor):
 
     """
 
-    def __init__(self, domain, workflow, task_list=None, repair_with=None,
+    def __init__(self, domain, workflow_class, task_list=None, repair_with=None,
                  force_activities=None):
-        super(Executor, self).__init__(workflow)
+        super(Executor, self).__init__(workflow_class)
         self._history = None
         self._execution_context = {}
         self.domain = domain
@@ -175,6 +173,7 @@ class Executor(executor.Executor):
             self.force_activities = None
         self.reset()
 
+    # noinspection PyAttributeOutsideInit
     def reset(self):
         """
         Clears the state of the execution.
@@ -187,6 +186,9 @@ class Executor(executor.Executor):
         self._decisions = []
         self._tasks = TaskRegistry()
         self._idempotent_tasks_to_submit = set()
+        self._execution = None
+        self.current_priority = None
+        self.create_workflow()
 
     def _make_task_id(self, a_task, *args, **kwargs):
         """
@@ -783,6 +785,7 @@ class Executor(executor.Executor):
                 len(self._decisions),
             ))
             self.after_replay()
+            self.decref_workflow()
             return self._decisions, {}
         except exceptions.TaskException as err:
             reason = 'Workflow execution error in task {}: "{}"'.format(
@@ -799,6 +802,7 @@ class Executor(executor.Executor):
                 details=swf.format.details(details),
             )
             self.after_closed()
+            self.decref_workflow()
             return [decision], {}
 
         except Exception as err:
@@ -819,6 +823,7 @@ class Executor(executor.Executor):
                 details=swf.format.details(details),
             )
             self.after_closed()
+            self.decref_workflow()
             return [decision], {}
 
         self.after_replay()
@@ -826,7 +831,14 @@ class Executor(executor.Executor):
         decision.complete(result=swf.format.result(json_dumps(result)))
         self.on_completed()
         self.after_closed()
+        self.decref_workflow()
         return [decision], {}
+
+    def decref_workflow(self):
+        """
+        Set the `_workflow` ivar to None in the hope of reducing memory consumption.
+        """
+        self._workflow = None
 
     def before_replay(self):
         return self._workflow.before_replay(self._history)

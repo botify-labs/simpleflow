@@ -3,6 +3,10 @@ import logging
 
 from ._decorators import deprecated
 
+if False:
+    from typing import Type
+    from simpleflow import Workflow
+
 __all__ = ['Executor']
 
 
@@ -27,13 +31,11 @@ class Executor(object):
     - asynchronous
     - asynchronous with full replay
 
-     :ivar _workflow: the workflow
-     :type _workflow: simpleflow.workflow.Workflow
-
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, workflow):
+    def __init__(self, workflow_class):
+        # type: (Type[Workflow]) -> None
         """
         Binds the workflow's definition.
 
@@ -42,23 +44,30 @@ class Executor(object):
         as a program, the workflow, and an interpreter, the executor.
 
         """
-        self._workflow = workflow(self)
+        self._workflow_class = workflow_class
+        self._workflow = None
+
+    @property
+    def workflow_class(self):
+        return self._workflow_class
 
     @property
     def workflow(self):
-        """
-        :return:
-        :rtype: simpleflow.workflow.Workflow
-        """
         return self._workflow
+
+    def create_workflow(self):
+        if self._workflow is None:
+            workflow = self._workflow_class(self)
+            if False:
+                assert isinstance(workflow, Workflow)
+            self._workflow = workflow
 
     def run_workflow(self, *args, **kwargs):
         """
         Runs the workflow definition.
 
         """
-        workflow = self._workflow
-        result = workflow.run(*args, **kwargs)
+        result = self._workflow.run(*args, **kwargs)
         return result
 
     @abc.abstractmethod
@@ -78,7 +87,7 @@ class Executor(object):
     def map(self, callable, iterable):
         """Submit *callable* with each of the items in ``*iterables``.
 
-        All items in ``*iterables`` must be serializable in JSON.
+        All items in ``*iterable`` must be serializable in JSON.
 
         """
         return [self.submit(callable, argument) for

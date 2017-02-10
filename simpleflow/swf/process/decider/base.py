@@ -64,19 +64,19 @@ class DeciderPoller(Poller, swf.actors.Decider):
         """
         self._workflow_name = '{}'.format(','.join(
             [
-                ex.workflow.name for ex in workflow_executors
+                ex.workflow_class.name for ex in workflow_executors
                 ]))
 
         # Maps a workflow's name to its definition.
         # Used to dispatch a decision task to the corresponding workflow.
         self._workflow_executors = {
-            executor.workflow.name: executor for executor in workflow_executors
+            executor.workflow_class.name: executor for executor in workflow_executors
         }
 
         if task_list:
             self.task_list = task_list
         else:
-            self.task_list = workflow_executors[0].workflow.task_list
+            self.task_list = workflow_executors[0].workflow_class.task_list
             # If not passed explicitly, all executors must use the same task list
             # else it's probably a mistake so we raise an error.
             self._check_all_task_lists_identical()
@@ -106,7 +106,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
 
     def _check_all_task_lists_identical(self):
         for ex in self._workflow_executors.values():
-            if ex.workflow.task_list != self.task_list:
+            if ex.workflow_class.task_list != self.task_list:
                 raise ValueError(
                     'all workflows must have the same task list '
                     '"{}" unless you specify it explicitly'.format(
