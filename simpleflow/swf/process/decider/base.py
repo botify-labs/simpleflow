@@ -62,7 +62,6 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :type  workflow_executors: list[simpleflow.swf.executor.Executor]
 
         """
-        print(ex._workflow for ex in workflow_executors)
         self._workflow_name = '{}'.format(','.join(
             [
                 ex.workflow_class.name for ex in workflow_executors

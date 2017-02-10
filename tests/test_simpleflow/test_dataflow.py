@@ -39,7 +39,7 @@ from tests.data import (
 )
 
 
-Executor.decref_workflow = lambda _: None  # FIXME use @patch?
+# Note: tests checking the Executor.workflow instance must patch `decref_workflow`.
 
 
 def check_task_scheduled_decision(decision, task):
@@ -220,7 +220,8 @@ class ATestDefinitionWithBeforeReplay(BaseTestWorkflow):
 
 
 @mock_swf
-def test_workflow_with_before_replay():
+@patch.object(Executor, 'decref_workflow')
+def test_workflow_with_before_replay(mock_decref_workflow):
     workflow = ATestDefinitionWithBeforeReplay
     executor = Executor(DOMAIN, workflow)
 
@@ -250,7 +251,8 @@ class ATestDefinitionWithAfterReplay(BaseTestWorkflow):
 
 
 @mock_swf
-def test_workflow_with_after_replay():
+@patch.object(Executor, 'decref_workflow')
+def test_workflow_with_after_replay(mock_decref_workflow):
     workflow = ATestDefinitionWithAfterReplay
     executor = Executor(DOMAIN, workflow)
 
@@ -279,7 +281,8 @@ class ATestDefinitionWithAfterClosed(BaseTestWorkflow):
 
 
 @mock_swf
-def test_workflow_with_after_closed():
+@patch.object(Executor, 'decref_workflow')
+def test_workflow_with_after_closed(mock_decref_workflow):
     workflow = ATestDefinitionWithAfterClosed
     executor = Executor(DOMAIN, workflow)
 
@@ -1070,7 +1073,8 @@ class ATestDefinitionFailWorkflow(OnFailureMixin, BaseTestWorkflow):
 
 
 @mock_swf
-def test_workflow_failed_from_definition():
+@patch.object(Executor, 'decref_workflow')
+def test_workflow_failed_from_definition(mock_decref_workflow):
     workflow = ATestDefinitionFailWorkflow
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
@@ -1112,7 +1116,8 @@ class ATestDefinitionActivityRaisesOnFailure(OnFailureMixin, BaseTestWorkflow):
 
 
 @mock_swf
-def test_workflow_activity_raises_on_failure():
+@patch.object(Executor, 'decref_workflow')
+def test_workflow_activity_raises_on_failure(mock_decref_workflow):
     workflow = ATestDefinitionActivityRaisesOnFailure
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)
@@ -1150,7 +1155,8 @@ class ATestOnFailureDefinition(OnFailureMixin, BaseTestWorkflow):
 
 
 @mock_swf
-def test_on_failure_callback():
+@patch.object(Executor, 'decref_workflow')
+def test_on_failure_callback(mock_decref_workflow):
     workflow = ATestOnFailureDefinition
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow)

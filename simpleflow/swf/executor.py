@@ -835,6 +835,9 @@ class Executor(executor.Executor):
         return [decision], {}
 
     def decref_workflow(self):
+        """
+        Set the `_workflow` ivar to None in the hope of reducing memory consumption.
+        """
         self._workflow = None
 
     def before_replay(self):
