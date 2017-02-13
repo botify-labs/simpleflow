@@ -6,6 +6,7 @@ import sys
 
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
+from io import open
 
 REQUIRES = [
 
@@ -67,7 +68,7 @@ if 'publish_test' in sys.argv:
 
 
 def read(fname):
-    with open(fname) as fp:
+    with open(fname, encoding='utf8') as fp:
         content = fp.read()
     return content
 
