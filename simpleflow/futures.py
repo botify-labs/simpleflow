@@ -144,7 +144,7 @@ class Future(object):
 
     def set_exception(self, exception):
         """
-        Set state to finished wiith an exception.
+        Set state to finished with an exception.
         :param exception:
         :type exception: Exception
         :return:
