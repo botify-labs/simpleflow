@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+0.14.1
+~~~~~~
+
+- Don't send exception up if raises_on_failure is false (#213)
+- Fix UnicodeDecodeError on windows machine (#211)
+- Try to use less memory (#209)
+- Standalone mode: use created task list for children activities (#207)
+
 0.14.0
 ~~~~~~
 
