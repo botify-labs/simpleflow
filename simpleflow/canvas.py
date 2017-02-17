@@ -206,7 +206,7 @@ class GroupFuture(futures.Future):
         for future in self.futures:
             if future.finished:
                 self._result.append(future.result)
-                if self.raises_on_failure:
+                if self.raises_on_failure is not False:
                     exception = future.exception
                     exceptions.append(exception)
             else:

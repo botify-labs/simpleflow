@@ -222,6 +222,15 @@ class TestChain(unittest.TestCase):
         self.assertTrue(chain.activities[0].activity.raises_on_failure)
         self.assertTrue(chain.activities[1].activity.raises_on_failure)
 
+    def test_raises_on_failure_doesnt_set_exception(self):
+        future = Chain(
+            ActivityTask(zero_division),
+            ActivityTask(to_string, "test1"),
+            raises_on_failure=False
+        ).submit(executor)
+        self.assertEqual(1, future.count_finished_activities)
+        self.assertIsNone(future.exception)
+
 
 class TestFuncGroup(unittest.TestCase):
     def test_previous_value_with_func(self):
