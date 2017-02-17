@@ -69,7 +69,22 @@ class CanvasWorkflow(Workflow):
             Chain(
                 (fail_incrementing, x),
                 (increment_slowly, 1),  # never executed
+                (multiply, [2]),
                 raises_on_failure=False,
+            )
+        )
+
+        futures.wait(future)
+
+        # Failing inside a chain doesn't stop a upper chain
+        future = self.submit(
+            Chain(
+                Chain(
+                    (fail_incrementing, x),
+                    raises_on_failure=False,
+                ),
+                (increment_slowly, 1),  # executed
+                (multiply, [2]),
             )
         )
 

@@ -155,12 +155,13 @@ class Group(object):
 
 class GroupFuture(futures.Future):
 
-    def __init__(self, activities, executor, max_parallel=None):
+    def __init__(self, activities, executor, max_parallel=None, raises_on_failure=True):
         super(GroupFuture, self).__init__()
         self.activities = activities
         self.futures = []
         self.executor = executor
         self.max_parallel = max_parallel
+        self.raises_on_failure = raises_on_failure
 
         for a in self.activities:
             if not self.max_parallel or self._count_pending_or_running < self.max_parallel:
@@ -205,8 +206,9 @@ class GroupFuture(futures.Future):
         for future in self.futures:
             if future.finished:
                 self._result.append(future.result)
-                exception = future.exception
-                exceptions.append(exception)
+                if self.raises_on_failure is not False:
+                    exception = future.exception
+                    exceptions.append(exception)
             else:
                 self._result.append(None)
                 exceptions.append(None)
@@ -238,14 +240,16 @@ class Chain(Group):
         return ChainFuture(
             self.activities,
             executor,
-            self.send_result
+            raises_on_failure=self.raises_on_failure,
+            send_result=self.send_result,
         )
 
 
 class ChainFuture(GroupFuture):
-    def __init__(self, activities, executor, send_result=False):
+    def __init__(self, activities, executor, raises_on_failure=True, send_result=False):
         self.activities = activities
         self.executor = executor
+        self.raises_on_failure = raises_on_failure
         self._state = futures.PENDING
         self._result = None
         self._exception = None
@@ -261,6 +265,7 @@ class ChainFuture(GroupFuture):
             if not future.finished:
                 break
             if future.finished and future.exception:
+                # End this chain
                 self._has_failed = True
                 break
             previous_result = future.result
