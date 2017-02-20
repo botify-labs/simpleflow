@@ -1,7 +1,8 @@
 from . import futures
 from .activity import Activity
 from .base import Submittable
-from .task import ActivityTask
+from .signal import WaitForSignal
+from .task import ActivityTask, SignalTask
 
 
 def propagate_attribute(obj, attr, val):
@@ -14,6 +15,8 @@ def propagate_attribute(obj, attr, val):
             propagate_attribute(activities, attr, val)
     elif isinstance(obj, FuncGroup):
         setattr(obj, attr, val)
+    elif isinstance(obj, (SignalTask, WaitForSignal)):
+        pass
     else:
         raise Exception('Cannot propagate attribute for unknown type: {}'.format(type(obj)))
 
