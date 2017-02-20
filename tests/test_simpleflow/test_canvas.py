@@ -35,6 +35,9 @@ def sum_previous(values, previous_value):
 
 @with_attributes()
 def running_task():
+    """
+    Special task: always running according to CustomExecutor.
+    """
     return True
 
 
@@ -52,7 +55,7 @@ class CustomExecutor(Executor):
     def submit(self, func, *args, **kwargs):
         if func == running_task:
             f = futures.Future()
-            f._state = futures.RUNNING
+            f.set_running()
             return f
         return super(CustomExecutor, self).submit(func, *args, **kwargs)
 
@@ -63,8 +66,6 @@ class MyWorkflow(workflow.Workflow):
     task_list = 'test_task_list'
     decision_tasks_timeout = '300'
     execution_timeout = '3600'
-    tag_list = None  # FIXME should be optional
-    child_policy = None  # FIXME should be optional
 
 
 executor = CustomExecutor(MyWorkflow)
@@ -229,6 +230,21 @@ class TestChain(unittest.TestCase):
             raises_on_failure=False
         ).submit(executor)
         self.assertEqual(1, future.count_finished_activities)
+        self.assertIsNone(future.exception)
+
+    def test_signals_dont_hurt(self):
+        """
+        Check that propagate_attribute doesn't fail on signal-related objects
+        :return:
+        """
+        future = Chain(
+            ActivityTask(to_string, 1),
+            executor.signal('test'),
+            ActivityTask(to_string, 2),
+            executor.wait_signal('test'),
+            raises_on_failure=False
+        ).submit(executor)
+        self.assertEqual(4, future.count_finished_activities)
         self.assertIsNone(future.exception)
 
 
