@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.14.2
+~~~~~~
+
+- propagate_attribute: skip signal objects (#215)
+- Local executor: check add_activity_task (#215)
+
 0.14.1
 ~~~~~~
 
