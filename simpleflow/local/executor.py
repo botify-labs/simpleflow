@@ -91,13 +91,14 @@ class Executor(executor.Executor):
         finally:
             future._state = futures.FINISHED
 
-        self._history.add_activity_task(
-            func,
-            decision_id=None,
-            last_state=state,
-            activity_id=context["activity_id"],
-            input={'args': args, 'kwargs': kwargs},
-            result=future._result)
+        if func:
+            self._history.add_activity_task(
+                func,
+                decision_id=None,
+                last_state=state,
+                activity_id=context["activity_id"],
+                input={'args': args, 'kwargs': kwargs},
+                result=future._result)
         return future
 
     def run(self, input=None):
