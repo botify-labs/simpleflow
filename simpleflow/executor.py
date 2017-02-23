@@ -174,5 +174,5 @@ class Executor(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def list_markers(self):
+    def list_markers(self, all=False):
         raise NotImplementedError

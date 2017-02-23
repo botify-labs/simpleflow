@@ -185,6 +185,6 @@ class Workflow(Submittable):
         # type: (str, str) -> Submittable
         return self.executor.record_marker(name, details)
 
-    def list_markers(self):
-        # type: () -> List[simpleflow.marker.Marker]
-        return self.executor.list_markers()
+    def list_markers(self, all=False):
+        # type: (bool) -> List[simpleflow.marker.Marker]
+        return self.executor.list_markers(all)

@@ -70,7 +70,7 @@ class Executor(executor.Executor):
                     'wait_signal({}) before signal was sent: unsupported by the local executor'.format(signal_name)
                 )
         elif isinstance(func, MarkerTask):
-            self._markers[func.name] = Marker(func.name, func.details)
+            self._markers.setdefault(func.name, []).append(Marker(func.name, func.details))
 
         if isinstance(func, Submittable):
             task = func  # *args, **kwargs already resolved.
@@ -149,5 +149,7 @@ class Executor(executor.Executor):
     def record_marker(self, name, details=None):
         return MarkerTask(name, details)
 
-    def list_markers(self):
-        return self._markers.values()
+    def list_markers(self, all=False):
+        if all:
+            return [m for ml in self._markers.values() for m in ml]
+        return [m[-1] for m in self._markers.values()]

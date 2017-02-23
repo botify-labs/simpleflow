@@ -22,7 +22,7 @@ class History(object):
     :ivar _signals: activity events
     :type _signals: collections.OrderedDict[str, dict[str, Any]]
     :ivar _markers: marker events
-    :type _markers: collections.OrderedDict[str, dict[str, Any]]
+    :type _markers: collections.OrderedDict[str, list[dict[str, Any]]]
     :ivar _tasks: ordered list of tasks/etc
     :type _tasks: list[dict[str, Any]]
     """
@@ -92,7 +92,7 @@ class History(object):
         """
 
         :return: Markers
-        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        :rtype: collections.OrderedDict[str, list[dict[str, Any]]]
         """
         return self._markers
 
@@ -457,7 +457,7 @@ class History(object):
                 'recorded_event_id': event.id,
                 'recorded_event_timestamp': event.timestamp,
             }
-            self._markers[event.marker_name] = marker
+            self._markers.setdefault(event.marker_name, []).append(marker)
         elif event.state == 'failed':
             marker = {
                 'type': 'marker',
@@ -467,7 +467,7 @@ class History(object):
                 'record_failed_event_id': event.id,
                 'record_failed_event_timestamp': event.timestamp,
             }
-            self._markers[event.marker_name] = marker
+            self._markers.setdefault(event.marker_name, []).append(marker)
 
     TYPE_TO_PARSER = {
         'ActivityTask': parse_activity_event,

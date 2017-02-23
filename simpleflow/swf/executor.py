@@ -482,8 +482,8 @@ class Executor(executor.Executor):
         :return:
         :rtype: Optional[dict[str, Any]]
         """
-        marker = history.markers.get(a_task.name)
-        return marker
+        marker_list = history.markers.get(a_task.name)
+        return marker_list[-1] if marker_list else None
 
     TASK_TYPE_TO_EVENT_FINDER = {
         ActivityTask: find_activity_event,
@@ -1058,5 +1058,12 @@ class Executor(executor.Executor):
     def record_marker(self, name, details=None):
         return MarkerTask(name, details)
 
-    def list_markers(self):
-        return [Marker(m['name'], m['details']) for m in self._history.markers.values() if m['state'] == 'recorded']
+    def list_markers(self, all=False):
+        if all:
+            return [Marker(m['name'], m['details']) for ml in self._history.markers.values() for m in ml]
+        rc = []
+        for ml in self._history.markers.values():
+            m = ml[-1]
+            if m['state'] == 'recorded':
+                rc.append(Marker(m['name'], m['details']))
+        return rc

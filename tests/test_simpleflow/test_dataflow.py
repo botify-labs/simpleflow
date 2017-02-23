@@ -1597,8 +1597,7 @@ class ATestDefinitionParentWorkflow(BaseTestWorkflow):
     name = 'test_parent_workflow'
 
     def run(self):
-        future = self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name='workflow-child-one-1')
-        print(future.result)
+        self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name='workflow-child-one-1')
 
 
 @mock_swf
@@ -1644,8 +1643,7 @@ class ATestDefinitionIdempotentParentWorkflow(BaseTestWorkflow):
     name = 'test_parent_workflow'
 
     def run(self):
-        future = self.submit(ATestDefinitionIdempotentChildWithIdWorkflow, a=1)
-        print(future.result)
+        self.submit(ATestDefinitionIdempotentChildWithIdWorkflow, a=1)
 
 
 @mock_swf
@@ -1676,4 +1674,23 @@ def test_workflow_idempotent_task_naming():
                 )
             }
         }
+    ]
+
+
+class ATestDefinitionWithMarkersWorkflow(BaseTestWorkflow):
+    name = "test_markers"
+
+    def run(self):
+        m1 = self.submit(self.record_marker('First marker'))
+        m2 = self.submit(self.record_marker('First marker', 'again'))
+        m3 = self.submit(self.record_marker('Second marker', details='Details for second marker'))
+
+
+@mock_swf
+def test_markers():
+    workflow = ATestDefinitionWithMarkersWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={})
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    assert decisions == [
     ]
