@@ -703,7 +703,7 @@ class Executor(executor.Executor):
         elif isinstance(func, BaseWorkflowTask) and not isinstance(func, WorkflowTask):
             func = WorkflowTask.from_generic_task(func)
         elif isinstance(func, BaseSignalTask) and not isinstance(func, SignalTask):
-            func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
+            func = SignalTask.from_generic_task(func)
 
         try:
             # do not use directly "Submittable" here because we want to catch if
@@ -912,7 +912,7 @@ class Executor(executor.Executor):
     def _run_id(self):
         return self._execution_context.get('run_id')
 
-    def signal(self, name, workflow_id=None, run_id=None, propagate=True, *args, **kwargs):
+    def signal(self, name, *args, **kwargs):
         """
         Send a signal.
         :param name:
@@ -923,19 +923,18 @@ class Executor(executor.Executor):
         :param kwargs:
         :return:
         """
-        logger.debug('signal: name={name}, workflow_id={workflow_id}, run_id={run_id}, propagate={propagate}'.format(
-            name=name,
-            workflow_id=workflow_id if workflow_id else self._workflow_id,
-            run_id=run_id if workflow_id else self._run_id,
-            propagate=propagate,
-        ))
+        logger.debug('{} - sending signal({}, args={}, kwargs={})'.format(self._workflow_id, name, args, kwargs))
+        workflow_id = kwargs.pop('workflow_id', None)
+        run_id = kwargs.pop('run_id', None)
+        propagate = kwargs.pop('propagate', True)
 
         extra_input = {'__propagate': False} if not propagate else None
         return SignalTask(
             name,
-            workflow_id=workflow_id if workflow_id else self._workflow_id,
-            run_id=run_id if workflow_id else self._run_id,
-            extra_input=extra_input,
+            workflow_id if workflow_id else self._workflow_id,
+            run_id if workflow_id else self._run_id,
+            None,
+            extra_input,
             *args,
             **kwargs
         )

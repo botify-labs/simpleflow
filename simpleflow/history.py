@@ -71,7 +71,7 @@ class History(object):
     def signaled_workflows(self):
         """
         :return: signaled workflows
-        :rtype: defaultdict(list)
+        :rtype: collections.defaultdict[list]
         """
         return self._signaled_workflows
 

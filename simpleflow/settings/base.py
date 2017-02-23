@@ -54,6 +54,7 @@ def load(conf_module_name=None):
         default,
     )
 
+
 def str_or_none(val):
     return val or None
 

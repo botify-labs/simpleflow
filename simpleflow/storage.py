@@ -1,6 +1,6 @@
 from boto.s3 import connection
 from boto.s3.key import Key
-from boto.s3.bucket import Bucket
+
 from . import settings
 
 BUCKET_CACHE = {}
@@ -11,7 +11,7 @@ def get_connection(host):
 
 
 def get_bucket(bucket):
-    if not bucket in BUCKET_CACHE:
+    if bucket not in BUCKET_CACHE:
         connection = get_connection(settings.SIMPLEFLOW_S3_HOST)
         BUCKET_CACHE[bucket] = connection.get_bucket(bucket)
     return BUCKET_CACHE[bucket]

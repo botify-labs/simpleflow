@@ -158,8 +158,12 @@ class SignalTask(task.SignalTask):
     Signal "task" on SWF.
     """
     @classmethod
-    def from_generic_task(cls, a_task, workflow_id, run_id, control, extra_input):
-        return cls(a_task.name, workflow_id, run_id, control, extra_input, *a_task.args, **a_task.kwargs)
+    def from_generic_task(cls, a_task):
+        workflow_id = a_task._kwargs.pop('workflow_id', None)
+        run_id = a_task._kwargs.pop('run_id', None)
+        propagate = a_task._kwargs.pop('propagate', True)
+        extra_input = {'__propagate': False} if not propagate else None
+        return cls(a_task.name, workflow_id, run_id, None, extra_input, *a_task._args, **a_task._kwargs)
 
     def __init__(self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs):
         super(SignalTask, self).__init__(name, *args, **kwargs)
@@ -187,7 +191,7 @@ class SignalTask(task.SignalTask):
             self.kwargs,
         )
 
-    def schedule(self, domain, task_list, priority=None):
+    def schedule(self, *args, **kwargs):
         input = {
             'args': self.args,
             'kwargs': self.kwargs,

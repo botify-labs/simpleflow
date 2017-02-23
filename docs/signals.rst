@@ -22,8 +22,8 @@ The ``Workflow.signal`` method sends a signal to one or several workflows.
             future = self.submit(self.signal('signal_name', workflow_id, run_id, *args, **kwargs))
 
 
-The future will be finished, its result being \*args and \*\*kwargs, as soon as at least one workflow has been signaled
-(including oneself).
+The future will be finished, its result being a ``dict`` containing the \*args and \*\*kwargs keys, as soon as
+at least one workflow has been signaled (including oneself).
 
 
 Waiting for a signal
@@ -47,6 +47,8 @@ Naturally, one isn't forced to wait on the future result:
                 # Something happened
                 self.process(my_signal.result)
 
+
+Here too the result is a ``dict`` containing the \*args and \*\*kwargs keys.
 
 Limitations
 -----------

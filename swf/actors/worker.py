@@ -47,13 +47,14 @@ class ActivityWorker(Actor):
         try:
             return self.connection.respond_activity_task_canceled(task_token, details)
         except boto.exception.SWFResponseError as e:
+            message = self.get_error_message(e)
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
                     "Unable to cancel activity task with token={}".format(task_token),
-                    e.body['message'],
+                    message,
                 )
 
-            raise ResponseError(e.body['message'])
+            raise ResponseError(message)
 
     def complete(self, task_token, result=None):
         """Responds to ``swf`` that the activity task is completed
@@ -70,13 +71,14 @@ class ActivityWorker(Actor):
                 result
             )
         except boto.exception.SWFResponseError as e:
+            message = self.get_error_message(e)
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
                     "Unable to complete activity task with token={}".format(task_token),
-                    e.body['message'],
+                    message,
                 )
 
-            raise ResponseError(e.body['message'])
+            raise ResponseError(message)
 
     def fail(self, task_token, details=None, reason=None):
         """Replies to ``swf`` that the activity task failed
@@ -97,13 +99,14 @@ class ActivityWorker(Actor):
                 reason=format.reason(reason),
             )
         except boto.exception.SWFResponseError as e:
+            message = self.get_error_message(e)
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
                     "Unable to fail activity task with token={}".format(task_token),
-                    e.body['message'],
+                    message,
                 )
 
-            raise ResponseError(e.body['message'])
+            raise ResponseError(message)
 
     def heartbeat(self, task_token, details=None):
         """Records activity task heartbeat
@@ -120,13 +123,14 @@ class ActivityWorker(Actor):
                 details
             )
         except boto.exception.SWFResponseError as e:
+            message = self.get_error_message(e)
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
                     "Unable to send heartbeat with token={}".format(task_token),
-                    e.body['message'],
+                    message,
                 )
 
-            raise ResponseError(e.body['message'])
+            raise ResponseError(message)
 
     def poll(self, task_list=None, identity=None):
         """Polls for an activity task to process from current
@@ -160,13 +164,14 @@ class ActivityWorker(Actor):
                 identity=identity
             )
         except boto.exception.SWFResponseError as e:
+            message = self.get_error_message(e)
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
                     "Unable to poll activity task",
-                    e.body['message'],
+                    message,
                 )
 
-            raise ResponseError(e.body['message'])
+            raise ResponseError(message)
 
         if 'taskToken' not in polled_activity_data:
             raise PollTimeout("Activity Worker poll timed out")
