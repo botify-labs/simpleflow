@@ -161,11 +161,18 @@ class Executor(object):
         """
         return {}
 
+    @abc.abstractmethod
     def signal(self, name, *args, **kwargs):
         raise NotImplementedError
 
+    @abc.abstractmethod
     def wait_signal(self, name):
         raise NotImplementedError
 
-    def get_future_from_signal(self, name):
+    @abc.abstractmethod
+    def record_marker(self, name, details=None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def list_markers(self):
         raise NotImplementedError

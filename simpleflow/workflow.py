@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+
 from simpleflow.base import Submittable
 from simpleflow.signal import WaitForSignal
 from . import canvas
@@ -7,6 +8,10 @@ from . import task
 from ._decorators import deprecated
 from .activity import Activity
 from .utils import issubclass_
+
+
+if False:
+    from typing import List
 
 
 class Workflow(Submittable):
@@ -175,3 +180,11 @@ class Workflow(Submittable):
 
     def wait_signal(self, name):
         return self.executor.wait_signal(name)
+
+    def record_marker(self, name, details=None):
+        # type: (str, str) -> Submittable
+        return self.executor.record_marker(name, details)
+
+    def list_markers(self):
+        # type: () -> List[simpleflow.marker.Marker]
+        return self.executor.list_markers()

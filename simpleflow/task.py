@@ -154,3 +154,32 @@ class SignalTask(Task):
 
     def execute(self):
         pass
+
+
+class MarkerTask(Task):
+    def __init__(self, name, *args, **kwargs):
+        if (args and kwargs) or len(args) > 1 or len(kwargs) > 1 or (kwargs and 'details' not in kwargs):
+            raise ValueError('Expected only one argument or the kwarg "details"')
+        self._name = name
+        self.args = self.resolve_args(*args)
+        self.kwargs = self.resolve_kwargs(**kwargs)
+
+    @property
+    def name(self):
+        """
+
+        :return:
+        :rtype: str
+        """
+        return self._name
+
+    @property
+    def details(self):
+        if len(self.args):
+            details = self.args[0]
+        else:
+            details = self.kwargs.get('details')
+        return details
+
+    def execute(self):
+        pass
