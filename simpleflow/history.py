@@ -21,6 +21,8 @@ class History(object):
     :type _external_workflows_canceling: collections.OrderedDict[str, dict[str, Any]]
     :ivar _signals: activity events
     :type _signals: collections.OrderedDict[str, dict[str, Any]]
+    :ivar _markers: marker events
+    :type _markers: collections.OrderedDict[str, dict[str, Any]]
     :ivar _tasks: ordered list of tasks/etc
     :type _tasks: list[dict[str, Any]]
     """
@@ -33,7 +35,17 @@ class History(object):
         self._external_workflows_canceling = collections.OrderedDict()
         self._signals = collections.OrderedDict()
         self._signaled_workflows = collections.defaultdict(list)
+        self._markers = collections.OrderedDict()
         self._tasks = []
+
+    @property
+    def swf_history(self):
+        """
+
+        :return: SWF history
+        :rtype: swf.models.history.History
+        """
+        return self._history
 
     @property
     def activities(self):
@@ -76,7 +88,20 @@ class History(object):
         return self._signaled_workflows
 
     @property
+    def markers(self):
+        """
+
+        :return: Markers
+        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        """
+        return self._markers
+
+    @property
     def tasks(self):
+        """
+        :return:
+         :rtype: list[dict[str, Any]]
+        """
         return self._tasks
 
     @property
@@ -422,11 +447,34 @@ class History(object):
             workflow['workflow_id'] = event.workflow_execution['workflowId']
             workflow['cancel_requested_timestamp'] = event.timestamp
 
+    def parse_marker_event(self, events, event):
+        if event.state == 'recorded':
+            marker = {
+                'type': 'marker',
+                'name': event.marker_name,
+                'state': event.state,
+                'details': getattr(event, 'details', None),
+                'recorded_event_id': event.id,
+                'recorded_event_timestamp': event.timestamp,
+            }
+            self._markers[event.marker_name] = marker
+        elif event.state == 'failed':
+            marker = {
+                'type': 'marker',
+                'name': event.marker_name,
+                'state': event.state,
+                'cause': event.cause,
+                'record_failed_event_id': event.id,
+                'record_failed_event_timestamp': event.timestamp,
+            }
+            self._markers[event.marker_name] = marker
+
     TYPE_TO_PARSER = {
         'ActivityTask': parse_activity_event,
         'ChildWorkflowExecution': parse_child_workflow_event,
         'WorkflowExecution': parse_workflow_event,
         'ExternalWorkflowExecution': parse_external_workflow_event,
+        'Marker': parse_marker_event,
     }
 
     def parse(self):

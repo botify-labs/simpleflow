@@ -215,3 +215,25 @@ class SignalTask(task.SignalTask):
         )
 
         return [decision]
+
+
+class MarkerTask(task.MarkerTask):
+
+    idempotent = False
+
+    @classmethod
+    def from_generic_task(cls, a_task):
+        # type: (task.MarkerTask) -> MarkerTask
+        return cls(a_task.name, *a_task.args, **a_task.kwargs)
+
+    def __init__(self, name, details=None):
+        super(MarkerTask, self).__init__(name, details)
+
+    @property
+    def id(self):
+        return self.name
+
+    def schedule(self, *args, **kwargs):
+        decision = swf.models.decision.MarkerDecision()
+        decision.record(self.name, self.details)
+        return [decision]

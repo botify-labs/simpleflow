@@ -20,13 +20,15 @@ from simpleflow import (
 from simpleflow.activity import Activity, PRIORITY_NOT_SET
 from simpleflow.base import Submittable
 from simpleflow.history import History
+from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf.helpers import swf_identity
-from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask
+from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask, MarkerTask
 from simpleflow.task import (
     ActivityTask as BaseActivityTask,
     WorkflowTask as BaseWorkflowTask,
     SignalTask as BaseSignalTask,
+    MarkerTask as BaseMarkerTask,
 )
 from simpleflow.utils import issubclass_, json_dumps, hex_hash
 from simpleflow.swf import constants
@@ -184,6 +186,8 @@ class Executor(executor.Executor):
         """
         self._open_activity_count = 0
         self._decisions = []
+        self._append_timer = False
+        self._timer_scheduled = False
         self._tasks = TaskRegistry()
         self._idempotent_tasks_to_submit = set()
         self._execution = None
@@ -336,6 +340,30 @@ class Executor(executor.Executor):
 
         return future
 
+    def _get_future_from_marker_event(self, a_task, event):
+        """Maps a marker event to a Future with the corresponding
+        state.
+
+        :param a_task: currently unused
+        :type a_task:
+        :param event: marker event
+        :type  event: dict[str, Any]
+        :rtype: futures.Future
+        """
+        future = futures.Future()
+        if not event:
+            return future
+        state = event['state']
+        if state == 'recorded':
+            future.set_finished(event['details'])
+        elif state == 'failed':
+            future.set_exception(exceptions.TaskFailed(
+                name=event['name'],
+                reason=event['cause'],
+            ))
+
+        return future
+
     def get_future_from_signal_event(self, a_task, event):
         """Maps a signal event to a Future with the corresponding
         state.
@@ -344,6 +372,7 @@ class Executor(executor.Executor):
         :type a_task: Optional[SignalTask]
         :param event: signal event
         :type  event: dict[str, Any]
+        :rtype: futures.Future
         """
         future = futures.Future()
         if not event:
@@ -362,6 +391,7 @@ class Executor(executor.Executor):
         :type a_task:
         :param event: external workflow event
         :type  event: dict[str, Any]
+        :rtype: futures.Future
         """
         future = futures.Future()
         if not event:
@@ -386,7 +416,7 @@ class Executor(executor.Executor):
         :param signal_name:
         :type signal_name: str
         :return:
-         :rtype: futures.Future
+        :rtype: futures.Future
         """
         event = self._history.signals.get(signal_name)
         return self.get_future_from_signal_event(None, event)
@@ -441,10 +471,25 @@ class Executor(executor.Executor):
                     break
         return event
 
+    def find_marker_event(self, a_task, history):
+        """
+        Get the event corresponding to a activity task, if any.
+
+        :param a_task:
+        :type a_task: Marker
+        :param history:
+        :type history: simpleflow.history.History
+        :return:
+        :rtype: Optional[dict[str, Any]]
+        """
+        marker = history.markers.get(a_task.name)
+        return marker
+
     TASK_TYPE_TO_EVENT_FINDER = {
         ActivityTask: find_activity_event,
         WorkflowTask: find_child_workflow_event,
         SignalTask: find_signal_event,
+        MarkerTask: find_marker_event,
     }
 
     def find_event(self, a_task, history):
@@ -523,7 +568,7 @@ class Executor(executor.Executor):
         Let a task schedule itself.
         If too many decisions are in flight, add a timer decision and raise ExecutionBlocked.
         :param a_task:
-        :type a_task: ActivityTask | WorkflowTask | SignalTask
+        :type a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask
         :param task_list:
         :type task_list: Optional[str]
         :raise: exceptions.ExecutionBlocked if too many decisions waiting
@@ -548,6 +593,10 @@ class Executor(executor.Executor):
         # Ready to schedule
         if isinstance(a_task, ActivityTask):
             self._open_activity_count += 1
+        elif isinstance(a_task, MarkerTask):
+            self._append_timer = True  # force a wake-up call
+        # elif isinstance(a_task, TimerTask):
+        #     self._timer_scheduled = True
 
         # Check if we won't violate the 1MB limit on API requests ; if so, do NOT
         # schedule the requested task and block execution instead, with a timer
@@ -560,7 +609,8 @@ class Executor(executor.Executor):
             # TODO: at this point we may check that self._decisions is not empty
             # If it's the case, it means that a single decision was weighting
             # more than 900kB, so we have bigger problems.
-            self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
+            self._append_timer = True
+            # self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
             raise exceptions.ExecutionBlocked()
 
         self._decisions.extend(decisions)
@@ -571,7 +621,8 @@ class Executor(executor.Executor):
         if len(self._decisions) == constants.MAX_DECISIONS - 1:
             # We add a timer to wake up the workflow immediately after
             # completing these decisions.
-            self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
+            self._append_timer = True
+            # self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
             raise exceptions.ExecutionBlocked()
 
     def _add_start_timer_decision(self, id):
@@ -586,6 +637,7 @@ class Executor(executor.Executor):
         'child_workflow': resume_child_workflow,
         'signal': get_future_from_signal_event,
         'external_workflow': get_future_from_external_workflow_event,
+        'marker': _get_future_from_marker_event,
     }
 
     def resume(self, a_task, *args, **kwargs):
@@ -704,11 +756,13 @@ class Executor(executor.Executor):
             func = WorkflowTask.from_generic_task(func)
         elif isinstance(func, BaseSignalTask) and not isinstance(func, SignalTask):
             func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
+        elif isinstance(func, BaseMarkerTask) and not isinstance(func, MarkerTask):
+            func = MarkerTask.from_generic_task(func)
 
         try:
             # do not use directly "Submittable" here because we want to catch if
             # we don't have an instance from a class known to work under simpleflow.swf
-            if isinstance(func, (ActivityTask, WorkflowTask, SignalTask)):
+            if isinstance(func, (ActivityTask, WorkflowTask, SignalTask, MarkerTask)):
                 # no need to wrap it, already wrapped in the correct format
                 a_task = func
             elif isinstance(func, Activity):
@@ -786,6 +840,8 @@ class Executor(executor.Executor):
             ))
             self.after_replay()
             self.decref_workflow()
+            if self._append_timer and not self._timer_scheduled:
+                self._add_start_timer_decision('_simpleflow_wakup_timer')
             return self._decisions, {}
         except exceptions.TaskException as err:
             reason = 'Workflow execution error in task {}: "{}"'.format(
@@ -998,3 +1054,9 @@ class Executor(executor.Executor):
                     )
                 except swf.models.workflow.WorkflowExecutionDoesNotExist:
                     logger.info('Workflow {} {} disappeared'.format(workflow_id, run_id))
+
+    def record_marker(self, name, details=None):
+        return MarkerTask(name, details)
+
+    def list_markers(self):
+        return [Marker(m['name'], m['details']) for m in self._history.markers.values() if m['state'] == 'recorded']
