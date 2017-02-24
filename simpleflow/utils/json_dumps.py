@@ -1,4 +1,6 @@
-from datetime import datetime
+from uuid import UUID
+
+import datetime
 import json
 import types
 
@@ -6,12 +8,26 @@ from simpleflow.futures import Future
 
 
 def _serialize_complex_object(obj):
-    if isinstance(obj, datetime):
+    if isinstance(obj, datetime.datetime):
+        r = obj.isoformat()
+        if obj.microsecond:
+            r = r[:23] + r[26:]  # milliseconds only
+        if r.endswith('+00:00'):
+            r = r[:-6] + 'Z'
+        return r
+    elif isinstance(obj, datetime.date):
         return obj.isoformat()
-    if isinstance(obj, types.GeneratorType):
+    elif isinstance(obj, datetime.time):
+        r = obj.isoformat()
+        if obj.microsecond:
+            r = r[:12]
+        return r
+    elif isinstance(obj, types.GeneratorType):
         return [i for i in obj]
-    if isinstance(obj, Future):
+    elif isinstance(obj, Future):
         return obj.result
+    elif isinstance(obj, UUID):
+        return str(obj)
     raise TypeError(
         "Type %s couldn't be serialized. This is a bug in simpleflow,"
         " please file a new issue on GitHub!" % type(obj))

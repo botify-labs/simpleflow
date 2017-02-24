@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+import datetime
 import re
 from builtins import range
 
@@ -1687,14 +1688,9 @@ class ATestDefinitionWithMarkersWorkflow(BaseTestWorkflow):
     def run(self):
         m1 = self.submit(self.record_marker('First marker'))
         m2 = self.submit(self.record_marker('First marker', 'again'))
-        m3 = self.submit(self.record_marker('Second marker', details='Details for second marker'))
+        self.second_marker_details = {'what': 'Details for second marker', 'date': datetime.date(2018, 1, 1)}
+        m3 = self.submit(self.record_marker('Second marker', details=self.second_marker_details))
         futures.wait(m1, m2, m3)
-        markers = self.list_markers()
-        expected = [Marker('First marker', 'again'), Marker('Second marker', 'Details for second marker')]
-        assert expected == markers
-        markers = self.list_markers(all=True)
-        expected = [Marker('First marker', None), Marker('First marker', 'again'), Marker('Second marker', 'Details for second marker')]
-        assert expected == markers
 
 
 @mock_swf
@@ -1713,14 +1709,14 @@ def test_markers():
         {
             'decisionType': 'RecordMarker',
             'recordMarkerDecisionAttributes': {
-                'details': 'again',
+                'details': '"again"',
                 'markerName': 'First marker'
             }
         },
         {
             'decisionType': 'RecordMarker',
             'recordMarkerDecisionAttributes': {
-                'details': 'Details for second marker',
+                'details': json_dumps({"what": "Details for second marker", "date": "2018-01-01"}),
                 'markerName': 'Second marker'
             }
         },

@@ -1061,10 +1061,10 @@ class Executor(executor.Executor):
 
     def list_markers(self, all=False):
         if all:
-            return [Marker(m['name'], m['details']) for ml in self._history.markers.values() for m in ml]
+            return [Marker(m['name'], json.loads(m['details'])) for ml in self._history.markers.values() for m in ml]
         rc = []
         for ml in self._history.markers.values():
             m = ml[-1]
             if m['state'] == 'recorded':
-                rc.append(Marker(m['name'], m['details']))
+                rc.append(Marker(m['name'], json.loads(m['details'])))
         return rc

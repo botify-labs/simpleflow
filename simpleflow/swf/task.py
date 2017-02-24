@@ -4,6 +4,7 @@ import swf.models
 import swf.models.decision
 
 from simpleflow import task
+from simpleflow.utils import json_dumps
 
 logger = logging.getLogger(__name__)
 
@@ -239,5 +240,8 @@ class MarkerTask(task.MarkerTask, SwfTask):
 
     def schedule(self, *args, **kwargs):
         decision = swf.models.decision.MarkerDecision()
-        decision.record(self.name, self.details)
+        decision.record(
+            self.name,
+            json_dumps(self.details) if self.details is not None else None,
+        )
         return [decision]

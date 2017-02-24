@@ -4,6 +4,7 @@ import logging.config
 
 from .activity import Activity  # NOQA
 from .workflow import Workflow  # NOQA
+from .signal import WaitForSignal  # NOQA
 
 from . import settings
 

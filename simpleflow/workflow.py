@@ -11,7 +11,7 @@ from .utils import issubclass_
 
 
 if False:
-    from typing import List
+    from typing import List, Any
 
 
 class Workflow(Submittable):
@@ -182,7 +182,7 @@ class Workflow(Submittable):
         return self.executor.wait_signal(name)
 
     def record_marker(self, name, details=None):
-        # type: (str, str) -> Submittable
+        # type: (str, Any) -> Submittable
         return self.executor.record_marker(name, details)
 
     def list_markers(self, all=False):
