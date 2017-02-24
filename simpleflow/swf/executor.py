@@ -186,8 +186,7 @@ class Executor(executor.Executor):
         """
         self._open_activity_count = 0
         self._decisions = []
-        self._append_timer = False
-        self._timer_scheduled = False
+        self._append_timer = False  # Append an immediate timer decision
         self._tasks = TaskRegistry()
         self._idempotent_tasks_to_submit = set()
         self._execution = None
@@ -594,9 +593,7 @@ class Executor(executor.Executor):
         if isinstance(a_task, ActivityTask):
             self._open_activity_count += 1
         elif isinstance(a_task, MarkerTask):
-            self._append_timer = True  # force a wake-up call
-        # elif isinstance(a_task, TimerTask):
-        #     self._timer_scheduled = True
+            self._append_timer = True  # markers don't generate decisions, so force a wake-up timer
 
         # Check if we won't violate the 1MB limit on API requests ; if so, do NOT
         # schedule the requested task and block execution instead, with a timer
@@ -610,7 +607,6 @@ class Executor(executor.Executor):
             # If it's the case, it means that a single decision was weighting
             # more than 900kB, so we have bigger problems.
             self._append_timer = True
-            # self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
             raise exceptions.ExecutionBlocked()
 
         self._decisions.extend(decisions)
@@ -622,7 +618,6 @@ class Executor(executor.Executor):
             # We add a timer to wake up the workflow immediately after
             # completing these decisions.
             self._append_timer = True
-            # self._add_start_timer_decision('resume-after-{}'.format(a_task.id))
             raise exceptions.ExecutionBlocked()
 
     def _add_start_timer_decision(self, id):
@@ -841,7 +836,7 @@ class Executor(executor.Executor):
             ))
             self.after_replay()
             self.decref_workflow()
-            if self._append_timer and not self._timer_scheduled:
+            if self._append_timer:
                 self._add_start_timer_decision('_simpleflow_wakup_timer')
             return self._decisions, {}
         except exceptions.TaskException as err:
