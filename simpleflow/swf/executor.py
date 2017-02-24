@@ -23,7 +23,7 @@ from simpleflow.history import History
 from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf.helpers import swf_identity
-from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask, MarkerTask
+from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask, MarkerTask, SwfTask
 from simpleflow.task import (
     ActivityTask as BaseActivityTask,
     WorkflowTask as BaseWorkflowTask,
@@ -750,14 +750,15 @@ class Executor(executor.Executor):
         priority_set_on_submit = kwargs.pop("__priority", PRIORITY_NOT_SET)
 
         # casts simpleflow.task.*Task to their equivalent in simpleflow.swf.task
-        if isinstance(func, BaseActivityTask) and not isinstance(func, ActivityTask):
-            func = ActivityTask.from_generic_task(func)
-        elif isinstance(func, BaseWorkflowTask) and not isinstance(func, WorkflowTask):
-            func = WorkflowTask.from_generic_task(func)
-        elif isinstance(func, BaseSignalTask) and not isinstance(func, SignalTask):
-            func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
-        elif isinstance(func, BaseMarkerTask) and not isinstance(func, MarkerTask):
-            func = MarkerTask.from_generic_task(func)
+        if not isinstance(func, SwfTask):
+            if isinstance(func, BaseActivityTask):
+                func = ActivityTask.from_generic_task(func)
+            elif isinstance(func, BaseWorkflowTask):
+                func = WorkflowTask.from_generic_task(func)
+            elif isinstance(func, BaseSignalTask):
+                func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
+            elif isinstance(func, BaseMarkerTask):
+                func = MarkerTask.from_generic_task(func)
 
         try:
             # do not use directly "Submittable" here because we want to catch if

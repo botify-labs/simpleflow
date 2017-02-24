@@ -8,7 +8,11 @@ from simpleflow import task
 logger = logging.getLogger(__name__)
 
 
-class ActivityTask(task.ActivityTask):
+class SwfTask(object):
+    pass
+
+
+class ActivityTask(task.ActivityTask, SwfTask):
     """
     Activity task managed on SWF.
     """
@@ -86,7 +90,7 @@ class ActivityTask(task.ActivityTask):
         return [decision]
 
 
-class WorkflowTask(task.WorkflowTask):
+class WorkflowTask(task.WorkflowTask, SwfTask):
     """
     WorkflowTask managed on SWF.
     """
@@ -153,7 +157,7 @@ class WorkflowTask(task.WorkflowTask):
         return [decision]
 
 
-class SignalTask(task.SignalTask):
+class SignalTask(task.SignalTask, SwfTask):
     """
     Signal "task" on SWF.
     """
@@ -217,7 +221,7 @@ class SignalTask(task.SignalTask):
         return [decision]
 
 
-class MarkerTask(task.MarkerTask):
+class MarkerTask(task.MarkerTask, SwfTask):
 
     idempotent = False
 
