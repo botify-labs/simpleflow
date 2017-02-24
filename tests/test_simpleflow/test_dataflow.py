@@ -13,6 +13,7 @@ from moto import mock_swf
 import swf.models
 import swf.models.decision
 import swf.models.workflow
+from simpleflow.marker import Marker
 from simpleflow.utils import json_dumps
 from swf.models.history import builder
 from swf.responses import Response
@@ -103,6 +104,7 @@ class ATestDefinitionThatSubmitsAnActivityTask(BaseTestWorkflow):
     """
     Execute a single task already wrapped as a simpleflow.task.ActivityTask.
     """
+
     def run(self):
         b = self.submit(ActivityTask(increment, 4))
         return b.result
@@ -1597,7 +1599,8 @@ class ATestDefinitionParentWorkflow(BaseTestWorkflow):
     name = 'test_parent_workflow'
 
     def run(self):
-        self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name='workflow-child-one-1')
+        future = self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name='workflow-child-one-1')
+        futures.wait(future)
 
 
 @mock_swf
@@ -1643,7 +1646,8 @@ class ATestDefinitionIdempotentParentWorkflow(BaseTestWorkflow):
     name = 'test_parent_workflow'
 
     def run(self):
-        self.submit(ATestDefinitionIdempotentChildWithIdWorkflow, a=1)
+        future = self.submit(ATestDefinitionIdempotentChildWithIdWorkflow, a=1)
+        futures.wait(future)
 
 
 @mock_swf
@@ -1684,6 +1688,13 @@ class ATestDefinitionWithMarkersWorkflow(BaseTestWorkflow):
         m1 = self.submit(self.record_marker('First marker'))
         m2 = self.submit(self.record_marker('First marker', 'again'))
         m3 = self.submit(self.record_marker('Second marker', details='Details for second marker'))
+        futures.wait(m1, m2, m3)
+        markers = self.list_markers()
+        expected = [Marker('First marker', 'again'), Marker('Second marker', 'Details for second marker')]
+        assert expected == markers
+        markers = self.list_markers(all=True)
+        expected = [Marker('First marker', None), Marker('First marker', 'again'), Marker('Second marker', 'Details for second marker')]
+        assert expected == markers
 
 
 @mock_swf
@@ -1692,5 +1703,33 @@ def test_markers():
     executor = Executor(DOMAIN, workflow)
     history = builder.History(workflow, input={})
     decisions, _ = executor.replay(Response(history=history, execution=None))
-    assert decisions == [
+    expected = [
+        {
+            'decisionType': 'RecordMarker',
+            'recordMarkerDecisionAttributes': {
+                'markerName': 'First marker'
+            }
+        },
+        {
+            'decisionType': 'RecordMarker',
+            'recordMarkerDecisionAttributes': {
+                'details': 'again',
+                'markerName': 'First marker'
+            }
+        },
+        {
+            'decisionType': 'RecordMarker',
+            'recordMarkerDecisionAttributes': {
+                'details': 'Details for second marker',
+                'markerName': 'Second marker'
+            }
+        },
+        {
+            'decisionType': 'StartTimer',
+            'startTimerDecisionAttributes': {
+                'startToFireTimeout': '0',
+                'timerId': '_simpleflow_wakup_timer'
+            }
+        }
     ]
+    assert expected == decisions
