@@ -263,7 +263,11 @@ class Executor(executor.Executor):
             future.set_running()
         elif state == 'completed':
             result = event['result']
-            future.set_finished(json.loads(result) if result else None)
+            try:
+                result = json.loads(result) if result else None
+            except ValueError:  # Not JSON
+                pass
+            future.set_finished(result)
         elif state == 'canceled':
             future.set_cancelled()
         elif state == 'failed':
