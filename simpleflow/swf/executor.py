@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import inspect
+
 import hashlib
 import json
 import logging
@@ -508,9 +510,10 @@ class Executor(executor.Executor):
         :return:
         :rtype: Optional[dict]
         """
-        finder = self.TASK_TYPE_TO_EVENT_FINDER.get(type(a_task))
-        if finder:
-            return finder(self, a_task, history)
+        for typ in inspect.getmro(type(a_task)):
+            finder = self.TASK_TYPE_TO_EVENT_FINDER.get(typ)
+            if finder:
+                return finder(self, a_task, history)
         raise TypeError('invalid type {} for task {}'.format(
             type(a_task), a_task))
 
