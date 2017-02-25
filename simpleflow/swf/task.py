@@ -44,10 +44,7 @@ class ActivityTask(task.ActivityTask):
             version=activity.version,
         )
 
-        input = {
-            'args': self.args,
-            'kwargs': self.kwargs,
-        }
+        input = self.get_input()
 
         if task_list is None:
             task_list = activity.task_list
@@ -84,6 +81,27 @@ class ActivityTask(task.ActivityTask):
         )
 
         return [decision]
+
+    def get_input(self):
+        input = {
+            'args': self.args,
+            'kwargs': self.kwargs,
+        }
+        return input
+
+
+class NonPythonicActivityTask(ActivityTask):
+    """
+    ActivityTask that pass raw kwargs or args as input, without "args" and "kwargs" subkeys.
+    """
+
+    def __init__(self, activity, *args, **kwargs):
+        if args and kwargs:
+            raise ValueError("This task type doesn't support both *args and kwargs")
+        super(ActivityTask, self).__init__(activity, *args, **kwargs)
+
+    def get_input(self):
+        return self.kwargs or self.args
 
 
 class WorkflowTask(task.WorkflowTask):

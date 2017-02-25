@@ -13,6 +13,7 @@ from moto import mock_swf
 import swf.models
 import swf.models.decision
 import swf.models.workflow
+from simpleflow.swf.task import NonPythonicActivityTask
 from simpleflow.utils import json_dumps
 from swf.models.history import builder
 from swf.responses import Response
@@ -36,6 +37,7 @@ from tests.data import (
     raise_on_failure,
     triple,
     Tetra,
+    non_pythonic,
 )
 
 
@@ -103,6 +105,7 @@ class ATestDefinitionThatSubmitsAnActivityTask(BaseTestWorkflow):
     """
     Execute a single task already wrapped as a simpleflow.task.ActivityTask.
     """
+
     def run(self):
         b = self.submit(ActivityTask(increment, 4))
         return b.result
@@ -1677,3 +1680,76 @@ def test_workflow_idempotent_task_naming():
             }
         }
     ]
+
+
+class ATestDefinitionNonPythonicWorkflow(BaseTestWorkflow):
+    def run(self, *args, **kwargs):
+        task = NonPythonicActivityTask(non_pythonic, *args, **kwargs)
+        future = self.submit(task)
+        futures.wait(future)
+
+
+@mock_swf
+def test_non_pythonic_activity_with_dict():
+    workflow = ATestDefinitionNonPythonicWorkflow
+    executor = Executor(DOMAIN, workflow)
+    args = {
+        "first_arg": 1,
+        "second_arg": {"foo": "bar"},
+    }
+    history = builder.History(workflow, input={"kwargs": args})
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    expected = [
+        {
+            'decisionType': 'ScheduleActivityTask',
+            'scheduleActivityTaskDecisionAttributes': {
+                'activityId': 'activity-tests.data.activities.non_pythonic-1',
+                'activityType': {
+                    'name': 'tests.data.activities.non_pythonic',
+                    'version': 'test'
+                },
+                'heartbeatTimeout': '300',
+                'input': json_dumps(args),
+                'scheduleToCloseTimeout': '300',
+                'scheduleToStartTimeout': '300',
+                'startToCloseTimeout': '300',
+                'taskList': {
+                    'name': 'default'
+                }
+            }
+        }
+    ]
+    assert expected == decisions
+
+
+@mock_swf
+def test_non_pythonic_activity_with_array():
+    workflow = ATestDefinitionNonPythonicWorkflow
+    executor = Executor(DOMAIN, workflow)
+    args = [
+        1,
+        {"foo": "bar"},
+    ]
+    history = builder.History(workflow, input={"args": args})
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    expected = [
+        {
+            'decisionType': 'ScheduleActivityTask',
+            'scheduleActivityTaskDecisionAttributes': {
+                'activityId': 'activity-tests.data.activities.non_pythonic-1',
+                'activityType': {
+                    'name': 'tests.data.activities.non_pythonic',
+                    'version': 'test'
+                },
+                'heartbeatTimeout': '300',
+                'input': json_dumps(args),
+                'scheduleToCloseTimeout': '300',
+                'scheduleToStartTimeout': '300',
+                'startToCloseTimeout': '300',
+                'taskList': {
+                    'name': 'default'
+                }
+            }
+        }
+    ]
+    assert expected == decisions
