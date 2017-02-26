@@ -2,11 +2,14 @@ from __future__ import print_function
 
 import time
 
+import abc
+
 from simpleflow import (
     activity,
     futures,
     Workflow,
 )
+from simpleflow import swf
 from simpleflow.canvas import Group, Chain
 from simpleflow.task import ActivityTask
 
@@ -76,8 +79,28 @@ def func_b_2_2(*args, **kwargs):
 
 
 class BaseWorkflow(Workflow):
+
     version = 'example'
     task_list = 'example'
+
+    def __init__(self, executor):
+        super(BaseWorkflow, self).__init__(executor)
+        self.futures = []
+
+    def submit_add(self, func, *args, **kwargs):
+        f = self.submit(func, *args, **kwargs)
+        self.futures.append(f)
+
+    def submit_and_wait(self, func, *args, **kwargs):
+        f = self.submit(func, *args, **kwargs)
+        return f.result
+
+    def wait_all(self):
+        futures.wait(*self.futures)
+
+    @abc.abstractmethod
+    def run(self, *args, **kwargs):
+        pass
 
 
 # This workflow demonstrates a basic use of signals inside a single workflow.
@@ -289,3 +312,61 @@ class ParentSignalsWorkflow6(BaseWorkflow):
         child_signal = self.submit(self.wait_signal('IAmReady'))
         assert child_signal.finished is False
         print('Parent: end')
+
+
+class ChildSignalsSelfWorkflow2(BaseWorkflow):
+    name = 'child-workflow'
+
+    def run(self):
+        self.submit_and_wait(self.signal('signal1'))
+        self.submit_and_wait(func_a_1_1)
+        self.submit(self.signal('signal1'))
+        self.submit_and_wait(self.signal('signal1'))
+
+
+class ParentSignalsWorkflow7(BaseWorkflow):
+    """
+    Test: re-process signal if new.
+    """
+    name = 'signals-parent'
+
+    def __init__(self, executor):
+        super(ParentSignalsWorkflow7, self).__init__(executor)
+        self.futures = []
+
+    def run(self):
+        ex = self.executor
+        if not isinstance(ex, swf.executor.Executor):
+            raise Exception('only works on SWF')
+        self.submit_add(ChildSignalsSelfWorkflow2)
+        self.submit_and_wait(func_a_1_1)
+
+        if self.just_got_signal('signal1'):
+            print('Just got signal1 (1)')
+        self.submit_add(func_a_1_2)
+        self.wait_all()
+        if self.just_got_signal('signal1'):
+            print('Just got signal1 (2)')
+        self.wait_all()
+        if self.just_got_signal('signal1'):
+            print('Just got signal1 (3)')
+
+    def just_got_signal(self, signal_name):
+        ex = self.executor
+        assert isinstance(ex, swf.executor.Executor)
+        signals = ex._history.signals
+        if not signals:
+            print('no signal')
+            return
+        sig = signals.get(signal_name)
+        if not sig:
+            print('{} not received'.format(signal_name))
+            return
+        print('signal {} last received at {}; _started_event_id={}; _previous_started_event_id={}; rc={}'.format(
+            signal_name,
+            sig['event_id'],
+            ex._started_event_id,
+            ex._previous_started_event_id,
+            ex._previous_started_event_id is None or sig['event_id'] > ex._previous_started_event_id,
+        ))
+        return ex._previous_started_event_id is None or sig['event_id'] > ex._previous_started_event_id

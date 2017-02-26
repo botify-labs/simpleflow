@@ -84,6 +84,8 @@ class Decider(Actor):
             raise PollTimeout("Decider poll timed out")
 
         events = task['events']
+        started_event_id = task['startedEventId']
+        previous_started_event_id = task.get('previousStartedEventId')
 
         next_page = task.get('nextPageToken')
         while next_page:
@@ -126,4 +128,10 @@ class Decider(Actor):
         )
 
         # TODO: move history into execution (needs refactoring on WorkflowExecution.history())
-        return Response(token=token, history=history, execution=execution)
+        return Response(
+            token=token,
+            history=history,
+            execution=execution,
+            started_event_id=started_event_id,
+            previous_started_event_id=previous_started_event_id,
+        )

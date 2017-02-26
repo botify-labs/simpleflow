@@ -774,6 +774,8 @@ class Executor(executor.Executor):
         self._history.parse()
         self.build_execution_context(decision_response)
         self._execution = decision_response.execution
+        self._started_event_id = decision_response.started_event_id
+        self._previous_started_event_id = decision_response.previous_started_event_id
 
         workflow_started_event = history[0]
         input = workflow_started_event.input
