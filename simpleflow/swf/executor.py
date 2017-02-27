@@ -837,7 +837,7 @@ class Executor(executor.Executor):
             self.after_replay()
             self.decref_workflow()
             if self._append_timer:
-                self._add_start_timer_decision('_simpleflow_wakup_timer')
+                self._add_start_timer_decision('_simpleflow_wake_up_timer')
             return self._decisions, {}
         except exceptions.TaskException as err:
             reason = 'Workflow execution error in task {}: "{}"'.format(

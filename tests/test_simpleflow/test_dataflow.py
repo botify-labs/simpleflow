@@ -1724,7 +1724,7 @@ def test_markers():
             'decisionType': 'StartTimer',
             'startTimerDecisionAttributes': {
                 'startToFireTimeout': '0',
-                'timerId': '_simpleflow_wakup_timer'
+                'timerId': '_simpleflow_wake_up_timer'
             }
         }
     ]
