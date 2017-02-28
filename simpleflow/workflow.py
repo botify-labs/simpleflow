@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from simpleflow.base import Submittable, SubmittableContainer
 from simpleflow.signal import WaitForSignal
 from . import canvas
-from . import step
 from . import task
 from ._decorators import deprecated
 from .activity import Activity
