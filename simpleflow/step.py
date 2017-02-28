@@ -47,20 +47,21 @@ class WorkflowStepMixin(object):
 
 class Step(SubmittableContainer):
 
-    def __init__(self, step_name, *activities, **options):
+    def __init__(self, step_name, activities, force=False, activities_if_step_already_done=None,
+                 emit_signal=False, dependencies=None):
         """
-        Register the `activity_group` as a step
-        If the step has already been previously computed
-        it won't be computed again
-
-        If the step was already computed and `activities_if_step_already_done`
-        is not empty, we'll call this submittable
+        :param step_name : Name of the step
+        :param force : Force the step even if already executed
+        :param activities_if_step_already_done : Activities to run even step already executed
+        :param emit_signal : Emit a signal when the step is executed
+        :param dependencies : list of steps name to force afterward
         """
         self.step_name = step_name
         self.activities = activities
-        self.force = options.pop('force', False)
-        self.activities_if_step_already_done = options.pop('activities_if_step_already_done', None)
-        self.emit_signal = options.pop('emit_signal', False)
+        self.force = force
+        self.activities_if_step_already_done = activities_if_step_already_done
+        self.emit_signal = emit_signal
+        self.dependencies = dependencies or []
 
     def submit(self, executor):
         if not hasattr(executor, 'step_config'):
@@ -74,6 +75,7 @@ class Step(SubmittableContainer):
             if (self.force or
                should_force_step(self.step_name, executor.step_config["force_steps"]) or
                self.step_name not in steps_done):
+                executor.step_config["force_steps"] += self.dependencies
                 return Chain(
                     self.activities,
                     (activity.Activity(MarkStepDoneTask, **executor.step_config["activity_params"]),

@@ -69,7 +69,9 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
             force_steps=force_steps
         )
         taskf = self.submit(
-            Step('my_step', task.ActivityTask(MyTask, num)))
+            Step('my_step',
+                 task.ActivityTask(MyTask, num),
+                 dependencies=['my_step_2']))
         futures.wait(taskf)
 
 
@@ -121,6 +123,9 @@ class StepTestCase(unittest.TestCase):
         add_activity_task_from_decision(history, decisions[0], MyTask)
         decisions, _ = executor.replay(Response(history=history, execution=None))
         check_task_scheduled_decision(decisions[0], task.Activity(step.MarkStepDoneTask))
+
+        # Check that we'll force the step 'my_step_3'
+        self.assertEquals(executor.step_config["force_steps"], ["my_step_2"])
 
     @mock_s3
     @mock_swf
