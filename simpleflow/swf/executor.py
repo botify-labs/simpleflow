@@ -7,6 +7,7 @@ import multiprocessing
 import re
 import traceback
 
+import simpleflow.task as base_task
 import swf.exceptions
 import swf.format
 import swf.models
@@ -25,11 +26,6 @@ from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
 from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask, MarkerTask, SwfTask
-from simpleflow.task import (
-    ActivityTask as BaseActivityTask,
-    WorkflowTask as BaseWorkflowTask,
-    SignalTask as BaseSignalTask,
-    MarkerTask as BaseMarkerTask,
 from simpleflow.utils import (
     hex_hash,
     issubclass_,
@@ -729,7 +725,7 @@ class Executor(executor.Executor):
         if priority_set_on_submit is not PRIORITY_NOT_SET:
             return priority_set_on_submit
         elif (isinstance(a_task, ActivityTask) and
-              a_task.activity.task_priority is not PRIORITY_NOT_SET):
+                      a_task.activity.task_priority is not PRIORITY_NOT_SET):
             return a_task.activity.task_priority
         elif self._workflow.task_priority is not PRIORITY_NOT_SET:
             return self._workflow.task_priority
@@ -750,13 +746,13 @@ class Executor(executor.Executor):
 
         # casts simpleflow.task.*Task to their equivalent in simpleflow.swf.task
         if not isinstance(func, SwfTask):
-            if isinstance(func, BaseActivityTask):
+            if isinstance(func, base_task.ActivityTask):
                 func = ActivityTask.from_generic_task(func)
-            elif isinstance(func, BaseWorkflowTask):
+            elif isinstance(func, base_task.WorkflowTask):
                 func = WorkflowTask.from_generic_task(func)
-            elif isinstance(func, BaseSignalTask):
+            elif isinstance(func, base_task.SignalTask):
                 func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
-            elif isinstance(func, BaseMarkerTask):
+            elif isinstance(func, base_task.MarkerTask):
                 func = MarkerTask.from_generic_task(func)
 
         try:
