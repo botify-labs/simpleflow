@@ -66,3 +66,13 @@ class TestGroup(unittest.TestCase):
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
         keys = [k for k in storage.list_keys(self.bucket, None)]
         self.assertEquals(keys[0].key, "mykey.txt")
+
+    def sanitize_bucket_and_host(self):
+        self.assertEquals(
+            sanitize_bucket_and_host('mybucket'),
+            ('mybucket', settings.SIMPLEFLOW_S3_HOST))
+        self.assertEquals(
+            sanitize_bucket_and_host('s3-eu-west-1.amazonaws.com/mybucket'),
+            ('mybucket', 's3-eu-west-1.amazonaws.com'))
+        with self.assertRaises(ValueError):
+            sanitize_bucket_and_host('any/mybucket')

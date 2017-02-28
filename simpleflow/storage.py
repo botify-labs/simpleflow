@@ -16,12 +16,25 @@ def get_connection(host):
     return connection.S3Connection(host=host)
 
 
+def sanitize_bucket_and_host(bucket):
+    """
+    if bucket is in following format : 'xxx.amazonaws.com/bucket_name',
+    Returns a 2-values tuple ('bucket_name', 'xxx.amazonaws.com')
+    """
+    if "/" in bucket:
+        host, bucket = bucket.split('/')
+        if not host.endswith('amazonaws.com'):
+            raise ValueError('host is waiting for an *.amazonaws.com URL')
+        return (bucket, host)
+    return (bucket, settings.SIMPLEFLOW_S3_HOST)
+
+
 def get_bucket(bucket):
+    bucket, host = sanitize_bucket_and_host(bucket)
+    connection = get_connection(host)
     if not bucket in BUCKET_CACHE:
-        connection = get_connection(settings.SIMPLEFLOW_S3_HOST)
         BUCKET_CACHE[bucket] = connection.get_bucket(bucket)
     return BUCKET_CACHE[bucket]
-
 
 def pull(bucket, path, dest_file):
     bucket = get_bucket(bucket)
@@ -56,8 +69,3 @@ def push_content(bucket, path, content, content_type=None):
 def list_keys(bucket, path=None):
     bucket = get_bucket(bucket)
     return bucket.list(path)
-
-
-def get_bucket_and_path_from_uri(uri):
-    p = urlparse(uri)
-    return (p.netloc, p.path[1:])

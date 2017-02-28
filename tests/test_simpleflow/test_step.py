@@ -24,10 +24,8 @@ def check_task_scheduled_decision(decision, task):
     assert decision['decisionType'] == 'ScheduleActivityTask'
 
     attributes = decision['scheduleActivityTaskDecisionAttributes']
-    assert attributes['activityType'] == {
-        'name': task.name,
-        'version': task.version
-    }
+    assert attributes['activityType']['name'] == task.name
+
 
 def add_activity_task_from_decision(history, decision, activity, result=None, last_state="completed"):
     attributes = decision['scheduleActivityTaskDecisionAttributes']
@@ -65,7 +63,8 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
             "task_list": "steps_task_list"
         }
         self.prepare_step_config(
-            s3_uri_prefix="s3://{}/data/".format(BUCKET),
+            s3_bucket=BUCKET,
+            s3_path_prefix="data/",
             activity_params=activity_params,
             force_steps=force_steps
         )
@@ -83,18 +82,16 @@ class StepTestCase(unittest.TestCase):
     @mock_s3
     def test_get_steps_done(self):
         self.create_bucket()
-        uri = "s3://{}/steps/".format(BUCKET)
         storage.push_content(BUCKET, "steps/mystep", "data")
         storage.push_content(BUCKET, "steps/mystep2", "data")
-        t = step.GetStepsDoneTask(uri)
+        t = step.GetStepsDoneTask(BUCKET, "steps/")
         res = t.execute()
         self.assertEquals(res, ["mystep", "mystep2"])
 
     @mock_s3
     def test_mark_step_done(self):
         self.create_bucket()
-        uri = "s3://{}/steps/".format(BUCKET)
-        t = step.MarkStepDoneTask(uri, "mystep")
+        t = step.MarkStepDoneTask(BUCKET, "steps/", "mystep")
         t.execute()
         self.assertEquals(
             storage.pull_content(BUCKET, "steps/mystep"),

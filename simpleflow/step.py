@@ -28,11 +28,12 @@ class StepNotPreparedException(Exception):
 
 class WorkflowStepMixin(object):
 
-    def prepare_step_config(self, s3_uri_prefix, activity_params={}, force_steps=None):
+    def prepare_step_config(self, s3_bucket, s3_path_prefix, activity_params={}, force_steps=None):
         activity_params_merged = copy.copy(ACTIVITY_PARAMS)
         activity_params_merged.update(activity_params)
         self._executor.step_config = {
-            "s3_uri_prefix": s3_uri_prefix,
+            "s3_bucket": s3_bucket,
+            "s3_path_prefix": s3_path_prefix,
             "activity_params": activity_params_merged,
             "force_steps": force_steps or []
         }
@@ -63,9 +64,8 @@ class Step(object):
         if not hasattr(executor, 'step_config'):
             raise StepNotPreparedException('Please call `workflow.prepare_step_config()` during run')
 
-        s3_uri_prefix = executor.step_config["s3_uri_prefix"]
-        s3_uri = os.path.join(
-            s3_uri_prefix,
+        path = os.path.join(
+            executor.step_config["s3_path_prefix"],
             self.step_name)
 
         def fn_run_step(steps_done):
@@ -75,7 +75,8 @@ class Step(object):
                 return Chain(
                     Group(self.activities),
                     (activity.Activity(MarkStepDoneTask, **executor.step_config["activity_params"]),
-                     s3_uri,
+                     executor.step_config["s3_bucket"],
+                     path,
                      self.step_name),
                 )
             elif self.activities_if_step_already_done:
@@ -85,7 +86,8 @@ class Step(object):
         chain_step = Chain(send_result=True)
         chain_step.append(
             activity.Activity(GetStepsDoneTask, **executor.step_config["activity_params"]),
-            executor.step_config["s3_uri_prefix"])
+            executor.step_config["s3_bucket"],
+            executor.step_config["s3_path_prefix"])
         chain_step.append(FuncGroup(fn_run_step))
 
         full_chain = Chain(chain_step)
@@ -112,25 +114,26 @@ def should_force_step(step_name, force_steps):
 
 class GetStepsDoneTask(object):
 
-    def __init__(self, s3_uri):
-        self.s3_uri = s3_uri
+    def __init__(self, bucket, path):
+        self.bucket = bucket
+        self.path = path
 
     def execute(self):
-        bucket, path = storage.get_bucket_and_path_from_uri(self.s3_uri)
         steps = []
-        for f in storage.list_keys(bucket, path):
-            steps.append(f.key[len(path):])
+        for f in storage.list_keys(self.bucket, self.path):
+            steps.append(f.key[len(self.path):])
         return steps
 
 
 class MarkStepDoneTask(object):
 
-    def __init__(self, s3_uri, step_name):
-        self.s3_uri = s3_uri
+    def __init__(self, bucket, path, step_name):
+        self.bucket = bucket
+        self.path = path
         self.step_name = step_name
 
     def execute(self):
-        uri = os.path.join(self.s3_uri, self.step_name)
+        path = os.path.join(self.path, self.step_name)
         if hasattr(self, 'context'):
             context = self.context
             content = {
@@ -140,5 +143,4 @@ class MarkStepDoneTask(object):
             }
         else:
             content = UNKNOWN_CONTEXT
-        bucket, path = storage.get_bucket_and_path_from_uri(uri)
-        storage.push_content(bucket, path, json.dumps(content))
+        storage.push_content(self.bucket, path, json.dumps(content))
