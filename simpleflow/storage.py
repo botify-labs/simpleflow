@@ -1,3 +1,4 @@
+from urlparse import urlparse
 from boto.s3 import connection
 from boto.s3.key import Key
 from boto.s3.bucket import Bucket
@@ -50,3 +51,8 @@ def push_content(bucket, path, content, content_type=None):
 def list_keys(bucket, path=None):
     bucket = get_bucket(bucket)
     return bucket.list(path)
+
+
+def get_bucket_and_path_from_uri(uri):
+    p = urlparse(uri)
+    return (p.netloc, p.path)
