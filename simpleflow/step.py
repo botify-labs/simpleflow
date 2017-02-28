@@ -12,6 +12,7 @@ ACTIVITY_PARAMS = {
     'schedule_to_close_timeout': 4 * 3600 + 60,
     'heartbeat_timeout': 180,
     'task_priority': 100,
+    'version': '1.0',
     'idempotent': True
 }
 UNKNOWN_CONTEXT = {
