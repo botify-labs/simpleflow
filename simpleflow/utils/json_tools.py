@@ -54,3 +54,18 @@ def json_dumps(obj, pretty=False, compact=True, **kwargs):
     elif compact:
         kwargs["separators"] = (",", ":")
     return json.dumps(obj, **kwargs)
+
+
+def json_loads_or_raw(data):
+    """
+    Try to get a JSON object from a string.
+    If this isn't JSON, return the raw string.
+    :param data: string; should be in JSON format
+    :return: JSON-decoded object or raw data
+    """
+    if not data:
+        return None
+    try:
+        return json.loads(data)
+    except ValueError:
+        return data

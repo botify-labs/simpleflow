@@ -1,7 +1,7 @@
 from zlib import adler32
 
 from . import retry  # NOQA
-from .json_dumps import json_dumps  # NOQA
+from .json_tools import json_dumps, json_loads_or_raw  # NOQA
 
 
 def issubclass_(arg1, arg2):
