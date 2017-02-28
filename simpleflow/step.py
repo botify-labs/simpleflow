@@ -14,6 +14,11 @@ ACTIVITY_PARAMS = {
     'task_priority': 100,
     'idempotent': True
 }
+UNKNOWN_CONTEXT = {
+    "run_id": "unknown",
+    "workflow_id": "unknown",
+    "version": "unknown"
+}
 
 
 class StepNotPreparedException(Exception):
@@ -25,7 +30,7 @@ class WorkflowStepMixin(object):
     def prepare_step_config(self, s3_uri_prefix, activity_params={}, force_steps=None):
         activity_params_merged = copy.copy(ACTIVITY_PARAMS)
         activity_params_merged.update(activity_params)
-        self.step_config = {
+        self._executor.step_config = {
             "s3_uri_prefix": s3_uri_prefix,
             "activity_params": activity_params_merged,
             "force_steps": force_steps or []
@@ -35,10 +40,9 @@ class WorkflowStepMixin(object):
         return Step(*args, **kwargs)
 
 
-class Step(Submittable):
+class Step(object):
 
-    def __init__(self, step_name, activity_group, force=False, activity_group_if_step_already_done=None,
-                 emit_signal=False):
+    def __init__(self, step_name, *activities, **options):
         """
         Register the `activity_group` as a step
         If the step has already been computed in a previous time
@@ -48,57 +52,48 @@ class Step(Submittable):
         is not empty, we'll call this submittable
         """
         self.step_name = step_name
-        self.activity_group = activity_group
-        self.force = force
-        self.activity_group_if_step_already_done = activity_group_if_step_already_done
-        self.emit_signal = emit_signal
+        self.activities = activities
+        self.force = options.pop('force', False)
+        self.activities_if_step_already_done = options.pop('activities_if_step_already_done', None)
+        self.emit_signal = options.pop('emit_signal', False)
 
-    def submit(self, workflow):
-        if not hasattr(workflow, 'step_config'):
+    def submit(self, executor):
+        from .canvas import Group, Chain, FuncGroup
+        if not hasattr(executor, 'step_config'):
             raise StepNotPreparedException('Please call `workflow.prepare_step_config()` during run')
 
-        if not hasattr(workflow, 'steps_done'):
-            f = workflow.submit(
-                activity.Activity(get_steps_done, **workflow.step_config["activity_params"]),
-                workflow.step_config["s3_uri_prefix"])
-            futures.wait(f)
-            workflow.steps_done = f.result
-
-        s3_uri_prefix = self.step_config["s3_uri_prefix"]
+        s3_uri_prefix = executor.step_config["s3_uri_prefix"]
         s3_uri = os.path.join(
             s3_uri_prefix,
-            step_name)
+            self.step_name)
 
-        signal = workflow.signal('step.{}'.format(self.step_name), propagate=False)
-        if (self.force or
-           should_force_step(self.step_name, workflow.force_steps) or
-           self.step_name not in workflow.steps_done):
-            return workflow.submit(Chain(
-                activity_group,
-                (activity.with_attributes(MarkStepAsDone, **activity_kwargs),
-                 s3_uri,
-                 self.step_name),
-                signal
-            ))
-        elif activity_group_if_step_already_done:
-            return workflow.submit(Chain(
-                activity_group_if_step_already_done,
-                signal
-            ))
-        return workflow.submit(signal)
+        def fn_run_step(steps_done):
+            if (self.force or
+               should_force_step(self.step_name, executor.step_config["force_steps"]) or
+               self.step_name not in steps_done):
+                return Chain(
+                    Group(self.activities),
+                    (activity.Activity(MarkStepDoneTask, **executor.step_config["activity_params"]),
+                     s3_uri,
+                     self.step_name),
+                )
+            elif self.activities_if_step_already_done:
+                return self.activities_if_step_already_done
+            return Group()
 
+        chain_step = Chain(send_result=True)
+        chain_step.append(
+            activity.Activity(GetStepsDoneTask, **executor.step_config["activity_params"]),
+            executor.step_config["s3_uri_prefix"])
+        chain_step.append(FuncGroup(fn_run_step))
 
-def get_state_path(s3_uri, step_name):
-    return os.path.join(s3_uri, 'steps', step_name)
+        full_chain = Chain(chain_step)
 
+        if self.emit_signal:
+            full_chain.append(
+                executor.signal('step.{}'.format(self.step_name), propagate=False))
 
-def get_steps_done(s3_uri):
-    steps = []
-    s3_uri = os.path.join(s3_uri, 'steps')
-    bucket, path = storage.get_bucket_and_path_from_uri(s3_uri)
-    for f in storage.list_files(bucket, path):
-        steps.append(f.uri.split('/')[-1])
-    return steps
+        return full_chain.submit(executor)
 
 
 def should_force_step(step_name, force_steps):
@@ -114,27 +109,35 @@ def should_force_step(step_name, force_steps):
     return False
 
 
-def get_steps_done(uri):
-    bucket, path = storage.get_bucket_and_path_from_uri(uri)
-    steps = []
-    for f in storage.list_keys(bucket, path):
-        steps.append(f.split('/')[-1])
-    return steps
+class GetStepsDoneTask(object):
+
+    def __init__(self, s3_uri):
+        self.s3_uri = s3_uri
+
+    def execute(self):
+        bucket, path = storage.get_bucket_and_path_from_uri(self.s3_uri)
+        steps = []
+        for f in storage.list_keys(bucket, path):
+            steps.append(f.key[len(path):])
+        return steps
 
 
-class MarkStepAsDone(object):
+class MarkStepDoneTask(object):
 
     def __init__(self, s3_uri, step_name):
         self.s3_uri = s3_uri
         self.step_name = step_name
 
     def execute(self):
-        uri = get_state_path(self.s3_uri, self.step_name)
-        context = self.context
-        content = {
-            "run_id": context["run_id"],
-            "workflow_id": context["workflow_id"],
-            "version": context["version"]
-        }
+        uri = os.path.join(self.s3_uri, self.step_name)
+        if hasattr(self, 'context'):
+            context = self.context
+            content = {
+                "run_id": context["run_id"],
+                "workflow_id": context["workflow_id"],
+                "version": context["version"]
+            }
+        else:
+            content = UNKNOWN_CONTEXT
         bucket, path = storage.get_bucket_and_path_from_uri(uri)
         storage.push_content(bucket, path, json.dumps(content))

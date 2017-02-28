@@ -3,6 +3,7 @@ from .activity import Activity
 from .base import Submittable
 from .signal import WaitForSignal
 from .task import ActivityTask, SignalTask
+from .step import Step
 
 
 def propagate_attribute(obj, attr, val):
@@ -180,7 +181,7 @@ class GroupFuture(futures.Future):
         if isinstance(act, ActivityTask):
             # Need to unwrap the ActivityTask since the SWF executor will build a swf.ActivityTask
             return self.executor.submit(act.activity, *act.args, **act.kwargs)
-        elif isinstance(act, (Group, FuncGroup)):
+        elif isinstance(act, (Group, FuncGroup, Step)):
             return act.submit(self.executor)
         elif isinstance(act, Submittable):
             return self.executor.submit(act)

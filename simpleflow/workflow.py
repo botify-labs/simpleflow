@@ -62,10 +62,8 @@ class Workflow(Submittable):
             return self._executor.submit(submittable, *args, **kwargs)
         elif isinstance(submittable, (task.Task, WaitForSignal)):
             return self._executor.submit(submittable)
-        elif isinstance(submittable, canvas.Group):
+        elif isinstance(submittable, (canvas.Group, step.Step)):
             return submittable.submit(self._executor)
-        elif isinstance(submittable, step.Step):
-            return submittable.submit(self)
         else:
             raise TypeError('Bad type for {} activity ({})'.format(
                 submittable,

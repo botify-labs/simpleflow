@@ -1,8 +1,13 @@
-from urlparse import urlparse
 from boto.s3 import connection
 from boto.s3.key import Key
 from boto.s3.bucket import Bucket
 from . import settings
+
+try:
+    from urlparse import urlparse
+except:
+    from urllib.parse import urlparse
+
 
 BUCKET_CACHE = {}
 
@@ -55,4 +60,4 @@ def list_keys(bucket, path=None):
 
 def get_bucket_and_path_from_uri(uri):
     p = urlparse(uri)
-    return (p.netloc, p.path)
+    return (p.netloc, p.path[1:])
