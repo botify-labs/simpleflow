@@ -1,9 +1,8 @@
 from . import futures
 from .activity import Activity
-from .base import Submittable
+from .base import Submittable, SubmittableContainer
 from .signal import WaitForSignal
 from .task import ActivityTask, SignalTask
-from .step import Step
 
 
 def propagate_attribute(obj, attr, val):
@@ -22,7 +21,7 @@ def propagate_attribute(obj, attr, val):
         raise Exception('Cannot propagate attribute for unknown type: {}'.format(type(obj)))
 
 
-class FuncGroup(Submittable):
+class FuncGroup(SubmittableContainer):
     """
     Class calling a function returning an ActivityTask, a group or a chain
     activities : Group, Chain...
@@ -105,7 +104,7 @@ class AggregateException(Exception):
         return self.exceptions == other.exceptions
 
 
-class Group(object):
+class Group(SubmittableContainer):
     """
     List of activities running in parallel.
     """
@@ -119,9 +118,9 @@ class Group(object):
         self.extend(activities)
 
     def append(self, submittable, *args, **kwargs):
-        if isinstance(submittable, (Submittable, Group, Step)):
+        if isinstance(submittable, (Submittable, SubmittableContainer)):
             if args or kwargs:
-                raise ValueError('args, kwargs not supported for Submittable or Group')
+                raise ValueError('args, kwargs not supported for Submittable or SubmittableContainer')
             if self.raises_on_failure is not None:
                 propagate_attribute(submittable, 'raises_on_failure', self.raises_on_failure)
             self.activities.append(submittable)
@@ -181,7 +180,7 @@ class GroupFuture(futures.Future):
         if isinstance(act, ActivityTask):
             # Need to unwrap the ActivityTask since the SWF executor will build a swf.ActivityTask
             return self.executor.submit(act.activity, *act.args, **act.kwargs)
-        elif isinstance(act, (Group, FuncGroup, Step)):
+        elif isinstance(act, SubmittableContainer):
             return act.submit(self.executor)
         elif isinstance(act, Submittable):
             return self.executor.submit(act)

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
-
-from simpleflow.base import Submittable
+from simpleflow.base import Submittable, SubmittableContainer
 from simpleflow.signal import WaitForSignal
 from . import canvas
 from . import step
@@ -62,7 +61,7 @@ class Workflow(Submittable):
             return self._executor.submit(submittable, *args, **kwargs)
         elif isinstance(submittable, (task.Task, WaitForSignal)):
             return self._executor.submit(submittable)
-        elif isinstance(submittable, (canvas.Group, step.Step)):
+        elif isinstance(submittable, SubmittableContainer):
             return submittable.submit(self._executor)
         else:
             raise TypeError('Bad type for {} activity ({})'.format(

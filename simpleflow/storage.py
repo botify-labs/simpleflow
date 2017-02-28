@@ -1,12 +1,8 @@
 from boto.s3 import connection
 from boto.s3.key import Key
-from boto.s3.bucket import Bucket
-from . import settings
+from future.moves.urllib.parse import urlparse
 
-try:
-    from urlparse import urlparse
-except:
-    from urllib.parse import urlparse
+from . import settings
 
 
 BUCKET_CACHE = {}
@@ -35,6 +31,7 @@ def get_bucket(bucket):
     if not bucket in BUCKET_CACHE:
         BUCKET_CACHE[bucket] = connection.get_bucket(bucket)
     return BUCKET_CACHE[bucket]
+
 
 def pull(bucket, path, dest_file):
     bucket = get_bucket(bucket)

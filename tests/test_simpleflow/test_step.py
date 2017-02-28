@@ -5,7 +5,7 @@ import unittest
 
 from moto import mock_swf, mock_s3
 from simpleflow.activity import with_attributes
-from simpleflow import workflow, task, storage, settings, step, futures
+from simpleflow import workflow, task, storage, step, futures
 from simpleflow.step import Step, WorkflowStepMixin, should_force_step
 from simpleflow.swf.executor import Executor
 from swf.models import Domain

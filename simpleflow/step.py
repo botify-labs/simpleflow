@@ -2,11 +2,12 @@ import json
 import copy
 import os
 
-from .base import Submittable
-from . import storage, futures, activity
+from .base import SubmittableContainer
+from .canvas import Group, Chain, FuncGroup
+from . import storage, activity
 
 
-ACTIVITY_PARAMS = {
+STEP_ACTIVITY_PARAMS_DEFAULT = {
     'schedule_to_start_timeout': 4 * 3600,
     'start_to_close_timeout': 60,
     'schedule_to_close_timeout': 4 * 3600 + 60,
@@ -15,6 +16,7 @@ ACTIVITY_PARAMS = {
     'version': '1.0',
     'idempotent': True
 }
+
 UNKNOWN_CONTEXT = {
     "run_id": "unknown",
     "workflow_id": "unknown",
@@ -28,9 +30,10 @@ class StepNotPreparedException(Exception):
 
 class WorkflowStepMixin(object):
 
-    def prepare_step_config(self, s3_bucket, s3_path_prefix, activity_params={}, force_steps=None):
-        activity_params_merged = copy.copy(ACTIVITY_PARAMS)
-        activity_params_merged.update(activity_params)
+    def prepare_step_config(self, s3_bucket, s3_path_prefix, activity_params=None, force_steps=None):
+        activity_params_merged = copy.copy(STEP_ACTIVITY_PARAMS_DEFAULT)
+        if activity_params:
+            activity_params_merged.update(activity_params)
         self._executor.step_config = {
             "s3_bucket": s3_bucket,
             "s3_path_prefix": s3_path_prefix,
@@ -42,15 +45,15 @@ class WorkflowStepMixin(object):
         return Step(*args, **kwargs)
 
 
-class Step(object):
+class Step(SubmittableContainer):
 
     def __init__(self, step_name, *activities, **options):
         """
         Register the `activity_group` as a step
-        If the step has already been computed in a previous time
+        If the step has already been previously computed
         it won't be computed again
 
-        If the step was already computed and `activity_group_if_step_already_done`
+        If the step was already computed and `activities_if_step_already_done`
         is not empty, we'll call this submittable
         """
         self.step_name = step_name
@@ -60,7 +63,6 @@ class Step(object):
         self.emit_signal = options.pop('emit_signal', False)
 
     def submit(self, executor):
-        from .canvas import Group, Chain, FuncGroup
         if not hasattr(executor, 'step_config'):
             raise StepNotPreparedException('Please call `workflow.prepare_step_config()` during run')
 
@@ -73,7 +75,7 @@ class Step(object):
                should_force_step(self.step_name, executor.step_config["force_steps"]) or
                self.step_name not in steps_done):
                 return Chain(
-                    Group(self.activities),
+                    self.activities,
                     (activity.Activity(MarkStepDoneTask, **executor.step_config["activity_params"]),
                      executor.step_config["s3_bucket"],
                      path,
@@ -113,6 +115,10 @@ def should_force_step(step_name, force_steps):
 
 
 class GetStepsDoneTask(object):
+    """
+    List all the steps that are done by parsing
+    S3 bucket + path
+    """
 
     def __init__(self, bucket, path):
         self.bucket = bucket
@@ -126,6 +132,9 @@ class GetStepsDoneTask(object):
 
 
 class MarkStepDoneTask(object):
+    """
+    Push a file called `step_name` into bucket/path
+    """
 
     def __init__(self, bucket, path, step_name):
         self.bucket = bucket
