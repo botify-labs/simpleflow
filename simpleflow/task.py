@@ -157,12 +157,14 @@ class SignalTask(Task):
 
 
 class MarkerTask(Task):
-    def __init__(self, name, *args, **kwargs):
-        if (args and kwargs) or len(args) > 1 or len(kwargs) > 1 or (kwargs and 'details' not in kwargs):
-            raise ValueError('Expected only one argument or the kwarg "details"')
+    def __init__(self, name, details):
+        """
+        :param name: Marker name
+        :param details: Serializable marker details
+        """
         self._name = name
-        self.args = self.resolve_args(*args)
-        self.kwargs = self.resolve_kwargs(**kwargs)
+        self.args = self.resolve_args(details)
+        self.kwargs = {}
 
     @property
     def name(self):
@@ -175,11 +177,7 @@ class MarkerTask(Task):
 
     @property
     def details(self):
-        if len(self.args):
-            details = self.args[0]
-        else:
-            details = self.kwargs.get('details')
-        return details
+        return self.args[0]
 
     def execute(self):
         pass
