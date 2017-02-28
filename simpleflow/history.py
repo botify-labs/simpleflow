@@ -31,7 +31,7 @@ class History(object):
         self._child_workflows = collections.OrderedDict()
         self._external_workflows_signaling = collections.OrderedDict()
         self._external_workflows_canceling = collections.OrderedDict()
-        self._signals = collections.OrderedDict()
+        self._signals = collections.defaultdict(list)
         self._signaled_workflows = collections.defaultdict(list)
         self._tasks = []
 
@@ -63,7 +63,7 @@ class History(object):
     def signals(self):
         """
         :return: signals
-        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        :rtype: collections.defaultdict[str, list[dict]]
         """
         return self._signals
 
@@ -337,8 +337,9 @@ class History(object):
                 'event_id': event.id,
                 'timestamp': event.timestamp,
             }
-            self._signals[event.signal_name] = signal
-            self._tasks.append(signal)
+            self._signals[event.signal_name].append(signal)
+            # FIXME useless?
+            # self._tasks.append(signal)
 
     def parse_external_workflow_event(self, events, event):
         """

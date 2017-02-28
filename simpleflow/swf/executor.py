@@ -394,7 +394,8 @@ class Executor(executor.Executor):
         :return:
          :rtype: futures.Future
         """
-        event = self._history.signals.get(signal_name)
+        events = self._history.signals.get(signal_name)
+        event = events[-1] if events else None
         return self.get_future_from_signal_event(None, event)
 
     def find_activity_event(self, a_task, history):
@@ -436,7 +437,8 @@ class Executor(executor.Executor):
         :rtype: Optional[dict]
         """
         # FIXME could look directly in signaled_workflows?
-        event = history.signals.get(a_task.name)
+        events = history.signals.get(a_task.name)
+        event = events[-1] if events else None
         if not event:
             if a_task.workflow_id is None:  # Broadcast, should be in signals
                 return None
@@ -973,7 +975,8 @@ class Executor(executor.Executor):
 
         known_workflows_ids = frozenset(known_workflows_ids)
 
-        for signal in history.signals.values():
+        for signals in history.signals.values():
+            signal = signals[-1]
             input = signal['input']
             propagate = input.get('__propagate', True)
             if not propagate:

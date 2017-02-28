@@ -12,6 +12,9 @@ from simpleflow import (
 from simpleflow import swf
 from simpleflow.canvas import Group, Chain
 from simpleflow.task import ActivityTask
+from simpleflow.utils import json_dumps
+
+SIGNAL_1 = 'signal1'
 
 
 @activity.with_attributes(task_list='quickstart', version='example')
@@ -79,7 +82,6 @@ def func_b_2_2(*args, **kwargs):
 
 
 class BaseWorkflow(Workflow):
-
     version = 'example'
     task_list = 'example'
 
@@ -318,10 +320,37 @@ class ChildSignalsSelfWorkflow2(BaseWorkflow):
     name = 'child-workflow'
 
     def run(self):
-        self.submit_and_wait(self.signal('signal1'))
-        self.submit_and_wait(func_a_1_1)
-        self.submit(self.signal('signal1'))
-        self.submit_and_wait(self.signal('signal1'))
+        execution_context = self.get_execution_context()
+        parent_workflow_id = execution_context['parent_workflow_id']
+        parent_run_id = execution_context['parent_run_id']
+        # FIXME BUG: this signal sent at 10 and 16?
+        self.submit(
+            self.signal(
+                SIGNAL_1,
+                # workflow_id=parent_workflow_id,
+                # run_id=parent_run_id,
+                propagate=True,
+                args=["1"]
+            )
+        )
+        self.submit(self.wait_signal(SIGNAL_1))
+        self.submit_and_wait(func_a_1_1, "1")
+        self.signal_immediate(SIGNAL_1, parent_workflow_id, parent_run_id, "2")
+        self.signal_immediate(SIGNAL_1, parent_workflow_id, parent_run_id, "3")
+        self.submit_and_wait(func_a_1_1, "2")
+
+    def signal_immediate(self, signal_name, workflow_id, run_id, *args, **kwargs):
+        self.executor._execution.signal(
+            signal_name=signal_name,
+            input={
+                "input": {
+                    "args": args,
+                    "kwargs": kwargs
+                }
+            },
+            workflow_id=workflow_id,
+            run_id=run_id,
+        )
 
 
 class ParentSignalsWorkflow7(BaseWorkflow):
@@ -341,32 +370,59 @@ class ParentSignalsWorkflow7(BaseWorkflow):
         self.submit_add(ChildSignalsSelfWorkflow2)
         self.submit_and_wait(func_a_1_1)
 
-        if self.just_got_signal('signal1'):
-            print('Just got signal1 (1)')
+        self.check_signal(1)
         self.submit_add(func_a_1_2)
         self.wait_all()
-        if self.just_got_signal('signal1'):
-            print('Just got signal1 (2)')
+        self.check_signal(2)
         self.wait_all()
-        if self.just_got_signal('signal1'):
-            print('Just got signal1 (3)')
+        self.check_signal(3)
 
-    def just_got_signal(self, signal_name):
+    def check_signal(self, i):
+        ss = self.get_signal_instances_since_last_replay(SIGNAL_1)
+        if ss:
+            print('Just got {} ({}):\n{}'.format(SIGNAL_1, i, '\n'.join(str(s) for s in ss)))
+
+    def get_signal_instances_since_last_replay(self, signal_name):
         ex = self.executor
         assert isinstance(ex, swf.executor.Executor)
         signals = ex._history.signals
         if not signals:
             print('no signal')
-            return
-        sig = signals.get(signal_name)
-        if not sig:
+            return []
+        sigs = signals.get(signal_name)
+        if not sigs:
             print('{} not received'.format(signal_name))
-            return
+            return []
+        previous_started_event_id = ex._previous_started_event_id or 0
+        sig = sigs[-1]
         print('signal {} last received at {}; _started_event_id={}; _previous_started_event_id={}; rc={}'.format(
             signal_name,
             sig['event_id'],
             ex._started_event_id,
-            ex._previous_started_event_id,
-            ex._previous_started_event_id is None or sig['event_id'] > ex._previous_started_event_id,
+            previous_started_event_id,
+            sig['event_id'] > previous_started_event_id,
         ))
-        return ex._previous_started_event_id is None or sig['event_id'] > ex._previous_started_event_id
+        sigs = [sig for sig in sigs if sig['event_id'] > previous_started_event_id]
+        return sigs
+
+        # def just_got_signal(self, signal_name):
+        #     ex = self.executor
+        #     assert isinstance(ex, swf.executor.Executor)
+        #     signals = ex._history.signals
+        #     if not signals:
+        #         print('no signal')
+        #         return
+        #     sigs = signals.get(signal_name)
+        #     if not sigs:
+        #         print('{} not received'.format(signal_name))
+        #         return
+        #     previous_started_event_id = ex._previous_started_event_id
+        #     sig = sigs[-1]
+        #     print('signal {} last received at {}; _started_event_id={}; _previous_started_event_id={}; rc={}'.format(
+        #         signal_name,
+        #         sig['event_id'],
+        #         ex._started_event_id,
+        #         previous_started_event_id,
+        #         previous_started_event_id is None or sig['event_id'] > previous_started_event_id,
+        #     ))
+        #     return previous_started_event_id is None or sig['event_id'] > previous_started_event_id
