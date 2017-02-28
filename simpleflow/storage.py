@@ -20,7 +20,7 @@ def sanitize_bucket_and_host(bucket):
     if "/" in bucket:
         host, bucket = bucket.split('/')
         if not host.endswith('amazonaws.com'):
-            raise ValueError('host is waiting for an *.amazonaws.com URL')
+            raise ValueError('host expecting an *.amazonaws.com URL')
         return (bucket, host)
     return (bucket, settings.SIMPLEFLOW_S3_HOST)
 
