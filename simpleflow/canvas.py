@@ -119,7 +119,7 @@ class Group(object):
         self.extend(activities)
 
     def append(self, submittable, *args, **kwargs):
-        if isinstance(submittable, (Submittable, Group)):
+        if isinstance(submittable, (Submittable, Group, Step)):
             if args or kwargs:
                 raise ValueError('args, kwargs not supported for Submittable or Group')
             if self.raises_on_failure is not None:
