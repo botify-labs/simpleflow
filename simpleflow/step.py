@@ -34,15 +34,27 @@ class WorkflowStepMixin(object):
         activity_params_merged = copy.copy(STEP_ACTIVITY_PARAMS_DEFAULT)
         if activity_params:
             activity_params_merged.update(activity_params)
-        self._executor.step_config = {
+        self.step_config = {
             "s3_bucket": s3_bucket,
             "s3_path_prefix": s3_path_prefix,
             "activity_params": activity_params_merged,
             "force_steps": force_steps or []
         }
+        self._steps_done_future = self.submit(
+            activity.Activity(
+                GetStepsDoneTask,
+                **self.step_config["activity_params"]),
+            self.step_config["s3_bucket"],
+            self.step_config["s3_path_prefix"])
 
     def step(self, *args, **kwargs):
         return Step(*args, **kwargs)
+
+    def get_steps_done(self):
+        return self._steps_done_future.result
+
+    def is_step_done(self, step_name):
+        return step_name in self.get_steps_done()
 
 
 class Step(SubmittableContainer):
@@ -64,43 +76,35 @@ class Step(SubmittableContainer):
         self.dependencies = dependencies or []
 
     def submit(self, executor):
-        if not hasattr(executor, 'step_config'):
+        workflow = executor.workflow
+        if not hasattr(workflow, 'step_config'):
             raise StepNotPreparedException('Please call `workflow.prepare_step_config()` during run')
 
         path = os.path.join(
-            executor.step_config["s3_path_prefix"],
+            workflow.step_config["s3_path_prefix"],
             self.step_name)
 
-        def fn_run_step(steps_done):
-            if (self.force or
-               should_force_step(self.step_name, executor.step_config["force_steps"]) or
-               self.step_name not in steps_done):
-                executor.step_config["force_steps"] += self.dependencies
-                return Chain(
-                    self.activities,
-                    (activity.Activity(MarkStepDoneTask, **executor.step_config["activity_params"]),
-                     executor.step_config["s3_bucket"],
-                     path,
-                     self.step_name),
-                )
-            elif self.activities_if_step_already_done:
-                return self.activities_if_step_already_done
-            return Group()
+        full_chain = Chain()
 
-        chain_step = Chain(send_result=True)
-        chain_step.append(
-            activity.Activity(GetStepsDoneTask, **executor.step_config["activity_params"]),
-            executor.step_config["s3_bucket"],
-            executor.step_config["s3_path_prefix"])
-        chain_step.append(FuncGroup(fn_run_step))
-
-        full_chain = Chain(chain_step)
+        if (self.force or
+           should_force_step(self.step_name, workflow.step_config["force_steps"]) or
+           self.step_name not in workflow.get_steps_done()):
+            workflow.step_config["force_steps"] += self.dependencies
+            full_chain += (
+                self.activities,
+                (activity.Activity(MarkStepDoneTask, **workflow.step_config["activity_params"]),
+                 workflow.step_config["s3_bucket"],
+                 path,
+                 self.step_name),
+            )
+        elif self.activities_if_step_already_done:
+            full_chain += self.activities_if_step_already_done
 
         if self.emit_signal:
             full_chain.append(
-                executor.signal('step.{}'.format(self.step_name), propagate=False))
+                workflow.signal('step.{}'.format(self.step_name), propagate=False))
 
-        return full_chain.submit(executor)
+        return workflow.submit(full_chain)
 
 
 def should_force_step(step_name, force_steps):
