@@ -120,7 +120,8 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         decisions = self.replay()
 
         # Check that the workflow is done
-        self.assertEquals(decisions[0]["decisionType"], "CompleteWorkflowExecution")
+        self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
+        self.assertEquals(decisions[0]["recordMarkerDecisionAttributes"]["details"], '"my_step already computed"')
 
     @mock_s3
     @mock_swf

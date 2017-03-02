@@ -35,7 +35,6 @@ class Step(SubmittableContainer):
             marker_msg = '{} is scheduled'.format(self.step_name)
             if workflow.step_is_forced(self.step_name, self.force):
                 marker_msg += ' (forced)'
-            full_chain.append(workflow.record_marker('step.log', marker_msg))
 
             workflow.step_config["force_steps"] += self.dependencies
             full_chain += (
@@ -44,12 +43,13 @@ class Step(SubmittableContainer):
                  workflow.step_config["s3_bucket"],
                  workflow.step_config["s3_path_prefix"],
                  self.step_name),
+                workflow.record_marker('step.log', marker_msg)
             )
         else:
-            full_chain.append(
-                workflow.record_marker('step.log', '{} already computed'.format(self.step_name)))
             if self.activities_if_step_already_done:
                 full_chain.append(self.activities_if_step_already_done)
+            full_chain.append(
+                workflow.record_marker('step.log', '{} already computed'.format(self.step_name)))
 
         if self.emit_signal:
             full_chain.append(
