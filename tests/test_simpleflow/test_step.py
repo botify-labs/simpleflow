@@ -7,7 +7,12 @@ import boto
 
 from simpleflow.activity import with_attributes
 from simpleflow import workflow, task, storage, step, futures
-from simpleflow.step import Step, WorkflowStepMixin, should_force_step
+from simpleflow.step.submittable import Step
+from simpleflow.step.workflow import WorkflowStepMixin
+from simpleflow.step.tasks import GetStepsDoneTask, MarkStepDoneTask
+from simpleflow.step.utils import (
+    should_force_step)
+from simpleflow.step.constants import UNKNOWN_CONTEXT
 from .base import TestWorkflowMixin
 
 
@@ -59,18 +64,18 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.create_bucket()
         storage.push_content(BUCKET, "steps/mystep", "data")
         storage.push_content(BUCKET, "steps/mystep2", "data")
-        t = step.GetStepsDoneTask(BUCKET, "steps/")
+        t = GetStepsDoneTask(BUCKET, "steps")
         res = t.execute()
         self.assertEquals(res, ["mystep", "mystep2"])
 
     @mock_s3
     def test_mark_step_done(self):
         self.create_bucket()
-        t = step.MarkStepDoneTask(BUCKET, "steps/", "mystep")
+        t = MarkStepDoneTask(BUCKET, "steps/", "mystep")
         t.execute()
         self.assertEquals(
             storage.pull_content(BUCKET, "steps/mystep"),
-            json.dumps(step.UNKNOWN_CONTEXT))
+            json.dumps(UNKNOWN_CONTEXT))
 
     @mock_s3
     @mock_swf
@@ -81,10 +86,10 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         decisions = self.replay()
 
         # Check that we call GetStepsDoneTask
-        self.check_task_scheduled_decision(decisions[0], task.Activity(step.GetStepsDoneTask))
+        self.check_task_scheduled_decision(decisions[0], task.Activity(GetStepsDoneTask))
 
         # Now decide that it returns no step done
-        self.add_activity_task_from_decision(decisions[0], task.Activity(step.GetStepsDoneTask), result=[])
+        self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=[])
         decisions = self.replay()
 
         # Check that we ask MyTask
@@ -93,7 +98,7 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         # Execute the task and check the we call MarkStepDoneTask
         self.add_activity_task_from_decision(decisions[0], MyTask)
         decisions = self.replay()
-        self.check_task_scheduled_decision(decisions[0], task.Activity(step.MarkStepDoneTask))
+        self.check_task_scheduled_decision(decisions[0], task.Activity(MarkStepDoneTask))
 
         # Check that we'll force the step 'my_step_3'
         self.assertEquals(self.executor._workflow.step_config["force_steps"], ["my_step_2"])
@@ -107,10 +112,10 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         decisions = self.replay()
 
         # Check that we call GetStepsDoneTask
-        self.check_task_scheduled_decision(decisions[0], task.Activity(step.GetStepsDoneTask))
+        self.check_task_scheduled_decision(decisions[0], task.Activity(GetStepsDoneTask))
 
         # Now decide that it returns 'my_step' as done
-        self.add_activity_task_from_decision(decisions[0], task.Activity(step.GetStepsDoneTask), result=['my_step'])
+        self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=['my_step'])
 
         decisions = self.replay()
 
@@ -126,10 +131,10 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         decisions = self.replay()
 
         # Check that we call GetStepsDoneTask
-        self.check_task_scheduled_decision(decisions[0], task.Activity(step.GetStepsDoneTask))
+        self.check_task_scheduled_decision(decisions[0], task.Activity(GetStepsDoneTask))
 
         # Now decide that it returns 'my_step' as done
-        self.add_activity_task_from_decision(decisions[0], task.Activity(step.GetStepsDoneTask), result=['my_step'])
+        self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=['my_step'])
         decisions = self.replay()
 
         # Check that we ask MyTask even if my_step was returned as done
