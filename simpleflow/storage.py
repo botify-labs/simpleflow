@@ -18,7 +18,9 @@ def sanitize_bucket_and_host(bucket):
     Returns a 2-values tuple ('bucket_name', 'xxx.amazonaws.com')
     """
     if "/" in bucket:
-        host, bucket = bucket.split('/')
+        host, bucket = bucket.split('/', 1)
+        if "/" in bucket:
+            raise ValueError('{} should contains only one slash separator'.format(bucket))
         if not host.endswith('amazonaws.com'):
             raise ValueError('host expecting an *.amazonaws.com URL')
         return (bucket, host)
