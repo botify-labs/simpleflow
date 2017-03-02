@@ -56,6 +56,17 @@ class WorkflowStepMixin(object):
     def is_step_done(self, step_name):
         return step_name in self.get_steps_done()
 
+    def step_will_run(self, step_name, force=False)
+        """
+        Return True if step will run by checking :
+        1/ force is True
+        2/ step_name is in force_steps configuration
+        3/ step_name is already computed
+        """
+        if (force or
+           should_force_step(step_name, self.step_config["force_steps"]) or
+           self.is_step_done(step_name))
+
 
 class Step(SubmittableContainer):
 
@@ -86,9 +97,7 @@ class Step(SubmittableContainer):
 
         full_chain = Chain()
 
-        if (self.force or
-           should_force_step(self.step_name, workflow.step_config["force_steps"]) or
-           self.step_name not in workflow.get_steps_done()):
+        if workflow.step_will_run(self.step_name, self.force):
             workflow.step_config["force_steps"] += self.dependencies
             full_chain += (
                 self.activities,
