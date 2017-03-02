@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+import datetime
 import re
 from builtins import range
 
@@ -13,6 +14,7 @@ from moto import mock_swf
 import swf.models
 import swf.models.decision
 import swf.models.workflow
+from simpleflow.marker import Marker
 from simpleflow.utils import json_dumps
 from swf.models.history import builder
 from swf.responses import Response
@@ -103,6 +105,7 @@ class ATestDefinitionThatSubmitsAnActivityTask(BaseTestWorkflow):
     """
     Execute a single task already wrapped as a simpleflow.task.ActivityTask.
     """
+
     def run(self):
         b = self.submit(ActivityTask(increment, 4))
         return b.result
@@ -1598,7 +1601,7 @@ class ATestDefinitionParentWorkflow(BaseTestWorkflow):
 
     def run(self):
         future = self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name='workflow-child-one-1')
-        print(future.result)
+        futures.wait(future)
 
 
 @mock_swf
@@ -1645,7 +1648,7 @@ class ATestDefinitionIdempotentParentWorkflow(BaseTestWorkflow):
 
     def run(self):
         future = self.submit(ATestDefinitionIdempotentChildWithIdWorkflow, a=1)
-        print(future.result)
+        futures.wait(future)
 
 
 @mock_swf
@@ -1677,3 +1680,52 @@ def test_workflow_idempotent_task_naming():
             }
         }
     ]
+
+
+class ATestDefinitionWithMarkersWorkflow(BaseTestWorkflow):
+    name = "test_markers"
+
+    def run(self):
+        m1 = self.submit(self.record_marker('First marker'))
+        m2 = self.submit(self.record_marker('First marker', 'again'))
+        self.second_marker_details = {'what': 'Details for second marker', 'date': datetime.date(2018, 1, 1)}
+        m3 = self.submit(self.record_marker('Second marker', details=self.second_marker_details))
+        futures.wait(m1, m2, m3)
+
+
+@mock_swf
+def test_markers():
+    workflow = ATestDefinitionWithMarkersWorkflow
+    executor = Executor(DOMAIN, workflow)
+    history = builder.History(workflow, input={})
+    decisions, _ = executor.replay(Response(history=history, execution=None))
+    expected = [
+        {
+            'decisionType': 'RecordMarker',
+            'recordMarkerDecisionAttributes': {
+                'markerName': 'First marker'
+            }
+        },
+        {
+            'decisionType': 'RecordMarker',
+            'recordMarkerDecisionAttributes': {
+                'details': '"again"',
+                'markerName': 'First marker'
+            }
+        },
+        {
+            'decisionType': 'RecordMarker',
+            'recordMarkerDecisionAttributes': {
+                'details': json_dumps({"what": "Details for second marker", "date": "2018-01-01"}),
+                'markerName': 'Second marker'
+            }
+        },
+        {
+            'decisionType': 'StartTimer',
+            'startTimerDecisionAttributes': {
+                'startToFireTimeout': '0',
+                'timerId': '_simpleflow_wake_up_timer'
+            }
+        }
+    ]
+    assert expected == decisions

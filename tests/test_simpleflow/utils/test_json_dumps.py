@@ -17,7 +17,7 @@ class TestJsonDumps(unittest.TestCase):
             [[1, 2],       '[1,2]'],
             [(1, 2),       '[1,2]'],
             [{'a': 'b'},   '{"a":"b"}'],
-            [{'start': d}, '{"start":"1970-01-01T00:00:00+00:00"}'],
+            [{'start': d}, '{"start":"1970-01-01T00:00:00Z"}'],
         ]
         for case in cases:
             self.assertEquals(
@@ -62,7 +62,7 @@ class TestJsonDumps(unittest.TestCase):
 
     def test_default(self):
         actual = json_dumps(datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC))
-        expected = '"1970-01-01T00:00:00+00:00"'
+        expected = '"1970-01-01T00:00:00Z"'
         self.assertEqual(expected, actual)
 
 

@@ -4,11 +4,16 @@ import swf.models
 import swf.models.decision
 
 from simpleflow import task
+from simpleflow.utils import json_dumps
 
 logger = logging.getLogger(__name__)
 
 
-class ActivityTask(task.ActivityTask):
+class SwfTask(object):
+    pass
+
+
+class ActivityTask(task.ActivityTask, SwfTask):
     """
     Activity task managed on SWF.
     """
@@ -86,7 +91,7 @@ class ActivityTask(task.ActivityTask):
         return [decision]
 
 
-class WorkflowTask(task.WorkflowTask):
+class WorkflowTask(task.WorkflowTask, SwfTask):
     """
     WorkflowTask managed on SWF.
     """
@@ -153,7 +158,7 @@ class WorkflowTask(task.WorkflowTask):
         return [decision]
 
 
-class SignalTask(task.SignalTask):
+class SignalTask(task.SignalTask, SwfTask):
     """
     Signal "task" on SWF.
     """
@@ -214,4 +219,29 @@ class SignalTask(task.SignalTask):
             control=self.control,
         )
 
+        return [decision]
+
+
+class MarkerTask(task.MarkerTask, SwfTask):
+
+    idempotent = False
+
+    @classmethod
+    def from_generic_task(cls, a_task):
+        # type: (task.MarkerTask) -> MarkerTask
+        return cls(a_task.name, *a_task.args, **a_task.kwargs)
+
+    def __init__(self, name, details=None):
+        super(MarkerTask, self).__init__(name, details)
+
+    @property
+    def id(self):
+        return self.name
+
+    def schedule(self, *args, **kwargs):
+        decision = swf.models.decision.MarkerDecision()
+        decision.record(
+            self.name,
+            json_dumps(self.details) if self.details is not None else None,
+        )
         return [decision]

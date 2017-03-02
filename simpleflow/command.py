@@ -426,11 +426,11 @@ def create_unique_task_list(workflow_id=''):
               required=False,
               default=60,
               help='Heartbeat interval in seconds (0 to disable heartbeating).')
-@click.option('--nb-workers',
+@click.option('--nb-workers', '-W',
               type=int,
               required=False,
               help='Number of parallel processes handling activity tasks.')
-@click.option('--nb-deciders',
+@click.option('--nb-deciders', '-D',
               type=int,
               required=False,
               help='Number of parallel processes handling decision tasks.')

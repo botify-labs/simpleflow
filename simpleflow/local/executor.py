@@ -1,3 +1,4 @@
+import collections
 import logging
 
 from simpleflow import (
@@ -6,8 +7,9 @@ from simpleflow import (
     futures,
 )
 from simpleflow.base import Submittable
+from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
-from simpleflow.task import ActivityTask, WorkflowTask, SignalTask
+from simpleflow.task import ActivityTask, WorkflowTask, SignalTask, MarkerTask
 from simpleflow.activity import Activity
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
@@ -22,11 +24,13 @@ class Executor(executor.Executor):
     Executes all tasks synchronously in a single local process.
 
     """
+
     def __init__(self, workflow_class):
         super(Executor, self).__init__(workflow_class)
         self.update_workflow_class()
         self.nb_activities = 0
         self.signals_sent = set()
+        self._markers = collections.OrderedDict()
 
     def update_workflow_class(self):
         """
@@ -65,6 +69,8 @@ class Executor(executor.Executor):
                 raise NotImplementedError(
                     'wait_signal({}) before signal was sent: unsupported by the local executor'.format(signal_name)
                 )
+        elif isinstance(func, MarkerTask):
+            self._markers.setdefault(func.name, []).append(Marker(func.name, func.details))
 
         if isinstance(func, Submittable):
             task = func  # *args, **kwargs already resolved.
@@ -139,3 +145,11 @@ class Executor(executor.Executor):
 
     def wait_signal(self, name):
         return WaitForSignal(name)
+
+    def record_marker(self, name, details=None):
+        return MarkerTask(name, details)
+
+    def list_markers(self, all=False):
+        if all:
+            return [m for ml in self._markers.values() for m in ml]
+        return [m[-1] for m in self._markers.values()]

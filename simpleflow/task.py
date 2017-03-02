@@ -154,3 +154,30 @@ class SignalTask(Task):
 
     def execute(self):
         pass
+
+
+class MarkerTask(Task):
+    def __init__(self, name, details):
+        """
+        :param name: Marker name
+        :param details: Serializable marker details
+        """
+        self._name = name
+        self.args = self.resolve_args(details)
+        self.kwargs = {}
+
+    @property
+    def name(self):
+        """
+
+        :return:
+        :rtype: str
+        """
+        return self._name
+
+    @property
+    def details(self):
+        return self.args[0]
+
+    def execute(self):
+        pass
