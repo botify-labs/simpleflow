@@ -38,7 +38,7 @@ class Step(SubmittableContainer):
             workflow.add_forced_steps(self.dependencies)
             full_chain += (
                 self.activities,
-                (activity.Activity(MarkStepDoneTask, **workflow._get_activity_params()),
+                (activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),
                  workflow.get_step_bucket(),
                  workflow.get_step_path_prefix(),
                  self.step_name),
