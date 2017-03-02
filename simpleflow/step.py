@@ -108,7 +108,7 @@ class Step(SubmittableContainer):
                  self.step_name),
             )
         elif self.activities_if_step_already_done:
-            full_chain += self.activities_if_step_already_done
+            full_chain.append(self.activities_if_step_already_done)
 
         if self.emit_signal:
             full_chain.append(
