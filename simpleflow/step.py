@@ -56,7 +56,7 @@ class WorkflowStepMixin(object):
     def is_step_done(self, step_name):
         return step_name in self.get_steps_done()
 
-    def step_will_run(self, step_name, force=False)
+    def step_will_run(self, step_name, force=False):
         """
         Return True if step will run by checking :
         1/ force is True
