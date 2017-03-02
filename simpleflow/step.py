@@ -92,10 +92,6 @@ class Step(SubmittableContainer):
         if not hasattr(workflow, 'step_config'):
             raise StepNotPreparedException('Please call `workflow.prepare_step_config()` during run')
 
-        path = os.path.join(
-            workflow.step_config["s3_path_prefix"],
-            self.step_name)
-
         full_chain = Chain()
 
         if workflow.step_will_run(self.step_name, self.force):
@@ -104,7 +100,7 @@ class Step(SubmittableContainer):
                 self.activities,
                 (activity.Activity(MarkStepDoneTask, **workflow.step_config["activity_params"]),
                  workflow.step_config["s3_bucket"],
-                 path,
+                 workflow.step_config["s3_path_prefix"],
                  self.step_name),
             )
         elif self.activities_if_step_already_done:
@@ -143,7 +139,7 @@ class GetStepsDoneTask(object):
     def execute(self):
         steps = []
         for f in storage.list_keys(self.bucket, self.path):
-            steps.append(f.key[len(self.path):])
+            steps.append(f.key[len(self.path) + 1:])
         return steps
 
 
