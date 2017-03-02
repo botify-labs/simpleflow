@@ -1,10 +1,15 @@
 import os
-import platform
 import re
 import signal
 import unittest
 
+import boto
+from moto import mock_swf
 from psutil import Process, NoSuchProcess
+
+from tests.data import WORKFLOW, DEFAULT_VERSION, TASK_LIST
+
+DOMAIN = "TestDomain"
 
 
 class IntegrationTestCase(unittest.TestCase):
@@ -29,4 +34,26 @@ class IntegrationTestCase(unittest.TestCase):
             "Expected {} processes matching {}, found {} in {}.".format(
                 count, regex, len(matching), children
             )
+        )
+
+
+@mock_swf
+class SimpleflowTestCase(unittest.TestCase):
+    def setUp(self):
+        self.conn = boto.connect_swf()
+        self.conn.register_domain(DOMAIN, "365")
+        self.conn.register_workflow_type(
+            DOMAIN,
+            WORKFLOW,
+            DEFAULT_VERSION,
+            task_list=TASK_LIST,
+            default_child_policy="TERMINATE",
+            default_execution_start_to_close_timeout="6",
+            default_task_start_to_close_timeout="3",
+        )
+        self.conn.start_workflow_execution(
+            DOMAIN,
+            "wfe-1234",
+            WORKFLOW,
+            DEFAULT_VERSION
         )

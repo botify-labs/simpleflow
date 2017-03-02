@@ -166,7 +166,7 @@ class SignalTask(task.SignalTask, SwfTask):
     def from_generic_task(cls, a_task, workflow_id, run_id, control, extra_input):
         return cls(a_task.name, workflow_id, run_id, control, extra_input, *a_task.args, **a_task.kwargs)
 
-    def __init__(self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs):
+    def __init__(self, name, workflow_id, run_id, control, extra_input, *args, **kwargs):
         super(SignalTask, self).__init__(name, *args, **kwargs)
         self.workflow_id = workflow_id
         self.run_id = run_id
