@@ -242,6 +242,9 @@ class MarkerTask(task.MarkerTask, SwfTask):
         decision = swf.models.decision.MarkerDecision()
         decision.record(
             self.name,
-            json_dumps(self.details) if self.details is not None else None,
+            self.get_json_details(),
         )
         return [decision]
+
+    def get_json_details(self):
+        return json_dumps(self.details) if self.details is not None else None

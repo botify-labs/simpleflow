@@ -475,13 +475,20 @@ class Executor(executor.Executor):
         Get the event corresponding to a activity task, if any.
 
         :param a_task:
-        :type a_task: Marker
+        :type a_task: MarkerTask
         :param history:
         :type history: simpleflow.history.History
         :return:
         :rtype: Optional[dict[str, Any]]
         """
+        json_details = a_task.get_json_details()
         marker_list = history.markers.get(a_task.name)
+        if not marker_list:
+            return None
+        marker_list = filter(
+            lambda m: m['state'] == 'recorded' and m['details'] == json_details,
+            marker_list
+        )
         return marker_list[-1] if marker_list else None
 
     TASK_TYPE_TO_EVENT_FINDER = {
@@ -725,7 +732,7 @@ class Executor(executor.Executor):
         if priority_set_on_submit is not PRIORITY_NOT_SET:
             return priority_set_on_submit
         elif (isinstance(a_task, ActivityTask) and
-                      a_task.activity.task_priority is not PRIORITY_NOT_SET):
+              a_task.activity.task_priority is not PRIORITY_NOT_SET):
             return a_task.activity.task_priority
         elif self._workflow.task_priority is not PRIORITY_NOT_SET:
             return self._workflow.task_priority
