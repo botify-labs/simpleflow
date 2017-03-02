@@ -26,30 +26,29 @@ class Step(SubmittableContainer):
 
     def submit(self, executor):
         workflow = executor.workflow
-        if not hasattr(workflow, 'step_config'):
-            raise StepNotPreparedException('Please call `workflow.prepare_step_config()` during run')
 
         full_chain = Chain()
 
         if workflow.step_will_run(self.step_name, self.force):
+            print 'go inside'
             marker_msg = '{} is scheduled'.format(self.step_name)
             if workflow.step_is_forced(self.step_name, self.force):
                 marker_msg += ' (forced)'
 
-            workflow.step_config["force_steps"] += self.dependencies
+            workflow.add_forced_steps(self.dependencies)
             full_chain += (
                 self.activities,
-                (activity.Activity(MarkStepDoneTask, **workflow.step_config["activity_params"]),
-                 workflow.step_config["s3_bucket"],
-                 workflow.step_config["s3_path_prefix"],
+                (activity.Activity(MarkStepDoneTask, **workflow._get_activity_params()),
+                 workflow.get_step_bucket(),
+                 workflow.get_step_path_prefix(),
                  self.step_name),
-                workflow.record_marker('step.log', marker_msg)
+                workflow.record_marker('log.step', marker_msg)
             )
         else:
             if self.activities_if_step_already_done:
                 full_chain.append(self.activities_if_step_already_done)
             full_chain.append(
-                workflow.record_marker('step.log', '{} already computed'.format(self.step_name)))
+                workflow.record_marker('log.step', '{} already computed'.format(self.step_name)))
 
         if self.emit_signal:
             full_chain.append(

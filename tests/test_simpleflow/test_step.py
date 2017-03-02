@@ -35,16 +35,14 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
     decision_tasks_timeout = '300'
     execution_timeout = '3600'
 
-    def run(self, num, force_steps=[]):
-        activity_params = {
+    def get_activity_params(self):
+        return {
             "task_list": "steps_task_list"
         }
-        self.prepare_step_config(
-            s3_bucket=BUCKET,
-            s3_path_prefix="data/",
-            activity_params=activity_params,
-            force_steps=force_steps
-        )
+
+    def run(self, num, force_steps=[]):
+        self.add_forced_steps(force_steps)
+
         taskf = self.submit(
             Step('my_step',
                  task.ActivityTask(MyTask, num),
@@ -92,6 +90,7 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=[])
         decisions = self.replay()
 
+        print decisions
         # Check that we ask MyTask
         self.check_task_scheduled_decision(decisions[0], MyTask)
 
@@ -138,6 +137,7 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=['my_step'])
         decisions = self.replay()
 
+        print decisions
         # Check that we ask MyTask even if my_step was returned as done
         self.check_task_scheduled_decision(decisions[0], MyTask)
 

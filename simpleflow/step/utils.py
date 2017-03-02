@@ -18,6 +18,7 @@ def step_will_run(step_name, force_steps, steps_done, force):
     2/ step_name is in force_steps configuration
     3/ step_name is already computed
     """
+    import pdb; pdb.set_trace()
     return (
         force or
         should_force_step(step_name, force_steps) or
