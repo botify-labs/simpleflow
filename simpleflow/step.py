@@ -63,9 +63,10 @@ class WorkflowStepMixin(object):
         2/ step_name is in force_steps configuration
         3/ step_name is already computed
         """
-        if (force or
-           should_force_step(step_name, self.step_config["force_steps"]) or
-           self.is_step_done(step_name))
+        return (
+            force or
+            should_force_step(step_name, self.step_config["force_steps"]) or
+            self.is_step_done(step_name))
 
 
 class Step(SubmittableContainer):
