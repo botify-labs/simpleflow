@@ -9,9 +9,7 @@ from simpleflow import utils
 from simpleflow.process import NamedMixin, with_state
 from simpleflow.swf.helpers import swf_identity
 
-
 logger = logging.getLogger(__name__)
-
 
 __all__ = ['Poller']
 
@@ -20,6 +18,7 @@ class Poller(swf.actors.Actor, NamedMixin):
     """Multi-processing implementation of a SWF actor.
 
     """
+
     def __init__(self, domain, task_list=None):
         self.is_alive = False
         self._named_mixin_properties = ["task_list"]
@@ -52,6 +51,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         - SIGTERM and SIGINT lead to a graceful shutdown
         - other signals are not modified for now
         """
+
         # NB: Function is nested to have a reference to *self*.
         def _handle_graceful_shutdown(signum, frame):
             logger.info("process: caught signal signal=SIGTERM pid={}".format(os.getpid()))
@@ -74,7 +74,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         self.set_process_name()
         while self.is_alive:
             try:
-                response = self._poll()
+                response = self.poll_with_retry()
             except swf.exceptions.PollTimeout:
                 continue
             self.process(response)
@@ -87,7 +87,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         logger.info('stopping %s', self.name)
         self.is_alive = False  # No longer take requests.
 
-    def _complete(self, token, response):
+    def complete_with_retry(self, token, response):
         """
         Complete with retry.
         :param token:
@@ -97,7 +97,6 @@ class Poller(swf.actors.Actor, NamedMixin):
         :return:
         :rtype:
         """
-        # FIXME this is a public member
         try:
             complete = utils.retry.with_delay(
                 nb_times=self.nb_retries,
@@ -131,7 +130,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         """
         return '{}()'.format(self.__class__.__name__)
 
-    def _poll(self):
+    def poll_with_retry(self):
         """
         Polls a task represented by its token and data. It uses long-polling
         with a timeout of one minute.
@@ -147,19 +146,26 @@ class Poller(swf.actors.Actor, NamedMixin):
         identity = self.identity
 
         logger.debug("polling task on %s", task_list)
-        try:
-            response = self.poll(
-                task_list,
-                identity=identity,
-            )
-        except swf.exceptions.PollTimeout:
-            logger.debug('{}: PollTimeout'.format(self))
-            raise
-        except Exception as err:
-            logger.error(
-                "exception %s when polling on %s",
-                str(err),
-                task_list,
-            )
-            raise
+        poll = utils.retry.with_delay(
+            nb_times=self.nb_retries,
+            delay=utils.retry.exponential,
+            log_with=logger.exception,
+            on_exceptions=swf.exceptions.ResponseError,
+        )(self.poll)
+        response = poll(task_list, identity=identity)
+        return response
+
+    @abc.abstractmethod
+    def fail(self, *args, **kwargs):
+        """fail; only relevant for activity workers."""
+        raise NotImplementedError
+
+    def fail_with_retry(self, *args, **kwargs):
+        fail = utils.retry.with_delay(
+            nb_times=self.nb_retries,
+            delay=utils.retry.exponential,
+            log_with=logger.exception,
+            on_exceptions=swf.exceptions.ResponseError,
+        )(self.fail)
+        response = fail(*args, **kwargs)
         return response
