@@ -4,6 +4,7 @@ from .tasks import MarkStepDoneTask
 from simpleflow.base import SubmittableContainer
 from simpleflow import activity
 from simpleflow.canvas import Chain
+from .utils import get_step_force_reasons
 
 
 class Step(SubmittableContainer):
@@ -30,12 +31,14 @@ class Step(SubmittableContainer):
         full_chain = Chain()
 
         if workflow.step_will_run(self.step_name, self.force):
-            print 'go inside'
             marker_msg = '{} is scheduled'.format(self.step_name)
             if workflow.step_is_forced(self.step_name, self.force):
                 marker_msg += ' (forced)'
+                reasons = get_step_force_reasons(self.step_name, self.steps_force_reasons)
+                if reasons:
+                    marker_msg += 'Reasons : ' + ', '.join(reasons)
 
-            workflow.add_forced_steps(self.dependencies)
+            workflow.add_forced_steps(self.dependencies, 'Dep of {}'.format(self.step_name))
             full_chain += (
                 self.activities,
                 (activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),

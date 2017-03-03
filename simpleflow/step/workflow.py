@@ -1,5 +1,6 @@
 import os
 import copy
+from collections import defaultdict
 
 from .constants import STEP_ACTIVITY_PARAMS_DEFAULT
 from .submittable import Step
@@ -29,13 +30,18 @@ class WorkflowStepMixin(object):
         """
         return {}
 
-    def add_forced_steps(self, steps):
+    def add_forced_steps(self, steps, reason=None):
         """
         Add steps to force
         """
         if not hasattr(self, 'steps_forced'):
             self.steps_forced = set()
+            self.steps_forced_reasons = defaultdict(list)
+        steps = set(steps)
         self.steps_forced |= set(steps)
+        if reason:
+            for step in steps:
+                self.steps_forced_reasons[step].append(reason)
 
     def get_forced_steps(self):
         return getattr(self, 'steps_forced', [])

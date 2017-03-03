@@ -11,7 +11,9 @@ from simpleflow.step.submittable import Step
 from simpleflow.step.workflow import WorkflowStepMixin
 from simpleflow.step.tasks import GetStepsDoneTask, MarkStepDoneTask
 from simpleflow.step.utils import (
-    should_force_step)
+    should_force_step,
+    get_step_force_reasons
+)
 from simpleflow.step.constants import UNKNOWN_CONTEXT
 from .base import TestWorkflowMixin
 
@@ -159,3 +161,13 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.assertFalse(should_force_step(step_name, force_step))
         force_step = ["a.b.cd"]
         self.assertFalse(should_force_step(step_name, force_step))
+
+    def test_reasons(self):
+        step_name = "a.b.c"
+        reasons = {
+            "a.b": ["MY_REASON"],
+            "a": ["MY_ROOT_REASON"]
+        }
+        self.assertItemsEqual(
+            get_step_force_reasons(step_name, reasons),
+            ["MY_REASON", "MY_ROOT_REASON"])

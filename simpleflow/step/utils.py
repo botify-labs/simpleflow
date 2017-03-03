@@ -28,3 +28,11 @@ def step_is_forced(step_name, force_steps, force):
     return (
         force or
         should_force_step(step_name, force_steps))
+
+
+def get_step_force_reasons(step_name, step_force_reasons):
+    reasons = []
+    for step, sreasons in reasons.iteritems():
+        if step == "*" or step == step_name or step_name.startswith(step + "."):
+            reasons += sreasons
+    return reasons
