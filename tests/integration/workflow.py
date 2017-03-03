@@ -7,6 +7,7 @@ from simpleflow import (
     Workflow,
     futures,
 )
+from simpleflow.canvas import Chain
 
 
 @activity.with_attributes(task_list='quickstart', version='example',
@@ -47,6 +48,30 @@ class ATestDefinitionWithIdempotentTask(Workflow):
         futures.wait(*results)
         assert all(r.result == results[0].result for r in results[1:-1])
         assert results[0].result != results[-1].result
+
+
+class MarkerWorkflow(Workflow):
+    name = 'example'
+    version = 'example'
+    task_list = 'example'
+    decision_tasks_timeout = '300'
+    execution_timeout = '3600'
+
+    def run(self, use_chain):
+        m1 = (self.record_marker('marker 1'))
+        m2 = (self.record_marker('marker 1', 'some details'))
+        m3 = self.record_marker('marker 2', "2nd marker's details")
+        if use_chain:
+            # Markers will be submitted in 3 replays
+            future = self.submit(Chain(
+                m1, m2, m3
+            ))
+        else:
+            # Markers will be submitted as one decision
+            future = self.submit(m1)
+            self.submit(m2)
+            self.submit(m3)
+        futures.wait(future)
 
 
 @activity.with_attributes(task_list='quickstart', version='example', idempotent=True)

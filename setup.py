@@ -80,6 +80,7 @@ DEPS = [
     'click',
     'psutil>=3.2.1',
     'pytz',
+    'typing',
 ]
 if PY2:
     DEPS += [
