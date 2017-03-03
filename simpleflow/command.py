@@ -18,6 +18,8 @@ import swf.models
 import swf.querysets
 
 from simpleflow.history import History
+from simpleflow.settings import logging_formatter
+from simpleflow.settings.logging_formatter import ColorModes
 from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
@@ -76,11 +78,14 @@ def comma_separated_list(value):
 @click.group()
 @click.option('--format')
 @click.option('--header/--no-header', default=False)
+@click.option('--color', type=click.Choice([ColorModes.AUTO, ColorModes.ALWAYS, ColorModes.NEVER]),
+              default=ColorModes.AUTO)
 @click.version_option(version=__version__)
 @click.pass_context
-def cli(ctx, header, format):
+def cli(ctx, header, format, color):
     ctx.params['format'] = format
     ctx.params['header'] = header
+    logging_formatter.color_mode = color
 
 
 def get_workflow_type(domain_name, workflow_class):
