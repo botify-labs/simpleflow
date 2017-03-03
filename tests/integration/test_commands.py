@@ -5,7 +5,6 @@ from flaky import flaky
 from sure import expect
 
 import simpleflow.command
-
 from . import vcr, VCRIntegrationTest
 
 
@@ -115,24 +114,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         start_line = [line for line in lines if line.startswith(self.workflow_id)][0]
         _, run_id = start_line.split(" ", 1)
 
-        response = self.conn.get_workflow_execution_history(
-            self.domain,
-            run_id,
-            self.workflow_id,
-        )
-
-        events = response['events']
-        next_page = response.get('nextPageToken')
-        while next_page is not None:
-            response = self.conn.get_workflow_execution_history(
-                self.domain,
-                run_id,
-                self.workflow_id,
-                next_page_token=next_page,
-            )
-
-            events.extend(response['events'])
-            next_page = response.get('nextPageToken')
+        events = self.get_events(run_id)
 
         activities = [
             e['activityTaskScheduledEventAttributes']['activityId']
