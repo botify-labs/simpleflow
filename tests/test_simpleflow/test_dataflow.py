@@ -1727,6 +1727,10 @@ def test_markers():
             'startTimerDecisionAttributes': {
                 'startToFireTimeout': '0',
                 'timerId': '_simpleflow_wake_up_timer'
+            }
+        }
+    ]
+    assert expected == decisions
 
 
 class ATestDefinitionNonPythonicWorkflow(BaseTestWorkflow):
