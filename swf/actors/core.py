@@ -47,3 +47,17 @@ class Actor(ConnectedSWFObject):
         shutting down.
         """
         raise NotImplementedError
+
+    def get_error_message(self, e):
+        """
+
+        :param e:
+         :type e: boto.exception.SWFResponseError
+        :return:
+        """
+        message = e.error_message
+        if not message:
+            if e.body:
+                # Expected 'message', got 'Message' ¯\_(ツ)_/¯
+                message = e.body.get('Message')
+        return message
