@@ -50,3 +50,23 @@ class VCRIntegrationTest(IntegrationTestCase):
         if not hasattr(self, "_conn"):
             self._conn = boto.swf.connect_to_region(self.region)
         return self._conn
+
+    def get_events(self, run_id):
+        response = self.conn.get_workflow_execution_history(
+            self.domain,
+            run_id,
+            self.workflow_id,
+        )
+        events = response['events']
+        next_page = response.get('nextPageToken')
+        while next_page is not None:
+            response = self.conn.get_workflow_execution_history(
+                self.domain,
+                run_id,
+                self.workflow_id,
+                next_page_token=next_page,
+            )
+
+            events.extend(response['events'])
+            next_page = response.get('nextPageToken')
+        return events
