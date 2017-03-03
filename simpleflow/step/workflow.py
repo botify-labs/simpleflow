@@ -4,9 +4,8 @@ from collections import defaultdict
 
 from .constants import STEP_ACTIVITY_PARAMS_DEFAULT
 from .submittable import Step
-from .utils import step_will_run, step_is_forced
 from .tasks import GetStepsDoneTask
-from simpleflow import activity, settings
+from simpleflow import activity, settings, task
 
 
 class WorkflowStepMixin(object):
@@ -36,18 +35,20 @@ class WorkflowStepMixin(object):
         """
         if not hasattr(self, 'steps_forced'):
             self.steps_forced = set()
-            self.steps_forced_reasons = defaultdict(list)
+            self.steps_forced_reasons = defaultdict(set)
         steps = set(steps)
         self.steps_forced |= set(steps)
         if reason:
             for step in steps:
-                self.steps_forced_reasons[step].append(reason)
+                self.steps_forced_reasons[step].add(reason)
 
     def get_forced_steps(self):
-        return getattr(self, 'steps_forced', [])
+        return list(getattr(self, 'steps_forced', []))
 
     def _get_step_activity_params(self):
         activity_params_merged = copy.copy(STEP_ACTIVITY_PARAMS_DEFAULT)
+        if hasattr(self, 'task_list'):
+            activity_params_merged["task_list"] = self.task_list
         activity_params = self.get_step_activity_params()
         if activity_params:
             activity_params_merged.update(activity_params)
@@ -56,33 +57,9 @@ class WorkflowStepMixin(object):
     def step(self, *args, **kwargs):
         return Step(*args, **kwargs)
 
-    def _get_steps_done_future(self):
-        if not hasattr(self, '_steps_done_future'):
-            self._steps_done_future = self.submit(
-                activity.Activity(
-                    GetStepsDoneTask,
-                    **self._get_step_activity_params()),
-                self.get_step_bucket(),
-                self.get_step_path_prefix())
-        return self._steps_done_future
-
-    def get_steps_done(self):
-        return self._get_steps_done_future().result
-
-    def is_step_done(self, step_name):
-        return step_name in self.get_steps_done()
-
-    def step_will_run(self, step_name, force=False):
-        """
-        Return True if step will run by checking :
-        1/ force is True
-        2/ step_name is in force_steps configuration
-        3/ step_name is already computed
-        """
-        force_steps = self.get_forced_steps()
-        steps_done = self.get_steps_done()
-        return step_will_run(step_name, force_steps, steps_done, force)
-
-    def step_is_forced(self, step_name, force=False):
-        force_steps = self.get_forced_steps()
-        return step_is_forced(step_name, force_steps, force)
+    def get_steps_done_activity(self):
+        return task.ActivityTask(activity.Activity(
+            GetStepsDoneTask,
+            **self._get_step_activity_params()),
+            self.get_step_bucket(),
+            self.get_step_path_prefix())

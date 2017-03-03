@@ -1,10 +1,12 @@
-from .exceptions import StepNotPreparedException
 from .tasks import MarkStepDoneTask
 
 from simpleflow.base import SubmittableContainer
 from simpleflow import activity
-from simpleflow.canvas import Chain
-from .utils import get_step_force_reasons
+from simpleflow.canvas import Chain, FuncGroup
+from .utils import (
+    get_step_force_reasons,
+    step_will_run,
+    step_is_forced)
 
 
 class Step(SubmittableContainer):
@@ -28,33 +30,41 @@ class Step(SubmittableContainer):
     def submit(self, executor):
         workflow = executor.workflow
 
-        full_chain = Chain()
+        def fn_steps_done(steps_done):
+            marker = {
+                "step": self.step_name,
+                "status": "scheduled",
+                "forced": False,
+                "reasons": []
+            }
+            chain = Chain()
+            if step_will_run(self.step_name, workflow.get_forced_steps(), steps_done, self.force):
+                if step_is_forced(self.step_name, workflow.get_forced_steps(), self.force):
+                    marker["forced"] = True
+                    marker["reasons"] = get_step_force_reasons(self.step_name, workflow.steps_forced_reasons)
 
-        if workflow.step_will_run(self.step_name, self.force):
-            marker_msg = '{} is scheduled'.format(self.step_name)
-            if workflow.step_is_forced(self.step_name, self.force):
-                marker_msg += ' (forced)'
-                reasons = get_step_force_reasons(self.step_name, self.steps_force_reasons)
-                if reasons:
-                    marker_msg += 'Reasons : ' + ', '.join(reasons)
+                workflow.add_forced_steps(self.dependencies, 'Dep of {}'.format(self.step_name))
+                chain += (
+                    self.activities,
+                    (activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),
+                     workflow.get_step_bucket(),
+                     workflow.get_step_path_prefix(),
+                     self.step_name),
+                    workflow.record_marker('log.step', marker)
+                )
+            else:
+                marker["status"] = "skipped"
+                if self.activities_if_step_already_done:
+                    chain.append(self.activities_if_step_already_done)
+                chain.append(
+                    workflow.record_marker('log.step', marker))
 
-            workflow.add_forced_steps(self.dependencies, 'Dep of {}'.format(self.step_name))
-            full_chain += (
-                self.activities,
-                (activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),
-                 workflow.get_step_bucket(),
-                 workflow.get_step_path_prefix(),
-                 self.step_name),
-                workflow.record_marker('log.step', marker_msg)
-            )
-        else:
-            if self.activities_if_step_already_done:
-                full_chain.append(self.activities_if_step_already_done)
-            full_chain.append(
-                workflow.record_marker('log.step', '{} already computed'.format(self.step_name)))
+            if self.emit_signal:
+                chain.append(
+                    workflow.signal('step.{}'.format(self.step_name), propagate=False))
+            return chain
 
-        if self.emit_signal:
-            full_chain.append(
-                workflow.signal('step.{}'.format(self.step_name), propagate=False))
-
-        return workflow.submit(full_chain)
+        return workflow.submit(Chain(
+            workflow.get_steps_done_activity(),
+            FuncGroup(fn_steps_done),
+            send_result=True))

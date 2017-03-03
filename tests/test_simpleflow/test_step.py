@@ -43,7 +43,7 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
         }
 
     def run(self, num, force_steps=[]):
-        self.add_forced_steps(force_steps)
+        self.add_forced_steps(force_steps, "workflow_init")
 
         taskf = self.submit(
             Step('my_step',
@@ -92,7 +92,6 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=[])
         decisions = self.replay()
 
-        print decisions
         # Check that we ask MyTask
         self.check_task_scheduled_decision(decisions[0], MyTask)
 
@@ -102,7 +101,7 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.check_task_scheduled_decision(decisions[0], task.Activity(MarkStepDoneTask))
 
         # Check that we'll force the step 'my_step_3'
-        self.assertEquals(self.executor._workflow.step_config["force_steps"], ["my_step_2"])
+        self.assertEquals(self.executor._workflow.get_forced_steps(), ["my_step_2"])
 
     @mock_s3
     @mock_swf
@@ -118,11 +117,14 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         # Now decide that it returns 'my_step' as done
         self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=['my_step'])
 
-        decisions = self.replay()
-
+        # Call Marker Step is done
+        print decisions
         # Check that the workflow is done
+        decisions = self.replay()
+        print decisions
         self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
-        self.assertEquals(decisions[0]["recordMarkerDecisionAttributes"]["details"], '"my_step already computed"')
+        self.assertEquals(decisions[0]["recordMarkerDecisionAttributes"]["details"],
+                          '{"status":"skipped","forced":false,"step":"my_step","reasons":[]}')
 
     @mock_s3
     @mock_swf
@@ -139,9 +141,18 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=['my_step'])
         decisions = self.replay()
 
-        print decisions
         # Check that we ask MyTask even if my_step was returned as done
         self.check_task_scheduled_decision(decisions[0], MyTask)
+        self.add_activity_task_from_decision(decisions[0], task.Activity(MyTask))
+
+        decisions = self.replay()
+        self.check_task_scheduled_decision(decisions[0], task.Activity(MarkStepDoneTask))
+        self.add_activity_task_from_decision(decisions[0], task.Activity(MarkStepDoneTask))
+
+        decisions = self.replay()
+        self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
+        self.assertEquals(decisions[0]["recordMarkerDecisionAttributes"]["details"],
+                          '{"status":"scheduled","forced":true,"step":"my_step","reasons":["workflow_init"]}')
 
     def test_should_force_step(self):
         step_name = "a.b.c"

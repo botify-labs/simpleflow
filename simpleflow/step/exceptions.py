@@ -1,2 +1,0 @@
-class StepNotPreparedException(Exception):
-    pass
