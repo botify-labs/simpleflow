@@ -2,10 +2,19 @@ import inspect
 import os
 
 import boto.swf
+from click.testing import CliRunner
+from sure import expect
 from vcr import VCR
 
 import simpleflow.command  # NOQA
 from tests.utils import IntegrationTestCase
+
+from simpleflow.utils import json_dumps
+
+if False:
+    from typing import List, Union
+    from click.testing import Result
+
 
 # Default SWF parameters
 os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
@@ -69,4 +78,38 @@ class VCRIntegrationTest(IntegrationTestCase):
 
             events.extend(response['events'])
             next_page = response.get('nextPageToken')
+        return events
+
+    def invoke(self, command, arguments):
+        # type: (str, Union(str, List[str])) -> Result
+        if not hasattr(self, "runner"):
+            self.runner = CliRunner()
+        if isinstance(arguments, str):
+            arguments = arguments.split(" ")
+        print('simpleflow {} {}'.format(command, ' '.join(arguments)))
+        return self.runner.invoke(command, arguments, catch_exceptions=False)
+
+    def run_standalone(self, workflow_name, *args, **kwargs):
+        input = json_dumps(dict(args=args, kwargs=kwargs))
+        result = self.invoke(
+            simpleflow.command.cli,
+            [
+                "standalone",
+                "--workflow-id",
+                str(self.workflow_id),
+                "--input",
+                input,
+                "--nb-deciders",
+                "2",
+                "--nb-workers",
+                "2",
+                workflow_name,
+            ],
+        )
+        expect(result.exit_code).to.equal(0)
+        lines = result.output.split("\n")
+        start_line = [line for line in lines if line.startswith(self.workflow_id)][0]
+        _, run_id = start_line.split(" ", 1)
+
+        events = self.get_events(run_id)
         return events
