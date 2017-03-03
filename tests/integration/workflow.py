@@ -50,8 +50,34 @@ class ATestDefinitionWithIdempotentTask(Workflow):
         assert results[0].result != results[-1].result
 
 
+@activity.with_attributes(task_list='quickstart', version='example', idempotent=True)
+def get_uuid(unused=None):
+    return str(uuid.uuid4())
+
+
+class ASignalingTestParentWorkflow(Workflow):
+    name = 'basic'
+    version = 'example'
+    task_list = 'example'
+    decision_tasks_timeout = '300'
+    execution_timeout = '3600'
+
+    def run(self, wait_after_first):
+        # Signaled twice since there's no barrier
+        sig = self.submit(self.signal('signal', 1))
+        if wait_after_first:
+            futures.wait(sig)
+        sig = self.submit(self.signal('signal', 2))
+        futures.wait(self.submit(self.record_marker('marker 1')))
+        sig_again = self.submit(self.signal('signal', 3))
+        futures.wait(self.submit(self.record_marker('marker 2')))
+        sig_ter = self.submit(self.signal('signal', 8, foo='bar'))
+        futures.wait(self.submit(self.record_marker('marker 3')))
+        futures.wait(sig, sig_again, sig_ter)
+
+
 class MarkerWorkflow(Workflow):
-    name = 'example'
+    name = 'basic'
     version = 'example'
     task_list = 'example'
     decision_tasks_timeout = '300'
@@ -72,8 +98,3 @@ class MarkerWorkflow(Workflow):
             self.submit(m2)
             self.submit(m3)
         futures.wait(future)
-
-
-@activity.with_attributes(task_list='quickstart', version='example', idempotent=True)
-def get_uuid(unused=None):
-    return str(uuid.uuid4())
