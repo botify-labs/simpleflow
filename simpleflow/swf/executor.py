@@ -37,6 +37,7 @@ from simpleflow.swf.task import (
     MarkerTask,
     TimerTask,
     CancelTimerTask,
+    LambdaFunctionTask,
 )
 from simpleflow.utils import (
     hex_hash,
@@ -359,7 +360,7 @@ class Executor(executor.Executor):
             future.set_finished(format.decode(event['result']))
         elif state == 'failed':
             future.set_exception(exceptions.TaskFailed(
-                name=event['id'],
+                name=event['name'],
                 reason=event['reason'],
                 details=event.get('details'),
             ))
@@ -380,6 +381,43 @@ class Executor(executor.Executor):
                 event.get('name', '#{}'.format(event['id'])),
                 state
             )
+
+        return future
+
+    def _get_future_from_lambda_function_event(self, event):
+        """
+
+        :param event: child workflow event
+        :type  event: dict[str, Any]
+        :return:
+        :rtype: futures.Future
+        """
+        future = futures.Future()
+        state = event['state']
+
+        if state == 'scheduled':
+            pass
+        elif state == 'schedule_failed':
+            logger.info('failed to schedule {}: {}'.format(
+                event['name'],
+                event['cause'],
+            ))
+            return None
+        elif state == 'started':
+            future.set_running()
+        elif state == 'completed':
+            future.set_finished(json_loads_or_raw(event['result']))
+        elif state == 'failed':
+            future.set_exception(exceptions.TaskFailed(
+                name=event['name'],
+                reason=event['reason'],
+                details=event.get('details'),
+            ))
+        elif state == 'timed_out':
+            future.set_exception(exceptions.TimeoutError(
+                event['timeout_type'],
+                None,
+            ))
 
         return future
 
@@ -520,6 +558,19 @@ class Executor(executor.Executor):
         """
         return history.child_workflows.get(a_task.id)
 
+    def find_lambda_function_event(self, a_task, history):
+        """
+        Get the event corresponding to a lambda function, if any.
+
+        :param a_task:
+        :type a_task: LambdaFunctionTask
+        :param history:
+        :type history: simpleflow.history.History
+        :return:
+        :rtype: Optional[dict]
+        """
+        return history.lambda_functions.get(a_task.id)
+
     def find_signal_event(self, a_task, history):
         """
         Get the event corresponding to a signal, if any.
@@ -593,6 +644,7 @@ class Executor(executor.Executor):
         MarkerTask: find_marker_event,
         TimerTask: find_timer_event,
         CancelTimerTask: find_timer_event,
+        LambdaFunctionTask: find_lambda_function_event,
     }
 
     def find_event(self, a_task, history):
@@ -794,12 +846,30 @@ class Executor(executor.Executor):
     def get_retry_task_timer_id(swf_task):
         return '__simpleflow_task_{}'.format(str(swf_task.id))
 
+    def resume_lambda_function(self, a_task, event):
+        """
+        Resume a child workflow.
+
+        :param a_task:
+        :type a_task: LambdaTask
+        :param event:
+        :type event: dict
+        :return:
+        :rtype: simpleflow.futures.Future
+        """
+        future = self._get_future_from_lambda_function_event(event)
+
+        if future.finished and future.exception:
+            raise future.exception
+
+        return future
+
     def schedule_task(self, a_task, task_list=None):
         """
         Let a task schedule itself.
         If too many decisions are in flight, add a timer decision and raise ExecutionBlocked.
         :param a_task:
-        :type a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask
+        :type a_task: SwfTask
         :param task_list:
         :type task_list: Optional[str]
         :raise: exceptions.ExecutionBlocked if too many decisions waiting
@@ -862,6 +932,7 @@ class Executor(executor.Executor):
         'external_workflow': get_future_from_external_workflow_event,
         'marker': _get_future_from_marker_event,
         'timer': _get_future_from_timer_event,
+        'lambda_function': resume_lambda_function,
     }
 
     def resume(self, a_task, *args, **kwargs):
