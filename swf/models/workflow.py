@@ -94,6 +94,7 @@ class WorkflowType(BaseModel):
         'execution_timeout',
         'decision_tasks_timeout',
         'description',
+        'lambda_role',
     ]
 
     def __init__(self, domain, name, version,
@@ -104,7 +105,9 @@ class WorkflowType(BaseModel):
                  child_policy=CHILD_POLICIES.TERMINATE,
                  execution_timeout='300',
                  decision_tasks_timeout='300',
-                 description=None, *args, **kwargs):
+                 description=None,
+                 lambda_role=None,
+                 *args, **kwargs):
         self.domain = domain
         self.name = name
         self.version = version
@@ -116,13 +119,14 @@ class WorkflowType(BaseModel):
         self.execution_timeout = execution_timeout
         self.decision_tasks_timeout = decision_tasks_timeout
         self.description = description
+        self.lambda_role = lambda_role
 
         # Explicitly call child_policy setter
         # to validate input value
         self.set_child_policy(child_policy)
 
         # immutable decorator rebinds class name,
-        # so have to use generice self.__class__
+        # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
     def set_child_policy(self, policy):
@@ -162,6 +166,7 @@ class WorkflowType(BaseModel):
             ('deprecation_date', self.deprecation_date, workflow_info['deprecationDate']),
             ('task_list', self.task_list, workflow_config['defaultTaskList']['name']),
             ('child_policy', self.child_policy, workflow_config['defaultChildPolicy']),
+            ('lambda_role', self.lambda_role, workflow_config['defaultLambdaRole']),
             ('execution_timeout', self.execution_timeout, workflow_config['defaultExecutionStartToCloseTimeout']),
             ('decision_tasks_timeout', self.decision_tasks_timeout, workflow_config['defaultTaskStartToCloseTimeout']),
             ('description', self.description, workflow_info['description']),
@@ -189,7 +194,7 @@ class WorkflowType(BaseModel):
     def save(self):
         """Creates the workflow type amazon side"""
         try:
-            self.connection.register_workflow_type(
+            self.my_register_workflow_type(
                 self.domain.name,
                 self.name,
                 self.version,
@@ -197,6 +202,7 @@ class WorkflowType(BaseModel):
                 default_child_policy=str(self.child_policy),
                 default_execution_start_to_close_timeout=str(self.execution_timeout),
                 default_task_start_to_close_timeout=str(self.decision_tasks_timeout),
+                default_lambda_role=self.lambda_role,
                 description=self.description
             )
         except SWFTypeAlreadyExistsError:
@@ -220,34 +226,37 @@ class WorkflowType(BaseModel):
 
     def start_execution(self, workflow_id=None, task_list=None,
                         child_policy=None, execution_timeout=None,
-                        input=None, tag_list=None, decision_tasks_timeout=None):
+                        input=None, tag_list=None, decision_tasks_timeout=None,
+                        lambda_role=None,
+                        ):
         """Starts a Workflow execution of current workflow type
 
         :param  workflow_id: The user defined identifier associated with the workflow execution
-        :type   workflow_id: String
+        :type   workflow_id: str
 
         :param  task_list: task list to use for scheduling decision tasks for execution
                         of this workflow
-        :type   task_list: String
+        :type   task_list: str
 
         :param  child_policy: policy to use for the child workflow executions
                               of this workflow execution.
-        :type   child_policy: CHILD_POLICIES.{TERMINATE |
-                                              REQUEST_CANCEL |
-                                              ABANDON}
+        :type   child_policy: CHILD_POLICIES | str
 
         :param  execution_timeout: maximum duration for the workflow execution
-        :type   execution_timeout: String
+        :type   execution_timeout: str
 
         :param  input: Input of the workflow execution
         :type   input: dict
 
         :param  tag_list: Tags associated with the workflow execution
-        :type   tag_list: String or list of strings or None
+        :type   tag_list: Optional[str | list[str]
 
         :param  decision_tasks_timeout: maximum duration of decision tasks
                                         for this workflow execution
-        :type   decision_tasks_timeout: String
+        :type   decision_tasks_timeout: str
+
+        :param lambda_role: Lambda role.
+        :type lambda_role: Optional[str]
         """
         workflow_id = workflow_id or '%s-%s-%i' % (self.name, self.version, time.time())
         task_list = task_list or self.task_list
@@ -263,7 +272,7 @@ class WorkflowType(BaseModel):
         if tag_list and len(tag_list) > 5:
             raise ValueError("You cannot have more than 5 tags in StartWorkflowExecution.")
 
-        run_id = self.connection.start_workflow_execution(
+        run_id = self.my_start_workflow_execution(
             self.domain.name,
             workflow_id,
             self.name,
@@ -272,11 +281,200 @@ class WorkflowType(BaseModel):
             child_policy=child_policy,
             execution_start_to_close_timeout=execution_timeout,
             input=format.input(input),
+            lambda_role=lambda_role,
             tag_list=tag_list,
             task_start_to_close_timeout=decision_tasks_timeout,
         )['runId']
 
         return WorkflowExecution(self.domain, workflow_id, run_id=run_id)
+
+    def my_register_workflow_type(self, domain, name, version,
+                                  task_list=None,
+                                  default_child_policy=None,
+                                  default_execution_start_to_close_timeout=None,
+                                  default_task_start_to_close_timeout=None,
+                                  default_lambda_role=None,
+                                  description=None):
+        """
+        Registers a new workflow type and its configuration settings
+        in the specified domain.
+
+        :type domain: string
+        :param domain: The name of the domain in which to register
+            the workflow type.
+
+        :type name: string
+        :param name: The name of the workflow type.
+
+        :type version: string
+        :param version: The version of the workflow type.
+
+        :type task_list: list of name, version of tasks
+        :param task_list: If set, specifies the default task list to use
+            for scheduling decision tasks for executions of this workflow
+            type. This default is used only if a task list is not provided
+            when starting the execution through the StartWorkflowExecution
+            Action or StartChildWorkflowExecution Decision.
+
+        :type default_child_policy: string
+
+        :param default_child_policy: If set, specifies the default
+            policy to use for the child workflow executions when a
+            workflow execution of this type is terminated, by calling the
+            TerminateWorkflowExecution action explicitly or due to an
+            expired timeout. This default can be overridden when starting
+            a workflow execution using the StartWorkflowExecution action
+            or the StartChildWorkflowExecution Decision. The supported
+            child policies are:
+
+            * TERMINATE: the child executions will be terminated.
+
+            * REQUEST_CANCEL: a request to cancel will be attempted
+              for each child execution by recording a
+              WorkflowExecutionCancelRequested event in its
+              history. It is up to the decider to take appropriate
+              actions when it receives an execution history with this
+              event.
+
+            * ABANDON: no action will be taken. The child executions
+              will continue to run.no docs
+
+        :type default_execution_start_to_close_timeout: string
+        :param default_execution_start_to_close_timeout: If set,
+            specifies the default maximum duration for executions of this
+            workflow type. You can override this default when starting an
+            execution through the StartWorkflowExecution Action or
+            StartChildWorkflowExecution Decision.
+
+        :type default_task_start_to_close_timeout: string
+        :param default_task_start_to_close_timeout: If set, specifies
+            the default maximum duration of decision tasks for this
+            workflow type. This default can be overridden when starting a
+            workflow execution using the StartWorkflowExecution action or
+            the StartChildWorkflowExecution Decision.
+
+        :param default_lambda_role: Default Lambda role
+        :type default_lambda_role: str
+
+        :type description: string
+        :param description: Textual description of the workflow type.
+
+        :raises: SWFTypeAlreadyExistsError, SWFLimitExceededError,
+            UnknownResourceFault, SWFOperationNotPermittedError
+        """
+        return self.connection.json_request('RegisterWorkflowType', {
+            'domain': domain,
+            'name': name,
+            'version': version,
+            'defaultTaskList': {'name': task_list},
+            'defaultChildPolicy': default_child_policy,
+            'defaultExecutionStartToCloseTimeout': default_execution_start_to_close_timeout,
+            'defaultLambdaRole': default_lambda_role,
+            'defaultTaskStartToCloseTimeout': default_task_start_to_close_timeout,
+            'description': description,
+        })
+
+    def my_start_workflow_execution(self, domain, workflow_id,
+                                    workflow_name, workflow_version,
+                                    task_list=None, child_policy=None,
+                                    execution_start_to_close_timeout=None,
+                                    input=None, tag_list=None,
+                                    task_start_to_close_timeout=None,
+                                    lambda_role=None):
+        """
+        Starts an execution of the workflow type in the specified
+        domain using the provided workflowId and input data.
+
+        :type domain: string
+        :param domain: The name of the domain in which the workflow
+            execution is created.
+
+        :type workflow_id: string
+        :param workflow_id: The user defined identifier associated with
+            the workflow execution. You can use this to associate a
+            custom identifier with the workflow execution. You may
+            specify the same identifier if a workflow execution is
+            logically a restart of a previous execution. You cannot
+            have two open workflow executions with the same workflowId
+            at the same time.
+
+        :type workflow_name: string
+        :param workflow_name: The name of the workflow type.
+
+        :type workflow_version: string
+        :param workflow_version: The version of the workflow type.
+
+        :type task_list: string
+        :param task_list: The task list to use for the decision tasks
+            generated for this workflow execution. This overrides the
+            defaultTaskList specified when registering the workflow type.
+
+        :type child_policy: string
+        :param child_policy: If set, specifies the policy to use for the
+            child workflow executions of this workflow execution if it
+            is terminated, by calling the TerminateWorkflowExecution
+            action explicitly or due to an expired timeout. This policy
+            overrides the default child policy specified when registering
+            the workflow type using RegisterWorkflowType. The supported
+            child policies are:
+
+             * TERMINATE: the child executions will be terminated.
+             * REQUEST_CANCEL: a request to cancel will be attempted
+                 for each child execution by recording a
+                 WorkflowExecutionCancelRequested event in its history.
+                 It is up to the decider to take appropriate actions
+                 when it receives an execution history with this event.
+             * ABANDON: no action will be taken. The child executions
+                 will continue to run.
+
+        :type execution_start_to_close_timeout: string
+        :param execution_start_to_close_timeout: The total duration for
+            this workflow execution. This overrides the
+            defaultExecutionStartToCloseTimeout specified when
+            registering the workflow type.
+
+        :type input: string
+        :param input: The input for the workflow
+            execution. This is a free form string which should be
+            meaningful to the workflow you are starting. This input is
+            made available to the new workflow execution in the
+            WorkflowExecutionStarted history event.
+
+        :type tag_list: list :param tag_list: The list of tags to
+            associate with the workflow execution. You can specify a
+            maximum of 5 tags. You can list workflow executions with a
+            specific tag by calling list_open_workflow_executions or
+            list_closed_workflow_executions and specifying a TagFilter.
+
+        :type task_start_to_close_timeout: string
+        :param task_start_to_close_timeout: Specifies the maximum duration of
+            decision tasks for this workflow execution. This parameter
+            overrides the defaultTaskStartToCloseTimeout specified when
+            registering the workflow type using register_workflow_type.
+
+        :param lambda_role: Lambda role.
+        :type lambda_role: str
+
+        :raises: UnknownResourceFault, TypeDeprecatedFault,
+            SWFWorkflowExecutionAlreadyStartedError, SWFLimitExceededError,
+            SWFOperationNotPermittedError, DefaultUndefinedFault
+        """
+        return self.connection.json_request('StartWorkflowExecution', {
+            'domain': domain,
+            'workflowId': workflow_id,
+            'workflowType': {
+                'name': workflow_name,
+                'version': workflow_version
+            },
+            'taskList': {'name': task_list},
+            'childPolicy': child_policy,
+            'executionStartToCloseTimeout': execution_start_to_close_timeout,
+            'input': input,
+            'lambdaRole': lambda_role,
+            'tagList': tag_list,
+            'taskStartToCloseTimeout': task_start_to_close_timeout,
+
+        })
 
     def __repr__(self):
         return '<{} domain={} name={} version={} status={}>'.format(

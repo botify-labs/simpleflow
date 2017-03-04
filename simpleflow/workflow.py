@@ -31,6 +31,7 @@ class Workflow(Submittable):
     version = None
     task_list = None
     task_priority = None
+    lambda_role = None
     retry = 0
     raises_on_failure = True
 
