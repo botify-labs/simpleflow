@@ -163,7 +163,7 @@ class WorkflowType(BaseModel):
             ('task_list', self.task_list, workflow_config['defaultTaskList']['name']),
             ('child_policy', self.child_policy, workflow_config['defaultChildPolicy']),
             ('execution_timeout', self.execution_timeout, workflow_config['defaultExecutionStartToCloseTimeout']),
-            ('decision_tasks_timout', self.decision_tasks_timeout, workflow_config['defaultTaskStartToCloseTimeout']),
+            ('decision_tasks_timeout', self.decision_tasks_timeout, workflow_config['defaultTaskStartToCloseTimeout']),
             ('description', self.description, workflow_info['description']),
         )
 
@@ -339,6 +339,7 @@ class WorkflowExecution(BaseModel):
         'close_status',
         'execution_timeout',
         'input',
+        'lambda_role',
         'tag_list',
         'decision_tasks_timeout',
         'close_timestamp',
@@ -363,6 +364,7 @@ class WorkflowExecution(BaseModel):
                  latest_activity_task_timestamp=None,
                  open_counts=None,
                  parent=None,
+                 lambda_role=None,
                  *args, **kwargs):
         Domain.check(domain)
         self.domain = domain
@@ -375,6 +377,7 @@ class WorkflowExecution(BaseModel):
         self.close_status = close_status
         self.execution_timeout = execution_timeout
         self.input = input
+        self.lambda_role = lambda_role
         self.tag_list = tag_list or []
         self.decision_tasks_timeout = decision_tasks_timeout
         self.close_timestamp = close_timestamp
@@ -386,7 +389,7 @@ class WorkflowExecution(BaseModel):
         self.parent = parent or {}  # so we can query keys in any case
 
         # immutable decorator rebinds class name,
-        # so have to use generice self.__class__
+        # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
     def _diff(self):
@@ -418,6 +421,7 @@ class WorkflowExecution(BaseModel):
             ('status', self.status, execution_info['executionStatus']),
             ('task_list', self.task_list, execution_config['taskList']['name']),
             ('child_policy', self.child_policy, execution_config['childPolicy']),
+            ('lambda_role', self.lambda_role, execution_config['lambdaRole']),
             ('execution_timeout', self.execution_timeout, execution_config['executionStartToCloseTimeout']),
             ('tag_list', self.tag_list, execution_info.get('tagList')),
             ('decision_tasks_timeout', self.decision_tasks_timeout, execution_config['taskStartToCloseTimeout']),

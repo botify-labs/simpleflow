@@ -33,6 +33,11 @@ from swf.models.event.marker import (
     CompiledMarkerEvent
 )
 
+from swf.models.event.lambda_function import (
+    LambdaFunctionEvent,
+    CompiledLambdaFunctionEvent
+)
+
 from swf.utils import camel_to_underscore, decapitalize
 
 
@@ -65,6 +70,10 @@ EVENTS = collections.OrderedDict([
     ('Timer', {
         'event': TimerEvent,
         'compiled': CompiledTimerEvent,
+    }),
+    ('LambdaFunction', {
+        'event': LambdaFunctionEvent,
+        'compiled': CompiledLambdaFunctionEvent,
     }),
 ])
 
