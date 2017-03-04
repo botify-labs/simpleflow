@@ -360,7 +360,7 @@ class Executor(executor.Executor):
             future.set_finished(format.decode(event['result']))
         elif state == 'failed':
             future.set_exception(exceptions.TaskFailed(
-                name=event['id'],
+                name=event['name'],
                 reason=event['reason'],
                 details=event.get('details'),
             ))
@@ -853,6 +853,24 @@ class Executor(executor.Executor):
     @staticmethod
     def get_retry_task_timer_id(swf_task):
         return '__simpleflow_task_{}'.format(str(swf_task.id))
+
+    def resume_lambda_function(self, a_task, event):
+        """
+        Resume a child workflow.
+
+        :param a_task:
+        :type a_task: LambdaTask
+        :param event:
+        :type event: dict
+        :return:
+        :rtype: simpleflow.futures.Future
+        """
+        future = self._get_future_from_lambda_function_event(event)
+
+        if future.finished and future.exception:
+            raise future.exception
+
+        return future
 
     def resume_lambda_function(self, a_task, event):
         """
