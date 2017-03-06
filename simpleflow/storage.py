@@ -1,6 +1,6 @@
+from boto.exception import S3ResponseError
 from boto.s3 import connection
 from boto.s3.key import Key
-from future.moves.urllib.parse import urlparse
 
 from . import settings
 
@@ -23,15 +23,25 @@ def sanitize_bucket_and_host(bucket):
             raise ValueError('{} should contains only one slash separator'.format(bucket))
         if not host.endswith('amazonaws.com'):
             raise ValueError('host expecting an *.amazonaws.com URL')
-        return (bucket, host)
-    return (bucket, settings.SIMPLEFLOW_S3_HOST)
+        return bucket, host
+    return bucket, settings.SIMPLEFLOW_S3_HOST
 
 
-def get_bucket(bucket):
+def get_bucket(bucket, create=True):
     bucket, host = sanitize_bucket_and_host(bucket)
     connection = get_connection(host)
-    if not bucket in BUCKET_CACHE:
-        BUCKET_CACHE[bucket] = connection.get_bucket(bucket)
+    if bucket not in BUCKET_CACHE:
+        try:
+            bucket = connection.get_bucket(bucket)
+        except S3ResponseError as e:
+            if e.error_code == 'NoSuchBucket' and create:
+                raise
+                # TODO location must be extracted from host; see boto.s3.connection.Location
+                # TODO and http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+                # bucket = connection.create_bucket(bucket, location=TBD)
+            else:
+                raise
+        BUCKET_CACHE[bucket] = bucket
     return BUCKET_CACHE[bucket]
 
 
