@@ -179,6 +179,6 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
             "a.b": ["MY_REASON"],
             "a": ["MY_ROOT_REASON"]
         }
-        self.assertItemsEqual(
-            get_step_force_reasons(step_name, reasons),
+        self.assertEquals(
+            sorted(get_step_force_reasons(step_name, reasons)),
             ["MY_REASON", "MY_ROOT_REASON"])
