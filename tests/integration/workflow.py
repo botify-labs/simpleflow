@@ -63,11 +63,13 @@ class ASignalingTestParentWorkflow(Workflow):
     execution_timeout = '3600'
 
     def run(self, wait_after_first):
-        # Signaled twice since there's no barrier
         sig = self.submit(self.signal('signal', 1))
         if wait_after_first:
             futures.wait(sig)
-        sig = self.submit(self.signal('signal', 2))
+        else:
+            # Will be signaled once anyway since signals are marked as idempotent
+            pass
+        sig = self.submit(self.signal('signal', 1))
         futures.wait(self.submit(self.record_marker('marker 1')))
         sig_again = self.submit(self.signal('signal', 3))
         futures.wait(self.submit(self.record_marker('marker 2')))

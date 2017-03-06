@@ -16,17 +16,19 @@ class TestSignals(VCRIntegrationTest):
             lambda e: e["eventType"] == "SignalExternalWorkflowExecutionInitiated",
             events
         )
+        print(signals_initiated)
         expect(len(list(signals_initiated))).to.equal(1)
 
     @flaky(max_runs=2)
     @vcr.use_cassette
-    def test_signal_played_twice(self):
+    def test_signal_played_twice_ignored_as_idempotent(self):
         events = self.run_standalone('tests.integration.workflow.ASignalingTestParentWorkflow', False)
         signals_initiated = filter(
             lambda e: e["eventType"] == "SignalExternalWorkflowExecutionInitiated",
             events
         )
-        expect(len(list(signals_initiated))).to.equal(2)
+        print(signals_initiated)
+        expect(len(list(signals_initiated))).to.equal(1)
 
 
 if __name__ == '__main__':

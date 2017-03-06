@@ -189,7 +189,11 @@ class SignalTask(task.SignalTask, SwfTask):
 
     @property
     def idempotent(self):
-        return None
+        """
+        Don't resend send a signal multiple times during a replay.
+        :return:
+        """
+        return True
 
     def __repr__(self):
         return '{}(name={}, workflow_id={}, run_id={}, control={}, args={}, kwargs={})'.format(
