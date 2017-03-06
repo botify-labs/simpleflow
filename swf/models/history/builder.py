@@ -43,7 +43,7 @@ class History(swf.models.History):
     Helper class to build a history to simulate the execution of a workflow.
 
     """
-    def __init__(self, workflow, input=None, tag_list=None):
+    def __init__(self, workflow, input=None, tag_list=None, lambda_role=None):
         """
         Bootstrap a history with the first events added by SWF.
 
@@ -53,6 +53,8 @@ class History(swf.models.History):
         :type  input: dict
         :param tag_list: string of tags (beware not a list)
         :type  tag_list: str
+        :param lambda_role: lambda role
+        :type  lambda_role: Optional[str]
 
         """
         self._workflow = workflow
@@ -72,6 +74,7 @@ class History(swf.models.History):
                     "executionStartToCloseTimeout":
                         workflow.execution_timeout,
                     "input": json_dumps(input if input else {}),
+                    "lambdaRole": lambda_role,
                     "workflowType": {
                         "name": workflow.name,
                         "version": workflow.version
@@ -370,7 +373,9 @@ class History(swf.models.History):
                                            input=None,
                                            control=None,
                                            tag_list=None,
-                                           task_start_to_close_timeout=0):
+                                           task_start_to_close_timeout=0,
+                                           lambda_role=None,
+                                           ):
         if control is None:
             control = {}
 
@@ -384,6 +389,7 @@ class History(swf.models.History):
                 'decisionTaskCompletedEventId': 76,
                 'executionStartToCloseTimeout': '432000',
                 'input': json_dumps(input) if input is not None else '{}',
+                'lambdaRole': lambda_role,
                 'tagList': tag_list,
                 'taskList': {'name': task_list},
                 'taskStartToCloseTimeout': task_start_to_close_timeout,
@@ -588,13 +594,17 @@ class History(swf.models.History):
                            task_list=None,
                            input=None,
                            result=None,
-                           control=None):
+                           control=None,
+                           lambda_role=None,
+                           ):
         self.add_child_workflow_start_initiated(
             workflow,
             workflow_id=workflow_id,
             task_list=task_list,
             input=input,
-            control=control)
+            control=control,
+            lambda_role=lambda_role,
+        )
 
         if last_state not in CHILD_WORKFLOW_STATES:
             raise ValueError('last_state "{}" not supported for '
