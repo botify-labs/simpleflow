@@ -33,35 +33,37 @@ class StepWorkflow(Workflow, WorkflowStepMixin):
             Step(
                 'my_step',
                 Group(
-                    multiply(1),
-                    multiply(2),
-                    multiply(2)
+                    (multiply, 1),
+                    (multiply, 2),
+                    (multiply, 3)
                 )
             )
         )
         futures.wait(future)
 
+        # You can force the step even if already executed
+        group = Group((multiply, 1), (multiply, 2), (multiply, 3))
+        step = Step(
+            'my_step_force',
+            group,
+            force=True)
+        futures.wait(self.submit(step))
 
-# You can force the step even if already executed
-group = Group(multiply(1), multiply(2), multiply(3))
-step = Step(
-    'my_step',
-    group,
-    force=True)
+        # You can play another activity group in the step was already computed
+        group_done = Group(self.signal('DONE'))
+        step = Step(
+            'my_step_with_callback_done',
+            group,
+            activities_if_step_already_done=group_done)
+        futures.wait(self.submit(step))
 
-# You can play another activity group in the step was already computed
-group_done = Group(workflow.signal('DONE'))
-step = Step(
-    'my_step',
-    group,
-    activities_if_step_already_done=group_done)
-
-# You can emit a signal with the identifier step.{step_name}
-# after the step is executed (cached or not)
-step = Step(
-    'my_step',
-    group,
-    emit_signal=True)
+        # You can emit a signal with the identifier step.{step_name}
+        # after the step is executed (cached or not)
+        step = Step(
+            'my_step_with_signal',
+            group,
+            emit_signal=True)
+        futures.wait(self.submit(step))
 
 
 # You can customize the place where the steps files are located by overriding the following methods:
@@ -95,5 +97,13 @@ class CustomizedStepWorkflow(Workflow, WorkflowStepMixin):
             "task_list": "specific_task_list"
         }
 
-    def run(self, people_id):
+    def run(self, people_id, force_steps=None):
         self.people_id = people_id
+
+        # You can declare step forcing
+        # at workflow initialization
+        # it can comes from the context or the result
+        # of a specific activity result
+        if force_steps:
+            self.add_forced_steps(force_steps,
+                                  reason="workflow_init")

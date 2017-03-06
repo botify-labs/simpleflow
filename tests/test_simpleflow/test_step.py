@@ -118,13 +118,12 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=['my_step'])
 
         # Call Marker Step is done
-        print decisions
         # Check that the workflow is done
         decisions = self.replay()
-        print decisions
         self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
-        self.assertEquals(decisions[0]["recordMarkerDecisionAttributes"]["details"],
-                          '{"status":"skipped","forced":false,"step":"my_step","reasons":[]}')
+        self.assertEquals(
+            json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
+            {"status":"skipped", "forced": False, "step":"my_step", "reasons":[]})
 
     @mock_s3
     @mock_swf
@@ -151,8 +150,9 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
 
         decisions = self.replay()
         self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
-        self.assertEquals(decisions[0]["recordMarkerDecisionAttributes"]["details"],
-                          '{"status":"scheduled","forced":true,"step":"my_step","reasons":["workflow_init"]}')
+        self.assertEquals(
+            json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
+            {"status": "scheduled", "forced": True, "step":"my_step", "reasons":["workflow_init"]})
 
     def test_should_force_step(self):
         step_name = "a.b.c"
