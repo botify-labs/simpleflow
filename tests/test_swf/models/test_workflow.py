@@ -187,13 +187,13 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
             self.assertLength(diffs, 0)
 
     def test_save_already_existing_type(self):
-        with patch.object(self.wt.connection, 'register_workflow_type') as mock:
+        with patch.object(self.wt, 'custom_register_workflow_type') as mock:
             with self.assertRaises(AlreadyExistsError):
                 mock.side_effect = SWFTypeAlreadyExistsError(400, "mocked exception")
                 self.wt.save()
 
     def test_save_with_response_error(self):
-        with patch.object(self.wt.connection, 'register_workflow_type') as mock:
+        with patch.object(self.wt, 'custom_register_workflow_type') as mock:
             with self.assertRaises(DoesNotExistError):
                 mock.side_effect = SWFResponseError(
                     400,

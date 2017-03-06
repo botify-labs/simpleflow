@@ -14,7 +14,7 @@ from swf.querysets.workflow import BaseWorkflowQuerySet,\
                                    WorkflowExecutionQuerySet
 from swf.utils import datetime_timestamp, past_day
 
-from ..mocks.workflow import mock_describe_workflow_type,\
+from tests.test_swf.mocks.workflow import mock_describe_workflow_type,\
                              mock_list_workflow_types,\
                              mock_list_open_workflow_executions,\
                              mock_list_closed_workflow_executions
@@ -110,7 +110,7 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
         with patch.object(Layer1, 'describe_workflow_type') as mock:
             mock.side_effect = DoesNotExistError("Mocked exception")
 
-            with patch.object(Layer1, 'register_workflow_type', mock_describe_workflow_type):
+            with patch.object(WorkflowType, 'custom_register_workflow_type', mock_describe_workflow_type):
                 workflow_type = self.wtq.get_or_create("TestDomain", "testversion")
 
                 self.assertIsInstance(workflow_type, WorkflowType)
@@ -145,9 +145,8 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
                 self.assertEqual(wt.status, REGISTERED)
 
     def test_create_workflow_type(self):
-        with patch.object(Layer1, 'register_workflow_type'):
+        with patch.object(WorkflowType, 'custom_register_workflow_type'):
             new_wt = self.wtq.create(
-                self.domain,
                 "TestWorkflowType",
                 "0.test",
             )
