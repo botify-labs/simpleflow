@@ -45,42 +45,43 @@ class WorkflowExecutionDoesNotExist(DoesNotExistError):
 class WorkflowType(BaseModel):
     """Simple Workflow Type wrapper
 
-    :param  domain: Domain the workflow type should be registered in
-    :type   domain: swf.models.Domain
+    :ivar  domain: Domain the workflow type should be registered in
+    :type  domain: swf.models.Domain
 
-    :param  name: name of the workflow type
-    :type   name: str
+    :ivar  name: name of the workflow type
+    :type  name: str
 
-    :param  version: workflow type version
-    :type   version: str
+    :ivar  version: workflow type version
+    :type  version: str
 
-    :param  status: workflow type status
-    :type   status: swf.core.ConnectedSWFObject.{REGISTERED, DEPRECATED}
+    :ivar  status: workflow type status
+    :type  status: swf.core.ConnectedSWFObject.{REGISTERED, DEPRECATED}
 
-    :param   creation_date: creation date of the current WorkflowType (timestamp)
-    :type    creation_date: float
+    :ivar   creation_date: creation date of the current WorkflowType (timestamp)
+    :type   creation_date: float
 
-    :param   deprecation_date: deprecation date of WorkflowType (timestamp)
-    :type    deprecation_date: float
+    :ivar   deprecation_date: deprecation date of WorkflowType (timestamp)
+    :type   deprecation_date: float
 
-    :param  task_list: task list to use for scheduling decision tasks for executions
+    :ivar  task_list: task list to use for scheduling decision tasks for executions
                        of this workflow type
-    :type   task_list: str
+    :type  task_list: str
 
-    :param  child_policy: policy to use for the child workflow executions
+    :ivar  child_policy: policy to use for the child workflow executions
                           when a workflow execution of this type is terminated
-    :type   child_policy: CHILD_POLICIES.{TERMINATE |
-                                          REQUEST_CANCEL |
-                                          ABANDON}
+    :type  child_policy: CHILD_POLICIES
 
-    :param  execution_timeout: maximum duration for executions of this workflow type
-    :type   execution_timeout: str
+    :ivar  execution_timeout: maximum duration for executions of this workflow type
+    :type  execution_timeout: str
 
-    :param  decision_tasks_timeout: maximum duration of decision tasks for this workflow type
-    :type   decision_tasks_timeout: str
+    :ivar  decision_tasks_timeout: maximum duration of decision tasks for this workflow type
+    :type  decision_tasks_timeout: str
 
-    :param  description: Textual description of the workflow type
-    :type   description: str
+    :ivar  description: Textual description of the workflow type
+    :type  description: str
+
+    :ivar lambda_role: Lambda role
+    :type lambda_role: str
     """
     __slots__ = [
         'domain',
@@ -166,7 +167,7 @@ class WorkflowType(BaseModel):
             ('deprecation_date', self.deprecation_date, workflow_info['deprecationDate']),
             ('task_list', self.task_list, workflow_config['defaultTaskList']['name']),
             ('child_policy', self.child_policy, workflow_config['defaultChildPolicy']),
-            ('lambda_role', self.lambda_role, workflow_config['defaultLambdaRole']),
+            ('lambda_role', self.lambda_role, workflow_config.get('defaultLambdaRole')),
             ('execution_timeout', self.execution_timeout, workflow_config['defaultExecutionStartToCloseTimeout']),
             ('decision_tasks_timeout', self.decision_tasks_timeout, workflow_config['defaultTaskStartToCloseTimeout']),
             ('description', self.description, workflow_info['description']),
@@ -194,7 +195,7 @@ class WorkflowType(BaseModel):
     def save(self):
         """Creates the workflow type amazon side"""
         try:
-            self.my_register_workflow_type(
+            self.custom_register_workflow_type(
                 self.domain.name,
                 self.name,
                 self.version,
@@ -272,7 +273,7 @@ class WorkflowType(BaseModel):
         if tag_list and len(tag_list) > 5:
             raise ValueError("You cannot have more than 5 tags in StartWorkflowExecution.")
 
-        run_id = self.my_start_workflow_execution(
+        run_id = self.custom_start_workflow_execution(
             self.domain.name,
             workflow_id,
             self.name,
@@ -288,13 +289,13 @@ class WorkflowType(BaseModel):
 
         return WorkflowExecution(self.domain, workflow_id, run_id=run_id)
 
-    def my_register_workflow_type(self, domain, name, version,
-                                  task_list=None,
-                                  default_child_policy=None,
-                                  default_execution_start_to_close_timeout=None,
-                                  default_task_start_to_close_timeout=None,
-                                  default_lambda_role=None,
-                                  description=None):
+    def custom_register_workflow_type(self, domain, name, version,
+                                      task_list=None,
+                                      default_child_policy=None,
+                                      default_execution_start_to_close_timeout=None,
+                                      default_task_start_to_close_timeout=None,
+                                      default_lambda_role=None,
+                                      description=None):
         """
         Registers a new workflow type and its configuration settings
         in the specified domain.
@@ -374,13 +375,13 @@ class WorkflowType(BaseModel):
             'description': description,
         })
 
-    def my_start_workflow_execution(self, domain, workflow_id,
-                                    workflow_name, workflow_version,
-                                    task_list=None, child_policy=None,
-                                    execution_start_to_close_timeout=None,
-                                    input=None, tag_list=None,
-                                    task_start_to_close_timeout=None,
-                                    lambda_role=None):
+    def custom_start_workflow_execution(self, domain, workflow_id,
+                                        workflow_name, workflow_version,
+                                        task_list=None, child_policy=None,
+                                        execution_start_to_close_timeout=None,
+                                        input=None, tag_list=None,
+                                        task_start_to_close_timeout=None,
+                                        lambda_role=None):
         """
         Starts an execution of the workflow type in the specified
         domain using the provided workflowId and input data.
@@ -619,7 +620,7 @@ class WorkflowExecution(BaseModel):
             ('status', self.status, execution_info['executionStatus']),
             ('task_list', self.task_list, execution_config['taskList']['name']),
             ('child_policy', self.child_policy, execution_config['childPolicy']),
-            ('lambda_role', self.lambda_role, execution_config['lambdaRole']),
+            ('lambda_role', self.lambda_role, execution_config.get('lambdaRole')),
             ('execution_timeout', self.execution_timeout, execution_config['executionStartToCloseTimeout']),
             ('tag_list', self.tag_list, execution_info.get('tagList')),
             ('decision_tasks_timeout', self.decision_tasks_timeout, execution_config['taskStartToCloseTimeout']),
