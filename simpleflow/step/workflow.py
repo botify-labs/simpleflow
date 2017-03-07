@@ -46,6 +46,10 @@ class WorkflowStepMixin(object):
         return list(getattr(self, 'steps_forced', []))
 
     def _get_step_activity_params(self):
+        """
+        Returns the merged version between self.get_step_activity_params()
+        and the default STEP_ACTIVITY_PARAMS_DEFAULT + workflow task list
+        """
         activity_params_merged = copy.copy(STEP_ACTIVITY_PARAMS_DEFAULT)
         if hasattr(self, 'task_list'):
             activity_params_merged["task_list"] = self.task_list

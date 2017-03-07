@@ -16,7 +16,7 @@ def step_will_run(step_name, force_steps, steps_done, force):
     Return True if step will run by checking :
     1/ force is True
     2/ step_name is in force_steps configuration
-    3/ step_name is already computed
+    3/ step_name is not yet computed
     """
     return (
         force or

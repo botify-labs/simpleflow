@@ -18,7 +18,7 @@ class Step(SubmittableContainer):
         :param force : Force the step even if already executed
         :param activities_if_step_already_done : Activities to run even step already executed
         :param emit_signal : Emit a signal when the step is executed
-        :param force_steps_if_executed : list of steps names to force afterward
+        :param force_steps_if_executed : list of steps names to force in the next phases of the workflow
         """
         self.step_name = step_name
         self.activities = activities
