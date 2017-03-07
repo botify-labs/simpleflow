@@ -807,12 +807,14 @@ class Executor(executor.Executor):
         iterable = task.get_actual_value(iterable)
         return super(Executor, self).starmap(callable, iterable)
 
-    def replay(self, decision_response):
+    def replay(self, decision_response, decref_workflow=True):
         """Replay the workflow from the start until it blocks.
         Called by the DeciderWorker.
 
         :param decision_response: an object wrapping the PollForDecisionTask response
         :type  decision_response: swf.responses.Response
+        :param decref_workflow : Decref workflow once replay is done (to save memory)
+        :type decref_workflow : boolean
 
         :returns: a list of decision and a context dict (obsolete, empty)
         :rtype: ([swf.models.decision.base.Decision], dict)
@@ -842,7 +844,8 @@ class Executor(executor.Executor):
                 len(self._decisions),
             ))
             self.after_replay()
-            self.decref_workflow()
+            if decref_workflow:
+                self.decref_workflow()
             if self._append_timer:
                 self._add_start_timer_decision('_simpleflow_wake_up_timer')
             return self._decisions, {}
@@ -861,7 +864,8 @@ class Executor(executor.Executor):
                 details=swf.format.details(details),
             )
             self.after_closed()
-            self.decref_workflow()
+            if decref_workflow:
+                self.decref_workflow()
             return [decision], {}
 
         except Exception as err:
@@ -882,7 +886,8 @@ class Executor(executor.Executor):
                 details=swf.format.details(details),
             )
             self.after_closed()
-            self.decref_workflow()
+            if decref_workflow:
+                self.decref_workflow()
             return [decision], {}
 
         self.after_replay()
@@ -890,7 +895,8 @@ class Executor(executor.Executor):
         decision.complete(result=swf.format.result(json_dumps(result)))
         self.on_completed()
         self.after_closed()
-        self.decref_workflow()
+        if decref_workflow:
+            self.decref_workflow()
         return [decision], {}
 
     def decref_workflow(self):

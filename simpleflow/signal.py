@@ -1,4 +1,4 @@
-from simpleflow.base import Submittable
+from .base import Submittable
 
 
 class WaitForSignal(Submittable):

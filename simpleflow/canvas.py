@@ -1,6 +1,6 @@
 from . import futures
 from .activity import Activity
-from .base import Submittable
+from .base import Submittable, SubmittableContainer
 from .signal import WaitForSignal
 from .task import ActivityTask, SignalTask
 
@@ -21,7 +21,7 @@ def propagate_attribute(obj, attr, val):
         raise Exception('Cannot propagate attribute for unknown type: {}'.format(type(obj)))
 
 
-class FuncGroup(Submittable):
+class FuncGroup(SubmittableContainer):
     """
     Class calling a function returning an ActivityTask, a group or a chain
     activities : Group, Chain...
@@ -35,7 +35,7 @@ class FuncGroup(Submittable):
 
     def submit(self, executor):
         inst = self.instantiate_task()
-        return inst.submit(executor)
+        return executor.workflow.submit(inst)
 
     def instantiate_task(self):
         self.activities = self.func(*self.args, **self.kwargs)
@@ -104,7 +104,7 @@ class AggregateException(Exception):
         return self.exceptions == other.exceptions
 
 
-class Group(object):
+class Group(SubmittableContainer):
     """
     List of activities running in parallel.
     """
@@ -118,9 +118,9 @@ class Group(object):
         self.extend(activities)
 
     def append(self, submittable, *args, **kwargs):
-        if isinstance(submittable, (Submittable, Group)):
+        if isinstance(submittable, (Submittable, SubmittableContainer)):
             if args or kwargs:
-                raise ValueError('args, kwargs not supported for Submittable or Group')
+                raise ValueError('args, kwargs not supported for Submittable or SubmittableContainer')
             if self.raises_on_failure is not None:
                 propagate_attribute(submittable, 'raises_on_failure', self.raises_on_failure)
             self.activities.append(submittable)
@@ -153,39 +153,28 @@ class Group(object):
         return self
 
     def submit(self, executor):
-        return GroupFuture(self.activities, executor, self.max_parallel)
+        return GroupFuture(self.activities, executor.workflow, self.max_parallel)
 
 
 class GroupFuture(futures.Future):
 
-    def __init__(self, activities, executor, max_parallel=None, raises_on_failure=True):
+    def __init__(self, activities, workflow, max_parallel=None, raises_on_failure=True):
         super(GroupFuture, self).__init__()
         self.activities = activities
         self.futures = []
-        self.executor = executor
+        self.workflow = workflow
         self.max_parallel = max_parallel
         self.raises_on_failure = raises_on_failure
 
         for a in self.activities:
             if not self.max_parallel or self._count_pending_or_running < self.max_parallel:
-                future = self._submit_activity(a)
+                future = workflow.submit(a)
                 self.futures.append(future)
                 if self._count_pending_or_running == self.max_parallel:
                     break
 
         self.sync_state()
         self.sync_result()
-
-    def _submit_activity(self, act):
-        if isinstance(act, ActivityTask):
-            # Need to unwrap the ActivityTask since the SWF executor will build a swf.ActivityTask
-            return self.executor.submit(act.activity, *act.args, **act.kwargs)
-        elif isinstance(act, (Group, FuncGroup)):
-            return act.submit(self.executor)
-        elif isinstance(act, Submittable):
-            return self.executor.submit(act)
-
-        raise TypeError('Wrong type for `act` ({}). Expecting `Submittable`, `Group` or `FuncGroup`'.format(type(act)))
 
     def sync_state(self):
         if all(a.finished for a in self.futures) and self._futures_contain_all_activities:
@@ -242,16 +231,16 @@ class Chain(Group):
     def submit(self, executor):
         return ChainFuture(
             self.activities,
-            executor,
+            executor.workflow,
             raises_on_failure=self.raises_on_failure,
             send_result=self.send_result,
         )
 
 
 class ChainFuture(GroupFuture):
-    def __init__(self, activities, executor, raises_on_failure=True, send_result=False):
+    def __init__(self, activities, workflow, raises_on_failure=True, send_result=False):
         self.activities = activities
-        self.executor = executor
+        self.workflow = workflow
         self.raises_on_failure = raises_on_failure
         self._state = futures.PENDING
         self._result = None
@@ -263,7 +252,7 @@ class ChainFuture(GroupFuture):
         for i, a in enumerate(self.activities):
             if send_result and i > 0:
                 a.args.append(previous_result)
-            future = self._submit_activity(a)
+            future = workflow.submit(a)
             self.futures.append(future)
             if not future.finished:
                 break

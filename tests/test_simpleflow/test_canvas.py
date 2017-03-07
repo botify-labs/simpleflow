@@ -53,7 +53,7 @@ class CustomExecutor(Executor):
     """
 
     def submit(self, func, *args, **kwargs):
-        if func == running_task:
+        if hasattr(func, 'activity') and func.activity == running_task:
             f = futures.Future()
             f.set_running()
             return f
@@ -70,20 +70,21 @@ class MyWorkflow(workflow.Workflow):
 
 executor = CustomExecutor(MyWorkflow)
 executor.initialize_history({})
+executor._workflow = MyWorkflow(executor)
 
 
 class TestGroup(unittest.TestCase):
     def test(self):
         future = Group(
-            ActivityTask(to_string, 1),
-            ActivityTask(to_string, 2)
-        ).submit(executor)
+                (to_string, 1),
+                (to_string, 2)
+            ).submit(executor)
         self.assertTrue(future.finished)
 
         future = Group(
-            ActivityTask(to_string, "test1"),
-            ActivityTask(running_task, "test2"),
-            ActivityTask(sum_values, [1, 2])
+            (to_string, "test1"),
+            (running_task, "test2"),
+            (sum_values, [1, 2])
         ).submit(executor)
         self.assertTrue(future.running)
         self.assertEquals(future.count_finished_activities, 2)
@@ -100,7 +101,7 @@ class TestGroup(unittest.TestCase):
 
         group = Group()
         group += [
-            ActivityTask(to_string, "test1"),
+            (to_string, "test1"),
             running_task,
             (sum_values, [1, 2]),
         ]
@@ -113,14 +114,14 @@ class TestGroup(unittest.TestCase):
 
     def test_exceptions(self):
         future = Group(
-            ActivityTask(to_string, 1),
-            ActivityTask(to_string, 2)
+            (to_string, 1),
+            (to_string, 2)
         ).submit(executor)
         self.assertIsNone(future.exception)
 
         future = Group(
-            ActivityTask(zero_division),
-            ActivityTask(zero_division),
+            (zero_division),
+            (zero_division),
         ).submit(executor)
         self.assertTrue(future.finished)
         self.assertIsInstance(future.exception, AggregateException)
@@ -130,19 +131,19 @@ class TestGroup(unittest.TestCase):
 
     def test_max_parallel(self):
         future = Group(
-            ActivityTask(running_task, "test1"),
-            ActivityTask(running_task, "test2"),
-            ActivityTask(running_task, "test3"),
+            (running_task, "test1"),
+            (running_task, "test2"),
+            (running_task, "test3"),
             max_parallel=2
         ).submit(executor)
         self.assertTrue(future.running)
         self.assertEquals(len(future.futures), 2)
 
         future = Group(
-            ActivityTask(to_string, "test1"),
-            ActivityTask(running_task, "test2"),
-            ActivityTask(running_task, "test3"),
-            ActivityTask(running_task, "test4"),
+            (to_string, "test1"),
+            (running_task, "test2"),
+            (running_task, "test3"),
+            (running_task, "test4"),
             max_parallel=2
         ).submit(executor)
         self.assertTrue(future.running)
@@ -151,9 +152,9 @@ class TestGroup(unittest.TestCase):
                           [futures.FINISHED, futures.RUNNING, futures.RUNNING])
 
         future = Group(
-            ActivityTask(to_string, "test1"),
-            ActivityTask(to_string, "test2"),
-            ActivityTask(to_string, "test3"),
+            (to_string, "test1"),
+            (to_string, "test2"),
+            (to_string, "test3"),
             max_parallel=2
         ).submit(executor)
         self.assertTrue(future.finished)
@@ -162,25 +163,25 @@ class TestGroup(unittest.TestCase):
 class TestChain(unittest.TestCase):
     def test(self):
         future = Chain(
-            ActivityTask(to_string, "test"),
-            ActivityTask(to_string, "test")
+            (to_string, "test"),
+            (to_string, "test")
         ).submit(executor)
         self.assertTrue(future.finished)
         self.assertEquals(future.count_finished_activities, 2)
 
         future = Chain(
-            ActivityTask(to_string, "test"),
-            ActivityTask(running_task, "test"),
-            ActivityTask(to_string, "test")
+            (to_string, "test"),
+            (running_task, "test"),
+            (to_string, "test")
         ).submit(executor)
         self.assertTrue(future.running)
         self.assertEquals(future.count_finished_activities, 1)
 
     def test_previous_value(self):
         future = Chain(
-            ActivityTask(sum_values, [1, 2]),
-            ActivityTask(sum_previous, [2, 3]),
-            ActivityTask(sum_previous, [4, 5]),
+            (sum_values, [1, 2]),
+            (sum_previous, [2, 3]),
+            (sum_previous, [4, 5]),
             send_result=True
         ).submit(executor)
         self.assertTrue(future.finished)
@@ -188,16 +189,16 @@ class TestChain(unittest.TestCase):
 
     def test_exceptions(self):
         future = Chain(
-            ActivityTask(to_string, 1),
-            ActivityTask(to_string, 2)
+            (to_string, 1),
+            (to_string, 2)
         ).submit(executor)
         self.assertIsNone(future.exception)
 
         # Do not execute the 3rd step is the 2nd is failing on chains
         future = Chain(
-            ActivityTask(to_string, "test1"),
-            ActivityTask(zero_division),
-            ActivityTask(to_string, "test2"),
+            (to_string, "test1"),
+            (zero_division),
+            (to_string, "test2"),
         ).submit(executor)
         self.assertTrue(future.finished)
         self.assertIsInstance(future.exception, AggregateException)
@@ -208,16 +209,16 @@ class TestChain(unittest.TestCase):
 
     def test_raises_on_failure(self):
         chain = Chain(
-            ActivityTask(to_string, "test1"),
-            ActivityTask(zero_division),
+            (to_string, "test1"),
+            (zero_division),
             raises_on_failure=False
         )
         self.assertFalse(chain.activities[0].activity.raises_on_failure)
         self.assertFalse(chain.activities[1].activity.raises_on_failure)
 
         chain = Chain(
-            ActivityTask(to_string, "test1"),
-            ActivityTask(zero_division),
+            (to_string, "test1"),
+            (zero_division),
             raises_on_failure=True
         )
         self.assertTrue(chain.activities[0].activity.raises_on_failure)
@@ -225,8 +226,8 @@ class TestChain(unittest.TestCase):
 
     def test_raises_on_failure_doesnt_set_exception(self):
         future = Chain(
-            ActivityTask(zero_division),
-            ActivityTask(to_string, "test1"),
+            (zero_division),
+            (to_string, "test1"),
             raises_on_failure=False
         ).submit(executor)
         self.assertEqual(1, future.count_finished_activities)
@@ -238,9 +239,9 @@ class TestChain(unittest.TestCase):
         :return:
         """
         future = Chain(
-            ActivityTask(to_string, 1),
+            (to_string, 1),
             executor.signal('test'),
-            ActivityTask(to_string, 2),
+            (to_string, 2),
             executor.wait_signal('test'),
             raises_on_failure=False
         ).submit(executor)
@@ -253,13 +254,13 @@ class TestFuncGroup(unittest.TestCase):
         def custom_func(previous_value):
             group = Group()
             for i in range(0, previous_value):
-                group.append(ActivityTask(to_int, i * 2))
+                group.append(to_int, i * 2)
             return group
 
         chain = Chain(
-            ActivityTask(sum_values, [1, 2]),
+            (sum_values, [1, 2]),
             FuncGroup(custom_func),
-            ActivityTask(sum_values),
+            (sum_values,),
             send_result=True).submit(executor)
         self.assertEquals(chain.result, [3, [0, 2, 4], 6])
 
@@ -267,7 +268,7 @@ class TestFuncGroup(unittest.TestCase):
         def custom_func():
             group = Group()
             for i in range(0, 2):
-                group.append(ActivityTask(zero_division))
+                group.append(zero_division)
             return group
 
         fngrp = FuncGroup(custom_func, raises_on_failure=False)
@@ -279,7 +280,7 @@ class TestFuncGroup(unittest.TestCase):
         def custom_func():
             group = Group()
             for i in range(0, 2):
-                group.append(ActivityTask(zero_division))
+                group.append(zero_division)
             return group
 
         fngrp = FuncGroup(custom_func, raises_on_failure=True)
@@ -292,17 +293,17 @@ class TestFuncGroup(unittest.TestCase):
 class TestComplexCanvas(unittest.TestCase):
     def test(self):
         complex_canvas = Chain(
-            ActivityTask(sum_values, [1, 2]),
-            ActivityTask(sum_values, [1, 2]),
+            (sum_values, [1, 2]),
+            (sum_values, [1, 2]),
             Group(
-                ActivityTask(to_int, 1),
-                ActivityTask(to_int, 2),
+                (to_int, 1),
+                (to_int, 2),
             ),
             Chain(
-                ActivityTask(sum_values, [1, 2]),
-                ActivityTask(running_task, 1)
+                (sum_values, [1, 2]),
+                (running_task, 1)
             ),
-            ActivityTask(sum_values, [1, 2])
+            (sum_values, [1, 2])
         )
         result = complex_canvas.submit(executor)
 

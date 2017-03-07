@@ -1,7 +1,8 @@
 from boto.s3 import connection
 from boto.s3.key import Key
-from boto.s3.bucket import Bucket
+
 from . import settings
+
 
 BUCKET_CACHE = {}
 
@@ -10,10 +11,27 @@ def get_connection(host):
     return connection.S3Connection(host=host)
 
 
+def sanitize_bucket_and_host(bucket):
+    """
+    if bucket is in following format : 'xxx.amazonaws.com/bucket_name',
+    Returns a 2-values tuple ('bucket_name', 'xxx.amazonaws.com')
+    """
+    if "/" in bucket:
+        host, bucket = bucket.split('/', 1)
+        if "/" in bucket:
+            raise ValueError('{} should contains only one slash separator'.format(bucket))
+        if not host.endswith('amazonaws.com'):
+            raise ValueError('host should be a *.amazonaws.com URL')
+        return bucket, host
+    return bucket, settings.SIMPLEFLOW_S3_HOST
+
+
 def get_bucket(bucket):
-    if not bucket in BUCKET_CACHE:
-        connection = get_connection(settings.SIMPLEFLOW_S3_HOST)
-        BUCKET_CACHE[bucket] = connection.get_bucket(bucket)
+    bucket, host = sanitize_bucket_and_host(bucket)
+    conn = get_connection(host)
+    if bucket not in BUCKET_CACHE:
+        bucket = conn.get_bucket(bucket)
+        BUCKET_CACHE[bucket] = bucket
     return BUCKET_CACHE[bucket]
 
 
