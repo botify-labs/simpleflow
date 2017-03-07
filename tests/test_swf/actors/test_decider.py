@@ -40,6 +40,7 @@ class TestActor(unittest.TestCase):
         response = self.actor.poll()
 
         self.assertIsNotNone(response.token)
+        self.assertEqual(0, response.previous_started_event_id)
         self.assertEquals(
             [evt.type for evt in response.history],
             ['WorkflowExecution', 'DecisionTask', 'DecisionTask']

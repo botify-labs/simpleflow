@@ -68,7 +68,7 @@ class Decider(Actor):
         workflow history.
         :type identity: str
 
-        :returns: a Response object with history, token, and execution set
+        :returns: a Response object with history, token, execution, and previous_started_event_id set.
         :rtype: swf.responses.Response
 
         """
@@ -85,6 +85,7 @@ class Decider(Actor):
             raise PollTimeout("Decider poll timed out")
 
         events = task['events']
+        previous_started_event_id = task['previousStartedEventId']
 
         next_page = task.get('nextPageToken')
         while next_page:
@@ -128,4 +129,9 @@ class Decider(Actor):
         )
 
         # TODO: move history into execution (needs refactoring on WorkflowExecution.history())
-        return Response(token=token, history=history, execution=execution)
+        return Response(
+            token=token,
+            history=history,
+            execution=execution,
+            previous_started_event_id=previous_started_event_id,
+        )
