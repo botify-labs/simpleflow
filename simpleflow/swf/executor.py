@@ -489,7 +489,7 @@ class Executor(executor.Executor):
             lambda m: m['state'] == 'recorded' and m['details'] == json_details,
             marker_list
         )
-        return marker_list[-1] if marker_list else None
+        return list(marker_list)[-1] if marker_list else None
 
     TASK_TYPE_TO_EVENT_FINDER = {
         ActivityTask: find_activity_event,
