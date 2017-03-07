@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+0.15.0
+~~~~~~
+
+- Feature: steps (#221)
+- Make activity task result optional (#225)
+- Use details in addition to name to find markers (#227)
+- Logging: add exception information (#163)
+- swf/actors: support 'Message' key (#224)
+- Implement markers (#216) (#217)
+- Add retry on swf.process.Poller.poll and fail (#208)
+
 0.14.2
 ~~~~~~
 
