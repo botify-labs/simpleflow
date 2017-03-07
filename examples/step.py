@@ -107,3 +107,11 @@ class CustomizedStepWorkflow(Workflow, WorkflowStepMixin):
         if force_steps:
             self.add_forced_steps(force_steps,
                                   reason="workflow_init")
+
+        # Forcing of steps are multi-leveled
+        # Ex : if you force "a.b", you will force all steps
+        # named "a.b" or starting by "a.b." (ex : a.b.c)
+        self.add_forced_steps(["a.b"])
+
+        # You cann also force all steps by calling "*"
+        self.add_forced_steps("*")
