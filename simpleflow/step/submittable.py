@@ -12,20 +12,20 @@ from .utils import (
 class Step(SubmittableContainer):
 
     def __init__(self, step_name, activities, force=False, activities_if_step_already_done=None,
-                 emit_signal=False, dependencies=None):
+                 emit_signal=False, force_steps_if_executed=None):
         """
         :param step_name : Name of the step
         :param force : Force the step even if already executed
         :param activities_if_step_already_done : Activities to run even step already executed
         :param emit_signal : Emit a signal when the step is executed
-        :param dependencies : list of steps name to force afterward
+        :param force_steps_if_executed : list of steps names to force afterward
         """
         self.step_name = step_name
         self.activities = activities
         self.force = force
         self.activities_if_step_already_done = activities_if_step_already_done
         self.emit_signal = emit_signal
-        self.dependencies = dependencies or []
+        self.force_steps_if_executed = force_steps_if_executed or []
 
     def submit(self, executor):
         workflow = executor.workflow
@@ -43,7 +43,7 @@ class Step(SubmittableContainer):
                     marker["forced"] = True
                     marker["reasons"] = get_step_force_reasons(self.step_name, workflow.steps_forced_reasons)
 
-                workflow.add_forced_steps(self.dependencies, 'Dep of {}'.format(self.step_name))
+                workflow.add_forced_steps(self.force_steps_if_executed, 'Dep of {}'.format(self.step_name))
                 chain += (
                     self.activities,
                     (activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),
