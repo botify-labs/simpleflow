@@ -826,6 +826,9 @@ class Executor(executor.Executor):
         self._history.parse()
         self.build_execution_context(decision_response)
         self._execution = decision_response.execution
+        self._previous_started_event_id = getattr(
+            decision_response, 'previous_started_event_id', 0
+        )  # getattr instead of fixing tests
 
         workflow_started_event = history[0]
         input = workflow_started_event.input
