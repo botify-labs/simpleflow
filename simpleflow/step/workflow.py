@@ -63,3 +63,7 @@ class WorkflowStepMixin(object):
             **self._get_step_activity_params()),
             self.get_step_bucket(),
             self.get_step_path_prefix())
+
+    def get_steps_done(self):
+        return self.submit(
+            self.get_steps_done_activity()).result
