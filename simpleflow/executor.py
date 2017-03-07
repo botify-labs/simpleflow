@@ -166,7 +166,7 @@ class Executor(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def wait_signal(self, name):
+    def wait_signal(self, name, if_new):
         raise NotImplementedError
 
     @abc.abstractmethod

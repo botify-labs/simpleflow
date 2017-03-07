@@ -177,8 +177,8 @@ class Workflow(Submittable):
     def signal(self, name, *args, **kwargs):
         return self.executor.signal(name, *args, **kwargs)
 
-    def wait_signal(self, name):
-        return self.executor.wait_signal(name)
+    def wait_signal(self, name, if_new=False):
+        return self.executor.wait_signal(name, if_new)
 
     def record_marker(self, name, details=None):
         # type: (str, Any) -> Submittable

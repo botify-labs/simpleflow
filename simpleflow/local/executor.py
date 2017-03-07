@@ -143,8 +143,8 @@ class Executor(executor.Executor):
     def signal(self, name, *args, **kwargs):
         return SignalTask(name, *args, **kwargs)
 
-    def wait_signal(self, name):
-        return WaitForSignal(name)
+    def wait_signal(self, name, if_new):
+        return WaitForSignal(name, if_new)
 
     def record_marker(self, name, details=None):
         return MarkerTask(name, details)

@@ -242,7 +242,7 @@ class TestChain(unittest.TestCase):
             (to_string, 1),
             executor.signal('test'),
             (to_string, 2),
-            executor.wait_signal('test'),
+            executor.wait_signal('test', False),
             raises_on_failure=False
         ).submit(executor)
         self.assertEqual(4, future.count_finished_activities)

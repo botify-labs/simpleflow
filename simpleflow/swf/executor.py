@@ -1005,9 +1005,9 @@ class Executor(executor.Executor):
             **kwargs
         )
 
-    def wait_signal(self, name):
+    def wait_signal(self, name, if_new):
         logger.debug('{} - wait_signal({})'.format(self._workflow_id, name))
-        return WaitForSignal(name)
+        return WaitForSignal(name, if_new)
 
     def propagate_signals(self):
         """
