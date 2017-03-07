@@ -48,7 +48,7 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
         taskf = self.submit(
             Step('my_step',
                  task.ActivityTask(MyTask, num),
-                 dependencies=['my_step_2']))
+                 force_steps_if_executed=['my_step_2']))
         futures.wait(taskf)
 
 
