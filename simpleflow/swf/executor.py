@@ -409,15 +409,19 @@ class Executor(executor.Executor):
 
         return future
 
-    def get_future_from_signal(self, signal_name):
+    def get_future_from_signal(self, wait_for_signal):
         """
 
-        :param signal_name:
-        :type signal_name: str
+        :param wait_for_signal:
+        :type wait_for_signal: WaitForSignal
         :return:
         :rtype: futures.Future
         """
-        event = self._history.signals.get(signal_name)
+        event = self._history.signals.get(wait_for_signal.signal_name)
+        if not event:
+            return futures.Future()
+        if wait_for_signal.if_new and event['event_id'] < self._previous_started_event_id:
+            return futures.Future()
         return self.get_future_from_signal_event(None, event)
 
     def find_activity_event(self, a_task, history):
@@ -773,8 +777,8 @@ class Executor(executor.Executor):
             elif issubclass_(func, Workflow):
                 a_task = WorkflowTask(self, func, *args, **kwargs)
             elif isinstance(func, WaitForSignal):
-                future = self.get_future_from_signal(func.signal_name)
-                logger.debug('submitted WaitForSignalTask({}): future={}'.format(func.signal_name, future))
+                future = self.get_future_from_signal(func)
+                logger.debug('submitted WaitForSignalTask({}, {}): future={}'.format(func.signal_name, func.if_new, future))
                 return future
             elif isinstance(func, Submittable):
                 raise TypeError(
