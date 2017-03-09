@@ -76,7 +76,7 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None,
         for workflow in workflows
         ]
     domain = swf.models.Domain(domain)
-    return DeciderPoller(executors, domain, task_list)
+    return DeciderPoller(executors, domain, task_list, is_standalone)
 
 
 def make_decider(workflows, domain, task_list, nb_children=None,
