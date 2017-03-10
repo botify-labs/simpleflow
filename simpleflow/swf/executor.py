@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import copy
 import hashlib
 import json
 import logging
@@ -733,8 +734,7 @@ class Executor(executor.Executor):
         """
         if priority_set_on_submit is not PRIORITY_NOT_SET:
             return priority_set_on_submit
-        elif (isinstance(a_task, ActivityTask) and
-                      a_task.activity.task_priority is not PRIORITY_NOT_SET):
+        elif isinstance(a_task, ActivityTask) and a_task.activity.task_priority is not PRIORITY_NOT_SET:
             return a_task.activity.task_priority
         elif self._workflow.task_priority is not PRIORITY_NOT_SET:
             return self._workflow.task_priority
@@ -1081,3 +1081,27 @@ class Executor(executor.Executor):
             if m['state'] == 'recorded':
                 rc.append(Marker(m['name'], json_loads_or_raw(m['details'])))
         return rc
+
+    def get_event_details(self, event_type, event_name):
+        if event_type == 'signal':
+            return self._history.signals.get(event_name)
+        elif event_type == 'marker':
+            marker_list = self._history.markers.get(event_name)
+            if not marker_list:
+                return None
+            marker_list = list(
+                filter(
+                    lambda m: m['state'] == 'recorded',
+                    marker_list
+                )
+            )
+            if not marker_list:
+                return None
+            # Make pleasing details
+            marker = copy.copy(marker_list[-1])
+            marker['details'] = json_loads_or_raw(marker['details'])
+            return marker
+        else:
+            raise ValueError('Unimplemented type {!r} for get_event_details'.format(
+                event_type
+            ))
