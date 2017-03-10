@@ -453,11 +453,11 @@ class History(object):
                 'name': event.marker_name,
                 'state': event.state,
                 'details': getattr(event, 'details', None),
-                'recorded_event_id': event.id,
-                'recorded_event_timestamp': event.timestamp,
+                'event_id': event.id,
+                'timestamp': event.timestamp,
             }
             self._markers.setdefault(event.marker_name, []).append(marker)
-        elif event.state == 'failed':
+        elif event.state == 'record_failed':
             marker = {
                 'type': 'marker',
                 'name': event.marker_name,
