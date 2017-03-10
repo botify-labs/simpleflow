@@ -84,6 +84,8 @@ class TestSimpleflowSwfExecutor(unittest.TestCase):
         # priority set at decorator level but overridden in self.submit()
         expect(get_task_priority(decisions[4])).to.equal("30")
 
+
+class TestCaseNotNeedingDomain(unittest.TestCase):
     def test_get_event_details(self):
         history = builder.History(ExampleWorkflow, input={})
         signal_input = {'x': 42, 'foo': 'bar', '__propagate': False}
