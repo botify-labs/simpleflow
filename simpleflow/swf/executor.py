@@ -174,7 +174,6 @@ class Executor(executor.Executor):
             self.force_activities = re.compile(force_activities)
         else:
             self.force_activities = None
-        self.reset()
 
     # noinspection PyAttributeOutsideInit
     def reset(self):
