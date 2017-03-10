@@ -485,9 +485,11 @@ class Executor(executor.Executor):
         marker_list = history.markers.get(a_task.name)
         if not marker_list:
             return None
-        marker_list = filter(
-            lambda m: m['state'] == 'recorded' and m['details'] == json_details,
-            marker_list
+        marker_list = list(
+            filter(
+                lambda m: m['state'] == 'recorded' and m['details'] == json_details,
+                marker_list
+            )
         )
         return marker_list[-1] if marker_list else None
 
@@ -732,7 +734,7 @@ class Executor(executor.Executor):
         if priority_set_on_submit is not PRIORITY_NOT_SET:
             return priority_set_on_submit
         elif (isinstance(a_task, ActivityTask) and
-              a_task.activity.task_priority is not PRIORITY_NOT_SET):
+                      a_task.activity.task_priority is not PRIORITY_NOT_SET):
             return a_task.activity.task_priority
         elif self._workflow.task_priority is not PRIORITY_NOT_SET:
             return self._workflow.task_priority

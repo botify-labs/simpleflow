@@ -110,7 +110,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
     def task_list(self):
         return getattr(self.workflow, 'task_list', None)
 
-    def schedule(self, domain, task_list=None, priority=None):
+    def schedule(self, domain, task_list=None, **kwargs):
         """
         Schedule a child workflow.
 
@@ -192,7 +192,7 @@ class SignalTask(task.SignalTask, SwfTask):
             self.kwargs,
         )
 
-    def schedule(self, domain, task_list, priority=None):
+    def schedule(self, *args, **kwargs):
         input = {
             'args': self.args,
             'kwargs': self.kwargs,
