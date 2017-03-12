@@ -7,12 +7,6 @@ class MyTestCase(unittest.TestCase):
     def test_format_final_exc_line(self):
         line = None
         try:
-            1/0
-        except Exception as e:
-            line = format_exc(e)
-        self.assertEqual("ZeroDivisionError: division by zero", line)
-
-        try:
             {}[1]
         except Exception as e:
             line = format_exc(e)
