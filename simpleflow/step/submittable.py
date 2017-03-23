@@ -1,3 +1,4 @@
+import copy
 from .tasks import MarkStepDoneTask
 
 from simpleflow.base import SubmittableContainer
@@ -43,14 +44,18 @@ class Step(SubmittableContainer):
                     marker["forced"] = True
                     marker["reasons"] = get_step_force_reasons(self.step_name, workflow.steps_forced_reasons)
 
+                marker_done = copy.copy(marker)
+                marker_done["status"] = "completed"
+
                 workflow.add_forced_steps(self.force_steps_if_executed, 'Dep of {}'.format(self.step_name))
                 chain += (
+                    workflow.record_marker('log.step', marker),
                     self.activities,
                     (activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),
                      workflow.get_step_bucket(),
                      workflow.get_step_path_prefix(),
                      self.step_name),
-                    workflow.record_marker('log.step', marker)
+                    workflow.record_marker('log.step', marker_done)
                 )
             else:
                 marker["status"] = "skipped"
