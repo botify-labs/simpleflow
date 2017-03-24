@@ -24,7 +24,7 @@ class TestActivityWorker(unittest.TestCase):
 
         worker = ActivityWorker()
 
-        with patch.object(poller, "fail") as mock:
+        with patch.object(poller, "fail_with_retry") as mock:
             worker.process(poller, "token", task)
 
         self.assertEquals(1, mock.call_count)
