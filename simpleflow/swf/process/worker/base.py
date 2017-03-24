@@ -132,12 +132,12 @@ class ActivityWorker(object):
         :type task: swf.models.ActivityTask
         """
         logger.debug('ActivityWorker.process() pid={}'.format(os.getpid()))
-        activity = self.dispatch(task)
-        input = json.loads(task.input)
-        args = input.get('args', ())
-        kwargs = input.get('kwargs', {})
-        context = sanitize_activity_context(task.context)
         try:
+            activity = self.dispatch(task)
+            input = json.loads(task.input)
+            args = input.get('args', ())
+            kwargs = input.get('kwargs', {})
+            context = sanitize_activity_context(task.context)
             result = ActivityTask(activity, *args, context=context, **kwargs).execute()
         except Exception as err:
             logger.exception("process error: {}".format(str(err)))
