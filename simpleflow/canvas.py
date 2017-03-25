@@ -251,7 +251,12 @@ class ChainFuture(GroupFuture):
         previous_result = None
         for i, a in enumerate(self.activities):
             if send_result and i > 0:
-                a.args.append(previous_result)
+                if isinstance(a, ActivityTask):
+                    args = a.args + [previous_result]
+                    a = ActivityTask(a.activity, *args, **a.kwargs)
+                else:
+                    a.args.append(previous_result)
+
             future = workflow.submit(a)
             self.futures.append(future)
             if not future.finished:
