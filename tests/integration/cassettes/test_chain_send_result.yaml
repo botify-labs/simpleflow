@@ -1,0 +1,88 @@
+interactions:
+- request:
+    body: !!python/unicode '{"domain": "TestDomain", "workflowType": {"name": "chaintest",
+      "version": "example"}}'
+    headers:
+      Authorization: ['AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar']
+      Content-Encoding: [amz-1.0]
+      Content-Length: ['85']
+      Content-Type: [application/json; charset=UTF-8]
+      Host: [swf.us-east-1.amazonaws.com]
+      User-Agent: [Boto/2.46.1 Python/2.7.10 Linux/4.8.0-42-generic]
+      X-Amz-Date: [20170325T123344Z]
+      X-Amz-Target: [com.amazonaws.swf.service.model.SimpleWorkflowService.DescribeWorkflowType]
+    method: POST
+    uri: https://swf.us-east-1.amazonaws.com/
+  response:
+    body: {string: !!python/unicode '{"configuration":{"defaultChildPolicy":"TERMINATE","defaultExecutionStartToCloseTimeout":"300","defaultTaskList":{"name":"None"},"defaultTaskStartToCloseTimeout":"300"},"typeInfo":{"creationDate":1.490443324394E9,"status":"REGISTERED","workflowType":{"name":"chaintest","version":"example"}}}'}
+    headers:
+      content-length: ['292']
+      content-type: [application/json]
+      x-amzn-requestid: [4968ef76-1157-11e7-a6fa-4153e81f5db6]
+    status: {code: 200, message: OK}
+- request:
+    body: !!python/unicode '{"domain": "TestDomain", "workflowId": "test-simpleflow-workflow",
+      "workflowType": {"name": "chaintest", "version": "example"}, "taskList": {"name":
+      "test-simpleflow-workflow-5d48a39002f8475d8d55e64790b26a78"}, "childPolicy":
+      "TERMINATE", "input": "{\"args\":[],\"kwargs\":{}}"}'
+    headers:
+      Authorization: ['AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar']
+      Content-Encoding: [amz-1.0]
+      Content-Length: ['278']
+      Content-Type: [application/json; charset=UTF-8]
+      Host: [swf.us-east-1.amazonaws.com]
+      User-Agent: [Boto/2.46.1 Python/2.7.10 Linux/4.8.0-42-generic]
+      X-Amz-Date: [20170325T123345Z]
+      X-Amz-Target: [com.amazonaws.swf.service.model.SimpleWorkflowService.StartWorkflowExecution]
+    method: POST
+    uri: https://swf.us-east-1.amazonaws.com/
+  response:
+    body: {string: !!python/unicode '{"runId":"2263WH+F+tnu0ZotmzjQIWj9n/yw6EHDTfwgZf37GRoFA="}'}
+    headers:
+      content-length: ['58']
+      content-type: [application/json]
+      x-amzn-requestid: [49a7f42e-1157-11e7-befd-711435840ad9]
+    status: {code: 200, message: OK}
+- request:
+    body: !!python/unicode '{"domain": "TestDomain", "execution": {"runId": "2263WH+F+tnu0ZotmzjQIWj9n/yw6EHDTfwgZf37GRoFA=",
+      "workflowId": "test-simpleflow-workflow"}}'
+    headers:
+      Authorization: ['AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar']
+      Content-Encoding: [amz-1.0]
+      Content-Length: ['140']
+      Content-Type: [application/json; charset=UTF-8]
+      Host: [swf.us-east-1.amazonaws.com]
+      User-Agent: [Boto/2.46.1 Python/2.7.10 Linux/4.8.0-42-generic]
+      X-Amz-Date: [20170325T123347Z]
+      X-Amz-Target: [com.amazonaws.swf.service.model.SimpleWorkflowService.DescribeWorkflowExecution]
+    method: POST
+    uri: https://swf.us-east-1.amazonaws.com/
+  response:
+    body: {string: !!python/unicode '{"executionConfiguration":{"childPolicy":"TERMINATE","executionStartToCloseTimeout":"300","taskList":{"name":"test-simpleflow-workflow-5d48a39002f8475d8d55e64790b26a78"},"taskStartToCloseTimeout":"300"},"executionInfo":{"cancelRequested":false,"closeStatus":"COMPLETED","closeTimestamp":1.490445227812E9,"execution":{"runId":"2263WH+F+tnu0ZotmzjQIWj9n/yw6EHDTfwgZf37GRoFA=","workflowId":"test-simpleflow-workflow"},"executionStatus":"CLOSED","startTimestamp":1.490445225378E9,"workflowType":{"name":"chaintest","version":"example"}},"latestActivityTaskTimestamp":1.490445227341E9,"openCounts":{"openActivityTasks":0,"openChildWorkflowExecutions":0,"openDecisionTasks":0,"openLambdaFunctions":0,"openTimers":0}}'}
+    headers:
+      content-length: ['710']
+      content-type: [application/json]
+      x-amzn-requestid: [4b546b6b-1157-11e7-8671-173bd2d11b46]
+    status: {code: 200, message: OK}
+- request:
+    body: !!python/unicode '{"domain": "TestDomain", "execution": {"runId": "2263WH+F+tnu0ZotmzjQIWj9n/yw6EHDTfwgZf37GRoFA=",
+      "workflowId": "test-simpleflow-workflow"}}'
+    headers:
+      Authorization: ['AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar']
+      Content-Encoding: [amz-1.0]
+      Content-Length: ['140']
+      Content-Type: [application/json; charset=UTF-8]
+      Host: [swf.us-east-1.amazonaws.com]
+      User-Agent: [Boto/2.46.1 Python/2.7.10 Linux/4.8.0-42-generic]
+      X-Amz-Date: [20170325T123448Z]
+      X-Amz-Target: [com.amazonaws.swf.service.model.SimpleWorkflowService.GetWorkflowExecutionHistory]
+    method: POST
+    uri: https://swf.us-east-1.amazonaws.com/
+  response:
+    body: {string: !!python/unicode '{"events":[{"eventId":1,"eventTimestamp":1.490445225378E9,"eventType":"WorkflowExecutionStarted","workflowExecutionStartedEventAttributes":{"childPolicy":"TERMINATE","executionStartToCloseTimeout":"300","input":"{\"args\":[],\"kwargs\":{}}","parentInitiatedEventId":0,"taskList":{"name":"test-simpleflow-workflow-5d48a39002f8475d8d55e64790b26a78"},"taskStartToCloseTimeout":"300","workflowType":{"name":"chaintest","version":"example"}}},{"decisionTaskScheduledEventAttributes":{"startToCloseTimeout":"300","taskList":{"name":"test-simpleflow-workflow-5d48a39002f8475d8d55e64790b26a78"}},"eventId":2,"eventTimestamp":1.490445225378E9,"eventType":"DecisionTaskScheduled"},{"decisionTaskStartedEventAttributes":{"identity":"{\"user\":\"zeb\",\"hostname\":\"zeb-P5Q-E\",\"pid\":31697}","scheduledEventId":2},"eventId":3,"eventTimestamp":1.49044522543E9,"eventType":"DecisionTaskStarted"},{"decisionTaskCompletedEventAttributes":{"scheduledEventId":2,"startedEventId":3},"eventId":4,"eventTimestamp":1.490445225892E9,"eventType":"DecisionTaskCompleted"},{"activityTaskScheduledEventAttributes":{"activityId":"activity-tests.integration.workflow.increment-1","activityType":{"name":"tests.integration.workflow.increment","version":"example"},"decisionTaskCompletedEventId":4,"heartbeatTimeout":"300","input":"{\"args\":[5],\"kwargs\":{}}","scheduleToCloseTimeout":"300","scheduleToStartTimeout":"300","startToCloseTimeout":"300","taskList":{"name":"test-simpleflow-workflow-5d48a39002f8475d8d55e64790b26a78"}},"eventId":5,"eventTimestamp":1.490445225892E9,"eventType":"ActivityTaskScheduled"},{"activityTaskStartedEventAttributes":{"identity":"{\"user\":\"zeb\",\"hostname\":\"zeb-P5Q-E\",\"pid\":31694}","scheduledEventId":5},"eventId":6,"eventTimestamp":1.490445225952E9,"eventType":"ActivityTaskStarted"},{"activityTaskCompletedEventAttributes":{"result":"6","scheduledEventId":5,"startedEventId":6},"eventId":7,"eventTimestamp":1.490445226358E9,"eventType":"ActivityTaskCompleted"},{"decisionTaskScheduledEventAttributes":{"startToCloseTimeout":"300","taskList":{"name":"test-simpleflow-workflow-5d48a39002f8475d8d55e64790b26a78"}},"eventId":8,"eventTimestamp":1.490445226358E9,"eventType":"DecisionTaskScheduled"},{"decisionTaskStartedEventAttributes":{"identity":"{\"user\":\"zeb\",\"hostname\":\"zeb-P5Q-E\",\"pid\":31695}","scheduledEventId":8},"eventId":9,"eventTimestamp":1.490445226395E9,"eventType":"DecisionTaskStarted"},{"decisionTaskCompletedEventAttributes":{"scheduledEventId":8,"startedEventId":9},"eventId":10,"eventTimestamp":1.490445226881E9,"eventType":"DecisionTaskCompleted"},{"activityTaskScheduledEventAttributes":{"activityId":"activity-tests.integration.workflow.double-1","activityType":{"name":"tests.integration.workflow.double","version":"example"},"decisionTaskCompletedEventId":10,"heartbeatTimeout":"300","input":"{\"args\":[6],\"kwargs\":{}}","scheduleToCloseTimeout":"300","scheduleToStartTimeout":"300","startToCloseTimeout":"300","taskList":{"name":"test-simpleflow-workflow-5d48a39002f8475d8d55e64790b26a78"}},"eventId":11,"eventTimestamp":1.490445226881E9,"eventType":"ActivityTaskScheduled"},{"activityTaskStartedEventAttributes":{"identity":"{\"user\":\"zeb\",\"hostname\":\"zeb-P5Q-E\",\"pid\":31696}","scheduledEventId":11},"eventId":12,"eventTimestamp":1.490445226918E9,"eventType":"ActivityTaskStarted"},{"activityTaskCompletedEventAttributes":{"result":"12","scheduledEventId":11,"startedEventId":12},"eventId":13,"eventTimestamp":1.490445227341E9,"eventType":"ActivityTaskCompleted"},{"decisionTaskScheduledEventAttributes":{"startToCloseTimeout":"300","taskList":{"name":"test-simpleflow-workflow-5d48a39002f8475d8d55e64790b26a78"}},"eventId":14,"eventTimestamp":1.490445227341E9,"eventType":"DecisionTaskScheduled"},{"decisionTaskStartedEventAttributes":{"identity":"{\"user\":\"zeb\",\"hostname\":\"zeb-P5Q-E\",\"pid\":31697}","scheduledEventId":14},"eventId":15,"eventTimestamp":1.490445227379E9,"eventType":"DecisionTaskStarted"},{"decisionTaskCompletedEventAttributes":{"scheduledEventId":14,"startedEventId":15},"eventId":16,"eventTimestamp":1.490445227812E9,"eventType":"DecisionTaskCompleted"},{"eventId":17,"eventTimestamp":1.490445227812E9,"eventType":"WorkflowExecutionCompleted","workflowExecutionCompletedEventAttributes":{"decisionTaskCompletedEventId":16,"result":"[6,12]"}}]}'}
+    headers:
+      content-length: ['4336']
+      content-type: [application/json]
+      x-amzn-requestid: [6fc64137-1157-11e7-bd38-397e58ec4410]
+    status: {code: 200, message: OK}
+version: 1
