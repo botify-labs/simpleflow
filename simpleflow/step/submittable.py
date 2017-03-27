@@ -7,7 +7,8 @@ from simpleflow.canvas import Chain, FuncGroup
 from .utils import (
     get_step_force_reasons,
     step_will_run,
-    step_is_forced)
+    step_is_forced,
+    step_is_skipped)
 
 
 class Step(SubmittableContainer):
@@ -42,9 +43,11 @@ class Step(SubmittableContainer):
             forced_steps = workflow.get_forced_steps()
             skipped_steps = workflow.get_skipped_steps()
             if step_will_run(self.step_name, forced_steps, skipped_steps, steps_done, self.force):
-                if step_is_forced(self.step_name, workflow.get_forced_steps(), self.force):
+                if step_is_forced(self.step_name, forced_steps, self.force):
                     marker["forced"] = True
                     marker["reasons"] = get_step_force_reasons(self.step_name, workflow.steps_forced_reasons)
+                elif step_is_skipped(self.step_name, skipped_steps):
+                    marker["reasons"] = get_step_skip_reasons(self.step_name, workflow.steps_skipped_reasons)
 
                 marker_done = copy.copy(marker)
                 marker_done["status"] = "completed"

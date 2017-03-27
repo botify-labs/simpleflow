@@ -44,3 +44,11 @@ def get_step_force_reasons(step_name, step_force_reasons):
         if step == "*" or step == step_name or step_name.startswith(step + "."):
             reasons += sreasons
     return reasons
+
+
+def step_is_skipped(step_name, skipped_steps):
+    return should_skip_step(step_name, skipped_steps)
+
+
+def get_step_skip_reason(step_name, step_skip_reasons):
+    return get_step_force_reasons(step_name, step_skip_reasons)
