@@ -46,9 +46,9 @@ def get_step_force_reasons(step_name, step_force_reasons):
     return reasons
 
 
-def step_is_skipped(step_name, skipped_steps):
+def step_is_skipped_by_force(step_name, skipped_steps):
     return should_skip_step(step_name, skipped_steps)
 
 
-def get_step_skip_reason(step_name, step_skip_reasons):
+def get_step_skip_reasons(step_name, step_skip_reasons):
     return get_step_force_reasons(step_name, step_skip_reasons)

@@ -43,8 +43,9 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
             "task_list": "steps_task_list"
         }
 
-    def run(self, num, force_steps=[]):
+    def run(self, num, force_steps=[], skip_steps=[]):
         self.add_forced_steps(force_steps, "workflow_init")
+        self.add_skipped_steps(skip_steps, "workflow_init")
 
         taskf = self.submit(
             Step('my_step',
@@ -135,7 +136,7 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
         self.assertEquals(
             json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
-            {"status":"skipped", "forced": False, "step":"my_step", "reasons":[]})
+            {"status":"skipped", "forced": False, "step":"my_step", "reasons":["Step was already played"]})
 
     @mock_s3
     @mock_swf
@@ -174,7 +175,31 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
         self.assertEquals(
             json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
-            {"status": "completed", "forced": True, "step":"my_step", "reasons":["workflow_init"]})
+            {"status": "completed", "forced": False, "step":"my_step", "reasons":["workflow_init"]})
+
+    @mock_s3
+    @mock_swf
+    def test_skip_step(self):
+        """
+        Commented while waiting for marker's swf mocks on moto
+        """
+        self.create_bucket()
+
+        self.build_history({"args": [2], "kwargs": {"skip_steps": ["my_step"]}})
+        decisions = self.replay()
+
+        # Check that we call GetStepsDoneTask
+        self.check_task_scheduled_decision(decisions[0], task.Activity(GetStepsDoneTask))
+
+        # Now decide that it returns 'my_step' as done
+        self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=[])
+        decisions = self.replay()
+
+        # Call marker
+        self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
+        self.assertEquals(
+            json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
+            {"status": "skipped", "forced": True, "step":"my_step", "reasons":["workflow_init"]})
 
     def test_should_force_step(self):
         step_name = "a.b.c"
