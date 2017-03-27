@@ -39,7 +39,9 @@ class Step(SubmittableContainer):
                 "reasons": []
             }
             chain = Chain()
-            if step_will_run(self.step_name, workflow.get_forced_steps(), steps_done, self.force):
+            forced_steps = workflow.get_forced_steps()
+            skipped_steps = workflow.get_skipped_steps()
+            if step_will_run(self.step_name, forced_steps, skipped_steps, steps_done, self.force):
                 if step_is_forced(self.step_name, workflow.get_forced_steps(), self.force):
                     marker["forced"] = True
                     marker["reasons"] = get_step_force_reasons(self.step_name, workflow.steps_forced_reasons)

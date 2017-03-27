@@ -11,17 +11,25 @@ def should_force_step(step_name, force_steps):
     return False
 
 
-def step_will_run(step_name, force_steps, steps_done, force):
+def should_skip_step(step_name, skipped_steps):
+    return should_force_step(step_name, skipped_steps)
+
+
+def step_will_run(step_name, force_steps, skipped_steps, steps_done, force=False):
     """
     Return True if step will run by checking :
     1/ force is True
     2/ step_name is in force_steps configuration
     3/ step_name is not yet computed
+    4/ step_name is not skipped
     """
-    return (
-        force or
-        should_force_step(step_name, force_steps) or
-        step_name not in steps_done)
+    # Forced steps has priority on skipped steps
+    if force or should_force_step(step_name, force_steps):
+        return True
+    elif should_skip_step(step_name, skipped_steps):
+        return False
+    else:
+        return step_name not in steps_done
 
 
 def step_is_forced(step_name, force_steps, force):
