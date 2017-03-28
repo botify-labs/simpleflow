@@ -46,3 +46,8 @@ def raise_on_failure():
 @activity.with_attributes(version=DEFAULT_VERSION)
 def raise_error():
     raise Exception('error')
+
+
+@activity.with_attributes(version=DEFAULT_VERSION)
+def non_pythonic(*args, **kwargs):
+    pass
