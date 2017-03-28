@@ -45,6 +45,22 @@ class WorkflowStepMixin(object):
     def get_forced_steps(self):
         return list(getattr(self, 'steps_forced', []))
 
+    def add_skipped_steps(self, steps, reason=None):
+        """
+        Add steps to skip
+        """
+        if not hasattr(self, 'steps_skipped'):
+            self.steps_skipped = set()
+            self.steps_skipped_reasons = defaultdict(set)
+        steps = set(steps)
+        self.steps_skipped |= set(steps)
+        if reason:
+            for step in steps:
+                self.steps_skipped_reasons[step].add(reason)
+
+    def get_skipped_steps(self):
+        return list(getattr(self, 'steps_skipped', []))
+
     def _get_step_activity_params(self):
         """
         Returns the merged version between self.get_step_activity_params()

@@ -11,8 +11,8 @@ from simpleflow.step.workflow import WorkflowStepMixin
 from simpleflow.step.submittable import Step
 
 
-@activity.with_attributes(task_list='example', version='example')
-def multiply(numbers):
+@activity.with_attributes(task_list='example', version='example', idempotent=True)
+def multiply(*numbers):
     val = 1
     for n in numbers:
         val *= n

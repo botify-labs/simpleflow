@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+0.15.2
+~~~~~~
+
+- mark when a step is scheduled before it's executed (#243)
+
+0.15.1
+~~~~~~
+
+- Enhancement: better activity type reason (#238)
+- Fix workers not catching errors during dispatch() step (#246)
+- Fix canvas.Chain send_result regression (#247)
+
 0.15.0
 ~~~~~~
 

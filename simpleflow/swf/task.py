@@ -49,10 +49,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
             version=activity.version,
         )
 
-        input = {
-            'args': self.args,
-            'kwargs': self.kwargs,
-        }
+        input = self.get_input()
 
         if task_list is None:
             task_list = activity.task_list
@@ -89,6 +86,27 @@ class ActivityTask(task.ActivityTask, SwfTask):
         )
 
         return [decision]
+
+    def get_input(self):
+        input = {
+            'args': self.args,
+            'kwargs': self.kwargs,
+        }
+        return input
+
+
+class NonPythonicActivityTask(ActivityTask):
+    """
+    ActivityTask that pass raw kwargs or args as input, without "args" and "kwargs" subkeys.
+    """
+
+    def __init__(self, activity, *args, **kwargs):
+        if args and kwargs:
+            raise ValueError("This task type doesn't support both *args and kwargs")
+        super(ActivityTask, self).__init__(activity, *args, **kwargs)
+
+    def get_input(self):
+        return self.kwargs or self.args
 
 
 class WorkflowTask(task.WorkflowTask, SwfTask):
@@ -224,7 +242,7 @@ class SignalTask(task.SignalTask, SwfTask):
 
 class MarkerTask(task.MarkerTask, SwfTask):
 
-    idempotent = False
+    idempotent = True
 
     @classmethod
     def from_generic_task(cls, a_task):
@@ -233,10 +251,7 @@ class MarkerTask(task.MarkerTask, SwfTask):
 
     def __init__(self, name, details=None):
         super(MarkerTask, self).__init__(name, details)
-
-    @property
-    def id(self):
-        return self.name
+        self.id = None
 
     def schedule(self, *args, **kwargs):
         decision = swf.models.decision.MarkerDecision()

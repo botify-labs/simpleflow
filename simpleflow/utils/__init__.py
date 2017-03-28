@@ -30,3 +30,30 @@ def hex_hash(s):
         return '0'
     s = s.encode('utf-8')
     return '{:x}'.format(adler32(s) & 0xffffffff)
+
+
+def format_exc(exc):
+    """
+    Copy-pasted from traceback._format_final_exc_line.
+    :param exc: Exception value
+    :type exc: Exception
+    :return: String
+    :rtype: str
+    """
+    etype = exc.__class__.__name__
+    valuestr = _some_str(exc)
+    if exc is None or not valuestr:
+        line = "%s" % etype
+    else:
+        line = "%s: %s" % (etype, valuestr)
+    return line
+
+
+def _some_str(value):
+    """
+    Copy-pasted from traceback.
+    """
+    try:
+        return str(value)
+    except:
+        return '<unprintable %s object>' % type(value).__name__
