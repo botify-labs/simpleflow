@@ -176,3 +176,7 @@ class Executor(object):
     @abc.abstractmethod
     def list_markers(self, all=False):
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_event_details(self, event_type, event_name):
+        raise NotImplementedError

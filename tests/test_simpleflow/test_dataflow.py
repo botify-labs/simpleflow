@@ -43,9 +43,6 @@ from tests.data import (
 )
 
 
-# Note: tests checking the Executor.workflow instance must patch `decref_workflow`.
-
-
 def check_task_scheduled_decision(decision, task):
     """
     Asserts that *decision* schedules *task*.

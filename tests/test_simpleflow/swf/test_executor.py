@@ -7,6 +7,8 @@ from sure import expect
 from simpleflow import activity, futures
 from simpleflow.swf.executor import Executor
 from swf.actors import Decider
+from swf.models.history import builder
+from swf.responses import Response
 from tests.data import (
     BaseTestWorkflow,
     DOMAIN,
@@ -81,3 +83,39 @@ class TestSimpleflowSwfExecutor(unittest.TestCase):
 
         # priority set at decorator level but overridden in self.submit()
         expect(get_task_priority(decisions[4])).to.equal("30")
+
+
+class TestCaseNotNeedingDomain(unittest.TestCase):
+    def test_get_event_details(self):
+        history = builder.History(ExampleWorkflow, input={})
+        signal_input = {'x': 42, 'foo': 'bar', '__propagate': False}
+        marker_details = {'baz': 'bae'}
+        history.add_signal('a_signal', signal_input)
+        history.add_marker('a_marker', marker_details)
+        executor = Executor(DOMAIN, ExampleWorkflow)
+        decisions, _ = executor.replay(Response(history=history, execution=None))
+        details = executor.get_event_details('signal', 'a_signal')
+        del details['timestamp']
+        expect(details).to.equal({
+            'type': 'signal',
+            'state': 'signaled',
+            'name': 'a_signal',
+            'input': signal_input,
+            'event_id': 4,
+            'external_initiated_event_id': 0,
+            'external_run_id': None,
+            'external_workflow_id': None,
+        })
+        details = executor.get_event_details('signal', 'another_signal')
+        expect(details).to.be.none
+        details = executor.get_event_details('marker', 'a_marker')
+        del details['timestamp']
+        expect(details).to.equal({
+            'type': 'marker',
+            'state': 'recorded',
+            'name': 'a_marker',
+            'details': marker_details,
+            'event_id': 5,
+        })
+        details = executor.get_event_details('marker', 'another_marker')
+        expect(details).to.be.none

@@ -10,7 +10,8 @@ from .utils import issubclass_
 
 
 if False:
-    from typing import List, Any
+    from typing import List, Any, Optional
+    from .marker import Marker
 
 
 class Workflow(Submittable):
@@ -185,5 +186,18 @@ class Workflow(Submittable):
         return self.executor.record_marker(name, details)
 
     def list_markers(self, all=False):
-        # type: (bool) -> List[simpleflow.marker.Marker]
+        # type: (bool) -> List[Marker]
         return self.executor.list_markers(all)
+
+    def get_event_details(self, event_type, event_name):
+        # type: (str, str) -> Optional[dict]
+        """
+        Get details about an event.
+        Backend-dependent.
+        The SWF backend can handle 'marker' and 'signal' events, returning a dict
+        with name, input/details, event_id, ...
+        :param event_type:
+        :param event_name:
+        :return: backend-dependent details.
+        """
+        return self.executor.get_event_details(event_type, event_name)
