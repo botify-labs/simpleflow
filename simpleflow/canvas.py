@@ -236,6 +236,9 @@ class Chain(Group):
             send_result=self.send_result,
         )
 
+    def __repr__(self):
+        return '<{} at {:#x}, activities={!r}>'.format(self.__class__.__name__, id(self), self.activities)
+
 
 class ChainFuture(GroupFuture):
     def __init__(self, activities, workflow, raises_on_failure=True, send_result=False):
