@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.15.2
+~~~~~~
+
+- mark when a step is scheduled before it's executed (#243)
+
 0.15.1
 ~~~~~~
 
