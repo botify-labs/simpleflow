@@ -224,7 +224,7 @@ class SignalTask(task.SignalTask, SwfTask):
 
 class MarkerTask(task.MarkerTask, SwfTask):
 
-    idempotent = False
+    idempotent = True
 
     @classmethod
     def from_generic_task(cls, a_task):
@@ -233,10 +233,7 @@ class MarkerTask(task.MarkerTask, SwfTask):
 
     def __init__(self, name, details=None):
         super(MarkerTask, self).__init__(name, details)
-
-    @property
-    def id(self):
-        return self.name
+        self.id = None
 
     def schedule(self, *args, **kwargs):
         decision = swf.models.decision.MarkerDecision()
