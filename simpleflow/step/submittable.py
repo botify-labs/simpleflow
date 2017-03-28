@@ -1,3 +1,4 @@
+import copy
 from .tasks import MarkStepDoneTask
 
 from simpleflow.base import SubmittableContainer
@@ -5,8 +6,10 @@ from simpleflow import activity
 from simpleflow.canvas import Chain, FuncGroup
 from .utils import (
     get_step_force_reasons,
+    get_step_skip_reasons,
     step_will_run,
-    step_is_forced)
+    step_is_forced,
+    step_is_skipped_by_force)
 
 
 class Step(SubmittableContainer):
@@ -38,22 +41,34 @@ class Step(SubmittableContainer):
                 "reasons": []
             }
             chain = Chain()
-            if step_will_run(self.step_name, workflow.get_forced_steps(), steps_done, self.force):
-                if step_is_forced(self.step_name, workflow.get_forced_steps(), self.force):
+            forced_steps = workflow.get_forced_steps()
+            skipped_steps = workflow.get_skipped_steps()
+            if step_will_run(self.step_name, forced_steps, skipped_steps, steps_done, self.force):
+                if step_is_forced(self.step_name, forced_steps, self.force):
                     marker["forced"] = True
                     marker["reasons"] = get_step_force_reasons(self.step_name, workflow.steps_forced_reasons)
 
+                marker_done = copy.copy(marker)
+                marker_done["status"] = "completed"
+
                 workflow.add_forced_steps(self.force_steps_if_executed, 'Dep of {}'.format(self.step_name))
                 chain += (
+                    workflow.record_marker('log.step', marker),
                     self.activities,
                     (activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),
                      workflow.get_step_bucket(),
                      workflow.get_step_path_prefix(),
                      self.step_name),
-                    workflow.record_marker('log.step', marker)
+                    workflow.record_marker('log.step', marker_done)
                 )
             else:
                 marker["status"] = "skipped"
+                if step_is_skipped_by_force(self.step_name, skipped_steps):
+                    marker["forced"] = True
+                    marker["reasons"] = get_step_skip_reasons(self.step_name, workflow.steps_skipped_reasons)
+                else:
+                    marker["reasons"] = ["Step was already played"]
+
                 if self.activities_if_step_already_done:
                     chain.append(self.activities_if_step_already_done)
                 chain.append(
