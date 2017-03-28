@@ -40,7 +40,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
     :ivar nb_retries: # of retries allowed
     :type nb_retries: int
     """
-    def __init__(self, workflow_executors, domain, task_list, nb_retries=3,
+    def __init__(self, workflow_executors, domain, task_list, is_standalone, nb_retries=3,
                  *args, **kwargs):
         """
         The decider is an actor that reads the full history of the workflow
@@ -83,6 +83,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
 
         self.nb_retries = nb_retries
         self.domain = domain
+        self.is_standalone = is_standalone
 
         # All executors must have the same domain.
         self._check_all_domains_identical()
@@ -166,7 +167,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :rtype: list[swf.models.decision.base.Decision]
         """
         worker = DeciderWorker(self.domain, self._workflow_executors)
-        decisions = worker.decide(decision_response, self.task_list)
+        decisions = worker.decide(decision_response, self.task_list if self.is_standalone else None)
         return decisions
 
 
