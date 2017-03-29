@@ -538,10 +538,13 @@ class WorkflowExecution(BaseModel):
                       raises(WorkflowExecutionDoesNotExist,
                              when=exceptions.is_unknown('domain'),
                              extract=exceptions.extract_resource))
-    def terminate(self, *args, **kwargs):
+    def terminate(self, child_policy=None, details=None, reason=None):
         """Terminates the workflow execution"""
         self.connection.terminate_workflow_execution(
             self.domain.name,
             self.workflow_id,
-            run_id=self.run_id
+            run_id=self.run_id,
+            child_policy=child_policy,
+            details=details,
+            reason=reason,
         )
