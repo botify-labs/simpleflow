@@ -12,7 +12,7 @@ from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
-from simpleflow.utils import json_dumps
+from simpleflow.utils import json_dumps, format_exc
 
 from .dispatch import dynamic_dispatcher
 
@@ -132,17 +132,17 @@ class ActivityWorker(object):
         :type task: swf.models.ActivityTask
         """
         logger.debug('ActivityWorker.process() pid={}'.format(os.getpid()))
-        activity = self.dispatch(task)
-        input = json.loads(task.input)
-        args = input.get('args', ())
-        kwargs = input.get('kwargs', {})
-        context = sanitize_activity_context(task.context)
         try:
+            activity = self.dispatch(task)
+            input = json.loads(task.input)
+            args = input.get('args', ())
+            kwargs = input.get('kwargs', {})
+            context = sanitize_activity_context(task.context)
             result = ActivityTask(activity, *args, context=context, **kwargs).execute()
         except Exception as err:
             logger.exception("process error: {}".format(str(err)))
             tb = traceback.format_exc()
-            return poller.fail_with_retry(token, task, reason=str(err), details=tb)
+            return poller.fail_with_retry(token, task, reason=format_exc(err), details=tb)
 
         try:
             poller.complete_with_retry(token, json_dumps(result))

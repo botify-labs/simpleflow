@@ -4,7 +4,7 @@ import tempfile
 import boto
 from moto import mock_s3
 
-from simpleflow import storage
+from simpleflow import storage, settings
 
 
 class TestGroup(unittest.TestCase):
@@ -66,3 +66,15 @@ class TestGroup(unittest.TestCase):
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
         keys = [k for k in storage.list_keys(self.bucket, None)]
         self.assertEquals(keys[0].key, "mykey.txt")
+
+    def test_sanitize_bucket_and_host(self):
+        self.assertEquals(
+            storage.sanitize_bucket_and_host('mybucket'),
+            ('mybucket', settings.SIMPLEFLOW_S3_HOST))
+        self.assertEquals(
+            storage.sanitize_bucket_and_host('s3-eu-west-1.amazonaws.com/mybucket'),
+            ('mybucket', 's3-eu-west-1.amazonaws.com'))
+        with self.assertRaises(ValueError):
+            storage.sanitize_bucket_and_host('any/mybucket')
+        with self.assertRaises(ValueError):
+            storage.sanitize_bucket_and_host('s3-eu-west-1.amazonaws.com/mybucket/subpath')

@@ -8,6 +8,7 @@ from simpleflow import (
     futures,
 )
 from simpleflow.canvas import Chain
+from simpleflow.task import ActivityTask
 
 
 @activity.with_attributes(task_list='quickstart', version='example',
@@ -21,6 +22,23 @@ def sleep(seconds):
     # it is displayed in "simpleflow activity.rerun" ; unfortunately hard to
     # include in a unit or integration test...
     return {"result": "slept {}s".format(seconds)}
+
+
+@activity.with_attributes(task_list='quickstart', version='example', idempotent=True)
+def get_uuid(unused=None):
+    return str(uuid.uuid4())
+
+
+@activity.with_attributes(task_list='decisions', version='example')
+def increment(x):
+    print("increment: %d" % x)
+    return x + 1
+
+
+@activity.with_attributes(task_list='decisions', version='example')
+def double(y):
+    print("double: %d" % y)
+    return y * 2
 
 
 class SleepWorkflow(Workflow):
@@ -100,3 +118,23 @@ class MarkerWorkflow(Workflow):
             self.submit(m2)
             self.submit(m3)
         futures.wait(future)
+
+
+class ChainTestWorkflow(Workflow):
+    name = 'chaintest'
+    version = 'example'
+    task_list = 'dlist'
+
+    def run(self, x=5):
+        future = self.submit(
+            Chain(
+                ActivityTask(increment, x),
+                ActivityTask(double),  # will fail before executing `double`
+                send_result=True
+            )
+        )
+        print("Future: %s" % future)
+        futures.wait(future)
+        print("Result: %s" % future.result)  # future.result == [6, 12]
+
+        return future.result

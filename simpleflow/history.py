@@ -183,7 +183,7 @@ class History(object):
         elif event.state == 'completed':
             activity = get_activity()
             activity['state'] = event.state
-            activity['result'] = event.result
+            activity['result'] = getattr(event, 'result', None)
             activity['completed_id'] = event.id
             activity['completed_timestamp'] = event.timestamp
         elif event.state == 'timed_out':
@@ -202,7 +202,7 @@ class History(object):
         elif event.state == 'failed':
             activity = get_activity()
             activity['state'] = event.state
-            activity['reason'] = event.reason
+            activity['reason'] = getattr(event, 'reason', '')
             activity['details'] = getattr(event, 'details', '')
             activity['failed_timestamp'] = event.timestamp
             if 'retry' not in activity:
@@ -212,8 +212,7 @@ class History(object):
         elif event.state == 'cancelled':
             activity = get_activity()
             activity['state'] = event.state
-            if hasattr(event, 'details'):
-                activity['details'] = event.details
+            activity['details'] = getattr(event, 'details', '')
             activity['cancelled_timestamp'] = event.timestamp
 
     def parse_child_workflow_event(self, events, event):
@@ -306,7 +305,7 @@ class History(object):
         elif event.state == 'completed':
             workflow = get_workflow()
             workflow['state'] = event.state
-            workflow['result'] = event.result
+            workflow['result'] = getattr(event, 'result', None)
             workflow['completed_id'] = event.id
             workflow['completed_timestamp'] = event.timestamp
         elif event.state == 'failed':

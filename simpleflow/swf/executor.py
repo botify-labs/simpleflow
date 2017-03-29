@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import inspect
+
 import hashlib
 import json
 import logging
@@ -485,9 +487,11 @@ class Executor(executor.Executor):
         marker_list = history.markers.get(a_task.name)
         if not marker_list:
             return None
-        marker_list = filter(
-            lambda m: m['state'] == 'recorded' and m['details'] == json_details,
-            marker_list
+        marker_list = list(
+            filter(
+                lambda m: m['state'] == 'recorded' and m['details'] == json_details,
+                marker_list
+            )
         )
         return marker_list[-1] if marker_list else None
 
@@ -508,9 +512,10 @@ class Executor(executor.Executor):
         :return:
         :rtype: Optional[dict]
         """
-        finder = self.TASK_TYPE_TO_EVENT_FINDER.get(type(a_task))
-        if finder:
-            return finder(self, a_task, history)
+        for typ in inspect.getmro(type(a_task)):
+            finder = self.TASK_TYPE_TO_EVENT_FINDER.get(typ)
+            if finder:
+                return finder(self, a_task, history)
         raise TypeError('invalid type {} for task {}'.format(
             type(a_task), a_task))
 
@@ -732,7 +737,7 @@ class Executor(executor.Executor):
         if priority_set_on_submit is not PRIORITY_NOT_SET:
             return priority_set_on_submit
         elif (isinstance(a_task, ActivityTask) and
-              a_task.activity.task_priority is not PRIORITY_NOT_SET):
+                      a_task.activity.task_priority is not PRIORITY_NOT_SET):
             return a_task.activity.task_priority
         elif self._workflow.task_priority is not PRIORITY_NOT_SET:
             return self._workflow.task_priority
@@ -807,12 +812,14 @@ class Executor(executor.Executor):
         iterable = task.get_actual_value(iterable)
         return super(Executor, self).starmap(callable, iterable)
 
-    def replay(self, decision_response):
+    def replay(self, decision_response, decref_workflow=True):
         """Replay the workflow from the start until it blocks.
         Called by the DeciderWorker.
 
         :param decision_response: an object wrapping the PollForDecisionTask response
         :type  decision_response: swf.responses.Response
+        :param decref_workflow : Decref workflow once replay is done (to save memory)
+        :type decref_workflow : boolean
 
         :returns: a list of decision and a context dict (obsolete, empty)
         :rtype: ([swf.models.decision.base.Decision], dict)
@@ -842,7 +849,8 @@ class Executor(executor.Executor):
                 len(self._decisions),
             ))
             self.after_replay()
-            self.decref_workflow()
+            if decref_workflow:
+                self.decref_workflow()
             if self._append_timer:
                 self._add_start_timer_decision('_simpleflow_wake_up_timer')
             return self._decisions, {}
@@ -861,7 +869,8 @@ class Executor(executor.Executor):
                 details=swf.format.details(details),
             )
             self.after_closed()
-            self.decref_workflow()
+            if decref_workflow:
+                self.decref_workflow()
             return [decision], {}
 
         except Exception as err:
@@ -882,7 +891,8 @@ class Executor(executor.Executor):
                 details=swf.format.details(details),
             )
             self.after_closed()
-            self.decref_workflow()
+            if decref_workflow:
+                self.decref_workflow()
             return [decision], {}
 
         self.after_replay()
@@ -890,7 +900,8 @@ class Executor(executor.Executor):
         decision.complete(result=swf.format.result(json_dumps(result)))
         self.on_completed()
         self.after_closed()
-        self.decref_workflow()
+        if decref_workflow:
+            self.decref_workflow()
         return [decision], {}
 
     def decref_workflow(self):

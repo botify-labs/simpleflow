@@ -1,6 +1,29 @@
 Changelog
 ---------
 
+0.15.2
+~~~~~~
+
+- mark when a step is scheduled before it's executed (#243)
+
+0.15.1
+~~~~~~
+
+- Enhancement: better activity type reason (#238)
+- Fix workers not catching errors during dispatch() step (#246)
+- Fix canvas.Chain send_result regression (#247)
+
+0.15.0
+~~~~~~
+
+- Feature: steps (#221)
+- Make activity task result optional (#225)
+- Use details in addition to name to find markers (#227)
+- Logging: add exception information (#163)
+- swf/actors: support 'Message' key (#224)
+- Implement markers (#216) (#217)
+- Add retry on swf.process.Poller.poll and fail (#208)
+
 0.14.2
 ~~~~~~
 
