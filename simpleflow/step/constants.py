@@ -6,7 +6,9 @@ STEP_ACTIVITY_PARAMS_DEFAULT = {
     'heartbeat_timeout': 180,
     'task_priority': 100,
     'version': '1.0',
-    'idempotent': True
+    'idempotent': True,
+    'raises_on_failure': True,
+    'retry': 1
 }
 
 UNKNOWN_CONTEXT = {
