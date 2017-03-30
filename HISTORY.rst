@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+0.15.3
+~~~~~~
+
+- make raises_on_failure=True on step activities (#249)
+- SWF: support for non-Python tasks (#219)
+- Fix get_step_path_prefix
+- Make MarkerTask's idempotents
+
 0.15.2
 ~~~~~~
 
