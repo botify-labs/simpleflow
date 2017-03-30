@@ -226,7 +226,7 @@ def terminate_workflow(domain, workflow_id, run_id):
 def restart_workflow(domain, workflow_id, run_id):
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
     history = ex.history()
-    ex.terminate()
+    ex.terminate(reason='workflow.restart')
     new_ex = ex.workflow_type.start_execution(
         ex.workflow_id,
         task_list=ex.task_list,
