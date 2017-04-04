@@ -205,7 +205,9 @@ class Executor(executor.Executor):
         :rtype: str
 
         """
-        if not a_task.idempotent:
+        if isinstance(a_task, ActivityTask) and hasattr(a_task.activity.callable, 'get_task_id'):
+            suffix = a_task.activity.callable.get_task_id(self.workflow, *args, **kwargs)
+        elif not a_task.idempotent:
             # If idempotency is False or unknown, let's generate a task id by
             # incrementing an id after the a_task name.
             # (default strategy, backwards compatible with previous versions)
