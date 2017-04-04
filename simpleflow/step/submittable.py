@@ -46,7 +46,10 @@ class Step(SubmittableContainer):
             if step_will_run(self.step_name, forced_steps, skipped_steps, steps_done, self.force):
                 if step_is_forced(self.step_name, forced_steps, self.force):
                     marker["forced"] = True
-                    marker["reasons"] = get_step_force_reasons(self.step_name, workflow.steps_forced_reasons)
+                    marker["reasons"] = get_step_force_reasons(
+                        self.step_name,
+                        getattr(workflow, 'steps_forced_reasons', {})
+                    )
 
                 marker_done = copy.copy(marker)
                 marker_done["status"] = "completed"
@@ -65,7 +68,10 @@ class Step(SubmittableContainer):
                 marker["status"] = "skipped"
                 if step_is_skipped_by_force(self.step_name, skipped_steps):
                     marker["forced"] = True
-                    marker["reasons"] = get_step_skip_reasons(self.step_name, workflow.steps_skipped_reasons)
+                    marker["reasons"] = get_step_skip_reasons(
+                        self.step_name,
+                        getattr(workflow, 'steps_skipped_reasons', {})
+                    )
                 else:
                     marker["reasons"] = ["Step was already played"]
 
