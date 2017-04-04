@@ -38,12 +38,16 @@ def step_is_forced(step_name, force_steps, force):
         should_force_step(step_name, force_steps))
 
 
-def get_step_force_reasons(step_name, step_force_reasons):
+def _get_step_reasons(step_name, step_reasons):
     reasons = []
-    for step, sreasons in step_force_reasons.items():
+    for step, sreasons in step_reasons.items():
         if step == "*" or step == step_name or step_name.startswith(step + "."):
             reasons += sreasons
     return reasons
+
+
+def get_step_force_reasons(step_name, step_force_reasons):
+    return _get_step_reasons(step_name, step_force_reasons)
 
 
 def step_is_skipped_by_force(step_name, skipped_steps):
@@ -51,4 +55,4 @@ def step_is_skipped_by_force(step_name, skipped_steps):
 
 
 def get_step_skip_reasons(step_name, step_skip_reasons):
-    return get_step_force_reasons(step_name, step_skip_reasons)
+    return _get_step_reasons(step_name, step_skip_reasons)
