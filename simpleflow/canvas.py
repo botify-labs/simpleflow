@@ -155,6 +155,9 @@ class Group(SubmittableContainer):
     def submit(self, executor):
         return GroupFuture(self.activities, executor.workflow, self.max_parallel)
 
+    def __repr__(self):
+        return '<{} at {:#x}, activities={!r}>'.format(self.__class__.__name__, id(self), self.activities)
+
 
 class GroupFuture(futures.Future):
 
@@ -212,6 +215,9 @@ class GroupFuture(futures.Future):
         return sum(1 if a.finished else 0
                    for a in self.futures)
 
+    def __repr__(self):
+        return '<{} at {:#x}, activities={!r}>'.format(self.__class__.__name__, id(self), self.activities)
+
 
 class Chain(Group):
     """
@@ -237,9 +243,6 @@ class Chain(Group):
             send_result=self.send_result,
             break_on_failure=self.break_on_failure,
         )
-
-    def __repr__(self):
-        return '<{} at {:#x}, activities={!r}>'.format(self.__class__.__name__, id(self), self.activities)
 
 
 class ChainFuture(GroupFuture):
