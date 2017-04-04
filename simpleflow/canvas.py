@@ -226,6 +226,7 @@ class Chain(Group):
                  *activities,
                  **options):
         self.send_result = options.pop('send_result', False)
+        self.break_on_failure = options.pop('break_on_failure', True)
         super(Chain, self).__init__(*activities, **options)
 
     def submit(self, executor):
@@ -234,6 +235,7 @@ class Chain(Group):
             executor.workflow,
             raises_on_failure=self.raises_on_failure,
             send_result=self.send_result,
+            break_on_failure=self.break_on_failure,
         )
 
     def __repr__(self):
@@ -241,7 +243,9 @@ class Chain(Group):
 
 
 class ChainFuture(GroupFuture):
-    def __init__(self, activities, workflow, raises_on_failure=True, send_result=False):
+    # Don't call GroupFuture.__init__ on purpose
+    # noinspection PyMissingConstructor
+    def __init__(self, activities, workflow, raises_on_failure, send_result, break_on_failure):
         self.activities = activities
         self.workflow = workflow
         self.raises_on_failure = raises_on_failure
@@ -264,7 +268,7 @@ class ChainFuture(GroupFuture):
             self.futures.append(future)
             if not future.finished:
                 break
-            if future.finished and future.exception:
+            if future.exception and break_on_failure:
                 # End this chain
                 self._has_failed = True
                 break

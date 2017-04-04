@@ -69,12 +69,26 @@ class CanvasWorkflow(Workflow):
             Chain(
                 (fail_incrementing, x),
                 (increment_slowly, 1),  # never executed
-                (multiply, [2]),
+                (multiply, [3, 2]),
                 raises_on_failure=False,
             )
         )
 
-        futures.wait(future)
+        assert [None] == future.result, 'Unexpected result {!r}'.format(future.result)
+        print('Chain with failure: {}'.format(future.result))
+
+        # Breaking the chain on failure is the default but can be bypassed
+        future = self.submit(
+            Chain(
+                (fail_incrementing, x),
+                (increment_slowly, 1),  # executed
+                (multiply, [3, 2]),
+                break_on_failure=False,
+            )
+        )
+
+        assert [None, 2, 6] == future.result, 'Unexpected result {!r}'.format(future.result)
+        print('Chain ignoring failure: {}'.format(future.result))
 
         # Failing inside a chain doesn't stop a upper chain
         future = self.submit(
@@ -84,10 +98,11 @@ class CanvasWorkflow(Workflow):
                     raises_on_failure=False,
                 ),
                 (increment_slowly, 1),  # executed
-                (multiply, [2]),
+                (multiply, [3, 2]),
             )
         )
 
-        futures.wait(future)
+        assert [[None], 2, 6] == future.result, 'Unexpected result {!r}'.format(future.result)
+        print('Chain with failure in subchain: {}'.format(future.result))
 
-        print('SUCCESS!')
+        print('Finished!')
