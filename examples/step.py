@@ -19,11 +19,12 @@ def multiply(*numbers):
     return val
 
 
-# This workflow demonstrates the use of simpleflow's Step submittable
-#
-# The second execution time of the workflow will skip the step 'my_step'
-# Because it waw already computed before, thanks to a file put on S3
 class StepWorkflow(Workflow, WorkflowStepMixin):
+    # This workflow demonstrates the use of simpleflow's Step submittable
+    #
+    # The second execution time of the workflow will skip the step 'my_step'
+    # Because it waw already computed before, thanks to a file put on S3
+
     name = 'step'
     version = 'example'
     task_list = 'example'
@@ -35,7 +36,7 @@ class StepWorkflow(Workflow, WorkflowStepMixin):
                 Group(
                     (multiply, 1),
                     (multiply, 2),
-                    (multiply, 3)
+                    (multiply, 3),
                 )
             )
         )
@@ -66,9 +67,8 @@ class StepWorkflow(Workflow, WorkflowStepMixin):
         futures.wait(self.submit(step))
 
 
-# You can customize the place where the steps files are located by overriding the following methods:
-
 class CustomizedStepWorkflow(Workflow, WorkflowStepMixin):
+    # You can customize the place where the steps files are located by overriding the following methods:
 
     def get_step_bucket(self):
         # It can be a S3 Bucket name
@@ -113,5 +113,5 @@ class CustomizedStepWorkflow(Workflow, WorkflowStepMixin):
         # named "a.b" or starting by "a.b." (ex : a.b.c)
         self.add_forced_steps(["a.b"])
 
-        # You cann also force all steps by calling "*"
+        # You can also force all steps by calling "*"
         self.add_forced_steps("*")
