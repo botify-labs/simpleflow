@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.15.4
+~~~~~~
+
+- Enhancement: add canvas option break_on_failure (#253)
+- Compute task_id from ActivityTask if has get_task_id method (#237)
+- Another case of wrong task list (#234)
+
 0.15.3
 ~~~~~~
 
