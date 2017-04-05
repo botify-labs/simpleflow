@@ -12,7 +12,7 @@ def start(workflows, domain, task_list, log_level=None, nb_processes=None,
     """
     Start a decider.
     :param workflows:
-    :type workflows:
+    :type workflows: list[str]
     :param domain:
     :type domain:
     :param task_list:

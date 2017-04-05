@@ -29,13 +29,13 @@ def get_uuid(unused=None):
     return str(uuid.uuid4())
 
 
-@activity.with_attributes(task_list='decisions', version='example')
+@activity.with_attributes(task_list='quickstart', version='example')
 def increment(x):
     print("increment: %d" % x)
     return x + 1
 
 
-@activity.with_attributes(task_list='decisions', version='example')
+@activity.with_attributes(task_list='quickstart', version='example')
 def double(y):
     print("double: %d" % y)
     return y * 2
@@ -95,18 +95,34 @@ class MarkerWorkflow(Workflow):
 class ChainTestWorkflow(Workflow):
     name = 'chaintest'
     version = 'example'
-    task_list = 'dlist'
+    task_list = 'example'
 
     def run(self, x=5):
         future = self.submit(
             Chain(
                 ActivityTask(increment, x),
-                ActivityTask(double),  # will fail before executing `double`
+                ActivityTask(double),
                 send_result=True
             )
         )
-        print("Future: %s" % future)
+        print('Future: {}'.format(future))
         futures.wait(future)
-        print("Result: %s" % future.result)  # future.result == [6, 12]
+        print('Result: {}'.format(future.result))  # future.result == [6, 12]
 
+        return future.result
+
+
+class TestRunChild(Workflow):
+    """
+    Test the deciders' task list doesn't override the workers' one.
+    """
+    name = 'example'
+    version = 'example'
+    task_list = 'example'
+    decision_tasks_timeout = '300'
+    execution_timeout = '3600'
+
+    def run(self):
+        future = self.submit(ChainTestWorkflow)
+        print('Result: {}'.format(future.result))
         return future.result
