@@ -233,7 +233,7 @@ class Chain(Group):
                  **options):
         self.send_result = options.pop('send_result', False)
         self.break_on_failure = options.pop('break_on_failure', True)
-        if self.send_result and not self.raises_on_failure:
+        if self.send_result and not self.break_on_failure:
             raise ValueError("Cannot combine send_result=True with break_on_failure=False")
         super(Chain, self).__init__(*activities, **options)
 
