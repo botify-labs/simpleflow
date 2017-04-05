@@ -227,6 +227,8 @@ class Chain(Group):
                  **options):
         self.send_result = options.pop('send_result', False)
         self.break_on_failure = options.pop('break_on_failure', True)
+        if self.send_result and not self.break_on_failure:
+            raise ValueError("Cannot combine send_result=True with break_on_failure=False")
         super(Chain, self).__init__(*activities, **options)
 
     def submit(self, executor):
@@ -259,6 +261,7 @@ class ChainFuture(GroupFuture):
         for i, a in enumerate(self.activities):
             if send_result and i > 0:
                 if isinstance(a, ActivityTask):
+                    # ActivityTask.args is ignored when building swf.ActivityTask (#247)
                     args = a.args + [previous_result]
                     a = ActivityTask(a.activity, *args, **a.kwargs)
                 else:
