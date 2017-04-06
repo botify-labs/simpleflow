@@ -47,6 +47,7 @@ class CanvasWorkflow(Workflow):
         x = 1
         y = 2
         z = 3
+
         future = self.submit(
             Chain(
                 Group(
@@ -90,7 +91,7 @@ class CanvasWorkflow(Workflow):
         assert [None, 2, 6] == future.result, 'Unexpected result {!r}'.format(future.result)
         print('Chain ignoring failure: {}'.format(future.result))
 
-        # Failing inside a chain doesn't stop a upper chain
+        # Failing inside a chain by default don't stop an upper chain
         future = self.submit(
             Chain(
                 Chain(
@@ -104,5 +105,24 @@ class CanvasWorkflow(Workflow):
 
         assert [[None], 2, 6] == future.result, 'Unexpected result {!r}'.format(future.result)
         print('Chain with failure in subchain: {}'.format(future.result))
+
+        # But it can, too
+        future = self.submit(
+            Chain(
+                Chain(
+                    Chain(
+                        (fail_incrementing, x),
+                        raises_on_failure=False,
+                        exception_on_failure=True,
+                    ),
+                    (increment_slowly, 1),  # not executed
+                    exception_on_failure=False,
+                ),
+                (multiply, [3, 2]),  # executed
+            )
+        )
+
+        assert [[[None]], 6] == future.result, 'Unexpected result {!r}'.format(future.result)
+        print('Chain with failure in sub-subchain: {}'.format(future.result))
 
         print('Finished!')
