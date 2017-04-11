@@ -85,7 +85,6 @@ class Step(SubmittableContainer):
                     workflow.signal('step.{}'.format(self.step_name), propagate=False))
             return chain
 
-        return workflow.submit(Chain(
-            workflow.get_steps_done_activity(),
-            FuncGroup(fn_steps_done),
-            send_result=True))
+        chain = Chain(workflow.get_steps_done_activity(), FuncGroup(fn_steps_done), send_result=True)
+        chain.raises_on_failure = False  # Don't bubble exceptions up
+        return workflow.submit(chain)
