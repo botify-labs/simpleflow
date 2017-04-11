@@ -594,12 +594,6 @@ class Executor(executor.Executor):
                 return
             self._idempotent_tasks_to_submit.add(task_identifier)
 
-        # if isinstance(a_task, SignalTask):
-        #     if a_task.workflow_id is None:
-        #         a_task.workflow_id = self._execution_context['workflow_id']
-        #         if a_task.run_id is None:
-        #             a_task.run_id = self._execution_context['run_id']
-
         # NB: ``decisions`` contains a single decision.
         decisions = a_task.schedule(self.domain, task_list, priority=self.current_priority)
 
@@ -609,7 +603,7 @@ class Executor(executor.Executor):
         elif isinstance(a_task, MarkerTask):
             self._append_timer = True  # markers don't generate decisions, so force a wake-up timer
 
-        # Check if we won't violate the 1MB limit on API requests ; if so, do NOT
+        # Check that we won't violate the 1MB limit on API requests; if so, do NOT
         # schedule the requested task and block execution instead, with a timer
         # to wake up the workflow immediately after completing these decisions.
         # See: http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-limits.html

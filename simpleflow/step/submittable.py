@@ -88,3 +88,15 @@ class Step(SubmittableContainer):
         chain = Chain(workflow.get_steps_done_activity(), FuncGroup(fn_steps_done), send_result=True)
         chain.raises_on_failure = False  # Don't bubble exceptions up
         return workflow.submit(chain)
+
+    def __repr__(self):
+        return '<{} at {:#x}, name={}, activities={!r}, force={}, if_done={}, sig={}, force_if_exec={}>'.format(
+            self.__class__.__name__,
+            id(self),
+            self.step_name,
+            self.activities,
+            self.force,
+            self.activities_if_step_already_done,
+            self.emit_signal,
+            self.force_steps_if_executed,
+        )

@@ -46,6 +46,9 @@ class FuncGroup(SubmittableContainer):
                             ' got {} instead'.format(type(self.activities)))
         return self.activities
 
+    def __repr__(self):
+        return '<{} at {:#x}, activities={!r}>'.format(self.__class__.__name__, id(self), self.activities)
+
 
 class AggregateException(Exception):
     """
