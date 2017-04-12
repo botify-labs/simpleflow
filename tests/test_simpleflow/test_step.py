@@ -7,6 +7,7 @@ import boto
 
 from simpleflow.activity import with_attributes
 from simpleflow import workflow, task, storage, step, futures
+from simpleflow.constants import MINUTE, HOUR
 from simpleflow.step.submittable import Step
 from simpleflow.step.workflow import WorkflowStepMixin
 from simpleflow.step.tasks import GetStepsDoneTask, MarkStepDoneTask
@@ -35,8 +36,8 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
     name = 'test_workflow'
     version = 'test_version'
     task_list = 'test_task_list'
-    decision_tasks_timeout = '300'
-    execution_timeout = '3600'
+    decision_tasks_timeout = 5 * MINUTE
+    execution_timeout = 1 * HOUR
 
     def get_activity_params(self):
         return {

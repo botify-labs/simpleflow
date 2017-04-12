@@ -3,6 +3,7 @@ import unittest
 
 from simpleflow.activity import with_attributes
 from simpleflow import metrology, storage, settings
+from simpleflow.constants import MINUTE, HOUR
 from simpleflow.local.executor import Executor
 
 import boto
@@ -25,10 +26,8 @@ class MyWorkflow(metrology.MetrologyWorkflow):
     name = 'test_workflow'
     version = 'test_version'
     task_list = 'test_task_list'
-    decision_tasks_timeout = '300'
-    execution_timeout = '3600'
-    tag_list = None  # FIXME should be optional
-    child_policy = None  # FIXME should be optional
+    decision_tasks_timeout = 5 * MINUTE
+    execution_timeout = 1 * HOUR
 
     def run(self, num):
         self.submit(MyMetrologyTask, num)

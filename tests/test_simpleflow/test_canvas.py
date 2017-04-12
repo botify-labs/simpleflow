@@ -8,6 +8,7 @@ from simpleflow.canvas import (
     Chain,
     AggregateException,
 )
+from simpleflow.constants import HOUR, MINUTE
 from simpleflow.local.executor import Executor
 from simpleflow.activity import with_attributes
 from simpleflow.task import ActivityTask
@@ -64,8 +65,8 @@ class MyWorkflow(workflow.Workflow):
     name = 'test_workflow'
     version = 'test_version'
     task_list = 'test_task_list'
-    decision_tasks_timeout = '300'
-    execution_timeout = '3600'
+    decision_tasks_timeout = 5 * MINUTE
+    execution_timeout = 1 * HOUR
 
 
 executor = CustomExecutor(MyWorkflow)
