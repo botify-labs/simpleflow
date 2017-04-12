@@ -113,10 +113,10 @@ class CanvasWorkflow(Workflow):
                     Chain(
                         (fail_incrementing, x),
                         raises_on_failure=False,
-                        exception_on_failure=True,
+                        bubbles_exception_on_failure=True,
                     ),
                     (increment_slowly, 1),  # not executed
-                    exception_on_failure=False,
+                    bubbles_exception_on_failure=False,
                 ),
                 (multiply, [3, 2]),  # executed
             )

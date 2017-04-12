@@ -115,7 +115,7 @@ class Group(SubmittableContainer):
         self.activities = []
         self.max_parallel = options.pop('max_parallel', None)
         self.raises_on_failure = options.pop('raises_on_failure', None)
-        self.exception_on_failure = options.pop('exception_on_failure', True)
+        self.bubbles_exception_on_failure = options.pop('bubbles_exception_on_failure', True)
         self.extend(activities)
 
     def append(self, submittable, *args, **kwargs):
@@ -154,7 +154,7 @@ class Group(SubmittableContainer):
         return self
 
     def submit(self, executor):
-        return GroupFuture(self.activities, executor.workflow, self.max_parallel, self.exception_on_failure)
+        return GroupFuture(self.activities, executor.workflow, self.max_parallel, self.bubbles_exception_on_failure)
 
     def __repr__(self):
         return '<{} at {:#x}, activities={!r}>'.format(self.__class__.__name__, id(self), self.activities)
@@ -162,13 +162,13 @@ class Group(SubmittableContainer):
 
 class GroupFuture(futures.Future):
 
-    def __init__(self, activities, workflow, max_parallel=None, exception_on_failure=True):
+    def __init__(self, activities, workflow, max_parallel=None, bubbles_exception_on_failure=True):
         super(GroupFuture, self).__init__()
         self.activities = activities
         self.futures = []
         self.workflow = workflow
         self.max_parallel = max_parallel
-        self.exception_on_failure = exception_on_failure
+        self.bubbles_exception_on_failure = bubbles_exception_on_failure
 
         for a in self.activities:
             if not self.max_parallel or self._count_pending_or_running < self.max_parallel:
@@ -202,7 +202,7 @@ class GroupFuture(futures.Future):
         for future in self.futures:
             if future.finished:
                 self._result.append(future.result)
-                if self.exception_on_failure is not False:
+                if self.bubbles_exception_on_failure is not False:
                     exception = future.exception
                     exceptions.append(exception)
             else:
@@ -236,15 +236,15 @@ class Chain(Group):
         self.break_on_failure = options.pop('break_on_failure', True)
         if self.send_result and not self.break_on_failure:
             raise ValueError("Cannot combine send_result=True with break_on_failure=False")
-        if options.get('raises_on_failure') is False and 'exception_on_failure' not in options:
-            options['exception_on_failure'] = False  # Compatible with 10cd67f: don't break upper chains
+        if options.get('raises_on_failure') is False and 'bubbles_exception_on_failure' not in options:
+            options['bubbles_exception_on_failure'] = False  # Compatible with 10cd67f: don't break upper chains
         super(Chain, self).__init__(*activities, **options)
 
     def submit(self, executor):
         return ChainFuture(
             self.activities,
             executor.workflow,
-            exception_on_failure=self.exception_on_failure,
+            bubbles_exception_on_failure=self.bubbles_exception_on_failure,
             send_result=self.send_result,
             break_on_failure=self.break_on_failure,
         )
@@ -253,10 +253,10 @@ class Chain(Group):
 class ChainFuture(GroupFuture):
     # Don't call GroupFuture.__init__ on purpose
     # noinspection PyMissingConstructor
-    def __init__(self, activities, workflow, exception_on_failure, send_result, break_on_failure):
+    def __init__(self, activities, workflow, bubbles_exception_on_failure, send_result, break_on_failure):
         self.activities = activities
         self.workflow = workflow
-        self.exception_on_failure = exception_on_failure
+        self.bubbles_exception_on_failure = bubbles_exception_on_failure
         self._state = futures.PENDING
         self._result = None
         self._exception = None
