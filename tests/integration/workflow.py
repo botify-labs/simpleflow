@@ -8,6 +8,7 @@ from simpleflow import (
     futures,
 )
 from simpleflow.canvas import Chain
+from simpleflow.constants import HOUR, MINUTE
 from simpleflow.task import ActivityTask
 
 
@@ -55,8 +56,8 @@ class ATestDefinitionWithIdempotentTask(Workflow):
     name = 'test_idempotent_workflow'
     version = 'example'
     task_list = 'example'
-    decision_tasks_timeout = '300'
-    execution_timeout = '3600'
+    decision_tasks_timeout = 5 * MINUTE
+    execution_timeout = 1 * HOUR
 
     def run(self):
         results = [self.submit(get_uuid) for _ in range(10)]
@@ -72,8 +73,8 @@ class MarkerWorkflow(Workflow):
     name = 'example'
     version = 'example'
     task_list = 'example'
-    decision_tasks_timeout = '300'
-    execution_timeout = '3600'
+    decision_tasks_timeout = 5 * MINUTE
+    execution_timeout = 1 * HOUR
 
     def run(self, use_chain):
         m1 = (self.record_marker('marker 1'))
@@ -119,8 +120,8 @@ class TestRunChild(Workflow):
     name = 'example'
     version = 'example'
     task_list = 'example'
-    decision_tasks_timeout = '300'
-    execution_timeout = '3600'
+    decision_tasks_timeout = 5 * MINUTE
+    execution_timeout = 1 * HOUR
 
     def run(self):
         future = self.submit(ChainTestWorkflow)

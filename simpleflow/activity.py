@@ -39,13 +39,13 @@ def with_attributes(
     :param raises_on_failure: whether to raise on failuer.
     :type raises_on_failure: bool
     :param start_to_close_timeout:
-    :type start_to_close_timeout: str
+    :type start_to_close_timeout: str | int
     :param schedule_to_close_timeout:
-    :type schedule_to_close_timeout: str
+    :type schedule_to_close_timeout: str | int
     :param schedule_to_start_timeout:
-    :type schedule_to_start_timeout: str
+    :type schedule_to_start_timeout: str | int
     :param heartbeat_timeout:
-    :type heartbeat_timeout: str
+    :type heartbeat_timeout: str | int
     :param idempotent: True if the activity is idempotent.
     :type idempotent: Optional[bool]
     :rtype: () -> Activity[()]

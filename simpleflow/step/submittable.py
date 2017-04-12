@@ -15,13 +15,14 @@ from .utils import (
 class Step(SubmittableContainer):
 
     def __init__(self, step_name, activities, force=False, activities_if_step_already_done=None,
-                 emit_signal=False, force_steps_if_executed=None):
+                 emit_signal=False, force_steps_if_executed=None, bubbles_exception_on_failure=False):
         """
         :param step_name : Name of the step
         :param force : Force the step even if already executed
         :param activities_if_step_already_done : Activities to run even step already executed
         :param emit_signal : Emit a signal when the step is executed
         :param force_steps_if_executed : list of steps names to force in the next phases of the workflow
+        :param bubbles_exception_on_failure : propagate potential exceptions to the caller
         """
         self.step_name = step_name
         self.activities = activities
@@ -29,6 +30,7 @@ class Step(SubmittableContainer):
         self.activities_if_step_already_done = activities_if_step_already_done
         self.emit_signal = emit_signal
         self.force_steps_if_executed = force_steps_if_executed or []
+        self.bubbles_exception_on_failure = bubbles_exception_on_failure
 
     def submit(self, executor):
         workflow = executor.workflow
@@ -83,6 +85,7 @@ class Step(SubmittableContainer):
             if self.emit_signal:
                 chain.append(
                     workflow.signal('step.{}'.format(self.step_name), propagate=False))
+            chain.bubbles_exception_on_failure = self.bubbles_exception_on_failure
             return chain
 
         return workflow.submit(Chain(

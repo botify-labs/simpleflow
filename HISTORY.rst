@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.15.5
+~~~~~~
+
+- Enhancement: distinguish raises_on_failure between tasks and groups (#255)
+- Add time constants
+- Relax activity.with_attributes timeouts types
+
 0.15.4
 ~~~~~~
 
