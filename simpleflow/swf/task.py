@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class SwfTask(object):
+    """
+    simpleflow.swf task; useful for type checking.
+    """
     pass
 
 
@@ -263,3 +266,45 @@ class MarkerTask(task.MarkerTask, SwfTask):
 
     def get_json_details(self):
         return json_dumps(self.details) if self.details is not None else None
+
+
+class TimerTask(task.TimerTask, SwfTask):
+
+    idempotent = True
+
+    @classmethod
+    def from_generic_task(cls, a_task):
+        # type: (task.TimerTask) -> TimerTask
+        return cls(a_task.timer_id, a_task.timeout, a_task.control)
+
+    def __init__(self, timer_id, timeout, control):
+        super(TimerTask, self).__init__(timer_id, timeout, control)
+
+    def schedule(self, *args, **kwargs):
+        decision = swf.models.decision.TimerDecision(
+            'start',
+            id=self.timer_id,
+            start_to_fire_timeout=str(self.timeout),
+            control=json_dumps(self.control) if self.control is not None else None,
+        )
+        return [decision]
+
+
+class CancelTimerTask(task.CancelTimerTask, SwfTask):
+
+    idempotent = True
+
+    @classmethod
+    def from_generic_task(cls, a_task):
+        # type: (task.CancelTimerTask) -> CancelTimerTask
+        return cls(a_task.timer_id)
+
+    def __init__(self, timer_id):
+        super(CancelTimerTask, self).__init__(timer_id)
+
+    def schedule(self, *args, **kwargs):
+        decision = swf.models.decision.TimerDecision(
+            'cancel',
+            id=self.timer_id,
+        )
+        return [decision]

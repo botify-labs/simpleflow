@@ -7,7 +7,7 @@ from simpleflow import (
     Workflow,
     futures,
 )
-from simpleflow.canvas import Chain
+from simpleflow.canvas import Chain, Group
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.task import ActivityTask
 
@@ -127,3 +127,27 @@ class TestRunChild(Workflow):
         future = self.submit(ChainTestWorkflow)
         print('Result: {}'.format(future.result))
         return future.result
+
+
+class TimerWorkflow(Workflow):
+    name = 'example'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self, t1=2, t2=120):
+        """
+        Cancel timer 2 after timer 1 is fired.
+        """
+        future = self.submit(
+            Group(
+                self.start_timer("timer 2", t2),
+                Chain(
+                    self.start_timer("timer 1", t1),
+                    self.cancel_timer("timer 2"),
+                ),
+            )
+        )
+        if future.pending:
+            print('Starting timers')
+        futures.wait(future)
+        print('Timer fired, exiting')

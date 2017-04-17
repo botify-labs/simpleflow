@@ -23,6 +23,8 @@ class History(object):
     :type _signals: collections.OrderedDict[str, dict[str, Any]]
     :ivar _markers: marker events
     :type _markers: collections.OrderedDict[str, list[dict[str, Any]]]
+    :ivar _timers: timer events
+    :type _timers: dict[str, dict[str, Any]]]
     :ivar _tasks: ordered list of tasks/etc
     :type _tasks: list[dict[str, Any]]
     """
@@ -36,6 +38,7 @@ class History(object):
         self._signals = collections.OrderedDict()
         self._signaled_workflows = collections.defaultdict(list)
         self._markers = collections.OrderedDict()
+        self._timers = {}
         self._tasks = []
 
     @property
@@ -95,6 +98,11 @@ class History(object):
         :rtype: collections.OrderedDict[str, list[dict[str, Any]]]
         """
         return self._markers
+
+    @property
+    def timers(self):
+        # type: () -> Dict[str, Dict[str, Any]]
+        return self._timers
 
     @property
     def tasks(self):
@@ -468,12 +476,47 @@ class History(object):
             }
             self._markers.setdefault(event.marker_name, []).append(marker)
 
+    def parse_timer_event(self, events, event):
+        if event.state == 'started':
+            timer = {
+                'type': 'timer',
+                'id': event.timer_id,
+                'state': event.state,
+                'start_to_fire_timeout': event.start_to_fire_timeout,
+                'control': getattr(event, 'control', None),
+                'started_event_id': event.id,
+                'started_event_timestamp': event.timestamp,
+            }
+            self._timers[event.timer_id] = timer
+        elif event.state == 'fired':
+            timer = self._timers[event.timer_id]
+            timer['state'] = event.state
+            timer['fired_event_id'] = event.id
+            timer['fired_event_timestamp'] = event.timestamp
+        elif event.state == 'start_failed':
+            timer = self._timers[event.timer_id]
+            timer['state'] = event.state
+            timer['cause'] = event.cause
+            timer['start_failed_event_id'] = event.id
+            timer['start_failed_event_timestamp'] = event.timestamp
+        elif event.state == 'canceled':
+            timer = self._timers[event.timer_id]
+            timer['state'] = event.state
+            timer['canceled_event_id'] = event.id
+            timer['canceled_event_timestamp'] = event.timestamp
+        elif event.state == 'cancel_failed':
+            timer = self._timers[event.timer_id]
+            timer['state'] = event.state
+            timer['cancel_failed_event_id'] = event.id
+            timer['cancel_failed_event_timestamp'] = event.timestamp
+
     TYPE_TO_PARSER = {
         'ActivityTask': parse_activity_event,
         'ChildWorkflowExecution': parse_child_workflow_event,
         'WorkflowExecution': parse_workflow_event,
         'ExternalWorkflowExecution': parse_external_workflow_event,
         'Marker': parse_marker_event,
+        'Timer': parse_timer_event,
     }
 
     def parse(self):

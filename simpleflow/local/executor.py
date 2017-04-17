@@ -104,7 +104,7 @@ class Executor(executor.Executor):
                 last_state=state,
                 activity_id=context["activity_id"],
                 input={'args': args, 'kwargs': kwargs},
-                result=future._result)
+                result=future.result)
         return future
 
     def run(self, input=None):
