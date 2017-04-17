@@ -77,11 +77,10 @@ class Future(object):
     @property
     def result(self):
         """Raise a cls::`exceptions.ExecutionBlocked` when the result is not
-        available."""
-        if self._state != FINISHED:
-            return self.wait()
-
-        return self._result
+        available and the future was not cancelled."""
+        if self.done:
+            return self._result
+        return self.wait()
 
     def cancel(self):
         """Cancel a future.
