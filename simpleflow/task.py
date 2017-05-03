@@ -86,6 +86,12 @@ class ActivityTask(Task):
             method.context = self.context
             return method(*self.args, **self.kwargs)
 
+    def propagate_attribute(self, attr, val):
+        """
+        Propagate to the activity.
+        """
+        setattr(self.activity, attr, val)
+
 
 class WorkflowTask(Task):
     """
@@ -155,6 +161,12 @@ class SignalTask(Task):
     def execute(self):
         pass
 
+    def propagate_attribute(self, attr, val):
+        """
+        No propagation.
+        """
+        pass
+
 
 class MarkerTask(Task):
     def __init__(self, name, details):
@@ -180,4 +192,10 @@ class MarkerTask(Task):
         return self.args[0]
 
     def execute(self):
+        pass
+
+    def propagate_attribute(self, attr, val):
+        """
+        No propagation.
+        """
         pass

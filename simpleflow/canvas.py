@@ -1,24 +1,7 @@
 from . import futures
 from .activity import Activity
 from .base import Submittable, SubmittableContainer
-from .signal import WaitForSignal
-from .task import ActivityTask, SignalTask
-
-
-def propagate_attribute(obj, attr, val):
-    if isinstance(obj, Activity):
-        setattr(obj, attr, val)
-    elif isinstance(obj, ActivityTask):
-        setattr(obj.activity, attr, val)
-    elif isinstance(obj, Group):
-        for activities in obj.activities:
-            propagate_attribute(activities, attr, val)
-    elif isinstance(obj, FuncGroup):
-        setattr(obj, attr, val)
-    elif isinstance(obj, (SignalTask, WaitForSignal)):
-        pass
-    else:
-        raise Exception('Cannot propagate attribute for unknown type: {}'.format(type(obj)))
+from .task import ActivityTask
 
 
 class FuncGroup(SubmittableContainer):
@@ -40,11 +23,15 @@ class FuncGroup(SubmittableContainer):
     def instantiate_task(self):
         self.activities = self.func(*self.args, **self.kwargs)
         if self.raises_on_failure is not None:
-            propagate_attribute(self.activities, 'raises_on_failure', self.raises_on_failure)
+            self.activities.propagate_attribute('raises_on_failure', self.raises_on_failure)
+
         if not isinstance(self.activities, (Submittable, Group)):
             raise TypeError('FuncGroup submission should return a Group or Submittable,'
                             ' got {} instead'.format(type(self.activities)))
         return self.activities
+
+    def propagate_attribute(self, attr, val):
+        setattr(self, attr, val)
 
 
 class AggregateException(Exception):
@@ -123,11 +110,11 @@ class Group(SubmittableContainer):
             if args or kwargs:
                 raise ValueError('args, kwargs not supported for Submittable or SubmittableContainer')
             if self.raises_on_failure is not None:
-                propagate_attribute(submittable, 'raises_on_failure', self.raises_on_failure)
+                submittable.propagate_attribute('raises_on_failure', self.raises_on_failure)
             self.activities.append(submittable)
         elif isinstance(submittable, Activity):
             if self.raises_on_failure is not None:
-                propagate_attribute(submittable, 'raises_on_failure', self.raises_on_failure)
+                submittable.propagate_attribute('raises_on_failure', self.raises_on_failure)
             self.activities.append(ActivityTask(submittable, *args, **kwargs))
         else:
             raise ValueError('{} should be a Submittable, Group, or Activity'.format(submittable))
@@ -158,6 +145,13 @@ class Group(SubmittableContainer):
 
     def __repr__(self):
         return '<{} at {:#x}, activities={!r}>'.format(self.__class__.__name__, id(self), self.activities)
+
+    def propagate_attribute(self, attr, val):
+        """
+        Propagate attribute to all activities of the Group.
+        """
+        for activities in self.activities:
+            activities.propagate_attribute(attr, val)
 
 
 class GroupFuture(futures.Future):

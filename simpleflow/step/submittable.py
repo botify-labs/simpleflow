@@ -92,3 +92,9 @@ class Step(SubmittableContainer):
             workflow.get_steps_done_activity(),
             FuncGroup(fn_steps_done),
             send_result=True))
+
+    def propagate_attribute(self, attr, val):
+        """
+        Propagate the attribute to the related activities.
+        """
+        self.activities.propagate_attribute(attr, val)
