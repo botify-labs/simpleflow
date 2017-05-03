@@ -160,6 +160,21 @@ class TestGroup(unittest.TestCase):
         ).submit(executor)
         self.assertTrue(future.finished)
 
+    def test_propagate_attribute(self):
+        """
+        Test that attribute 'raises_on_failure' is well propagated through Group.
+        """
+        inner_a = Group(
+            (running_task, "test1"),
+            (running_task, "test2"),
+        )
+        inner_b = ActivityTask(running_task, "test3")
+        Group(inner_a, inner_b, raises_on_failure=False).submit(executor)
+
+        self.assertFalse(inner_b.activity.raises_on_failure)
+        self.assertFalse(inner_a.activities[0].activity.raises_on_failure)
+        self.assertFalse(inner_a.activities[1].activity.raises_on_failure)
+
 
 class TestChain(unittest.TestCase):
     def test(self):
@@ -249,6 +264,21 @@ class TestChain(unittest.TestCase):
         self.assertEqual(4, future.count_finished_activities)
         self.assertIsNone(future.exception)
 
+    def test_propagate_attribute(self):
+        """
+        Test that attribute 'raises_on_failure' is well propagated through Chain.
+        """
+        inner_a = Chain(
+            (running_task, "test1"),
+            (running_task, "test2"),
+        )
+        inner_b = ActivityTask(running_task, "test3")
+        Chain(inner_a, inner_b, raises_on_failure=False).submit(executor)
+
+        self.assertFalse(inner_b.activity.raises_on_failure)
+        self.assertFalse(inner_a.activities[0].activity.raises_on_failure)
+        self.assertFalse(inner_a.activities[1].activity.raises_on_failure)
+
 
 class TestFuncGroup(unittest.TestCase):
     def test_previous_value_with_func(self):
@@ -289,6 +319,34 @@ class TestFuncGroup(unittest.TestCase):
         # the activities
         with self.assertRaises(exceptions.TaskFailed):
             fngrp.submit(executor)
+
+    def test_propagate_attribute(self):
+        """
+        Test that attribute 'raises_on_failure' is well propagated through FuncGroup.
+        """
+
+        first = ActivityTask(running_task, "test1")
+        intermediary_activities = Chain(
+                (running_task, "test2"),
+                (running_task, "test3"),
+        )
+        last = ActivityTask(running_task, "test4")
+
+        def custom_func(_):
+            return intermediary_activities
+
+        Chain(
+            first,
+            FuncGroup(custom_func),
+            last,
+            send_result=True,
+            raises_on_failure=False
+        ).submit(executor)
+
+        self.assertFalse(first.activity.raises_on_failure)
+        self.assertFalse(last.activity.raises_on_failure)
+        self.assertFalse(intermediary_activities.activities[0].activity.raises_on_failure)
+        self.assertFalse(intermediary_activities.activities[1].activity.raises_on_failure)
 
 
 class TestComplexCanvas(unittest.TestCase):
