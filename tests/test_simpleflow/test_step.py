@@ -47,17 +47,6 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
     name = 'test_workflow'
     version = 'test_version'
     task_list = 'test_task_list'
-
-
-executor = CustomExecutor(MyWorkflow)
-executor.initialize_history({})
-executor._workflow = MyWorkflow(executor)
-
-
-class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
-    name = 'test_workflow'
-    version = 'test_version'
-    task_list = 'test_task_list'
     decision_tasks_timeout = 5 * MINUTE
     execution_timeout = 1 * HOUR
 
@@ -75,6 +64,13 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
                  task.ActivityTask(MyTask, num),
                  force_steps_if_executed=['my_step_2']))
         futures.wait(taskf)
+
+    def get_step_bucket(self):
+        return BUCKET
+
+executor = CustomExecutor(MyWorkflow)
+executor.initialize_history({})
+executor._workflow = MyWorkflow(executor)
 
 
 class StepTestCase(unittest.TestCase, TestWorkflowMixin):
@@ -125,7 +121,6 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.assertEquals(
             json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
             {"status": "scheduled", "forced": True, "step":"my_step", "reasons":["workflow_init"]})
-
 
         # Check that we ask MyTask
         decisions = self.replay()
@@ -258,10 +253,14 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.assertFalse(step_will_run("a.b.c", [], ["a.b"], []))
         self.assertTrue(step_will_run("a.b.c", [], ["b"], ["a.b"]))
 
+    @mock_s3
+    @mock_swf
     def test_propagate_attribute(self):
         """
         Test that attribute 'raises_on_failure' is well propagated through Step.
         """
+        self.create_bucket()
+
         activities = Chain(
             (MyTask, 1),
             (MyTask, 2),
