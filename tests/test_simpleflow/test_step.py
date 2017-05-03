@@ -1,12 +1,14 @@
 import json
 import unittest
 
-from mock import patch
 from moto import mock_swf, mock_s3
 import boto
+from simpleflow.local import Executor
+
+from simpleflow.canvas import Chain
 
 from simpleflow.activity import with_attributes
-from simpleflow import workflow, task, storage, step, futures
+from simpleflow import workflow, task, storage, futures
 from simpleflow.constants import MINUTE, HOUR
 from simpleflow.step.submittable import Step
 from simpleflow.step.workflow import WorkflowStepMixin
@@ -30,6 +32,26 @@ class MyTask(object):
 
     def execute(self):
         return self.num * 2
+
+
+class CustomExecutor(Executor):
+    def submit(self, func, *args, **kwargs):
+        if hasattr(func, 'activity') and func.activity == MyTask:
+            f = futures.Future()
+            f.set_running()
+            return f
+        return super(CustomExecutor, self).submit(func, *args, **kwargs)
+
+
+class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
+    name = 'test_workflow'
+    version = 'test_version'
+    task_list = 'test_task_list'
+
+
+executor = CustomExecutor(MyWorkflow)
+executor.initialize_history({})
+executor._workflow = MyWorkflow(executor)
 
 
 class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
@@ -232,7 +254,20 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
             ["MY_REASON", "MY_ROOT_REASON"])
 
     def test_step_will_run_skipped(self):
-        step_name = "a.b.c"
         self.assertFalse(step_will_run("a.b.c", [], ["a.b"], ["a.b"]))
         self.assertFalse(step_will_run("a.b.c", [], ["a.b"], []))
         self.assertTrue(step_will_run("a.b.c", [], ["b"], ["a.b"]))
+
+    def test_propagate_attribute(self):
+        """
+        Test that attribute 'raises_on_failure' is well propagated through Step.
+        """
+        activities = Chain(
+            (MyTask, 1),
+            (MyTask, 2),
+        )
+        step_act = Step("test_propagate_attribute", activities)
+        Chain(step_act, raises_on_failure=False).submit(executor)
+
+        self.assertFalse(activities.activities[0].activity.raises_on_failure)
+        self.assertFalse(activities.activities[1].activity.raises_on_failure)
