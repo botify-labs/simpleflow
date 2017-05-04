@@ -109,15 +109,14 @@ class Group(SubmittableContainer):
         if isinstance(submittable, (Submittable, SubmittableContainer)):
             if args or kwargs:
                 raise ValueError('args, kwargs not supported for Submittable or SubmittableContainer')
-            if self.raises_on_failure is not None:
-                submittable.propagate_attribute('raises_on_failure', self.raises_on_failure)
-            self.activities.append(submittable)
         elif isinstance(submittable, Activity):
-            if self.raises_on_failure is not None:
-                submittable.propagate_attribute('raises_on_failure', self.raises_on_failure)
-            self.activities.append(ActivityTask(submittable, *args, **kwargs))
+            submittable = ActivityTask(submittable, *args, **kwargs)
         else:
             raise ValueError('{} should be a Submittable, Group, or Activity'.format(submittable))
+
+        if self.raises_on_failure is not None:
+            submittable.propagate_attribute('raises_on_failure', self.raises_on_failure)
+        self.activities.append(submittable)
 
     def extend(self, iterable):
         """

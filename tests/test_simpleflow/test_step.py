@@ -35,6 +35,11 @@ class MyTask(object):
 
 
 class CustomExecutor(Executor):
+
+    def __init__(self, workflow_class):
+        super(CustomExecutor, self).__init__(workflow_class)
+        self.create_workflow()
+
     def submit(self, func, *args, **kwargs):
         if hasattr(func, 'activity') and func.activity == MyTask:
             f = futures.Future()
@@ -67,10 +72,6 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
 
     def get_step_bucket(self):
         return BUCKET
-
-executor = CustomExecutor(MyWorkflow)
-executor.initialize_history({})
-executor._workflow = MyWorkflow(executor)
 
 
 class StepTestCase(unittest.TestCase, TestWorkflowMixin):
@@ -260,6 +261,8 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         Test that attribute 'raises_on_failure' is well propagated through Step.
         """
         self.create_bucket()
+        executor = CustomExecutor(MyWorkflow)
+        executor.initialize_history({})
 
         activities = Chain(
             (MyTask, 1),

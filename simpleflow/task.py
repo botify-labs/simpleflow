@@ -163,7 +163,7 @@ class SignalTask(Task):
 
     def propagate_attribute(self, attr, val):
         """
-        No propagation.
+        No propagation: We've not established a policy yet for child workflows.
         """
         pass
 
@@ -192,10 +192,4 @@ class MarkerTask(Task):
         return self.args[0]
 
     def execute(self):
-        pass
-
-    def propagate_attribute(self, attr, val):
-        """
-        No propagation.
-        """
         pass
