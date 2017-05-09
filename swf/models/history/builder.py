@@ -663,3 +663,16 @@ class History(swf.models.History):
         }))
 
         return self
+
+    def add_marker(self, name, details=None):
+        self.events.append(EventFactory({
+            'eventId': self.next_id,
+            'eventTimestamp': new_timestamp_string(),
+            'eventType': 'MarkerRecorded',
+            'markerRecordedEventAttributes': {
+                'details': json_dumps(details) if details is not None else '{}',
+                'markerName': name,
+            }
+        }))
+
+        return self

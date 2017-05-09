@@ -67,5 +67,5 @@ def json_loads_or_raw(data):
         return None
     try:
         return json.loads(data)
-    except ValueError:
+    except Exception:
         return data

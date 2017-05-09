@@ -153,3 +153,6 @@ class Executor(executor.Executor):
         if all:
             return [m for ml in self._markers.values() for m in ml]
         return [m[-1] for m in self._markers.values()]
+
+    def get_event_details(self, event_type, event_name):
+        return None  # To be implemented if needed
