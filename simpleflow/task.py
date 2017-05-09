@@ -86,6 +86,12 @@ class ActivityTask(Task):
             method.context = self.context
             return method(*self.args, **self.kwargs)
 
+    def propagate_attribute(self, attr, val):
+        """
+        Propagate to the activity.
+        """
+        setattr(self.activity, attr, val)
+
 
 class WorkflowTask(Task):
     """
@@ -153,6 +159,12 @@ class SignalTask(Task):
         return self._name
 
     def execute(self):
+        pass
+
+    def propagate_attribute(self, attr, val):
+        """
+        No propagation: We've not established a policy yet for child workflows.
+        """
         pass
 
 

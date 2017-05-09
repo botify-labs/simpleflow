@@ -1,12 +1,14 @@
 import json
 import unittest
 
-from mock import patch
 from moto import mock_swf, mock_s3
 import boto
+from simpleflow.local import Executor
+
+from simpleflow.canvas import Chain
 
 from simpleflow.activity import with_attributes
-from simpleflow import workflow, task, storage, step, futures
+from simpleflow import workflow, task, storage, futures
 from simpleflow.constants import MINUTE, HOUR
 from simpleflow.step.submittable import Step
 from simpleflow.step.workflow import WorkflowStepMixin
@@ -32,6 +34,20 @@ class MyTask(object):
         return self.num * 2
 
 
+class CustomExecutor(Executor):
+
+    def __init__(self, workflow_class):
+        super(CustomExecutor, self).__init__(workflow_class)
+        self.create_workflow()
+
+    def submit(self, func, *args, **kwargs):
+        if hasattr(func, 'activity') and func.activity == MyTask:
+            f = futures.Future()
+            f.set_running()
+            return f
+        return super(CustomExecutor, self).submit(func, *args, **kwargs)
+
+
 class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
     name = 'test_workflow'
     version = 'test_version'
@@ -53,6 +69,9 @@ class MyWorkflow(workflow.Workflow, WorkflowStepMixin):
                  task.ActivityTask(MyTask, num),
                  force_steps_if_executed=['my_step_2']))
         futures.wait(taskf)
+
+    def get_step_bucket(self):
+        return BUCKET
 
 
 class StepTestCase(unittest.TestCase, TestWorkflowMixin):
@@ -103,7 +122,6 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.assertEquals(
             json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
             {"status": "scheduled", "forced": True, "step":"my_step", "reasons":["workflow_init"]})
-
 
         # Check that we ask MyTask
         decisions = self.replay()
@@ -232,7 +250,26 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
             ["MY_REASON", "MY_ROOT_REASON"])
 
     def test_step_will_run_skipped(self):
-        step_name = "a.b.c"
         self.assertFalse(step_will_run("a.b.c", [], ["a.b"], ["a.b"]))
         self.assertFalse(step_will_run("a.b.c", [], ["a.b"], []))
         self.assertTrue(step_will_run("a.b.c", [], ["b"], ["a.b"]))
+
+    @mock_s3
+    @mock_swf
+    def test_propagate_attribute(self):
+        """
+        Test that attribute 'raises_on_failure' is well propagated through Step.
+        """
+        self.create_bucket()
+        executor = CustomExecutor(MyWorkflow)
+        executor.initialize_history({})
+
+        activities = Chain(
+            (MyTask, 1),
+            (MyTask, 2),
+        )
+        step_act = Step("test_propagate_attribute", activities)
+        Chain(step_act, raises_on_failure=False).submit(executor)
+
+        self.assertFalse(activities.activities[0].activity.raises_on_failure)
+        self.assertFalse(activities.activities[1].activity.raises_on_failure)

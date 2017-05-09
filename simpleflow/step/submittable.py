@@ -18,6 +18,8 @@ class Step(SubmittableContainer):
                  emit_signal=False, force_steps_if_executed=None, bubbles_exception_on_failure=False):
         """
         :param step_name : Name of the step
+        :param activities : submittable entity, not a list.
+        :type activities : Submittable | SubmittableContainer
         :param force : Force the step even if already executed
         :param activities_if_step_already_done : Activities to run even step already executed
         :param emit_signal : Emit a signal when the step is executed
@@ -92,3 +94,9 @@ class Step(SubmittableContainer):
             workflow.get_steps_done_activity(),
             FuncGroup(fn_steps_done),
             send_result=True))
+
+    def propagate_attribute(self, attr, val):
+        """
+        Propagate the attribute to the related activities.
+        """
+        self.activities.propagate_attribute(attr, val)

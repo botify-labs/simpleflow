@@ -129,3 +129,6 @@ class Activity(object):
             self.name,
             self.version,
             self.task_list)
+
+    def propagate_attribute(self, attr, val):
+        setattr(self, attr, val)
