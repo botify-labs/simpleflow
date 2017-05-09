@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.15.6
+~~~~~~
+
+- Fix step attribute propagation (#261)
+- Enhancement: get_event_details (#235)
+
 0.15.5
 ~~~~~~
 
