@@ -1,3 +1,4 @@
+import errno
 import json
 import logging
 import multiprocessing
@@ -229,7 +230,8 @@ def spawn(poller, token, task, heartbeat=60):
                 # that the worker process is still alive.
                 os.kill(worker.pid, signal.SIGKILL)
             except OSError as e:
-                if "No such process" not in e.strerror:
+                # Compare errno to the errno for "No such process"
+                if e.errno != errno.ESRCH:
                     # re-raise if we get an OSError for another reason
                     raise
                 logger.warning('process was not here anymore, got OSError: {}'.format(e.strerror))
