@@ -216,7 +216,7 @@ class Executor(executor.Executor):
             # If a_task is idempotent, we can do better and hash arguments.
             # It makes the workflow resistant to retries or variations on the
             # same task name (see #11).
-            arguments = json_dumps({"args": args, "kwargs": kwargs}, sort_keys=True)
+            arguments = json_dumps({"args": args, "kwargs": kwargs})
             suffix = hashlib.md5(arguments.encode('utf-8')).hexdigest()
 
         if isinstance(a_task, (WorkflowTask,)):
