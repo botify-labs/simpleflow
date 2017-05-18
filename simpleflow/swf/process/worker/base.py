@@ -2,6 +2,7 @@ import json
 import logging
 import multiprocessing
 import os
+import signal
 import traceback
 
 import psutil
@@ -218,10 +219,20 @@ def spawn(poller, token, task, heartbeat=60):
             )
             response = poller.heartbeat(token)
         except swf.exceptions.DoesNotExistError as error:
-            # The subprocess is responsible for completing the task.
-            # Either the task or the workflow execution no longer exists.
-            logger.debug('heartbeat failed: {}'.format(error))
-            # TODO: kill the worker at this point but make it configurable.
+            # Either the task or the workflow execution no longer exists,
+            # let's kill the worker process.
+            logger.warning('heartbeat failed: {}'.format(error))
+            logger.warning('killing (KILL) worker with pid={}'.format(worker.pid))
+            try:
+                # The try/except protects us from a race condition: by the
+                # time we issue the os.kill() call, we're not 100% sure
+                # that the worker process is still alive.
+                os.kill(worker.pid, signal.SIGKILL)
+            except OSError as e:
+                if "No such process" not in e.strerror:
+                    # re-raise if we get an OSError for another reason
+                    raise
+                logger.warning('process was not here anymore, got OSError: {}'.format(e.strerror))
             return
         except Exception as error:
             # Let's crash if it cannot notify the heartbeat failed.  The
