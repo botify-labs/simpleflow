@@ -53,6 +53,7 @@ def json_dumps(obj, pretty=False, compact=True, **kwargs):
         kwargs["separators"] = (",", ": ")
     elif compact:
         kwargs["separators"] = (",", ":")
+        kwargs["sort_keys"] = True
     return json.dumps(obj, **kwargs)
 
 
