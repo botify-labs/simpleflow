@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.15.7
+~~~~~~
+
+- Kill worker on UnknownResourceFault's during a heartbeat (#88) (#263)
+- Sort keys by default in json_dumps (#264)
+
 0.15.6
 ~~~~~~
 
