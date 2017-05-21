@@ -162,9 +162,4 @@ def swf_identity():
     identity = {k: v for k, v in iteritems(identity) if v is not None}
 
     # serialize the result
-    result = json_dumps(identity)
-
-    # truncate value to fit with SWF limits
-    truncated = result[:256]
-
-    return truncated
+    return json_dumps(identity)

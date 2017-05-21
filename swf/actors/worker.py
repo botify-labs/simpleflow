@@ -45,7 +45,10 @@ class ActivityWorker(Actor):
         :type   details: string
         """
         try:
-            return self.connection.respond_activity_task_canceled(task_token, details)
+            return self.connection.respond_activity_task_canceled(
+                task_token,
+                details=format.details(details),
+            )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
             if e.error_code == 'UnknownResourceFault':
@@ -68,7 +71,7 @@ class ActivityWorker(Actor):
         try:
             return self.connection.respond_activity_task_completed(
                 task_token,
-                result
+                format.result(result),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
@@ -120,7 +123,7 @@ class ActivityWorker(Actor):
         try:
             return self.connection.record_activity_task_heartbeat(
                 task_token,
-                details
+                format.heartbeat_details(details),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
@@ -161,7 +164,7 @@ class ActivityWorker(Actor):
             polled_activity_data = self.connection.poll_for_activity_task(
                 self.domain.name,
                 task_list,
-                identity=identity
+                identity=format.identity(identity),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)

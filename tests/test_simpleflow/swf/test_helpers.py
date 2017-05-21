@@ -29,18 +29,6 @@ class TestSwfHelpers(unittest.TestCase):
             "pid": 1234,
         })
 
-    def test_swf_identity_truncated(self, mock_pid, mock_user, mock_host):
-        """
-        The result should be truncated to 256 characters. Producing an invalid
-        JSON string is better than producing an invalid SWF response (for now).
-        Later we might externalize this another way (think Data Converters).
-        """
-        mock_host.return_value = "a" * 250
-        mock_user.return_value = "root"
-        mock_pid.return_value = 1234
-
-        expect(swf_identity()).to.have.length_of(256)
-
     def test_swf_identity_with_extra_environment(self, mock_pid, mock_user, mock_host):
         """
         SIMPLEFLOW_IDENTITY environment variable can provide extra keys.

@@ -55,3 +55,24 @@ class TestFormat(unittest.TestCase):
             len(swf.format.result(message)),
             swf.constants.MAX_RESULT_LENGTH,
         )
+
+    def test_execution_context(self):
+        message = 'A' * (swf.constants.MAX_RESULT_LENGTH * 2)
+        self.assertEquals(
+            len(swf.format.execution_context(message)),
+            swf.constants.MAX_EXECUTION_CONTEXT_LENGTH,
+        )
+
+    def test_heartbeat_details(self):
+        message = 'A' * (swf.constants.MAX_RESULT_LENGTH * 2)
+        self.assertEquals(
+            len(swf.format.heartbeat_details(message)),
+            swf.constants.MAX_HEARTBEAT_DETAILS_LENGTH,
+        )
+
+    def test_identity(self):
+        message = 'A' * (swf.constants.MAX_RESULT_LENGTH * 2)
+        self.assertEquals(
+            len(swf.format.identity(message)),
+            swf.constants.MAX_IDENTITY_LENGTH,
+        )

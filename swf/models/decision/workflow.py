@@ -21,7 +21,9 @@ class WorkflowExecutionDecision(Decision):
         :param  result: The result of the workflow execution
         :type   result: str
         """
-        self.update_attributes({'result': format.result(json_dumps(result))})
+        self.update_attributes({
+            'result': format.result(json_dumps(result)),
+        })
 
     @decision_action
     def cancel(self, details=None):
@@ -30,7 +32,9 @@ class WorkflowExecutionDecision(Decision):
         :param  details: Optional details of the cancellation
         :type   details: str
         """
-        self.update_attributes({'details': details})
+        self.update_attributes({
+            'details': format.details(details),
+        })
 
     @decision_action
     def fail(self, details=None, reason=None):
@@ -50,8 +54,8 @@ class WorkflowExecutionDecision(Decision):
     @decision_action
     def terminate(self, reason=None, details=None):
         self.update_attributes({
-            'reason': reason,
-            'details': details,
+            'reason': format.reason(reason),
+            'details': format.details(details),
         })
 
     @decision_action

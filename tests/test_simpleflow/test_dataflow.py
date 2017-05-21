@@ -91,7 +91,7 @@ def test_workflow_with_input():
     # workflow and set its result accordingly.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(result=json_dumps(result))
+    workflow_completed.complete(result=result)
 
     assert decisions[0] == workflow_completed
 
@@ -309,7 +309,7 @@ def test_workflow_with_after_closed(mock_decref_workflow):
     assert not hasattr(executor.workflow, 'b')
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(result=json_dumps(5))
+    workflow_completed.complete(result=5)
 
     assert decisions[0] == workflow_completed
     assert executor.workflow.b == 5
@@ -375,7 +375,7 @@ def test_workflow_with_two_tasks():
     # should complete the workflow and its result to ``b.result``.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(result=json_dumps(4))
+    workflow_completed.complete(result=4)
 
     assert decisions[0] == workflow_completed
 
@@ -428,7 +428,7 @@ def test_workflow_with_two_tasks_not_completed():
     # complete the workflow.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(result=json_dumps(result))
+    workflow_completed.complete(result=result)
 
     assert decisions[0] == workflow_completed
 
@@ -493,7 +493,7 @@ def test_workflow_with_same_task_called_two_times():
     # The executor should now complete the workflow.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(result=json_dumps(3))
+    workflow_completed.complete(result=3)
 
     assert decisions[0] == workflow_completed
 
@@ -554,7 +554,7 @@ def test_workflow_reuse_same_future():
     # The executor should now complete the workflow.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(result=json_dumps(4))
+    workflow_completed.complete(result=4)
 
     assert decisions[0] == workflow_completed
 
@@ -625,7 +625,7 @@ def test_workflow_with_two_tasks_same_future():
     # Both tasks completed, hence the executor should complete the workflow.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(result=json_dumps((4, 3)))
+    workflow_completed.complete(result=(4, 3))
 
     assert decisions[0] == workflow_completed
 
@@ -678,8 +678,7 @@ def test_workflow_map():
     # All tasks are finished, the executor should complete the workflow.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(
-        result=json_dumps([i + 1 for i in range(nb_parts)]))
+    workflow_completed.complete(result=[i + 1 for i in range(nb_parts)])
 
     assert decisions[0] == workflow_completed
 
@@ -736,7 +735,7 @@ def test_workflow_retry_activity():
     # Now the task is finished and the executor should complete the workflow.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(result=json_dumps(8))
+    workflow_completed.complete(result=8)
 
     assert decisions[0] == workflow_completed
 
@@ -785,7 +784,7 @@ def test_workflow_retry_activity_failed_again():
 
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
     # ``a.result`` is ``None`` because it was not set.
-    workflow_completed.complete(result=json_dumps(None))
+    workflow_completed.complete(result=None)
 
     assert decisions[0] == workflow_completed
 
@@ -845,7 +844,7 @@ def test_workflow_with_child_workflow():
     # workflow.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(result=json_dumps(4))
+    workflow_completed.complete(result=4)
 
     assert decisions[0] == workflow_completed
 
@@ -1014,7 +1013,7 @@ def test_workflow_with_more_than_max_decisions():
     # All tasks are finised, the executor should complete the workflow.
     decisions, _ = executor.replay(Response(history=history, execution=None))
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
-    workflow_completed.complete(result='null')
+    workflow_completed.complete(result=None)
 
     assert decisions[0] == workflow_completed
 
@@ -1084,7 +1083,7 @@ def test_workflow_failed_from_definition(mock_decref_workflow):
         decision_id=history.last_id,
         activity_id='activity-tests.data.activities.raise_error-1',
         last_state='failed',
-        result=json_dumps(None))
+        result=None)
 
     (history
      .add_decision_task_scheduled()
