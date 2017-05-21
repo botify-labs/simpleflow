@@ -22,7 +22,7 @@ class WorkflowExecutionDecision(Decision):
         :type   result: str
         """
         self.update_attributes({
-            'result': format.result(json_dumps(result)),
+            'result': format.result(result),
         })
 
     @decision_action

@@ -1,6 +1,8 @@
 from . import constants
 import logging
 
+from simpleflow.utils import json_dumps
+
 
 logger = logging.getLogger(__name__)
 
@@ -46,4 +48,4 @@ def reason(message):
 
 
 def result(message):
-    return wrap(message, constants.MAX_RESULT_LENGTH)
+    return wrap(json_dumps(message), constants.MAX_RESULT_LENGTH)

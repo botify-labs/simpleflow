@@ -13,7 +13,7 @@ from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
-from simpleflow.utils import json_dumps, format_exc
+from simpleflow.utils import format_exc
 
 from .dispatch import dynamic_dispatcher
 
@@ -147,7 +147,7 @@ class ActivityWorker(object):
             return poller.fail_with_retry(token, task, reason=format_exc(err), details=tb)
 
         try:
-            poller.complete_with_retry(token, json_dumps(result))
+            poller.complete_with_retry(token, result)
         except Exception as err:
             logger.exception("complete error")
             reason = 'cannot complete task {}: {}'.format(
