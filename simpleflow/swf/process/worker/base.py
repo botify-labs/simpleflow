@@ -9,7 +9,6 @@ import traceback
 import psutil
 import swf.actors
 import swf.exceptions
-import swf.format
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
 from simpleflow.swf.task import ActivityTask
@@ -98,8 +97,8 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
             return swf.actors.ActivityWorker.fail(
                 self,
                 token,
-                reason=swf.format.reason(reason),
-                details=swf.format.details(details),
+                reason=reason,
+                details=details,
             )
         except Exception as err:
             logger.error('cannot fail task {}: {}'.format(

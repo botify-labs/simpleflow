@@ -12,7 +12,6 @@ import traceback
 
 import simpleflow.task as base_task
 import swf.exceptions
-import swf.format
 import swf.models
 import swf.models.decision
 from simpleflow import (
@@ -948,8 +947,8 @@ class Executor(executor.Executor):
 
             decision = swf.models.decision.WorkflowExecutionDecision()
             decision.fail(
-                reason=swf.format.reason(reason),
-                details=swf.format.details(details),
+                reason=reason,
+                details=details,
             )
             self.after_closed()
             if decref_workflow:
@@ -970,8 +969,8 @@ class Executor(executor.Executor):
 
             decision = swf.models.decision.WorkflowExecutionDecision()
             decision.fail(
-                reason=swf.format.reason(reason),
-                details=swf.format.details(details),
+                reason=reason,
+                details=details,
             )
             self.after_closed()
             if decref_workflow:
@@ -980,7 +979,7 @@ class Executor(executor.Executor):
 
         self.after_replay()
         decision = swf.models.decision.WorkflowExecutionDecision()
-        decision.complete(result=swf.format.result(json_dumps(result)))
+        decision.complete(result=result)
         self.on_completed()
         self.after_closed()
         if decref_workflow:
@@ -1022,9 +1021,8 @@ class Executor(executor.Executor):
 
         decision = swf.models.decision.WorkflowExecutionDecision()
         decision.fail(
-            reason=swf.format.reason(
-                'Workflow execution failed: {}'.format(reason)),
-            details=swf.format.details(details),
+            reason='Workflow execution failed: {}'.format(reason),
+            details=details,
         )
 
         self._decisions.append(decision)

@@ -6,6 +6,7 @@
 # See the file LICENSE for copying permission.
 
 from simpleflow.utils import json_dumps
+from swf import format
 from swf.models.decision.base import Decision, decision_action
 from swf.models.workflow import CHILD_POLICIES
 
@@ -20,7 +21,7 @@ class WorkflowExecutionDecision(Decision):
         :param  result: The result of the workflow execution
         :type   result: str
         """
-        self.update_attributes({'result': result})
+        self.update_attributes({'result': format.result(json_dumps(result))})
 
     @decision_action
     def cancel(self, details=None):
@@ -42,8 +43,8 @@ class WorkflowExecutionDecision(Decision):
         :type   reason: str
         """
         self.update_attributes({
-            'details': details,
-            'reason': reason
+            'details': format.details(details),
+            'reason': format.reason(reason),
         })
 
     @decision_action
