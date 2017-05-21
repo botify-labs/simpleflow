@@ -675,7 +675,7 @@ class Executor(executor.Executor):
         # schedule the requested task and block execution instead, with a timer
         # to wake up the workflow immediately after completing these decisions.
         # See: http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-limits.html
-        request_size = len(json.dumps(self._decisions + decisions))
+        request_size = len(json_dumps(self._decisions + decisions))
         # We keep a 5kB of error margin for headers, json structure, and the
         # timer decision, and 32kB for the context, even if we don't use it now.
         if request_size > constants.MAX_REQUEST_SIZE - 5000 - 32000:
