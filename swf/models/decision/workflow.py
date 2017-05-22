@@ -5,7 +5,6 @@
 #
 # See the file LICENSE for copying permission.
 
-from simpleflow.utils import json_dumps
 from swf import format
 from swf.models.decision.base import Decision, decision_action
 from swf.models.workflow import CHILD_POLICIES
@@ -87,7 +86,7 @@ class WorkflowExecutionDecision(Decision):
         :type   workflow_type_version: str
         """
         if input is not None:
-            input = json_dumps(input)
+            input = format.input(input)
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -136,7 +135,7 @@ class ChildWorkflowExecutionDecision(Decision):
 
         """
         if input is not None:
-            input = json_dumps(input)
+            input = format.input(input)
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -202,7 +201,7 @@ class ExternalWorkflowExecutionDecision(Decision):
         :type   run_id: str
         """
         if input is not None:
-            input = json_dumps(input)
+            input = format.input(input)
 
         self.update_attributes({
             'signalName': signal_name,

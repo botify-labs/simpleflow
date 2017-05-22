@@ -10,7 +10,6 @@ import time
 
 from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError
 from simpleflow import compat
-from simpleflow.utils import json_dumps
 from swf import exceptions, format
 from swf.constants import REGISTERED
 from swf.exceptions import (
@@ -272,7 +271,7 @@ class WorkflowType(BaseModel):
             task_list=task_list,
             child_policy=child_policy,
             execution_start_to_close_timeout=execution_timeout,
-            input=format.input(json_dumps(input)),
+            input=format.input(input),
             tag_list=tag_list,
             task_start_to_close_timeout=decision_tasks_timeout,
         )['runId']
@@ -514,7 +513,7 @@ class WorkflowExecution(BaseModel):
             self.domain.name,
             signal_name,
             workflow_id or self.workflow_id,
-            input=format.input(json_dumps(input)),
+            input=format.input(input),
             run_id=run_id if workflow_id else self.run_id,
         )
 

@@ -5,7 +5,7 @@
 #
 # See the file LICENSE for copying permission.
 
-from simpleflow.utils import json_dumps
+from swf import format
 from swf.models.decision.base import Decision, decision_action
 
 
@@ -63,7 +63,7 @@ class ActivityTaskDecision(Decision):
         :type   task_priority: int|String
         """
         if input is not None:
-            input = json_dumps(input)
+            input = format.input(input)
 
         if task_priority is not None:
             # NB: here we call int() so we raise early if a wrong task priority

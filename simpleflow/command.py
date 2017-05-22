@@ -13,6 +13,7 @@ from uuid import uuid4
 import boto.connection
 import click
 
+from swf import format
 import swf.exceptions
 import swf.models
 import swf.querysets
@@ -580,7 +581,7 @@ def standalone(context,
         execution_timeout,
         tags,
         decision_tasks_timeout,
-        json_dumps(wf_input),
+        format.input(wf_input),
         None,
         local=False,
     )

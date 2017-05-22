@@ -40,7 +40,7 @@ def identity(message):
 
 
 def input(message):
-    return wrap(message, constants.MAX_INPUT_LENGTH)
+    return wrap(json_dumps(message), constants.MAX_INPUT_LENGTH)
 
 
 def reason(message):
