@@ -130,7 +130,7 @@ class ActivityType(BaseModel):
         """
         try:
             description = self.connection.describe_activity_type(
-                self.name,
+                self.domain.name,
                 self.name,
                 self.version
             )
