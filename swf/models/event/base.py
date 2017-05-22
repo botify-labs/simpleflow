@@ -10,7 +10,7 @@ from datetime import datetime
 import pytz
 from future.utils import iteritems
 
-from simpleflow.utils import json_loads_or_raw
+from swf import format
 from swf.utils import camel_to_underscore, cached_property
 
 
@@ -94,7 +94,7 @@ class Event(object):
 
     @input.setter
     def input(self, value):
-        self._input = json_loads_or_raw(value)
+        self._input = format.decode(value)
 
     def process_attributes(self):
         """Processes the event raw_data attributes_key elements

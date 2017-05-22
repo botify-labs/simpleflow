@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function
 
-import json
 import logging
 import multiprocessing
 import os
@@ -26,7 +25,7 @@ from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
 from simpleflow.swf.utils import get_workflow_history_and_run_id
-from simpleflow.utils import json_dumps, json_loads_or_raw
+from simpleflow.utils import json_dumps
 from simpleflow import __version__
 
 if False:
@@ -105,14 +104,14 @@ def get_workflow_type(domain_name, workflow_class):
 def load_input(input_fp):
     if input_fp is None:
         input_fp = sys.stdin
-    input = json_loads_or_raw(input_fp)
+    input = format.decode(input_fp)
     return transform_input(input)
 
 
 def get_input(wf_input):
     if not wf_input:
         wf_input = sys.stdin.read()
-    wf_input = json_loads_or_raw(wf_input)
+    wf_input = format.decode(wf_input)
     return transform_input(wf_input)
 
 
@@ -638,7 +637,7 @@ def activity_rerun(domain,
 
     input_override = None
     if input:
-        input_override = json.loads(input)
+        input_override = format.decode(input)
 
     # find workflow execution
     try:

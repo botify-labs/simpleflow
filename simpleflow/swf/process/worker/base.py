@@ -1,5 +1,4 @@
 import errno
-import json
 import logging
 import multiprocessing
 import os
@@ -7,6 +6,7 @@ import signal
 import traceback
 
 import psutil
+from swf import format
 import swf.actors
 import swf.exceptions
 from simpleflow.process import Supervisor, with_state
@@ -135,7 +135,7 @@ class ActivityWorker(object):
         logger.debug('ActivityWorker.process() pid={}'.format(os.getpid()))
         try:
             activity = self.dispatch(task)
-            input = json.loads(task.input)
+            input = format.decode(task.input)
             args = input.get('args', ())
             kwargs = input.get('kwargs', {})
             context = sanitize_activity_context(task.context)

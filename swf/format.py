@@ -1,10 +1,14 @@
 from . import constants
 import logging
 
-from simpleflow.utils import json_dumps
+from simpleflow.utils import json_dumps, json_loads_or_raw
 
 
 logger = logging.getLogger(__name__)
+
+
+def decode(content):
+    return json_loads_or_raw(content)
 
 
 def wrap(message, max_length):

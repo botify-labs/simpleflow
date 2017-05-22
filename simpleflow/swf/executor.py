@@ -11,6 +11,7 @@ import re
 import traceback
 
 import simpleflow.task as base_task
+from swf import format
 import swf.exceptions
 import swf.models
 import swf.models.decision
@@ -40,7 +41,6 @@ from simpleflow.utils import (
     hex_hash,
     issubclass_,
     json_dumps,
-    json_loads_or_raw,
     retry,
 )
 from simpleflow.workflow import Workflow
@@ -284,7 +284,7 @@ class Executor(executor.Executor):
             future.set_running()
         elif state == 'completed':
             result = event['result']
-            future.set_finished(json_loads_or_raw(result))
+            future.set_finished(format.decode(result))
         elif state == 'canceled':
             future.set_cancelled()
         elif state == 'failed':
@@ -338,7 +338,7 @@ class Executor(executor.Executor):
         elif state == 'started':
             future.set_running()
         elif state == 'completed':
-            future.set_finished(json_loads_or_raw(event['result']))
+            future.set_finished(format.decode(event['result']))
         elif state == 'failed':
             future.set_exception(exceptions.TaskFailed(
                 name=event['id'],
@@ -1164,14 +1164,14 @@ class Executor(executor.Executor):
     def list_markers(self, all=False):
         if all:
             return [
-                Marker(m['name'], json_loads_or_raw(m['details']))
+                Marker(m['name'], format.decode(m['details']))
                 for ml in self._history.markers.values() for m in ml
             ]
         rc = []
         for ml in self._history.markers.values():
             m = ml[-1]
             if m['state'] == 'recorded':
-                rc.append(Marker(m['name'], json_loads_or_raw(m['details'])))
+                rc.append(Marker(m['name'], format.decode(m['details'])))
         return rc
 
     def get_event_details(self, event_type, event_name):
@@ -1191,7 +1191,7 @@ class Executor(executor.Executor):
                 return None
             # Make pleasing details
             marker = copy.copy(marker_list[-1])
-            marker['details'] = json_loads_or_raw(marker['details'])
+            marker['details'] = format.decode(marker['details'])
             return marker
         elif event_type == 'timer':
             return self._history.timers.get(event_name)
