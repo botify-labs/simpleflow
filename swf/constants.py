@@ -24,3 +24,7 @@ MAX_RESULT_LENGTH = 32000
 # Hence this value is an upper limit to retrieve *all* open/closed workflow
 # executions on a given region+domain.
 MAX_WORKFLOW_AGE = 366 + 90 + 1
+
+# Jumbo fields
+JUMBO_FIELDS_PREFIX = "simpleflow+s3://"
+JUMBO_FIELDS_MAX_SIZE = 5 * 1024 ** 2  # 5MB
