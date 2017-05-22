@@ -6,25 +6,25 @@ import swf.constants
 
 
 class TestFormat(unittest.TestCase):
-    def test_wrap_none(self):
+    def test_encode_none(self):
         self.assertEquals(
-            swf.format.wrap(None, 1),
+            swf.format.encode(None, 1),
             None
         )
 
-    def test_wrap_smaller(self):
+    def test_encode_smaller(self):
         MAX_LENGTH = random.randint(10, 1000)
         message = 'A' * (MAX_LENGTH // 2)
         self.assertEquals(
-            swf.format.wrap(message, MAX_LENGTH),
+            swf.format.encode(message, MAX_LENGTH),
             message,
         )
 
-    def test_wrap_longer(self):
+    def test_encode_longer(self):
         MAX_LENGTH = random.randint(10, 1000)
         message = 'A' * 1000
         self.assertEquals(
-            len(swf.format.wrap(message, MAX_LENGTH)),
+            len(swf.format.encode(message, MAX_LENGTH)),
             MAX_LENGTH,
         )
 
