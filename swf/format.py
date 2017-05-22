@@ -13,6 +13,8 @@ JUMBO_FIELDS_BUCKET = os.getenv("SIMPLEFLOW_JUMBO_FIELDS_BUCKET")
 
 
 def decode(content):
+    if content is None:
+        return content
     if content.startswith(constants.JUMBO_FIELDS_PREFIX):
         location, _size = content.split()
         content = _pull_jumbo_field(location)
