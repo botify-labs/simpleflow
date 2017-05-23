@@ -439,7 +439,7 @@ class Executor(executor.Executor):
         if state == 'started':
             future.set_running()
         elif state == 'fired':
-            future.set_finished(None)  # FIXME send control?
+            future.set_finished(None)
         elif state == 'canceled':
             future.set_cancelled()
         elif state in ('start_failed', 'cancel_failed'):
