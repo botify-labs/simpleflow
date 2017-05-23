@@ -28,7 +28,15 @@ from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
-from simpleflow.swf.task import ActivityTask, WorkflowTask, SignalTask, MarkerTask, SwfTask
+from simpleflow.swf.task import (
+    SwfTask,
+    ActivityTask,
+    WorkflowTask,
+    SignalTask,
+    MarkerTask,
+    TimerTask,
+    CancelTimerTask,
+)
 from simpleflow.utils import (
     hex_hash,
     issubclass_,
@@ -413,6 +421,35 @@ class Executor(executor.Executor):
 
         return future
 
+    def _get_future_from_timer_event(self, a_task, event):
+        """
+        Maps a timer event to a Future with the corresponding state.
+
+        :param a_task: Timer task; unused.
+        :type a_task: TimerTask
+        :param event: Timer event
+        :type event: dict[str, Any]
+        :return:
+        :rtype: futures.Future
+        """
+        future = futures.Future()
+        if not event:
+            return future
+        state = event['state']
+        if state == 'started':
+            future.set_running()
+        elif state == 'fired':
+            future.set_finished(None)
+        elif state == 'canceled':
+            future.set_cancelled()
+        elif state in ('start_failed', 'cancel_failed'):
+            future.set_exception(exceptions.TaskFailed(
+                name=event['timer_id'],
+                reason=event['cause'],
+            ))
+
+        return future
+
     def get_future_from_signal(self, signal_name):
         """
 
@@ -426,7 +463,7 @@ class Executor(executor.Executor):
 
     def find_activity_event(self, a_task, history):
         """
-        Get the event corresponding to a activity task, if any.
+        Get the event corresponding to an activity task, if any.
 
         :param a_task:
         :type a_task: ActivityTask
@@ -476,7 +513,7 @@ class Executor(executor.Executor):
 
     def find_marker_event(self, a_task, history):
         """
-        Get the event corresponding to a activity task, if any.
+        Get the event corresponding to a marker, if any.
 
         :param a_task:
         :type a_task: MarkerTask
@@ -497,18 +534,40 @@ class Executor(executor.Executor):
         )
         return marker_list[-1] if marker_list else None
 
+    def find_timer_event(self, a_task, history):
+        """
+        Get the event corresponding to a timer or timer cancellation, if any.
+
+        :param a_task:
+        :type a_task: TimerTask | CancelTimerTask
+        :param history:
+        :type history: simpleflow.history.History
+        :return:
+        :rtype: Optional[dict[str, Any]]
+        """
+        event = history.timers.get(a_task.id)
+        if not event:
+            return None
+        if isinstance(a_task, CancelTimerTask):
+            if 'canceled_event_id' not in event and 'cancel_failed_event_id' not in event:
+                # Timer not yet cancelled: no future returned
+                return None
+        return event
+
     TASK_TYPE_TO_EVENT_FINDER = {
         ActivityTask: find_activity_event,
         WorkflowTask: find_child_workflow_event,
         SignalTask: find_signal_event,
         MarkerTask: find_marker_event,
+        TimerTask: find_timer_event,
+        CancelTimerTask: find_timer_event,
     }
 
     def find_event(self, a_task, history):
         """
-        Get the event corresponding to an activity or child workflow, if any
+        Get the event corresponding to a "task", if any.
         :param a_task:
-        :type a_task: ActivityTask | WorkflowTask | SignalTask
+        :type a_task: SwfTask
         :param history:
         :type history: simpleflow.history.History
         :return:
@@ -594,20 +653,14 @@ class Executor(executor.Executor):
                 return
             self._idempotent_tasks_to_submit.add(task_identifier)
 
-        # if isinstance(a_task, SignalTask):
-        #     if a_task.workflow_id is None:
-        #         a_task.workflow_id = self._execution_context['workflow_id']
-        #         if a_task.run_id is None:
-        #             a_task.run_id = self._execution_context['run_id']
-
         # NB: ``decisions`` contains a single decision.
         decisions = a_task.schedule(self.domain, task_list, priority=self.current_priority)
 
         # Ready to schedule
         if isinstance(a_task, ActivityTask):
             self._open_activity_count += 1
-        elif isinstance(a_task, MarkerTask):
-            self._append_timer = True  # markers don't generate decisions, so force a wake-up timer
+        elif isinstance(a_task, (MarkerTask, CancelTimerTask)):
+            self._append_timer = True  # Marker and CancelTimer don't generate decisions, so force a wake-up timer
 
         # Check if we won't violate the 1MB limit on API requests ; if so, do NOT
         # schedule the requested task and block execution instead, with a timer
@@ -647,6 +700,7 @@ class Executor(executor.Executor):
         'signal': get_future_from_signal_event,
         'external_workflow': get_future_from_external_workflow_event,
         'marker': _get_future_from_marker_event,
+        'timer': _get_future_from_timer_event,
     }
 
     def resume(self, a_task, *args, **kwargs):
@@ -658,7 +712,7 @@ class Executor(executor.Executor):
         If in repair mode, we may fake the task to repair from the previous history.
 
         :param a_task:
-        :type a_task: ActivityTask | WorkflowTask | SignalTask
+        :type a_task: Task
         :param args:
         :param args: list
         :type kwargs:
@@ -767,11 +821,15 @@ class Executor(executor.Executor):
                 func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
             elif isinstance(func, base_task.MarkerTask):
                 func = MarkerTask.from_generic_task(func)
+            elif isinstance(func, base_task.TimerTask):
+                func = TimerTask.from_generic_task(func)
+            elif isinstance(func, base_task.CancelTimerTask):
+                func = CancelTimerTask.from_generic_task(func)
 
         try:
             # do not use directly "Submittable" here because we want to catch if
             # we don't have an instance from a class known to work under simpleflow.swf
-            if isinstance(func, (ActivityTask, WorkflowTask, SignalTask, MarkerTask)):
+            if isinstance(func, SwfTask):
                 # no need to wrap it, already wrapped in the correct format
                 a_task = func
             elif isinstance(func, Activity):

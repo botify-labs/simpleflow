@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from simpleflow.base import Submittable, SubmittableContainer
 from simpleflow.signal import WaitForSignal
+from simpleflow.task import TimerTask, CancelTimerTask
 from . import canvas
 from . import task
 from ._decorators import deprecated
@@ -201,3 +202,9 @@ class Workflow(Submittable):
         :return: backend-dependent details.
         """
         return self.executor.get_event_details(event_type, event_name)
+
+    def start_timer(self, timer_id, timeout, control=None):
+        return TimerTask(timer_id, timeout, control)
+
+    def cancel_timer(self, timer_id):
+        return CancelTimerTask(timer_id)

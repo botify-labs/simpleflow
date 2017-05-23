@@ -3,6 +3,8 @@ from __future__ import absolute_import
 import abc
 from copy import deepcopy
 
+import time
+
 from simpleflow.base import Submittable
 from . import futures
 from .activity import Activity
@@ -193,3 +195,57 @@ class MarkerTask(Task):
 
     def execute(self):
         pass
+
+
+class TimerTask(Task):
+    """
+    Timer.
+    """
+
+    def __init__(self, timer_id, timeout, control=None):
+        self.timer_id = timer_id
+        self.timeout = timeout
+        self.control = control
+        self.args = ()
+        self.kwargs = {}
+
+    @property
+    def name(self):
+        return self.timer_id
+
+    @property
+    def id(self):
+        return self.timer_id
+
+    def __repr__(self):
+        return '<{} timer_id="{}" timeout={}>'.format(self.__class__.__name__, self.timer_id, self.timeout)
+
+    def execute(self):
+        # Local execution
+        time.sleep(self.timeout)
+
+
+class CancelTimerTask(Task):
+    """
+    Timer cancellation.
+    """
+
+    def __init__(self, timer_id):
+        self.timer_id = timer_id
+        self.args = ()
+        self.kwargs = {}
+
+    @property
+    def name(self):
+        return self.timer_id
+
+    @property
+    def id(self):
+        return self.timer_id
+
+    def __repr__(self):
+        return '<{} timer_id="{}">'.format(self.__class__.__name__, self.timer_id)
+
+    def execute(self):
+        # Local execution: no-op
+        return

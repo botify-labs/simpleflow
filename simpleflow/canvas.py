@@ -210,7 +210,14 @@ class GroupFuture(futures.Future):
                    for a in self.futures)
 
     def __repr__(self):
-        return '<{} at {:#x}, activities={!r}>'.format(self.__class__.__name__, id(self), self.activities)
+        return '<{} at {:#x}, state={state}, exception={exception}, activities={activities}, futures={futures}>'.format(
+            self.__class__.__name__,
+            id(self),
+            state=self._state,
+            exception=self._exception,
+            activities=self.activities,
+            futures=self.futures,
+        )
 
 
 class Chain(Group):
