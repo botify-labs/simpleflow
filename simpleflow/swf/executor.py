@@ -762,7 +762,8 @@ class Executor(executor.Executor):
                     self._open_activity_count += 1
 
         if not future:
-            self.schedule_task(a_task, task_list=self.task_list)
+            task_list = getattr(a_task, 'task_list', self.task_list)
+            self.schedule_task(a_task, task_list=task_list)
             future = futures.Future()  # return a pending future.
 
         if self._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT:
