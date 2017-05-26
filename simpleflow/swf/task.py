@@ -2,7 +2,6 @@ import logging
 
 import swf.models
 import swf.models.decision
-
 from simpleflow import task
 from simpleflow.utils import json_dumps
 
@@ -20,6 +19,8 @@ class ActivityTask(task.ActivityTask, SwfTask):
     """
     Activity task managed on SWF.
     """
+    cached_models = {}
+
     @classmethod
     def from_generic_task(cls, task):
         """
@@ -44,12 +45,10 @@ class ActivityTask(task.ActivityTask, SwfTask):
         :rtype: list[swf.models.decision.Decision]
         """
         activity = self.activity
-        # FIXME Always involve a GET call to the SWF API which introduces useless
-        # latency if the ActivityType already exists.
-        model = swf.models.ActivityType(
+        model = self.get_activity_type(
             domain,
             activity.name,
-            version=activity.version,
+            activity.version
         )
 
         input = self.get_input()
@@ -97,6 +96,32 @@ class ActivityTask(task.ActivityTask, SwfTask):
         }
         return input
 
+    @classmethod
+    def get_activity_type(cls, domain, name, version):
+        # type: (swf.models.Domain, str, str) -> swf.models.ActivityType
+        """
+        Cache known ActivityType's to remove useless latency.
+        :param domain:
+        :type domain:
+        :param name:
+        :type name:
+        :param version:
+        :type version:
+        :return:
+        :rtype:
+        """
+        key = (domain.name, name, version)
+        model = cls.cached_models.get(key)
+        if model:
+            return model
+        model = swf.models.ActivityType(
+            domain,
+            name,
+            version=version,
+        )
+        cls.cached_models[key] = model
+        return model
+
 
 class NonPythonicActivityTask(ActivityTask):
     """
@@ -105,7 +130,7 @@ class NonPythonicActivityTask(ActivityTask):
 
     def __init__(self, activity, *args, **kwargs):
         if args and kwargs:
-            raise ValueError("This task type doesn't support both *args and kwargs")
+            raise ValueError("This task type doesn't support both *args and **kwargs")
         super(ActivityTask, self).__init__(activity, *args, **kwargs)
 
     def get_input(self):
@@ -116,6 +141,8 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
     """
     WorkflowTask managed on SWF.
     """
+    cached_models = {}
+
     @classmethod
     def from_generic_task(cls, task):
         """
@@ -145,12 +172,10 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         :rtype: list[swf.models.decision.Decision]
         """
         workflow = self.workflow
-        # FIXME Always involve a GET call to the SWF API which introduces useless
-        # latency if the WorkflowType already exists.
-        model = swf.models.WorkflowType(
+        model = self.get_workflow_type(
             domain,
             workflow.__module__ + '.' + workflow.__name__,
-            version=workflow.version,
+            workflow.version
         )
 
         input = {
@@ -177,6 +202,32 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         )
 
         return [decision]
+
+    @classmethod
+    def get_workflow_type(cls, domain, name, version):
+        # type: (swf.models.Domain, str, str) -> swf.models.WorkflowType
+        """
+        Cache known WorkflowType's to remove useless latency.
+        :param domain:
+        :type domain:
+        :param name:
+        :type name:
+        :param version:
+        :type version:
+        :return:
+        :rtype:
+        """
+        key = (domain.name, name, version)
+        model = cls.cached_models.get(key)
+        if model:
+            return model
+        model = swf.models.WorkflowType(
+            domain,
+            name,
+            version=version,
+        )
+        cls.cached_models[key] = model
+        return model
 
 
 class SignalTask(task.SignalTask, SwfTask):
