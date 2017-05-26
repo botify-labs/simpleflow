@@ -2,6 +2,8 @@ import logging
 import os
 from uuid import uuid4
 
+import lazy_object_proxy
+
 from . import constants
 
 from simpleflow import storage
@@ -16,8 +18,13 @@ def decode(content):
     if content is None:
         return content
     if content.startswith(constants.JUMBO_FIELDS_PREFIX):
-        location, _size = content.split()
-        content = _pull_jumbo_field(location)
+
+        def unwrap():
+            location, _size = content.split()
+            value = _pull_jumbo_field(location)
+            return json_loads_or_raw(value)
+
+        return lazy_object_proxy.Proxy(unwrap)
     return json_loads_or_raw(content)
 
 

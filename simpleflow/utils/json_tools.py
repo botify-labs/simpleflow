@@ -4,6 +4,8 @@ import datetime
 import json
 import types
 
+import lazy_object_proxy
+
 from simpleflow.futures import Future
 
 
@@ -27,6 +29,8 @@ def _serialize_complex_object(obj):
     elif isinstance(obj, Future):
         return obj.result
     elif isinstance(obj, UUID):
+        return str(obj)
+    elif isinstance(obj, lazy_object_proxy.Proxy):
         return str(obj)
     raise TypeError(
         "Type %s couldn't be serialized. This is a bug in simpleflow,"
