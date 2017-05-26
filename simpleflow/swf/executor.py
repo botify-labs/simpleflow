@@ -924,7 +924,7 @@ class Executor(executor.Executor):
             reason = 'Workflow execution error in task {}: "{}"'.format(
                 err.task.name,
                 getattr(err.exception, 'reason', repr(err.exception)))
-            logger.exception(reason)
+            logger.exception('%s', reason)  # Don't let logger try to interpolate the message
 
             details = getattr(err.exception, 'details', None)
             self.on_failure(reason, details)
@@ -947,7 +947,7 @@ class Executor(executor.Executor):
 
             tb = traceback.format_exc()
             details = 'Traceback:\n{}'.format(tb)
-            logger.exception(reason + '\n' + details)
+            logger.exception('%s', reason + '\n' + details)  # Don't let logger try to interpolate the message
 
             self.on_failure(reason)
 
