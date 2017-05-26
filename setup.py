@@ -95,7 +95,7 @@ setup(
                       read("README_SWF.rst") + '\n\n' +
                       read("HISTORY.rst")),
     author='Greg Leclercq',
-    author_email='greg@botify.com',
+    author_email='tech@botify.com',
     url='https://github.com/botify-labs/simpleflow',
     packages=find_packages(exclude=("test*", )),
     package_dir={
