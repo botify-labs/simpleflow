@@ -148,7 +148,7 @@ class ActivityWorker(object):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.exception("process error: {}".format(str(exc_value)))
             tb = traceback.format_tb(exc_traceback, limit=TRACEBACK_SIZE)
-            return poller.fail(
+            return poller.fail_with_retry(
                 token,
                 task,
                 reason=format_exc(exc_value),
