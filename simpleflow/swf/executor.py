@@ -1090,7 +1090,7 @@ class Executor(executor.Executor):
             return
 
         known_workflows_ids = []
-        if self._execution_context['parent_workflow_id']:
+        if self._execution_context.get('parent_workflow_id'):
             known_workflows_ids.append(
                 (self._execution_context['parent_workflow_id'], self._execution_context['parent_run_id'])
             )
@@ -1170,6 +1170,8 @@ class Executor(executor.Executor):
             marker = copy.copy(marker_list[-1])
             marker['details'] = json_loads_or_raw(marker['details'])
             return marker
+        elif event_type == 'timer':
+            return self._history.timers.get(event_name)
         else:
             raise ValueError('Unimplemented type {!r} for get_event_details'.format(
                 event_type
