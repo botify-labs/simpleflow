@@ -2,44 +2,31 @@
 from __future__ import absolute_import
 
 import datetime
+import functools
 import re
 from builtins import range
 
-import functools
-from mock import patch
-
 import boto
+from mock import patch
 from moto import mock_swf
 
 import swf.models
 import swf.models.decision
 import swf.models.workflow
-from simpleflow.marker import Marker
-from simpleflow.swf.task import NonPythonicActivityTask
-from simpleflow.utils import json_dumps
-from swf.models.history import builder
-from swf.responses import Response
-
 from simpleflow import (
     futures,
 )
-from simpleflow.task import ActivityTask
 from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.executor import Executor
-
+from simpleflow.swf.task import NonPythonicActivityTask
+from simpleflow.task import ActivityTask
+from simpleflow.utils import json_dumps
+from swf.models.history import builder
+from swf.responses import Response
 from tests.data import (
-    BaseTestWorkflow,
-    DOMAIN,
-    double,
-    increment,
-    increment_retry,
-    print_message,
-    raise_error,
-    raise_on_failure,
-    triple,
-    Tetra,
-    non_pythonic,
+    BaseTestWorkflow, DOMAIN, Tetra, double, increment, increment_retry, non_pythonic, print_message,
+    raise_error, raise_on_failure, triple,
 )
 
 
@@ -1574,6 +1561,7 @@ def test_execution_context():
     expected = dict(
         name='the_workflow_name',
         version='the_workflow_version',
+        domain_name=DOMAIN.name,
         workflow_id='a_workflow_id',
         run_id='a_run_id',
         tag_list=[],

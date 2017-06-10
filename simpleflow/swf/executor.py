@@ -1032,6 +1032,7 @@ class Executor(executor.Executor):
         self._execution_context = dict(
             name=execution.workflow_type.name,
             version=execution.workflow_type.version,
+            domain_name=self.domain.name,
             workflow_id=execution.workflow_id,
             run_id=execution.run_id,
             tag_list=getattr(workflow_started_event, 'tag_list', None) or [],  # attribute is absent if no tagList

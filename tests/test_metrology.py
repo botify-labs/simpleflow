@@ -57,3 +57,7 @@ class MetrologyTestCase(unittest.TestCase):
         self.assertEquals(res[0][1]["metrology"][0]["name"], "Step1")
         self.assertEquals(res[0][1]["metrology"][0]["read"]["records"], 1)
         self.assertEquals(res[0][1]["metrology"][0]["metadata"]["num"], 1)
+
+
+if __name__ == '__main__':
+    unittest.main()
