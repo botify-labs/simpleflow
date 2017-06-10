@@ -75,7 +75,7 @@ def read(fname):
 DEPS = [
     'future',
     'boto>=2.38.0',
-    'tabulate==0.7.3',
+    'tabulate>=0.7.3,<0.8.0',
     'setproctitle',
     'click',
     'psutil>=3.2.1',
