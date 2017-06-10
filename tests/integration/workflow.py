@@ -9,6 +9,7 @@ from simpleflow import (
 )
 from simpleflow.canvas import Chain, Group
 from simpleflow.constants import HOUR, MINUTE
+from simpleflow.swf.utils import get_workflow_execution
 from simpleflow.task import ActivityTask
 
 
@@ -40,6 +41,20 @@ def increment(x):
 def double(y):
     print("double: %d" % y)
     return y * 2
+
+
+@activity.with_attributes(task_list='quickstart', version='example')
+def send_unrequested_signal():
+    context = send_unrequested_signal.context
+    ex = get_workflow_execution(context['domain_name'], context['workflow_id'], context['run_id'])
+    ex.connection.signal_workflow_execution(
+        ex.domain.name,
+        'unexpected',
+        ex.workflow_id,
+        input='Hi there!',  # not JSON-formatted
+        run_id=ex.run_id,
+    )
+    return 'signal sent!'
 
 
 class SleepWorkflow(Workflow):
@@ -151,3 +166,15 @@ class TimerWorkflow(Workflow):
             print('Starting timers')
         futures.wait(future)
         print('Timer fired, exiting')
+
+
+class SignaledWorkflow(Workflow):
+    name = 'example'
+    version = 'example'
+    task_list = 'example'
+    decision_tasks_timeout = 5 * MINUTE
+    execution_timeout = 1 * HOUR
+
+    def run(self):
+        future = self.submit(send_unrequested_signal)
+        return future.result
