@@ -25,13 +25,13 @@ from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
 from simpleflow.swf.utils import get_workflow_history_and_run_id
-from simpleflow.utils import json_dumps
+from simpleflow.utils import json_dumps, json_loads_or_raw
 from simpleflow import __version__
 
 if False:
-    from typing import Text, Type
-    from simpleflow import Workflow
-    from swf.models import WorkflowType
+    from typing import Text, Type  # NOQA
+    from simpleflow import Workflow  # NOQA
+    from swf.models import WorkflowType  # NOQA
 
 
 logger = logging.getLogger(__name__)
@@ -104,14 +104,14 @@ def get_workflow_type(domain_name, workflow_class):
 def load_input(input_fp):
     if input_fp is None:
         input_fp = sys.stdin
-    input = json.load(input_fp)
+    input = json_loads_or_raw(input_fp)
     return transform_input(input)
 
 
 def get_input(wf_input):
     if not wf_input:
         wf_input = sys.stdin.read()
-    wf_input = json.loads(wf_input)
+    wf_input = json_loads_or_raw(wf_input)
     return transform_input(wf_input)
 
 
@@ -123,9 +123,16 @@ def get_or_load_input(input_file, input):
 
 
 def transform_input(wf_input):
+    if isinstance(wf_input, dict):
+        return wf_input
     if isinstance(wf_input, list):
         wf_input = {
             'args': wf_input,
+            'kwargs': {},
+        }
+    else:
+        wf_input = {
+            'args': [wf_input],
             'kwargs': {},
         }
     return wf_input
