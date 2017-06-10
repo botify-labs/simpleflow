@@ -1,6 +1,21 @@
-from simpleflow import Workflow, futures
+from simpleflow import Workflow
 from simpleflow.lambda_function import LambdaFunction
 from simpleflow.swf.task import LambdaFunctionTask
+
+"""
+The lambda function is:
+
+from __future__ import print_function
+
+import json
+
+print('Loading function')
+
+
+def lambda_handler(event, context):
+    print("Received event: " + json.dumps(event, indent=2))
+    return 42
+"""
 
 
 class LambdaWorkflow(Workflow):
@@ -20,4 +35,4 @@ class LambdaWorkflow(Workflow):
                 foo='bar',
             )
         )
-        print(futures.wait(future))
+        print(future.result)

@@ -56,6 +56,7 @@ class TestTaskLists(VCRIntegrationTest):
             input='[]',
             input_file=None,
             local=False,
+            lambda_role=None,
         )
         while True:
             time.sleep(1)

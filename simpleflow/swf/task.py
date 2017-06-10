@@ -391,10 +391,13 @@ class LambdaFunctionTask(task.Task, SwfTask):
         return self.lambda_function.name
 
     def schedule(self, *args, **kwargs):
-        input = {
-            'args': self.args,
-            'kwargs': self.kwargs,
-        }
+        if self.lambda_function.is_python_function:
+            input = {
+                'args': self.args,
+                'kwargs': self.kwargs,
+            }
+        else:
+            input = self.kwargs or self.args
 
         decision = swf.models.decision.LambdaFunctionDecision(
             'schedule',
