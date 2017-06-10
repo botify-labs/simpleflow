@@ -1066,7 +1066,7 @@ class Executor(executor.Executor):
             propagate=propagate,
         ))
 
-        extra_input = {'__propagate': False} if not propagate else None
+        extra_input = {'__propagate': propagate if isinstance(propagate, bool) else str(propagate)}
         return SignalTask(
             name,
             workflow_id=workflow_id if workflow_id else self._workflow_id,
@@ -1104,7 +1104,7 @@ class Executor(executor.Executor):
             input = signal['input']
             if not isinstance(input, dict):  # foreign signal: don't try processing it
                 continue
-            propagate = input.get('__propagate', True)
+            propagate = input.get('__propagate', False)
             if not propagate:
                 continue
             name = signal['name']
