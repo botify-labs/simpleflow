@@ -688,6 +688,16 @@ class History(object):
                 'started_id': event.id,
                 'started_timestamp': event.timestamp,
             })
+        elif event.state == 'start_failed':
+            lambda_function = get_lambda()
+            lambda_function.update({
+                'state': event.state,
+                'cause': event.cause,
+                'message': getattr(event, 'message', ''),
+                'start_failed_id': event.id,
+                'start_failed_timestamp': event.timestamp,
+                'retry': lambda_function.get('retry', -1) + 1,
+            })
         elif event.state == 'completed':
             lambda_function = get_lambda()
             lambda_function.update({

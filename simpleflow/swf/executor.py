@@ -413,11 +413,19 @@ class Executor(executor.Executor):
                 reason=event['reason'],
                 details=event.get('details'),
             ))
+        elif state == 'start_failed':
+            future.set_exception(exceptions.TaskFailed(
+                name=event['id'],
+                reason=event['cause'],
+                details=event.get('message'),
+            ))
         elif state == 'timed_out':
             future.set_exception(exceptions.TimeoutError(
                 event['timeout_type'],
                 None,
             ))
+        else:
+            logger.warning('Unknown state: %s', state)
 
         return future
 
