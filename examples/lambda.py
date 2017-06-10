@@ -7,7 +7,7 @@ class LambdaWorkflow(Workflow):
     name = 'basic'
     version = 'example'
     task_list = 'example'
-    # lambda_role = ''
+    lambda_role = 'arn:aws:iam::111111000000:role/swf-lambda'  # optional, overridable (--lambda-role)
 
     def run(self):
         future = self.submit(
