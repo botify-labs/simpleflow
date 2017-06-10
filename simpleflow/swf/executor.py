@@ -1102,6 +1102,8 @@ class Executor(executor.Executor):
 
         for signal in history.signals.values():
             input = signal['input']
+            if not isinstance(input, dict):  # foreign signal: don't try processing it
+                continue
             propagate = input.get('__propagate', True)
             if not propagate:
                 continue
