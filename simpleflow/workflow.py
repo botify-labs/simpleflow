@@ -167,6 +167,15 @@ class Workflow(Submittable):
         """
         pass
 
+    def on_canceled(self, history):
+        """
+        Method called on canceling the execution.
+
+        :param history:
+        :type history: simpleflow.history.History
+        """
+        pass
+
     def get_execution_context(self):
         """
         Get an execution context from the executor.
@@ -208,3 +217,11 @@ class Workflow(Submittable):
 
     def cancel_timer(self, timer_id):
         return CancelTimerTask(timer_id)
+
+    def should_cancel(self, history):
+        """
+        Called by the executor if cancel requested.
+        :param history:
+        :return:
+        """
+        return True

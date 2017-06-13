@@ -906,8 +906,17 @@ class Executor(executor.Executor):
         kwargs = input.get('kwargs', {})
 
         self.before_replay()
+
         try:
             self.propagate_signals()
+            if self._history.cancel_requested:
+                decisions = self.handle_cancel_requested()
+                if decisions is not None:
+                    self.after_replay()
+                    self.after_closed()
+                    if decref_workflow:
+                        self.decref_workflow()
+                    return decisions
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
             logger.info('{} open activities ({} decisions)'.format(
@@ -996,6 +1005,9 @@ class Executor(executor.Executor):
             self._workflow.on_completed(self._history)
         except NotImplementedError:
             pass
+
+    def on_canceled(self):
+        self._workflow.on_canceled(self._history)
 
     def fail(self, reason, details=None):
         self.on_failure(reason, details)
@@ -1179,3 +1191,30 @@ class Executor(executor.Executor):
             raise ValueError('Unimplemented type {!r} for get_event_details'.format(
                 event_type
             ))
+
+    def handle_cancel_requested(self):
+        decision = swf.models.decision.WorkflowExecutionDecision()
+        is_current_decision = self._history.completed_decision_id < self._history.cancel_requested_id
+        should_cancel = self._workflow.should_cancel(self._history)
+        if not should_cancel:
+            return None  # ignore cancel
+        if is_current_decision:
+            self.on_canceled()
+            decision.cancel()
+            return [decision]
+        if self._history.cancel_failed:
+            logger.warning('failed: %s', self._history.cancel_failed)
+        if self._history.cancel_failed and self._history.cancel_failed_decision_task_completed_event_id == self._history.completed_decision_id:
+            # Per http://docs.aws.amazon.com/amazonswf/latest/apireference/API_Decision.html,
+            # we should call RespondDecisionTaskCompleted without any decisions; however this hangs the workflow...
+
+            # <1 WorkflowExecution : started>, <2 DecisionTask : scheduled>, <3 DecisionTask : started>,
+            # <4 DecisionTask : completed>, <5 ActivityTask : scheduled>, <6 ActivityTask : started>,
+            # <7 WorkflowExecution : cancel_requested>, <8 DecisionTask : scheduled>, <9 DecisionTask : started>,
+            # <10 ActivityTask : completed>, <11 DecisionTask : scheduled>, <12 DecisionTask : completed>,
+            # <13 WorkflowExecution : cancel_failed>, <14 DecisionTask : started>
+
+            # return []
+            pass
+        decision.cancel()
+        return [decision]
