@@ -11,6 +11,7 @@ from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.task import ActivityTask, WorkflowTask, SignalTask, MarkerTask
 from simpleflow.activity import Activity
+from simpleflow.utils import format_exc
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
 from simpleflow.history import History
@@ -91,7 +92,7 @@ class Executor(executor.Executor):
             future._exception = err
             logger.info('rescuing exception: {}'.format(err))
             if isinstance(func, Activity) and func.raises_on_failure:
-                message = err.args[0] if err.args else ''
+                message = format_exc(err)
                 raise exceptions.TaskFailed(func.name, message)
             state = 'failed'
         finally:
