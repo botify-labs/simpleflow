@@ -185,8 +185,14 @@ class Executor(executor.Executor):
             self.force_activities = re.compile(force_activities)
         else:
             self.force_activities = None
+        self._open_activity_count = 0
+        self._decisions = []
+        self._append_timer = False  # Append an immediate timer decision
+        self._tasks = TaskRegistry()
+        self._idempotent_tasks_to_submit = set()
+        self._execution = None
+        self.current_priority = None
 
-    # noinspection PyAttributeOutsideInit
     def reset(self):
         """
         Clears the state of the execution.
@@ -892,10 +898,12 @@ class Executor(executor.Executor):
         """
         self.reset()
 
+        # noinspection PyUnresolvedReferences
         history = decision_response.history
         self._history = History(history)
         self._history.parse()
         self.build_execution_context(decision_response)
+        # noinspection PyUnresolvedReferences
         self._execution = decision_response.execution
 
         workflow_started_event = history[0]
@@ -1034,11 +1042,13 @@ class Executor(executor.Executor):
         :param decision_response:
         :type  decision_response: swf.responses.Response
         """
+        # noinspection PyUnresolvedReferences
         execution = decision_response.execution
         if not execution:
             # For tests that don't provide an execution object.
             return
 
+        # noinspection PyUnresolvedReferences
         history = decision_response.history
         workflow_started_event = history[0]
         self._execution_context = dict(
