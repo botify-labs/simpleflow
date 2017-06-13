@@ -258,6 +258,18 @@ class History(object):
             activity['state'] = event.state
             activity['details'] = getattr(event, 'details', '')
             activity['cancelled_timestamp'] = event.timestamp
+        elif event.state == 'cancel_requested':
+            activity = {
+                'type': 'activity',
+                'id': event.activity_id,
+                'state': event.state,
+                'cancel_requested_timestamp': event.timestamp,
+            }
+            if event.activity_id not in self._activities:
+                self._activities[event.activity_id] = activity
+                self._tasks.append(activity)
+            else:
+                self._activities[event.activity_id].update(activity)
 
     def parse_child_workflow_event(self, events, event):
         """Aggregate all the attributes of a workflow in a single entry.
