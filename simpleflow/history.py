@@ -40,6 +40,10 @@ class History(object):
         self._markers = collections.OrderedDict()
         self._timers = {}
         self._tasks = []
+        self._cancel_requested = None
+        self._cancel_failed = None
+        self.started_decision_id = None
+        self.completed_decision_id = None
 
     @property
     def swf_history(self):
@@ -81,6 +85,38 @@ class History(object):
         :rtype: collections.OrderedDict[str, dict[str, Any]]
         """
         return self._signals
+
+    @property
+    def cancel_requested(self):
+        """
+        :return: Last cancel requested event, if any.
+        :rtype: Optional[dict]
+        """
+        return self._cancel_requested
+
+    @property
+    def cancel_failed(self):
+        """
+        :return: Last cancel failed event, if any.
+        :rtype: Optional[dict]
+        """
+        return self._cancel_failed
+
+    @property
+    def cancel_requested_id(self):
+        """
+        :return: ID of last cancel requested event, if any.
+        :rtype: Optional[int]
+        """
+        return self._cancel_requested['event_id'] if self._cancel_requested else None
+
+    @property
+    def cancel_failed_decision_task_completed_event_id(self):
+        """
+        :return: ID of last cancel failed event, if any.
+        :rtype: Optional[int]
+        """
+        return self._cancel_failed['decision_task_completed_event_id'] if self._cancel_failed else None
 
     @property
     def signaled_workflows(self):
@@ -371,6 +407,26 @@ class History(object):
             }
             self._signals[event.signal_name] = signal
             self._tasks.append(signal)
+        elif event.state == 'cancel_requested':
+            cancel_requested = {
+                'type': event.state,
+                'cause': getattr(event, 'cause', None),
+                'external_initiated_event_id': getattr(event, 'external_initiated_event_id', None),
+                'external_run_id': getattr(event, 'external_workflow_execution', {}).get('runId'),
+                'external_workflow_id': getattr(event, 'external_workflow_execution', {}).get('workflowId'),
+                'event_id': event.id,
+                'timestamp': event.timestamp,
+            }
+            self._cancel_requested = cancel_requested
+        elif event.state == 'cancel_failed':
+            cancel_failed = {
+                'type': event.state,
+                'cause': getattr(event, 'cause', None),
+                'event_id': event.id,
+                'decision_task_completed_event_id': event.decision_task_completed_event_id,
+                'timestamp': event.timestamp,
+            }
+            self._cancel_failed = cancel_failed
 
     def parse_external_workflow_event(self, events, event):
         """
@@ -378,6 +434,7 @@ class History(object):
         :param events:
         :param event:
         """
+
         def get_workflow(workflows):
             initiated_event = events[event.initiated_event_id - 1]
             return workflows[initiated_event.workflow_id]
@@ -452,6 +509,7 @@ class History(object):
             workflow = get_workflow(self._external_workflows_canceling)
             workflow['run_id'] = event.workflow_execution['runId']
             workflow['workflow_id'] = event.workflow_execution['workflowId']
+            workflow['cancel_requested_event_id'] = event.id
             workflow['cancel_requested_timestamp'] = event.timestamp
 
     def parse_marker_event(self, events, event):
@@ -522,8 +580,15 @@ class History(object):
             timer['cancel_failed_event_id'] = event.id
             timer['cancel_failed_event_timestamp'] = event.timestamp
 
+    def parse_decision_event(self, events, event):
+        if event.state == 'started':
+            self.started_decision_id = event.id
+        if event.state == 'completed':
+            self.completed_decision_id = event.id
+
     TYPE_TO_PARSER = {
         'ActivityTask': parse_activity_event,
+        'DecisionTask': parse_decision_event,
         'ChildWorkflowExecution': parse_child_workflow_event,
         'WorkflowExecution': parse_workflow_event,
         'ExternalWorkflowExecution': parse_external_workflow_event,
