@@ -90,7 +90,7 @@ class Executor(executor.Executor):
             state = 'completed'
         except Exception as err:
             future._exception = err
-            logger.info('rescuing exception: {}'.format(err))
+            logger.exception('rescuing exception: {}'.format(err))
             if isinstance(func, Activity) and func.raises_on_failure:
                 message = format_exc(err)
                 raise exceptions.TaskFailed(func.name, message)
