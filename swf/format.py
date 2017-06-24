@@ -1,4 +1,3 @@
-import logging
 import os
 from uuid import uuid4
 
@@ -93,7 +92,7 @@ def _pull_jumbo_field(location):
     # cache jumbo fields content for better efficiency across decider replays
     # NB: for now the cache *will also* be triggered on activity workers, where it's
     # not that useful. The performance hit should be minimal. To be improved later.
-    # NB2: cache has to be lazily insantiated here, cache objects do not survive forks,
+    # NB2: cache has to be lazily instantiated here, cache objects do not survive forks,
     # see DiskCache docs.
     cache = Cache(constants.CACHE_DIR)
     cache_key = "jumbo_fields/" + path.split("/")[-1]
