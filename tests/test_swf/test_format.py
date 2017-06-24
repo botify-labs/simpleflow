@@ -140,3 +140,11 @@ class TestFormat(unittest.TestCase):
         encoded = swf.format.result(message)
 
         assert not encoded.startswith("simpleflow+s3://jumbo-bucket/with/subdir//")
+
+    def test_jumbo_fields_encoding_raise_if_encoded_form_overflows_thresholds(self):
+        # 'reason' field is limited to 256 chars for instance
+        self.setup_jumbo_fields("jumbo-bucket/with/a/very/long/name/" + "a" * 256)
+
+        message = 'A' * 500
+        with self.assertRaisesRegexp(ValueError, "Jumbo field signature is longer than"):
+            swf.format.reason(message)

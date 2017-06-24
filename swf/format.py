@@ -62,7 +62,13 @@ def encode(message, max_length, allow_jumbo_fields=True):
                 ))
             message = message[:constants.JUMBO_FIELDS_MAX_SIZE]
 
-        return _push_jumbo_field(message)
+        jumbo_signature = _push_jumbo_field(message)
+        if len(jumbo_signature) > max_length:
+            raise ValueError(
+                "Jumbo field signature is longer than the max allowed length "
+                "for this field: {} ; reduce jumbo bucket length?".format(jumbo_signature)
+            )
+        return jumbo_signature
 
     return message
 
