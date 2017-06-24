@@ -96,6 +96,14 @@ class TestFormat(unittest.TestCase):
             swf.constants.MAX_IDENTITY_LENGTH,
         )
 
+    def test_identity_doesnt_use_jumbo_fields(self):
+        self.setup_jumbo_fields("jumbo-bucket")
+        message = 'A' * (swf.constants.MAX_RESULT_LENGTH * 2)
+        self.assertEquals(
+            swf.format.identity(message),
+            'A' * swf.constants.MAX_IDENTITY_LENGTH,
+        )
+
     def test_jumbo_fields_encoding_without_directory(self):
         self.setup_jumbo_fields("jumbo-bucket")
         message = 'A' * 64000

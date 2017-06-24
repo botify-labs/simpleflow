@@ -38,12 +38,14 @@ def decode(content):
     return json_loads_or_raw(content)
 
 
-def encode(message, max_length):
+def encode(message, max_length, allow_jumbo_fields=True):
     if not message:
         return message
 
+    can_use_jumbo_fields = allow_jumbo_fields and _jumbo_fields_bucket()
+
     if len(message) > max_length:
-        if not _jumbo_fields_bucket():
+        if not can_use_jumbo_fields:
             logger.warning(
                 'message "{}" too long ({} chars), wrapped to {}'.format(
                     message,
@@ -98,7 +100,10 @@ def heartbeat_details(message):
 
 
 def identity(message):
-    return encode(message, constants.MAX_IDENTITY_LENGTH)
+    # we don't allow the use of jumbo fields for identity because it's guaranteed
+    # to change on every task, and we fear it makes the decider too slow
+    # NB: this should be revisited / questionned later, maybe not such a problem?
+    return encode(message, constants.MAX_IDENTITY_LENGTH, allow_jumbo_fields=False)
 
 
 def input(message):
