@@ -115,7 +115,7 @@ class TestFormat(unittest.TestCase):
 
         key = encoded.split()[0].replace("simpleflow+s3://jumbo-bucket/", "")
         self.assertEquals(
-            self.conn.get_bucket("jumbo-bucket").get_key(key).get_contents_as_string(),
+            self.conn.get_bucket("jumbo-bucket").get_key(key).get_contents_as_string(encoding='utf-8'),
             json.dumps(message),
         )
 
@@ -130,7 +130,7 @@ class TestFormat(unittest.TestCase):
 
         key = encoded.split()[0].replace("simpleflow+s3://jumbo-bucket/", "")
         self.assertEquals(
-            self.conn.get_bucket("jumbo-bucket").get_key(key).get_contents_as_string(),
+            self.conn.get_bucket("jumbo-bucket").get_key(key).get_contents_as_string(encoding='utf-8'),
             json.dumps(message),
         )
 
