@@ -1,12 +1,8 @@
 from __future__ import print_function
 
-import time
+import os
 
-from simpleflow import (
-    activity,
-    Workflow,
-    futures,
-)
+from simpleflow import Workflow, activity
 
 
 @activity.with_attributes(task_list='quickstart', version='example')
@@ -30,6 +26,9 @@ class JumboFieldsWorkflow(Workflow):
     task_list = 'example'
 
     def run(self, string):
+        if 'SIMPLEFLOW_JUMBO_FIELDS_BUCKET' not in os.environ:
+            print("Please define SIMPLEFLOW_JUMBO_FIELDS_BUCKET to run this example (see README.rst).")
+            raise ValueError()
         long_string = self.submit(repeat50k, str(string))
         string_length = self.submit(length, long_string)
         print('{} * 50k has a length of: {}'.format(
