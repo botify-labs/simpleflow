@@ -193,6 +193,13 @@ things (which implicitly enables the feature by the way):
 And ensure your deciders and activity workers have access to this S3 bucket (``s3:GetObject`` and
 ``s3:PutObject`` should be enough, but please test it first).
 
+The overhead of the signature format is maximum 91 chars at this point (fixed protocol
+and UUID width, and max 5M = 5242880 for the size part). So you should ensure
+that your bucket + directory is not longer than 256 - 91 = 165 chars, else
+you may not be able to get a working jumbo field signature for tiny fields.
+In that case stripping the signature would only break things down the road
+in unpredictable and hard to debug ways, so simpleflow will raise.
+
 This feature is still in beta mode, and any feedback is appreciated.
 
 
