@@ -15,7 +15,13 @@ logger = logging.getLogger(__name__)
 
 def _jumbo_fields_bucket():
     # wrapped into a function so easier to override for tests
-    return os.getenv("SIMPLEFLOW_JUMBO_FIELDS_BUCKET")
+    bucket = os.getenv("SIMPLEFLOW_JUMBO_FIELDS_BUCKET")
+    if not bucket:
+        return
+    # trim trailing / if there, would provoke double slashes down the road
+    if bucket.endswith("/"):
+        bucket = bucket[:-1]
+    return bucket
 
 
 def decode(content):

@@ -125,3 +125,10 @@ class TestFormat(unittest.TestCase):
             self.conn.get_bucket("jumbo-bucket").get_key(key).get_contents_as_string(),
             json.dumps(message),
         )
+
+    def test_jumbo_fields_with_directory_strip_trailing_slash(self):
+        self.setup_jumbo_fields("jumbo-bucket/with/subdir/")
+        message = 'A' * 64000
+        encoded = swf.format.result(message)
+
+        assert not encoded.startswith("simpleflow+s3://jumbo-bucket/with/subdir//")
