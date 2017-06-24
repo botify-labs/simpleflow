@@ -28,3 +28,6 @@ MAX_WORKFLOW_AGE = 366 + 90 + 1
 # Jumbo fields
 JUMBO_FIELDS_PREFIX = "simpleflow+s3://"
 JUMBO_FIELDS_MAX_SIZE = 5 * 1024 ** 2  # 5MB
+
+# Cache directory
+CACHE_DIR = "/tmp/simpleflow-cache"

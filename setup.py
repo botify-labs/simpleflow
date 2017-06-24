@@ -75,6 +75,7 @@ def read(fname):
 DEPS = [
     'future',
     'boto>=2.38.0',
+    'diskcache==2.4.1',
     'lazy_object_proxy',
     'tabulate>=0.7.3,<0.8.0',
     'setproctitle',

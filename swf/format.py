@@ -2,15 +2,15 @@ import logging
 import os
 from uuid import uuid4
 
+from diskcache import Cache
 import lazy_object_proxy
 
 from . import constants
+from .core import logger
 
 from simpleflow import storage
+from simpleflow.constants import HOUR
 from simpleflow.utils import json_dumps, json_loads_or_raw
-
-
-logger = logging.getLogger(__name__)
 
 
 def _jumbo_fields_bucket():
@@ -89,7 +89,22 @@ def _push_jumbo_field(message):
 
 def _pull_jumbo_field(location):
     bucket, path = location.replace(constants.JUMBO_FIELDS_PREFIX, "").split("/", 1)
-    return storage.pull_content(bucket, path)
+
+    # cache jumbo fields content for better efficiency across decider replays
+    # NB: for now the cache *will also* be triggered on activity workers, where it's
+    # not that useful. The performance hit should be minimal. To be improved later.
+    # NB2: cache has to be lazily insantiated here, cache objects do not survive forks,
+    # see DiskCache docs.
+    cache = Cache(constants.CACHE_DIR)
+    cache_key = "jumbo_fields/" + path.split("/")[-1]
+    if cache_key in cache:
+        logger.debug("diskcache: getting key={} from cache_dir={}".format(cache_key, constants.CACHE_DIR))
+        return cache[cache_key]
+    content = storage.pull_content(bucket, path)
+    logger.debug("diskcache: setting key={} on cache_dir={}".format(cache_key, constants.CACHE_DIR))
+    cache.set(cache_key, content, expire=3 * HOUR)
+
+    return content
 
 
 # A few helpers to wrap common SWF fields
