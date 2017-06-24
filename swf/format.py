@@ -11,7 +11,11 @@ from simpleflow.utils import json_dumps, json_loads_or_raw
 
 
 logger = logging.getLogger(__name__)
-JUMBO_FIELDS_BUCKET = os.getenv("SIMPLEFLOW_JUMBO_FIELDS_BUCKET")
+
+
+def _jumbo_fields_bucket():
+    # wrapped into a function so easier to override for tests
+    return os.getenv("SIMPLEFLOW_JUMBO_FIELDS_BUCKET")
 
 
 def decode(content):
@@ -33,7 +37,7 @@ def encode(message, max_length):
         return message
 
     if len(message) > max_length:
-        if not JUMBO_FIELDS_BUCKET:
+        if not _jumbo_fields_bucket():
             logger.warning(
                 'message "{}" too long ({} chars), wrapped to {}'.format(
                     message,
@@ -58,8 +62,13 @@ def encode(message, max_length):
 def _push_jumbo_field(message):
     size = len(message)
     uuid = str(uuid4())
-    bucket, directory = JUMBO_FIELDS_BUCKET.split("/", 1)
-    path = "{}/{}".format(directory, uuid)
+    bucket_with_dir = _jumbo_fields_bucket()
+    if "/" in bucket_with_dir:
+        bucket, directory = _jumbo_fields_bucket().split("/", 1)
+        path = "{}/{}".format(directory, uuid)
+    else:
+        bucket = bucket_with_dir
+        path = uuid
     storage.push_content(bucket, path, message)
     return "{}{}/{} {}".format(constants.JUMBO_FIELDS_PREFIX, bucket, path, size)
 
