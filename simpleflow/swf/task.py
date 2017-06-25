@@ -111,16 +111,13 @@ class ActivityTask(task.ActivityTask, SwfTask):
         :rtype:
         """
         key = (domain.name, name, version)
-        model = cls.cached_models.get(key)
-        if model:
-            return model
-        model = swf.models.ActivityType(
-            domain,
-            name,
-            version=version,
-        )
-        cls.cached_models[key] = model
-        return model
+        if key not in cls.cached_models:
+            cls.cached_models[key] = swf.models.ActivityType(
+                domain,
+                name,
+                version=version,
+            )
+        return cls.cached_models[key]
 
 
 class NonPythonicActivityTask(ActivityTask):
@@ -218,22 +215,20 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         :rtype:
         """
         key = (domain.name, name, version)
-        model = cls.cached_models.get(key)
-        if model:
-            return model
-        model = swf.models.WorkflowType(
-            domain,
-            name,
-            version=version,
-        )
-        cls.cached_models[key] = model
-        return model
+        if key not in cls.cached_models:
+            cls.cached_models[key] = swf.models.WorkflowType(
+                domain,
+                name,
+                version=version,
+            )
+        return cls.cached_models[key]
 
 
 class SignalTask(task.SignalTask, SwfTask):
     """
     Signal "task" on SWF.
     """
+
     @classmethod
     def from_generic_task(cls, a_task, workflow_id, run_id, control, extra_input):
         return cls(a_task.name, workflow_id, run_id, control, extra_input, *a_task.args, **a_task.kwargs)
@@ -295,7 +290,6 @@ class SignalTask(task.SignalTask, SwfTask):
 
 
 class MarkerTask(task.MarkerTask, SwfTask):
-
     idempotent = True
 
     @classmethod
@@ -320,7 +314,6 @@ class MarkerTask(task.MarkerTask, SwfTask):
 
 
 class TimerTask(task.TimerTask, SwfTask):
-
     idempotent = True
 
     @classmethod
@@ -342,7 +335,6 @@ class TimerTask(task.TimerTask, SwfTask):
 
 
 class CancelTimerTask(task.CancelTimerTask, SwfTask):
-
     idempotent = True
 
     @classmethod
