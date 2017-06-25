@@ -62,7 +62,7 @@ def cancel_workflow():
     context = cancel_workflow.context
     workflow_id = context['workflow_id']
     run_id = context['run_id']
-    domain_name = context['domain_name']  # TODO
+    domain_name = context['domain_name']
     workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id)
     workflow_execution.request_cancel()
 
