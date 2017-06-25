@@ -185,8 +185,14 @@ class Executor(executor.Executor):
             self.force_activities = re.compile(force_activities)
         else:
             self.force_activities = None
+        self._open_activity_count = 0
+        self._decisions = []
+        self._append_timer = False  # Append an immediate timer decision
+        self._tasks = TaskRegistry()
+        self._idempotent_tasks_to_submit = set()
+        self._execution = None
+        self.current_priority = None
 
-    # noinspection PyAttributeOutsideInit
     def reset(self):
         """
         Clears the state of the execution.
@@ -892,10 +898,12 @@ class Executor(executor.Executor):
         """
         self.reset()
 
+        # noinspection PyUnresolvedReferences
         history = decision_response.history
         self._history = History(history)
         self._history.parse()
         self.build_execution_context(decision_response)
+        # noinspection PyUnresolvedReferences
         self._execution = decision_response.execution
 
         workflow_started_event = history[0]
@@ -906,8 +914,17 @@ class Executor(executor.Executor):
         kwargs = input.get('kwargs', {})
 
         self.before_replay()
+
         try:
             self.propagate_signals()
+            if self._history.cancel_requested:
+                decisions = self.handle_cancel_requested()
+                if decisions is not None:
+                    self.after_replay()
+                    self.after_closed()
+                    if decref_workflow:
+                        self.decref_workflow()
+                    return decisions
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
             logger.info('{} open activities ({} decisions)'.format(
@@ -997,6 +1014,9 @@ class Executor(executor.Executor):
         except NotImplementedError:
             pass
 
+    def on_canceled(self):
+        self._workflow.on_canceled(self._history)
+
     def fail(self, reason, details=None):
         self.on_failure(reason, details)
 
@@ -1022,11 +1042,13 @@ class Executor(executor.Executor):
         :param decision_response:
         :type  decision_response: swf.responses.Response
         """
+        # noinspection PyUnresolvedReferences
         execution = decision_response.execution
         if not execution:
             # For tests that don't provide an execution object.
             return
 
+        # noinspection PyUnresolvedReferences
         history = decision_response.history
         workflow_started_event = history[0]
         self._execution_context = dict(
@@ -1179,3 +1201,30 @@ class Executor(executor.Executor):
             raise ValueError('Unimplemented type {!r} for get_event_details'.format(
                 event_type
             ))
+
+    def handle_cancel_requested(self):
+        decision = swf.models.decision.WorkflowExecutionDecision()
+        is_current_decision = self._history.completed_decision_id < self._history.cancel_requested_id
+        should_cancel = self._workflow.should_cancel(self._history)
+        if not should_cancel:
+            return None  # ignore cancel
+        if is_current_decision:
+            self.on_canceled()
+            decision.cancel()
+            return [decision]
+        if self._history.cancel_failed:
+            logger.warning('failed: %s', self._history.cancel_failed)
+        if self._history.cancel_failed and self._history.cancel_failed_decision_task_completed_event_id == self._history.completed_decision_id:
+            # Per http://docs.aws.amazon.com/amazonswf/latest/apireference/API_Decision.html,
+            # we should call RespondDecisionTaskCompleted without any decisions; however this hangs the workflow...
+
+            # <1 WorkflowExecution : started>, <2 DecisionTask : scheduled>, <3 DecisionTask : started>,
+            # <4 DecisionTask : completed>, <5 ActivityTask : scheduled>, <6 ActivityTask : started>,
+            # <7 WorkflowExecution : cancel_requested>, <8 DecisionTask : scheduled>, <9 DecisionTask : started>,
+            # <10 ActivityTask : completed>, <11 DecisionTask : scheduled>, <12 DecisionTask : completed>,
+            # <13 WorkflowExecution : cancel_failed>, <14 DecisionTask : started>
+
+            # return []
+            pass
+        decision.cancel()
+        return [decision]

@@ -57,6 +57,16 @@ def send_unrequested_signal():
     return 'signal sent!'
 
 
+@activity.with_attributes(task_list='quickstart', version='example')
+def cancel_workflow():
+    context = cancel_workflow.context
+    workflow_id = context['workflow_id']
+    run_id = context['run_id']
+    domain_name = context['domain_name']  # TODO
+    workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id)
+    workflow_execution.request_cancel()
+
+
 class SleepWorkflow(Workflow):
     name = 'basic'
     version = 'example'
@@ -178,3 +188,23 @@ class SignaledWorkflow(Workflow):
     def run(self):
         future = self.submit(send_unrequested_signal)
         return future.result
+
+
+
+class WorkflowToCancel(Workflow):
+    name = 'example'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self, *args, **kwargs):
+        future = self.submit(cancel_workflow)
+        return future.result
+
+    def should_cancel(self, history):
+        input = history.events[0].input or {}
+        if input.get('args'):
+            agree = input['args'][0]
+        else:
+            agree = input.get('kwargs', {}).get('agree', True)
+        print('should_cancel called! agree? {}'.format(agree))
+        return agree
