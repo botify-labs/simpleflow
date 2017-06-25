@@ -55,6 +55,11 @@ Limitations
 * derive from futures.Future to add the timestamp or counter and better names? This would bypass the "reset" issue too
 
 
+One way to handle recurrent signals is by using ``event_id``'s (available with ``Workflow.get_event_details``). For
+instance, when receiving a signal, check that a marker with the same name does not exist or is in the past (lower
+event ID); if so, the signal is new, so process it and create a marker.
+
+
 Implementation
 --------------
 
@@ -67,9 +72,8 @@ This decision results in a ``SignalExternalWorkflowExecutionInitiated`` followed
 then a completed future. (It can also fail, for instance if the workflow doesn't exist.)
 
 The receiver gets a ``WorkflowExecutionSignaled`` with the signal name, input and external (i.e. sender) information.
-In this implementation, we want every known workflow to be signaled too, so the signal is propagated by default to the
-parent and children of the workflow. This can be disabled by passing ``propagate=False`` to signal.
+We may want every known workflow to be signaled too:  if ``propagate=True`` is passed to ``Workflow.signal``, the
+signal is propagated to the parent and children of the workflow.
 
-One limit here is that we propagate using ``SignalWorkflowExecution``, not a decision; this means the target doesn't
-have the ``externalWorkflowExecution`` information. We try and fix this by passing ``__workflow_id`` and ``__run_id``
-in the input.
+Since we propagate using ``SignalWorkflowExecution``, not a decision, the target doesn't have the
+``externalWorkflowExecution`` information; so we pass ``__workflow_id`` and ``__run_id`` in the input.

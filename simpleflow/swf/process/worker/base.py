@@ -140,6 +140,7 @@ class ActivityWorker(object):
             args = input.get('args', ())
             kwargs = input.get('kwargs', {})
             context = sanitize_activity_context(task.context)
+            context['domain_name'] = poller.domain.name
             result = ActivityTask(activity, *args, context=context, **kwargs).execute()
         except Exception as err:
             logger.exception("process error: {}".format(str(err)))

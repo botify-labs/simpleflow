@@ -1032,6 +1032,7 @@ class Executor(executor.Executor):
         self._execution_context = dict(
             name=execution.workflow_type.name,
             version=execution.workflow_type.version,
+            domain_name=self.domain.name,
             workflow_id=execution.workflow_id,
             run_id=execution.run_id,
             tag_list=getattr(workflow_started_event, 'tag_list', None) or [],  # attribute is absent if no tagList
@@ -1066,7 +1067,7 @@ class Executor(executor.Executor):
             propagate=propagate,
         ))
 
-        extra_input = {'__propagate': False} if not propagate else None
+        extra_input = {'__propagate': propagate if isinstance(propagate, bool) else str(propagate)}
         return SignalTask(
             name,
             workflow_id=workflow_id if workflow_id else self._workflow_id,
@@ -1102,7 +1103,9 @@ class Executor(executor.Executor):
 
         for signal in history.signals.values():
             input = signal['input']
-            propagate = input.get('__propagate', True)
+            if not isinstance(input, dict):  # foreign signal: don't try processing it
+                continue
+            propagate = input.get('__propagate', False)
             if not propagate:
                 continue
             name = signal['name']
