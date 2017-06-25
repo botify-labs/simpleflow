@@ -32,6 +32,11 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
     )
 
 
+def get_workflow_history(domain_name, workflow_id, run_id=None):
+    history, _ = get_workflow_history_and_run_id(domain_name, workflow_id, run_id)
+    return history
+
+
 # TODO: move this function inside a QuerySet object when we merge the
 # "simpleflow" and "swf" namespaces
 def get_workflow_history_and_run_id(domain_name, workflow_id, run_id=None):
