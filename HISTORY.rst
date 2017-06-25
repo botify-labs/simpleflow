@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+0.18.0
+~~~~~~
+
+- Implement "jumbo" fields (#265)
+
 0.17.0
 ~~~~~~
 

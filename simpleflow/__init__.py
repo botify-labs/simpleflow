@@ -9,7 +9,7 @@ from .signal import WaitForSignal  # NOQA
 from . import settings
 
 
-__version__ = '0.17.0'
+__version__ = '0.18.0'
 __author__ = 'Greg Leclercq'
 __license__ = "MIT"
 
