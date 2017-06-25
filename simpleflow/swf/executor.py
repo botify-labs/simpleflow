@@ -71,14 +71,7 @@ def run_fake_activity_task(domain, task_list, result):
     )
 
 
-# TODO: test that correctly! At the time of writing this I don't have any real
-# world crawl containing child workflows, so this is not guaranteed to work the
-# first time, and it's a bit hard to test end-to-end even with moto.mock_swf
-# (child workflows are not really well supported there too).
-# ---
-# if "poll_for_decision_task" doesn't contain a "taskToken"
-# key, then retry ; it happens (not often) that the decider
-# doesn't get the scheduled task while it should...
+# Same retry condition as run_fake_activity_task
 @retry.with_delay(nb_times=3,
                   delay=retry.exponential,
                   on_exceptions=KeyError)
@@ -169,17 +162,25 @@ class Executor(executor.Executor):
     :type repair_with: Optional[simpleflow.history.History]
     :ivar force_activities: regex with activities to force
     :type _history: History
+    :ivar _repair_workflow_id: workflow ID to repair, if any
+    :type _repair_workflow_id: Optional[str]
+    :ivar repair_run_id: run ID to repair, if any
+    :type _repair_run_id: Optional[str]
 
     """
 
     def __init__(self, domain, workflow_class, task_list=None, repair_with=None,
-                 force_activities=None):
+                 force_activities=None,
+                 repair_workflow_id=None, repair_run_id=None,
+                 ):
         super(Executor, self).__init__(workflow_class)
         self._history = None
         self._execution_context = {}
         self.domain = domain
         self.task_list = task_list
         self.repair_with = repair_with
+        self._repair_workflow_id = repair_workflow_id
+        self._repair_run_id = repair_run_id
         if force_activities:
             self.force_activities = re.compile(force_activities)
         else:
@@ -203,11 +204,13 @@ class Executor(executor.Executor):
         self.current_priority = None
         self.create_workflow()
 
-    def _make_task_id(self, a_task, *args, **kwargs):
+    def _make_task_id(self, a_task, workflow_id, run_id, *args, **kwargs):
         """
         Assign a new ID to *a_task*.
 
         :type a_task: ActivityTask | WorkflowTask
+        :type workflow_id: str
+        :type run_id: str
         :returns:
             String with at most 256 characters.
         :rtype: str
@@ -229,7 +232,7 @@ class Executor(executor.Executor):
 
         if isinstance(a_task, (WorkflowTask,)):
             # Some task types must have globally unique names.
-            suffix = '{}--{}--{}'.format(self._workflow_id, hex_hash(self._run_id), suffix)
+            suffix = '{}--{}--{}'.format(workflow_id, hex_hash(run_id), suffix)
 
         task_id = '{name}-{suffix}'.format(name=a_task.name, suffix=suffix)
         if len(task_id) > 256:  # Better safe than sorry...
@@ -720,9 +723,14 @@ class Executor(executor.Executor):
         :rtype: futures.Future
         :raise: exceptions.ExecutionBlocked if open activities limit reached
         """
+        is_repair = bool(self.repair_with)
 
         if not a_task.id:  # Can be already set (WorkflowTask)
-            a_task.id = self._make_task_id(a_task, *args, **kwargs)
+            if is_repair:
+                workflow_id, run_id = self._repair_workflow_id, self._repair_run_id
+            else:
+                workflow_id, run_id = self._workflow_id, self._run_id
+            a_task.id = self._make_task_id(a_task, workflow_id, run_id, *args, **kwargs)
         event = self.find_event(a_task, self._history)
         logger.debug('executor: resume {}, event={}'.format(a_task, event))
         future = None
@@ -732,8 +740,7 @@ class Executor(executor.Executor):
                            self.force_activities.search(a_task.id))
 
         # try to fill in the blanks with the workflow we're trying to repair if any
-        # TODO: maybe only do that for idempotent tasks?? (not enough information to decide?)
-        if not event and self.repair_with and not force_execution:
+        if not event and is_repair and not force_execution:
             # try to find a former event matching this task
             former_event = self.find_event(a_task, self.repair_with)
             # ... but only keep the event if the task was successful

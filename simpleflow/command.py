@@ -24,7 +24,7 @@ from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
-from simpleflow.swf.utils import get_workflow_history
+from simpleflow.swf.utils import get_workflow_history_and_run_id
 from simpleflow.utils import json_dumps
 from simpleflow import __version__
 
@@ -522,13 +522,14 @@ def standalone(context,
             'retrieving history of previous execution: domain={} '
             'workflow_id={} run_id={}'.format(domain, repair, repair_run_id)
         )
-        previous_history = get_workflow_history(domain, repair, run_id=repair_run_id)
+        previous_history, repair_run_id = get_workflow_history_and_run_id(domain, repair, run_id=repair_run_id)
         previous_history.parse()
         # get the previous execution input if none passed
         if not input and not input_file:
             wf_input = previous_history.events[0].input
     else:
         previous_history = None
+        repair_run_id = None
 
     task_list = create_unique_task_list(workflow_id)
     logger.info('using task list {}'.format(task_list))
@@ -544,6 +545,8 @@ def standalone(context,
             'repair_with': previous_history,
             'force_activities': force_activities,
             'is_standalone': True,
+            'repair_workflow_id': repair or None,
+            'repair_run_id': repair_run_id,
         },
     )
     decider_proc.start()
