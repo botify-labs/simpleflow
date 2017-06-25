@@ -5,14 +5,11 @@ from flaky import flaky
 from sure import expect
 
 import simpleflow.command
+
 from . import vcr, VCRIntegrationTest
 
 
 class TestSimpleflowCommand(VCRIntegrationTest):
-    def invoke(self, command, arguments):
-        if not hasattr(self, "runner"):
-            self.runner = CliRunner()
-        return self.runner.invoke(command, arguments.split(" "))
 
     def cleanup_sleep_workflow(self):
         # ideally this should be in a tearDown() or setUp() call, but those
@@ -80,7 +77,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         # run a very short workflow
         result = self.invoke(
             simpleflow.command.cli,
-            "standalone --workflow-id %s --input {\"args\":[0]} --nb-workers 1 " \
+            "standalone --workflow-id %s --input {\"args\":[0]} --nb-workers 1 "
             "--nb-deciders 1 tests.integration.workflow.SleepWorkflow" % self.workflow_id
         )
         expect(result.exit_code).to.equal(0)
@@ -103,18 +100,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
     @flaky(max_runs=2)
     @vcr.use_cassette
     def test_simpleflow_idempotent(self):
-        result = self.invoke(
-            simpleflow.command.cli,
-            "standalone --workflow-id %s --input {}"
-            " --nb-deciders 2 --nb-workers 2"
-            " tests.integration.workflow.ATestDefinitionWithIdempotentTask" % self.workflow_id
-        )
-        expect(result.exit_code).to.equal(0)
-        lines = result.output.split("\n")
-        start_line = [line for line in lines if line.startswith(self.workflow_id)][0]
-        _, run_id = start_line.split(" ", 1)
-
-        events = self.get_events(run_id)
+        events = self.run_standalone("tests.integration.workflow.ATestDefinitionWithIdempotentTask")
 
         activities = [
             e['activityTaskScheduledEventAttributes']['activityId']
@@ -134,7 +120,6 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         expect(failures).should_not.contain('ACTIVITY_ID_ALREADY_IN_USE')
 
 # TODO: simpleflow decider.start
-# TODO: simpleflow standalone
 # TODO: simpleflow task.info
 # TODO: simpleflow worker.start
 # TODO: simpleflow workflow.filter

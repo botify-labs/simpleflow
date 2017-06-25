@@ -84,7 +84,7 @@ class VCRIntegrationTest(IntegrationTestCase):
         # type: (str, Union(str, List[str])) -> Result
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
-        if isinstance(arguments, str):
+        if not isinstance(arguments, (list, tuple)):
             arguments = arguments.split(" ")
         print('simpleflow {} {}'.format(command, ' '.join(arguments)))
         return self.runner.invoke(command, arguments, catch_exceptions=False)

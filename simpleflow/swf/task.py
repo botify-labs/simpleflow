@@ -184,10 +184,20 @@ class SignalTask(task.SignalTask, SwfTask):
     Signal "task" on SWF.
     """
     @classmethod
-    def from_generic_task(cls, a_task, workflow_id, run_id, control, extra_input):
+    def from_generic_task(cls, a_task, default_workflow_id, default_run_id):
+        workflow_id = a_task.kwargs.pop('workflow_id', None)
+        run_id = a_task.kwargs.pop('run_id', None)
+        propagate = a_task.kwargs.pop('propagate', True)
+        if not workflow_id:
+            workflow_id = default_workflow_id
+            run_id = default_run_id
+
+        extra_input = {'__propagate': False} if not propagate else None
+        control = None
+
         return cls(a_task.name, workflow_id, run_id, control, extra_input, *a_task.args, **a_task.kwargs)
 
-    def __init__(self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs):
+    def __init__(self, name, workflow_id, run_id, control, extra_input, *args, **kwargs):
         super(SignalTask, self).__init__(name, *args, **kwargs)
         self.workflow_id = workflow_id
         self.run_id = run_id
@@ -200,7 +210,11 @@ class SignalTask(task.SignalTask, SwfTask):
 
     @property
     def idempotent(self):
-        return None
+        """
+        Don't resend send a signal multiple times during a replay.
+        :return:
+        """
+        return True
 
     def __repr__(self):
         return '{}(name={}, workflow_id={}, run_id={}, control={}, args={}, kwargs={})'.format(

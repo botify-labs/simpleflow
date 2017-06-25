@@ -1,7 +1,3 @@
-import unittest
-
-import boto
-from moto import mock_swf
 from sure import expect
 
 from simpleflow import activity, futures
@@ -12,8 +8,10 @@ from swf.responses import Response
 from tests.data import (
     BaseTestWorkflow,
     DOMAIN,
+    TASK_LIST,
     increment,
 )
+from tests.utils import SimpleflowTestCase
 
 
 @activity.with_attributes(task_priority=32)
@@ -42,25 +40,10 @@ class ExampleWorkflow(BaseTestWorkflow):
         futures.wait(a, b, c, d, e)
 
 
-@mock_swf
-class TestSimpleflowSwfExecutor(unittest.TestCase):
-    def setUp(self):
-        self.conn = boto.connect_swf()
-        self.conn.register_domain("TestDomain", "50")
-        self.conn.register_workflow_type(
-            "TestDomain", "test-workflow", "v1.2",
-            task_list="test-task-list", default_child_policy="TERMINATE",
-            default_execution_start_to_close_timeout="6",
-            default_task_start_to_close_timeout="3",
-        )
-        self.conn.start_workflow_execution("TestDomain", "wfe-1234",
-                                           "test-workflow", "v1.2")
-
-    def tearDown(self):
-        pass
+class TestSimpleflowSwfExecutor(SimpleflowTestCase):
 
     def test_submit_resolves_priority(self):
-        response = Decider(DOMAIN, "test-task-list").poll()
+        response = Decider(DOMAIN, TASK_LIST).poll()
         executor = Executor(DOMAIN, ExampleWorkflow)
         decisions, _ = executor.replay(response)
 
