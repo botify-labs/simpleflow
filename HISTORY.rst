@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.18.1
+~~~~~~
+
+- Add back get_workflow_history
+
+
 0.18.0
 ~~~~~~
 
