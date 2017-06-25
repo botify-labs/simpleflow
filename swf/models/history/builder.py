@@ -676,3 +676,43 @@ class History(swf.models.History):
         }))
 
         return self
+
+    def add_timer_started(self, timer_id, timeout, control=None):
+        d = {
+            # "decisionTaskCompletedEventId": decision_id,
+            'startToFireTimeout': str(timeout),
+            'timerId': timer_id,
+        }
+        if control is not None:
+            d['control'] = json_dumps(control)
+        self.events.append(EventFactory({
+            'eventId': self.next_id,
+            'eventTimestamp': new_timestamp_string(),
+            'eventType': 'TimerStarted',
+            'timerStartedEventAttributes': d
+        }))
+        return self
+
+    def add_timer_fired(self, timer_id, started_timer_id=0):
+        self.events.append(EventFactory({
+            'eventId': self.next_id,
+            'eventTimestamp': new_timestamp_string(),
+            'eventType': 'TimerFired',
+            'timerFiredEventAttributes': {
+                'timerId': timer_id,
+                'startedEventId': started_timer_id,
+            }
+        }))
+        return self
+
+    def add_timer_canceled(self, timer_id, started_timer_id=0):
+        self.events.append(EventFactory({
+            'eventId': self.next_id,
+            'eventTimestamp': new_timestamp_string(),
+            'eventType': 'TimerCanceled',
+            'timerCanceledEventAttributes': {
+                'timerId': timer_id,
+                'startedEventId': started_timer_id,
+            }
+        }))
+        return self

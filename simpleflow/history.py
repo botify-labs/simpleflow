@@ -482,7 +482,7 @@ class History(object):
                 'type': 'timer',
                 'id': event.timer_id,
                 'state': event.state,
-                'start_to_fire_timeout': event.start_to_fire_timeout,
+                'start_to_fire_timeout': int(event.start_to_fire_timeout),
                 'control': getattr(event, 'control', None),
                 'started_event_id': event.id,
                 'started_event_timestamp': event.timestamp,
@@ -494,7 +494,13 @@ class History(object):
             timer['fired_event_id'] = event.id
             timer['fired_event_timestamp'] = event.timestamp
         elif event.state == 'start_failed':
-            timer = self._timers[event.timer_id]
+            timer = self._timers.get(event.timer_id)
+            if timer is None:
+                timer = {
+                    'type': 'timer',
+                    'id': event.timer_id,
+                }
+                self._timers[event.timer_id] = timer
             timer['state'] = event.state
             timer['cause'] = event.cause
             timer['start_failed_event_id'] = event.id
@@ -505,7 +511,13 @@ class History(object):
             timer['canceled_event_id'] = event.id
             timer['canceled_event_timestamp'] = event.timestamp
         elif event.state == 'cancel_failed':
-            timer = self._timers[event.timer_id]
+            timer = self._timers.get(event.timer_id)
+            if timer is None:
+                timer = {
+                    'type': 'timer',
+                    'id': event.timer_id,
+                }
+                self._timers[event.timer_id] = timer
             timer['state'] = event.state
             timer['cancel_failed_event_id'] = event.id
             timer['cancel_failed_event_timestamp'] = event.timestamp

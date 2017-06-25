@@ -92,8 +92,12 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
         marker_details = {'baz': 'bae'}
         history.add_signal('a_signal', signal_input)
         history.add_marker('a_marker', marker_details)
+        history.add_timer_started('a_timer', 1)
+        history.add_timer_fired('a_timer')
+
         executor = Executor(DOMAIN, ExampleWorkflow)
         decisions, _ = executor.replay(Response(history=history, execution=None))
+
         details = executor.get_event_details('signal', 'a_signal')
         del details['timestamp']
         expect(details).to.equal({
@@ -106,8 +110,10 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
             'external_run_id': None,
             'external_workflow_id': None,
         })
+
         details = executor.get_event_details('signal', 'another_signal')
         expect(details).to.be.none
+
         details = executor.get_event_details('marker', 'a_marker')
         del details['timestamp']
         expect(details).to.equal({
@@ -118,4 +124,19 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
             'event_id': 5,
         })
         details = executor.get_event_details('marker', 'another_marker')
+        expect(details).to.be.none
+
+        details = executor.get_event_details('timer', 'a_timer')
+        del details['started_event_timestamp']
+        del details['fired_event_timestamp']
+        expect(details).to.equal({
+            'type': 'timer',
+            'state': 'fired',
+            'id': 'a_timer',
+            'start_to_fire_timeout': 1,
+            'started_event_id': 6,
+            'fired_event_id': 7,
+            'control': None,
+        })
+        details = executor.get_event_details('timer', 'another_timer')
         expect(details).to.be.none
