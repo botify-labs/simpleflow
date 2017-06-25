@@ -5,7 +5,7 @@
 #
 # See the file LICENSE for copying permission.
 
-from simpleflow.utils import json_dumps
+from swf import format
 from swf.models.decision.base import Decision, decision_action
 from swf.models.workflow import CHILD_POLICIES
 
@@ -20,7 +20,9 @@ class WorkflowExecutionDecision(Decision):
         :param  result: The result of the workflow execution
         :type   result: str
         """
-        self.update_attributes({'result': result})
+        self.update_attributes({
+            'result': format.result(result),
+        })
 
     @decision_action
     def cancel(self, details=None):
@@ -29,7 +31,9 @@ class WorkflowExecutionDecision(Decision):
         :param  details: Optional details of the cancellation
         :type   details: str
         """
-        self.update_attributes({'details': details})
+        self.update_attributes({
+            'details': format.details(details),
+        })
 
     @decision_action
     def fail(self, details=None, reason=None):
@@ -42,15 +46,15 @@ class WorkflowExecutionDecision(Decision):
         :type   reason: str
         """
         self.update_attributes({
-            'details': details,
-            'reason': reason
+            'details': format.details(details),
+            'reason': format.reason(reason),
         })
 
     @decision_action
     def terminate(self, reason=None, details=None):
         self.update_attributes({
-            'reason': reason,
-            'details': details,
+            'reason': format.reason(reason),
+            'details': format.details(details),
         })
 
     @decision_action
@@ -82,7 +86,7 @@ class WorkflowExecutionDecision(Decision):
         :type   workflow_type_version: str
         """
         if input is not None:
-            input = json_dumps(input)
+            input = format.input(input)
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -131,7 +135,7 @@ class ChildWorkflowExecutionDecision(Decision):
 
         """
         if input is not None:
-            input = json_dumps(input)
+            input = format.input(input)
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -197,7 +201,7 @@ class ExternalWorkflowExecutionDecision(Decision):
         :type   run_id: str
         """
         if input is not None:
-            input = json_dumps(input)
+            input = format.input(input)
 
         self.update_attributes({
             'signalName': signal_name,

@@ -33,6 +33,7 @@ Features
 - Implement replay behavior like the Amazon Flow framework.
 - Handle retry of tasks that failed.
 - Automatically register decorated tasks.
+- Encodes/decodes large fields to S3 objects transparently (aka "jumbo fields").
 - Handle the completion of a decision with more than 100 tasks.
 - Provides a local executor to check a workflow without Amazon SWF (see
   ``simpleflow --local`` command).
@@ -157,6 +158,50 @@ blocks here because ``z.result`` is not available. The decider schedules the
 task backs by the *z* future: ``double(y)``. The workflow execution continues
 so forth by evaluating the ``BasicWorkflow.run`` again from the start until
 it finishes.
+
+
+Jumbo Fields
+~~~~~~~~~~~~
+
+For some use cases, you want to be able to have fields larger than the standard
+SWF limitations (which is maximum 32K bytes on the largest ones, input and result,
+and lower for some others).
+
+Simpleflow allows to transparently translate such fields to objects stored on AWS
+S3. The format is then the following:
+
+    simpleflow+s3://jumbo-bucket/with/optional/prefix/5d7191af-3962-4c67-997a-cdd39a31ba61 5242880
+
+The format provides a pseudo-S3 address as a first word. The "simpleflow+s3://"
+prefix is here for implementation purposes, and may be extended later with other
+backends such as simpleflow+ssh or simpleflow+gs.
+
+The second word provides the length of the object in bytes, so a client parsing
+the SWF history can decide if it's worth it to pull/decode the object.
+
+For now jumbo fields are limited to 5MB in size. Simpleflow will perform disk caching
+for this feature to avoid issuing too many queries to S3, which would slow down
+the deciders especially. Disk cache is located at ``/tmp/simpleflow-cache`` and is
+limited to 1GB, with a LRU eviction strategy. It's performed with the `DiskCache
+library <http://www.grantjenks.com/docs/diskcache/>`_.
+
+You have to configure an environment variable to tell simpleflow where to store
+things (which implicitly enables the feature by the way):
+
+    SIMPLEFLOW_JUMBO_FIELDS_BUCKET=jumbo-bucket/with/optional/prefix
+
+And ensure your deciders and activity workers have access to this S3 bucket (``s3:GetObject`` and
+``s3:PutObject`` should be enough, but please test it first).
+
+The overhead of the signature format is maximum 91 chars at this point (fixed protocol
+and UUID width, and max 5M = 5242880 for the size part). So you should ensure
+that your bucket + directory is not longer than 256 - 91 = 165 chars, else
+you may not be able to get a working jumbo field signature for tiny fields.
+In that case stripping the signature would only break things down the road
+in unpredictable and hard to debug ways, so simpleflow will raise.
+
+This feature is still in beta mode, and any feedback is appreciated.
+
 
 Commands
 --------

@@ -1,5 +1,4 @@
 import errno
-import json
 import logging
 import multiprocessing
 import os
@@ -7,14 +6,14 @@ import signal
 import traceback
 
 import psutil
+from swf import format
 import swf.actors
 import swf.exceptions
-import swf.format
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
-from simpleflow.utils import json_dumps, format_exc
+from simpleflow.utils import format_exc
 
 from .dispatch import dynamic_dispatcher
 
@@ -98,8 +97,8 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
             return swf.actors.ActivityWorker.fail(
                 self,
                 token,
-                reason=swf.format.reason(reason),
-                details=swf.format.details(details),
+                reason=reason,
+                details=details,
             )
         except Exception as err:
             logger.error('cannot fail task {}: {}'.format(
@@ -136,7 +135,7 @@ class ActivityWorker(object):
         logger.debug('ActivityWorker.process() pid={}'.format(os.getpid()))
         try:
             activity = self.dispatch(task)
-            input = json.loads(task.input)
+            input = format.decode(task.input)
             args = input.get('args', ())
             kwargs = input.get('kwargs', {})
             context = sanitize_activity_context(task.context)
@@ -148,7 +147,7 @@ class ActivityWorker(object):
             return poller.fail_with_retry(token, task, reason=format_exc(err), details=tb)
 
         try:
-            poller.complete_with_retry(token, json_dumps(result))
+            poller.complete_with_retry(token, result)
         except Exception as err:
             logger.exception("complete error")
             reason = 'cannot complete task {}: {}'.format(

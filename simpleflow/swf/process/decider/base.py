@@ -4,7 +4,6 @@ import logging
 
 import swf.actors
 import swf.exceptions
-import swf.format
 import swf.models.decision
 
 from simpleflow.process import Supervisor, with_state
@@ -218,7 +217,7 @@ class DeciderWorker(object):
             message = "workflow decision failed: {}".format(err)
             logger.exception(message)
             decision = swf.models.decision.WorkflowExecutionDecision()
-            decision.fail(reason=swf.format.reason(message), details=swf.format.details(details))
+            decision.fail(reason=message, details=details)
             decisions = [decision]
 
         return decisions

@@ -4,6 +4,10 @@ import datetime
 import json
 import types
 
+import lazy_object_proxy
+from future.utils import iteritems
+
+from simpleflow.compat import PY2
 from simpleflow.futures import Future
 
 
@@ -28,9 +32,21 @@ def _serialize_complex_object(obj):
         return obj.result
     elif isinstance(obj, UUID):
         return str(obj)
+    elif isinstance(obj, lazy_object_proxy.Proxy):
+        return str(obj)
     raise TypeError(
         "Type %s couldn't be serialized. This is a bug in simpleflow,"
         " please file a new issue on GitHub!" % type(obj))
+
+
+def _resolve_proxy(obj):
+    if isinstance(obj, dict):
+        return {k: _resolve_proxy(v) for k, v in iteritems(obj)}
+    if isinstance(obj, (list, tuple)):
+        return [_resolve_proxy(v) for v in obj]
+    if isinstance(obj, lazy_object_proxy.Proxy):
+        return str(obj)
+    return obj
 
 
 def json_dumps(obj, pretty=False, compact=True, **kwargs):
@@ -54,7 +70,15 @@ def json_dumps(obj, pretty=False, compact=True, **kwargs):
     elif compact:
         kwargs["separators"] = (",", ":")
         kwargs["sort_keys"] = True
-    return json.dumps(obj, **kwargs)
+
+    try:
+        return json.dumps(obj, **kwargs)
+    except TypeError:
+        # lazy_object_proxy.Proxy subclasses basestring: _serialize_complex_object isn't called on python2
+        if PY2:
+            obj = _resolve_proxy(obj)
+            return json.dumps(obj, **kwargs)
+        raise
 
 
 def json_loads_or_raw(data):

@@ -3,12 +3,13 @@ import re
 import sys
 import subprocess
 import functools
-import json
 
 from builtins import map
 
 from future.utils import iteritems
+
 from simpleflow import compat
+from swf import format
 
 try:
     import cPickle as pickle
@@ -197,7 +198,7 @@ def python(interpreter='python'):
                 if not compat.PY2:
                     output = output.decode('utf-8', errors='replace')
                 last_line = output.rstrip().rsplit('\n', 1)[-1]
-                d = json.loads(last_line)
+                d = format.decode(last_line)
                 return d
             except BaseException as ex:
                 logger.warning('Exception in python.execute: {}'.format(ex))
@@ -359,7 +360,7 @@ if __name__ == '__main__':
 
     funcname = cmd_arguments.funcname
     try:
-        arguments = json.loads(cmd_arguments.funcargs)
+        arguments = format.decode(cmd_arguments.funcargs)
     except:
         raise ValueError('cannot load arguments from {}'.format(
             cmd_arguments.funcargs))

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import boto.exception
 
+from swf import format
 from swf.actors.core import Actor
 from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError
 from swf.models.history import History
@@ -41,7 +42,7 @@ class Decider(Actor):
             self.connection.respond_decision_task_completed(
                 task_token,
                 decisions,
-                execution_context,
+                format.execution_context(execution_context),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
@@ -77,7 +78,7 @@ class Decider(Actor):
         task = self.connection.poll_for_decision_task(
             self.domain.name,
             task_list=task_list,
-            identity=identity,
+            identity=format.identity(identity),
             **kwargs
         )
         token = task.get('taskToken')
@@ -92,7 +93,7 @@ class Decider(Actor):
                 task = self.connection.poll_for_decision_task(
                     self.domain.name,
                     task_list=task_list,
-                    identity=identity,
+                    identity=format.identity(identity),
                     next_page_token=next_page,
                     **kwargs
                 )

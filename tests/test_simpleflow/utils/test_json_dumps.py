@@ -65,6 +65,19 @@ class TestJsonDumps(unittest.TestCase):
         expected = '"1970-01-01T00:00:00Z"'
         self.assertEqual(expected, actual)
 
+    def test_proxy(self):
+        from lazy_object_proxy import Proxy
+
+        def unwrap():
+            return "foo"
+
+        data = {
+            "args": [Proxy(unwrap)]
+        }
+        expected = '{"args":["foo"]}'
+        actual = json_dumps(data)
+        self.assertEqual(expected, actual)
+
 
 if __name__ == '__main__':
     unittest.main()

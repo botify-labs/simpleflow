@@ -23,5 +23,8 @@ export SWF_CONNECTION_RETRIES=1
 # See tests/integration/README.md for instructions about cassettes updating
 export SIMPLEFLOW_VCR_RECORD_MODE=none
 
+# Disable jumbo fields
+export SIMPLEFLOW_JUMBO_FIELDS_BUCKET=""
+
 # run tests
 py.test --no-success-flaky-report -q $PYTEST_OPTIONS $*
