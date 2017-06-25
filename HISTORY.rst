@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+0.17.0
+~~~~~~
+
+- Enhancement/272/implement workflow cancelation (#273)
+- Bugfix: 270: signals improvements (#271)
+- Enhancement: timer: get_event_details (#269)
+- Append "/" to get_step_path_prefix (#268)
+- Enhancement/misc (#266)
+- Repair reruns successful child workflows (#191)
+
 0.16.0
 ~~~~~~
 
