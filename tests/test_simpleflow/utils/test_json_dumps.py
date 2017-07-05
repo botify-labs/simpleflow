@@ -90,8 +90,8 @@ class TestJsonDumps(unittest.TestCase):
         ]
         actual = json_dumps(data)
         actual = json.loads(actual)
-        self.assertItemsEqual(expected[0], actual[0])
-        self.assertItemsEqual(expected[1], actual[1])
+        self.assertEqual(sorted(expected[0]), sorted(actual[0]))
+        self.assertEqual(sorted(expected[1]), sorted(actual[1]))
 
 
 if __name__ == '__main__':
