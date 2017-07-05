@@ -34,6 +34,8 @@ def _serialize_complex_object(obj):
         return str(obj)
     elif isinstance(obj, lazy_object_proxy.Proxy):
         return str(obj)
+    elif isinstance(obj, (set, frozenset)):
+        return list(obj)
     raise TypeError(
         "Type %s couldn't be serialized. This is a bug in simpleflow,"
         " please file a new issue on GitHub!" % type(obj))
