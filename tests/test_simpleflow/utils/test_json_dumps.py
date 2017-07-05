@@ -1,4 +1,5 @@
 import datetime
+import json
 import unittest
 
 import pytz
@@ -77,6 +78,20 @@ class TestJsonDumps(unittest.TestCase):
         expected = '{"args":["foo"]}'
         actual = json_dumps(data)
         self.assertEqual(expected, actual)
+
+    def test_set(self):
+        data = [
+            {1, 2, 3},
+            frozenset([-1, -2, -3]),
+        ]
+        expected = [
+            [1, 2, 3],
+            [-1, -2, -3],
+        ]
+        actual = json_dumps(data)
+        actual = json.loads(actual)
+        self.assertEqual(sorted(expected[0]), sorted(actual[0]))
+        self.assertEqual(sorted(expected[1]), sorted(actual[1]))
 
 
 if __name__ == '__main__':
