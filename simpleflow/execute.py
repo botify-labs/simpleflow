@@ -12,6 +12,7 @@ import logging
 import tempfile
 import traceback
 
+# noinspection PyCompatibility
 from builtins import map
 
 from future.utils import iteritems
@@ -408,13 +409,18 @@ def main():
         )
         if cmd_arguments.error_fd == 2:
             sys.stderr.flush()
-        os.write(cmd_arguments.error_fd, details.encode('utf-8'))
+        if not compat.PY2:
+            details = details.encode('utf-8')
+        os.write(cmd_arguments.error_fd, details)
         sys.exit(1)
 
     if cmd_arguments.result_fd == 1:  # stdout (legacy)
         sys.stdout.flush()  # may have print's in flight
         os.write(cmd_arguments.result_fd, b'\n')
-    os.write(cmd_arguments.result_fd, json_dumps(result).encode('utf-8'))
+    result = json_dumps(result)
+    if not compat.PY2:
+        result = result.encode('utf-8')
+    os.write(cmd_arguments.result_fd, result)
 
 
 if __name__ == '__main__':
