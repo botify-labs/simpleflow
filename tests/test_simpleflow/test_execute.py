@@ -1,5 +1,7 @@
 # coding: utf-8
 from __future__ import print_function
+
+import json
 import tempfile
 import os.path
 import platform
@@ -7,6 +9,7 @@ import platform
 import pytest
 
 from simpleflow import execute
+from simpleflow.exceptions import ExecutionError
 
 
 @execute.program(path='ls')
@@ -139,15 +142,17 @@ def test_function_as_program_with_kwargs():
 
 
 def test_function_as_program_raises_builtin_exception():
-    with pytest.raises(TypeError):
+    with pytest.raises(ExecutionError) as excinfo:
         add('1')
-    with pytest.raises(TypeError):
+    assert '"error":"TypeError"' in str(excinfo.value)
+    with pytest.raises(ExecutionError) as excinfo:
         Add('1')
+    assert '"error":"TypeError"' in str(excinfo.value)
 
 
 @execute.python()
 def print_string(s, retval):
-    print(s)
+    print(s, end='')
     return retval
 
 
@@ -163,8 +168,10 @@ class PrintString(object):
 
 
 def test_function_with_print():
-    assert print_string("This isn't part of the return value", None) is None
-    assert PrintString("This isn't part of the return value", None) is None
+    actual = print_string("This isn't part of the return value", None)
+    assert actual is None, actual
+    actual = PrintString("This isn't part of the return value", None)
+    assert actual is None, actual
 
 
 def test_function_with_print_and_return():
@@ -197,10 +204,12 @@ class RaiseDummyException(object):
 
 
 def test_function_as_program_raises_custom_exception():
-    with pytest.raises(DummyException):
+    with pytest.raises(ExecutionError) as excinfo:
         raise_dummy_exception()
-    with pytest.raises(DummyException):
+    assert '"error":"DummyException"' in str(excinfo.value)
+    with pytest.raises(ExecutionError) as excinfo:
         RaiseDummyException()
+    assert '"error":"DummyException"' in str(excinfo.value)
 
 
 @execute.python()
@@ -210,12 +219,9 @@ def raise_timeout_error():
 
 
 def test_function_as_program_raises_module_exception():
-    from simpleflow.exceptions import TimeoutError
-
-    with pytest.raises(TimeoutError) as err:
+    with pytest.raises(ExecutionError) as excinfo:
         raise_timeout_error()
-        assert err.timeout_type == 'timeout'
-        assert err.timeout_value == 1
+    assert '"error":"TimeoutError"' in str(excinfo.value)
 
 
 @execute.python()
@@ -246,6 +252,8 @@ def raise_dummy_exception_with_unicode():
 
 
 def test_exception_with_unicode():
-    with pytest.raises(DummyException) as err:
+    with pytest.raises(ExecutionError) as excinfo:
         raise_dummy_exception_with_unicode()
-        assert err.args[0] == u'ʘ‿ʘ'
+    assert '"error":"DummyException"' in str(excinfo.value)
+    error = json.loads(excinfo.value.args[0])
+    assert error['message'] == u'ʘ‿ʘ'

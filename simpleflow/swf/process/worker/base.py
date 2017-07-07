@@ -7,16 +7,17 @@ import sys
 import traceback
 
 import psutil
+
+from simpleflow.exceptions import ExecutionError
 from swf import format
 import swf.actors
 import swf.exceptions
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
-from simpleflow.swf.constants import TRACEBACK_SIZE
 
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
-from simpleflow.utils import format_exc
+from simpleflow.utils import format_exc, json_dumps
 
 from .dispatch import dynamic_dispatcher
 
@@ -147,12 +148,13 @@ class ActivityWorker(object):
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.exception("process error: {}".format(str(exc_value)))
-            tb = traceback.format_tb(exc_traceback, limit=TRACEBACK_SIZE)
-            return poller.fail_with_retry(
-                token,
-                task,
-                reason=format_exc(exc_value),
-                details=json_dumps(
+            if isinstance(exc_value, ExecutionError) and len(exc_value.args):
+                details = exc_value.args[0]
+                reason = format_exc(exc_value)  # FIXME json.loads and rebuild?
+            else:
+                tb = traceback.format_tb(exc_traceback)
+                reason = format_exc(exc_value)
+                details = json_dumps(
                     {
                         'error': exc_type.__name__,
                         'message': str(exc_value),
@@ -160,14 +162,20 @@ class ActivityWorker(object):
                     },
                     default=repr
                 )
+            return poller.fail_with_retry(
+                token,
+                task,
+                reason=reason,
+                details=details
             )
 
         try:
             poller.complete_with_retry(token, result)
         except Exception as err:
             logger.exception("complete error")
-            reason = 'cannot complete task {}: {}'.format(
+            reason = 'cannot complete task {}: {} {}'.format(
                 task.activity_id,
+                err.__class__.__name__,
                 err,
             )
             poller.fail_with_retry(token, task, reason)

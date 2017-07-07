@@ -12,5 +12,3 @@ else:
     MAX_DECISIONS = 100
     MAX_OPEN_ACTIVITY_COUNT = int(os.getenv("SWF_MAX_OPEN_ACTIVITY_COUNT", 1000))
     MAX_REQUEST_SIZE = 1000 * 1000  # bytes
-
-TRACEBACK_SIZE = None  # Unlimited (well, up to 32K)
