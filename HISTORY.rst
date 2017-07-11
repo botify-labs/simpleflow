@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.18.2
+~~~~~~
+
+- Bugfix: task failed details (#281)
+- Add sets support to json_dumps (#275)
+
 0.18.1
 ~~~~~~
 
