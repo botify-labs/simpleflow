@@ -6,8 +6,8 @@ from simpleflow.canvas import (
     FuncGroup,
     Group,
     Chain,
-    AggregateException,
 )
+from simpleflow.exceptions import AggregateException
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.local.executor import Executor
 from simpleflow.activity import with_attributes
