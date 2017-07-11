@@ -1140,7 +1140,9 @@ def test_workflow_activity_raises_on_failure(mock_decref_workflow):
     workflow_failed.fail(
         reason='Workflow execution error in task '
                'activity-tests.data.activities.raise_on_failure: '
-               '"error"')
+               '"error"',
+        details=builder.DEFAULT_DETAILS,
+    )
 
     assert decisions[0] == workflow_failed
 

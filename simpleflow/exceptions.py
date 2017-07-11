@@ -39,7 +39,7 @@ class TaskFailed(Exception):
         super(TaskFailed, self).__init__(name, reason, details)
         self.name = name
         self.reason = reason
-        self.details = None
+        self.details = details
 
     def __repr__(self):
         return '{} ({}, "{}")'.format(
@@ -67,3 +67,60 @@ class TaskCanceled(Exception):
 
 class TaskTerminated(Exception):
     pass
+
+
+class AggregateException(Exception):
+    """
+    Class containing a list of exceptions.
+
+    :type exceptions: list[Exception]
+    """
+    def __init__(self, exceptions):
+        self.exceptions = exceptions
+
+    def append(self, ex):
+        self.exceptions.append(ex)
+
+    def handle(self, handler, *args, **kwargs):
+        """
+        Invoke a user-defined handler on each exception.
+        :param handler: Predicate accepting an exception and returning True if it's been handled.
+        :type handler: (Exception) -> bool
+        :param args: args for the handler
+        :param kwargs: kwargs for the handler
+        :raise: new AggregateException with the unhandled exceptions, if any
+        """
+        unhandled_exceptions = []
+        for ex in self.exceptions:
+            if ex and not handler(ex, *args, **kwargs):
+                unhandled_exceptions.append(ex)
+        if unhandled_exceptions:
+            raise AggregateException(unhandled_exceptions)
+
+    def flatten(self):
+        """
+        Flatten the AggregateException. Return a new instance without inner AggregateException.
+        :return:
+        :rtype: AggregateException
+        """
+        flattened_exceptions = []
+        self._flatten(self, flattened_exceptions)
+        return AggregateException(flattened_exceptions)
+
+    @staticmethod
+    def _flatten(exception, exceptions):
+        if isinstance(exception, AggregateException):
+            for ex in exception.exceptions:
+                if ex:
+                    AggregateException._flatten(ex, exceptions)
+        else:
+            exceptions.append(exception)
+
+    def __repr__(self):
+        return '<{} {}>'.format(self.__class__.__name__, repr([repr(ex) for ex in self.exceptions]))
+
+    def __str__(self):
+        return '{}({})'.format(self.__class__.__name__, str([str(ex) for ex in self.exceptions]))
+
+    def __eq__(self, other):
+        return self.exceptions == other.exceptions
