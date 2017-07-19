@@ -190,7 +190,6 @@ class SignaledWorkflow(Workflow):
         return future.result
 
 
-
 class WorkflowToCancel(Workflow):
     name = 'example'
     version = 'example'

@@ -1,5 +1,5 @@
 from collections import namedtuple
-from mock import patch, ANY
+from mock import patch
 import unittest
 
 from moto import mock_swf
@@ -30,3 +30,7 @@ class TestActivityWorker(unittest.TestCase):
         self.assertEquals(1, mock.call_count)
         self.assertEquals(mock.call_args[0], ("token", task))
         self.assertIn("No module named ", mock.call_args[1]["reason"])
+
+
+if __name__ == '__main__':
+    unittest.main()

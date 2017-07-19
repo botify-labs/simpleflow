@@ -1,28 +1,28 @@
 from __future__ import absolute_import, print_function
-import re
-import sys
-import subprocess
-import functools
 
+import os
+import sys
+
+try:
+    import subprocess32 as subprocess
+except ImportError:
+    import subprocess
+import functools
+import logging
+import tempfile
+import traceback
+
+# noinspection PyCompatibility
 from builtins import map
 
 from future.utils import iteritems
 
-from simpleflow import compat
 from swf import format
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-import base64
-import logging
-
+from simpleflow import compat
+from simpleflow.exceptions import ExecutionError
 from simpleflow.utils import json_dumps
 
 __all__ = ['program', 'python']
-
-logger = logging.getLogger(__name__)
 
 
 class RequiredArgument(object):
@@ -61,7 +61,7 @@ def format_arguments(*args, **kwargs):
             return '-' + str(key)  # short option -c
         return '--' + str(key)  # long option --val
 
-    return ['{}="{}"'.format(arg(key), value) for key, value in
+    return ['{}="{}"'.format(arg(k), v) for k, v in
             iteritems(kwargs)] + list(map(str, args))
 
 
@@ -139,7 +139,7 @@ def get_name(func):
     return '.'.join([prefix, name])
 
 
-def python(interpreter='python'):
+def python(interpreter='python', logger_name=__name__):
     """
     Execute a callable as an external Python program.
 
@@ -153,56 +153,58 @@ def python(interpreter='python'):
     def wrap_callable(func):
         @functools.wraps(func)
         def execute(*args, **kwargs):
+            logger = logging.getLogger(logger_name)
             command = 'simpleflow.execute'  # name of a module.
-            full_command = [
-                interpreter, '-m', command,  # execute module a script.
-                get_name(func), format_arguments_json(*args, **kwargs),
-            ]
-            try:
-                output = subprocess.check_output(
+            sys.stdout.flush()
+            sys.stderr.flush()
+            result_str = None  # useless
+            with tempfile.TemporaryFile() as result_fd, tempfile.TemporaryFile() as error_fd:
+                dup_result_fd = os.dup(result_fd.fileno())  # remove FD_CLOEXEC
+                dup_error_fd = os.dup(error_fd.fileno())  # remove FD_CLOEXEC
+                # print('error_fd: {}'.format(dup_error_fd))
+                full_command = [
+                    interpreter, '-m', command,  # execute module a script.
+                    get_name(func), format_arguments_json(*args, **kwargs),
+                    '--logger-name={}'.format(logger_name),
+                    '--result-fd={}'.format(dup_result_fd),
+                    '--error-fd={}'.format(dup_error_fd),
+                ]
+                if compat.PY2:  # close_fds doesn't work with python2 (using its C _posixsubprocess helper)
+                    close_fds = False
+                    pass_fds = ()
+                else:
+                    close_fds = True
+                    pass_fds = (dup_result_fd, dup_error_fd)
+                process = subprocess.Popen(
                     full_command,
-                    # Redirect stderr to stdout to get traceback on error.
-                    stderr=subprocess.STDOUT,
+                    bufsize=-1,
+                    close_fds=close_fds,
+                    pass_fds=pass_fds,
                 )
-            except subprocess.CalledProcessError as err:
-                err_output = err.output
-                if not compat.PY2:
-                    err_output = err_output.decode('utf-8', errors='replace')
-                logger.info(
-                    "Got a subprocess.CalledProcessError on command: {}\n"
-                    "Original error output: '{}'".format(
-                        full_command, err_output, type(err_output)
-                    )
-                )
-                exclines = err_output.rstrip().rsplit('\n', 2)
-                excline = exclines[-1]
+                rc = process.wait()
+                os.close(dup_result_fd)
+                os.close(dup_error_fd)
+                if rc:
+                    error_fd.seek(0)
+                    err_output = error_fd.read()
+                    if err_output:
+                        if not compat.PY2:
+                            err_output = err_output.decode('utf-8', errors='replace')
+                    raise ExecutionError(err_output)
 
-                try:
-                    exception = pickle.loads(
-                        base64.b64decode(excline.rstrip()))
-                except (TypeError, pickle.UnpicklingError):
-                    exception = Exception(excline)
-                    if ':' in excline:
-                        cls, msg = excline.split(':', 1)
-                        if re.match(r'\s*[\w.]+\s*', cls):
-                            try:
-                                exception = eval('{}("{}")'.format(
-                                    cls.strip(),
-                                    msg.strip(),
-                                ))
-                            except BaseException as ex:
-                                logger.warning('{}'.format(ex))
+                result_fd.seek(0)
+                result_str = result_fd.read()
 
-                raise exception
+            if not result_str:
+                return None
             try:
                 if not compat.PY2:
-                    output = output.decode('utf-8', errors='replace')
-                last_line = output.rstrip().rsplit('\n', 1)[-1]
-                d = format.decode(last_line)
-                return d
+                    result_str = result_str.decode('utf-8', errors='replace')
+                result = format.decode(result_str)
+                return result
             except BaseException as ex:
-                logger.warning('Exception in python.execute: {}'.format(ex))
-                logger.warning(repr(output))
+                logger.exception('Exception in python.execute: {} {}'.format(ex.__class__.__name__, ex))
+                logger.warning('%r', result_str)
 
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
@@ -306,7 +308,7 @@ def make_callable(funcname):
     return callable_
 
 
-if __name__ == '__main__':
+def main():
     """
     When executed as a script, this module expects the name of a callable as
     its first argument and the arguments of the callable encoded in a JSON
@@ -345,7 +347,6 @@ if __name__ == '__main__':
 
     """
     import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'funcname',
@@ -355,20 +356,38 @@ if __name__ == '__main__':
         'funcargs',
         help='callable arguments in JSON',
     )
-
+    parser.add_argument(
+        '--logger-name',
+        help='logger name',
+    )
+    parser.add_argument(
+        '--result-fd',
+        type=int,
+        default=1,
+        metavar='N',
+        help='result file descriptor',
+    )
+    parser.add_argument(
+        '--error-fd',
+        type=int,
+        default=2,
+        metavar='N',
+        help='error file descriptor',
+    )
     cmd_arguments = parser.parse_args()
-
     funcname = cmd_arguments.funcname
     try:
         arguments = format.decode(cmd_arguments.funcargs)
     except:
         raise ValueError('cannot load arguments from {}'.format(
             cmd_arguments.funcargs))
-
+    if cmd_arguments.logger_name:
+        logger = logging.getLogger(cmd_arguments.logger_name)
+    else:
+        logger = logging.getLogger(__name__)
     callable_ = make_callable(funcname)
     if hasattr(callable_, '__wrapped__'):
         callable_ = callable_.__wrapped__
-
     args = arguments.get('args', ())
     kwargs = arguments.get('kwargs', {})
     try:
@@ -378,13 +397,31 @@ if __name__ == '__main__':
             result = callable_(*args, **kwargs)
     except Exception as err:
         logger.error('Exception: {}'.format(err))
-        # Use base64 encoding to avoid carriage returns and special characters.
-        # FIXME change this: brittle, missing traceback
-        encoded_err = base64.b64encode(pickle.dumps(err))
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        tb = traceback.format_tb(exc_traceback)
+        details = json_dumps(
+            {
+                'error': exc_type.__name__,
+                'message': str(exc_value),
+                'traceback': tb,
+            },
+            default=repr,
+        )
+        if cmd_arguments.error_fd == 2:
+            sys.stderr.flush()
         if not compat.PY2:
-            # Convert bytes to string
-            encoded_err = encoded_err.decode('utf-8', errors='replace')
-        print(encoded_err)
+            details = details.encode('utf-8')
+        os.write(cmd_arguments.error_fd, details)
         sys.exit(1)
-    else:
-        print(json_dumps(result))
+
+    if cmd_arguments.result_fd == 1:  # stdout (legacy)
+        sys.stdout.flush()  # may have print's in flight
+        os.write(cmd_arguments.result_fd, b'\n')
+    result = json_dumps(result)
+    if not compat.PY2:
+        result = result.encode('utf-8')
+    os.write(cmd_arguments.result_fd, result)
+
+
+if __name__ == '__main__':
+    main()

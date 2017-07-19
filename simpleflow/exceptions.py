@@ -124,3 +124,7 @@ class AggregateException(Exception):
 
     def __eq__(self, other):
         return self.exceptions == other.exceptions
+
+
+class ExecutionError(Exception):
+    pass
