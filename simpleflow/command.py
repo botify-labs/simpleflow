@@ -7,6 +7,7 @@ import os
 import signal
 import sys
 import time
+import inspect
 from uuid import uuid4
 
 import boto.connection
@@ -661,5 +662,9 @@ def activity_rerun(domain,
     logger.info("Will re-run: {}(*{}, **{})".format(func.__name__, args, kwargs))
 
     # finally replay the function with the correct arguments
-    result = func(*args, **kwargs)
+    if inspect.isclass(func):
+        kls = func(*args, **kwargs)
+        result = kls.execute()
+    else:
+        result = func(*args, **kwargs)
     logger.info("Result (JSON): {}".format(json_dumps(result, compact=False)))
