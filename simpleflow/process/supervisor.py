@@ -71,7 +71,7 @@ class Supervisor(NamedMixin):
         self._args = arguments if arguments is not None else ()
         self._background = background
 
-        self._processes = []
+        self._processes = {}
         self._terminating = False
 
         super(Supervisor, self).__init__()
@@ -102,7 +102,15 @@ class Supervisor(NamedMixin):
                 args=self._args
             )
             child.start()
-            self._processes.append(child)
+
+            # One might wonder if `child.pid` is guaranteed to be set at this
+            # point. I tried it experimentally, and read quickly the source
+            # at https://github.com/python/cpython/blob/2.7/Lib/multiprocessing/process.py
+            # which shows that `pid` ultimately translates to `os.getpid()` after the
+            # fork. So no big risk, but I add an assertion just in case anyway.
+            pid = child.pid
+            assert pid, "Cannot add process with pid={}: {}".format(pid, child)
+            self._processes[pid] = child
 
     def target(self):
         """
@@ -114,7 +122,7 @@ class Supervisor(NamedMixin):
 
         # protection against double use of ".start()"
         if len(self._processes) != 0:
-            raise Exception("Child processes list is not empty, already called .start() ?")
+            raise Exception("Child processes map is not empty, already called .start() ?")
 
         # start worker processes
         self._start_worker_processes()
@@ -124,7 +132,7 @@ class Supervisor(NamedMixin):
             # if terminating, join all processes and exit the loop so we finish
             # the supervisor process
             if self._terminating:
-                for proc in self._processes:
+                for proc in self._processes.values():
                     proc.join()
                 break
 
@@ -169,12 +177,12 @@ class Supervisor(NamedMixin):
                 logger.debug("  child: name=%s pid=%d status=%s" % (name, child.pid, status))
                 if status in (psutil.STATUS_ZOMBIE, "unknown"):
                     logger.debug("  process {} is zombie, will cleanup".format(child.pid))
-                    to_clean = [p for p in self._processes if p.pid == child.pid]
-                    for process in to_clean:
+                    to_clean = self._processes.get(child.pid)
+                    if to_clean:
                         # join process to clean it up
-                        process.join()
+                        to_clean.join()
                         # remove the process from self._processes so it will be replaced later
-                        self._processes.remove(process)
+                        del self._processes[child.pid]
 
             # compensate lost children here
             self._start_worker_processes()
@@ -202,9 +210,9 @@ class Supervisor(NamedMixin):
         """
         Sends a stop (SIGTERM) signal to all worker processes.
         """
-        for child in self._processes:
-            logger.info("process: sending SIGTERM to pid={}".format(child.pid))
-            os.kill(child.pid, signal.SIGTERM)
+        for pid in self._processes.keys():
+            logger.info("process: sending SIGTERM to pid={}".format(pid))
+            os.kill(pid, signal.SIGTERM)
 
     def payload_friendly_name(self):
         payload = self._payload
