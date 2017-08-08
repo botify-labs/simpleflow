@@ -133,6 +133,7 @@ class Supervisor(NamedMixin):
             # the supervisor process
             if self._terminating:
                 for proc in self._processes.values():
+                    logger.info("process: waiting for proces={} to finish.".format(proc))
                     proc.wait()
                 break
 
