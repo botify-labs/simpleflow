@@ -48,3 +48,12 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tasklist(custom_checkbox=true)
   - pymdownx.tilde
+
+# Pages tree
+pages:
+  - Home: index.md
+  - Getting started: quickstart.md
+  - Features:
+    - Command Line: features/command_line.md
+    - Jumbo Fields: features/jumbo_fields.md
+  - Development: development.md
