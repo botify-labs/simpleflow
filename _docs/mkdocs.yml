@@ -55,6 +55,7 @@ pages:
   - Home: index.md
   - Getting started: quickstart.md
   - Features:
+    - SWF Object Layer: features/swf_layer.md
     - Command Line: features/command_line.md
     - Program Tasks: features/program_tasks.md
     - Jumbo Fields: features/jumbo_fields.md
