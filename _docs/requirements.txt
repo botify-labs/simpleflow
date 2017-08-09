@@ -9,7 +9,8 @@ certifi==2017.7.27.1      # via tornado
 click==6.7                # via mkdocs
 jinja2==2.9.6             # via mkdocs
 livereload==2.5.1         # via mkdocs
-markdown==2.6.8           # via mkdocs, pymdown-extensions
+markdown-include==0.5.1
+markdown==2.6.8           # via markdown-include, mkdocs, pymdown-extensions
 markupsafe==1.0           # via jinja2
 mkdocs-material==1.8.1
 mkdocs==0.16.3

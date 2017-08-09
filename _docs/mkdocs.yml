@@ -35,6 +35,7 @@ markdown_extensions:
   - markdown.extensions.footnotes
   - markdown.extensions.meta
   - markdown.extensions.toc(permalink=true)
+  - markdown_include.include
   - pymdownx.arithmatex
   - pymdownx.betterem(smart_enable=all)
   - pymdownx.caret
@@ -57,3 +58,4 @@ pages:
     - Command Line: features/command_line.md
     - Jumbo Fields: features/jumbo_fields.md
   - Development: development.md
+  - License: license.md
