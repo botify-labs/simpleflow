@@ -2,7 +2,7 @@
 docs_dir: src/
 
 # Project information
-site_name: Simpleflow Documentation
+site_name: "Simpleflow documentation"
 copyright: "Copyright &copy; 2017 - Botify"
 
 # Code
@@ -52,9 +52,9 @@ markdown_extensions:
 
 # Pages tree
 pages:
-  - Home: index.md
+  - Intro: index.md
   - Installation: installation.md
-  - Getting started: quickstart.md
+  - Getting started: getting_started.md
   - Features:
     - SWF Object Layer: features/swf_layer.md
     - Command Line: features/command_line.md

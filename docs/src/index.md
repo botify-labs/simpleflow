@@ -1,5 +1,5 @@
-Introduction
-============
+Intro
+=====
 
 Simpleflow is a Python library that provides abstractions to write programs in
 the [distributed dataflow paradigm](https://en.wikipedia.org/wiki/Distributed_data_flow).
