@@ -1,12 +1,10 @@
-.. _execute:
-
 Execution of Tasks as Programs
 ==============================
 
 Introduction
 ------------
 
-The :py:mod:`simpleflow.execute` module allows to define functions that will be
+The `simpleflow.execute` module allows to define functions that will be
 executed as a program.
 
 There are two modes:
@@ -14,21 +12,21 @@ There are two modes:
 - Convert the definition of a fonction as a command line.
 - Execute a Python function in another process.
 
-Please refer to the :py:mod:`simpleflow.tests.test_activity` test module for
+Please refer to the `simpleflow.tests.test_activity` test module for
 further examples.
 
 Executing a function as a command line
 --------------------------------------
 
-Let's take the example of ``ls``:
+Let's take the example of `ls`:
 
-.. code::
+```python
+@execute.program()
+def ls():
+    pass
+```
 
-        @execute.program()
-        def ls():
-            pass
-
-Calling ``ls()`` in Python will execute the ``ls`` command. Here the purpose of
+Calling `ls()` in Python will execute the `ls` command. Here the purpose of
 the function definition is only to describe the command line. The reason for
 this is to map a call in a workflow definition to a program to execute on the
 command line. The program may be written in any language whereas the workflow
@@ -40,15 +38,14 @@ Executing a Python function in another process
 The rationale for this feature is to execute a function with another
 interpreter (such as pypy) or in another environment (virtualenv).
 
-.. code::
+```python
+@execute.python(interpreter='pypy')
+def inc(xs):
+    return [x + 1 for x in xs]
+```
 
-    @execute.python(interpreter='pypy')
-    def inc(xs):
-        return [x + 1 for x in xs]
-
-Calling ``inc(range(10))`` in Python will execute the function with the
-``pypy`` interpreter found in the ``$PATH``.
-
+Calling `inc(range(10))` in Python will execute the function with the
+`pypy` interpreter found in the `$PATH`.
 
 Limitations
 -----------

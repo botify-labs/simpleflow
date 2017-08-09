@@ -56,6 +56,7 @@ pages:
   - Getting started: quickstart.md
   - Features:
     - Command Line: features/command_line.md
+    - Program Tasks: features/program_tasks.md
     - Jumbo Fields: features/jumbo_fields.md
   - Development: development.md
   - Contributing: contributing.md
