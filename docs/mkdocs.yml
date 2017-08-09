@@ -8,6 +8,7 @@ copyright: "Copyright &copy; 2017 - Botify"
 # Code
 repo_name: botify-labs/simpleflow
 repo_url: https://github.com/botify-labs/simpleflow
+edit_uri: edit/master/docs/src/
 
 # Theme / design
 theme: material
