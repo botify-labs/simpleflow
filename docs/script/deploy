@@ -1,0 +1,5 @@
+#!/bin/bash
+set -xe
+
+# temporary deploy to gh-pages
+./script/build && mkdocs gh-deploy

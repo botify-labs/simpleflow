@@ -1,4 +1,5 @@
 #!/bin/bash
-set -e
+set -xe
 
-echo "TODO"
+cd docs/
+./script/build
