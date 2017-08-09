@@ -41,7 +41,7 @@ output/*.html
 output/*/index.html
 
 # Mkdocs
-_docs/site
+docs/site
 
 # Coverage
 htmlcov/
