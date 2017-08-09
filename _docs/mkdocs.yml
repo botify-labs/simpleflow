@@ -60,6 +60,7 @@ pages:
     - Command Line: features/command_line.md
     - Program Tasks: features/program_tasks.md
     - Jumbo Fields: features/jumbo_fields.md
+    - Signals: features/signals.md
   - Development: development.md
   - Contributing: contributing.md
   - License: license.md
