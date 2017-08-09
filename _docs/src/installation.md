@@ -1,18 +1,15 @@
-.. _install:
-
 Installation
 ============
 
 From the PyPI
 -------------
-::
 
     $ pip install -U simpleflow
 
 From Source
 -----------
 
-simpleflow is actively developed on Github_.
+simpleflow is actively developed on [Github](https://github.com/botify-labs/simpleflow).
 
 You can clone the public repo: ::
 
@@ -20,13 +17,10 @@ You can clone the public repo: ::
 
 Or download one of the following:
 
-* tarball_
-* zipball_
+* [tarball](https://github.com/botify-labs/simpleflow/tarball/master)
+* [zipball](https://github.com/botify-labs/simpleflow/zipball/master)
 
 Once you have the source, you can install it into your site-packages with ::
 
     $ python setup.py install
 
-.. _Github: https://github.com/botify-labs/simpleflow
-.. _tarball: https://github.com/botify-labs/simpleflow/tarball/master
-.. _zipball: https://github.com/botify-labs/simpleflow/zipball/master

@@ -53,6 +53,7 @@ markdown_extensions:
 # Pages tree
 pages:
   - Home: index.md
+  - Installation: installation.md
   - Getting started: quickstart.md
   - Features:
     - SWF Object Layer: features/swf_layer.md
