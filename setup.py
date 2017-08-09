@@ -93,7 +93,7 @@ setup(
     name='simpleflow',
     version=__version__,
     description='Python library for dataflow programming with Amazon SWF',
-    long_description=(read("README.rst") + '\n\n' +
+    long_description=(read("README.md") + '\n\n' +
                       read("README_SWF.rst") + '\n\n' +
                       read("HISTORY.rst")),
     author='Greg Leclercq',
