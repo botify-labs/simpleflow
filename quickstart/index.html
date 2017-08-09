@@ -1,0 +1,576 @@
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <link rel="shortcut icon" href="../assets/images/favicon.png">
+      
+      <meta name="generator" content="mkdocs-0.16.3, mkdocs-material-1.8.1">
+    
+    
+      
+        <title>Getting started - Simpleflow Documentation</title>
+      
+    
+    
+      <script src="../assets/javascripts/modernizr-1df76c4e58.js"></script>
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application-bfecc7305d.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-02c2a4388f.palette.css">
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    
+  </head>
+  
+  
+  
+  
+    <body data-md-color-primary="deep-purple" data-md-color-accent="deep-purple">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="drawer">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search">
+    <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <a href=".." title="Simpleflow Documentation" class="md-icon md-icon--home md-header-nav__button">
+          </a>
+        
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <span class="md-flex__ellipsis md-header-nav__title">
+          
+            
+              
+            
+            Getting started
+          
+        </span>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__inner">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" required placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query">
+      <label class="md-icon md-search__icon" for="search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset">close</button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result" data-md-lang-search="" data-md-lang-tokenizer="[\s\-]+">
+          <div class="md-search-result__meta" data-md-lang-result-none="No matching documents" data-md-lang-result-one="1 matching document" data-md-lang-result-other="# matching documents">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/botify-labs/simpleflow" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      botify-labs/simpleflow
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="drawer">
+    
+      <i class="md-icon md-icon--home md-nav__button"></i>
+    
+    Simpleflow Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/botify-labs/simpleflow" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      botify-labs/simpleflow
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href=".." title="Home" class="md-nav__link">
+      Home
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../installation/" title="Installation" class="md-nav__link">
+      Installation
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+    <a href="./" title="Getting started" class="md-nav__link md-nav__link--active">
+      Getting started
+    </a>
+    
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Features
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Features
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../features/swf_layer/" title="SWF Object Layer" class="md-nav__link">
+      SWF Object Layer
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../features/command_line/" title="Command Line" class="md-nav__link">
+      Command Line
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../features/program_tasks/" title="Program Tasks" class="md-nav__link">
+      Program Tasks
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../features/jumbo_fields/" title="Jumbo Fields" class="md-nav__link">
+      Jumbo Fields
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../features/signals/" title="Signals" class="md-nav__link">
+      Signals
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../development/" title="Development" class="md-nav__link">
+      Development
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../contributing/" title="Contributing" class="md-nav__link">
+      Contributing
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../license/" title="License" class="md-nav__link">
+      License
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <h1 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h1>
+<p>Let's take a simple example that computes the result of <code>(x + 1) * 2</code>. You
+will find this example in <code>examples/basic.py</code>.</p>
+<p>We need to declare the functions as activities to make them available:</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">simpleflow</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">activity</span><span class="p">,</span>
+    <span class="n">Workflow</span><span class="p">,</span>
+    <span class="n">futures</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nd">@activity.with_attributes</span><span class="p">(</span><span class="n">task_list</span><span class="o">=</span><span class="s1">&#39;quickstart&#39;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s1">&#39;example&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
+
+<span class="nd">@activity.with_attributes</span><span class="p">(</span><span class="n">task_list</span><span class="o">=</span><span class="s1">&#39;quickstart&#39;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s1">&#39;example&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">double</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span>
+
+<span class="nd">@activity.with_attributes</span><span class="p">(</span><span class="n">task_list</span><span class="o">=</span><span class="s1">&#39;quickstart&#39;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s1">&#39;example&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delay</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span>
+</pre></div>
+
+<p>And then define the workflow itself in a <code>example.py</code> file:</p>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">BasicWorkflow</span><span class="p">(</span><span class="n">Workflow</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;basic&#39;</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;example&#39;</span>
+    <span class="n">task_list</span> <span class="o">=</span> <span class="s1">&#39;example&#39;</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">increment</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">yy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">double</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;({x} + 1) * 2 = {result}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">result</span><span class="p">))</span>
+        <span class="n">futures</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">yy</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">z</span><span class="o">.</span><span class="n">result</span>
+</pre></div>
+
+<p>Now check that the workflow works locally with an integer "x" and a wait value "t"::</p>
+<div class="codehilite"><pre><span></span>$ simpleflow workflow.start --local examples.basic.BasicWorkflow --input &#39;[1, 5]&#39;
+(1 + 1) * 2 = 4
+</pre></div>
+
+
+<p><strong>input</strong> is encoded in JSON format and can contain the list of <strong>positional</strong>
+arguments such as <code>'[1, 1]</code> or a <strong>dict</strong> with the <code>args</code> and <code>kwargs</code> keys
+such as <code>{&quot;args&quot;: [1], &quot;kwargs&quot;: {}}</code>, <code>{&quot;kwargs&quot;: {&quot;x&quot;: 1}}</code>, or
+`'{"args": [1], "kwargs": {"t": 5}}'``.</p>
+<p>Now that you are confident that the workflow should work, you can run it on
+Amazon SWF with the <code>standalone</code> command::</p>
+<div class="codehilite"><pre><span></span>$ simpleflow standalone --domain TestDomain examples.basic.BasicWorkflow --input &#39;[1, 5]&#39;
+</pre></div>
+
+
+<p>The <strong>standalone</strong> command sets an unique task list and manage all the processes
+that are needed to execute the workflow: decider, activity worker, and a client
+that starts the workflow. It is very convenient for testing a workflow by
+executing it with SWF during the development steps or integration tests.</p>
+<p>Let's take a closer look to the workflow definition.</p>
+<p>It is a <strong>class</strong> that inherits from <code>simpleflow.Workflow</code>:</p>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">BasicWorkflow</span><span class="p">(</span><span class="n">Workflow</span><span class="p">):</span>
+</pre></div>
+
+<p>It defines 3 class attributes:</p>
+<ul>
+<li><strong>name</strong>, the name of the SWF workflow type.</li>
+<li><strong>version</strong>, the version of the SWF workflow type. It is currently provided
+  only for labeling a workflow.</li>
+<li><strong>task_list</strong>, the default task list (see it as a dynamically created queue)
+  where decision tasks for this workflow will be sent. Any <strong>decider</strong> that
+  listens on this task list can handle this workflow. This value can be
+  overrided by the simpleflow commands and objects.</li>
+</ul>
+<p>It also implements the <code>run</code> method that takes two arguments: <code>x</code> and
+<code>t=30</code> (i.e. <code>t</code> is optional and has the default value <code>30</code>). These
+arguments are passed with the <code>--input</code> option. The <code>run</code> method
+describes the workflow and how its tasks should execute.</p>
+<p>Each time a decider takes a decision task, it executes again the <code>run</code>
+from the start. When the workflow execution starts, it evaluates <code>y =
+self.submit(increment, x)</code> for the first time. <strong>y</strong> holds a future in state
+<code>PENDING</code>. The execution continues with the line <code>yy = self.submit(delay, t,
+y)</code>. <strong>yy</strong> holds another future in state <code>PENDING</code>. This state means the task
+has not been scheduled. Now execution still continue in the <code>run</code> method
+with the line <code>z = self.submit(double, y)</code>. Here it needs the value of the
+<strong>y</strong> future to evaluate the <code>double</code> activity. As the execution cannot
+continues, the decider schedules the task <code>increment</code>. <strong>yy</strong> is not a
+dependency for any task so it is not scheduled.</p>
+<p>Once the decider has scheduled the task for <strong>y</strong>, it sleeps and waits for an
+event to be waken up. This happens when the <code>increment</code> task completes.
+SWF schedules a decision task. A decider takes it and executes the
+<code>BasicWorkflow.run</code> method again from the start. It evalues the line <code>y
+= self.submit(increment, x)</code>. The task associated with the <strong>y</strong> future has
+completed. Hence <strong>y</strong> is in state <code>FINISHED</code> and contains the value <code>2</code> in
+<code>y.result</code>. The execution continues until it blocks. It goes by <code>yy =
+self.submit(delay, t, y)</code> that stays the same. Then it reaches <code>z =
+self.submit(double, y)</code>. It gets the value of <code>y.result</code> and <strong>z</strong> now holds a
+future in state <code>PENDING</code>. Execution reaches the line with the <code>print</code>. It
+blocks here because <code>z.result</code> is not available. The decider schedules the
+task backs by the <strong>z</strong> future: <code>double(y)</code>. The workflow execution continues
+so forth by evaluating the <code>BasicWorkflow.run</code> again from the start until
+it finishes.</p>
+                
+                  
+                
+              
+              
+                
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../installation/" title="Installation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Installation
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../features/swf_layer/" title="SWF Object Layer" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                SWF Object Layer
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2017 - Botify
+          </div>
+        
+        powered by
+        <a href="http://www.mkdocs.org" title="MkDocs">MkDocs</a>
+        and
+        <a href="http://squidfunk.github.io/mkdocs-material/" title="Material for MkDocs">
+          Material for MkDocs</a>
+      </div>
+      
+        
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="https://www.botify.com/" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/botify-labs" class="md-footer-social__link fa fa-github-alt"></a>
+    
+      <a href="https://twitter.com/botify" class="md-footer-social__link fa fa-twitter"></a>
+    
+  </div>
+
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application-6940329b9f.js"></script>
+      
+      
+      <script>app.initialize({url:{base:".."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>
