@@ -45,6 +45,9 @@ docs/_build
 docs/api/*
 !docs/api/.gitkeep
 
+# Mkdocs
+_docs/site
+
 # Coverage
 htmlcov/
 

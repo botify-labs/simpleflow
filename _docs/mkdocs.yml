@@ -1,0 +1,50 @@
+# Meta parameters for mkdocs
+docs_dir: src/
+
+# Project information
+site_name: Simpleflow Documentation
+copyright: "Copyright &copy; 2017 - Botify"
+
+# Code
+repo_name: botify-labs/simpleflow
+repo_url: https://github.com/botify-labs/simpleflow
+
+# Theme / design
+theme: material
+extra:
+  palette:
+    primary: deep-purple
+    accent: deep-purple
+  feature:
+    tabs: false
+  social:
+    - type: globe
+      link: https://www.botify.com/
+    - type: github-alt
+      link: https://github.com/botify-labs
+    - type: twitter
+      link: https://twitter.com/botify
+extra_css:
+  - stylesheets/extra.css
+
+# Extensions
+markdown_extensions:
+  - markdown.extensions.admonition
+  - markdown.extensions.codehilite(guess_lang=false)
+  - markdown.extensions.def_list
+  - markdown.extensions.footnotes
+  - markdown.extensions.meta
+  - markdown.extensions.toc(permalink=true)
+  - pymdownx.arithmatex
+  - pymdownx.betterem(smart_enable=all)
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist(custom_checkbox=true)
+  - pymdownx.tilde
