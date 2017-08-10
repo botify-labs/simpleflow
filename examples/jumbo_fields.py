@@ -27,7 +27,7 @@ class JumboFieldsWorkflow(Workflow):
 
     def run(self, string):
         if 'SIMPLEFLOW_JUMBO_FIELDS_BUCKET' not in os.environ:
-            print("Please define SIMPLEFLOW_JUMBO_FIELDS_BUCKET to run this example (see README.rst).")
+            print("Please define SIMPLEFLOW_JUMBO_FIELDS_BUCKET to run this example (see documentation).")
             raise ValueError()
         long_string = self.submit(repeat50k, str(string))
         string_length = self.submit(length, long_string)

@@ -1,11 +1,15 @@
 SWF Object Layer
 ================
 
-`simpleflow` includes a `swf` module that is a wrapper for the
-[Amazon Simple Workflow](http://aws.amazon.com/swf) service. It aims to provide
-some abstractions over the [boto](http://boto.readthedocs.org) library SWF API
-implementation, like querysets and objects over commonly used concepts: `Domains`,
-`Workflows`, `Activities`, and so on.
+`simpleflow` includes a `swf` module that is an object-oriented wrapper for the
+`boto.swf` library, used to access the [Amazon Simple Workflow](http://aws.amazon.com/swf) service.
+
+It aims to provide:
+* **Modelisation**: Swf entities and concepts are to be manipulated through *Models* and *QuerySets* (any ressemblance with the Django API would not be a coincidence).
+* **High-level Events, History**: A higher level of abstractions over SWF *events* and *history*. Events are implemented as stateful objects aware of their own state and possible transitions. History enhance the events flow description, and can be compiled to check it's integrity and the activities statuses transitions.
+* **Decisions**: Stateful abstractions above the SWF decision making system.
+* **Actors**: SWF actors base implementation such as a *Decider* or an activity *Worker* from which the user can easily inherit to implement it's own decision/processing model.
+
 
 Settings
 --------
