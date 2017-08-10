@@ -7,9 +7,10 @@ import os.path
 import platform
 
 import pytest
+import time
 
 from simpleflow import execute
-from simpleflow.exceptions import ExecutionError
+from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 
 
 @execute.program(path='ls')
@@ -257,3 +258,23 @@ def test_exception_with_unicode():
     assert '"error":"DummyException"' in str(excinfo.value)
     error = json.loads(excinfo.value.args[0])
     assert error['message'] == u'ʘ‿ʘ'
+
+
+def sleep_and_return(seconds):
+    time.sleep(seconds)
+    return seconds
+
+
+def test_timeout_execute():
+    func = execute.python(timeout=0.5)(sleep_and_return)
+
+    # Normal case
+    result = func(0.25)
+    assert result == 0.25
+
+    # Timeout case
+    t = time.time()
+    with pytest.raises(ExecutionTimeoutError) as e:
+        func(10)
+    assert (time.time() - t) < 10.0
+    assert 'ExecutionTimeoutError after 0.5 seconds' in str(e.value)

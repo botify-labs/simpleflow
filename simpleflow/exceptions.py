@@ -128,3 +128,18 @@ class AggregateException(Exception):
 
 class ExecutionError(Exception):
     pass
+
+
+class ExecutionTimeoutError(Exception):
+    def __init__(self, command, timeout_value):
+        self.timeout_command = command
+        self.timeout_value = timeout_value
+
+    def __repr__(self):
+        return '{} after {} seconds ({})'.format(
+            self.__class__.__name__,
+            self.timeout_value,
+            self.timeout_command)
+
+    def __str__(self):
+        return self.__repr__()

@@ -3,6 +3,8 @@ from __future__ import absolute_import, print_function
 import os
 import sys
 
+import time
+
 try:
     import subprocess32 as subprocess
 except ImportError:
@@ -19,7 +21,7 @@ from future.utils import iteritems
 
 from swf import format
 from simpleflow import compat
-from simpleflow.exceptions import ExecutionError
+from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 from simpleflow.utils import json_dumps
 
 __all__ = ['program', 'python']
@@ -139,7 +141,7 @@ def get_name(func):
     return '.'.join([prefix, name])
 
 
-def python(interpreter='python', logger_name=__name__):
+def python(interpreter='python', logger_name=__name__, timeout=None):
     """
     Execute a callable as an external Python program.
 
@@ -181,7 +183,21 @@ def python(interpreter='python', logger_name=__name__):
                     close_fds=close_fds,
                     pass_fds=pass_fds,
                 )
-                rc = process.wait()
+
+                # Wait for process
+                if timeout:
+                    t_start = time.time()
+                    rc = process.poll()
+                    while time.time() - t_start < timeout and rc is None:
+                        time.sleep(1)
+                        rc = process.poll()
+
+                    if rc is None:
+                        process.terminate()  # send SIGTERM
+                        raise ExecutionTimeoutError(command=full_command, timeout_value=timeout)
+                else:
+                    rc = process.wait()
+
                 os.close(dup_result_fd)
                 os.close(dup_error_fd)
                 if rc:
