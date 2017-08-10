@@ -1,4 +1,5 @@
-# Quickstart
+Quickstart
+==========
 
 Let's take a simple example that computes the result of `(x + 1) * 2`. You
 will find this example in `examples/basic.py`.
@@ -54,7 +55,7 @@ Now check that the workflow works locally with an integer "x" and a wait value "
 **input** is encoded in JSON format and can contain the list of **positional**
 arguments such as `'[1, 1]` or a **dict** with the `args` and `kwargs` keys
 such as `{"args": [1], "kwargs": {}}`, `{"kwargs": {"x": 1}}`, or
-`'{"args": [1], "kwargs": {"t": 5}}'``.
+`'{"args": [1], "kwargs": {"t": 5}}'`.
 
 Now that you are confident that the workflow should work, you can run it on
 Amazon SWF with the `standalone` command::

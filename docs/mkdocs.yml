@@ -55,7 +55,7 @@ markdown_extensions:
 pages:
   - Intro: index.md
   - Installation: installation.md
-  - Getting started: getting_started.md
+  - Quickstart: quickstart.md
   - Features:
     - SWF Object Layer: features/swf_layer.md
     - Command Line: features/command_line.md

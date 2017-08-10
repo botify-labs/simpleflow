@@ -1,8 +1,8 @@
 Installation
 ============
 
-From the PyPI
--------------
+From the PyPI (recommended)
+---------------------------
 
     $ pip install -U simpleflow
 
@@ -11,9 +11,9 @@ From Source
 
 simpleflow is actively developed on [Github](https://github.com/botify-labs/simpleflow).
 
-You can clone the public repo: ::
+You can clone the public repo:
 
-    git clone https://github.com/botify-labs/simpleflow.git
+    $ git clone https://github.com/botify-labs/simpleflow
 
 Or download one of the following:
 

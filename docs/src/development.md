@@ -5,8 +5,11 @@ Development
 Requirements
 ------------
 
-- Python 2.6.x or 2.7.x
-- Python 3.x compatibility is NOT guaranteed for now: https://github.com/botify-labs/simpleflow/issues/87
+- CPython 2.7 or 3.6 (recommended)
+- Pypy 2.5+
+
+NB about Pypy: all tests pass but some parts of the deciders may not work ; Pypy
+support is mostly for activity workers where you need the performance boost.
 
 
 Development environment
@@ -23,7 +26,7 @@ And use it with:
     ./script/docker-run
 
 It will then mount your current directory inside the container and pass the
-most relevant variables (your AWS_* credentials for instance).
+most relevant variables (your `AWS_*` credentials for instance).
 
 
 Running tests

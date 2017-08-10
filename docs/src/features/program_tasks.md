@@ -1,9 +1,6 @@
 Execution of Tasks as Programs
 ==============================
 
-Introduction
-------------
-
 The `simpleflow.execute` module allows to define functions that will be
 executed as a program.
 
@@ -14,6 +11,7 @@ There are two modes:
 
 Please refer to the `simpleflow.tests.test_activity` test module for
 further examples.
+
 
 Executing a function as a command line
 --------------------------------------
@@ -32,6 +30,7 @@ this is to map a call in a workflow definition to a program to execute on the
 command line. The program may be written in any language whereas the workflow
 definition is in Python.
 
+
 Executing a Python function in another process
 ----------------------------------------------
 
@@ -46,6 +45,7 @@ def inc(xs):
 
 Calling `inc(range(10))` in Python will execute the function with the
 `pypy` interpreter found in the `$PATH`.
+
 
 Limitations
 -----------

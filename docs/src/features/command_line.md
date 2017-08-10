@@ -1,6 +1,8 @@
 Command Line
 ============
 
+Simpleflow comes with a `simpleflow` command-line utility that can be used to list workflows against SWF, boot decider or activity workers (with multiprocessing), and a few other goodies.
+
 
 List Workflow Executions
 ------------------------

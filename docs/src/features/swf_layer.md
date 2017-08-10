@@ -5,16 +5,23 @@ SWF Object Layer
 `boto.swf` library, used to access the [Amazon Simple Workflow](http://aws.amazon.com/swf) service.
 
 It aims to provide:
-* **Modelisation**: Swf entities and concepts are to be manipulated through *Models* and *QuerySets* (any ressemblance with the Django API would not be a coincidence).
-* **High-level Events, History**: A higher level of abstractions over SWF *events* and *history*. Events are implemented as stateful objects aware of their own state and possible transitions. History enhance the events flow description, and can be compiled to check it's integrity and the activities statuses transitions.
-* **Decisions**: Stateful abstractions above the SWF decision making system.
-* **Actors**: SWF actors base implementation such as a *Decider* or an activity *Worker* from which the user can easily inherit to implement it's own decision/processing model.
+
+- **Modelisation**: Swf entities and concepts are to be manipulated through *Models* and
+  *QuerySets* (any ressemblance with the Django API would not be a coincidence).
+- **High-level Events, History**: A higher level of abstractions over SWF *events* and
+  *history*. Events are implemented as stateful objects aware of their own state and
+  possible transitions. History enhances the events flow description, and can be
+  compiled to check its integrity and the activities statuses transitions.
+- **Decisions**: Stateful abstractions above the SWF decision making system.
+- **Actors**: SWF actors base implementation such as a *Decider* or an activity
+  *Worker* from which the user can easily inherit to implement its own
+  decision/processing model.
 
 
 Settings
 --------
 
-!!! warning
+!!! bug
     The informations in this "Settings" section may be outdated, they need some love.
 
 
@@ -46,7 +53,7 @@ The following environment variables
     - `AWS_SECRET_ACCESS_KEY`
     - `region`
 
-If neither of the previous methods were used, you can still set the AWS credentials with :meth:`swf.settings.set`:
+If neither of the previous methods were used, you can still set the AWS credentials with `swf.settings.set`:
 
 ```python
 >>> import swf.settings
@@ -60,15 +67,18 @@ If neither of the previous methods were used, you can still set the AWS credenti
 ```
 
 
-Batteries Included
-------------------
+Example usage
+-------------
 
 ### Models
 
-Simple Workflow entities such as domains, workflow types, workflow executions and activity types are to be manipulated through swf using `models`. They are immutable `swf` objects representations providing an interface to objects attributes, local/remote objects synchronization and changes watch between these local and remote objects.
+Simple Workflow entities such as domains, workflow types, workflow executions and activity types are to be
+manipulated through swf using `models`. They are immutable `swf` objects representations providing an
+interface to objects attributes, local/remote objects synchronization and changes watch between these
+local and remote objects.
 
 ```python
-# Models resides in swf.models module
+# Models reside in the swf.models module
 >>> from swf.models import Domain, WorkflowType, WorkflowExecution, ActivityType
 
 # Once imported you're ready to create a local model instance
@@ -83,24 +93,31 @@ Simple Workflow entities such as domains, workflow types, workflow executions an
 >>> D.save()
 ```
 
-Now you have a local `Domain` model object, and if no errors were raised, the `save` method have saved amazon-side. But, sometimes, you won't be able to know if the model you're manipulating has an upstream version: whether you've acquired it through a queryset, or the remote object has been deleted for example. Fortunately, models are shipped with a set of functions to make sure your local objects keep synced and consistent.
+Now you have a local `Domain` model object, and if no errors were raised, the `save` method have saved
+amazon-side. Sometimes you won't be able to know if the model you're manipulating has an upstream version:
+whether you've acquired it through a queryset, or the remote object has been deleted for example.
+Fortunately, models are shipped with a set of functions to make sure your local objects keep synced and
+consistent.
 
 ```python
-# Exists method let's you know if you're model instance has an upstream version
+# Exists method lets you know if your model instance has an upstream version
 >>> D.exists
 True
 
 # What if changes have been made to the remote object?
 # synced  and changes methods help ensuring local and remote models
-#are still synced and which changes have been maid.
+# are still synced and which changes have been made (in the case below
+# nothing has changed)
 >>> D.is_synced
 True
 >>> D.changes
 ModelDiff()
+
 ```
 
 
-What if your local object is out of sync? Models `upstream` method will fetch the remote version of your object and will build a new model instance using it's attributes.
+What if your local object is out of sync? Models `upstream` method will fetch the remote version of
+your object and will build a new model instance using its attributes.
 
 ```python
 >>> D.is_synced
@@ -159,9 +176,13 @@ they're behaving like django managers.
 
 ### Actors
 
-Swf workflows are based on a worker-decider pattern. Every actions in the flow is executed by a worker which runs supplied activity tasks. And every actions is the result of a decision taken by the decider reading the workflow events history and deciding what to do next. In order to ease the development of such workers and decider, swf exposes base classes for them located in `swf.actors` submodule.
+SWF workflows are based on a worker-decider pattern. Every actions in the flow is executed by a worker
+which runs supplied activity tasks. And every actions is the result of a decision taken by the decider
+reading the workflow events history and deciding what to do next. In order to ease the development of
+such workers and decider, `swf` exposes base classes for them located in the `swf.actors` submodule.
 
-* An `Actor` must basically implement a `start` and `stop` method and can actually inherits from whatever runtime implementation you need: thread, gevent, multiprocess...
+* An `Actor` must basically implement a `start` and `stop` method and can actually inherits from whatever
+  runtime implementation you need: thread, gevent, multiprocess...
 
 ```python
 class Actor(ConnectedSWFObject):
@@ -170,7 +191,9 @@ class Actor(ConnectedSWFObject):
     def stop(self):
 ```
 
-* `Decider` base class implements the core functionality of a swf decider: polling for decisions tasks, and sending back a decision task copleted decision. Every other special needs implementations are left up to the user.
+* `Decider` base class implements the core functionality of a swf decider: polling for decisions tasks,
+  and sending back a decision task copleted decision. Every other special needs implementations are left
+  up to the user.
 
 ```python
 class Decider(Actor):
@@ -179,7 +202,10 @@ class Decider(Actor):
     def poll(self, task_list=None, identity=None, maximum_page_size=None)
 ```
 
-* `Worker` base class implements the core functionality of a swf worker whoes role is to process activity tasks. It is basically able to poll for new activity tasks to process, send back a heartbeat to swf service in order to let it know it hasn't failed or crashed, and to complete, fail or cancel the activity task it's processing.
+* `Worker` base class implements the core functionality of a swf worker whoes role is to process activity
+  tasks. It is basically able to poll for new activity tasks to process, send back a heartbeat to SWF
+  service in order to let it know it hasn't failed or crashed, and to complete, fail or cancel the activity
+  task it's processing.
 
 ```python
 class ActivityWorker(Actor):
