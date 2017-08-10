@@ -13,3 +13,6 @@
 .md-main__inner {
   padding-top: 1rem;
 }
+.badges {
+  display: none;
+}
