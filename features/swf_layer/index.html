@@ -281,8 +281,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#batteries-included" title="Batteries Included" class="md-nav__link">
-    Batteries Included
+  <a href="#example-usage" title="Example usage" class="md-nav__link">
+    Example usage
   </a>
   
     <nav class="md-nav">
@@ -461,8 +461,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#batteries-included" title="Batteries Included" class="md-nav__link">
-    Batteries Included
+  <a href="#example-usage" title="Example usage" class="md-nav__link">
+    Example usage
   </a>
   
     <nav class="md-nav">
@@ -533,14 +533,24 @@
                 
                 
                 <h1 id="swf-object-layer">SWF Object Layer<a class="headerlink" href="#swf-object-layer" title="Permanent link">&para;</a></h1>
-<p><code>simpleflow</code> includes a <code>swf</code> module that is a wrapper for the
-<a href="http://aws.amazon.com/swf">Amazon Simple Workflow</a> service. It aims to provide
-some abstractions over the <a href="http://boto.readthedocs.org">boto</a> library SWF API
-implementation, like querysets and objects over commonly used concepts: <code>Domains</code>,
-<code>Workflows</code>, <code>Activities</code>, and so on.</p>
+<p><code>simpleflow</code> includes a <code>swf</code> module that is an object-oriented wrapper for the
+<code>boto.swf</code> library, used to access the <a href="http://aws.amazon.com/swf">Amazon Simple Workflow</a> service.</p>
+<p>It aims to provide:</p>
+<ul>
+<li><strong>Modelisation</strong>: Swf entities and concepts are to be manipulated through <em>Models</em> and
+  <em>QuerySets</em> (any ressemblance with the Django API would not be a coincidence).</li>
+<li><strong>High-level Events, History</strong>: A higher level of abstractions over SWF <em>events</em> and
+  <em>history</em>. Events are implemented as stateful objects aware of their own state and
+  possible transitions. History enhances the events flow description, and can be
+  compiled to check its integrity and the activities statuses transitions.</li>
+<li><strong>Decisions</strong>: Stateful abstractions above the SWF decision making system.</li>
+<li><strong>Actors</strong>: SWF actors base implementation such as a <em>Decider</em> or an activity
+  <em>Worker</em> from which the user can easily inherit to implement its own
+  decision/processing model.</li>
+</ul>
 <h2 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">&para;</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
+<div class="admonition bug">
+<p class="admonition-title">Bug</p>
 <p>The informations in this "Settings" section may be outdated, they need some love.</p>
 </div>
 <p>Mandatory:</p>
@@ -566,7 +576,7 @@ implementation, like querysets and objects over commonly used concepts: <code>Do
     - <code>AWS_ACCESS_KEY_ID</code>
     - <code>AWS_SECRET_ACCESS_KEY</code>
     - <code>region</code></p>
-<p>If neither of the previous methods were used, you can still set the AWS credentials with :meth:<code>swf.settings.set</code>:</p>
+<p>If neither of the previous methods were used, you can still set the AWS credentials with <code>swf.settings.set</code>:</p>
 <div class="codehilite"><pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">swf.settings</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">swf</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">aws_access_key_id</span><span class="o">=</span><span class="s1">&#39;MYAWSACCESSKEYID&#39;</span><span class="p">,</span>
 <span class="o">...</span>                  <span class="n">aws_secret_access_key</span><span class="o">=</span><span class="s1">&#39;MYAWSSECRETACCESSKEY&#39;</span><span class="p">,</span>
@@ -577,10 +587,13 @@ implementation, like querysets and objects over commonly used concepts: <code>Do
 <span class="p">[</span><span class="n">Domain</span><span class="p">(</span><span class="s1">&#39;test1&#39;</span><span class="p">),</span> <span class="n">Domain</span><span class="p">(</span><span class="s1">&#39;test2&#39;</span><span class="p">)]</span>
 </pre></div>
 
-<h2 id="batteries-included">Batteries Included<a class="headerlink" href="#batteries-included" title="Permanent link">&para;</a></h2>
+<h2 id="example-usage">Example usage<a class="headerlink" href="#example-usage" title="Permanent link">&para;</a></h2>
 <h3 id="models">Models<a class="headerlink" href="#models" title="Permanent link">&para;</a></h3>
-<p>Simple Workflow entities such as domains, workflow types, workflow executions and activity types are to be manipulated through swf using <code>models</code>. They are immutable <code>swf</code> objects representations providing an interface to objects attributes, local/remote objects synchronization and changes watch between these local and remote objects.</p>
-<div class="codehilite"><pre><span></span><span class="c1"># Models resides in swf.models module</span>
+<p>Simple Workflow entities such as domains, workflow types, workflow executions and activity types are to be
+manipulated through swf using <code>models</code>. They are immutable <code>swf</code> objects representations providing an
+interface to objects attributes, local/remote objects synchronization and changes watch between these
+local and remote objects.</p>
+<div class="codehilite"><pre><span></span><span class="c1"># Models reside in the swf.models module</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">swf.models</span> <span class="kn">import</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">WorkflowType</span><span class="p">,</span> <span class="n">WorkflowExecution</span><span class="p">,</span> <span class="n">ActivityType</span>
 
 <span class="c1"># Once imported you&#39;re ready to create a local model instance</span>
@@ -595,21 +608,27 @@ implementation, like querysets and objects over commonly used concepts: <code>Do
 <span class="o">&gt;&gt;&gt;</span> <span class="n">D</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </pre></div>
 
-<p>Now you have a local <code>Domain</code> model object, and if no errors were raised, the <code>save</code> method have saved amazon-side. But, sometimes, you won't be able to know if the model you're manipulating has an upstream version: whether you've acquired it through a queryset, or the remote object has been deleted for example. Fortunately, models are shipped with a set of functions to make sure your local objects keep synced and consistent.</p>
-<div class="codehilite"><pre><span></span><span class="c1"># Exists method let&#39;s you know if you&#39;re model instance has an upstream version</span>
+<p>Now you have a local <code>Domain</code> model object, and if no errors were raised, the <code>save</code> method have saved
+amazon-side. Sometimes you won't be able to know if the model you're manipulating has an upstream version:
+whether you've acquired it through a queryset, or the remote object has been deleted for example.
+Fortunately, models are shipped with a set of functions to make sure your local objects keep synced and
+consistent.</p>
+<div class="codehilite"><pre><span></span><span class="c1"># Exists method lets you know if your model instance has an upstream version</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">D</span><span class="o">.</span><span class="n">exists</span>
 <span class="bp">True</span>
 
 <span class="c1"># What if changes have been made to the remote object?</span>
 <span class="c1"># synced  and changes methods help ensuring local and remote models</span>
-<span class="c1">#are still synced and which changes have been maid.</span>
+<span class="c1"># are still synced and which changes have been made (in the case below</span>
+<span class="c1"># nothing has changed)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">D</span><span class="o">.</span><span class="n">is_synced</span>
 <span class="bp">True</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">D</span><span class="o">.</span><span class="n">changes</span>
 <span class="n">ModelDiff</span><span class="p">()</span>
 </pre></div>
 
-<p>What if your local object is out of sync? Models <code>upstream</code> method will fetch the remote version of your object and will build a new model instance using it's attributes.</p>
+<p>What if your local object is out of sync? Models <code>upstream</code> method will fetch the remote version of
+your object and will build a new model instance using its attributes.</p>
 <div class="codehilite"><pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="n">D</span><span class="o">.</span><span class="n">is_synced</span>
 <span class="bp">False</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">D</span><span class="o">.</span><span class="n">changes</span>
@@ -652,9 +671,13 @@ they're behaving like django managers.</p>
 <h3 id="decisions">Decisions<a class="headerlink" href="#decisions" title="Permanent link">&para;</a></h3>
 <p>(coming soon)</p>
 <h3 id="actors">Actors<a class="headerlink" href="#actors" title="Permanent link">&para;</a></h3>
-<p>Swf workflows are based on a worker-decider pattern. Every actions in the flow is executed by a worker which runs supplied activity tasks. And every actions is the result of a decision taken by the decider reading the workflow events history and deciding what to do next. In order to ease the development of such workers and decider, swf exposes base classes for them located in <code>swf.actors</code> submodule.</p>
+<p>SWF workflows are based on a worker-decider pattern. Every actions in the flow is executed by a worker
+which runs supplied activity tasks. And every actions is the result of a decision taken by the decider
+reading the workflow events history and deciding what to do next. In order to ease the development of
+such workers and decider, <code>swf</code> exposes base classes for them located in the <code>swf.actors</code> submodule.</p>
 <ul>
-<li>An <code>Actor</code> must basically implement a <code>start</code> and <code>stop</code> method and can actually inherits from whatever runtime implementation you need: thread, gevent, multiprocess...</li>
+<li>An <code>Actor</code> must basically implement a <code>start</code> and <code>stop</code> method and can actually inherits from whatever
+  runtime implementation you need: thread, gevent, multiprocess...</li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Actor</span><span class="p">(</span><span class="n">ConnectedSWFObject</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">task_list</span><span class="p">)</span>
@@ -663,7 +686,9 @@ they're behaving like django managers.</p>
 </pre></div>
 
 <ul>
-<li><code>Decider</code> base class implements the core functionality of a swf decider: polling for decisions tasks, and sending back a decision task copleted decision. Every other special needs implementations are left up to the user.</li>
+<li><code>Decider</code> base class implements the core functionality of a swf decider: polling for decisions tasks,
+  and sending back a decision task copleted decision. Every other special needs implementations are left
+  up to the user.</li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Decider</span><span class="p">(</span><span class="n">Actor</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">task_list</span><span class="p">)</span>
@@ -672,7 +697,10 @@ they're behaving like django managers.</p>
 </pre></div>
 
 <ul>
-<li><code>Worker</code> base class implements the core functionality of a swf worker whoes role is to process activity tasks. It is basically able to poll for new activity tasks to process, send back a heartbeat to swf service in order to let it know it hasn't failed or crashed, and to complete, fail or cancel the activity task it's processing.</li>
+<li><code>Worker</code> base class implements the core functionality of a swf worker whoes role is to process activity
+  tasks. It is basically able to poll for new activity tasks to process, send back a heartbeat to SWF
+  service in order to let it know it hasn't failed or crashed, and to complete, fail or cancel the activity
+  task it's processing.</li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">ActivityWorker</span><span class="p">(</span><span class="n">Actor</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">task_list</span><span class="p">)</span>

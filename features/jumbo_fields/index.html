@@ -288,12 +288,42 @@
     
     <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
     
-      
     
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Jumbo Fields
+      </label>
     
     <a href="./" title="Jumbo Fields" class="md-nav__link md-nav__link--active">
       Jumbo Fields
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#format" title="Format" class="md-nav__link">
+    Format
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" title="Configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
     
   </li>
 
@@ -365,8 +395,27 @@
 <nav class="md-nav md-nav--secondary">
   
   
-    
   
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#format" title="Format" class="md-nav__link">
+    Format
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" title="Configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
   
 </nav>
                   </div>
@@ -381,20 +430,23 @@
                   <a href="https://github.com/botify-labs/simpleflow/edit/master/docs/src/features/jumbo_fields.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
                 
                 
-                <h1 id="feature-jumbo-fields">Feature: Jumbo Fields<a class="headerlink" href="#feature-jumbo-fields" title="Permanent link">&para;</a></h1>
+                  <h1>Jumbo Fields</h1>
+                
+                <p>=====================</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This feature is still in beta mode, and any feedback is appreciated.</p>
 </div>
-<p>For some use cases, you want to be able to have fields larger than the standard
-SWF limitations (which is maximum 32K bytes on the largest ones, input and result,
-and lower for some others).</p>
+<p>For some use cases, you want to be able to have fields larger than what SWF accepts
+(which is maximum 32K bytes on the largest ones, input and result, and lower for
+some others).</p>
 <p>Simpleflow allows to transparently translate such fields to objects stored on AWS
 S3. The format is then the following:</p>
 <div class="codehilite"><pre><span></span>simpleflow+s3://jumbo-bucket/with/optional/prefix/5d7191af-[...]-cdd39a31ba61 5242880
 </pre></div>
 
 
+<h2 id="format">Format<a class="headerlink" href="#format" title="Permanent link">&para;</a></h2>
 <p>The format provides a pseudo-S3 address as a first word. The "simpleflow+s3://"
 prefix is here for implementation purposes, and may be extended later with other
 backends such as simpleflow+ssh or simpleflow+gs.</p>
@@ -405,6 +457,7 @@ for this feature to avoid issuing too many queries to S3, which would slow down
 the deciders especially. Disk cache is located at <code>/tmp/simpleflow-cache</code> and is
 limited to 1GB, with a LRU eviction strategy. It's performed with the <code>DiskCache
 library &lt;http://www.grantjenks.com/docs/diskcache/&gt;</code>_.</p>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <p>You have to configure an environment variable to tell simpleflow where to store
 things (which implicitly enables the feature by the way):</p>
 <div class="codehilite"><pre><span></span>SIMPLEFLOW_JUMBO_FIELDS_BUCKET=jumbo-bucket/with/optional/prefix
@@ -413,12 +466,15 @@ things (which implicitly enables the feature by the way):</p>
 
 <p>And ensure your deciders and activity workers have access to this S3 bucket (<code>s3:GetObject</code> and
 <code>s3:PutObject</code> should be enough, but please test it first).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning on bucket name length</p>
 <p>The overhead of the signature format is maximum 91 chars at this point (fixed protocol
 and UUID width, and max 5M = 5242880 for the size part). So you should ensure
 that your bucket + directory is not longer than 256 - 91 = 165 chars, else
 you may not be able to get a working jumbo field signature for tiny fields.
 In that case stripping the signature would only break things down the road
 in unpredictable and hard to debug ways, so simpleflow will raise.</p>
+</div>
                 
                   
                 
