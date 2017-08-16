@@ -461,9 +461,11 @@
                 <h1 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h1>
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Python 2.6.x or 2.7.x</li>
-<li>Python 3.x compatibility is NOT guaranteed for now: <a href="https://github.com/botify-labs/simpleflow/issues/87">https://github.com/botify-labs/simpleflow/issues/87</a></li>
+<li>CPython 2.7 or 3.6 (recommended)</li>
+<li>Pypy 2.5+</li>
 </ul>
+<p>NB about Pypy: all tests pass but some parts of the deciders may not work ; Pypy
+support is mostly for activity workers where you need the performance boost.</p>
 <h2 id="development-environment">Development environment<a class="headerlink" href="#development-environment" title="Permanent link">&para;</a></h2>
 <p>A <code>Dockerfile</code> is provided to help development on non-Linux machines.</p>
 <p>You can build a <code>simpleflow</code> image with:</p>
@@ -477,7 +479,7 @@
 
 
 <p>It will then mount your current directory inside the container and pass the
-most relevant variables (your AWS_* credentials for instance).</p>
+most relevant variables (your <code>AWS_*</code> credentials for instance).</p>
 <h2 id="running-tests">Running tests<a class="headerlink" href="#running-tests" title="Permanent link">&para;</a></h2>
 <p>You can run tests with:</p>
 <div class="codehilite"><pre><span></span>./script/test

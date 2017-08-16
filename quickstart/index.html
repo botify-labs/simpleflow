@@ -426,7 +426,7 @@ will find this example in <code>examples/basic.py</code>.</p>
 <p><strong>input</strong> is encoded in JSON format and can contain the list of <strong>positional</strong>
 arguments such as <code>'[1, 1]</code> or a <strong>dict</strong> with the <code>args</code> and <code>kwargs</code> keys
 such as <code>{&quot;args&quot;: [1], &quot;kwargs&quot;: {}}</code>, <code>{&quot;kwargs&quot;: {&quot;x&quot;: 1}}</code>, or
-`'{"args": [1], "kwargs": {"t": 5}}'``.</p>
+<code>'{&quot;args&quot;: [1], &quot;kwargs&quot;: {&quot;t&quot;: 5}}'</code>.</p>
 <p>Now that you are confident that the workflow should work, you can run it on
 Amazon SWF with the <code>standalone</code> command::</p>
 <div class="codehilite"><pre><span></span>$ simpleflow standalone --domain TestDomain examples.basic.BasicWorkflow --input &#39;[1, 5]&#39;
