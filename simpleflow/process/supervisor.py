@@ -71,7 +71,7 @@ class Supervisor(NamedMixin):
         self._args = arguments if arguments is not None else ()
         self._background = background
 
-        self._processes = []
+        self._processes = {}
         self._terminating = False
 
         super(Supervisor, self).__init__()
@@ -102,7 +102,15 @@ class Supervisor(NamedMixin):
                 args=self._args
             )
             child.start()
-            self._processes.append(child)
+
+            # One might wonder if `child.pid` is guaranteed to be set at this
+            # point. I tried it experimentally, and read quickly the source
+            # at https://github.com/python/cpython/blob/2.7/Lib/multiprocessing/process.py
+            # which shows that `pid` ultimately translates to `os.getpid()` after the
+            # fork. So no big risk, but I add an assertion just in case anyway.
+            pid = child.pid
+            assert pid, "Cannot add process with pid={}: {}".format(pid, child)
+            self._processes[pid] = psutil.Process(pid)
 
     def target(self):
         """
@@ -114,7 +122,7 @@ class Supervisor(NamedMixin):
 
         # protection against double use of ".start()"
         if len(self._processes) != 0:
-            raise Exception("Child processes list is not empty, already called .start() ?")
+            raise Exception("Child processes map is not empty, already called .start() ?")
 
         # start worker processes
         self._start_worker_processes()
@@ -124,8 +132,9 @@ class Supervisor(NamedMixin):
             # if terminating, join all processes and exit the loop so we finish
             # the supervisor process
             if self._terminating:
-                for proc in self._processes:
-                    proc.join()
+                for proc in self._processes.values():
+                    logger.info("process: waiting for proces={} to finish.".format(proc))
+                    proc.wait()
                 break
 
             # wait 0.1s
@@ -158,10 +167,8 @@ class Supervisor(NamedMixin):
                          "from pid={}".format(os.getpid()))
 
             # cleanup children
-            # NB: here we use psutil's Process() API because it helps us identifying children
-            # reliably and determining their state ; we could list children via self._processes
-            # but identifying if they're alive is more tricky (???????)
-            for child in psutil.Process().children():
+            to_remove = []
+            for pid, child in self._processes.items():
                 try:
                     name, status = child.name(), child.status()
                 except psutil.NoSuchProcess:  # May be untimely deceased
@@ -169,12 +176,14 @@ class Supervisor(NamedMixin):
                 logger.debug("  child: name=%s pid=%d status=%s" % (name, child.pid, status))
                 if status in (psutil.STATUS_ZOMBIE, "unknown"):
                     logger.debug("  process {} is zombie, will cleanup".format(child.pid))
-                    to_clean = [p for p in self._processes if p.pid == child.pid]
-                    for process in to_clean:
-                        # join process to clean it up
-                        process.join()
-                        # remove the process from self._processes so it will be replaced later
-                        self._processes.remove(process)
+                    # join process to clean it up
+                    child.wait()
+                    # set the process to be removed from self._processes
+                    to_remove.append(pid)
+
+            # cleanup our internal state (self._processes)
+            for pid in to_remove:
+                del self._processes[pid]
 
             # compensate lost children here
             self._start_worker_processes()
@@ -202,9 +211,9 @@ class Supervisor(NamedMixin):
         """
         Sends a stop (SIGTERM) signal to all worker processes.
         """
-        for child in self._processes:
-            logger.info("process: sending SIGTERM to pid={}".format(child.pid))
-            os.kill(child.pid, signal.SIGTERM)
+        for process in self._processes.values():
+            logger.info("process: sending SIGTERM to pid={}".format(process.pid))
+            process.terminate()
 
     def payload_friendly_name(self):
         payload = self._payload
