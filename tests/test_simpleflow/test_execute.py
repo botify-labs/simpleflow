@@ -5,6 +5,7 @@ import json
 import tempfile
 import os.path
 import platform
+import threading
 
 import pytest
 import time
@@ -278,3 +279,10 @@ def test_timeout_execute():
         func(10)
     assert (time.time() - t) < 10.0
     assert 'ExecutionTimeoutError after 0.5 seconds' in str(e.value)
+
+
+def test_timeout_execute_from_thread():
+    # From a thread
+    t = threading.Thread(target=test_timeout_execute)
+    t.start()
+    t.join()
