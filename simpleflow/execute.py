@@ -163,7 +163,9 @@ def wait_subprocess(process, timeout=None, command_info=None):
                 process.terminate()  # send SIGTERM
             except OSError as e:
                 # Ignore that exception the case the sub-process already terminated after last poll() call.
-                if e.errno != 3:
+                if e.errno == 3:
+                    return process.poll()
+                else:
                     raise
             raise ExecutionTimeoutError(command=command_info, timeout_value=timeout)
         return rc
