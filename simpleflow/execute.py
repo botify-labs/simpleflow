@@ -141,6 +141,35 @@ def get_name(func):
     return '.'.join([prefix, name])
 
 
+def wait_subprocess(process, timeout=None, command_info=None):
+    """
+    Wait for a process, raise if timeout.
+    :param process: the process to wait
+    :param timeout: timeout after 'timeout' seconds
+    :type timeout: int | None
+    :param command_info:
+        :returns: return code
+        :rtype: int.
+    """
+    if timeout:
+        t_start = time.time()
+        rc = process.poll()
+        while time.time() - t_start < timeout and rc is None:
+            time.sleep(1)
+            rc = process.poll()
+
+        if rc is None:
+            try:
+                process.terminate()  # send SIGTERM
+            except OSError as e:
+                # Ignore that exception the case the sub-process already terminated after last poll() call.
+                if e.errno != 3:
+                    raise
+            raise ExecutionTimeoutError(command=command_info, timeout_value=timeout)
+        return rc
+    return process.wait()
+
+
 def python(interpreter='python', logger_name=__name__, timeout=None):
     """
     Execute a callable as an external Python program.
@@ -184,19 +213,7 @@ def python(interpreter='python', logger_name=__name__, timeout=None):
                     pass_fds=pass_fds,
                 )
 
-                # Wait for process
-                if timeout:
-                    t_start = time.time()
-                    rc = process.poll()
-                    while time.time() - t_start < timeout and rc is None:
-                        time.sleep(1)
-                        rc = process.poll()
-
-                    if rc is None:
-                        process.terminate()  # send SIGTERM
-                        raise ExecutionTimeoutError(command=full_command, timeout_value=timeout)
-                else:
-                    rc = process.wait()
+                rc = wait_subprocess(process, timeout=timeout, command_info=full_command)
 
                 os.close(dup_result_fd)
                 os.close(dup_error_fd)
