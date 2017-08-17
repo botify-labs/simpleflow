@@ -94,7 +94,7 @@ setup(
     version=__version__,
     description='Python library for dataflow programming with Amazon SWF',
     long_description=(read("README.md") + '\n\n' +
-                      read("HISTORY.rst")),
+                      read("CHANGELOG.md")),
     author='Greg Leclercq',
     author_email='tech@botify.com',
     url='https://github.com/botify-labs/simpleflow',
