@@ -2,7 +2,7 @@ Signals
 =======
 
 !!! warning
-    This feature is in "beta" mode so this is subject to change.
+    This feature is in _beta_ mode and subject to changes. Any feedback is appreciated.
 
 Signals are handled via two methods: `Workflow.signal` and `Workflow.wait_signal`.
 They are currently only implemented with SWF.

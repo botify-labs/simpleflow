@@ -1,12 +1,12 @@
 Jumbo Fields
 ============
 
-!!! note
-    This feature is still in beta mode, and any feedback is appreciated.
+!!! warning
+    This feature is in _beta_ mode and subject to changes. Any feedback is appreciated.
 
 For some use cases, you want to be able to have fields larger than what SWF accepts
-(which is maximum 32K bytes on the largest ones, input and result, and lower for
-some others).
+(which is maximum 32K bytes on the largest ones, `input` and `result`, and lower for
+some others, as documented [here](http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-limits.html)).
 
 Simpleflow allows to transparently translate such fields to objects stored on AWS
 S3. The format is then the following:
@@ -17,9 +17,9 @@ S3. The format is then the following:
 Format
 ------
 
-The format provides a pseudo-S3 address as a first word. The "simpleflow+s3://"
+The format provides a pseudo-S3 address as a first word. The `simpleflow+s3://`
 prefix is here for implementation purposes, and may be extended later with other
-backends such as simpleflow+ssh or simpleflow+gs.
+backends such as `simpleflow+ssh` or `simpleflow+gs`.
 
 The second word provides the length of the object in bytes, so a client parsing
 the SWF history can decide if it's worth it to pull/decode the object.
@@ -27,8 +27,8 @@ the SWF history can decide if it's worth it to pull/decode the object.
 For now jumbo fields are limited to 5MB in size. Simpleflow will perform disk caching
 for this feature to avoid issuing too many queries to S3, which would slow down
 the deciders especially. Disk cache is located at `/tmp/simpleflow-cache` and is
-limited to 1GB, with a LRU eviction strategy. It's performed with the `DiskCache
-library <http://www.grantjenks.com/docs/diskcache/>`_.
+limited to 1GB, with a LRU eviction strategy. It's performed with the
+[DiskCache library](http://www.grantjenks.com/docs/diskcache/).
 
 
 Configuration
