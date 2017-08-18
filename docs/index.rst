@@ -1,3 +1,3 @@
-**This documentation has moved to GitHub_.**
+This documentation has moved to `GitHub`_.
 
-.. _GitHub: https://simpleflow.readthedocs.io/
+.. _GitHub: https://botify-labs.github.io/simpleflow/
