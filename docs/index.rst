@@ -1,1 +1,3 @@
-**This documentation has moved to https://botify-labs.github.io/simpleflow/.**
+**This documentation has moved to GitHub_.**
+
+.. _GitHub: https://simpleflow.readthedocs.io/
