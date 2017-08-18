@@ -354,6 +354,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#reproducing-travis-failures" title="Reproducing Travis failures" class="md-nav__link">
+    Reproducing Travis failures
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#release" title="Release" class="md-nav__link">
     Release
   </a>
@@ -435,6 +442,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#reproducing-travis-failures" title="Reproducing Travis failures" class="md-nav__link">
+    Reproducing Travis failures
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#release" title="Release" class="md-nav__link">
     Release
   </a>
@@ -501,6 +515,32 @@ simpleflow during tests:</p>
   against the real SWF endpoints in tests. If you need to update cassettes, see
   <code>tests/integration/README.md</code></li>
 </ul>
+<h2 id="reproducing-travis-failures">Reproducing Travis failures<a class="headerlink" href="#reproducing-travis-failures" title="Permanent link">&para;</a></h2>
+<p>It might happen that a test fails on <a href="https://travis-ci.org/botify-labs/simpleflow">Travis</a>
+and you want to reproduce locally. Travis has a <a href="https://docs.travis-ci.com/user/common-build-problems/#Running-a-Container-Based-Docker-Image-Locally">helpful section in their docs</a>
+about reproducing such issues. As of 2017, simpleflow builds run on 12.04 containers on
+the Travis infrastructure. So you can get close to the Travis setup with something like:</p>
+<div class="codehilite"><pre><span></span>docker run -it \
+  -u travis \
+  -e DEBIAN_FRONTEND=noninteractive \
+  -e PYTHONDONTWRITEBYTECODE=true \
+  -v $(pwd):/botify-labs/simpleflow \
+  quay.io/travisci/travis-python /bin/bash
+</pre></div>
+
+
+<p>Then you may to follow your failed build commands to reproduce your errors.</p>
+<p>For instance on pypy builds the commands look like:</p>
+<div class="codehilite"><pre><span></span>sudo apt-get install ca-certificates libssl1.0.0
+cd botify-labs/simpleflow
+source ~/virtualenv/pypy/bin/activate
+pip install .
+pip install -r requirements-dev.txt
+rm -rf build/
+./script/test -vv
+</pre></div>
+
+
 <h2 id="release">Release<a class="headerlink" href="#release" title="Permanent link">&para;</a></h2>
 <p>In order to release a new version, you'll need credentials on pypi.python.org for this
 software, as long as write access to this repository. Ask via an issue if needed.
