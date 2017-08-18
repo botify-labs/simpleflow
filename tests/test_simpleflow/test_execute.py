@@ -5,11 +5,13 @@ import json
 import tempfile
 import os.path
 import platform
+import threading
 
 import pytest
+import time
 
 from simpleflow import execute
-from simpleflow.exceptions import ExecutionError
+from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 
 
 @execute.program(path='ls')
@@ -257,3 +259,31 @@ def test_exception_with_unicode():
     assert '"error":"DummyException"' in str(excinfo.value)
     error = json.loads(excinfo.value.args[0])
     assert error['message'] == u'ʘ‿ʘ'
+
+
+def sleep_and_return(seconds):
+    time.sleep(seconds)
+    return seconds
+
+
+def test_timeout_execute():
+    timeout = 3  # TODO: the timeout should be smaller but as a workaround for Pypy slowness/overhead we set it to 3 sec
+    func = execute.python(timeout=timeout)(sleep_and_return)
+
+    # Normal case
+    result = func(0.25)
+    assert result == 0.25
+
+    # Timeout case
+    t = time.time()
+    with pytest.raises(ExecutionTimeoutError) as e:
+        func(10)
+    assert (time.time() - t) < 10.0
+    assert 'ExecutionTimeoutError after {} seconds'.format(timeout) in str(e.value)
+
+
+def test_timeout_execute_from_thread():
+    # From a thread
+    t = threading.Thread(target=test_timeout_execute)
+    t.start()
+    t.join()

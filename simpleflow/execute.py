@@ -3,6 +3,8 @@ from __future__ import absolute_import, print_function
 import os
 import sys
 
+import time
+
 try:
     import subprocess32 as subprocess
 except ImportError:
@@ -19,7 +21,7 @@ from future.utils import iteritems
 
 from swf import format
 from simpleflow import compat
-from simpleflow.exceptions import ExecutionError
+from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 from simpleflow.utils import json_dumps
 
 __all__ = ['program', 'python']
@@ -139,7 +141,38 @@ def get_name(func):
     return '.'.join([prefix, name])
 
 
-def python(interpreter='python', logger_name=__name__):
+def wait_subprocess(process, timeout=None, command_info=None):
+    """
+    Wait for a process, raise if timeout.
+    :param process: the process to wait
+    :param timeout: timeout after 'timeout' seconds
+    :type timeout: int | None
+    :param command_info:
+        :returns: return code
+        :rtype: int.
+    """
+    if timeout:
+        t_start = time.time()
+        rc = process.poll()
+        while time.time() - t_start < timeout and rc is None:
+            time.sleep(1)
+            rc = process.poll()
+
+        if rc is None:
+            try:
+                process.terminate()  # send SIGTERM
+            except OSError as e:
+                # Ignore that exception the case the sub-process already terminated after last poll() call.
+                if e.errno == 3:
+                    return process.poll()
+                else:
+                    raise
+            raise ExecutionTimeoutError(command=command_info, timeout_value=timeout)
+        return rc
+    return process.wait()
+
+
+def python(interpreter='python', logger_name=__name__, timeout=None):
     """
     Execute a callable as an external Python program.
 
@@ -181,7 +214,9 @@ def python(interpreter='python', logger_name=__name__):
                     close_fds=close_fds,
                     pass_fds=pass_fds,
                 )
-                rc = process.wait()
+
+                rc = wait_subprocess(process, timeout=timeout, command_info=full_command)
+
                 os.close(dup_result_fd)
                 os.close(dup_error_fd)
                 if rc:
