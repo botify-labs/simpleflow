@@ -52,6 +52,34 @@ simpleflow during tests:
   `tests/integration/README.md`
 
 
+Reproducing Travis failures
+---------------------------
+
+It might happen that a test fails on [Travis](https://travis-ci.org/botify-labs/simpleflow)
+and you want to reproduce locally. Travis has a [helpful section in their docs](https://docs.travis-ci.com/user/common-build-problems/#Running-a-Container-Based-Docker-Image-Locally)
+about reproducing such issues. As of 2017, simpleflow builds run on 12.04 containers on
+the Travis infrastructure. So you can get close to the Travis setup with something like:
+
+    docker run -it \
+      -u travis \
+      -e DEBIAN_FRONTEND=noninteractive \
+      -e PYTHONDONTWRITEBYTECODE=true \
+      -v $(pwd):/botify-labs/simpleflow \
+      quay.io/travisci/travis-python /bin/bash
+
+Then you may to follow your failed build commands to reproduce your errors.
+
+For instance on pypy builds the commands look like:
+
+    sudo apt-get install ca-certificates libssl1.0.0
+    cd botify-labs/simpleflow
+    source ~/virtualenv/pypy/bin/activate
+    pip install .
+    pip install -r requirements-dev.txt
+    rm -rf build/
+    ./script/test -vv
+
+
 Release
 -------
 
