@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.18.6
+------
+
+- Add a new timeout parameter (#286)
+
 0.18.5
 ------
 
