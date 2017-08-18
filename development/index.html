@@ -543,16 +543,9 @@ rm -rf build/
 
 <h2 id="release">Release<a class="headerlink" href="#release" title="Permanent link">&para;</a></h2>
 <p>In order to release a new version, you'll need credentials on pypi.python.org for this
-software, as long as write access to this repository. Ask via an issue if needed.
-Rough process:</p>
-<div class="codehilite"><pre><span></span>git checkout master
-git pull --rebase
-v=0.10.0
-vi simpleflow/__init__.py
-git add . &amp;&amp; git commit -m &quot;Bump version to $v&quot;
-git tag $v
-git push --tags
-python setup.py sdist upload -r pypi
+software, as long as write access to this repository. Ask via an issue if needed.</p>
+<p>The release process is then automated behind a script:</p>
+<div class="codehilite"><pre><span></span>./script/release
 </pre></div>
                 
                   
