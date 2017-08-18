@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.18.5
+------
+
+- Documentation overhaul (#284)
+- Add a release script (closes #179) (#287)
+
 0.18.4
 ------
 
