@@ -85,13 +85,7 @@ Release
 
 In order to release a new version, you'll need credentials on pypi.python.org for this
 software, as long as write access to this repository. Ask via an issue if needed.
-Rough process:
 
-    git checkout master
-    git pull --rebase
-    v=0.10.0
-    vi simpleflow/__init__.py
-    git add . && git commit -m "Bump version to $v"
-    git tag $v
-    git push --tags
-    python setup.py sdist upload -r pypi
+The release process is then automated behind a script:
+
+    ./script/release
