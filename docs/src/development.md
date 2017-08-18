@@ -67,7 +67,7 @@ the Travis infrastructure. So you can get close to the Travis setup with somethi
       -v $(pwd):/botify-labs/simpleflow \
       quay.io/travisci/travis-python /bin/bash
 
-Then you may to follow your failed build commands to reproduce your errors.
+Then you may want to follow your failed build commands to reproduce the errors.
 
 For instance on pypy builds the commands look like:
 
