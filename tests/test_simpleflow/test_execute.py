@@ -267,7 +267,8 @@ def sleep_and_return(seconds):
 
 
 def test_timeout_execute():
-    func = execute.python(timeout=0.5)(sleep_and_return)
+    timeout = 3  # TODO: the timeout should be smaller but as a workaround for Pypy slowness/overhead we set it to 3 sec
+    func = execute.python(timeout=timeout)(sleep_and_return)
 
     # Normal case
     result = func(0.25)
@@ -278,7 +279,7 @@ def test_timeout_execute():
     with pytest.raises(ExecutionTimeoutError) as e:
         func(10)
     assert (time.time() - t) < 10.0
-    assert 'ExecutionTimeoutError after 0.5 seconds' in str(e.value)
+    assert 'ExecutionTimeoutError after {} seconds'.format(timeout) in str(e.value)
 
 
 def test_timeout_execute_from_thread():
