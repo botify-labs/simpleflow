@@ -1,0 +1,18 @@
+.md-icon--home:before {
+  content: "code";
+}
+.md-typeset {
+  font-size: 1.5rem;
+}
+.md-typeset h1 {
+  margin-bottom: 3rem;
+}
+.md-typeset h2 {
+  margin-top: 3rem;
+}
+.md-main__inner {
+  padding-top: 1rem;
+}
+.badges {
+  display: none;
+}

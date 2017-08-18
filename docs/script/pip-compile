@@ -1,0 +1,3 @@
+#!/bin/bash
+set -ex
+pip-compile --output-file requirements.txt requirements.human
