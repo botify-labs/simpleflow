@@ -4,7 +4,7 @@ Changelog
 0.18.7
 ------
 
-
+- Fix MANIFEST.in so README.md is included in final package
 
 0.18.6
 ------
