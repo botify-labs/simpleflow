@@ -31,6 +31,22 @@ def reset_signal_handlers(func):
     return wrapped
 
 
+def _void_handle_sigchld(signum, frame):
+    """
+    Default action for a SIGCHLD signal handling is to ignore it
+    which in practice has no effect on the running program. Having
+    a handler that does nothing is a bit different, in the sense
+    it will interrupt the execution of any "time.sleep()" routing.
+    From "time" module docs:
+
+        The actual suspension time may be less than that requested
+        because any caught signal will terminate the sleep()
+        following execution of that signal's catching routine.
+
+    """
+    pass
+
+
 class Supervisor(NamedMixin):
     """
     The `Supervisor` class is responsible for managing one or many worker processes
@@ -89,6 +105,26 @@ class Supervisor(NamedMixin):
         else:
             self.target()
 
+    def _cleanup_worker_processes(self):
+        # cleanup children
+        to_remove = []
+        for pid, child in self._processes.items():
+            try:
+                name, status = child.name(), child.status()
+            except psutil.NoSuchProcess:  # May be untimely deceased
+                name, status = "unknown", "unknown"
+            logger.debug("  child: name=%s pid=%d status=%s" % (name, child.pid, status))
+            if status in (psutil.STATUS_ZOMBIE, "unknown"):
+                logger.debug("  process {} is zombie, will cleanup".format(child.pid))
+                # join process to clean it up
+                child.wait()
+                # set the process to be removed from self._processes
+                to_remove.append(pid)
+
+        # cleanup our internal state (self._processes)
+        for pid in to_remove:
+            del self._processes[pid]
+
     def _start_worker_processes(self):
         """
         Start missing worker processes depending on self._nb_children and the current
@@ -124,9 +160,6 @@ class Supervisor(NamedMixin):
         if len(self._processes) != 0:
             raise Exception("Child processes map is not empty, already called .start() ?")
 
-        # start worker processes
-        self._start_worker_processes()
-
         # wait for all processes to finish
         while True:
             # if terminating, join all processes and exit the loop so we finish
@@ -137,15 +170,24 @@ class Supervisor(NamedMixin):
                     proc.wait()
                 break
 
-            # wait 0.1s
-            # TODO: evaluate if it has a performance impact ; a priori no, but ?
-            time.sleep(0.1)
+            # start worker processes
+            self._cleanup_worker_processes()
+            self._start_worker_processes()
+
+            # re-evaluate state at least every 5 seconds ; if a SIGCHLD happens during
+            # the "time.sleep()" below, it will be interrupted, making the code above
+            # run nearly immediately ; but if a SIGCHLD happens during the two calls
+            # above, the "time.sleep()" here won't be stopped, so better have it
+            # relatively short, but not too short since the above methods involve
+            # scanning a bunch of entries in /proc so that could become slow if we do
+            # it every 0.1s.
+            time.sleep(5)
 
     def bind_signal_handlers(self):
         """
         Binds signals for graceful shutdown:
         - SIGTERM and SIGINT lead to a graceful shutdown
-        - SIGCHLD is used to maintain the workers pool to the desired number
+        - SIGCHLD is intentionally left to a void handler, see comment
         - other signals are not modified for now
         """
 
@@ -157,43 +199,12 @@ class Supervisor(NamedMixin):
                 signal_name, os.getpid()))
             self.terminate()
 
-        # NB: Function is nested to have a reference to *self*.
-        def _handle_sigchld(signum, frame):
-            """
-            Handles SIGCHLD signal at supervisor process level. By construction this
-            handler is only attached to this process, not worker processes nor deciders.
-            """
-            logger.debug("process: caught signal signal=SIGCHLD, will cleanup zombies "
-                         "from pid={}".format(os.getpid()))
-
-            # cleanup children
-            to_remove = []
-            for pid, child in self._processes.items():
-                try:
-                    name, status = child.name(), child.status()
-                except psutil.NoSuchProcess:  # May be untimely deceased
-                    name, status = "unknown", "unknown"
-                logger.debug("  child: name=%s pid=%d status=%s" % (name, child.pid, status))
-                if status in (psutil.STATUS_ZOMBIE, "unknown"):
-                    logger.debug("  process {} is zombie, will cleanup".format(child.pid))
-                    # join process to clean it up
-                    child.wait()
-                    # set the process to be removed from self._processes
-                    to_remove.append(pid)
-
-            # cleanup our internal state (self._processes)
-            for pid in to_remove:
-                del self._processes[pid]
-
-            # compensate lost children here
-            self._start_worker_processes()
-
         # bind SIGTERM and SIGINT
         signal.signal(signal.SIGTERM, _handle_graceful_shutdown)
         signal.signal(signal.SIGINT, _handle_graceful_shutdown)
 
         # bind SIGCHLD
-        signal.signal(signal.SIGCHLD, _handle_sigchld)
+        signal.signal(signal.SIGCHLD, _void_handle_sigchld)
 
     @with_state("stopping")
     def terminate(self):
