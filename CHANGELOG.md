@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.18.8
+------
+
+- Move workers cleanup/start outside SIGCHLD handler (#290)
+
 0.18.7
 ------
 
