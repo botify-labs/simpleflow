@@ -44,7 +44,7 @@ def _void_handle_sigchld(signum, frame):
         following execution of that signal's catching routine.
 
     """
-    logger.debug("process: caught signal signal=SIGCHLD pid={}".format(os.getpid()))
+    pass
 
 
 class Supervisor(NamedMixin):
