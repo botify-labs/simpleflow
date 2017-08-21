@@ -52,6 +52,7 @@ class TestSupervisor(IntegrationTestCase):
         self.assertProcess(r'simpleflow Worker\(sleep_long, 30\)', count=2)
 
     @mark.skipif(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
+    @mark.skipif(platform.python_implementation() == 'PyPy', reason="this test is too flaky on pypy")
     def test_terminate(self):
         # custom function that handles sigterm by changing its name, so we can
         # test it effectively received a SIGTERM (maybe there's a better way?)
