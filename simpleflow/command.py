@@ -24,6 +24,7 @@ from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
+from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_history_and_run_id
 from simpleflow.utils import json_dumps
 from simpleflow import __version__
@@ -650,7 +651,7 @@ def activity_rerun(domain,
     # now rerun the specified activity
     history = History(wfe.history())
     history.parse()
-    func, args, kwargs, params = helpers.find_activity(
+    task, args, kwargs, params = helpers.find_activity(
         history, scheduled_id=scheduled_id, activity_id=activity_id, input=input_override,
     )
     logger.debug("Found activity. Last execution:")
@@ -658,8 +659,8 @@ def activity_rerun(domain,
         logger.debug(line)
     if input_override:
         logger.info("NB: input will be overriden with the passed one!")
-    logger.info("Will re-run: {}(*{}, **{})".format(func.__name__, args, kwargs))
+    logger.info("Will re-run: {}(*{}, **{})".format(task, args, kwargs))
 
-    # finally replay the function with the correct arguments
-    result = func(*args, **kwargs)
+    # execute the activity task with the correct arguments
+    result = ActivityTask(task, *args, **kwargs).execute()
     logger.info("Result (JSON): {}".format(json_dumps(result, compact=False)))

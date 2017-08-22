@@ -12,6 +12,7 @@ import swf.querysets
 from future.utils import iteritems
 from simpleflow.activity import Activity
 from simpleflow.utils import json_dumps
+from simpleflow.dispatch import dynamic_dispatcher
 
 from .stats import pretty
 
@@ -115,12 +116,10 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     if not found_activity:
         raise ValueError("Couldn't find activity.")
 
-    # get the callable
-    module_name, method_name = found_activity["name"].rsplit('.', 1)
-    module = import_module(module_name)
-    func = getattr(module, method_name)
-    if isinstance(func, Activity):
-        func = func.callable
+    # get the activity
+    activity_str = found_activity["name"]
+    dispatcher = dynamic_dispatcher.Dispatcher()
+    activity = dispatcher.dispatch_activity(activity_str)
 
     # get the input
     input_ = input or found_activity["input"]
@@ -130,7 +129,7 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     kwargs = input_.get('kwargs', {})
 
     # return everything
-    return func, args, kwargs, found_activity
+    return activity, args, kwargs, found_activity
 
 
 def get_task(domain_name, workflow_id, task_id, details):
