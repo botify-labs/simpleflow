@@ -413,9 +413,7 @@ def main():
     )
     parser.add_argument(
         '--kill-children',
-        action='store_const',
-        const=True,
-        default=False,
+        action='store_true',
         help='kill child processes on exit',
     )
     cmd_arguments = parser.parse_args()
