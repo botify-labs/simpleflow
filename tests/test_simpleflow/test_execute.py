@@ -293,19 +293,19 @@ def test_timeout_execute_from_thread():
     t.join()
 
 
-def create_subprocess_and_raise():
+def create_sleeper_subprocess():
     pid = subprocess.Popen(['sleep', '600']).pid
     return pid
 
 
 def test_execute_dont_kill_children():
-    pid = execute.python()(create_subprocess_and_raise)()
+    pid = execute.python()(create_sleeper_subprocess)()
     subprocess = psutil.Process(pid)
     assert subprocess.status() == 'sleeping'
     subprocess.terminate()  # cleanup
 
 
 def test_execute_kill_children():
-    pid = execute.python(kill_children=True)(create_subprocess_and_raise)()
+    pid = execute.python(kill_children=True)(create_sleeper_subprocess)()
     with pytest.raises(psutil.NoSuchProcess):
         psutil.Process(pid)
