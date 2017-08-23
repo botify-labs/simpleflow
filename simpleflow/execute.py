@@ -426,8 +426,8 @@ def main():
 
         for child in children:
             child.terminate()
-        time.sleep(0.3)
-        for child in children:
+        _, still_alive = psutil.wait_procs(children, timeout=0.3)
+        for child in still_alive:
             child.kill()
 
     funcname = cmd_arguments.funcname
