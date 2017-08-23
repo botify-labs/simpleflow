@@ -109,13 +109,13 @@ def generate_version_file(new_version):
 
     def bump_version_line(line):
         if line.startswith("__version__"):
-            return "__version__ = '{}'".format(new_version)
+            return "__version__ = '{}'\n".format(new_version)
         return line
 
     lines = [bump_version_line(line) for line in lines]
 
     with open(VERSION_FILE, "w") as f:
-        f.write("\n".join(lines) + "\n")
+        f.write("".join(lines))
 
 
 def changelog_lines(from_tag):
