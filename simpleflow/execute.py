@@ -423,10 +423,16 @@ def main():
         children = process.children(recursive=True)
 
         for child in children:
-            child.terminate()
+            try:
+                child.terminate()
+            except psutil.NoSuchProcess:
+                pass
         _, still_alive = psutil.wait_procs(children, timeout=0.3)
         for child in still_alive:
-            child.kill()
+            try:
+                child.kill()
+            except psutil.NoSuchProcess:
+                pass
 
     funcname = cmd_arguments.funcname
     try:
