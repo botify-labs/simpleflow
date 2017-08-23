@@ -15,7 +15,6 @@ import subprocess
 
 from simpleflow import execute
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
-from simpleflow.execute import get_name
 
 
 @execute.program(path='ls')
