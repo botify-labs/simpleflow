@@ -7,8 +7,11 @@ import os.path
 import platform
 import threading
 
+import psutil
 import pytest
 import time
+
+import subprocess
 
 from simpleflow import execute
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
@@ -287,3 +290,21 @@ def test_timeout_execute_from_thread():
     t = threading.Thread(target=test_timeout_execute)
     t.start()
     t.join()
+
+
+def create_sleeper_subprocess():
+    pid = subprocess.Popen(['sleep', '600']).pid
+    return pid
+
+
+def test_execute_dont_kill_children():
+    pid = execute.python()(create_sleeper_subprocess)()
+    subprocess = psutil.Process(pid)
+    assert subprocess.status() == 'sleeping'
+    subprocess.terminate()  # cleanup
+
+
+def test_execute_kill_children():
+    pid = execute.python(kill_children=True)(create_sleeper_subprocess)()
+    with pytest.raises(psutil.NoSuchProcess):
+        psutil.Process(pid)

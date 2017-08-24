@@ -5,6 +5,8 @@ import sys
 
 import time
 
+import psutil
+
 try:
     import subprocess32 as subprocess
 except ImportError:
@@ -172,7 +174,7 @@ def wait_subprocess(process, timeout=None, command_info=None):
     return process.wait()
 
 
-def python(interpreter='python', logger_name=__name__, timeout=None):
+def python(interpreter='python', logger_name=__name__, timeout=None, kill_children=False):
     """
     Execute a callable as an external Python program.
 
@@ -202,6 +204,8 @@ def python(interpreter='python', logger_name=__name__, timeout=None):
                     '--result-fd={}'.format(dup_result_fd),
                     '--error-fd={}'.format(dup_error_fd),
                 ]
+                if kill_children:
+                    full_command.append('--kill-children')
                 if compat.PY2:  # close_fds doesn't work with python2 (using its C _posixsubprocess helper)
                     close_fds = False
                     pass_fds = ()
@@ -214,9 +218,7 @@ def python(interpreter='python', logger_name=__name__, timeout=None):
                     close_fds=close_fds,
                     pass_fds=pass_fds,
                 )
-
                 rc = wait_subprocess(process, timeout=timeout, command_info=full_command)
-
                 os.close(dup_result_fd)
                 os.close(dup_error_fd)
                 if rc:
@@ -409,7 +411,29 @@ def main():
         metavar='N',
         help='error file descriptor',
     )
+    parser.add_argument(
+        '--kill-children',
+        action='store_true',
+        help='kill child processes on exit',
+    )
     cmd_arguments = parser.parse_args()
+
+    def kill_child_processes():
+        process = psutil.Process(os.getpid())
+        children = process.children(recursive=True)
+
+        for child in children:
+            try:
+                child.terminate()
+            except psutil.NoSuchProcess:
+                pass
+        _, still_alive = psutil.wait_procs(children, timeout=0.3)
+        for child in still_alive:
+            try:
+                child.kill()
+            except psutil.NoSuchProcess:
+                pass
+
     funcname = cmd_arguments.funcname
     try:
         arguments = format.decode(cmd_arguments.funcargs)
@@ -447,6 +471,8 @@ def main():
         if not compat.PY2:
             details = details.encode('utf-8')
         os.write(cmd_arguments.error_fd, details)
+        if cmd_arguments.kill_children:
+            kill_child_processes()
         sys.exit(1)
 
     if cmd_arguments.result_fd == 1:  # stdout (legacy)
@@ -456,6 +482,8 @@ def main():
     if not compat.PY2:
         result = result.encode('utf-8')
     os.write(cmd_arguments.result_fd, result)
+    if cmd_arguments.kill_children:
+        kill_child_processes()
 
 
 if __name__ == '__main__':
