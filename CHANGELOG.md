@@ -5,6 +5,7 @@ Changelog
 ------
 
 - Fix activity.rerun not working with class based tasks (#289)
+- Add a new option (and parameter) --kill-children (#292)
 
 0.18.8
 ------
