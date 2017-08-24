@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.18.9
+------
+
+- Fix activity.rerun not working with class based tasks (#289)
+
 0.18.8
 ------
 
