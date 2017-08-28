@@ -64,7 +64,7 @@ class Poller(swf.actors.Actor, NamedMixin):
     @with_state('running')
     def start(self):
         """
-        Start the main decider process. There is no daemonization. The process
+        Start the main poller process. There is no daemonization. The process
         is intended to be run inside a supervisor process.
 
         """
@@ -78,6 +78,23 @@ class Poller(swf.actors.Actor, NamedMixin):
             except swf.exceptions.PollTimeout:
                 continue
             self.process(response)
+
+    @with_state('running')
+    def run_once(self):
+        """
+        Run the main poller process and exits after first task is processed.
+        """
+        logger.info("starting %s on domain %s", self.name, self.domain.name)
+        self.bind_signal_handlers()
+        self.is_alive = True
+        self.set_process_name()
+        while self.is_alive:
+            try:
+                response = self.poll_with_retry()
+            except swf.exceptions.PollTimeout:
+                continue
+            self.process(response)
+            break
 
     @with_state('stopping')
     def stop_gracefully(self):

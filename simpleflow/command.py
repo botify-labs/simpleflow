@@ -389,6 +389,9 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
     )
 
 
+@click.option('--one-task',
+              is_flag=True,
+              help='Run only one task and shut down (no supervisor).')
 @click.option('--heartbeat',
               type=int,
               required=False,
@@ -404,7 +407,7 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
               required=True,
               help='SWF Domain')
 @cli.command('worker.start', help='Start a worker process to handle activity tasks.')
-def start_worker(domain, task_list, log_level, nb_processes, heartbeat):
+def start_worker(domain, task_list, log_level, nb_processes, heartbeat, one_task):
     if log_level:
         logger.warning(
             "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
@@ -414,6 +417,7 @@ def start_worker(domain, task_list, log_level, nb_processes, heartbeat):
         task_list,
         nb_processes,
         heartbeat,
+        one_task
     )
 
 

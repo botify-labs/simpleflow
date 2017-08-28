@@ -24,7 +24,7 @@ def make_worker_poller(domain, task_list, heartbeat):
     return ActivityPoller(domain, task_list, heartbeat)
 
 
-def start(domain, task_list, nb_processes=None, heartbeat=60):
+def start(domain, task_list, nb_processes=None, heartbeat=60, one_task=False):
     """
     Start a worker for the given domain and task_list.
     :param domain:
@@ -37,6 +37,9 @@ def start(domain, task_list, nb_processes=None, heartbeat=60):
     :type heartbeat: int
     """
     poller = make_worker_poller(domain, task_list, heartbeat)
-    worker = Worker(poller, nb_processes)
-    worker.is_alive = True
-    worker.start()
+    if one_task:
+        poller.run_once()
+    else:
+        worker = Worker(poller, nb_processes)
+        worker.is_alive = True
+        worker.start()
