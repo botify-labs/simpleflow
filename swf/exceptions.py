@@ -112,6 +112,10 @@ class InvalidKeywordArgumentError(SWFError):
     pass
 
 
+class RateLimitExceededError(SWFError):
+    pass
+
+
 def ignore(*args, **kwargs):
     return
 

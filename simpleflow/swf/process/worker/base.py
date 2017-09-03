@@ -260,6 +260,14 @@ def spawn(poller, token, task, heartbeat=60):
                     raise
                 logger.warning('process was not here anymore, got OSError: {}'.format(e.strerror))
             return
+        except swf.exceptions.RateLimitExceededError as error:
+            # ignore rate limit errors: high chances the next heartbeat will be
+            # ok anyway, so it would be stupid to break the task for that
+            logger.warning(
+                'got a "ThrottlingException / Rate exceeded" when heartbeating for task {}: {}'.format(
+                    task.activity_type.name,
+                    error))
+            continue
         except Exception as error:
             # Let's crash if it cannot notify the heartbeat failed.  The
             # subprocess will become orphan and the heartbeat timeout may
