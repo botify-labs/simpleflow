@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.18.10
+-------
+
+- Don't raise when ThrottlingException occur on RecordActivityTaskHeartbeat endpoint (#297)
+
 0.18.9
 ------
 
