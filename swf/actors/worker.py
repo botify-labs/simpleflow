@@ -3,7 +3,7 @@
 import boto.exception
 from swf.actors import Actor
 from swf.models import ActivityTask
-from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError
+from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError, RateLimitExceededError
 from swf import format
 
 
@@ -130,6 +130,12 @@ class ActivityWorker(Actor):
             if e.error_code == 'UnknownResourceFault':
                 raise DoesNotExistError(
                     "Unable to send heartbeat with token={}".format(task_token),
+                    message,
+                )
+
+            if e.error_code == 'ThrottlingException':
+                raise RateLimitExceededError(
+                    "Rate exceeded when sending heartbeat with token={}".format(task_token),
                     message,
                 )
 
