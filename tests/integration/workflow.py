@@ -207,3 +207,15 @@ class WorkflowToCancel(Workflow):
             agree = input.get('kwargs', {}).get('agree', True)
         print('should_cancel called! agree? {}'.format(agree))
         return agree
+
+
+class GroupTestWorkflowWithChild(Workflow):
+    name = 'example'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self):
+        g = Group()
+        g.append(ChainTestWorkflow, 4)
+        future = self.submit(g)
+        return future.result

@@ -1,8 +1,13 @@
 from simpleflow.exceptions import AggregateException
+from simpleflow.utils import issubclass_
 from . import futures
 from .activity import Activity
 from .base import Submittable, SubmittableContainer
-from .task import ActivityTask
+from .task import ActivityTask, WorkflowTask
+
+
+if False:
+    from typing import List  # NOQA
 
 
 class FuncGroup(SubmittableContainer):
@@ -44,17 +49,23 @@ class Group(SubmittableContainer):
                  *activities,
                  **options):
         self.activities = []
+        self.workflow_tasks = []  # type: List[WorkflowTask]
         self.max_parallel = options.pop('max_parallel', None)
         self.raises_on_failure = options.pop('raises_on_failure', None)
         self.bubbles_exception_on_failure = options.pop('bubbles_exception_on_failure', True)
         self.extend(activities)
 
     def append(self, submittable, *args, **kwargs):
+        from simpleflow import Workflow
         if isinstance(submittable, (Submittable, SubmittableContainer)):
             if args or kwargs:
                 raise ValueError('args, kwargs not supported for Submittable or SubmittableContainer')
         elif isinstance(submittable, Activity):
             submittable = ActivityTask(submittable, *args, **kwargs)
+        elif issubclass_(submittable, Workflow):
+            # We can't set the executor yet, so use None and remember it.
+            submittable = WorkflowTask(None, submittable, *args, **kwargs)
+            self.workflow_tasks.append(submittable)
         else:
             raise ValueError('{} should be a Submittable, Group, or Activity'.format(submittable))
 
@@ -84,6 +95,7 @@ class Group(SubmittableContainer):
         return self
 
     def submit(self, executor):
+        self.set_workflow_tasks_executor(executor)
         return GroupFuture(self.activities, executor.workflow, self.max_parallel, self.bubbles_exception_on_failure)
 
     def __repr__(self):
@@ -95,6 +107,17 @@ class Group(SubmittableContainer):
         """
         for activities in self.activities:
             activities.propagate_attribute(attr, val)
+
+    def set_workflow_tasks_executor(self, executor):
+        """
+        Set the workflow tasks executor.
+        :param executor:
+        :return:
+        """
+        for wt in self.workflow_tasks:
+            assert not wt.executor
+            wt.executor = executor
+        self.workflow_tasks = []
 
 
 class GroupFuture(futures.Future):
@@ -185,6 +208,7 @@ class Chain(Group):
         super(Chain, self).__init__(*activities, **options)
 
     def submit(self, executor):
+        self.set_workflow_tasks_executor(executor)
         return ChainFuture(
             self.activities,
             executor.workflow,
