@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.18.11
+-------
+
+- Allow Workflow instances in Group (#299)
+
 0.18.10
 -------
 
