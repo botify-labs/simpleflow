@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.18.12
+-------
+
+- Enhancement: save waiting_signals in the execution context (#300)
+- Mark flaky tests as expected to fail (#301)
+
 0.18.11
 -------
 
