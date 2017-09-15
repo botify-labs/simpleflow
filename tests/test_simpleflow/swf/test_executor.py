@@ -62,7 +62,7 @@ class TestSimpleflowSwfExecutor(unittest.TestCase):
     def test_submit_resolves_priority(self):
         response = Decider(DOMAIN, "test-task-list").poll()
         executor = Executor(DOMAIN, ExampleWorkflow)
-        decisions, _ = executor.replay(response)
+        decisions = executor.replay(response).decisions
 
         expect(decisions).to.have.length_of(5)
 
@@ -96,7 +96,7 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
         history.add_timer_fired('a_timer')
 
         executor = Executor(DOMAIN, ExampleWorkflow)
-        decisions, _ = executor.replay(Response(history=history, execution=None))
+        executor.replay(Response(history=history, execution=None))
 
         details = executor.get_event_details('signal', 'a_signal')
         del details['timestamp']

@@ -8,9 +8,9 @@ class DecisionsAndContext(object):
     Encapsulate decisions and execution context.
     The execution context contains keys with either plain values, lists or sets.
     """
-    def __init__(self):
-        self.decisions = []  # type: List[Decision]
-        self.execution_context = None  # type: Dict[str, Any]
+    def __init__(self, decisions=None, execution_context=None):
+        self.decisions = decisions or []  # type: List[Decision]
+        self.execution_context = execution_context  # type: Dict[str, Any]
 
     def __repr__(self):
         return '<{} decisions={}, execution_context={}>'.format(

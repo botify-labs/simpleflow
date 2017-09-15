@@ -47,6 +47,7 @@ from simpleflow.utils import (
 from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
 
+
 logger = logging.getLogger(__name__)
 
 __all__ = ['Executor']
@@ -889,16 +890,14 @@ class Executor(executor.Executor):
         return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, decision_response, decref_workflow=True):
+        # type: (swf.responses.Response, bool) -> DecisionsAndContext
         """Replay the workflow from the start until it blocks.
         Called by the DeciderWorker.
 
         :param decision_response: an object wrapping the PollForDecisionTask response
-        :type  decision_response: swf.responses.Response
         :param decref_workflow : Decref workflow once replay is done (to save memory)
-        :type decref_workflow : boolean
 
         :returns: a list of decision with an optional context
-        :rtype: Union[List[swf.models.decision.base.Decision], DecisionsAndContext]
         """
         self.reset()
 
@@ -928,7 +927,7 @@ class Executor(executor.Executor):
                     self.after_closed()
                     if decref_workflow:
                         self.decref_workflow()
-                    return decisions
+                    return DecisionsAndContext(decisions)
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
             logger.info('{} open activities ({} decisions)'.format(
@@ -958,7 +957,7 @@ class Executor(executor.Executor):
             self.after_closed()
             if decref_workflow:
                 self.decref_workflow()
-            return [decision]
+            return DecisionsAndContext([decision])
 
         except Exception as err:
             reason = 'Cannot replay the workflow: {}({})'.format(
@@ -980,7 +979,7 @@ class Executor(executor.Executor):
             self.after_closed()
             if decref_workflow:
                 self.decref_workflow()
-            return [decision]
+            return DecisionsAndContext([decision])
 
         self.after_replay()
         decision = swf.models.decision.WorkflowExecutionDecision()
@@ -989,7 +988,7 @@ class Executor(executor.Executor):
         self.after_closed()
         if decref_workflow:
             self.decref_workflow()
-        return [decision]
+        return DecisionsAndContext([decision])
 
     def decref_workflow(self):
         """

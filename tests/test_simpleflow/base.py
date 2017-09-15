@@ -14,10 +14,10 @@ class TestWorkflowMixin(object):
         self.history = builder.History(self.WORKFLOW, input=workflow_input)
 
     def replay(self):
-        decisions, _ = self.executor.replay(
+        decisions = self.executor.replay(
             Response(history=self.history, execution=None),
             decref_workflow=False)
-        return decisions
+        return decisions.decisions
 
     def check_task_scheduled_decision(self, decision, task):
         """
@@ -35,9 +35,10 @@ class TestWorkflowMixin(object):
         activity_input = attributes["input"]
         (self.history
             .add_activity_task(
-            activity,
-            decision_id=decision_id,
-            activity_id=activity_id,
-            last_state=last_state,
-            input=activity_input,
-            result=result))
+                activity,
+                decision_id=decision_id,
+                activity_id=activity_id,
+                last_state=last_state,
+                input=activity_input,
+                result=result)
+        )
