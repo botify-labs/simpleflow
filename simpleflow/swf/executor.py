@@ -1054,17 +1054,17 @@ class Executor(executor.Executor):
         # noinspection PyUnresolvedReferences
         history = decision_response.history
         workflow_started_event = history[0]
-        self._execution_context = dict(
-            name=execution.workflow_type.name,
-            version=execution.workflow_type.version,
-            domain_name=self.domain.name,
-            workflow_id=execution.workflow_id,
-            run_id=execution.run_id,
-            tag_list=getattr(workflow_started_event, 'tag_list', None) or [],  # attribute is absent if no tagList
-            continued_execution_run_id=getattr(workflow_started_event, 'continued_execution_run_id', None),
-            parent_workflow_id=getattr(workflow_started_event, 'parent_workflow_execution', {}).get('workflowId'),
-            parent_run_id=getattr(workflow_started_event, 'parent_workflow_execution', {}).get('runId'),
-        )
+        self._execution_context = {
+            'name': execution.workflow_type.name,
+            'version': execution.workflow_type.version,
+            'domain_name': self.domain.name,
+            'workflow_id': execution.workflow_id,
+            'run_id': execution.run_id,
+            'tag_list': getattr(workflow_started_event, 'tag_list', None) or [],
+            'continued_execution_run_id': getattr(workflow_started_event, 'continued_execution_run_id', None),
+            'parent_workflow_id': getattr(workflow_started_event, 'parent_workflow_execution', {}).get('workflowId'),
+            'parent_run_id': getattr(workflow_started_event, 'parent_workflow_execution', {}).get('runId')
+        }
 
     @property
     def _workflow_id(self):
