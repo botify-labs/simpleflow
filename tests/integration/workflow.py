@@ -209,6 +209,19 @@ class WorkflowToCancel(Workflow):
         return agree
 
 
+@activity.with_attributes(task_list='quickstart', version='example')
+def wait_and_signal(name='signal'):
+    time.sleep(1 + len(name))  # Hoping to be deterministic
+    context = wait_and_signal.context
+    ex = get_workflow_execution(context['domain_name'], context['workflow_id'], context['run_id'])
+    ex.connection.signal_workflow_execution(
+        ex.domain.name,
+        name,
+        ex.workflow_id,
+        run_id=ex.run_id,
+    )
+
+
 class GroupTestWorkflowWithChild(Workflow):
     name = 'example'
     version = 'example'
@@ -219,3 +232,23 @@ class GroupTestWorkflowWithChild(Workflow):
         g.append(ChainTestWorkflow, 4)
         future = self.submit(g)
         return future.result
+
+
+class WorkflowWithWaitSignal(Workflow):
+    name = 'example'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self, *args, **kwargs):
+        future = self.submit(
+            Chain(
+                Group(
+                    (self.wait_signal('signal 2'),),
+                    (self.wait_signal('signal'),),
+                    (wait_and_signal,),
+                    (wait_and_signal, 'signal 2'),
+                ),
+                (increment, 1),
+            )
+        )
+        futures.wait(future)

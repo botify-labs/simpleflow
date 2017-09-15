@@ -11,6 +11,7 @@ import re
 import traceback
 
 import simpleflow.task as base_task
+from simpleflow.swf.process.decider.decisions_and_context import DecisionsAndContext
 from swf import format
 import swf.exceptions
 import swf.models
@@ -45,6 +46,7 @@ from simpleflow.utils import (
 )
 from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
+
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +187,7 @@ class Executor(executor.Executor):
         else:
             self.force_activities = None
         self._open_activity_count = 0
-        self._decisions = []
+        self._decisions_and_context = DecisionsAndContext()
         self._append_timer = False  # Append an immediate timer decision
         self._tasks = TaskRegistry()
         self._idempotent_tasks_to_submit = set()
@@ -201,7 +203,7 @@ class Executor(executor.Executor):
 
         """
         self._open_activity_count = 0
-        self._decisions = []
+        self._decisions_and_context = DecisionsAndContext()
         self._append_timer = False  # Append an immediate timer decision
         self._tasks = TaskRegistry()
         self._idempotent_tasks_to_submit = set()
@@ -676,7 +678,7 @@ class Executor(executor.Executor):
         # See: http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-limits.html
         # NB: here we use json.dumps, not json_dumps, since the serialization will
         # happen inside boto.swf and is out of our control.
-        request_size = len(json.dumps(self._decisions + decisions))
+        request_size = len(json.dumps(self._decisions_and_context.decisions + decisions))
         # We keep a 5kB of error margin for headers, json structure, and the
         # timer decision, and 32kB for the context, even if we don't use it now.
         if request_size > constants.MAX_REQUEST_SIZE - 5000 - 32000:
@@ -686,12 +688,12 @@ class Executor(executor.Executor):
             self._append_timer = True
             raise exceptions.ExecutionBlocked()
 
-        self._decisions.extend(decisions)
+        self._decisions_and_context.extend_decision(decisions)
 
         # Check if we won't exceed max decisions -1
         # TODO: if we had exactly MAX_DECISIONS - 1 to take, this will wake up
         # the workflow for no reason. Evaluate if we can do better.
-        if len(self._decisions) == constants.MAX_DECISIONS - 1:
+        if len(self._decisions_and_context.decisions) == constants.MAX_DECISIONS - 1:
             # We add a timer to wake up the workflow immediately after
             # completing these decisions.
             self._append_timer = True
@@ -702,7 +704,7 @@ class Executor(executor.Executor):
             'start',
             id=id,
             start_to_fire_timeout='0')
-        self._decisions.append(timer)
+        self._decisions_and_context.append_decision(timer)
 
     EVENT_TYPE_TO_FUTURE = {
         'activity': resume_activity,
@@ -853,6 +855,8 @@ class Executor(executor.Executor):
             elif isinstance(func, WaitForSignal):
                 future = self.get_future_from_signal(func.signal_name)
                 logger.debug('submitted WaitForSignalTask({}): future={}'.format(func.signal_name, future))
+                if not future.done:
+                    self._decisions_and_context.append_kv_to_set_context('waiting_signals', func.signal_name)
                 return future
             elif isinstance(func, Submittable):
                 raise TypeError(
@@ -886,16 +890,14 @@ class Executor(executor.Executor):
         return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, decision_response, decref_workflow=True):
+        # type: (swf.responses.Response, bool) -> DecisionsAndContext
         """Replay the workflow from the start until it blocks.
         Called by the DeciderWorker.
 
         :param decision_response: an object wrapping the PollForDecisionTask response
-        :type  decision_response: swf.responses.Response
         :param decref_workflow : Decref workflow once replay is done (to save memory)
-        :type decref_workflow : boolean
 
-        :returns: a list of decision and a context dict (obsolete, empty)
-        :rtype: ([swf.models.decision.base.Decision], dict)
+        :returns: a list of decision with an optional context
         """
         self.reset()
 
@@ -925,19 +927,19 @@ class Executor(executor.Executor):
                     self.after_closed()
                     if decref_workflow:
                         self.decref_workflow()
-                    return decisions
+                    return DecisionsAndContext(decisions)
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
             logger.info('{} open activities ({} decisions)'.format(
                 self._open_activity_count,
-                len(self._decisions),
+                len(self._decisions_and_context.decisions),
             ))
             self.after_replay()
             if decref_workflow:
                 self.decref_workflow()
             if self._append_timer:
                 self._add_start_timer_decision('_simpleflow_wake_up_timer')
-            return self._decisions, {}
+            return self._decisions_and_context
         except exceptions.TaskException as err:
             reason = 'Workflow execution error in task {}: "{}"'.format(
                 err.task.name,
@@ -955,7 +957,7 @@ class Executor(executor.Executor):
             self.after_closed()
             if decref_workflow:
                 self.decref_workflow()
-            return [decision], {}
+            return DecisionsAndContext([decision])
 
         except Exception as err:
             reason = 'Cannot replay the workflow: {}({})'.format(
@@ -977,7 +979,7 @@ class Executor(executor.Executor):
             self.after_closed()
             if decref_workflow:
                 self.decref_workflow()
-            return [decision], {}
+            return DecisionsAndContext([decision])
 
         self.after_replay()
         decision = swf.models.decision.WorkflowExecutionDecision()
@@ -986,7 +988,7 @@ class Executor(executor.Executor):
         self.after_closed()
         if decref_workflow:
             self.decref_workflow()
-        return [decision], {}
+        return DecisionsAndContext([decision])
 
     def decref_workflow(self):
         """
@@ -1027,7 +1029,7 @@ class Executor(executor.Executor):
             details=details,
         )
 
-        self._decisions.append(decision)
+        self._decisions_and_context.append_decision(decision)
         raise exceptions.ExecutionBlocked('workflow execution failed')
 
     def run(self, decision_response):
@@ -1051,17 +1053,17 @@ class Executor(executor.Executor):
         # noinspection PyUnresolvedReferences
         history = decision_response.history
         workflow_started_event = history[0]
-        self._execution_context = dict(
-            name=execution.workflow_type.name,
-            version=execution.workflow_type.version,
-            domain_name=self.domain.name,
-            workflow_id=execution.workflow_id,
-            run_id=execution.run_id,
-            tag_list=getattr(workflow_started_event, 'tag_list', None) or [],  # attribute is absent if no tagList
-            continued_execution_run_id=getattr(workflow_started_event, 'continued_execution_run_id', None),
-            parent_workflow_id=getattr(workflow_started_event, 'parent_workflow_execution', {}).get('workflowId'),
-            parent_run_id=getattr(workflow_started_event, 'parent_workflow_execution', {}).get('runId'),
-        )
+        self._execution_context = {
+            'name': execution.workflow_type.name,
+            'version': execution.workflow_type.version,
+            'domain_name': self.domain.name,
+            'workflow_id': execution.workflow_id,
+            'run_id': execution.run_id,
+            'tag_list': getattr(workflow_started_event, 'tag_list', None) or [],
+            'continued_execution_run_id': getattr(workflow_started_event, 'continued_execution_run_id', None),
+            'parent_workflow_id': getattr(workflow_started_event, 'parent_workflow_execution', {}).get('workflowId'),
+            'parent_run_id': getattr(workflow_started_event, 'parent_workflow_execution', {}).get('runId')
+        }
 
     @property
     def _workflow_id(self):
@@ -1214,7 +1216,8 @@ class Executor(executor.Executor):
             return [decision]
         if self._history.cancel_failed:
             logger.warning('failed: %s', self._history.cancel_failed)
-        if self._history.cancel_failed and self._history.cancel_failed_decision_task_completed_event_id == self._history.completed_decision_id:
+        if (self._history.cancel_failed and
+                self._history.cancel_failed_decision_task_completed_event_id == self._history.completed_decision_id):
             # Per http://docs.aws.amazon.com/amazonswf/latest/apireference/API_Decision.html,
             # we should call RespondDecisionTaskCompleted without any decisions; however this hangs the workflow...
 
