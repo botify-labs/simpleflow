@@ -8,6 +8,10 @@ import swf.models.decision
 
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
+from simpleflow.swf.process.decider.decisions_and_context import DecisionsAndContext
+
+if False:
+    from typing import Any, List, Optional, Union  # NOQA
 
 
 logger = logging.getLogger(__name__)
@@ -132,6 +136,16 @@ class DeciderPoller(Poller, swf.actors.Decider):
 
     @with_state('completing')
     def complete(self, token, decisions=None, execution_context=None):
+        # type: (str, Optional[List], Union[Optional[Any], DecisionsAndContext], Optional) -> None
+        """
+        DubiousImpl: ~same signature as swf.actors.Decider.complete although execution_context is never set...
+        :param token: task token.
+        :param decisions: decisions, maybe with context.
+        :param execution_context: None...
+        :return: nothing.
+        """
+        if isinstance(decisions, DecisionsAndContext):
+            decisions, execution_context = decisions.decisions, decisions.execution_context
         return swf.actors.Decider.complete(self, token, decisions, execution_context)
 
     def process(self, decision_response):
@@ -163,7 +177,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :type  decision_response: swf.responses.Response
 
         :return: the decisions.
-        :rtype: list[swf.models.decision.base.Decision]
+        :rtype: Union[List[swf.models.decision.base.Decision], DecisionsAndContext]
         """
         worker = DeciderWorker(self.domain, self._workflow_executors)
         decisions = worker.decide(decision_response, self.task_list if self.is_standalone else None)
@@ -209,8 +223,6 @@ class DeciderWorker(object):
             self._workflow_executors[workflow_name] = workflow_executor
         try:
             decisions = workflow_executor.replay(decision_response)
-            if isinstance(decisions, tuple) and len(decisions) == 2:  # (decisions, obsolete context)
-                decisions = decisions[0]
         except Exception as err:
             import traceback
             details = traceback.format_exc()
