@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.18.13
+-------
+
+- Fix diskcache OperationalError (#303)
+
 0.18.12
 -------
 
