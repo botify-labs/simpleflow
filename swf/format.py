@@ -105,7 +105,6 @@ def _pull_jumbo_field(location):
             return cache[cache_key]
     except OperationalError:
         logger.warning("diskcache: got an OperationalError, skipping cache usage")
-        pass
 
     content = storage.pull_content(bucket, path)
 
@@ -115,7 +114,6 @@ def _pull_jumbo_field(location):
             cache.set(cache_key, content, expire=3 * HOUR)
         except OperationalError:
             logger.warning("diskcache: got an OperationalError on write, skipping cache write")
-            pass
 
     return content
 
