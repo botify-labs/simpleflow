@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from diskcache import Cache
 import lazy_object_proxy
+from sqlite3 import OperationalError
 
 from . import constants
 from .core import logger
@@ -94,14 +95,25 @@ def _pull_jumbo_field(location):
     # not that useful. The performance hit should be minimal. To be improved later.
     # NB2: cache has to be lazily instantiated here, cache objects do not survive forks,
     # see DiskCache docs.
-    cache = Cache(constants.CACHE_DIR)
-    cache_key = "jumbo_fields/" + path.split("/")[-1]
-    if cache_key in cache:
-        logger.debug("diskcache: getting key={} from cache_dir={}".format(cache_key, constants.CACHE_DIR))
-        return cache[cache_key]
+    cache = None
+
+    try:
+        cache = Cache(constants.CACHE_DIR)
+        cache_key = "jumbo_fields/" + path.split("/")[-1]
+        if cache_key in cache:
+            logger.debug("diskcache: getting key={} from cache_dir={}".format(cache_key, constants.CACHE_DIR))
+            return cache[cache_key]
+    except OperationalError:
+        logger.warning("diskcache: got an OperationalError, skipping cache usage")
+
     content = storage.pull_content(bucket, path)
-    logger.debug("diskcache: setting key={} on cache_dir={}".format(cache_key, constants.CACHE_DIR))
-    cache.set(cache_key, content, expire=3 * HOUR)
+
+    if cache:
+        try:
+            logger.debug("diskcache: setting key={} on cache_dir={}".format(cache_key, constants.CACHE_DIR))
+            cache.set(cache_key, content, expire=3 * HOUR)
+        except OperationalError:
+            logger.warning("diskcache: got an OperationalError on write, skipping cache write")
 
     return content
 
