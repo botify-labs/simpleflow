@@ -55,4 +55,4 @@ Then execute `./extras/demo`.
 More informations
 -----------------
 
-Read the main documentation at https://simpleflow.readthedocs.org/.
+Read the main documentation at https://botify-labs.github.io/simpleflow/.
