@@ -46,21 +46,12 @@ def encode(message, max_length, allow_jumbo_fields=True):
 
     if len(message) > max_length:
         if not can_use_jumbo_fields:
-            logger.warning(
-                'message "{}" too long ({} chars), wrapped to {}'.format(
-                    message,
-                    len(message),
-                    max_length,
-                ))
-            return message[:max_length]
+            logger.error("Message too long, will raise: {}".format(message))
+            raise ValueError("Message too long ({} chars)".format(len(message)))
 
         if len(message) > constants.JUMBO_FIELDS_MAX_SIZE:
-            logger.warning(
-                'message too long even for a jumbo field ({} chars), wrapped to {}'.format(
-                    len(message),
-                    constants.JUMBO_FIELDS_MAX_SIZE,
-                ))
-            message = message[:constants.JUMBO_FIELDS_MAX_SIZE]
+            logger.error("Message too long, will raise: {}".format(message))
+            raise ValueError("Message too long even for a jumbo field ({} chars)".format(len(message)))
 
         jumbo_signature = _push_jumbo_field(message)
         if len(jumbo_signature) > max_length:
