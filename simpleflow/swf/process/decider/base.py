@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
 import logging
+import multiprocessing
+import os
 
 import swf.actors
 import swf.exceptions
@@ -148,24 +150,18 @@ class DeciderPoller(Poller, swf.actors.Decider):
             decisions, execution_context = decisions.decisions, decisions.execution_context
         return swf.actors.Decider.complete(self, token, decisions, execution_context)
 
+    @with_state('processing')
     def process(self, decision_response):
         """
         Take a PollForDecisionTask response object and try to complete the
         decision task, by calling self._complete() with the response token and
-        a set of decisions.
+        a set of decisions. We fork so it protects us reliably against memory
+        leaks on long-running deciders.
 
         :param decision_response: an object wrapping the PollForDecisionTask response.
         :type  decision_response: swf.responses.Response
         """
-        logger.info('taking decision for workflow {}'.format(
-            self._workflow_name))
-        decisions = self.decide(decision_response)
-        try:
-            logger.info('completing decision for workflow {}'.format(
-                self._workflow_name))
-            self.complete_with_retry(decision_response.token, decisions)
-        except Exception as err:
-            logger.error('cannot complete decision: {}'.format(err))
+        spawn(self, decision_response)
 
     @with_state('deciding')
     def decide(self, decision_response):
@@ -233,3 +229,23 @@ class DeciderWorker(object):
             decisions = [decision]
 
         return decisions
+
+
+def process_decision(poller, decision_response):
+    logger.info("taking decision for workflow {}".format(poller._workflow_name))
+    decisions = poller.decide(decision_response)
+    try:
+        logger.info("completing decision for workflow {}".format(poller._workflow_name))
+        poller.complete_with_retry(decision_response.token, decisions)
+    except Exception as err:
+        logger.error("cannot complete decision: {}".format(err))
+
+
+def spawn(poller, decision_response):
+    logger.debug("spawn() pid={}".format(os.getpid()))
+    worker = multiprocessing.Process(
+        target=process_decision,
+        args=(poller, decision_response),
+    )
+    worker.start()
+    worker.join()
