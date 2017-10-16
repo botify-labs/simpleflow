@@ -38,8 +38,8 @@ class DeciderPoller(Poller, swf.actors.Decider):
     """
     Decider poller.
 
-    :ivar _workflow_name: concatenated workflows names.
-    :type _workflow_name: str
+    :ivar workflow_name: concatenated workflows names.
+    :type workflow_name: str
     :ivar _workflow_executors: executors dict: workflow name -> executor
     :type _workflow_executors: dict[str, simpleflow.swf.executor.Executor]
     :ivar nb_retries: # of retries allowed
@@ -67,7 +67,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :type  workflow_executors: list[simpleflow.swf.executor.Executor]
 
         """
-        self._workflow_name = '{}'.format(','.join(
+        self.workflow_name = '{}'.format(','.join(
             [
                 ex.workflow_class.name for ex in workflow_executors
                 ]))
@@ -126,8 +126,8 @@ class DeciderPoller(Poller, swf.actors.Decider):
 
         :rtype: str
         """
-        if self._workflow_name:
-            suffix = '(workflow={})'.format(self._workflow_name)
+        if self.workflow_name:
+            suffix = '(workflow={})'.format(self.workflow_name)
         else:
             suffix = ''
         return '{}{}'.format(self.__class__.__name__, suffix)
@@ -232,10 +232,10 @@ class DeciderWorker(object):
 
 
 def process_decision(poller, decision_response):
-    logger.info("taking decision for workflow {}".format(poller._workflow_name))
+    logger.info("taking decision for workflow {}".format(poller.workflow_name))
     decisions = poller.decide(decision_response)
     try:
-        logger.info("completing decision for workflow {}".format(poller._workflow_name))
+        logger.info("completing decision for workflow {}".format(poller.workflow_name))
         poller.complete_with_retry(decision_response.token, decisions)
     except Exception as err:
         logger.error("cannot complete decision: {}".format(err))
