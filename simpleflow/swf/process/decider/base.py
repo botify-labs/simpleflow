@@ -232,6 +232,7 @@ class DeciderWorker(object):
 
 
 def process_decision(poller, decision_response):
+    logger.debug("process_decision() pid={}".format(os.getpid()))
     logger.info("taking decision for workflow {}".format(poller.workflow_name))
     decisions = poller.decide(decision_response)
     try:
