@@ -46,11 +46,11 @@ def encode(message, max_length, allow_jumbo_fields=True):
 
     if len(message) > max_length:
         if not can_use_jumbo_fields:
-            logger.error("Message too long, will raise: {}".format(message))
+            _log_message_too_long(message)
             raise ValueError("Message too long ({} chars)".format(len(message)))
 
         if len(message) > constants.JUMBO_FIELDS_MAX_SIZE:
-            logger.error("Message too long, will raise: {}".format(message))
+            _log_message_too_long(message)
             raise ValueError("Message too long even for a jumbo field ({} chars)".format(len(message)))
 
         jumbo_signature = _push_jumbo_field(message)
@@ -107,6 +107,13 @@ def _pull_jumbo_field(location):
             logger.warning("diskcache: got an OperationalError on write, skipping cache write")
 
     return content
+
+
+def _log_message_too_long(message):
+    if len(message) > constants.MAX_LOG_FIELD:
+        message = "{} <...truncated to {} chars>".format(
+            message[:constants.MAX_LOG_FIELD], constants.MAX_LOG_FIELD)
+    logger.error("Message too long, will raise: {}".format(message))
 
 
 # A few helpers to wrap common SWF fields
