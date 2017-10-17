@@ -42,67 +42,14 @@ class TestFormat(unittest.TestCase):
     def test_encode_longer(self):
         MAX_LENGTH = random.randint(10, 1000)
         message = 'A' * 1000
-        self.assertEquals(
-            len(swf.format.encode(message, MAX_LENGTH)),
-            MAX_LENGTH,
-        )
-
-    def test_reason(self):
-        message = 'A' * (swf.constants.MAX_REASON_LENGTH * 2)
-        self.assertEquals(
-            len(swf.format.reason(message)),
-            swf.constants.MAX_REASON_LENGTH,
-        )
-
-    def test_details(self):
-        message = 'A' * (swf.constants.MAX_DETAILS_LENGTH * 2)
-        self.assertEquals(
-            len(swf.format.details(message)),
-            swf.constants.MAX_DETAILS_LENGTH,
-        )
-
-    def test_input(self):
-        message = 'A' * (swf.constants.MAX_INPUT_LENGTH * 2)
-        self.assertEquals(
-            len(swf.format.input(message)),
-            swf.constants.MAX_INPUT_LENGTH,
-        )
-
-    def test_result(self):
-        message = 'A' * (swf.constants.MAX_RESULT_LENGTH * 2)
-        self.assertEquals(
-            len(swf.format.result(message)),
-            swf.constants.MAX_RESULT_LENGTH,
-        )
-
-    def test_execution_context(self):
-        message = 'A' * (swf.constants.MAX_RESULT_LENGTH * 2)
-        self.assertEquals(
-            len(swf.format.execution_context(message)),
-            swf.constants.MAX_EXECUTION_CONTEXT_LENGTH,
-        )
-
-    def test_heartbeat_details(self):
-        message = 'A' * (swf.constants.MAX_RESULT_LENGTH * 2)
-        self.assertEquals(
-            len(swf.format.heartbeat_details(message)),
-            swf.constants.MAX_HEARTBEAT_DETAILS_LENGTH,
-        )
-
-    def test_identity(self):
-        message = 'A' * (swf.constants.MAX_RESULT_LENGTH * 2)
-        self.assertEquals(
-            len(swf.format.identity(message)),
-            swf.constants.MAX_IDENTITY_LENGTH,
-        )
+        with self.assertRaisesRegexp(ValueError, "Message too long"):
+            swf.format.encode(message, MAX_LENGTH)
 
     def test_identity_doesnt_use_jumbo_fields(self):
         self.setup_jumbo_fields("jumbo-bucket")
         message = 'A' * (swf.constants.MAX_RESULT_LENGTH * 2)
-        self.assertEquals(
-            swf.format.identity(message),
-            'A' * swf.constants.MAX_IDENTITY_LENGTH,
-        )
+        with self.assertRaisesRegexp(ValueError, "Message too long"):
+            swf.format.identity(message)
 
     def test_jumbo_fields_encoding_without_directory(self):
         self.setup_jumbo_fields("jumbo-bucket")
