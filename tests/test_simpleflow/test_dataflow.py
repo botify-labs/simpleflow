@@ -1567,7 +1567,7 @@ def test_execution_context():
             )
         )
     ).decisions
-    context = executor.get_execution_context()
+    context = executor.get_running_context()
     expected = dict(
         name='the_workflow_name',
         version='the_workflow_version',

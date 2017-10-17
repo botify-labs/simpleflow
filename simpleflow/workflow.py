@@ -178,12 +178,13 @@ class Workflow(Submittable):
 
     def get_execution_context(self):
         """
-        Get an execution context from the executor.
+        Get a context from the executor.
         The content is specific to each executor.
+        FIXME should be get_running_context; the execution context is something else in SWF.
         :return: context
         :rtype: dict
         """
-        return self.executor.get_execution_context()
+        return self.executor.get_running_context()
 
     def signal(self, name, *args, **kwargs):
         return self.executor.signal(name, *args, **kwargs)
