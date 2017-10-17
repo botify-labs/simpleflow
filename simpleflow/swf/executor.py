@@ -939,6 +939,21 @@ class Executor(executor.Executor):
                 self.decref_workflow()
             if self._append_timer:
                 self._add_start_timer_decision('_simpleflow_wake_up_timer')
+
+            if not self._decisions_and_context.execution_context:
+                # Check the need to send an empty-string context (not None) to clear latestExecutionContext
+                last_completed_decision = next(
+                    # next((generator), default) to prevent StopIteration. Python is fun :-)
+                    (e for e in reversed(history.events) if e.type == 'DecisionTask' and e.state == 'completed'),
+                    None
+                )
+                last_decision_had_context = (
+                    last_completed_decision and
+                    hasattr(last_completed_decision, 'execution_context') and
+                    last_completed_decision.execution_context)
+                if last_decision_had_context:
+                    self._decisions_and_context.execution_context = ""
+
             return self._decisions_and_context
         except exceptions.TaskException as err:
             reason = 'Workflow execution error in task {}: "{}"'.format(

@@ -1,6 +1,7 @@
+import json
+
 from sure import expect
 
-from simpleflow.utils import json_dumps
 from tests.integration import VCRIntegrationTest, vcr
 
 
@@ -39,20 +40,22 @@ class TestSignals(VCRIntegrationTest):
         # The DecisionTaskCompleted event following wait_signal should contain the right execution context
         expect(events[4]['eventType']).should.be.equal('DecisionTaskCompleted')
         expect(events[4]['decisionTaskCompletedEventAttributes']).should.contain('executionContext')
-        expect(events[4]['decisionTaskCompletedEventAttributes']['executionContext']).should.be.equal(
-            json_dumps(
-                {"waiting_signals": ["signal", "signal 2"]}
-            )
+        execution_context = json.loads(events[4]['decisionTaskCompletedEventAttributes']['executionContext'])
+        expect(execution_context).should.be.equal(
+                {"waiting_signals": ["signal 2", "signal"]}
         )
 
         expect(events[14]['eventType']).should.be.equal('DecisionTaskCompleted')
         expect(events[14]['decisionTaskCompletedEventAttributes']).should.contain('executionContext')
-        expect(events[14]['decisionTaskCompletedEventAttributes']['executionContext']).should.be.equal(
-            json_dumps(
-                {"waiting_signals": ["signal 2"]}
-            )
-        )
+        execution_context = json.loads(events[14]['decisionTaskCompletedEventAttributes']['executionContext'])
+        expect(execution_context).should.be.equal({"waiting_signals": ["signal 2"]})
 
-        # The DecisionTaskCompleted event following the signals should have no context
+        # The DecisionTaskCompleted event following the signals should have an empty context
         expect(events[22]['eventType']).should.be.equal('DecisionTaskCompleted')
-        expect(events[22]['decisionTaskCompletedEventAttributes']).should_not.contain('executionContext')
+        expect(events[22]['decisionTaskCompletedEventAttributes']).should.contain('executionContext')
+        execution_context = events[22]['decisionTaskCompletedEventAttributes']['executionContext']
+        expect(execution_context).should.be.empty
+
+        # The next DecisionTaskCompleted event should have no context
+        expect(events[24]['eventType']).should.be.equal('DecisionTaskCompleted')
+        expect(events[24]['decisionTaskCompletedEventAttributes']).should_not.contain('executionContext')
