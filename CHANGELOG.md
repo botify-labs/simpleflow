@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.18.14
+-------
+
+- Update the link to the documentation (#306)
+- Fork on each decision task to protect against memory leaks (#200) (#308)
+- Don't truncate too long fields, raise instead (closes #307) (#309)
+
 0.18.13
 -------
 
