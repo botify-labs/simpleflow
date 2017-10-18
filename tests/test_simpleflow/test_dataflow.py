@@ -1546,13 +1546,13 @@ def test_task_naming():
 
 
 @mock_swf
-def test_execution_context():
+def test_run_context():
     workflow = ATestTaskNaming
     executor = Executor(DOMAIN, workflow)
 
     history = builder.History(workflow, input={})
 
-    decisions = executor.replay(
+    executor.replay(
         Response(
             history=history,
             execution=swf.models.workflow.WorkflowExecution(
@@ -1566,7 +1566,7 @@ def test_execution_context():
                 ),
             )
         )
-    ).decisions
+    )
     context = executor.get_run_context()
     expected = dict(
         name='the_workflow_name',

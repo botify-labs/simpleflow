@@ -158,7 +158,7 @@ class Executor(object):
 
     def get_run_context(self):
         """
-        Get the running context.
+        Get the run context.
         The content is specific to each executor.
         :return: context
         :rtype: dict
