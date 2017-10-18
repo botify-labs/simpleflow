@@ -492,7 +492,6 @@ class History(object):
             }
             if event.workflow_id not in self._external_workflows_canceling:
                 self._external_workflows_canceling[event.workflow_id] = workflow
-                self._tasks.append(workflow)
             else:
                 logger.warning("request_cancel_initiated again for workflow {} (initiated @{}, we're @{})".format(
                     event.workflow_id,
