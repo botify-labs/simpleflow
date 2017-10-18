@@ -11,7 +11,6 @@ import re
 import traceback
 
 import simpleflow.task as base_task
-from simpleflow.swf.process.decider.decisions_and_context import DecisionsAndContext
 from swf import format
 import swf.exceptions
 import swf.models
@@ -29,6 +28,7 @@ from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
+from simpleflow.swf.utils import DecisionsAndContext
 from simpleflow.swf.task import (
     SwfTask,
     ActivityTask,
