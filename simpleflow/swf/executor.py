@@ -1156,24 +1156,20 @@ class Executor(executor.Executor):
             if not propagate:
                 continue
             name = signal['name']
-            orig_workflow_id = input.get('__workflow_id')
-            orig_run_id = input.get('__run_id')
 
             input = {
                 'args': input.get('args'),
                 'kwargs': input.get('kwargs'),
-                '__workflow_id': self._workflow_id,
-                '__run_id': self._run_id,
                 '__propagate': propagate,
             }
+
             sender = (
-                signal['external_workflow_id'] or orig_workflow_id,
-                signal['external_run_id'] or orig_run_id
+                signal['external_workflow_id'],
+                signal['external_run_id']
             )
             signaled_workflows_ids = set(
                 (w['workflow_id'], w['run_id']) for w in history.signaled_workflows[name]
             )
-            signaled_workflows_ids.add((orig_workflow_id, orig_run_id))
             not_signaled_workflows_ids = list(known_workflows_ids - signaled_workflows_ids - {sender})
             for workflow_id, run_id in not_signaled_workflows_ids:
                 try:
