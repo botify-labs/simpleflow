@@ -263,17 +263,17 @@ class SignalTask(task.SignalTask, SwfTask):
         input = {
             'args': self.args,
             'kwargs': self.kwargs,
-            '__workflow_id': self.workflow_id,
-            '__run_id': self.run_id,
         }
         if self.extra_input:
             input.update(self.extra_input)
         logger.debug(
-            'scheduling signal name={name}, workflow_id={workflow_id}, run_id={run_id}, control={control}'.format(
+            'scheduling signal name={name}, workflow_id={workflow_id}, run_id={run_id}, control={control}, '
+            'extra_input={extra_input}'.format(
                 name=self.name,
                 workflow_id=self.workflow_id,
                 run_id=self.run_id,
                 control=self.control,
+                extra_input=self.extra_input,
             )
         )
 
