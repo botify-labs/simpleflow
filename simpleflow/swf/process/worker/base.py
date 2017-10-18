@@ -68,13 +68,14 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         return swf.actors.ActivityWorker.poll(self, task_list, identity)
 
     @with_state('processing')
-    def process(self, request):
+    def process(self, response):
         """
-        Process a request.
-        :param request:
-        :type request: (str, swf.models.ActivityTask)
+        Process a swf.actors.ActivityWorker poll response..
+        :param response:
+        :type response: swf.responses.Response
         """
-        token, task = request
+        token = response.task_token
+        task = response.activity_task
         spawn(self, token, task, self._heartbeat)
 
     @with_state('completing')

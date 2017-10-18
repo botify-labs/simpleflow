@@ -4,6 +4,7 @@ import boto.exception
 from swf.actors import Actor
 from swf.models import ActivityTask
 from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError, RateLimitExceededError
+from swf.responses import Response
 from swf import format
 
 
@@ -190,6 +191,9 @@ class ActivityWorker(Actor):
             self.task_list,
             polled_activity_data
         )
-        task_token = activity_task.task_token
 
-        return task_token, activity_task
+        return Response(
+            task_token=activity_task.task_token,
+            activity_task=activity_task,
+            raw_response=polled_activity_data,
+        )
