@@ -18,7 +18,7 @@ class WorkflowExecutionDecision(Decision):
         """Complete workflow execution decision builder
 
         :param  result: The result of the workflow execution
-        :type   result: str
+        :type   result: Optional[Any]
         """
         self.update_attributes({
             'result': format.result(result),
@@ -29,7 +29,7 @@ class WorkflowExecutionDecision(Decision):
         """Cancel workflow execution decision builder
 
         :param  details: Optional details of the cancellation
-        :type   details: str
+        :type   details: Optional[Any]
         """
         self.update_attributes({
             'details': format.details(details),
@@ -40,10 +40,10 @@ class WorkflowExecutionDecision(Decision):
         """Fail workflow execution decision builder
 
         :param  details: Optional details of the failure
-        :type   details: str
+        :type   details: Optional[Any]
 
         :param  reason: A descriptive reason for the failure that may help in diagnostics
-        :type   reason: str
+        :type   reason: Optional[str]
         """
         self.update_attributes({
             'details': format.details(details),

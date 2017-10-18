@@ -176,7 +176,7 @@ class Executor(executor.Executor):
                  ):
         super(Executor, self).__init__(workflow_class)
         self._history = None
-        self._execution_context = {}
+        self._run_context = {}
         self.domain = domain
         self.task_list = task_list
         self.repair_with = repair_with
@@ -905,7 +905,7 @@ class Executor(executor.Executor):
         history = decision_response.history
         self._history = History(history)
         self._history.parse()
-        self.build_execution_context(decision_response)
+        self.build_run_context(decision_response)
         # noinspection PyUnresolvedReferences
         self._execution = decision_response.execution
 
@@ -939,6 +939,10 @@ class Executor(executor.Executor):
                 self.decref_workflow()
             if self._append_timer:
                 self._add_start_timer_decision('_simpleflow_wake_up_timer')
+
+            if not self._decisions_and_context.execution_context:
+                self.maybe_clear_execution_context()
+
             return self._decisions_and_context
         except exceptions.TaskException as err:
             reason = 'Workflow execution error in task {}: "{}"'.format(
@@ -990,6 +994,25 @@ class Executor(executor.Executor):
             self.decref_workflow()
         return DecisionsAndContext([decision])
 
+    def maybe_clear_execution_context(self):
+        """
+        Replace a null execution_context with an empty string if the preceding one was set.
+        This is to clear latestExecutionContext.
+        :return:
+        """
+        events = self._history.events
+        last_completed_decision = next(
+            # next((generator), default) to prevent StopIteration. Python is fun :-)
+            (e for e in reversed(events) if e.type == 'DecisionTask' and e.state == 'completed'),
+            None
+        )
+        last_decision_had_context = (
+            last_completed_decision and
+            hasattr(last_completed_decision, 'execution_context') and
+            last_completed_decision.execution_context)
+        if last_decision_had_context:
+            self._decisions_and_context.execution_context = ""
+
     def decref_workflow(self):
         """
         Set the `_workflow` ivar to None in the hope of reducing memory consumption.
@@ -1035,10 +1058,10 @@ class Executor(executor.Executor):
     def run(self, decision_response):
         return self.replay(decision_response)
 
-    def get_execution_context(self):
-        return self._execution_context
+    def get_run_context(self):
+        return self._run_context
 
-    def build_execution_context(self, decision_response):
+    def build_run_context(self, decision_response):
         """
         Extract data from the execution and history.
         :param decision_response:
@@ -1053,7 +1076,7 @@ class Executor(executor.Executor):
         # noinspection PyUnresolvedReferences
         history = decision_response.history
         workflow_started_event = history[0]
-        self._execution_context = {
+        self._run_context = {
             'name': execution.workflow_type.name,
             'version': execution.workflow_type.version,
             'domain_name': self.domain.name,
@@ -1067,11 +1090,11 @@ class Executor(executor.Executor):
 
     @property
     def _workflow_id(self):
-        return self._execution_context.get('workflow_id')
+        return self._run_context.get('workflow_id')
 
     @property
     def _run_id(self):
-        return self._execution_context.get('run_id')
+        return self._run_context.get('run_id')
 
     def signal(self, name, workflow_id=None, run_id=None, propagate=True, *args, **kwargs):
         """
@@ -1115,9 +1138,9 @@ class Executor(executor.Executor):
             return
 
         known_workflows_ids = []
-        if self._execution_context.get('parent_workflow_id'):
+        if self._run_context.get('parent_workflow_id'):
             known_workflows_ids.append(
-                (self._execution_context['parent_workflow_id'], self._execution_context['parent_run_id'])
+                (self._run_context['parent_workflow_id'], self._run_context['parent_run_id'])
             )
         known_workflows_ids.extend(
             (w['workflow_id'], w['run_id']) for w in history.child_workflows.values() if w['state'] == 'started'
