@@ -154,9 +154,9 @@ class Executor(object):
 
     @deprecated
     def get_execution_context(self):
-        return self.get_running_context()
+        return self.get_run_context()
 
-    def get_running_context(self):
+    def get_run_context(self):
         """
         Get the running context.
         The content is specific to each executor.

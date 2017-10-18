@@ -176,15 +176,25 @@ class Workflow(Submittable):
         """
         pass
 
+    def get_run_context(self):
+        """
+        Get a context from the executor.
+        The content is specific to each executor.
+        :return: context
+        :rtype: dict
+        """
+        return self.executor.get_run_context()
+
+    @deprecated
     def get_execution_context(self):
         """
         Get a context from the executor.
         The content is specific to each executor.
-        FIXME should be get_running_context; the execution context is something else in SWF.
+        FIXME should be get_run_context; the execution context is something else in SWF.
         :return: context
         :rtype: dict
         """
-        return self.executor.get_running_context()
+        return self.executor.get_run_context()
 
     def signal(self, name, *args, **kwargs):
         return self.executor.signal(name, *args, **kwargs)

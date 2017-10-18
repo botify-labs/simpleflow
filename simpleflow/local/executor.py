@@ -57,7 +57,7 @@ class Executor(executor.Executor):
 
         future = futures.Future()
 
-        context = self.get_running_context()
+        context = self.get_run_context()
         context["activity_id"] = str(self.nb_activities)
         self.nb_activities += 1
 
@@ -132,7 +132,7 @@ class Executor(executor.Executor):
     def after_closed(self):
         return self._workflow.after_closed(self._history)
 
-    def get_running_context(self):
+    def get_run_context(self):
         return {
             "name": "local",
             "version": "1.0",
