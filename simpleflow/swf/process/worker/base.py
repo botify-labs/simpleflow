@@ -1,10 +1,13 @@
+from base64 import b64decode
 import errno
 import logging
+import json
 import multiprocessing
 import os
 import signal
 import sys
 import traceback
+import uuid
 
 import psutil
 
@@ -12,13 +15,16 @@ from simpleflow.exceptions import ExecutionError
 from swf import format
 import swf.actors
 import swf.exceptions
+from swf.models import ActivityTask as BaseActivityTask
+from swf.responses import Response
 from simpleflow.dispatch import dynamic_dispatcher
+from simpleflow.job import KubernetesJob
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
 
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
-from simpleflow.utils import format_exc, json_dumps
+from simpleflow.utils import format_exc, json_dumps, to_k8s_identifier
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +44,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     Polls an activity and handles it in the worker.
 
     """
-    def __init__(self, domain, task_list, heartbeat=60):
+    def __init__(self, domain, task_list, heartbeat=60, process_mode=None, poll_data=None):
         """
 
         :param domain:
@@ -47,6 +53,8 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         :type task_list:
         :param heartbeat:
         :type heartbeat:
+        :param process_mode: Whether to process locally (default) or spawn a Kubernetes job.
+        :type process_mode: Optional[str]
         """
         self.nb_retries = 3
         # heartbeat=0 is a special value to disable heartbeating. We want to
@@ -54,6 +62,8 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         # this as "no timeout"
         self._heartbeat = heartbeat or None
 
+        self.process_mode = 'kubernetes' if process_mode == 'kubernetes' else 'local'
+        self.poll_data = poll_data
         super(ActivityPoller, self).__init__(domain, task_list)
 
     @property
@@ -65,7 +75,22 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 
     @with_state('polling')
     def poll(self, task_list=None, identity=None):
-        return swf.actors.ActivityWorker.poll(self, task_list, identity)
+        if self.poll_data:
+            # the poll data has been passed as input
+            polled_activity_data = json.loads(b64decode(self.poll_data))
+            activity_task = BaseActivityTask.from_poll(
+                self.domain,
+                self.task_list,
+                polled_activity_data,
+            )
+            return Response(
+                task_token=activity_task.task_token,
+                activity_task=activity_task,
+                raw_response=polled_activity_data,
+            )
+        else:
+            # we need to poll SWF's PollForActivityTask
+            return swf.actors.ActivityWorker.poll(self, task_list, identity)
 
     @with_state('processing')
     def process(self, response):
@@ -74,9 +99,13 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         :param response:
         :type response: swf.responses.Response
         """
-        token = response.task_token
-        task = response.activity_task
-        spawn(self, token, task, self._heartbeat)
+        if self.process_mode == "kubernetes":
+            job = KubernetesJob(self.job_name, self.domain.name, response.raw_response)
+            job.schedule()
+        else:
+            token = response.task_token
+            task = response.activity_task
+            spawn(self, token, task, self._heartbeat)
 
     @with_state('completing')
     def complete(self, token, result=None):
@@ -110,6 +139,18 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
                 task.activity_type.name,
                 err,
             ))
+
+    @property
+    def identity(self):
+        if self.process_mode == "kubernetes":
+            self.job_name = "{}--{}".format(to_k8s_identifier(self.task_list), str(uuid.uuid4()))
+            return json_dumps({
+                "cluster": os.environ["K8S_CLUSTER"],
+                "namespace": os.environ["K8S_NAMESPACE"],
+                "job": self.job_name,
+            })
+        else:
+            return super(ActivityPoller, self).identity
 
 
 class ActivityWorker(object):
