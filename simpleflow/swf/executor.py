@@ -1148,6 +1148,8 @@ class Executor(executor.Executor):
 
         known_workflows_ids = frozenset(known_workflows_ids)
 
+        signals_scheduled = False
+
         for signal in history.signals.values():
             input = signal['input']
             if not isinstance(input, dict):  # foreign signal: don't try processing it
@@ -1157,12 +1159,8 @@ class Executor(executor.Executor):
                 continue
             name = signal['name']
 
-            input = {
-                'args': input.get('args'),
-                'kwargs': input.get('kwargs'),
-                '__propagate': propagate,
-            }
-
+            args = input.get('args', ())
+            kwargs = input.get('kwargs', {})
             sender = (
                 signal['external_workflow_id'],
                 signal['external_run_id']
@@ -1171,16 +1169,21 @@ class Executor(executor.Executor):
                 (w['workflow_id'], w['run_id']) for w in history.signaled_workflows[name]
             )
             not_signaled_workflows_ids = list(known_workflows_ids - signaled_workflows_ids - {sender})
+            extra_input = {'__propagate': propagate}
             for workflow_id, run_id in not_signaled_workflows_ids:
-                try:
-                    self._execution.signal(
-                        signal_name=name,
-                        input=input,
-                        workflow_id=workflow_id,
-                        run_id=run_id,
-                    )
-                except swf.models.workflow.WorkflowExecutionDoesNotExist:
-                    logger.info('Workflow {} {} disappeared'.format(workflow_id, run_id))
+                self.schedule_task(SignalTask(
+                    name,
+                    workflow_id,
+                    run_id,
+                    None,
+                    extra_input,
+                    *args,
+                    **kwargs
+                ))
+                signals_scheduled = True
+        if signals_scheduled:
+            self._append_timer = True
+            raise exceptions.ExecutionBlocked()
 
     def record_marker(self, name, details=None):
         return MarkerTask(name, details)
