@@ -231,6 +231,7 @@ class SignalTask(task.SignalTask, SwfTask):
     """
     Signal "task" on SWF.
     """
+    idempotent = True
 
     @classmethod
     def from_generic_task(cls, a_task, workflow_id, run_id, control, extra_input):
@@ -246,10 +247,6 @@ class SignalTask(task.SignalTask, SwfTask):
     @property
     def id(self):
         return self._name
-
-    @property
-    def idempotent(self):
-        return None
 
     def __repr__(self):
         return '{}(name={}, workflow_id={}, run_id={}, control={}, args={}, kwargs={})'.format(
