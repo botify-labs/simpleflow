@@ -73,6 +73,10 @@ class ActivityTask(task.ActivityTask, SwfTask):
         )
         task_priority = kwargs.get('priority')
 
+        meta = activity.meta
+        if meta:
+            input["meta"] = meta
+
         decision = swf.models.decision.ActivityTaskDecision(
             'schedule',
             activity_id=self.id,

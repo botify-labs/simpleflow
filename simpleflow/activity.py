@@ -24,6 +24,7 @@ def with_attributes(
         schedule_to_start_timeout=settings.ACTIVITY_SCHEDULE_TO_START_TIMEOUT,
         heartbeat_timeout=settings.ACTIVITY_HEARTBEAT_TIMEOUT,
         idempotent=None,
+        meta=None,
 ):
     """
     Decorator: wrap a function/class into an Activity.
@@ -48,6 +49,8 @@ def with_attributes(
     :type heartbeat_timeout: str | int
     :param idempotent: True if the activity is idempotent.
     :type idempotent: Optional[bool]
+    :param meta:
+    :type meta: str
     :rtype: () -> Activity[()]
 
     """
@@ -62,6 +65,7 @@ def with_attributes(
             heartbeat_timeout,
             task_priority=task_priority,
             idempotent=idempotent,
+            meta=meta,
         )
 
     return wrap
@@ -79,7 +83,8 @@ class Activity(object):
                  schedule_to_start_timeout=None,
                  heartbeat_timeout=None,
                  task_priority=PRIORITY_NOT_SET,
-                 idempotent=None):
+                 idempotent=None,
+                 meta=None):
         self._callable = callable
 
         self._name = name
@@ -93,6 +98,7 @@ class Activity(object):
         self.task_schedule_to_close_timeout = schedule_to_close_timeout
         self.task_schedule_to_start_timeout = schedule_to_start_timeout
         self.task_heartbeat_timeout = heartbeat_timeout
+        self.meta = meta
 
         self.register()
 
