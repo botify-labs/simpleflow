@@ -1096,17 +1096,17 @@ class Executor(executor.Executor):
     def _run_id(self):
         return self._run_context.get('run_id')
 
-    def signal(self, name, workflow_id=None, run_id=None, propagate=True, *args, **kwargs):
+    def signal(self, name, *args, **kwargs):
         """
         Send a signal.
         :param name:
-        :param workflow_id:
-        :param run_id:
-        :param propagate:
         :param args:
         :param kwargs:
         :return:
         """
+        workflow_id = kwargs.pop('workflow_id', None)
+        run_id = kwargs.pop('run_id', None)
+        propagate = kwargs.pop('propagate', True)
         logger.debug('signal: name={name}, workflow_id={workflow_id}, run_id={run_id}, propagate={propagate}'.format(
             name=name,
             workflow_id=workflow_id if workflow_id else self._workflow_id,
