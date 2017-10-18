@@ -919,7 +919,6 @@ class Executor(executor.Executor):
         self.before_replay()
 
         try:
-            self.propagate_signals()
             if self._history.cancel_requested:
                 decisions = self.handle_cancel_requested()
                 if decisions is not None:
@@ -928,6 +927,7 @@ class Executor(executor.Executor):
                     if decref_workflow:
                         self.decref_workflow()
                     return DecisionsAndContext(decisions)
+            self.propagate_signals()
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
             logger.info('{} open activities ({} decisions)'.format(
