@@ -297,6 +297,7 @@ def create_sleeper_subprocess():
     return pid
 
 
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="psutil process statuses are buggy on OSX")
 def test_execute_dont_kill_children():
     pid = execute.python()(create_sleeper_subprocess)()
     subprocess = psutil.Process(pid)
