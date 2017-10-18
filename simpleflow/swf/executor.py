@@ -1164,6 +1164,7 @@ class Executor(executor.Executor):
                 'kwargs': input.get('kwargs'),
                 '__workflow_id': self._workflow_id,
                 '__run_id': self._run_id,
+                '__propagate': propagate,
             }
             sender = (
                 signal['external_workflow_id'] or orig_workflow_id,
