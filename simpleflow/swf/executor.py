@@ -1182,7 +1182,6 @@ class Executor(executor.Executor):
                 ))
                 signals_scheduled = True
         if signals_scheduled:
-            self._append_timer = True
             raise exceptions.ExecutionBlocked()
 
     def record_marker(self, name, details=None):
