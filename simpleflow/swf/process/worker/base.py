@@ -106,8 +106,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         :type response: swf.responses.Response
         """
         if self.process_mode == "kubernetes":
-            job = KubernetesJob(self.job_name, self.domain.name, response.raw_response)
-            job.schedule()
+            spawn_kubernetes_job(self, response.raw_response)
         else:
             token = response.task_token
             task = response.activity_task
@@ -242,6 +241,11 @@ def process_task(poller, token, task):
     logger.debug('process_task() pid={}'.format(os.getpid()))
     worker = ActivityWorker()
     worker.process(poller, token, task)
+
+
+def spawn_kubernetes_job(poller, swf_response):
+    job = KubernetesJob(poller.job_name, poller.domain.name, swf_response)
+    job.schedule()
 
 
 def spawn(poller, token, task, heartbeat=60):
