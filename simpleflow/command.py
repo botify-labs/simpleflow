@@ -22,6 +22,7 @@ from simpleflow.settings import logging_formatter
 from simpleflow.settings.logging_formatter import ColorModes
 from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
+from simpleflow.swf.constants import VALID_PROCESS_MODES
 from simpleflow.swf.process import decider, worker
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_history_and_run_id
@@ -392,7 +393,7 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
               help='Provide a base64 encoded json dump of the SWF poll response, instead of polling SWF',
               )
 @click.option('--process-mode',
-              type=click.Choice(['local', 'kubernetes']),
+              type=click.Choice(VALID_PROCESS_MODES),
               default='local',
               help='Whether to process the task locally or in a Kubernetes job (default=local)',
               )

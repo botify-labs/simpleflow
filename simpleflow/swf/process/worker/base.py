@@ -20,6 +20,7 @@ from swf.responses import Response
 from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.job import KubernetesJob
 from simpleflow.process import Supervisor, with_state
+from simpleflow.swf.constants import VALID_PROCESS_MODES
 from simpleflow.swf.process import Poller
 
 from simpleflow.swf.task import ActivityTask
@@ -62,7 +63,9 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         # this as "no timeout"
         self._heartbeat = heartbeat or None
 
-        self.process_mode = 'kubernetes' if process_mode == 'kubernetes' else 'local'
+        self.process_mode = process_mode or 'local'
+        assert self.process_mode in VALID_PROCESS_MODES, 'invalid process_mode "{}"'.format(self.process_mode)
+
         self.poll_data = poll_data
         super(ActivityPoller, self).__init__(domain, task_list)
 
