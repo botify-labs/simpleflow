@@ -72,8 +72,8 @@ def ls_optional_named_arguments(hide='', *args):
     pass
 
 
-@pytest.mark.skipif(platform.system() == 'Darwin',
-                    reason="ls doesn't have a --hide option on MacOSX")
+@pytest.mark.xfail(platform.system() == 'Darwin',
+                   reason="ls doesn't have a --hide option on MacOSX")
 def test_execute_program_optional_named_arguments():
     with tempfile.NamedTemporaryFile(suffix='\xe9') as f:
         assert ls_optional_named_arguments(f.name).strip() == f.name
@@ -90,8 +90,8 @@ def test_execute_program_with_positional_arguments():
         assert ls(f.name).strip() == f.name
 
 
-@pytest.mark.skipif(platform.system() == 'Darwin',
-                    reason="ls doesn't have a --hide option on MacOSX")
+@pytest.mark.xfail(platform.system() == 'Darwin',
+                   reason="ls doesn't have a --hide option on MacOSX")
 def test_execute_program_with_named_arguments():
     with tempfile.NamedTemporaryFile() as f:
         assert f.name not in (ls(
@@ -297,7 +297,7 @@ def create_sleeper_subprocess():
     return pid
 
 
-@pytest.mark.skipif(platform.system() == 'Darwin', reason="psutil process statuses are buggy on OSX")
+@pytest.mark.xfail(platform.system() == 'Darwin', reason="psutil process statuses are buggy on OSX")
 def test_execute_dont_kill_children():
     pid = execute.python()(create_sleeper_subprocess)()
     subprocess = psutil.Process(pid)
