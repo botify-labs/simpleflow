@@ -80,20 +80,23 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     def poll(self, task_list=None, identity=None):
         if self.poll_data:
             # the poll data has been passed as input
-            polled_activity_data = json.loads(b64decode(self.poll_data))
-            activity_task = BaseActivityTask.from_poll(
-                self.domain,
-                self.task_list,
-                polled_activity_data,
-            )
-            return Response(
-                task_token=activity_task.task_token,
-                activity_task=activity_task,
-                raw_response=polled_activity_data,
-            )
+            return self.fake_poll()
         else:
             # we need to poll SWF's PollForActivityTask
             return swf.actors.ActivityWorker.poll(self, task_list, identity)
+
+    def fake_poll(self):
+        polled_activity_data = json.loads(b64decode(self.poll_data))
+        activity_task = BaseActivityTask.from_poll(
+            self.domain,
+            self.task_list,
+            polled_activity_data,
+        )
+        return Response(
+            task_token=activity_task.task_token,
+            activity_task=activity_task,
+            raw_response=polled_activity_data,
+        )
 
     @with_state('processing')
     def process(self, response):
