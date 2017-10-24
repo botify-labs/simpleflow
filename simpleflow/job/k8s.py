@@ -1,5 +1,5 @@
 from base64 import b64encode
-from jinja2 import Template
+import jinja2
 import json
 import os
 import yaml
@@ -39,10 +39,6 @@ class KubernetesJob(object):
             raise ValueError("Cannot extract 'meta' key from task input")
         job_template = meta["k8s_job_template"]
 
-        # get job template
-        with open(job_template) as f:
-            content = f.read()
-
         # setup variables that will be interpolated in the template
         variables = dict(os.environ)
         for key, value in meta.get("k8s_job_data", {}):
@@ -50,9 +46,13 @@ class KubernetesJob(object):
         variables["JOB_NAME"] = self.job_name
         variables["PAYLOAD"] = b64encode(json_dumps(self.response))
 
-        # fill in the blanks
-        template = Template(content)
-        rendered = template.render(**variables)
+        # render the job template with those context variables
+        path, filename = os.path.split(job_template)
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(path or './'),
+            undefined=jinja2.StrictUndefined,
+        )
+        rendered = env.get_template(filename).render(variables)
 
         return yaml.load(rendered)
 
