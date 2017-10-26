@@ -17,6 +17,7 @@ import swf.exceptions
 import swf.models
 import swf.querysets
 
+from simpleflow import Workflow
 from simpleflow.history import History
 from simpleflow.settings import logging_formatter
 from simpleflow.settings.logging_formatter import ColorModes
@@ -25,13 +26,12 @@ from simpleflow.swf import helpers
 from simpleflow.swf.process import decider
 from simpleflow.swf.process import worker
 from simpleflow.swf.task import ActivityTask
-from simpleflow.swf.utils import get_workflow_history_and_run_id
+from simpleflow.swf.utils import get_workflow_execution
 from simpleflow.utils import json_dumps
 from simpleflow import __version__
 
 if False:
     from typing import Text, Type  # NOQA
-    from simpleflow import Workflow  # NOQA
     from swf.models import WorkflowType  # NOQA
 
 
@@ -513,8 +513,9 @@ def standalone(context,
             "You should only use --force-activities with --repair."
         )
 
+    workflow_class = get_workflow(workflow)
     if not workflow_id:
-        workflow_id = get_workflow(workflow).name
+        workflow_id = workflow_class.name
 
     wf_input = None
     if input or input_file:
@@ -530,14 +531,26 @@ def standalone(context,
             'retrieving history of previous execution: domain={} '
             'workflow_id={} run_id={}'.format(domain, repair, repair_run_id)
         )
-        previous_history, repair_run_id = get_workflow_history_and_run_id(domain, repair, run_id=repair_run_id)
+        workflow_execution = get_workflow_execution(domain, repair, run_id=repair_run_id)
+        previous_history = History(workflow_execution.history())
+        repair_run_id = workflow_execution.run_id
         previous_history.parse()
         # get the previous execution input if none passed
         if not input and not input_file:
             wf_input = previous_history.events[0].input
+        if not tags:
+            tags = workflow_execution.tag_list
     else:
         previous_history = None
         repair_run_id = None
+        if not tags:
+            get_tag_list = getattr(workflow_class, 'get_tag_list', None)
+            if get_tag_list:
+                tags = get_tag_list(workflow_class, *wf_input.get('args', ()), **wf_input.get('kwargs', {}))
+            else:
+                tags = getattr(workflow_class, 'tag_list', None)
+            if tags == Workflow.INHERIT_TAG_LIST:
+                tags = None
 
     task_list = create_unique_task_list(workflow_id)
     logger.info('using task list {}'.format(task_list))
