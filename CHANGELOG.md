@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.18.15
+-------
+
+- Bugfix: propagate signal (#312)
+- Enhancement: inherit tag list (#314)
+- * blank SWF decision execution context when needed
+* rename ambiguous "execution_context" to "run_context" (#310)
+
 0.18.14
 -------
 
