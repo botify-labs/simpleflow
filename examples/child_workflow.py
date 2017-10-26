@@ -70,7 +70,7 @@ class ChildWorkflowWithGetId(Workflow):
 
     def run(self, my_id=None):
         print('ChildWorkflowWithGetId: id={}, workflow_id={}'.format(
-            my_id, self.get_execution_context().get('workflow_id')
+            my_id, self.get_run_context().get('workflow_id')
         ))
 
 

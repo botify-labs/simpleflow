@@ -224,17 +224,17 @@ class ChildSignalsParentWorkflow(BaseWorkflow):
     name = 'child-workflow'
 
     def run(self):
-        execution_context = self.get_execution_context()
-        parent_workflow_id = execution_context.get('parent_workflow_id')
-        parent_run_id = execution_context.get('parent_run_id')
-        print(execution_context)
+        run_context = self.get_run_context()
+        parent_workflow_id = run_context.get('parent_workflow_id')
+        parent_run_id = run_context.get('parent_run_id')
+        print(run_context)
         f = self.submit(
             self.signal(
                 'ChildReady',
                 workflow_id=parent_workflow_id, run_id=parent_run_id,
                 me={
-                    'workflow_id': execution_context.get('workflow_id'),
-                    'run_id': execution_context.get('run_id'),
+                    'workflow_id': run_context.get('workflow_id'),
+                    'run_id': run_context.get('run_id'),
                 }
             )
         )
@@ -262,8 +262,8 @@ class ChildSignalsSelfWorkflow(BaseWorkflow):
     name = 'child-workflow'
 
     def run(self):
-        execution_context = self.get_execution_context()
-        print(execution_context)
+        run_context = self.get_run_context()
+        print(run_context)
         f1 = self.submit(
             self.signal(
                 'IAmReady',

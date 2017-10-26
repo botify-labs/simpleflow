@@ -43,7 +43,7 @@ class BasicWorkflow(Workflow):
     task_list = 'example'
 
     def run(self, x, t=30):
-        execution = self.get_execution_context()
+        execution = self.get_run_context()
         print('DEBUG: execution context: {}'.format(execution))
         y = self.submit(increment, x)
         yy = self.submit(Delay, t, y)
