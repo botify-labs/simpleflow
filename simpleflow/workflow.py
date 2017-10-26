@@ -32,6 +32,8 @@ class Workflow(Submittable):
     task_list = None
     task_priority = None
 
+    INHERIT_TAG_LIST = 'INHERIT_TAG_LIST'
+
     def __init__(self, executor):
         self._executor = executor
 

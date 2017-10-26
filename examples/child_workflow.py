@@ -51,6 +51,8 @@ class IdempotentChildWorkflow(Workflow):
     execution_timeout = 60 * 5
     idempotent = True
 
+    tag_list = Workflow.INHERIT_TAG_LIST
+
     def run(self, x):
         y = self.submit(ChildWorkflow, x, name='GRAND-CHILD', my_tag_list=['abc', 'def=3'])
         return y.result + randrange(1000000)
@@ -68,7 +70,7 @@ class ChildWorkflowWithGetId(Workflow):
 
     def run(self, my_id=None):
         print('ChildWorkflowWithGetId: id={}, workflow_id={}'.format(
-            my_id, self.get_execution_context().get('workflow_id')
+            my_id, self.get_run_context().get('workflow_id')
         ))
 
 
@@ -76,6 +78,7 @@ class ParentWorkflow(Workflow):
     name = 'basic_parent'
     version = 'example'
     task_list = 'example'
+    tag_list = ['these', 'are', 'tags']
 
     def __init__(self, executor):
         super(ParentWorkflow, self).__init__(executor)

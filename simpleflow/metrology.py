@@ -136,7 +136,7 @@ class MetrologyWorkflow(Workflow):
         if settings.METROLOGY_PATH_PREFIX:
             path.append(settings.METROLOGY_PATH_PREFIX)
 
-        context = self.get_execution_context()
+        context = self.get_run_context()
         path.append(urllib.parse.quote_plus(context["workflow_id"]))
         path.append(urllib.parse.quote_plus(context["run_id"]))
         return str(os.path.join(*path))
