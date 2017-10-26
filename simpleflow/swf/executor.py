@@ -664,7 +664,7 @@ class Executor(executor.Executor):
             self._idempotent_tasks_to_submit.add(task_identifier)
 
         # NB: ``decisions`` contains a single decision.
-        decisions = a_task.schedule(self.domain, task_list, priority=self.current_priority)
+        decisions = a_task.schedule(self.domain, task_list, priority=self.current_priority, executor=self)
 
         # Ready to schedule
         if isinstance(a_task, ActivityTask):
