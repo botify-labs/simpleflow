@@ -9,5 +9,6 @@ ADD . /code/simpleflow
 
 WORKDIR /code/simpleflow
 
+RUN pip install .
 RUN pip install -r requirements-dev.txt
 RUN python setup.py develop
