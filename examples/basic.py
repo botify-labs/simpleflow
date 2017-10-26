@@ -41,6 +41,7 @@ class BasicWorkflow(Workflow):
     name = 'basic'
     version = 'example'
     task_list = 'example'
+    tag_list = ['a=1', 'b=foo']
 
     def run(self, x, t=30):
         execution = self.get_run_context()

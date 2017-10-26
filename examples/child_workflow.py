@@ -78,6 +78,7 @@ class ParentWorkflow(Workflow):
     name = 'basic_parent'
     version = 'example'
     task_list = 'example'
+    tag_list = ['these', 'are', 'tags']
 
     def __init__(self, executor):
         super(ParentWorkflow, self).__init__(executor)
