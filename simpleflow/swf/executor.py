@@ -11,7 +11,6 @@ import re
 import traceback
 
 import simpleflow.task as base_task
-from simpleflow.swf.process.decider.decisions_and_context import DecisionsAndContext
 from swf import format
 import swf.exceptions
 import swf.models
@@ -29,6 +28,7 @@ from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
+from simpleflow.swf.utils import DecisionsAndContext
 from simpleflow.swf.task import (
     SwfTask,
     ActivityTask,
@@ -919,7 +919,6 @@ class Executor(executor.Executor):
         self.before_replay()
 
         try:
-            self.propagate_signals()
             if self._history.cancel_requested:
                 decisions = self.handle_cancel_requested()
                 if decisions is not None:
@@ -928,6 +927,7 @@ class Executor(executor.Executor):
                     if decref_workflow:
                         self.decref_workflow()
                     return DecisionsAndContext(decisions)
+            self.propagate_signals()
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
             logger.info('{} open activities ({} decisions)'.format(
@@ -1096,17 +1096,19 @@ class Executor(executor.Executor):
     def _run_id(self):
         return self._run_context.get('run_id')
 
-    def signal(self, name, workflow_id=None, run_id=None, propagate=True, *args, **kwargs):
+    def signal(self, name, *args, **kwargs):
         """
         Send a signal.
+        Pop workflow_id, run_id and propagate (default: True) from the kwargs.
+        If workflow_id is not set or falsy, use the current workflow_id/run_id.
         :param name:
-        :param workflow_id:
-        :param run_id:
-        :param propagate:
         :param args:
         :param kwargs:
         :return:
         """
+        workflow_id = kwargs.pop('workflow_id', None)
+        run_id = kwargs.pop('run_id', None)
+        propagate = kwargs.pop('propagate', True)
         logger.debug('signal: name={name}, workflow_id={workflow_id}, run_id={run_id}, propagate={propagate}'.format(
             name=name,
             workflow_id=workflow_id if workflow_id else self._workflow_id,
@@ -1148,6 +1150,8 @@ class Executor(executor.Executor):
 
         known_workflows_ids = frozenset(known_workflows_ids)
 
+        signals_scheduled = False
+
         for signal in history.signals.values():
             input = signal['input']
             if not isinstance(input, dict):  # foreign signal: don't try processing it
@@ -1156,34 +1160,31 @@ class Executor(executor.Executor):
             if not propagate:
                 continue
             name = signal['name']
-            orig_workflow_id = input.get('__workflow_id')
-            orig_run_id = input.get('__run_id')
 
-            input = {
-                'args': input.get('args'),
-                'kwargs': input.get('kwargs'),
-                '__workflow_id': self._workflow_id,
-                '__run_id': self._run_id,
-            }
+            args = input.get('args', ())
+            kwargs = input.get('kwargs', {})
             sender = (
-                signal['external_workflow_id'] or orig_workflow_id,
-                signal['external_run_id'] or orig_run_id
+                signal['external_workflow_id'],
+                signal['external_run_id']
             )
             signaled_workflows_ids = set(
                 (w['workflow_id'], w['run_id']) for w in history.signaled_workflows[name]
             )
-            signaled_workflows_ids.add((orig_workflow_id, orig_run_id))
             not_signaled_workflows_ids = list(known_workflows_ids - signaled_workflows_ids - {sender})
+            extra_input = {'__propagate': propagate}
             for workflow_id, run_id in not_signaled_workflows_ids:
-                try:
-                    self._execution.signal(
-                        signal_name=name,
-                        input=input,
-                        workflow_id=workflow_id,
-                        run_id=run_id,
-                    )
-                except swf.models.workflow.WorkflowExecutionDoesNotExist:
-                    logger.info('Workflow {} {} disappeared'.format(workflow_id, run_id))
+                self.schedule_task(SignalTask(
+                    name,
+                    workflow_id,
+                    run_id,
+                    None,
+                    extra_input,
+                    *args,
+                    **kwargs
+                ))
+                signals_scheduled = True
+        if signals_scheduled:
+            raise exceptions.ExecutionBlocked()
 
     def record_marker(self, name, details=None):
         return MarkerTask(name, details)

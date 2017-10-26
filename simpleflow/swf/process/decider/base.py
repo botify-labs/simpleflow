@@ -10,10 +10,13 @@ import swf.models.decision
 
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
-from simpleflow.swf.process.decider.decisions_and_context import DecisionsAndContext
+from simpleflow.swf.utils import DecisionsAndContext
+
 
 if False:
     from typing import Any, List, Optional, Union  # NOQA
+    from swf.responses import Response  # NOQA
+    from simpleflow.swf.executor import Executor  # NOQA
 
 
 logger = logging.getLogger(__name__)
@@ -41,12 +44,20 @@ class DeciderPoller(Poller, swf.actors.Decider):
     :ivar workflow_name: concatenated workflows names.
     :type workflow_name: str
     :ivar _workflow_executors: executors dict: workflow name -> executor
-    :type _workflow_executors: dict[str, simpleflow.swf.executor.Executor]
+    :type _workflow_executors: Dict[str, Executor]
     :ivar nb_retries: # of retries allowed
     :type nb_retries: int
     """
-    def __init__(self, workflow_executors, domain, task_list, is_standalone, nb_retries=3,
-                 *args, **kwargs):
+    def __init__(self,
+                 workflow_executors,  # type: List[Executor]
+                 domain,  # type: swf.models.Domain
+                 task_list,  # type: str
+                 is_standalone,  # type: bool
+                 nb_retries=3,  # type: int
+                 *args,
+                 **kwargs
+                 ):
+        # type: (...) -> None
         """
         The decider is an actor that reads the full history of the workflow
         execution and decides what happens next. The :class:`DeciderPoller`
@@ -232,6 +243,7 @@ class DeciderWorker(object):
 
 
 def process_decision(poller, decision_response):
+    # type: (DeciderPoller, Response) -> None
     logger.debug("process_decision() pid={}".format(os.getpid()))
     logger.info("taking decision for workflow {}".format(poller.workflow_name))
     decisions = poller.decide(decision_response)

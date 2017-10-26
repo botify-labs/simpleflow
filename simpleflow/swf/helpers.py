@@ -4,22 +4,21 @@ import getpass
 import json
 import os
 import socket
-from importlib import import_module
+
+from future.utils import iteritems
 
 import swf.exceptions
 import swf.models
 import swf.querysets
-from future.utils import iteritems
-from simpleflow.activity import Activity
-from simpleflow.utils import json_dumps
 from simpleflow.dispatch import dynamic_dispatcher
-
+from simpleflow.utils import json_dumps
 from .stats import pretty
 
 __all__ = [
     'show_workflow_profile',
     'show_workflow_status',
     'list_workflow_executions',
+    'swf_identity',
 ]
 
 
@@ -152,7 +151,7 @@ def swf_identity():
     if "SIMPLEFLOW_IDENTITY" in os.environ:
         try:
             extra_keys = json.loads(os.environ["SIMPLEFLOW_IDENTITY"])
-        except:
+        except Exception:
             extra_keys = {}
         for key, value in iteritems(extra_keys):
             identity[key] = value

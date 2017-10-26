@@ -2,7 +2,11 @@ from . import settings
 from . import registry
 
 
-__all__ = ['with_attributes', 'Activity']
+__all__ = [
+    'with_attributes',
+    'Activity',
+    'PRIORITY_NOT_SET',
+]
 
 
 class NotSet(object):

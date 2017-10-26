@@ -289,3 +289,52 @@ class ParentSignalsWorkflow6(BaseWorkflow):
         child_signal = self.submit(self.wait_signal('IAmReady'))
         assert child_signal.finished is False
         print('Parent: end')
+
+
+# TODO: make integration tests of these
+
+class ChildWorkflowSendingSignals(Workflow):
+    name = 'child'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self):
+        return self.submit(
+            Chain(
+                Group(
+                    ChildWorkflowWaitingSignals,
+                    self.signal('signal', propagate=True),
+                    self.signal('signal 2', propagate=True)
+                ),
+            )
+        ).result
+
+
+class ChildWorkflowWaitingSignals(Workflow):
+    name = 'child_2'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self):
+        return self.submit(
+            Chain(
+                Group(
+                    self.wait_signal('signal'),
+                    self.wait_signal('signal 2'),
+                ),
+            )
+        ).result
+
+
+class WorkflowWithTwoChildren(Workflow):
+    name = 'parent'
+    version = 'example'
+    task_list = 'example'
+
+    def run(self, *args, **kwargs):
+        return self.submit(
+            Group(
+                ChildWorkflowWaitingSignals,
+                ChildWorkflowSendingSignals,
+            )
+        ).result
