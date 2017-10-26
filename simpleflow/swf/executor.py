@@ -1099,6 +1099,8 @@ class Executor(executor.Executor):
     def signal(self, name, *args, **kwargs):
         """
         Send a signal.
+        Pop workflow_id, run_id and propagate (default: True) from the kwargs.
+        If workflow_id is not set or falsy, use the current workflow_id/run_id.
         :param name:
         :param args:
         :param kwargs:
