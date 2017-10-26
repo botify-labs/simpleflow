@@ -51,6 +51,8 @@ class IdempotentChildWorkflow(Workflow):
     execution_timeout = 60 * 5
     idempotent = True
 
+    tag_list = Workflow.INHERIT_TAG_LIST
+
     def run(self, x):
         y = self.submit(ChildWorkflow, x, name='GRAND-CHILD', my_tag_list=['abc', 'def=3'])
         return y.result + randrange(1000000)
