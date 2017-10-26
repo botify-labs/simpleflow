@@ -55,6 +55,10 @@ markdown_extensions:
 pages:
   - Intro: index.md
   - Installation: installation.md
+  - Architecture:
+    - Standalone: architecture/standalone.md
+    - Multiprocess: architecture/multiprocess.md
+    - Kubernetes: architecture/kubernetes.md
   - Quickstart: quickstart.md
   - Features:
     - SWF Object Layer: features/swf_layer.md
