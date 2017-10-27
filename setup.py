@@ -76,6 +76,8 @@ DEPS = [
     'future',
     'boto>=2.38.0',
     'diskcache==2.4.1',
+    'Jinja2>=2.8',
+    'kubernetes==3.0.0',
     'lazy_object_proxy',
     'tabulate>=0.7.3,<0.8.0',
     'setproctitle',
@@ -83,6 +85,7 @@ DEPS = [
     'psutil>=3.2.1',
     'pytz',
     'typing',
+    'PyYAML',
 ]
 if PY2:
     DEPS += [

@@ -25,7 +25,7 @@ class FakePoller(Poller):
 
 
 class TestSupervisor(IntegrationTestCase):
-    @mark.skipif(platform.system() == 'Darwin', reason="psutil process statuses are buggy on OSX")
+    @mark.xfail(platform.system() == 'Darwin', reason="psutil process statuses are buggy on OSX")
     def test_sigterm_handling(self):
         """
         Tests that SIGTERM is correctly ignored by the poller.

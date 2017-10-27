@@ -1,3 +1,4 @@
+import re
 from zlib import adler32
 
 from . import retry  # NOQA
@@ -57,3 +58,12 @@ def _some_str(value):
         return str(value)
     except:
         return '<unprintable %s object>' % type(value).__name__
+
+
+def to_k8s_identifier(string):
+    # NB: K8S identifiers are only lc letters + "." + "-"
+    # and we use "." as a separator in many names
+    string = string.lower()
+    string = re.sub(r"[^a-z-]", "-", string)
+    string = re.sub(r"--+", "-", string)
+    return string

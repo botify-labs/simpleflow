@@ -9,7 +9,7 @@ from simpleflow.process import NamedMixin, with_state
 
 
 class TestNamedMixin(unittest.TestCase):
-    @mark.skipif(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
+    @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_with_state_decorator(self):
         # example class used below
         class Example(NamedMixin):
@@ -24,7 +24,7 @@ class TestNamedMixin(unittest.TestCase):
         inst.run()
         expect(Process().name()).to.equal("simpleflow Example()[running]")
 
-    @mark.skipif(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
+    @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_named_mixin_exposed_properties(self):
         # example class used below
         class Example(NamedMixin):

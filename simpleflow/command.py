@@ -23,8 +23,8 @@ from simpleflow.settings import logging_formatter
 from simpleflow.settings.logging_formatter import ColorModes
 from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
-from simpleflow.swf.process import decider
-from simpleflow.swf.process import worker
+from simpleflow.swf.constants import VALID_PROCESS_MODES
+from simpleflow.swf.process import decider, worker
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_execution
 from simpleflow.utils import json_dumps
@@ -389,6 +389,17 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
     )
 
 
+@click.option('--poll-data',
+              help='Provide a base64 encoded json dump of the SWF poll response, instead of polling SWF',
+              )
+@click.option('--process-mode',
+              type=click.Choice(VALID_PROCESS_MODES),
+              default='local',
+              help='Whether to process the task locally or in a Kubernetes job (default=local)',
+              )
+@click.option('--one-task',
+              is_flag=True,
+              help='Run only one task and shut down (no supervisor).')
 @click.option('--heartbeat',
               type=int,
               required=False,
@@ -396,30 +407,34 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
               help='Heartbeat interval in seconds (0 to disable heartbeating).')
 @click.option('--nb-processes', '-N', type=int)
 @click.option('--log-level', '-l')
-@click.option('--task-list',
-              required=True,
-              )
+@click.option('--task-list')
 @click.option('--domain', '-d',
               envvar='SWF_DOMAIN',
               required=True,
               help='SWF Domain')
-@click.argument('unused_workflow',
-                required=False)
 @cli.command('worker.start', help='Start a worker process to handle activity tasks.')
-def start_worker(unused_workflow, domain, task_list, log_level, nb_processes, heartbeat):
+def start_worker(domain, task_list, log_level, nb_processes, heartbeat, one_task, process_mode, poll_data):
     if log_level:
         logger.warning(
             "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
         )
-    if unused_workflow:
-        logger.warning(
-            "Deprecated: workflow is not used anymore and will be removed in the future"
-        )
+
+    if process_mode == "kubernetes" and poll_data:
+        # don't accept to have a worker that doesn't poll AND doesn't process
+        # since it would be just a gate to a scheduling infinite loop
+        raise ValueError("--process-mode=kubernetes and --poll-data options are exclusive")
+
+    if not task_list and not poll_data:
+        raise ValueError("Please provide a --task-list or some data via --poll-data")
+
     worker.command.start(
         domain,
         task_list,
         nb_processes,
         heartbeat,
+        one_task,
+        process_mode,
+        poll_data,
     )
 
 
