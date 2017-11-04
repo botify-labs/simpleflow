@@ -1,11 +1,11 @@
 # py.test plugin for rerunning flaky tests
-flaky==3.3.0
+flaky
 invoke
-mock==1.0.1
-moto==0.4.31
-pytest==3.0.1
+mock
+moto
+pytest
 sphinx
 sphinx_rtd_theme
-sure==1.4.0
-vcrpy==1.10.0
+sure
+vcrpy
 wheel
