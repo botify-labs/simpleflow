@@ -7,7 +7,11 @@ from simpleflow.constants import MINUTE, HOUR
 from simpleflow.local.executor import Executor
 
 import boto
-from moto import mock_s3
+
+try:
+    from moto import mock_s3_deprecated as mock_s3
+except ImportError:
+    from moto import mock_s3
 
 
 @with_attributes(task_list='test_task_list')

@@ -1,8 +1,13 @@
 import json
 import unittest
 
-from moto import mock_swf, mock_s3
+try:
+    from moto import mock_swf_deprecated as mock_swf, mock_s3_deprecated as mock_s3
+except ImportError:
+    from moto import mock_swf, mock_s3
+
 import boto
+
 from simpleflow.local import Executor
 
 from simpleflow.canvas import Chain

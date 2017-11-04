@@ -8,7 +8,11 @@ from builtins import range
 
 import boto
 from mock import patch
-from moto import mock_swf
+
+try:
+    from moto import mock_swf_deprecated as mock_swf
+except ImportError:
+    from moto import mock_swf
 
 import swf.models
 import swf.models.decision
