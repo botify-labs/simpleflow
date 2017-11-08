@@ -13,7 +13,7 @@ This architecture splits activity workers in two parts:
   the communication with SWF afterward: hearbeats, response when activity is finished.
 
 <div style="text-align:center; padding:15px;">
-  <img src="/../schemas/simpleflow_architecture_kubernetes.svg" title="Kubernetes Architecture">
+  <img src="./../../schemas/simpleflow_architecture_kubernetes.svg" title="Kubernetes Architecture">
 </div>
 
 There are a few limitations with this design:

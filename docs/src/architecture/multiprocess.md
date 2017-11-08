@@ -11,7 +11,7 @@ If you're not familiar with the 3 standard roles around an SWF setup, go read th
 3 roles are potentially distributed on different machines:
 
 <div style="text-align:center; padding:15px;">
-  <img src="/../schemas/simpleflow_architecture_multiprocessing.svg" title="Multiprocess Architecture">
+  <img src="./../../schemas/simpleflow_architecture_multiprocessing.svg" title="Multiprocess Architecture">
 </div>
 
 A few notes about this schema:
