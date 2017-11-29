@@ -118,8 +118,6 @@ class WorkflowTask(Task):
         self.kwargs = self.resolve_kwargs(**kwargs)
 
         if get_workflow_id:
-            if self.idempotent:
-                raise Exception('"get_workflow_id" and "idempotent" are mutually exclusive')
             self.id = get_workflow_id(workflow, *self.args, **self.kwargs)
         else:
             self.id = None
