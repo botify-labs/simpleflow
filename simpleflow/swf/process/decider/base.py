@@ -4,6 +4,7 @@ import logging
 import multiprocessing
 import os
 
+from swf import format
 import swf.actors
 import swf.exceptions
 import swf.models.decision
@@ -246,6 +247,7 @@ def process_decision(poller, decision_response):
     # type: (DeciderPoller, Response) -> None
     logger.debug("process_decision() pid={}".format(os.getpid()))
     logger.info("taking decision for workflow {}".format(poller.workflow_name))
+    format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     decisions = poller.decide(decision_response)
     try:
         logger.info("completing decision for workflow {}".format(poller.workflow_name))

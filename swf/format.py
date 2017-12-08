@@ -13,6 +13,9 @@ from simpleflow.constants import HOUR
 from simpleflow.utils import json_dumps, json_loads_or_raw
 
 
+JUMBO_FIELDS_MEMORY_CACHE = {}
+
+
 def _jumbo_fields_bucket():
     # wrapped into a function so easier to override for tests
     bucket = os.getenv("SIMPLEFLOW_JUMBO_FIELDS_BUCKET")
@@ -79,6 +82,9 @@ def _push_jumbo_field(message):
 
 
 def _pull_jumbo_field(location):
+    if JUMBO_FIELDS_MEMORY_CACHE.get(location):
+        return JUMBO_FIELDS_MEMORY_CACHE[location]
+
     bucket, path = location.replace(constants.JUMBO_FIELDS_PREFIX, "").split("/", 1)
 
     # cache jumbo fields content for better efficiency across decider replays
@@ -98,6 +104,7 @@ def _pull_jumbo_field(location):
         logger.warning("diskcache: got an OperationalError, skipping cache usage")
 
     content = storage.pull_content(bucket, path)
+    JUMBO_FIELDS_MEMORY_CACHE[location] = content
 
     if cache:
         try:
