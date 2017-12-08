@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.19.2
+------
+
+- Slow jumbo cache fixes (#320)
+
 0.19.1
 ------
 
