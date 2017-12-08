@@ -4,7 +4,7 @@
     
     <url>
      <loc>/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -12,7 +12,7 @@
     
     <url>
      <loc>/installation/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -21,19 +21,19 @@
         
     <url>
      <loc>/architecture/standalone/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/architecture/multiprocess/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/architecture/kubernetes/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -42,7 +42,7 @@
     
     <url>
      <loc>/quickstart/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -51,31 +51,31 @@
         
     <url>
      <loc>/features/swf_layer/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/features/command_line/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/features/program_tasks/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/features/jumbo_fields/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/features/signals/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -84,7 +84,7 @@
     
     <url>
      <loc>/development/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -92,7 +92,7 @@
     
     <url>
      <loc>/contributing/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -100,7 +100,7 @@
     
     <url>
      <loc>/license/</loc>
-     <lastmod>2017-11-08</lastmod>
+     <lastmod>2017-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
     

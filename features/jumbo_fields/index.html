@@ -516,11 +516,16 @@ prefix is here for implementation purposes, and may be extended later with other
 backends such as <code>simpleflow+ssh</code> or <code>simpleflow+gs</code>.</p>
 <p>The second word provides the length of the object in bytes, so a client parsing
 the SWF history can decide if it's worth it to pull/decode the object.</p>
-<p>For now jumbo fields are limited to 5MB in size. Simpleflow will perform disk caching
-for this feature to avoid issuing too many queries to S3, which would slow down
-the deciders especially. Disk cache is located at <code>/tmp/simpleflow-cache</code> and is
-limited to 1GB, with a LRU eviction strategy. It's performed with the
-<a href="http://www.grantjenks.com/docs/diskcache/">DiskCache library</a>.</p>
+<p>For now jumbo fields are limited to 5MB in size.</p>
+<p>Simpleflow will optionally perform disk caching for this feature to avoid
+issuing too many queries to S3. The disk cache is enabled if you set the
+<code>SIMPLEFLOW_ENABLE_DISK_CACHE</code> environment variable. The resulting disk
+cache will be limited to 1GB, with a LRU eviction strategy. It uses
+Sqlite3 under the hood and it's powered by the
+<a href="http://www.grantjenks.com/docs/diskcache/">DiskCache library</a> library.
+Note that this cache used to be enabled by default, but it's not anymore,
+since it proved to slow things down under certain circumstances that we
+couldn't track down precisely.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <p>You have to configure an environment variable to tell simpleflow where to store
 things (which implicitly enables the feature by the way):</p>
