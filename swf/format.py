@@ -116,7 +116,10 @@ def _push_jumbo_field(message):
     else:
         bucket = bucket_with_dir
         path = uuid
+
     storage.push_content(bucket, path, message)
+    _set_cached(path, message)
+
     return "{}{}/{} {}".format(constants.JUMBO_FIELDS_PREFIX, bucket, path, size)
 
 
