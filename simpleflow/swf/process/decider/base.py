@@ -245,15 +245,17 @@ class DeciderWorker(object):
 
 def process_decision(poller, decision_response):
     # type: (DeciderPoller, Response) -> None
+    workflow_id = decision_response.execution.workflow_id
+    workflow_str = "workflow {} ({})".format(workflow_id, poller.workflow_name)
     logger.debug("process_decision() pid={}".format(os.getpid()))
-    logger.info("taking decision for workflow {}".format(poller.workflow_name))
+    logger.info("taking decision for {}".format(workflow_str))
     format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     decisions = poller.decide(decision_response)
     try:
-        logger.info("completing decision for workflow {}".format(poller.workflow_name))
+        logger.info("completing decision for {}".format(workflow_str))
         poller.complete_with_retry(decision_response.token, decisions)
     except Exception as err:
-        logger.error("cannot complete decision: {}".format(err))
+        logger.error("cannot complete decision for {}: {}".format(workflow_str, err))
 
 
 def spawn(poller, decision_response):
