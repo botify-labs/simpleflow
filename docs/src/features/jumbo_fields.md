@@ -24,11 +24,17 @@ backends such as `simpleflow+ssh` or `simpleflow+gs`.
 The second word provides the length of the object in bytes, so a client parsing
 the SWF history can decide if it's worth it to pull/decode the object.
 
-For now jumbo fields are limited to 5MB in size. Simpleflow will perform disk caching
-for this feature to avoid issuing too many queries to S3, which would slow down
-the deciders especially. Disk cache is located at `/tmp/simpleflow-cache` and is
-limited to 1GB, with a LRU eviction strategy. It's performed with the
-[DiskCache library](http://www.grantjenks.com/docs/diskcache/).
+For now jumbo fields are limited to 5MB in size.
+
+Simpleflow will optionally perform disk caching for this feature to avoid
+issuing too many queries to S3. The disk cache is enabled if you set the
+`SIMPLEFLOW_ENABLE_DISK_CACHE` environment variable. The resulting disk
+cache will be limited to 1GB, with a LRU eviction strategy. It uses
+Sqlite3 under the hood and it's powered by the
+[DiskCache library](http://www.grantjenks.com/docs/diskcache/) library.
+Note that this cache used to be enabled by default, but it's not anymore,
+since it proved to slow things down under certain circumstances that we
+couldn't track down precisely.
 
 
 Configuration

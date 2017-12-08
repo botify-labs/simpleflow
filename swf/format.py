@@ -9,6 +9,7 @@ from . import constants
 from .core import logger
 
 from simpleflow import storage
+from simpleflow.settings import SIMPLEFLOW_ENABLE_DISK_CACHE
 from simpleflow.constants import HOUR
 from simpleflow.utils import json_dumps, json_loads_or_raw
 
@@ -73,20 +74,21 @@ def _get_cached(path):
         return JUMBO_FIELDS_MEMORY_CACHE[path]
 
     # 2/ disk cache
-    try:
-        # NB: this cache may also be triggered on activity workers, where it's not that
-        # useful. The performance hit should be minimal. To be improved later.
-        # NB2: cache has to be lazily instantiated here, cache objects do not survive forks,
-        # see DiskCache docs.
-        cache = Cache(constants.CACHE_DIR)
-        # generate a dedicated cache key because this cache may be shared with other
-        # features of simpleflow at some point
-        cache_key = "jumbo_fields/" + path.split("/")[-1]
-        if cache_key in cache:
-            logger.debug("diskcache: getting key={} from cache_dir={}".format(cache_key, constants.CACHE_DIR))
-            return cache[cache_key]
-    except OperationalError:
-        logger.warning("diskcache: got an OperationalError, skipping cache usage")
+    if SIMPLEFLOW_ENABLE_DISK_CACHE:
+        try:
+            # NB: this cache may also be triggered on activity workers, where it's not that
+            # useful. The performance hit should be minimal. To be improved later.
+            # NB2: cache has to be lazily instantiated here, cache objects do not survive forks,
+            # see DiskCache docs.
+            cache = Cache(constants.CACHE_DIR)
+            # generate a dedicated cache key because this cache may be shared with other
+            # features of simpleflow at some point
+            cache_key = "jumbo_fields/" + path.split("/")[-1]
+            if cache_key in cache:
+                logger.debug("diskcache: getting key={} from cache_dir={}".format(cache_key, constants.CACHE_DIR))
+                return cache[cache_key]
+        except OperationalError:
+            logger.warning("diskcache: got an OperationalError, skipping cache usage")
 
     # nothing to return, but better be explicit here
     return
@@ -97,13 +99,14 @@ def _set_cached(path, content):
     JUMBO_FIELDS_MEMORY_CACHE[path] = content
 
     # 2/ disk cache
-    try:
-        cache = Cache(constants.CACHE_DIR)
-        cache_key = "jumbo_fields/" + path.split("/")[-1]
-        logger.debug("diskcache: setting key={} on cache_dir={}".format(cache_key, constants.CACHE_DIR))
-        cache.set(cache_key, content, expire=3 * HOUR)
-    except OperationalError:
-        logger.warning("diskcache: got an OperationalError on write, skipping cache write")
+    if SIMPLEFLOW_ENABLE_DISK_CACHE:
+        try:
+            cache = Cache(constants.CACHE_DIR)
+            cache_key = "jumbo_fields/" + path.split("/")[-1]
+            logger.debug("diskcache: setting key={} on cache_dir={}".format(cache_key, constants.CACHE_DIR))
+            cache.set(cache_key, content, expire=3 * HOUR)
+        except OperationalError:
+            logger.warning("diskcache: got an OperationalError on write, skipping cache write")
 
 
 def _push_jumbo_field(message):
