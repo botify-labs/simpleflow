@@ -70,7 +70,7 @@ def encode(message, max_length, allow_jumbo_fields=True):
 
 def _get_cached(path):
     # 1/ memory cache
-    if JUMBO_FIELDS_MEMORY_CACHE.get(path):
+    if path in JUMBO_FIELDS_MEMORY_CACHE:
         return JUMBO_FIELDS_MEMORY_CACHE[path]
 
     # 2/ disk cache
