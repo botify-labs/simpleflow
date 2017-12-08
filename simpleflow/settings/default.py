@@ -51,3 +51,5 @@ LOGGING = {
         },
     }
 }
+
+SIMPLEFLOW_ENABLE_DISK_CACHE = False

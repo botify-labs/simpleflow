@@ -239,6 +239,7 @@ def process_task(poller, token, task):
     :type task: swf.models.ActivityTask
     """
     logger.debug('process_task() pid={}'.format(os.getpid()))
+    format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     worker = ActivityWorker()
     worker.process(poller, token, task)
 
