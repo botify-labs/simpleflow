@@ -67,6 +67,45 @@ def encode(message, max_length, allow_jumbo_fields=True):
     return message
 
 
+def _get_cached(path):
+    # 1/ memory cache
+    if JUMBO_FIELDS_MEMORY_CACHE.get(path):
+        return JUMBO_FIELDS_MEMORY_CACHE[path]
+
+    # 2/ disk cache
+    try:
+        # NB: this cache may also be triggered on activity workers, where it's not that
+        # useful. The performance hit should be minimal. To be improved later.
+        # NB2: cache has to be lazily instantiated here, cache objects do not survive forks,
+        # see DiskCache docs.
+        cache = Cache(constants.CACHE_DIR)
+        # generate a dedicated cache key because this cache may be shared with other
+        # features of simpleflow at some point
+        cache_key = "jumbo_fields/" + path.split("/")[-1]
+        if cache_key in cache:
+            logger.debug("diskcache: getting key={} from cache_dir={}".format(cache_key, constants.CACHE_DIR))
+            return cache[cache_key]
+    except OperationalError:
+        logger.warning("diskcache: got an OperationalError, skipping cache usage")
+
+    # nothing to return, but better be explicit here
+    return
+
+
+def _set_cached(path, content):
+    # 1/ memory cache
+    JUMBO_FIELDS_MEMORY_CACHE[path] = content
+
+    # 2/ disk cache
+    try:
+        cache = Cache(constants.CACHE_DIR)
+        cache_key = "jumbo_fields/" + path.split("/")[-1]
+        logger.debug("diskcache: setting key={} on cache_dir={}".format(cache_key, constants.CACHE_DIR))
+        cache.set(cache_key, content, expire=3 * HOUR)
+    except OperationalError:
+        logger.warning("diskcache: got an OperationalError on write, skipping cache write")
+
+
 def _push_jumbo_field(message):
     size = len(message)
     uuid = str(uuid4())
@@ -82,36 +121,14 @@ def _push_jumbo_field(message):
 
 
 def _pull_jumbo_field(location):
-    if JUMBO_FIELDS_MEMORY_CACHE.get(location):
-        return JUMBO_FIELDS_MEMORY_CACHE[location]
-
     bucket, path = location.replace(constants.JUMBO_FIELDS_PREFIX, "").split("/", 1)
 
-    # cache jumbo fields content for better efficiency across decider replays
-    # NB: for now the cache *will also* be triggered on activity workers, where it's
-    # not that useful. The performance hit should be minimal. To be improved later.
-    # NB2: cache has to be lazily instantiated here, cache objects do not survive forks,
-    # see DiskCache docs.
-    cache = None
-
-    try:
-        cache = Cache(constants.CACHE_DIR)
-        cache_key = "jumbo_fields/" + path.split("/")[-1]
-        if cache_key in cache:
-            logger.debug("diskcache: getting key={} from cache_dir={}".format(cache_key, constants.CACHE_DIR))
-            return cache[cache_key]
-    except OperationalError:
-        logger.warning("diskcache: got an OperationalError, skipping cache usage")
+    cached_value = _get_cached(path)
+    if cached_value:
+        return cached_value
 
     content = storage.pull_content(bucket, path)
-    JUMBO_FIELDS_MEMORY_CACHE[location] = content
-
-    if cache:
-        try:
-            logger.debug("diskcache: setting key={} on cache_dir={}".format(cache_key, constants.CACHE_DIR))
-            cache.set(cache_key, content, expire=3 * HOUR)
-        except OperationalError:
-            logger.warning("diskcache: got an OperationalError on write, skipping cache write")
+    _set_cached(path, content)
 
     return content
 
