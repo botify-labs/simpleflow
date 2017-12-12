@@ -4,10 +4,8 @@ import hashlib
 import logging
 import os
 
+from simpleflow.settings import SIMPLEFLOW_BINARIES_DIRECTORY
 from simpleflow.storage import pull
-
-
-LOCAL_BIN_DIR = "/tmp/simpleflow-binaries"
 
 
 logger = logging.getLogger(__name__)
@@ -52,7 +50,7 @@ class RemoteBinary(object):
 
     def _compute_local_directory(self):
         suffix = hashlib.md5(self.remote_location.encode("utf-8")).hexdigest()
-        return os.path.join(LOCAL_BIN_DIR, "{}-{}".format(self.name, suffix))
+        return os.path.join(SIMPLEFLOW_BINARIES_DIRECTORY, "{}-{}".format(self.name, suffix))
 
     def _compute_local_location(self):
         return os.path.join(self.local_directory, self.name)

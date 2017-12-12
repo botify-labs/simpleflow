@@ -53,3 +53,4 @@ LOGGING = {
 }
 
 SIMPLEFLOW_ENABLE_DISK_CACHE = False
+SIMPLEFLOW_BINARIES_DIRECTORY = '/tmp/simpleflow-binaries'
