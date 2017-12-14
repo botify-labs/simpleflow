@@ -72,15 +72,18 @@ class RemoteBinary(object):
         os.chmod(self.local_location, 0o755)
 
 
-# convenience helper
+# convenience helpers
+def download_binaries(binaries_map):
+    for binary, remote_location in binaries_map.items():
+        binary = RemoteBinary(binary, remote_location)
+        binary.download()
+        os.environ["PATH"] = binary.local_directory + ":" + os.environ["PATH"]
+
 def with_binaries(binaries_map):
     def decorator(func):
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
-            for binary, remote_location in binaries_map.items():
-                binary = RemoteBinary(binary, remote_location)
-                binary.download()
-                os.environ["PATH"] = binary.local_directory + ":" + os.environ["PATH"]
+            download_binaries(binaries_map)
             return func(*args, **kwargs)
         return wrapped
     return decorator
