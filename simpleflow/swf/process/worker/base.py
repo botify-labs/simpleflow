@@ -18,6 +18,7 @@ import swf.exceptions
 from swf.models import ActivityTask as BaseActivityTask
 from swf.responses import Response
 from simpleflow.dispatch import dynamic_dispatcher
+from simpleflow.download import download_binaries
 from simpleflow.job import KubernetesJob
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.constants import VALID_PROCESS_MODES
@@ -191,6 +192,8 @@ class ActivityWorker(object):
             kwargs = input.get('kwargs', {})
             context = sanitize_activity_context(task.context)
             context['domain_name'] = poller.domain.name
+            if input.get('meta', {}).get('binaries'):
+                download_binaries(input['meta']['binaries'])
             result = ActivityTask(activity, *args, context=context, **kwargs).execute()
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
