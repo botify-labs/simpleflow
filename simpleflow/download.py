@@ -4,6 +4,8 @@ import hashlib
 import logging
 import os
 
+from lockfile import FileLock
+
 from simpleflow.settings import SIMPLEFLOW_BINARIES_DIRECTORY
 from simpleflow.storage import pull
 
@@ -29,15 +31,16 @@ class RemoteBinary(object):
 
         # limit ourselves to S3 for now
         assert remote_location.startswith("s3://")
-
         self.remote_location = remote_location
         self.local_directory = self._compute_local_directory()
         self.local_location = self._compute_local_location()
+        self.lock_location = self._compute_lock_location()
 
     def download(self):
         self._mkdir_p(self.local_directory)
-        if not self._check_binary_present():
-            self._download_binary()
+        with FileLock(self.lock_location):
+            if not self._check_binary_present():
+                self._download_binary()
 
     def _mkdir_p(self, path):
         try:
@@ -54,6 +57,9 @@ class RemoteBinary(object):
 
     def _compute_local_location(self):
         return os.path.join(self.local_directory, self.name)
+
+    def _compute_lock_location(self):
+        return os.path.join(self.local_directory, ".{}.lock".format(self.name))
 
     def _check_binary_present(self):
         return os.access(self.local_location, os.X_OK)

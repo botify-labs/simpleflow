@@ -79,6 +79,7 @@ DEPS = [
     'Jinja2>=2.8',
     'kubernetes==3.0.0',
     'lazy_object_proxy',
+    'lockfile>=0.9.1',
     'tabulate>=0.7.3,<0.8.0',
     'setproctitle',
     'click',
