@@ -60,13 +60,13 @@ def sanitize_bucket_and_host(bucket):
     return bucket, location
 
 
-def get_bucket(bucket):
-    bucket, location = sanitize_bucket_and_host(bucket)
+def get_bucket(bucket_name):
+    bucket_name, location = sanitize_bucket_and_host(bucket_name)
     conn = get_connection(location)
-    if bucket not in BUCKET_CACHE:
-        bucket = conn.get_bucket(bucket)
-        BUCKET_CACHE[bucket] = bucket
-    return BUCKET_CACHE[bucket]
+    if bucket_name not in BUCKET_CACHE:
+        bucket = conn.get_bucket(bucket_name, validate=False)
+        BUCKET_CACHE[bucket_name] = bucket
+    return BUCKET_CACHE[bucket_name]
 
 
 def pull(bucket, path, dest_file):
