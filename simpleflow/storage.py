@@ -1,14 +1,24 @@
-from boto.s3 import connection
+import logging
+
+from boto.s3 import connect_to_region, connection
 from boto.s3.key import Key
+from boto.exception import S3ResponseError
 
 from . import settings
 
 
+logger = logging.getLogger(__name__)
+
 BUCKET_CACHE = {}
 
 
-def get_connection(host):
-    return connection.S3Connection(host=host)
+def get_connection(host_or_region):
+    # first case: we got a valid DNS (host)
+    if "." in host_or_region:
+        return connection.S3Connection(host=host_or_region)
+
+    # second case: we got a region
+    return connect_to_region(host_or_region)
 
 
 def sanitize_bucket_and_host(bucket):
@@ -16,6 +26,7 @@ def sanitize_bucket_and_host(bucket):
     if bucket is in following format : 'xxx.amazonaws.com/bucket_name',
     Returns a 2-values tuple ('bucket_name', 'xxx.amazonaws.com')
     """
+    # first case: we got a "<host>/<bucket_name>" input
     if "/" in bucket:
         host, bucket = bucket.split('/', 1)
         if "/" in bucket:
@@ -23,12 +34,35 @@ def sanitize_bucket_and_host(bucket):
         if not host.endswith('amazonaws.com'):
             raise ValueError('host should be a *.amazonaws.com URL')
         return bucket, host
-    return bucket, settings.SIMPLEFLOW_S3_HOST
+
+    # second case: we got a bucket name, we need to figure out which region it's in
+    try:
+        conn0 = connection.S3Connection()
+        bucket_obj = conn0.get_bucket(bucket, validate=False)
+
+        # get_location() returns a region or an empty string for us-east-1,
+        # historically named "US Standard" in some places. Maybe other S3
+        # calls support an empty string as region, but I prefer to be
+        # explicit here.
+        location = bucket_obj.get_location() or "us-east-1"
+    except S3ResponseError as e:
+        if e.error_code == "AccessDenied":
+            # probably not allowed to perform GetBucketLocation on this bucket
+            logger.warning("Access denied while trying to get location of bucket {}".format(bucket))
+            location = ""
+        else:
+            raise
+
+    # fallback for backward compatibility
+    if not location:
+        location = settings.SIMPLEFLOW_S3_HOST
+
+    return bucket, location
 
 
 def get_bucket(bucket):
-    bucket, host = sanitize_bucket_and_host(bucket)
-    conn = get_connection(host)
+    bucket, location = sanitize_bucket_and_host(bucket)
+    conn = get_connection(location)
     if bucket not in BUCKET_CACHE:
         bucket = conn.get_bucket(bucket)
         BUCKET_CACHE[bucket] = bucket

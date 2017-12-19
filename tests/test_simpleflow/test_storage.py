@@ -2,9 +2,10 @@ import os
 import unittest
 import tempfile
 import boto
+from mock import patch
 from moto import mock_s3
 
-from simpleflow import storage, settings
+from simpleflow import storage
 
 
 class TestGroup(unittest.TestCase):
@@ -67,14 +68,37 @@ class TestGroup(unittest.TestCase):
         keys = [k for k in storage.list_keys(self.bucket, None)]
         self.assertEquals(keys[0].key, "mykey.txt")
 
+    @mock_s3
     def test_sanitize_bucket_and_host(self):
+        self.create()
+
+        # bucket where "get_location" works: return bucket+region
         self.assertEquals(
-            storage.sanitize_bucket_and_host('mybucket'),
-            ('mybucket', settings.SIMPLEFLOW_S3_HOST))
+            storage.sanitize_bucket_and_host(self.bucket),
+            (self.bucket, 'us-east-1'))
+
+        # bucket where "get_location" doesn't work: return bucket + default region setting
+        def _access_denied():
+            from boto.exception import S3ResponseError
+            err = S3ResponseError("reason", "resp")
+            err.error_code = "AccessDenied"
+            raise err
+
+        with patch("boto.s3.bucket.Bucket.get_location", side_effect=_access_denied):
+            with patch("simpleflow.settings.SIMPLEFLOW_S3_HOST") as default:
+                self.assertEquals(
+                    storage.sanitize_bucket_and_host(self.bucket),
+                    (self.bucket, default))
+
+        # bucket where we provided a host/bucket: return bucket+host
         self.assertEquals(
-            storage.sanitize_bucket_and_host('s3-eu-west-1.amazonaws.com/mybucket'),
-            ('mybucket', 's3-eu-west-1.amazonaws.com'))
+            storage.sanitize_bucket_and_host('s3.amazonaws.com/{}'.format(self.bucket)),
+            (self.bucket, 's3.amazonaws.com'))
+
+        # bucket trivially invalid: raise
         with self.assertRaises(ValueError):
             storage.sanitize_bucket_and_host('any/mybucket')
+
+        # bucket with too many "/": raise
         with self.assertRaises(ValueError):
             storage.sanitize_bucket_and_host('s3-eu-west-1.amazonaws.com/mybucket/subpath')
