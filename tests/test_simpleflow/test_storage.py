@@ -8,6 +8,13 @@ from moto import mock_s3
 from simpleflow import storage
 
 
+# disable storage.BUCKET_LOCATIONS_CACHE because it interfers with tests
+class DevNullCache(dict):
+    def __setitem__(self, key, value):
+        pass
+storage.BUCKET_LOCATIONS_CACHE = DevNullCache()
+
+
 class TestGroup(unittest.TestCase):
 
     def create(self):

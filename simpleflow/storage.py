@@ -10,6 +10,7 @@ from . import settings
 logger = logging.getLogger(__name__)
 
 BUCKET_CACHE = {}
+BUCKET_LOCATIONS_CACHE = {}
 
 
 def get_connection(host_or_region):
@@ -35,6 +36,11 @@ def sanitize_bucket_and_host(bucket):
             raise ValueError('host should be a *.amazonaws.com URL')
         return bucket, host
 
+    # return location from cache is possible, so we don't issue "GetBucketLocation"
+    # calls with each other S3 call
+    if bucket in BUCKET_LOCATIONS_CACHE:
+        return bucket, BUCKET_LOCATIONS_CACHE[bucket]
+
     # second case: we got a bucket name, we need to figure out which region it's in
     try:
         conn0 = connection.S3Connection()
@@ -45,6 +51,9 @@ def sanitize_bucket_and_host(bucket):
         # calls support an empty string as region, but I prefer to be
         # explicit here.
         location = bucket_obj.get_location() or "us-east-1"
+
+        # save location for later use
+        BUCKET_LOCATIONS_CACHE[bucket] = location
     except S3ResponseError as e:
         if e.error_code == "AccessDenied":
             # probably not allowed to perform GetBucketLocation on this bucket
