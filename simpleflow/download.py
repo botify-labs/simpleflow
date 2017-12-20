@@ -79,11 +79,13 @@ def download_binaries(binaries_map):
         binary.download()
         os.environ["PATH"] = binary.local_directory + ":" + os.environ["PATH"]
 
+
 def with_binaries(binaries_map):
     def decorator(func):
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
             download_binaries(binaries_map)
             return func(*args, **kwargs)
+        wrapped.__wrapped__ = func
         return wrapped
     return decorator
