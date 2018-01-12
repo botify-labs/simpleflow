@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.20.0
+------
+
+- Feature/318/simpleflow download binary (#321)
+
 0.19.2
 ------
 
