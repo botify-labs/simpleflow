@@ -1,3 +1,4 @@
+from pprint import pformat
 import sys
 
 from future.utils import iteritems
@@ -13,6 +14,12 @@ def put_setting(key, value):
 def configure(dct):
     for k, v in iteritems(dct):
         put_setting(k, v)
+
+
+def print_settings():
+    for key in sorted(_keys):
+        value = getattr(sys.modules[__name__], key)
+        print("{}={}".format(key, pformat(value)))
 
 
 # initialize a list of settings names
