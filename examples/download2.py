@@ -30,7 +30,7 @@ class BasicWorkflow(Workflow):
                 binary: location_tpl.format(version=version)
             }
             msg = self.submit(use_custom_binary, [binary]).result
-            print(colorize("DEBUG", msg))
+            print(colorize("BLUE", msg))
 
 # Run with:
 # LOG_LEVEL=info simpleflow standalone --nb-deciders 1 --nb-workers 1 examples.download2.BasicWorkflow --input '[]' 2>&1

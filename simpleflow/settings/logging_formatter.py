@@ -31,6 +31,10 @@ def colorize(level, message):
         "INFO": GREEN,
         "DEBUG": BLUE,
         "NOTSET": END,
+        "RED": RED,
+        "GREEN": GREEN,
+        "YELLOW": YELLOW,
+        "BLUE": BLUE,
     }
 
     # colored string
