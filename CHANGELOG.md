@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.20.2
+------
+
+- add meta to metrology, upload stats only at the end of a task (#324)
+
 0.20.1
 ------
 
