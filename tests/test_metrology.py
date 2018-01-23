@@ -20,6 +20,7 @@ class MyMetrologyTask(metrology.MetrologyTask):
         with self.step('Step1') as step:
             step.metadata["num"] = self.num
             step.read.records = self.num
+        self.meta = "foo bar"
 
 
 class MyWorkflow(metrology.MetrologyWorkflow):
@@ -47,16 +48,19 @@ class MetrologyTestCase(unittest.TestCase):
         res = json.loads(storage.pull_content(
             settings.METROLOGY_BUCKET,
             "local/local/activity.0.json"))
-        self.assertEquals(res[0]["name"], "Step1")
-        self.assertEquals(res[0]["read"]["records"], 1)
-        self.assertEquals(res[0]["metadata"]["num"], 1)
+        self.assertEquals(res["meta"], "foo bar")
+        steps = res["steps"]
+        self.assertEquals(steps[0]["name"], "Step1")
+        self.assertEquals(steps[0]["read"]["records"], 1)
+        self.assertEquals(steps[0]["metadata"]["num"], 1)
 
         res = json.loads(storage.pull_content(
             settings.METROLOGY_BUCKET,
             "local/local/metrology.json"))
-        self.assertEquals(res[0][1]["metrology"][0]["name"], "Step1")
-        self.assertEquals(res[0][1]["metrology"][0]["read"]["records"], 1)
-        self.assertEquals(res[0][1]["metrology"][0]["metadata"]["num"], 1)
+        self.assertEquals(res[0][1]["metrology"]["meta"], "foo bar")
+        self.assertEquals(res[0][1]["metrology"]["steps"][0]["name"], "Step1")
+        self.assertEquals(res[0][1]["metrology"]["steps"][0]["read"]["records"], 1)
+        self.assertEquals(res[0][1]["metrology"]["steps"][0]["metadata"]["num"], 1)
 
 
 if __name__ == '__main__':

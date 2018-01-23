@@ -84,7 +84,10 @@ class ActivityTask(Task):
         if hasattr(method, 'execute'):
             task = method(*self.args, **self.kwargs)
             task.context = self.context
-            return task.execute()
+            result = task.execute()
+            if hasattr(task, 'post_execute'):
+                task.post_execute()
+            return result
         else:
             # NB: the following line attaches some *state* to the callable, so it
             # can be used directly for advanced usage. This works well because we

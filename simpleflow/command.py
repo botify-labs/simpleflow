@@ -690,5 +690,8 @@ def activity_rerun(domain,
     logger.info("Will re-run: {}(*{}, **{})".format(task, args, kwargs))
 
     # execute the activity task with the correct arguments
-    result = ActivityTask(task, *args, **kwargs).execute()
+    instance = ActivityTask(task, *args, **kwargs)
+    result = instance.execute()
+    if hasattr(instance, 'post_execute'):
+        instance.post_execute()
     logger.info("Result (JSON): {}".format(json_dumps(result, compact=False)))
