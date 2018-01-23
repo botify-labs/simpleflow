@@ -61,6 +61,7 @@ pages:
     - Kubernetes: architecture/kubernetes.md
   - Quickstart: quickstart.md
   - Features:
+    - Settings: features/settings.md
     - SWF Object Layer: features/swf_layer.md
     - Command Line: features/command_line.md
     - Program Tasks: features/program_tasks.md
