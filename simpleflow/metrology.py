@@ -52,7 +52,6 @@ class Step(object):
     def done(self):
         self.time_finished = time.time()
         self.time_total = self.time_finished - self.time_started
-        self.task.upload_stats()
 
     def get_stats(self):
         stats = OrderedDict([
@@ -84,6 +83,9 @@ class StepExecution(object):
 
 class MetrologyTask(object):
 
+    def can_upload(self):
+        return all(c in self.context for c in ('workflow_id', 'run_id', 'activity_id'))
+
     @property
     def metrology_path(self):
         path = []
@@ -109,19 +111,26 @@ class MetrologyTask(object):
         return step_exec
 
     def upload_stats(self):
-        stats = []
+        if not self.can_upload():
+            return
+
+        content = {"steps": [], "meta": getattr(self, 'meta', None)}
+
         for step in self.steps:
-            stats.append(step.get_stats())
+            content["steps"].append(step.get_stats())
 
         storage.push_content(
             settings.METROLOGY_BUCKET,
             self.metrology_path,
-            json.dumps(stats, indent=2),
+            json.dumps(content, indent=2),
             content_type="application/json")
 
     @abc.abstractmethod
     def execute(self):
         pass
+
+    def post_execute(self):
+        return self.upload_stats()
 
 
 class MetrologyWorkflow(Workflow):

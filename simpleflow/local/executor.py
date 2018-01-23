@@ -87,6 +87,8 @@ class Executor(executor.Executor):
 
         try:
             future._result = task.execute()
+            if hasattr(task, 'post_execute'):
+                task.post_execute()
             state = 'completed'
         except Exception as err:
             future._exception = err

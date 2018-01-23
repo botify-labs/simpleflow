@@ -463,6 +463,8 @@ def main():
             inst = callable_(*args, **kwargs)
             inst.context = context
             result = inst.execute()
+            if hasattr(inst, 'post_execute'):
+                inst.post_execute()
         else:
             callable_.context = context
             result = callable_(*args, **kwargs)
