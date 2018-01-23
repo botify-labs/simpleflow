@@ -19,10 +19,9 @@ import swf.exceptions
 import swf.models
 import swf.querysets
 
-from simpleflow import Workflow
+from simpleflow import Workflow, log
 from simpleflow.history import History
-from simpleflow.settings import logging_formatter, print_settings
-from simpleflow.settings.logging_formatter import ColorModes, colorize
+from simpleflow.settings import print_settings
 from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.constants import VALID_PROCESS_MODES
@@ -81,14 +80,19 @@ def comma_separated_list(value):
 @click.group()
 @click.option('--format')
 @click.option('--header/--no-header', default=False)
-@click.option('--color', type=click.Choice([ColorModes.AUTO, ColorModes.ALWAYS, ColorModes.NEVER]),
-              default=ColorModes.AUTO)
+@click.option('--color',
+              type=click.Choice([
+                  log.ColorModes.AUTO,
+                  log.ColorModes.ALWAYS,
+                  log.ColorModes.NEVER
+              ]),
+              default=log.ColorModes.AUTO)
 @click.version_option(version=__version__)
 @click.pass_context
 def cli(ctx, header, format, color):
     ctx.params['format'] = format
     ctx.params['header'] = header
-    logging_formatter.color_mode = color
+    log.color_mode = color
 
 
 def get_workflow_type(domain_name, workflow_class):
@@ -702,7 +706,7 @@ def activity_rerun(domain,
 def info(sections):
     @contextmanager
     def section(title):
-        print(colorize("BLUE", "# {}".format(title)))
+        print(log.colorize("BLUE", "# {}".format(title)))
         yield
         print("")
 

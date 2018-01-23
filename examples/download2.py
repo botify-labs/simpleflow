@@ -6,7 +6,7 @@ from simpleflow import (
     activity,
     Workflow,
 )
-from simpleflow.settings.logging_formatter import colorize
+from simpleflow.log import colorize
 
 
 @activity.with_attributes(task_list='quickstart', version='example')
