@@ -78,7 +78,7 @@ class ActivityTask(Task):
     def execute(self):
         method = self.activity.callable
 
-        if getattr(method, 'add_context_in_kwargs', False):                                                                                                                                                                                                                                                                                               
+        if getattr(method, 'add_context_in_kwargs', False):
             self.kwargs["context"] = self.context
 
         if hasattr(method, 'execute'):
