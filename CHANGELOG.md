@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.20.1
+------
+
+- inject context into python subprocess (#322)
+
 0.20.0
 ------
 
