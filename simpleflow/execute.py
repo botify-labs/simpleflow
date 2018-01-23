@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function
 
 import os
 import sys
+import json
 
 import time
 
@@ -193,6 +194,7 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
             sys.stdout.flush()
             sys.stderr.flush()
             result_str = None  # useless
+            context = kwargs.pop('context', {})
             with tempfile.TemporaryFile() as result_fd, tempfile.TemporaryFile() as error_fd:
                 dup_result_fd = os.dup(result_fd.fileno())  # remove FD_CLOEXEC
                 dup_error_fd = os.dup(error_fd.fileno())  # remove FD_CLOEXEC
@@ -203,6 +205,7 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
                     '--logger-name={}'.format(logger_name),
                     '--result-fd={}'.format(dup_result_fd),
                     '--error-fd={}'.format(dup_error_fd),
+                    '--context={}'.format(json_dumps(context)),
                 ]
                 if kill_children:
                     full_command.append('--kill-children')
@@ -245,6 +248,7 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
 
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
+        execute.add_context_in_kwargs = True
         return execute
 
     return wrap_callable
@@ -394,6 +398,10 @@ def main():
         help='callable arguments in JSON',
     )
     parser.add_argument(
+        '--context',
+        help='Activity Context',
+    )
+    parser.add_argument(
         '--logger-name',
         help='logger name',
     )
@@ -449,10 +457,14 @@ def main():
         callable_ = callable_.__wrapped__
     args = arguments.get('args', ())
     kwargs = arguments.get('kwargs', {})
+    context = json.loads(cmd_arguments.context)
     try:
         if hasattr(callable_, 'execute'):
-            result = callable_(*args, **kwargs).execute()
+            inst = callable_(*args, **kwargs)
+            inst.context = context
+            result = inst.execute()
         else:
+            callable_.context = context
             result = callable_(*args, **kwargs)
     except Exception as err:
         logger.error('Exception: {}'.format(err))
