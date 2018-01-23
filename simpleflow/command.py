@@ -696,29 +696,34 @@ def activity_rerun(domain,
     logger.info("Result (JSON): {}".format(json_dumps(result, compact=False)))
 
 
-@cli.command('info', help='Display versions, settings, and environment variables.')
-def info():
+@click.argument("sections", required=False, default="versions,settings,environment", type=comma_separated_list)
+@cli.command("info", help="Display versions, settings, and environment variables. "
+                          "Available sections: versions, settings, environment.")
+def info(sections):
     @contextmanager
     def section(title):
         print(colorize("BLUE", "# {}".format(title)))
         yield
         print("")
 
-    with section("Versions"):
-        print("simpleflow: {}".format(__version__))
-        version, build = sys.version.split("\n", 1)
-        print("python_version: {}".format(version))
-        print("python_build: {}".format(build))
-        print("platform: {}".format(platform.platform()))
+    if "versions" in sections:
+        with section("Versions"):
+            print("simpleflow: {}".format(__version__))
+            version, build = sys.version.split("\n", 1)
+            print("python_version: {}".format(version))
+            print("python_build: {}".format(build))
+            print("platform: {}".format(platform.platform()))
 
-    with section("Settings"):
-        print_settings()
+    if "settings" in sections:
+        with section("Settings"):
+            print_settings()
 
-    with section("Environment AWS* SIMPLEFLOW*"):
-        for key in sorted(os.environ.keys()):
-            if not key.startswith("AWS") and not key.startswith("SIMPLEFLOW"):
-                continue
-            value = os.environ[key]
-            if "SECRET" in key:
-                value = "<redacted>"
-            print("{}={}".format(key, value))
+    if "environment" in sections:
+        with section("Environment AWS* SIMPLEFLOW*"):
+            for key in sorted(os.environ.keys()):
+                if not key.startswith("AWS") and not key.startswith("SIMPLEFLOW"):
+                    continue
+                value = os.environ[key]
+                if "SECRET" in key:
+                    value = "<redacted>"
+                print("{}={}".format(key, value))

@@ -22,7 +22,7 @@ This is the simplest:
 ```
 $ export SIMPLEFLOW_IDENTITY='{"hostname":"machine.example.net"}'
 
-$ simpleflow info | grep IDENTITY
+$ simpleflow info settings | grep IDENTITY
 SIMPLEFLOW_IDENTITY='{"hostname":"machine.example.net"}'
 ```
 
@@ -38,7 +38,7 @@ SIMPLEFLOW_IDENTITY = '{"hostname":"harcoded.example.net"}'
 
 $ export SIMPLEFLOW_SETTINGS_MODULE='my.custom.module'
 
-$ simpleflow info | grep IDENTITY
+$ simpleflow info settings | grep IDENTITY
 SIMPLEFLOW_IDENTITY='{"hostname":"harcoded.example.net"}'
 ```
 
