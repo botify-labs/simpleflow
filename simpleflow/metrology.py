@@ -130,7 +130,7 @@ class MetrologyTask(object):
         pass
 
     def post_execute(self):
-        return self.upload_stats()
+        self.upload_stats()
 
 
 class MetrologyWorkflow(Workflow):
