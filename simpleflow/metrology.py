@@ -116,7 +116,7 @@ class MetrologyTask(object):
 
         content = {"steps": [], "meta": getattr(self, 'meta', None)}
 
-        for step in self.steps:
+        for step in getattr(self, 'steps', []):
             content["steps"].append(step.get_stats())
 
         storage.push_content(
