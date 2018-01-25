@@ -1,7 +1,7 @@
 import logging  # NOQA
 import os
 
-from .logging_formatter import SimpleflowFormatter
+from simpleflow.log import SimpleflowFormatter
 
 
 WORKFLOW_DEFAULT_TASK_LIST = 'default'

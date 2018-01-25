@@ -6,7 +6,7 @@ from simpleflow import (
     activity,
     Workflow,
 )
-from simpleflow.settings.logging_formatter import colorize
+from simpleflow.log import colorize
 
 
 @activity.with_attributes(task_list='quickstart', version='example')
@@ -30,7 +30,7 @@ class BasicWorkflow(Workflow):
                 binary: location_tpl.format(version=version)
             }
             msg = self.submit(use_custom_binary, [binary]).result
-            print(colorize("DEBUG", msg))
+            print(colorize("BLUE", msg))
 
 # Run with:
 # LOG_LEVEL=info simpleflow standalone --nb-deciders 1 --nb-workers 1 examples.download2.BasicWorkflow --input '[]' 2>&1

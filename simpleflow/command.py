@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function
 
+from contextlib import contextmanager
 import logging
 import multiprocessing
 import os
+import platform
 import signal
 import sys
 import time
@@ -17,10 +19,9 @@ import swf.exceptions
 import swf.models
 import swf.querysets
 
-from simpleflow import Workflow
+from simpleflow import Workflow, log
 from simpleflow.history import History
-from simpleflow.settings import logging_formatter
-from simpleflow.settings.logging_formatter import ColorModes
+from simpleflow.settings import print_settings
 from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.constants import VALID_PROCESS_MODES
@@ -79,14 +80,19 @@ def comma_separated_list(value):
 @click.group()
 @click.option('--format')
 @click.option('--header/--no-header', default=False)
-@click.option('--color', type=click.Choice([ColorModes.AUTO, ColorModes.ALWAYS, ColorModes.NEVER]),
-              default=ColorModes.AUTO)
+@click.option('--color',
+              type=click.Choice([
+                  log.ColorModes.AUTO,
+                  log.ColorModes.ALWAYS,
+                  log.ColorModes.NEVER
+              ]),
+              default=log.ColorModes.AUTO)
 @click.version_option(version=__version__)
 @click.pass_context
 def cli(ctx, header, format, color):
     ctx.params['format'] = format
     ctx.params['header'] = header
-    logging_formatter.color_mode = color
+    log.color_mode = color
 
 
 def get_workflow_type(domain_name, workflow_class):
@@ -263,7 +269,7 @@ def with_format(ctx):
                 )
 @cli.command('workflow.info', help='Info about a workflow execution.')
 @click.pass_context
-def info(ctx, domain, workflow_id, run_id):
+def workflow_info(ctx, domain, workflow_id, run_id):
     print(with_format(ctx)(helpers.show_workflow_info)(
         domain,
         workflow_id,
@@ -695,3 +701,36 @@ def activity_rerun(domain,
     if hasattr(instance, 'post_execute'):
         instance.post_execute()
     logger.info("Result (JSON): {}".format(json_dumps(result, compact=False)))
+
+
+@click.argument("sections", required=False, default="versions,settings,environment", type=comma_separated_list)
+@cli.command("info", help="Display versions, settings, and environment variables. "
+                          "Available sections: versions, settings, environment.")
+def info(sections):
+    @contextmanager
+    def section(title):
+        print(log.colorize("BLUE", "# {}".format(title)))
+        yield
+        print("")
+
+    if "versions" in sections:
+        with section("Versions"):
+            print("simpleflow: {}".format(__version__))
+            version, build = sys.version.split("\n", 1)
+            print("python_version: {}".format(version))
+            print("python_build: {}".format(build))
+            print("platform: {}".format(platform.platform()))
+
+    if "settings" in sections:
+        with section("Settings"):
+            print_settings()
+
+    if "environment" in sections:
+        with section("Environment AWS* SIMPLEFLOW*"):
+            for key in sorted(os.environ.keys()):
+                if not key.startswith("AWS") and not key.startswith("SIMPLEFLOW"):
+                    continue
+                value = os.environ[key]
+                if "SECRET" in key:
+                    value = "<redacted>"
+                print("{}={}".format(key, value))

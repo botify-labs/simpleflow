@@ -99,7 +99,7 @@ def info(workflow_execution):
         first_event = history.tasks[0]
         first_timestamp = first_event[first_event['state'] + '_timestamp']
         last_event = history.tasks[-1]
-        last_timestamp = last_event[last_event['state'] + '_timestamp']
+        last_timestamp = last_event.get('timestamp') or last_event[last_event['state'] + '_timestamp']
         workflow_input = first_event['input']
     else:
         first_event = history.events[0]
