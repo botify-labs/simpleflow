@@ -126,9 +126,10 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
         input_ = {}
     args = input_.get('args', ())
     kwargs = input_.get('kwargs', {})
+    meta = input_.get('meta', {})
 
     # return everything
-    return activity, args, kwargs, found_activity
+    return activity, args, kwargs, meta, found_activity
 
 
 def get_task(domain_name, workflow_id, task_id, details):

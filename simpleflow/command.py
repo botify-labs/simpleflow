@@ -20,6 +20,7 @@ import swf.models
 import swf.querysets
 
 from simpleflow import Workflow, log
+from simpleflow.download import download_binaries
 from simpleflow.history import History
 from simpleflow.settings import print_settings
 from simpleflow.swf.stats import pretty
@@ -685,7 +686,7 @@ def activity_rerun(domain,
     # now rerun the specified activity
     history = History(wfe.history())
     history.parse()
-    task, args, kwargs, params = helpers.find_activity(
+    task, args, kwargs, meta, params = helpers.find_activity(
         history, scheduled_id=scheduled_id, activity_id=activity_id, input=input_override,
     )
     logger.debug("Found activity. Last execution:")
@@ -693,7 +694,10 @@ def activity_rerun(domain,
         logger.debug(line)
     if input_override:
         logger.info("NB: input will be overriden with the passed one!")
-    logger.info("Will re-run: {}(*{}, **{})".format(task, args, kwargs))
+    logger.info("Will re-run: {}(*{}, **{}) [+meta={}]".format(task, args, kwargs, meta))
+
+    # download binaries if needed
+    download_binaries(meta.get("binaries", {}))
 
     # execute the activity task with the correct arguments
     instance = ActivityTask(task, *args, **kwargs)

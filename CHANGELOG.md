@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.20.3
+------
+
+- Small settings improvements (#323)
+
 0.20.2
 ------
 
