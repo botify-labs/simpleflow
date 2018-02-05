@@ -28,7 +28,7 @@ def _jumbo_fields_bucket():
     return bucket
 
 
-def decode(content):
+def decode(content, parse_json=True):
     if content is None:
         return content
     if content.startswith(constants.JUMBO_FIELDS_PREFIX):
@@ -36,10 +36,16 @@ def decode(content):
         def unwrap():
             location, _size = content.split()
             value = _pull_jumbo_field(location)
-            return json_loads_or_raw(value)
+            if parse_json:
+                return json_loads_or_raw(value)
+            return value
 
         return lazy_object_proxy.Proxy(unwrap)
-    return json_loads_or_raw(content)
+
+    if parse_json:
+        return json_loads_or_raw(content)
+
+    return content
 
 
 def encode(message, max_length, allow_jumbo_fields=True):

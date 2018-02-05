@@ -111,3 +111,18 @@ class TestFormat(unittest.TestCase):
 
         for case in cases:
             self.assertEquals(case[1], swf.format.decode(case[0]))
+
+    def test_decode_no_parse_json(self):
+        self.setup_jumbo_fields("jumbo-bucket")
+        push_content("jumbo-bucket", "abc", "decoded jumbo field yay!")
+
+        cases = [
+            [None,                                  None],
+            ["foo bar baz",                         "foo bar baz"],
+            ['"a string"',                          '"a string"'],
+            ['[1, 2]',                              "[1, 2]"],
+            ["simpleflow+s3://jumbo-bucket/abc 24", "decoded jumbo field yay!"],
+        ]
+
+        for case in cases:
+            self.assertEquals(case[1], swf.format.decode(case[0], parse_json=False))
