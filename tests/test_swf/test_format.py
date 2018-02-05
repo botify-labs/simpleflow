@@ -6,6 +6,7 @@ import random
 import boto
 from moto import mock_s3
 
+from simpleflow.storage import push_content
 import swf.format
 import swf.constants
 
@@ -95,3 +96,18 @@ class TestFormat(unittest.TestCase):
         message = 'A' * 500
         with self.assertRaisesRegexp(ValueError, "Jumbo field signature is longer than"):
             swf.format.reason(message)
+
+    def test_decode(self):
+        self.setup_jumbo_fields("jumbo-bucket")
+        push_content("jumbo-bucket", "abc", "decoded jumbo field yay!")
+
+        cases = [
+            [None,                                  None],
+            ["foo bar baz",                         "foo bar baz"],
+            ['"a string"',                          "a string"],
+            ['[1, 2]',                              [1, 2]],
+            ["simpleflow+s3://jumbo-bucket/abc 24", "decoded jumbo field yay!"],
+        ]
+
+        for case in cases:
+            self.assertEquals(case[1], swf.format.decode(case[0]))
