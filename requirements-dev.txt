@@ -1,5 +1,4 @@
-# py.test plugin for rerunning flaky tests
-flaky
+flaky  # py.test plugin for rerunning flaky tests
 invoke
 mock
 moto

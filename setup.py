@@ -93,23 +93,23 @@ def read(fname):
 
 DEPS = [
     'future',
-    'boto',
-    'diskcache',
-    'Jinja2',
-    'kubernetes',
+    'boto>=2.38.0',
+    'diskcache==2.4.1',
+    'Jinja2>=2.8',
+    'kubernetes==3.0.0',
     'lazy_object_proxy',
     'lockfile>=0.9.1',
     'tabulate>=0.7.3,<0.8.0',
     'setproctitle',
     'click',
-    'psutil',
+    'psutil>=3.2.1',
     'pytz',
     'typing',
     'PyYAML',
 ]
 if PY2:
     DEPS += [
-        'subprocess32',
+        'subprocess32',  # TODO? >=3.5.0, not yet released
     ]
 
 tests_require = []
