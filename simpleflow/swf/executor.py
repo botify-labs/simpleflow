@@ -299,6 +299,12 @@ class Executor(executor.Executor):
                 event['timeout_type'],
                 event['timeout_value'])
             future.set_exception(exception)
+        else:
+            logger.info(
+                'unhandled state for activity %s: %s',
+                event.get('name', '#{}'.format(event['id'])),
+                state
+            )
 
         return future
 
@@ -357,6 +363,12 @@ class Executor(executor.Executor):
             ))
         elif state == 'terminated':
             future.set_exception(exceptions.TaskTerminated())
+        else:
+            logger.info(
+                'unhandled state for workflow %s: %s',
+                event.get('name', '#{}'.format(event['id'])),
+                state
+            )
 
         return future
 
@@ -622,12 +634,12 @@ class Executor(executor.Executor):
         # Otherwise retry the task by scheduling it again.
         return None  # means the task is not in SWF.
 
-    def resume_child_workflow(self, a_task, event):
+    def resume_child_workflow(self, a_workflow, event):
         """
         Resume a child workflow.
 
-        :param a_task:
-        :type a_task: WorkflowTask
+        :param a_workflow:
+        :type a_workflow: WorkflowTask
         :param event:
         :type event: dict
         :return:
@@ -639,10 +651,24 @@ class Executor(executor.Executor):
             # WORKFLOW_TYPE_DOES_NOT_EXIST, will be created
             return None
 
-        if future.finished and future.exception:
-            raise future.exception
+        if not future.finished:  # Still pending or running...
+            return future
 
-        return future
+        if future.exception is None:  # Result available!
+            return future
+
+        # Compare number of retries in history with configured max retries
+        # NB: we used to do a strict comparison (==), but that can lead to
+        # infinite retries in case the code is redeployed with a decreased
+        # retry limit and a workflow has a already crossed the new limit. So
+        # ">=" is better there.
+        if event.get('retry', 0) >= a_workflow.workflow.retry:
+            if a_workflow.workflow.raises_on_failure:
+                raise exceptions.WorkflowException(a_workflow, future.exception)
+            return future  # with future.exception set.
+
+        # Otherwise retry the workflow by scheduling it again.
+        return None  # means it is not in SWF.
 
     def schedule_task(self, a_task, task_list=None):
         """

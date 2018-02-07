@@ -3,6 +3,7 @@ from simpleflow import (
     Workflow,
     futures,
 )
+from simpleflow.canvas import Group
 
 
 @activity.with_attributes(task_list='quickstart', version='example',
@@ -27,3 +28,23 @@ class FailingWorkflow(Workflow):
         y = self.submit(fail_and_raise)
         futures.wait(x, y)
         raise ValueError("YOU SHOULD NEVER SEE THIS")
+
+
+class NotFailingWorkflow(Workflow):
+    name = "basic"
+    version = 'example'
+    task_list = 'example'
+
+    def run(self, *args, **kwargs):
+        print("args:", args)
+        print("kwargs:", kwargs)
+        g = Group(raises_on_failure=False)
+        g.append(FailingWorkflow)
+        f = self.submit(g)
+        futures.wait(f)
+
+    def on_failure(self, history, reason, details=None):
+        print("on_failure called, it shouldn't :'(")
+
+    def on_completed(self, history):
+        print('workflow completed!')

@@ -189,7 +189,9 @@ def start_workflow(workflow,
                    local):
     workflow_class = get_workflow(workflow)
 
-    wf_input = get_or_load_input(input_file, input)
+    wf_input = {}
+    if input or input_file:
+        wf_input = get_or_load_input(input_file, input)
 
     if local:
         from .local import Executor
@@ -539,7 +541,7 @@ def standalone(context,
     if not workflow_id:
         workflow_id = workflow_class.name
 
-    wf_input = None
+    wf_input = {}
     if input or input_file:
         wf_input = get_or_load_input(input_file, input)
 

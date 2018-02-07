@@ -31,6 +31,8 @@ class Workflow(Submittable):
     version = None
     task_list = None
     task_priority = None
+    retry = 0
+    raises_on_failure = True
 
     INHERIT_TAG_LIST = 'INHERIT_TAG_LIST'
 
@@ -105,6 +107,12 @@ class Workflow(Submittable):
         return self.submit(group).futures
 
     def fail(self, reason, details=None):
+        """
+        Fail the workflow. User-called.
+        :param reason:
+        :param details:
+        :return:
+        """
         self._executor.fail(reason, details)
 
     def before_replay(self, history):
