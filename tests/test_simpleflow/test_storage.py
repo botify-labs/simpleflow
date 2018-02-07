@@ -3,7 +3,11 @@ import unittest
 import tempfile
 import boto
 from mock import patch
-from moto import mock_s3
+
+try:
+    from moto import mock_s3_deprecated as mock_s3
+except ImportError:
+    from moto import mock_s3
 
 from simpleflow import storage
 
@@ -12,6 +16,8 @@ from simpleflow import storage
 class DevNullCache(dict):
     def __setitem__(self, key, value):
         pass
+
+
 storage.BUCKET_LOCATIONS_CACHE = DevNullCache()
 
 

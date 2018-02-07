@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 
+import os
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 from io import open
@@ -24,6 +25,23 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
+        with open('script/test') as fd:
+            for line in fd:
+                m = re.match(r'\s*unset\s+(.*)\s*#?', line)
+                if m:
+                    for var in m.group(1).split():
+                        print('unset {}'.format(var))
+                        os.environ.pop(var, None)
+                m = re.match(r'\s*export\s+(.*)\s*#?', line)
+                if m:
+                    for var in m.group(1).split():
+                        k, v = var.split('=', 1)
+                        print('export {}={}'.format(k, v))
+                        if k[:1] in '\'"':
+                            k = k[1:-1]
+                        if v[:1] in '\'"':
+                            v = v[1:-1]
+                        os.environ[k] = v
         import pytest
         errcode = pytest.main(self.test_args)
         sys.exit(errcode)
@@ -45,8 +63,8 @@ def find_version(fname):
         raise RuntimeError('Cannot find version information')
     return version
 
-__version__ = find_version("simpleflow/__init__.py")
 
+__version__ = find_version("simpleflow/__init__.py")
 
 if 'publish' in sys.argv:
     try:
@@ -72,6 +90,7 @@ def read(fname):
         content = fp.read()
     return content
 
+
 DEPS = [
     'future',
     'boto>=2.38.0',
@@ -90,8 +109,14 @@ DEPS = [
 ]
 if PY2:
     DEPS += [
-        'subprocess32',
+        'subprocess32',  # TODO? >=3.5.0, not yet released
     ]
+
+tests_require = []
+for line in open('requirements-dev.txt'):
+    line = re.sub(r'(?: +|^)#.*$', '', line).strip()
+    if line:
+        tests_require.append(line)
 
 setup(
     name='simpleflow',
@@ -102,7 +127,7 @@ setup(
     author='Greg Leclercq',
     author_email='tech@botify.com',
     url='https://github.com/botify-labs/simpleflow',
-    packages=find_packages(exclude=("test*", )),
+    packages=find_packages(exclude=("test*",)),
     package_dir={
         'simpleflow': 'simpleflow',
         'swf': 'swf',
@@ -126,10 +151,7 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     test_suite='tests',
-    tests_require=[
-        'pytest',
-        'moto==0.4.31',
-    ],
+    tests_require=tests_require,
     cmdclass={'test': PyTest},
     entry_points={
         'console_scripts': [

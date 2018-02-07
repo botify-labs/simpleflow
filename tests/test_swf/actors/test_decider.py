@@ -1,6 +1,10 @@
-import boto
 import unittest
-from moto import mock_swf
+import boto
+
+try:
+    from moto import mock_swf_deprecated as mock_swf
+except ImportError:
+    from moto import mock_swf
 
 from swf.exceptions import PollTimeout
 from swf.actors import Decider

@@ -20,7 +20,7 @@ class WorkflowStepMixin(object):
         """
         Return the S3 bucket's path prefix where to store the steps files
         """
-        return os.path.join(self.get_execution_context().get("workflow_id", "default"), 'steps/')
+        return os.path.join(self.get_run_context().get("workflow_id", "default"), 'steps/')
 
     def get_step_activity_params(self):
         """

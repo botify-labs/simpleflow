@@ -49,3 +49,5 @@ htmlcov/
 # Temporary files
 .cache/
 tmp/
+
+!docs/script/build

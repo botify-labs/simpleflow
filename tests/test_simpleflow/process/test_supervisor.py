@@ -14,8 +14,9 @@ from sure import expect
 from simpleflow.process import Supervisor, reset_signal_handlers
 from tests.utils import IntegrationTestCase
 
-
 TIME_STORE = {}
+
+
 def increase_wait_time(err, func_name, func, plugin):
     """
     This function is used as a "rerun_filter" for "flaky". It increases an offset
@@ -27,13 +28,13 @@ def increase_wait_time(err, func_name, func, plugin):
     TIME_STORE[func_name] = TIME_STORE.get(func_name, -1) + 1
     return True
 
-@flaky(max_runs=4, rerun_filter=increase_wait_time)
+
+@flaky(max_runs=8, rerun_filter=increase_wait_time)
 class TestSupervisor(IntegrationTestCase):
     def wait(self, seconds=0.5):
         caller = sys._getframe(1).f_code.co_name
         wait_offset = TIME_STORE.get(caller, 0)
         time.sleep(seconds + wait_offset)
-
 
     @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_start(self):
@@ -62,6 +63,7 @@ class TestSupervisor(IntegrationTestCase):
                 setproctitle("simpleflow worker: shutting down")
                 time.sleep(10)
                 os._exit(0)
+
             signal.signal(signal.SIGTERM, handle_sigterm)
             setproctitle("simpleflow worker: running")
             time.sleep(60)
@@ -84,12 +86,14 @@ class TestSupervisor(IntegrationTestCase):
     def test_payload_friendly_name(self):
         def foo():
             pass
+
         supervisor = Supervisor(foo, background=True)
         self.assertEqual(supervisor._payload_friendly_name, "foo")
 
         class Foo(object):
             def bar(self):
                 pass
+
         supervisor = Supervisor(Foo().bar, background=True)
         self.assertEqual(supervisor._payload_friendly_name, "Foo.bar")
 

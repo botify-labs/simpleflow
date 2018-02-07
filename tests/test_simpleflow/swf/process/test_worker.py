@@ -2,7 +2,10 @@ from collections import namedtuple
 from mock import patch
 import unittest
 
-from moto import mock_swf
+try:
+    from moto import mock_swf_deprecated as mock_swf
+except ImportError:
+    from moto import mock_swf
 
 from simpleflow.swf.process.worker.base import ActivityWorker, ActivityPoller
 from swf.models import Domain, ActivityTask
