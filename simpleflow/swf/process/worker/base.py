@@ -106,11 +106,20 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         :param response:
         :type response: swf.responses.Response
         """
+        token = response.task_token
+        task = response.activity_task
         if self.process_mode == "kubernetes":
-            spawn_kubernetes_job(self, response.raw_response)
+            try:
+                spawn_kubernetes_job(self, response.raw_response)
+            except Exception as err:
+                logger.exception("spawn_kubernetes_job error")
+                reason = 'cannot spawn kubernetes job for task {}: {} {}'.format(
+                    task.activity_id,
+                    err.__class__.__name__,
+                    err,
+                )
+                self.fail_with_retry(token, task, reason)
         else:
-            token = response.task_token
-            task = response.activity_task
             spawn(self, token, task, self._heartbeat)
 
     @with_state('completing')
