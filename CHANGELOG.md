@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.20.4
+------
+
+- Fail activity task on k8s job spawning failure (#328)
+
 0.20.3
 ------
 
