@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.20.5
+------
+
+- Add 'simpleflow binaries.download' command
+
 0.20.4
 ------
 
