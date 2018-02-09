@@ -738,3 +738,13 @@ def info(sections):
                 if "SECRET" in key:
                     value = "<redacted>"
                 print("{}={}".format(key, value))
+
+
+@click.argument("locations", nargs=-1)
+@cli.command("binaries.download", help="Downloads some binaries with simpleflow.download module. "
+                                       "It expects a list of locations as <binary>=<s3_location> arguments.")
+def binaries_download(locations):
+    locations_split = [b.split("=", 2) for b in locations]
+    binaries_map = {b[0]: b[1] for b in locations_split}
+
+    download_binaries(binaries_map)
