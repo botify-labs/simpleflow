@@ -744,7 +744,10 @@ def info(sections):
 @cli.command("binaries.download", help="Downloads some binaries with simpleflow.download module. "
                                        "It expects a list of locations as <binary>=<s3_location> arguments.")
 def binaries_download(locations):
-    locations_split = [b.split("=", 2) for b in locations]
-    binaries_map = {b[0]: b[1] for b in locations_split}
+    pool = multiprocessing.Pool(5)
+    pool.map(_download_binary, locations)
 
-    download_binaries(binaries_map)
+
+def _download_binary(spec):
+    progname, location = spec.split("=", 2)
+    download_binaries({progname: location})
