@@ -14,6 +14,7 @@ from tests.data import (
     DOMAIN,
     increment,
 )
+from tests.utils import MockSWFTestCase
 
 
 @activity.with_attributes(task_priority=32)
@@ -43,23 +44,11 @@ class ExampleWorkflow(BaseTestWorkflow):
 
 
 @mock_swf
-class TestSimpleflowSwfExecutor(unittest.TestCase):
-    def setUp(self):
-        self.conn = boto.connect_swf()
-        self.conn.register_domain("TestDomain", "50")
-        self.conn.register_workflow_type(
-            "TestDomain", "test-workflow", "v1.2",
-            task_list="test-task-list", default_child_policy="TERMINATE",
-            default_execution_start_to_close_timeout="6",
-            default_task_start_to_close_timeout="3",
-        )
+class TestSimpleflowSwfExecutor(MockSWFTestCase):
+    def test_submit_resolves_priority(self):
         self.conn.start_workflow_execution("TestDomain", "wfe-1234",
                                            "test-workflow", "v1.2")
 
-    def tearDown(self):
-        pass
-
-    def test_submit_resolves_priority(self):
         response = Decider(DOMAIN, "test-task-list").poll()
         executor = Executor(DOMAIN, ExampleWorkflow)
         decisions = executor.replay(response).decisions
