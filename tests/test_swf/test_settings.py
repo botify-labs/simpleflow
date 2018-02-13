@@ -9,6 +9,7 @@ AWS_ENV_KEYS = (
     "AWS_DEFAULT_REGION",
 )
 
+
 class TestSettings(unittest.TestCase):
     def setUp(self):
         self.oldies = {}

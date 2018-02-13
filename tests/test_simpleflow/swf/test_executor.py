@@ -1,4 +1,4 @@
-import os
+import mock
 import unittest
 
 import boto
@@ -151,19 +151,10 @@ class ExampleJumboWorkflow(BaseTestWorkflow):
 @mock_s3
 @mock_swf
 class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
-    def setUp(self):
-        os.environ["SIMPLEFLOW_JUMBO_FIELDS_BUCKET"] = "jumbo-bucket"
-        self.conn = boto.connect_s3()
-        self.conn.create_bucket("jumbo-bucket")
-        super(self.__class__, self).setUp()
-
-    def tearDown(self):
-        # reset jumbo fields bucket so most tests will have jumbo fields disabled
-        os.environ["SIMPLEFLOW_JUMBO_FIELDS_BUCKET"] = ""
-        super(self.__class__, self).tearDown()
-
+    @mock.patch.dict("os.environ", {"SIMPLEFLOW_JUMBO_FIELDS_BUCKET": "jumbo-bucket"})
     def test_jumbo_fields_are_replaced_correctly(self):
         # prepare execution
+        boto.connect_s3().create_bucket("jumbo-bucket")
         self.conn.register_activity_type(
             "TestDomain",
             "tests.test_simpleflow.swf.test_executor.print_me_n_times",

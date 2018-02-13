@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import copy
 import inspect
-
 import hashlib
 import json
 import logging
