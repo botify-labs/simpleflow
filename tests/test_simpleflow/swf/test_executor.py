@@ -237,8 +237,8 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
         activity_result_evt = events[-2]
         assert activity_result_evt["eventType"] == "ActivityTaskFailed"
         attrs = activity_result_evt["activityTaskFailedEventAttributes"]
-        expect(attrs["reason"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 90020")
-        expect(attrs["details"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 90506")
+        expect(attrs["reason"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}")
+        expect(attrs["details"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}")
         details = format.decode(attrs["details"])
         expect(details["error"]).to.equal("ValueError")
         expect(len(details["message"])).to.be.greater_than(9*10000)
