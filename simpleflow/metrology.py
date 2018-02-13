@@ -1,13 +1,13 @@
-from future.standard_library import install_aliases
-install_aliases()
-
 import abc
 import json
 import os
 import re
 import time
-import urllib.parse
 from collections import OrderedDict
+try:
+    from urllib.parse import quote_plus  # py 3.x
+except ImportError:
+    from urllib import quote_plus  # py 2.x
 
 from . import storage, settings
 from .swf.stats.pretty import dump_history_to_json
@@ -92,7 +92,7 @@ class MetrologyTask(object):
         if settings.METROLOGY_PATH_PREFIX is not None:
             path.append(settings.METROLOGY_PATH_PREFIX)
         path.append(self.context["workflow_id"])
-        path.append(urllib.parse.quote_plus(self.context["run_id"]))
+        path.append(quote_plus(self.context["run_id"]))
         path.append("activity.{}.json".format(self.context["activity_id"]))
         return str(os.path.join(*path))
 
@@ -146,8 +146,8 @@ class MetrologyWorkflow(Workflow):
             path.append(settings.METROLOGY_PATH_PREFIX)
 
         context = self.get_run_context()
-        path.append(urllib.parse.quote_plus(context["workflow_id"]))
-        path.append(urllib.parse.quote_plus(context["run_id"]))
+        path.append(quote_plus(context["workflow_id"]))
+        path.append(quote_plus(context["run_id"]))
         return str(os.path.join(*path))
 
     def push_metrology(self, history):
