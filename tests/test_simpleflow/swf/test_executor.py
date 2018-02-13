@@ -270,5 +270,5 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
         reason = format.decode(attrs["reason"], use_proxy=False)
         expect(reason).to.match(
             r'^Workflow execution error in task activity-tests.test_simpleflow.swf.'
-            'test_executor.print_me_n_times: "simpleflow+s3:'
+            'test_executor.print_me_n_times: "ValueError: Number: 012345679\d+"$'
         )
