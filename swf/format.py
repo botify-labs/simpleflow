@@ -28,7 +28,7 @@ def _jumbo_fields_bucket():
     return bucket
 
 
-def decode(content, parse_json=True):
+def decode(content, parse_json=True, use_proxy=True):
     if content is None:
         return content
     if content.startswith(constants.JUMBO_FIELDS_PREFIX):
@@ -40,7 +40,9 @@ def decode(content, parse_json=True):
                 return json_loads_or_raw(value)
             return value
 
-        return lazy_object_proxy.Proxy(unwrap)
+        if use_proxy:
+            return lazy_object_proxy.Proxy(unwrap)
+        return unwrap()
 
     if parse_json:
         return json_loads_or_raw(content)
