@@ -1,6 +1,5 @@
 import multiprocessing
 import os
-import platform
 import signal
 import sys
 import time
@@ -27,6 +26,7 @@ def increase_wait_time(err, func_name, func, plugin):
     TIME_STORE[func_name] = TIME_STORE.get(func_name, -1) + 1
     return True
 
+
 @flaky(max_runs=4, rerun_filter=increase_wait_time)
 class TestSupervisor(IntegrationTestCase):
     def wait(self, seconds=0.5):
@@ -34,8 +34,9 @@ class TestSupervisor(IntegrationTestCase):
         wait_offset = TIME_STORE.get(caller, 0)
         time.sleep(seconds + wait_offset)
 
-
-    @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
+    @mark.skip("flaky test based on time.sleep")
+    # @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
+    # @mark.xfail(platform.python_implementation() == 'PyPy', reason="this test is too flaky on pypy")
     def test_start(self):
         # dummy function used in following tests
         def sleep_long(seconds):
@@ -52,8 +53,9 @@ class TestSupervisor(IntegrationTestCase):
         self.assertProcess(r'simpleflow Supervisor\(_payload_friendly_name=sleep_long, _nb_children=2\)')
         self.assertProcess(r'simpleflow Worker\(sleep_long, 30\)', count=2)
 
-    @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
-    @mark.xfail(platform.python_implementation() == 'PyPy', reason="this test is too flaky on pypy")
+    @mark.skip("flaky test based on time.sleep")
+    # @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
+    # @mark.xfail(platform.python_implementation() == 'PyPy', reason="this test is too flaky on pypy")
     def test_terminate(self):
         # custom function that handles sigterm by changing its name, so we can
         # test it effectively received a SIGTERM (maybe there's a better way?)
@@ -80,7 +82,8 @@ class TestSupervisor(IntegrationTestCase):
         self.wait(1)
         self.assertProcess(r'worker: shutting down')
 
-    @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
+    @mark.skip("flaky test based on time.sleep")
+    # @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_payload_friendly_name(self):
         def foo():
             pass
@@ -93,7 +96,8 @@ class TestSupervisor(IntegrationTestCase):
         supervisor = Supervisor(Foo().bar, background=True)
         self.assertEqual(supervisor._payload_friendly_name, "Foo.bar")
 
-    @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
+    @mark.skip("flaky test based on time.sleep")
+    # @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_maintain_the_pool_of_workers_if_not_terminating(self):
         # dummy function used in following tests
         def sleep_long(seconds):
@@ -127,7 +131,8 @@ class TestSupervisor(IntegrationTestCase):
         expect(new_workers[0].pid).to.not_be.equal(old_workers[0].pid)
 
     # NB: not in the Supervisor class but we want to benefit from the tearDown()
-    @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
+    @mark.skip("flaky test based on time.sleep")
+    # @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
     def test_reset_signal_handlers(self):
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
