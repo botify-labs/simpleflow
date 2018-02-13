@@ -1,12 +1,14 @@
+import os
 import unittest
 
 import boto
-from moto import mock_swf
+from moto import mock_swf, mock_s3
 from sure import expect
 
 from simpleflow import activity, futures
 from simpleflow.swf.executor import Executor
 from swf.actors import Decider
+from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
 from swf.models.history import builder
 from swf.responses import Response
 from tests.data import (
@@ -129,3 +131,74 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
         })
         details = executor.get_event_details('timer', 'another_timer')
         expect(details).to.be.none
+
+
+@activity.with_attributes()
+def print_me_n_times(s, n):
+    return s * n
+
+
+class ExampleJumboWorkflow(BaseTestWorkflow):
+    """
+    Example workflow definition used in tests below.
+    """
+    def run(self, s, n):
+        a = self.submit(print_me_n_times, s, n)
+        futures.wait(a)
+        return a.result
+
+
+@mock_s3
+@mock_swf
+class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
+    def setUp(self):
+        os.environ["SIMPLEFLOW_JUMBO_FIELDS_BUCKET"] = "jumbo-bucket"
+        self.conn = boto.connect_s3()
+        self.conn.create_bucket("jumbo-bucket")
+        super(self.__class__, self).setUp()
+
+    def tearDown(self):
+        # reset jumbo fields bucket so most tests will have jumbo fields disabled
+        os.environ["SIMPLEFLOW_JUMBO_FIELDS_BUCKET"] = ""
+        super(self.__class__, self).tearDown()
+
+    def test_jumbo_fields_are_replaced_correctly(self):
+        # prepare execution
+        self.conn.register_activity_type(
+            "TestDomain",
+            "tests.test_simpleflow.swf.test_executor.print_me_n_times",
+            "default"
+        )
+
+        # start execution
+        run_id = self.conn.start_workflow_execution(
+            "TestDomain", "wfe-1234", "test-workflow", "v1.2",
+            input='{"args": ["012345679", 10000]}',
+        )["runId"]
+
+        # decider part
+        decider = Decider(DOMAIN, "test-task-list")
+        response = decider.poll()
+        executor = Executor(DOMAIN, ExampleJumboWorkflow)
+        result = executor.replay(response)
+        assert len(result.decisions) == 1
+        decider.complete(response.token,
+                         decisions=result.decisions,
+                         execution_context=result.execution_context)
+
+        # worker part
+        poller = ActivityPoller(DOMAIN, "default")
+        response = poller.poll()
+        worker = ActivityWorker()
+        worker.process(poller, response.task_token, response.activity_task)
+
+        # now check the history
+        events = self.conn.get_workflow_execution_history(
+            "TestDomain", workflow_id="wfe-1234", run_id=run_id
+        )["events"]
+
+        activity_result_evt = events[-2]
+        assert activity_result_evt["eventType"] == "ActivityTaskCompleted"
+        result = activity_result_evt["activityTaskCompletedEventAttributes"]["result"]
+
+        expect(result).to.match(r"^simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 90002$")
