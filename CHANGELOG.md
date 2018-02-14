@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.20.6
+------
+
+- Improve tests and fix jumbo fields decoding on failure (#330)
+- Remove future.standard_library.install_aliases() (#329)
+
 0.20.5
 ------
 
