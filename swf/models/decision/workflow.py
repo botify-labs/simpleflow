@@ -5,7 +5,7 @@
 #
 # See the file LICENSE for copying permission.
 
-from swf import format
+from simpleflow import format
 from swf.models.decision.base import Decision, decision_action
 from swf.models.workflow import CHILD_POLICIES
 

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import copy
 import inspect
-
 import hashlib
 import json
 import logging
@@ -11,13 +10,13 @@ import re
 import traceback
 
 import simpleflow.task as base_task
-from swf import format
 import swf.exceptions
 import swf.models
 import swf.models.decision
 from simpleflow import (
     exceptions,
     executor,
+    format,
     futures,
     task,
 )
@@ -945,9 +944,16 @@ class Executor(executor.Executor):
 
             return self._decisions_and_context
         except exceptions.TaskException as err:
+            def _extract_reason(err):
+                if hasattr(err.exception, 'reason'):
+                    raw = err.exception.reason
+                    # don't parse eventual json object here, since we will cast
+                    # the result to a string anyway, better keep a json representation
+                    return format.decode(raw, parse_json=False, use_proxy=False)
+                return repr(err.exception)
             reason = 'Workflow execution error in task {}: "{}"'.format(
                 err.task.name,
-                getattr(err.exception, 'reason', repr(err.exception)))
+                _extract_reason(err))
             logger.exception('%s', reason)  # Don't let logger try to interpolate the message
 
             details = getattr(err.exception, 'details', None)

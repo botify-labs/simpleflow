@@ -1,6 +1,5 @@
 import multiprocessing
 import os
-import platform
 import signal
 import time
 
@@ -25,7 +24,8 @@ class FakePoller(Poller):
 
 
 class TestSupervisor(IntegrationTestCase):
-    @mark.xfail(platform.system() == 'Darwin', reason="psutil process statuses are buggy on OSX")
+    @mark.skip("flaky test based on time.sleep")
+    # @mark.xfail(platform.system() == 'Darwin', reason="psutil process statuses are buggy on OSX")
     def test_sigterm_handling(self):
         """
         Tests that SIGTERM is correctly ignored by the poller.

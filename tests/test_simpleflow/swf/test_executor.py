@@ -1,12 +1,10 @@
+import mock
 import unittest
 
-import boto
-from moto import mock_swf
 from sure import expect
 
-from simpleflow import activity, futures
+from simpleflow import activity, format, futures
 from simpleflow.swf.executor import Executor
-from swf.actors import Decider
 from swf.models.history import builder
 from swf.responses import Response
 from tests.data import (
@@ -14,6 +12,7 @@ from tests.data import (
     DOMAIN,
     increment,
 )
+from tests.utils import MockSWFTestCase
 
 
 @activity.with_attributes(task_priority=32)
@@ -42,27 +41,10 @@ class ExampleWorkflow(BaseTestWorkflow):
         futures.wait(a, b, c, d, e)
 
 
-@mock_swf
-class TestSimpleflowSwfExecutor(unittest.TestCase):
-    def setUp(self):
-        self.conn = boto.connect_swf()
-        self.conn.register_domain("TestDomain", "50")
-        self.conn.register_workflow_type(
-            "TestDomain", "test-workflow", "v1.2",
-            task_list="test-task-list", default_child_policy="TERMINATE",
-            default_execution_start_to_close_timeout="6",
-            default_task_start_to_close_timeout="3",
-        )
-        self.conn.start_workflow_execution("TestDomain", "wfe-1234",
-                                           "test-workflow", "v1.2")
-
-    def tearDown(self):
-        pass
-
+class TestSimpleflowSwfExecutor(MockSWFTestCase):
     def test_submit_resolves_priority(self):
-        response = Decider(DOMAIN, "test-task-list").poll()
-        executor = Executor(DOMAIN, ExampleWorkflow)
-        decisions = executor.replay(response).decisions
+        self.start_workflow_execution()
+        decisions = self.build_decisions(ExampleWorkflow).decisions
 
         expect(decisions).to.have.length_of(5)
 
@@ -140,3 +122,106 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
         })
         details = executor.get_event_details('timer', 'another_timer')
         expect(details).to.be.none
+
+
+@activity.with_attributes(raises_on_failure=True)
+def print_me_n_times(s, n, raises=False):
+    if raises:
+        raise ValueError("Number: {}".format(s * n))
+    return s * n
+
+
+class ExampleJumboWorkflow(BaseTestWorkflow):
+    """
+    Example workflow definition used in tests below.
+    """
+    def run(self, s, n, raises=False):
+        a = self.submit(print_me_n_times, s, n, raises=raises)
+        futures.wait(a)
+        return a.result
+
+
+class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
+    @mock.patch.dict("os.environ", {"SIMPLEFLOW_JUMBO_FIELDS_BUCKET": "jumbo-bucket"})
+    def test_jumbo_fields_are_replaced_correctly(self):
+        # prepare
+        self.register_activity_type(
+            "tests.test_simpleflow.swf.test_executor.print_me_n_times",
+            "default"
+        )
+
+        # start execution
+        self.start_workflow_execution(input='{"args": ["012345679", 10000]}')
+
+        # decider part
+        result = self.build_decisions(ExampleJumboWorkflow)
+        assert len(result.decisions) == 1
+        self.take_decisions(result.decisions, result.execution_context)
+
+        # worker part
+        self.process_activity_task()
+
+        # now check the history
+        events = self.get_workflow_execution_history()["events"]
+
+        activity_result_evt = events[-2]
+        assert activity_result_evt["eventType"] == "ActivityTaskCompleted"
+        result = activity_result_evt["activityTaskCompletedEventAttributes"]["result"]
+
+        expect(result).to.match(r"^simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 90002$")
+
+    @mock.patch.dict("os.environ", {"SIMPLEFLOW_JUMBO_FIELDS_BUCKET": "jumbo-bucket"})
+    def test_jumbo_fields_in_task_failed_is_decoded(self):
+        # prepare execution
+        self.register_activity_type(
+            "tests.test_simpleflow.swf.test_executor.print_me_n_times",
+            "default"
+        )
+
+        # start execution
+        self.start_workflow_execution(
+            input='{"args": ["012345679", 10000], "kwargs": {"raises": true}}',
+        )
+
+        # decider part
+        result = self.build_decisions(ExampleJumboWorkflow)
+        assert len(result.decisions) == 1
+        self.take_decisions(result.decisions, result.execution_context)
+
+        # worker part
+        self.process_activity_task()
+
+        # now check the history
+        events = self.get_workflow_execution_history()["events"]
+
+        activity_result_evt = events[-2]
+        assert activity_result_evt["eventType"] == "ActivityTaskFailed"
+        attrs = activity_result_evt["activityTaskFailedEventAttributes"]
+        expect(attrs["reason"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}")
+        expect(attrs["details"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}")
+        details = format.decode(attrs["details"])
+        expect(details["error"]).to.equal("ValueError")
+        expect(len(details["message"])).to.be.greater_than(9*10000)
+
+        # decide again (should lead to workflow failure)
+        result = self.build_decisions(ExampleJumboWorkflow)
+        assert len(result.decisions) == 1
+        assert result.decisions[0]["decisionType"] == "FailWorkflowExecution"
+        self.take_decisions(result.decisions, result.execution_context)
+
+        # now check history again
+        events = self.get_workflow_execution_history()["events"]
+
+        event = events[-1]
+        assert event["eventType"] == "WorkflowExecutionFailed"
+        attrs = event["workflowExecutionFailedEventAttributes"]
+
+        details = format.decode(attrs["details"], use_proxy=False)
+        expect(details).to.be.a("dict")
+        expect(details["message"]).to.match(r"^Number: 012345.*")
+
+        reason = format.decode(attrs["reason"], use_proxy=False)
+        expect(reason).to.match(
+            r'^Workflow execution error in task activity-tests.test_simpleflow.swf.'
+            'test_executor.print_me_n_times: "ValueError: Number: 012345679\d+"$'
+        )

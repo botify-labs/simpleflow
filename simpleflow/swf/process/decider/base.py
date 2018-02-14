@@ -4,7 +4,7 @@ import logging
 import multiprocessing
 import os
 
-from swf import format
+from simpleflow import format
 import swf.actors
 import swf.exceptions
 import swf.models.decision

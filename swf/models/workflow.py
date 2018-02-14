@@ -9,8 +9,8 @@ import collections
 import time
 
 from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError
-from simpleflow import compat
-from swf import exceptions, format
+from simpleflow import compat, format
+from swf import exceptions
 from swf.constants import REGISTERED
 from swf.exceptions import (
     DoesNotExistError,

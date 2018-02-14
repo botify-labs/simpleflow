@@ -5,12 +5,8 @@ from diskcache import Cache
 import lazy_object_proxy
 from sqlite3 import OperationalError
 
-from . import constants
-from .core import logger
-
-from simpleflow import storage
+from simpleflow import constants, logger, storage
 from simpleflow.settings import SIMPLEFLOW_ENABLE_DISK_CACHE
-from simpleflow.constants import HOUR
 from simpleflow.utils import json_dumps, json_loads_or_raw
 
 
@@ -28,7 +24,7 @@ def _jumbo_fields_bucket():
     return bucket
 
 
-def decode(content):
+def decode(content, parse_json=True, use_proxy=True):
     if content is None:
         return content
     if content.startswith(constants.JUMBO_FIELDS_PREFIX):
@@ -36,10 +32,18 @@ def decode(content):
         def unwrap():
             location, _size = content.split()
             value = _pull_jumbo_field(location)
-            return json_loads_or_raw(value)
+            if parse_json:
+                return json_loads_or_raw(value)
+            return value
 
-        return lazy_object_proxy.Proxy(unwrap)
-    return json_loads_or_raw(content)
+        if use_proxy:
+            return lazy_object_proxy.Proxy(unwrap)
+        return unwrap()
+
+    if parse_json:
+        return json_loads_or_raw(content)
+
+    return content
 
 
 def encode(message, max_length, allow_jumbo_fields=True):
@@ -104,7 +108,7 @@ def _set_cached(path, content):
             cache = Cache(constants.CACHE_DIR)
             cache_key = "jumbo_fields/" + path.split("/")[-1]
             logger.debug("diskcache: setting key={} on cache_dir={}".format(cache_key, constants.CACHE_DIR))
-            cache.set(cache_key, content, expire=3 * HOUR)
+            cache.set(cache_key, content, expire=3 * constants.HOUR)
         except OperationalError:
             logger.warning("diskcache: got an OperationalError on write, skipping cache write")
 

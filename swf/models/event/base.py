@@ -10,7 +10,7 @@ from datetime import datetime
 import pytz
 from future.utils import iteritems
 
-from swf import format
+from simpleflow import format
 from swf.utils import camel_to_underscore, cached_property
 
 
