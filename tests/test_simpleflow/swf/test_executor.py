@@ -1,14 +1,10 @@
 import mock
 import unittest
 
-import boto
-from moto import mock_swf, mock_s3
 from sure import expect
 
 from simpleflow import activity, futures
 from simpleflow.swf.executor import Executor
-from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
-from swf.actors import Decider
 from swf import format
 from swf.models.history import builder
 from swf.responses import Response
@@ -46,15 +42,10 @@ class ExampleWorkflow(BaseTestWorkflow):
         futures.wait(a, b, c, d, e)
 
 
-@mock_swf
 class TestSimpleflowSwfExecutor(MockSWFTestCase):
     def test_submit_resolves_priority(self):
-        self.conn.start_workflow_execution("TestDomain", "wfe-1234",
-                                           "test-workflow", "v1.2")
-
-        response = Decider(DOMAIN, "test-task-list").poll()
-        executor = Executor(DOMAIN, ExampleWorkflow)
-        decisions = executor.replay(response).decisions
+        self.start_workflow_execution()
+        decisions = self.build_decisions(ExampleWorkflow).decisions
 
         expect(decisions).to.have.length_of(5)
 
@@ -151,45 +142,28 @@ class ExampleJumboWorkflow(BaseTestWorkflow):
         return a.result
 
 
-@mock_s3
-@mock_swf
 class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
     @mock.patch.dict("os.environ", {"SIMPLEFLOW_JUMBO_FIELDS_BUCKET": "jumbo-bucket"})
     def test_jumbo_fields_are_replaced_correctly(self):
-        # prepare execution
-        boto.connect_s3().create_bucket("jumbo-bucket")
-        self.conn.register_activity_type(
-            "TestDomain",
+        # prepare
+        self.register_activity_type(
             "tests.test_simpleflow.swf.test_executor.print_me_n_times",
             "default"
         )
 
         # start execution
-        run_id = self.conn.start_workflow_execution(
-            "TestDomain", "wfe-1234", "test-workflow", "v1.2",
-            input='{"args": ["012345679", 10000]}',
-        )["runId"]
+        self.start_workflow_execution(input='{"args": ["012345679", 10000]}')
 
         # decider part
-        decider = Decider(DOMAIN, "test-task-list")
-        response = decider.poll()
-        executor = Executor(DOMAIN, ExampleJumboWorkflow)
-        result = executor.replay(response)
+        result = self.build_decisions(ExampleJumboWorkflow)
         assert len(result.decisions) == 1
-        decider.complete(response.token,
-                         decisions=result.decisions,
-                         execution_context=result.execution_context)
+        self.take_decisions(result.decisions, result.execution_context)
 
         # worker part
-        poller = ActivityPoller(DOMAIN, "default")
-        response = poller.poll()
-        worker = ActivityWorker()
-        worker.process(poller, response.task_token, response.activity_task)
+        self.process_activity_task()
 
         # now check the history
-        events = self.conn.get_workflow_execution_history(
-            "TestDomain", workflow_id="wfe-1234", run_id=run_id
-        )["events"]
+        events = self.get_workflow_execution_history()["events"]
 
         activity_result_evt = events[-2]
         assert activity_result_evt["eventType"] == "ActivityTaskCompleted"
@@ -200,39 +174,26 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
     @mock.patch.dict("os.environ", {"SIMPLEFLOW_JUMBO_FIELDS_BUCKET": "jumbo-bucket"})
     def test_jumbo_fields_in_task_failed_is_decoded(self):
         # prepare execution
-        boto.connect_s3().create_bucket("jumbo-bucket")
-        self.conn.register_activity_type(
-            "TestDomain",
+        self.register_activity_type(
             "tests.test_simpleflow.swf.test_executor.print_me_n_times",
             "default"
         )
 
         # start execution
-        run_id = self.conn.start_workflow_execution(
-            "TestDomain", "wfe-1234", "test-workflow", "v1.2",
+        self.start_workflow_execution(
             input='{"args": ["012345679", 10000], "kwargs": {"raises": true}}',
-        )["runId"]
+        )
 
         # decider part
-        decider = Decider(DOMAIN, "test-task-list")
-        response = decider.poll()
-        executor = Executor(DOMAIN, ExampleJumboWorkflow)
-        result = executor.replay(response)
+        result = self.build_decisions(ExampleJumboWorkflow)
         assert len(result.decisions) == 1
-        decider.complete(response.token,
-                         decisions=result.decisions,
-                         execution_context=result.execution_context)
+        self.take_decisions(result.decisions, result.execution_context)
 
         # worker part
-        poller = ActivityPoller(DOMAIN, "default")
-        response = poller.poll(identity="tst")
-        worker = ActivityWorker()
-        worker.process(poller, response.task_token, response.activity_task)
+        self.process_activity_task()
 
         # now check the history
-        events = self.conn.get_workflow_execution_history(
-            "TestDomain", workflow_id="wfe-1234", run_id=run_id
-        )["events"]
+        events = self.get_workflow_execution_history()["events"]
 
         activity_result_evt = events[-2]
         assert activity_result_evt["eventType"] == "ActivityTaskFailed"
@@ -244,20 +205,13 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
         expect(len(details["message"])).to.be.greater_than(9*10000)
 
         # decide again (should lead to workflow failure)
-        decider = Decider(DOMAIN, "test-task-list")
-        response = decider.poll()
-        executor = Executor(DOMAIN, ExampleJumboWorkflow)
-        result = executor.replay(response)
+        result = self.build_decisions(ExampleJumboWorkflow)
         assert len(result.decisions) == 1
         assert result.decisions[0]["decisionType"] == "FailWorkflowExecution"
-        decider.complete(response.token,
-                         decisions=result.decisions,
-                         execution_context=result.execution_context)
+        self.take_decisions(result.decisions, result.execution_context)
 
         # now check history again
-        events = self.conn.get_workflow_execution_history(
-            "TestDomain", workflow_id="wfe-1234", run_id=run_id
-        )["events"]
+        events = self.get_workflow_execution_history()["events"]
 
         event = events[-1]
         assert event["eventType"] == "WorkflowExecutionFailed"
