@@ -22,8 +22,7 @@ from builtins import map
 
 from future.utils import iteritems
 
-from swf import format
-from simpleflow import compat
+from simpleflow import compat, format
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 from simpleflow.utils import json_dumps
 

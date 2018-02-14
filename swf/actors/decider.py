@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import boto.exception
 
-from simpleflow import compat
+from simpleflow import compat, format
 from simpleflow.utils import json_dumps
-from swf import format
 from swf.actors.core import Actor
 from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError
 from swf.models.history import History

@@ -3,9 +3,8 @@ import unittest
 
 from sure import expect
 
-from simpleflow import activity, futures
+from simpleflow import activity, format, futures
 from simpleflow.swf.executor import Executor
-from swf import format
 from swf.models.history import builder
 from swf.responses import Response
 from tests.data import (

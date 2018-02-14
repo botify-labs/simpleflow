@@ -14,7 +14,7 @@ from uuid import uuid4
 import boto.connection
 import click
 
-from swf import format
+from simpleflow import format
 import swf.exceptions
 import swf.models
 import swf.querysets

@@ -1,11 +1,11 @@
 # -*- coding:utf-8 -*-
 
 import boto.exception
+from simpleflow import format
 from swf.actors import Actor
 from swf.models import ActivityTask
 from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError, RateLimitExceededError
 from swf.responses import Response
-from swf import format
 
 
 class ActivityWorker(Actor):

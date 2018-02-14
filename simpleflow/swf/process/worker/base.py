@@ -11,8 +11,8 @@ import uuid
 
 import psutil
 
+from simpleflow import format
 from simpleflow.exceptions import ExecutionError
-from swf import format
 import swf.actors
 import swf.exceptions
 from swf.models import ActivityTask as BaseActivityTask

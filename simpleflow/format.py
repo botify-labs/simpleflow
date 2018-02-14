@@ -5,12 +5,10 @@ from diskcache import Cache
 import lazy_object_proxy
 from sqlite3 import OperationalError
 
-from . import constants
-from .core import logger
+from . import constants, logger
 
 from simpleflow import storage
 from simpleflow.settings import SIMPLEFLOW_ENABLE_DISK_CACHE
-from simpleflow.constants import HOUR
 from simpleflow.utils import json_dumps, json_loads_or_raw
 
 
@@ -112,7 +110,7 @@ def _set_cached(path, content):
             cache = Cache(constants.CACHE_DIR)
             cache_key = "jumbo_fields/" + path.split("/")[-1]
             logger.debug("diskcache: setting key={} on cache_dir={}".format(cache_key, constants.CACHE_DIR))
-            cache.set(cache_key, content, expire=3 * HOUR)
+            cache.set(cache_key, content, expire=3 * constants.HOUR)
         except OperationalError:
             logger.warning("diskcache: got an OperationalError on write, skipping cache write")
 

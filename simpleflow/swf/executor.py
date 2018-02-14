@@ -10,13 +10,13 @@ import re
 import traceback
 
 import simpleflow.task as base_task
-from swf import format
 import swf.exceptions
 import swf.models
 import swf.models.decision
 from simpleflow import (
     exceptions,
     executor,
+    format,
     futures,
     task,
 )
