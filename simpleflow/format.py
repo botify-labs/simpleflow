@@ -5,9 +5,7 @@ from diskcache import Cache
 import lazy_object_proxy
 from sqlite3 import OperationalError
 
-from . import constants, logger
-
-from simpleflow import storage
+from simpleflow import constants, logger, storage
 from simpleflow.settings import SIMPLEFLOW_ENABLE_DISK_CACHE
 from simpleflow.utils import json_dumps, json_loads_or_raw
 

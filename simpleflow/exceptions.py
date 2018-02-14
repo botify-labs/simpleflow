@@ -36,10 +36,14 @@ class TaskFailed(Exception):
 
     """
     def __init__(self, name, reason, details=None):
-        super(TaskFailed, self).__init__(name, reason, details)
+        # NB: this is late imported else we have a circular dependency that's hard to fix
+        from simpleflow.format import decode
+
         self.name = name
-        self.reason = reason
-        self.details = details
+        self.reason = decode(reason, parse_json=False, use_proxy=False)
+        self.details = decode(details, parse_json=False, use_proxy=False)
+
+        super(TaskFailed, self).__init__(name, self.reason, self.details)
 
     def __repr__(self):
         return '{} ({}, "{}")'.format(
