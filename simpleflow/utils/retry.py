@@ -23,8 +23,7 @@ def constant(value):
 def exponential(value):
     import random
 
-    return random.random() * (2 ** value)
-
+    return random.random() * (2 ** value) + 1;
 
 def with_delay(
         nb_times=1,
