@@ -21,9 +21,12 @@ def constant(value):
 
 
 def exponential(value):
+    """
+    Set retry time exponentially; per the "+ 1," begin at a minimum of one second.
+    """
     import random
 
-    return random.random() * (2 ** value) + 1;
+    return random.random() * (2 ** value) + 1
 
 def with_delay(
         nb_times=1,
