@@ -872,6 +872,8 @@ def test_workflow_with_child_workflow_failed():
 
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert reason == 'Workflow execution error in workflow-test_workflow: "None"'
 
 
 def test_workflow_with_child_workflow_timed_out():
@@ -897,6 +899,8 @@ def test_workflow_with_child_workflow_timed_out():
 
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert reason == 'Workflow execution error in workflow-test_workflow: "TimeoutError(START_TO_CLOSE)"'
 
 
 def test_workflow_with_child_workflow_canceled():
@@ -922,6 +926,8 @@ def test_workflow_with_child_workflow_canceled():
 
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert reason == 'Workflow execution error in workflow-test_workflow: "TaskCanceled()"'
 
 
 def test_workflow_with_child_workflow_terminated():
@@ -947,6 +953,8 @@ def test_workflow_with_child_workflow_terminated():
 
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
+    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
+    assert reason == 'Workflow execution error in workflow-test_workflow: "TaskTerminated()"'
 
 
 class ATestDefinitionMoreThanMaxDecisions(BaseTestWorkflow):
@@ -1130,7 +1138,7 @@ def test_workflow_activity_raises_on_failure(mock_decref_workflow):
 
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
-        reason='Workflow execution error in task '
+        reason='Workflow execution error in '
                'activity-tests.data.activities.raise_on_failure: '
                '"error"',
         details=builder.DEFAULT_DETAILS,
@@ -1281,7 +1289,7 @@ def test_activity_task_timeout_raises():
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
-        reason='Workflow execution error in task '
+        reason='Workflow execution error in '
                'activity-tests.data.activities.raise_on_failure: '
                '"TimeoutError(START_TO_CLOSE)"')
 
