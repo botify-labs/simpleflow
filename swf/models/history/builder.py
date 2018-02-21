@@ -677,9 +677,9 @@ class History(swf.models.History):
 
         return self
 
-    def add_timer_started(self, timer_id, timeout, control=None):
+    def add_timer_started(self, timer_id, timeout, control=None, decision_id=0):
         d = {
-            # "decisionTaskCompletedEventId": decision_id,
+            "decisionTaskCompletedEventId": decision_id,
             'startToFireTimeout': str(timeout),
             'timerId': timer_id,
         }

@@ -1,6 +1,7 @@
 import collections
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -187,6 +188,8 @@ class History(object):
                 'scheduled_timestamp': event.timestamp,
                 'input': event.input,
                 'task_list': event.task_list['name'],
+                'control': getattr(event, 'control', None),
+                'decision_task_completed_event_id': event.decision_task_completed_event_id,
             }
             if event.activity_id not in self._activities:
                 self._activities[event.activity_id] = activity
@@ -220,50 +223,62 @@ class History(object):
 
         elif event.state == 'started':
             activity = get_activity()
-            activity['state'] = event.state
-            activity['identity'] = event.identity
-            activity['started_id'] = event.id
-            activity['started_timestamp'] = event.timestamp
+            activity.update({
+                'state': event.state,
+                'identity': event.identity,
+                'started_id': event.id,
+                'started_timestamp': event.timestamp,
+            })
         elif event.state == 'completed':
             activity = get_activity()
-            activity['state'] = event.state
-            activity['result'] = getattr(event, 'result', None)
-            activity['completed_id'] = event.id
-            activity['completed_timestamp'] = event.timestamp
+            activity.update({
+                'state': event.state,
+                'result': getattr(event, 'result', None),
+                'completed_id': event.id,
+                'completed_timestamp': event.timestamp,
+            })
         elif event.state == 'timed_out':
             activity = get_activity()
-            activity['state'] = event.state
-            activity['timeout_type'] = event.timeout_type
-            activity['timeout_value'] = getattr(
-                events[activity['scheduled_id'] - 1],
-                '{}_timeout'.format(event.timeout_type.lower()))
-            activity['timed_out_id'] = event.id
-            activity['timed_out_timestamp'] = event.timestamp
+            activity.update({
+                'state': event.state,
+                'timeout_type': event.timeout_type,
+                'timeout_value': getattr(
+                    events[activity['scheduled_id'] - 1],
+                    '{}_timeout'.format(event.timeout_type.lower())),
+                'timed_out_id': event.id,
+                'timed_out_timestamp': event.timestamp,
+            })
             if 'retry' not in activity:
                 activity['retry'] = 0
             else:
                 activity['retry'] += 1
         elif event.state == 'failed':
             activity = get_activity()
-            activity['state'] = event.state
-            activity['reason'] = getattr(event, 'reason', '')
-            activity['details'] = getattr(event, 'details', '')
-            activity['failed_timestamp'] = event.timestamp
+            activity.update({
+                'state': event.state,
+                'reason': getattr(event, 'reason', ''),
+                'details': getattr(event, 'details', ''),
+                'failed_id': event.id,
+                'failed_timestamp': event.timestamp,
+            })
             if 'retry' not in activity:
                 activity['retry'] = 0
             else:
                 activity['retry'] += 1
         elif event.state == 'cancelled':
             activity = get_activity()
-            activity['state'] = event.state
-            activity['details'] = getattr(event, 'details', '')
-            activity['cancelled_timestamp'] = event.timestamp
+            activity.update({
+                'state': event.state,
+                'details': getattr(event, 'details', ''),
+                'cancelled_timestamp': event.timestamp,
+            })
         elif event.state == 'cancel_requested':
             activity = {
                 'type': 'activity',
                 'id': event.activity_id,
                 'state': event.state,
                 'cancel_requested_timestamp': event.timestamp,
+                'cancel_decision_task_completed_event_id': event.decision_task_completed_event_id,
             }
             if event.activity_id not in self._activities:
                 self._activities[event.activity_id] = activity
@@ -314,12 +329,14 @@ class History(object):
                 'version': event.workflow_type['version'],
                 'state': event.state,
                 'initiated_event_id': event.id,
-                'raw_input': event.raw.get('input'),
+                'raw_input': event.raw.get('input'),  # FIXME obsolete; any user out there?
+                'input': event.input,
                 'child_policy': event.child_policy,
                 'control': getattr(event, 'control', None),
                 'tag_list': getattr(event, 'tag_list', None),
                 'task_list': event.task_list['name'],
                 'initiated_event_timestamp': event.timestamp,
+                'decision_task_completed_event_id': event.decision_task_completed_event_id,
             }
             if event.workflow_id not in self._child_workflows:
                 self._child_workflows[event.workflow_id] = workflow
@@ -345,6 +362,7 @@ class History(object):
                 'control': getattr(event, 'control', None),
                 'start_failed_id': event.id,
                 'start_failed_timestamp': event.timestamp,
+                'decision_task_completed_event_id': event.decision_task_completed_event_id,
             }
             if event.workflow_id not in self._child_workflows:
                 self._child_workflows[event.workflow_id] = workflow
@@ -353,51 +371,66 @@ class History(object):
                 self._child_workflows[event.workflow_id].update(workflow)
         elif event.state == 'started':
             workflow = get_workflow()
-            workflow['state'] = event.state
-            workflow['run_id'] = event.workflow_execution['runId']
-            workflow['workflow_id'] = event.workflow_execution['workflowId']
-            workflow['started_id'] = event.id
-            workflow['started_timestamp'] = event.timestamp
+            workflow.update({
+                'state': event.state,
+                'run_id': event.workflow_execution['runId'],
+                'workflow_id': event.workflow_execution['workflowId'],
+                'started_id': event.id,
+                'started_timestamp': event.timestamp,
+            })
         elif event.state == 'completed':
             workflow = get_workflow()
-            workflow['state'] = event.state
-            workflow['result'] = getattr(event, 'result', None)
-            workflow['completed_id'] = event.id
-            workflow['completed_timestamp'] = event.timestamp
+            workflow.update({
+                'state': event.state,
+                'result': getattr(event, 'result', None),
+                'completed_id': event.id,
+                'completed_timestamp': event.timestamp,
+            })
         elif event.state == 'failed':
             workflow = get_workflow()
-            workflow['state'] = event.state
-            workflow['reason'] = getattr(event, 'reason', None)
-            workflow['details'] = getattr(event, 'details', None)
-            workflow['failed_id'] = event.id
-            workflow['failed_timestamp'] = event.timestamp
-            # FIXME add retry here too?
+            workflow.update({
+                'state': event.state,
+                'reason': getattr(event, 'reason', None),
+                'details': getattr(event, 'details', None),
+                'failed_id': event.id,
+                'failed_timestamp': event.timestamp,
+            })
+            if 'retry' not in workflow:
+                workflow['retry'] = 0
+            else:
+                workflow['retry'] += 1
         elif event.state == 'timed_out':
             workflow = get_workflow()
-            workflow['state'] = event.state
-            workflow['timeout_type'] = event.timeout_type
-            workflow['timeout_value'] = getattr(
-                events[workflow['initiated_event_id'] - 1],
-                '{}_timeout'.format(event.timeout_type.lower()),
-                None,
-            )
-            workflow['timed_out_id'] = event.id
-            workflow['timed_out_timestamp'] = event.timestamp
+            workflow.update({
+                'state': event.state,
+                'timeout_type': event.timeout_type,
+                'timeout_value': getattr(
+                    events[workflow['initiated_event_id'] - 1],
+                    '{}_timeout'.format(event.timeout_type.lower()),
+                    None
+                ),
+                'timed_out_id': event.id,
+                'timed_out_timestamp': event.timestamp,
+            })
             if 'retry' not in workflow:
                 workflow['retry'] = 0
             else:
                 workflow['retry'] += 1
         elif event.state == 'canceled':
             workflow = get_workflow()
-            workflow['state'] = event.state
-            workflow['details'] = getattr(event, 'details', None)
-            workflow['canceled_id'] = event.id
-            workflow['canceled_timestamp'] = event.timestamp
+            workflow.update({
+                'state': event.state,
+                'details': getattr(event, 'details', None),
+                'canceled_id': event.id,
+                'canceled_timestamp': event.timestamp,
+            })
         elif event.state == 'terminated':
             workflow = get_workflow()
-            workflow['state'] = event.state
-            workflow['terminated_id'] = event.id
-            workflow['terminated_timestamp'] = event.timestamp
+            workflow.update({
+                'state': event.state,
+                'terminated_id': event.id,
+                'terminated_timestamp': event.timestamp,
+            })
 
     def parse_workflow_event(self, events, event):
         """
@@ -467,18 +500,22 @@ class History(object):
             self._external_workflows_signaling[event.id] = workflow
         elif event.state == 'signal_execution_failed':
             workflow = self._external_workflows_signaling[event.initiated_event_id]
-            workflow['state'] = event.state
-            workflow['cause'] = event.cause
+            workflow.update({
+                'state': event.state,
+                'cause': event.cause,
+                'signal_failed_timestamp': event.timestamp,
+            })
             if control:
                 workflow['control'] = control
-            workflow['signal_failed_timestamp'] = event.timestamp
         elif event.state == 'execution_signaled':
             workflow = self._external_workflows_signaling[event.initiated_event_id]
-            workflow['state'] = event.state
-            workflow['run_id'] = event.workflow_execution['runId']
-            workflow['workflow_id'] = event.workflow_execution['workflowId']
-            workflow['signaled_event_id'] = event.id
-            workflow['signaled_timestamp'] = event.timestamp
+            workflow.update({
+                'state': event.state,
+                'run_id': event.workflow_execution['runId'],
+                'workflow_id': event.workflow_execution['workflowId'],
+                'signaled_event_id': event.id,
+                'signaled_timestamp': event.timestamp,
+            })
             self._signaled_workflows[workflow['signal_name']].append(workflow)
         elif event.state == 'request_cancel_execution_initiated':
             workflow = {
@@ -501,17 +538,21 @@ class History(object):
                 self._external_workflows_canceling[event.workflow_id].update(workflow)
         elif event.state == 'request_cancel_execution_failed':
             workflow = get_workflow(self._external_workflows_canceling)
-            workflow['state'] = event.state
-            workflow['cause'] = event.cause
+            workflow.update({
+                'state': event.state,
+                'cause': event.cause,
+            })
             if control:
                 workflow['control'] = control
             workflow['request_cancel_failed_timestamp'] = event.timestamp
         elif event.state == 'execution_cancel_requested':
             workflow = get_workflow(self._external_workflows_canceling)
-            workflow['run_id'] = event.workflow_execution['runId']
-            workflow['workflow_id'] = event.workflow_execution['workflowId']
-            workflow['cancel_requested_event_id'] = event.id
-            workflow['cancel_requested_timestamp'] = event.timestamp
+            workflow.update({
+                'run_id': event.workflow_execution['runId'],
+                'workflow_id': event.workflow_execution['workflowId'],
+                'cancel_requested_event_id': event.id,
+                'cancel_requested_timestamp': event.timestamp,
+            })
 
     def parse_marker_event(self, events, event):
         if event.state == 'recorded':
@@ -545,41 +586,53 @@ class History(object):
                 'control': getattr(event, 'control', None),
                 'started_event_id': event.id,
                 'started_event_timestamp': event.timestamp,
+                'decision_task_completed_event_id': event.decision_task_completed_event_id,
             }
             self._timers[event.timer_id] = timer
         elif event.state == 'fired':
             timer = self._timers[event.timer_id]
-            timer['state'] = event.state
-            timer['fired_event_id'] = event.id
-            timer['fired_event_timestamp'] = event.timestamp
+            timer.update({
+                'state': event.state,
+                'fired_event_id': event.id,
+                'fired_event_timestamp': event.timestamp,
+            })
         elif event.state == 'start_failed':
             timer = self._timers.get(event.timer_id)
             if timer is None:
                 timer = {
                     'type': 'timer',
                     'id': event.timer_id,
+                    'decision_task_completed_event_id': event.decision_task_completed_event_id,
                 }
                 self._timers[event.timer_id] = timer
-            timer['state'] = event.state
-            timer['cause'] = event.cause
-            timer['start_failed_event_id'] = event.id
-            timer['start_failed_event_timestamp'] = event.timestamp
+            timer.update({
+                'state': event.state,
+                'cause': event.cause,
+                'start_failed_event_id': event.id,
+                'start_failed_event_timestamp': event.timestamp,
+            })
         elif event.state == 'canceled':
             timer = self._timers[event.timer_id]
-            timer['state'] = event.state
-            timer['canceled_event_id'] = event.id
-            timer['canceled_event_timestamp'] = event.timestamp
+            timer.update({
+                'state': event.state,
+                'canceled_event_id': event.id,
+                'canceled_event_timestamp': event.timestamp,
+                'cancel_decision_task_completed_event_id': event.decision_task_completed_event_id,
+            })
         elif event.state == 'cancel_failed':
             timer = self._timers.get(event.timer_id)
             if timer is None:
                 timer = {
                     'type': 'timer',
                     'id': event.timer_id,
+                    'cancel_decision_task_completed_event_id': event.decision_task_completed_event_id,
                 }
                 self._timers[event.timer_id] = timer
-            timer['state'] = event.state
-            timer['cancel_failed_event_id'] = event.id
-            timer['cancel_failed_event_timestamp'] = event.timestamp
+            timer.update({
+                'state': event.state,
+                'cancel_failed_event_id': event.id,
+                'cancel_failed_event_timestamp': event.timestamp,
+            })
 
     def parse_decision_event(self, events, event):
         if event.state == 'started':
