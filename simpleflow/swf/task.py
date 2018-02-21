@@ -12,7 +12,9 @@ class SwfTask(object):
     """
     simpleflow.swf task; useful for type checking.
     """
-    pass
+    @property
+    def payload(self):
+        raise NotImplementedError
 
 
 class ActivityTask(task.ActivityTask, SwfTask):
@@ -27,6 +29,10 @@ class ActivityTask(task.ActivityTask, SwfTask):
         Casts a generic simpleflow.task.ActivityTask into a SWF one.
         """
         return cls(task.activity, *task._args, **task._kwargs)
+
+    @property
+    def payload(self):
+        return self.activity
 
     @property
     def task_list(self):
@@ -72,6 +78,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
             activity.task_heartbeat_timeout,
         )
         task_priority = kwargs.get('priority')
+        control = kwargs.get('control')
 
         meta = activity.meta
         if meta:
@@ -81,7 +88,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
             'schedule',
             activity_id=self.id,
             activity_type=model,
-            control=None,
+            control=json_dumps(control) if control is not None else None,
             task_list=task_list,
             input=input,
             task_timeout=str(task_timeout) if task_timeout else None,
@@ -156,6 +163,10 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         return 'workflow-{}'.format(self.workflow.name)
 
     @property
+    def payload(self):
+        return self.workflow
+
+    @property
     def task_list(self):
         return getattr(self.workflow, 'task_list', None)
 
@@ -183,6 +194,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
             'args': self.args,
             'kwargs': self.kwargs,
         }
+        control = kwargs.get('control')
 
         get_tag_list = getattr(workflow, 'get_tag_list', None)
         if get_tag_list:
@@ -199,6 +211,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
             workflow_id=self.id,
             workflow_type=model,
             task_list=task_list or self.task_list,
+            control=json_dumps(control) if control is not None else None,
             input=input,
             tag_list=tag_list,
             child_policy=getattr(workflow, 'child_policy', None),
@@ -287,7 +300,7 @@ class SignalTask(task.SignalTask, SwfTask):
             input=input,
             workflow_id=self.workflow_id,
             run_id=self.run_id,
-            control=self.control,
+            control=json_dumps(self.control) if self.control is not None else None,
         )
 
         return [decision]
