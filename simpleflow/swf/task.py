@@ -88,7 +88,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
             'schedule',
             activity_id=self.id,
             activity_type=model,
-            control=json_dumps(control) if control is not None else None,
+            control=json_dumps(control) if control is not None else None,  # FIXME encode in the model?
             task_list=task_list,
             input=input,
             task_timeout=str(task_timeout) if task_timeout else None,
@@ -190,10 +190,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
             workflow.version
         )
 
-        input = {
-            'args': self.args,
-            'kwargs': self.kwargs,
-        }
+        input = self.get_input()
         control = kwargs.get('control')
 
         get_tag_list = getattr(workflow, 'get_tag_list', None)
@@ -211,7 +208,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
             workflow_id=self.id,
             workflow_type=model,
             task_list=task_list or self.task_list,
-            control=json_dumps(control) if control is not None else None,
+            control=json_dumps(control) if control is not None else None,  # FIXME encode in the model?
             input=input,
             tag_list=tag_list,
             child_policy=getattr(workflow, 'child_policy', None),
@@ -219,6 +216,13 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         )
 
         return [decision]
+
+    def get_input(self):
+        input = {
+            'args': self.args,
+            'kwargs': self.kwargs,
+        }
+        return input
 
     @classmethod
     def get_workflow_type(cls, domain, name, version):
@@ -300,7 +304,7 @@ class SignalTask(task.SignalTask, SwfTask):
             input=input,
             workflow_id=self.workflow_id,
             run_id=self.run_id,
-            control=json_dumps(self.control) if self.control is not None else None,
+            control=json_dumps(self.control) if self.control is not None else None,  # FIXME encode in the model?
         )
 
         return [decision]
@@ -346,7 +350,7 @@ class TimerTask(task.TimerTask, SwfTask):
             'start',
             id=self.timer_id,
             start_to_fire_timeout=str(self.timeout),
-            control=json_dumps(self.control) if self.control is not None else None,
+            control=json_dumps(self.control) if self.control is not None else None,  # FIXME encode in the model?
         )
         return [decision]
 

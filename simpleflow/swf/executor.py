@@ -19,6 +19,7 @@ from simpleflow import (
     format,
     futures,
     task,
+    compat,
 )
 from simpleflow.activity import Activity, PRIORITY_NOT_SET
 from simpleflow.base import Submittable
@@ -676,13 +677,20 @@ class Executor(executor.Executor):
         """
         timer = self.find_timer_associated_with(event, swf_task)
         if timer:
-            timer['control'] = format.decode(timer['control'])
+            if isinstance(timer['control'], compat.string_types):  # FIXME unconditional?
+                control = format.decode(timer['control'])
+            else:
+                control = timer['control']
+            if not isinstance(control, dict):
+                control = {}
             if timer['state'] == 'started':
                 logger.debug('handle_failure: timer {} started, "pending" future'.format(timer['id']))
                 return futures.Future(), swf_task  # mark as pending
             elif timer['state'] in ('fired', 'canceled'):
                 logger.debug('handle_failure: timer {} fired or canceled, retrying'.format(timer['id']))
-                return None, swf_task  # TODO: update task
+                swf_task.args = control.get('args', ())
+                swf_task.kwargs = control.get('kwargs', {})
+                return None, swf_task
             elif timer['state'] == 'start_failed':
                 raise exceptions.TaskFailed('timer', timer['id'], timer['cause'])
             else:  # TODO: handle
@@ -719,7 +727,7 @@ class Executor(executor.Executor):
                     TimerTask(
                         self.get_retry_task_timer_id(swf_task),
                         failure_context.retry_wait_timeout,
-                        None  # FIXME control: put updated input/args/kwargs
+                        swf_task.get_input()
                     ),
                 )
             if failure_context.decision != base_task.TaskFailureContext.Decision.none:

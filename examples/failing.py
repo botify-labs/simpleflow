@@ -46,11 +46,14 @@ class FailingWorkflow(Workflow):
     task_list = 'example'
     retry = 1
 
-    def run(self):
+    def run(self, fail=True):
         x = self.submit(fail_but_dont_raise)
-        y = self.submit(fail_and_raise)
-        futures.wait(x, y)
-        raise ValueError("YOU SHOULD NEVER SEE THIS")
+        if fail:
+            y = self.submit(fail_and_raise)
+            futures.wait(x, y)
+            raise ValueError("YOU SHOULD NEVER SEE THIS")
+        else:
+            futures.wait(x)
 
     def on_task_failure(self, failure_context):
         # type: (TaskFailureContext) -> Optional[TaskFailureContext]
@@ -95,6 +98,8 @@ class NotFailingWorkflow(Workflow):
             if failure_context.retry_count < 2:  # maximum 2 retries
                 failure_context.decision = failure_context.Decision.retry_later
                 failure_context.retry_wait_timeout = 1 * MINUTE
+                if failure_context.retry_count == 1:  # don't fail on this retry
+                    failure_context.a_task.kwargs = {'fail': False}
                 return failure_context
         else:
             print(colorize(ORANGE, "===> unhandled: {}, {!r}".format(

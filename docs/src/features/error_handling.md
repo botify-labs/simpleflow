@@ -38,7 +38,7 @@ The `TaskFailureContext.decision` (nothing in common with SWF's decisions) is se
 * abort: use default abort strategy
 * ignore: discard the exception, consider the task finished; the future's result may be user-modified
 * cancel: mark the future as cancelled
-* retry: schedule the task again; its input may be user-modified (well, the whole task)
-* retry_later: schedule the task after retry_wait_timeout seconds
+* retry: schedule the task again; its args and kwargs may be user-modified (well, the whole task)
+* retry_later: schedule the task after retry_wait_timeout seconds, with args and kwargs potentially altered
 
 
