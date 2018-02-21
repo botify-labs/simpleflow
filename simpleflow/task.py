@@ -4,12 +4,18 @@ import abc
 from copy import deepcopy
 
 import time
+from enum import Enum
 
 import six
 
 from simpleflow.base import Submittable
 from . import futures
 from .activity import Activity
+
+
+if False:
+    from simpleflow.history import History  # NOQA
+    from typing import Optional, Any, Dict, Union  # NOQA
 
 
 def get_actual_value(value):
@@ -255,3 +261,92 @@ class CancelTimerTask(Task):
     def execute(self):
         # Local execution: no-op
         return
+
+
+class TaskFailureContext(object):
+    """
+    Some context for a task/workflow failure.
+    """
+    class Decision(Enum):
+        none = 0
+        abort = 1
+        ignore = 2
+        retry_now = 3
+        retry_later = 4
+        cancel = 5
+
+    def __init__(self,
+                 a_task,  # type: Union[ActivityTask, WorkflowTask]
+                 event,  # type: Dict[str, Any]
+                 future,  # type: futures.Future
+                 history=None,  # type: Optional[History]
+                 ):
+        self.a_task = a_task
+        self.event = event
+        self.future = future
+        self.history = history
+        self.decision = TaskFailureContext.Decision.none
+        self.retry_wait_timeout = None
+        self._task_error = None
+
+    def __repr__(self):
+        return '<TaskFailureContext' \
+               ' task type={type}' \
+               ' task.id={id}' \
+               ' task.name={name}' \
+               ' event={event}' \
+               ' future={future}' \
+               ' task_error={task_error}' \
+               ' current_started_decision_id={started_decision_id}' \
+               ' last_completed_decision_id={completed_decision_id}' \
+               ' decision={decision}' \
+               ' retry_wait_timeout={retry_wait_timeout}' \
+               '>' \
+            .format(
+                type=type(self.a_task),
+                id=getattr(self.a_task, 'id', None),
+                name=getattr(self.a_task, 'name', None),
+                event=self.event,
+                future=self.future,
+                task_error=self.task_error,
+                started_decision_id=self.current_started_decision_id,
+                completed_decision_id=self.last_completed_decision_id,
+                decision=self.decision,
+                retry_wait_timeout=self.retry_wait_timeout,
+                )
+
+    @property
+    def retry_count(self):
+        return self.event.get('retry')
+
+    @property
+    def task_name(self):
+        if hasattr(self.a_task, 'payload'):
+            return self.a_task.payload.name
+        if hasattr(self.a_task, 'name'):
+            return self.a_task.name
+        return None
+
+    @property
+    def exception(self):
+        return self.future.exception
+
+    @property
+    def current_started_decision_id(self):
+        return self.history.started_decision_id if self.history else None
+
+    @property
+    def last_completed_decision_id(self):
+        return self.history.completed_decision_id if self.history else None
+
+    @property
+    def task_error(self):
+        if self._task_error is None:
+            from simpleflow.exceptions import TaskFailed
+            from simpleflow.utils import json_loads_or_raw
+            self._task_error = ()  # falsy value different from None
+            if isinstance(self.exception, TaskFailed) and self.exception.details:
+                details = json_loads_or_raw(self.exception.details)
+                if isinstance(details, dict) and 'error' in details:
+                    self._task_error = details['error']
+        return self._task_error

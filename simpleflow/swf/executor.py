@@ -623,18 +623,7 @@ class Executor(executor.Executor):
         if future.exception is None:  # Result available!
             return future
 
-        # Compare number of retries in history with configured max retries
-        # NB: we used to do a strict comparison (==), but that can lead to
-        # infinite retries in case the code is redeployed with a decreased
-        # retry limit and a workflow has a already crossed the new limit. So
-        # ">=" is better there.
-        if event.get('retry', 0) >= a_task.activity.retry:
-            if a_task.activity.raises_on_failure:
-                raise exceptions.TaskException(a_task, future.exception)
-            return future  # with future.exception set.
-
-        # Otherwise retry the task by scheduling it again.
-        return None  # means the task is not in SWF.
+        return self.handle_failure(event, future, a_task, exceptions.TaskException)
 
     def resume_child_workflow(self, a_workflow, event):
         """
@@ -659,18 +648,113 @@ class Executor(executor.Executor):
         if future.exception is None:  # Result available!
             return future
 
+        return self.handle_failure(event, future, a_workflow, exceptions.WorkflowException)
+
+    def handle_failure(self,
+                       event,  # type: dict
+                       future,  # type: futures.Future
+                       swf_task,  # type: Union[ActivityTask, WorkflowTask]
+                       exception_class,  # type: Type[Exception]
+                       ):
+        # type: (...) -> Union[futures.Future, Tuple[Optional[futures.Future], SwfTask], None]
+        """
+        Call the workflow's on_task_failure method if it exists.
+        If no retry/abort/ignore decision, use the default strategy (using retry count and raises_on_failure).
+
+        on_task_failure can:
+        * abort the task
+        * ignore the error, and set the future's result as wanted
+        * cancel the task (the future will be marked "cancelled")
+        * retry as many times as wanted, immediately or with a wait period
+        * do nothing: the default error handling is used
+
+        :param event:
+        :param future:
+        :param swf_task:
+        :param exception_class:
+        :return:
+        """
+        timer = self.find_timer_associated_with(event, swf_task)
+        if timer:
+            timer['control'] = format.decode(timer['control'])
+            if timer['state'] == 'started':
+                logger.debug('handle_failure: timer {} started, "pending" future'.format(timer['id']))
+                return futures.Future(), swf_task  # mark as pending
+            elif timer['state'] in ('fired', 'canceled'):
+                logger.debug('handle_failure: timer {} fired or canceled, retrying'.format(timer['id']))
+                return None, swf_task  # TODO: update task
+            elif timer['state'] == 'start_failed':
+                raise exceptions.TaskFailed('timer', timer['id'], timer['cause'])
+            else:  # TODO: handle
+                logger.warning('Unexpected timer state for timer "{}": {}'.format(timer['id'], timer['state']))
+
+        if hasattr(self.workflow, 'on_task_failure'):
+            # FIXME uncomment if deemed useful
+            # for field in 'details', 'control':  # decode these fields; FIXME to do in history.parse?
+            #     if field in event and isinstance(event[field], compat.string_types):
+            #         event[field] = format.decode(event[field] or None)  # FIXME details: empty string if not set
+
+            failure_context = base_task.TaskFailureContext(swf_task, event, future, self._history)
+            new_failure_context = self.workflow.on_task_failure(failure_context)  # type: base_task.TaskFailureContext
+            if new_failure_context:
+                failure_context = new_failure_context
+            future, swf_task, event = failure_context.future, failure_context.a_task, failure_context.event  # updatable
+            if failure_context.decision == base_task.TaskFailureContext.Decision.abort:
+                if swf_task.payload.raises_on_failure:
+                    raise exception_class(swf_task, future.exception)
+                return future, swf_task
+            if failure_context.decision == base_task.TaskFailureContext.Decision.ignore:
+                future.set_exception(None)
+                return future, swf_task
+            if failure_context.decision == base_task.TaskFailureContext.Decision.cancel:
+                future.set_cancelled()
+                return future, swf_task
+            if (failure_context.decision == base_task.TaskFailureContext.Decision.retry_now or
+                    (failure_context.decision == base_task.TaskFailureContext.Decision.retry_later and
+                     not failure_context.retry_wait_timeout)):
+                return None, swf_task
+            if failure_context.decision == base_task.TaskFailureContext.Decision.retry_later:
+                return (
+                    None,
+                    TimerTask(
+                        self.get_retry_task_timer_id(swf_task),
+                        failure_context.retry_wait_timeout,
+                        None  # FIXME control: put updated input/args/kwargs
+                    ),
+                )
+            if failure_context.decision != base_task.TaskFailureContext.Decision.none:
+                raise ValueError('Unexpected TaskFailureValue decision: {}'.format(failure_context.decision))
+
         # Compare number of retries in history with configured max retries
         # NB: we used to do a strict comparison (==), but that can lead to
         # infinite retries in case the code is redeployed with a decreased
         # retry limit and a workflow has a already crossed the new limit. So
         # ">=" is better there.
-        if event.get('retry', 0) >= a_workflow.workflow.retry:
-            if a_workflow.workflow.raises_on_failure:
-                raise exceptions.WorkflowException(a_workflow, future.exception)
-            return future  # with future.exception set.
-
+        if event.get('retry', 0) >= swf_task.payload.retry:
+            if swf_task.payload.raises_on_failure:
+                raise exception_class(swf_task, future.exception)
+            return future
         # Otherwise retry the workflow by scheduling it again.
         return None  # means it is not in SWF.
+
+    def find_timer_associated_with(self, event, swf_task):
+        # type: (dict, Union[ActivityTask, WorkflowTask]) -> Optional[dict]
+        """
+        Return a potential timer "associated with" an event, i.e.
+        * with a related name
+        * launched in a decision completed after the event's decision
+        :param event:
+        :param swf_task:
+        :return:
+        """
+        timer = self._history.timers.get(self.get_retry_task_timer_id(swf_task))
+        if timer and timer['decision_task_completed_event_id'] > event['decision_task_completed_event_id']:
+            return timer
+        return None
+
+    @staticmethod
+    def get_retry_task_timer_id(swf_task):
+        return '__simpleflow_task_{}'.format(str(swf_task.id))
 
     def schedule_task(self, a_task, task_list=None):
         """
@@ -799,7 +883,11 @@ class Executor(executor.Executor):
         if event:
             ttf = self.EVENT_TYPE_TO_FUTURE.get(event['type'])
             if ttf:
-                future = ttf(self, a_task, event)
+                future_and_more = ttf(self, a_task, event)
+                if isinstance(future_and_more, tuple):
+                    future, a_task = future_and_more
+                else:
+                    future = future_and_more
             if event['type'] == 'activity':
                 if future and future.state in (futures.PENDING, futures.RUNNING):
                     self._open_activity_count += 1
