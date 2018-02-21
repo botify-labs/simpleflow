@@ -969,7 +969,7 @@ class Executor(executor.Executor):
                 self.maybe_clear_execution_context()
 
             return self._decisions_and_context
-        except exceptions.TaskException as err:
+        except (exceptions.TaskException, exceptions.WorkflowException) as err:
             def _extract_reason(err):
                 if hasattr(err.exception, 'reason'):
                     raw = err.exception.reason
@@ -977,8 +977,9 @@ class Executor(executor.Executor):
                     # the result to a string anyway, better keep a json representation
                     return format.decode(raw, parse_json=False, use_proxy=False)
                 return repr(err.exception)
-            reason = 'Workflow execution error in task {}: "{}"'.format(
-                err.task.name,
+
+            reason = 'Workflow execution error in {}: "{}"'.format(
+                err.payload.name,
                 _extract_reason(err))
             logger.exception('%s', reason)  # Don't let logger try to interpolate the message
 
