@@ -69,9 +69,11 @@ class Future(object):
         self._exception = None
 
     def __repr__(self):
-        return '<Future at %s state=%s>' % (
+        return '<Future at %s state=%s%s>' % (
             hex(id(self)),
-            _STATE_TO_DESCRIPTION_MAP[self._state])
+            _STATE_TO_DESCRIPTION_MAP[self._state],
+            ' exception=%r' % self._exception if self._exception else ''
+        )
 
     def wait(self):
         raise exceptions.ExecutionBlocked
@@ -147,7 +149,7 @@ class Future(object):
         """
         Set state to finished with an exception.
         :param exception:
-        :type exception: Exception
+        :type exception: Optional[Exception]
         :return:
         """
         self._state = FINISHED
