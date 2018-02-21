@@ -2,11 +2,11 @@ from datetime import datetime
 import logging
 import sys
 
-
 RED = '\033[91m'
 GREEN = '\033[92m'
 YELLOW = '\033[93m'
 BLUE = '\033[94m'
+ORANGE = "\033[38;5;214m"
 END = '\033[0m'
 
 
@@ -14,6 +14,7 @@ class ColorModes(object):
     AUTO = 'auto'
     ALWAYS = 'always'
     NEVER = 'never'
+
 
 color_mode = 'auto'
 
