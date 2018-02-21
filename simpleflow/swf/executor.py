@@ -46,6 +46,8 @@ from simpleflow.utils import (
 from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
 
+if False:
+    from typing import Optional, Type, Union, Tuple  # NOQA
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +176,7 @@ class Executor(executor.Executor):
                  repair_workflow_id=None, repair_run_id=None,
                  ):
         super(Executor, self).__init__(workflow_class)
-        self._history = None
+        self._history = None  # type: Optional[History]
         self._run_context = {}
         self.domain = domain
         self.task_list = task_list
@@ -609,7 +611,7 @@ class Executor(executor.Executor):
         :param event:
         :type event: dict
         :return:
-        :rtype: futures.Future | None
+        :rtype: Optional[futures.Future]
         """
         future = self._get_future_from_activity_event(event)
         if not future:  # schedule failed, maybe OK later.
@@ -724,11 +726,11 @@ class Executor(executor.Executor):
             self._append_timer = True
             raise exceptions.ExecutionBlocked()
 
-    def _add_start_timer_decision(self, id):
+    def _add_start_timer_decision(self, id, timeout=0):
         timer = swf.models.decision.TimerDecision(
             'start',
             id=id,
-            start_to_fire_timeout='0')
+            start_to_fire_timeout=str(timeout))
         self._decisions_and_context.append_decision(timer)
 
     EVENT_TYPE_TO_FUTURE = {
@@ -751,7 +753,7 @@ class Executor(executor.Executor):
         :param a_task:
         :type a_task: Task
         :param args:
-        :param args: list
+        :type args: tuple
         :type kwargs:
         :type kwargs: dict
         :rtype: futures.Future
@@ -1040,9 +1042,9 @@ class Executor(executor.Executor):
             None
         )
         last_decision_had_context = (
-            last_completed_decision and
-            hasattr(last_completed_decision, 'execution_context') and
-            last_completed_decision.execution_context)
+                last_completed_decision and
+                hasattr(last_completed_decision, 'execution_context') and
+                last_completed_decision.execution_context)
         if last_decision_had_context:
             self._decisions_and_context.execution_context = ""
 
