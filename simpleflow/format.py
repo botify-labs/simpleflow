@@ -180,3 +180,7 @@ def reason(message):
 
 def result(message):
     return encode(json_dumps(message), constants.MAX_RESULT_LENGTH)
+
+
+def control(message):
+    return encode(json_dumps(message), constants.MAX_CONTROL_LENGTH)

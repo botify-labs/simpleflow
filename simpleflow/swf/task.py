@@ -88,7 +88,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
             'schedule',
             activity_id=self.id,
             activity_type=model,
-            control=json_dumps(control) if control is not None else None,  # FIXME encode in the model?
+            control=control,
             task_list=task_list,
             input=input,
             task_timeout=str(task_timeout) if task_timeout else None,
@@ -208,7 +208,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
             workflow_id=self.id,
             workflow_type=model,
             task_list=task_list or self.task_list,
-            control=json_dumps(control) if control is not None else None,  # FIXME encode in the model?
+            control=control,
             input=input,
             tag_list=tag_list,
             child_policy=getattr(workflow, 'child_policy', None),
@@ -304,7 +304,7 @@ class SignalTask(task.SignalTask, SwfTask):
             input=input,
             workflow_id=self.workflow_id,
             run_id=self.run_id,
-            control=json_dumps(self.control) if self.control is not None else None,  # FIXME encode in the model?
+            control=self.control,
         )
 
         return [decision]
@@ -326,12 +326,9 @@ class MarkerTask(task.MarkerTask, SwfTask):
         decision = swf.models.decision.MarkerDecision()
         decision.record(
             self.name,
-            self.get_json_details(),
+            self.details,
         )
         return [decision]
-
-    def get_json_details(self):
-        return json_dumps(self.details) if self.details is not None else None
 
 
 class TimerTask(task.TimerTask, SwfTask):
@@ -350,7 +347,7 @@ class TimerTask(task.TimerTask, SwfTask):
             'start',
             id=self.timer_id,
             start_to_fire_timeout=str(self.timeout),
-            control=json_dumps(self.control) if self.control is not None else None,  # FIXME encode in the model?
+            control=self.control
         )
         return [decision]
 

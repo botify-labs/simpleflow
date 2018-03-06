@@ -38,14 +38,14 @@ class ActivityTaskDecision(Decision):
         :type   activity_type: swf.models.activity.ActivityType
 
         :param  control: data attached to the event that can be used by the decider in subsequent workflow tasks
-        :type   control: String
+        :type   control: Optional[dict]
 
         :param  heartbeat_timeout: Specifies the maximum time before which a worker processing a task of this type must
                 report progress
         :type   heartbeat_timeout: String
 
         :param  input: input provided to the activity task
-        :type   input: dict
+        :type   input: Optional[dict]
 
         :param  duration_timeout: Maximum duration for this activity task
         :type   duration_timeout: String
@@ -64,6 +64,8 @@ class ActivityTaskDecision(Decision):
         """
         if input is not None:
             input = format.input(input)
+        if control is not None:
+            control = format.control(control)
 
         if task_priority is not None:
             # NB: here we call int() so we raise early if a wrong task priority

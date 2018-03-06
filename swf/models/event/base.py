@@ -61,6 +61,7 @@ class Event(object):
         self._state = state
         self._timestamp = timestamp
         self._input = {}
+        self._control = None
         self.raw = raw_data or {}
 
         self.process_attributes()
@@ -95,6 +96,14 @@ class Event(object):
     @input.setter
     def input(self, value):
         self._input = format.decode(value)
+
+    @property
+    def control(self):
+        return self._control
+
+    @control.setter
+    def control(self, value):
+        self._control = format.decode(value)
 
     def process_attributes(self):
         """Processes the event raw_data attributes_key elements

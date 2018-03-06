@@ -71,7 +71,7 @@ class WorkflowExecutionDecision(Decision):
         :type   execution_timeout: str
 
         :param  input: The input provided to the new workflow execution
-        :type   input: dict
+        :type   input: Optional[dict]
 
         :param  tag_list: list of tags to associate with the new workflow execution
         :type   tag_list: list
@@ -122,7 +122,7 @@ class ChildWorkflowExecutionDecision(Decision):
         :type   execution_timeout: str
 
         :param  input: The input provided to the child workflow execution
-        :type   input: str
+        :type   input: Optional[dict]
 
         :param  tag_list: list of tags to associate with the child workflow execution
         :type   tag_list: list
@@ -133,9 +133,15 @@ class ChildWorkflowExecutionDecision(Decision):
         :param  task_timeout: maximum duration of decision tasks for the child workflow execution
         :type   task_timeout: str
 
+        :param  control: data attached to the event that can be used by
+                  the decider in subsequent workflow tasks
+        :type   control: Optional[dict]
+
         """
         if input is not None:
             input = format.input(input)
+        if control is not None:
+            control = format.control(control)
 
         self.update_attributes({
             'childPolicy': child_policy,
@@ -165,13 +171,16 @@ class ExternalWorkflowExecutionDecision(Decision):
         :param  workflow_id: id of the external workflow execution to cancel
         :type   workflow_id: str
 
-        :param  : data attached to the event that can be used by
+        :param  control: data attached to the event that can be used by
                   the decider in subsequent workflow tasks
-        :type   : str
+        :type   control: Optional[dict]
 
         :param  run_id: run id of the external workflow execution to cancel
         :type   run_id: str
         """
+        if control is not None:
+            control = format.control(control)
+
         self.update_attributes({
             'workflowId': workflow_id,
             'control': control,
@@ -192,7 +201,7 @@ class ExternalWorkflowExecutionDecision(Decision):
 
         :param  control: data attached to the event that can be used by the decider
                          in subsequent decision tasks
-        :type   control: str
+        :type   control: Optional[dict]
 
         :param  input: input to be provided with the signal
         :type   input: Optional[dict]
@@ -202,6 +211,8 @@ class ExternalWorkflowExecutionDecision(Decision):
         """
         if input is not None:
             input = format.input(input)
+        if control is not None:
+            control = format.control(control)
 
         self.update_attributes({
             'signalName': signal_name,

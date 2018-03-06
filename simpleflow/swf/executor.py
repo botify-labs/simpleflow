@@ -546,7 +546,7 @@ class Executor(executor.Executor):
         :return:
         :rtype: Optional[dict[str, Any]]
         """
-        json_details = a_task.get_json_details()
+        json_details = json_dumps(a_task.details) if a_task.details is not None else None
         marker_list = history.markers.get(a_task.name)
         if not marker_list:
             return None
