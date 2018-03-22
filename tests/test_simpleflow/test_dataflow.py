@@ -872,8 +872,6 @@ def test_workflow_with_child_workflow_failed():
 
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
-    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
-    assert reason == "Cannot replay the workflow: TaskFailed(('workflow-test_workflow-None--0--1', None, None))"
 
 
 def test_workflow_with_child_workflow_timed_out():
@@ -899,8 +897,6 @@ def test_workflow_with_child_workflow_timed_out():
 
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
-    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
-    assert re.match(r'Cannot replay the workflow: TimeoutError\(.*\)', reason)
 
 
 def test_workflow_with_child_workflow_canceled():
@@ -926,8 +922,6 @@ def test_workflow_with_child_workflow_canceled():
 
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
-    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
-    assert re.match(r"Cannot replay the workflow: TaskCanceled\(.*\)", reason)
 
 
 def test_workflow_with_child_workflow_terminated():
@@ -953,8 +947,6 @@ def test_workflow_with_child_workflow_terminated():
 
     decision = decisions[0]
     assert decision.type == 'FailWorkflowExecution'
-    reason = decision['failWorkflowExecutionDecisionAttributes']['reason']
-    assert reason == "Cannot replay the workflow: TaskTerminated()"
 
 
 class ATestDefinitionMoreThanMaxDecisions(BaseTestWorkflow):
