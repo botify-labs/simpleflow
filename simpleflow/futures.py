@@ -36,7 +36,9 @@ _STATE_TO_DESCRIPTION_MAP = {
 
 def get_result_or_raise(future):
     """Returns the ``result`` of *future* if it is available, otherwise
-    raise."""
+    raise.
+    FIXME how is this different from future.result?
+    """
     if future.state == PENDING:
         raise exceptions.ExecutionBlocked()
     return future.result

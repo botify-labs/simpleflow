@@ -23,6 +23,27 @@ class TaskException(Exception):
             self.exception)
 
 
+class WorkflowException(Exception):
+    """
+    Wrap an exception raised by a workflow.
+
+    """
+    def __init__(self, workflow, exception):
+        """
+        :param exception: raised by a workflow.
+        :type  exception: TaskFailed.
+
+        """
+        self.workflow = workflow
+        self.exception = exception
+
+    def __repr__(self):
+        return '{}(workflow={} exception={})'.format(
+            self.__class__.__name__,
+            self.workflow,
+            self.exception)
+
+
 class TaskFailed(Exception):
     """
     Wrap the error's *reason* and *details* for an task that failed.

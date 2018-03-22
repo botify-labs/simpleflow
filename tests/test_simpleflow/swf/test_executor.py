@@ -74,7 +74,7 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
         marker_details = {'baz': 'bae'}
         history.add_signal('a_signal', signal_input)
         history.add_marker('a_marker', marker_details)
-        history.add_timer_started('a_timer', 1)
+        history.add_timer_started('a_timer', 1, decision_id=2)
         history.add_timer_fired('a_timer')
 
         executor = Executor(DOMAIN, ExampleWorkflow)
@@ -115,6 +115,7 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
             'type': 'timer',
             'state': 'fired',
             'id': 'a_timer',
+            'decision_task_completed_event_id': 2,
             'start_to_fire_timeout': 1,
             'started_event_id': 6,
             'fired_event_id': 7,

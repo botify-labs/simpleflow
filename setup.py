@@ -45,8 +45,8 @@ def find_version(fname):
         raise RuntimeError('Cannot find version information')
     return version
 
-__version__ = find_version("simpleflow/__init__.py")
 
+__version__ = find_version("simpleflow/__init__.py")
 
 if 'publish' in sys.argv:
     try:
@@ -71,6 +71,7 @@ def read(fname):
     with open(fname, encoding='utf8') as fp:
         content = fp.read()
     return content
+
 
 DEPS = [
     'future',
@@ -102,7 +103,7 @@ setup(
     author='Greg Leclercq',
     author_email='tech@botify.com',
     url='https://github.com/botify-labs/simpleflow',
-    packages=find_packages(exclude=("test*", )),
+    packages=find_packages(exclude=("test*",)),
     package_dir={
         'simpleflow': 'simpleflow',
         'swf': 'swf',

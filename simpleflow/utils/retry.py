@@ -28,6 +28,7 @@ def exponential(value):
 
     return random.random() * (2 ** value) + 1
 
+
 def with_delay(
         nb_times=1,
         delay=constant(1),
@@ -76,6 +77,7 @@ def with_delay(
                     nb_retries += 1
                     if nb_times - nb_retries <= 0:
                         raise
+
         return decorated
 
     on_exceptions = _to_tuple(on_exceptions)

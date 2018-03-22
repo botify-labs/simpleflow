@@ -49,3 +49,7 @@ htmlcov/
 # Temporary files
 .cache/
 tmp/
+
+
+# Not to be ignored
+!docs/script/build

@@ -5,6 +5,8 @@ from copy import deepcopy
 
 import time
 
+import six
+
 from simpleflow.base import Submittable
 from . import futures
 from .activity import Activity
@@ -19,12 +21,11 @@ def get_actual_value(value):
     return value
 
 
+@six.add_metaclass(abc.ABCMeta)
 class Task(Submittable):
     """A Task represents a work that can be scheduled for execution.
 
     """
-    __metaclass__ = abc.ABCMeta
-
     @abc.abstractproperty
     def name(self):
         raise NotImplementedError()
@@ -145,6 +146,12 @@ class WorkflowTask(Task):
         workflow = self.workflow(self.executor)
         return workflow.run(*self.args, **self.kwargs)
 
+    def propagate_attribute(self, attr, val):
+        """
+        Propagate to the workflow.
+        """
+        setattr(self.workflow, attr, val)
+
 
 class SignalTask(Task):
     """
@@ -166,12 +173,6 @@ class SignalTask(Task):
         return self._name
 
     def execute(self):
-        pass
-
-    def propagate_attribute(self, attr, val):
-        """
-        No propagation: We've not established a policy yet for child workflows.
-        """
         pass
 
 
