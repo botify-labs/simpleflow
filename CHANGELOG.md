@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.20.7
+------
+
+- Feature: raises_on_failure and retry on workflow (#334)
+
 0.20.6
 ------
 
