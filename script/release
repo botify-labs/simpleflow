@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-import os
+from __future__ import print_function
 import subprocess
 import re
 import sys
+from builtins import str, input
+
 
 VERSION_FILE = "simpleflow/__init__.py"
 MAIN_BRANCH = "master"
@@ -58,7 +60,7 @@ def execute(command, ignore=False, log=False):
     (out, error) = pr.communicate()
     if pr.returncode != 0 and not ignore:
         fail("Error: executing '{}', {}".format(command, error))
-    return out
+    return out.decode("utf-8")
 
 
 def current_branch():
@@ -68,13 +70,13 @@ def current_branch():
     for branch in execute("git branch --no-color").split("\n"):
         if branch.startswith("* "):
             return branch.split()[1]
-    fail("Couldn't find current branch, please don't" \
+    fail("Couldn't find current branch, please don't"
          " be in 'detached' state when running this.")
 
 
 def on_main_branch():
     """
-    Checks wether we're on main branch or not. If you're not on main
+    Checks whether we're on main branch or not. If you're not on main
     branch, you're supposed to know what you do!
     """
     return current_branch() == MAIN_BRANCH
@@ -91,11 +93,11 @@ def current_version():
             if not re.search("^[0-9.]+$", version_num):
                 fail("Found version num == {}, but it looks suspicious".format(version_num))
             return version_num
-    fail("Unable to find current version in in {}".format(VERSION_FILE))
+    fail("Unable to find current version in {}".format(VERSION_FILE))
 
 
 def increment_version(current):
-    nums = re.split("(?:\.|-)", current)
+    nums = re.split(r"[.\-]", current)
     nums[-1] = str(int(nums[-1]) + 1)
     return ".".join(nums)
 
@@ -160,7 +162,7 @@ def write_changelog(content, new_tag):
 
 def generate_changelog(from_tag, to_tag):
     proposed = proposed_changelog(from_tag, to_tag)
-    print proposed.replace("\n", "\n  ")
+    print(proposed.replace("\n", "\n  "))
     write_changelog(proposed, to_tag)
     return proposed
 
@@ -190,17 +192,17 @@ def main(argv):
     while not re.match(r'^(\d+)(\.\d+){2,3}?$', new_version):
         if new_version:
             print("BAD FORMAT ({})! Should be in the form: 1.2.3".format(new_version))
-        new_version = raw_input("New version to release [{}]: ".format(default_new_version))
+        new_version = input("New version to release [{}]: ".format(default_new_version))
         if not new_version:
             new_version = default_new_version
 
     # check if on main branch or not
     step("Check current branch")
     if not on_main_branch():
-        print "WARNING!"
-        print "  You're not on the main branch ({}).".format(MAIN_BRANCH)
-        print "Please confirm you want to continue [y/N] ",
-        answer = raw_input()
+        print("WARNING!")
+        print("  You're not on the main branch ({}).".format(MAIN_BRANCH))
+        print("Please confirm you want to continue [y/N]", end=' ')
+        answer = input()
         if not answer.lower().startswith("y"):
             fail("Will not continue as you're not on the main branch")
 
@@ -219,6 +221,7 @@ def main(argv):
     # push package to pypi
     step("Generate and push package to pypi.python.org")
     execute("python setup.py sdist upload -r pypi", log=True)
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
