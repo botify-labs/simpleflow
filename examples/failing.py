@@ -22,6 +22,7 @@ class FailingWorkflow(Workflow):
     name = 'failing'
     version = 'example'
     task_list = 'example'
+    retry = 1
 
     def run(self):
         x = self.submit(fail_but_dont_raise)
