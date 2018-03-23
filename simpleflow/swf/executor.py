@@ -50,7 +50,6 @@ from swf.core import ConnectedSWFObject
 if False:
     from typing import Optional, Type, Union, Tuple  # NOQA
 
-
 logger = logging.getLogger(__name__)
 
 __all__ = ['Executor']
@@ -679,10 +678,10 @@ class Executor(executor.Executor):
         :return:
         """
         event_id = History.get_event_id(event)
-        logger.info('handle_failure: failed_id=%s', event_id)
         if event_id in self.handled_failures:  # don't call workflow method multiple times
             return self.handled_failures[event_id]
 
+        logger.info('handle_failure: failed_id=%s', event_id)
         rc = self.do_handle_failure(event, future, swf_task, exception_class)
         self.handled_failures[event_id] = rc
         return rc
@@ -721,7 +720,7 @@ class Executor(executor.Executor):
             #     if field in event and isinstance(event[field], compat.string_types):
             #         event[field] = format.decode(event[field] or None)  # FIXME details: empty string if not set
 
-            failure_context = base_task.TaskFailureContext(swf_task, event, future, self._history)
+            failure_context = base_task.TaskFailureContext(swf_task, event, future, exception_class, self._history)
             new_failure_context = self.workflow.on_task_failure(failure_context)  # type: base_task.TaskFailureContext
             if new_failure_context:
                 failure_context = new_failure_context
@@ -730,17 +729,17 @@ class Executor(executor.Executor):
                 if swf_task.payload.raises_on_failure:
                     raise exception_class(swf_task, future.exception)
                 return future, swf_task
-            if failure_context.decision == base_task.TaskFailureContext.Decision.ignore:
+            elif failure_context.decision == base_task.TaskFailureContext.Decision.ignore:
                 future.set_exception(None)
                 return future, swf_task
-            if failure_context.decision == base_task.TaskFailureContext.Decision.cancel:
+            elif failure_context.decision == base_task.TaskFailureContext.Decision.cancel:
                 future.set_cancelled()
                 return future, swf_task
-            if (failure_context.decision == base_task.TaskFailureContext.Decision.retry_now or
+            elif (failure_context.decision == base_task.TaskFailureContext.Decision.retry_now or
                     (failure_context.decision == base_task.TaskFailureContext.Decision.retry_later and
                      not failure_context.retry_wait_timeout)):
                 return None, swf_task
-            if failure_context.decision == base_task.TaskFailureContext.Decision.retry_later:
+            elif failure_context.decision == base_task.TaskFailureContext.Decision.retry_later:
                 return (
                     None,
                     TimerTask(
@@ -749,9 +748,19 @@ class Executor(executor.Executor):
                         swf_task.get_input()
                     ),
                 )
+            elif failure_context.decision == base_task.TaskFailureContext.Decision.handled:
+                return future, swf_task
             if failure_context.decision != base_task.TaskFailureContext.Decision.none:
                 raise ValueError('Unexpected TaskFailureValue decision: {}'.format(failure_context.decision))
 
+        return self.default_failure_handling(event, future, swf_task, exception_class)
+
+    @staticmethod
+    def default_failure_handling(event,  # type: dict
+                                 future,  # type: futures.Future
+                                 swf_task,  # type: Union[ActivityTask, WorkflowTask]
+                                 exception_class,  # type: Type[Exception]
+                                 ):
         # Compare number of retries in history with configured max retries
         # NB: we used to do a strict comparison (==), but that can lead to
         # infinite retries in case the code is redeployed with a decreased

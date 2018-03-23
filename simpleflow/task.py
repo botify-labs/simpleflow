@@ -9,13 +9,13 @@ from enum import Enum
 import six
 
 from simpleflow.base import Submittable
+from simpleflow.history import History
 from . import futures
 from .activity import Activity
 
 
 if False:
-    from simpleflow.history import History  # NOQA
-    from typing import Optional, Any, Dict, Union  # NOQA
+    from typing import Optional, Any, Dict, Union, Type  # NOQA
 
 
 def get_actual_value(value):
@@ -274,16 +274,19 @@ class TaskFailureContext(object):
         retry_now = 3
         retry_later = 4
         cancel = 5
+        handled = 6
 
     def __init__(self,
                  a_task,  # type: Union[ActivityTask, WorkflowTask]
                  event,  # type: Dict[str, Any]
                  future,  # type: futures.Future
+                 exception_class,  # type: Type[Exception]
                  history=None,  # type: Optional[History]
                  ):
         self.a_task = a_task
         self.event = event
         self.future = future
+        self.exception_class = exception_class
         self.history = history
         self.decision = TaskFailureContext.Decision.none
         self.retry_wait_timeout = None
