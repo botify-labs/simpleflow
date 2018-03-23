@@ -350,3 +350,9 @@ class TaskFailureContext(object):
                 if isinstance(details, dict) and 'error' in details:
                     self._task_error = details['error']
         return self._task_error
+
+    @property
+    def id(self):
+        # type: () -> Optional[int]
+        event = self.event
+        return History.get_event_id(event)

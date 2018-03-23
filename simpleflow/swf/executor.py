@@ -50,6 +50,7 @@ from swf.core import ConnectedSWFObject
 if False:
     from typing import Optional, Type, Union, Tuple  # NOQA
 
+
 logger = logging.getLogger(__name__)
 
 __all__ = ['Executor']
@@ -195,6 +196,7 @@ class Executor(executor.Executor):
         self._idempotent_tasks_to_submit = set()
         self._execution = None
         self.current_priority = None
+        self.handled_failures = {}
 
     def reset(self):
         """
@@ -211,6 +213,7 @@ class Executor(executor.Executor):
         self._idempotent_tasks_to_submit = set()
         self._execution = None
         self.current_priority = None
+        self.handled_failures = {}
         self.create_workflow()
 
     def _make_task_id(self, a_task, workflow_id, run_id, *args, **kwargs):
@@ -675,6 +678,22 @@ class Executor(executor.Executor):
         :param exception_class:
         :return:
         """
+        event_id = History.get_event_id(event)
+        logger.info('handle_failure: failed_id=%s', event_id)
+        if event_id in self.handled_failures:  # don't call workflow method multiple times
+            return self.handled_failures[event_id]
+
+        rc = self.do_handle_failure(event, future, swf_task, exception_class)
+        self.handled_failures[event_id] = rc
+        return rc
+
+    def do_handle_failure(self,
+                          event,  # type: dict
+                          future,  # type: futures.Future
+                          swf_task,  # type: Union[ActivityTask, WorkflowTask]
+                          exception_class,  # type: Type[Exception]
+                          ):
+        # type: (...) -> Union[futures.Future, Tuple[Optional[futures.Future], SwfTask], None]
         timer = self.find_timer_associated_with(event, swf_task)
         if timer:
             if isinstance(timer['control'], compat.string_types):  # FIXME unconditional?

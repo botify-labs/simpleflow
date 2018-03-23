@@ -660,3 +660,16 @@ class History(object):
             parser = self.TYPE_TO_PARSER.get(event.type)
             if parser:
                 parser(self, events, event)
+
+    @staticmethod
+    def get_event_id(event):
+        for event_id_key in (  # FIXME add a universal name?..
+                'scheduled_id',
+                'initiated_event_id',
+                'event_id',
+                'started_event_id',
+                'cancel_failed_event_id',
+        ):
+            event_id = event.get(event_id_key)
+            if event_id:
+                return event_id
