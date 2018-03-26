@@ -766,6 +766,7 @@ class Executor(executor.Executor):
         else:
             # Otherwise retry the workflow by scheduling it again.
             failure_context.future = None  # means it is not in SWF.
+        failure_context.decision = base_task.TaskFailureContext.Decision.handled
         return failure_context
 
     def find_timer_associated_with(self, event, swf_task):
