@@ -681,7 +681,7 @@ class Executor(executor.Executor):
         if event_id in self.handled_failures:  # don't call workflow method multiple times
             return self.handled_failures[event_id]
 
-        logger.info('handle_failure: failed_id=%s', event_id)
+        logger.debug('handle_failure: failed_id=%s', event_id)
         rc = self.do_handle_failure(event, future, swf_task, exception_class)
         self.handled_failures[event_id] = rc
         return rc
