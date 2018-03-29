@@ -11,7 +11,7 @@ from simpleflow.compat import PY2
 from simpleflow.futures import Future
 
 
-def _serialize_complex_object(obj):
+def serialize_complex_object(obj):
     if isinstance(obj, datetime.datetime):
         r = obj.isoformat()
         if obj.microsecond:
@@ -64,7 +64,7 @@ def json_dumps(obj, pretty=False, compact=True, **kwargs):
     :rtype: str
     """
     if "default" not in kwargs:
-        kwargs["default"] = _serialize_complex_object
+        kwargs["default"] = serialize_complex_object
     if pretty:
         kwargs["indent"] = 4
         kwargs["sort_keys"] = True
@@ -76,7 +76,7 @@ def json_dumps(obj, pretty=False, compact=True, **kwargs):
     try:
         return json.dumps(obj, **kwargs)
     except TypeError:
-        # lazy_object_proxy.Proxy subclasses basestring: _serialize_complex_object isn't called on python2
+        # lazy_object_proxy.Proxy subclasses basestring: serialize_complex_object isn't called on python2
         if PY2:
             obj = _resolve_proxy(obj)
             return json.dumps(obj, **kwargs)
