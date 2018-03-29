@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.20.8
+------
+
+- Expose simpleflow.utils.serialize_complex_object() function (#336)
+
 0.20.7
 ------
 
