@@ -5,6 +5,7 @@
 #
 # See the file LICENSE for copying permission.
 
+from simpleflow.utils import json_dumps
 from swf.models.decision.base import Decision, decision_action
 
 
@@ -19,8 +20,10 @@ class MarkerDecision(Decision):
         :type   name: str
 
         :param  details: Optional details of the marker.
-        :type   details: str
+        :type   details: Optional[dict]
         """
+        if details is not None:
+            details = json_dumps(details)
 
         self.update_attributes({
             'markerName': name,

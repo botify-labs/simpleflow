@@ -16,11 +16,16 @@ class TaskException(Exception):
         self.task = task
         self.exception = exception
 
+    @property
+    def payload(self):
+        return self.task
+
     def __repr__(self):
-        return '{}(task={} exception={})'.format(
+        return '{}(task={}, exception={})'.format(
             self.__class__.__name__,
             self.task,
-            self.exception)
+            self.exception,
+        )
 
 
 class WorkflowException(Exception):
@@ -37,11 +42,16 @@ class WorkflowException(Exception):
         self.workflow = workflow
         self.exception = exception
 
+    @property
+    def payload(self):
+        return self.workflow
+
     def __repr__(self):
-        return '{}(workflow={} exception={})'.format(
+        return '{}(workflow={}, exception={})'.format(
             self.__class__.__name__,
             self.workflow,
-            self.exception)
+            self.exception,
+        )
 
 
 class TaskFailed(Exception):
@@ -89,6 +99,11 @@ class TaskCanceled(Exception):
     def __init__(self, details=None):
         self.details = details
 
+    def __repr__(self):
+        if self.details is None:  # same repr in python 2 and 3, because test :roll_eyes:
+            return '{}()'.format(self.__class__.__name__)
+        return '{}({})'.format(self.__class__.__name__, self.details)
+
 
 class TaskTerminated(Exception):
     pass
@@ -110,7 +125,7 @@ class AggregateException(Exception):
         """
         Invoke a user-defined handler on each exception.
         :param handler: Predicate accepting an exception and returning True if it's been handled.
-        :type handler: (Exception) -> bool
+        :type handler: (Exception, ...) -> bool
         :param args: args for the handler
         :param kwargs: kwargs for the handler
         :raise: new AggregateException with the unhandled exceptions, if any

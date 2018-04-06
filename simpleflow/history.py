@@ -188,7 +188,7 @@ class History(object):
                 'scheduled_timestamp': event.timestamp,
                 'input': event.input,
                 'task_list': event.task_list['name'],
-                'control': getattr(event, 'control', None),
+                'control': event.control,
                 'decision_task_completed_event_id': event.decision_task_completed_event_id,
             }
             if event.activity_id not in self._activities:
@@ -332,7 +332,7 @@ class History(object):
                 'raw_input': event.raw.get('input'),  # FIXME obsolete; any user out there?
                 'input': event.input,
                 'child_policy': event.child_policy,
-                'control': getattr(event, 'control', None),
+                'control': event.control,
                 'tag_list': getattr(event, 'tag_list', None),
                 'task_list': event.task_list['name'],
                 'initiated_event_timestamp': event.timestamp,
@@ -359,7 +359,7 @@ class History(object):
                 'cause': event.cause,
                 'name': event.workflow_type['name'],
                 'version': event.workflow_type['version'],
-                'control': getattr(event, 'control', None),
+                'control': event.control,
                 'start_failed_id': event.id,
                 'start_failed_timestamp': event.timestamp,
                 'decision_task_completed_event_id': event.decision_task_completed_event_id,
@@ -484,7 +484,6 @@ class History(object):
             initiated_event = events[event.initiated_event_id - 1]
             return workflows[initiated_event.workflow_id]
 
-        control = getattr(event, 'control', None)
         if event.state == 'signal_execution_initiated':
             workflow = {
                 'type': 'external_workflow',
@@ -494,7 +493,7 @@ class History(object):
                 'state': event.state,
                 'initiated_event_id': event.id,
                 'input': event.input,
-                'control': control,
+                'control': event.control,
                 'initiated_event_timestamp': event.timestamp,
             }
             self._external_workflows_signaling[event.id] = workflow
@@ -505,8 +504,8 @@ class History(object):
                 'cause': event.cause,
                 'signal_failed_timestamp': event.timestamp,
             })
-            if control:
-                workflow['control'] = control
+            if event.control:
+                workflow['control'] = event.control
         elif event.state == 'execution_signaled':
             workflow = self._external_workflows_signaling[event.initiated_event_id]
             workflow.update({
@@ -523,7 +522,7 @@ class History(object):
                 'id': event.workflow_id,
                 'run_id': getattr(event, 'run_id', None),
                 'state': event.state,
-                'control': control,
+                'control': event.control,
                 'initiated_event_id': event.id,
                 'initiated_event_timestamp': event.timestamp,
             }
@@ -542,8 +541,8 @@ class History(object):
                 'state': event.state,
                 'cause': event.cause,
             })
-            if control:
-                workflow['control'] = control
+            if event.control:
+                workflow['control'] = event.control
             workflow['request_cancel_failed_timestamp'] = event.timestamp
         elif event.state == 'execution_cancel_requested':
             workflow = get_workflow(self._external_workflows_canceling)
@@ -583,7 +582,7 @@ class History(object):
                 'id': event.timer_id,
                 'state': event.state,
                 'start_to_fire_timeout': int(event.start_to_fire_timeout),
-                'control': getattr(event, 'control', None),
+                'control': event.control,
                 'started_event_id': event.id,
                 'started_event_timestamp': event.timestamp,
                 'decision_task_completed_event_id': event.decision_task_completed_event_id,
@@ -661,3 +660,16 @@ class History(object):
             parser = self.TYPE_TO_PARSER.get(event.type)
             if parser:
                 parser(self, events, event)
+
+    @staticmethod
+    def get_event_id(event):
+        for event_id_key in (  # FIXME add a universal name?..
+                'scheduled_id',
+                'initiated_event_id',
+                'event_id',
+                'started_event_id',
+                'cancel_failed_event_id',
+        ):
+            event_id = event.get(event_id_key)
+            if event_id:
+                return event_id

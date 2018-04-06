@@ -48,7 +48,7 @@ def datetime_timestamp(dt):
 
 
 def get_subkey(d, key_path):
-    """Gets a sub-dict key, and return None if whether
+    """Gets a sub-dict key, and return None if either
     the parent or child dict key does not exist
 
     :param  d: dict to operate over

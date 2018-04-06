@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-
-from . import exceptions
+from simpleflow._decorators import deprecated
+from simpleflow import exceptions
 
 
 __all__ = ['Future', 'get_result_or_raise', 'wait']
@@ -34,13 +34,11 @@ _STATE_TO_DESCRIPTION_MAP = {
 }
 
 
+@deprecated
 def get_result_or_raise(future):
     """Returns the ``result`` of *future* if it is available, otherwise
     raise.
-    FIXME how is this different from future.result?
     """
-    if future.state == PENDING:
-        raise exceptions.ExecutionBlocked()
     return future.result
 
 
@@ -69,9 +67,11 @@ class Future(object):
         self._exception = None
 
     def __repr__(self):
-        return '<Future at %s state=%s>' % (
+        return '<Future at %s state=%s%s>' % (
             hex(id(self)),
-            _STATE_TO_DESCRIPTION_MAP[self._state])
+            _STATE_TO_DESCRIPTION_MAP[self._state],
+            ' exception=%r' % self._exception if self._exception else ''
+        )
 
     def wait(self):
         raise exceptions.ExecutionBlocked
@@ -147,7 +147,7 @@ class Future(object):
         """
         Set state to finished with an exception.
         :param exception:
-        :type exception: Exception
+        :type exception: Optional[Exception]
         :return:
         """
         self._state = FINISHED

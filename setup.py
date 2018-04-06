@@ -91,6 +91,7 @@ DEPS = [
 ]
 if PY2:
     DEPS += [
+        'enum34',
         'subprocess32',
     ]
 

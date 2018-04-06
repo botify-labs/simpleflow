@@ -5,6 +5,7 @@
 #
 # See the file LICENSE for copying permission.
 
+from simpleflow import format
 from swf.models.decision.base import Decision, decision_action
 
 
@@ -23,8 +24,11 @@ class TimerDecision(Decision):
 
         :param  control: Optional data attached to the event that can
                          be used by the decider in subsequent workflow tasks
-        :type   control: str
+        :type   control: Optional[dict]
         """
+        if control is not None:
+            control = format.control(control)
+
         self.update_attributes({
             'timerId': id,
             'startToFireTimeout': start_to_fire_timeout,
