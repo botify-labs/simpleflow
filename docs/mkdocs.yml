@@ -3,7 +3,7 @@ docs_dir: src/
 
 # Project information
 site_name: "Simpleflow documentation"
-copyright: "Copyright &copy; 2017 - Botify"
+copyright: "Copyright &copy; 2017‒2018 — Botify"
 
 # Code
 repo_name: botify-labs/simpleflow
@@ -67,6 +67,7 @@ pages:
     - Program Tasks: features/program_tasks.md
     - Jumbo Fields: features/jumbo_fields.md
     - Signals: features/signals.md
+    - Error Handling: features/error_handling.md
   - Development: development.md
   - Contributing: contributing.md
   - License: license.md

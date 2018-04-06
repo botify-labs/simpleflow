@@ -6,11 +6,10 @@ Error Handling
 
 What follows applies to the SWF executor; the local one only handles `raises_on_failure`.
 
-A workflow can declare a method to be called on an activity or child workflow error, that is, either an
-`ActivityTaskFailed`, `ActivityTaskTimedOut`, `ChildWorkflowExecutionFailed` or `ChildWorkflowExecutionTimedOut`.
-In its absence, errors are handled as follow:
+A workflow can declare a method to be called when a task or child workflow fails or times out.
+By default, errors are handled as follow:
 
-*  a`retry` attribute defines how many times the task is retried; it defaults to 0 (no retry)
+*  a`retry` attribute defines how many times the task or workflow is retried; it defaults to 0 (no retry)
 * if too many retries were attempted, the `raises_on_failure` attribute is checked. If False, a future is returned with 
     its `exception` set; if True, the workflow is aborted. 
 
@@ -22,6 +21,7 @@ It is passed a `TaskFailureContext` object with error details and can modify it 
 instance.
 
 The `TaskFailureContext` currently have these members:
+
 * a_task: failed `ActivityTask` or `WorkflowTask`
 * task_name: activity or workflow name
 * exception: raised exception (shortcut to future.exception)
@@ -33,9 +33,9 @@ The `TaskFailureContext` currently have these members:
 * decision: described below
 * retry_wait_timeout: ditto
 
-The `TaskFailureContext.decision` (nothing in common with SWF's decisions) is set by `on_task_failure`. It can be:
+The `TaskFailureContext.decision` (nothing in common with SWF's decisions) should be set by `on_task_failure`. It can be:
 
-* none: continue with default handling (potential retries then abort)
+* none: default value, continue with default handling (potential retries then abort)
 * abort: use default abort strategy
 * ignore: discard the exception, consider the task finished; the future's result may be user-modified
 * cancel: mark the future as cancelled
@@ -45,5 +45,5 @@ The `TaskFailureContext.decision` (nothing in common with SWF's decisions) is se
     strategy here is for `on_task_failure` to call the executor's `default_failure_handling` method, and make 
     workflow-specific processing according to its return value)
 
-The `Workflow.on_task_failure` method is guaranteed to be called once only on a given replay, but may be called 
+The `Workflow.on_task_failure` method is guaranteed to be called only once on a given replay, but may be called
 again with the same failure in subsequent replays: it must thus be idempotent.
