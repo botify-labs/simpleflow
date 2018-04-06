@@ -85,6 +85,12 @@
      <changefreq>daily</changefreq>
     </url>
         
+    <url>
+     <loc>/features/error_handling/</loc>
+     <lastmod>2018-04-06</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
     
 
     
