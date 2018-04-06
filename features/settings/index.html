@@ -16,7 +16,7 @@
     
     
       
-        <title>Program Tasks - Simpleflow documentation</title>
+        <title>Settings - Simpleflow documentation</title>
       
     
     
@@ -83,7 +83,7 @@
                 </span>
               
             
-            Program Tasks
+            Settings
           
         </span>
       </div>
@@ -305,11 +305,54 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../settings/" title="Settings" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Settings
+      </label>
+    
+    <a href="./" title="Settings" class="md-nav__link md-nav__link--active">
       Settings
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configure-a-setting-via-an-environment-variable" title="Configure a setting via an environment variable" class="md-nav__link">
+    Configure a setting via an environment variable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-a-setting-via-a-custom-module" title="Configure a setting via a custom module" class="md-nav__link">
+    Configure a setting via a custom module
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -341,61 +384,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="toc">
-        Program Tasks
-      </label>
-    
-    <a href="./" title="Program Tasks" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../program_tasks/" title="Program Tasks" class="md-nav__link">
       Program Tasks
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#executing-a-function-as-a-command-line" title="Executing a function as a command line" class="md-nav__link">
-    Executing a function as a command line
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#executing-a-python-function-in-another-process" title="Executing a Python function in another process" class="md-nav__link">
-    Executing a Python function in another process
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#limitations" title="Limitations" class="md-nav__link">
-    Limitations
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -485,22 +478,15 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#executing-a-function-as-a-command-line" title="Executing a function as a command line" class="md-nav__link">
-    Executing a function as a command line
+  <a href="#configure-a-setting-via-an-environment-variable" title="Configure a setting via an environment variable" class="md-nav__link">
+    Configure a setting via an environment variable
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#executing-a-python-function-in-another-process" title="Executing a Python function in another process" class="md-nav__link">
-    Executing a Python function in another process
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#limitations" title="Limitations" class="md-nav__link">
-    Limitations
+  <a href="#configure-a-setting-via-a-custom-module" title="Configure a setting via a custom module" class="md-nav__link">
+    Configure a setting via a custom module
   </a>
   
 </li>
@@ -519,45 +505,42 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/botify-labs/simpleflow/edit/master/docs/src/features/program_tasks.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
+                  <a href="https://github.com/botify-labs/simpleflow/edit/master/docs/src/features/settings.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
                 
                 
-                <h1 id="execution-of-tasks-as-programs">Execution of Tasks as Programs<a class="headerlink" href="#execution-of-tasks-as-programs" title="Permanent link">&para;</a></h1>
-<p>The <code>simpleflow.execute</code> module allows to define functions that will be
-executed as a program.</p>
-<p>There are two modes:</p>
+                <h1 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">&para;</a></h1>
+<p>Simpleflow comes with a <code>simpleflow.settings</code> module which aims at configuring
+generic parameters not tied to a specific simpleflow command.</p>
+<p>Parameters can be specified:</p>
 <ul>
-<li>Convert the definition of a fonction as a command line.</li>
-<li>Execute a Python function in another process.</li>
+<li>via an environment variable (higher precedence)</li>
+<li>via a python config module, specified by <code>SIMPLEFLOW_SETTINGS_MODULE</code></li>
+<li>via defaults stored in <code>simpleflow/settings/default.py</code> (lowest precedence)</li>
 </ul>
-<p>Please refer to the <code>simpleflow.tests.test_activity</code> test module for
-further examples.</p>
-<h2 id="executing-a-function-as-a-command-line">Executing a function as a command line<a class="headerlink" href="#executing-a-function-as-a-command-line" title="Permanent link">&para;</a></h2>
-<p>Let's take the example of <code>ls</code>:</p>
-<div class="codehilite"><pre><span></span><span class="nd">@execute.program</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">ls</span><span class="p">():</span>
-    <span class="k">pass</span>
-</pre></div>
+<p>For the rest of this document, we will take "SIMPLEFLOW_IDENTITY" as an example. It
+controls the identity of SWF deciders and workers as reported to the SWF API when
+polling for tasks.</p>
+<h2 id="configure-a-setting-via-an-environment-variable">Configure a setting via an environment variable<a class="headerlink" href="#configure-a-setting-via-an-environment-variable" title="Permanent link">&para;</a></h2>
+<p>This is the simplest:
+<div class="codehilite"><pre><span></span>$ export SIMPLEFLOW_IDENTITY=&#39;{&quot;hostname&quot;:&quot;machine.example.net&quot;}&#39;
 
-<p>Calling <code>ls()</code> in Python will execute the <code>ls</code> command. Here the purpose of
-the function definition is only to describe the command line. The reason for
-this is to map a call in a workflow definition to a program to execute on the
-command line. The program may be written in any language whereas the workflow
-definition is in Python.</p>
-<h2 id="executing-a-python-function-in-another-process">Executing a Python function in another process<a class="headerlink" href="#executing-a-python-function-in-another-process" title="Permanent link">&para;</a></h2>
-<p>The rationale for this feature is to execute a function with another
-interpreter (such as pypy) or in another environment (virtualenv).</p>
-<div class="codehilite"><pre><span></span><span class="nd">@execute.python</span><span class="p">(</span><span class="n">interpreter</span><span class="o">=</span><span class="s1">&#39;pypy&#39;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">inc</span><span class="p">(</span><span class="n">xs</span><span class="p">):</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
-</pre></div>
+$ simpleflow info settings | grep IDENTITY
+SIMPLEFLOW_IDENTITY=&#39;{&quot;hostname&quot;:&quot;machine.example.net&quot;}&#39;
+</pre></div></p>
+<h2 id="configure-a-setting-via-a-custom-module">Configure a setting via a custom module<a class="headerlink" href="#configure-a-setting-via-a-custom-module" title="Permanent link">&para;</a></h2>
+<p>In that form, you will have to create a module that configures the settings
+you want first, like this:
+<div class="codehilite"><pre><span></span>$ cat my/custom/module.py
+SIMPLEFLOW_IDENTITY = &#39;{&quot;hostname&quot;:&quot;harcoded.example.net&quot;}&#39;
 
-<p>Calling <code>inc(range(10))</code> in Python will execute the function with the
-<code>pypy</code> interpreter found in the <code>$PATH</code>.</p>
-<h2 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h2>
-<p>The main limitation comes from the need to serialize the arguments and the
-return values to pass them as strings. Hence all arguments and return values
-must be convertible into JSON values.</p>
+$ export SIMPLEFLOW_SETTINGS_MODULE=&#39;my.custom.module&#39;
+
+$ simpleflow info settings | grep IDENTITY
+SIMPLEFLOW_IDENTITY=&#39;{&quot;hostname&quot;:&quot;harcoded.example.net&quot;}&#39;
+</pre></div></p>
+<p>Of course the example above is not very interesting since the value is
+hardcoded, but if you need some settings to be dynamically computed, this
+is how you can achieve it.</p>
                 
                   
                 
@@ -576,7 +559,7 @@ must be convertible into JSON values.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../command_line/" title="Command Line" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../../quickstart/" title="Quickstart" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -585,19 +568,19 @@ must be convertible into JSON values.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Command Line
+                Quickstart
               </span>
             </div>
           </a>
         
         
-          <a href="../jumbo_fields/" title="Jumbo Fields" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../swf_layer/" title="SWF Object Layer" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Jumbo Fields
+                SWF Object Layer
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">
