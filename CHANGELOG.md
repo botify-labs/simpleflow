@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.21.0
+------
+
+- Feature: custom logic on retry (#332)
+
 0.20.8
 ------
 
