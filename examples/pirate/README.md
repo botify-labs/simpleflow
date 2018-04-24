@@ -1,5 +1,5 @@
-ExamplePirate Business Workflow
-===============================
+Example Pirate Business Workflow
+================================
 
 This example workflow demonstrates basic features of simpleflow in a fun way.
 
@@ -10,6 +10,6 @@ export SWF_DOMAIN=TestDomain
 simpleflow standalone \
   --nb-deciders 1 \
   --nb-workers 2 \
-  --input '{"money_needed": 120}' \
+  --input '{"kwargs":{"money_needed": 120}}' \
   examples.pirate.decider.PirateBusiness
 ```
