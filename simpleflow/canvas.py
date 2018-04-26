@@ -5,7 +5,7 @@ from .activity import Activity
 from .base import Submittable, SubmittableContainer
 from .task import ActivityTask, WorkflowTask
 
-
+# noinspection PyUnreachableCode
 if False:
     from typing import List  # NOQA
 
@@ -27,13 +27,14 @@ class FuncGroup(SubmittableContainer):
         return executor.workflow.submit(inst)
 
     def instantiate_task(self):
-        self.activities = self.func(*self.args, **self.kwargs)
+        self.activities = self.func(*self.args, **self.kwargs)  # ivar for testing/debugging ease
+        if not isinstance(self.activities, (Submittable, Group)):
+            raise TypeError('FuncGroup submission should return a Group or Submittable,'
+                            ' got {} instead (func: {!r})'.format(type(self.activities), self.func))
+
         if self.raises_on_failure is not None:
             self.activities.propagate_attribute('raises_on_failure', self.raises_on_failure)
 
-        if not isinstance(self.activities, (Submittable, Group)):
-            raise TypeError('FuncGroup submission should return a Group or Submittable,'
-                            ' got {} instead'.format(type(self.activities)))
         return self.activities
 
     def propagate_attribute(self, attr, val):
@@ -77,7 +78,7 @@ class Group(SubmittableContainer):
         """
         Append the specified activities.
         :param iterable: list of Submittables/Groups/tuples
-        Tuples are (activity, [args, [kwargs]]).
+        Tuples are (activity, args).
         """
         for it in iterable:
             if not isinstance(it, tuple):
