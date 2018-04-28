@@ -406,7 +406,7 @@ class Executor(executor.Executor):
         elif state == 'started':
             future.set_running()
         elif state == 'completed':
-            future.set_finished(json_loads_or_raw(event['result']))
+            future.set_finished(format.decode(event['result']))
         elif state == 'failed':
             future.set_exception(exceptions.TaskFailed(
                 name=event['id'],
@@ -872,30 +872,12 @@ class Executor(executor.Executor):
 
         return future
 
-    def resume_lambda_function(self, a_task, event):
-        """
-        Resume a child workflow.
-
-        :param a_task:
-        :type a_task: LambdaTask
-        :param event:
-        :type event: dict
-        :return:
-        :rtype: simpleflow.futures.Future
-        """
-        future = self._get_future_from_lambda_function_event(event)
-
-        if future.finished and future.exception:
-            raise future.exception
-
-        return future
-
     def schedule_task(self, a_task, task_list=None):
         """
         Let a task schedule itself.
         If too many decisions are in flight, add a timer decision and raise ExecutionBlocked.
         :param a_task:
-        :type a_task: SwfTask
+        :type a_task: ActivityTask | WorkflowTask | SignalTask [ MarkerTask [ TimerTask | CancelTimerTask | LambdaFunctionTask  # noqa
         :param task_list:
         :type task_list: Optional[str]
         :raise: exceptions.ExecutionBlocked if too many decisions waiting
@@ -1488,8 +1470,9 @@ class Executor(executor.Executor):
 
     def handle_cancel_requested(self):
         decision = swf.models.decision.WorkflowExecutionDecision()
-        is_current_decision = self._history.completed_decision_id < self._history.cancel_requested_id
-        should_cancel = self._workflow.should_cancel(self._history)
+        history = self._history
+        is_current_decision = history.completed_decision_id < history.cancel_requested_id
+        should_cancel = self._workflow.should_cancel(history)
         if not should_cancel:
             return None  # ignore cancel
         if is_current_decision:

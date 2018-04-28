@@ -130,6 +130,7 @@ class History(object):
         """
         return self._lambda_functions
 
+    @property
     def signaled_workflows(self):
         """
         :return: signaled workflows
