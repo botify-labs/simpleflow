@@ -115,10 +115,7 @@ def format_arguments_json(*args, **kwargs):
         'args': args,
         'kwargs': kwargs,
     })
-    try:
-        return format.encode(dump, MAX_ARGUMENTS_JSON_LENGTH)
-    except format.JumboTooLargeError:
-        return dump
+    return dump
 
 
 def get_name(func):
@@ -214,7 +211,6 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
                     '--context={}'.format(json_dumps(context)),
                 ]
                 if len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH:  # command-line limit on Linux: 128K
-                    # Note: on production systems, format_arguments_json should be able to use Jumbo fields
                     full_command.append(arguments_json)
                     arg_file = None
                     arg_fd = None
@@ -479,9 +475,8 @@ def main():
             parser.error('the following arguments are required: funcargs')
     else:
         with os.fdopen(cmd_arguments.arguments_json_fd) as arguments_json_file:
-            content = arguments_json_file.read()#.decode('utf-8')
+            content = arguments_json_file.read()
     try:
-        print("content: {}".format(content))
         arguments = format.decode(content)
     except Exception:
         raise ValueError('cannot load arguments from {}'.format(
