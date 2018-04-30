@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+import errno
 import os
 import sys
 import json
@@ -7,6 +8,8 @@ import json
 import time
 
 import psutil
+
+MAX_ARGUMENTS_JSON_LENGTH = 65536
 
 try:
     import subprocess32 as subprocess
@@ -108,10 +111,14 @@ def check_keyword_arguments(argspec, kwargs):
 
 
 def format_arguments_json(*args, **kwargs):
-    return json_dumps({
+    dump = json_dumps({
         'args': args,
         'kwargs': kwargs,
     })
+    try:
+        return format.encode(dump, MAX_ARGUMENTS_JSON_LENGTH)
+    except format.JumboTooLargeError:
+        return dump
 
 
 def get_name(func):
@@ -165,7 +172,7 @@ def wait_subprocess(process, timeout=None, command_info=None):
                 process.terminate()  # send SIGTERM
             except OSError as e:
                 # Ignore that exception the case the sub-process already terminated after last poll() call.
-                if e.errno == 3:
+                if e.errno == errno.ESRCH:
                     return process.poll()
                 else:
                     raise
@@ -197,23 +204,38 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
             with tempfile.TemporaryFile() as result_fd, tempfile.TemporaryFile() as error_fd:
                 dup_result_fd = os.dup(result_fd.fileno())  # remove FD_CLOEXEC
                 dup_error_fd = os.dup(error_fd.fileno())  # remove FD_CLOEXEC
-                # print('error_fd: {}'.format(dup_error_fd))
+                arguments_json = format_arguments_json(*args, **kwargs)
                 full_command = [
                     interpreter, '-m', command,  # execute module a script.
-                    get_name(func), format_arguments_json(*args, **kwargs),
+                    get_name(func),
                     '--logger-name={}'.format(logger_name),
                     '--result-fd={}'.format(dup_result_fd),
                     '--error-fd={}'.format(dup_error_fd),
                     '--context={}'.format(json_dumps(context)),
                 ]
+                if len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH:  # command-line limit on Linux: 128K
+                    # Note: on production systems, format_arguments_json should be able to use Jumbo fields
+                    full_command.append(arguments_json)
+                    arg_file = None
+                    arg_fd = None
+                else:
+                    arg_file = tempfile.TemporaryFile()
+                    arg_file.write(arguments_json.encode('utf-8'))
+                    arg_file.flush()
+                    arg_file.seek(0)
+                    arg_fd = os.dup(arg_file.fileno())
+                    full_command.append('--arguments-json-fd={}'.format(arg_fd))
+                    full_command.append('foo')  # dummy funcarg
                 if kill_children:
                     full_command.append('--kill-children')
                 if compat.PY2:  # close_fds doesn't work with python2 (using its C _posixsubprocess helper)
                     close_fds = False
-                    pass_fds = ()
+                    pass_fds = []
                 else:
                     close_fds = True
-                    pass_fds = (dup_result_fd, dup_error_fd)
+                    pass_fds = [dup_result_fd, dup_error_fd]
+                    if arg_file:
+                        pass_fds.append(arg_fd)
                 process = subprocess.Popen(
                     full_command,
                     bufsize=-1,
@@ -223,6 +245,8 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
                 rc = wait_subprocess(process, timeout=timeout, command_info=full_command)
                 os.close(dup_result_fd)
                 os.close(dup_error_fd)
+                if arg_file:
+                    arg_file.close()
                 if rc:
                     error_fd.seek(0)
                     err_output = error_fd.read()
@@ -419,6 +443,13 @@ def main():
         help='error file descriptor',
     )
     parser.add_argument(
+        '--arguments-json-fd',
+        type=int,
+        default=None,
+        metavar='N',
+        help='JSON input file descriptor',
+    )
+    parser.add_argument(
         '--kill-children',
         action='store_true',
         help='kill child processes on exit',
@@ -442,11 +473,19 @@ def main():
                 pass
 
     funcname = cmd_arguments.funcname
+    if cmd_arguments.arguments_json_fd is None:
+        content = cmd_arguments.funcargs
+        if content is None:
+            parser.error('the following arguments are required: funcargs')
+    else:
+        with os.fdopen(cmd_arguments.arguments_json_fd) as arguments_json_file:
+            content = arguments_json_file.read()#.decode('utf-8')
     try:
-        arguments = format.decode(cmd_arguments.funcargs)
-    except:
+        print("content: {}".format(content))
+        arguments = format.decode(content)
+    except Exception:
         raise ValueError('cannot load arguments from {}'.format(
-            cmd_arguments.funcargs))
+            content))
     if cmd_arguments.logger_name:
         logger = logging.getLogger(cmd_arguments.logger_name)
     else:
@@ -456,16 +495,18 @@ def main():
         callable_ = callable_.__wrapped__
     args = arguments.get('args', ())
     kwargs = arguments.get('kwargs', {})
-    context = json.loads(cmd_arguments.context)
+    context = json.loads(cmd_arguments.context) if cmd_arguments.context is not None else None
     try:
         if hasattr(callable_, 'execute'):
             inst = callable_(*args, **kwargs)
-            inst.context = context
+            if context is not None:
+                inst.context = context
             result = inst.execute()
             if hasattr(inst, 'post_execute'):
                 inst.post_execute()
         else:
-            callable_.context = context
+            if context is not None:
+                callable_.context = context
             result = callable_(*args, **kwargs)
     except Exception as err:
         logger.error('Exception: {}'.format(err))
