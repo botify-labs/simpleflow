@@ -319,3 +319,16 @@ def length(x):
 def test_large_command_line():
     x = "a" * 1024 * 1024
     assert length(x) == len(x)
+
+
+def test_large_command_line_unicode():
+    x = u"ä" * 1024 * 1024
+    assert length(x) == len(x)
+
+
+def test_large_command_line_utf8():
+    """
+    UTF-8 bytes must be handled as Unicode, both in Python 2 and Python 3.
+    """
+    x = u"ä" * 1024 * 1024
+    assert length(x.encode('utf-8')) == len(x)

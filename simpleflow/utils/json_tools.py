@@ -12,6 +12,8 @@ from simpleflow.futures import Future
 
 
 def serialize_complex_object(obj):
+    if isinstance(obj, bytes):  # Python 3 only (serialize_complex_object not called here in Python 2)
+        return obj.decode('utf-8', errors='replace')
     if isinstance(obj, datetime.datetime):
         r = obj.isoformat()
         if obj.microsecond:
