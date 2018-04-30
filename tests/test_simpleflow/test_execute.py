@@ -309,3 +309,13 @@ def test_execute_kill_children():
     pid = execute.python(kill_children=True)(create_sleeper_subprocess)()
     with pytest.raises(psutil.NoSuchProcess):
         psutil.Process(pid)
+
+
+@execute.python()
+def length(x):
+    return len(x)
+
+
+def test_large_command_line():
+    x = "a" * 1024 * 1024
+    assert length(x) == len(x)

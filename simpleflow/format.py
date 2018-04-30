@@ -13,6 +13,10 @@ from simpleflow.utils import json_dumps, json_loads_or_raw
 JUMBO_FIELDS_MEMORY_CACHE = {}
 
 
+class JumboTooLargeError(ValueError):
+    pass
+
+
 def _jumbo_fields_bucket():
     # wrapped into a function so easier to override for tests
     bucket = os.getenv("SIMPLEFLOW_JUMBO_FIELDS_BUCKET")
@@ -55,15 +59,15 @@ def encode(message, max_length, allow_jumbo_fields=True):
     if len(message) > max_length:
         if not can_use_jumbo_fields:
             _log_message_too_long(message)
-            raise ValueError("Message too long ({} chars)".format(len(message)))
+            raise JumboTooLargeError("Message too long ({} chars)".format(len(message)))
 
         if len(message) > constants.JUMBO_FIELDS_MAX_SIZE:
             _log_message_too_long(message)
-            raise ValueError("Message too long even for a jumbo field ({} chars)".format(len(message)))
+            raise JumboTooLargeError("Message too long even for a jumbo field ({} chars)".format(len(message)))
 
         jumbo_signature = _push_jumbo_field(message)
         if len(jumbo_signature) > max_length:
-            raise ValueError(
+            raise JumboTooLargeError(
                 "Jumbo field signature is longer than the max allowed length "
                 "for this field: {} ; reduce jumbo bucket length?".format(jumbo_signature)
             )
