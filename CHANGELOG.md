@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.21.1
+------
+
+- simpleflow.execute.python: handle huge args (#339)
+
 0.21.0
 ------
 
