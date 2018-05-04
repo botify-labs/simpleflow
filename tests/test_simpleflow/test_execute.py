@@ -1,7 +1,13 @@
 # coding: utf-8
 from __future__ import print_function
 
+try:
+    import contextlib2 as contextlib
+except ImportError:
+    import contextlib
+import io
 import json
+import sys
 import tempfile
 import os.path
 import platform
@@ -332,3 +338,22 @@ def test_large_command_line_utf8():
     """
     x = u"ä" * 1024 * 1024
     assert length(x.encode('utf-8')) == len(x)
+
+
+@execute.python()
+def print_on_stdout_and_stderr(for_stdout, for_stderr):
+    print(for_stdout, end='')
+    print(for_stderr, file=sys.stderr, end='')
+
+
+def test_print_on_stdout_and_stderr():
+    for_stdout = 'This goes to stdout'
+    for_stderr = 'This goes to stderr'
+    f_out = io.StringIO()
+    f_err = io.StringIO()
+    with contextlib.redirect_stdout(f_out), contextlib.redirect_stderr(f_err):
+        print_on_stdout_and_stderr(for_stdout, for_stderr)
+    actual_out = f_out.getvalue()
+    actual_err = f_err.getvalue()
+    assert for_stdout == actual_out, '"{}" != "{}"'.format(for_stdout, actual_out)
+    assert for_stderr == actual_err, '"{}" != "{}"'.format(for_stderr, actual_err)

@@ -93,6 +93,7 @@ if PY2:
     DEPS += [
         'enum34',
         'subprocess32',
+        'contextlib2',  # FIXME currently only used by tests
     ]
 
 setup(
