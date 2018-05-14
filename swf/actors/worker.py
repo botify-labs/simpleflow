@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 import boto.exception
-from simpleflow import format
+from simpleflow import format, logging_context
 from swf.actors import Actor
 from swf.models import ActivityTask
 from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError, RateLimitExceededError
@@ -57,8 +57,9 @@ class ActivityWorker(Actor):
                     "Unable to cancel activity task with token={}".format(task_token),
                     message,
                 )
-
             raise ResponseError(message)
+        finally:
+            logging_context.reset()
 
     def complete(self, task_token, result=None):
         """Responds to ``swf`` that the activity task is completed
@@ -164,11 +165,12 @@ class ActivityWorker(Actor):
         :returns: task token, polled activity task
         :rtype: (str, ActivityTask)
         """
+        logging_context.reset()
         task_list = task_list or self.task_list
         identity = identity or self._identity
 
         try:
-            polled_activity_data = self.connection.poll_for_activity_task(
+            task = self.connection.poll_for_activity_task(
                 self.domain.name,
                 task_list,
                 identity=format.identity(identity),
@@ -183,17 +185,22 @@ class ActivityWorker(Actor):
 
             raise ResponseError(message)
 
-        if 'taskToken' not in polled_activity_data:
+        if 'taskToken' not in task:
             raise PollTimeout("Activity Worker poll timed out")
+
+        logging_context.set("workflow_id", task["workflowExecution"]["workflowId"])
+        logging_context.set("task_type", "activity")
+        logging_context.set("event_id", task["startedEventId"])
+        logging_context.set("activity_id", task["activityId"])
 
         activity_task = ActivityTask.from_poll(
             self.domain,
             self.task_list,
-            polled_activity_data
+            task,
         )
 
         return Response(
             task_token=activity_task.task_token,
             activity_task=activity_task,
-            raw_response=polled_activity_data,
+            raw_response=task,
         )

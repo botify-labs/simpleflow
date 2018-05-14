@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import boto.exception
 
-from simpleflow import compat, format
+from simpleflow import compat, format, logging_context
 from simpleflow.utils import json_dumps
 from swf.actors.core import Actor
 from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError
@@ -54,8 +54,9 @@ class Decider(Actor):
                     "Unable to complete decision task with token={}".format(task_token),
                     message,
                 )
-
             raise ResponseError(message)
+        finally:
+            logging_context.reset()
 
     def poll(self, task_list=None,
              identity=None,
@@ -76,6 +77,7 @@ class Decider(Actor):
         :rtype: swf.responses.Response
 
         """
+        logging_context.reset()
         task_list = task_list or self.task_list
 
         task = self.connection.poll_for_decision_task(
@@ -89,6 +91,9 @@ class Decider(Actor):
             raise PollTimeout("Decider poll timed out")
 
         events = task['events']
+        logging_context.set("workflow_id", task["workflowExecution"]["workflowId"])
+        logging_context.set("task_type", "decision")
+        logging_context.set("event_id", task["startedEventId"])
 
         next_page = task.get('nextPageToken')
         while next_page:
