@@ -144,16 +144,17 @@ def setup_logging():
 
     syslog_target = base_settings.get("SIMPLEFLOW_SYSLOG_TARGET")
     if syslog_target:
-        config = setup_syslog_logging(config, syslog_target)
+        host, port = syslog_target.rsplit(":", 1)
+        config = setup_syslog_logging(config, host, int(port))
 
     logging.config.dictConfig(config)
 
 
-def setup_syslog_logging(config, syslog_target):
+def setup_syslog_logging(config, host, port):
     config["loggers"]["simpleflow"]["handlers"].append("syslog")
     config["handlers"]["syslog"] = {
         "class": "logging.handlers.SysLogHandler",
-        "address": syslog_target.split(":"),
+        "address": (host, port),
         "level": "DEBUG",
         "formatter": "syslog_formatter",
     }
