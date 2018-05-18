@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import logging
 import multiprocessing
 import os
 
@@ -9,6 +8,7 @@ import swf.actors
 import swf.exceptions
 import swf.models.decision
 
+from simpleflow import logger
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
 from simpleflow.swf.utils import DecisionsAndContext
@@ -18,9 +18,6 @@ if False:
     from typing import Any, List, Optional, Union  # NOQA
     from swf.responses import Response  # NOQA
     from simpleflow.swf.executor import Executor  # NOQA
-
-
-logger = logging.getLogger(__name__)
 
 
 class Decider(Supervisor):

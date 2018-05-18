@@ -2,7 +2,6 @@
 from __future__ import absolute_import, print_function
 
 from contextlib import contextmanager
-import logging
 import multiprocessing
 import os
 import platform
@@ -19,7 +18,7 @@ import swf.exceptions
 import swf.models
 import swf.querysets
 
-from simpleflow import Workflow, log
+from simpleflow import log, logger, Workflow, __version__
 from simpleflow.download import download_binaries
 from simpleflow.history import History
 from simpleflow.settings import print_settings
@@ -30,14 +29,10 @@ from simpleflow.swf.process import decider, worker
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_execution
 from simpleflow.utils import json_dumps
-from simpleflow import __version__
 
 if False:
     from typing import Text, Type  # NOQA
     from swf.models import WorkflowType  # NOQA
-
-
-logger = logging.getLogger(__name__)
 
 
 def get_workflow(clspath):

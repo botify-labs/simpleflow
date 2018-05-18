@@ -1,14 +1,11 @@
-import logging
-
 import swf.models
 
+from simpleflow import logger
 from simpleflow.swf.executor import Executor
 from . import (
     Decider,
     DeciderPoller,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def load_workflow_executor(domain, workflow_name, task_list=None, repair_with=None,

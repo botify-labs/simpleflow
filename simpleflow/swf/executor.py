@@ -4,7 +4,6 @@ import copy
 import inspect
 import hashlib
 import json
-import logging
 import multiprocessing
 import re
 import traceback
@@ -18,6 +17,7 @@ from simpleflow import (
     executor,
     format,
     futures,
+    logger,
     task,
     compat,
 )
@@ -50,8 +50,6 @@ from swf.core import ConnectedSWFObject
 # noinspection PyUnreachableCode
 if False:
     from typing import Optional, Type, Union, Tuple  # NOQA
-
-logger = logging.getLogger(__name__)
 
 __all__ = ['Executor']
 

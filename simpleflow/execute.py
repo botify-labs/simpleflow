@@ -27,6 +27,7 @@ from builtins import map
 from future.utils import iteritems
 
 from simpleflow import compat, format
+from simpleflow import logger as simpleflow_logger
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 from simpleflow.utils import json_dumps
 
@@ -499,7 +500,7 @@ def main():
     if cmd_arguments.logger_name:
         logger = logging.getLogger(cmd_arguments.logger_name)
     else:
-        logger = logging.getLogger(__name__)
+        logger = simpleflow_logger
     callable_ = make_callable(funcname)
     if hasattr(callable_, '__wrapped__'):
         callable_ = callable_.__wrapped__

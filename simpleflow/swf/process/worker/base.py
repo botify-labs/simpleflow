@@ -1,5 +1,4 @@
 from base64 import b64decode
-import logging
 import json
 import multiprocessing
 import os
@@ -9,7 +8,7 @@ import uuid
 
 import psutil
 
-from simpleflow import format
+from simpleflow import format, logger
 from simpleflow.exceptions import ExecutionError
 import swf.actors
 import swf.exceptions
@@ -26,9 +25,6 @@ from simpleflow.swf.process import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
 from simpleflow.utils import format_exc, json_dumps, to_k8s_identifier
-
-
-logger = logging.getLogger(__name__)
 
 
 class Worker(Supervisor):

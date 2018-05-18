@@ -1,10 +1,7 @@
 from __future__ import absolute_import
-import logging
 
+from simpleflow import logger
 from . import helpers
-
-
-logger = logging.getLogger(__name__)
 
 
 def start(workflows, domain, task_list, log_level=None, nb_processes=None,

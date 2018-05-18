@@ -1,5 +1,4 @@
 import functools
-import logging
 import multiprocessing
 import os
 import signal
@@ -8,9 +7,8 @@ import types
 
 import psutil
 
+from simpleflow import logger
 from .named_mixin import NamedMixin, with_state
-
-logger = logging.getLogger(__name__)
 
 
 def reset_signal_handlers(func):

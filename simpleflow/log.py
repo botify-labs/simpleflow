@@ -1,5 +1,5 @@
 from datetime import datetime
-import logging
+import logging.config
 import sys
 
 from . import logging_context, settings
