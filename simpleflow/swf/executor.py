@@ -47,6 +47,7 @@ from simpleflow.utils import (
 from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
 
+# noinspection PyUnreachableCode
 if False:
     from typing import Optional, Type, Union, Tuple  # NOQA
 
@@ -196,6 +197,7 @@ class Executor(executor.Executor):
         self._execution = None
         self.current_priority = None
         self.handled_failures = {}
+        self.created_activity_types = set()
 
     def reset(self):
         """
@@ -213,6 +215,7 @@ class Executor(executor.Executor):
         self._execution = None
         self.current_priority = None
         self.handled_failures = {}
+        self.created_activity_types = set()
         self.create_workflow()
 
     def _make_task_id(self, a_task, workflow_id, run_id, *args, **kwargs):
@@ -265,11 +268,14 @@ class Executor(executor.Executor):
         if state == 'scheduled':
             pass
         elif state == 'schedule_failed':
-            if event['cause'] == 'ACTIVITY_TYPE_DOES_NOT_EXIST':
+            name = event['activity_type']['name']
+            version = event['activity_type']['version']
+            if event['cause'] == 'ACTIVITY_TYPE_DOES_NOT_EXIST' and (name, version) not in self.created_activity_types:
+                self.created_activity_types.add((name, version))
                 activity_type = swf.models.ActivityType(
                     self.domain,
-                    name=event['activity_type']['name'],
-                    version=event['activity_type']['version'])
+                    name=name,
+                    version=version)
                 logger.info('creating activity type {} in domain {}'.format(
                     activity_type.name,
                     self.domain.name))
@@ -282,7 +288,7 @@ class Executor(executor.Executor):
                             self.domain.name))
                 return None
             logger.info('failed to schedule {}: {}'.format(
-                event['activity_type']['name'],
+                name,
                 event['cause'],
             ))
             return None
