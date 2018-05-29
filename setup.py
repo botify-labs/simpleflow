@@ -11,8 +11,8 @@ from io import open
 REQUIRES = [
 
 ]
-PUBLISH_CMD = "python setup.py register sdist bdist_wheel upload"
-TEST_PUBLISH_CMD = 'python setup.py register -r test sdist bdist_wheel upload -r test'
+PUBLISH_CMD = "python setup.py sdist bdist_wheel upload"
+TEST_PUBLISH_CMD = 'python setup.py sdist bdist_wheel upload -r test'
 
 PY2 = int(sys.version[0]) == 2
 
