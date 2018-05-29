@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.21.3
+------
+
+- Don't try creating ActivityType's multiple times (#342)
+
 0.21.2
 ------
 
